@@ -333,6 +333,10 @@ Changelog
   complexity in the number of samples.
   :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
 
+- |Feature| Added `sample_weight` parameter to
+  :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV`.
+  :pr:`16449` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
   has been optimised for dense matrices when using `solver='newton-cg'` and
   `multi_class!='multinomial'`.
@@ -368,6 +372,13 @@ Changelog
   :user:`Alexandre Gramfort <agramfort>`.
   Same for BayesianRidge, ARDRegression in:
   :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
+  Same for :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.MultiTaskLasso`, :class:`linear_model.MultiTaskLassoCV`,
+  :class:`linear_model.MultiTaskElasticNet`,
+  :class:`linear_model.MultiTaskElasticNetCV`, in:
+  :pr:`17785` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
   The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
   :class:`linear_model.OrthogonalMatchingPursuitCV` will default to
   False in 1.2 and will be removed in 1.4.
@@ -430,6 +441,10 @@ Changelog
 - |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.
+
+- |Feature|  :func:`metrics.mean_squared_log_error` now supports
+  `squared=False`.
+  :pr:`20326` by :user:`Uttam kumar <helper-uttam>`.
 
 - |Efficiency| Improved speed of :func:`metrics.confusion_matrix` when labels
   are integral.
@@ -544,6 +559,10 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
 
+- |Feature| :class:`preprocessing.PolynomialFeatures` now supports passing
+  a tuple to `degree`, i.e. `degree=(min_degree, max_degree)`.
+  :pr:`20250` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |API| The `n_input_features_` attribute of
   :class:`preprocessing.PolynomialFeatures` is deprecated in favor of
   `n_features_in_` and will be removed in 1.2. :pr:`20240` by
@@ -579,6 +598,9 @@ Changelog
 - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Propreties that are decorated with :func:`utils.deprecated` correctly
+  wraps the property's docstring. :pr:`20385` by `Thomas Fan`_.
 
 :mod:`sklearn.validation`
 .........................

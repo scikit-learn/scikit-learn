@@ -71,7 +71,7 @@ def test_cdist(metric, X1, X2):
         kwargs = dict(zip(keys, vals))
         if metric == "mahalanobis":
             # See: https://github.com/scipy/scipy/issues/13861
-            pytest.xfail("scipy#13861: cdist with 'mahalanobis' fails on" "memmap data")
+            pytest.xfail("scipy#13861: cdist with 'mahalanobis' fails onmemmap data")
         elif metric == "wminkowski":
             if sp_version >= parse_version("1.8.0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")
@@ -118,7 +118,7 @@ def test_pdist(metric, X1, X2):
         kwargs = dict(zip(keys, vals))
         if metric == "mahalanobis":
             # See: https://github.com/scipy/scipy/issues/13861
-            pytest.xfail("scipy#13861: pdist with 'mahalanobis' fails on" "memmap data")
+            pytest.xfail("scipy#13861: pdist with 'mahalanobis' fails onmemmap data")
         elif metric == "wminkowski":
             if sp_version >= parse_version("1.8.0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")

@@ -262,15 +262,14 @@ def test_input_error():
     for monotonic_cst in ([1, 3], [1, -3]):
         gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
         with pytest.raises(
-            ValueError, match="must be None or an array-like of " "-1, 0 or 1"
+            ValueError, match="must be None or an array-like of -1, 0 or 1"
         ):
             gbdt.fit(X, y)
 
     gbdt = HistGradientBoostingClassifier(monotonic_cst=[0, 1])
     with pytest.raises(
         ValueError,
-        match="monotonic constraints are not supported "
-        "for multiclass classification",
+        match="monotonic constraints are not supported for multiclass classification",
     ):
         gbdt.fit(X, y)
 

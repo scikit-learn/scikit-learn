@@ -66,8 +66,7 @@ def _test_features_list(data_id):
     sparse = data_description["format"].lower() == "sparse_arff"
     if sparse is True:
         raise ValueError(
-            "This test is not intended for sparse data, to keep "
-            "code relatively simple"
+            "This test is not intended for sparse data, to keep code relatively simple"
         )
     url = _DATA_FILE.format(data_description["file_id"])
     with _open_openml_url(url, data_home=None) as f:
@@ -1232,7 +1231,8 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         raise ValueError(
             "This mechanism intends to test correct cache"
             "handling. As such, urlopen should never be "
-            "accessed. URL: %s" % request.get_full_url()
+            "accessed. URL: %s"
+            % request.get_full_url()
         )
 
     data_id = 2
@@ -1370,9 +1370,7 @@ def test_string_attribute_without_dataframe(monkeypatch, gzip_response):
 def test_dataset_with_openml_error(monkeypatch, gzip_response):
     data_id = 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    msg = (
-        "OpenML registered a problem with the dataset. It might be unusable. " "Error:"
-    )
+    msg = "OpenML registered a problem with the dataset. It might be unusable. Error:"
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(data_id=data_id, cache=False, as_frame=False)
 
@@ -1381,7 +1379,7 @@ def test_dataset_with_openml_error(monkeypatch, gzip_response):
 def test_dataset_with_openml_warning(monkeypatch, gzip_response):
     data_id = 3
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    msg = "OpenML raised a warning on the dataset. It might be unusable. " "Warning:"
+    msg = "OpenML raised a warning on the dataset. It might be unusable. Warning:"
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(data_id=data_id, cache=False, as_frame=False)
 
@@ -1419,7 +1417,7 @@ def test_fetch_openml_raises_illegal_argument():
     with pytest.raises(ValueError, match=msg):
         fetch_openml(data_id=-1, name="nAmE", version="version")
 
-    msg = "Neither name nor data_id are provided. " "Please provide name or data_id."
+    msg = "Neither name nor data_id are provided. Please provide name or data_id."
     with pytest.raises(ValueError, match=msg):
         fetch_openml()
 
