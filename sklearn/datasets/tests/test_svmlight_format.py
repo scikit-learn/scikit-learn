@@ -5,7 +5,7 @@ import numpy as np
 import scipy.sparse as sp
 import os
 import shutil
-from importlib import resources as importlib_resources
+from importlib import resources
 from tempfile import NamedTemporaryFile
 
 import pytest
@@ -31,7 +31,7 @@ def _load_svmlight_local_test_file(filename, **kwargs):
     """
     Helper to load resource `filename` with `importlib.resources`
     """
-    with importlib_resources.open_binary(TEST_DATA_MODULE, filename) as f:
+    with resources.open_binary(TEST_DATA_MODULE, filename) as f:
         return load_svmlight_file(f, **kwargs)
 
 
@@ -76,7 +76,7 @@ def test_load_svmlight_file_fd():
 
     # GH20081: testing equality between path-based and
     # fd-based load_svmlight_file
-    with importlib_resources.path(TEST_DATA_MODULE, datafile) as data_path:
+    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
         data_path = str(data_path)
         X1, y1 = load_svmlight_file(data_path)
 
@@ -95,7 +95,7 @@ def test_load_svmlight_file_multilabel():
 
 
 def test_load_svmlight_files():
-    with importlib_resources.path(TEST_DATA_MODULE, datafile) as data_path:
+    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
         X_train, y_train, X_test, y_test = load_svmlight_files(
             [str(data_path)] * 2, dtype=np.float32
         )
@@ -104,7 +104,7 @@ def test_load_svmlight_files():
     assert X_train.dtype == np.float32
     assert X_test.dtype == np.float32
 
-    with importlib_resources.path(TEST_DATA_MODULE, datafile) as data_path:
+    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
         X1, y1, X2, y2, X3, y3 = load_svmlight_files(
             [str(data_path)] * 3, dtype=np.float64
         )
@@ -136,7 +136,7 @@ def test_load_compressed():
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".gz") as tmp:
         tmp.close()  # necessary under windows
-        with importlib_resources.open_binary(TEST_DATA_MODULE, datafile) as f:
+        with resources.open_binary(TEST_DATA_MODULE, datafile) as f:
             with gzip.open(tmp.name, "wb") as fh_out:
                 shutil.copyfileobj(f, fh_out)
         Xgz, ygz = load_svmlight_file(tmp.name)
@@ -148,7 +148,7 @@ def test_load_compressed():
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
         tmp.close()  # necessary under windows
-        with importlib_resources.open_binary(TEST_DATA_MODULE, datafile) as f:
+        with resources.open_binary(TEST_DATA_MODULE, datafile) as f:
             with BZ2File(tmp.name, "wb") as fh_out:
                 shutil.copyfileobj(f, fh_out)
         Xbz, ybz = load_svmlight_file(tmp.name)
@@ -227,9 +227,7 @@ def test_load_large_qid():
 
 def test_load_invalid_file2():
     with pytest.raises(ValueError):
-        with importlib_resources.path(
-            TEST_DATA_MODULE, datafile
-        ) as data_path, importlib_resources.path(
+        with resources.path(TEST_DATA_MODULE, datafile) as data_path, resources.path(
             TEST_DATA_MODULE, invalidfile
         ) as invalid_path:
             load_svmlight_files([str(data_path), str(invalid_path), str(data_path)])

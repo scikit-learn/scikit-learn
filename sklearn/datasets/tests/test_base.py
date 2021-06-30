@@ -5,7 +5,7 @@ import warnings
 from pickle import loads
 from pickle import dumps
 from functools import partial
-from importlib import resources as importlib_resources
+from importlib import resources
 
 import pytest
 
@@ -23,7 +23,6 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.datasets._base import (
-    DATA_MODULE,
     load_csv_data,
     load_gzip_compressed_csv_data,
 )
@@ -139,13 +138,29 @@ def test_load_files_wo_load_content(
 def test_load_csv_data(
     filename, expected_n_samples, expected_n_features, expected_target_names
 ):
-    actual_data, actual_target, actual_target_names = load_csv_data(
-        data_module=DATA_MODULE, data_file_name=filename
-    )
+    actual_data, actual_target, actual_target_names = load_csv_data(filename)
     assert actual_data.shape[0] == expected_n_samples
     assert actual_data.shape[1] == expected_n_features
     assert actual_target.shape[0] == expected_n_samples
     np.testing.assert_array_equal(actual_target_names, expected_target_names)
+
+
+def test_load_csv_data_with_descr():
+    data_file_name = "iris.csv"
+    descr_file_name = "iris.rst"
+
+    res_without_descr = load_csv_data(data_file_name=data_file_name)
+    res_with_descr = load_csv_data(
+        data_file_name=data_file_name, descr_file_name=descr_file_name
+    )
+    assert len(res_with_descr) == 4
+    assert len(res_without_descr) == 3
+
+    np.testing.assert_array_equal(res_with_descr[0], res_without_descr[0])
+    np.testing.assert_array_equal(res_with_descr[1], res_without_descr[1])
+    np.testing.assert_array_equal(res_with_descr[2], res_without_descr[2])
+
+    assert res_with_descr[-1].startswith(".. _iris_dataset:")
 
 
 @pytest.mark.parametrize(
@@ -157,8 +172,22 @@ def test_load_csv_data(
     ],
 )
 def test_load_gzip_compressed_csv_data(filename, kwargs, expected_shape):
-    actual_data = load_gzip_compressed_csv_data(DATA_MODULE, filename, **kwargs)
+    actual_data = load_gzip_compressed_csv_data(filename, **kwargs)
     assert actual_data.shape == tuple(expected_shape)
+
+
+def test_load_gzip_compressed_csv_data_with_descr():
+    data_file_name = "diabetes_target.csv.gz"
+    descr_file_name = "diabetes.rst"
+
+    expected_data = load_gzip_compressed_csv_data(data_file_name=data_file_name)
+    actual_data, descr = load_gzip_compressed_csv_data(
+        data_file_name=data_file_name,
+        descr_file_name=descr_file_name,
+    )
+
+    np.testing.assert_array_equal(actual_data, expected_data)
+    assert descr.startswith(".. _diabetes_dataset:")
 
 
 def test_load_sample_images():
@@ -227,11 +256,10 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
     if has_descr:
         assert bunch.DESCR
     if filenames:
+        assert "data_module" in bunch
         assert all(
             [
-                f in bunch
-                and "file_module" in bunch
-                and importlib_resources.is_resource(bunch["file_module"], bunch[f])
+                f in bunch and resources.is_resource(bunch["data_module"], bunch[f])
                 for f in filenames
             ]
         )

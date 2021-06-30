@@ -21,7 +21,6 @@ from ._base import _fetch_remote
 from ._base import _convert_data_dataframe
 from . import get_data_home
 from ._base import RemoteFileMetadata
-from ._base import DESCR_MODULE
 from ._base import load_descr
 from ..utils import Bunch
 from ..utils import check_random_state
@@ -204,7 +203,7 @@ def fetch_kddcup99(
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
 
-    fdescr = load_descr(DESCR_MODULE, "kddcup99.rst")
+    fdescr = load_descr("kddcup99.rst")
 
     frame = None
     if as_frame:

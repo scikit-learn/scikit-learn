@@ -35,7 +35,6 @@ from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
-from ._base import DESCR_MODULE
 from ._base import load_descr
 from ..utils import Bunch
 
@@ -175,7 +174,7 @@ def fetch_california_housing(
     # target in units of 100,000
     target = target / 100000.0
 
-    descr = load_descr(DESCR_MODULE, "california_housing.rst")
+    descr = load_descr("california_housing.rst")
 
     X = data
     y = target

@@ -5,7 +5,7 @@ import warnings
 import json
 import os
 import re
-from importlib import resources as importlib_resources
+from importlib import resources
 from io import BytesIO
 
 import numpy as np
@@ -248,7 +248,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 
         data_file_name = _file_name(url, suffix)
 
-        with importlib_resources.open_binary(data_module, data_file_name) as f:
+        with resources.open_binary(data_module, data_file_name) as f:
             if has_gzip_header and gzip_response:
                 fp = BytesIO(f.read())
                 return _MockHTTPResponse(fp, True)
@@ -287,7 +287,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         data_file_name = _file_name(url, ".json")
 
         # load the file itself, to simulate a http error
-        with importlib_resources.open_binary(data_module, data_file_name) as f:
+        with resources.open_binary(data_module, data_file_name) as f:
             decompressed_f = read_fn(f, "rb")
             decoded_s = decompressed_f.read().decode("utf-8")
             json_data = json.loads(decoded_s)
@@ -296,7 +296,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
                 url=None, code=412, msg="Simulated mock error", hdrs=None, fp=None
             )
 
-        with importlib_resources.open_binary(data_module, data_file_name) as f:
+        with resources.open_binary(data_module, data_file_name) as f:
             if has_gzip_header:
                 fp = BytesIO(f.read())
                 return _MockHTTPResponse(fp, True)
@@ -1449,8 +1449,8 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     # create a temporary modified arff file
     original_data_module = OPENML_TEST_DATA_MODULE + "." + f"id_{data_id}"
     original_data_file_name = "data-v1-dl-1666876.arff.gz"
-    corrupt_copy_path = os.path.join(tmpdir, "test_invalid_checksum.arff")
-    with importlib_resources.open_binary(
+    corrupt_copy_path = tmpdir / "test_invalid_checksum.arff"
+    with resources.open_binary(
         original_data_module, original_data_file_name
     ) as orig_file:
         orig_gzip = gzip.open(orig_file, "rb")

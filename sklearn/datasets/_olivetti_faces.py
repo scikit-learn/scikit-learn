@@ -24,7 +24,6 @@ from . import get_data_home
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ._base import _pkl_filepath
-from ._base import DESCR_MODULE
 from ._base import load_descr
 from ..utils import check_random_state, Bunch
 
@@ -139,7 +138,7 @@ def fetch_olivetti_faces(
         target = target[order]
     faces_vectorized = faces.reshape(len(faces), -1)
 
-    fdescr = load_descr(DESCR_MODULE, "olivetti_faces.rst")
+    fdescr = load_descr("olivetti_faces.rst")
 
     if return_X_y:
         return faces_vectorized, target

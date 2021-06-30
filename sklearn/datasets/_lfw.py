@@ -21,7 +21,6 @@ from ._base import (
     get_data_home,
     _fetch_remote,
     RemoteFileMetadata,
-    DESCR_MODULE,
     load_descr,
 )
 from ..utils import Bunch
@@ -335,7 +334,7 @@ def fetch_lfw_people(
 
     X = faces.reshape(len(faces), -1)
 
-    fdescr = load_descr(DESCR_MODULE, "lfw.rst")
+    fdescr = load_descr("lfw.rst")
 
     if return_X_y:
         return X, target
@@ -523,7 +522,7 @@ def fetch_lfw_pairs(
         index_file_path, data_folder_path, resize=resize, color=color, slice_=slice_
     )
 
-    fdescr = load_descr(DESCR_MODULE, "lfw.rst")
+    fdescr = load_descr("lfw.rst")
 
     # pack the results as a Bunch instance
     return Bunch(

@@ -26,7 +26,6 @@ from . import get_data_home
 from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
-from ._base import DESCR_MODULE
 from ._base import load_descr
 from ..utils import Bunch
 from ._base import _pkl_filepath
@@ -180,7 +179,7 @@ def fetch_covtype(
         X = X[ind]
         y = y[ind]
 
-    fdescr = load_descr(DESCR_MODULE, "covtype.rst")
+    fdescr = load_descr("covtype.rst")
 
     frame = None
     if as_frame:

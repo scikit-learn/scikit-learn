@@ -42,7 +42,6 @@ from ._base import _convert_data_dataframe
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
-from ._base import DESCR_MODULE
 from ._base import load_descr
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
@@ -288,7 +287,7 @@ def fetch_20newsgroups(
             "subset can only be 'train', 'test' or 'all', got '%s'" % subset
         )
 
-    fdescr = load_descr(DESCR_MODULE, "twenty_newsgroups.rst")
+    fdescr = load_descr("twenty_newsgroups.rst")
 
     data.DESCR = fdescr
 
@@ -509,7 +508,7 @@ def fetch_20newsgroups_vectorized(
             % subset
         )
 
-    fdescr = load_descr(DESCR_MODULE, "twenty_newsgroups.rst")
+    fdescr = load_descr("twenty_newsgroups.rst")
 
     frame = None
     target_name = ["category_class"]
