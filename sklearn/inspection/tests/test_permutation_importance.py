@@ -526,3 +526,29 @@ def test_permutation_importance_multi_metric(list_single_scorer, multi_scorer):
         )
 
         assert_allclose(multi_result.importances, single_result.importances)
+
+def test_error_max_samples():
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(42)
+    n_repeats = 5
+
+    # Last column is correlated with y
+    X = pd.DataFrame({"col1": [1.0, 2.0, 3.0, np.nan], "col2": ["a", "b", "a", "b"]})
+    y = np.array([0, 1, 0, 1])
+
+    num_preprocess = make_pipeline(SimpleImputer(), StandardScaler())
+    preprocess = ColumnTransformer(
+        [("num", num_preprocess, ["col1"]), ("cat", OneHotEncoder(), ["col2"])]
+    )
+    clf = make_pipeline(preprocess, LogisticRegression(solver="lbfgs"))
+    clf.fit(X, y)
+
+    # Test max_samples
+    with pytest.raises(ValueError):
+        result = permutation_importance(
+            clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples=len(y)+1
+        )
+    with pytest.raises(ValueError):
+        result = permutation_importance(
+            clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples="string"
+        )
