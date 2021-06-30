@@ -1261,7 +1261,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
-            Returns the instance itself.
+            Fitted estimator.
         """
         return super().fit(X, y, sample_weight=sample_weight)
 
