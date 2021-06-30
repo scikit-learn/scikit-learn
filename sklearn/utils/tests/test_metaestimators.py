@@ -84,7 +84,7 @@ class AvailableParameterEstimator:
     def __init__(self, available=True):
         self.available = available
 
-    @available_if(lambda est: True)
+    @available_if(lambda est: est.available)
     def available_func(self):
         """This is a mock available_if function"""
         pass
@@ -104,4 +104,4 @@ def test_available_if_docstring():
 
 def test_available_if():
     assert hasattr(AvailableParameterEstimator(), "available_func")
-    assert hasattr(AvailableParameterEstimator(available=False), "available_func")
+    assert not hasattr(AvailableParameterEstimator(available=False), "available_func")
