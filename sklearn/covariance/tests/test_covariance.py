@@ -262,15 +262,6 @@ def test_ledoit_wolf_shrinkage_empty_array():
         ledoit_wolf_shrinkage(X_empty)
 
 
-def test_ledoit_wolf_object_empty_array():
-    # test that LedoitWolf method `fit` raises
-    # a ValueError when providing an empty array
-    X_empty = np.zeros((0, 2))
-    lw = LedoitWolf()
-    with pytest.raises(ValueError, match="Found array with 0 sample"):
-        lw.fit(X_empty)
-
-
 def test_oas():
     # Tests OAS module on a simple dataset.
     # test shrinkage coeff on a simple data set

@@ -429,15 +429,15 @@ class LedoitWolf(EmpiricalCovariance):
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
-        with config_context(assume_finite=True):
-            X = self._validate_data(X)
+        X = self._validate_data(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        covariance, shrinkage = ledoit_wolf(
-            X - self.location_, assume_centered=True, block_size=self.block_size
-        )
+        with config_context(assume_finite=True):
+            covariance, shrinkage = ledoit_wolf(
+                X - self.location_, assume_centered=True, block_size=self.block_size
+            )
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)
 
