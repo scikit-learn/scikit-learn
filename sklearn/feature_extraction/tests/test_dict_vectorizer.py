@@ -6,6 +6,7 @@ from random import Random
 import numpy as np
 import scipy.sparse as sp
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose
 
 import pytest
 
@@ -13,14 +14,12 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 
 
-@pytest.mark.parametrize('sparse', (True, False))
-@pytest.mark.parametrize('dtype', (int, np.float32, np.int16))
-@pytest.mark.parametrize('sort', (True, False))
-@pytest.mark.parametrize('iterable', (True, False))
+@pytest.mark.parametrize("sparse", (True, False))
+@pytest.mark.parametrize("dtype", (int, np.float32, np.int16))
+@pytest.mark.parametrize("sort", (True, False))
+@pytest.mark.parametrize("iterable", (True, False))
 def test_dictvectorizer(sparse, dtype, sort, iterable):
-    D = [{"foo": 1, "bar": 3},
-         {"bar": 4, "baz": 2},
-         {"bar": 1, "quux": 1, "quuux": 2}]
+    D = [{"foo": 1, "bar": 3}, {"bar": 4, "baz": 2}, {"bar": 1, "quux": 1, "quuux": 2}]
 
     v = DictVectorizer(sparse=sparse, dtype=dtype, sort=sort)
     X = v.fit_transform(iter(D) if iterable else D)
@@ -32,28 +31,22 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
 
     if sparse:
         # CSR matrices can't be compared for equality
-        assert_array_equal(X.A, v.transform(iter(D) if iterable
-                                            else D).A)
+        assert_array_equal(X.A, v.transform(iter(D) if iterable else D).A)
     else:
-        assert_array_equal(X, v.transform(iter(D) if iterable
-                                          else D))
+        assert_array_equal(X, v.transform(iter(D) if iterable else D))
 
     if sort:
-        assert (v.feature_names_ ==
-                     sorted(v.feature_names_))
+        assert v.feature_names_ == sorted(v.feature_names_)
 
 
 # TODO: Remove in 0.26 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_feature_selection(get_names):
     # make two feature dicts with two useful features and a bunch of useless
     # ones, in terms of chi2
-    d1 = dict([("useless%d" % i, 10) for i in range(20)],
-              useful1=1, useful2=20)
-    d2 = dict([("useless%d" % i, 10) for i in range(20)],
-              useful1=20, useful2=1)
+    d1 = dict([("useless%d" % i, 10) for i in range(20)], useful1=1, useful2=20)
+    d2 = dict([("useless%d" % i, 10) for i in range(20)], useful1=20, useful2=1)
 
     for indices in (True, False):
         v = DictVectorizer().fit([d1, d2])
@@ -64,14 +57,15 @@ def test_feature_selection(get_names):
         assert getattr(v, get_names)() == ["useful1", "useful2"]
 
 
-# TODO: Remove in 0.26 when get_feature_names is removed.
+# TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_one_of_k(get_names):
-    D_in = [{"version": "1", "ham": 2},
-            {"version": "2", "spam": .3},
-            {"version=3": True, "spam": -1}]
+    D_in = [
+        {"version": "1", "ham": 2},
+        {"version": "2", "spam": 0.3},
+        {"version=3": True, "spam": -1},
+    ]
     v = DictVectorizer()
     X = v.fit_transform(D_in)
     assert X.shape == (3, 5)
@@ -84,18 +78,21 @@ def test_one_of_k(get_names):
     assert "version" not in names
 
 
-# TODO: Remove in 0.26 when get_feature_names is removed.
+# TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("get_names", ["get_feature_names",
-                                       "get_feature_names_out"])
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_iterable_value(get_names):
-    D_names = ['ham', 'spam', 'version=1', 'version=2', 'version=3']
-    X_expected = [[2.0, 0.0, 2.0, 1.0, 0.0],
-                  [0.0, 0.3, 0.0, 1.0, 0.0],
-                  [0.0, -1.0, 0.0, 0.0, 1.0]]
-    D_in = [{"version": ["1", "2", "1"], "ham": 2},
-            {"version": "2", "spam": .3},
-            {"version=3": True, "spam": -1}]
+    D_names = ["ham", "spam", "version=1", "version=2", "version=3"]
+    X_expected = [
+        [2.0, 0.0, 2.0, 1.0, 0.0],
+        [0.0, 0.3, 0.0, 1.0, 0.0],
+        [0.0, -1.0, 0.0, 0.0, 1.0],
+    ]
+    D_in = [
+        {"version": ["1", "2", "1"], "ham": 2},
+        {"version": "2", "spam": 0.3},
+        {"version=3": True, "spam": -1},
+    ]
     v = DictVectorizer()
     X = v.fit_transform(D_in)
     X = X.toarray()
@@ -110,11 +107,11 @@ def test_iterable_value(get_names):
 
 
 def test_iterable_not_string_error():
-    error_value = ("Unsupported type <class 'int'> in iterable value. "
-                   "Only iterables of string are supported.")
-    D2 = [{'foo': '1', 'bar': '2'},
-          {'foo': '3', 'baz': '1'},
-          {'foo': [1, 'three']}]
+    error_value = (
+        "Unsupported type <class 'int'> in iterable value. "
+        "Only iterables of string are supported."
+    )
+    D2 = [{"foo": "1", "bar": "2"}, {"foo": "3", "baz": "1"}, {"foo": [1, "three"]}]
     v = DictVectorizer(sparse=False)
     with pytest.raises(TypeError) as error:
         v.fit(D2)
@@ -122,12 +119,16 @@ def test_iterable_not_string_error():
 
 
 def test_mapping_error():
-    error_value = ("Unsupported value type <class 'dict'> "
-                   "for foo: {'one': 1, 'three': 3}.\n"
-                   "Mapping objects are not supported.")
-    D2 = [{'foo': '1', 'bar': '2'},
-          {'foo': '3', 'baz': '1'},
-          {'foo': {'one': 1, 'three': 3}}]
+    error_value = (
+        "Unsupported value type <class 'dict'> "
+        "for foo: {'one': 1, 'three': 3}.\n"
+        "Mapping objects are not supported."
+    )
+    D2 = [
+        {"foo": "1", "bar": "2"},
+        {"foo": "3", "baz": "1"},
+        {"foo": {"one": 1, "three": 3}},
+    ]
     v = DictVectorizer(sparse=False)
     with pytest.raises(TypeError) as error:
         v.fit(D2)
@@ -173,18 +174,57 @@ def test_deterministic_vocabulary():
 def test_n_features_in():
     # For vectorizers, n_features_in_ does not make sense and does not exist.
     dv = DictVectorizer()
-    assert not hasattr(dv, 'n_features_in_')
-    d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
+    assert not hasattr(dv, "n_features_in_")
+    d = [{"foo": 1, "bar": 2}, {"foo": 3, "baz": 1}]
     dv.fit(d)
-    assert not hasattr(dv, 'n_features_in_')
+    assert not hasattr(dv, "n_features_in_")
 
 
-# TODO: Remove in 0.26 when get_feature_names is removed
+# TODO: Remove in 1.2 when get_feature_names is removed
 def test_feature_union_get_feature_names_deprecated():
-    D_in = [{"version": "1", "ham": 2},
-            {"version": "2", "spam": .3}]
+    D_in = [{"version": "1", "ham": 2}, {"version": "2", "spam": 0.3}]
     v = DictVectorizer().fit(D_in)
 
     msg = "get_feature_names is deprecated in 0.24"
     with pytest.warns(FutureWarning, match=msg):
         v.get_feature_names()
+
+
+def test_dictvectorizer_dense_sparse_equivalence():
+    """Check the equivalence between between sparse and dense DictVectorizer.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19978
+    """
+    movie_entry_fit = [
+        {"category": ["thriller", "drama"], "year": 2003},
+        {"category": ["animation", "family"], "year": 2011},
+        {"year": 1974},
+    ]
+    movie_entry_transform = [{"category": ["thriller"], "unseen_feature": "3"}]
+    dense_vectorizer = DictVectorizer(sparse=False)
+    sparse_vectorizer = DictVectorizer(sparse=True)
+
+    dense_vector_fit = dense_vectorizer.fit_transform(movie_entry_fit)
+    sparse_vector_fit = sparse_vectorizer.fit_transform(movie_entry_fit)
+
+    assert not sp.issparse(dense_vector_fit)
+    assert sp.issparse(sparse_vector_fit)
+
+    assert_allclose(dense_vector_fit, sparse_vector_fit.toarray())
+
+    dense_vector_transform = dense_vectorizer.transform(movie_entry_transform)
+    sparse_vector_transform = sparse_vectorizer.transform(movie_entry_transform)
+
+    assert not sp.issparse(dense_vector_transform)
+    assert sp.issparse(sparse_vector_transform)
+
+    assert_allclose(dense_vector_transform, sparse_vector_transform.toarray())
+
+    dense_inverse_transform = dense_vectorizer.inverse_transform(dense_vector_transform)
+    sparse_inverse_transform = sparse_vectorizer.inverse_transform(
+        sparse_vector_transform
+    )
+
+    expected_inverse = [{"category=thriller": 1.0}]
+    assert dense_inverse_transform == expected_inverse
+    assert sparse_inverse_transform == expected_inverse

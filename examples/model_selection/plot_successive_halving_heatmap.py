@@ -16,7 +16,7 @@ import pandas as pd
 from sklearn.svm import SVC
 from sklearn import datasets
 from sklearn.model_selection import GridSearchCV
-from sklearn.experimental import enable_successive_halving  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingGridSearchCV
 
 

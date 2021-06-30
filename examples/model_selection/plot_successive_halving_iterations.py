@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import randint
 import numpy as np
 
-from sklearn.experimental import enable_successive_halving  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.ensemble import RandomForestClassifier
 

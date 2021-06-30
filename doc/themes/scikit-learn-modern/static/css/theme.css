@@ -37,6 +37,7 @@ code {
   background-color: #ecf0f3;
   border-radius: 0.2rem;
   padding: 0.15rem;
+  word-break: normal;
 }
 
 nav {
@@ -785,43 +786,43 @@ div.admonition p.admonition-title + p, div.deprecated p {
   display: inline;
 }
 
-div.admonition, div.deprecated {
+div.admonition, div.deprecated,
+div.versionchanged {
+  margin-top: 0.5rem;
   padding: 0.5rem;
   border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
   border: 1px solid #ddd;
-  margin-bottom: 1rem;
+}
+
+div.versionadded {
+  margin: 1rem 0;
 }
 
 div.admonition {
   background-color: #eee;
 }
 
-div.admonition p, div.admonition dl, div.admonition dd {
+div.admonition p, div.admonition dl, div.admonition dd,
+div.deprecated p, div.versionchanged p, div.versionadded p{
   margin-bottom: 0
 }
 
 div.deprecated {
   color: #b94a48;
   background-color: #F3E5E5;
-  border: 1px solid #eed3d7;
+  border-color: #eed3d7;
 }
 
 div.seealso {
   background-color: #FFFBE8;
-  border: 1px solid #fbeed5;
+  border-color: #fbeed5;
   color: #AF8A4B;
 }
 
 div.versionchanged {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
   background-color: #FFFBE8;
-  border: 1px solid #fbeed5;
-  border-radius: 0.5rem;
-}
-
-div.versionchanged p {
-  margin-bottom: 0;
+  border-color: #fbeed5;
 }
 
 dt.label {
@@ -848,7 +849,8 @@ div.body dd > p {
     hyphens: none;
 }
 
-img.align-center, .figure.align-center, object.align-center {
+img.align-center, figure.align-center,
+.figure.align-center, object.align-center {
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -856,7 +858,8 @@ img.align-center, .figure.align-center, object.align-center {
   text-align: center;
 }
 
-img.align-right, .figure.align-right, object.align-right {
+img.align-right, figure.align-right,
+.figure.align-right, object.align-right {
   clear: right;
   float: right;
   margin-left: 1em;

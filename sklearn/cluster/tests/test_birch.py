@@ -17,7 +17,6 @@ from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
 
 
 def test_n_samples_leaves_roots():
@@ -26,8 +25,9 @@ def test_n_samples_leaves_roots():
     brc = Birch()
     brc.fit(X)
     n_samples_root = sum([sc.n_samples_ for sc in brc.root_.subclusters_])
-    n_samples_leaves = sum([sc.n_samples_ for leaf in brc._get_leaves()
-                            for sc in leaf.subclusters_])
+    n_samples_leaves = sum(
+        [sc.n_samples_ for leaf in brc._get_leaves() for sc in leaf.subclusters_]
+    )
     assert n_samples_leaves == X.shape[0]
     assert n_samples_root == X.shape[0]
 
@@ -40,8 +40,7 @@ def test_partial_fit():
     brc_partial = Birch(n_clusters=None)
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
-    assert_array_almost_equal(brc_partial.subcluster_centers_,
-                              brc.subcluster_centers_)
+    assert_array_almost_equal(brc_partial.subcluster_centers_, brc.subcluster_centers_)
 
     # Test that same global labels are obtained after calling partial_fit
     # with None
@@ -53,14 +52,13 @@ def test_partial_fit():
 def test_birch_predict():
     # Test the predict method predicts the nearest centroid.
     rng = np.random.RandomState(0)
-    X = generate_clustered_data(n_clusters=3, n_features=3,
-                                n_samples_per_cluster=10)
+    X = generate_clustered_data(n_clusters=3, n_features=3, n_samples_per_cluster=10)
 
     # n_samples * n_samples_per_cluster
     shuffle_indices = np.arange(30)
     rng.shuffle(shuffle_indices)
     X_shuffle = X[shuffle_indices, :]
-    brc = Birch(n_clusters=4, threshold=1.)
+    brc = Birch(n_clusters=4, threshold=1.0)
     brc.fit(X_shuffle)
     centroids = brc.subcluster_centers_
     assert_array_equal(brc.labels_, brc.predict(X_shuffle))
@@ -91,8 +89,9 @@ def test_n_clusters():
         brc3.fit(X)
 
     # Test that a small number of clusters raises a warning.
-    brc4 = Birch(threshold=10000.)
-    assert_warns(ConvergenceWarning, brc4.fit, X)
+    brc4 = Birch(threshold=10000.0)
+    with pytest.warns(ConvergenceWarning):
+        brc4.fit(X)
 
 
 def test_sparse_X():
@@ -106,8 +105,7 @@ def test_sparse_X():
     brc_sparse.fit(csr)
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
-    assert_array_almost_equal(brc.subcluster_centers_,
-                              brc_sparse.subcluster_centers_)
+    assert_array_almost_equal(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
 
 
 def test_partial_fit_second_call_error_checks():
@@ -136,12 +134,10 @@ def test_branching_factor():
     branching_factor = 9
 
     # Purposefully set a low threshold to maximize the subclusters.
-    brc = Birch(n_clusters=None, branching_factor=branching_factor,
-                threshold=0.01)
+    brc = Birch(n_clusters=None, branching_factor=branching_factor, threshold=0.01)
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
-    brc = Birch(n_clusters=3, branching_factor=branching_factor,
-                threshold=0.01)
+    brc = Birch(n_clusters=3, branching_factor=branching_factor, threshold=0.01)
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
 
@@ -170,7 +166,7 @@ def test_threshold():
 
     brc = Birch(threshold=5.0, n_clusters=None)
     brc.fit(X)
-    check_threshold(brc, 5.)
+    check_threshold(brc, 5.0)
 
 
 def test_birch_n_clusters_long_int():
@@ -179,3 +175,15 @@ def test_birch_n_clusters_long_int():
     X, _ = make_blobs(random_state=0)
     n_clusters = np.int64(5)
     Birch(n_clusters=n_clusters).fit(X)
+
+
+# TODO: Remove in 1.2
+@pytest.mark.parametrize("attribute", ["fit_", "partial_fit_"])
+def test_birch_fit_attributes_deprecated(attribute):
+    """Test that fit_ and partial_fit_ attributes are deprecated."""
+    msg = f"`{attribute}` is deprecated in 1.0 and will be removed in 1.2"
+    X, y = make_blobs(n_samples=10)
+    brc = Birch().fit(X, y)
+
+    with pytest.warns(FutureWarning, match=msg):
+        getattr(brc, attribute)

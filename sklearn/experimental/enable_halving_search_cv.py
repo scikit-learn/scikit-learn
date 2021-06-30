@@ -9,7 +9,7 @@ Importing this file dynamically sets the
 `model_selection` module::
 
     >>> # explicitly require this experimental feature
-    >>> from sklearn.experimental import enable_successive_halving # noqa
+    >>> from sklearn.experimental import enable_halving_search_cv # noqa
     >>> # now you can import normally from model_selection
     >>> from sklearn.model_selection import HalvingRandomSearchCV
     >>> from sklearn.model_selection import HalvingGridSearchCV
@@ -21,15 +21,13 @@ flake8 to ignore the import, which appears as unused.
 
 from ..model_selection._search_successive_halving import (
     HalvingRandomSearchCV,
-    HalvingGridSearchCV
+    HalvingGridSearchCV,
 )
 
 from .. import model_selection
 
 # use settattr to avoid mypy errors when monkeypatching
-setattr(model_selection, "HalvingRandomSearchCV",
-        HalvingRandomSearchCV)
-setattr(model_selection, "HalvingGridSearchCV",
-        HalvingGridSearchCV)
+setattr(model_selection, "HalvingRandomSearchCV", HalvingRandomSearchCV)
+setattr(model_selection, "HalvingGridSearchCV", HalvingGridSearchCV)
 
-model_selection.__all__ += ['HalvingRandomSearchCV', 'HalvingGridSearchCV']
+model_selection.__all__ += ["HalvingRandomSearchCV", "HalvingGridSearchCV"]

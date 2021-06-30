@@ -173,7 +173,6 @@ y_score = classifier.decision_function(X_test)
 # %%
 # The average precision score in multi-label settings
 # ....................................................
-from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import average_precision_score
 
 # For each class
@@ -187,7 +186,7 @@ for i in range(n_classes):
 
 # A "micro-average": quantifying score on all classes jointly
 precision["micro"], recall["micro"], _ = precision_recall_curve(Y_test.ravel(),
-    y_score.ravel())
+                                                                y_score.ravel())
 average_precision["micro"] = average_precision_score(Y_test, y_score,
                                                      average="micro")
 print('Average precision score, micro-averaged over all classes: {0:0.2f}'
