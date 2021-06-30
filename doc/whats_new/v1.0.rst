@@ -314,6 +314,10 @@ Changelog
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
+- |Enhancement| Extend :func:`plot_partial_dependence` to handle categorical
+  features.
+  :pr:`18298` by :user:`Madhura Jayaratne <madhuracj>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
