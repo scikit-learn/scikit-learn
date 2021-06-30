@@ -1,4 +1,5 @@
 """Permutation importance for estimators."""
+import numbers
 import numpy as np
 from joblib import Parallel
 from sklearn.ensemble._bagging import _generate_indices
@@ -49,8 +50,18 @@ def _calculate_permutation_scores(
             n_population=X.shape[0],
             n_samples=max_samples,
         )
-        X_permuted = X_permuted.iloc[row_indices]
-        y_mod = y_mod.iloc[row_indices]
+        if hasattr(X_permuted, "iloc"):
+            X_permuted = X_permuted.iloc[row_indices]
+            if hasattr(y_mod, "iloc"):
+                y_mod = y_mod.iloc[row_indices]
+            else:
+                y_mod = y_mod[row_indices]
+        else:
+            X_permuted= X_permuted[row_indices]
+            if hasattr(y_mod, "iloc"):
+                y_mod = y_mod.iloc[row_indices]
+            else:
+                y_mod = y_mod[row_indices]
 
     scores = []
     shuffling_idx = np.arange(X_permuted.shape[0])
@@ -186,7 +197,7 @@ def permutation_importance(
         - If float, then draw `max_samples * X.shape[0]` samples.
         No effect if max_samples is equal to 1.0 or X.shape[0].
 
-        .. versionadded:: 0.24.3
+        .. versionadded:: 1.0.dev0
 
     Returns
     -------
