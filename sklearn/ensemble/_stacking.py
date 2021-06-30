@@ -85,7 +85,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             else:
                 if (
                     self.stack_method_[est_idx] == "predict_proba"
-                    and self.type_of_target == "multilabel-indicator"
+                    and self._type_of_target == "multilabel-indicator"
                     and isinstance(preds, list)
                 ):
                     for pred in preds:
@@ -489,9 +489,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Returns a fitted instance of estimator.
         """
         check_classification_targets(y)
-        self.type_of_target = type_of_target(y)
+        self._type_of_target = type_of_target(y)
         self.classes_ = []
-        if self.type_of_target != "multilabel-indicator":
+        if self._type_of_target != "multilabel-indicator":
             self._le = LabelEncoder().fit(y)
             self.classes_ = self._le.classes_
             y = self._le.transform(y)
@@ -519,7 +519,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Predicted targets.
         """
         y_pred = super().predict(X, **predict_params)
-        if self.type_of_target != "multilabel-indicator":
+        if self._type_of_target != "multilabel-indicator":
             y_pred = self._le.inverse_transform(y_pred)
         return y_pred
 
