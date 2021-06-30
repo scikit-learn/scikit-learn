@@ -31,7 +31,7 @@ from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
 
 
-@pytest.mark.parametrize("n_jobs, max_samples", product([1, 2], [.5, 1.0]))
+@pytest.mark.parametrize("n_jobs, max_samples", product([1, 2], [0.5, 1.0]))
 def test_permutation_importance_correlated_feature_regression(n_jobs, max_samples):
     # Make sure that feature highly correlated to the target have a higher
     # importance
@@ -47,8 +47,13 @@ def test_permutation_importance_correlated_feature_regression(n_jobs, max_sample
     clf.fit(X, y)
 
     result = permutation_importance(
-        clf, X, y, n_repeats=n_repeats, random_state=rng, n_jobs=n_jobs,
-        max_samples=max_samples
+        clf,
+        X,
+        y,
+        n_repeats=n_repeats,
+        random_state=rng,
+        n_jobs=n_jobs,
+        max_samples=max_samples,
     )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
@@ -58,8 +63,10 @@ def test_permutation_importance_correlated_feature_regression(n_jobs, max_sample
     assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
 
 
-@pytest.mark.parametrize("n_jobs, max_samples", product([1, 2], [.5, 1.0]))
-def test_permutation_importance_correlated_feature_regression_pandas(n_jobs, max_samples):
+@pytest.mark.parametrize("n_jobs, max_samples", product([1, 2], [0.5, 1.0]))
+def test_permutation_importance_correlated_feature_regression_pandas(
+    n_jobs, max_samples
+):
     pd = pytest.importorskip("pandas")
 
     # Make sure that feature highly correlated to the target have a higher
@@ -79,8 +86,13 @@ def test_permutation_importance_correlated_feature_regression_pandas(n_jobs, max
     clf.fit(X, y)
 
     result = permutation_importance(
-        clf, X, y, n_repeats=n_repeats, random_state=rng, n_jobs=n_jobs,
-        max_samples=max_samples
+        clf,
+        X,
+        y,
+        n_repeats=n_repeats,
+        random_state=rng,
+        n_jobs=n_jobs,
+        max_samples=max_samples,
     )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
@@ -90,7 +102,7 @@ def test_permutation_importance_correlated_feature_regression_pandas(n_jobs, max
     assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
 
 
-@pytest.mark.parametrize("n_jobs, max_samples", product([1, 2], [.5, 1.0]))
+@pytest.mark.parametrize("n_jobs, max_samples", product([1, 2], [0.5, 1.0]))
 def test_robustness_to_high_cardinality_noisy_feature(n_jobs, max_samples, seed=42):
     # Permutation variable importance should not be affected by the high
     # cardinality bias of traditional feature importances, especially when
@@ -140,8 +152,13 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, max_samples, seed=
     # Let's check that permutation-based feature importances do not have this
     # problem.
     r = permutation_importance(
-        clf, X_test, y_test, n_repeats=n_repeats, random_state=rng, n_jobs=n_jobs,
-        max_samples=max_samples
+        clf,
+        X_test,
+        y_test,
+        n_repeats=n_repeats,
+        random_state=rng,
+        n_jobs=n_jobs,
+        max_samples=max_samples,
     )
 
     assert r.importances.shape == (X.shape[1], n_repeats)
@@ -164,6 +181,7 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, max_samples, seed=
     # contributing approximately a bit more than 0.2 of accuracy.
     assert informative_importances.min() > 0.15
 
+
 def test_permutation_importance_mixed_types():
     rng = np.random.RandomState(42)
     n_repeats = 4
@@ -174,8 +192,9 @@ def test_permutation_importance_mixed_types():
 
     clf = make_pipeline(SimpleImputer(), LogisticRegression(solver="lbfgs"))
     clf.fit(X, y)
-    result = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng,
-                                    max_samples=len(y))
+    result = permutation_importance(
+        clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples=len(y)
+    )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
 
@@ -185,8 +204,9 @@ def test_permutation_importance_mixed_types():
 
     # use another random state
     rng = np.random.RandomState(0)
-    result2 = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng,
-                                     max_samples=len(y))
+    result2 = permutation_importance(
+        clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples=len(y)
+    )
     assert result2.importances.shape == (X.shape[1], n_repeats)
 
     assert not np.allclose(result.importances, result2.importances)
@@ -194,6 +214,7 @@ def test_permutation_importance_mixed_types():
     # the correlated feature with y is the last column and should
     # have the highest importance
     assert np.all(result2.importances_mean[-1] > result2.importances_mean[:-1])
+
 
 def test_permutation_importance_mixed_types_pandas():
     pd = pytest.importorskip("pandas")
@@ -211,13 +232,15 @@ def test_permutation_importance_mixed_types_pandas():
     clf = make_pipeline(preprocess, LogisticRegression(solver="lbfgs"))
     clf.fit(X, y)
 
-    result = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng,
-                                    max_samples=len(y))
+    result = permutation_importance(
+        clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples=len(y)
+    )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
     # the correlated feature with y is the last column and should
     # have the highest importance
     assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
+
 
 def test_permutation_importance_linear_regresssion():
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
@@ -235,6 +258,7 @@ def test_permutation_importance_linear_regresssion():
     assert_allclose(
         expected_importances, results.importances_mean, rtol=1e-1, atol=1e-6
     )
+
 
 @pytest.mark.parametrize("max_samples", [500, 1.0])
 def test_permutation_importance_equivalence_sequential_parallel(max_samples):
@@ -277,7 +301,7 @@ def test_permutation_importance_equivalence_sequential_parallel(max_samples):
     )
 
 
-@pytest.mark.parametrize("n_jobs, max_samples", product([None, 1, 2], [.5, 1.0]))
+@pytest.mark.parametrize("n_jobs, max_samples", product([None, 1, 2], [0.5, 1.0]))
 def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples):
     # This test checks that the column shuffling logic has the same behavior
     # both a dataframe and a simple numpy array.
@@ -315,8 +339,13 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
 
     n_repeats = 3
     importance_array = permutation_importance(
-        rf, X, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs,
-        max_samples=max_samples
+        rf,
+        X,
+        y,
+        n_repeats=n_repeats,
+        random_state=0,
+        n_jobs=n_jobs,
+        max_samples=max_samples,
     )
 
     # First check that the problem is structured enough and that the model is
@@ -328,8 +357,13 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     # Now check that importances computed on dataframe matche the values
     # of those computed on the array with the same data.
     importance_dataframe = permutation_importance(
-        rf, X_df, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs,
-        max_samples=max_samples
+        rf,
+        X_df,
+        y,
+        n_repeats=n_repeats,
+        random_state=0,
+        n_jobs=n_jobs,
+        max_samples=max_samples,
     )
     assert_allclose(
         importance_array["importances"], importance_dataframe["importances"]
@@ -396,7 +430,7 @@ def test_permutation_importance_sample_weight():
         random_state=1,
         scoring="neg_mean_absolute_error",
         n_repeats=200,
-        sample_weight=w
+        sample_weight=w,
     )
     x1_x2_imp_ratio_w_ones = pi.importances_mean[0] / pi.importances_mean[1]
     assert x1_x2_imp_ratio_w_ones == pytest.approx(x1_x2_imp_ratio_w_none, 0.01)
@@ -416,7 +450,7 @@ def test_permutation_importance_sample_weight():
         random_state=1,
         scoring="neg_mean_absolute_error",
         n_repeats=200,
-        sample_weight=w
+        sample_weight=w,
     )
     x1_x2_imp_ratio_w = pi.importances_mean[0] / pi.importances_mean[1]
     assert x1_x2_imp_ratio_w / x1_x2_imp_ratio_w_none == pytest.approx(2, 0.01)

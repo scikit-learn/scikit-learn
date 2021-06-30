@@ -57,7 +57,7 @@ def _calculate_permutation_scores(
             else:
                 y_mod = y_mod[row_indices]
         else:
-            X_permuted= X_permuted[row_indices]
+            X_permuted = X_permuted[row_indices]
             if hasattr(y_mod, "iloc"):
                 y_mod = y_mod.iloc[row_indices]
             else:
