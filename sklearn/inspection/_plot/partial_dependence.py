@@ -367,7 +367,7 @@ def plot_partial_dependence(
     else:
         if len(features) != len(is_categorical):
             raise ValueError(
-                "Parameter is_categorical should be the same " "size as features."
+                "Parameter is_categorical should be the same size as features."
             )
 
         tmp_categorical = []

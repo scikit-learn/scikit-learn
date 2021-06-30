@@ -505,7 +505,7 @@ def partial_dependence(
     else:
         if len(features_indices) != len(is_categorical):
             raise ValueError(
-                "Parameter is_categorical should be the same " "size as features."
+                "Parameter is_categorical should be the same size as features."
             )
 
     grid, values = _grid_from_X(
