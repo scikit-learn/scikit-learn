@@ -741,7 +741,11 @@ class KNeighborsMixin:
             and self.effective_metric_ in ArgKmin.valid_metrics()
         ):
             results = ArgKmin.get_for(
-                X=X, Y=self._fit_X, k=n_neighbors, metric=self.effective_metric_
+                X=X,
+                Y=self._fit_X,
+                k=n_neighbors,
+                metric=self.effective_metric_,
+                metric_kwargs=self.effective_metric_params_,
             ).compute(
                 strategy="auto",
                 return_distance=return_distance,
