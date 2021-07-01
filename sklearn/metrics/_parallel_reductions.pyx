@@ -16,6 +16,7 @@ np.import_array()
 
 from libc.stdlib cimport free, malloc
 from libcpp.vector cimport vector
+from cython.operator cimport dereference as deref
 
 from cython.parallel cimport parallel, prange
 
@@ -279,9 +280,6 @@ cdef class PairwiseDistancesReduction:
         on a pair of chunks"""
         return -1
 
-    def __dealloc__(self):
-        pass
-
     # Placeholder methods which can be implemented
 
     cdef void _on_X_parallel_init(self,
@@ -399,7 +397,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
 
     def __dealloc__(self):
-        PairwiseDistancesReduction.__dealloc__(self)
         if self.heaps_indices_chunks is not NULL:
             free(self.heaps_indices_chunks)
         else:
@@ -766,8 +763,32 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         # NOTE: not used for now.
         DTYPE_t radius_proxy
 
-        vector[vector[ITYPE_t]] neigh_indices
-        vector[vector[DTYPE_t]] neigh_distances
+        # We want resizable buffers which we will
+        # to wrapped within numpy arrays at the end.
+        #
+        # std::vector comes as a handy interface for
+        # efficient resizable buffers.
+        #
+        # Though it is possible to access their buffer
+        # address with std::vector::data, their buffer
+        # can't be stolen: their life-time is tight to
+        # the buffer's.
+        #
+        # To solve this, we allocate dynamically
+        # allocate vectors which won't be
+        # freed, but their buffer eventually will
+        # as the ownership will be transferred to
+        # numpy arrays.
+        #
+        # TODO: Find a proper way to handle this
+        # It's "OK-ish" as numpy arrays are
+        # then responsible for their buffer
+        # lifetime which consist of most of the
+        # vectors actual data (residual metadata
+        # exist, don't account but won't be deleted).
+        # Still, meh.
+        vector[vector[ITYPE_t]] * neigh_indices
+        vector[vector[DTYPE_t]] * neigh_distances
 
         bint sort_results
 
@@ -798,8 +819,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self.radius = radius
         self.sort_results = False
 
-        self.neigh_indices.resize(self.n_X)
-        self.neigh_distances.resize(self.n_X)
+        # Won't be freed for reasons stated at their definition.
+        self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
+        self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
 
 
     cdef int _reduce_on_chunks(self,
@@ -822,8 +844,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                 dist_i_j = self.distance_metric.dist(
                     &X_c[i, 0], &Y_c[j, 0], self.d)
                 if dist_i_j <= self.radius:
-                    self.neigh_distances[X_start + i].push_back(dist_i_j)
-                    self.neigh_indices[X_start + i].push_back(Y_start + j)
+                    deref(self.neigh_distances)[X_start + i].push_back(dist_i_j)
+                    deref(self.neigh_indices)[X_start + i].push_back(Y_start + j)
 
         return 0
 
@@ -840,9 +862,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         if self.sort_results:
             for idx in range(X_start, X_end):
                 _simultaneous_sort(
-                    self.neigh_distances[idx].data(),
-                    self.neigh_indices[idx].data(),
-                    self.neigh_indices[idx].size()
+                    deref(self.neigh_distances)[idx].data(),
+                    deref(self.neigh_indices)[idx].data(),
+                    deref(self.neigh_indices)[idx].size()
                 )
 
     def compute(self,
@@ -855,6 +877,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self._parallel_on_X()
         return self._finalise_compute(return_distance)
 
+
     def _finalise_compute(self,
            bint return_distance
     ):
@@ -863,14 +886,17 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             np_arrays_distances = []
 
             for i in range(self.n_X):
-                np_arrays_distances.append(buffer_to_numpy_array(self.neigh_distances[i].data(), self.neigh_distances[i].size()))
-                np_arrays_indices.append(buffer_to_numpy_array(self.neigh_indices[i].data(), self.neigh_indices[i].size()))
+                np_arrays_distances.append(buffer_to_numpy_array(deref(self.neigh_distances)[i].data(),
+                                                                 deref(self.neigh_distances)[i].size()))
+                np_arrays_indices.append(buffer_to_numpy_array(deref(self.neigh_indices)[i].data(),
+                                                               deref(self.neigh_indices)[i].size()))
 
-            return np.array(np_arrays_distances, np.ndarray), np.array(np_arrays_indices, np.ndarray)
+            return np.array(np_arrays_distances, dtype=np.ndarray), np.array(np_arrays_indices, dtype=np.ndarray)
 
         np_arrays_indices = []
 
         for i in range(self.n_X):
-            np_arrays_indices.append(buffer_to_numpy_array(self.neigh_indices[i].data(), self.neigh_indices[i].size()))
+            np_arrays_indices.append(buffer_to_numpy_array(deref(self.neigh_indices)[i].data(),
+                                                           deref(self.neigh_indices)[i].size()))
 
-        return np.array(np_arrays_indices, np.ndarray)
+        return np.array(np_arrays_indices, dtype=np.ndarray)
