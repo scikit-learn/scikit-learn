@@ -329,6 +329,7 @@ cdef class ArgKmin(ParallelReduction):
 
     The implementation is parallelized on chunks whose size can
     be set using ``chunk_size``.
+
     Parameters
     ----------
     X: ndarray of shape (n, d)
@@ -346,7 +347,6 @@ cdef class ArgKmin(ParallelReduction):
     cdef:
         ITYPE_t k
 
-        DTYPE_t ** dist_middle_terms_chunks
         DTYPE_t ** heaps_approx_distances_chunks
         ITYPE_t ** heaps_indices_chunks
 
@@ -389,11 +389,11 @@ cdef class ArgKmin(ParallelReduction):
         self.argkmin_distances = np.full((self.n_X, self.k), FLOAT_INF, dtype=DTYPE)
 
         # Temporary datastructures used in threads
-        self.dist_middle_terms_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_approx_distances_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
 
     def __dealloc__(self):
+        ParallelReduction.__dealloc__(self)
         if self.heaps_indices_chunks is not NULL:
             free(self.heaps_indices_chunks)
         else:
@@ -403,11 +403,6 @@ cdef class ArgKmin(ParallelReduction):
             free(self.heaps_approx_distances_chunks)
         else:
             raise RuntimeError("Trying to free heaps_approx_distances_chunks which is NULL")
-
-        if self.dist_middle_terms_chunks is not NULL:
-            free(self.dist_middle_terms_chunks)
-        else:
-            raise RuntimeError("Trying to free dist_middle_terms_chunks which is NULL")
 
     cdef int _reduce_on_chunks(self,
         const DTYPE_t[:, ::1] X,
@@ -423,7 +418,6 @@ cdef class ArgKmin(ParallelReduction):
             const DTYPE_t[:, ::1] X_c = X[X_start:X_end, :]
             const DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
             ITYPE_t k = self.k
-            DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
             DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
@@ -447,11 +441,9 @@ cdef class ArgKmin(ParallelReduction):
     ) nogil:
         cdef:
             # in bytes
-            ITYPE_t size_dist_middle_terms = self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf
             ITYPE_t heap_size = self.X_n_samples_chunk * self.k * self.sf
 
         # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(size_dist_middle_terms)
         self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heap_size)
 
     cdef void _on_X_prange_iter_init(self,
@@ -489,7 +481,6 @@ cdef class ArgKmin(ParallelReduction):
     cdef void _on_X_parallel_finalize(self,
             ITYPE_t thread_num
     ) nogil:
-        free(self.dist_middle_terms_chunks[thread_num])
         free(self.heaps_approx_distances_chunks[thread_num])
 
     cdef void _on_Y_parallel_init(self,
@@ -497,12 +488,9 @@ cdef class ArgKmin(ParallelReduction):
     ) nogil:
         cdef:
             # in bytes
-            ITYPE_t size_dist_middle_terms = self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf
             ITYPE_t int_heap_size = self.X_n_samples_chunk * self.k * self.si
             ITYPE_t float_heap_size = self.X_n_samples_chunk * self.k * self.sf
 
-        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(size_dist_middle_terms)
         self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(float_heap_size)
 
         # As chunks of X are shared across threads, so must their
@@ -536,7 +524,6 @@ cdef class ArgKmin(ParallelReduction):
                         self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
                     )
 
-        free(self.dist_middle_terms_chunks[thread_num])
         free(self.heaps_approx_distances_chunks[thread_num])
         free(self.heaps_indices_chunks[thread_num])
 
@@ -627,9 +614,24 @@ cdef class ArgKmin(ParallelReduction):
         return np.asarray(self.argkmin_indices)
 
 cdef class FastSquaredEuclideanArgKmin(ArgKmin):
+    """Fast specialized alternative for ArgKmin on
+    EuclideanDistance.
+
+    Computes the argkmin of vectors (rows) of a set of
+    vectors (rows) of X on another set of vectors (rows) of Y
+    using the GEMM-trick.
+
+    This implementation has an superior arithmetic intensity
+    and hence running time, but it can suffer from numerical
+    instability. We recommend using ArgKmin with
+    EuclideanDistance when exact precision is needed.
+    """
 
     cdef:
         DTYPE_t[::1] Y_sq_norms
+
+        # Buffers for GEMM
+        DTYPE_t ** dist_middle_terms_chunks
 
     def __init__(self,
                   X,
@@ -642,7 +644,46 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
                          k=k,
                          chunk_size=chunk_size)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
+        # Temporary datastructures used in threads
+        self.dist_middle_terms_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
 
+    def __dealloc__(self):
+        ArgKmin.__dealloc__(self)
+        if self.dist_middle_terms_chunks is not NULL:
+            free(self.dist_middle_terms_chunks)
+        else:
+            raise RuntimeError("Trying to free dist_middle_terms_chunks which is NULL")
+
+    cdef void _on_X_parallel_init(self,
+            ITYPE_t thread_num,
+    ) nogil:
+        ArgKmin._on_X_parallel_init(self, thread_num)
+        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
+            self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf)
+
+    cdef void _on_X_parallel_finalize(self,
+            ITYPE_t thread_num
+    ) nogil:
+        ArgKmin._on_X_parallel_finalize(self, thread_num)
+        free(self.dist_middle_terms_chunks[thread_num])
+
+    cdef void _on_Y_parallel_init(self,
+            ITYPE_t thread_num,
+    ) nogil:
+        ArgKmin._on_Y_parallel_init(self, thread_num)
+        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
+            self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf)
+
+    cdef void _on_Y_parallel_finalize(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_chunk_idx,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
+        ArgKmin._on_Y_parallel_finalize(self, thread_num, X_chunk_idx, X_start, X_end)
+        free(self.dist_middle_terms_chunks[thread_num])
 
     cdef int _reduce_on_chunks(self,
         const DTYPE_t[:, ::1] X,
