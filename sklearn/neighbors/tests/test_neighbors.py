@@ -1846,6 +1846,10 @@ def test_fast_sqeuclidean_correctness(
 @pytest.mark.parametrize("d", [5, 10, 100, 500])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
 @pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
+@pytest.mark.skip(
+    reason="Long test, translation invariance should "
+    "have its own study: skipping for now"
+)
 def test_fast_sqeuclidean_translation_invariance(
     n,
     d,
