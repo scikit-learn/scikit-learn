@@ -1543,49 +1543,48 @@ def test_k_and_radius_neighbors_X_None():
         )
 
 
-def test_k_and_radius_neighbors_duplicates():
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
+def test_k_and_radius_neighbors_duplicates(algorithm):
     # Test behavior of kneighbors when duplicates are present in query
+    nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
+    nn.fit([[0], [1]])
 
-    for algorithm in ALGORITHMS:
-        nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
-        nn.fit([[0], [1]])
+    # Do not do anything special to duplicates.
+    kng = nn.kneighbors_graph([[0], [1]], mode="distance")
+    assert_array_equal(kng.A, np.array([[0.0, 0.0], [0.0, 0.0]]))
+    assert_array_equal(kng.data, [0.0, 0.0])
+    assert_array_equal(kng.indices, [0, 1])
 
-        # Do not do anything special to duplicates.
-        kng = nn.kneighbors_graph([[0], [1]], mode="distance")
-        assert_array_equal(kng.A, np.array([[0.0, 0.0], [0.0, 0.0]]))
-        assert_array_equal(kng.data, [0.0, 0.0])
-        assert_array_equal(kng.indices, [0, 1])
+    dist, ind = nn.radius_neighbors([[0], [1]], radius=1.5)
+    check_object_arrays(dist, [[0, 1], [1, 0]])
+    check_object_arrays(ind, [[0, 1], [0, 1]])
 
-        dist, ind = nn.radius_neighbors([[0], [1]], radius=1.5)
-        check_object_arrays(dist, [[0, 1], [1, 0]])
-        check_object_arrays(ind, [[0, 1], [0, 1]])
+    rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5)
+    assert_array_equal(rng.A, np.ones((2, 2)))
 
-        rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5)
-        assert_array_equal(rng.A, np.ones((2, 2)))
+    rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5, mode="distance")
+    rng.sort_indices()
+    assert_array_equal(rng.A, [[0, 1], [1, 0]])
+    assert_array_equal(rng.indices, [0, 1, 0, 1])
+    assert_array_equal(rng.data, [0, 1, 1, 0])
 
-        rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5, mode="distance")
-        rng.sort_indices()
-        assert_array_equal(rng.A, [[0, 1], [1, 0]])
-        assert_array_equal(rng.indices, [0, 1, 0, 1])
-        assert_array_equal(rng.data, [0, 1, 1, 0])
+    # Mask the first duplicates when n_duplicates > n_neighbors.
+    X = np.ones((3, 1))
+    nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm="brute")
+    nn.fit(X)
+    dist, ind = nn.kneighbors()
+    assert_array_equal(dist, np.zeros((3, 1)))
+    assert_array_equal(ind, [[1], [0], [1]])
 
-        # Mask the first duplicates when n_duplicates > n_neighbors.
-        X = np.ones((3, 1))
-        nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm="brute")
-        nn.fit(X)
-        dist, ind = nn.kneighbors()
-        assert_array_equal(dist, np.zeros((3, 1)))
-        assert_array_equal(ind, [[1], [0], [1]])
-
-        # Test that zeros are explicitly marked in kneighbors_graph.
-        kng = nn.kneighbors_graph(mode="distance")
-        assert_array_equal(kng.A, np.zeros((3, 3)))
-        assert_array_equal(kng.data, np.zeros(3))
-        assert_array_equal(kng.indices, [1.0, 0.0, 1.0])
-        assert_array_equal(
-            nn.kneighbors_graph().A,
-            np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
-        )
+    # Test that zeros are explicitly marked in kneighbors_graph.
+    kng = nn.kneighbors_graph(mode="distance")
+    assert_array_equal(kng.A, np.zeros((3, 3)))
+    assert_array_equal(kng.data, np.zeros(3))
+    assert_array_equal(kng.indices, [1.0, 0.0, 1.0])
+    assert_array_equal(
+        nn.kneighbors_graph().A,
+        np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+    )
 
 
 def test_include_self_neighbors_graph():
