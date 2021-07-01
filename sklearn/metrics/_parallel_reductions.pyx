@@ -130,6 +130,8 @@ cdef class ParallelReduction:
                                          "same dimension but currently are " \
                                          f"respectively {X.shape[1]}-dimensional " \
                                          f"and {Y.shape[1]}-dimensional."
+        distance_metric._validate_data(X)
+        distance_metric._validate_data(Y)
 
         self.d = X.shape[1]
         self.sf = sizeof(DTYPE_t)
