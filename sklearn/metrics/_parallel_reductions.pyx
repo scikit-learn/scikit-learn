@@ -41,6 +41,38 @@ from ..utils._heap cimport _simultaneous_sort, _push
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t
 from ..utils._typedefs import ITYPE, DTYPE
+from ..utils._typedefs import DTYPECODE, ITYPECODE
+
+######################
+## std::vector to np.ndarray coercion
+# TODO: for now using this simple solution: https://stackoverflow.com/a/23873586
+# A better solution would make sure of using the same allocator implementations.
+# Those implementations depend on the runtimes' allocator which can be different
+# in some configuration and thus would make the program crash.
+
+cdef extern from "numpy/arrayobject.h":
+    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
+
+cdef np.ndarray[DITYPE_t, ndim=1] buffer_to_numpy_array(DITYPE_t * ptr, np.npy_intp size):
+    """ Create a numpy ndarray given a buffer and its size. """
+    typenum = DTYPECODE if DITYPE_t is DTYPE_t else ITYPECODE
+    cdef np.ndarray[DITYPE_t, ndim=1] arr = np.PyArray_SimpleNewFromData(1, &size, typenum, ptr)
+
+    # Makes the numpy array responsible to the life-cycle of its buffer.
+    PyArray_ENABLEFLAGS(arr, np.NPY_OWNDATA)
+    return arr
+
+cpdef np.ndarray _vector_to_np_ndarray(vector[vector[DITYPE_t]] vec_of_vecs):
+    # In the case of inner vectors of different shapes
+    # some boilerplate is needed to coerce
+    # a vector[vector[T]] into a np.ndarray[np.ndarray[T]]
+    np_arrays = []
+
+    for i in range(vec_of_vecs.size()):
+        np_arrays.append(buffer_to_numpy_array(vec_of_vecs[i].data(), vec_of_vecs[i].size()))
+
+    return np.array(np_arrays, np.ndarray)
+#####################
 
 
 cdef class PairwiseDistancesReduction:
@@ -836,20 +868,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     def _finalise_compute(self,
            bint return_distance
     ):
-        # TODO: this is totally inefficient.
-        # Each vector content is copied into a Python list, which boxes
-        # integers. Those lists are then converted into numpy arrays
-        def _vector_to_np_ndarray(vec_of_vecs):
-            # In the case of inner vectors of different shapes
-            # some boilerplate is needed to coerce
-            # a vector[vector[T]] into a np.ndarray[np.ndarray[T]]
-            vec_of_vecs = np.array(vec_of_vecs, dtype=np.ndarray)
-            for i, v in enumerate(vec_of_vecs):
-                vec_of_vecs[i] = np.array(v)
-
-            return vec_of_vecs
-
         if return_distance:
-             return _vector_to_np_ndarray(self.neigh_distances), _vector_to_np_ndarray(self.neigh_indices)
+             return (_vector_to_np_ndarray[DTYPE_t](self.neigh_distances),
+                    _vector_to_np_ndarray[ITYPE_t](self.neigh_indices))
 
-        return _vector_to_np_ndarray(self.neigh_indices)
+        return _vector_to_np_ndarray[ITYPE_t](self.neigh_indices)
