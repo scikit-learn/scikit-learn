@@ -1305,7 +1305,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
-            Partially fitted estimator.
+            Returns the instance itself.
         """
         return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 
