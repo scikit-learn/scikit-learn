@@ -551,7 +551,6 @@ class GraphSpectralEmbedding(BaseEstimator):
         self.check_lcc = check_lcc
         self.regularizer = regularizer
         self.concat = concat
-        self.is_fitted_ = False
 
     def fit(self, X, y=None):
         """
@@ -572,6 +571,8 @@ class GraphSpectralEmbedding(BaseEstimator):
         A = self._validate_data(
             X, accept_sparse="csr", ensure_min_samples=2, estimator=self
         )
+        if A.shape[0] != A.shape[1]:
+            raise ValueError("Matrix input must be square")
 
         if self.check_lcc:
             directed = not _is_symmetric(A)
