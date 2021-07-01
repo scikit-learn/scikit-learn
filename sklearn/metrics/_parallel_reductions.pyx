@@ -155,9 +155,164 @@ cdef class ParallelReduction:
             self.n_X != (X_n_full_chunks * self.X_n_samples_chunk)
         )
 
+    cdef void _on_X_parallel_init(self,
+            ITYPE_t thread_num,
+    ) nogil:
+        return
+
+    cdef void _on_X_parallel_finalize(self,
+            ITYPE_t thread_num
+    ) nogil:
+        return
+
+    cdef void _on_X_prange_iter_init(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_chunk_idx,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _on_X_prange_iter_finalize(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_chunk_idx,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _parallel_on_X(self) nogil:
+        """Computes the reduction of each vector (row) of X on Y
+        by parallelizing computation on chunks of X.
+
+        Private datastructures are modified internally by threads.
+
+        Private template methods can be implemented on subclasses to
+        interact with those datastructures at various stages.
+        """
+        cdef:
+            ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx
+            ITYPE_t num_threads = min(self.X_n_chunks, self.effective_omp_n_thread)
+            ITYPE_t thread_num
+
+        with nogil, parallel(num_threads=num_threads):
+            thread_num = openmp.omp_get_thread_num()
+
+            # Allocating thread local datastructures
+            self._on_X_parallel_init(thread_num)
+
+            for X_chunk_idx in prange(self.X_n_chunks, schedule='static'):
+                X_start = X_chunk_idx * self.X_n_samples_chunk
+                if X_chunk_idx == self.X_n_chunks - 1 and self.X_n_samples_rem > 0:
+                    X_end = X_start + self.X_n_samples_rem
+                else:
+                    X_end = X_start + self.X_n_samples_chunk
+
+                # Reinitializing thread local datastructures for the new X chunk
+                self._on_X_prange_iter_init(thread_num, X_chunk_idx, X_start, X_end)
+
+                for Y_chunk_idx in range(self.Y_n_chunks):
+                    Y_start = Y_chunk_idx * self.Y_n_samples_chunk
+                    if Y_chunk_idx == self.Y_n_chunks - 1 and self.Y_n_samples_rem > 0:
+                        Y_end = Y_start + self.Y_n_samples_rem
+                    else:
+                        Y_end = Y_start + self.Y_n_samples_chunk
+
+                    self._reduce_on_chunks(
+                        self.X,
+                        self.Y,
+                        X_start, X_end,
+                        Y_start, Y_end,
+                        thread_num,
+                    )
+
+                # Adjusting thread local datastructures on the full pass on Y
+                self._on_X_prange_iter_finalize(thread_num, X_chunk_idx, X_start, X_end)
+
+            # end: for X_chunk_idx
+
+            # Deallocating thread local datastructures
+            self._on_X_parallel_finalize(thread_num)
+
+        # end: with nogil, parallel
+        return
+
+    cdef void _on_Y_parallel_init(self,
+        ITYPE_t thread_num,
+    ) nogil:
+        return
+
+    cdef void _on_Y_parallel_finalize(self,
+        ITYPE_t thread_num,
+        ITYPE_t X_chunk_idx,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _on_Y_finalize(self,
+        ITYPE_t thread_num,
+    ) nogil:
+        return
+
+    cdef void _parallel_on_Y(self) nogil:
+        """Computes the argkmin of each vector (row) of X on Y
+        by parallelizing computation on chunks of Y.
+
+        Private datastructures are modified internally by threads.
+
+        Private template methods can be implemented on subclasses to
+        interact with those datastructures at various stages.
+        """
+        cdef:
+            ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx
+            ITYPE_t num_threads = min(self.X_n_chunks, self.effective_omp_n_thread)
+            ITYPE_t thread_num
+
+        for X_chunk_idx in range(self.X_n_chunks):
+            X_start = X_chunk_idx * self.X_n_samples_chunk
+            if X_chunk_idx == self.X_n_chunks - 1 and self.X_n_samples_rem > 0:
+                X_end = X_start + self.X_n_samples_rem
+            else:
+                X_end = X_start + self.X_n_samples_chunk
+
+            with nogil, parallel(num_threads=num_threads):
+                # Thread local buffers
+                thread_num = openmp.omp_get_thread_num()
+
+                # Allocating thread local datastructures
+                self._on_Y_parallel_init(thread_num)
+
+                for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
+                    Y_start = Y_chunk_idx * self.Y_n_samples_chunk
+                    if Y_chunk_idx == self.Y_n_chunks - 1 \
+                            and self.Y_n_samples_rem > 0:
+                        Y_end = Y_start + self.Y_n_samples_rem
+                    else:
+                        Y_end = Y_start + self.Y_n_samples_chunk
+
+                    self._reduce_on_chunks(
+                        self.X,
+                        self.Y,
+                        X_start, X_end,
+                        Y_start, Y_end,
+                        thread_num,
+                    )
+                # end: prange
+
+                # Synchronizing thread local datastructures with the main ones
+                # This can potentially block
+                self._on_Y_parallel_finalize(thread_num, X_chunk_idx, X_start, X_end)
+            # end: with nogil, parallel
+
+        # end: for X_chunk_idx
+        # Adjusting main datastructures before returning
+        self._on_Y_finalize(num_threads)
+        return
+
     cdef int _reduce_on_chunks(self,
-        const DTYPE_t[:, ::1] X,                  # IN
-        const DTYPE_t[:, ::1] Y,                  # IN
+        const DTYPE_t[:, ::1] X,
+        const DTYPE_t[:, ::1] Y,
         ITYPE_t X_start,
         ITYPE_t X_end,
         ITYPE_t Y_start,
@@ -255,8 +410,8 @@ cdef class ArgKmin(ParallelReduction):
             raise RuntimeError("Trying to free dist_middle_terms_chunks which is NULL")
 
     cdef int _reduce_on_chunks(self,
-        const DTYPE_t[:, ::1] X,                  # IN
-        const DTYPE_t[:, ::1] Y,                  # IN
+        const DTYPE_t[:, ::1] X,
+        const DTYPE_t[:, ::1] Y,
         ITYPE_t X_start,
         ITYPE_t X_end,
         ITYPE_t Y_start,
@@ -287,170 +442,124 @@ cdef class ArgKmin(ParallelReduction):
 
         return 0
 
-    cdef int _parallel_on_X(self,
-        ITYPE_t[:, ::1] argkmin_indices,
-        DTYPE_t[:, ::1] argkmin_approx_distances,
+    cdef void _on_X_parallel_init(self,
+            ITYPE_t thread_num,
     ) nogil:
-        """Computes the argkmin of each vector (row) of X on Y
-        by parallelizing computation on chunks of X.
-        """
         cdef:
-            ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx, idx, jdx
-            ITYPE_t num_threads = min(self.X_n_chunks, self.effective_omp_n_thread)
-            ITYPE_t thread_num
-
             # in bytes
             ITYPE_t size_dist_middle_terms = self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf
             ITYPE_t heap_size = self.X_n_samples_chunk * self.k * self.sf
 
-        with nogil, parallel(num_threads=num_threads):
-            # Thread local buffers
-            thread_num = openmp.omp_get_thread_num()
-            # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-            self.dist_middle_terms_chunks[thread_num] = <DTYPE_t*> malloc(size_dist_middle_terms)
-            self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t*> malloc(heap_size)
+        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(size_dist_middle_terms)
+        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heap_size)
 
-            for X_chunk_idx in prange(self.X_n_chunks, schedule='static'):
-                # We reset the heap between X chunks (memset can't be used here)
-                for idx in range(self.X_n_samples_chunk * self.k):
-                    self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
-
-                X_start = X_chunk_idx * self.X_n_samples_chunk
-                if X_chunk_idx == self.X_n_chunks - 1 and self.X_n_samples_rem > 0:
-                    X_end = X_start + self.X_n_samples_rem
-                else:
-                    X_end = X_start + self.X_n_samples_chunk
-
-                # Referencing the thread-local heaps via the thread-scope pointer
-                # of pointers attached to the instance
-                self.heaps_indices_chunks[thread_num] = &argkmin_indices[X_start, 0]
-
-                for Y_chunk_idx in range(self.Y_n_chunks):
-                    Y_start = Y_chunk_idx * self.Y_n_samples_chunk
-                    if Y_chunk_idx == self.Y_n_chunks - 1 and self.Y_n_samples_rem > 0:
-                        Y_end = Y_start + self.Y_n_samples_rem
-                    else:
-                        Y_end = Y_start + self.Y_n_samples_chunk
-
-                    self._reduce_on_chunks(
-                        self.X,
-                        self.Y,
-                        X_start, X_end,
-                        Y_start, Y_end,
-                        thread_num,
-                    )
-
-                # Sorting indices so that the closests' come first.
-                for idx in range(X_end - X_start):
-                    _simultaneous_sort(
-                        self.heaps_approx_distances_chunks[thread_num] + idx * self.k,
-                        &argkmin_indices[X_start + idx, 0],
-                        self.k
-                    )
-
-            # end: for X_chunk_idx
-            free(self.dist_middle_terms_chunks[thread_num])
-            free(self.heaps_approx_distances_chunks[thread_num])
-
-        # end: with nogil, parallel
-        return self.X_n_chunks
-
-
-    cdef int _parallel_on_Y(self,
-        ITYPE_t[:, ::1] argkmin_indices,          # OUT
-        DTYPE_t[:, ::1] argkmin_approx_distances,   # OUT
+    cdef void _on_X_prange_iter_init(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_chunk_idx,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
     ) nogil:
-        """Computes the argkmin of each vector (row) of X on Y
-        by parallelizing computation on chunks of Y.
 
-        This parallelization strategy is more costly (as we need
-        extra heaps and synchronisation), yet it is useful in
-        most contexts.
-        """
+        # We reset the heap between X chunks (memset can't be used here)
+        for idx in range(self.X_n_samples_chunk * self.k):
+            self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
+
+        # Referencing the thread-local heaps via the thread-scope pointer
+        # of pointers attached to the instance
+        self.heaps_indices_chunks[thread_num] = &self.argkmin_indices[X_start, 0]
+
+    cdef void _on_X_prange_iter_finalize(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_chunk_idx,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
         cdef:
-            ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx, idx, jdx
-            ITYPE_t num_threads = min(self.X_n_chunks, self.effective_omp_n_thread)
-            ITYPE_t thread_num
+            ITYPE_t idx, jdx
 
+        # Sorting indices of the argkmin for each query vector of X
+        for idx in range(X_end - X_start):
+            _simultaneous_sort(
+                self.heaps_approx_distances_chunks[thread_num] + idx * self.k,
+                &self.argkmin_indices[X_start + idx, 0],
+                self.k
+            )
+
+    cdef void _on_X_parallel_finalize(self,
+            ITYPE_t thread_num
+    ) nogil:
+        free(self.dist_middle_terms_chunks[thread_num])
+        free(self.heaps_approx_distances_chunks[thread_num])
+
+    cdef void _on_Y_parallel_init(self,
+            ITYPE_t thread_num,
+    ) nogil:
+        cdef:
             # in bytes
             ITYPE_t size_dist_middle_terms = self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf
             ITYPE_t int_heap_size = self.X_n_samples_chunk * self.k * self.si
             ITYPE_t float_heap_size = self.X_n_samples_chunk * self.k * self.sf
 
-        for X_chunk_idx in range(self.X_n_chunks):
-            X_start = X_chunk_idx * self.X_n_samples_chunk
-            if X_chunk_idx == self.X_n_chunks - 1 and self.X_n_samples_rem > 0:
-                X_end = X_start + self.X_n_samples_rem
-            else:
-                X_end = X_start + self.X_n_samples_chunk
+        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(size_dist_middle_terms)
+        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(float_heap_size)
 
-            with nogil, parallel(num_threads=num_threads):
-                # Thread local buffers
-                thread_num = openmp.omp_get_thread_num()
+        # As chunks of X are shared across threads, so must their
+        # heaps. To solve this, each thread has its own locals
+        # heaps which are then synchronised back in the main ones.
+        self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(int_heap_size)
 
-                # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-                self.dist_middle_terms_chunks[thread_num] = <DTYPE_t*> malloc(size_dist_middle_terms)
-                self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t*> malloc(float_heap_size)
+        # Initialising heaps (memset can't be used here)
+        for idx in range(self.X_n_samples_chunk * self.k):
+            self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
+            self.heaps_indices_chunks[thread_num][idx] = -1
 
-                # As chunks of X are shared across threads, so must their
-                # heaps. To solve this, each thread has its own locals
-                # heaps which are then synchronised back in the main ones.
-                self.heaps_indices_chunks[thread_num] = <ITYPE_t*> malloc(int_heap_size)
-
-                # Initialising heaps (memset can't be used here)
-                for idx in range(self.X_n_samples_chunk * self.k):
-                    self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
-                    self.heaps_indices_chunks[thread_num][idx] = -1
-
-                for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
-                    Y_start = Y_chunk_idx * self.Y_n_samples_chunk
-                    if Y_chunk_idx == self.Y_n_chunks - 1 \
-                        and self.Y_n_samples_rem > 0:
-                        Y_end = Y_start + self.Y_n_samples_rem
-                    else:
-                        Y_end = Y_start + self.Y_n_samples_chunk
-
-
-                    self._reduce_on_chunks(
-                        self.X,
-                        self.Y,
-                        X_start, X_end,
-                        Y_start, Y_end,
-                        thread_num,
+    cdef void _on_Y_parallel_finalize(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_chunk_idx,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
+        cdef:
+            ITYPE_t idx, jdx
+        with gil:
+            # Synchronising the thread local heaps
+            # with the main heaps
+            for idx in range(X_end - X_start):
+                for jdx in range(self.k):
+                    _push(
+                        &self.argkmin_distances[X_start + idx, 0],
+                        &self.argkmin_indices[X_start + idx, 0],
+                        self.k,
+                        self.heaps_approx_distances_chunks[thread_num][idx * self.k + jdx],
+                        self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
                     )
 
-                # end: for Y_chunk_idx
-                with gil:
-                    # Synchronising the thread local heaps
-                    # with the main heaps
-                    for idx in range(X_end - X_start):
-                        for jdx in range(self.k):
-                            _push(
-                                &argkmin_approx_distances[X_start + idx, 0],
-                                &argkmin_indices[X_start + idx, 0],
-                                self.k,
-                                self.heaps_approx_distances_chunks[thread_num][idx * self.k + jdx],
-                                self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
-                            )
+        free(self.dist_middle_terms_chunks[thread_num])
+        free(self.heaps_approx_distances_chunks[thread_num])
+        free(self.heaps_indices_chunks[thread_num])
 
-            # end: with nogil, parallel
+    cdef void _on_Y_finalize(self,
+            ITYPE_t thread_num,
+    ) nogil:
+        cdef:
+            ITYPE_t num_threads = min(self.X_n_chunks, self.effective_omp_n_thread)
+            ITYPE_t idx
 
-            # Sorting indices of the argkmin for each query vector of X
-            for idx in prange(self.n_X, schedule='static',
-                              nogil=True, num_threads=num_threads):
-                _simultaneous_sort(
-                    &argkmin_approx_distances[idx, 0],
-                    &argkmin_indices[idx, 0],
-                    self.k,
-                )
-            # end: prange
-
-        # end: for X_chunk_idx
-        return self.Y_n_chunks
+        # Sorting indices of the argkmin for each query vector of X
+        for idx in prange(self.n_X, schedule='static',
+                          nogil=True, num_threads=num_threads):
+            _simultaneous_sort(
+                &self.argkmin_distances[idx, 0],
+                &self.argkmin_indices[idx, 0],
+                self.k,
+            )
+        return
 
     cdef void _exact_distances(self,
-        ITYPE_t[:, ::1] Y_indices,          # IN
-        DTYPE_t[:, ::1] distances,          # IN/OUT
+        ITYPE_t[:, ::1] Y_indices,  # IN
+        DTYPE_t[:, ::1] distances,  # IN/OUT
     ) nogil:
         """Convert reduced distances to pairwise distances in parallel."""
         cdef:
@@ -494,40 +603,28 @@ cdef class ArgKmin(ParallelReduction):
         indices: ndarray of shape (n, k)
             Indices of each X vector argkmin in Y.
         """
-        cdef:
-            ITYPE_t n_X = self.X.shape[0]
-            ITYPE_t[:, ::1] argkmin_indices = np.full((n_X, self.k), 0,
-                                                   dtype=ITYPE)
-            DTYPE_t[:, ::1] argkmin_distances = np.full((n_X, self.k),
-                                                      FLOAT_INF,
-                                                      dtype=DTYPE)
-
         if strategy == 'auto':
             # This is a simple heuristic whose constant for the
             # comparison has been chosen based on experiments.
-            if 4 * self.chunk_size * self.effective_omp_n_thread < n_X:
+            if 4 * self.chunk_size * self.effective_omp_n_thread < self.n_X:
                 strategy = 'parallel_on_X'
             else:
                 strategy = 'parallel_on_Y'
 
         if strategy == 'parallel_on_Y':
-            self._parallel_on_Y(
-                argkmin_indices, argkmin_distances
-            )
+            self._parallel_on_Y()
         elif strategy == 'parallel_on_X':
-            self._parallel_on_X(
-                argkmin_indices, argkmin_distances
-            )
+            self._parallel_on_X()
         else:
             raise RuntimeError(f"strategy '{strategy}' not supported.")
 
         if return_distance:
             # We need to recompute distances because we relied on
             # reduced distances.
-            self._exact_distances(argkmin_indices, argkmin_distances)
-            return np.asarray(argkmin_distances), np.asarray(argkmin_indices)
+            self._exact_distances(self.argkmin_indices, self.argkmin_distances)
+            return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
-        return np.asarray(argkmin_indices)
+        return np.asarray(self.argkmin_indices)
 
 cdef class FastSquaredEuclideanArgKmin(ArgKmin):
 
@@ -548,8 +645,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
 
 
     cdef int _reduce_on_chunks(self,
-        const DTYPE_t[:, ::1] X,                  # IN
-        const DTYPE_t[:, ::1] Y,                  # IN
+        const DTYPE_t[:, ::1] X,
+        const DTYPE_t[:, ::1] Y,
         ITYPE_t X_start,
         ITYPE_t X_end,
         ITYPE_t Y_start,
