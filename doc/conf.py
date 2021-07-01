@@ -61,7 +61,7 @@ if os.environ.get("NO_MATHJAX"):
     mathjax_path = ""
 else:
     extensions.append("sphinx.ext.mathjax")
-    mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/" "tex-chtml.js"
+    mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
 
 autodoc_default_options = {"members": True, "inherited-members": True}
 
@@ -285,7 +285,7 @@ intersphinx_mapping = {
 v = parse(release)
 if v.release is None:
     raise ValueError(
-        "Ill-formed version: {!r}. Version should follow " "PEP440".format(version)
+        "Ill-formed version: {!r}. Version should follow PEP440".format(version)
     )
 
 if v.is_devrelease:
@@ -435,9 +435,7 @@ def generate_min_dependency_table(app):
 
     for package, (version, tags) in dependent_packages.items():
         output.write(
-            f"{package:<{package_header_len}} "
-            f"{version:<{version_header_len}} "
-            f"{tags}\n"
+            f"{package:<{package_header_len}} {version:<{version_header_len}} {tags}\n"
         )
 
     output.write(
@@ -494,8 +492,10 @@ linkcode_resolve = make_linkcode_resolve(
 warnings.filterwarnings(
     "ignore",
     category=UserWarning,
-    message="Matplotlib is currently using agg, which is a"
-    " non-GUI backend, so cannot show the figure.",
+    message=(
+        "Matplotlib is currently using agg, which is a"
+        " non-GUI backend, so cannot show the figure."
+    ),
 )
 
 

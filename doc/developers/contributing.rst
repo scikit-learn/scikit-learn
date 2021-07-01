@@ -222,7 +222,7 @@ latest up-to-date workflow.
   `Video <https://youtu.be/dyxS9KKCNzA>`__,
   `Transcript
   <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
-  
+
 .. note::
   In January 2021, the default branch name changed from ``master`` to ``main``
   for the scikit-learn GitHub repository to use more inclusive terms.
@@ -1115,8 +1115,8 @@ use the decorator ``deprecated`` on a property. Please note that the
 decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
-    @deprecated("Attribute labels_ was deprecated in version 0.13 and "
-                "will be removed in 0.15. Use 'classes_' instead")
+    @deprecated("Attribute `labels_` was deprecated in version 0.13 and "
+                "will be removed in 0.15. Use `classes_` instead")
     @property
     def labels_(self):
         return self.classes_

@@ -107,7 +107,7 @@ def test_assert_raise_message():
 
 
 def test_ignore_warning():
-    # This check that ignore_warning decorateur and context manager are working
+    # This check that ignore_warning decorator and context manager are working
     # as expected
     def _warning_function():
         warnings.warn("deprecation warning", DeprecationWarning)
@@ -162,9 +162,12 @@ def test_ignore_warning():
     assert_no_warnings(decorator_no_warning)
     assert_no_warnings(decorator_no_warning_multiple)
     assert_no_warnings(decorator_no_deprecation_warning)
-    assert_warns(DeprecationWarning, decorator_no_user_warning)
-    assert_warns(UserWarning, decorator_no_deprecation_multiple_warning)
-    assert_warns(DeprecationWarning, decorator_no_user_multiple_warning)
+    with pytest.warns(DeprecationWarning):
+        decorator_no_user_warning()
+    with pytest.warns(UserWarning):
+        decorator_no_deprecation_multiple_warning()
+    with pytest.warns(DeprecationWarning):
+        decorator_no_user_multiple_warning()
 
     # Check the context manager
     def context_manager_no_warning():
@@ -194,9 +197,12 @@ def test_ignore_warning():
     assert_no_warnings(context_manager_no_warning)
     assert_no_warnings(context_manager_no_warning_multiple)
     assert_no_warnings(context_manager_no_deprecation_warning)
-    assert_warns(DeprecationWarning, context_manager_no_user_warning)
-    assert_warns(UserWarning, context_manager_no_deprecation_multiple_warning)
-    assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
+    with pytest.warns(DeprecationWarning):
+        context_manager_no_user_warning()
+    with pytest.warns(UserWarning):
+        context_manager_no_deprecation_multiple_warning()
+    with pytest.warns(DeprecationWarning):
+        context_manager_no_user_multiple_warning()
 
     # Check that passing warning class as first positional argument
     warning_class = UserWarning
@@ -420,7 +426,7 @@ class MockMetaEstimator:
         """
         self.delegate = delegate
 
-    @if_delegate_has_method(delegate=("delegate"))
+    @if_delegate_has_method(delegate="delegate")
     def predict(self, X):
         """This is available only if delegate has predict.
 
@@ -431,7 +437,7 @@ class MockMetaEstimator:
         """
         return self.delegate.predict(X)
 
-    @if_delegate_has_method(delegate=("delegate"))
+    @if_delegate_has_method(delegate="delegate")
     @deprecated("Testing a deprecated delegated method")
     def score(self, X):
         """This is available only if delegate has score.
@@ -442,7 +448,7 @@ class MockMetaEstimator:
             Parameter y
         """
 
-    @if_delegate_has_method(delegate=("delegate"))
+    @if_delegate_has_method(delegate="delegate")
     def predict_proba(self, X):
         """This is available only if delegate has predict_proba.
 

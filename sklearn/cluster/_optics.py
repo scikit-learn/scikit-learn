@@ -266,9 +266,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
             msg = (
-                f"Data will be converted to boolean for"
+                "Data will be converted to boolean for"
                 f" metric {self.metric}, to avoid this warning,"
-                f" you may convert the data prior to calling fit."
+                " you may convert the data prior to calling fit."
             )
             warnings.warn(msg, DataConversionWarning)
 
@@ -276,8 +276,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         if self.cluster_method not in ["dbscan", "xi"]:
             raise ValueError(
-                "cluster_method should be one of"
-                " 'dbscan' or 'xi' but is %s" % self.cluster_method
+                "cluster_method should be one of 'dbscan' or 'xi' but is %s"
+                % self.cluster_method
             )
 
         (
@@ -334,13 +334,13 @@ class OPTICS(ClusterMixin, BaseEstimator):
 def _validate_size(size, n_samples, param_name):
     if size <= 0 or (size != int(size) and size > 1):
         raise ValueError(
-            "%s must be a positive integer "
-            "or a float between 0 and 1. Got %r" % (param_name, size)
+            "%s must be a positive integer or a float between 0 and 1. Got %r"
+            % (param_name, size)
         )
     elif size > n_samples:
         raise ValueError(
-            "%s must be no greater than the"
-            " number of samples (%d). Got %d" % (param_name, n_samples, size)
+            "%s must be no greater than the number of samples (%d). Got %d"
+            % (param_name, n_samples, size)
         )
 
 

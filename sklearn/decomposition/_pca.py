@@ -365,6 +365,7 @@ class PCA(_BasePCA):
             and n_features is the number of features.
 
         y : Ignored
+            Ignored.
 
         Returns
         -------
@@ -384,6 +385,7 @@ class PCA(_BasePCA):
             and n_features is the number of features.
 
         y : Ignored
+            Ignored.
 
         Returns
         -------
@@ -450,7 +452,7 @@ class PCA(_BasePCA):
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
         else:
             raise ValueError(
-                "Unrecognized svd_solver='{0}'" "".format(self._fit_svd_solver)
+                "Unrecognized svd_solver='{0}'".format(self._fit_svd_solver)
             )
 
     def _fit_full(self, X, n_components):
@@ -460,7 +462,7 @@ class PCA(_BasePCA):
         if n_components == "mle":
             if n_samples < n_features:
                 raise ValueError(
-                    "n_components='mle' is only supported " "if n_samples >= n_features"
+                    "n_components='mle' is only supported if n_samples >= n_features"
                 )
         elif not 0 <= n_components <= min(n_samples, n_features):
             raise ValueError(
@@ -527,8 +529,8 @@ class PCA(_BasePCA):
 
         if isinstance(n_components, str):
             raise ValueError(
-                "n_components=%r cannot be a string "
-                "with svd_solver='%s'" % (n_components, svd_solver)
+                "n_components=%r cannot be a string with svd_solver='%s'"
+                % (n_components, svd_solver)
             )
         elif not 1 <= n_components <= min(n_samples, n_features):
             raise ValueError(
@@ -634,6 +636,7 @@ class PCA(_BasePCA):
             The data.
 
         y : Ignored
+            Ignored.
 
         Returns
         -------
