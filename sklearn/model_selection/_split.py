@@ -28,6 +28,7 @@ from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
+from ..utils.metadata_requests import RequestType
 from ..base import _pprint, _MetadataRequester
 
 __all__ = [
@@ -52,7 +53,7 @@ __all__ = [
 
 
 class GroupsConsumer(_MetadataRequester):
-    _metadata_request__groups = {"split": {"groups": True}}
+    _metadata_request__groups = {"split": {"groups": RequestType.REQUESTED}}
 
 
 class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):
@@ -60,6 +61,10 @@ class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
+
+    # This indicates that by default CV splitters don't have a "groups" kwarg,
+    # unless indicated by inheriting from ``GroupsConsumer``.
+    _metadata_request__groups = {"split": {"groups": RequestType.EXISTS_NOT}}
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -1560,6 +1565,10 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
 
 class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
+
+    # This indicates that by default CV splitters don't have a "groups" kwarg,
+    # unless indicated by inheriting from ``GroupsConsumer``.
+    _metadata_request__groups = {"split": {"groups": RequestType.EXISTS_NOT}}
 
     def __init__(
         self, n_splits=10, *, test_size=None, train_size=None, random_state=None

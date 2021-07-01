@@ -517,13 +517,20 @@ def test__get_default_requests():
         ExplicitRequestOverwrite().get_metadata_request(), exclude="fit"
     )
 
-    class ExplicitRequestImplicit(BaseEstimator):
+    class ImplicitRequest(BaseEstimator):
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert metadata_request_factory(ExplicitRequestImplicit()).fit.requests == {
+    assert metadata_request_factory(ImplicitRequest()).fit.requests == {
         "prop": RequestType.ERROR_IF_PASSED
     }
-    assert_request_is_empty(
-        ExplicitRequestImplicit().get_metadata_request(), exclude="fit"
-    )
+    assert_request_is_empty(ImplicitRequest().get_metadata_request(), exclude="fit")
+
+    class ImplicitRequestRemoval(BaseEstimator):
+        _metadata_request__prop = {"fit": {"prop": RequestType.EXISTS_NOT}}
+
+        def fit(self, X, y, prop=None, **kwargs):
+            return self
+
+    assert metadata_request_factory(ImplicitRequestRemoval()).fit.requests == {}
+    assert_request_is_empty(ImplicitRequestRemoval().get_metadata_request())

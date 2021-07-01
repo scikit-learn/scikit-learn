@@ -10,8 +10,15 @@ class RequestType(Enum):
     UNREQUESTED = False
     REQUESTED = True
     ERROR_IF_PASSED = None
+    # this sentinel is used in `_metadata_request__*` attributes to indicate that a
+    # metadata is not present eventhough it may be present in the corresponding
+    # method's signature.
+    # TODO: I'm not happy with REMOVE, for now putting a Yoda style name here.
+    EXISTS_NOT = sentinel("EXISTS_NOT")
 
 
+# this sentinel is the default used in `{method}_requests` methods to indicate
+# no change requested by the user.
 UNCHANGED = sentinel("UNCHANGED")
 
 METHODS = [
@@ -86,19 +93,28 @@ class MethodMetadataRequest:
         prop : str
             The property for which a request is set.
 
-        alias : str or {True, False, None}
+        alias : str, RequestType, or {True, False, None}
             The alias which is routed to `prop`
-            True: requested
-            False: not requested
-            None: error if passed
+
+            - str: the name which should be used as an alias when a meta-estimator
+              routes the metadata.
+
+            - True or RequestType.REQUESTED: requested
+
+            - False or RequestType.UNREQUESTED: not requested
+
+            - None or RequestType.ERROR_IF_PASSED: error if passed
 
         allow_aliasing : bool, default=True
             If False, alias should be the same as prop if it's a string.
 
         overwrite : bool or str, default=False
+
             - True: ``alias`` replaces the existing routing.
+
             - False: a ``ValueError`` is raised if the given value conflicts
               with an existing one.
+
             - "on-default": only overwrite the alias is it is
               RequestType.ERROR_IF_PASSED
 
@@ -123,7 +139,7 @@ class MethodMetadataRequest:
 
         if not isinstance(alias, str):
             try:
-                RequestType(alias)
+                alias = RequestType(alias)
             except ValueError:
                 raise ValueError(
                     "alias should be either a string or one of "
@@ -132,10 +148,10 @@ class MethodMetadataRequest:
 
         if alias == prop:
             alias = RequestType.REQUESTED
-        if not isinstance(alias, str):
-            alias = RequestType(alias)
 
-        if prop not in self.requests or overwrite:
+        if alias == RequestType.EXISTS_NOT and prop in self.requests:
+            del self.requests[prop]
+        elif prop not in self.requests or overwrite:
             self.requests[prop] = alias
         elif (
             overwrite == "on-default"
@@ -672,6 +688,7 @@ class _MetadataRequester:
         This method combines the information present in ``metadata_request__*``
         class attributes.
         """
+
         requests = MetadataRequest()
 
         # need to go through the MRO since this is a class attribute and
@@ -688,7 +705,7 @@ class _MetadataRequester:
             defaults.update(klass_defaults)
         defaults = dict(sorted(defaults.items()))
 
-        # First take all arguments from the method signatures and have them ass
+        # First take all arguments from the method signatures and have them as
         # ERROR_IF_PASSED, except X, y, *args, and **kwargs.
         for method in METHODS:
             # Here we use `isfunction` instead of `ismethod` because calling `getattr`
@@ -698,7 +715,7 @@ class _MetadataRequester:
             for pname, param in inspect.signature(
                 getattr(cls, method)
             ).parameters.items():
-                if pname in {"X", "y", "self", "cls"}:
+                if pname in {"X", "y", "Y", "self", "cls"}:
                     continue
                 if param.kind in {param.VAR_POSITIONAL, param.VAR_KEYWORD}:
                     continue
