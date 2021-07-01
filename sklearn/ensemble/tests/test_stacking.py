@@ -569,11 +569,10 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
 
 @pytest.mark.parametrize("passthrough", [False, True])
 def test_stacking_classifier_multilabel(passthrough):
-    # prescale the data to avoid convergence warning without using a pipeline
-    # for later assert
     X_train, X_test, y_train, y_test = train_test_split(
-        scale(X_multilabel_r), y_multilabel_r, stratify=y_multilabel_r, random_state=42
+        X_multilabel_r, y_multilabel_r, stratify=y_multilabel_r, random_state=42
     )
+
     estimators = [
         ("rfc", RandomForestClassifier(n_estimators=10, random_state=42)),
         ("dc", DummyClassifier()),
@@ -588,9 +587,9 @@ def test_stacking_classifier_multilabel(passthrough):
     clf.predict(X_test)
     clf.predict_proba(X_test)
     sc = clf.score(X_test, y_test)
-    assert passthrough or sc == pytest.approx(0.4)
+    assert passthrough or sc == pytest.approx(0.32)
 
-    assert not passthrough or sc == pytest.approx(0.32)
+    assert not passthrough or sc == pytest.approx(0.44)
 
     X_trans = clf.transform(X_test)
     expected_column_count = 32 if passthrough else 12
