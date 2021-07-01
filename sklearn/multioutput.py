@@ -64,22 +64,20 @@ def _partial_fit_estimator(
     return estimator
 
 
-def _available_if_base_estimator_has(attr):
-    def _check(self):
-        return (
-            (hasattr(self, "base_estimator") and hasattr(self.base_estimator, attr))
-            or hasattr(self.estimator, attr)
-            or all(hasattr(est, attr) for est in self.estimators_)
-        )
-
-    return available_if(_check)
-
-
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
+
+    def _available_if_base_estimator_has(attr):
+        def _check(self):
+            return (
+                hasattr(self.estimator, attr)
+                or all(hasattr(est, attr) for est in self.estimators_)
+            )
+
+        return available_if(_check)
 
     @_available_if_base_estimator_has("partial_fit")
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -291,7 +289,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
-    @_available_if_base_estimator_has("partial_fit")
+    @_MultiOutputEstimator._available_if_base_estimator_has("partial_fit")
     def partial_fit(self, X, y, sample_weight=None):
         """Incrementally fit the model to data.
         Fit a separate model for each output variable.
@@ -481,6 +479,15 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.order = order
         self.cv = cv
         self.random_state = random_state
+
+    def _available_if_base_estimator_has(attr):
+        def _check(self):
+            return (
+                hasattr(self.base_estimator, attr)
+                or all(hasattr(est, attr) for est in self.estimators_)
+            )
+
+        return available_if(_check)
 
     @abstractmethod
     def fit(self, X, Y, **fit_params):
@@ -711,7 +718,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         ]
         return self
 
-    @_available_if_base_estimator_has("predict_proba")
+    @_BaseChain._available_if_base_estimator_has("predict_proba")
     def predict_proba(self, X):
         """Predict probability estimates.
 
@@ -740,7 +747,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         return Y_prob
 
-    @_available_if_base_estimator_has("decision_function")
+    @_BaseChain._available_if_base_estimator_has("decision_function")
     def decision_function(self, X):
         """Evaluate the decision_function of the models in the chain.
 
