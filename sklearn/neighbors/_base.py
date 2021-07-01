@@ -758,12 +758,6 @@ class KNeighborsMixin:
                 return_distance=return_distance,
             )
 
-            # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == "euclidean":
-                kwds = {"squared": True}
-            else:
-                kwds = self.effective_metric_params_
-
             chunked_results = list(
                 pairwise_distances_chunked(
                     X,
@@ -771,7 +765,7 @@ class KNeighborsMixin:
                     reduce_func=reduce_func,
                     metric=self.effective_metric_,
                     n_jobs=n_jobs,
-                    **kwds,
+                    **self.effective_metric_params_,
                 )
             )
 
