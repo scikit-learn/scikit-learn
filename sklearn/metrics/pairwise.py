@@ -31,7 +31,7 @@ from ..utils._mask import _get_mask
 from ..utils.fixes import delayed
 from ..utils.fixes import sp_version, parse_version
 
-from ._argkmin_fast import _argkmin
+from ._parallel_reductions import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
 
@@ -646,18 +646,24 @@ def pairwise_distances_argmin_min(
     """
     X, Y = check_pairwise_arrays(X, Y)
 
-    if metric == "fast_sqeuclidean":
-        # TODO: generalise this simple plug here
-        values, indices = _argkmin(X, Y, k=1, strategy="auto", return_distance=True)
+    if axis == 0:
+        X, Y = Y, X
+
+    if metric_kwargs is None:
+        metric_kwargs = {}
+
+    if (
+        # TODO: support sparse arrays
+        not issparse(X)
+        and not issparse(X)
+        and metric in ArgKmin.valid_metrics()
+    ):
+        values, indices = ArgKmin.get_for(
+            X=X, Y=Y, k=1, metric=metric, metric_kwargs=metric_kwargs
+        ).compute(strategy="auto", return_distance=True)
         values = np.ndarray.flatten(values)
         indices = np.ndarray.flatten(indices)
     else:
-        if metric_kwargs is None:
-            metric_kwargs = {}
-
-        if axis == 0:
-            X, Y = Y, X
-
         indices, values = zip(
             *pairwise_distances_chunked(
                 X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs
@@ -786,7 +792,7 @@ def haversine_distances(X, Y=None):
     array([[    0.        , 11099.54035582],
            [11099.54035582,     0.        ]])
     """
-    from ..neighbors import DistanceMetric
+    from ..metrics import DistanceMetric
 
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 

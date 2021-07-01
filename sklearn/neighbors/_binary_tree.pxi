@@ -142,7 +142,6 @@
 #                                   BinaryTree tree2, ITYPE_t i_node2):
 #     """Compute the maximum distance between two nodes"""
 
-cimport cython
 cimport numpy as np
 from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
 from libc.math cimport fmin, fmax
@@ -152,8 +151,7 @@ from libc.string cimport memcpy
 import numpy as np
 import warnings
 
-from ._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
-                             euclidean_dist_to_rdist, euclidean_rdist_to_dist)
+from ..metrics._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist, euclidean_dist_to_rdist)
 
 from ._partition_nodes cimport partition_node_indices
 
@@ -796,7 +794,7 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS
-from ._dist_metrics import get_valid_metric_ids
+from sklearn.metrics._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 

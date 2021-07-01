@@ -16,7 +16,7 @@ from scipy import sparse
 from scipy.cluster import hierarchy
 
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.neighbors.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
+from sklearn.metrics.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
 from sklearn.utils._testing import assert_almost_equal, create_memmap_backed_data
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
@@ -30,6 +30,7 @@ from sklearn.cluster._agglomerative import (
     _fix_connectivity,
 )
 from sklearn.feature_extraction.image import grid_to_graph
+from sklearn.metrics import DistanceMetric
 from sklearn.metrics.pairwise import (
     PAIRED_DISTANCES,
     cosine_distances,
@@ -37,7 +38,7 @@ from sklearn.metrics.pairwise import (
     pairwise_distances,
 )
 from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.neighbors import kneighbors_graph, DistanceMetric
+from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster._hierarchical_fast import (
     average_merge,
     max_merge,

@@ -23,7 +23,7 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..metrics._argkmin_fast import _argkmin
+from ..metrics._parallel_reductions import ArgKmin
 from ..utils import (
     check_array,
     gen_even_slices,
@@ -737,13 +737,19 @@ class KNeighborsMixin:
             )
 
         elif (
-            self._fit_method == "brute" and self.effective_metric_ == "fast_sqeuclidean"
+            # TODO: support sparse arrays
+            not issparse(X)
+            and not issparse(self._fit_X)
+            and self._fit_method == "brute"
+            and self.effective_metric_ in ArgKmin.valid_metrics()
         ):
-            # TODO: generalise this simple plug here
-            results = _argkmin(
-                X,
+            results = ArgKmin.get_for(
+                X=X,
                 Y=self._fit_X,
                 k=n_neighbors,
+                metric=self.effective_metric_,
+                metric_kwargs=self.effective_metric_params_,
+            ).compute(
                 strategy="auto",
                 return_distance=return_distance,
             )
@@ -755,12 +761,6 @@ class KNeighborsMixin:
                 return_distance=return_distance,
             )
 
-            # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == "euclidean":
-                kwds = {"squared": True}
-            else:
-                kwds = self.effective_metric_params_
-
             chunked_results = list(
                 pairwise_distances_chunked(
                     X,
@@ -768,7 +768,7 @@ class KNeighborsMixin:
                     reduce_func=reduce_func,
                     metric=self.effective_metric_,
                     n_jobs=n_jobs,
-                    **kwds,
+                    **self.effective_metric_params_,
                 )
             )
 
