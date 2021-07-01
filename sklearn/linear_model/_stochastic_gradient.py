@@ -665,8 +665,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         Internally, this method uses ``max_iter = 1``. Therefore, it is not
         guaranteed that a minimum of the cost function is reached after calling
-        it once. Matters such as objective convergence and early stopping
-        should be handled by the user.
+        it once. Matters such as objective convergence, early stopping, and
+        learning rate adjustments should be handled by the user.
 
         Parameters
         ----------
