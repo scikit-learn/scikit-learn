@@ -1202,6 +1202,18 @@ def test_feature_names_count_vectorizer():
     )
 
 
+def test_pipeline_feature_names_out_trans_no_get_feature_names_out():
+    """Check that error is raised when a tarnsformer does not define
+    `get_feature_names_out`."""
+    pipe = Pipeline(steps=[("notrans", NoTrans())])
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+
+    msg = "does not provide get_feature_names_out"
+    with pytest.raises(AttributeError, match=msg):
+        pipe.get_feature_names_out()
+
+
 def test_pipeline_param_error():
     clf = make_pipeline(LogisticRegression())
     with pytest.raises(
