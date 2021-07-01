@@ -288,6 +288,10 @@ Changelog
   interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
   :user:`murata-yu`.
 
+- |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
+  NaN in feature importance when fitted with very small sample weight.
+  :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
