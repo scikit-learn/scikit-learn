@@ -102,6 +102,9 @@ cdef class ParallelReduction:
         ITYPE_t n_X, X_n_samples_chunk, X_n_chunks, X_n_samples_rem
         ITYPE_t n_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_rem
 
+    @classmethod
+    def valid_metrics(cls):
+        return {*METRIC_MAPPING.keys()}
 
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults
@@ -154,6 +157,9 @@ cdef class ParallelReduction:
         self.X_n_chunks = X_n_full_chunks + (
             self.n_X != (X_n_full_chunks * self.X_n_samples_chunk)
         )
+
+    def __dealloc__(self):
+        pass
 
     cdef void _on_X_parallel_init(self,
             ITYPE_t thread_num,
