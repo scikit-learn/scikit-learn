@@ -190,7 +190,7 @@ cdef class ArgKmin(ParallelReduction):
 
     cdef:
         DTYPE_t ** dist_middle_terms_chunks
-        DTYPE_t ** heaps_red_distances_chunks
+        DTYPE_t ** heaps_approx_distances_chunks
         ITYPE_t ** heaps_indices_chunks
 
     @classmethod
@@ -224,7 +224,7 @@ cdef class ArgKmin(ParallelReduction):
 
         self.k = k
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
-        self.heaps_red_distances_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
+        self.heaps_approx_distances_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
 
     def __dealloc__(self):
@@ -233,10 +233,10 @@ cdef class ArgKmin(ParallelReduction):
         else:
             raise RuntimeError("Trying to free heaps_indices_chunks which is NULL")
 
-        if self.heaps_red_distances_chunks is not NULL:
-            free(self.heaps_red_distances_chunks)
+        if self.heaps_approx_distances_chunks is not NULL:
+            free(self.heaps_approx_distances_chunks)
         else:
-            raise RuntimeError("Trying to free heaps_red_distances_chunks which is NULL")
+            raise RuntimeError("Trying to free heaps_approx_distances_chunks which is NULL")
 
         if self.dist_middle_terms_chunks is not NULL:
             free(self.dist_middle_terms_chunks)
@@ -258,7 +258,7 @@ cdef class ArgKmin(ParallelReduction):
             DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
             ITYPE_t k = self.k
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
-            DTYPE_t *heaps_red_distances = self.heaps_red_distances_chunks[thread_num]
+            DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
             ITYPE_t n_x = X_end - X_start
@@ -266,7 +266,7 @@ cdef class ArgKmin(ParallelReduction):
 
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
-                _push(heaps_red_distances + i * self.k,
+                _push(heaps_approx_distances + i * self.k,
                       heaps_indices + i * self.k,
                       k,
                       self.distance_metric.rdist(&X_c[i, 0],
@@ -278,7 +278,7 @@ cdef class ArgKmin(ParallelReduction):
 
     cdef int _parallel_on_X(self,
         ITYPE_t[:, ::1] argkmin_indices,
-        DTYPE_t[:, ::1] argkmin_red_distances,
+        DTYPE_t[:, ::1] argkmin_approx_distances,
     ) nogil:
         """Computes the argkmin of each vector (row) of X on Y
         by parallelizing computation on chunks of X.
@@ -297,12 +297,12 @@ cdef class ArgKmin(ParallelReduction):
             thread_num = openmp.omp_get_thread_num()
             # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
             self.dist_middle_terms_chunks[thread_num] = <DTYPE_t*> malloc(size_dist_middle_terms)
-            self.heaps_red_distances_chunks[thread_num] = <DTYPE_t*> malloc(heap_size)
+            self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t*> malloc(heap_size)
 
             for X_chunk_idx in prange(self.X_n_chunks, schedule='static'):
                 # We reset the heap between X chunks (memset can't be used here)
                 for idx in range(self.X_n_samples_chunk * self.k):
-                    self.heaps_red_distances_chunks[thread_num][idx] = FLOAT_INF
+                    self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
 
                 X_start = X_chunk_idx * self.X_n_samples_chunk
                 if X_chunk_idx == self.X_n_chunks - 1 and self.X_n_samples_rem > 0:
@@ -332,14 +332,14 @@ cdef class ArgKmin(ParallelReduction):
                 # Sorting indices so that the closests' come first.
                 for idx in range(X_end - X_start):
                     _simultaneous_sort(
-                        self.heaps_red_distances_chunks[thread_num] + idx * self.k,
+                        self.heaps_approx_distances_chunks[thread_num] + idx * self.k,
                         &argkmin_indices[X_start + idx, 0],
                         self.k
                     )
 
             # end: for X_chunk_idx
             free(self.dist_middle_terms_chunks[thread_num])
-            free(self.heaps_red_distances_chunks[thread_num])
+            free(self.heaps_approx_distances_chunks[thread_num])
 
         # end: with nogil, parallel
         return self.X_n_chunks
@@ -347,7 +347,7 @@ cdef class ArgKmin(ParallelReduction):
 
     cdef int _parallel_on_Y(self,
         ITYPE_t[:, ::1] argkmin_indices,          # OUT
-        DTYPE_t[:, ::1] argkmin_red_distances,   # OUT
+        DTYPE_t[:, ::1] argkmin_approx_distances,   # OUT
     ) nogil:
         """Computes the argkmin of each vector (row) of X on Y
         by parallelizing computation on chunks of Y.
@@ -379,7 +379,7 @@ cdef class ArgKmin(ParallelReduction):
 
                 # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
                 self.dist_middle_terms_chunks[thread_num] = <DTYPE_t*> malloc(size_dist_middle_terms)
-                self.heaps_red_distances_chunks[thread_num] = <DTYPE_t*> malloc(float_heap_size)
+                self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t*> malloc(float_heap_size)
 
                 # As chunks of X are shared across threads, so must their
                 # heaps. To solve this, each thread has its own locals
@@ -388,7 +388,7 @@ cdef class ArgKmin(ParallelReduction):
 
                 # Initialising heaps (memset can't be used here)
                 for idx in range(self.X_n_samples_chunk * self.k):
-                    self.heaps_red_distances_chunks[thread_num][idx] = FLOAT_INF
+                    self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
                     self.heaps_indices_chunks[thread_num][idx] = -1
 
                 for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
@@ -415,10 +415,10 @@ cdef class ArgKmin(ParallelReduction):
                     for idx in range(X_end - X_start):
                         for jdx in range(self.k):
                             _push(
-                                &argkmin_red_distances[X_start + idx, 0],
+                                &argkmin_approx_distances[X_start + idx, 0],
                                 &argkmin_indices[X_start + idx, 0],
                                 self.k,
-                                self.heaps_red_distances_chunks[thread_num][idx * self.k + jdx],
+                                self.heaps_approx_distances_chunks[thread_num][idx * self.k + jdx],
                                 self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
                             )
 
@@ -428,7 +428,7 @@ cdef class ArgKmin(ParallelReduction):
             for idx in prange(self.n_X, schedule='static',
                               nogil=True, num_threads=num_threads):
                 _simultaneous_sort(
-                    &argkmin_red_distances[idx, 0],
+                    &argkmin_approx_distances[idx, 0],
                     &argkmin_indices[idx, 0],
                     self.k,
                 )
@@ -557,35 +557,52 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
             ITYPE_t k = self.k
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
-            DTYPE_t *heaps_red_distances = self.heaps_red_distances_chunks[thread_num]
+            DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
-        # Instead of computing the full pairwise squared distances matrix,
-        # ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²,
-        # we only need to store the - 2 X_c.Y_c^T + ||Y_c||²
-        # term since the argmin for a given sample X_c^{i} does not depend on
-        # ||X_c^{i}||²
+            # Instead of computing the full pairwise squared distances matrix,
+            #
+            #      ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²,
+            #
+            # we only need to store the
+            #                                - 2 X_c.Y_c^T + ||Y_c||²
+            #
+            # term since the argkmin for a given sample X_c^{i} does not depend on
+            # ||X_c^{i}||²
+            #
+            # This term gets computed efficiently bellow using GEMM from BLAS Level 3.
+            #
+            # Careful: LDA, LDB and LDC are given for F-ordered arrays in BLAS documentations,
+            # for instance:
+            # https://www.netlib.org/lapack/explore-html/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
+            #
+            # Here, we use their counterpart values to work with C-ordered arrays.
+            BLAS_Order order = RowMajor
+            BLAS_Trans ta = NoTrans
+            BLAS_Trans tb = Trans
+            ITYPE_t m = X_c.shape[0]
+            ITYPE_t n = Y_c.shape[0]
+            ITYPE_t K = X_c.shape[1]
+            DTYPE_t alpha = - 2.
+            DTYPE_t * A = & X_c[0, 0]
+            ITYPE_t lda = X_c.shape[1]
+            DTYPE_t * B = & Y_c[0, 0]
+            ITYPE_t ldb = X_c.shape[1]
+            DTYPE_t beta = 0.
+            DTYPE_t * C = dist_middle_terms
+            ITYPE_t ldc = Y_c.shape[0]
 
-        # Careful: LDA, LDB and LDC are given for F-ordered arrays.
-        # Here, we use their counterpart values as indicated in the documentation.
-        # See the documentation of parameters here:
-        # https://www.netlib.org/lapack/explore-html/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
-        #
         # dist_middle_terms = -2 * X_c.dot(Y_c.T)
-        _gemm(RowMajor, NoTrans, Trans,
-              X_c.shape[0], Y_c.shape[0], X_c.shape[1],
-              -2.0,
-              &X_c[0, 0], X_c.shape[1],
-              &Y_c[0, 0], X_c.shape[1], 0.0,
-              dist_middle_terms, Y_c.shape[0])
+        _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, C, ldc)
 
-        # Computing argmins here
+        # Pushing the distance and their associated indices on heaps
+        # which keep tracks of the argkmin.
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
-                _push(heaps_red_distances + i * k,
+                _push(heaps_approx_distances + i * k,
                       heaps_indices + i * k,
                       k,
-                      # reduced distance: - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                      # approximated distance: - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                       dist_middle_terms[i * Y_c.shape[0] + j] + self.Y_sq_norms[j + Y_start],
                       j + Y_start)
         return 0
