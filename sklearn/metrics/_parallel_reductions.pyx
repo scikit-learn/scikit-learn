@@ -19,6 +19,7 @@ from cython.parallel cimport parallel, prange
 
 from ._dist_metrics cimport DistanceMetric
 from ._dist_metrics import METRIC_MAPPING
+from ..utils import check_array
 
 DEF CHUNK_SIZE = 256  # number of vectors
 
@@ -85,21 +86,22 @@ cdef class ParallelReduction:
     """
 
     cdef:
-        ITYPE_t effective_omp_n_thread
-
-        ITYPE_t k, d, sf, si
-        ITYPE_t n_samples_chunk, chunk_size
-
-        ITYPE_t n_Y, Y_n_samples_chunk, Y_n_samples_rem
-        ITYPE_t n_X, X_n_samples_chunk, X_n_samples_rem
-
-        # Counting remainder chunk in total number of chunks
-        ITYPE_t Y_n_chunks, X_n_chunks, num_threads
-
-        DTYPE_t[:, ::1] X
-        DTYPE_t[:, ::1] Y
+        const DTYPE_t[:, ::1] X  # shape: (n_X, d)
+        const DTYPE_t[:, ::1] Y  # shape: (n_Y, d)
 
         DistanceMetric distance_metric
+
+        ITYPE_t effective_omp_n_thread
+        ITYPE_t n_samples_chunk, chunk_size
+
+        ITYPE_t d
+
+        # dtypes sizes
+        ITYPE_t sf, si
+
+        ITYPE_t n_X, X_n_samples_chunk, X_n_chunks, X_n_samples_rem
+        ITYPE_t n_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_rem
+
 
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults
@@ -108,22 +110,23 @@ cdef class ParallelReduction:
         self.Y = np.empty((1, 1), dtype=DTYPE, order='c')
 
     def __init__(self,
-                 DTYPE_t[:, ::1] X,
-                 DTYPE_t[:, ::1] Y,
+                 X,
+                 Y,
                  DistanceMetric distance_metric,
                  ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         cdef:
             ITYPE_t X_n_full_chunks, Y_n_full_chunks
-        self.X = X
-        self.Y = Y
 
-        # TODO: use proper internals checks of scikit-learn
-        assert X.shape[1] == Y.shape[1], (
-            f"Vectors of X and Y must have the same "
-            f"number of dimensions but are respectively "
-            f"{X.shape[1]}-dimensional and {Y.shape[1]}-dimensional."
-        )
+        self.effective_omp_n_thread = _openmp_effective_n_threads()
+
+        self.X = check_array(X, dtype=DTYPE)
+        self.Y = check_array(Y, dtype=DTYPE)
+
+        assert X.shape[1] == Y.shape[1], "Vectors of X and Y must have the " \
+                                         "same dimension but currently are " \
+                                         f"respectively {X.shape[1]}-dimensional " \
+                                         f"and {Y.shape[1]}-dimensional."
 
         self.d = X.shape[1]
         self.sf = sizeof(DTYPE_t)
@@ -152,12 +155,9 @@ cdef class ParallelReduction:
             self.n_X != (X_n_full_chunks * self.X_n_samples_chunk)
         )
 
-        self.effective_omp_n_thread = _openmp_effective_n_threads()
-
-
     cdef int _reduce_on_chunks(self,
-        DTYPE_t[:, ::1] X,                  # IN
-        DTYPE_t[:, ::1] Y,                  # IN
+        const DTYPE_t[:, ::1] X,                  # IN
+        const DTYPE_t[:, ::1] Y,                  # IN
         ITYPE_t X_start,
         ITYPE_t X_end,
         ITYPE_t Y_start,
@@ -189,9 +189,14 @@ cdef class ArgKmin(ParallelReduction):
     """
 
     cdef:
+        ITYPE_t k
+
         DTYPE_t ** dist_middle_terms_chunks
         DTYPE_t ** heaps_approx_distances_chunks
         ITYPE_t ** heaps_indices_chunks
+
+        ITYPE_t[:, ::1] argkmin_indices
+        DTYPE_t[:, ::1] argkmin_distances
 
     @classmethod
     def valid_metrics(cls):
@@ -199,8 +204,8 @@ cdef class ArgKmin(ParallelReduction):
 
     @classmethod
     def get_for(cls,
-                DTYPE_t[:, ::1] X,
-                DTYPE_t[:, ::1] Y,
+                X,
+                Y,
                 ITYPE_t k,
                 str metric="fast_sqeuclidean",
                 ITYPE_t chunk_size=CHUNK_SIZE,
@@ -214,8 +219,8 @@ cdef class ArgKmin(ParallelReduction):
                        chunk_size=chunk_size)
 
     def __init__(self,
-                 DTYPE_t[:, ::1] X,
-                 DTYPE_t[:, ::1] Y,
+                 X,
+                 Y,
                  DistanceMetric distance_metric,
                  ITYPE_t k,
                  ITYPE_t chunk_size = CHUNK_SIZE,
@@ -223,6 +228,12 @@ cdef class ArgKmin(ParallelReduction):
         ParallelReduction.__init__(self, X, Y, distance_metric, chunk_size)
 
         self.k = k
+
+        # Results returned by ArgKmin.compute
+        self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
+        self.argkmin_distances = np.full((self.n_X, self.k), FLOAT_INF, dtype=DTYPE)
+
+        # Temporary datastructures used in threads
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_approx_distances_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
@@ -244,8 +255,8 @@ cdef class ArgKmin(ParallelReduction):
             raise RuntimeError("Trying to free dist_middle_terms_chunks which is NULL")
 
     cdef int _reduce_on_chunks(self,
-        DTYPE_t[:, ::1] X,                  # IN
-        DTYPE_t[:, ::1] Y,                  # IN
+        const DTYPE_t[:, ::1] X,                  # IN
+        const DTYPE_t[:, ::1] Y,                  # IN
         ITYPE_t X_start,
         ITYPE_t X_end,
         ITYPE_t Y_start,
@@ -254,8 +265,8 @@ cdef class ArgKmin(ParallelReduction):
     ) nogil except -1:
         cdef:
             ITYPE_t i, j
-            DTYPE_t[:, ::1] X_c = X[X_start:X_end, :]
-            DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
+            const DTYPE_t[:, ::1] X_c = X[X_start:X_end, :]
+            const DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
             ITYPE_t k = self.k
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
             DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
@@ -524,8 +535,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         DTYPE_t[::1] Y_sq_norms
 
     def __init__(self,
-                  DTYPE_t[:, ::1] X,
-                  DTYPE_t[:, ::1] Y,
+                  X,
+                  Y,
                   ITYPE_t k,
                   ITYPE_t chunk_size = CHUNK_SIZE,
     ):
@@ -537,8 +548,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
 
 
     cdef int _reduce_on_chunks(self,
-        DTYPE_t[:, ::1] X,                  # IN
-        DTYPE_t[:, ::1] Y,                  # IN
+        const DTYPE_t[:, ::1] X,                  # IN
+        const DTYPE_t[:, ::1] Y,                  # IN
         ITYPE_t X_start,
         ITYPE_t X_end,
         ITYPE_t Y_start,
@@ -553,8 +564,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         """
         cdef:
             ITYPE_t i, j
-            DTYPE_t[:, ::1] X_c = X[X_start:X_end, :]
-            DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
+            const DTYPE_t[:, ::1] X_c = X[X_start:X_end, :]
+            const DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
             ITYPE_t k = self.k
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
             DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
