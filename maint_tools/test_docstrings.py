@@ -13,7 +13,6 @@ DOCSTRING_IGNORE_LIST = [
     "AffinityPropagation",
     "AgglomerativeClustering",
     "BaggingRegressor",
-    "BernoulliNB",
     "BernoulliRBM",
     "Birch",
     "CCA",
