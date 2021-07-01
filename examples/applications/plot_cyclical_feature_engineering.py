@@ -97,7 +97,7 @@ X["weather"].value_counts()
 # train machine learning models with cross validation. Instead, we simplify the
 # representation by collapsing those into the `"rain"` category.
 #
-X['weather'].replace(to_replace='heavy_rain', value="rain", inplace=True)
+X["weather"].replace(to_replace="heavy_rain", value="rain", inplace=True)
 # %%
 X["weather"].value_counts()
 
@@ -214,7 +214,7 @@ def evaluate(model, X, y, cv):
         X,
         y,
         cv=ts_cv,
-        scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"]
+        scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
     )
     mae = -cv_results["test_neg_mean_absolute_error"]
     rmse = -cv_results["test_neg_root_mean_squared_error"]
@@ -513,17 +513,17 @@ ax.plot(naive_linear_predictions[last_hours], "x-", label="Ordinal time features
 ax.plot(
     cyclic_cossin_linear_predictions[last_hours],
     "x-",
-    label="Trigonometric time features"
+    label="Trigonometric time features",
 )
 ax.plot(
     cyclic_spline_linear_predictions[last_hours],
     "x-",
-    label="Spline-based time features"
+    label="Spline-based time features",
 )
 ax.plot(
     one_hot_linear_predictions[last_hours],
     "x-",
-    label="One-hot time features"
+    label="One-hot time features",
 )
 _ = ax.legend()
 
@@ -725,7 +725,7 @@ predictions = [
 labels = [
     "One hot + polynomial kernel",
     "Splines + polynomial kernel",
-    "Gradient Boosted Trees"
+    "Gradient Boosted Trees",
 ]
 for ax, pred, label in zip(axes, predictions, labels):
     ax.scatter(y.iloc[test_0].values, pred, alpha=0.3, label=label)
