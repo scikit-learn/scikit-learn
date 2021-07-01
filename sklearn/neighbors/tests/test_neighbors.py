@@ -1334,19 +1334,9 @@ def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbor
 
             neigh.fit(X[:, feature_sl])
 
-            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-            ExceptionToAssert = None
-            if (
-                metric == "wminkowski"
-                and algorithm == "brute"
-                and sp_version >= parse_version("1.6.0")
-            ):
-                ExceptionToAssert = DeprecationWarning
-
-            with pytest.warns(ExceptionToAssert):
-                results[algorithm] = neigh.kneighbors(
-                    test[:, feature_sl], return_distance=True
-                )
+            results[algorithm] = neigh.kneighbors(
+                test[:, feature_sl], return_distance=True
+            )
 
         assert_array_almost_equal(results["brute"][0], results["ball_tree"][0])
         assert_array_almost_equal(results["brute"][1], results["ball_tree"][1])
