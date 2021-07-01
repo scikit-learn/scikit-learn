@@ -139,7 +139,6 @@ DOCSTRING_IGNORE_LIST = [
     "RANSACRegressor",
     "RBFSampler",
     "RFE",
-    "RFECV",
     "RadiusNeighborsClassifier",
     "RadiusNeighborsRegressor",
     "RadiusNeighborsTransformer",
