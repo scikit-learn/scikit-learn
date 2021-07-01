@@ -737,7 +737,10 @@ class KNeighborsMixin:
             )
 
         elif (
-            self._fit_method == "brute"
+            # TODO: support sparse arrays
+            not issparse(X)
+            and not issparse(self._fit_X)
+            and self._fit_method == "brute"
             and self.effective_metric_ in ArgKmin.valid_metrics()
         ):
             results = ArgKmin.get_for(
