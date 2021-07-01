@@ -25,7 +25,6 @@ from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import RidgeClassifierCV
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
 from sklearn.svm import SVC
@@ -578,7 +577,6 @@ def test_stacking_classifier_multilabel(passthrough):
     estimators = [
         ("rfc", RandomForestClassifier(n_estimators=10, random_state=42)),
         ("dc", DummyClassifier()),
-        ("rc", RidgeClassifierCV()),
     ]
     final_estimator = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
@@ -590,12 +588,12 @@ def test_stacking_classifier_multilabel(passthrough):
     clf.predict(X_test)
     clf.predict_proba(X_test)
     sc = clf.score(X_test, y_test)
-    assert passthrough or sc == pytest.approx(0.44)
+    assert passthrough or sc == pytest.approx(0.4)
 
-    assert not passthrough or sc == pytest.approx(0.52)
+    assert not passthrough or sc == pytest.approx(0.32)
 
     X_trans = clf.transform(X_test)
-    expected_column_count = 35 if passthrough else 15
+    expected_column_count = 32 if passthrough else 12
     assert X_trans.shape[1] == expected_column_count
     if passthrough:
         assert_allclose(X_test, X_trans[:, -20:])
