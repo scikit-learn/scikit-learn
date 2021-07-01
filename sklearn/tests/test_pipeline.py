@@ -35,9 +35,9 @@ from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.impute import SimpleImputer
 
 iris = load_iris()
 
@@ -1171,6 +1171,7 @@ def test_make_pipeline_memory():
 
 
 def test_features_names_passthrough():
+    """Check pipeline.get_feature_names_out with passthrough"""
     pipe = Pipeline(
         steps=[
             ("imputer", "passthrough"),
@@ -1189,6 +1190,7 @@ def test_features_names_passthrough():
 
 
 def test_feature_names_count_vectorizer():
+    """Check pipeline.get_feature_names_out with vectorizers"""
     pipe = Pipeline(steps=[("vect", CountVectorizer()), ("clf", LogisticRegression())])
     y = ["pizza" in x for x in JUNK_FOOD_DOCS]
     pipe.fit(JUNK_FOOD_DOCS, y)
@@ -1397,6 +1399,7 @@ def test_feature_union_warns_unknown_transformer_weight():
 
 # TODO: Remove in 1.2 when get_feature_names is removed
 def test_feature_union_get_feature_names_deprecated():
+    """Check that get_feature_names is deprecated"""
     msg = "get_feature_names is deprecated in 1.0"
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ["x2"]

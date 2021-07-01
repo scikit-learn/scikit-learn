@@ -1484,7 +1484,7 @@ def test_feature_names_empty_columns(empty_col, get_names, expected_names):
     ],
 )
 def test_feature_names_out_pandas(selector):
-    # checks name when selecting only the second column
+    """Checks name when selecting only the second column"""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"col1": ["a", "a", "b"], "col2": ["z", "z", "z"]})
     ct = ColumnTransformer([("ohe", OneHotEncoder(), selector)])
@@ -1497,7 +1497,7 @@ def test_feature_names_out_pandas(selector):
     "selector", [[1], lambda x: [1], [False, True], lambda x: [False, True]]
 )
 def test_feature_names_out_non_pandas(selector):
-    # checks name when selecting the second column with numpy array
+    """Checks name when selecting the second column with numpy array"""
     X = [["a", "z"], ["a", "z"], ["b", "z"]]
     ct = ColumnTransformer([("ohe", OneHotEncoder(), selector)])
     ct.fit(X)
@@ -1568,6 +1568,7 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
 
 # TODO: Remove in 1.2 when get_feature_names is removed
 def test_column_transformers_get_feature_names_deprecated():
+    """Check that get_feature_names is deprecated"""
     X = np.array([[0, 1], [2, 4]])
     ct = ColumnTransformer([("trans", "passthrough", [0, 1])])
     ct.fit(X)
