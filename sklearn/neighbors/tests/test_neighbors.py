@@ -57,6 +57,7 @@ SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix, lil_
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
+COMMON_VALID_METRICS = set.intersection(*map(set, neighbors.VALID_METRICS.values()))
 P = (1, 2, 3, 4, np.inf)
 JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
@@ -77,31 +78,65 @@ def _weight_func(dist):
     return retval ** 2
 
 
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_features", [5, 10, 100])
+@pytest.mark.parametrize("n_query_pts", [1, 10, 100])
+@pytest.mark.parametrize("n_neighbors", [1, 10, 100])
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 def test_unsupervised_kneighbors(
-    n_samples=20, n_features=5, n_query_pts=2, n_neighbors=5
+    n_samples,
+    n_features,
+    n_query_pts,
+    n_neighbors,
+    metric,
 ):
-    # Test unsupervised neighbors methods
-    X = rng.rand(n_samples, n_features)
+    # The different algorithms must return identical results
+    # on their common metrics, with and without returning
+    # distances
 
-    test = rng.rand(n_query_pts, n_features)
+    # Redefining the rng locally to use the same generated X
+    local_rng = np.random.RandomState(0)
+    X = local_rng.rand(n_samples, n_features)
 
-    for p in P:
-        results_nodist = []
-        results = []
+    test = local_rng.rand(n_query_pts, n_features)
 
-        for algorithm in ALGORITHMS:
-            neigh = neighbors.NearestNeighbors(
-                n_neighbors=n_neighbors, algorithm=algorithm, p=p
-            )
-            neigh.fit(X)
+    results_nodist = []
+    results = []
 
-            results_nodist.append(neigh.kneighbors(test, return_distance=False))
-            results.append(neigh.kneighbors(test, return_distance=True))
+    for algorithm in ALGORITHMS:
+        neigh = neighbors.NearestNeighbors(
+            n_neighbors=n_neighbors, algorithm=algorithm, metric=metric
+        )
+        neigh.fit(X)
 
-        for i in range(len(results) - 1):
-            assert_array_almost_equal(results_nodist[i], results[i][1])
-            assert_array_almost_equal(results[i][0], results[i + 1][0])
-            assert_array_almost_equal(results[i][1], results[i + 1][1])
+        results_nodist.append(neigh.kneighbors(test, return_distance=False))
+        results.append(neigh.kneighbors(test, return_distance=True))
+
+    for i in range(len(results) - 1):
+        algorithm = ALGORITHMS[i]
+        next_algorithm = ALGORITHMS[i + 1]
+
+        indices_no_dist = results_nodist[i]
+        distances, next_distances = results[i][0], results[i + 1][0]
+        indices, next_indices = results[i][1], results[i + 1][1]
+        assert_array_equal(
+            indices_no_dist,
+            indices,
+            err_msg=f"The '{algorithm}' algorithm returns different"
+            f"indices depending on 'return_distances'.",
+        )
+        assert_array_equal(
+            indices,
+            next_indices,
+            err_msg=f"The '{algorithm}' and '{next_algorithm}' "
+            f"algorithms return different indices.",
+        )
+        assert_array_equal(
+            distances,
+            next_distances,
+            err_msg=f"The '{algorithm}' and '{next_algorithm}' "
+            f"algorithms return different distances.",
+        )
 
 
 @pytest.mark.parametrize(
