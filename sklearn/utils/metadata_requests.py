@@ -712,10 +712,12 @@ class _MetadataRequester:
             # on a class instead of an instance returns an unbound function.
             if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
                 continue
-            for pname, param in inspect.signature(
-                getattr(cls, method)
-            ).parameters.items():
-                if pname in {"X", "y", "Y", "self", "cls"}:
+            # ignore the first parameter of the method, which is usually "self"
+            params = list(inspect.signature(getattr(cls, method)).parameters.items())[
+                1:
+            ]
+            for pname, param in params:
+                if pname in {"X", "y", "Y"}:
                     continue
                 if param.kind in {param.VAR_POSITIONAL, param.VAR_KEYWORD}:
                     continue
