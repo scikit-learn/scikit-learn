@@ -805,8 +805,8 @@ class OutlierMixin:
         return self.fit(X).predict(X)
 
 
-class OneToOneMixin:
-    """Provides get_feature_names_out for simple transformers
+class OneToOneFeatureMixin:
+    """Provides `get_feature_names_out` for simple transformers.
 
     Assumes there's a 1-to-1 correspondence between input features
     and output features.
@@ -815,14 +815,14 @@ class OneToOneMixin:
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
-        Returns input_features as this transformation
-        doesn't add or drop features.
+        Returns `input_features` as this transformation doesn't add or drop
+        features.
 
         Parameters
         ----------
         input_features : array-like of str or None, default=None
             Input features. If None, they are generated as
-            x0, x1, ..., xn_features.
+            `[x0, x1, ..., xn_features]`.
 
         Returns
         -------

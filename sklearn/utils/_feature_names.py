@@ -8,7 +8,7 @@ def _make_feature_names(n_features, prefix="x", input_features=None):
     Parameters
     ----------
     n_features : int
-        Number of feature names to generate
+        Number of feature names to generate.
     prefix : str, default='x'
         Prefix for each feature name.
     input_features : array-like of str

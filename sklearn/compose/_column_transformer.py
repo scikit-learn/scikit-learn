@@ -373,10 +373,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         return Bunch(**{name: trans for name, trans, _ in self.transformers_})
 
     def _get_feature_names_out(self, get_names):
-        """Private function to be used by get_feature_names_out and
-        get_feature_names. This should be removed and integrated into
-        get_feature_names_out when get_feature_names is deprecated.
-        """
+        """Private function to be used by get_feature_names*."""
+        # TODO(1.2): This should be removed and integrated into
+        # get_feature_names_out when get_feature_names is deprecated.
         feature_names = []
         for name, trans, column, _ in self._iter(fitted=True):
             if trans == "drop" or _is_empty_column_selection(column):
@@ -405,7 +404,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        feature_names : list of strings
+        feature_names : list of str
             Names of the features produced by transform.
         """
         check_is_fitted(self)

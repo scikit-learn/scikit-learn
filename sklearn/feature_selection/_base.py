@@ -145,9 +145,9 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
         Parameters
         ----------
-        input_features : list of str or None, default=None
-            Input features to select from. If None, they are generated as
-            x0, x1, ..., xn.
+        input_features : array-like of str or None, default=None
+            Input features. If None, they are generated as
+            `[x0, x1, ..., xn_features]`.
 
         Returns
         -------

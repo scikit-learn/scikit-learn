@@ -139,9 +139,9 @@ or by name::
     >>> pipe['reduce_dim']
     PCA()
 
-To enable model inspection, `Pipeline` has a ``get_feature_names_out()`` method,
-just like all transformers. You can use pipeline slicing to get the feature names
-going into each step::
+To enable model inspection, :class:`~sklearn.pipeline.Pipeline` has a
+``get_feature_names_out()`` method, just like all transformers. You can use
+pipeline slicing to get the feature names going into each step::
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.feature_selection import SelectKBest
