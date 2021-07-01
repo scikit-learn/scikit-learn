@@ -39,9 +39,9 @@ from ..utils._cython_blas cimport (
 
 from ..utils._heap cimport _simultaneous_sort, _push
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._typedefs cimport ITYPE_t, DTYPE_t
+from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
+from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 from ..utils._typedefs import ITYPE, DTYPE
-from ..utils._typedefs import DTYPECODE, ITYPECODE
 
 ######################
 ## std::vector to np.ndarray coercion
@@ -62,16 +62,6 @@ cdef np.ndarray[DITYPE_t, ndim=1] buffer_to_numpy_array(DITYPE_t * ptr, np.npy_i
     PyArray_ENABLEFLAGS(arr, np.NPY_OWNDATA)
     return arr
 
-cpdef np.ndarray _vector_to_np_ndarray(vector[vector[DITYPE_t]] vec_of_vecs):
-    # In the case of inner vectors of different shapes
-    # some boilerplate is needed to coerce
-    # a vector[vector[T]] into a np.ndarray[np.ndarray[T]]
-    np_arrays = []
-
-    for i in range(vec_of_vecs.size()):
-        np_arrays.append(buffer_to_numpy_array(vec_of_vecs[i].data(), vec_of_vecs[i].size()))
-
-    return np.array(np_arrays, np.ndarray)
 #####################
 
 
@@ -869,7 +859,18 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
            bint return_distance
     ):
         if return_distance:
-             return (_vector_to_np_ndarray[DTYPE_t](self.neigh_distances),
-                    _vector_to_np_ndarray[ITYPE_t](self.neigh_indices))
+            np_arrays_indices = []
+            np_arrays_distances = []
 
-        return _vector_to_np_ndarray[ITYPE_t](self.neigh_indices)
+            for i in range(self.n_X):
+                np_arrays_distances.append(buffer_to_numpy_array(self.neigh_distances[i].data(), self.neigh_distances[i].size()))
+                np_arrays_indices.append(buffer_to_numpy_array(self.neigh_indices[i].data(), self.neigh_indices[i].size()))
+
+            return np.array(np_arrays_distances, np.ndarray), np.array(np_arrays_indices, np.ndarray)
+
+        np_arrays_indices = []
+
+        for i in range(self.n_X):
+            np_arrays_indices.append(buffer_to_numpy_array(self.neigh_indices[i].data(), self.neigh_indices[i].size()))
+
+        return np.array(np_arrays_indices, np.ndarray)
