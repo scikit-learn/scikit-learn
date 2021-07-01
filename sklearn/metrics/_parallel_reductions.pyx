@@ -12,7 +12,10 @@ import numpy as np
 cimport numpy as np
 cimport openmp
 
+np.import_array()
+
 from libc.stdlib cimport free, malloc
+from libcpp.vector cimport vector
 
 from cython.parallel cimport parallel, prange
 
@@ -402,9 +405,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
-            ITYPE_t n_x = X_end - X_start
-            ITYPE_t n_y = Y_end - Y_start
-
         # Pushing the distance and their associated indices on heaps
         # which keep tracks of the argkmin.
         for i in range(X_c.shape[0]):
@@ -568,6 +568,11 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         else:
             raise RuntimeError(f"strategy '{strategy}' not supported.")
 
+        return self._finalise_compute(return_distance)
+
+    def _finalise_compute(self,
+           bint return_distance
+    ):
         if return_distance:
             # We need to recompute distances because we relied on
             # approximate distances.
@@ -724,3 +729,127 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
                       dist_middle_terms[i * Y_c.shape[0] + j] + self.Y_sq_norms[j + Y_start],
                       j + Y_start)
         return 0
+
+
+cdef class RadiusNeighborhood(PairwiseDistancesReduction):
+
+    cdef:
+        DTYPE_t radius
+
+        # Distances metrics compute approximated distance
+        # ("reduced distance" in the original wording),
+        # which are proxies necessitating less computations.
+        # We get the proxy for the radius to be able to compare
+
+        # NOTE: not used for now.
+        DTYPE_t radius_proxy
+
+        vector[vector[ITYPE_t]] neigh_indices
+        vector[vector[DTYPE_t]] neigh_distances
+
+        bint sort_results
+
+
+    @classmethod
+    def get_for(cls,
+                X,
+                Y,
+                DTYPE_t radius,
+                str metric="euclidean",
+                ITYPE_t chunk_size=CHUNK_SIZE,
+                dict metric_kwargs=dict(),
+        ):
+        return RadiusNeighborhood(X=X, Y=Y,
+                       distance_metric=DistanceMetric.get_metric(metric, **metric_kwargs),
+                       radius=radius,
+                       chunk_size=chunk_size)
+
+    def __init__(self,
+                 X,
+                 Y,
+                 DistanceMetric distance_metric,
+                 DTYPE_t radius,
+                 ITYPE_t chunk_size = CHUNK_SIZE,
+    ):
+        PairwiseDistancesReduction.__init__(self, X, Y, distance_metric, chunk_size)
+
+        self.radius = radius
+        self.sort_results = False
+
+        self.neigh_indices.resize(self.n_X)
+        self.neigh_distances.resize(self.n_X)
+
+
+    cdef int _reduce_on_chunks(self,
+        const DTYPE_t[:, ::1] X,
+        const DTYPE_t[:, ::1] Y,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil except -1:
+        cdef:
+            ITYPE_t i, j
+            const DTYPE_t[:, ::1] X_c = X[X_start:X_end, :]
+            const DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
+            DTYPE_t dist_i_j
+
+        for i in range(X_c.shape[0]):
+            for j in range(Y_c.shape[0]):
+                dist_i_j = self.distance_metric.dist(
+                    &X_c[i, 0], &Y_c[j, 0], self.d)
+                if dist_i_j <= self.radius:
+                    self.neigh_distances[X_start + i].push_back(dist_i_j)
+                    self.neigh_indices[X_start + i].push_back(Y_start + j)
+
+        return 0
+
+    cdef void _on_X_prange_iter_finalize(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_chunk_idx,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
+        cdef:
+            ITYPE_t idx, jdx
+
+        # Sorting neighbors for each query vector of X
+        if self.sort_results:
+            for idx in range(X_start, X_end):
+                _simultaneous_sort(
+                    self.neigh_distances[idx].data(),
+                    self.neigh_indices[idx].data(),
+                    self.neigh_indices[idx].size()
+                )
+
+    def compute(self,
+           str strategy = "auto",
+           bint return_distance = False,
+           bint sort_results = False
+    ):
+        # TODO: setup thread local datastructures for supporting _parallel_on_Y
+        self.sort_results = sort_results
+        self._parallel_on_X()
+        return self._finalise_compute(return_distance)
+
+    def _finalise_compute(self,
+           bint return_distance
+    ):
+        # TODO: this is totally inefficient.
+        # Each vector content is copied into a Python list, which boxes
+        # integers. Those lists are then converted into numpy arrays
+        def _vector_to_np_ndarray(vec_of_vecs):
+            # In the case of inner vectors of different shapes
+            # some boilerplate is needed to coerce
+            # a vector[vector[T]] into a np.ndarray[np.ndarray[T]]
+            vec_of_vecs = np.array(vec_of_vecs, dtype=np.ndarray)
+            for i, v in enumerate(vec_of_vecs):
+                vec_of_vecs[i] = np.array(v)
+
+            return vec_of_vecs
+
+        if return_distance:
+             return _vector_to_np_ndarray(self.neigh_distances), _vector_to_np_ndarray(self.neigh_indices)
+
+        return _vector_to_np_ndarray(self.neigh_indices)
