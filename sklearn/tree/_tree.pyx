@@ -1292,8 +1292,8 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
     """Perform cost complexity pruning.
 
     This function takes an already grown tree, `orig_tree` and outputs a
-    boolean mask `leaves_in_subtree` to are the leaves in the pruned tree. The
-    controller signals when the pruning should stop and is passed the
+    boolean mask `leaves_in_subtree` which are the leaves in the pruned tree. The
+    controller signals when the pruning should stop and is passed wtih the
     metrics of the subtrees during the pruning process.
 
     Parameters
