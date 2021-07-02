@@ -3,53 +3,189 @@ from inspect import signature
 from typing import Optional
 
 import pytest
-from sklearn.utils._testing import all_estimators
+from sklearn.utils import all_estimators
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
-# List of whitelisted modules and methods; regexp are supported.
-DOCSTRING_WHITELIST = [
-    "LogisticRegression$",
-    "LogisticRegression.fit",
-    "LogisticRegression.decision_function",
-    "Birch.predict",
-    "Birch.transform",
+# List of modules ignored when checking for numpydoc validation.
+DOCSTRING_IGNORE_LIST = [
+    "AdditiveChi2Sampler",
+    "AffinityPropagation",
+    "AgglomerativeClustering",
+    "BaggingRegressor",
+    "BernoulliRBM",
+    "Birch",
+    "CCA",
+    "CalibratedClassifierCV",
+    "CategoricalNB",
+    "ClassifierChain",
+    "ColumnTransformer",
+    "ComplementNB",
+    "CountVectorizer",
+    "DecisionTreeRegressor",
+    "DictVectorizer",
+    "DictionaryLearning",
+    "DummyClassifier",
+    "DummyRegressor",
+    "ElasticNet",
+    "ElasticNetCV",
+    "EllipticEnvelope",
+    "EmpiricalCovariance",
+    "ExtraTreeClassifier",
+    "ExtraTreeRegressor",
+    "ExtraTreesClassifier",
+    "ExtraTreesRegressor",
+    "FactorAnalysis",
+    "FastICA",
+    "FeatureAgglomeration",
+    "FeatureHasher",
+    "FeatureUnion",
+    "FunctionTransformer",
+    "GammaRegressor",
+    "GaussianMixture",
+    "GaussianNB",
+    "GaussianProcessRegressor",
+    "GaussianRandomProjection",
+    "GenericUnivariateSelect",
     "GradientBoostingClassifier",
     "GradientBoostingRegressor",
-    "LinearDiscriminantAnalysis.decision_function",
-    "LinearSVC.decision_function",
-    "LogisticRegressionCV.decision_function",
-    "OPTICS",
-    "OPTICS.fit",
-    "PassiveAggressiveClassifier.decision_function",
-    "Perceptron.decision_function",
-    "RidgeClassifier.decision_function",
-    "RidgeClassifier.fit",
-    "RidgeClassifierCV.decision_function",
+    "GraphicalLasso",
+    "GraphicalLassoCV",
+    "GridSearchCV",
+    "HalvingGridSearchCV",
+    "HalvingRandomSearchCV",
+    "HashingVectorizer",
+    "HistGradientBoostingClassifier",
+    "HistGradientBoostingRegressor",
+    "HuberRegressor",
+    "IncrementalPCA",
+    "IsolationForest",
+    "Isomap",
+    "IsotonicRegression",
+    "IterativeImputer",
+    "KBinsDiscretizer",
+    "KNNImputer",
+    "KNeighborsRegressor",
+    "KNeighborsTransformer",
+    "KernelCenterer",
     "KernelDensity",
-    "KernelDensity.fit",
-    "KernelDensity.score",
-    "DecisionTreeClassifier",
-    "DecisionTreeRegressor",
-    "LinearRegression$",
-    "SGDClassifier.decision_function",
-    "SGDClassifier.set_params",
-    "SGDClassifier.get_params",
-    "SGDClassifier.fit",
-    "SGDClassifier.partial_fit",
-    "SGDClassifier.predict$",  # $ to avoid match w/ predict_proba (regex)
-    "SGDClassifier.score",
-    "SGDClassifier.sparsify",
-    "SGDClassifier.densify",
-    "VotingClassifier.fit",
-    "VotingClassifier.transform",
-    "VotingClassifier.predict",
-    "VotingClassifier.score",
-    "VotingClassifier.predict_proba",
-    "VotingClassifier.set_params",
-    "VotingClassifier.get_params",
-    "VotingClassifier.named_estimators",
-    "VotingClassifier$",
+    "KernelPCA",
+    "KernelRidge",
+    "LabelBinarizer",
+    "LabelEncoder",
+    "LabelPropagation",
+    "LabelSpreading",
+    "Lars",
+    "LarsCV",
+    "LassoCV",
+    "LassoLars",
+    "LassoLarsCV",
+    "LassoLarsIC",
+    "LatentDirichletAllocation",
+    "LedoitWolf",
+    "LinearSVC",
+    "LinearSVR",
+    "LocalOutlierFactor",
+    "LocallyLinearEmbedding",
+    "MDS",
+    "MLPClassifier",
+    "MLPRegressor",
+    "MaxAbsScaler",
+    "MeanShift",
+    "MinCovDet",
+    "MiniBatchDictionaryLearning",
+    "MiniBatchKMeans",
+    "MiniBatchSparsePCA",
+    "MissingIndicator",
+    "MultiLabelBinarizer",
+    "MultiOutputClassifier",
+    "MultiOutputRegressor",
+    "MultiTaskElasticNet",
+    "MultiTaskElasticNetCV",
+    "MultiTaskLasso",
+    "MultiTaskLassoCV",
+    "MultinomialNB",
+    "NMF",
+    "NearestCentroid",
+    "NearestNeighbors",
+    "NeighborhoodComponentsAnalysis",
+    "Normalizer",
+    "NuSVC",
+    "NuSVR",
+    "Nystroem",
+    "OAS",
+    "OPTICS",
+    "OneClassSVM",
+    "OneVsOneClassifier",
+    "OneVsRestClassifier",
+    "OrdinalEncoder",
+    "OrthogonalMatchingPursuit",
+    "OrthogonalMatchingPursuitCV",
+    "OutputCodeClassifier",
+    "PLSCanonical",
+    "PLSRegression",
+    "PLSSVD",
+    "PassiveAggressiveClassifier",
+    "PassiveAggressiveRegressor",
+    "PatchExtractor",
+    "Pipeline",
+    "PoissonRegressor",
+    "PolynomialCountSketch",
+    "PolynomialFeatures",
+    "PowerTransformer",
+    "QuadraticDiscriminantAnalysis",
+    "QuantileRegressor",
+    "QuantileTransformer",
+    "RANSACRegressor",
+    "RBFSampler",
+    "RFE",
+    "RFECV",
+    "RadiusNeighborsClassifier",
+    "RadiusNeighborsRegressor",
+    "RadiusNeighborsTransformer",
+    "RandomForestClassifier",
+    "RandomTreesEmbedding",
+    "RandomizedSearchCV",
+    "RegressorChain",
+    "Ridge",
+    "RidgeCV",
+    "RidgeClassifier",
+    "RidgeClassifierCV",
+    "RobustScaler",
+    "SGDOneClassSVM",
+    "SGDRegressor",
+    "SVC",
+    "SVR",
+    "SelectFdr",
+    "SelectFpr",
+    "SelectFromModel",
+    "SelectFwe",
+    "SelectKBest",
+    "SelectPercentile",
+    "SelfTrainingClassifier",
+    "SequentialFeatureSelector",
+    "ShrunkCovariance",
+    "SimpleImputer",
+    "SkewedChi2Sampler",
+    "SparseCoder",
+    "SparsePCA",
+    "SparseRandomProjection",
+    "SpectralBiclustering",
+    "SpectralClustering",
+    "SpectralCoclustering",
+    "SpectralEmbedding",
+    "SplineTransformer",
+    "StackingClassifier",
+    "StackingRegressor",
+    "TSNE",
+    "TfidfVectorizer",
+    "TheilSenRegressor",
+    "TransformedTargetRegressor",
+    "TruncatedSVD",
+    "TweedieRegressor",
+    "VarianceThreshold",
+    "VotingClassifier",
+    "VotingRegressor",
 ]
 
 
@@ -72,7 +208,7 @@ def get_all_methods():
             yield Estimator, method
 
 
-def filter_errors(errors, method):
+def filter_errors(errors, method, Estimator=None):
     """
     Ignore some errors based on the method type.
 
@@ -89,6 +225,13 @@ def filter_errors(errors, method):
 
         if code in ["RT02", "GL01"]:
             continue
+
+        # Ignore PR02: Unknown parameters for properties. We sometimes use
+        # properties for ducktyping, i.e. SGDClassifier.predict_proba
+        if code == "PR02" and Estimator is not None and method is not None:
+            method_obj = getattr(Estimator, method)
+            if isinstance(method_obj, property):
+                continue
 
         # Following codes are only taken into account for the
         # top level class docstrings:
@@ -165,14 +308,14 @@ def test_docstring(Estimator, method, request):
 
     import_path = ".".join(import_path)
 
-    if not any(re.search(regex, import_path) for regex in DOCSTRING_WHITELIST):
+    if Estimator.__name__ in DOCSTRING_IGNORE_LIST:
         request.applymarker(
             pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
         )
 
     res = numpydoc_validation.validate(import_path)
 
-    res["errors"] = list(filter_errors(res["errors"], method))
+    res["errors"] = list(filter_errors(res["errors"], method, Estimator=Estimator))
 
     if res["errors"]:
         msg = repr_errors(res, Estimator, method)

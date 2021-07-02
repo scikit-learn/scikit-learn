@@ -206,7 +206,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     if X.shape[0] == 1:
         warnings.warn(
-            "Only one sample available. " "You may want to reshape your data array"
+            "Only one sample available. You may want to reshape your data array"
         )
     n_samples, n_features = X.shape
 
@@ -305,7 +305,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
         warnings.warn(
-            "Only one sample available. " "You may want to reshape your data array"
+            "Only one sample available. You may want to reshape your data array"
         )
         n_features = X.size
     else:
@@ -486,7 +486,7 @@ def oas(X, *, assume_centered=False):
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
         warnings.warn(
-            "Only one sample available. " "You may want to reshape your data array"
+            "Only one sample available. You may want to reshape your data array"
         )
         n_samples = 1
         n_features = X.size

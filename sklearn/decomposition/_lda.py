@@ -847,7 +847,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
             n_samples, n_components = doc_topic_distr.shape
             if n_samples != X.shape[0]:
                 raise ValueError(
-                    "Number of samples in X and doc_topic_distr" " do not match."
+                    "Number of samples in X and doc_topic_distr do not match."
                 )
 
             if n_components != self.n_components:
