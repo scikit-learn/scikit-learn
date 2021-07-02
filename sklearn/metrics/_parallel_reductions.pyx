@@ -12,7 +12,6 @@ import numpy as np
 cimport numpy as np
 cimport openmp
 
-from libc.math cimport sqrt
 from libc.stdlib cimport free, malloc
 
 from cython.parallel cimport parallel, prange
@@ -22,9 +21,7 @@ from ._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 
 DEF CHUNK_SIZE = 256  # number of vectors
-
 DEF MIN_CHUNK_SAMPLES = 20
-
 DEF FLOAT_INF = 1e36
 
 from ..utils._cython_blas cimport (
@@ -41,30 +38,6 @@ from ..utils._heap cimport _simultaneous_sort, _push
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t
 from ..utils._typedefs import ITYPE, DTYPE
-
-
-cdef inline DTYPE_t _euclidean_dist(
-    DTYPE_t[:, ::1] X,
-    DTYPE_t[:, ::1] Y,
-    ITYPE_t i,
-    ITYPE_t j,
-) nogil:
-    cdef:
-        DTYPE_t dist = 0
-        ITYPE_t k
-        ITYPE_t upper_unrolled_idx = (X.shape[1] // 4) * 4
-
-    # Unrolling loop to help with vectorisation
-    for k in range(0, upper_unrolled_idx, 4):
-        dist += (X[i, k] - Y[j, k]) * (X[i, k] - Y[j, k])
-        dist += (X[i, k + 1] - Y[j, k + 1]) * (X[i, k + 1] - Y[j, k + 1])
-        dist += (X[i, k + 2] - Y[j, k + 2]) * (X[i, k + 2] - Y[j, k + 2])
-        dist += (X[i, k + 3] - Y[j, k + 3]) * (X[i, k + 3] - Y[j, k + 3])
-
-    for k in range(upper_unrolled_idx, X.shape[1]):
-        dist += (X[i, k] - Y[j, k]) * (X[i, k] - Y[j, k])
-
-    return sqrt(dist)
 
 
 cdef class ParallelReduction:
@@ -160,35 +133,6 @@ cdef class ParallelReduction:
             self.n_X != (X_n_full_chunks * self.X_n_samples_chunk)
         )
 
-    def __dealloc__(self):
-        pass
-
-    cdef void _on_X_parallel_init(self,
-            ITYPE_t thread_num,
-    ) nogil:
-        return
-
-    cdef void _on_X_parallel_finalize(self,
-            ITYPE_t thread_num
-    ) nogil:
-        return
-
-    cdef void _on_X_prange_iter_init(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
-    ) nogil:
-        return
-
-    cdef void _on_X_prange_iter_finalize(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
-    ) nogil:
-        return
-
     cdef void _parallel_on_X(self) nogil:
         """Computes the reduction of each vector (row) of X on Y
         by parallelizing computation on chunks of X.
@@ -245,26 +189,8 @@ cdef class ParallelReduction:
         # end: with nogil, parallel
         return
 
-    cdef void _on_Y_parallel_init(self,
-        ITYPE_t thread_num,
-    ) nogil:
-        return
-
-    cdef void _on_Y_parallel_finalize(self,
-        ITYPE_t thread_num,
-        ITYPE_t X_chunk_idx,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-    ) nogil:
-        return
-
-    cdef void _on_Y_finalize(self,
-        ITYPE_t thread_num,
-    ) nogil:
-        return
-
     cdef void _parallel_on_Y(self) nogil:
-        """Computes the argkmin of each vector (row) of X on Y
+        """Computes the reduction of each vector (row) of X on Y
         by parallelizing computation on chunks of Y.
 
         Private datastructures are modified internally by threads.
@@ -318,6 +244,7 @@ cdef class ParallelReduction:
         self._on_Y_finalize(num_threads)
         return
 
+    # Placeholder methods which have to be implemented
     cdef int _reduce_on_chunks(self,
         const DTYPE_t[:, ::1] X,
         const DTYPE_t[:, ::1] Y,
@@ -330,6 +257,55 @@ cdef class ParallelReduction:
         """ Abstract method: Sub-classes implemented the reduction
         on a pair of chunks"""
         return -1
+
+    def __dealloc__(self):
+        pass
+
+    # Placeholder methods which can be implemented
+
+    cdef void _on_X_parallel_init(self,
+            ITYPE_t thread_num,
+    ) nogil:
+        return
+
+    cdef void _on_X_parallel_finalize(self,
+            ITYPE_t thread_num
+    ) nogil:
+        return
+
+    cdef void _on_X_prange_iter_init(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_chunk_idx,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _on_X_prange_iter_finalize(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_chunk_idx,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _on_Y_parallel_init(self,
+        ITYPE_t thread_num,
+    ) nogil:
+        return
+
+    cdef void _on_Y_parallel_finalize(self,
+        ITYPE_t thread_num,
+        ITYPE_t X_chunk_idx,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _on_Y_finalize(self,
+        ITYPE_t thread_num,
+    ) nogil:
+        return
 
 cdef class ArgKmin(ParallelReduction):
     """Computes the argkmin of vectors (rows) of a set of
@@ -374,6 +350,7 @@ cdef class ArgKmin(ParallelReduction):
                 ITYPE_t chunk_size=CHUNK_SIZE,
                 dict metric_kwargs=dict(),
         ):
+        # This factory comes to handle specialisation on fast_sqeuclidean.
         if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
         return ArgKmin(X=X, Y=Y,
@@ -396,7 +373,7 @@ cdef class ArgKmin(ParallelReduction):
         self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_X, self.k), FLOAT_INF, dtype=DTYPE)
 
-        # Temporary datastructures used in threads
+        # Pointers to thread local heaps used in threads for `parallel_on_Y` solely
         self.heaps_approx_distances_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
 
@@ -432,6 +409,8 @@ cdef class ArgKmin(ParallelReduction):
             ITYPE_t n_x = X_end - X_start
             ITYPE_t n_y = Y_end - Y_start
 
+        # Pushing the distance and their associated indices on heaps
+        # which keep tracks of the argkmin.
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
                 _push(heaps_approx_distances + i * self.k,
@@ -447,12 +426,8 @@ cdef class ArgKmin(ParallelReduction):
     cdef void _on_X_parallel_init(self,
             ITYPE_t thread_num,
     ) nogil:
-        cdef:
-            # in bytes
-            ITYPE_t heap_size = self.X_n_samples_chunk * self.k * self.sf
-
-        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heap_size)
+        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(
+            self.X_n_samples_chunk * self.k * self.sf)
 
     cdef void _on_X_prange_iter_init(self,
             ITYPE_t thread_num,
@@ -629,10 +604,12 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
     vectors (rows) of X on another set of vectors (rows) of Y
     using the GEMM-trick.
 
+    Notes
+    -----
     This implementation has an superior arithmetic intensity
     and hence running time, but it can suffer from numerical
-    instability. We recommend using ArgKmin with
-    EuclideanDistance when exact precision is needed.
+    instability. ArgKmin with EuclideanDistance must be
+    used when exact precision is needed.
     """
 
     cdef:
