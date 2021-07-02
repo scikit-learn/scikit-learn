@@ -80,7 +80,7 @@ sns.boxplot(
 # ------------------------------------------------------
 #
 # Let's now train two :class:`~sklearn.linear_model.LinearRegression`
-# models to predict our hourly wage . We include the ability feature
+# models to predict our hourly wage. We include the ability feature
 # in the first model and show that our estimate of the college degree
 # coefficient is close to 2 which is the true causal effect from our
 # data generating process. In real life, intellectual ability is either
