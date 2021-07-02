@@ -1,7 +1,7 @@
 """
-==================================================================
-Pitfall in the Causal Interpretation of Machine Learning Models
-==================================================================
+================================================
+Causal Interpretation of Machine Learning Models
+================================================
 
 Machine Learning models are great for measuring statistical associations.
 Unfortunately, unless we're willing to make strong assumptions about the data, 
@@ -34,7 +34,7 @@ from sklearn.linear_model import LinearRegression
 # the hourly wage of one of the parents is drawn from Beta distribution.
 # We then create an indicator of college degree which is positivily
 # impacted by ability and parental hourly wage. Finally, we model
-# hourly wages as linear function of all the previous variables and a
+# hourly wages as a linear function of all the previous variables and a
 # random component. Note that all variables have a positivie effect on 
 # hourly wages. 
 
@@ -59,7 +59,7 @@ hourly_wages[hourly_wages < 0] = 0
 # ------------------
 #
 # As expected, people with a higher ability are more likely to attend
-# and graduate from college. 
+# and graduate college. 
 
 import pandas as pd
 import seaborn as sns
@@ -79,9 +79,14 @@ sns.boxplot(
 # ------------------------------------------------------
 #
 # Let's now train two :class:`~sklearn.linear_model.LinearRegression` 
-# models to predict our hourly . We include the ability feature in the first model and show that
-# our estimate for the college degree coefficient is close to 2 which is the true causal effect from our data generating process. In real life, intellectual ability is either never observed or poorly measured (e.g. IQ score).
-# Researchers are forced to "omit" the ability feature from their models, thereby inflating the estimate via a positive OVB. 
+# models to predict our hourly wage . We include the ability feature 
+#in the first model and show that our estimate of the college degree
+# coefficient is close to 2 which is the true causal effect from our
+# data generating process. In real life, intellectual ability is either
+# never observed or poorly measured (e.g. IQ score).
+# Researchers are forced to "omit" the ability feature from their models,
+# thereby inflating the estimate via a positive OVB. 
+
 clf_with = LinearRegression()
 clf_with.fit(np.stack([experiences, parent_hourly_wages, college_degrees,
              abilities], axis=1), hourly_wages)
@@ -105,16 +110,17 @@ print ('College degree coefficient without ability control: {}'.format(
 #
 # Machine learning models are not reliable for inferring causation causal effect. 
 # While we showed this with a linear model, OVB can strike any type of models.
-# Whenever interpreting a coefficient of a feautre or a change in predictions
+#
+# Whenever interpreting a coefficient or a change in predictions
 # brought about by a change in one of the features, it is important to think of 
 # potentially unobsered variables and whether they could be correlated with both
 # the feature in question and the target variable.
-# Such variables are called `Confounding Variables<https://en.wikipedia.org/wiki/Confounding>`.
+# Such variables are called `"Confounding Variables"<https://en.wikipedia.org/wiki/Confounding>`_.
 # To avoid these, researchers usually conduct experiments in which
 # the treatment variable (e.g. college degree) is randomized. When an experiment
 # is prohibitively expensive or unethical, researchers
 # can somethimes use other causal inference techniques such as
-# `Instrumental Variables<https://en.wikipedia.org/wiki/Instrumental_variables_estimation>`_(IV) estimations.
+# `"Instrumental Variables"<https://en.wikipedia.org/wiki/Instrumental_variables_estimation>`_(IV) estimations.
  
 
 

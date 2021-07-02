@@ -673,8 +673,10 @@ plt.subplots_adjust(left=.3)
 # causes both EDUCATION and WAGE. One example of such variable is ability.
 # Presumably, more able people are more likely to pursue education while at the
 # same time being more likely to earn a higher hourly wage at any level of
-# education. In this case, ability induces a positive `Omitted Variable Bias <https://en.wikipedia.org/wiki/Conditional_dependence>`_(OVB)
-# on the EDUCATION coefficient, thereby exaggerating the effect of education on wages.
+# education. In this case, ability induces a positive `"Omitted Variable Bias" 
+# <https://en.wikipedia.org/wiki/Conditional_dependence>`_(OVB)
+# on the EDUCATION coefficient, thereby exaggerating the effect of education
+# on wages.
 #
 # See the :ref:`sphx_glr_auto_examples_inspection_plot_causal_interpretation.py`
 # for a simulated case of ability OVB.
@@ -688,9 +690,9 @@ plt.subplots_adjust(left=.3)
 # learning models are trained to approximates the unobserved
 # mathematical function that links X to y from sample data. As a 
 # result, any interpretation made about a model may not necessarily
-# generalize to the true Data Generating process. This is especially
+# generalize to the true Data Generating Process. This is especially
 # true when the model is of bad quality or when the sample data is
-# not representative of the population
+# not representative of the population.
 
 # %%
 # Lessons learned
@@ -708,7 +710,7 @@ plt.subplots_adjust(left=.3)
 #   coefficients could significantly vary from one another.
 # * Inspecting coefficients across the folds of a cross-validation loop
 #   gives an idea of their stability.
-# * Coefficient are unlikely to have any causal interpretation. They tend 
-#   to be biased by omitted confounders. 
+# * Coefficient are unlikely to have any causal meaning. They tend 
+#   to be biased by unobserved confounders. 
 # * Inspection tools may not necessarily provide insights on the true
 #   Data Generating Process. 
