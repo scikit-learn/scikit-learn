@@ -69,9 +69,6 @@ cdef class ParallelReduction:
 
         ITYPE_t d
 
-        # dtypes sizes
-        ITYPE_t sf, si
-
         ITYPE_t n_X, X_n_samples_chunk, X_n_chunks, X_n_samples_rem
         ITYPE_t n_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_rem
 
@@ -107,8 +104,6 @@ cdef class ParallelReduction:
         distance_metric._validate_data(Y)
 
         self.d = X.shape[1]
-        self.sf = sizeof(DTYPE_t)
-        self.si = sizeof(ITYPE_t)
         self.chunk_size = chunk_size
         self.n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
@@ -463,8 +458,8 @@ cdef class ArgKmin(ParallelReduction):
         # As chunks of X are shared across threads, so must their
         # heaps. To solve this, each thread has its own locals
         # heaps which are then synchronised back in the main ones.
-        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heaps_size * self.sf)
-        self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(heaps_size * self.si)
+        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heaps_size * sizeof(DTYPE_t))
+        self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(heaps_size * sizeof(ITYPE_t))
 
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
@@ -631,7 +626,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         ArgKmin._on_X_parallel_init(self, thread_num)
         # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
         self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
-            self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf)
+            self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t))
 
     cdef void _on_X_parallel_finalize(self,
             ITYPE_t thread_num
@@ -645,7 +640,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         ArgKmin._on_Y_parallel_init(self, thread_num)
         # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
         self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
-            self.Y_n_samples_chunk * self.X_n_samples_chunk * self.sf)
+            self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t))
 
     cdef void _on_Y_parallel_finalize(self,
             ITYPE_t thread_num,
