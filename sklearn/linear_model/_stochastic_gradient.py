@@ -2000,7 +2000,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         instance used by `np.random`.
 
     learning_rate : string, optional
-        The learning rate schedule:
+        The learning rate schedule to use with fit. (If using partial_fit,
+        learning rate must be controlled directly)
 
         'constant':
             eta = eta0
