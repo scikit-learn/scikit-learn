@@ -789,8 +789,10 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, dataframe} of shape \
-            (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input samples. Use ``dtype=np.float32`` for maximum
+            efficiency. Sparse matrices are also supported, use sparse
+            ``csc_matrix`` for maximum efficiency.
 
         y : Ignored
             Not used, present for API consistency by convention.
