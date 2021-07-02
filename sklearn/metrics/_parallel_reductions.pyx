@@ -40,9 +40,10 @@ from ..utils._typedefs cimport ITYPE_t, DTYPE_t
 from ..utils._typedefs import ITYPE, DTYPE
 
 
-cdef class ParallelReduction:
-    """Abstract class to computes a reduction of a set of
-    vectors (rows) of X on another set of vectors (rows) of Y.
+cdef class PairwiseDistancesReduction:
+    """Abstract class to computes a reduction on pairwise
+    distances between a set of vectors (rows) X and another
+    set of vectors (rows) of Y.
 
     The implementation of the reduction is done parallelized
     on chunks whose size can be set using ``chunk_size``.
@@ -302,7 +303,7 @@ cdef class ParallelReduction:
     ) nogil:
         return
 
-cdef class ArgKmin(ParallelReduction):
+cdef class ArgKmin(PairwiseDistancesReduction):
     """Computes the argkmin of vectors (rows) of a set of
     vectors (rows) of X on another set of vectors (rows) of Y.
 
@@ -334,7 +335,7 @@ cdef class ArgKmin(ParallelReduction):
 
     @classmethod
     def valid_metrics(cls):
-        return {"fast_sqeuclidean", *METRIC_MAPPING.keys()}
+        return {"fast_sqeuclidean", *PairwiseDistancesReduction.valid_metrics()}
 
     @classmethod
     def get_for(cls,
@@ -360,7 +361,7 @@ cdef class ArgKmin(ParallelReduction):
                  ITYPE_t k,
                  ITYPE_t chunk_size = CHUNK_SIZE,
     ):
-        ParallelReduction.__init__(self, X, Y, distance_metric, chunk_size)
+        PairwiseDistancesReduction.__init__(self, X, Y, distance_metric, chunk_size)
 
         self.k = k
 
@@ -373,7 +374,7 @@ cdef class ArgKmin(ParallelReduction):
         self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
 
     def __dealloc__(self):
-        ParallelReduction.__dealloc__(self)
+        PairwiseDistancesReduction.__dealloc__(self)
         if self.heaps_indices_chunks is not NULL:
             free(self.heaps_indices_chunks)
         else:
