@@ -369,7 +369,7 @@ cdef class ArgKmin(ParallelReduction):
 
         self.k = k
 
-        # Results returned by ArgKmin.compute
+        # Results returned by ArgKmin.compute used as the main heaps
         self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_X, self.k), FLOAT_INF, dtype=DTYPE)
 
@@ -423,12 +423,6 @@ cdef class ArgKmin(ParallelReduction):
 
         return 0
 
-    cdef void _on_X_parallel_init(self,
-            ITYPE_t thread_num,
-    ) nogil:
-        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(
-            self.X_n_samples_chunk * self.k * self.sf)
-
     cdef void _on_X_prange_iter_init(self,
             ITYPE_t thread_num,
             ITYPE_t X_chunk_idx,
@@ -436,12 +430,10 @@ cdef class ArgKmin(ParallelReduction):
             ITYPE_t X_end,
     ) nogil:
 
-        # We reset the heap between X chunks (memset can't be used here)
-        for idx in range(self.X_n_samples_chunk * self.k):
-            self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
-
-        # Referencing the thread-local heaps via the thread-scope pointer
-        # of pointers attached to the instance
+        # As this strategy is embarassingly parallel, we can set the
+        # thread-local heaps pointers to the proper position
+        # on the main heaps
+        self.heaps_approx_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
         self.heaps_indices_chunks[thread_num] = &self.argkmin_indices[X_start, 0]
 
     cdef void _on_X_prange_iter_finalize(self,
@@ -457,29 +449,22 @@ cdef class ArgKmin(ParallelReduction):
         for idx in range(X_end - X_start):
             _simultaneous_sort(
                 self.heaps_approx_distances_chunks[thread_num] + idx * self.k,
-                &self.argkmin_indices[X_start + idx, 0],
+                self.heaps_indices_chunks[thread_num] + idx * self.k,
                 self.k
             )
-
-    cdef void _on_X_parallel_finalize(self,
-            ITYPE_t thread_num
-    ) nogil:
-        free(self.heaps_approx_distances_chunks[thread_num])
 
     cdef void _on_Y_parallel_init(self,
             ITYPE_t thread_num,
     ) nogil:
         cdef:
-            # in bytes
-            ITYPE_t int_heap_size = self.X_n_samples_chunk * self.k * self.si
-            ITYPE_t float_heap_size = self.X_n_samples_chunk * self.k * self.sf
-
-        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(float_heap_size)
+            # number of scalar elements
+            ITYPE_t heaps_size = self.X_n_samples_chunk * self.k
 
         # As chunks of X are shared across threads, so must their
         # heaps. To solve this, each thread has its own locals
         # heaps which are then synchronised back in the main ones.
-        self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(int_heap_size)
+        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heaps_size * self.sf)
+        self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(heaps_size * self.si)
 
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
@@ -517,7 +502,8 @@ cdef class ArgKmin(ParallelReduction):
             ITYPE_t num_threads = min(self.X_n_chunks, self.effective_omp_n_thread)
             ITYPE_t idx
 
-        # Sorting indices of the argkmin for each query vector of X
+        # Sort the main heaps into arrays in parallel
+        # in ascending order w.r.t the distances
         for idx in prange(self.n_X, schedule='static',
                           nogil=True, num_threads=num_threads):
             _simultaneous_sort(
@@ -542,7 +528,6 @@ cdef class ArgKmin(ParallelReduction):
                                                  &self.Y[Y_indices[i, j], 0],
                                                  self.d)
 
-    # Python interface
     def compute(self,
            str strategy = "auto",
            bint return_distance = False
@@ -590,7 +575,7 @@ cdef class ArgKmin(ParallelReduction):
 
         if return_distance:
             # We need to recompute distances because we relied on
-            # reduced distances.
+            # approximate distances.
             self._exact_distances(self.argkmin_indices, self.argkmin_distances)
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
@@ -625,6 +610,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
                   ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         ArgKmin.__init__(self, X, Y,
+                         # The distance metric here is used for exact distances computations
                          distance_metric=DistanceMetric.get_metric("euclidean"),
                          k=k,
                          chunk_size=chunk_size)
@@ -736,7 +722,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
                 _push(heaps_approx_distances + i * k,
                       heaps_indices + i * k,
                       k,
-                      # approximated distance: - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                      # approximate distance: - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                       dist_middle_terms[i * Y_c.shape[0] + j] + self.Y_sq_norms[j + Y_start],
                       j + Y_start)
         return 0
