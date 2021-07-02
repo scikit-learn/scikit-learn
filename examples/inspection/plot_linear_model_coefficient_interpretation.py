@@ -674,8 +674,8 @@ plt.subplots_adjust(left=.3)
 # causes both EDUCATION and WAGE. One example of such variable is ability.
 # Presumably, more able people are more likely to pursue education while at the
 # same time being more likely to earn a higher hourly wage at any level of
-# education. In this case, ability induces a positive `"Omitted Variable Bias"
-# <https://en.wikipedia.org/wiki/Conditional_dependence>`_(OVB)
+# education. In this case, ability induces a positive `Omitted Variable Bias
+# <https://en.wikipedia.org/wiki/Omitted-variable_bias>`_ (OVB)
 # on the EDUCATION coefficient, thereby exaggerating the effect of education
 # on wages.
 #

@@ -11,7 +11,7 @@ To illustrate this, we will simulate a situation in which we try to answer
 one of the most important questions in economics of education:
 what is the causal effect of earning a college degree on hourly wages?
 Although the answer to this question is crucial to policy makers,
-`Omitted-Variable Biases<https://en.wikipedia.org/wiki/Omitted-variable_bias>`_(OVB)
+`Omitted-Variable Biases <https://en.wikipedia.org/wiki/Omitted-variable_bias>`_ (OVB)
 prevent us from identifying that causal effect.
 
 
@@ -39,7 +39,7 @@ from sklearn.linear_model import LinearRegression
 # random component. Note that all variables have a positivie effect on
 # hourly wages.
 
-N = 1000000
+N = 10000
 experiences = np.random.normal(20, 10, size=N).astype(int)
 experiences[experiences < 0] = 0
 abilities = np.random.normal(0, 0.15, size=N)
@@ -57,23 +57,24 @@ hourly_wages[hourly_wages < 0] = 0
 
 # %%
 # Description of the simulated data
-# ------------------
+# ---------------------------------
 #
-# As expected, people with a higher ability are more likely to attend
-# and graduate college.
+# The following plot shows the distribution of each variable,
+# and pairwise scatter plots. Key to our OVB story is the positive
+# relationship between ability and college degree.
 
 import pandas as pd
 import seaborn as sns
 
-df = pd.DataFrame({'college_degree': college_degrees,
-                  'ability': abilities})
+df = pd.DataFrame({
+    'hourly_wage': hourly_wages,
+    'experience': experiences,
+    'parent_hourly_wage': parent_hourly_wages,
+    'college_degree': college_degrees,
+    'ability': abilities
+    })
 
-sns.boxplot(
-    data=df,
-    x="college_degree",
-    y="ability",
-    showmeans=True,
-)
+_ = sns.pairplot(df, diag_kind='kde')
 
 # %%
 # Predicting income with and without the ability feature
@@ -114,12 +115,12 @@ print('College degree coefficient without ability control: {}'.format(
 # brought about by a change in one of the features, it is important to think of
 # potentially unobsered variables and whether they could be correlated with both
 # the feature in question and the target variable.
-# Such variables are called `"Confounding Variables"
+# Such variables are called `Confounding Variables
 # <https://en.wikipedia.org/wiki/Confounding>`_.
 # To avoid these, researchers usually conduct experiments in which
 # the treatment variable (e.g. college degree) is randomized. When an experiment
 # is prohibitively expensive or unethical, researchers
-# can somethimes use other causal inference techniques such as
-# `"Instrumental Variables"
-# <https://en.wikipedia.org/wiki/Instrumental_variables_estimation>`_(IV)
+# can somethimes use other causal inference techniques such
+# as `Instrumental Variables
+# <https://en.wikipedia.org/wiki/Instrumental_variables_estimation>`_ (IV)
 # estimations.
