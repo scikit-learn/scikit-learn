@@ -661,12 +661,13 @@ plt.subplots_adjust(left=.3)
 # Policy makers might want to know the effect of education on wage to
 # assess whether or not a a certain policy designed to entice people to
 # pursue more education would make economic sense. 
-# While machine Learning models are great for measuring statistical associations,
-# they are generally unable to infer causal effects. 
+# While machine Learning models are great for measuring statistical
+# associations, they are generally unable to infer causal effects. 
 #
-# It might be tempting to look at the coefficient of education on wage from
-# our last model (or any model for that matter) and conclude that it captures the
-# true effect of a change in the standardized education variable on wages. 
+# It might be tempting to look at the coefficient of education on wage
+# from our last model (or any model for that matter) and conclude that it
+# captures the true effect of a change in the standardized education variable
+# on wages. 
 #
 # Unfortunately there are likely unobserved confounding variables that either
 # inflate or deflate that coefficient. A confounding variable is a variable that
@@ -683,11 +684,11 @@ plt.subplots_adjust(left=.3)
 
 #%%
 # Warning: data and model quality
-# ---------------------------------
+# -------------------------------
 #
 # Keep in mind that the outcome y and features X are the product
 # of a Data Generating Process that is hidden from us. Machine
-# learning models are trained to approximates the unobserved
+# learning models are trained to approximate the unobserved
 # mathematical function that links X to y from sample data. As a 
 # result, any interpretation made about a model may not necessarily
 # generalize to the true Data Generating Process. This is especially
