@@ -26,21 +26,17 @@ RandomForestQuantileRegressor and ExtraTreesQuantileRegressor are therefore only
 placeholders that link to the two implementations, passing on a parameter base_estimator
 to pick the right training algorithm.
 """
-from abc import ABCMeta, abstractmethod
-
 from cython.parallel cimport prange
-from libc.stdint cimport int32_t, int64_t
-
 cimport openmp
 cimport numpy as np
 from numpy cimport ndarray
 
-from ..metrics import mean_pinball_loss
 from ..utils._weighted_quantile cimport _weighted_quantile_presorted_1D, _weighted_quantile_unchecked_1D, Interpolation
+
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from numpy.lib.function_base import _quantile_is_valid
-
 import threading
 import joblib
 from joblib import Parallel
@@ -52,19 +48,22 @@ from ..utils.fixes import _joblib_parallel_args
 from ..tree import DecisionTreeRegressor, ExtraTreeRegressor
 from ..utils import check_array, check_X_y, check_random_state
 from ..utils.validation import check_is_fitted
+from ..metrics import mean_pinball_loss
+
+ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 
 
 __all__ = ["RandomForestQuantileRegressor", "ExtraTreesQuantileRegressor"]
 
 
-cpdef void _quantile_forest_predict(int64_t[:, ::1] X_leaves,
+cpdef void _quantile_forest_predict(SIZE_t[:, ::1] X_leaves,
                                     float[:, ::1] y_train,
-                                    int64_t[:, ::1] y_train_leaves,
+                                    SIZE_t[:, ::1] y_train_leaves,
                                     float[:, ::1] y_weights,
                                     float[::1] q,
                                     float[:, :, ::1] quantiles,
-                                    int64_t start,
-                                    int64_t stop):
+                                    SIZE_t start,
+                                    SIZE_t stop):
     """
     X_leaves : (n_estimators, n_test_samples)
     y_train : (n_samples, n_outputs)
@@ -112,13 +111,13 @@ cpdef void _quantile_forest_predict(int64_t[:, ::1] X_leaves,
                                                     quantiles[:, i, o], Interpolation.linear)
 
 
-cdef void _weighted_random_sample(int64_t[::1] leaves,
-                                  int64_t[::1] unique_leaves,
+cdef void _weighted_random_sample(SIZE_t[::1] leaves,
+                                  SIZE_t[::1] unique_leaves,
                                   float[::1] weights,
-                                  int64_t[::1] idx,
+                                  SIZE_t[::1] idx,
                                   double[::1] random_numbers,
-                                  int64_t[::1] sampled_idx,
-                                  int n_jobs):
+                                  SIZE_t[::1] sampled_idx,
+                                  SIZE_t n_jobs):
     """
     Random sample for each unique leaf
 
@@ -544,7 +543,7 @@ class _RandomSampleForestQuantileRegressor(_DefaultForestQuantileRegressor):
             random_instance = check_random_state(est.random_state)
             random_numbers = random_instance.rand(len(unique_leaves))
 
-            sampled_idx = np.empty(len(unique_leaves), dtype=np.int64)
+            sampled_idx = np.empty(len(unique_leaves), dtype=np.intp)
             _weighted_random_sample(leaves, unique_leaves, est.y_weights_[mask], idx, random_numbers, sampled_idx,
                                     self.n_jobs)
 
