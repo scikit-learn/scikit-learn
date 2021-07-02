@@ -17,7 +17,6 @@ DOCSTRING_IGNORE_LIST = [
     "Birch",
     "CCA",
     "CalibratedClassifierCV",
-    "CategoricalNB",
     "ClassifierChain",
     "ColumnTransformer",
     "ComplementNB",
