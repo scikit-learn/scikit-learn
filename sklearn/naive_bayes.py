@@ -190,7 +190,7 @@ class GaussianNB(_BaseNB):
     ComplementNB : The Complement Naive Bayes classifier
         described in Rennie et al. (2003).
     MultinomialNB : Naive Bayes classifier for multinomial models.
-    
+
     Examples
     --------
     >>> import numpy as np
