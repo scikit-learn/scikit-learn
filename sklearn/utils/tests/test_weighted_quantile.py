@@ -1,5 +1,5 @@
 import numpy as np
-from .._weighted_quantile import weighted_quantile
+from sklearn.utils._weighted_quantile import weighted_quantile
 
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_almost_equal

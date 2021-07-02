@@ -29,6 +29,8 @@ to pick the right training algorithm.
 from abc import ABCMeta, abstractmethod
 
 from cython.parallel cimport prange
+from libc.stdint cimport int32_t, int64_t
+
 cimport openmp
 cimport numpy as np
 from numpy cimport ndarray
@@ -55,14 +57,14 @@ from ..utils.validation import check_is_fitted
 __all__ = ["RandomForestQuantileRegressor", "ExtraTreesQuantileRegressor"]
 
 
-cpdef void _quantile_forest_predict(long[:, ::1] X_leaves,
+cpdef void _quantile_forest_predict(int64_t[:, ::1] X_leaves,
                                     float[:, ::1] y_train,
-                                    long[:, ::1] y_train_leaves,
+                                    int64_t[:, ::1] y_train_leaves,
                                     float[:, ::1] y_weights,
                                     float[::1] q,
                                     float[:, :, ::1] quantiles,
-                                    long start,
-                                    long stop):
+                                    int64_t start,
+                                    int64_t stop):
     """
     X_leaves : (n_estimators, n_test_samples)
     y_train : (n_samples, n_outputs)
@@ -110,12 +112,12 @@ cpdef void _quantile_forest_predict(long[:, ::1] X_leaves,
                                                     quantiles[:, i, o], Interpolation.linear)
 
 
-cdef void _weighted_random_sample(long[::1] leaves,
-                                  long[::1] unique_leaves,
+cdef void _weighted_random_sample(int64_t[::1] leaves,
+                                  int64_t[::1] unique_leaves,
                                   float[::1] weights,
-                                  long[::1] idx,
+                                  int64_t[::1] idx,
                                   double[::1] random_numbers,
-                                  long[::1] sampled_idx,
+                                  int64_t[::1] sampled_idx,
                                   int n_jobs):
     """
     Random sample for each unique leaf
@@ -530,7 +532,7 @@ class _RandomSampleForestQuantileRegressor(_DefaultForestQuantileRegressor):
 
         for i, est in enumerate(self.estimators_):
             if self.verbose:
-                print(f"Sampling tree {i} of {self.n_estimators}")
+                print(f"Sampling tree {i+1} of {self.n_estimators}")
 
             mask = est.y_weights_ > 0
 
