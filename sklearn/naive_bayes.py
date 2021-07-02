@@ -183,6 +183,14 @@ class GaussianNB(_BaseNB):
     theta_ : ndarray of shape (n_classes, n_features)
         mean of each feature per class.
 
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : The Complement Naive Bayes classifier
+        described in Rennie et al. (2003).
+    MultinomialNB : Naive Bayes classifier for multinomial models.
+    
     Examples
     --------
     >>> import numpy as np
@@ -796,6 +804,14 @@ class MultinomialNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : The Complement Naive Bayes classifier
+        described in Rennie et al. (2003).
+    GaussianNB : Gaussian Naive Bayes (GaussianNB).
+
     Examples
     --------
     >>> import numpy as np
@@ -929,6 +945,13 @@ class ComplementNB(_BaseDiscreteNB):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    GaussianNB : Gaussian Naive Bayes (GaussianNB).
+    MultinomialNB : Naive Bayes classifier for multinomial models.
 
     Examples
     --------
@@ -1215,6 +1238,14 @@ class CategoricalNB(_BaseDiscreteNB):
         inferred from the data or set by the minimum number of categories.
 
         .. versionadded:: 0.24
+
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    ComplementNB : The Complement Naive Bayes classifier
+        described in Rennie et al. (2003).
+    GaussianNB : Gaussian Naive Bayes (GaussianNB).
+    MultinomialNB : Naive Bayes classifier for multinomial models.
 
     Examples
     --------
