@@ -425,7 +425,7 @@ cdef class ArgKmin(ParallelReduction):
             ITYPE_t X_end,
     ) nogil:
 
-        # As this strategy is embarassingly parallel, we can set the
+        # As this strategy is embarrassingly parallel, we can set the
         # thread-local heaps pointers to the proper position
         # on the main heaps
         self.heaps_approx_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
@@ -494,13 +494,12 @@ cdef class ArgKmin(ParallelReduction):
             ITYPE_t thread_num,
     ) nogil:
         cdef:
-            ITYPE_t num_threads = min(self.X_n_chunks, self.effective_omp_n_thread)
             ITYPE_t idx
 
         # Sort the main heaps into arrays in parallel
         # in ascending order w.r.t the distances
-        for idx in prange(self.n_X, schedule='static',
-                          nogil=True, num_threads=num_threads):
+        for idx in prange(self.n_X, schedule='static', nogil=True,
+                          num_threads=self.effective_omp_n_thread):
             _simultaneous_sort(
                 &self.argkmin_distances[idx, 0],
                 &self.argkmin_indices[idx, 0],
@@ -512,7 +511,7 @@ cdef class ArgKmin(ParallelReduction):
         ITYPE_t[:, ::1] Y_indices,  # IN
         DTYPE_t[:, ::1] distances,  # IN/OUT
     ) nogil:
-        """Convert reduced distances to pairwise distances in parallel."""
+        """Convert approximate distances to pairwise distances in parallel."""
         cdef:
             ITYPE_t i, j
 
