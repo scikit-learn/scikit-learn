@@ -574,7 +574,7 @@ class SVC(BaseSVC):
         weight one.
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     verbose : bool, default=False
         Enable verbose output. Note that this setting takes advantage of a
@@ -675,22 +675,6 @@ class SVC(BaseSVC):
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> y = np.array([1, 1, 2, 2])
-    >>> from sklearn.svm import SVC
-    >>> clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
-    >>> clf.fit(X, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('svc', SVC(gamma='auto'))])
-
-    >>> print(clf.predict([[-0.8, -1]]))
-    [1]
-
     See Also
     --------
     SVR : Support Vector Machine for Regression implemented using libsvm.
@@ -707,6 +691,22 @@ class SVC(BaseSVC):
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    >>> y = np.array([1, 1, 2, 2])
+    >>> from sklearn.svm import SVC
+    >>> clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
+    >>> clf.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svc', SVC(gamma='auto'))])
+
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
     """
 
     _impl = "c_svc"
