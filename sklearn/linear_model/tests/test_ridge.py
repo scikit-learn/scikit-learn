@@ -1627,7 +1627,8 @@ def test_lbfgs_solver_consistency(alpha):
     alpha = np.asarray([alpha])
     config = {
         "positive": False,
-        "tol": 1e-14,
+        "tol": 1e-16,
+        "max_iter": 500000,
     }
 
     coef_lbfgs = _solve_lbfgs(X, y, alpha, **config)
