@@ -63,7 +63,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    subsample : int, optional (default='warn')
+    subsample : int or None (default='warn')
         Maximum number of samples, used to fit the model, for computational
         efficiency. Used when ``strategy`` is 'quantile'.
 
