@@ -194,7 +194,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if self.strategy == "quantile" and self.subsample == "warn":
             warnings.warn(
-                "In the future (vTBD) onwards subsample = 1e5"
+                "In version 1.2, onwards subsample = 2e5"
                 "will be used by default. Pass subsample=None to"
                 "silence this warning for now.",
                 FutureWarning,
