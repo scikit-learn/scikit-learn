@@ -243,7 +243,8 @@ def _solve_lbfgs(
 
     The main purpose is fitting with forcing coefficients to be positive.
     For unconstrained ridge regression, there are faster dedicated solver methods.
-    Note that LBFGS seems faster than scipy.optimize.lsq_linear.
+    Note that with positive bounds on the coefficients, LBFGS seems faster
+    than scipy.optimize.lsq_linear.
     """
     n_samples, n_features = X.shape
 
