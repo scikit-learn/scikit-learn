@@ -83,7 +83,6 @@ DOCSTRING_IGNORE_LIST = [
     "LassoLarsIC",
     "LatentDirichletAllocation",
     "LedoitWolf",
-    "LinearSVC",
     "LinearSVR",
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
