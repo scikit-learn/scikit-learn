@@ -196,6 +196,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         y : array-like of shape (n_samples,)
             The target values.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         return self._fit(X, y)
 
