@@ -402,7 +402,8 @@ def test_subsample_default_and_none():
     kbd_subs_def = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
     kbd_subs_none.fit(X)
 
-    with pytest.warns(FutureWarning):
+    msg = "Pass subsample=None"
+    with pytest.warns(FutureWarning, match=msg):
         kbd_subs_def.fit(X)
 
     assert_array_equal(kbd_subs_none.bin_edges_[0], kbd_subs_def.bin_edges_[0])
