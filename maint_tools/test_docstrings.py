@@ -90,7 +90,6 @@ DOCSTRING_IGNORE_LIST = [
     "MDS",
     "MLPClassifier",
     "MLPRegressor",
-    "MaxAbsScaler",
     "MeanShift",
     "MinCovDet",
     "MiniBatchDictionaryLearning",
