@@ -25,6 +25,7 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_array
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
+# from ..utils.validation import check_is_fitted
 
 
 def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
@@ -370,7 +371,9 @@ class BisectKMeans(KMeans):
                 n_threads=self._n_threads,
             )
 
-            if best_inertia is None or inertia < best_inertia:
+            # allow small tolerance on the inertia to accommodate for
+            # non-deterministic rounding errors due to parallel computation
+            if best_inertia is None or inertia < best_inertia * (1 - 1e-6):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
@@ -450,8 +453,8 @@ class BisectKMeans(KMeans):
 
         # Subtract of mean of X for more accurate distance computations
         if not sp.issparse(X):
-            X_mean = X.mean(axis=0)
-            X -= X_mean
+            self._X_mean = X.mean(axis=0)
+            X -= self._X_mean
 
         # Only assign to created centroid when n_clusters == 1
         if self.n_clusters == 1:
@@ -469,17 +472,14 @@ class BisectKMeans(KMeans):
         else:
             # Run proper bisection to gather
             # self.cluster_centers_ and self.labels_
-            # clusters, self.labels_ = self._run_bisect_kmeans(
-            #     X, sample_weight, random_state
-            # )
             clusters, self.labels_ = self._run_bisect_kmeans(
                 X, sample_weight, random_state
             )
 
         # Restore original data
         if not sp.issparse(X):
-            X += X_mean
-            clusters += X_mean
+            X += self._X_mean
+            clusters += self._X_mean
 
         self.cluster_centers_ = clusters
 
@@ -525,21 +525,22 @@ class BisectKMeans(KMeans):
 
         # Tree Dictionary will be later used at prediction
         tree_dict = {
-            0: {'children': None,
-                'center': None
-                }
+            -1: {'children': None,
+                 'center': None
+                 }
         }
 
-        # Leaves Dictionary
+        # Leaves Dictionary used for clustering
         leaves_dict = {
-            0: {'samples': np.ones(X.shape[0], dtype=bool),
-                'error_or_size': None}
+            -1: {'samples': np.ones(X.shape[0], dtype=bool),
+                 'error_or_size': None}
         }
         # Initialize Labels
-        labels = np.zeros(X.shape[0], dtype=np.intc)
+        labels = np.full(X.shape[0], -1, dtype=np.intc)
 
         # ID of biggest center stored in centers_dict
-        biggest_id = 0
+        biggest_id = -1
+
         last_center_id = 0
 
         for n_iter in range(self.n_clusters - 1):
@@ -569,29 +570,32 @@ class BisectKMeans(KMeans):
                 # to pick cluster with largest number of data points assigned
                 metrics_values = np.bincount(_labels)
 
-            labels[picked_samples] = _labels + last_center_id
-
             # "Create Hierarchy" - cluster with smaller metrics value (SSE or ammount of points)
             # will be at 'left side' and cluster with higher at 'right side'
             lower_id = 0 if metrics_values[0] <= metrics_values[1] else 1
             centers_id = [lower_id, 1 - lower_id]
 
             # Assign calculated nested clusters to their root
-            tree_dict[biggest_id]['children'] = [last_center_id + 1, last_center_id + 2]
+            tree_dict[biggest_id]['children'] = [last_center_id,
+                                                 last_center_id + 1]
 
             for id in range(2):
                 child_id = tree_dict[biggest_id]['children'][id]
+                picked_id = centers_id[id]
 
                 # Save Results on Tree
                 tree_dict[child_id] = {
                     'children': None,
-                    'center': _centers[centers_id[id]]
+                    'center': _centers[picked_id]
                 }
+
+                samples_mask = leaves_dict[biggest_id]['samples'].copy()
+                samples_mask[picked_samples] = (_labels == picked_id)
 
                 # Save recently generated leaves
                 leaves_dict[child_id] = {
-                    'samples': (labels == (child_id - 1)),
-                    'error_or_size': metrics_values[id]
+                    'samples': samples_mask,
+                    'error_or_size': metrics_values[picked_id]
                 }
 
             # Split cluster is no longer leaf
@@ -600,20 +604,66 @@ class BisectKMeans(KMeans):
             last_center_id += 2
 
             # Pick new 'biggest cluster' to split
-            biggest_id, _ = max(leaves_dict.items(), key=lambda x: x[1]['error_or_size'])
+            biggest_id, _ = max(leaves_dict.items(),
+                                key=lambda x: x[1]['error_or_size'])
 
         # Delete Initial cluster
-        del tree_dict[0]
+        del tree_dict[-1]
 
         # Take clusters of leaves as centers
         centers = np.array([item['center'] for item in tree_dict.values() if
                             item['children'] is None])
 
-        # Shift labels to fit centers ids
-        for i, key in enumerate(leaves_dict.keys()):
-            labels[labels == (key - 1)] = i
+        #TODO Rearange centers to keep hierarchy
 
-        # Inner Tree will be later used at 'predict' method:
-        self._inner_tree = tree_dict
+        for i, key in enumerate(leaves_dict.keys()):
+            labels[leaves_dict[key]['samples']] = i
+
+        # # Inner Tree will be later used at 'predict' method:
+        # self._inner_tree = tree_dict
 
         return centers, labels
+
+    # def new_predict(self, X, sample_weight=None):
+    #     check_is_fitted(self)
+    #
+    #     X = self._check_test_data(X)
+    #     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+    #     # X -= self._X_mean
+    #
+    #     tree_clusters = np.array([item['center'] for item in self._inner_tree.values()])
+    #     tree_clusters += self._X_mean
+    #
+    #     cluster_to_leaves = np.array([leaf for leaf, value in self._inner_tree.items() if value['children'] is None], dtype=np.intc)
+    #
+    #     labels = self.recursive(X, sample_weight, tree_clusters, cluster_to_leaves, [0, 1])
+    #     print(f"New predict:    {labels}")
+
+
+    # def recursive(self, X, sample_weight, tree_clusters, cluster_to_leaves, picked_nodes):
+    #     x_squared_norms = row_norms(X, squared=True)
+    #     picked_clusters = tree_clusters[picked_nodes]
+    #
+    #     _labels = _check_labels_threadpool_limit(X,
+    #                                              sample_weight,
+    #                                              x_squared_norms,
+    #                                              picked_clusters,
+    #                                              self._n_threads)
+    #
+    #     indexes = [(_labels == 0), (_labels == 1)]
+    #     for idx in range(2):
+    #         children = self._inner_tree[picked_nodes[idx]]['children']
+    #
+    #
+    #         if children:
+    #             _labels[indexes[idx]] = self.recursive(X[indexes[idx]],
+    #                                               sample_weight[indexes[idx]],
+    #                                               tree_clusters,
+    #                                               cluster_to_leaves,
+    #                                               children)
+    #         else:
+    #             label = np.searchsorted(cluster_to_leaves, picked_nodes[idx])
+    #             _labels[indexes[idx]] = label
+    #
+    #
+    #     return _labels
