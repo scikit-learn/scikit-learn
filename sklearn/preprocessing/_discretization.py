@@ -213,7 +213,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 subsample_idx = rng.choice(
                     n_samples, size=self.subsample, replace=False
                 )
-                X = X.take(subsample_idx, mode="clip", axis=0)
+                X = X.take(subsample_idx, axis=0)
 
         # Check if encode & strategy are valids
         valid_encode = ("onehot", "onehot-dense", "ordinal")
