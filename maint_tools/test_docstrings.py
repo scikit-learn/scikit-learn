@@ -115,7 +115,6 @@ DOCSTRING_IGNORE_LIST = [
     "Nystroem",
     "OAS",
     "OPTICS",
-    "OneClassSVM",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
     "OrdinalEncoder",
