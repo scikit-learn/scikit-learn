@@ -67,7 +67,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         Maximum number of samples, used to fit the model, for computational
         efficiency. Used when ``strategy`` is 'quantile'.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None (default=None)
         Determines random number generation for subsampling.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
