@@ -178,7 +178,7 @@ def corrected_std(differences, n_train, n_test):
 
     Parameters
     ----------
-    differences : ndarray of shape (n_samples, 1)
+    differences : ndarray of shape (n_samples,)
         Vector containing the differences in the score metrics of two models.
     n_train : int
         Number of samples in the training set.
@@ -187,7 +187,7 @@ def corrected_std(differences, n_train, n_test):
 
     Returns
     -------
-    corrected_std : int
+    corrected_std : float
         Variance-corrected standard deviation of the set of differences.
     """
     # kr = k times r, r times repeated k-fold crossvalidation
@@ -204,7 +204,7 @@ def compute_corrected_ttest(differences, df, n_train, n_test):
 
     Parameters
     ----------
-    differences : array-like of shape (n_samples, 1)
+    differences : array-like of shape (n_samples,)
         Vector containing the differences in the score metrics of two models.
     df : int
         Degrees of freedom.
