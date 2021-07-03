@@ -110,7 +110,6 @@ DOCSTRING_IGNORE_LIST = [
     "NearestNeighbors",
     "NeighborhoodComponentsAnalysis",
     "Normalizer",
-    "NuSVC",
     "NuSVR",
     "Nystroem",
     "OAS",
