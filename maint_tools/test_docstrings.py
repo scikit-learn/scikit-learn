@@ -79,7 +79,6 @@ DOCSTRING_IGNORE_LIST = [
     "LarsCV",
     "LassoCV",
     "LassoLars",
-    "LassoLarsCV",
     "LassoLarsIC",
     "LatentDirichletAllocation",
     "LedoitWolf",
