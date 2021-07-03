@@ -605,6 +605,11 @@ class RFECV(RFE):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
             .. versionadded:: 0.20
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         tags = self._get_tags()
         X, y = self._validate_data(
