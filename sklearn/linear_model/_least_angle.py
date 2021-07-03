@@ -1094,7 +1094,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
@@ -1129,7 +1129,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 class LassoLars(Lars):
-    """Lasso model fit with Least Angle Regression a.k.a. Lars
+    """Lasso model fit with Least Angle Regression a.k.a. Lars.
 
     It is a Linear Model trained with an L1 prior as regularizer.
 
@@ -1149,7 +1149,7 @@ class LassoLars(Lars):
         should prefer the LinearRegression object.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -1251,6 +1251,20 @@ class LassoLars(Lars):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    lars_path : Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    lasso_path : Compute Lasso path with coordinate descent.
+    Lasso : Linear Model trained with L1 prior as
+        regularizer (aka the Lasso).
+    LassoCV : Lasso linear model with iterative fitting
+        along a regularization path.
+    LassoLarsCV: Cross-validated Lasso, using the LARS algorithm.
+    LassoLarsIC : Lasso model fit with Lars using BIC
+        or AIC for model selection.
+    sklearn.decomposition.sparse_encode : Sparse coding.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1259,17 +1273,6 @@ class LassoLars(Lars):
     LassoLars(alpha=0.01, normalize=False)
     >>> print(reg.coef_)
     [ 0.         -0.955...]
-
-    See Also
-    --------
-    lars_path
-    lasso_path
-    Lasso
-    LassoCV
-    LassoLarsCV
-    LassoLarsIC
-    sklearn.decomposition.sparse_encode
-
     """
 
     method = "lasso"
