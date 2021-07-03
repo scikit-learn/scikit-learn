@@ -29,6 +29,7 @@ from sklearn.linear_model import RidgeClassifier
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.linear_model._ridge import _solve_cholesky
 from sklearn.linear_model._ridge import _solve_cholesky_kernel
+from sklearn.linear_model._ridge import _solve_lbfgs
 from sklearn.linear_model._ridge import _check_gcv_mode
 from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
@@ -1616,6 +1617,22 @@ def test_positive_ridge_loss(alpha):
     for random_state in range(n_checks):
         loss_perturbed = ridge_loss(model_positive, random_state=random_state)
         assert loss_positive <= loss_perturbed
+
+
+@pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
+def test_lbfgs_solver_consistency(alpha):
+    """Test that LBGFS gets almost the same coef of cholesky when positive=False."""
+    X, y = make_regression(n_samples=300, n_features=300, random_state=42)
+    y = np.expand_dims(y, 1)
+    alpha = np.asarray([alpha])
+    config = {
+        "positive": False,
+        "tol": 1e-14,
+    }
+
+    coef_lbfgs = _solve_lbfgs(X, y, alpha, **config)
+    coef_cholesky = _solve_cholesky(X, y, alpha)
+    assert_allclose(coef_lbfgs, coef_cholesky, atol=1e-4, rtol=0)
 
 
 def test_lbfgs_solver_error():
