@@ -100,7 +100,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
     def inverse_transform(self, X):
         """
-        Reverse the transformation operation
+        Reverse the transformation operation.
 
         Parameters
         ----------
