@@ -304,7 +304,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         P : ndarray of shape (n_samples, n_classes) or list of such arrays
-            Return the probability of the sample for each class in
+            Returns the probability of the sample for each class in
             the model, where classes are ordered arithmetically, for each
             output.
         """
@@ -503,7 +503,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        self : Estimator
+        self : object
             Fitted estimator.
         """
         allowed_strategies = ("mean", "median", "quantile", "constant")
