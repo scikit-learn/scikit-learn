@@ -819,11 +819,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self.radius = radius
         self.sort_results = False
 
-        # Won't be freed for reasons stated at their definition.
-        self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
-        self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
-
-
     cdef int _reduce_on_chunks(self,
         const DTYPE_t[:, ::1] X,
         const DTYPE_t[:, ::1] Y,
@@ -872,6 +867,10 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
            bint return_distance = False,
            bint sort_results = False
     ):
+        # Won't be freed for reasons stated at their definition.
+        self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
+        self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
+
         # TODO: setup thread local datastructures for supporting _parallel_on_Y
         self.sort_results = sort_results
         self._parallel_on_X()
