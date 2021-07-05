@@ -259,7 +259,7 @@ def test_minibatch_nmf_transform(regularization):
         n_components=3,
         regularization=regularization,
         random_state=0,
-        fresh_restarts=True
+        fresh_restarts=True,
     )
     ft = m.fit_transform(A)
     t = m.transform(A)
@@ -296,7 +296,7 @@ def test_nmf_inverse_transform(solver, regularization):
         random_state=0,
         regularization=regularization,
         max_iter=5000,
-        tol=1e-6
+        tol=1e-6,
     )
     ft = m.fit_transform(A)
     A_new = m.inverse_transform(ft)
@@ -388,7 +388,7 @@ def test_nmf_sparse_transform(Estimator, solver):
 
 
 @pytest.mark.parametrize("init", ["random", "nndsvd"])
-@pytest.mark.parametrize("solver",["cd", "mu"])
+@pytest.mark.parametrize("solver", ["cd", "mu"])
 @pytest.mark.parametrize(
     "regularization", (None, "both", "components", "transformation")
 )
@@ -407,7 +407,7 @@ def test_non_negative_factorization_consistency(init, solver, regularization):
         max_iter=max_iter,
         regularization=regularization,
         random_state=1,
-        tol=1e-2
+        tol=1e-2,
     )
     W_nmf_2, H, n_iter = non_negative_factorization(
         A,
@@ -418,7 +418,7 @@ def test_non_negative_factorization_consistency(init, solver, regularization):
         max_iter=max_iter,
         regularization=regularization,
         random_state=1,
-        tol=1e-2
+        tol=1e-2,
     )
 
     model_class = NMF(
@@ -897,7 +897,7 @@ def test_nmf_minibatchnmf_equivalence():
         tol=0,
         max_no_improvement=None,
         batch_size=X.shape[0],
-        forget_factor=0.0
+        forget_factor=0.0,
     )
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
@@ -909,11 +909,16 @@ def test_minibatch_nmf_partial_fit():
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(100, 5))
     mbnmf1 = MiniBatchNMF(
-        n_components=5, init="custom", random_state=0, max_iter=2, batch_size=10, tol=0, max_no_improvement=None, fresh_restarts=False
+        n_components=5,
+        init="custom",
+        random_state=0,
+        max_iter=2,
+        batch_size=10,
+        tol=0,
+        max_no_improvement=None,
+        fresh_restarts=False,
     )
-    mbnmf2 = MiniBatchNMF(
-        n_components=5, init="custom", random_state=0
-    )
+    mbnmf2 = MiniBatchNMF(n_components=5, init="custom", random_state=0)
 
     # Force the same init of H (W is recomputed anyway) to be able to compare results.
     W, H = nmf._initialize_nmf(X, n_components=5, init="random", random_state=0)
@@ -921,7 +926,7 @@ def test_minibatch_nmf_partial_fit():
     mbnmf1.fit(X, W=W, H=H)
     for i in range(2):
         for j in range(10):
-            mbnmf2.partial_fit(X[j: j + 10], W=W[:10], H=H)
+            mbnmf2.partial_fit(X[j : j + 10], W=W[:10], H=H)
 
     assert mbnmf1.n_steps_ == mbnmf2.n_steps_
     assert_allclose(mbnmf1.components_, mbnmf2.components_)

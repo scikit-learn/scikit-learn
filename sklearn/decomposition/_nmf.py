@@ -1148,7 +1148,7 @@ def non_negative_factorization(
         l1_ratio=l1_ratio,
         verbose=verbose,
         shuffle=shuffle,
-        regularization=regularization
+        regularization=regularization,
     )
 
     with config_context(assume_finite=True):
@@ -1178,7 +1178,7 @@ def non_negative_factorization_online(
     forget_factor=0.7,
     fresh_restarts=True,
     fresh_restarts_max_iter=30,
-    transform_max_iter=None
+    transform_max_iter=None,
 ):
     """Compute Online Non-negative Matrix Factorization (MiniBatchNMF).
 
@@ -1358,7 +1358,7 @@ def non_negative_factorization_online(
         forget_factor=forget_factor,
         fresh_restarts=fresh_restarts,
         fresh_restarts_max_iter=fresh_restarts_max_iter,
-        transform_max_iter=transform_max_iter
+        transform_max_iter=transform_max_iter,
     )
 
     with config_context(assume_finite=True):
@@ -2450,8 +2450,10 @@ class MiniBatchNMF(NMF):
         has_components = hasattr(self, "components_")
 
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32],
-            reset=not has_components
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=not has_components,
         )
 
         if not has_components:
