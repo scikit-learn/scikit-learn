@@ -395,11 +395,9 @@ def plot_partial_dependence(
             ]
         else:
             raise ValueError(
-                "Expected `categorical_features` to be an array-like of "
-                "boolean, interger, or string. Got "
-                f"{categorical_features.dtype} instead."
+                "Expected `categorical_features` to be an array-like of boolean,"
+                f" interger, or string. Got {categorical_features.dtype} instead."
             )
-        has_categorical = any(any(cat) for cat in is_categorical)
 
         for cats in is_categorical:
             if np.size(cats) == 2 and (cats[0] != cats[1]):
@@ -408,7 +406,7 @@ def plot_partial_dependence(
                     "continuous and categorical features."
                 )
 
-        if has_categorical and kind != "average":
+        if kind != "average" and any(any(cat) for cat in is_categorical):
             raise ValueError(
                 "It is not possible to display individual effects for categorical"
                 " features."
