@@ -13,6 +13,7 @@ import time
 import itertools
 import warnings
 from math import sqrt
+from scipy import linalg
 
 from ._cdnmf_fast import _update_cdnmf_fast
 from .._config import config_context
@@ -164,6 +165,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         res /= beta * (beta - 1)
 
     if square_root:
+        res = max(res, 0)  # avoid negative number due to rounding errors
         return np.sqrt(2 * res)
     else:
         return res
@@ -789,18 +791,14 @@ def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H, gamma
             delta_H **= gamma
         H *= delta_H
 
-    return H, A, B
+    return H
 
 
 def _fit_multiplicative_update(
     X,
     W,
     H,
-    A,
-    B,
     beta_loss="frobenius",
-    batch_size=None,
-    iter_offset=0,
     max_iter=200,
     tol=1e-4,
     l1_reg_W=0,
@@ -809,7 +807,6 @@ def _fit_multiplicative_update(
     l2_reg_H=0,
     update_H=True,
     verbose=0,
-    forget_factor=None,
 ):
     """Compute Non-negative Matrix Factorization with Multiplicative Update.
 
@@ -828,12 +825,6 @@ def _fit_multiplicative_update(
     H : array-like of shape (n_components, n_features)
         Initial guess for the solution.
 
-    A : array-like of shape (n_components, n_features)
-        Initial guess for the numerator auxiliary function
-
-    B : array-like of shape (n_components, n_features)
-        Initial guess for the denominator auxiliary function
-
     beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
@@ -841,17 +832,7 @@ def _fit_multiplicative_update(
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
-        matrix X cannot contain zeros. When `batch_size` is not `None`
-        `beta_loss` cannot be `'frobenius'`.
-
-    batch_size : int, default=None
-        Number of samples in each mini-batch.
-        Used in the batch case only.
-
-    iter_offset : int, default=0
-        Number of previous iterations completed used for
-        initialization, only used in
-        :class:`sklearn.decomposition.MiniBatchNMF`.
+        matrix X cannot contain zeros.
 
     max_iter : int, default=200
         Number of iterations.
@@ -878,11 +859,6 @@ def _fit_multiplicative_update(
     verbose : int, default=0
         The verbosity level.
 
-    forget_factor : float, default=None
-        Amount of rescaling of past information. Its value is 1 for batch
-        NMF algorithm, it could be <1 for online NMF algorithm.
-        When r<0.5 the solution is unstable.
-
     Returns
     -------
     W : ndarray of shape (n_samples, n_components)
@@ -894,19 +870,6 @@ def _fit_multiplicative_update(
     n_iter : int
         The number of iterations done by the algorithm.
 
-    iter_offset : int
-        The number of iteration on data batches that has been
-        performed, only used in
-        :class:`sklearn.decomposition.MiniBatchNMF`.
-
-    A : array-like of shape (n_components, n_features)
-        Numerator auxiliary function, only used in
-        :class:`sklearn.decomposition.MiniBatchNMF`.
-
-    B : array-like of shape (n_components, n_features)
-        Denominator auxiliary function, only used in
-        :class:`sklearn.decomposition.MiniBatchNMF`.
-
     References
     ----------
     Lee, D. D., & Seung, H., S. (2001). Algorithms for Non-negative Matrix
@@ -915,12 +878,6 @@ def _fit_multiplicative_update(
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
     start_time = time.time()
-
-    n_samples = X.shape[0]
-
-    rho = 0.0
-    if forget_factor is not None:
-        rho = forget_factor ** (batch_size / n_samples)
 
     beta_loss = _beta_loss_to_float(beta_loss)
 
@@ -937,20 +894,12 @@ def _fit_multiplicative_update(
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
-
-    if batch_size is None:
-        batch_size = n_samples
-
-    batches = gen_batches(n_samples, batch_size)
-    batches = itertools.cycle(batches)
-    n_batches = int(np.ceil(n_samples / batch_size))
-    n_steps = max_iter * n_batches
-    for n_i, batch in zip(range(n_steps), batches):
+    for n_iter in range(1, max_iter + 1):
         # update W
         # H_sum, HHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
-            X[batch],
-            W[batch],
+            X,
+            W,
             H,
             beta_loss,
             l1_reg_W,
@@ -961,16 +910,16 @@ def _fit_multiplicative_update(
             XHt,
             update_H,
         )
-        W[batch] *= delta_W
+        W *= delta_W
 
         # necessary for stability with beta_loss < 1
         if beta_loss < 1:
-            W[batch][W[batch] < np.finfo(np.float64).eps] = 0.0
+            W[W < np.finfo(np.float64).eps] = 0.0
 
         # update H
         if update_H:
-            H, A, B = _multiplicative_update_h(
-                X[batch], W[batch], H, A, B, beta_loss, l1_reg_H, l2_reg_H, gamma, rho
+            H = _multiplicative_update_h(
+                X, W, H, None, None, beta_loss, l1_reg_H, l2_reg_H, gamma, None
             )
 
             # These values will be recomputed since H changed
@@ -980,18 +929,14 @@ def _fit_multiplicative_update(
             if beta_loss <= 1:
                 H[H < np.finfo(np.float64).eps] = 0.0
 
-        # XHt is updated if batch_size is smaller than n_samples
-        if batch_size < n_samples:
-            XHt = None
-
         # test convergence criterion every 10 iterations
-        if tol > 0 and n_i % (10 * n_batches) == 0:
+        if tol > 0 and n_iter % 10 == 0:
             error = _beta_divergence(X, W, H, beta_loss, square_root=True)
             if verbose:
                 iter_time = time.time()
                 print(
                     "Epoch %02d reached after %.3f seconds, error: %f"
-                    % (n_i, iter_time - start_time, error)
+                    % (n_iter, iter_time - start_time, error)
                 )
 
             if (previous_error - error) / error_at_init < tol:
@@ -999,17 +944,13 @@ def _fit_multiplicative_update(
             previous_error = error
 
     # do not print if we have already printed in the convergence test
-    if verbose and (tol == 0 or n_i % (10 * n_batches) != 0):
+    if verbose and (tol == 0 or n_iter % 10 != 0):
         end_time = time.time()
-        print("Epoch %02d reached after %.3f seconds." % (n_i, end_time - start_time))
+        print(
+            "Epoch %02d reached after %.3f seconds." % (n_iter, end_time - start_time)
+        )
 
-    if forget_factor is None:
-        n_iter = n_i + 1
-        return W, H, n_iter
-    else:
-        n_iter = int(np.ceil((n_i + 1) / n_batches))
-        iter_offset = n_i - (n_iter * n_batches)
-        return W, H, n_iter, iter_offset, A, B
+    return W, H, n_iter
 
 
 def non_negative_factorization(
@@ -1021,7 +962,6 @@ def non_negative_factorization(
     init="warn",
     update_H=True,
     solver="cd",
-    batch_size=None,
     beta_loss="frobenius",
     tol=1e-4,
     max_iter=200,
@@ -1031,7 +971,6 @@ def non_negative_factorization(
     random_state=None,
     verbose=0,
     shuffle=False,
-    forget_factor=None,
 ):
     """Compute Non-negative Matrix Factorization (NMF).
 
@@ -1080,12 +1019,6 @@ def non_negative_factorization(
         Number of components, if n_components is not set all features
         are kept.
 
-    batch_size : int, default=None
-        Number of samples per batch: setting `batch_size != None`
-        will select the MiniBatch implementation.
-
-        .. versionadded:: 1.0
-
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
 
@@ -1122,8 +1055,7 @@ def non_negative_factorization(
         - 'cd' is a Coordinate Descent solver that uses Fast Hierarchical
             Alternating Least Squares (Fast HALS).
 
-        - 'mu' is a Multiplicative Update solver
-            This is the only solver available when `batch_size` is not `None`.
+        - 'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
@@ -1137,8 +1069,7 @@ def non_negative_factorization(
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
-        matrix X cannot contain zeros. Used only in 'mu' solver. When
-        `batch_size` is not `None` `beta_loss` cannot be `'frobenius'`.
+        matrix X cannot contain zeros. Used only in 'mu' solver.
 
         .. versionadded:: 0.19
 
@@ -1174,12 +1105,6 @@ def non_negative_factorization(
     shuffle : bool, default=False
         If true, randomize the order of coordinates in the CD solver.
 
-    forget_factor : float, default=None.
-        Amount of rescaling of past information. Only for
-        MiniBatch implementation.
-
-        .. versionadded:: 1.0
-
     Returns
     -------
     W : ndarray of shape (n_samples, n_components)
@@ -1190,10 +1115,6 @@ def non_negative_factorization(
 
     n_iter : int
         Actual number of iterations.
-
-    iter_offset : int
-        The number of iteration on data batches that has been
-        performed. Only returned if `batch_size` is not `None`.
 
     Examples
     --------
@@ -1212,7 +1133,209 @@ def non_negative_factorization(
 
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
+    """
+    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
 
+    est = NMF(
+        n_components=n_components,
+        init=init,
+        solver=solver,
+        beta_loss=beta_loss,
+        tol=tol,
+        max_iter=max_iter,
+        random_state=random_state,
+        alpha=alpha,
+        l1_ratio=l1_ratio,
+        verbose=verbose,
+        shuffle=shuffle,
+        regularization=regularization
+    )
+
+    with config_context(assume_finite=True):
+        W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
+
+    return W, H, n_iter
+
+
+def non_negative_factorization_online(
+    X,
+    W=None,
+    H=None,
+    n_components=None,
+    *,
+    init=None,
+    update_H=True,
+    beta_loss="frobenius",
+    tol=1e-4,
+    max_iter=200,
+    alpha=0.0,
+    l1_ratio=0.0,
+    regularization=None,
+    random_state=None,
+    verbose=0,
+    shuffle=False,
+    batch_size=1024,
+    forget_factor=0.7,
+    fresh_restarts=True,
+    fresh_restarts_max_iter=30,
+    transform_max_iter=None
+):
+    """Compute Online Non-negative Matrix Factorization (MiniBatchNMF).
+
+    Find two non-negative matrices (W, H) whose product approximates the non-
+    negative matrix X. This factorization can be used for example for
+    dimensionality reduction, source separation or topic extraction.
+
+    The objective function is:
+
+        .. math::
+
+            0.5 * ||X - WH||_{loss}^2 + alpha * l1_{ratio} * ||vec(W)||_1
+
+            + alpha * l1_{ratio} * ||vec(H)||_1
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
+
+    Where:
+
+    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
+
+    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
+
+    The generic norm :math:`||X - WH||_{loss}^2` may represent
+    the Frobenius norm or another supported beta-divergence loss.
+    The choice between options is controlled by the `beta_loss` parameter.
+
+    The objective function is minimized with an alternating minimization of W
+    and H. If H is given and update_H=False, it solves for W only.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Constant matrix.
+
+    W : array-like of shape (n_samples, n_components), default=None
+        If init='custom', it is used as initial guess for the solution.
+
+    H : array-like of shape (n_components, n_features), default=None
+        If init='custom', it is used as initial guess for the solution.
+        If update_H=False, it is used as a constant, to solve for W only.
+
+    n_components : int, default=None
+        Number of components, if n_components is not set all features
+        are kept.
+
+    init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
+        Method used to initialize the procedure.
+
+        Valid options:
+
+        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
+
+        - 'random': non-negative random matrices, scaled with:
+            sqrt(X.mean() / n_components)
+
+        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
+            initialization (better for sparseness)
+
+        - 'nndsvda': NNDSVD with zeros filled with the average of X
+            (better when sparsity is not desired)
+
+        - 'nndsvdar': NNDSVD with zeros filled with small random values
+            (generally faster, less accurate alternative to NNDSVDa
+            for when sparsity is not desired)
+
+        - 'custom': use custom matrices W and H if `update_H=True`. If
+          `update_H=False`, then only custom matrix H is used.
+
+    update_H : bool, default=True
+        Set to True, both W and H will be estimated from initial guesses.
+        Set to False, only W will be estimated.
+
+    beta_loss : float or {'frobenius', 'kullback-leibler', \
+            'itakura-saito'}, default='frobenius'
+        Beta divergence to be minimized, measuring the distance between X
+        and the dot product WH. Note that values different from 'frobenius'
+        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
+        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
+        matrix X cannot contain zeros.
+
+    tol : float, default=1e-4
+        Tolerance of the stopping condition.
+
+    max_iter : int, default=200
+        Maximum number of iterations before timing out.
+
+    alpha : float, default=0.
+        Constant that multiplies the regularization terms.
+
+    l1_ratio : float, default=0.
+        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
+        For l1_ratio = 0 the penalty is an elementwise L2 penalty
+        (aka Frobenius Norm).
+        For l1_ratio = 1 it is an elementwise L1 penalty.
+        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
+
+    regularization : {'both', 'components', 'transformation'}, default=None
+        Select whether the regularization affects the components (H), the
+        transformation (W), both or none of them.
+
+    random_state : int, RandomState instance or None, default=None
+        Used for NMF initialisation (when ``init`` == 'nndsvdar' or
+        'random'), and in Coordinate Descent. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    verbose : int, default=0
+        The verbosity level.
+
+    batch_size : int, default=1024
+        Number of samples per batch.
+
+    forget_factor : float, default=0.7
+        Amount of rescaling of past information. Its value could be 1 with
+        finite datasets. Choosing values < 1 is recommended with online
+        learning as more recent batches will weight more than past batches.
+
+    fresh_restarts : bool, default=False
+        Whether to completely solve for W at each step. Doing fresh restarts can lead to
+        a better solution for a same number of epochs but is much slower.
+
+    fresh_restarts_max_iter : int, default=30
+        Maximum number of iterations when solving for W at each step. Only used when
+        doing fresh restarts. These iterations may be stopped early based on a small
+        change of W controlled by `tol`.
+
+    transform_max_iter : int, default=None
+        Maximum number of iterations when solving for W at transform time. If left to
+        None it defaults to `max_iter`.
+
+    Returns
+    -------
+    W : ndarray of shape (n_samples, n_components)
+        Solution to the non-negative least squares problem.
+
+    H : ndarray of shape (n_components, n_features)
+        Solution to the non-negative least squares problem.
+
+    n_iter : int
+        Actual number of iterations over the full dataset.
+
+    n_steps : int
+        The number mini-batches processed.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import non_negative_factorization_online
+    >>> W, H, n_iter, n_steps = non_negative_factorization_online(X, n_components=2,
+    ... init='random', random_state=0)
+
+    References
+    ----------
     Lefevre, A., Bach, F., Fevotte, C. (2011). Online algorithms for
     nonnegative matrix factorization with the Itakura-Saito divergence.
     WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
@@ -1220,49 +1343,28 @@ def non_negative_factorization(
     """
     X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
 
-    if batch_size is None:
-        est = NMF(
-            n_components=n_components,
-            init=init,
-            solver=solver,
-            beta_loss=beta_loss,
-            tol=tol,
-            max_iter=max_iter,
-            random_state=random_state,
-            alpha=alpha,
-            l1_ratio=l1_ratio,
-            verbose=verbose,
-            shuffle=shuffle,
-            regularization=regularization,
-        )
+    est = MiniBatchNMF(
+        n_components=n_components,
+        init=init,
+        batch_size=batch_size,
+        beta_loss=beta_loss,
+        tol=tol,
+        max_iter=max_iter,
+        random_state=random_state,
+        alpha=alpha,
+        l1_ratio=l1_ratio,
+        regularization=regularization,
+        verbose=verbose,
+        forget_factor=forget_factor,
+        fresh_restarts=fresh_restarts,
+        fresh_restarts_max_iter=fresh_restarts_max_iter,
+        transform_max_iter=transform_max_iter
+    )
 
-        with config_context(assume_finite=True):
-            W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
+    with config_context(assume_finite=True):
+        W, H, n_iter, n_steps = est._fit_transform(X, W=W, H=H, update_H=update_H)
 
-        return W, H, n_iter
-    else:
-        est = MiniBatchNMF(
-            n_components=n_components,
-            init=init,
-            batch_size=batch_size,
-            solver=solver,
-            beta_loss=beta_loss,
-            tol=tol,
-            max_iter=max_iter,
-            random_state=random_state,
-            alpha=alpha,
-            l1_ratio=l1_ratio,
-            forget_factor=forget_factor,
-            verbose=verbose,
-            regularization=regularization,
-        )
-
-        with config_context(assume_finite=True):
-            W, H, n_iter, iter_offset, A, B = est._fit_transform(
-                X, W=W, H=H, update_H=update_H
-            )
-
-        return W, H, n_iter, iter_offset, A, B
+    return W, H, n_iter, n_steps
 
 
 class NMF(TransformerMixin, BaseEstimator):
@@ -1526,6 +1628,14 @@ class NMF(TransformerMixin, BaseEstimator):
 
         self._beta_loss = _beta_loss_to_float(self.beta_loss)
 
+        # regularization
+        (
+            self._l1_reg_W,
+            self._l1_reg_H,
+            self._l2_reg_W,
+            self._l2_reg_H,
+        ) = _compute_regularization(self.alpha, self.l1_ratio, self.regularization)
+
         return self
 
     def _check_w_h(self, X, W, H, update_H):
@@ -1655,10 +1765,6 @@ class NMF(TransformerMixin, BaseEstimator):
         # initialize or check W and H
         W, H = self._check_w_h(X, W, H, update_H)
 
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
-            self.alpha, self.l1_ratio, self.regularization
-        )
-
         if self.solver == "cd":
             W, H, n_iter = _fit_coordinate_descent(
                 X,
@@ -1666,10 +1772,10 @@ class NMF(TransformerMixin, BaseEstimator):
                 H,
                 self.tol,
                 self.max_iter,
-                l1_reg_W,
-                l1_reg_H,
-                l2_reg_W,
-                l2_reg_H,
+                self._l1_reg_W,
+                self._l1_reg_H,
+                self._l2_reg_W,
+                self._l2_reg_H,
                 update_H=update_H,
                 verbose=self.verbose,
                 shuffle=self.shuffle,
@@ -1680,20 +1786,15 @@ class NMF(TransformerMixin, BaseEstimator):
                 X,
                 W,
                 H,
-                None,
-                None,
                 self._beta_loss,
-                None,
-                0,
                 self.max_iter,
                 self.tol,
-                l1_reg_W,
-                l1_reg_H,
-                l2_reg_W,
-                l2_reg_H,
+                self._l1_reg_W,
+                self._l1_reg_H,
+                self._l2_reg_W,
+                self._l2_reg_H,
                 update_H,
                 self.verbose,
-                None,
             )
         else:
             raise ValueError("Invalid solver parameter '%s'." % self.solver)
@@ -1849,8 +1950,16 @@ class MiniBatchNMF(NMF):
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros.
 
-    tol : float, default: 1e-4
-        Tolerance of the stopping condition.
+    tol : float, default=1e-4
+        Control early stopping based on the norm of the differences in H
+        between 2 steps. To disable early stopping based on changes in H, set
+        `tol` to 0.0.
+
+    max_no_improvement : int, default=10
+        Control early stopping based on the consecutive number of mini batches
+        that does not yield an improvement on the smoothed cost function.
+        To disable convergence detection based on cost function, set
+        `max_no_improvement` to None.
 
     max_iter : integer, default: 200
         Maximum number of iterations over the complete dataset before
@@ -1873,13 +1982,30 @@ class MiniBatchNMF(NMF):
         For l1_ratio = 1 it is an elementwise L1 penalty.
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
+    regularization : {'both', 'components', 'transformation'}, default=None
+        Select whether the regularization affects the components (H), the
+        transformation (W), both or none of them.
+
     verbose : bool, default=False
         Whether to be verbose.
 
-    forget_factor : float, default=0.7.
-        Amount of rescaling of past information. Its value could be =1 with
-        finite datasets. Choosing values <1 is recommended with online
+    forget_factor : float, default=0.7
+        Amount of rescaling of past information. Its value could be 1 with
+        finite datasets. Choosing values < 1 is recommended with online
         learning as more recent batches will weight more than past batches.
+
+    fresh_restarts : bool, default=False
+        Whether to completely solve for W at each step. Doing fresh restarts can lead to
+        a better solution for a same number of epochs but is much slower.
+
+    fresh_restarts_max_iter : int, default=30
+        Maximum number of iterations when solving for W at each step. Only used when
+        doing fresh restarts. These iterations may be stopped early based on a small
+        change of W controlled by `tol`.
+
+    transform_max_iter : int, default=None
+        Maximum number of iterations when solving for W at transform time. If left to
+        None it defaults to `max_iter`.
 
     Attributes
     ----------
@@ -1897,11 +2023,13 @@ class MiniBatchNMF(NMF):
         the fitted model.
 
     n_iter_ : int
-        Actual number of iterations.
+        Actual number of started iterations over the whole dataset.
 
-    iter_offset_ : int
-        The number of iteration on data batches that has been
-        performed.
+    n_steps_ : int
+        Number of mini-batches processed.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     Examples
     --------
@@ -1933,17 +2061,21 @@ class MiniBatchNMF(NMF):
         n_components=None,
         *,
         init=None,
-        solver="mu",
         batch_size=1024,
+        solver="mu",
         beta_loss="frobenius",
         tol=1e-4,
+        max_no_improvement=10,
         max_iter=200,
         random_state=None,
         alpha=0.0,
         l1_ratio=0.0,
-        verbose=0,
         regularization="both",
+        verbose=0,
         forget_factor=0.7,
+        fresh_restarts=False,
+        fresh_restarts_max_iter=30,
+        transform_max_iter=None,
     ):
 
         super().__init__(
@@ -1961,8 +2093,12 @@ class MiniBatchNMF(NMF):
             regularization=regularization,
         )
 
+        self.max_no_improvement = max_no_improvement
         self.batch_size = batch_size
         self.forget_factor = forget_factor
+        self.fresh_restarts = fresh_restarts
+        self.fresh_restarts_max_iter = fresh_restarts_max_iter
+        self.transform_max_iter = transform_max_iter
 
     def _check_params(self, X):
         super()._check_params(X)
@@ -1995,7 +2131,145 @@ class MiniBatchNMF(NMF):
         else:
             self._gamma = 1.0
 
+        # transform_max_iter
+        self._transform_max_iter = (
+            self.max_iter
+            if self.transform_max_iter is None
+            else self.transform_max_iter
+        )
+
         return self
+
+    def _solve_W(self, X, H, max_iter):
+        """Minimize the objective function w.r.t W"""
+        avg = np.sqrt(X.mean() / self._n_components)
+        W = np.full((X.shape[0], self._n_components), avg, dtype=X.dtype)
+        W_buffer = W.copy()
+
+        for i in range(max_iter):
+            delta_W, *_ = _multiplicative_update_w(
+                X, W, H, self._beta_loss, self._l1_reg_W, self._l2_reg_W, self._gamma
+            )
+            W *= delta_W
+
+            W_diff = linalg.norm(W - W_buffer) / linalg.norm(W)
+            if self.tol > 0 and W_diff <= self.tol:
+                break
+
+            W_buffer[:] = W
+
+        return W
+
+    def _minibatch_step(self, X, W, H, update_H):
+        """Perform the update of W and H for one minibatch"""
+        batch_size = X.shape[0]
+
+        # update W
+        if self.fresh_restarts or W is None:
+            W = self._solve_W(X, H, self.fresh_restarts_max_iter)
+        else:
+            delta_W, *_ = _multiplicative_update_w(
+                X, W, H, self._beta_loss, self._l1_reg_W, self._l2_reg_W, self._gamma
+            )
+            W *= delta_W
+
+        # necessary for stability with beta_loss < 1
+        if self._beta_loss < 1:
+            W[W < np.finfo(np.float64).eps] = 0.0
+
+        batch_cost = (
+            _beta_divergence(X, W, H, self._beta_loss)
+            + self._l1_reg_W * W.sum()
+            + self._l1_reg_H * H.sum()
+            + self._l2_reg_W * (W ** 2).sum()
+            + self._l2_reg_H * (H ** 2).sum()
+        )
+        batch_cost /= batch_size
+
+        # update H
+        if update_H:
+            H[:] = _multiplicative_update_h(
+                X,
+                W,
+                H,
+                self._components_numerator,
+                self._components_denominator,
+                self._beta_loss,
+                self._l1_reg_H,
+                self._l2_reg_H,
+                self._gamma,
+                self._rho,
+            )
+
+            # necessary for stability with beta_loss < 1
+            if self._beta_loss <= 1:
+                H[H < np.finfo(np.float64).eps] = 0.0
+
+        return batch_cost
+
+    def _minibatch_convergence(
+        self, X, batch_cost, H, H_buffer, n_samples, step, n_steps
+    ):
+        """Helper function to encapsulate the early stopping logic"""
+        batch_size = X.shape[0]
+
+        # counts steps starting from 1 for user friendly verbose mode.
+        step = step + 1
+
+        # Ignore first iteration because dictionary is not projected on the
+        # constraint set yet.
+        if step == 1:
+            if self.verbose:
+                print(
+                    f"Minibatch step {step}/{n_steps}: mean batch "
+                    f"cost: {batch_cost}"
+                )
+            return False
+
+        # Compute an Exponentially Weighted Average of the cost function to
+        # monitor the convergence while discarding minibatch-local stochastic
+        # variability: https://en.wikipedia.org/wiki/Moving_average
+        if self._ewa_cost is None:
+            self._ewa_cost = batch_cost
+        else:
+            alpha = batch_size / (n_samples + 1)
+            alpha = min(alpha, 1)
+            self._ewa_cost = self._ewa_cost * (1 - alpha) + batch_cost * alpha
+
+        # Log progress to be able to monitor convergence
+        if self.verbose:
+            print(
+                f"Minibatch step {step}/{n_steps}: mean batch cost: "
+                f"{batch_cost}, ewa cost: {self._ewa_cost}"
+            )
+
+        # Early stopping based on change of H
+        H_diff = linalg.norm(H - H_buffer) / linalg.norm(H)
+        if self.tol > 0 and H_diff <= self.tol:
+            if self.verbose:
+                print(f"Converged (small H change) at step " f"{step}/{n_steps}")
+            return True
+
+        # Early stopping heuristic due to lack of improvement on smoothed
+        # cost function
+        if self._ewa_cost_min is None or self._ewa_cost < self._ewa_cost_min:
+            self._no_improvement = 0
+            self._ewa_cost_min = self._ewa_cost
+        else:
+            self._no_improvement += 1
+
+        if (
+            self.max_no_improvement is not None
+            and self._no_improvement >= self.max_no_improvement
+        ):
+            if self.verbose:
+                print(
+                    f"Converged (lack of improvement in objective function) "
+                    f"at step {step}/{n_steps}"
+                )
+            return True
+
+        return False
 
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
@@ -2025,7 +2299,7 @@ class MiniBatchNMF(NMF):
         )
 
         with config_context(assume_finite=True):
-            W, H, n_iter, n_steps, A, B = self._fit_transform(X, W=W, H=H)
+            W, H, n_iter, n_steps = self._fit_transform(X, W=W, H=H)
 
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
@@ -2042,8 +2316,6 @@ class MiniBatchNMF(NMF):
         self.components_ = H
         self.n_iter_ = n_iter
         self.n_steps_ = n_steps
-        self._components_numerator = A
-        self._components_denominator = B
 
         return W
 
@@ -2078,19 +2350,11 @@ class MiniBatchNMF(NMF):
         H : ndarray of shape (n_components, n_features)
             Factorization matrix, sometimes called 'dictionary'.
 
-        n_iter_ : int
-            Actual number of iterations.
+        n_iter : int
+            Actual number of started iterations over the whole dataset.
 
-        iter_offset : int, default=0
-            Number of previous iterations completed used for
-            initialization, only used in
-            :class:`sklearn.decomposition.MiniBatchNMF`.
-
-        A : array-like of shape (n_components, n_features)
-            Initial guess for the numerator auxiliary function
-
-        B : array-like of shape (n_components, n_features)
-            Initial guess for the denominator auxiliary function
+        n_steps : int
+            Number of mini-batches processed.
         """
         check_non_negative(X, "NMF (input X)")
         self._check_params(X)
@@ -2105,14 +2369,16 @@ class MiniBatchNMF(NMF):
         n_samples, n_features = X.shape
         # initialize or check W and H
         W, H = self._check_w_h(X, W, H, update_H)
-
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
-            self.alpha, self.l1_ratio, self.regularization
-        )
+        H_buffer = H.copy()
 
         # Initialize auxiliary matrices
-        A = H.copy()
-        B = np.ones(H.shape, dtype=H.dtype)
+        self._components_numerator = H.copy()
+        self._components_denominator = np.ones(H.shape, dtype=H.dtype)
+
+        # Attributes to monitor the convergence
+        self._ewa_cost = None
+        self._ewa_cost_min = None
+        self._no_improvement = 0
 
         batches = gen_batches(n_samples, self._batch_size)
         batches = itertools.cycle(batches)
@@ -2120,97 +2386,89 @@ class MiniBatchNMF(NMF):
         n_steps = self.max_iter * n_steps_per_epoch
 
         for i, batch in zip(range(n_steps), batches):
-            # update W
-            delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
-                X[batch],
-                W[batch],
-                H,
-                self._beta_loss,
-                l1_reg_W,
-                l2_reg_W,
-                self._gamma,
-                update_H=update_H,
-            )
-            W[batch] *= delta_W
+            batch_cost = self._minibatch_step(X[batch], W[batch], H, update_H)
 
-            # necessary for stability with beta_loss < 1
-            if self._beta_loss < 1:
-                W[batch][W[batch] < np.finfo(np.float64).eps] = 0.0
+            if update_H and self._minibatch_convergence(
+                X, batch_cost, H, H_buffer, n_samples, i, n_steps
+            ):
+                break
 
-            # update H
-            if update_H:
-                H, A, B = _multiplicative_update_h(
-                    X[batch],
-                    W[batch],
-                    H,
-                    A,
-                    B,
-                    self._beta_loss,
-                    l1_reg_H,
-                    l2_reg_H,
-                    self._gamma,
-                    self._rho,
-                )
+            H_buffer[:] = H
 
-                # necessary for stability with beta_loss < 1
-                if self._beta_loss <= 1:
-                    H[H < np.finfo(np.float64).eps] = 0.0
+        if self.fresh_restarts:
+            W = self._solve_W(X, H, self._transform_max_iter)
 
         n_steps = i + 1
         n_iter = int(np.ceil((i + 1) / n_steps_per_epoch))
 
-        return W, H, n_iter, n_steps, A, B
+        return W, H, n_iter, n_steps
 
-    def partial_fit(self, X, y=None, **params):
+    def transform(self, X):
+        """Transform the data X according to the fitted MiniBatchNMF model.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Data matrix to be transformed by the model.
+
+        Returns
+        -------
+        W : ndarray of shape (n_samples, n_components)
+            Transformed data.
+        """
+        check_is_fitted(self)
+        X = self._validate_data(
+            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+        )
+
+        W = self._solve_W(X, self.components_, self._transform_max_iter)
+
+        return W
+
+    def partial_fit(self, X, y=None, W=None, H=None):
+        """Updates the model using the data in X as a mini-batch.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Data matrix to be decomposed
+
+        y : Ignored
+
+        W : array-like of shape (n_samples, n_components)
+            If init='custom', it is used as initial guess for the solution.
+            Only used for the first call to `partial_fit`
+
+        H : array-like of shape (n_components, n_features)
+            If init='custom', it is used as initial guess for the solution.
+            Only used for the first call to `partial_fit`
+
+        Returns
+        -------
+        self
+        """
         has_components = hasattr(self, "components_")
 
-        if has_components:
-            with config_context(assume_finite=True):
-                X = self._validate_data(
-                    X,
-                    accept_sparse=("csr", "csc"),
-                    dtype=[np.float64, np.float32],
-                    reset=False,
-                )
-                # initialize W and H
-                H = self.components_
-                W = None
-                # Compute W given H and X using transform
-                W, *_ = self._fit_transform(X, H=H, update_H=False)
+        X = self._validate_data(
+            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32],
+            reset=not has_components
+        )
 
-                # Add 1 iteration to the current estimation
-                l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
-                    self.alpha, self.l1_ratio, self.regularization
-                )
+        if not has_components:
+            # This instance has not been fitted yet (fit or partial_fit)
+            self._check_params(X)
+            _, H = self._check_w_h(X, W=W, H=H, update_H=True)
 
-                W, H, n_iter, iter_offset, A, B = _fit_multiplicative_update(
-                    X,
-                    W,
-                    self.components_,
-                    self._components_numerator,
-                    self._components_denominator,
-                    self._beta_loss,
-                    self._batch_size,
-                    self.iter_offset_,
-                    1,
-                    self.tol,
-                    l1_reg_W,
-                    l1_reg_H,
-                    l2_reg_W,
-                    l2_reg_H,
-                    True,
-                    self.verbose,
-                    self.forget_factor,
-                )
-
-            self.n_components_ = H.shape[0]
-            self.components_ = H
-            self.n_iter_ += n_iter
-            self.iter_offset_ += iter_offset
-            self._components_numerator = A
-            self._components_denominator = B
-
+            self._components_numerator = H.copy()
+            self._components_denominator = np.ones(H.shape, dtype=H.dtype)
+            self.n_steps_ = 0
         else:
-            self.fit_transform(X, **params)
+            H = self.components_
+
+        self._minibatch_step(X, None, H, update_H=True)
+
+        self.n_components_ = H.shape[0]
+        self.components_ = H
+        self.n_steps_ += 1
 
         return self

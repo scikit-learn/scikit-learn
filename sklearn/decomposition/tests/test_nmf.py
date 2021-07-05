@@ -176,8 +176,8 @@ def test_nmf_true_reconstruction(regularization):
     # Test that the fit is not too far away from an exact solution
     # (by construction)
     n_samples = 15
-    n_components = 5
     n_features = 10
+    n_components = 5
     beta_loss = 1
     init = "nndsvda"  # FIXME : should be removed in 1.1
     batch_size = 3
@@ -215,7 +215,6 @@ def test_nmf_true_reconstruction(regularization):
         init=init,
         beta_loss=beta_loss,
         batch_size=batch_size,
-        forget_factor=0.3,
         regularization=regularization,
         random_state=0,
         max_iter=max_iter,
@@ -227,17 +226,15 @@ def test_nmf_true_reconstruction(regularization):
     assert_allclose(X, X_calc, atol=1)
 
 
-@pytest.mark.parametrize(
-    ["Estimator", "solver"], [[NMF, "cd"], [NMF, "mu"], [MiniBatchNMF, "mu"]]
-)
+@pytest.mark.parametrize("solver", ["cd", "mu"])
 @pytest.mark.parametrize(
     "regularization", (None, "both", "components", "transformation")
 )
-def test_nmf_transform(Estimator, solver, regularization):
-    # Test that NMF.transform returns close values
+def test_nmf_transform(solver, regularization):
+    # Test that fit_transform is equivalent to fit.transform for NMF
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
-    m = Estimator(
+    m = NMF(
         solver=solver,
         n_components=3,
         init="random",
@@ -248,6 +245,25 @@ def test_nmf_transform(Estimator, solver, regularization):
     ft = m.fit_transform(A)
     t = m.transform(A)
     assert_allclose(ft, t, atol=1e-1)
+
+
+@pytest.mark.parametrize(
+    "regularization", (None, "both", "components", "transformation")
+)
+def test_minibatch_nmf_transform(regularization):
+    # Test that fit_transform is equivalent to fit.transform for MiniBatchNMF
+    # Only guaranteed with fresh restarts
+    rng = np.random.mtrand.RandomState(42)
+    A = np.abs(rng.randn(6, 5))
+    m = MiniBatchNMF(
+        n_components=3,
+        regularization=regularization,
+        random_state=0,
+        fresh_restarts=True
+    )
+    ft = m.fit_transform(A)
+    t = m.transform(A)
+    assert_allclose(ft, t)
 
 
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
@@ -265,28 +281,46 @@ def test_nmf_transform_custom_init(Estimator):
     m.transform(A)
 
 
-@pytest.mark.parametrize(
-    ["Estimator", "solver"], [[NMF, "cd"], [NMF, "mu"], [MiniBatchNMF, "mu"]]
-)
+@pytest.mark.parametrize("solver", ["cd", "mu"])
 @pytest.mark.parametrize(
     "regularization", (None, "both", "components", "transformation")
 )
-def test_nmf_inverse_transform(Estimator, solver, regularization):
+def test_nmf_inverse_transform(solver, regularization):
     # Test that NMF.inverse_transform returns close values
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
-    m = Estimator(
+    m = NMF(
         solver=solver,
         n_components=4,
         init="random",
         random_state=0,
         regularization=regularization,
         max_iter=5000,
-        tol=1e-6,
+        tol=1e-6
     )
     ft = m.fit_transform(A)
     A_new = m.inverse_transform(ft)
-    assert_allclose(A, A_new, atol=1e-2)
+    assert_allclose(A, A_new, rtol=1e-3)
+
+
+@pytest.mark.parametrize(
+    "regularization", (None, "both", "components", "transformation")
+)
+def test_mbnmf_inverse_transform(regularization):
+    # Test that MiniBatchNMF.inverse_transform returns close values
+    random_state = np.random.RandomState(0)
+    A = np.abs(random_state.randn(6, 4))
+    m = MiniBatchNMF(
+        n_components=4,
+        random_state=0,
+        regularization=regularization,
+        max_iter=500,
+        tol=1e-6,
+        fresh_restarts=True,
+    )
+    ft = m.fit_transform(A)
+    A_new = m.inverse_transform(ft)
+    assert_allclose(A, A_new, rtol=1e-3)
 
 
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
@@ -354,16 +388,11 @@ def test_nmf_sparse_transform(Estimator, solver):
 
 
 @pytest.mark.parametrize("init", ["random", "nndsvd"])
-@pytest.mark.parametrize(
-    ["Estimator", "solver", "batch_size", "forget_factor"],
-    [[NMF, "cd", None, None], [NMF, "mu", None, None], [MiniBatchNMF, "mu", 10, 0.7]],
-)
+@pytest.mark.parametrize("solver",["cd", "mu"])
 @pytest.mark.parametrize(
     "regularization", (None, "both", "components", "transformation")
 )
-def test_non_negative_factorization_consistency(
-    Estimator, init, solver, regularization, batch_size, forget_factor
-):
+def test_non_negative_factorization_consistency(init, solver, regularization):
     # Test that the function is called in the same way, either directly
     # or through the NMF class
     max_iter = 500
@@ -371,32 +400,28 @@ def test_non_negative_factorization_consistency(
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    W_nmf, H, *_ = non_negative_factorization(
+    W_nmf, H, n_iter = non_negative_factorization(
         A,
         init=init,
         solver=solver,
         max_iter=max_iter,
         regularization=regularization,
         random_state=1,
-        tol=1e-2,
-        batch_size=batch_size,
-        forget_factor=forget_factor,
+        tol=1e-2
     )
-    W_nmf_2, *_ = non_negative_factorization(
+    W_nmf_2, H, n_iter = non_negative_factorization(
         A,
         H=H,
         update_H=False,
         init=init,
         solver=solver,
         max_iter=max_iter,
-        batch_size=batch_size,
-        forget_factor=forget_factor,
         regularization=regularization,
         random_state=1,
-        tol=1e-2,
+        tol=1e-2
     )
 
-    model_class = Estimator(
+    model_class = NMF(
         init=init,
         solver=solver,
         regularization=regularization,
@@ -407,8 +432,8 @@ def test_non_negative_factorization_consistency(
     W_cls = model_class.fit_transform(A)
     W_cls_2 = model_class.transform(A)
 
-    assert_allclose(W_nmf, W_cls, atol=1e-7)
-    assert_allclose(W_nmf_2, W_cls_2, atol=1e-7)
+    assert_allclose(W_nmf, W_cls)
+    assert_allclose(W_nmf_2, W_cls_2)
 
 
 def test_non_negative_factorization_checking():
@@ -437,13 +462,6 @@ def test_non_negative_factorization_checking():
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, 0 * A, 2, init="custom", regularization="spam")
-    init = "nndsvda"  # FIXME : should be removed in 1.1
-    msg = "batch_size must be a positive integer, got 0.5 instead."
-    with pytest.raises(ValueError, match=msg):
-        nnmf(A, A, A, 2, batch_size=0.5, init=init, solver="mu", beta_loss=1)
-    msg = "batch_size must be a positive integer, got '3' instead."
-    with pytest.raises(ValueError, match=msg):
-        nnmf(A, A, A, 2, batch_size="3", init=init, solver="mu", beta_loss=1)
 
 
 def _beta_divergence_dense(X, W, H, beta):
@@ -527,8 +545,7 @@ def test_special_sparse_dot():
 
 
 @ignore_warnings(category=ConvergenceWarning)
-@pytest.mark.parametrize("forget_factor", [None, 0.7])
-def test_nmf_multiplicative_update_sparse(forget_factor):
+def test_nmf_multiplicative_update_sparse():
     # Compare sparse and dense input in multiplicative update NMF
     # Also test continuity of the results with respect to beta_loss parameter
     n_samples = 20
@@ -562,7 +579,6 @@ def test_nmf_multiplicative_update_sparse(forget_factor):
             l1_ratio=l1_ratio,
             regularization="both",
             random_state=42,
-            forget_factor=forget_factor,
         )
 
         # Compare with sparse X
@@ -581,7 +597,6 @@ def test_nmf_multiplicative_update_sparse(forget_factor):
             l1_ratio=l1_ratio,
             regularization="both",
             random_state=42,
-            forget_factor=forget_factor,
         )
 
         assert_allclose(W1, W2, atol=1e-7)
@@ -605,7 +620,6 @@ def test_nmf_multiplicative_update_sparse(forget_factor):
             l1_ratio=l1_ratio,
             regularization="both",
             random_state=42,
-            forget_factor=forget_factor,
         )
 
         assert_allclose(W1, W3, atol=1e-4)
@@ -634,7 +648,6 @@ def test_nmf_negative_beta_loss(forget_factor):
             beta_loss=beta_loss,
             random_state=0,
             max_iter=1000,
-            forget_factor=forget_factor,
         )
         assert not np.any(np.isnan(W))
         assert not np.any(np.isnan(H))
@@ -769,7 +782,6 @@ def test_nmf_decreasing(forget_factor):
                     H,
                     beta_loss=beta_loss,
                     init="custom",
-                    forget_factor=forget_factor,
                     n_components=n_components,
                     max_iter=1,
                     alpha=alpha,
@@ -871,75 +883,47 @@ def test_nmf_custom_init_dtype_error(Estimator):
 
 
 def test_nmf_minibatchnmf_equivalence():
-    # Test that the standard nmf is the minibatch nmf after 1 iteration
-    # with batch_size = n_samples and forget_factor 0.0
+    # Test that MiniBatchNMF is equivalent to NMF when batch_size = n_samples and
+    # forget_factor 0.0 (stopping criterion put aside)
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
-    max_iter = 1
     init = "nndsvda"  # FIXME : should be removed in 1.1
-    nmf = NMF(5, solver="mu", init=init, random_state=0, max_iter=max_iter, tol=0)
+
+    nmf = NMF(n_components=5, solver="mu", init=init, random_state=0, tol=0)
     mbnmf = MiniBatchNMF(
-        5,
-        solver="mu",
+        n_components=5,
         init=init,
         random_state=0,
-        max_iter=max_iter,
         tol=0,
+        max_no_improvement=None,
         batch_size=X.shape[0],
-        forget_factor=0.0,
+        forget_factor=0.0
     )
     W = nmf.fit_transform(X)
     mbW = mbnmf.fit_transform(X)
     assert_allclose(W, mbW)
 
 
-@pytest.mark.parametrize("batch_size", [24, 32, 48])
-def test_nmf_close_minibatch_nmf(batch_size):
-    # Test that the decomposition with standard and minibatch nmf
-    # gives close results
-    rng = np.random.mtrand.RandomState(42)
-    X = np.abs(rng.randn(48, 5))
-    max_iter = 5000
-    solver = "mu"
-    beta_loss = "kullback-leibler"
-    init = "nndsvda"  # FIXME : should be removed in 1.1
-    nmf = NMF(
-        5,
-        solver=solver,
-        init=init,
-        random_state=0,
-        max_iter=max_iter,
-        beta_loss=beta_loss,
-    )
-    mbnmf = MiniBatchNMF(
-        5,
-        solver=solver,
-        init=init,
-        random_state=0,
-        max_iter=max_iter,
-        batch_size=batch_size,
-        beta_loss=beta_loss,
-    )
-    W = nmf.fit_transform(X)
-    mbW = mbnmf.fit_transform(X)
-    assert_allclose(W, mbW, atol=1e-1)
-
-
 def test_minibatch_nmf_partial_fit():
+    # Check fit / partial_fit equivalence. Applicable only with fresh restarts.
     rng = np.random.mtrand.RandomState(42)
-    X = np.abs(rng.randn(48, 5))
+    X = np.abs(rng.randn(100, 5))
     mbnmf1 = MiniBatchNMF(
-        5, solver="mu", init="nndsvdar", random_state=0, max_iter=200, batch_size=24
+        n_components=5, init="custom", random_state=0, max_iter=2, batch_size=10, tol=0, max_no_improvement=None, fresh_restarts=False
     )
     mbnmf2 = MiniBatchNMF(
-        5, solver="mu", init="nndsvdar", random_state=0, max_iter=1, batch_size=24
+        n_components=5, init="custom", random_state=0
     )
 
-    mbnmf1.fit(X)
-    for i in range(mbnmf1.n_iter_):
-        mbnmf2.partial_fit(X)
+    # Force the same init of H (W is recomputed anyway) to be able to compare results.
+    W, H = nmf._initialize_nmf(X, n_components=5, init="random", random_state=0)
 
-    assert mbnmf1.n_iter_ == mbnmf2.n_iter_
+    mbnmf1.fit(X, W=W, H=H)
+    for i in range(2):
+        for j in range(10):
+            mbnmf2.partial_fit(X[j: j + 10], W=W[:10], H=H)
+
+    assert mbnmf1.n_steps_ == mbnmf2.n_steps_
     assert_allclose(mbnmf1.components_, mbnmf2.components_)
 
 
