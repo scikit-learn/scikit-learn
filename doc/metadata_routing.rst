@@ -22,7 +22,9 @@ in this section require the following imports and data::
   >>> import numpy as np
   >>> from sklearn.metrics import make_scorer, accuracy_score
   >>> from sklearn.linear_model import LogisticRegressionCV
+  >>> from sklearn.linear_model import LogisticRegression
   >>> from sklearn.model_selection import cross_validate
+  >>> from sklearn.model_selection import GridSearchCV
   >>> from sklearn.model_selection import GroupKFold
   >>> from sklearn.feature_selection import SelectKBest
   >>> from sklearn.pipeline import make_pipeline
@@ -36,9 +38,10 @@ in this section require the following imports and data::
 Weighted scoring and fitting
 ----------------------------
 
-Here GroupKFold requests ``groups`` by default. We need to explicitly request
-weights in ``make_scorer`` and for ``LogisticRegressionCV``. Both of these
-consumers understand the meaning of the key ``"sample_weight"``::
+Here ``GroupKFold`` requests ``groups`` by default. However, we need to
+explicitly request weights in ``make_scorer`` and for ``LogisticRegressionCV``.
+Both of these *consumers* understand the meaning of the key
+``"sample_weight"``::
 
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            score_params=["sample_weight"])
@@ -54,16 +57,17 @@ consumers understand the meaning of the key ``"sample_weight"``::
   ...     scoring=weighted_acc,
   ... )
 
-Error handling: if props={'sample_weight': my_weights, ...} were passed,
-cross_validate would raise an error, since 'sample_weight' was not
-requested by any of its children.
+Error handling: if ``props={'sample_weigh': my_weights, ...}`` were passed
+(note the typo), cross_validate would raise an error, since 'sample_weigh' was
+not requested by any of its children.
 
 Weighted scoring and unweighted fitting
 ---------------------------------------
 
 Since ``LogisticRegressionCV``, like all scikit-learn estimators, requires that
-weights explicitly be requested, we need to explicitly say that ``sample_weight``
-is not used for it, so that ``cross_validate`` doesn't pass it along.
+weights explicitly be requested, we need to explicitly say that
+``sample_weight`` is not used for it, so that ``cross_validate`` doesn't pass
+it along.
 
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            score_params=["sample_weight"])
@@ -82,8 +86,8 @@ is not used for it, so that ``cross_validate`` doesn't pass it along.
 Unweighted feature selection
 ----------------------------
 
-Like ``LogisticRegressionCV``, ``SelectKBest`` needs to request weights
-explicitly. Here it does not request them::
+Unlike ``LogisticRegressionCV``, ``SelectKBest`` doesn't accept weights and
+therefore `"sample_weight"` is not routed to it::
 
   >>> weighted_acc = make_scorer(accuracy_score,
   ...                            score_params=["sample_weight"])
@@ -106,7 +110,8 @@ Different scoring and fitting weights
 
 Despite ``make_scorer`` and ``LogisticRegressionCV`` both expecting a key
 ``sample_weight``, we can use aliases to pass different weights to different
-consumers::
+consumers. In this example, we pass ``scoring_weight`` to the scorer, and
+``fitting_weight`` to ``LogisticRegressionCV``::
 
   >>> weighted_acc = make_scorer(
   ...     accuracy_score, score_params={"sample_weight": "scoring_weight"}
@@ -133,18 +138,31 @@ API Interface
 A *consumer* is an object (estimator, meta-estimator, scorer, splitter) which
 accepts and uses some metadata in at least one of their methods (``fit``,
 ``predict``, ``inverse_transform``, ``transform``, ``score``, ``split``).
-Meta-estimators which only forward the metadata to the child estimator and
-don't use the metadata themselves are not consumers. (Meta)Estimators and
-splitters expose a ``request_*`` method for each metadata they accept. For
-instance, if an estimator supports ``sample_weight`` in ``fit`` and ``score``,
-it exposes ``estimator.request_sample_weight(fit=value, score=value)``. Here
-``value`` can be:
+Meta-estimators which only forward the metadata other objects (the child
+estimator, scorers, or splitters) and don't use the metadata themselves are not
+consumers. (Meta)Estimators which route metadata to other objects are routers.
+An (meta)estimator can be a consumer and a router at the same time.
+(Meta)Estimators and splitters expose a ``*_requests`` method for each method
+which accepts at least one metadata. For instance, if an estimator supports
+``sample_weight`` in ``fit`` and ``score``, it exposes
+``estimator.fit_requests(sample_weight=value)`` and
+``estimator.score_requests(sample_weight=value)``. Here ``value`` can be:
 
-- ``True``: method requests a ``sample_weight``.
-- ``False``: method does not request a ``sample_weight``.
+- ``RequestType.REQUESTED`` or ``True``: method requests a ``sample_weight``.
+  This means if the metadata is provided, it will be used, otherwise no error
+  is raised.
+- ``RequestType.UNREQUESTED`` or ``False``: method does not request a
+  ``sample_weight``.
+- ``RequestType.ERROR_IF_PASSED`` or ``None``: router will raise an error if
+  ``sample_weight`` is passed. This is in almost all cases the default value
+  when an object is instantiated and ensures the user sets the metadata
+  requests explicitly when a metadata is passed.
 - ``"param_name"``: if this estimator is used in a meta-estimator, the
   meta-estimator should forward ``"param_name"`` as ``sample_weight`` to this
-  estimator.
+  estimator. This means the mapping between the metadata required by the
+  object, e.g. ``sample_weight`` and what is provided by the user, e.g.
+  ``my_weights`` is done at the router level, and not by the object, e.g.
+  estimator, itself.
 
 For the scorers, on the other hand, the user sets the routing via
 ``make_scorer`` which accepts a ``score_params`` keyword argument, which is
@@ -153,3 +171,20 @@ defined as::
     score_params : list of strings, or dict of {str: str}, default=None
         A list of required properties, or a mapping of the form
         ``{"required_metadata": "provided_metadata"}``, or None.
+
+If a metadata, e.g. ``sample_weight`` is passed by the user, the metadata
+request for all objects which potentially can accept ``sample_weight`` should
+be set by the user, otherwise an error is raised by the router object. For
+example, the following code would raise, since it hasn't been explicitly set
+whether ``sample_weight`` should be passed to the estimator's scorer or not::
+
+    >>> param_grid = {"C": [0.1, 1]}
+    >>> lr = LogisticRegression().fit_requests(sample_weight=True)
+    >>> try:
+    ...     GridSearchCV(
+    ...         estimator=lr, param_grid=param_grid
+    ...     ).fit(X, y, sample_weight=my_weights)
+    ... except ValueError as e:
+    ...     print(e)
+    sample_weight is passed but is not explicitly set as requested or not. In
+    method: score
