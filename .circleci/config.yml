@@ -133,6 +133,8 @@ jobs:
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
     environment:
+      - OMP_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 2
       - CYTHON_VERSION: 'latest'
       - JOBLIB_VERSION: 'latest'
       - THREADPOOLCTL_VERSION: 'latest'
