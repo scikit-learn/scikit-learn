@@ -576,7 +576,7 @@ def test_adaboost_negative_weight_error(model, X, y):
 
 def test_adaboost_numerically_stable_feature_importance_with_small_weights():
     rng = np.random.RandomState(42)
-    X = rng.random((1000, 10))
+    X = rng.normal(size=(1000, 10))
     y = rng.choice([0, 1], size=1000)
     sample_weight = np.ones_like(y) * 1e-263
     tree = DecisionTreeClassifier(max_depth=10, random_state=12)
