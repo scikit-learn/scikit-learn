@@ -15,7 +15,7 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
     FILE=libomp-12.0.0_0+universal.darwin_17.i386-x86_64.tbz2
     wget https://packages.macports.org/libomp/$FILE
     mkdir -p $HOME/opt
-    tar -xvjf $FILE -C $HOME/opt
+    tar -C $HOME -xvjf $FILE opt
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
