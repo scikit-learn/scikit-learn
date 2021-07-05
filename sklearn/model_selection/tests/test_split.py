@@ -1759,8 +1759,6 @@ def test_nested_cv():
         gs = GridSearchCV(
             Ridge(), param_grid={"alpha": [1, 0.1]}, cv=inner_cv, error_score="raise"
         )
-        print(inner_cv, outer_cv)
-        outer_cv.get_metadata_request()
         cross_val_score(
             gs, X=X, y=y, groups=groups, cv=outer_cv, props={"groups": groups}
         )
