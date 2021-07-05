@@ -18,7 +18,7 @@ print(__doc__)
 # Data generation
 # ---------------
 #
-# We will work in a setting where `X` will be a single feature. We create a
+# We will work in a setting where `X` will contain a single feature. We create a
 # function that will generate the target to be predicted. We will add an
 # option to add some noise to the generated target.
 import numpy as np
@@ -70,7 +70,9 @@ _ = plt.ylabel("y")
 # Optimisation of kernel hyperparameters in GPR
 # ---------------------------------------------
 #
-# Now, we will create a GPR using an additive kernel using a
+# Now, we will create a 
+# :class:`~sklearn.gaussian_process.GaussianProcessRegressor`
+# using an additive kernel adding a
 # :class:`~sklearn.gaussian_process.kernels.RBF` and
 # :class:`~sklearn.gaussian_process.kernels.WhiteKernel` kernels.
 # The :class:`~sklearn.gaussian_process.kernels.WhiteKernel` is a kernel that
@@ -79,10 +81,10 @@ _ = plt.ylabel("y")
 # non-linearity between the data and the target.
 #
 # However, we will show that the hyperparameter space contains several local
-# minima. It will highlight the importance of initial hyperparameter values.
+# minima. It will highlights the importance of initial hyperparameter values.
 #
 # We will create a model using a kernel with a high noise level and a large
-# length scale, which explains all variations in the data by noise.
+# length scale, which will explain all variations in the data by noise.
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel
 
@@ -112,7 +114,7 @@ _ = plt.title(
 #
 # Now, we will initialize the
 # :class:`~sklearn.gaussian_process.kernels.RBF` with a
-# larger length_scale and the
+# larger `length_scale` and the
 # :class:`~sklearn.gaussian_process.kernels.WhiteKernel`
 # with a smaller noise level lower bound.
 kernel = 1.0 * RBF(length_scale=1e-1, length_scale_bounds=(1e-2, 1e3)) + WhiteKernel(
@@ -125,7 +127,7 @@ y_mean, y_std = gpr.predict(X, return_std=True)
 # %%
 plt.plot(X, y, label="Perfect generator")
 plt.scatter(x=X_train[:, 0], y=y_train, color="tab:orange", label="Noisy measurement")
-plt.errorbar(X, y_mean, y_std)
+plt.errorbar(X, y_mean, y_std, ecolor="tab:yellow")
 plt.legend()
 plt.xlabel("X")
 plt.ylabel("y")
@@ -136,15 +138,16 @@ _ = plt.title(
 )
 
 # %%
-# First, we see that the model's predictions are precise than the previous
-# model's. This new model is able to estimate the noise-free functional
-# relationship.
+# First, we see that the model's predictions are more precise than the
+# previous model's: this new model is able to estimate the noise-free
+# functional relationship.
 #
 # Looking at the kernel hyperparameters, we see that the best combination found
 # has a smaller noise level and shorter length scale than the first model.
 #
-# We can have a look at the Log-Marginal-Likelihood (LML) of GPR for different
-# hyperparameters to get a sense of the local minima.
+# We can inspect the Log-Marginal-Likelihood (LML) of
+# :class:`~sklearn.gaussian_process.GaussianProcessRegressor`
+# for different hyperparameters to get a sense of the local minima.
 from matplotlib.colors import LogNorm
 
 length_scale = np.logspace(-2, 4, num=50)
@@ -152,7 +155,7 @@ noise_level = np.logspace(-2, 1, num=50)
 length_scale_grid, noise_level_grid = np.meshgrid(length_scale, noise_level)
 
 log_marginal_likelihood = [
-    gpr.log_marginal_likelihood(np.log([0.36, scale, noise]))
+    gpr.log_marginal_likelihood(theta=np.log([0.36, scale, noise]))
     for scale, noise in zip(length_scale_grid.ravel(), noise_level_grid.ravel())
 ]
 log_marginal_likelihood = np.reshape(
