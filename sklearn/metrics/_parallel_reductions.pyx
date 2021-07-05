@@ -699,9 +699,12 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             ITYPE_t n = Y_c.shape[0]
             ITYPE_t K = X_c.shape[1]
             DTYPE_t alpha = - 2.
-            DTYPE_t * A = & X_c[0, 0]
+            # TODO: necessarily casting because APIs exposed
+            # via scipy.linalg.cython_blas aren't reflecting
+            # the const-identifier for arguments
+            DTYPE_t * A = <DTYPE_t*> & X_c[0, 0]
             ITYPE_t lda = X_c.shape[1]
-            DTYPE_t * B = & Y_c[0, 0]
+            DTYPE_t * B = <DTYPE_t*> & Y_c[0, 0]
             ITYPE_t ldb = X_c.shape[1]
             DTYPE_t beta = 0.
             DTYPE_t * C = dist_middle_terms
