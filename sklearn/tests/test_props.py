@@ -527,7 +527,7 @@ def test__get_default_requests():
     assert_request_is_empty(ImplicitRequest().get_metadata_request(), exclude="fit")
 
     class ImplicitRequestRemoval(BaseEstimator):
-        _metadata_request__prop = {"fit": {"prop": RequestType.EXISTS_NOT}}
+        _metadata_request__prop = {"fit": {"prop": RequestType.UNUSED}}
 
         def fit(self, X, y, prop=None, **kwargs):
             return self

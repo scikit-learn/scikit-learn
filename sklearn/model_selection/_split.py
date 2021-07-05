@@ -64,7 +64,7 @@ class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):
 
     # This indicates that by default CV splitters don't have a "groups" kwarg,
     # unless indicated by inheriting from ``GroupsConsumer``.
-    _metadata_request__groups = {"split": {"groups": RequestType.EXISTS_NOT}}
+    _metadata_request__groups = {"split": {"groups": RequestType.UNUSED}}
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -1568,7 +1568,7 @@ class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
 
     # This indicates that by default CV splitters don't have a "groups" kwarg,
     # unless indicated by inheriting from ``GroupsConsumer``.
-    _metadata_request__groups = {"split": {"groups": RequestType.EXISTS_NOT}}
+    _metadata_request__groups = {"split": {"groups": RequestType.UNUSED}}
 
     def __init__(
         self, n_splits=10, *, test_size=None, train_size=None, random_state=None

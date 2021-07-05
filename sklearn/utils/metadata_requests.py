@@ -10,11 +10,10 @@ class RequestType(Enum):
     UNREQUESTED = False
     REQUESTED = True
     ERROR_IF_PASSED = None
-    # this sentinel is used in `_metadata_request__*` attributes to indicate that a
-    # metadata is not present eventhough it may be present in the corresponding
-    # method's signature.
-    # TODO: I'm not happy with REMOVE, for now putting a Yoda style name here.
-    EXISTS_NOT = sentinel("EXISTS_NOT")
+    # this sentinel is used in `_metadata_request__*` attributes to indicate
+    # that a metadata is not present even though it may be present in the
+    # corresponding method's signature.
+    UNUSED = sentinel("UNUSED")
 
 
 # this sentinel is the default used in `{method}_requests` methods to indicate
@@ -149,7 +148,7 @@ class MethodMetadataRequest:
         if alias == prop:
             alias = RequestType.REQUESTED
 
-        if alias == RequestType.EXISTS_NOT and prop in self.requests:
+        if alias == RequestType.UNUSED and prop in self.requests:
             del self.requests[prop]
         elif prop not in self.requests or overwrite:
             self.requests[prop] = alias
