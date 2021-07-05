@@ -70,7 +70,7 @@ _ = plt.ylabel("y")
 # Optimisation of kernel hyperparameters in GPR
 # ---------------------------------------------
 #
-# Now, we will create a 
+# Now, we will create a
 # :class:`~sklearn.gaussian_process.GaussianProcessRegressor`
 # using an additive kernel adding a
 # :class:`~sklearn.gaussian_process.kernels.RBF` and
