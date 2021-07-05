@@ -14,14 +14,14 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
     # wheels.yml accordingly. Note that Darwin_17 == High Sierra / 10.13.
     FILE=libomp-12.0.0_0+universal.darwin_17.i386-x86_64.tbz2
     wget https://packages.macports.org/libomp/$FILE
-    tar -C $HOME -xvjf $FILE opt
+    tar -C / -xvjf $FILE opt
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
     export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I$HOME/opt/local/include/libomp"
-    export CXXFLAGS="$CXXFLAGS -I$HOME/opt/local/include/libomp"
-    export LDFLAGS="$LDFLAGS -Wl,-rpath,$HOME/opt/local/lib/libomp -L$HOME/opt/local/lib/libomp -lomp"
+    export CFLAGS="$CFLAGS -I/opt/local/include/libomp"
+    export CXXFLAGS="$CXXFLAGS -I/opt/local/include/libomp"
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp"
 fi
 
 # The version of the built dependencies are specified
