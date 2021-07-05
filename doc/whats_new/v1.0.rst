@@ -405,7 +405,7 @@ Changelog
   :user:`Oliver Grisel <ogrisel>` and
   :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Feature| Added new solver `lbfgs` (available with `solver="lbfgs")
+- |Feature| Added new solver `lbfgs` (available with `solver="lbfgs"`)
   and `positive` argument to class:`linear_model.Ridge`.
   When `positive` is set to True, forces the coefficients to be positive
   (only supported by `lbfgs`).
