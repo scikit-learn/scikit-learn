@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
-from sklearn.base import SampleWeightConsumer
 from sklearn.datasets import make_classification
 from sklearn.feature_selection import SelectKBest
 from sklearn.metrics import balanced_accuracy_score
@@ -103,15 +102,15 @@ class MyEst(ClassifierMixin, BaseEstimator):
         return self.svc_predict_proba(X)
 
 
-class StuffConsumer:
-    _metadata_request__new_param = {"fit": "new_param"}
-    _metadata_request__brand = {"fit": "brand"}
-
-
-class MyTrs(SampleWeightConsumer, StuffConsumer, TransformerMixin, BaseEstimator):
-    def fit(self, X, y=None, **fit_params):
+class MyTrs(TransformerMixin, BaseEstimator):
+    def fit(self, X, y=None, brand=None, new_param=None, sample_weight=None):
         metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, kwargs=fit_params
+            ignore_extras=False,
+            kwargs={
+                "brand": brand,
+                "new_param": new_param,
+                "sample_weight": sample_weight,
+            },
         )
         self._estimator = SelectKBest().fit(X, y)
         return self
@@ -393,7 +392,12 @@ def test_invalid_arg_given():
 
 
 def test_get_metadata_request():
-    class TestDefaultsBadMetadataName(SampleWeightConsumer, _MetadataRequester):
+    class TestDefaultsBadMetadataName(_MetadataRequester):
+        _metadata_request__sample_weight = {
+            "fit": "sample_weight",
+            "score": "sample_weight",
+        }
+
         _metadata_request__my_param = {
             "score": {"my_param": True},
             # the following method raise an error
@@ -406,7 +410,12 @@ def test_get_metadata_request():
             "fit": "my_param",
         }
 
-    class TestDefaultsBadMethodName(SampleWeightConsumer, _MetadataRequester):
+    class TestDefaultsBadMethodName(_MetadataRequester):
+        _metadata_request__sample_weight = {
+            "fit": "sample_weight",
+            "score": "sample_weight",
+        }
+
         _metadata_request__my_param = {
             "score": {"my_param": True},
             # the following method raise an error
@@ -418,7 +427,12 @@ def test_get_metadata_request():
             "fit": "my_other_param",
         }
 
-    class TestDefaults(_MetadataRequester, SampleWeightConsumer):
+    class TestDefaults(_MetadataRequester):
+        _metadata_request__sample_weight = {
+            "fit": "sample_weight",
+            "score": "sample_weight",
+        }
+
         _metadata_request__my_param = {
             "score": {"my_param": True},
             "predict": {"my_param": True},

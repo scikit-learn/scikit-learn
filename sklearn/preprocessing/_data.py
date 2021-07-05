@@ -16,7 +16,7 @@ from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
 
-from ..base import BaseEstimator, TransformerMixin, SampleWeightConsumer
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.extmath import row_norms
@@ -625,7 +625,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     return X
 
 
-class StandardScaler(TransformerMixin, BaseEstimator, SampleWeightConsumer):
+class StandardScaler(TransformerMixin, BaseEstimator):
     """Standardize features by removing the mean and scaling to unit variance.
 
     The standard score of a sample `x` is calculated as:

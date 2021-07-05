@@ -24,7 +24,6 @@ from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.metadata_requests import _MetadataRequester
-from .utils.metadata_requests import SampleWeightConsumer
 
 
 def clone(estimator, *, safe=True):
@@ -522,7 +521,7 @@ class BaseEstimator(_MetadataRequester):
         return output
 
 
-class ClassifierMixin(SampleWeightConsumer):
+class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
 
     _estimator_type = "classifier"
@@ -559,7 +558,7 @@ class ClassifierMixin(SampleWeightConsumer):
         return {"requires_y": True}
 
 
-class RegressorMixin(SampleWeightConsumer):
+class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
 
     _estimator_type = "regressor"

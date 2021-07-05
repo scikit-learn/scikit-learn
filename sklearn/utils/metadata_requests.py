@@ -752,15 +752,3 @@ class _MetadataRequester:
             requests = self._get_default_requests()
 
         return requests.to_dict()
-
-
-class SampleWeightConsumer:
-    """Mixin class to add ``sample_weight`` request to ``fit`` and ``score``.
-
-    .. versionadded:: 1.1
-    """
-
-    _metadata_request__sample_weight = {
-        "fit": "sample_weight",
-        "score": "sample_weight",
-    }

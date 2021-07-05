@@ -28,7 +28,6 @@ from ._base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator
-from ..base import SampleWeightConsumer
 from ..base import is_classifier
 from ..utils import deprecated
 
@@ -138,7 +137,7 @@ class VerboseReporter:
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(SampleWeightConsumer, BaseEnsemble, metaclass=ABCMeta):
+class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting."""
 
     @abstractmethod

@@ -30,7 +30,6 @@ from ..utils.validation import (
 )
 from ..utils.metadata_requests import metadata_request_factory
 from ..utils.metadata_requests import MetadataRouter
-from ..utils.metadata_requests import SampleWeightConsumer
 from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -1409,7 +1408,7 @@ def _path_residuals(
     return this_mse.mean(axis=0)
 
 
-class LinearModelCV(MultiOutputMixin, LinearModel, SampleWeightConsumer, ABC):
+class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     """Base class for iterative model fitting along a regularization path."""
 
     @abstractmethod
