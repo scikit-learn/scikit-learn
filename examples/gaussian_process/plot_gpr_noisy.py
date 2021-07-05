@@ -41,7 +41,7 @@ y = target_generator(X, add_noise=False)
 # %%
 import matplotlib.pyplot as plt
 
-plt.plot(X, y, label="Perfect generator")
+plt.plot(X, y, label="Expected signal")
 plt.legend()
 plt.xlabel("X")
 _ = plt.ylabel("y")
@@ -55,12 +55,13 @@ X_train = rng.uniform(0, 5, size=20).reshape(-1, 1)
 y_train = target_generator(X_train, add_noise=True)
 
 # %%
-plt.plot(X, y, label="Perfect generator")
+plt.plot(X, y, label="Expected signal")
 plt.scatter(
     x=X_train[:, 0],
     y=y_train,
-    color="tab:orange",
-    label="Noisy training samples",
+    color="black",
+    alpha=0.4,
+    label="Observations",
 )
 plt.legend()
 plt.xlabel("X")
@@ -96,8 +97,8 @@ gpr.fit(X_train, y_train)
 y_mean, y_std = gpr.predict(X, return_std=True)
 
 # %%
-plt.plot(X, y, label="Perfect generator")
-plt.scatter(x=X_train[:, 0], y=y_train, color="tab:orange", label="Noisy measurement")
+plt.plot(X, y, label="Expected signal")
+plt.scatter(x=X_train[:, 0], y=y_train, color="black", alpha=0.4, label="Observsations")
 plt.errorbar(X, y_mean, y_std)
 plt.legend()
 plt.xlabel("X")
@@ -125,9 +126,9 @@ gpr.fit(X_train, y_train)
 y_mean, y_std = gpr.predict(X, return_std=True)
 
 # %%
-plt.plot(X, y, label="Perfect generator")
-plt.scatter(x=X_train[:, 0], y=y_train, color="tab:orange", label="Noisy measurement")
-plt.errorbar(X, y_mean, y_std, ecolor="tab:yellow")
+plt.plot(X, y, label="Expected signal")
+plt.scatter(x=X_train[:, 0], y=y_train, color="black", alpha=0.4, label="Observations")
+plt.errorbar(X, y_mean, y_std)
 plt.legend()
 plt.xlabel("X")
 plt.ylabel("y")
