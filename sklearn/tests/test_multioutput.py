@@ -33,8 +33,10 @@ from sklearn.impute import SimpleImputer
 from sklearn.ensemble import StackingRegressor
 
 
-def test_multi_target_regression():
-    X, y = datasets.make_regression(n_targets=3, random_state=0)
+# XXX: DEBUG only, do no merge with `range(1000)`
+@pytest.mark.parametrize("seed", range(1000))
+def test_multi_target_regression(seed):
+    X, y = datasets.make_regression(n_targets=3, random_state=seed)
     X_train, y_train = X[:50], y[:50]
     X_test, y_test = X[50:], y[50:]
 
