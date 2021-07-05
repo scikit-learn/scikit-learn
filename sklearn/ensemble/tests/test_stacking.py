@@ -30,6 +30,7 @@ from sklearn.svm import LinearSVR
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import scale
 
 from sklearn.ensemble import StackingClassifier
@@ -567,32 +568,57 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
         stacker.n_features_in_
 
 
+@pytest.mark.parametrize("stack_method", ["auto", "predict"])
 @pytest.mark.parametrize("passthrough", [False, True])
-def test_stacking_classifier_multilabel(passthrough):
+def test_stacking_classifier_multilabel(stack_method, passthrough):
     X_train, X_test, y_train, y_test = train_test_split(
         X_multilabel_r, y_multilabel_r, stratify=y_multilabel_r, random_state=42
     )
 
     estimators = [
-        ("rfc", RandomForestClassifier(n_estimators=10, random_state=42)),
-        ("dc", DummyClassifier()),
+        ("knnc", KNeighborsClassifier()),
+        ("dcs", DummyClassifier(strategy="stratified", random_state=42)),
+        ("dcu", DummyClassifier(strategy="uniform", random_state=42)),
     ]
-    final_estimator = RandomForestClassifier(n_estimators=10, random_state=42)
+    final_estimator = KNeighborsClassifier()
+
     clf = StackingClassifier(
         estimators=estimators,
         final_estimator=final_estimator,
         passthrough=passthrough,
+        stack_method=stack_method,
     )
     clf.fit(X_train, y_train)
     clf.predict(X_test)
     clf.predict_proba(X_test)
     sc = clf.score(X_test, y_test)
-    assert passthrough or sc == pytest.approx(0.32)
 
-    assert not passthrough or sc == pytest.approx(0.44)
+    # (passthrough & stack_method == "predict") => (sc == 0.44)
+    assert not passthrough or stack_method != "predict" or sc == pytest.approx(0.44)
+
+    # (passthrough & stack_method != "predict") => (sc == 0.48)
+    assert not passthrough or stack_method == "predict" or sc == pytest.approx(0.48)
+
+    # (not passthrough & stack_method == "predict") => (sc == 0.24)
+    assert passthrough or stack_method != "predict" or sc == pytest.approx(0.24)
+
+    # (not passthrough & stack_method != "predict") => (sc == 0.2)
+    assert passthrough or stack_method == "predict" or sc == pytest.approx(0.2)
 
     X_trans = clf.transform(X_test)
-    expected_column_count = 32 if passthrough else 12
-    assert X_trans.shape[1] == expected_column_count
+    expected_column = X_trans.shape[1]
+
+    # (passthrough & stack_method == "predict") => (columns == 29)
+    assert not passthrough or stack_method != "predict" or expected_column == 29
+
+    # (passthrough & stack_method != "predict") => (sc == 38)
+    assert not passthrough or stack_method == "predict" or expected_column == 38
+
+    # (not passthrough & stack_method == "predict") => (sc == 9)
+    assert passthrough or stack_method != "predict" or expected_column == 9
+
+    # (not passthrough & stack_method != "predict") => (sc == 18)
+    assert passthrough or stack_method == "predict" or expected_column == 18
+
     if passthrough:
         assert_allclose(X_test, X_trans[:, -20:])
