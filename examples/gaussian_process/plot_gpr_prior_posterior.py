@@ -21,15 +21,15 @@ print(__doc__)
 # Helper function
 # ---------------
 #
-# Before to present each individual kernel available for Gaussian processes,
-# we will define an helper function to help us plotting samples drawn from
+# Before presenting each individual kernel available for Gaussian processes,
+# we will define an helper function allowing us plotting samples drawn from
 # the Gaussian process.
 #
 # This function will take a
 # :class:`~sklearn.gaussian_process.GaussianProcessRegressor` model and will
 # drawn sample from the Gaussian process. If the model was not fit, the samples
-# are drawn from the prior distribution while after fit, the samples are drawn
-# from the posterior distribution.
+# are drawn from the prior distribution while after model fitting, the samples are
+# drawn from the posterior distribution.
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -37,9 +37,9 @@ import numpy as np
 def plot_gpr_samples(gpr_model, n_samples, ax):
     """Plot samples drawn from the Gaussian process model.
 
-    If the Gaussian process model is not train then the drawn samples are
-    drawn from the prior distributions. Otherwise, the samples are drawn from
-    the posterior distribution. Be aware that a sample here correspond to a
+    If the Gaussian process model is not trained then the drawn samples are
+    drawn from the prior distribution. Otherwise, the samples are drawn from
+    the posterior distribution. Be aware that a sample here corresponds to a
     function.
 
     Parameters
@@ -95,8 +95,8 @@ n_samples = 5
 # Kernel cookbook
 # ---------------
 #
-# In thi section, we illustrate some sample drawn from the prior and posterior
-# distribution of the Gaussian process with different kernels.
+# In this section, we illustrate some samples drawn from the prior and posterior
+# distributions of the Gaussian process with different kernels.
 #
 # Radial Basis Function kernel
 # ............................
@@ -134,7 +134,7 @@ print(
 # ..........................
 from sklearn.gaussian_process.kernels import RationalQuadratic
 
-kernel = 1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1, alpha_bounds=(1e-5, 1e10))
+kernel = 1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1, alpha_bounds=(1e-5, 1e15))
 gpr = GaussianProcessRegressor(kernel=kernel, random_state=0)
 
 fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
