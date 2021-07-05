@@ -163,14 +163,14 @@ _ = plt.title(
 
 # %%
 # This fitted model is not accurate. Indeed, we did not set the parameters of
-# the kernel and instead used the default ones. We can have a look at them.
+# the kernel and instead used the default ones. We can inspect them.
 kernel_ridge.kernel
 
 # %%
 # Our kernel has two parameters: the length-scale and the periodicity. For our
-# dataset, we use `sin(x)` as the generative process. It means that we have
-# a periodicity of :math:`2 \pi`. The default value of the parameter being
-# :math:`1`, it explains the high frequency observed in the predictions of
+# dataset, we use `sin` as the generative process, implying a
+# :math:`2 \pi`-periodicity for the signal. The default value of the parameter
+# being :math:`1`, it explains the high frequency observed in the predictions of
 # our model.
 # Similar conclusions could be drawn with the length-scale parameter. Thus, it
 # tell us that the kernel parameters need to be tuned. We will use a randomized
@@ -205,8 +205,7 @@ kernel_ridge_tuned.best_params_
 # %%
 # Looking at the best parameters, we see that they are different from the
 # defaults. We also see that the periodicity is closer to the expected value:
-# :math:`2 \pi`. We can now have a look at the predictions of our tuned kernel
-# ridge.
+# :math:`2 \pi`. We can now inspect the predictions of our tuned kernel ridge.
 start_time = time.time()
 predictions_kr = kernel_ridge_tuned.predict(data)
 print(f"Time for KernelRidge predict: {time.time() - start_time:.3f} seconds")
