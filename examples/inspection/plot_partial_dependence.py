@@ -88,7 +88,7 @@ preprocessor_mlp = ColumnTransformer(
     [
         (
             "num",
-            make_pipeline(QuantileTransformer(), SimpleImputer(strategy="mean")),
+            make_pipeline(StandardScaler(), SimpleImputer(strategy="mean")),
             numerical_features,
         ),
         (
@@ -119,12 +119,39 @@ tic = time()
 mlp = make_pipeline(
     preprocessor_mlp,
     MLPRegressor(
-        hidden_layer_sizes=(50, 50), learning_rate_init=0.01, early_stopping=True
+        hidden_layer_sizes=(100, 50), learning_rate_init=0.01, early_stopping=True
     ),
 )
 mlp.fit(X_train, y_train)
 print(f"done in {time() - tic:.3f}s")
 print(f"Test R2 score: {mlp.score(X_test, y_test):.2f}")
+
+# %%
+from sklearn.inspection import plot_partial_dependence
+
+print("Computing partial dependence plots...")
+features = [
+    "TotalBsmtSF",
+    "GrLivArea",
+    "OverallQual",
+]
+tic = time()
+display = plot_partial_dependence(
+    mlp,
+    X_train,
+    features,
+    kind="both",
+    subsample=100,
+    n_jobs=3,
+    grid_resolution=50,
+    random_state=0,
+)
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    "Partial dependence of house value on non-location features\n"
+    "for the California housing dataset, with Gradient Boosting"
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 
 # %%
 from sklearn.preprocessing import OrdinalEncoder
@@ -149,7 +176,6 @@ preprocessor_hgbdt = ColumnTransformer(
 )
 
 # %%
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 
@@ -251,7 +277,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_
 
 from time import time
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import QuantileTransformer
+
+# from sklearn.preprocessing import QuantileTransformer
 from sklearn.neural_network import MLPRegressor
 
 print("Training MLPRegressor...")
