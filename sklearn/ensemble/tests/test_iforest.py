@@ -230,8 +230,8 @@ def test_iforest_average_path_length():
     # It tests non-regression for #8549 which used the wrong formula
     # for average path length, strictly for the integer case
     # Updated to check average path length when input is <= 2 (issue #11839)
-    result_5 = 77.0 / 30.0
-    result_999 = 12.9689417211006898253130364
+    result_5 = 77.0 / 30.0  # exact value
+    result_999 = 12.9689417211006898253130364  # exact value
     assert_allclose(_average_path_length([0]), [0.0])
     assert_allclose(_average_path_length([1]), [0.0])
     assert_allclose(_average_path_length([2]), [1.0])
@@ -317,7 +317,7 @@ def test_iforest_with_uniform_data():
 
     rng = np.random.RandomState(0)
 
-    assert all(np.abs(iforest.decision_function(X)) < 1.0e-15)
+    assert all(np.abs(iforest.decision_function(X)) < 2 * np.finfo(float).eps)
     assert all(iforest.predict(X) == 1)
     assert all(iforest.predict(rng.randn(100, 10)) == 1)
     assert all(iforest.predict(X + 1) == 1)

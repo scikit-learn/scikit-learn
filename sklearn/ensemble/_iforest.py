@@ -335,7 +335,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         is_inlier = np.ones(X.shape[0], dtype=int)
         # is_inlier[self.decision_function(X) < 0] = -1
-        is_inlier[self.decision_function(X) < -1.0e-15] = -1
+        is_inlier[self.decision_function(X) < -2 * np.finfo(float).eps] = -1
         return is_inlier
 
     def decision_function(self, X):
@@ -486,6 +486,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         }
 
 
+# Lookup table used below in _average_path_length() for small samples
 _average_path_length_small = np.array(
     (
         0.0,
@@ -558,6 +559,21 @@ def _average_path_length(n_samples_leaf):
     Returns
     -------
     average_path_length : ndarray of shape (n_samples,)
+
+    Notes
+    -----
+    Average path length equals :math:`2*(H(n)-1)`, with :math:`H(n)`
+    the :math:`n`th harmonic number. Calculation adapted from the
+    harmonic number asymptotic expansion, see Wikipedia
+    (https://en.wikipedia.org/wiki/Harmonic_number#Calculation) or
+    M.B. Villarino in [MBV]_.
+
+    References
+    ----------
+    .. [MBV] Villarino, M.B. Ramanujan’s Harmonic Number Expansion Into Negative
+        Powers Of A Triangular Number. JIPAM. J. Inequal. Pure Appl. Math. 9(3),
+        89 (2008). https://www.emis.de/journals/JIPAM/article1026.html.
+        Preprint at https://arxiv.org/abs/0707.3950.
     """
 
     n_samples_leaf = check_array(n_samples_leaf, ensure_2d=False)
@@ -566,7 +582,7 @@ def _average_path_length(n_samples_leaf):
     n_samples_leaf = n_samples_leaf.reshape((1, -1))
     average_path_length = np.zeros(n_samples_leaf.shape)
 
-    mask_small = n_samples_leaf < 52
+    mask_small = n_samples_leaf < len(_average_path_length_small)
     not_mask = ~mask_small
 
     average_path_length[mask_small] = _average_path_length_small[
@@ -575,20 +591,21 @@ def _average_path_length(n_samples_leaf):
 
     # Average path length equals 2*(H(n)-1), with H(n) the nth harmonic number.
     # For the harmonic number calculation,
-    # see the following publications and references therein
+    # see Wikipedia (https://en.wikipedia.org/wiki/Harmonic_number#Calculation)
+    # or the following publications and references therein
     # Villarino, M.B. Ramanujan’s Harmonic Number Expansion Into Negative
     # Powers Of A Triangular Number. JIPAM. J. Inequal. Pure Appl. Math. 9(3),
-    # 89 (2008). https://www.emis.de/journals/JIPAM/article1026.html?sid=1026.
+    # 89 (2008). https://www.emis.de/journals/JIPAM/article1026.html.
     # Preprint at https://arxiv.org/abs/0707.3950.
     # or
     # Wang, W. Harmonic Number Expansions of the Ramanujan Type.
     # Results Math 73, 161 (2018). https://doi.org/10.1007/s00025-018-0920-8
 
-    tmp = 1.0 / np.square(n_samples_leaf[not_mask])
+    n2_inv = 1.0 / np.square(n_samples_leaf[not_mask])
     average_path_length[not_mask] = (
         2.0 * (np.log(n_samples_leaf[not_mask]) - 1.0 + np.euler_gamma)
         + 1.0 / n_samples_leaf[not_mask]
-        - tmp * (1.0 / 6.0 - tmp * (1.0 / 60.0 - tmp / 126.0))
+        - n2_inv * (1.0 / 6.0 - n2_inv * (1.0 / 60.0 - n2_inv / 126.0))
     )
 
     return average_path_length.reshape(n_samples_leaf_shape)
