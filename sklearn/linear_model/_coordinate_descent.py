@@ -296,15 +296,15 @@ def lasso_path(
 
     See Also
     --------
-    lars_path : Compute Least Angle Regression or Lasso path using LARS \
-    algorithm.
+    lars_path : Compute Least Angle Regression or Lasso path using LARS
+        algorithm.
     Lasso : The Lasso is a linear model that estimates sparse coefficients.
     LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
-    LassoCV : Lasso linear model with iterative fitting along a regularization \
-    path.
-    LassoLarsCV : Cross-validated Lasso, using the LARS algorithm.
-    sklearn.decomposition.sparse_encode : Estimator that can be used to \
-    transform signals into sparse linear combination of atoms from a fixed.
+    LassoCV : Lasso linear model with iterative fitting along a regularization
+        path.
+    LassoLarsCV : Cross-validated Lasso using the LARS algorithm.
+    sklearn.decomposition.sparse_encode : Estimator that can be used to
+        transform signals into sparse linear combination of atoms from a fixed.
 
     Notes
     -----
