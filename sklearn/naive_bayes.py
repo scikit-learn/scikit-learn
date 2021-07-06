@@ -127,7 +127,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
 class GaussianNB(_BaseNB):
     """
-    Gaussian Naive Bayes (GaussianNB)
+    Gaussian Naive Bayes (GaussianNB).
 
     Can perform online updates to model parameters via :meth:`partial_fit`.
     For details on algorithm used to update feature means and variance online,
@@ -234,6 +234,7 @@ class GaussianNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X, y = self._validate_data(X, y)
         return self._partial_fit(
@@ -354,6 +355,7 @@ class GaussianNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return self._partial_fit(
             X, y, classes, _refit=False, sample_weight=sample_weight
