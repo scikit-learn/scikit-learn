@@ -546,7 +546,7 @@ def test_angle_out_of_range_checks():
     # check the angle parameter range
     for angle in [-1, -1e-6, 1 + 1e-6, 2]:
         tsne = TSNE(angle=angle)
-        with pytest.raises(ValueError, match="'angle' must be between " "0.0 - 1.0"):
+        with pytest.raises(ValueError, match="'angle' must be between 0.0 - 1.0"):
             tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
@@ -557,9 +557,7 @@ def test_pca_initialization_not_compatible_with_precomputed_kernel():
     tsne = TSNE(metric="precomputed", init="pca", square_distances=True)
     with pytest.raises(
         ValueError,
-        match='The parameter init="pca" cannot'
-        " be used with"
-        ' metric="precomputed".',
+        match='The parameter init="pca" cannot be used with metric="precomputed".',
     ):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
@@ -903,9 +901,7 @@ def test_n_iter_without_progress():
             sys.stdout = old_stdout
 
         # The output needs to contain the value of n_iter_without_progress
-        assert (
-            "did not make any progress during the " "last -1 episodes. Finished." in out
-        )
+        assert "did not make any progress during the last -1 episodes. Finished." in out
 
 
 # TODO: Remove filterwarnings in 1.2
