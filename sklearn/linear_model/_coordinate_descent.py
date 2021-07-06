@@ -784,6 +784,19 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
+    SGDRegressor : Implements elastic net regression with incremental training.
+    SGDClassifier : Implements logistic regression with elastic net penalty
+        (``SGDClassifier(loss="log", penalty="elasticnet")``).
+
+    Notes
+    -----
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a Fortran-contiguous numpy array.
+
     Examples
     --------
     >>> from sklearn.linear_model import ElasticNet
@@ -799,20 +812,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     1.451...
     >>> print(regr.predict([[0, 0]]))
     [1.451...]
-
-
-    Notes
-    -----
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
-
-    See Also
-    --------
-    ElasticNetCV : Elastic net model with best model selection by
-        cross-validation.
-    SGDRegressor : Implements elastic net regression with incremental training.
-    SGDClassifier : Implements logistic regression with elastic net penalty
-        (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """
 
     path = staticmethod(enet_path)
