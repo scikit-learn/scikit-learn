@@ -500,7 +500,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     See Also
     ----------
-    GeneralizedLinearRegressor : Generalized Linear Model with a Poisson distribution.
+    GeneralizedLinearRegressor : Generalized Linear Model with a Poisson
+        distribution.
     """
 
     def __init__(
