@@ -216,10 +216,13 @@ def filter_errors(errors, method, Estimator=None):
         #   (as we may need refer to the name of the returned
         #    object)
         #  - GL01: Docstring text (summary) should start in the line
-        #  immediately after the opening quotes (not in the same line,
-        #  or leaving a blank line in between)
+        #    immediately after the opening quotes (not in the same line,
+        #    or leaving a blank line in between)
+        #  - GL02: If there's a blank line, it should be before the
+        #    first line of the Returns section, not after (it allows to have
+        #    short docstrings for properties).
 
-        if code in ["RT02", "GL01"]:
+        if code in ["RT02", "GL01", "GL02"]:
             continue
 
         # Ignore PR02: Unknown parameters for properties. We sometimes use
