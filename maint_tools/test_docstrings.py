@@ -25,7 +25,6 @@ DOCSTRING_IGNORE_LIST = [
     "DictVectorizer",
     "DictionaryLearning",
     "DummyClassifier",
-    "ElasticNet",
     "ElasticNetCV",
     "EllipticEnvelope",
     "EmpiricalCovariance",
