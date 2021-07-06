@@ -1603,16 +1603,16 @@ class NMF(TransformerMixin, BaseEstimator):
         allowed_regularization = ("both", "components", "transformation", None)
         if self.regularization not in allowed_regularization:
             raise ValueError(
-                "Invalid regularization parameter: got %r instead of "
-                "one of %r" % (self.regularization, allowed_regularization)
+                "Invalid regularization parameter: got %r instead of one of %r"
+                % (self.regularization, allowed_regularization)
             )
 
         # 'mu' is the only solver that handles other beta losses
         # than 'frobenius'
         if self.solver != "mu" and self.beta_loss not in (2, "frobenius"):
             raise ValueError(
-                "Invalid beta_loss parameter: solver %r does not handle "
-                "beta_loss = %r" % (self.solver, self.beta_loss)
+                "Invalid beta_loss parameter: solver %r does not handle beta_loss = %r"
+                % (self.solver, self.beta_loss)
             )
 
         if self.solver == "mu" and self.init == "nndsvd":
@@ -1701,7 +1701,8 @@ class NMF(TransformerMixin, BaseEstimator):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence." % self.max_iter,
+                "it to improve convergence."
+                % self.max_iter,
                 ConvergenceWarning,
             )
 
@@ -2108,14 +2109,14 @@ class MiniBatchNMF(NMF):
         if not isinstance(self.solver, str) or self.solver != "mu":
             raise ValueError(
                 f"Invalid solver parameter '{self.solver}'. "
-                f"Only solver='mu' is accepted."
+                "Only solver='mu' is accepted."
             )
 
         # batch_size
         self._batch_size = self.batch_size
         if not isinstance(self._batch_size, numbers.Integral) or self._batch_size <= 0:
             raise ValueError(
-                f"batch_size must be a positive integer, got "
+                "batch_size must be a positive integer, got "
                 f"{self._batch_size!r} instead."
             )
         self._batch_size = min(self._batch_size, X.shape[0])
@@ -2221,10 +2222,7 @@ class MiniBatchNMF(NMF):
         # constraint set yet.
         if step == 1:
             if self.verbose:
-                print(
-                    f"Minibatch step {step}/{n_steps}: mean batch "
-                    f"cost: {batch_cost}"
-                )
+                print(f"Minibatch step {step}/{n_steps}: mean batch cost: {batch_cost}")
             return False
 
         # Compute an Exponentially Weighted Average of the cost function to
@@ -2248,7 +2246,7 @@ class MiniBatchNMF(NMF):
         H_diff = linalg.norm(H - H_buffer) / linalg.norm(H)
         if self.tol > 0 and H_diff <= self.tol:
             if self.verbose:
-                print(f"Converged (small H change) at step " f"{step}/{n_steps}")
+                print(f"Converged (small H change) at step {step}/{n_steps}")
             return True
 
         # Early stopping heuristic due to lack of improvement on smoothed
@@ -2265,7 +2263,7 @@ class MiniBatchNMF(NMF):
         ):
             if self.verbose:
                 print(
-                    f"Converged (lack of improvement in objective function) "
+                    "Converged (lack of improvement in objective function) "
                     f"at step {step}/{n_steps}"
                 )
             return True
@@ -2305,7 +2303,8 @@ class MiniBatchNMF(NMF):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence." % self.max_iter,
+                "it to improve convergence."
+                % self.max_iter,
                 ConvergenceWarning,
             )
 
