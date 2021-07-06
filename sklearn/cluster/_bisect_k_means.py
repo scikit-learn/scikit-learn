@@ -523,20 +523,22 @@ class BisectKMeans(KMeans):
         """
         strategy = self.bisect_strategy
 
-        # Tree Dictionary will be later used at prediction
+        # Dictionary to imitate tree view of created centers.
+        # Used to keep hierarchical ordering.
         tree_dict = {
             -1: {'children': None,
                  'center': None
                  }
         }
 
-        # Leaves Dictionary used for clustering
+        # Leaves Dictionary used for clustering.
+        # Stores information which data points are assigned to given cluster ('samples')
+        # along with error or amount of assigned points ('error_or_size'), depending on
+        # specified 'bisect_strategy'
         leaves_dict = {
             -1: {'samples': np.ones(X.shape[0], dtype=bool),
                  'error_or_size': None}
         }
-        # Initialize Labels
-        labels = np.full(X.shape[0], -1, dtype=np.intc)
 
         # ID of biggest center stored in centers_dict
         biggest_id = -1
@@ -589,6 +591,7 @@ class BisectKMeans(KMeans):
                     'center': _centers[picked_id]
                 }
 
+                # Create Mask for samples for selecting proper data points
                 samples_mask = leaves_dict[biggest_id]['samples'].copy()
                 samples_mask[picked_samples] = (_labels == picked_id)
 
@@ -610,60 +613,32 @@ class BisectKMeans(KMeans):
         # Delete Initial cluster
         del tree_dict[-1]
 
-        # Take clusters of leaves as centers
-        centers = np.array([item['center'] for item in tree_dict.values() if
-                            item['children'] is None])
+        # Sort Leaf centers by their root
+        ordered_centers = [0, 1]
+        while len(ordered_centers) != self.n_clusters:
+            new_order = []
 
-        #TODO Rearange centers to keep hierarchy
+            for idx in ordered_centers:
+                center_id = [idx] if tree_dict[idx]['children'] is None else tree_dict[idx]['children']
+                new_order.extend(center_id)
 
-        for i, key in enumerate(leaves_dict.keys()):
-            labels[leaves_dict[key]['samples']] = i
+            ordered_centers = new_order
+
+        # Initialize Labels
+        labels = np.full(X.shape[0], -1, dtype=np.intc)
+
+        centers = []
+
+        for i, center_id in enumerate(ordered_centers):
+            # Save cluster centers in hierarchical order
+            centers.append(tree_dict[center_id]['center'])
+
+            # Assign labels to proper data points
+            labels[leaves_dict[center_id]['samples']] = i
+
+        centers = np.asarray(centers)
 
         # # Inner Tree will be later used at 'predict' method:
         # self._inner_tree = tree_dict
 
         return centers, labels
-
-    # def new_predict(self, X, sample_weight=None):
-    #     check_is_fitted(self)
-    #
-    #     X = self._check_test_data(X)
-    #     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-    #     # X -= self._X_mean
-    #
-    #     tree_clusters = np.array([item['center'] for item in self._inner_tree.values()])
-    #     tree_clusters += self._X_mean
-    #
-    #     cluster_to_leaves = np.array([leaf for leaf, value in self._inner_tree.items() if value['children'] is None], dtype=np.intc)
-    #
-    #     labels = self.recursive(X, sample_weight, tree_clusters, cluster_to_leaves, [0, 1])
-    #     print(f"New predict:    {labels}")
-
-
-    # def recursive(self, X, sample_weight, tree_clusters, cluster_to_leaves, picked_nodes):
-    #     x_squared_norms = row_norms(X, squared=True)
-    #     picked_clusters = tree_clusters[picked_nodes]
-    #
-    #     _labels = _check_labels_threadpool_limit(X,
-    #                                              sample_weight,
-    #                                              x_squared_norms,
-    #                                              picked_clusters,
-    #                                              self._n_threads)
-    #
-    #     indexes = [(_labels == 0), (_labels == 1)]
-    #     for idx in range(2):
-    #         children = self._inner_tree[picked_nodes[idx]]['children']
-    #
-    #
-    #         if children:
-    #             _labels[indexes[idx]] = self.recursive(X[indexes[idx]],
-    #                                               sample_weight[indexes[idx]],
-    #                                               tree_clusters,
-    #                                               cluster_to_leaves,
-    #                                               children)
-    #         else:
-    #             label = np.searchsorted(cluster_to_leaves, picked_nodes[idx])
-    #             _labels[indexes[idx]] = label
-    #
-    #
-    #     return _labels

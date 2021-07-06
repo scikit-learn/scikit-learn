@@ -52,20 +52,6 @@ def test_sparse():
 
     bisect_means.fit(X)
     normal_centers = bisect_means.cluster_centers_
+
     assert_array_almost_equal(normal_centers, sparse_centers)
-
-
-# def test_perf():
-#     """Test Bisecting K-Means with sparse data"""
-#
-#     rng = np.random.RandomState(0)
-#     X = rng.rand(10, 2)
-#     X = np.around(X, 2)
-#
-#     np.set_printoptions(precision=2)
-#
-#     bisect_means = BisectKMeans(n_clusters=3, random_state=0)
-#     bisect_means.fit(X)
-#     print(f"Labels:        {bisect_means.labels_}")
-#     print(f"Predict:        {bisect_means.predict(X)}")
-#     assert_array_almost_equal(bisect_means.labels_, bisect_means.predict(X))
+    assert_array_almost_equal(bisect_means.labels_, bisect_means.predict(X))
