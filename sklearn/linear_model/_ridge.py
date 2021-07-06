@@ -15,6 +15,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy import sparse
+from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel
@@ -235,6 +236,64 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
+def _solve_lbfgs(
+    X, y, alpha, positive=True, max_iter=None, tol=1e-3, X_offset=None, X_scale=None
+):
+    """Solve ridge regression with LBFGS.
+
+    The main purpose is fitting with forcing coefficients to be positive.
+    For unconstrained ridge regression, there are faster dedicated solver methods.
+    Note that with positive bounds on the coefficients, LBFGS seems faster
+    than scipy.optimize.lsq_linear.
+    """
+    n_samples, n_features = X.shape
+
+    options = {}
+    if max_iter is not None:
+        options["maxiter"] = max_iter
+    config = {
+        "method": "L-BFGS-B",
+        "tol": tol,
+        "jac": True,
+        "options": options,
+    }
+    if positive:
+        config["bounds"] = [(0, np.inf)] * n_features
+
+    if X_offset is not None and X_scale is not None:
+        X_offset_scale = X_offset / X_scale
+    else:
+        X_offset_scale = None
+
+    coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
+
+    for i in range(y.shape[1]):
+        x0 = np.zeros((n_features,))
+        y_column = y[:, i]
+
+        def func(w):
+            residual = X.dot(w) - y_column
+            if X_offset_scale is not None:
+                residual -= w.dot(X_offset_scale)
+            f = 0.5 * residual.dot(residual) + 0.5 * alpha[i] * w.dot(w)
+            grad = X.T @ residual + alpha[i] * w
+            if X_offset_scale is not None:
+                grad -= X_offset_scale * np.sum(residual)
+
+            return f, grad
+
+        result = optimize.minimize(func, x0, **config)
+        if not result["success"]:
+            warnings.warn(
+                "The lbfgs solver did not converge. Try increasing max_iter "
+                f"or tol. Currently: max_iter={max_iter} and tol={tol}",
+                ConvergenceWarning,
+            )
+        coefs[i] = result["x"]
+
+    return coefs
+
+
 def _get_valid_accept_sparse(is_X_sparse, solver):
     if is_X_sparse and solver in ["auto", "sag", "saga"]:
         return "csr"
@@ -252,6 +311,7 @@ def ridge_regression(
     max_iter=None,
     tol=1e-3,
     verbose=0,
+    positive=False,
     random_state=None,
     return_n_iter=False,
     return_intercept=False,
@@ -287,8 +347,8 @@ def ridge_regression(
 
         .. versionadded:: 0.17
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}, \
-        default='auto'
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
+            'sag', 'saga', 'lbfgs'}, default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -317,10 +377,13 @@ def ridge_regression(
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
 
+        - 'lbfgs' uses L-BFGS-B algorithm implemented in
+          `scipy.optimize.minimize`. It can be used only when `positive`
+          is True.
 
-        All last five solvers support both dense and sparse data. However, only
-        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
-        True.
+        All last six solvers support both dense and sparse data. However, only
+        'sag', 'sparse_cg', and 'lbfgs' support sparse input when `fit_intercept`
+        is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -331,7 +394,7 @@ def ridge_regression(
         Maximum number of iterations for conjugate gradient solver.
         For the 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
-        1000.
+        1000. For 'lbfgs' solver, the default value is 15000.
 
     tol : float, default=1e-3
         Precision of the solution.
@@ -339,6 +402,10 @@ def ridge_regression(
     verbose : int, default=0
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
+
+    positive : bool, default=False
+        When set to ``True``, forces the coefficients to be positive.
+        Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -389,6 +456,7 @@ def ridge_regression(
         max_iter=max_iter,
         tol=tol,
         verbose=verbose,
+        positive=positive,
         random_state=random_state,
         return_n_iter=return_n_iter,
         return_intercept=return_intercept,
@@ -407,6 +475,7 @@ def _ridge_regression(
     max_iter=None,
     tol=1e-3,
     verbose=0,
+    positive=False,
     random_state=None,
     return_n_iter=False,
     return_intercept=False,
@@ -418,18 +487,33 @@ def _ridge_regression(
     has_sw = sample_weight is not None
 
     if solver == "auto":
-        if return_intercept:
-            # only sag supports fitting intercept directly
+        if positive:
+            solver = "lbfgs"
+        elif return_intercept:
+            # sag supports fitting intercept directly
             solver = "sag"
         elif not sparse.issparse(X):
             solver = "cholesky"
         else:
             solver = "sparse_cg"
 
-    if solver not in ("sparse_cg", "cholesky", "svd", "lsqr", "sag", "saga"):
+    if solver not in ("sparse_cg", "cholesky", "svd", "lsqr", "sag", "saga", "lbfgs"):
         raise ValueError(
             "Known solvers are 'sparse_cg', 'cholesky', 'svd'"
-            " 'lsqr', 'sag' or 'saga'. Got %s." % solver
+            " 'lsqr', 'sag', 'saga' or 'lbfgs'. Got %s." % solver
+        )
+
+    if positive and solver != "lbfgs":
+        raise ValueError(
+            "When positive=True, only 'lbfgs' solver can be used. "
+            f"Please change solver {solver} to 'lbfgs' "
+            "or set positive=False."
+        )
+
+    if solver == "lbfgs" and not positive:
+        raise ValueError(
+            "'lbfgs' solver can be used only when positive=True. "
+            "Please use another solver."
         )
 
     if return_intercept and solver != "sag":
@@ -554,6 +638,18 @@ def _ridge_regression(
             intercept = intercept[0]
         coef = np.asarray(coef)
 
+    elif solver == "lbfgs":
+        coef = _solve_lbfgs(
+            X,
+            y,
+            alpha,
+            positive=positive,
+            tol=tol,
+            max_iter=max_iter,
+            X_offset=X_offset,
+            X_scale=X_scale,
+        )
+
     if solver == "svd":
         if sparse.issparse(X):
             raise TypeError("SVD solver does not support sparse inputs currently")
@@ -585,6 +681,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         max_iter=None,
         tol=1e-3,
         solver="auto",
+        positive=False,
         random_state=None,
     ):
         self.alpha = alpha
@@ -594,6 +691,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.tol = tol
         self.solver = solver
+        self.positive = positive
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
@@ -612,16 +710,31 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             multi_output=True,
             y_numeric=True,
         )
-        if sparse.issparse(X) and self.fit_intercept:
-            if self.solver not in ["auto", "sparse_cg", "sag"]:
+        if self.solver == "lbfgs" and not self.positive:
+            raise ValueError(
+                "'lbfgs' solver can be used only when positive=True. "
+                "Please use another solver."
+            )
+
+        if self.positive:
+            if self.solver not in ["auto", "lbfgs"]:
+                raise ValueError(
+                    f"solver='{self.solver}' does not support positive fitting. Please"
+                    " set the solver to 'auto' or 'lbfgs', or set `positive=False`"
+                )
+            else:
+                solver = self.solver
+        elif sparse.issparse(X) and self.fit_intercept:
+            if self.solver not in ["auto", "sparse_cg", "sag", "lbfgs"]:
                 raise ValueError(
                     "solver='{}' does not support fitting the intercept "
                     "on sparse data. Please set the solver to 'auto' or "
-                    "'sparse_cg', 'sag', or set `fit_intercept=False`".format(
-                        self.solver
-                    )
+                    "'sparse_cg', 'sag', 'lbfgs' "
+                    "or set `fit_intercept=False`".format(self.solver)
                 )
-            if self.solver == "sag" and self.max_iter is None and self.tol > 1e-4:
+            if self.solver == "lbfgs":
+                solver = "lbfgs"
+            elif self.solver == "sag" and self.max_iter is None and self.tol > 1e-4:
                 warnings.warn(
                     '"sag" solver requires many iterations to fit '
                     "an intercept with sparse inputs. Either set the "
@@ -658,6 +771,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 max_iter=self.max_iter,
                 tol=self.tol,
                 solver="sag",
+                positive=self.positive,
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=True,
@@ -682,6 +796,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 max_iter=self.max_iter,
                 tol=self.tol,
                 solver=solver,
+                positive=self.positive,
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=False,
@@ -744,12 +859,13 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         Maximum number of iterations for conjugate gradient solver.
         For 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
+        For 'lbfgs' solver, the default value is 15000.
 
     tol : float, default=1e-3
         Precision of the solution.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}, \
-        default='auto'
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
+            'sag', 'saga', 'lbfgs'}, default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -777,14 +893,22 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
 
-        All last five solvers support both dense and sparse data. However, only
-        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
-        True.
+        - 'lbfgs' uses L-BFGS-B algorithm implemented in
+          `scipy.optimize.minimize`. It can be used only when `positive`
+          is True.
+
+        All last six solvers support both dense and sparse data. However, only
+        'sag', 'sparse_cg', and 'lbfgs' support sparse input when `fit_intercept`
+        is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
+
+    positive : bool, default=False
+        When set to ``True``, forces the coefficients to be positive.
+        Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -843,6 +967,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         max_iter=None,
         tol=1e-3,
         solver="auto",
+        positive=False,
         random_state=None,
     ):
         super().__init__(
@@ -853,6 +978,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             max_iter=max_iter,
             tol=tol,
             solver=solver,
+            positive=positive,
             random_state=random_state,
         )
 
@@ -932,8 +1058,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}, \
-        default='auto'
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
+            'sag', 'saga', 'lbfgs'}, default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -965,6 +1091,14 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
              Stochastic Average Gradient descent solver.
           .. versionadded:: 0.19
            SAGA solver.
+
+        - 'lbfgs' uses L-BFGS-B algorithm implemented in
+          `scipy.optimize.minimize`. It can be used only when `positive`
+          is True.
+
+    positive : bool, default=False
+        When set to ``True``, forces the coefficients to be positive.
+        Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -1025,6 +1159,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         tol=1e-3,
         class_weight=None,
         solver="auto",
+        positive=False,
         random_state=None,
     ):
         super().__init__(
@@ -1035,6 +1170,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             max_iter=max_iter,
             tol=tol,
             solver=solver,
+            positive=positive,
             random_state=random_state,
         )
         self.class_weight = class_weight

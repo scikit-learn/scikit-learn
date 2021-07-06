@@ -1165,7 +1165,7 @@ class BernoulliNB(_BaseDiscreteNB):
 
 
 class CategoricalNB(_BaseDiscreteNB):
-    """Naive Bayes classifier for categorical features
+    """Naive Bayes classifier for categorical features.
 
     The categorical Naive Bayes classifier is suitable for classification with
     discrete features that are categorically distributed. The categories of
