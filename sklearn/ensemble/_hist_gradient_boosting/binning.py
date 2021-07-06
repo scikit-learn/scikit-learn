@@ -12,6 +12,7 @@ import numpy as np
 from ...utils import check_random_state, check_array
 from ...base import BaseEstimator, TransformerMixin
 from ...utils.validation import check_is_fitted
+from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF, X_BITSET_INNER_DTYPE
 from ._bitset import set_bitset_memoryview
@@ -151,12 +152,14 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         is_categorical=None,
         known_categories=None,
         random_state=None,
+        n_threads=None,
     ):
         self.n_bins = n_bins
         self.subsample = subsample
         self.is_categorical = is_categorical
         self.known_categories = known_categories
         self.random_state = random_state
+        self.n_threads = n_threads
 
     def fit(self, X, y=None):
         """Fit data X by computing the binning thresholds.
@@ -264,8 +267,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 "This estimator was fitted with {} features but {} got passed "
                 "to transform()".format(self.n_bins_non_missing_.shape[0], X.shape[1])
             )
+
+        n_threads = _openmp_effective_n_threads(self.n_threads)
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
-        _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_, binned)
+        _map_to_bins(
+            X, self.bin_thresholds_, self.missing_values_bin_idx_, n_threads, binned
+        )
         return binned
 
     def make_known_categories_bitsets(self):
