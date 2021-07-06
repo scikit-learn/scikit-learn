@@ -54,8 +54,8 @@ def _check_init(A, shape, whom):
     A = check_array(A)
     if np.shape(A) != shape:
         raise ValueError(
-            "Array with wrong shape passed to %s. Expected %s, "
-            "but got %s " % (whom, shape, np.shape(A))
+            "Array with wrong shape passed to %s. Expected %s, but got %s "
+            % (whom, shape, np.shape(A))
         )
     check_non_negative(A, whom)
     if np.max(A) == 0:
@@ -223,8 +223,8 @@ def _check_string_param(solver, regularization, beta_loss, init):
     # 'mu' is the only solver that handles other beta losses than 'frobenius'
     if solver != "mu" and beta_loss not in (2, "frobenius"):
         raise ValueError(
-            "Invalid beta_loss parameter: solver %r does not handle beta_loss"
-            " = %r" % (solver, beta_loss)
+            "Invalid beta_loss parameter: solver %r does not handle beta_loss = %r"
+            % (solver, beta_loss)
         )
 
     if solver == "mu" and init == "nndsvd":
@@ -248,8 +248,8 @@ def _beta_loss_to_float(beta_loss):
 
     if not isinstance(beta_loss, numbers.Number):
         raise ValueError(
-            "Invalid beta_loss parameter: got %r instead "
-            "of one of %r, or a float." % (beta_loss, allowed_beta_loss.keys())
+            "Invalid beta_loss parameter: got %r instead of one of %r, or a float."
+            % (beta_loss, allowed_beta_loss.keys())
         )
     return beta_loss
 
@@ -315,12 +315,10 @@ def _initialize_nmf(X, n_components, init="warn", eps=1e-6, random_state=None):
     """
     if init == "warn":
         warnings.warn(
-            (
-                "The 'init' value, when 'init=None' and "
-                "n_components is less than n_samples and "
-                "n_features, will be changed from 'nndsvd' to "
-                "'nndsvda' in 1.1 (renaming of 0.26)."
-            ),
+            "The 'init' value, when 'init=None' and "
+            "n_components is less than n_samples and "
+            "n_features, will be changed from 'nndsvd' to "
+            "'nndsvda' in 1.1 (renaming of 0.26).",
             FutureWarning,
         )
         init = None
@@ -1319,18 +1317,19 @@ class NMF(TransformerMixin, BaseEstimator):
             or self._n_components <= 0
         ):
             raise ValueError(
-                "Number of components must be a positive integer;"
-                " got (n_components=%r)" % self._n_components
+                "Number of components must be a positive integer; got (n_components=%r)"
+                % self._n_components
             )
         if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
             raise ValueError(
                 "Maximum number of iterations must be a positive "
-                "integer; got (max_iter=%r)" % self.max_iter
+                "integer; got (max_iter=%r)"
+                % self.max_iter
             )
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
-                "Tolerance for stopping criteria must be "
-                "positive; got (tol=%r)" % self.tol
+                "Tolerance for stopping criteria must be positive; got (tol=%r)"
+                % self.tol
             )
         return self
 
@@ -1349,8 +1348,9 @@ class NMF(TransformerMixin, BaseEstimator):
             _check_init(H, (self._n_components, n_features), "NMF (input H)")
             if H.dtype != X.dtype:
                 raise TypeError(
-                    "H should have the same dtype as X. Got "
-                    "H.dtype = {}.".format(H.dtype)
+                    "H should have the same dtype as X. Got H.dtype = {}.".format(
+                        H.dtype
+                    )
                 )
             # 'mu' solver should not be initialized by zeros
             if self.solver == "mu":
@@ -1497,7 +1497,8 @@ class NMF(TransformerMixin, BaseEstimator):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence." % self.max_iter,
+                "it to improve convergence."
+                % self.max_iter,
                 ConvergenceWarning,
             )
 
