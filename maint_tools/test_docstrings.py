@@ -68,7 +68,6 @@ DOCSTRING_IGNORE_LIST = [
     "KernelPCA",
     "KernelRidge",
     "LabelBinarizer",
-    "LabelEncoder",
     "LabelPropagation",
     "LabelSpreading",
     "LarsCV",
