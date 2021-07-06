@@ -17,7 +17,6 @@ DOCSTRING_IGNORE_LIST = [
     "Birch",
     "CCA",
     "CalibratedClassifierCV",
-    "CategoricalNB",
     "ClassifierChain",
     "ColumnTransformer",
     "ComplementNB",
@@ -26,7 +25,6 @@ DOCSTRING_IGNORE_LIST = [
     "DictVectorizer",
     "DictionaryLearning",
     "DummyClassifier",
-    "DummyRegressor",
     "ElasticNetCV",
     "EllipticEnvelope",
     "EmpiricalCovariance",
@@ -58,13 +56,11 @@ DOCSTRING_IGNORE_LIST = [
     "HistGradientBoostingRegressor",
     "HuberRegressor",
     "IncrementalPCA",
-    "IsolationForest",
     "Isomap",
     "IsotonicRegression",
     "IterativeImputer",
     "KBinsDiscretizer",
     "KNNImputer",
-    "KNeighborsRegressor",
     "KNeighborsTransformer",
     "KernelCenterer",
     "KernelDensity",
@@ -87,7 +83,6 @@ DOCSTRING_IGNORE_LIST = [
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
     "MDS",
-    "MLPClassifier",
     "MLPRegressor",
     "MaxAbsScaler",
     "MeanShift",
@@ -106,7 +101,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultinomialNB",
     "NMF",
     "NearestCentroid",
-    "NearestNeighbors",
     "NeighborhoodComponentsAnalysis",
     "Normalizer",
     "NuSVC",
@@ -219,10 +213,13 @@ def filter_errors(errors, method, Estimator=None):
         #   (as we may need refer to the name of the returned
         #    object)
         #  - GL01: Docstring text (summary) should start in the line
-        #  immediately after the opening quotes (not in the same line,
-        #  or leaving a blank line in between)
+        #    immediately after the opening quotes (not in the same line,
+        #    or leaving a blank line in between)
+        #  - GL02: If there's a blank line, it should be before the
+        #    first line of the Returns section, not after (it allows to have
+        #    short docstrings for properties).
 
-        if code in ["RT02", "GL01"]:
+        if code in ["RT02", "GL01", "GL02"]:
             continue
 
         # Ignore PR02: Unknown parameters for properties. We sometimes use
