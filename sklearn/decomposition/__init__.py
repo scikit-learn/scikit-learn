@@ -46,6 +46,7 @@ __all__ = [
     "dict_learning_online",
     "fastica",
     "non_negative_factorization",
+    "non_negative_factorization_online",
     "randomized_svd",
     "sparse_encode",
     "FactorAnalysis",
