@@ -71,7 +71,6 @@ DOCSTRING_IGNORE_LIST = [
     "LabelSpreading",
     "LarsCV",
     "LassoCV",
-    "LassoLarsCV",
     "LatentDirichletAllocation",
     "LedoitWolf",
     "LinearSVR",
