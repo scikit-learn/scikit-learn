@@ -944,7 +944,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
     @property
     def probA_(self):
-        """Return parameter learned in Platt scaling."""
+        """ndarray : Parameter learned in Platt scaling."""
         return self._probA
 
     @property
