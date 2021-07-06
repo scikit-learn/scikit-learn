@@ -955,6 +955,13 @@ class ComplementNB(_BaseDiscreteNB):
     GaussianNB : Gaussian Naive Bayes (GaussianNB).
     MultinomialNB : Naive Bayes classifier for multinomial models.
 
+    References
+    ----------
+    Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
+    Tackling the poor assumptions of naive bayes text classifiers. In ICML
+    (Vol. 3, pp. 616-623).
+    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
+
     Examples
     --------
     >>> import numpy as np
@@ -967,13 +974,6 @@ class ComplementNB(_BaseDiscreteNB):
     ComplementNB()
     >>> print(clf.predict(X[2:3]))
     [3]
-
-    References
-    ----------
-    Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
-    Tackling the poor assumptions of naive bayes text classifiers. In ICML
-    (Vol. 3, pp. 616-623).
-    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None, norm=False):
