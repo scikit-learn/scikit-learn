@@ -789,8 +789,8 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, dataframe} of shape \
-            (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
 
         y : Ignored
             Not used, present for API consistency by convention.
