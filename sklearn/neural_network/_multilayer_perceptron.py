@@ -1217,7 +1217,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         log_y_prob : ndarray of shape (n_samples, n_classes)
             The predicted log-probability of the sample for each class
             in the model, where classes are ordered as they are in
-            `self.classes_`. Equivalent to log(predict_proba(X)).
+            `self.classes_`. Equivalent to `log(predict_proba(X))`.
         """
         y_prob = self.predict_proba(X)
         return np.log(y_prob, out=y_prob)
