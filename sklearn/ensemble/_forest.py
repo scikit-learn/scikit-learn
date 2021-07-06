@@ -615,13 +615,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     )
     @property
     def n_features_(self):
-        """Number of features when fitting the estimator.
-
-        Returns
-        -------
-        n_features_in_ : int
-            The number of features when fitting the estimator.
-        """
+        """int : The number of features when fitting the estimator."""
         return self.n_features_in_
 
 
