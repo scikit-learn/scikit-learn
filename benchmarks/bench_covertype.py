@@ -125,8 +125,10 @@ if __name__ == "__main__":
         nargs="?",
         default=1,
         type=int,
-        help="Number of concurrently running workers for "
-        "models that support parallelism.",
+        help=(
+            "Number of concurrently running workers for "
+            "models that support parallelism."
+        ),
     )
     parser.add_argument(
         "--order",
@@ -134,7 +136,7 @@ if __name__ == "__main__":
         default="C",
         type=str,
         choices=["F", "C"],
-        help="Allow to choose between fortran and C ordered " "data",
+        help="Allow to choose between fortran and C ordered data",
     )
     parser.add_argument(
         "--random-seed",

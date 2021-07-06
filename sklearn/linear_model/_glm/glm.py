@@ -210,13 +210,15 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
             raise ValueError(
-                "Penalty term must be a non-negative number;"
-                " got (alpha={0})".format(self.alpha)
+                "Penalty term must be a non-negative number; got (alpha={0})".format(
+                    self.alpha
+                )
             )
         if not isinstance(self.fit_intercept, bool):
             raise ValueError(
-                "The argument fit_intercept must be bool;"
-                " got {0}".format(self.fit_intercept)
+                "The argument fit_intercept must be bool; got {0}".format(
+                    self.fit_intercept
+                )
             )
         if self.solver not in ["lbfgs"]:
             raise ValueError(
@@ -237,8 +239,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
         if not isinstance(self.warm_start, bool):
             raise ValueError(
-                "The argument warm_start must be bool;"
-                " got {0}".format(self.warm_start)
+                "The argument warm_start must be bool; got {0}".format(self.warm_start)
             )
 
         family = self._family_instance
@@ -259,8 +260,9 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         if not np.all(family.in_y_range(y)):
             raise ValueError(
-                "Some value(s) of y are out of the valid "
-                "range for family {0}".format(family.__class__.__name__)
+                "Some value(s) of y are out of the valid range for family {0}".format(
+                    family.__class__.__name__
+                )
             )
         # TODO: if alpha=0 check that X is not rank deficient
 
@@ -776,5 +778,5 @@ class TweedieRegressor(GeneralizedLinearRegressor):
             self.power = value.power
         else:
             raise TypeError(
-                "TweedieRegressor.family must be of type " "TweedieDistribution!"
+                "TweedieRegressor.family must be of type TweedieDistribution!"
             )

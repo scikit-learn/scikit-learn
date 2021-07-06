@@ -172,8 +172,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self.max_iter = max_iter
         if svd_method not in ["lapack", "randomized"]:
             raise ValueError(
-                "SVD method %s is not supported. Please consider"
-                " the documentation" % svd_method
+                "SVD method %s is not supported. Please consider the documentation"
+                % svd_method
             )
         self.svd_method = svd_method
 
@@ -252,8 +252,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         else:
             raise ValueError(
-                "SVD method %s is not supported. Please consider"
-                " the documentation" % self.svd_method
+                "SVD method %s is not supported. Please consider the documentation"
+                % self.svd_method
             )
 
         for i in range(self.max_iter):
