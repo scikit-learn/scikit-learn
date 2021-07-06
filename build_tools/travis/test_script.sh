@@ -15,7 +15,7 @@ except ImportError:
 python -c "import joblib; print(f'{joblib.cpu_count()} CPUs')"
 python -c "import platform; print(f'{platform.machine()}')"
 
-TEST_CMD="pytest --showlocals --durations=20 --pyargs"
+TEST_CMD="pytest --showlocals --durations=20 --maxfail=5 --pyargs"
 
 # Run the tests on the installed version
 mkdir -p $TEST_DIR
