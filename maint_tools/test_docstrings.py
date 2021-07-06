@@ -85,7 +85,6 @@ DOCSTRING_IGNORE_LIST = [
     "LocallyLinearEmbedding",
     "MDS",
     "MLPRegressor",
-    "MaxAbsScaler",
     "MeanShift",
     "MinCovDet",
     "MiniBatchDictionaryLearning",
