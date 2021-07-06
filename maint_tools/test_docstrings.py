@@ -59,7 +59,6 @@ DOCSTRING_IGNORE_LIST = [
     "HistGradientBoostingRegressor",
     "HuberRegressor",
     "IncrementalPCA",
-    "IsolationForest",
     "Isomap",
     "IsotonicRegression",
     "IterativeImputer",
