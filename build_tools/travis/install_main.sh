@@ -10,6 +10,7 @@
 set -e
 
 echo "CPU Arch: $TRAVIS_CPU_ARCH."
+lscpu || echo "lscpu not found"
 
 # Import "get_dep"
 source build_tools/shared.sh
