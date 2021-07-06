@@ -1906,7 +1906,7 @@ class LassoLarsCV(LarsCV):
 
 
 class LassoLarsIC(LassoLars):
-    """Lasso model fit with Lars using BIC or AIC for model selection
+    """Lasso model fit with Lars using BIC or AIC for model selection.
 
     The optimization objective for Lasso is::
 
@@ -1926,7 +1926,7 @@ class LassoLarsIC(LassoLars):
         The type of criterion to use.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -2008,14 +2008,18 @@ class LassoLarsIC(LassoLars):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
-    >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    LassoLarsIC(criterion='bic', normalize=False)
-    >>> print(reg.coef_)
-    [ 0.  -1.11...]
+    lars_path : Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    lasso_path : Compute Lasso path with coordinate descent.
+    Lasso : Linear Model trained with L1 prior as
+        regularizer (aka the Lasso).
+    LassoCV : Lasso linear model with iterative fitting
+        along a regularization path.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoLarsCV: Cross-validated Lasso, using the LARS algorithm.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     Notes
     -----
@@ -2028,9 +2032,14 @@ class LassoLarsIC(LassoLars):
     https://en.wikipedia.org/wiki/Akaike_information_criterion
     https://en.wikipedia.org/wiki/Bayesian_information_criterion
 
-    See Also
+    Examples
     --------
-    lars_path, LassoLars, LassoLarsCV
+    >>> from sklearn import linear_model
+    >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
+    >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
+    LassoLarsIC(criterion='bic', normalize=False)
+    >>> print(reg.coef_)
+    [ 0.  -1.11...]
     """
 
     def __init__(
@@ -2066,10 +2075,10 @@ class LassoLarsIC(LassoLars):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            training data.
+            Training data.
 
         y : array-like of shape (n_samples,)
-            target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to X's dtype if necessary.
 
         copy_X : bool, default=None
             If provided, this parameter will override the choice
@@ -2079,7 +2088,7 @@ class LassoLarsIC(LassoLars):
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
