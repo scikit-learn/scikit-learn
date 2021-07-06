@@ -842,7 +842,7 @@ def _lars_path_solver(
 
 
 class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
-    """Least Angle Regression model a.k.a. LAR
+    """Least Angle Regression model a.k.a. LAR.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -940,6 +940,13 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    lars_path: Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    LarsCV : Cross-validated Least Angle Regression model.
+    sklearn.decomposition.sparse_encode : Sparse coding.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -948,12 +955,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     Lars(n_nonzero_coefs=1, normalize=False)
     >>> print(reg.coef_)
     [ 0. -1.11...]
-
-    See Also
-    --------
-    lars_path, LarsCV
-    sklearn.decomposition.sparse_encode
-
     """
 
     method = "lar"
