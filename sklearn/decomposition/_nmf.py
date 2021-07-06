@@ -555,8 +555,6 @@ def _multiplicative_update_w(
             # preserve the XHt, which is not re-computed (update_H=False)
             numerator = XHt.copy()
 
-        numerator = numerator[0 : W.shape[0], 0 : W.shape[1]]
-
         # Denominator
         if HHt is None:
             HHt = np.dot(H, H.T)
@@ -597,7 +595,6 @@ def _multiplicative_update_w(
 
         # here numerator = dot(X * (dot(W, H) ** (beta_loss - 2)), H.T)
         numerator = safe_sparse_dot(WH_safe_X, H.T)
-        numerator = numerator[0 : W.shape[0], 0 : W.shape[1]]
 
         # Denominator
         if beta_loss == 1:
@@ -641,65 +638,7 @@ def _multiplicative_update_w(
 
 def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H, gamma, rho):
 
-    """update H in Multiplicative Update NMF.
-
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-        Constant input matrix.
-
-    W : array-like of shape (n_samples, n_components)
-        Initial guess for the solution.
-
-    H : array-like of shape (n_components, n_features)
-        Initial guess for the solution.
-
-    A : array-like of shape (n_components, n_features)
-        Initial guess for the numerator auxiliary function.
-        Used in the batch case only.
-
-    B : array-like of shape (n_components, n_features)
-        Initial guess for the denominator auxiliary function.
-        Used in the batch case only.
-
-    beta_loss : float or {'frobenius', 'kullback-leibler', \
-            'itakura-saito'}, default='frobenius'
-        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
-        Beta divergence to be minimized, measuring the distance between X
-        and the dot product WH. Note that values different from 'frobenius'
-        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
-        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
-        matrix X cannot contain zeros. When
-        `batch_size` is not `None` `beta_loss` cannot be `'frobenius'`.
-
-    l1_reg_H : float, default=0.
-        L1 regularization parameter for H.
-
-    l2_reg_H : float, default=0.
-        L2 regularization parameter for H.
-
-    gamma : float, default=1.
-        Exponent for Maximization-Minimization (MM) algorithm
-        [Fevotte 2011].
-
-    rho : float.
-        Scaling factor for past information for online and minibatch
-        algorithm.
-
-    Returns
-    -------
-    H : ndarray of shape (n_components, n_features)
-        Updated matrix H.
-
-    A : array-like of shape (n_components, n_features)
-        Numerator auxiliary function, only used in
-        :class:`sklearn.decomposition.MiniBatchNMF`.
-
-    B : array-like of shape (n_components, n_features)
-        Denominator auxiliary function, only used in
-        :class:`sklearn.decomposition.MiniBatchNMF`.
-    """
-
+    """update H in Multiplicative Update NMF."""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
         denominator = np.linalg.multi_dot([W.T, W, H])
@@ -894,7 +833,7 @@ def _fit_multiplicative_update(
     H_sum, HHt, XHt = None, None, None
     for n_iter in range(1, max_iter + 1):
         # update W
-        # H_sum, HHt are saved and reused if not update_H
+        # H_sum, HHt and XHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
             X,
             W,
@@ -930,6 +869,7 @@ def _fit_multiplicative_update(
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
             error = _beta_divergence(X, W, H, beta_loss, square_root=True)
+
             if verbose:
                 iter_time = time.time()
                 print(
