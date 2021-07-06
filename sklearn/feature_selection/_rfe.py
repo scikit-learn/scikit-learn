@@ -184,7 +184,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     @property
     def classes_(self):
-        """The classes labels. Only available when `estimator` is a classifier."""
+        """ndarray : Classes labels available when `estimator` is a classifier."""
         return self.estimator_.classes_
 
     def fit(self, X, y):
