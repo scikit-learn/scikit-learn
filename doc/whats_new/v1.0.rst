@@ -264,7 +264,7 @@ Changelog
 
 - |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
   :class:`~sklearn.ensemble.HistGradientBoostingRegressor` takes cgroups quotas
-  into account when deciding the number of threads used for OpenMP. :pr:`xxxx`
+  into account when deciding the number of threads used for OpenMP. :pr:`20477`
   by `Thomas Fan`_.
 
 - |Fix| Do not allow to compute out-of-bag (OOB) score in
