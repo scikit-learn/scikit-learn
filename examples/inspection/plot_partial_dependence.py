@@ -33,6 +33,184 @@ California housing dataset. The example is taken from [1]_.
        Graphical Statistics, 24(1): 44-65 (https://arxiv.org/abs/1309.6392)
 """
 
+# %%
+from sklearn.datasets import fetch_openml
+
+ames = fetch_openml(name="house_prices", as_frame=True)
+X, y = ames.data.drop(columns="Id"), ames.target
+y -= y.mean()
+
+# %%
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
+
+# %%
+from sklearn.compose import make_column_selector as selector
+
+numerical_features = [
+    "LotFrontage",
+    "LotArea",
+    "MasVnrArea",
+    "BsmtFinSF1",
+    "BsmtFinSF2",
+    "BsmtUnfSF",
+    "TotalBsmtSF",
+    "1stFlrSF",
+    "2ndFlrSF",
+    "LowQualFinSF",
+    "GrLivArea",
+    "BedroomAbvGr",
+    "KitchenAbvGr",
+    "TotRmsAbvGrd",
+    "Fireplaces",
+    "GarageCars",
+    "GarageArea",
+    "WoodDeckSF",
+    "OpenPorchSF",
+    "EnclosedPorch",
+    "3SsnPorch",
+    "ScreenPorch",
+    "PoolArea",
+    "MiscVal",
+]
+categorical_features = X.columns.difference(numerical_features)
+categorical_features_as_str = selector(dtype_include=object)(X[categorical_features])
+categorical_features_as_num = selector(dtype_exclude=object)(X[categorical_features])
+
+# %%
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, QuantileTransformer
+
+preprocessor_mlp = ColumnTransformer(
+    [
+        (
+            "num",
+            make_pipeline(QuantileTransformer(), SimpleImputer(strategy="mean")),
+            numerical_features,
+        ),
+        (
+            "cat_as_str",
+            make_pipeline(
+                SimpleImputer(strategy="constant", fill_value="missing"),
+                OneHotEncoder(handle_unknown="ignore"),
+            ),
+            categorical_features_as_str,
+        ),
+        (
+            "cat_as_num",
+            make_pipeline(
+                StandardScaler(), SimpleImputer(strategy="constant", fill_value=-1)
+            ),
+            categorical_features_as_num,
+        ),
+    ],
+)
+
+# %%
+from time import time
+from sklearn.pipeline import make_pipeline
+from sklearn.neural_network import MLPRegressor
+
+print("Training MLPRegressor...")
+tic = time()
+mlp = make_pipeline(
+    preprocessor_mlp,
+    MLPRegressor(
+        hidden_layer_sizes=(50, 50), learning_rate_init=0.01, early_stopping=True
+    ),
+)
+mlp.fit(X_train, y_train)
+print(f"done in {time() - tic:.3f}s")
+print(f"Test R2 score: {mlp.score(X_test, y_test):.2f}")
+
+# %%
+from sklearn.preprocessing import OrdinalEncoder
+
+preprocessor_hgbdt = ColumnTransformer(
+    [
+        ("num", SimpleImputer(strategy="mean"), numerical_features),
+        (
+            "cat_as_str",
+            make_pipeline(
+                SimpleImputer(strategy="constant", fill_value="missing"),
+                OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
+            ),
+            categorical_features_as_str,
+        ),
+        (
+            "cat_as_num",
+            SimpleImputer(strategy="constant", fill_value=-1),
+            categorical_features_as_num,
+        ),
+    ],
+)
+
+# %%
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingRegressor
+
+
+print("Training HistGradientBoostingRegressor...")
+tic = time()
+hgbr = make_pipeline(preprocessor_hgbdt, HistGradientBoostingRegressor())
+hgbr.fit(X_train, y_train)
+print(f"done in {time() - tic:.3f}s")
+print(f"Test R2 score: {hgbr.score(X_test, y_test):.2f}")
+
+# %%
+from sklearn.inspection import plot_partial_dependence
+
+print("Computing partial dependence plots...")
+features = [
+    "TotalBsmtSF",
+    "GrLivArea",
+    "OverallQual",
+]
+tic = time()
+display = plot_partial_dependence(
+    hgbr,
+    X_train,
+    features,
+    kind="both",
+    subsample=50,
+    n_jobs=3,
+    grid_resolution=20,
+    random_state=0,
+)
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    "Partial dependence of house value on non-location features\n"
+    "for the California housing dataset, with Gradient Boosting"
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+
+# %%
+import matplotlib.pyplot as plt
+
+features = ["TotalBsmtSF", "OverallQual", ("TotalBsmtSF", "OverallQual")]
+print("Computing partial dependence plots...")
+tic = time()
+_, ax = plt.subplots(ncols=3, figsize=(9, 4))
+display = plot_partial_dependence(
+    hgbr,
+    X_train,
+    features,
+    kind="average",
+    n_jobs=3,
+    grid_resolution=20,
+    ax=ax,
+)
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    "Partial dependence of house value on non-location features\n"
+    "for the California housing dataset, with Gradient Boosting"
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+
+# %%
 print(__doc__)
 
 # %%
@@ -53,9 +231,7 @@ y = cal_housing.target
 
 y -= y.mean()
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.1, random_state=0
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
 
 # %%
 # 1-way partial dependence with different models
@@ -80,10 +256,12 @@ from sklearn.neural_network import MLPRegressor
 
 print("Training MLPRegressor...")
 tic = time()
-est = make_pipeline(QuantileTransformer(),
-                    MLPRegressor(hidden_layer_sizes=(50, 50),
-                                 learning_rate_init=0.01,
-                                 early_stopping=True))
+est = make_pipeline(
+    QuantileTransformer(),
+    MLPRegressor(
+        hidden_layer_sizes=(50, 50), learning_rate_init=0.01, early_stopping=True
+    ),
+)
 est.fit(X_train, y_train)
 print(f"done in {time() - tic:.3f}s")
 print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
@@ -113,17 +291,23 @@ import matplotlib.pyplot as plt
 from sklearn.inspection import partial_dependence
 from sklearn.inspection import plot_partial_dependence
 
-print('Computing partial dependence plots...')
+print("Computing partial dependence plots...")
 tic = time()
-features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
+features = ["MedInc", "AveOccup", "HouseAge", "AveRooms"]
 display = plot_partial_dependence(
-       est, X_train, features, kind="both", subsample=50,
-       n_jobs=3, grid_resolution=20, random_state=0
+    est,
+    X_train,
+    features,
+    kind="both",
+    subsample=50,
+    n_jobs=3,
+    grid_resolution=20,
+    random_state=0,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
-    'Partial dependence of house value on non-location features\n'
-    'for the California housing dataset, with MLPRegressor'
+    "Partial dependence of house value on non-location features\n"
+    "for the California housing dataset, with MLPRegressor"
 )
 display.figure_.subplots_adjust(hspace=0.3)
 
@@ -156,16 +340,22 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 # We will plot the partial dependence, both individual (ICE) and averaged one
 # (PDP). We limit to only 50 ICE curves to not overcrowd the plot.
 
-print('Computing partial dependence plots...')
+print("Computing partial dependence plots...")
 tic = time()
 display = plot_partial_dependence(
-    est, X_train, features, kind="both", subsample=50,
-    n_jobs=3, grid_resolution=20, random_state=0
+    est,
+    X_train,
+    features,
+    kind="both",
+    subsample=50,
+    n_jobs=3,
+    grid_resolution=20,
+    random_state=0,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
-    'Partial dependence of house value on non-location features\n'
-    'for the California housing dataset, with Gradient Boosting'
+    "Partial dependence of house value on non-location features\n"
+    "for the California housing dataset, with Gradient Boosting"
 )
 display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 
@@ -209,18 +399,23 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # the tree-based algorithm, when only PDPs are requested, they can be computed
 # on an efficient way using the `'recursion'` method.
 
-features = ['AveOccup', 'HouseAge', ('AveOccup', 'HouseAge')]
-print('Computing partial dependence plots...')
+features = ["AveOccup", "HouseAge", ("AveOccup", "HouseAge")]
+print("Computing partial dependence plots...")
 tic = time()
 _, ax = plt.subplots(ncols=3, figsize=(9, 4))
 display = plot_partial_dependence(
-    est, X_train, features, kind='average', n_jobs=3, grid_resolution=20,
+    est,
+    X_train,
+    features,
+    kind="average",
+    n_jobs=3,
+    grid_resolution=20,
     ax=ax,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
-    'Partial dependence of house value on non-location features\n'
-    'for the California housing dataset, with Gradient Boosting'
+    "Partial dependence of house value on non-location features\n"
+    "for the California housing dataset, with Gradient Boosting"
 )
 display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 
@@ -240,24 +435,26 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+
 fig = plt.figure()
 
-features = ('AveOccup', 'HouseAge')
+features = ("AveOccup", "HouseAge")
 pdp = partial_dependence(
-    est, X_train, features=features, kind='average', grid_resolution=20
+    est, X_train, features=features, kind="average", grid_resolution=20
 )
 XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
 Z = pdp.average[0].T
 ax = Axes3D(fig)
-surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1,
-                       cmap=plt.cm.BuPu, edgecolor='k')
+surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu, edgecolor="k")
 ax.set_xlabel(features[0])
 ax.set_ylabel(features[1])
-ax.set_zlabel('Partial dependence')
+ax.set_zlabel("Partial dependence")
 # pretty init view
 ax.view_init(elev=22, azim=122)
 plt.colorbar(surf)
-plt.suptitle('Partial dependence of house value on median\n'
-             'age and average occupancy, with Gradient Boosting')
+plt.suptitle(
+    "Partial dependence of house value on median\n"
+    "age and average occupancy, with Gradient Boosting"
+)
 plt.subplots_adjust(top=0.9)
 plt.show()
