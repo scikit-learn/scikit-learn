@@ -4,7 +4,6 @@ import tempfile
 import shutil
 import os
 import numbers
-import copy
 from unittest.mock import Mock
 from functools import partial
 
@@ -617,7 +616,6 @@ def test_classification_scorer_sample_weight():
     estimator = _make_estimators(X_train, y_train, y_ml_train)
 
     for name, scorer in SCORERS.items():
-        scorer = copy.deepcopy(scorer)
         if name in REGRESSION_SCORERS:
             # skip the regression scores
             continue
@@ -635,6 +633,8 @@ def test_classification_scorer_sample_weight():
             )
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
+            # this should not raise. sample_weight should be ignored if None.
+            _ = scorer(estimator[name], X_test[:10], target[:10], sample_weight=None)
             assert weighted != unweighted, (
                 f"scorer {name} behaves identically when called with "
                 f"sample weights: {weighted} vs {unweighted}"
