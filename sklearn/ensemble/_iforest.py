@@ -264,7 +264,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         if self.contamination != "auto":
             if not (0.0 < self.contamination <= 0.5):
                 raise ValueError(
-                    "contamination must be in (0, 0.5], " "got: %f" % self.contamination
+                    "contamination must be in (0, 0.5], got: %f" % self.contamination
                 )
 
         if isinstance(self.max_samples, str):
@@ -274,7 +274,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 raise ValueError(
                     "max_samples (%s) is not supported."
                     'Valid choices are: "auto", int or'
-                    "float" % self.max_samples
+                    "float"
+                    % self.max_samples
                 )
 
         elif isinstance(self.max_samples, numbers.Integral):

@@ -349,5 +349,5 @@ def test_n_features_deprecation():
     y = np.array([1, 0])
     est = IsolationForest().fit(X, y)
 
-    with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
+    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
