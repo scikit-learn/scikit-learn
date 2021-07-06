@@ -1,37 +1,41 @@
 # %%
-import pandas as pd
+from sklearn.datasets import fetch_openml
 
-bikes = pd.read_csv(
-    "https://raw.githubusercontent.com/christophM/interpretable-ml-book/master"
-    "/data/bike.csv"
-)
-bikes.head()
+X, y = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True, return_X_y=True)
 
 # %%
-target_name = "cnt"
-X = bikes.drop(columns=[target_name, "days_since_2011"])
-y = bikes[target_name]
+X.head()
+
+# %%
+y.head()
 
 # %%
 from sklearn.model_selection import train_test_split
 
 y -= y.mean()
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.1, shuffle=False, random_state=0
+)
+
+# %%
+numerical_features = [
+    "temp",
+    "feel_temp",
+    "humidity",
+    "windspeed",
+]
+categorical_features = X_train.columns.drop(numerical_features)
 
 # %%
 # Create a column transformer that will preprocess the numerical data with
 # standard scaler and the categorical data with one hot encoder.
 from sklearn.compose import ColumnTransformer
-from sklearn.compose import make_column_selector as selector
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import QuantileTransformer
 from sklearn.preprocessing import OneHotEncoder
 
-numerical_features = selector(dtype_include=["float", "int"])
-categorical_features = selector(dtype_include=["object"])
-
-preprocessor = ColumnTransformer(
+mlp_preprocessor = ColumnTransformer(
     transformers=[
-        ("num", StandardScaler(), numerical_features),
+        ("num", QuantileTransformer(n_quantiles=100), numerical_features),
         ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
     ]
 )
@@ -46,9 +50,9 @@ from sklearn.pipeline import make_pipeline
 print("Training MLPRegressor...")
 tic = time()
 mlp_model = make_pipeline(
-    preprocessor,
+    mlp_preprocessor,
     MLPRegressor(
-        hidden_layer_sizes=(100, 50), learning_rate_init=0.01, early_stopping=True
+        hidden_layer_sizes=(50, 50), learning_rate_init=0.01, early_stopping=True
     ),
 )
 mlp_model.fit(X_train, y_train)
@@ -59,7 +63,7 @@ print(f"Test R2 score: {mlp_model.score(X_test, y_test):.2f}")
 from sklearn.inspection import plot_partial_dependence
 
 print("Computing partial dependence plots...")
-features = numerical_features(X_train)
+features = ["temp", "humidity", "windspeed"]
 tic = time()
 display = plot_partial_dependence(
     mlp_model,
@@ -75,7 +79,7 @@ print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
     "XXX",
 )
-display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.5)
 
 # %%
 # Create a pipeline that will preprocess the data and then use a Histogram
@@ -84,7 +88,7 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # data.
 from sklearn.preprocessing import OrdinalEncoder
 
-preprocessor = ColumnTransformer(
+hgbdt_preprocessor = ColumnTransformer(
     transformers=[
         ("cat", OrdinalEncoder(), categorical_features),
     ],
@@ -97,14 +101,14 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 
 print("Training HistGradientBoostingRegressor...")
 tic = time()
-hgbdt_model = make_pipeline(preprocessor, HistGradientBoostingRegressor())
+hgbdt_model = make_pipeline(hgbdt_preprocessor, HistGradientBoostingRegressor())
 hgbdt_model.fit(X_train, y_train)
 print(f"done in {time() - tic:.3f}s")
 print(f"Test R2 score: {hgbdt_model.score(X_test, y_test):.2f}")
 
 # %%
 print("Computing partial dependence plots...")
-features = numerical_features(X_train)
+features = ["temp", "humidity", "windspeed"]
 tic = time()
 display = plot_partial_dependence(
     hgbdt_model,
@@ -120,6 +124,47 @@ print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
     "XXX",
 )
-display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+display.figure_.subplots_adjust(hspace=0.5)
+
+# %%
+print("Computing partial dependence plots...")
+features = ["season", "weather"]
+tic = time()
+display = plot_partial_dependence(
+    hgbdt_model,
+    X_train,
+    features,
+    kind="average",
+    subsample=50,
+    n_jobs=-1,
+    grid_resolution=20,
+    random_state=0,
+    categorical_features=categorical_features,
+)
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    "XXX",
+)
+display.figure_.subplots_adjust(hspace=1.0)
+
+# %%
+print("Computing partial dependence plots...")
+features = ["temp", "humidity", ("temp", "humidity")]
+tic = time()
+display = plot_partial_dependence(
+    hgbdt_model,
+    X_train,
+    features,
+    kind="average",
+    subsample=50,
+    n_jobs=-1,
+    grid_resolution=20,
+    random_state=0,
+)
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    "XXX",
+)
+display.figure_.subplots_adjust(wspace=0.5, hspace=0.5)
 
 # %%
