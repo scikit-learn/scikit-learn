@@ -80,17 +80,14 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
 
     See Also
     --------
-    KNeighborsClassifier :
-        Classifier implementing the k-nearest neighbors vote.
-    RadiusNeighborsClassifier :
-        Classifier implementing a vote among neighbors within a given
+    KNeighborsClassifier : Classifier implementing the k-nearest neighbors
+        vote.
+    RadiusNeighborsClassifier : Classifier implementing a vote among neighbors
+        within a given radius.
+    KNeighborsRegressor : Regression based on k-nearest neighbors.
+    RadiusNeighborsRegressor : Regression based on neighbors within a fixed
         radius.
-    KNeighborsRegressor :
-        Regression based on k-nearest neighbors.
-    RadiusNeighborsRegressor :
-        Regression based on neighbors within a fixed radius.
-    BallTree :
-        Space partitioning data structure for organizing points in a
+    BallTree : Space partitioning data structure for organizing points in a
         multi-dimensional space, used for nearest neighbor search.
 
     Notes

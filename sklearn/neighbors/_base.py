@@ -1185,8 +1185,8 @@ class RadiusNeighborsMixin:
 
         See Also
         --------
-        kneighbors_graph :
-            Compute the (weighted) graph of k-Neighbors for points in X.
+        kneighbors_graph : Compute the (weighted) graph of k-Neighbors for
+            points in X.
 
         Examples
         --------
