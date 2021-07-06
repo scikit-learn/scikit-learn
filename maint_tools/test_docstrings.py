@@ -102,7 +102,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultinomialNB",
     "NMF",
     "NearestCentroid",
-    "NearestNeighbors",
     "NeighborhoodComponentsAnalysis",
     "Normalizer",
     "NuSVC",
