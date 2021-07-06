@@ -618,7 +618,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def coef_(self):
-        """Return the weights assigned to the features."""
+        """ndarray : Weights assigned to the features."""
         if self.kernel != "linear":
             raise AttributeError("coef_ is only available when using a linear kernel")
 
