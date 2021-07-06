@@ -75,7 +75,6 @@ DOCSTRING_IGNORE_LIST = [
     "LabelEncoder",
     "LabelPropagation",
     "LabelSpreading",
-    "Lars",
     "LarsCV",
     "LassoCV",
     "LassoLars",
