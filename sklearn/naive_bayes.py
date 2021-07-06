@@ -734,7 +734,7 @@ class _BaseDiscreteNB(_BaseNB):
 
 class MultinomialNB(_BaseDiscreteNB):
     """
-    Naive Bayes classifier for multinomial models
+    Naive Bayes classifier for multinomial models.
 
     The multinomial Naive Bayes classifier is suitable for classification with
     discrete features (e.g., word counts for text classification). The
@@ -814,6 +814,18 @@ class MultinomialNB(_BaseDiscreteNB):
         described in Rennie et al. (2003).
     GaussianNB : Gaussian Naive Bayes (GaussianNB).
 
+    Notes
+    -----
+    For the rationale behind the names `coef_` and `intercept_`, i.e.
+    naive Bayes as a linear classifier, see J. Rennie et al. (2003),
+    Tackling the poor assumptions of naive Bayes text classifiers, ICML.
+
+    References
+    ----------
+    C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
+    Information Retrieval. Cambridge University Press, pp. 234-265.
+    https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
+
     Examples
     --------
     >>> import numpy as np
@@ -826,18 +838,6 @@ class MultinomialNB(_BaseDiscreteNB):
     MultinomialNB()
     >>> print(clf.predict(X[2:3]))
     [3]
-
-    Notes
-    -----
-    For the rationale behind the names `coef_` and `intercept_`, i.e.
-    naive Bayes as a linear classifier, see J. Rennie et al. (2003),
-    Tackling the poor assumptions of naive Bayes text classifiers, ICML.
-
-    References
-    ----------
-    C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
-    Information Retrieval. Cambridge University Press, pp. 234-265.
-    https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
