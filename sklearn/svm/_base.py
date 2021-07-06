@@ -639,7 +639,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def n_support_(self):
-        """Return number of support vectors for each class."""
+        """ndarray : Number of support vectors for each class."""
         try:
             check_is_fitted(self)
         except NotFittedError:
