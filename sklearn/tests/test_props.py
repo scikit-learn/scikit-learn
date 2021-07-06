@@ -1,3 +1,4 @@
+import re
 import numpy as np
 import pytest
 
@@ -11,11 +12,13 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import cross_validate
+from sklearn.model_selection._split import check_cv
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
 from sklearn.utils import MetadataRequest
 from sklearn.utils.metadata_requests import RequestType
 from sklearn.utils.metadata_requests import metadata_request_factory
+from sklearn.utils.metadata_requests import MetadataRouter
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import StratifiedKFold
@@ -548,3 +551,110 @@ def test__get_default_requests():
 
     assert metadata_request_factory(ImplicitRequestRemoval()).fit.requests == {}
     assert_request_is_empty(ImplicitRequestRemoval().get_metadata_request())
+
+
+def test_validate():
+    class ConsumerRouter(BaseEstimator):
+        def __init__(self, cv=None):
+            self.cv = cv
+
+        def fit(self, X, y, sample_weight=None, **kwargs):
+            kwargs["sample_weight"] = sample_weight
+            metadata_request_factory(self).fit.validate_metadata(
+                ignore_extras=False,
+                self_metadata=super(),
+                kwargs=kwargs,
+            )
+            return self
+
+        def get_metadata_request(self):
+            router = (
+                MetadataRouter()
+                .add(super(), mapping="one-to-one", overwrite=False, mask=False)
+                .add(
+                    check_cv(self.cv),
+                    mapping={"fit": "split"},
+                    overwrite=False,
+                    mask=True,
+                )
+            )
+            return router.get_metadata_request()
+
+    err_message = "Metadata passed which is not understood: {param}. In method: fit"
+
+    est = ConsumerRouter()
+    est.fit(X=None, y=None)
+    est.fit(X=None, y=None, sample_weight="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["my_weight"]))
+    ):
+        est.fit(X=None, y=None, my_weight="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["my_weight"]))
+    ):
+        est.fit(X=None, y=None, sample_weight="test", my_weight="test")
+
+    est = ConsumerRouter(cv=GroupKFold())
+    est.fit(X=None, y=None, groups="test")
+    est.fit(X=None, y=None, sample_weight="test", groups="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["my_weight"]))
+    ):
+        est.fit(X=None, y=None, my_weight="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["my_weight"]))
+    ):
+        est.fit(X=None, y=None, sample_weight="test", my_weight="test")
+
+    est = ConsumerRouter(cv=GroupKFold().split_requests(groups="my_groups"))
+    est.fit(X=None, y=None, sample_weight="test", my_groups="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["groups"]))
+    ):
+        est.fit(X=None, y=None, groups="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["groups"]))
+    ):
+        est.fit(X=None, y=None, sample_weight="test", my_groups="test", groups="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["groups"]))
+    ):
+        est.fit(X=None, y=None, sample_weight="test", groups="test")
+
+    est = ConsumerRouter(
+        cv=GroupKFold().split_requests(groups="my_groups")
+    ).fit_requests(sample_weight="my_weight")
+    est.fit(X=None, y=None, sample_weight="test", my_groups="test")
+    est.fit(X=None, y=None, my_groups="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["groups"]))
+    ):
+        est.fit(X=None, y=None, groups="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["groups"]))
+    ):
+        est.fit(X=None, y=None, sample_weight="test", my_groups="test", groups="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["groups"]))
+    ):
+        est.fit(X=None, y=None, sample_weight="test", groups="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["my_weights"]))
+    ):
+        est.fit(X=None, y=None, my_weights="test", my_groups="test")
+
+    with pytest.raises(
+        ValueError, match=re.escape(err_message.format(param=["groups", "my_weights"]))
+    ):
+        est.fit(X=None, y=None, my_weights="test", groups="test")

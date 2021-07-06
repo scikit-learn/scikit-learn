@@ -197,13 +197,31 @@ class MethodMetadataRequest:
                 expected_metadata=expected_metadata,
             )
 
-    def validate_metadata(self, ignore_extras=False, kwargs=None):
+    def validate_metadata(self, ignore_extras=False, self_metadata=None, kwargs=None):
         """Validate the given arguments against the requested ones.
 
         Parameters
         ----------
         ignore_extras : bool, default=False
             If ``True``, no error is raised if extra unknown args are passed.
+
+        self_metadata : MetadataRequest-like, default=None
+            This parameter can be anything which can be an input to
+            ``metadata_request_factory``. Only the part of the metadata which
+            is the same as ``name`` is used.
+
+            Consumers don't validate their own metadata. Validation is always
+            done by routers (i.e. usually meta-estimators). But sometimes an
+            object is a consumer and a router, e.g. ``LogisticRegressionCV``
+            which consumes ``sample_weight``, but also routes metadata to the
+            given scorer(s) and CV object, and therefore is also a router. In
+            such a case, ``sample_weight`` is the metadata being consumed. A
+            router can get its own required metadata, as opposed to the ones
+            required by its sub-objects, using
+            ``metadata_request_factory(super())``. ``validate_metadata`` then
+            uses the part which is relevant to this validation. Since this
+            object knows which method is relevant using its ``name``, passing
+            ``super()`` here would be sufficient.
 
         kwargs : dict
             Provided metadata.
@@ -213,11 +231,18 @@ class MethodMetadataRequest:
         None
         """
         kwargs = {} if kwargs is None else kwargs
+        self_metadata = getattr(
+            metadata_request_factory(self_metadata), self.name
+        ).requests
+        # we then remove self metadata from kwargs, since they should not be
+        # validated.
+        kwargs = {v: k for v, k in kwargs.items() if v not in self_metadata}
         args = {arg for arg, value in kwargs.items() if value is not None}
         if not ignore_extras and args - set(self.requests.keys()):
             raise ValueError(
                 "Metadata passed which is not understood: "
-                f"{args - set(self.requests.keys())}. In method: {self.name}"
+                f"{sorted(args - set(self.requests.keys()))}. In method: "
+                f"{self.name}"
             )
 
         for prop, alias in self.requests.items():

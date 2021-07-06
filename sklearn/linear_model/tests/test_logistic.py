@@ -13,7 +13,7 @@ from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.metrics import get_scorer
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, GroupKFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
@@ -2237,3 +2237,63 @@ def test_sample_weight_not_modified(multi_class, class_weight):
     )
     clf.fit(X, y, sample_weight=W)
     assert_allclose(expected, W)
+
+
+def test_lrcv_metadata_routing():
+    X, y = make_classification(n_samples=20, random_state=0)
+    sample_weight = y + 1
+    rng = np.random.RandomState(0)
+    groups = rng.randint(low=0, high=10, size=len(y))
+    err_message = "Metadata passed which is not understood: {param}. In method: fit"
+
+    lrcv = LogisticRegressionCV(
+        random_state=0,
+        max_iter=1,
+    )
+    lrcv.fit(X, y)
+    lrcv.fit(X, y, sample_weight=sample_weight)
+    lrcv.fit(X, y, sample_weight=None)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(err_message.format(param=["my_weights"])),
+    ):
+        lrcv.fit(X, y, my_weights=sample_weight)
+
+    lrcv = LogisticRegressionCV(
+        random_state=0,
+        max_iter=1,
+    ).fit_requests(sample_weight="my_weight")
+    lrcv.fit(X, y)
+    lrcv.fit(X, y, sample_weight=sample_weight)
+    lrcv.fit(X, y, sample_weight=None)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(err_message.format(param=["my_weights"])),
+    ):
+        lrcv.fit(X, y, my_weights=sample_weight)
+
+    lrcv = LogisticRegressionCV(
+        random_state=0,
+        max_iter=1,
+        cv=GroupKFold(),
+    ).fit_requests(sample_weight="my_weight")
+    lrcv.fit(X, y, groups=groups)
+    lrcv.fit(X, y, sample_weight=sample_weight, groups=groups)
+    lrcv.fit(X, y, sample_weight=None, groups=groups)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(err_message.format(param=["my_weights"])),
+    ):
+        lrcv.fit(X, y, my_weights=sample_weight, groups=groups)
+
+    with pytest.raises(ValueError, match="The 'groups' parameter should not be None."):
+        lrcv.fit(X, y)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(err_message.format(param=["my_groups"])),
+    ):
+        lrcv.fit(X, y, my_groups=groups)

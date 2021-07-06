@@ -2110,6 +2110,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
         scorer = get_scorer(self.scoring)
+        metadata_request_factory(self).fit.validate_metadata(
+            ignore_extras=False, self_metadata=super(), kwargs=fit_params
+        )
         cv_params = metadata_request_factory(cv).split.get_method_input(
             ignore_extras=True, kwargs=fit_params
         )
