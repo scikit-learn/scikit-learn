@@ -1847,14 +1847,14 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     See Also
     --------
-    lars_path : Compute Least Angle Regression or Lasso path using LARS \
-    algorithm.
+    lars_path : Compute Least Angle Regression or Lasso path using LARS
+        algorithm.
     lasso_path : Compute Lasso path with coordinate descent.
     Lasso : The Lasso is a linear model that estimates sparse coefficients.
     LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
-    LassoCV : Lasso linear model with iterative fitting along a regularization \
-    path.
-    LassoLarsCV : Cross-validated Lasso, using the LARS algorithm.
+    LassoCV : Lasso linear model with iterative fitting along a regularization
+        path.
+    LassoLarsCV : Cross-validated Lasso using the LARS algorithm.
 
     Notes
     -----
