@@ -114,7 +114,6 @@ DOCSTRING_IGNORE_LIST = [
     "PassiveAggressiveRegressor",
     "PatchExtractor",
     "Pipeline",
-    "PoissonRegressor",
     "PolynomialCountSketch",
     "PolynomialFeatures",
     "PowerTransformer",
