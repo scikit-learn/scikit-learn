@@ -216,6 +216,7 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
 
     return scores
 
+
 print("Computing principal eigenvector score using a power iteration method")
 t0 = time()
 scores = centrality_scores(X, max_iter=100)

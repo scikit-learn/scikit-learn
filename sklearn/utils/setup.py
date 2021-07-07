@@ -56,6 +56,7 @@ def configuration(parent_package="", top_path=None):
         "sklearn/utils/_weight_vector.pyx.tp",
         "sklearn/utils/_weight_vector.pxd.tp",
     ]
+
     gen_from_templates(templates, top_path)
 
     config.add_extension(

@@ -119,8 +119,15 @@ class SGDOptimizer(BaseOptimizer):
         velocities that are used to update params
     """
 
-    def __init__(self, params, learning_rate_init=0.1, lr_schedule='constant',
-                 momentum=0.9, nesterov=True, power_t=0.5):
+    def __init__(
+        self,
+        params,
+        learning_rate_init=0.1,
+        lr_schedule="constant",
+        momentum=0.9,
+        nesterov=True,
+        power_t=0.5,
+    ):
         super().__init__(params, learning_rate_init)
 
         self.lr_schedule = lr_schedule
@@ -139,12 +146,13 @@ class SGDOptimizer(BaseOptimizer):
             number of training samples trained on so far, used to update
             learning rate for 'invscaling'
         """
-        if self.lr_schedule == 'invscaling':
-            self.learning_rate = (float(self.learning_rate_init) /
-                                  (time_step + 1) ** self.power_t)
+        if self.lr_schedule == "invscaling":
+            self.learning_rate = (
+                float(self.learning_rate_init) / (time_step + 1) ** self.power_t
+            )
 
     def trigger_stopping(self, msg, verbose):
-        if self.lr_schedule != 'adaptive':
+        if self.lr_schedule != "adaptive":
             if verbose:
                 print(msg + " Stopping.")
             return True
@@ -154,10 +162,9 @@ class SGDOptimizer(BaseOptimizer):
                 print(msg + " Learning rate too small. Stopping.")
             return True
 
-        self.learning_rate /= 5.
+        self.learning_rate /= 5.0
         if verbose:
-            print(msg + " Setting learning rate to %f" %
-                  self.learning_rate)
+            print(msg + " Setting learning rate to %f" % self.learning_rate)
         return False
 
     def _get_updates(self, grads):
@@ -174,13 +181,17 @@ class SGDOptimizer(BaseOptimizer):
         updates : list, length = len(grads)
             The values to add to params
         """
-        updates = [self.momentum * velocity - self.learning_rate * grad
-                   for velocity, grad in zip(self.velocities, grads)]
+        updates = [
+            self.momentum * velocity - self.learning_rate * grad
+            for velocity, grad in zip(self.velocities, grads)
+        ]
         self.velocities = updates
 
         if self.nesterov:
-            updates = [self.momentum * velocity - self.learning_rate * grad
-                       for velocity, grad in zip(self.velocities, grads)]
+            updates = [
+                self.momentum * velocity - self.learning_rate * grad
+                for velocity, grad in zip(self.velocities, grads)
+            ]
 
         return updates
 
@@ -232,8 +243,9 @@ class AdamOptimizer(BaseOptimizer):
     arXiv preprint arXiv:1412.6980 (2014).
     """
 
-    def __init__(self, params, learning_rate_init=0.001, beta_1=0.9,
-                 beta_2=0.999, epsilon=1e-8):
+    def __init__(
+        self, params, learning_rate_init=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8
+    ):
         super().__init__(params, learning_rate_init)
 
         self.beta_1 = beta_1
@@ -258,13 +270,21 @@ class AdamOptimizer(BaseOptimizer):
             The values to add to params
         """
         self.t += 1
-        self.ms = [self.beta_1 * m + (1 - self.beta_1) * grad
-                   for m, grad in zip(self.ms, grads)]
-        self.vs = [self.beta_2 * v + (1 - self.beta_2) * (grad ** 2)
-                   for v, grad in zip(self.vs, grads)]
-        self.learning_rate = (self.learning_rate_init *
-                              np.sqrt(1 - self.beta_2 ** self.t) /
-                              (1 - self.beta_1 ** self.t))
-        updates = [-self.learning_rate * m / (np.sqrt(v) + self.epsilon)
-                   for m, v in zip(self.ms, self.vs)]
+        self.ms = [
+            self.beta_1 * m + (1 - self.beta_1) * grad
+            for m, grad in zip(self.ms, grads)
+        ]
+        self.vs = [
+            self.beta_2 * v + (1 - self.beta_2) * (grad ** 2)
+            for v, grad in zip(self.vs, grads)
+        ]
+        self.learning_rate = (
+            self.learning_rate_init
+            * np.sqrt(1 - self.beta_2 ** self.t)
+            / (1 - self.beta_1 ** self.t)
+        )
+        updates = [
+            -self.learning_rate * m / (np.sqrt(v) + self.epsilon)
+            for m, v in zip(self.ms, self.vs)
+        ]
         return updates

@@ -33,6 +33,7 @@ def g(x):
     whether g(x) <= 0 or not)"""
     return 5. - x[:, 1] - .5 * x[:, 0] ** 2.
 
+
 # Design of experiments
 X = np.array([[-4.61611719, -6.00099547],
               [4.10469096, 5.32782448],
