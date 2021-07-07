@@ -1926,7 +1926,8 @@ def test_fast_radius_neighborhood_reduction_consistency(
     spread=1000,
     dtype=np.float64,
 ):
-    # Temporary consistency check
+    # Temporary transitionalconsistency check
+    # TODO: remove once the implementation is stabilized.
     rng = np.random.RandomState(1)
 
     X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread

@@ -763,29 +763,25 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         # NOTE: not used for now.
         DTYPE_t radius_proxy
 
-        # We want resizable buffers which we will
-        # to wrapped within numpy arrays at the end.
+        # We want resizable buffers which we will to wrapped within numpy
+        # arrays at the end.
         #
-        # std::vector comes as a handy interface for
-        # efficient resizable buffers.
+        # std::vector comes as a handy interface for efficient resizable
+        # buffers.
         #
-        # Though it is possible to access their buffer
-        # address with std::vector::data, their buffer
-        # can't be stolen: their life-time is tight to
-        # the buffer's.
+        # Though it is possible to access their buffer address with
+        # std::vector::data, their buffer can't be stolen: their
+        # life-time is tight to the buffer's.
         #
-        # To solve this, we allocate dynamically
-        # allocate vectors which won't be
-        # freed, but their buffer eventually will
-        # as the ownership will be transferred to
-        # numpy arrays.
+        # To solve this, we allocate dynamically allocate vectors which won't be
+        # freed, but their buffer eventually will as the ownership will be
+        # transferred to numpy arrays.
         #
-        # TODO: Find a proper way to handle this
-        # It's "OK-ish" as numpy arrays are
-        # then responsible for their buffer
-        # lifetime which consist of most of the
-        # vectors actual data (residual metadata
-        # exist, don't account but won't be deleted).
+        # TODO: Find a proper way to handle buffers' lifetime
+        # It's "OK-ish" as numpy arrays are then responsible for their buffer
+        # lifetime which consist of most of the vectors actual data (residual
+        # metadata exist, don't account but won't be deleted).
+        #
         # Still, meh.
         vector[vector[ITYPE_t]] * neigh_indices
         vector[vector[DTYPE_t]] * neigh_distances
@@ -880,6 +876,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     def _finalise_compute(self,
            bint return_distance
     ):
+        # TODO: factorise this (currently set like so to avoid having a missing symbol
+        # in the generated shared library
         if return_distance:
             np_arrays_indices = []
             np_arrays_distances = []
@@ -891,6 +889,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                                                                deref(self.neigh_indices)[i].size()))
 
             return np.array(np_arrays_distances, dtype=np.ndarray), np.array(np_arrays_indices, dtype=np.ndarray)
+
+        free(self.neigh_distances)
 
         np_arrays_indices = []
 
