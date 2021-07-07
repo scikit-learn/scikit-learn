@@ -950,7 +950,7 @@ class ComplementNB(_BaseDiscreteNB):
     --------
     BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
     CategoricalNB : Naive Bayes classifier for categorical features.
-    GaussianNB : Gaussian Naive Bayes (GaussianNB).
+    GaussianNB : Gaussian Naive Bayes.
     MultinomialNB : Naive Bayes classifier for multinomial models.
 
     References
