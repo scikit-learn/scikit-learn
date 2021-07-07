@@ -184,6 +184,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     @property
     def classes_(self):
+        """Classes labels available when `estimator` is a classifier.
+
+        Returns
+        -------
+        ndarray of shape (n_classes,)
+        """
         return self.estimator_.classes_
 
     def fit(self, X, y):
@@ -196,6 +202,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         y : array-like of shape (n_samples,)
             The target values.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         return self._fit(X, y)
 
@@ -407,8 +418,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
 
 class RFECV(RFE):
-    """Feature ranking with recursive feature elimination and cross-validated
-    selection of the best number of features.
+    """Recursive feature elimination with cross-validation to select the number of features.
 
     See glossary entry for :term:`cross-validation estimator`.
 
@@ -457,7 +467,7 @@ class RFECV(RFE):
         .. versionchanged:: 0.22
             ``cv`` default value of None changed from 3-fold to 5-fold.
 
-    scoring : string, callable or None, default=None
+    scoring : str, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
@@ -522,6 +532,10 @@ class RFECV(RFE):
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
 
+    See Also
+    --------
+    RFE : Recursive feature elimination.
+
     Notes
     -----
     The size of ``grid_scores_`` is equal to
@@ -529,6 +543,13 @@ class RFECV(RFE):
     where step is the number of features removed at each iteration.
 
     Allows NaN/Inf in the input if the underlying estimator does as well.
+
+    References
+    ----------
+
+    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
+           for cancer classification using support vector machines",
+           Mach. Learn., 46(1-3), 389--422, 2002.
 
     Examples
     --------
@@ -547,17 +568,6 @@ class RFECV(RFE):
            False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
-
-    See Also
-    --------
-    RFE : Recursive feature elimination.
-
-    References
-    ----------
-
-    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
-           for cancer classification using support vector machines",
-           Mach. Learn., 46(1-3), 389--422, 2002.
     """
 
     def __init__(
@@ -600,6 +610,11 @@ class RFECV(RFE):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
             .. versionadded:: 0.20
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         tags = self._get_tags()
         X, y = self._validate_data(
