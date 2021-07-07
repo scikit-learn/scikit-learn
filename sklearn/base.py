@@ -322,7 +322,10 @@ class BaseEstimator:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "
                     "using version {2}. This might lead to breaking code or "
-                    "invalid results. Use at your own risk.".format(
+                    "invalid results. Use at your own risk. "
+                    "For more info please refer to:\n"
+                    "https://scikit-learn.org/stable/modules/model_persistence"
+                    ".html#security-maintainability-limitations".format(
                         self.__class__.__name__, pickle_version, __version__
                     ),
                     UserWarning,
