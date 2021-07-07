@@ -101,7 +101,8 @@ cdef class PairwiseDistancesReduction:
 
     @classmethod
     def valid_metrics(cls):
-        return {*METRIC_MAPPING.keys()}.difference({"pyfunc", "sokalmichener"})
+        excluded = {"pyfunc", "sokalmichener", "matching", "jaccard"}
+        return {*METRIC_MAPPING.keys()}.difference(excluded)
 
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults
