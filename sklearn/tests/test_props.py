@@ -19,6 +19,7 @@ from sklearn.utils import MetadataRequest
 from sklearn.utils.metadata_requests import RequestType
 from sklearn.utils.metadata_requests import metadata_request_factory
 from sklearn.utils.metadata_requests import MetadataRouter
+from sklearn.utils.metadata_requests import MethodMetadataRequest
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import StratifiedKFold
@@ -100,9 +101,6 @@ class MyEst(ClassifierMixin, BaseEstimator):
 
     def predict(self, X):
         return self.svc_.predict(X)
-
-    def predict_proba(self, X):
-        return self.svc_predict_proba(X)
 
 
 class MyTrs(TransformerMixin, BaseEstimator):
@@ -658,3 +656,59 @@ def test_validate():
         ValueError, match=re.escape(err_message.format(param=["groups", "my_weights"]))
     ):
         est.fit(X=None, y=None, my_weights="test", groups="test")
+
+
+def test_method_metadata_request():
+    mmr = MethodMetadataRequest(name="fit")
+    with pytest.raises(
+        ValueError, match="overwrite can only be one of {True, False, 'on-default'}."
+    ):
+        mmr.add_request(prop="test", alias=None, overwrite="test")
+
+    with pytest.raises(ValueError, match="Expected all metadata to be called test"):
+        mmr.add_request(prop="foo", alias="bar", expected_metadata="test")
+
+    with pytest.raises(ValueError, match="Aliasing is not allowed"):
+        mmr.add_request(prop="foo", alias="bar", allow_aliasing=False)
+
+    with pytest.raises(ValueError, match="alias should be either a string or"):
+        mmr.add_request(prop="foo", alias=1.4)
+
+    mmr.add_request(prop="foo", alias=None)
+    assert mmr.requests == {"foo": RequestType.ERROR_IF_PASSED}
+    with pytest.raises(ValueError, match="foo is already requested"):
+        mmr.add_request(prop="foo", alias=True)
+    with pytest.raises(ValueError, match="foo is already requested"):
+        mmr.add_request(prop="foo", alias=True)
+    mmr.add_request(prop="foo", alias=True, overwrite="on-default")
+    assert mmr.requests == {"foo": RequestType.REQUESTED}
+
+    with pytest.raises(ValueError, match="Can only add another MethodMetadataRequest"):
+        mmr.merge_method_request({})
+
+    assert MethodMetadataRequest.from_dict(None, name="fit").requests == {}
+    assert MethodMetadataRequest.from_dict("foo", name="fit").requests == {
+        "foo": RequestType.ERROR_IF_PASSED
+    }
+    assert MethodMetadataRequest.from_dict(["foo", "bar"], name="fit").requests == {
+        "foo": RequestType.ERROR_IF_PASSED,
+        "bar": RequestType.ERROR_IF_PASSED,
+    }
+
+
+def test_metadata_request_factory():
+    class Consumer(BaseEstimator):
+        _metadata_request__prop = {"fit": "prop"}
+
+    assert_request_is_empty(metadata_request_factory(None))
+    assert_request_is_empty(metadata_request_factory({}))
+    assert_request_is_empty(metadata_request_factory(object()))
+
+    mr = MetadataRequest({"fit": "foo"}, default="bar")
+    mr_factory = metadata_request_factory(mr)
+    assert_request_is_empty(mr_factory, exclude="fit")
+    assert mr_factory.fit.requests == {"foo": "bar"}
+
+    mr = metadata_request_factory(Consumer())
+    assert_request_is_empty(mr, exclude="fit")
+    assert mr.fit.requests == {"prop": RequestType.ERROR_IF_PASSED}

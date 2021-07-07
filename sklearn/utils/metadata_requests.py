@@ -333,7 +333,9 @@ class MethodMetadataRequest:
         return res
 
     @classmethod
-    def from_dict(cls, requests, name, allow_aliasing=True):
+    def from_dict(
+        cls, requests, name, allow_aliasing=True, default=RequestType.ERROR_IF_PASSED
+    ):
         """Construct a MethodMetadataRequest from a given dictionary.
 
         Parameters
@@ -356,9 +358,9 @@ class MethodMetadataRequest:
         if requests is None:
             requests = dict()
         elif isinstance(requests, str):
-            requests = {requests: RequestType.ERROR_IF_PASSED}
-        elif isinstance(requests, list):
-            requests = {r: RequestType.ERROR_IF_PASSED for r in requests}
+            requests = {requests: default}
+        elif isinstance(requests, (list, set)):
+            requests = {r: default for r in requests}
         result = cls(name=name)
         for prop, alias in requests.items():
             result.add_request(prop=prop, alias=alias, allow_aliasing=allow_aliasing)
@@ -402,17 +404,15 @@ class MetadataRequest:
             )
 
         for method, method_requests in requests.items():
-            method_requests = {} if method_requests is None else method_requests
-            try:
-                mmr = getattr(self, method)
-            except AttributeError:
+            if method not in METHODS:
                 raise ValueError(f"{method} is not supported as a method.")
-            if isinstance(method_requests, str):
-                method_requests = {method_requests: default}
-            elif isinstance(method_requests, (list, set)):
-                method_requests = {m: default for m in method_requests}
-            for prop, alias in method_requests.items():
-                mmr.add_request(prop=prop, alias=alias)
+            setattr(
+                self,
+                method,
+                MethodMetadataRequest.from_dict(
+                    method_requests, name=method, default=default
+                ),
+            )
 
     def add_requests(
         self,
