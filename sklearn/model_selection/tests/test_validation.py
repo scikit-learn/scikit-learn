@@ -2360,3 +2360,11 @@ def test_validation_pairwise():
     msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
     with pytest.warns(FutureWarning, match=msg):
         cross_validate(svm, linear_kernel, y, cv=2)
+
+
+def test_cross_validate_deprecated_fit_params():
+    X, y = make_classification(random_state=0)
+    estimator = MockClassifier()
+
+    with pytest.warns(FutureWarning, match="fit_params is deprecated"):
+        cross_validate(estimator, X, y, fit_params={"param": "value"})

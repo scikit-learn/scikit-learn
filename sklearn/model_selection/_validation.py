@@ -256,7 +256,11 @@ def cross_validate(
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
     if fit_params is not None:
-        warnings.warn("fit_params is deprecated. Please use props.", FutureWarning)
+        warnings.warn(
+            "fit_params is deprecated and will be removed in version 1.3. "
+            "Please use props instead.",
+            FutureWarning,
+        )
         props = {} if props is None else props
         props.update(fit_params)
 
