@@ -16,6 +16,10 @@ except ImportError:
 "
 python -c "import joblib; print(f'{joblib.cpu_count()} CPUs')"
 python -c "import platform; print(f'{platform.machine()}')"
+
+
+# Force the use of the armv8 core type:
+export OPENBLAS_CORETYPE=armv8
 python -m threadpoolctl -i sklearn  # also triggers imports of numpy and scipy
 
 TEST_CMD="pytest --showlocals --durations=20 --maxfail=5 --pyargs"
