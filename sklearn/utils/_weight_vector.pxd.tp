@@ -16,17 +16,13 @@ between double braces are substituted in setup.py.
 dtypes = [('64', 'double'),
           ('32', 'float')]
 
-def get_dispatch(dtypes):
-    for name, c_type in dtypes:
-        yield name, c_type
-
 }}
 
 # cython: language_level=3
 
 cimport numpy as np
 
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type in dtypes}}
 
 cdef extern from "math.h":
     cdef extern {{c_type}} sqrt({{c_type}} x)

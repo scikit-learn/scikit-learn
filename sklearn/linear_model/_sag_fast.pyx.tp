@@ -23,10 +23,6 @@ License: BSD 3 clause
 dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
 
-def get_dispatch(dtypes):
-    for name, c_type, np_type in dtypes:
-        yield name, c_type, np_type
-
 }}
 
 #------------------------------------------------------------------------------
@@ -61,7 +57,7 @@ from libc.stdio cimport printf
 np.import_array()
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in dtypes}}
 
 cdef extern from "_sgd_fast_helpers.h":
     bint skl_isfinite{{name}}({{c_type}}) nogil
@@ -69,7 +65,7 @@ cdef extern from "_sgd_fast_helpers.h":
 
 {{endfor}}
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in dtypes}}
 
 cdef inline {{c_type}} fmax{{name}}({{c_type}} x, {{c_type}} y) nogil:
     if x > y:
@@ -79,7 +75,7 @@ cdef inline {{c_type}} fmax{{name}}({{c_type}} x, {{c_type}} y) nogil:
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in dtypes}}
 
 cdef {{c_type}} _logsumexp{{name}}({{c_type}}* arr, int n_classes) nogil:
     """Computes the sum of arr assuming arr is in the log domain.
@@ -105,7 +101,7 @@ cdef {{c_type}} _logsumexp{{name}}({{c_type}}* arr, int n_classes) nogil:
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in dtypes}}
 
 cdef class MultinomialLogLoss{{name}}:
     cdef {{c_type}} _loss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
@@ -209,7 +205,7 @@ cdef class MultinomialLogLoss{{name}}:
 
 {{endfor}}
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in dtypes}}
 
 cdef inline {{c_type}} _soft_thresholding{{name}}({{c_type}} x, {{c_type}} shrinkage) nogil:
     return fmax{{name}}(x - shrinkage, 0) - fmax{{name}}(- x - shrinkage, 0)
@@ -217,7 +213,7 @@ cdef inline {{c_type}} _soft_thresholding{{name}}({{c_type}} x, {{c_type}} shrin
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in dtypes}}
 
 def sag{{name}}(SequentialDataset{{name}} dataset,
         np.ndarray[{{c_type}}, ndim=2, mode='c'] weights_array,
@@ -553,7 +549,7 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in dtypes}}
 
 cdef int scale_weights{{name}}({{c_type}}* weights, {{c_type}}* wscale,
                                int n_features,
@@ -592,7 +588,7 @@ cdef int scale_weights{{name}}({{c_type}}* weights, {{c_type}}* wscale,
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in dtypes}}
 
 cdef int lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
                                int n_samples, int n_classes, int sample_itr,
@@ -683,7 +679,7 @@ cdef int lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in dtypes}}
 
 cdef void predict_sample{{name}}({{c_type}}* x_data_ptr, int* x_ind_ptr, int xnnz,
                                  {{c_type}}* w_data_ptr, {{c_type}} wscale,

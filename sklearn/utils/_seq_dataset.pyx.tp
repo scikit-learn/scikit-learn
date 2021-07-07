@@ -24,12 +24,8 @@ License: BSD 3 clause
 dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
 
-def get_dispatch(dtypes):
-    for name, c_type, np_type in dtypes:
-        yield name, c_type, np_type
-
 }}
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in dtypes}}
 
 #------------------------------------------------------------------------------
 

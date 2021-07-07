@@ -16,10 +16,6 @@ between double braces are substituted in setup.py.
 dtypes = [('64', 'double'),
           ('32', 'float')]
 
-def get_dispatch(dtypes):
-    for name, c_type in dtypes:
-        yield name, c_type
-
 }}
 
 # cython: cdivision=True
@@ -44,8 +40,7 @@ from ._cython_blas cimport _dot, _scal, _axpy
 
 np.import_array()
 
-
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type in dtypes}}
 
 cdef class WeightVector{{name}}(object):
     """Dense vector represented by a scalar and a numpy array.

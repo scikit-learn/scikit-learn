@@ -16,12 +16,8 @@ between double braces are substituted in setup.py.
 dtypes = [('64', 'double'),
           ('32', 'float')]
 
-def get_dispatch(dtypes):
-    for name, c_type in dtypes:
-        yield name, c_type
-
 }}
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type in dtypes}}
 
 #------------------------------------------------------------------------------
 
