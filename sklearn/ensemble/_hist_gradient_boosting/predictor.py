@@ -58,7 +58,7 @@ class TreePredictor:
             known_cat_bitsets array.
 
         n_threads : int
-            Number of openmp threads to use.
+            Number of OpenMP threads to use.
 
         Returns
         -------
@@ -89,7 +89,7 @@ class TreePredictor:
             index of the last bin and is always equal to max_bins (as passed
             to the GBDT classes), or equivalently to n_bins - 1.
         n_threads : int
-            Number of openmp threads to use.
+            Number of OpenMP threads to use.
 
         Returns
         -------

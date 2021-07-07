@@ -36,10 +36,10 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
     binning_thresholds : list of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
+    n_threads : int
+        Number of OpenMP threads to use.
     binned : ndarray, shape (n_samples, n_features)
         Output array, must be fortran aligned.
-    n_threads : int
-        Number of threads for openmp
     """
     cdef:
         int feature_idx

@@ -263,6 +263,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # there's no way to tell the scorer that it needs to predict binned
         # data.
         self._in_fit = True
+
+        # `_openmp_effective_n_threads` is used to take cgroups CPU quotes
+        # into account when determine the maximum number of threads to use.
         n_threads = _openmp_effective_n_threads()
 
         if isinstance(self.loss, str):
@@ -827,7 +830,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         X : array-like of shape (n_samples, n_features)
             The input samples.
         n_threads : int (default=None)
-            Number of openmp threads to use, if
+            Number of OpenMP threads to use. If `None`, then
+            `_openmp_effective_n_threads` is called to determine the effective
+            number of threads use, which takes cgroups CPU quotes into account. See
+            the docstring of `_openmp_effective_n_threads` for details.
 
         Returns
         -------
@@ -864,6 +870,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 f_idx_map,
             ) = self._bin_mapper.make_known_categories_bitsets()
 
+        #
         n_threads = _openmp_effective_n_threads(n_threads)
         for predictors_of_ith_iteration in predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
