@@ -855,14 +855,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             dtype=self._baseline_prediction.dtype,
         )
         raw_predictions += self._baseline_prediction
+
+        # We intentionally decouple the number of threads used at prediction
+        # time from the number of threads used at fit time because the model
+        # can be deployed on a different machine for prediction purposes.
+        n_threads = _openmp_effective_n_threads(n_threads)
         self._predict_iterations(
             X, self._predictors, raw_predictions, is_binned, n_threads
         )
         return raw_predictions
 
-    def _predict_iterations(
-        self, X, predictors, raw_predictions, is_binned, n_threads=None
-    ):
+    def _predict_iterations(self, X, predictors, raw_predictions, is_binned, n_threads):
         """Add the predictions of the predictors to raw_predictions."""
         if not is_binned:
             (
@@ -870,8 +873,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 f_idx_map,
             ) = self._bin_mapper.make_known_categories_bitsets()
 
-        #
-        n_threads = _openmp_effective_n_threads(n_threads)
         for predictors_of_ith_iteration in predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
                 if is_binned:
@@ -920,12 +921,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             dtype=self._baseline_prediction.dtype,
         )
         raw_predictions += self._baseline_prediction
+
+        # We intentionally decouple the number of threads used at prediction
+        # time from the number of threads used at fit time because the model
+        # can be deployed on a different machine for prediction purposes.
+        n_threads = _openmp_effective_n_threads()
         for iteration in range(len(self._predictors)):
             self._predict_iterations(
                 X,
                 self._predictors[iteration : iteration + 1],
                 raw_predictions,
                 is_binned=False,
+                n_threads=n_threads,
             )
             yield raw_predictions.copy()
 
