@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-from threadpoolctl import threadpool_limits
+# from threadpoolctl import threadpool_limits
 
 from ..exceptions import ConvergenceWarning
 from ..exceptions import EfficiencyWarning
@@ -16,8 +16,8 @@ from ._kmeans import _kmeans_single_lloyd
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
 
-from ._k_means_lloyd import lloyd_iter_chunked_dense
-from ._k_means_lloyd import lloyd_iter_chunked_sparse
+# from ._k_means_lloyd import lloyd_iter_chunked_dense
+# from ._k_means_lloyd import lloyd_iter_chunked_sparse
 
 from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
@@ -25,74 +25,74 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_array
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
-# from ..utils.validation import check_is_fitted
 
 
-def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
-    """Compute the labels of the given samples and centers.
 
-    Parameters
-    ----------
-    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-        The input samples to assign to the labels. If sparse matrix, must
-        be in CSR format.
-
-    sample_weight : ndarray of shape (n_samples,)
-        The weights for each observation in X.
-
-    x_squared_norms : ndarray of shape (n_samples,)
-        Precomputed squared euclidean norm of each data point, to speed up
-        computations.
-
-    centers : ndarray of shape (n_clusters, n_features)
-        The cluster centers.
-
-    n_threads : int, default=1
-        The number of OpenMP threads to use for the computation. Parallelism is
-        sample-wise on the main cython loop which assigns each sample to its
-        closest center.
-
-    Returns
-    -------
-    labels : ndarray of shape (n_samples,)
-        The resulting assignment (Labels of each point).
-    """
-    n_samples = X.shape[0]
-    n_clusters = centers.shape[0]
-
-    labels = np.full(n_samples, -1, dtype=np.int32)
-    weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
-    center_shift = np.zeros_like(weight_in_clusters)
-
-    if sp.issparse(X):
-        _labels = lloyd_iter_chunked_sparse
-    else:
-        _labels = lloyd_iter_chunked_dense
-
-    _labels(
-        X,
-        sample_weight,
-        x_squared_norms,
-        centers,
-        centers,
-        weight_in_clusters,
-        labels,
-        center_shift,
-        n_threads,
-        update_centers=False,
-    )
-
-    return labels
-
-
-def _check_labels_threadpool_limit(
-    X, sample_weight, x_squared_norms, centers, n_threads=1
-):
-    """Same as _check_labels but in a threadpool_limits context."""
-    with threadpool_limits(limits=1, user_api="blas"):
-        labels = _check_labels(X, sample_weight, x_squared_norms, centers, n_threads)
-
-    return labels
+# def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
+#     """Compute the labels of the given samples and centers.
+#
+#     Parameters
+#     ----------
+#     X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+#         The input samples to assign to the labels. If sparse matrix, must
+#         be in CSR format.
+#
+#     sample_weight : ndarray of shape (n_samples,)
+#         The weights for each observation in X.
+#
+#     x_squared_norms : ndarray of shape (n_samples,)
+#         Precomputed squared euclidean norm of each data point, to speed up
+#         computations.
+#
+#     centers : ndarray of shape (n_clusters, n_features)
+#         The cluster centers.
+#
+#     n_threads : int, default=1
+#         The number of OpenMP threads to use for the computation. Parallelism is
+#         sample-wise on the main cython loop which assigns each sample to its
+#         closest center.
+#
+#     Returns
+#     -------
+#     labels : ndarray of shape (n_samples,)
+#         The resulting assignment (Labels of each point).
+#     """
+#     n_samples = X.shape[0]
+#     n_clusters = centers.shape[0]
+#
+#     labels = np.full(n_samples, -1, dtype=np.int32)
+#     weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
+#     center_shift = np.zeros_like(weight_in_clusters)
+#
+#     if sp.issparse(X):
+#         _labels = lloyd_iter_chunked_sparse
+#     else:
+#         _labels = lloyd_iter_chunked_dense
+#
+#     _labels(
+#         X,
+#         sample_weight,
+#         x_squared_norms,
+#         centers,
+#         centers,
+#         weight_in_clusters,
+#         labels,
+#         center_shift,
+#         n_threads,
+#         update_centers=False,
+#     )
+#
+#     return labels
+#
+#
+# def _check_labels_threadpool_limit(
+#     X, sample_weight, x_squared_norms, centers, n_threads=1
+# ):
+#     """Same as _check_labels but in a threadpool_limits context."""
+#     with threadpool_limits(limits=1, user_api="blas"):
+#         labels = _check_labels(X, sample_weight, x_squared_norms, centers, n_threads)
+#
+#     return labels
 
 
 class BisectKMeans(KMeans):
@@ -525,19 +525,14 @@ class BisectKMeans(KMeans):
 
         # Dictionary to imitate tree view of created centers.
         # Used to keep hierarchical ordering.
-        tree_dict = {
-            -1: {'children': None,
-                 'center': None
-                 }
-        }
+        tree_dict = {-1: {"children": None, "center": None}}
 
         # Leaves Dictionary used for clustering.
         # Stores information which data points are assigned to given cluster ('samples')
         # along with error or amount of assigned points ('error_or_size'), depending on
         # specified 'bisect_strategy'
         leaves_dict = {
-            -1: {'samples': np.ones(X.shape[0], dtype=bool),
-                 'error_or_size': None}
+            -1: {"samples": np.ones(X.shape[0], dtype=bool), "error_or_size": None}
         }
 
         # ID of biggest center stored in centers_dict
@@ -546,26 +541,25 @@ class BisectKMeans(KMeans):
         last_center_id = 0
 
         for n_iter in range(self.n_clusters - 1):
-            picked_samples = leaves_dict[biggest_id]['samples']
+            picked_samples = leaves_dict[biggest_id]["samples"]
 
             # Pick data and weights to bisect
             picked_data = X[picked_samples]
             picked_weights = sample_weight[picked_samples]
 
             # Perform Bisection
-            _centers, _labels = self._bisect(picked_data,
-                                             picked_weights,
-                                             random_state)
+            _centers, _labels = self._bisect(picked_data, picked_weights, random_state)
 
             if self.verbose:
                 print(f"Centroid Found: {_centers[0]}")
                 print(f"Centroid Found: {_centers[1]}")
 
-            if strategy == 'biggest_sse':
+            if strategy == "biggest_sse":
                 # "biggest_sse" uses computed SSE (Sum of Squared Errors)
                 # to pick cluster with biggest SSE Error
-                metrics_values = self._compute_bisect_errors(picked_data, _centers,
-                                                            _labels, picked_weights)
+                metrics_values = self._compute_bisect_errors(
+                    picked_data, _centers, _labels, picked_weights
+                )
             else:
                 # strategy == 'largest_cluster'
                 # 'largest_cluster' takes counts occurances of each label
@@ -578,27 +572,23 @@ class BisectKMeans(KMeans):
             centers_id = [lower_id, 1 - lower_id]
 
             # Assign calculated nested clusters to their root
-            tree_dict[biggest_id]['children'] = [last_center_id,
-                                                 last_center_id + 1]
+            tree_dict[biggest_id]["children"] = [last_center_id, last_center_id + 1]
 
             for id in range(2):
-                child_id = tree_dict[biggest_id]['children'][id]
+                child_id = tree_dict[biggest_id]["children"][id]
                 picked_id = centers_id[id]
 
                 # Save Results on Tree
-                tree_dict[child_id] = {
-                    'children': None,
-                    'center': _centers[picked_id]
-                }
+                tree_dict[child_id] = {"children": None, "center": _centers[picked_id]}
 
                 # Create Mask for samples for selecting proper data points
-                samples_mask = leaves_dict[biggest_id]['samples'].copy()
-                samples_mask[picked_samples] = (_labels == picked_id)
+                samples_mask = leaves_dict[biggest_id]["samples"].copy()
+                samples_mask[picked_samples] = _labels == picked_id
 
                 # Save recently generated leaves
                 leaves_dict[child_id] = {
-                    'samples': samples_mask,
-                    'error_or_size': metrics_values[picked_id]
+                    "samples": samples_mask,
+                    "error_or_size": metrics_values[picked_id],
                 }
 
             # Split cluster is no longer leaf
@@ -607,8 +597,9 @@ class BisectKMeans(KMeans):
             last_center_id += 2
 
             # Pick new 'biggest cluster' to split
-            biggest_id, _ = max(leaves_dict.items(),
-                                key=lambda x: x[1]['error_or_size'])
+            biggest_id, _ = max(
+                leaves_dict.items(), key=lambda x: x[1]["error_or_size"]
+            )
 
         # Delete Initial cluster
         del tree_dict[-1]
@@ -619,7 +610,11 @@ class BisectKMeans(KMeans):
             new_order = []
 
             for idx in ordered_centers:
-                center_id = [idx] if tree_dict[idx]['children'] is None else tree_dict[idx]['children']
+                center_id = (
+                    [idx]
+                    if tree_dict[idx]["children"] is None
+                    else tree_dict[idx]["children"]
+                )
                 new_order.extend(center_id)
 
             ordered_centers = new_order
@@ -631,10 +626,10 @@ class BisectKMeans(KMeans):
 
         for i, center_id in enumerate(ordered_centers):
             # Save cluster centers in hierarchical order
-            centers.append(tree_dict[center_id]['center'])
+            centers.append(tree_dict[center_id]["center"])
 
             # Assign labels to proper data points
-            labels[leaves_dict[center_id]['samples']] = i
+            labels[leaves_dict[center_id]["samples"]] = i
 
         centers = np.asarray(centers)
 

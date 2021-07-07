@@ -757,8 +757,9 @@ Bisecting K-Means
 
 The :class:`BisectKMeans` is an iterative variant of :class:`KMeans`, using
 divisive hierarchical clustering.
-Instead of creating all centroids at once - It consequently split selected
-cluster into two new clusters till it reaches desired number of clusters.
+Instead of creating all centroids at once - It obtains desired number of centroids
+by picking one cluster at each iteration and splitting it into two new clusters,
+until target number of clusters is reached.
 
 With that approach, it is possible to produce either an un-nested (flat)
 clustering or a hierarchical clustering.
@@ -766,9 +767,6 @@ clustering or a hierarchical clustering.
 Cluster to split is picked depending on parameter ``bisect_strategy``:
 - Cluster with largest amount of data points (with ``largest_cluster``)
 - Cluster with biggest SSE (Sum of Squared Errors) (with ``biggest_sse``)
-
-Cluster to split is always picked from all clusters obtained from previous
-iterations of algorithm. This leads to more balanced split of data.
 
 Picking by largest amount of data points in most cases produces result as
 accurate as picking by SSE and is faster (especially for larger amount of data
