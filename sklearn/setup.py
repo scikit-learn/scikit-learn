@@ -1,15 +1,12 @@
+import sys
 import os
 
-from sklearn._build_utils import maybe_cythonize_extensions
+from sklearn._build_utils import cythonize_extensions
 
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info
     import numpy
-
-    # needs to be called during build otherwise show_version may fail sometimes
-    get_info('blas_opt', 0)
 
     libraries = []
     if os.name == 'posix':
@@ -33,6 +30,10 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('feature_selection/tests')
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
+    config.add_subpackage('impute')
+    config.add_subpackage('impute/tests')
+    config.add_subpackage('inspection')
+    config.add_subpackage('inspection/tests')
     config.add_subpackage('mixture')
     config.add_subpackage('mixture/tests')
     config.add_subpackage('model_selection')
@@ -43,13 +44,19 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('preprocessing/tests')
     config.add_subpackage('semi_supervised')
     config.add_subpackage('semi_supervised/tests')
+    config.add_subpackage('experimental')
+    config.add_subpackage('experimental/tests')
+    config.add_subpackage('ensemble/_hist_gradient_boosting')
+    config.add_subpackage('ensemble/_hist_gradient_boosting/tests')
+    config.add_subpackage('_loss/')
+    config.add_subpackage('_loss/tests')
+    config.add_subpackage('externals')
 
     # submodules which have their own setup.py
     config.add_subpackage('cluster')
     config.add_subpackage('datasets')
     config.add_subpackage('decomposition')
     config.add_subpackage('ensemble')
-    config.add_subpackage('externals')
     config.add_subpackage('feature_extraction')
     config.add_subpackage('manifold')
     config.add_subpackage('metrics')
@@ -69,7 +76,11 @@ def configuration(parent_package='', top_path=None):
     # add the test directory
     config.add_subpackage('tests')
 
-    maybe_cythonize_extensions(top_path, config)
+    # Skip cythonization as we do not want to include the generated
+    # C/C++ files in the release tarballs as they are not necessarily
+    # forward compatible with future versions of Python for instance.
+    if 'sdist' not in sys.argv:
+        cythonize_extensions(top_path, config)
 
     return config
 

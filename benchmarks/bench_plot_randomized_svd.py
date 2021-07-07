@@ -74,13 +74,13 @@ from time import time
 from collections import defaultdict
 import os.path
 
+from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils import gen_batches
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.extmath import randomized_svd
-from sklearn.datasets.samples_generator import (make_low_rank_matrix,
-                                                make_sparse_uncorrelated)
+from sklearn.datasets import make_low_rank_matrix, make_sparse_uncorrelated
 from sklearn.datasets import (fetch_lfw_people,
-                              fetch_mldata,
+                              fetch_openml,
                               fetch_20newsgroups_vectorized,
                               fetch_olivetti_faces,
                               fetch_rcv1)
@@ -103,16 +103,16 @@ enable_spectral_norm = False
 
 # Determine when to switch to batch computation for matrix norms,
 # in case the reconstructed (dense) matrix is too large
-MAX_MEMORY = np.int(2e9)
+MAX_MEMORY = int(2e9)
 
-# The following datasets can be dowloaded manually from:
+# The following datasets can be downloaded manually from:
 # CIFAR 10: https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
 # SVHN: http://ufldl.stanford.edu/housenumbers/train_32x32.mat
 CIFAR_FOLDER = "./cifar-10-batches-py/"
 SVHN_FOLDER = "./SVHN/"
 
 datasets = ['low rank matrix', 'lfw_people', 'olivetti_faces', '20newsgroups',
-            'MNIST original', 'CIFAR', 'a1a', 'SVHN', 'uncorrelated matrix']
+            'mnist_784', 'CIFAR', 'a3a', 'SVHN', 'uncorrelated matrix']
 
 big_sparse_datasets = ['big sparse matrix', 'rcv1']
 
@@ -155,17 +155,17 @@ def get_data(dataset_name):
         del X1
         del X2
     elif dataset_name == 'low rank matrix':
-        X = make_low_rank_matrix(n_samples=500, n_features=np.int(1e4),
+        X = make_low_rank_matrix(n_samples=500, n_features=int(1e4),
                                  effective_rank=100, tail_strength=.5,
                                  random_state=random_state)
     elif dataset_name == 'uncorrelated matrix':
         X, _ = make_sparse_uncorrelated(n_samples=500, n_features=10000,
                                         random_state=random_state)
     elif dataset_name == 'big sparse matrix':
-        sparsity = np.int(1e6)
-        size = np.int(1e6)
-        small_size = np.int(1e4)
-        data = np.random.normal(0, 1, np.int(sparsity/10))
+        sparsity = int(1e6)
+        size = int(1e6)
+        small_size = int(1e4)
+        data = np.random.normal(0, 1, int(sparsity/10))
         data = np.repeat(data, 10)
         row = np.random.uniform(0, small_size, sparsity)
         col = np.random.uniform(0, small_size, sparsity)
@@ -174,7 +174,7 @@ def get_data(dataset_name):
         del row
         del col
     else:
-        X = fetch_mldata(dataset_name).data
+        X = fetch_openml(dataset_name).data
     return X
 
 
@@ -257,7 +257,7 @@ def svd_timing(X, n_comps, n_iter, n_oversamples,
     return U, mu, V, call_time
 
 
-def norm_diff(A, norm=2, msg=True):
+def norm_diff(A, norm=2, msg=True, random_state=None):
     """
     Compute the norm diff with the original matrix, when randomized
     SVD is called with *params.
@@ -269,7 +269,11 @@ def norm_diff(A, norm=2, msg=True):
         print("... computing %s norm ..." % norm)
     if norm == 2:
         # s = sp.linalg.norm(A, ord=2)  # slow
-        value = sp.sparse.linalg.svds(A, k=1, return_singular_vectors=False)
+        v0 = _init_arpack_v0(min(A.shape), random_state)
+        value = sp.sparse.linalg.svds(A,
+                                      k=1,
+                                      return_singular_vectors=False,
+                                      v0=v0)
     else:
         if sp.sparse.issparse(A):
             value = sp.sparse.linalg.norm(A, ord=norm)
@@ -299,7 +303,7 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
     all_time = defaultdict(list)
     if enable_spectral_norm:
         all_spectral = defaultdict(list)
-        X_spectral_norm = norm_diff(X, norm=2, msg=False)
+        X_spectral_norm = norm_diff(X, norm=2, msg=False, random_state=0)
     all_frobenius = defaultdict(list)
     X_fro_norm = norm_diff(X, norm='fro', msg=False)
 
@@ -313,8 +317,9 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
             all_time[label].append(time)
             if enable_spectral_norm:
                 A = U.dot(np.diag(s).dot(V))
-                all_spectral[label].append(norm_diff(X - A, norm=2) /
-                                           X_spectral_norm)
+                all_spectral[label].append(
+                    norm_diff(X - A, norm=2, random_state=0) / X_spectral_norm
+                )
             f = scalable_frobenius_norm_discrepancy(X, U, s, V)
             all_frobenius[label].append(f / X_fro_norm)
 
@@ -328,8 +333,9 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
             all_time[label].append(time)
             if enable_spectral_norm:
                 A = U.dot(np.diag(s).dot(V))
-                all_spectral[label].append(norm_diff(X - A, norm=2) /
-                                           X_spectral_norm)
+                all_spectral[label].append(
+                    norm_diff(X - A, norm=2, random_state=0) / X_spectral_norm
+                )
             f = scalable_frobenius_norm_discrepancy(X, U, s, V)
             all_frobenius[label].append(f / X_fro_norm)
 
@@ -354,10 +360,10 @@ def bench_b(power_list):
     for rank in ranks:
         X = make_low_rank_matrix(effective_rank=rank, **data_params)
         if enable_spectral_norm:
-            X_spectral_norm = norm_diff(X, norm=2, msg=False)
+            X_spectral_norm = norm_diff(X, norm=2, msg=False, random_state=0)
         X_fro_norm = norm_diff(X, norm='fro', msg=False)
 
-        for n_comp in [np.int(rank/2), rank, rank*2]:
+        for n_comp in [int(rank/2), rank, rank*2]:
             label = "rank=%d, n_comp=%d" % (rank, n_comp)
             print(label)
             for pi in power_list:
@@ -365,8 +371,10 @@ def bench_b(power_list):
                                         power_iteration_normalizer='LU')
                 if enable_spectral_norm:
                     A = U.dot(np.diag(s).dot(V))
-                    all_spectral[label].append(norm_diff(X - A, norm=2) /
-                                               X_spectral_norm)
+                    all_spectral[label].append(
+                        norm_diff(X - A, norm=2, random_state=0) /
+                        X_spectral_norm
+                    )
                 f = scalable_frobenius_norm_discrepancy(X, U, s, V)
                 all_frobenius[label].append(f / X_fro_norm)
 
@@ -389,7 +397,7 @@ def bench_c(datasets, n_comps):
             continue
 
         if enable_spectral_norm:
-            X_spectral_norm = norm_diff(X, norm=2, msg=False)
+            X_spectral_norm = norm_diff(X, norm=2, msg=False, random_state=0)
         X_fro_norm = norm_diff(X, norm='fro', msg=False)
         n_comps = np.minimum(n_comps, np.min(X.shape))
 
@@ -402,8 +410,9 @@ def bench_c(datasets, n_comps):
         all_time[label].append(time)
         if enable_spectral_norm:
             A = U.dot(np.diag(s).dot(V))
-            all_spectral[label].append(norm_diff(X - A, norm=2) /
-                                       X_spectral_norm)
+            all_spectral[label].append(
+                norm_diff(X - A, norm=2, random_state=0) / X_spectral_norm
+            )
         f = scalable_frobenius_norm_discrepancy(X, U, s, V)
         all_frobenius[label].append(f / X_fro_norm)
 
@@ -416,8 +425,9 @@ def bench_c(datasets, n_comps):
             all_time[label].append(time)
             if enable_spectral_norm:
                 A = U.dot(np.diag(s).dot(V))
-                all_spectral[label].append(norm_diff(X - A, norm=2) /
-                                           X_spectral_norm)
+                all_spectral[label].append(
+                    norm_diff(X - A, norm=2, random_state=0) / X_spectral_norm
+                )
             f = scalable_frobenius_norm_discrepancy(X, U, s, V)
             all_frobenius[label].append(f / X_fro_norm)
 

@@ -1,0 +1,14 @@
+name: "Pull Request Labeler"
+on: pull_request_target
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: thomasjpfan/labeler@v2.5.0
+      continue-on-error: true
+      if: github.repository == 'scikit-learn/scikit-learn'
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        max-labels: "3"
+        configuration-path: ".github/labeler-module.yml"

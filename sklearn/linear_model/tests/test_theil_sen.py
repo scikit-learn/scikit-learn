@@ -8,17 +8,16 @@ import os
 import sys
 from contextlib import contextmanager
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal, assert_array_less
-from numpy.testing import assert_array_almost_equal, assert_warns
+from numpy.testing import assert_array_almost_equal
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
-from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point
-from sklearn.linear_model.theil_sen import _modified_weiszfeld_step
-from sklearn.utils.testing import (
-        assert_almost_equal, assert_greater, assert_less, assert_raises,
-)
+from sklearn.linear_model._theil_sen import _spatial_median, _breakdown_point
+from sklearn.linear_model._theil_sen import _modified_weiszfeld_step
+from sklearn.utils._testing import assert_almost_equal, assert_raises
 
 
 @contextmanager
@@ -156,14 +155,19 @@ def test_spatial_median_2d():
     fermat_weber = fmin_bfgs(cost_func, median, disp=False)
     assert_array_almost_equal(median, fermat_weber)
     # Check when maximum iteration is exceeded a warning is emitted
-    assert_warns(ConvergenceWarning, _spatial_median, X, max_iter=30, tol=0.)
+    warning_message = (
+        "Maximum number of iterations 30 reached"
+        " in spatial median."
+    )
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        _spatial_median(X, max_iter=30, tol=0.)
 
 
 def test_theil_sen_1d():
     X, y, w, c = gen_toy_problem_1d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
-    assert_greater(np.abs(lstq.coef_ - w), 0.9)
+    assert np.abs(lstq.coef_ - w) > 0.9
     # Check that Theil-Sen works
     theil_sen = TheilSenRegressor(random_state=0).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
@@ -174,19 +178,22 @@ def test_theil_sen_1d_no_intercept():
     X, y, w, c = gen_toy_problem_1d(intercept=False)
     # Check that Least Squares fails
     lstq = LinearRegression(fit_intercept=False).fit(X, y)
-    assert_greater(np.abs(lstq.coef_ - w - c), 0.5)
+    assert np.abs(lstq.coef_ - w - c) > 0.5
     # Check that Theil-Sen works
     theil_sen = TheilSenRegressor(fit_intercept=False,
                                   random_state=0).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w + c, 1)
     assert_almost_equal(theil_sen.intercept_, 0.)
 
+    # non-regression test for #18104
+    theil_sen.score(X, y)
+
 
 def test_theil_sen_2d():
     X, y, w, c = gen_toy_problem_2d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
-    assert_greater(norm(lstq.coef_ - w), 1.0)
+    assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
     theil_sen = TheilSenRegressor(max_subpopulation=1e3,
                                   random_state=0).fit(X, y)
@@ -196,7 +203,7 @@ def test_theil_sen_2d():
 
 def test_calc_breakdown_point():
     bp = _breakdown_point(1e10, 2)
-    assert_less(np.abs(bp - 1 + 1 / (np.sqrt(2))), 1.e-6)
+    assert np.abs(bp - 1 + 1 / (np.sqrt(2))) < 1.e-6
 
 
 def test_checksubparams_negative_subpopulation():
@@ -257,9 +264,9 @@ def test_theil_sen_parallel():
     X, y, w, c = gen_toy_problem_2d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
-    assert_greater(norm(lstq.coef_ - w), 1.0)
+    assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(n_jobs=-1,
+    theil_sen = TheilSenRegressor(n_jobs=2,
                                   random_state=0,
                                   max_subpopulation=2e3).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)

@@ -44,7 +44,6 @@ from __future__ import division, print_function, absolute_import
 
 
 import numpy
-import tempfile
 
 from numpy import (amin, amax, ravel, asarray, arange, ones, newaxis,
                    transpose, iscomplexobj, uint8, issubdtype, array)
@@ -66,6 +65,14 @@ except ImportError:
 __all__ = ['bytescale', 'imread', 'imsave', 'fromimage', 'toimage', 'imresize']
 
 
+PILLOW_ERROR_MESSAGE = (
+    "The Python Imaging Library (PIL) is required to load data "
+    "from jpeg files. Please refer to "
+    "https://pillow.readthedocs.io/en/stable/installation.html "
+    "for installing PIL."
+)
+
+
 def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     """
     Byte scales an array (image).
@@ -80,13 +87,13 @@ def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     ----------
     data : ndarray
         PIL image data array.
-    cmin : scalar, optional
+    cmin : scalar, default=None
         Bias scaling of small values. Default is ``data.min()``.
-    cmax : scalar, optional
+    cmax : scalar, default=None
         Bias scaling of large values. Default is ``data.max()``.
-    high : scalar, optional
+    high : scalar, default=None
         Scale max value to `high`.  Default is 255.
-    low : scalar, optional
+    low : scalar, default=None
         Scale min value to `low`.  Default is 0.
 
     Returns
@@ -151,9 +158,9 @@ def imread(name, flatten=False, mode=None):
     ----------
     name : str or file object
         The file name or file object to be read.
-    flatten : bool, optional
+    flatten : bool, default=False
         If True, flattens the color layers into a single gray-scale layer.
-    mode : str, optional
+    mode : str, default=None
         Mode to convert image to, e.g. ``'RGB'``.  See the Notes for more
         details.
 
@@ -194,8 +201,7 @@ def imread(name, flatten=False, mode=None):
 
     """
     if not pillow_installed:
-        raise ImportError("The Python Imaging Library (PIL) "
-                          "is required to load data from jpeg files")
+        raise ImportError(PILLOW_ERROR_MESSAGE)
 
     im = Image.open(name)
     return fromimage(im, flatten=flatten, mode=mode)
@@ -223,7 +229,7 @@ def imsave(name, arr, format=None):
         represents a grey-level image.  Shape ``MxNx3`` stores the red, green
         and blue bands along the last dimension.  An alpha layer may be
         included, specified as the last colour band of an ``MxNx4`` array.
-    format : str
+    format : str, default=None
         Image format. If omitted, the format to use is determined from the
         file name extension. If a file object was used instead of a file name,
         this parameter should always be used.
@@ -266,9 +272,9 @@ def fromimage(im, flatten=False, mode=None):
     ----------
     im : PIL image
         Input image.
-    flatten : bool
+    flatten : bool, default=False
         If true, convert the output to grey-scale.
-    mode : str, optional
+    mode : str, default=None
         Mode to convert image to, e.g. ``'RGB'``.  See the Notes of the
         `imread` docstring for more details.
 
@@ -281,8 +287,7 @@ def fromimage(im, flatten=False, mode=None):
 
     """
     if not pillow_installed:
-        raise ImportError("The Python Imaging Library (PIL) "
-                          "is required to load data from jpeg files")
+        raise ImportError(PILLOW_ERROR_MESSAGE)
 
     if not Image.isImageType(im):
         raise TypeError("Input is not a PIL image.")
@@ -349,8 +354,7 @@ def toimage(arr, high=255, low=0, cmin=None, cmax=None, pal=None,
 
     """
     if not pillow_installed:
-        raise ImportError("The Python Imaging Library (PIL) "
-                          "is required to load data from jpeg files")
+        raise ImportError(PILLOW_ERROR_MESSAGE)
 
     data = asarray(arr)
     if iscomplexobj(data):
@@ -365,23 +369,23 @@ def toimage(arr, high=255, low=0, cmin=None, cmax=None, pal=None,
         shape = (shape[1], shape[0])  # columns show up first
         if mode == 'F':
             data32 = data.astype(numpy.float32)
-            image = Image.frombytes(mode, shape, data32.tostring())
+            image = Image.frombytes(mode, shape, data32.tobytes())
             return image
         if mode in [None, 'L', 'P']:
             bytedata = bytescale(data, high=high, low=low,
                                  cmin=cmin, cmax=cmax)
-            image = Image.frombytes('L', shape, bytedata.tostring())
+            image = Image.frombytes('L', shape, bytedata.tobytes())
             if pal is not None:
-                image.putpalette(asarray(pal, dtype=uint8).tostring())
+                image.putpalette(asarray(pal, dtype=uint8).tobytes())
                 # Becomes a mode='P' automagically.
             elif mode == 'P':  # default gray-scale
                 pal = (arange(0, 256, 1, dtype=uint8)[:, newaxis] *
                        ones((3,), dtype=uint8)[newaxis, :])
-                image.putpalette(asarray(pal, dtype=uint8).tostring())
+                image.putpalette(asarray(pal, dtype=uint8).tobytes())
             return image
         if mode == '1':  # high input gives threshold for 1
             bytedata = (data > high)
-            image = Image.frombytes('1', shape, bytedata.tostring())
+            image = Image.frombytes('1', shape, bytedata.tobytes())
             return image
         if cmin is None:
             cmin = amin(ravel(data))
@@ -390,7 +394,7 @@ def toimage(arr, high=255, low=0, cmin=None, cmax=None, pal=None,
         data = (data*1.0 - cmin)*(high - low)/(cmax - cmin) + low
         if mode == 'I':
             data32 = data.astype(numpy.uint32)
-            image = Image.frombytes(mode, shape, data32.tostring())
+            image = Image.frombytes(mode, shape, data32.tobytes())
         else:
             raise ValueError(_errstr)
         return image
@@ -415,13 +419,13 @@ def toimage(arr, high=255, low=0, cmin=None, cmax=None, pal=None,
 
     bytedata = bytescale(data, high=high, low=low, cmin=cmin, cmax=cmax)
     if ca == 2:
-        strdata = bytedata.tostring()
+        strdata = bytedata.tobytes()
         shape = (shape[1], shape[0])
     elif ca == 1:
-        strdata = transpose(bytedata, (0, 2, 1)).tostring()
+        strdata = transpose(bytedata, (0, 2, 1)).tobytes()
         shape = (shape[2], shape[0])
     elif ca == 0:
-        strdata = transpose(bytedata, (1, 2, 0)).tostring()
+        strdata = transpose(bytedata, (1, 2, 0)).tobytes()
         shape = (shape[2], shape[1])
     if mode is None:
         if numch == 3:
@@ -466,10 +470,10 @@ def imresize(arr, size, interp='bilinear', mode=None):
         * float - Fraction of current size.
         * tuple - Size of the output image (height, width).
 
-    interp : str, optional
+    interp : str, default='bilinear'
         Interpolation to use for re-sizing ('nearest', 'lanczos', 'bilinear',
         'bicubic' or 'cubic').
-    mode : str, optional
+    mode : str, default=None
         The PIL image mode ('P', 'L', etc.) to convert `arr` before resizing.
         If ``mode=None`` (the default), 2-D images will be treated like
         ``mode='L'``, i.e. casting to long integer.  For 3-D and 4-D arrays,

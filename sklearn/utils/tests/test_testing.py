@@ -12,15 +12,10 @@ import pytest
 
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sklearn.utils.testing import (
+from sklearn.utils._testing import (
     assert_raises,
-    assert_less,
-    assert_greater,
-    assert_less_equal,
-    assert_greater_equal,
     assert_warns,
     assert_no_warnings,
-    assert_equal,
     set_random_state,
     assert_raise_message,
     ignore_warnings,
@@ -29,33 +24,13 @@ from sklearn.utils.testing import (
     assert_raises_regex,
     TempMemmap,
     create_memmap_backed_data,
-    _delete_folder)
+    _delete_folder,
+    _convert_container,
+    raises,
+)
 
-from sklearn.utils.testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-
-
-def test_assert_less():
-    assert_less(0, 1)
-    assert_raises(AssertionError, assert_less, 1, 0)
-
-
-def test_assert_greater():
-    assert_greater(1, 0)
-    assert_raises(AssertionError, assert_greater, 0, 1)
-
-
-def test_assert_less_equal():
-    assert_less_equal(0, 1)
-    assert_less_equal(1, 1)
-    assert_raises(AssertionError, assert_less_equal, 1, 0)
-
-
-def test_assert_greater_equal():
-    assert_greater_equal(1, 0)
-    assert_greater_equal(1, 1)
-    assert_raises(AssertionError, assert_greater_equal, 0, 1)
 
 
 def test_set_random_state():
@@ -64,7 +39,7 @@ def test_set_random_state():
     # Linear Discriminant Analysis doesn't have random state: smoke test
     set_random_state(lda, 3)
     set_random_state(tree, 3)
-    assert_equal(tree.random_state, 3)
+    assert tree.random_state == 3
 
 
 def test_assert_allclose_dense_sparse():
@@ -73,18 +48,17 @@ def test_assert_allclose_dense_sparse():
     y = sparse.csc_matrix(x)
     for X in [x, y]:
         # basic compare
-        assert_raise_message(AssertionError, msg, assert_allclose_dense_sparse,
-                             X, X * 2)
+        with pytest.raises(AssertionError, match=msg):
+            assert_allclose_dense_sparse(X, X*2)
         assert_allclose_dense_sparse(X, X)
 
-    assert_raise_message(ValueError, "Can only compare two sparse",
-                         assert_allclose_dense_sparse, x, y)
+    with pytest.raises(ValueError, match="Can only compare two sparse"):
+        assert_allclose_dense_sparse(x, y)
 
     A = sparse.diags(np.ones(5), offsets=0).tocsr()
     B = sparse.csr_matrix(np.ones((1, 5)))
-
-    assert_raise_message(AssertionError, "Arrays are not equal",
-                         assert_allclose_dense_sparse, B, A)
+    with pytest.raises(AssertionError, match="Arrays are not equal"):
+        assert_allclose_dense_sparse(B, A)
 
 
 def test_assert_raises_msg():
@@ -139,7 +113,7 @@ def test_ignore_warning():
                                                      category=UserWarning))
     assert_warns(UserWarning,
                  ignore_warnings(_multiple_warning_function,
-                                 category=DeprecationWarning))
+                                 category=FutureWarning))
     assert_warns(DeprecationWarning,
                  ignore_warnings(_multiple_warning_function,
                                  category=UserWarning))
@@ -236,23 +210,26 @@ class TestWarns(unittest.TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             filters_orig = warnings.filters[:]
-            assert_equal(assert_warns(UserWarning, f), 3)
+            assert assert_warns(UserWarning, f) == 3
             # test that assert_warns doesn't have side effects on warnings
             # filters
-            assert_equal(warnings.filters, filters_orig)
-
-        assert_raises(AssertionError, assert_no_warnings, f)
-        assert_equal(assert_no_warnings(lambda x: x, 1), 1)
+            assert warnings.filters == filters_orig
+        with pytest.raises(AssertionError):
+            assert_no_warnings(f)
+        assert assert_no_warnings(lambda x: x, 1) == 1
 
     def test_warn_wrong_warning(self):
         def f():
-            warnings.warn("yo", DeprecationWarning)
+            warnings.warn("yo", FutureWarning)
 
         failed = False
         filters = sys.modules['warnings'].filters[:]
         try:
             try:
                 # Should raise an AssertionError
+
+                # assert_warns has a special handling of "FutureWarning" that
+                # pytest.warns does not have
                 assert_warns(UserWarning, f)
                 failed = True
             except AssertionError:
@@ -321,6 +298,27 @@ def f_bad_order(b, a):
     """
     c = a + b
     return c
+
+
+def f_too_many_param_docstring(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : int
+        Parameter b
+    c : int
+        Parameter c
+
+    Returns
+    -------
+    d : list
+        Parameter c
+    """
+    d = a + b
+    return d
 
 
 def f_missing(a, b):
@@ -447,11 +445,8 @@ class MockMetaEstimator:
 
 
 def test_check_docstring_parameters():
-    try:
-        import numpydoc  # noqa
-    except ImportError:
-        raise SkipTest(
-            "numpydoc is required to test the docstrings")
+    pytest.importorskip('numpydoc',
+                        reason="numpydoc is required to test the docstrings")
 
     incorrect = check_docstring_parameters(f_ok)
     assert incorrect == []
@@ -459,39 +454,108 @@ def test_check_docstring_parameters():
     assert incorrect == []
     incorrect = check_docstring_parameters(f_missing, ignore=['b'])
     assert incorrect == []
-    assert_raise_message(RuntimeError, 'Unknown section Results',
-                         check_docstring_parameters, f_bad_sections)
-    assert_raise_message(RuntimeError, 'Unknown section Parameter',
-                         check_docstring_parameters, Klass.f_bad_sections)
+    with pytest.raises(RuntimeError, match="Unknown section Results"):
+        check_docstring_parameters(f_bad_sections)
+    with pytest.raises(RuntimeError, match="Unknown section Parameter"):
+        check_docstring_parameters(Klass.f_bad_sections)
 
     incorrect = check_docstring_parameters(f_check_param_definition)
     assert (
         incorrect == [
             "sklearn.utils.tests.test_testing.f_check_param_definition There "
             "was no space between the param name and colon ('a: int')",
+
             "sklearn.utils.tests.test_testing.f_check_param_definition There "
             "was no space between the param name and colon ('b:')",
+
             "sklearn.utils.tests.test_testing.f_check_param_definition "
             "Parameter 'c :' has an empty type spec. Remove the colon",
+
             "sklearn.utils.tests.test_testing.f_check_param_definition There "
             "was no space between the param name and colon ('d:int')",
         ])
 
-    messages = ["a != b", "arg mismatch: ['b']", "arg mismatch: ['X', 'y']",
-                "predict y != X",
-                "predict_proba arg mismatch: ['X']",
-                "score arg mismatch: ['X']",
-                ".fit arg mismatch: ['X', 'y']"]
+    messages = [
+            ["In function: sklearn.utils.tests.test_testing.f_bad_order",
+             "There's a parameter name mismatch in function docstring w.r.t."
+             " function signature, at index 0 diff: 'b' != 'a'",
+             "Full diff:",
+             "- ['b', 'a']",
+             "+ ['a', 'b']"],
+
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.f_too_many_param_docstring",
+             "Parameters in function docstring have more items w.r.t. function"
+             " signature, first extra item: c",
+             "Full diff:",
+             "- ['a', 'b']",
+             "+ ['a', 'b', 'c']",
+             "?          +++++"],
+
+            ["In function: sklearn.utils.tests.test_testing.f_missing",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: b",
+             "Full diff:",
+             "- ['a', 'b']",
+             "+ ['a']"],
+
+            ["In function: sklearn.utils.tests.test_testing.Klass.f_missing",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
+             "Full diff:",
+             "- ['X', 'y']",
+             "+ []"],
+
+            ["In function: " +
+             "sklearn.utils.tests.test_testing.MockMetaEstimator.predict",
+             "There's a parameter name mismatch in function docstring w.r.t."
+             " function signature, at index 0 diff: 'X' != 'y'",
+             "Full diff:",
+             "- ['X']",
+             "?   ^",
+             "+ ['y']",
+             "?   ^"],
+
+            ["In function: " +
+             "sklearn.utils.tests.test_testing.MockMetaEstimator."
+             + "predict_proba",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
+             "Full diff:",
+             "- ['X']",
+             "+ []"],
+
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.MockMetaEstimator.score",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
+             "Full diff:",
+             "- ['X']",
+             "+ []"],
+
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.MockMetaEstimator.fit",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
+             "Full diff:",
+             "- ['X', 'y']",
+             "+ []"],
+
+            ]
 
     mock_meta = MockMetaEstimator(delegate=MockEst())
 
-    for mess, f in zip(messages,
-                       [f_bad_order, f_missing, Klass.f_missing,
-                        mock_meta.predict, mock_meta.predict_proba,
-                        mock_meta.score, mock_meta.fit]):
+    for msg, f in zip(messages,
+                      [f_bad_order,
+                       f_too_many_param_docstring,
+                       f_missing,
+                       Klass.f_missing,
+                       mock_meta.predict,
+                       mock_meta.predict_proba,
+                       mock_meta.score,
+                       mock_meta.fit]):
         incorrect = check_docstring_parameters(f)
-        assert len(incorrect) >= 1
-        assert mess in incorrect[0], '"%s" not in "%s"' % (mess, incorrect[0])
+        assert msg == incorrect, ('\n"%s"\n not in \n"%s"' % (msg, incorrect))
 
 
 class RegistrationCounter:
@@ -556,3 +620,92 @@ def test_create_memmap_backed_data(monkeypatch):
     for input_array, data in zip(input_list, mmap_data_list):
         check_memmap(input_array, data)
     assert registration_counter.nb_calls == 4
+
+
+@pytest.mark.parametrize(
+    "constructor_name, container_type",
+    [('list', list),
+     ('tuple', tuple),
+     ('array', np.ndarray),
+     ('sparse', sparse.csr_matrix),
+     ('dataframe', pytest.importorskip('pandas').DataFrame),
+     ('series', pytest.importorskip('pandas').Series),
+     ('index', pytest.importorskip('pandas').Index),
+     ('slice', slice)]
+)
+def test_convert_container(constructor_name, container_type):
+    container = [0, 1]
+    assert isinstance(_convert_container(container, constructor_name),
+                      container_type)
+
+
+def test_raises():
+    # Tests for the raises context manager
+
+    # Proper type, no match
+    with raises(TypeError):
+        raise TypeError()
+
+    # Proper type, proper match
+    with raises(TypeError, match="how are you") as cm:
+        raise TypeError("hello how are you")
+    assert cm.raised_and_matched
+
+    # Proper type, proper match with multiple patterns
+    with raises(TypeError, match=["not this one", "how are you"]) as cm:
+        raise TypeError("hello how are you")
+    assert cm.raised_and_matched
+
+    # bad type, no match
+    with pytest.raises(ValueError, match="this will be raised"):
+        with raises(TypeError) as cm:
+            raise ValueError("this will be raised")
+    assert not cm.raised_and_matched
+
+    # Bad type, no match, with a err_msg
+    with pytest.raises(AssertionError, match="the failure message"):
+        with raises(TypeError, err_msg="the failure message") as cm:
+            raise ValueError()
+    assert not cm.raised_and_matched
+
+    # bad type, with match (is ignored anyway)
+    with pytest.raises(ValueError, match="this will be raised"):
+        with raises(TypeError, match="this is ignored") as cm:
+            raise ValueError("this will be raised")
+    assert not cm.raised_and_matched
+
+    # proper type but bad match
+    with pytest.raises(
+        AssertionError, match="should contain one of the following patterns"
+    ):
+        with raises(TypeError, match="hello") as cm:
+            raise TypeError("Bad message")
+    assert not cm.raised_and_matched
+
+    # proper type but bad match, with err_msg
+    with pytest.raises(AssertionError, match="the failure message"):
+        with raises(
+            TypeError, match="hello", err_msg="the failure message"
+        ) as cm:
+            raise TypeError("Bad message")
+    assert not cm.raised_and_matched
+
+    # no raise with default may_pass=False
+    with pytest.raises(AssertionError, match="Did not raise"):
+        with raises(TypeError) as cm:
+            pass
+    assert not cm.raised_and_matched
+
+    # no raise with may_pass=True
+    with raises(TypeError, match="hello", may_pass=True) as cm:
+        pass  # still OK
+    assert not cm.raised_and_matched
+
+    # Multiple exception types:
+    with raises((TypeError, ValueError)):
+        raise TypeError()
+    with raises((TypeError, ValueError)):
+        raise ValueError()
+    with pytest.raises(AssertionError):
+        with raises((TypeError, ValueError)):
+            pass

@@ -30,7 +30,7 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 
-from sklearn.metrics.classification import accuracy_score, log_loss
+from sklearn.metrics import accuracy_score, log_loss
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 
@@ -63,7 +63,7 @@ print("Log-loss: %.3f (initial) %.3f (optimized)"
 
 
 # Plot posteriors
-plt.figure(0)
+plt.figure()
 plt.scatter(X[:train_size, 0], y[:train_size], c='k', label="Train data",
             edgecolors=(0, 0, 0))
 plt.scatter(X[train_size:, 0], y[train_size:], c='g', label="Test data",
@@ -80,7 +80,7 @@ plt.ylim(-0.25, 1.5)
 plt.legend(loc="best")
 
 # Plot LML landscape
-plt.figure(1)
+plt.figure()
 theta0 = np.logspace(0, 8, 30)
 theta1 = np.logspace(-1, 1, 29)
 Theta0, Theta1 = np.meshgrid(theta0, theta1)

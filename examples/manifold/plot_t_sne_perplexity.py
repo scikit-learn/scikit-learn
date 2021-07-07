@@ -6,7 +6,7 @@ t-SNE: The effect of various perplexity values on the shape
 An illustration of t-SNE on the two concentric circles and the S-curve
 datasets for different perplexity values.
 
-We observe a tendency towards clearer shapes as the preplexity value increases.
+We observe a tendency towards clearer shapes as the perplexity value increases.
 
 The size, the distance and the shape of clusters may vary upon initialization,
 perplexity values and does not always convey a meaning.
@@ -69,7 +69,7 @@ for i, perplexity in enumerate(perplexities):
     ax.axis('tight')
 
 # Another example using s-curve
-X, color = datasets.samples_generator.make_s_curve(n_samples, random_state=0)
+X, color = datasets.make_s_curve(n_samples, random_state=0)
 
 ax = subplots[1][0]
 ax.scatter(X[:, 0], X[:, 2], c=color)

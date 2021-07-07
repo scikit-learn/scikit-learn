@@ -3,18 +3,15 @@
 #
 # License: BSD 3 clause
 
-import pytest
 import numpy as np
-from numpy.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
+import pytest
 import scipy.sparse as sp
-
-from sklearn.utils.seq_dataset import ArrayDataset64
-from sklearn.utils.seq_dataset import ArrayDataset32
-from sklearn.utils.seq_dataset import CSRDataset64
-from sklearn.utils.seq_dataset import CSRDataset32
+from numpy.testing import assert_array_equal
+from sklearn.utils._seq_dataset import (
+    ArrayDataset32, ArrayDataset64, CSRDataset32, CSRDataset64)
 
 from sklearn.datasets import load_iris
+from sklearn.utils._testing import assert_allclose
 
 iris = load_iris()
 X64 = iris.data.astype(np.float64)
@@ -97,23 +94,28 @@ def test_seq_dataset_shuffle(make_dense_dataset, make_sparse_dataset):
         assert idx1 == i
         assert idx2 == i
 
-    for i in range(5):
+    for i in [132, 50, 9, 18, 58]:
         _, _, _, idx1 = dense_dataset._random_py()
         _, _, _, idx2 = sparse_dataset._random_py()
-        assert idx1 == idx2
+        assert idx1 == i
+        assert idx2 == i
 
     seed = 77
     dense_dataset._shuffle_py(seed)
     sparse_dataset._shuffle_py(seed)
 
-    for i in range(5):
+    idx_next = [63, 91, 148, 87, 29]
+    idx_shuffle = [137, 125, 56, 121, 127]
+    for i, j in zip(idx_next, idx_shuffle):
         _, _, _, idx1 = dense_dataset._next_py()
         _, _, _, idx2 = sparse_dataset._next_py()
-        assert idx1 == idx2
+        assert idx1 == i
+        assert idx2 == i
 
         _, _, _, idx1 = dense_dataset._random_py()
         _, _, _, idx2 = sparse_dataset._random_py()
-        assert idx1 == idx2
+        assert idx1 == j
+        assert idx2 == j
 
 
 @pytest.mark.parametrize('make_dataset_32,make_dataset_64', [

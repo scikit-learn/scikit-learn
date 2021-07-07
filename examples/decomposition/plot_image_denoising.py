@@ -55,7 +55,7 @@ except ImportError:
 face = face / 255.
 
 # downsample for higher speed
-face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
+face = face[::4, ::4] + face[1::4, ::4] + face[::4, 1::4] + face[1::4, 1::4]
 face /= 4.0
 height, width = face.shape
 

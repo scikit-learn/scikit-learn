@@ -227,7 +227,7 @@ New features
 Classifiers and regressors
 
 - Added :class:`multioutput.ClassifierChain` for multi-label
-  classification. By `Adam Kleczewski <adamklec>`_.
+  classification. By :user:`Adam Kleczewski <adamklec>`.
 
 - Added solver ``'saga'`` that implements the improved version of Stochastic
   Average Gradient, in :class:`linear_model.LogisticRegression` and
@@ -811,7 +811,7 @@ Miscellaneous
   Python 2. :issue:`9284` by :user:`Sebastin Santy <SebastinSanty>`.
 
 - Several minor issues were fixed with thanks to the alerts of
-  [lgtm.com](https://lgtm.com/). :issue:`9278` by :user:`Jean Helie <jhelie>`,
+  `lgtm.com <https://lgtm.com/>`_. :issue:`9278` by :user:`Jean Helie <jhelie>`,
   among others.
 
 API changes summary

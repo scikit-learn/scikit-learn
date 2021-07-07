@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import roc_curve, auc
-from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_mldata
+from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle as sh
 
@@ -63,7 +63,7 @@ for dat in datasets:
         y = dataset.target
 
     if dat == 'shuttle':
-        dataset = fetch_mldata('shuttle')
+        dataset = fetch_openml('shuttle')
         X = dataset.data
         y = dataset.target
         X, y = sh(X, y, random_state=random_state)
@@ -119,8 +119,7 @@ for dat in datasets:
     y_test = y[n_samples_train:]
 
     print('--- Fitting the IsolationForest estimator...')
-    model = IsolationForest(behaviour='new', n_jobs=-1,
-                            random_state=random_state)
+    model = IsolationForest(n_jobs=-1, random_state=random_state)
     tstart = time()
     model.fit(X_train)
     fit_time = time() - tstart

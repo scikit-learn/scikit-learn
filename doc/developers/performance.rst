@@ -74,8 +74,10 @@ following:
 
 When using Cython, use either
 
-   $ python setup.py build_ext -i
-   $ python setup.py install
+.. prompt:: bash $
+
+  python setup.py build_ext -i
+  python setup.py install
 
 to generate C files. You are responsible for adding .c/.cpp extensions along
 with build parameters in each submodule ``setup.py``.
@@ -101,7 +103,7 @@ dataset and as in the :ref:`sphx_glr_auto_examples_classification_plot_digits_cl
 
   In [2]: from sklearn.datasets import load_digits
 
-  In [3]: X = load_digits().data
+  In [3]: X, _ = load_digits(return_X_y=True)
 
 Before starting the profiling session and engaging in tentative
 optimization iterations, it is important to measure the total execution
@@ -179,30 +181,34 @@ It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
 Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
-us install ``line_profiler`` and wire it to IPython::
+us install ``line_profiler`` and wire it to IPython:
 
-  $ pip install line_profiler
+.. prompt:: bash $
 
-- **Under IPython 0.13+**, first create a configuration profile::
+  pip install line_profiler
 
-    $ ipython profile create
+- **Under IPython 0.13+**, first create a configuration profile:
 
-  Then register the line_profiler extension in
-  ``~/.ipython/profile_default/ipython_config.py``::
+.. prompt:: bash $
+
+  ipython profile create
+
+Then register the line_profiler extension in
+``~/.ipython/profile_default/ipython_config.py``::
 
     c.TerminalIPythonApp.extensions.append('line_profiler')
     c.InteractiveShellApp.extensions.append('line_profiler')
 
-  This will register the ``%lprun`` magic command in the IPython terminal
-  application and the other frontends such as qtconsole and notebook.
+This will register the ``%lprun`` magic command in the IPython terminal application and the other frontends such as qtconsole and notebook.
 
 Now restart IPython and let us use this new toy::
 
   In [1]: from sklearn.datasets import load_digits
 
-  In [2]: from sklearn.decomposition.nmf import _nls_subproblem, NMF
+  In [2]: from sklearn.decomposition import NMF
+    ... : from sklearn.decomposition._nmf import _nls_subproblem
 
-  In [3]: X = load_digits().data
+  In [3]: X, _ = load_digits(return_X_y=True)
 
   In [4]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
   Timer unit: 1e-06 s
@@ -251,26 +257,30 @@ Memory usage profiling
 
 You can analyze in detail the memory usage of any Python code with the help of
 `memory_profiler <https://pypi.org/project/memory_profiler/>`_. First,
-install the latest version::
+install the latest version:
 
-    $ pip install -U memory_profiler
+.. prompt:: bash $
+
+  pip install -U memory_profiler
 
 Then, setup the magics in a manner similar to ``line_profiler``.
 
-- **Under IPython 0.11+**, first create a configuration profile::
+- **Under IPython 0.11+**, first create a configuration profile:
 
-    $ ipython profile create
+.. prompt:: bash $
+  
+    ipython profile create
 
-  Then register the extension in
-  ``~/.ipython/profile_default/ipython_config.py``
-  alongside the line profiler::
+
+Then register the extension in
+``~/.ipython/profile_default/ipython_config.py``
+alongside the line profiler::
 
     c.TerminalIPythonApp.extensions.append('memory_profiler')
     c.InteractiveShellApp.extensions.append('memory_profiler')
 
-  This will register the ``%memit`` and ``%mprun`` magic commands in the
-  IPython terminal application and the other frontends such as qtconsole and
-  notebook.
+This will register the ``%memit`` and ``%mprun`` magic commands in the
+IPython terminal application and the other frontends such as qtconsole and   notebook.
 
 ``%mprun`` is useful to examine, line-by-line, the memory usage of key
 functions in your program. It is very similar to ``%lprun``, discussed in the
@@ -328,6 +338,27 @@ memory alignment, direct blas calls...
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
 - http://conference.scipy.org/proceedings/SciPy2009/paper_2/
 
+Using OpenMP
+------------
+
+Since scikit-learn can be built without OpenMP, it's necessary to
+protect each direct call to OpenMP. This can be done using the following
+syntax::
+
+  # importing OpenMP
+  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+      cimport openmp
+
+  # calling OpenMP
+  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+      max_threads = openmp.omp_get_max_threads()
+  ELSE:
+      max_threads = 1
+
+.. note::
+
+   Protecting the parallel loop, ``prange``, is already done by cython.
+
 
 .. _profiling-compiled-extension:
 
@@ -339,26 +370,16 @@ directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to introspect what's happening inside the
 compiled extension it-self.
 
-Using yep and google-perftools
---------------------------------
+Using yep and gperftools
+------------------------
 
 Easy profiling without special compilation options use yep:
 
 - https://pypi.org/project/yep/
 - http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
-.. note::
-
-  google-perftools provides a nice 'line by line' report mode that
-  can be triggered with the ``--lines`` option. However this
-  does not seem to work correctly at the time of writing. This
-  issue can be tracked on the `project issue tracker
-  <https://github.com/gperftools/gperftools>`_.
-
-
-
 Using gprof
--------------
+-----------
 
 In order to profile compiled Python extensions one could use ``gprof``
 after having recompiled the project with ``gcc -pg`` and using the
@@ -369,21 +390,34 @@ with ``-pg`` which is rather complicated to get working.
 Fortunately there exist two alternative profilers that don't require you to
 recompile everything.
 
-
 Using valgrind / callgrind / kcachegrind
 ----------------------------------------
 
-TODO
+kcachegrind
+~~~~~~~~~~~
 
+``yep`` can be used to create a profiling report.
+``kcachegrind`` provides a graphical environment to visualize this report:
+
+.. prompt:: bash $
+
+  # Run yep to profile some python script
+  python -m yep -c my_file.py
+
+.. prompt:: bash $
+
+  # open my_file.py.callgrin with kcachegrind
+  kcachegrind my_file.py.prof
+
+.. note::
+
+   ``yep`` can be executed with the argument ``--lines`` or ``-l`` to compile
+   a profiling report 'line by line'.
 
 Multi-core parallelism using ``joblib.Parallel``
 ================================================
 
-TODO: give a simple teaser example here.
-
-Checkout the official joblib documentation:
-
-- https://joblib.readthedocs.io
+See `joblib documentation <https://joblib.readthedocs.io>`_
 
 
 .. _warm-restarts:

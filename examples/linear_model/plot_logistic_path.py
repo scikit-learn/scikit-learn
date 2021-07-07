@@ -14,7 +14,7 @@ path": on the left-hand side of the figure (strong regularizers), all the
 coefficients are exactly 0. When regularization gets progressively looser,
 coefficients can get non-zero values one after the other.
 
-Here we choose the SAGA solver because it can efficiently optimize for the
+Here we choose the liblinear solver because it can efficiently optimize for the
 Logistic Regression loss with a non-smooth, sparsity inducing l1 penalty.
 
 Also note that we set a low value for the tolerance to make sure that the model
@@ -55,9 +55,10 @@ cs = l1_min_c(X, y, loss='log') * np.logspace(0, 7, 16)
 
 print("Computing regularization path ...")
 start = time()
-clf = linear_model.LogisticRegression(penalty='l1', solver='saga',
+clf = linear_model.LogisticRegression(penalty='l1', solver='liblinear',
                                       tol=1e-6, max_iter=int(1e6),
-                                      warm_start=True)
+                                      warm_start=True,
+                                      intercept_scaling=10000.)
 coefs_ = []
 for c in cs:
     clf.set_params(C=c)

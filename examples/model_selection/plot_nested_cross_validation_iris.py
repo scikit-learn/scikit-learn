@@ -80,8 +80,7 @@ for i in range(NUM_TRIALS):
     outer_cv = KFold(n_splits=4, shuffle=True, random_state=i)
 
     # Non_nested parameter search and scoring
-    clf = GridSearchCV(estimator=svm, param_grid=p_grid, cv=inner_cv,
-                       iid=False)
+    clf = GridSearchCV(estimator=svm, param_grid=p_grid, cv=inner_cv)
     clf.fit(X_iris, y_iris)
     non_nested_scores[i] = clf.best_score_
 

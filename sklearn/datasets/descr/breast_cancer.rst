@@ -18,13 +18,13 @@ Breast cancer wisconsin (diagnostic) dataset
         - compactness (perimeter^2 / area - 1.0)
         - concavity (severity of concave portions of the contour)
         - concave points (number of concave portions of the contour)
-        - symmetry 
+        - symmetry
         - fractal dimension ("coastline approximation" - 1)
 
         The mean, standard error, and "worst" or largest (mean of the three
-        largest values) of these features were computed for each image,
-        resulting in 30 features.  For instance, field 3 is Mean Radius, field
-        13 is Radius SE, field 23 is Worst Radius.
+        worst/largest values) of these features were computed for each image,
+        resulting in 30 features.  For instance, field 0 is Mean Radius, field
+        10 is Radius SE, field 20 is Worst Radius.
 
         - class:
                 - WDBC-Malignant

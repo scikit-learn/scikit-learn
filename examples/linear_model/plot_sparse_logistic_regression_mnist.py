@@ -1,6 +1,6 @@
 """
 =====================================================
-MNIST classfification using multinomial logistic + L1
+MNIST classification using multinomial logistic + L1
 =====================================================
 
 Here we fit a multinomial logistic regression with L1 penalty on a subset of
@@ -36,7 +36,7 @@ t0 = time.time()
 train_samples = 5000
 
 # Load data from https://www.openml.org/d/554
-X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
+X, y = fetch_openml('mnist_784', version=1, return_X_y=True, as_frame=False)
 
 random_state = check_random_state(0)
 permutation = random_state.permutation(X.shape[0])
@@ -52,9 +52,9 @@ X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 # Turn up tolerance for faster convergence
-clf = LogisticRegression(C=50. / train_samples,
-                         multi_class='multinomial',
-                         penalty='l1', solver='saga', tol=0.1)
+clf = LogisticRegression(
+    C=50. / train_samples, penalty='l1', solver='saga', tol=0.1
+)
 clf.fit(X_train, y_train)
 sparsity = np.mean(clf.coef_ == 0) * 100
 score = clf.score(X_test, y_test)
