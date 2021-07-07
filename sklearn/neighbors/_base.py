@@ -954,7 +954,7 @@ class RadiusNeighborsMixin:
     def radius_neighbors(
         self, X=None, radius=None, return_distance=True, sort_results=False
     ):
-        """Finds the neighbors within a given radius of a point or points.
+        """Find the neighbors within a given radius of a point or points.
 
         Return the indices and distances of each point from the dataset
         lying in a ball with size ``radius`` around the points of the query
@@ -997,6 +997,14 @@ class RadiusNeighborsMixin:
             from the population matrix that lie within a ball of size
             ``radius`` around the query points.
 
+        Notes
+        -----
+        Because the number of neighbors of each point is not necessarily
+        equal, the results for multiple query points cannot be fit in a
+        standard data array.
+        For efficiency, `radius_neighbors` returns arrays of objects, where
+        each object is a 1D array of indices or distances.
+
         Examples
         --------
         In the following example, we construct a NeighborsClassifier
@@ -1018,14 +1026,6 @@ class RadiusNeighborsMixin:
         The first array returned contains the distances to all points which
         are closer than 1.6, while the second array returned contains their
         indices.  In general, multiple points can be queried at the same time.
-
-        Notes
-        -----
-        Because the number of neighbors of each point is not necessarily
-        equal, the results for multiple query points cannot be fit in a
-        standard data array.
-        For efficiency, `radius_neighbors` returns arrays of objects, where
-        each object is a 1D array of indices or distances.
         """
         check_is_fitted(self)
 
@@ -1146,7 +1146,7 @@ class RadiusNeighborsMixin:
     def radius_neighbors_graph(
         self, X=None, radius=None, mode="connectivity", sort_results=False
     ):
-        """Computes the (weighted) graph of Neighbors for points in X
+        """Compute the (weighted) graph of Neighbors for points in X.
 
         Neighborhoods are restricted the points at a distance lower than
         radius.
@@ -1183,6 +1183,11 @@ class RadiusNeighborsMixin:
             `A[i, j]` gives the weight of the edge connecting `i` to `j`.
             The matrix is of CSR format.
 
+        See Also
+        --------
+        kneighbors_graph : Compute the (weighted) graph of k-Neighbors for
+            points in X.
+
         Examples
         --------
         >>> X = [[0], [3], [1]]
@@ -1195,10 +1200,6 @@ class RadiusNeighborsMixin:
         array([[1., 0., 1.],
                [0., 1., 0.],
                [1., 0., 1.]])
-
-        See Also
-        --------
-        kneighbors_graph
         """
         check_is_fitted(self)
 
