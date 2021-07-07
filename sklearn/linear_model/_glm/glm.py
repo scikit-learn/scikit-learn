@@ -530,7 +530,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
-        """str : Returns the string `'poisson'`."""
+        """Return the string `'poisson'`."""
         # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
         return "poisson"
 
