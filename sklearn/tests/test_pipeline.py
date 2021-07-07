@@ -1159,6 +1159,20 @@ def test_pipeline_param_error():
     ):
         clf.fit([[0], [0]], [0, 1], sample_weight=[1, 1])
 
+    # until the deprecation, the pipeline uses the "old" style or routing if at
+    # least one parameter has "__" in it, and therefore `sample_weight` would
+    # not be accepted
+    with pytest.raises(
+        ValueError,
+        match="Pipeline.fit does not accept the sample_weight parameter",
+    ):
+        clf.fit(
+            [[0], [0]],
+            [0, 1],
+            sample_weight=[1, 1],
+            logisticregression__sample_weight=[1, 1],
+        )
+
 
 parameter_grid_test_verbose = (
     (est, pattern, method)
