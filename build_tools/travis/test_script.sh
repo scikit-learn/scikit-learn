@@ -2,6 +2,8 @@
 
 set -e
 
+pip install git+https://github.com/ogrisel/threadpoolctl.git@openblas_get_corename
+
 python --version
 python -c "import numpy; print(f'numpy {numpy.__version__}')"
 python -c "import scipy; print(f'scipy {scipy.__version__}')"
@@ -14,6 +16,7 @@ except ImportError:
 "
 python -c "import joblib; print(f'{joblib.cpu_count()} CPUs')"
 python -c "import platform; print(f'{platform.machine()}')"
+python -m threadpoolctl -i sklearn  # also triggers imports of numpy and scipy
 
 TEST_CMD="pytest --showlocals --durations=20 --maxfail=5 --pyargs"
 
