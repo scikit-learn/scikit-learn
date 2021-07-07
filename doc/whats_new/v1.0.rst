@@ -266,7 +266,7 @@ Changelog
   :class:`~sklearn.ensemble.HistGradientBoostingRegressor` takes cgroups quotas
   into account when deciding the number of threads used for OpenMP. This
   avoids performance problems caused by over-subscription when using those
-  classes in a docker containers for instance. :pr:`20477`
+  classes in a docker container for instance. :pr:`20477`
   by `Thomas Fan`_.
 
 - |Fix| Do not allow to compute out-of-bag (OOB) score in
