@@ -350,6 +350,11 @@ class MethodMetadataRequest:
             If false, only aliases with the same name as the parameter are
             allowed. This is useful when handling the default values.
 
+        default : RequestType, True, False, None, or str, \
+            default=RequestType.ERROR_IF_PASSED
+            The default value to be used if parameters are provided as a string
+            or list instead of the fully specifying dict.
+
         Returns
         -------
         requests: MethodMetadataRequest
