@@ -44,6 +44,10 @@ from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 from ..utils._typedefs import ITYPE, DTYPE
 
+
+cdef extern from "<algorithm>" namespace "std" nogil:
+    OutputIt move[InputIt, OutputIt](InputIt first, InputIt last, OutputIt d_first)
+
 ######################
 ## std::vector to np.ndarray coercion
 # TODO: for now using this simple solution: https://stackoverflow.com/a/23873586
@@ -348,7 +352,7 @@ cdef class PairwiseDistancesReduction:
         return
 
     cdef void _on_Y_finalize(self,
-        ITYPE_t thread_num,
+        ITYPE_t num_threads,
     ) nogil:
         return
 
@@ -537,7 +541,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         free(self.heaps_indices_chunks[thread_num])
 
     cdef void _on_Y_finalize(self,
-            ITYPE_t thread_num,
+        ITYPE_t num_threads,
     ) nogil:
         cdef:
             ITYPE_t idx
@@ -812,6 +816,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         vector[vector[ITYPE_t]] * neigh_indices
         vector[vector[DTYPE_t]] * neigh_distances
 
+        vector[vector[ITYPE_t]] ** neigh_indices_chunks
+        vector[vector[DTYPE_t]] ** neigh_distances_chunks
+
         bint sort_results
 
 
@@ -866,6 +873,18 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         return 0
 
+    cdef void _on_X_prange_iter_init(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_chunk_idx,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
+
+        # As this strategy is embarrassingly parallel, we can set the
+        # thread-local vectors' pointers to the main vectors'.
+        self.neigh_distances_chunks[thread_num] = self.neigh_distances
+        self.neigh_indices_chunks[thread_num] = self.neigh_indices
+
     cdef void _on_X_prange_iter_finalize(self,
             ITYPE_t thread_num,
             ITYPE_t X_chunk_idx,
@@ -883,6 +902,51 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                     deref(self.neigh_indices)[idx].data(),
                     deref(self.neigh_indices)[idx].size()
                 )
+    cdef void _on_Y_parallel_init(self,
+        ITYPE_t thread_num,
+    ) nogil:
+        self.neigh_distances_chunks[thread_num] = new vector[vector[DTYPE_t]](self.n_X)
+        self.neigh_indices_chunks[thread_num] = new vector[vector[ITYPE_t]](self.n_X)
+
+    cdef void _on_Y_finalize(self,
+        ITYPE_t num_threads,
+    ) nogil:
+        cdef:
+            ITYPE_t idx, jdx, thread_num, idx_n_element, idx_current
+
+        # Merge associated vectors into one and sort in parallel
+        # in ascending order w.r.t the distances if needed
+        for idx in range(self.n_X): #, schedule='static'):
+            idx_n_element = 0
+            for jdx in range(num_threads):
+                idx_n_element += self.neigh_indices_chunks[jdx][idx].size()
+
+            deref(self.neigh_distances)[idx].reserve(idx_n_element)
+            deref(self.neigh_indices)[idx].reserve(idx_n_element)
+
+            for jdx in range(num_threads):
+                move(deref(self.neigh_distances_chunks[jdx])[idx].begin(),
+                     deref(self.neigh_distances_chunks[jdx])[idx].end(),
+                     deref(self.neigh_distances)[idx].end())
+                move(deref(self.neigh_indices_chunks[jdx])[idx].begin(),
+                     deref(self.neigh_indices_chunks[jdx])[idx].end(),
+                     deref(self.neigh_indices)[idx].end())
+
+        for jdx in range(num_threads):
+            free(self.neigh_distances_chunks[jdx])
+            free(self.neigh_indices_chunks[jdx])
+
+        if self.sort_results:
+            for idx in prange(self.n_X, schedule='static',
+                              num_threads=self.effective_omp_n_thread,
+                              nogil=True):
+                _simultaneous_sort(
+                    deref(self.neigh_distances)[idx].data(),
+                    deref(self.neigh_indices)[idx].data(),
+                    deref(self.neigh_indices)[idx].size()
+                )
+
+        return
 
     def compute(self,
            str strategy = "auto",
