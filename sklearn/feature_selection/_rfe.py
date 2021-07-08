@@ -637,7 +637,7 @@ class RFECV(CVMetadataRequester, RFE):
         **kwargs : dict
             Extra parameteres passed to the underlying scorer.
 
-            .. versionadded: 1.1
+            .. versionadded:: 1.1
 
         Returns
         -------
