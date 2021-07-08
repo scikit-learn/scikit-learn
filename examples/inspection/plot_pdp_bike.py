@@ -96,12 +96,13 @@ numerical_features = [
 categorical_features = X_train.columns.drop(numerical_features)
 
 # %%
-# Before to go into details in the machine learning pipeline processing, we will try
-# to get some additional intuitions regarding the dataset that could be helpful to
-# understand the model statistical performance and results of the partial dependence
-# analysis.
-
-# %%
+# Before to go into details regarding the preprocessing of the different machine
+# learning pipeline, we will try to get some additional intuitions regarding the dataset
+# that could be helpful to understand the model statistical performance and results of
+# the partial dependence analysis.
+#
+# We will plot the average number of bike rentals by grouping the data by season and
+# by year.
 from itertools import product
 import numpy as np
 import matplotlib.pyplot as plt
@@ -120,7 +121,11 @@ for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
 
     # decorate the plot
     ax.set_xticks(
-        np.linspace(xtick_start, len(xticklabels), len(xticklabels) // xtick_period)
+        np.linspace(
+            start=xtick_start,
+            stop=len(xticklabels),
+            step=len(xticklabels) // xtick_period,
+        )
     )
     ax.set_xticklabels(xticklabels[xtick_start::xtick_period])
     ax.set_xlabel("")
@@ -133,6 +138,14 @@ for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
     ax.legend(loc=2)
 
 # %%
+# The first striking difference between the train and test set is that the number of
+# bike rentals is higher in the test set. For this reason, it will not be surprising to
+# get a machine learning model that will be underestimate the number of bike rentals. We
+# also observe that the number of bike rentals is lower during the spring season. In
+# addition, we see that during the working day, there is a specific pattern around 6-7
+# am and 5-6 pm with some peaks of bike rentals. We can keep in mind these different
+# intuitions and use them to understand the partial dependence plot.
+#
 # Preprocessor for machine-learning models
 # ----------------------------------------
 #
@@ -220,7 +233,7 @@ print(f"Test R2 score: {mlp_model.score(X_test, y_test):.2f}")
 # Note that it is important to check that the model is accurate enough on a
 # test set before plotting the partial dependence since there would be little
 # use in explaining the impact of a given feature on the prediction function of
-# a poor model.
+# a poor model. In this regard, our model is working reasonably well.
 import matplotlib.pyplot as plt
 from sklearn.inspection import plot_partial_dependence
 
@@ -307,39 +320,33 @@ _ = display.figure_.suptitle(
 # In all plots, the tick marks on the x-axis represent the deciles of the
 # feature values in the training data.
 #
+# We will first look at the PDPs for the numerical features. For both models, the
+# general trend of the PDP of the temperature is that the number of bike rentals is
+# increasing with temperature. We can make a similar analysis but with the opposite
+# trend for the humidity features. The number of bike rentals is decreasing when the
+# humidity increases. Finally, we see the same trend for the windspeed feature. The
+# number of bike rentals is decreasing when the windspeed is increasing for both models.
 # We also observe that :class:`~sklearn.neural_network.MLPRegressor` has much
-# smoother predictions than
-# :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
-#
-# We will first look at the partial dependence plots for the numerical features.
-# For both models, the general trend of the PDP of the temperature is that the
-# number of bike rentals is increasing with temperature. However, there is a difference
-# between the two models: the PDP of the neural network achieves a plateau at high
-# temperature while the PDP of the gradient boosting model is increasing until
-# the temperature 35 degrees Celsius and drop after that.
-#
-# We can make a similar analysis but with the opposite trend for the humidity features.
-# The number of bike rentals is decreasing when the humidity increases. However, the
-# neural network shows a plateau at low humidity while the gradient boosting model
-# is first increasing up to 25% of humidity and then starts to decrease.
-#
-# Finally, we see the same trend for the windspeed feature. The number of bike
-# rentals is decreasing when the windspeed is increasing for both models.
+# smoother predictions than :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
 #
 # Now, we will look at the partial dependence plots for the categorical features.
 #
-# We have different findings for both models. For the neural network, we observe that
-# the Saturday (index 6) and Sunday (index 0) are the largest impact on the number of
-# bike rentals. We do not observe the same clear trend for the gradient boosting.
-# When the weather is rainy, both models agree that the number of bike rentals is
-# decreasing. Regarsing the season feature, we might explanations that might be
-# counter-intuitive: it seems that the winter season has a positive impact on the
-# number of bike rentals.
+# We observe that the spring season is the lowest bar for the season feature. With the
+# weather feature, the rain category is the lowest bar. Regarding the hour feature,
+# we see two peaks around the 7 am and 6 pm. These findings are in line with the
+# with the observations we made earlier on the dataset.
 #
 # However, it is worth noting that we are creating potential meaningless
 # synthetic samples if features are correlated.
-
-# %%
+#
+# 2D interaction plots
+# --------------------
+#
+# PDPs with two features of interest enable us to visualize interactions among
+# them. However, ICEs cannot be plotted in an easy manner and thus interpreted.
+# Another consideration is linked to the performance to compute the PDPs. With
+# the tree-based algorithm, when only PDPs are requested, they can be computed
+# on an efficient way using the `'recursion'` method.
 print("Computing partial dependence plots...")
 features = ["season", "weather"]
 tic = time()
