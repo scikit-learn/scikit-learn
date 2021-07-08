@@ -855,3 +855,29 @@ def test_polynomial_features_deprecated_n_input_features():
 
     with pytest.warns(FutureWarning, match=depr_msg):
         PolynomialFeatures().fit(X).n_input_features_
+
+
+def test_csr_polynomial_expansion_index_overflow():
+    N = 12
+    M = 120000
+    dtype = np.float32
+    x = sparse.csr_matrix(
+        (
+            np.arange(1, 5, dtype=np.int64),
+            (np.array([N - 1, N - 1, N, N]), np.array([M - 1, M, M - 1, M])),
+        ),
+        shape=(N + 1, M + 1),
+        dtype=dtype,
+        copy=False,
+    )
+    pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
+    xinter = pf.fit_transform(x)
+    n_index, m_index = xinter.nonzero()
+
+    assert xinter.dtype == dtype
+    assert xinter.shape == (13, 7200180001)
+    assert_array_almost_equal(xinter.data, np.array([1, 2, 2, 3, 4, 12], dtype=dtype))
+    assert_array_almost_equal(n_index, np.array([11, 11, 11, 12, 12, 12]))
+    assert_array_almost_equal(
+        m_index, np.array([119999, 120000, 7200180000, 119999, 120000, 7200180000])
+    )

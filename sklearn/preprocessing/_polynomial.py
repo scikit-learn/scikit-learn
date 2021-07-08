@@ -170,6 +170,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         return combinations
 
+    @staticmethod
+    def _calc_expanded_dimensionality(d, interaction_only, degree):
+        if degree == 2:
+            return (d ** 2 + d) // 2 - interaction_only * d
+        else:
+            return (d ** 3 + 3 * d ** 2 + 2 * d) // 6 - interaction_only * d ** 2
+
     @property
     def powers_(self):
         check_is_fitted(self)
@@ -334,17 +341,48 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             if self._min_degree <= 1:
                 to_stack.append(X)
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
-                Xp_next = _csr_polynomial_expansion(
-                    X.data, X.indices, X.indptr, X.shape[1], self.interaction_only, deg
+                # Count how many nonzero elements the expanded matrix will contain.
+                total_nnz = sum(
+                    self._calc_expanded_dimensionality(
+                        X.indptr[row_i + 1] - X.indptr[row_i],
+                        self.interaction_only,
+                        deg,
+                    )
+                    for row_i in range(X.indptr.shape[0] - 1)
                 )
-                if Xp_next is None:
+                expanded_d = self._calc_expanded_dimensionality(
+                    X.shape[1], self.interaction_only, deg
+                )
+                if expanded_d == 0:
                     break
-                to_stack.append(Xp_next)
+                assert expanded_d > 0
+                index_t = np.int64 if expanded_d > np.iinfo(np.int32).max else np.int32
+                expanded_data = np.ndarray(shape=total_nnz, dtype=X.data.dtype)
+                expanded_indices = np.ndarray(shape=total_nnz, dtype=index_t)
+                expanded_indptr = np.ndarray(shape=X.indptr.shape[0], dtype=index_t)
+                _csr_polynomial_expansion(
+                    X.data,
+                    X.indices,
+                    X.indptr,
+                    X.shape[1],
+                    expanded_data,
+                    expanded_indices,
+                    expanded_indptr,
+                    self.interaction_only,
+                    deg,
+                )
+                to_stack.append(
+                    sparse.csr_matrix(
+                        (expanded_data, expanded_indices, expanded_indptr),
+                        shape=(X.indptr.shape[0] - 1, expanded_d),
+                        dtype=X.dtype,
+                    )
+                )
             if len(to_stack) == 0:
                 # edge case: deal with empty matrix
                 XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
             else:
-                XP = sparse.hstack(to_stack, format="csr")
+                XP = sparse.hstack(to_stack, format="csr", dtype=X.dtype)
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
         elif sparse.isspmatrix(X):
