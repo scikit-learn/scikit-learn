@@ -829,11 +829,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ----------
         X : array-like of shape (n_samples, n_features)
             The input samples.
-        n_threads : int (default=None)
-            Number of OpenMP threads to use. If `None`, then
-            `_openmp_effective_n_threads` is called to determine the effective
-            number of threads use, which takes cgroups CPU quotes into account. See
-            the docstring of `_openmp_effective_n_threads` for details.
+        n_threads : int, default=None
+            Number of OpenMP threads to use. `_openmp_effective_n_threads` is called
+            to determine the effective number of threads use, which takes cgroups CPU
+            quotes into account. See the docstring of `_openmp_effective_n_threads`
+            for details.
 
         Returns
         -------

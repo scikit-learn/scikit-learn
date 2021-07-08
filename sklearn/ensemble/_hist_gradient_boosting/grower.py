@@ -178,10 +178,10 @@ class TreeGrower:
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
     n_threads : int, default=None
-        Number of OpenMP threads to use. If `None`, then
-        `_openmp_effective_n_threads` is called to determine the effective
-        number of threads use, which takes cgroups CPU quotes into account. See
-        the docstring of `_openmp_effective_n_threads` for details.
+        Number of OpenMP threads to use. `_openmp_effective_n_threads` is called
+        to determine the effective number of threads use, which takes cgroups CPU
+        quotes into account. See the docstring of `_openmp_effective_n_threads`
+        for details.
     """
 
     def __init__(
