@@ -63,6 +63,31 @@ cdef np.ndarray[DITYPE_t, ndim=1] buffer_to_numpy_array(DITYPE_t * ptr, np.npy_i
     PyArray_ENABLEFLAGS(arr, np.NPY_OWNDATA)
     return arr
 
+# TODO: this got duplicated because type covariance is not support; i.e. the following function
+#
+#       cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(vector[vector[DITYPE_t]] * vecs)
+#
+# cannot be called dispatched for vector[vector[ITYPE_t]]* and vector[vector[DTYPE_t]]*
+cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays_ITYPE(vector[vector[ITYPE_t]]* vecs):
+    cdef ITYPE_t n = deref(vecs).size()
+    np_arrays_of_np_arrays = np.empty(n, dtype=np.ndarray)
+
+    for i in range(n):
+        np_arrays_of_np_arrays[i] = buffer_to_numpy_array(deref(vecs)[i].data(),
+                                                           deref(vecs)[i].size())
+
+    return np_arrays_of_np_arrays
+
+cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays_DTYPE(vector[vector[DTYPE_t]]* vecs):
+    cdef ITYPE_t n = deref(vecs).size()
+    np_arrays_of_np_arrays = np.empty(n, dtype=np.ndarray)
+
+    for i in range(n):
+        np_arrays_of_np_arrays[i] = buffer_to_numpy_array(deref(vecs)[i].data(),
+                                                           deref(vecs)[i].size())
+
+    return np_arrays_of_np_arrays
+
 #####################
 
 
@@ -873,30 +898,14 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self._parallel_on_X()
         return self._finalise_compute(return_distance)
 
-
     def _finalise_compute(self,
            bint return_distance
     ):
-        # TODO: factorise this (currently set like so to avoid having a missing symbol
-        # in the generated shared library
         if return_distance:
-            np_arrays_indices = []
-            np_arrays_distances = []
+            return (_coerce_vectors_to_np_nd_arrays_DTYPE(self.neigh_distances),
+                    _coerce_vectors_to_np_nd_arrays_ITYPE(self.neigh_indices))
 
-            for i in range(self.n_X):
-                np_arrays_distances.append(buffer_to_numpy_array(deref(self.neigh_distances)[i].data(),
-                                                                 deref(self.neigh_distances)[i].size()))
-                np_arrays_indices.append(buffer_to_numpy_array(deref(self.neigh_indices)[i].data(),
-                                                               deref(self.neigh_indices)[i].size()))
-
-            return np.array(np_arrays_distances, dtype=np.ndarray), np.array(np_arrays_indices, dtype=np.ndarray)
-
+        # We need to free the buffers here because they won't be
+        #
         free(self.neigh_distances)
-
-        np_arrays_indices = []
-
-        for i in range(self.n_X):
-            np_arrays_indices.append(buffer_to_numpy_array(deref(self.neigh_indices)[i].data(),
-                                                           deref(self.neigh_indices)[i].size()))
-
-        return np.array(np_arrays_indices, dtype=np.ndarray)
+        return _coerce_vectors_to_np_nd_arrays_ITYPE(self.neigh_indices)
