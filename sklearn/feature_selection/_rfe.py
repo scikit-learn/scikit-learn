@@ -344,6 +344,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         y : array of shape [n_samples]
             The target values.
 
+        **kwargs : dict
+            Other parameters passed to the scorer.
+
+            .. versionadded:: 1.1
+
         Returns
         -------
         score : float
