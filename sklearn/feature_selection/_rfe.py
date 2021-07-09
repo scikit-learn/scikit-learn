@@ -192,7 +192,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         """
         return self.estimator_.classes_
 
-    def fit(self, X, y):
+    def fit(self, X, y, **metadata):
         """Fit the RFE model and then the underlying estimator on the selected features.
 
         Parameters
@@ -203,14 +203,19 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         y : array-like of shape (n_samples,)
             The target values.
 
+        **metadata : dict, default=None
+            Parameters to be passed to the underlying estimator's fit.
+
+            .. versionadded:: 1.0
+
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        return self._fit(X, y)
+        return self._fit(X, y, **metadata)
 
-    def _fit(self, X, y, step_score=None):
+    def _fit(self, X, y, step_score=None, **metadata):
         # Parameter step_score controls the calculation of self.scores_
         # step_score is not exposed to users
         # and is used when implementing RFECV
@@ -269,7 +274,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
-            estimator.fit(X[:, features], y)
+            estimator.fit(X[:, features], y, **metadata)
 
             # Get importance and rank them
             importances = _get_feature_importances(
@@ -296,7 +301,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # Set final attributes
         features = np.arange(n_features)[support_]
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X[:, features], y)
+        self.estimator_.fit(X[:, features], y, **metadata)
 
         # Compute step score when only n_features_to_select features left
         if step_score:
@@ -325,7 +330,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict(self.transform(X))
 
     @if_delegate_has_method(delegate="estimator")
-    def score(self, X, y):
+    def score(self, X, y, **metadata):
         """Reduce X to the selected features and return the score of the underlying estimator.
 
         Parameters
@@ -336,6 +341,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         y : array of shape [n_samples]
             The target values.
 
+        **metadata : dict, default=None
+            Parameters to be passed to the underlying estimator's score.
+
+            .. versionadded:: 1.0
+
         Returns
         -------
         score : float
@@ -343,7 +353,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             features returned by `rfe.transform(X)` and `y`.
         """
         check_is_fitted(self)
-        return self.estimator_.score(self.transform(X), y)
+        return self.estimator_.score(self.transform(X), y, **metadata)
 
     def _get_support_mask(self):
         check_is_fitted(self)

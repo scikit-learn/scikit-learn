@@ -8,6 +8,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
@@ -493,3 +494,28 @@ def test_multioutput(ClsRFE):
     clf = RandomForestClassifier(n_estimators=5)
     rfe_test = ClsRFE(clf)
     rfe_test.fit(X, y)
+
+
+def test_RFE_fit_score_params():
+    # Make sure RFE passes the metadata down to fit and score methods of the
+    # underlying estimator
+    class TestEstimator(BaseEstimator, ClassifierMixin):
+        def fit(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("prop cannot be None")
+            self.svc_ = SVC(kernel="linear").fit(X, y)
+            self.coef_ = self.svc_.coef_
+            return self
+
+        def score(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("prop cannot be None")
+            return self.svc_.score(X, y)
+
+    X, y = load_iris(return_X_y=True)
+    with pytest.raises(ValueError, match="prop cannot be None"):
+        RFE(estimator=TestEstimator()).fit(X, y)
+    with pytest.raises(ValueError, match="prop cannot be None"):
+        RFE(estimator=TestEstimator()).fit(X, y)
+
+    RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y, prop="foo")
