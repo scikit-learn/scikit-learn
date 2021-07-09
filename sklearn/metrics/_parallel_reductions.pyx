@@ -213,7 +213,7 @@ cdef class PairwiseDistancesReduction:
                     X_end = X_start + self.X_n_samples_chunk
 
                 # Reinitializing thread datastructures for the new X chunk
-                self._on_X_prange_iter_init(thread_num, X_chunk_idx, X_start, X_end)
+                self._on_X_prange_iter_init(thread_num, X_start, X_end)
 
                 for Y_chunk_idx in range(self.Y_n_chunks):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
@@ -231,7 +231,7 @@ cdef class PairwiseDistancesReduction:
                     )
 
                 # Adjusting thread datastructures on the full pass on Y
-                self._on_X_prange_iter_finalize(thread_num, X_chunk_idx, X_start, X_end)
+                self._on_X_prange_iter_finalize(thread_num, X_start, X_end)
 
             # end: for X_chunk_idx
 
@@ -254,6 +254,10 @@ cdef class PairwiseDistancesReduction:
             ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx
             ITYPE_t num_threads = min(self.X_n_chunks, self.effective_omp_n_thread)
             ITYPE_t thread_num
+
+        # TODO: put the "with nogil, parallel"-context here
+        # Allocating datastructures
+        self._on_Y_init(num_threads)
 
         for X_chunk_idx in range(self.X_n_chunks):
             X_start = X_chunk_idx * self.X_n_samples_chunk
@@ -287,7 +291,7 @@ cdef class PairwiseDistancesReduction:
 
                 # Synchronizing the thread datastructures with the main ones
                 # This can potentially block
-                self._on_Y_parallel_finalize(thread_num, X_chunk_idx, X_start, X_end)
+                self._on_Y_parallel_finalize(thread_num, X_start, X_end)
             # end: with nogil, parallel
 
         # end: for X_chunk_idx
@@ -324,7 +328,6 @@ cdef class PairwiseDistancesReduction:
 
     cdef void _on_X_prange_iter_init(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
@@ -332,9 +335,13 @@ cdef class PairwiseDistancesReduction:
 
     cdef void _on_X_prange_iter_finalize(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _on_Y_init(self,
+        ITYPE_t num_threads,
     ) nogil:
         return
 
@@ -345,7 +352,6 @@ cdef class PairwiseDistancesReduction:
 
     cdef void _on_Y_parallel_finalize(self,
         ITYPE_t thread_num,
-        ITYPE_t X_chunk_idx,
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
@@ -470,7 +476,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     cdef void _on_X_prange_iter_init(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
@@ -482,7 +487,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     cdef void _on_X_prange_iter_finalize(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
@@ -497,19 +501,25 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 self.k
             )
 
-    cdef void _on_Y_parallel_init(self,
-            ITYPE_t thread_num,
+    cdef void _on_Y_init(self,
+            ITYPE_t num_threads,
     ) nogil:
         cdef:
             # number of scalar elements
             ITYPE_t heaps_size = self.X_n_samples_chunk * self.k
+            ITYPE_t thread_num
 
-        # As chunks of X are shared across threads, so must their
-        # heaps. To solve this, each thread has its own locals
-        # heaps which are then synchronised back in the main ones.
-        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heaps_size * sizeof(DTYPE_t))
-        self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(heaps_size * sizeof(ITYPE_t))
+        for thread_num in prange(num_threads, schedule='static', nogil=True,
+                                 num_threads=num_threads):
+            # As chunks of X are shared across threads, so must their
+            # heaps. To solve this, each thread has its own heaps
+            # which are then synchronised back in the main ones.
+            self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heaps_size * sizeof(DTYPE_t))
+            self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(heaps_size * sizeof(ITYPE_t))
 
+    cdef void _on_Y_parallel_init(self,
+            ITYPE_t thread_num,
+    ) nogil:
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
             self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
@@ -517,12 +527,13 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     cdef void _on_Y_parallel_finalize(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
         cdef:
             ITYPE_t idx, jdx
+        # TODO: see if synchronisation can be made in parallel samples-wise
+        # thanks to the context which wraps the call to this method
         with gil:
             # Synchronising the thread local heaps
             # with the main heaps
@@ -536,24 +547,27 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                         self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
                     )
 
-        free(self.heaps_approx_distances_chunks[thread_num])
-        free(self.heaps_indices_chunks[thread_num])
 
     cdef void _on_Y_finalize(self,
         ITYPE_t num_threads,
     ) nogil:
         cdef:
-            ITYPE_t idx
+            ITYPE_t idx, thread_num
 
-        # Sort the main heaps into arrays in parallel
-        # in ascending order w.r.t the distances
-        for idx in prange(self.n_X, schedule='static', nogil=True,
-                          num_threads=self.effective_omp_n_thread):
-            _simultaneous_sort(
-                &self.argkmin_distances[idx, 0],
-                &self.argkmin_indices[idx, 0],
-                self.k,
-            )
+        with nogil, parallel(num_threads=self.effective_omp_n_thread):
+            # Deallocating temporary datastructures
+            for thread_num in prange(num_threads, schedule='static'):
+                free(self.heaps_approx_distances_chunks[thread_num])
+                free(self.heaps_indices_chunks[thread_num])
+
+            # Sort the main heaps into arrays in parallel
+            # in ascending order w.r.t the distances
+            for idx in prange(self.n_X, schedule='static'):
+                _simultaneous_sort(
+                    &self.argkmin_distances[idx, 0],
+                    &self.argkmin_indices[idx, 0],
+                    self.k,
+                )
         return
 
     cdef void _exact_distances(self,
@@ -697,11 +711,10 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
 
     cdef void _on_Y_parallel_finalize(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
-        ArgKmin._on_Y_parallel_finalize(self, thread_num, X_chunk_idx, X_start, X_end)
+        ArgKmin._on_Y_parallel_finalize(self, thread_num, X_start, X_end)
         free(self.dist_middle_terms_chunks[thread_num])
 
     cdef int _reduce_on_chunks(self,
@@ -874,7 +887,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
     cdef void _on_X_prange_iter_init(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
@@ -886,7 +898,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
     cdef void _on_X_prange_iter_finalize(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
