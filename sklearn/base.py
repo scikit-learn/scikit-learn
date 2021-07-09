@@ -408,7 +408,7 @@ class BaseEstimator:
             feature names of data provided when reset was last True.
             .. note::
                It is recommended to call `reset=True` in `fit` and in the first
-               call to `partial_fit`. All other methods that validates `X`
+               call to `partial_fit`. All other methods that validate `X`
                should set `reset=False`.
         """
 
