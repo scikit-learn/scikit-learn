@@ -289,6 +289,15 @@ def cross_validate(
 
     results = _aggregate_score_dicts(results)
 
+    # If all the fits failed raise an informative warning in the main process
+    # if results["fit_failed"].all():
+    #     all_fits_failed_message = (
+    #         "All the fit on the training sets failed. Something seems wrong in the"
+    #         f" configuration of {estimator}\n.You can try to debug this further by"
+    #         " setting 'error_score='raise'."
+    #     )
+    #     warnings.warn(all_fits_failed_message)
+
     ret = {}
     ret["fit_time"] = results["fit_time"]
     ret["score_time"] = results["score_time"]
