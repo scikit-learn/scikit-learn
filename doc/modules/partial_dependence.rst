@@ -30,29 +30,28 @@ interest must be small (usually, one or two) thus the input features of interest
 are usually chosen among the most important features.
 
 The figure below shows two one-way and one two-way partial dependence plots for
-the California housing dataset, with a :class:`HistGradientBoostingRegressor
-<sklearn.ensemble.HistGradientBoostingRegressor>`:
+the bike sharing dataset, with a
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor`:
 
 .. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_003.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html
    :align: center
    :scale: 70
 
-One-way PDPs tell us about the interaction between the target response and an
-input feature of interest feature (e.g. linear, non-linear). The left plot
-in the above figure shows the effect of the average occupancy on the median
-house price; we can clearly see a linear relationship among them when the
-average occupancy is inferior to 3 persons. Similarly, we could analyze the
-effect of the house age on the median house price (middle plot). Thus, these
-interpretations are marginal, considering a feature at a time.
+One-way PDPs tell us about the interaction between the target response and an input
+feature of interest feature (e.g. linear, non-linear). The left plot in the above figure
+shows the effect of the temperature on the number of bike rentals; we can clearly see
+that a higher temperature is related with a higher number of bike rentals. Similarly, we
+could analyze the effect of the humidity on the number of bike rentals (middle plot).
+Thus, these interpretations are marginal, considering a feature at a time.
 
-PDPs with two input features of interest show the interactions among the two
-features. For example, the two-variable PDP in the above figure shows the
-dependence of median house price on joint values of house age and average
-occupants per household. We can clearly see an interaction between the two
-features: for an average occupancy greater than two, the house price is nearly
-independent of the house age, whereas for values less than 2 there is a strong
-dependence on age.
+PDPs with two input features of interest show the interactions among the two features.
+For example, the two-variable PDP in the above figure shows the dependence of the number
+of bike rentals on joint values of temperature and humidity. We can clearly see an
+interaction between the two features: with a temperature higher than 20 degrees Celsius,
+mainly the humidity has a strong impact on the number of bike rentals. For lower
+temperatures, both the temperature and the humidity have an impact on the number of bike
+rentals.
 
 The :mod:`sklearn.inspection` module provides a convenience function
 :func:`plot_partial_dependence` to create one-way and two-way partial
@@ -73,6 +72,12 @@ and a two-way PDP between the two features::
 
 You can access the newly created figure and Axes objects using ``plt.gcf()``
 and ``plt.gca()``.
+
+If you wish to plot partial dependence of categorical features, you need to specify
+which features to considered as such using the parameter `categorical_features`. This
+parameters takes a list of indices or names of the categorical features or a boolean
+mask. The graphical representation of partial dependence for categorical features is
+a bar plot or a 2D heatmap.
 
 For multi-class classification, you need to set the class label for which
 the PDPs should be created via the ``target`` argument::

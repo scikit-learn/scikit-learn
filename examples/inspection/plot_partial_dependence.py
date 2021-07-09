@@ -396,15 +396,40 @@ display = plot_partial_dependence(
     ax=ax,
 )
 print(f"done in {time() - tic:.3f}s")
-_ = display.figure_.suptitle("1-way vs 2-way PDP using gradient boosting", fontsize=16)
+_ = display.figure_.suptitle(
+    "1-way vs 2-way of numerical PDP using gradient boosting", fontsize=16
+)
 
 # %%
 # The two-way partial dependence plot shows the dependence of the number of bike rentals
 # on joint values of temperature and humidity.
 # We clearly see an interaction between the two features. For a temperature higher than
 # 20 degrees Celcius, the humidity will have a greater impact of the number of bike
-# rentals.
-#
+# rentals. For a temperature lower than 20 degrees Celcius, both the temperature and
+# humidity will have an impact on the number of bike rentals.
+# 2-way interaction is also supported for categorical data.
+print("Computing partial dependence plots...")
+features = ["season", "weather", ("season", "weather")]
+_, ax = plt.subplots(ncols=3, figsize=(9, 4))
+tic = time()
+display = plot_partial_dependence(
+    hgbdt_model,
+    X_train,
+    features,
+    kind="average",
+    categorical_features=categorical_features,
+    n_jobs=3,
+    grid_resolution=30,
+    random_state=0,
+    ax=ax,
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    "1-way vs 2-way PDP of categorical features using gradient boosting", fontsize=16
+)
+
+
+# %%
 # 3D representation
 # .................
 #
