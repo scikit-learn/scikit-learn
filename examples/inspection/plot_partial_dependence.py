@@ -419,7 +419,7 @@ display = plot_partial_dependence(
     kind="average",
     categorical_features=categorical_features,
     n_jobs=3,
-    grid_resolution=30,
+    grid_resolution=20,
     random_state=0,
     ax=ax,
 )
