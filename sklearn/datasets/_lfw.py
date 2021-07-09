@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 ARCHIVE = RemoteFileMetadata(
     filename="lfw.tgz",
     url="https://ndownloader.figshare.com/files/5976018",
-    checksum=("055f7d9c632d7370e6fb4afc7468d40f" "970c34a80d4c6f50ffec63f5a8d536c0"),
+    checksum="055f7d9c632d7370e6fb4afc7468d40f970c34a80d4c6f50ffec63f5a8d536c0",
 )
 
 # The original funneled data can be found in:
@@ -36,7 +36,7 @@ ARCHIVE = RemoteFileMetadata(
 FUNNELED_ARCHIVE = RemoteFileMetadata(
     filename="lfw-funneled.tgz",
     url="https://ndownloader.figshare.com/files/5976015",
-    checksum=("b47c8422c8cded889dc5a13418c4bc2a" "bbda121092b3533a83306f90d900100a"),
+    checksum="b47c8422c8cded889dc5a13418c4bc2abbda121092b3533a83306f90d900100a",
 )
 
 # The original target data can be found in:
@@ -47,23 +47,17 @@ TARGETS = (
     RemoteFileMetadata(
         filename="pairsDevTrain.txt",
         url="https://ndownloader.figshare.com/files/5976012",
-        checksum=(
-            "1d454dada7dfeca0e7eab6f65dc4e97a" "6312d44cf142207be28d688be92aabfa"
-        ),
+        checksum="1d454dada7dfeca0e7eab6f65dc4e97a6312d44cf142207be28d688be92aabfa",
     ),
     RemoteFileMetadata(
         filename="pairsDevTest.txt",
         url="https://ndownloader.figshare.com/files/5976009",
-        checksum=(
-            "7cb06600ea8b2814ac26e946201cdb30" "4296262aad67d046a16a7ec85d0ff87c"
-        ),
+        checksum="7cb06600ea8b2814ac26e946201cdb304296262aad67d046a16a7ec85d0ff87c",
     ),
     RemoteFileMetadata(
         filename="pairs.txt",
         url="https://ndownloader.figshare.com/files/5976006",
-        checksum=(
-            "ea42330c62c92989f9d7c03237ed5d59" "1365e89b3e649747777b70e692dc1592"
-        ),
+        checksum="ea42330c62c92989f9d7c03237ed5d591365e89b3e649747777b70e692dc1592",
     ),
 )
 

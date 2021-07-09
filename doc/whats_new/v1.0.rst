@@ -368,6 +368,13 @@ Changelog
   :user:`Alexandre Gramfort <agramfort>`.
   Same for BayesianRidge, ARDRegression in:
   :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
+  Same for :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.MultiTaskLasso`, :class:`linear_model.MultiTaskLassoCV`,
+  :class:`linear_model.MultiTaskElasticNet`,
+  :class:`linear_model.MultiTaskElasticNetCV`, in:
+  :pr:`17785` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
   The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
   :class:`linear_model.OrthogonalMatchingPursuitCV` will default to
   False in 1.2 and will be removed in 1.4.
@@ -397,6 +404,12 @@ Changelog
 - |Fix| Sample weight invariance for class:`Ridge` was fixed in :pr:`19616` by
   :user:`Oliver Grisel <ogrisel>` and
   :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Feature| Added new solver `lbfgs` (available with `solver="lbfgs"`)
+  and `positive` argument to class:`linear_model.Ridge`.
+  When `positive` is set to True, forces the coefficients to be positive
+  (only supported by `lbfgs`).
+  :pr:`20231` by :user:`Toshihiro Nakae <tnakae>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -587,6 +600,9 @@ Changelog
 - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Propreties that are decorated with :func:`utils.deprecated` correctly
+  wraps the property's docstring. :pr:`20385` by `Thomas Fan`_.
 
 :mod:`sklearn.validation`
 .........................

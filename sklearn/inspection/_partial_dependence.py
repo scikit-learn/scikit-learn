@@ -74,7 +74,7 @@ def _grid_from_X(X, percentiles, grid_resolution):
     if not all(0 <= x <= 1 for x in percentiles):
         raise ValueError("'percentiles' values must be in [0, 1].")
     if percentiles[0] >= percentiles[1]:
-        raise ValueError("percentiles[0] must be strictly less " "than percentiles[1].")
+        raise ValueError("percentiles[0] must be strictly less than percentiles[1].")
 
     if grid_resolution <= 1:
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
@@ -429,7 +429,7 @@ def partial_dependence(
     if kind != "average" and kind != "legacy":
         if method == "recursion":
             raise ValueError(
-                "The 'recursion' method only applies when 'kind' is set " "to 'average'"
+                "The 'recursion' method only applies when 'kind' is set to 'average'"
             )
         method = "brute"
 
