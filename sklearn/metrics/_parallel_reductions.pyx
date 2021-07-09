@@ -701,21 +701,25 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         ArgKmin._on_X_parallel_finalize(self, thread_num)
         free(self.dist_middle_terms_chunks[thread_num])
 
-    cdef void _on_Y_parallel_init(self,
-            ITYPE_t thread_num,
+    cdef void _on_Y_init(self,
+            ITYPE_t num_threads,
     ) nogil:
-        ArgKmin._on_Y_parallel_init(self, thread_num)
-        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
-            self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t))
+        cdef ITYPE_t thread_num
+        ArgKmin._on_Y_init(self, num_threads)
 
-    cdef void _on_Y_parallel_finalize(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
+        for thread_num in range(num_threads):
+            # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+            self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
+                self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t))
+
+    cdef void _on_Y_finalize(self,
+            ITYPE_t num_threads,
     ) nogil:
-        ArgKmin._on_Y_parallel_finalize(self, thread_num, X_start, X_end)
-        free(self.dist_middle_terms_chunks[thread_num])
+        cdef ITYPE_t thread_num
+        ArgKmin._on_Y_finalize(self, num_threads)
+
+        for thread_num in range(num_threads):
+            free(self.dist_middle_terms_chunks[thread_num])
 
     cdef int _reduce_on_chunks(self,
         const DTYPE_t[:, ::1] X,
