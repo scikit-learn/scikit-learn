@@ -469,7 +469,7 @@ Changelog
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
 :mod:`sklearn.mixture`
-..............................
+......................
 
 - |Fix| Ensure that the best parameters are set appropriately
   in the case of divergency for :class:`mixture.GaussianMixture` and
@@ -505,7 +505,7 @@ Changelog
 
 
 :mod:`sklearn.neighbors`
-..........................
+........................
 
 - |Enhancement| The creation of :class:`neighbors.KDTree` and
   :class:`neighbors.BallTree` has been improved for their worst-cases time
