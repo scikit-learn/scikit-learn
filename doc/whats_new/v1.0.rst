@@ -262,6 +262,13 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` take cgroups quotas
+  into account when deciding the number of threads used by OpenMP. This
+  avoids performance problems caused by over-subscription when using those
+  classes in a docker container for instance. :pr:`20477`
+  by `Thomas Fan`_.
+
 - |Fix| Do not allow to compute out-of-bag (OOB) score in
   :class:`ensemble.RandomForestClassifier` and
   :class:`ensemble.ExtraTreesClassifier` with multiclass-multioutput target
