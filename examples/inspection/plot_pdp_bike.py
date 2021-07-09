@@ -67,7 +67,7 @@ X["weather"].replace(to_replace="heavy_rain", value="rain", inplace=True)
 X["year"].value_counts()
 
 # %%
-# We see that we have data from two years. We will use the first year to  train the
+# We see that we have data from two years. We will use the first year to train the
 # model and the second year to test the model.
 mask_training = X["year"] == 0.0
 X_train, y_train = X[mask_training], y[mask_training]
@@ -124,7 +124,7 @@ for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
         np.linspace(
             start=xtick_start,
             stop=len(xticklabels),
-            step=len(xticklabels) // xtick_period,
+            num=len(xticklabels) // xtick_period,
         )
     )
     ax.set_xticklabels(xticklabels[xtick_start::xtick_period])
@@ -241,10 +241,10 @@ print("Computing partial dependence plots...")
 features = [
     "temp",
     "humidity",
-    "windspeed",  # numerical features
+    "windspeed",
     "season",
     "weather",
-    "hour",  # categorical features
+    "hour",
 ]
 tic = time()
 _, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8))
@@ -339,35 +339,48 @@ _ = display.figure_.suptitle(
 # However, it is worth noting that we are creating potential meaningless
 # synthetic samples if features are correlated.
 #
+# ICE vs. PDP
+# ...........
+# PDP is an average of the marginal effects of the features. Indeed, we averaging the
+# response of all samples of the provided set. Thus, some effects could be hidden. In
+# this regards, it is possible to plot each individual response. This representation is
+# called the Individual Effect Plot (ICE). In the plot below, we plot 50 randomly
+# selected ICEs for the temperature and humidity features.
+print("Computing partial dependence plots and individual conditional expectation...")
+tic = time()
+_, ax = plt.subplots(ncols=2, figsize=(6, 4))
+features = ["temp", "humidity"]
+display = plot_partial_dependence(
+    hgbdt_model,
+    X_train,
+    features,
+    kind="both",
+    grid_resolution=100,
+    subsample=50,
+    n_jobs=3,
+    ax=ax,
+    method="brute",
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
+
+# %%
+# We see that the ICE for the temperature feature gives us some additional information:
+# Some of the ICE lines are flat while some others shows a decrease of the dependence
+# for temperature above 35 degrees Celcius. We observe a similar pattern for the
+# humidity feature: some of the ICEs lines show a sharp decrease when the humidity is
+# above 80%.
+#
 # 2D interaction plots
 # --------------------
 #
-# PDPs with two features of interest enable us to visualize interactions among
-# them. However, ICEs cannot be plotted in an easy manner and thus interpreted.
-# Another consideration is linked to the performance to compute the PDPs. With
-# the tree-based algorithm, when only PDPs are requested, they can be computed
-# on an efficient way using the `'recursion'` method.
-print("Computing partial dependence plots...")
-features = ["season", "weather"]
-tic = time()
-display = plot_partial_dependence(
-    hgbdt_model,
-    X_test,
-    features,
-    kind="average",
-    subsample=20,
-    n_jobs=-1,
-    grid_resolution=20,
-    random_state=0,
-    categorical_features=categorical_features,
-)
-print(f"done in {time() - tic:.3f}s")
-display.figure_.suptitle(
-    "XXX",
-)
-display.figure_.subplots_adjust(hspace=1.0)
-
-# %%
+# Heatmap representation
+# ......................
+#
+# PDPs with two features of interest enable us to visualize interactions among them.
+# However, ICEs cannot be plotted in an easy manner and thus interpreted. We will show
+# the representation of available in :func:`~sklearn.inspection.plot_partial_dependence`
+# that is a 2D heatmap.
 print("Computing partial dependence plots...")
 features = ["temp", "humidity", ("temp", "humidity")]
 _, ax = plt.subplots(ncols=3, figsize=(9, 4))
@@ -377,46 +390,50 @@ display = plot_partial_dependence(
     X_train,
     features,
     kind="average",
-    n_jobs=-1,
+    n_jobs=3,
     grid_resolution=30,
     random_state=0,
     ax=ax,
 )
 print(f"done in {time() - tic:.3f}s")
-display.figure_.suptitle(
-    "XXX",
+_ = display.figure_.suptitle("1-way vs 2-way PDP using gradient boosting", fontsize=16)
+
+# %%
+# The two-way partial dependence plot shows the dependence of the number of bike rentals
+# on joint values of temperature and humidity.
+# We clearly see an interaction between the two features: XXXX.
+#
+# 3D representation
+# .................
+#
+# In the previous plot, we show a 2D heatmap representation of the 2-way interaction.
+# Here, we show a 3D representation that uses matplotlib.
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+from sklearn.inspection import partial_dependence
+
+fig = plt.figure()
+
+features = ("temp", "humidity")
+pdp = partial_dependence(
+    hgbdt_model, X_train, features=features, kind="average", grid_resolution=20
 )
-display.figure_.subplots_adjust(wspace=0.5, hspace=0.5)
-
-# %%
-
-# %%
-
-average_week_demand = bikes.frame.groupby(["year", "season", "weekday", "hour"]).mean()
-# average_week_demand["count"].groupby(["year", "season"]).plot.bar(figsize=(12, 4))
-average_week_demand["count"].groupby(["season"]).plot(figsize=(12, 4))
-
-# %%
-average_week_demand["count"].groupby(["season"]).plot.bar(figsize=(12, 4))
-
-# %%
-y_pred = mlp_model.predict(X)
-
-# %%
-from sklearn.metrics import r2_score
-
-plt.scatter(y_train, y_pred[mask_training], alpha=0.2)
-plt.title(f"Training set: {r2_score(y_train, y_pred[mask_training]):.3f}")
-
-# %%
-plt.scatter(y_test, y_pred[~mask_training], alpha=0.2)
-plt.title(f"Training set: {r2_score(y_test, y_pred[~mask_training]):.3f}")
-
-# %%
-residuals = y - y_pred
-plt.scatter(y_train, residuals[mask_training], alpha=0.2)
-
-# %%
-plt.scatter(y_test, residuals[~mask_training], alpha=0.2)
+XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
+Z = pdp.average[0].T
+ax = Axes3D(fig)
+surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu, edgecolor="k")
+ax.set_xlabel(features[0])
+ax.set_ylabel(features[1])
+ax.set_zlabel("Partial dependence")
+# pretty init view
+ax.view_init(elev=22, azim=122)
+plt.colorbar(surf)
+plt.suptitle(
+    "Partial dependence of number of bike rentals on\n"
+    "the temperature and humidity using a gradient boosting",
+    fontsize=16,
+)
+plt.subplots_adjust(top=0.9)
+plt.show()
 
 # %%
