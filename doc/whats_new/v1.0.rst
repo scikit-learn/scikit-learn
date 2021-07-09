@@ -310,7 +310,12 @@ Changelog
   :pr:`17169` by :user:`Dmytro Lituiev <DSLituiev>`
   and :user:`Julien Jerphanion <jjerphan>`.
 
-- |API| Raises an error in :class:`feature_selection.VarianceThreshold`
+  - |Enhancement| :class:`feature_selection.RFE` now accepts extra input as
+    ``**metadata`` during ``fit`` and ``score`` which are passed to the
+    corresponding scores of the underlying estimator. :pr:`20491` by
+    `Adrin Jalali`_.
+
+  - |API| Raises an error in :class:`feature_selection.VarianceThreshold`
   when the variance threshold is negative.
   :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
 
