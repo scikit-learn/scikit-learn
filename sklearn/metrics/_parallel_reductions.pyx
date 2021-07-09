@@ -289,9 +289,9 @@ cdef class PairwiseDistancesReduction:
                     )
                 # end: prange
 
-                # Synchronizing the thread datastructures with the main ones
-                # This can potentially block
-                self._on_Y_parallel_finalize(thread_num, X_start, X_end)
+            # Synchronizing the thread datastructures with the main ones
+            # This can potentially block
+            self._on_Y_after_parallel(num_threads, X_start, X_end)
             # end: with nogil, parallel
 
         # end: for X_chunk_idx
@@ -350,8 +350,8 @@ cdef class PairwiseDistancesReduction:
     ) nogil:
         return
 
-    cdef void _on_Y_parallel_finalize(self,
-        ITYPE_t thread_num,
+    cdef void _on_Y_after_parallel(self,
+        ITYPE_t num_threads,
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
@@ -525,27 +525,28 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
             self.heaps_indices_chunks[thread_num][idx] = -1
 
-    cdef void _on_Y_parallel_finalize(self,
-            ITYPE_t thread_num,
+    cdef void _on_Y_after_parallel(self,
+            ITYPE_t num_threads,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx
-        # TODO: see if synchronisation can be made in parallel samples-wise
-        # thanks to the context which wraps the call to this method
-        with gil:
-            # Synchronising the thread local heaps
-            # with the main heaps
-            for idx in range(X_end - X_start):
-                for jdx in range(self.k):
-                    _push(
-                        &self.argkmin_distances[X_start + idx, 0],
-                        &self.argkmin_indices[X_start + idx, 0],
-                        self.k,
-                        self.heaps_approx_distances_chunks[thread_num][idx * self.k + jdx],
-                        self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
-                    )
+            ITYPE_t idx, jdx, thread_num
+        with nogil, parallel(num_threads=self.effective_omp_n_thread):
+            # Synchronising the thread local heaps with the main heaps
+            # This is done in parallel samples-wise (no need for locks)
+            #
+            # Note: can this lead to false sharing?
+            for idx in prange(X_end - X_start, schedule="static"):
+                for thread_num in range(num_threads):
+                    for jdx in range(self.k):
+                        _push(
+                            &self.argkmin_distances[X_start + idx, 0],
+                            &self.argkmin_indices[X_start + idx, 0],
+                            self.k,
+                            self.heaps_approx_distances_chunks[thread_num][idx * self.k + jdx],
+                            self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
+                        )
 
 
     cdef void _on_Y_finalize(self,
@@ -863,6 +864,16 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self.radius = radius
         self.sort_results = False
 
+        # Pointers to datastructures used in threads for `parallel_on_Y` solely
+        self.neigh_distances_chunks = <vector[vector[DTYPE_t]] **> malloc(
+            sizeof(self.neigh_distances) * self.effective_omp_n_thread)
+        self.neigh_indices_chunks = <vector[vector[ITYPE_t]] **> malloc(
+            sizeof(self.neigh_indices) * self.effective_omp_n_thread)
+
+    def __dealloc(self):
+        free(self.neigh_distances_chunks)
+        free(self.neigh_indices_chunks)
+
     cdef int _reduce_on_chunks(self,
         const DTYPE_t[:, ::1] X,
         const DTYPE_t[:, ::1] Y,
@@ -915,11 +926,63 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                     deref(self.neigh_indices)[idx].data(),
                     deref(self.neigh_indices)[idx].size()
                 )
+
     cdef void _on_Y_parallel_init(self,
         ITYPE_t thread_num,
     ) nogil:
+        # As chunks of X are shared across threads, so must their
+        # vectors. To solve this, each thread has its own vectors
+        # which are then synchronised merged back in the main ones.
         self.neigh_distances_chunks[thread_num] = new vector[vector[DTYPE_t]](self.n_X)
         self.neigh_indices_chunks[thread_num] = new vector[vector[ITYPE_t]](self.n_X)
+
+    cdef void _merge_vectors(self,
+        ITYPE_t idx,
+        ITYPE_t num_threads,
+    ) nogil:
+        cdef:
+            ITYPE_t thread_num, idx_n_elements = 0, last_element_idx = 0
+        for thread_num in range(num_threads):
+            idx_n_elements += self.neigh_indices_chunks[thread_num][idx].size()
+
+        deref(self.neigh_distances)[idx].reserve(idx_n_elements)
+        deref(self.neigh_indices)[idx].reserve(idx_n_elements)
+
+        for thread_num in range(num_threads):
+            move(deref(self.neigh_distances_chunks[thread_num])[idx].begin(),
+                 deref(self.neigh_distances_chunks[thread_num])[idx].end(),
+                 deref(self.neigh_distances)[idx].begin() + last_element_idx)
+            move(deref(self.neigh_indices_chunks[thread_num])[idx].begin(),
+                 deref(self.neigh_indices_chunks[thread_num])[idx].end(),
+                 deref(self.neigh_indices)[idx].begin() + last_element_idx)
+            last_element_idx += self.neigh_indices_chunks[thread_num][idx].size()
+
+            free(self.neigh_distances_chunks[thread_num])
+            free(self.neigh_indices_chunks[thread_num])
+
+    cdef void _on_Y_after_parallel(self,
+        ITYPE_t num_threads,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil:
+        cdef:
+            ITYPE_t idx, jdx, idx_n_element, idx_current
+
+        # Merge associated vectors into one and sort in parallel
+        # in ascending order w.r.t the distances if needed
+        with nogil, parallel(num_threads=self.effective_omp_n_thread):
+            for idx in prange(self.n_X, schedule='static'):
+                self._merge_vectors(idx, num_threads)
+
+            if self.sort_results:
+                for idx in prange(self.n_X, schedule='static'):
+                    _simultaneous_sort(
+                        deref(self.neigh_distances)[idx].data(),
+                        deref(self.neigh_indices)[idx].data(),
+                        deref(self.neigh_indices)[idx].size()
+                    )
+
+        return
 
     cdef void _on_Y_finalize(self,
         ITYPE_t num_threads,
@@ -929,30 +992,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         # Merge associated vectors into one and sort in parallel
         # in ascending order w.r.t the distances if needed
-        for idx in range(self.n_X): #, schedule='static'):
-            idx_n_element = 0
-            for jdx in range(num_threads):
-                idx_n_element += self.neigh_indices_chunks[jdx][idx].size()
-
-            deref(self.neigh_distances)[idx].reserve(idx_n_element)
-            deref(self.neigh_indices)[idx].reserve(idx_n_element)
-
-            for jdx in range(num_threads):
-                move(deref(self.neigh_distances_chunks[jdx])[idx].begin(),
-                     deref(self.neigh_distances_chunks[jdx])[idx].end(),
-                     deref(self.neigh_distances)[idx].end())
-                move(deref(self.neigh_indices_chunks[jdx])[idx].begin(),
-                     deref(self.neigh_indices_chunks[jdx])[idx].end(),
-                     deref(self.neigh_indices)[idx].end())
-
-        for jdx in range(num_threads):
-            free(self.neigh_distances_chunks[jdx])
-            free(self.neigh_indices_chunks[jdx])
-
         if self.sort_results:
-            for idx in prange(self.n_X, schedule='static',
-                              num_threads=self.effective_omp_n_thread,
-                              nogil=True):
+            for idx in prange(self.n_X, schedule='static', nogil=True,
+                              num_threads=self.effective_omp_n_thread):
                 _simultaneous_sort(
                     deref(self.neigh_distances)[idx].data(),
                     deref(self.neigh_indices)[idx].data(),
@@ -966,13 +1008,21 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
            bint return_distance = False,
            bint sort_results = False
     ):
-        # Won't be freed for reasons stated at their definition.
-        self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
+        # This won't be freed for reasons stated at their definition.
         self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
 
-        # TODO: setup thread local datastructures for supporting _parallel_on_Y
+        # This is freed then if return_distance = False
+        self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
+
         self.sort_results = sort_results
-        self._parallel_on_X()
+
+        if strategy == 'parallel_on_Y':
+            self._parallel_on_Y()
+        elif strategy == 'parallel_on_X':
+            self._parallel_on_X()
+        else:
+            raise RuntimeError(f"strategy '{strategy}' not supported.")
+
         return self._finalise_compute(return_distance)
 
     def _finalise_compute(self,
