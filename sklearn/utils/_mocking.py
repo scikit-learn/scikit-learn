@@ -192,7 +192,6 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         self
         """
         assert _num_samples(X) == _num_samples(y)
-
         if self.methods_to_check == "all" or "fit" in self.methods_to_check:
             X, y = self._check_X_y(X, y, should_be_fitted=False)
         self.n_features_in_ = np.shape(X)[1]

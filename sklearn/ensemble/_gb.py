@@ -464,6 +464,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             estimator and requests certain metadata, they should be included
             in ``fit_params``.
 
+            .. versionadded:: 1.1
+
         Returns
         -------
         self : object
@@ -882,6 +884,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def get_metadata_request(self):
         """Get requested data properties.
+
+        .. versionadded:: 1.1
 
         Returns
         -------

@@ -151,6 +151,8 @@ class _MultimetricScorer:
     def get_metadata_request(self):
         """Get requested data properties.
 
+        .. versionadded:: 1.1
+
         Returns
         -------
         request : dict
@@ -237,6 +239,8 @@ class _BaseScorer(_MetadataRequester):
         **kwargs : dict
             Other parameters passed to the scorer.
 
+            .. versionadded:: 1.1
+
         Returns
         -------
         score : float
@@ -251,6 +255,13 @@ class _BaseScorer(_MetadataRequester):
     def score_requests(self, **kwargs):
         """Set requested parameters by the scorer.
 
+        Note that this method returns a new instance of the scorer, and does
+        **not** change the original scorer object.
+
+        .. versionadded:: 1.1
+
+        Parameters
+        ----------
         kwargs : dict
             Arguments should be of the form param_name={True, False, None, str}.
             The value can also be of the form RequestType
@@ -282,6 +293,8 @@ class _PredictScorer(_BaseScorer):
 
         **kwargs : dict
             Other parameters passed to the scorer.
+
+            .. versionadded:: 1.1
 
         Returns
         -------
@@ -318,6 +331,8 @@ class _ProbaScorer(_BaseScorer):
 
         **kwargs : dict
             Other parameters passed to the scorer.
+
+            .. versionadded:: 1.1
 
         Returns
         -------
@@ -371,6 +386,8 @@ class _ThresholdScorer(_BaseScorer):
 
         **kwargs : dict
             Other parameters passed to the scorer.
+
+            .. versionadded:: 1.1
 
         Returns
         -------
@@ -458,6 +475,8 @@ class _passthrough_scorer:
 
     def get_metadata_request(self):
         """Get requested data properties.
+
+        .. versionadded:: 1.1
 
         Returns
         -------
@@ -689,6 +708,8 @@ def make_scorer(
         A list of required properties, or a mapping of the form
         ``{"required_metadata": "provided_metadata"}``, or None.
 
+        .. versionadded:: 1.1
+
     **kwargs : additional arguments
         Additional parameters to be passed to score_func.
 
@@ -751,14 +772,6 @@ neg_mean_absolute_error_scorer = make_scorer(
 neg_mean_absolute_percentage_error_scorer = make_scorer(
     mean_absolute_percentage_error,
     greater_is_better=False,
-)
-neg_median_absolute_error_scorer = make_scorer(
-    median_absolute_error, greater_is_better=False
-)
-neg_root_mean_squared_error_scorer = make_scorer(
-    mean_squared_error,
-    greater_is_better=False,
-    squared=False,
 )
 neg_median_absolute_error_scorer = make_scorer(
     median_absolute_error, greater_is_better=False

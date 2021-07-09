@@ -9,11 +9,12 @@ from collections import defaultdict
 import platform
 import inspect
 import re
+
 import numpy as np
 
 from . import __version__
-from .utils import _IS_32BIT
 from ._config import get_config
+from .utils import _IS_32BIT
 from .utils._tags import (
     _DEFAULT_TAGS,
     _safe_tags,
@@ -149,7 +150,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 class BaseEstimator(_MetadataRequester):
-    """Base class for all estimators in scikit-learn
+    """Base class for all estimators in scikit-learn.
 
     Notes
     -----

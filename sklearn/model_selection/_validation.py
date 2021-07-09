@@ -137,6 +137,8 @@ def cross_validate(
     props : dict, default=None
         The metadata required to be passed to the underlying relevant methods.
 
+        .. versionadded:: 1.1
+
     pre_dispatch : int or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
@@ -459,6 +461,8 @@ def cross_val_score(
     props : dict, default=None
         The metadata required to be passed to the underlying relevant methods.
 
+        .. versionadded:: 1.1
+
     pre_dispatch : int or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
@@ -598,6 +602,8 @@ def _fit_and_score(
 
     score_params : dict or None
         Parameters that will be passed to the scorer.
+
+        .. versionadded:: 1.1
 
     return_train_score : bool, default=False
         Compute and return score on training set.

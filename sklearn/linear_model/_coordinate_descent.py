@@ -1486,6 +1486,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         **kwargs : dict
             Other arguments to be passed to the underlying score and CV methods.
 
+            .. versionadded:: 1.1
+
         Returns
         -------
         self : object
@@ -1726,6 +1728,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
     def get_metadata_request(self):
         """Get requested data properties.
+
+        .. versionadded:: 1.1
 
         Returns
         -------

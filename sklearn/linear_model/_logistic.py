@@ -2023,6 +2023,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         **fit_params : dict of str -> array-like
             Parameters requested by the scorer and the CV splitter.
 
+            .. versionadded:: 1.1
+
         Returns
         -------
         self : object
@@ -2407,6 +2409,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     def get_metadata_request(self):
         """Get requested data properties.
+
+        .. versionadded:: 1.1
 
         Returns
         -------

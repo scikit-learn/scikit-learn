@@ -60,6 +60,8 @@ class CVMetadataRequester:
     def get_metadata_request(self):
         """Get requested data properties.
 
+        .. versionadded:: 1.1
+
         Returns
         -------
         request : dict
@@ -768,6 +770,7 @@ class BaseSearchCV(
             fit_params.update({"groups": groups})
         estimator = self.estimator
         refit_metric = "score"
+
         if callable(self.scoring):
             scorers = score_router = self.scoring
         elif self.scoring is None or isinstance(self.scoring, str):

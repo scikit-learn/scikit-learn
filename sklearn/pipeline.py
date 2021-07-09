@@ -265,6 +265,8 @@ class Pipeline(_BaseComposition):
     def get_metadata_request(self):
         """Get requested data properties.
 
+        .. versionadded:: 1.1
+
         Returns
         -------
         request : dict

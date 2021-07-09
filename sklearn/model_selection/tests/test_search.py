@@ -1,4 +1,4 @@
-"""test the search module"""
+"""Test the search module"""
 
 from collections.abc import Iterable, Sized
 from io import StringIO
@@ -13,15 +13,17 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
+from sklearn.utils._testing import (
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_allclose,
+    assert_almost_equal,
+    ignore_warnings,
+    MinimalClassifier,
+    MinimalRegressor,
+    MinimalTransformer,
+)
 from sklearn.utils import MetadataRequest
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import MinimalClassifier
-from sklearn.utils._testing import MinimalRegressor
-from sklearn.utils._testing import MinimalTransformer
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
@@ -2245,8 +2247,6 @@ def test_scalar_fit_param(SearchCV, param_search):
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
     class TestEstimator(ClassifierMixin, BaseEstimator):
-        _metadata_request__r = {"fit": ["r"]}
-
         def __init__(self, a=None):
             self.a = a
 
@@ -2281,11 +2281,6 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
     )
 
     class _FitParamClassifier(SGDClassifier):
-        _metadata_request__sample_weight = {"fit": "sample_weight"}
-        _metadata_request__tuple_of_arrays = {"fit": "tuple_of_arrays"}
-        _metadata_request__scalar_param = {"fit": "scalar_param"}
-        _metadata_request__callable_param = {"fit": "callable_param"}
-
         def fit(
             self,
             X,

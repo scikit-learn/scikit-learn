@@ -290,6 +290,8 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         This method mirrors the given regressor's ``fit`` metadata request.
 
+        .. versionadded:: 1.1
+
         Returns
         -------
         request : dict

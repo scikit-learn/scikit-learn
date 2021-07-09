@@ -52,7 +52,12 @@ __all__ = [
 ]
 
 
-class GroupsConsumer(_MetadataRequester):
+class GroupsComsumerMixin(_MetadataRequester):
+    """A Mixin to add support for ``groups``
+
+    .. versionadded:: 1.1
+    """
+
     _metadata_request__groups = {"split": {"groups": RequestType.REQUESTED}}
 
 
@@ -63,7 +68,7 @@ class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):
     """
 
     # This indicates that by default CV splitters don't have a "groups" kwarg,
-    # unless indicated by inheriting from ``GroupsConsumer``.
+    # unless indicated by inheriting from ``GroupsComsumerMixin``.
     _metadata_request__groups = {"split": {"groups": RequestType.UNUSED}}
 
     def split(self, X, y=None, groups=None):
@@ -459,7 +464,7 @@ class KFold(_BaseKFold):
             current = stop
 
 
-class GroupKFold(GroupsConsumer, _BaseKFold):
+class GroupKFold(GroupsComsumerMixin, _BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
     The same group will not appear in two different folds (the number of
@@ -1107,7 +1112,7 @@ class TimeSeriesSplit(_BaseKFold):
                 )
 
 
-class LeaveOneGroupOut(GroupsConsumer, BaseCrossValidator):
+class LeaveOneGroupOut(GroupsComsumerMixin, BaseCrossValidator):
     """Leave One Group Out cross-validator
 
     Provides train/test indices to split data according to a third-party
@@ -1217,7 +1222,7 @@ class LeaveOneGroupOut(GroupsConsumer, BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class LeavePGroupsOut(GroupsConsumer, BaseCrossValidator):
+class LeavePGroupsOut(GroupsComsumerMixin, BaseCrossValidator):
     """Leave P Group(s) Out cross-validator
 
     Provides train/test indices to split data according to a third-party
@@ -1567,7 +1572,7 @@ class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     # This indicates that by default CV splitters don't have a "groups" kwarg,
-    # unless indicated by inheriting from ``GroupsConsumer``.
+    # unless indicated by inheriting from ``GroupsComsumerMixin``.
     _metadata_request__groups = {"split": {"groups": RequestType.UNUSED}}
 
     def __init__(
@@ -1734,7 +1739,7 @@ class ShuffleSplit(BaseShuffleSplit):
             yield ind_train, ind_test
 
 
-class GroupShuffleSplit(GroupsConsumer, ShuffleSplit):
+class GroupShuffleSplit(GroupsComsumerMixin, ShuffleSplit):
     """Shuffle-Group(s)-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
