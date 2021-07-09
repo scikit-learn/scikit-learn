@@ -44,6 +44,12 @@ from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 from ..utils._typedefs import ITYPE, DTYPE
 
+# As type covariance is not supported for C++ container via Cython,
+# we need to redefine a fused type
+ctypedef fused vector_vector_DITYPE_t:
+    vector[vector[ITYPE_t]]
+    vector[vector[DTYPE_t]]
+
 # TODO: This has been introduced in Cython 3.0, change for `libcpp.algorithm.move` once Cython 3 is used
 # Introduction in Cython:
 # https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L47
@@ -69,24 +75,10 @@ cdef np.ndarray[DITYPE_t, ndim=1] buffer_to_numpy_array(DITYPE_t * ptr, np.npy_i
     PyArray_ENABLEFLAGS(arr, np.NPY_OWNDATA)
     return arr
 
-# TODO: this got duplicated because type covariance is not support; i.e. the following function
-#
-#       cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(vector[vector[DITYPE_t]] * vecs)
-#
-# cannot be called dispatched for vector[vector[ITYPE_t]]* and vector[vector[DTYPE_t]]*
-cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays_ITYPE(vector[vector[ITYPE_t]]* vecs):
-    cdef ITYPE_t n = deref(vecs).size()
-    np_arrays_of_np_arrays = np.empty(n, dtype=np.ndarray)
-
-    for i in range(n):
-        np_arrays_of_np_arrays[i] = buffer_to_numpy_array(deref(vecs)[i].data(),
-                                                           deref(vecs)[i].size())
-
-    return np_arrays_of_np_arrays
-
-cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays_DTYPE(vector[vector[DTYPE_t]]* vecs):
-    cdef ITYPE_t n = deref(vecs).size()
-    np_arrays_of_np_arrays = np.empty(n, dtype=np.ndarray)
+cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(vector_vector_DITYPE_t* vecs):
+    cdef:
+        ITYPE_t n = deref(vecs).size()
+        np.ndarray[object, ndim=1] np_arrays_of_np_arrays = np.empty(n, dtype=np.ndarray)
 
     for i in range(n):
         np_arrays_of_np_arrays[i] = buffer_to_numpy_array(deref(vecs)[i].data(),
@@ -1043,10 +1035,10 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
            bint return_distance
     ):
         if return_distance:
-            return (_coerce_vectors_to_np_nd_arrays_DTYPE(self.neigh_distances),
-                    _coerce_vectors_to_np_nd_arrays_ITYPE(self.neigh_indices))
+            return (_coerce_vectors_to_np_nd_arrays(self.neigh_distances),
+                    _coerce_vectors_to_np_nd_arrays(self.neigh_indices))
 
         # We need to free the buffers here because they won't be managed
         # by a numpy array then.
         free(self.neigh_distances)
-        return _coerce_vectors_to_np_nd_arrays_ITYPE(self.neigh_indices)
+        return _coerce_vectors_to_np_nd_arrays(self.neigh_indices)
