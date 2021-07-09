@@ -17,8 +17,9 @@ np.import_array()
 from libc.stdlib cimport free, malloc
 from libcpp.vector cimport vector
 from cython.operator cimport dereference as deref
-
 from cython.parallel cimport parallel, prange
+
+from scipy.sparse import issparse
 
 from ._dist_metrics cimport DistanceMetric
 from ._dist_metrics import METRIC_MAPPING
@@ -126,6 +127,15 @@ cdef class PairwiseDistancesReduction:
     def valid_metrics(cls):
         excluded = {"pyfunc", "sokalmichener", "matching", "jaccard"}
         return sorted({*METRIC_MAPPING.keys()}.difference(excluded))
+
+    @classmethod
+    def is_usable_for(cls, X, Y, metric) -> bool:
+        # TODO: support sparse arrays
+        return (not issparse(X) and
+                not issparse(X) and
+                X.dtype == Y.dtype == np.float64
+                and metric in cls.valid_metrics())
+
 
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults

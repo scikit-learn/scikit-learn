@@ -23,7 +23,7 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..metrics._parallel_reductions import ArgKmin
+from ..metrics._parallel_reductions import ArgKmin, RadiusNeighborhood
 from ..utils import (
     check_array,
     gen_even_slices,
@@ -736,12 +736,8 @@ class KNeighborsMixin:
                 X, n_neighbors=n_neighbors, return_distance=return_distance
             )
 
-        elif (
-            # TODO: support sparse arrays
-            not issparse(X)
-            and not issparse(self._fit_X)
-            and self._fit_method == "brute"
-            and self.effective_metric_ in ArgKmin.valid_metrics()
+        elif self._fit_method == "brute" and ArgKmin.is_usable_for(
+            X, self._fit_X, self.effective_metric_
         ):
             results = ArgKmin.get_for(
                 X=X,
@@ -1059,13 +1055,22 @@ class RadiusNeighborsMixin:
                 X, radius=radius, return_distance=return_distance
             )
 
+        elif self._fit_method == "brute" and RadiusNeighborhood.is_usable_for(
+            X, self._fit_X, self.effective_metric_
+        ):
+            results = RadiusNeighborhood.get_for(
+                X=X,
+                Y=self._fit_X,
+                radius=radius,
+                metric=self.effective_metric_,
+                metric_kwargs=self.effective_metric_params_,
+            ).compute(
+                strategy="auto",
+                return_distance=return_distance,
+                sort_results=sort_results,
+            )
+
         elif self._fit_method == "brute":
-            # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == "euclidean":
-                radius *= radius
-                kwds = {"squared": True}
-            else:
-                kwds = self.effective_metric_params_
 
             reduce_func = partial(
                 self._radius_neighbors_reduce_func,
@@ -1079,7 +1084,7 @@ class RadiusNeighborsMixin:
                 reduce_func=reduce_func,
                 metric=self.effective_metric_,
                 n_jobs=self.n_jobs,
-                **kwds,
+                **self.effective_metric_params_,
             )
             if return_distance:
                 neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
