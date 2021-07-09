@@ -442,7 +442,6 @@ def test_pairwise_distances_argmin_min():
 
     expected_idx = [0, 1]
     expected_vals = [2, 2]
-    expected_vals_sq = [4, 4]
 
     # euclidean metric
     idx, vals = pairwise_distances_argmin_min(X, Y, metric="euclidean")
@@ -460,10 +459,12 @@ def test_pairwise_distances_argmin_min():
 
     # euclidean metric squared
     idx, vals = pairwise_distances_argmin_min(
-        X, Y, metric="euclidean", metric_kwargs={"squared": True}
+        X,
+        Y,
+        metric="fast_sqeuclidean",
     )
     assert_array_almost_equal(idx, expected_idx)
-    assert_array_almost_equal(vals, expected_vals_sq)
+    assert_array_almost_equal(vals, expected_vals)
 
     # Non-euclidean scikit-learn metric
     idx, vals = pairwise_distances_argmin_min(X, Y, metric="manhattan")

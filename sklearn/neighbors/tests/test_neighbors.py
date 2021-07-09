@@ -1285,9 +1285,11 @@ def test_neighbors_badargs():
 
 def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5):
     # Test computing the neighbors for various metrics
-    # create a symmetric matrix
-    V = rng.rand(n_features, n_features)
-    VI = np.dot(V, V.T)
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(n_samples, n_features)
+    test = rng.rand(n_query_pts, n_features)
+    V = np.cov(X.T)
 
     metrics = [
         ("euclidean", {}),
@@ -1299,18 +1301,25 @@ def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbor
         ("chebyshev", {}),
         ("seuclidean", dict(V=rng.rand(n_features))),
         ("wminkowski", dict(p=3, w=rng.rand(n_features))),
-        ("mahalanobis", dict(VI=VI)),
+        ("mahalanobis", dict(V=V)),
         ("haversine", {}),
     ]
     algorithms = ["brute", "ball_tree", "kd_tree"]
-    X = rng.rand(n_samples, n_features)
-
-    test = rng.rand(n_query_pts, n_features)
 
     for metric, metric_params in metrics:
         if metric == "wminkowski" and sp_version >= parse_version("1.8.0"):
             # wminkowski will be removed in SciPy 1.8.0
             continue
+
+        # Haversine distance only accepts 2D data
+        if metric == "haversine":
+            feature_sl = slice(None, 2)
+            X_train = np.ascontiguousarray(X[:, feature_sl])
+            X_test = np.ascontiguousarray(test[:, feature_sl])
+        else:
+            X_train = X
+            X_test = test
+
         results = {}
         p = metric_params.pop("p", 2)
         for algorithm in algorithms:
@@ -1330,20 +1339,15 @@ def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbor
                 metric_params=metric_params,
             )
 
-            # Haversine distance only accepts 2D data
-            feature_sl = slice(None, 2) if metric == "haversine" else slice(None)
+            neigh.fit(X_train)
 
-            neigh.fit(X[:, feature_sl])
+            results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
-            results[algorithm] = neigh.kneighbors(
-                test[:, feature_sl], return_distance=True
-            )
-
-        assert_array_almost_equal(results["brute"][0], results["ball_tree"][0])
-        assert_array_almost_equal(results["brute"][1], results["ball_tree"][1])
+        assert_allclose(results["brute"][0], results["ball_tree"][0])
+        assert_allclose(results["brute"][1], results["ball_tree"][1])
         if "kd_tree" in results:
-            assert_array_almost_equal(results["brute"][0], results["kd_tree"][0])
-            assert_array_almost_equal(results["brute"][1], results["kd_tree"][1])
+            assert_allclose(results["brute"][0], results["kd_tree"][0])
+            assert_allclose(results["brute"][1], results["kd_tree"][1])
 
 
 def test_callable_metric():
@@ -1575,16 +1579,16 @@ def test_k_and_radius_neighbors_duplicates(algorithm):
     nn.fit(X)
     dist, ind = nn.kneighbors()
     assert_array_equal(dist, np.zeros((3, 1)))
-    assert_array_equal(ind, [[1], [0], [1]])
+    assert_array_equal(ind, [[2], [2], [0]])
 
     # Test that zeros are explicitly marked in kneighbors_graph.
     kng = nn.kneighbors_graph(mode="distance")
     assert_array_equal(kng.A, np.zeros((3, 3)))
     assert_array_equal(kng.data, np.zeros(3))
-    assert_array_equal(kng.indices, [1.0, 0.0, 1.0])
+    assert_array_equal(kng.indices, [2.0, 2.0, 0.0])
     assert_array_equal(
         nn.kneighbors_graph().A,
-        np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]),
     )
 
 
