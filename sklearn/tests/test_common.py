@@ -313,9 +313,10 @@ def test_check_n_features_in_after_fitting(estimator):
 # TODO: When more modules get added, we can remove it from this list to make
 # sure it gets tested. After we finish each module we can move the checks
 # into check_estimator.
-# NOTE: Metaestimators that delegates validation to the inner estimator is
-# is actually checking that the inner estimator checks for column name
-# consistency
+# NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
+# delegates validation to a base estimator, the check is testing that the base estimator
+# is checking for column name consistency.
+
 COLUMN_NAME_MODULES_TO_IGNORE = {
     "compose",
     "ensemble",

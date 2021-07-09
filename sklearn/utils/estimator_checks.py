@@ -3428,19 +3428,10 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         import pandas as pd
     except ImportError:
         raise SkipTest(
-            "pandas is not installed: not checking "
-            "column name consistency for pandas"
+            "pandas is not installed: not checking column name consistency "
+            "for pandas"
         )
 
-    def _construct_dataframe(X, columns):
-        return pd.DataFrame(X, columns=columns)
-
-    _check_column_name_consistency(
-        name, estimator_orig, _construct_dataframe, "dataframe"
-    )
-
-
-def _check_column_name_consistency(name, estimator_orig, construct_X, array_name):
     tags = _safe_tags(estimator_orig)
 
     if (
@@ -3454,8 +3445,6 @@ def _check_column_name_consistency(name, estimator_orig, construct_X, array_name
 
     estimator = clone(estimator_orig)
     set_random_state(estimator)
-    if "warm_start" in estimator.get_params():
-        estimator.set_params(warm_start=False)
 
     X_orig = rng.normal(size=(150, 8))
     X_orig = _enforce_estimator_tags_x(estimator, X_orig)
@@ -3463,57 +3452,81 @@ def _check_column_name_consistency(name, estimator_orig, construct_X, array_name
     n_samples, n_features = X_orig.shape
 
     names = np.array([f"col_{i}" for i in range(n_features)])
-    X = construct_X(X_orig, names)
+    X = pd.DataFrame(X_orig, columns=names)
 
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
-
     estimator.fit(X, y)
 
     if not hasattr(estimator, "feature_names_in_"):
         raise ValueError(
             "Estimator does not have a feature_names_in_ "
-            f"attribute after fitting with a {array_name}"
+            "attribute after fitting with a dataframe"
         )
 
-    check_funcs = [
-        getattr(estimator, func)
-        for func in ("predict", "transform", "decision_function", "predict_proba")
-        if hasattr(estimator, func)
-    ]
-    for func in check_funcs:
-        func(X)  # works
+    check_methods = []
+    for method in (
+        "predict",
+        "transform",
+        "decision_function",
+        "predict_proba",
+        "score",
+        "predict_log_proba",
+    ):
+        if not hasattr(estimator, method):
+            continue
+
+        callable_method = getattr(estimator, method)
+        if method == "score":
+            callable_method = partial(callable_method, y=y)
+        check_methods.append((method, callable_method))
+
+    for _, method in check_methods:
+        method(X)  # works
 
     assert_array_equal(estimator.feature_names_in_, names)
-    bad_names = names[::-1]
-    X_bad = construct_X(X, bad_names)
 
-    expected_msg = (
-        "The column names should match those that were passed "
-        "during fit. Starting version 1.2, an error will be raised"
-    )
-    for method in check_funcs:
-        # TODO In 1.2, this will be an error.
+    invalid_names = [
+        names[::-1],
+        [f"another_prefix_{i}" for i in range(n_features)],
+        names[:3],
+    ]
+
+    for invalid_name in invalid_names:
+        X_bad = pd.DataFrame(X, columns=invalid_name)
+
+        expected_msg = (
+            "The column names should match those that were passed "
+            "during fit. Starting version 1.2, an error will be raised"
+        )
+        for name, method in check_methods:
+            # TODO In 1.2, this will be an error.
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "error",
+                    category=FutureWarning,
+                    module="sklearn",
+                )
+                with raises(
+                    FutureWarning, match=expected_msg, err_msg=f"{name} did not raise"
+                ):
+                    method(X_bad)
+
+        # partial_fit checks on second call
+        if not hasattr(estimator, "partial_fit"):
+            continue
+
+        estimator = clone(estimator_orig)
+        if is_classifier(estimator):
+            classes = np.unique(y)
+            estimator.partial_fit(X, y, classes=classes)
+        else:
+            estimator.partial_fit(X, y)
+
         with warnings.catch_warnings():
             warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
             with raises(FutureWarning, match=expected_msg):
-                method(X_bad)
-
-    # partial_fit checks on second call
-    if not hasattr(estimator, "partial_fit"):
-        return  # partial_fit is not defined
-
-    estimator = clone(estimator_orig)
-    if is_classifier(estimator):
-        classes = np.unique(y)
-        estimator.partial_fit(X, y, classes=classes)
-    else:
-        estimator.partial_fit(X, y)
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
-        with raises(FutureWarning, match=expected_msg):
-            estimator.partial_fit(X_bad, y)
+                estimator.partial_fit(X_bad, y)

@@ -399,7 +399,7 @@ class BaseEstimator:
 
         Parameters
         ----------
-        X : {dataframe-like} of shape (n_samples, n_features)
+        X : {ndarray, dataframe} of shape (n_samples, n_features)
             The input samples.
 
         reset : bool

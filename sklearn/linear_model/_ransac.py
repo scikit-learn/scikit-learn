@@ -562,6 +562,7 @@ class RANSACRegressor(
             Score of the prediction.
         """
         check_is_fitted(self)
+        self._check_feature_names(X, reset=False)
 
         return self.estimator_.score(X, y)
 

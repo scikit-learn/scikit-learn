@@ -1597,7 +1597,7 @@ def _get_feature_names(X):
 
     Parameters
     ----------
-    X : dataframe of shape (n_samples, n_features)
+    X : {ndarray, dataframe} of shape (n_samples, n_features)
         Array container to extract feature names.
 
         - pandas DataFrame : The columns will be considered to be feature
@@ -1609,10 +1609,5 @@ def _get_feature_names(X):
     names: Sequence of str or None
         Column names of `X`. Unrecognized array containers will return `None`.
     """
-    if hasattr(X, "iloc"):
-        with suppress(ImportError):
-            # check explicitly for pandas
-            import pandas as pd
-
-            if isinstance(X, pd.DataFrame):
-                return X.columns
+    if hasattr(X, "columns"):
+        return X.columns
