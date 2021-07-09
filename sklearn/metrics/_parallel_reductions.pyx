@@ -202,7 +202,7 @@ cdef class PairwiseDistancesReduction:
         with nogil, parallel(num_threads=num_threads):
             thread_num = openmp.omp_get_thread_num()
 
-            # Allocating thread local datastructures
+            # Allocating thread datastructures
             self._on_X_parallel_init(thread_num)
 
             for X_chunk_idx in prange(self.X_n_chunks, schedule='static'):
@@ -212,7 +212,7 @@ cdef class PairwiseDistancesReduction:
                 else:
                     X_end = X_start + self.X_n_samples_chunk
 
-                # Reinitializing thread local datastructures for the new X chunk
+                # Reinitializing thread datastructures for the new X chunk
                 self._on_X_prange_iter_init(thread_num, X_chunk_idx, X_start, X_end)
 
                 for Y_chunk_idx in range(self.Y_n_chunks):
@@ -230,12 +230,12 @@ cdef class PairwiseDistancesReduction:
                         thread_num,
                     )
 
-                # Adjusting thread local datastructures on the full pass on Y
+                # Adjusting thread datastructures on the full pass on Y
                 self._on_X_prange_iter_finalize(thread_num, X_chunk_idx, X_start, X_end)
 
             # end: for X_chunk_idx
 
-            # Deallocating thread local datastructures
+            # Deallocating thread datastructures
             self._on_X_parallel_finalize(thread_num)
 
         # end: with nogil, parallel
@@ -263,10 +263,9 @@ cdef class PairwiseDistancesReduction:
                 X_end = X_start + self.X_n_samples_chunk
 
             with nogil, parallel(num_threads=num_threads):
-                # Thread local buffers
                 thread_num = openmp.omp_get_thread_num()
 
-                # Allocating thread local datastructures
+                # Initializing datastructures used in this thread
                 self._on_Y_parallel_init(thread_num)
 
                 for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
@@ -286,12 +285,13 @@ cdef class PairwiseDistancesReduction:
                     )
                 # end: prange
 
-                # Synchronizing thread local datastructures with the main ones
+                # Synchronizing the thread datastructures with the main ones
                 # This can potentially block
                 self._on_Y_parallel_finalize(thread_num, X_chunk_idx, X_start, X_end)
             # end: with nogil, parallel
 
         # end: for X_chunk_idx
+        # Deallocating temporary datastructures
         # Adjusting main datastructures before returning
         self._on_Y_finalize(num_threads)
         return
@@ -422,7 +422,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_X, self.k), FLOAT_INF, dtype=DTYPE)
 
-        # Pointers to thread local heaps used in threads for `parallel_on_Y` solely
+        # Pointers to thread heaps used in threads for `parallel_on_Y` solely
         self.heaps_approx_distances_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
 
@@ -476,8 +476,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     ) nogil:
 
         # As this strategy is embarrassingly parallel, we can set the
-        # thread-local heaps pointers to the proper position
-        # on the main heaps
+        # thread heaps pointers to the proper position on the main heaps
         self.heaps_approx_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
         self.heaps_indices_chunks[thread_num] = &self.argkmin_indices[X_start, 0]
 
@@ -969,7 +968,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             return (_coerce_vectors_to_np_nd_arrays_DTYPE(self.neigh_distances),
                     _coerce_vectors_to_np_nd_arrays_ITYPE(self.neigh_indices))
 
-        # We need to free the buffers here because they won't be
-        #
+        # We need to free the buffers here because they won't be managed
+        # by a numpy array then.
         free(self.neigh_distances)
         return _coerce_vectors_to_np_nd_arrays_ITYPE(self.neigh_indices)
