@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-# from threadpoolctl import threadpool_limits
+from threadpoolctl import threadpool_limits
 
 from ..exceptions import ConvergenceWarning
 from ..exceptions import EfficiencyWarning
@@ -16,83 +16,83 @@ from ._kmeans import _kmeans_single_lloyd
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
 
-# from ._k_means_lloyd import lloyd_iter_chunked_dense
-# from ._k_means_lloyd import lloyd_iter_chunked_sparse
+from ._k_means_lloyd import lloyd_iter_chunked_dense
+from ._k_means_lloyd import lloyd_iter_chunked_sparse
 
 from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 
 from ..utils.validation import check_array
+# from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
 
 
+def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
+    """Compute the labels of the given samples and centers.
 
-# def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
-#     """Compute the labels of the given samples and centers.
-#
-#     Parameters
-#     ----------
-#     X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-#         The input samples to assign to the labels. If sparse matrix, must
-#         be in CSR format.
-#
-#     sample_weight : ndarray of shape (n_samples,)
-#         The weights for each observation in X.
-#
-#     x_squared_norms : ndarray of shape (n_samples,)
-#         Precomputed squared euclidean norm of each data point, to speed up
-#         computations.
-#
-#     centers : ndarray of shape (n_clusters, n_features)
-#         The cluster centers.
-#
-#     n_threads : int, default=1
-#         The number of OpenMP threads to use for the computation. Parallelism is
-#         sample-wise on the main cython loop which assigns each sample to its
-#         closest center.
-#
-#     Returns
-#     -------
-#     labels : ndarray of shape (n_samples,)
-#         The resulting assignment (Labels of each point).
-#     """
-#     n_samples = X.shape[0]
-#     n_clusters = centers.shape[0]
-#
-#     labels = np.full(n_samples, -1, dtype=np.int32)
-#     weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
-#     center_shift = np.zeros_like(weight_in_clusters)
-#
-#     if sp.issparse(X):
-#         _labels = lloyd_iter_chunked_sparse
-#     else:
-#         _labels = lloyd_iter_chunked_dense
-#
-#     _labels(
-#         X,
-#         sample_weight,
-#         x_squared_norms,
-#         centers,
-#         centers,
-#         weight_in_clusters,
-#         labels,
-#         center_shift,
-#         n_threads,
-#         update_centers=False,
-#     )
-#
-#     return labels
-#
-#
-# def _check_labels_threadpool_limit(
-#     X, sample_weight, x_squared_norms, centers, n_threads=1
-# ):
-#     """Same as _check_labels but in a threadpool_limits context."""
-#     with threadpool_limits(limits=1, user_api="blas"):
-#         labels = _check_labels(X, sample_weight, x_squared_norms, centers, n_threads)
-#
-#     return labels
+    Parameters
+    ----------
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The input samples to assign to the labels. If sparse matrix, must
+        be in CSR format.
+
+    sample_weight : ndarray of shape (n_samples,)
+        The weights for each observation in X.
+
+    x_squared_norms : ndarray of shape (n_samples,)
+        Precomputed squared euclidean norm of each data point, to speed up
+        computations.
+
+    centers : ndarray of shape (n_clusters, n_features)
+        The cluster centers.
+
+    n_threads : int, default=1
+        The number of OpenMP threads to use for the computation. Parallelism is
+        sample-wise on the main cython loop which assigns each sample to its
+        closest center.
+
+    Returns
+    -------
+    labels : ndarray of shape (n_samples,)
+        The resulting assignment (Labels of each point).
+    """
+    n_samples = X.shape[0]
+    n_clusters = centers.shape[0]
+
+    labels = np.full(n_samples, -1, dtype=np.int32)
+    weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
+    center_shift = np.zeros_like(weight_in_clusters)
+
+    if sp.issparse(X):
+        _labels = lloyd_iter_chunked_sparse
+    else:
+        _labels = lloyd_iter_chunked_dense
+
+    _labels(
+        X,
+        sample_weight,
+        x_squared_norms,
+        centers,
+        centers,
+        weight_in_clusters,
+        labels,
+        center_shift,
+        n_threads,
+        update_centers=False,
+    )
+
+    return labels
+
+
+def _check_labels_threadpool_limit(
+    X, sample_weight, x_squared_norms, centers, n_threads=1
+):
+    """Same as _check_labels but in a threadpool_limits context."""
+    with threadpool_limits(limits=1, user_api="blas"):
+        labels = _check_labels(X, sample_weight, x_squared_norms, centers, n_threads)
+
+    return labels
 
 
 class BisectKMeans(KMeans):
@@ -528,8 +528,8 @@ class BisectKMeans(KMeans):
         tree_dict = {-1: {"children": None, "center": None}}
 
         # Leaves Dictionary used for clustering.
-        # Stores information which data points are assigned to given cluster ('samples')
-        # along with error or amount of assigned points ('error_or_size'), depending on
+        # Stores information which data points are assigned to given cluster
+        # along with error or amount of assigned points, depending on
         # specified 'bisect_strategy'
         leaves_dict = {
             -1: {"samples": np.ones(X.shape[0], dtype=bool), "error_or_size": None}
@@ -566,7 +566,8 @@ class BisectKMeans(KMeans):
                 # to pick cluster with largest number of data points assigned
                 metrics_values = np.bincount(_labels)
 
-            # "Create Hierarchy" - cluster with smaller metrics value (SSE or ammount of points)
+            # "Create Hierarchy":
+            # Cluster with smaller metrics value (SSE or ammount of points)
             # will be at 'left side' and cluster with higher at 'right side'
             lower_id = 0 if metrics_values[0] <= metrics_values[1] else 1
             centers_id = [lower_id, 1 - lower_id]
@@ -633,7 +634,7 @@ class BisectKMeans(KMeans):
 
         centers = np.asarray(centers)
 
-        # # Inner Tree will be later used at 'predict' method:
-        # self._inner_tree = tree_dict
+        # Inner Tree will be later used at 'predict' method:
+        self._inner_tree = tree_dict
 
         return centers, labels
