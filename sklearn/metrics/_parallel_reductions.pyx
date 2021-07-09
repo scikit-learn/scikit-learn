@@ -681,7 +681,6 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
 
     def __dealloc__(self):
-        ArgKmin.__dealloc__(self)
         if self.dist_middle_terms_chunks is not NULL:
             free(self.dist_middle_terms_chunks)
         else:
