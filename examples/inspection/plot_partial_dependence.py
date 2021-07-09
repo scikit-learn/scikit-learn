@@ -125,8 +125,8 @@ display = plot_partial_dependence(
        n_jobs=3,
        grid_resolution=20,
        random_state=0,
-       ice_lines_kw={"color": "b", "alpha": 0.3, "linewidth": 0.5},
-       pd_line_kw={"color": "r"},
+       ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+       pd_line_kw={"color": "tab:orange", "linestyle": "--"},
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -175,8 +175,8 @@ display = plot_partial_dependence(
     n_jobs=3,
     grid_resolution=20,
     random_state=0,
-    ice_lines_kw={"color": "b", "alpha": 0.3, "linewidth": 0.5},
-    pd_line_kw={"color": "r"},
+       ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+       pd_line_kw={"color": "tab:orange", "linestyle": "--"},
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(

@@ -191,17 +191,19 @@ def plot_partial_dependence(
         For one-way partial dependence plots.
 
     ice_lines_kw : dict, default=None
-        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+        Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
         For ICE lines in the one-way partial dependence plots.
-        Takes priority over ```line_kw`` when not ``None``.
+        Takes priority over `line_kw` when not `None`.
 
         .. versionadded:: 1.0
+
     pd_line_kw : dict, default=None
-        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+        Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
         For partial dependence in one-way partial dependence plots.
-        Takes priority over ```line_kw`` when not ``None``.
+        Takes priority over `line_kw` when not `None`.
 
         .. versionadded:: 1.0
+
     contour_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
         For two-way partial dependence plots.
@@ -897,17 +899,19 @@ class PartialDependenceDisplay:
             For one-way partial dependence plots.
 
         ice_lines_kw : dict, default=None
-            Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+            Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
             For ICE lines in the one-way partial dependence plots.
-            Takes priority over ```line_kw`` when not ``None``.
+            Takes priority over `line_kw` when not `None`.
 
             .. versionadded:: 1.0
+
         pd_line_kw : dict, default=None
-            Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+            Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
             For partial dependence in one-way partial dependence plots.
-            Takes priority over ```line_kw`` when not ``None``.
+            Takes priority over `line_kw` when not `None`.
 
             .. versionadded:: 1.0
+
         contour_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
@@ -928,14 +932,14 @@ class PartialDependenceDisplay:
 
         if line_kw is not None and ice_lines_kw is not None:
             warnings.warn(
-                "Both line_kw and ice_lines_kw are specified. ice_lines_kw "
-                "will take priority. Do not pass line_kw to silence this "
+                "Both `line_kw` and `ice_lines_kw` are specified. `ice_lines_kw` "
+                "will take priority. Do not pass `line_kw` to silence this "
                 "warning."
             )
         if line_kw is not None and pd_line_kw is not None:
             warnings.warn(
-                "Both line_kw and pd_line_kw are specified. pd_line_kw will "
-                "take priority. Do not pass line_kw to silence this warning."
+                "Both `line_kw` and `pd_line_kw` are specified. `pd_line_kw` will "
+                "take priority. Do not pass `line_kw` to silence this warning."
             )
 
         if ax is None:

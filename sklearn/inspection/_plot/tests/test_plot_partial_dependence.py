@@ -710,8 +710,8 @@ def test_plot_partial_dependence_lines_kw(
     expected_colors,
 ):
     """
-    check that passing pd_line_kw and ice_lines_kw will act on the
-    specific lines in the plot
+    Check that passing `pd_line_kw` and `ice_lines_kw` will act on the
+    specific lines in the plot.
     """
 
     disp = plot_partial_dependence(
@@ -740,8 +740,8 @@ def test_plot_partial_dependence_lines_kw_warnings(
     diabetes,
 ):
     """
-    check that passing line_kw along with pd_line_kw and ice_lines_kw
-    raises warnings
+    Check that passing `line_kw` along with `pd_line_kw` and `ice_lines_kw`
+    raises warnings.
     """
     with pytest.warns(UserWarning, match=r"^Both line_kw and") as record:
         plot_partial_dependence(
@@ -759,12 +759,12 @@ def test_plot_partial_dependence_lines_kw_warnings(
 
     warnings_messages = {rcd.message.args[0] for rcd in record}
     ice_lines_kw_msg = (
-        "Both line_kw and ice_lines_kw are specified. ice_lines_kw "
-        "will take priority. Do not pass line_kw to silence this warning."
+        "Both `line_kw` and `ice_lines_kw` are specified. `ice_lines_kw` "
+        "will take priority. Do not pass `line_kw` to silence this warning."
     )
     pd_line_kw_msg = (
-        "Both line_kw and pd_line_kw are specified. pd_line_kw "
-        "will take priority. Do not pass line_kw to silence this warning."
+        "Both `line_kw` and `pd_line_kw` are specified. `pd_line_kw` "
+        "will take priority. Do not pass `line_kw` to silence this warning."
     )
 
     assert ice_lines_kw_msg in warnings_messages
