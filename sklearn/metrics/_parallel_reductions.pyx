@@ -252,7 +252,7 @@ cdef class PairwiseDistancesReduction:
         """
         cdef:
             ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx
-            ITYPE_t num_threads = min(self.X_n_chunks, self.effective_omp_n_thread)
+            ITYPE_t num_threads = min(self.Y_n_chunks, self.effective_omp_n_thread)
             ITYPE_t thread_num
 
         # TODO: put the "with nogil, parallel"-context here
