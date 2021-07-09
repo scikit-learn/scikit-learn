@@ -44,9 +44,11 @@ from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 from ..utils._typedefs import ITYPE, DTYPE
 
-
+# TODO: This has been introduced in Cython 3.0, change for `libcpp.algorithm.move` once Cython 3 is used
+# Introduction in Cython:
+# https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L47
 cdef extern from "<algorithm>" namespace "std" nogil:
-    OutputIt move[InputIt, OutputIt](InputIt first, InputIt last, OutputIt d_first)
+    OutputIt move[InputIt, OutputIt](InputIt first, InputIt last, OutputIt d_first) except +
 
 ######################
 ## std::vector to np.ndarray coercion
@@ -533,10 +535,10 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         cdef:
             ITYPE_t idx, jdx, thread_num
         with nogil, parallel(num_threads=self.effective_omp_n_thread):
-            # Synchronising the thread local heaps with the main heaps
+            # Synchronising the thread heaps with the main heaps
             # This is done in parallel samples-wise (no need for locks)
             #
-            # Note: can this lead to false sharing?
+            # NOTE: can this lead to false sharing?
             for idx in prange(X_end - X_start, schedule="static"):
                 for thread_num in range(num_threads):
                     for jdx in range(self.k):
@@ -905,7 +907,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     ) nogil:
 
         # As this strategy is embarrassingly parallel, we can set the
-        # thread-local vectors' pointers to the main vectors'.
+        # thread  vectors' pointers to the main vectors'.
         self.neigh_distances_chunks[thread_num] = self.neigh_distances
         self.neigh_indices_chunks[thread_num] = self.neigh_indices
 
@@ -944,14 +946,15 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             ITYPE_t idx_n_elements = 0
             ITYPE_t last_element_idx = deref(self.neigh_indices)[idx].size()
 
-        # Resizing buffers once for the given
+        # Resizing buffers only once for the given
         for thread_num in range(num_threads):
             idx_n_elements += deref(self.neigh_distances_chunks[thread_num])[idx].size()
 
         deref(self.neigh_distances)[idx].resize(last_element_idx + idx_n_elements)
         deref(self.neigh_indices)[idx].resize(last_element_idx + idx_n_elements)
 
-        # Moving the element at the right place
+        # Moving the elements by range using the range first element
+        # as the reference for the insertion
         for thread_num in range(num_threads):
             move(
                 deref(self.neigh_distances_chunks[thread_num])[idx].begin(),
@@ -973,23 +976,19 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     ) nogil:
         cdef:
             ITYPE_t idx, thread_num
-        # Merge associated vectors into one and sort in parallel
-        # in ascending order w.r.t the distances if needed
+        # Merge associated vectors into one
+        # This is done in parallel samples-wise (no need for locks)
         with nogil, parallel(num_threads=self.effective_omp_n_thread):
             for idx in prange(self.n_X, schedule='static'):
                 self._merge_vectors(idx, num_threads)
 
+            # The content of the vector have been std::moved,
+            # Hence they can't be used anymore and can only
+            # be deleted.
             for thread_num in prange(num_threads, schedule='static'):
                 del self.neigh_distances_chunks[thread_num]
                 del self.neigh_indices_chunks[thread_num]
 
-            if self.sort_results:
-                for idx in prange(self.n_X, schedule='static'):
-                    _simultaneous_sort(
-                        deref(self.neigh_distances)[idx].data(),
-                        deref(self.neigh_indices)[idx].data(),
-                        deref(self.neigh_indices)[idx].size()
-                    )
         return
 
     cdef void _on_Y_finalize(self,
@@ -998,8 +997,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         cdef:
             ITYPE_t idx, jdx, thread_num, idx_n_element, idx_current
 
-        # Merge associated vectors into one and sort in parallel
-        # in ascending order w.r.t the distances if needed
+        # Sort in parallel in ascending order w.r.t the distances if needed
         if self.sort_results:
             for idx in prange(self.n_X, schedule='static', nogil=True,
                               num_threads=self.effective_omp_n_thread):
@@ -1019,7 +1017,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         # This won't be freed for reasons stated at their definition.
         self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
 
-        # This is freed then if return_distance = False
+        # This will be freed then solely if return_distance = False
         self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
 
         self.sort_results = sort_results
