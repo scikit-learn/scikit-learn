@@ -401,7 +401,9 @@ _ = display.figure_.suptitle("1-way vs 2-way PDP using gradient boosting", fonts
 # %%
 # The two-way partial dependence plot shows the dependence of the number of bike rentals
 # on joint values of temperature and humidity.
-# We clearly see an interaction between the two features: XXXX.
+# We clearly see an interaction between the two features. For a temperature higher than
+# 20 degrees Celcius, the humidity will have a greater impact of the number of bike
+# rentals.
 #
 # 3D representation
 # .................
@@ -429,11 +431,8 @@ ax.set_zlabel("Partial dependence")
 ax.view_init(elev=22, azim=122)
 plt.colorbar(surf)
 plt.suptitle(
-    "Partial dependence of number of bike rentals on\n"
-    "the temperature and humidity using a gradient boosting",
+    "PD of number of bike rentals on\nthe temperature and humidity using",
     fontsize=16,
 )
 plt.subplots_adjust(top=0.9)
 plt.show()
-
-# %%
