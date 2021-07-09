@@ -864,7 +864,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self.radius = radius
         self.sort_results = False
 
-        # Pointers to datastructures used in threads for `parallel_on_Y` solely
+        # Pointers to datastructures used in threads
         self.neigh_distances_chunks = <vector[vector[DTYPE_t]] **> malloc(
             sizeof(self.neigh_distances) * self.effective_omp_n_thread)
         self.neigh_indices_chunks = <vector[vector[ITYPE_t]] **> malloc(
@@ -891,11 +891,10 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
-                dist_i_j = self.distance_metric.dist(
-                    &X_c[i, 0], &Y_c[j, 0], self.d)
+                dist_i_j = self.distance_metric.dist(&X_c[i, 0], &Y_c[j, 0], self.d)
                 if dist_i_j <= self.radius:
-                    deref(self.neigh_distances)[X_start + i].push_back(dist_i_j)
-                    deref(self.neigh_indices)[X_start + i].push_back(Y_start + j)
+                    deref(self.neigh_distances_chunks[thread_num])[X_start + i].push_back(dist_i_j)
+                    deref(self.neigh_indices_chunks[thread_num])[X_start + i].push_back(Y_start + j)
 
         return 0
 
@@ -941,24 +940,31 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         ITYPE_t num_threads,
     ) nogil:
         cdef:
-            ITYPE_t thread_num, idx_n_elements = 0, last_element_idx = 0
+            ITYPE_t thread_num
+            ITYPE_t idx_n_elements = 0
+            ITYPE_t last_element_idx = deref(self.neigh_indices)[idx].size()
+
+        # Resizing buffers once for the given
         for thread_num in range(num_threads):
-            idx_n_elements += self.neigh_indices_chunks[thread_num][idx].size()
+            idx_n_elements += deref(self.neigh_distances_chunks[thread_num])[idx].size()
 
-        deref(self.neigh_distances)[idx].reserve(idx_n_elements)
-        deref(self.neigh_indices)[idx].reserve(idx_n_elements)
+        deref(self.neigh_distances)[idx].resize(last_element_idx + idx_n_elements)
+        deref(self.neigh_indices)[idx].resize(last_element_idx + idx_n_elements)
 
+        # Moving the element at the right place
         for thread_num in range(num_threads):
-            move(deref(self.neigh_distances_chunks[thread_num])[idx].begin(),
-                 deref(self.neigh_distances_chunks[thread_num])[idx].end(),
-                 deref(self.neigh_distances)[idx].begin() + last_element_idx)
-            move(deref(self.neigh_indices_chunks[thread_num])[idx].begin(),
-                 deref(self.neigh_indices_chunks[thread_num])[idx].end(),
-                 deref(self.neigh_indices)[idx].begin() + last_element_idx)
-            last_element_idx += self.neigh_indices_chunks[thread_num][idx].size()
+            move(
+                deref(self.neigh_distances_chunks[thread_num])[idx].begin(),
+                deref(self.neigh_distances_chunks[thread_num])[idx].end(),
+                deref(self.neigh_distances)[idx].begin() + last_element_idx
+            )
+            move(
+                deref(self.neigh_indices_chunks[thread_num])[idx].begin(),
+                deref(self.neigh_indices_chunks[thread_num])[idx].end(),
+                deref(self.neigh_indices)[idx].begin() + last_element_idx
+            )
+            last_element_idx += deref(self.neigh_distances_chunks[thread_num])[idx].size()
 
-            free(self.neigh_distances_chunks[thread_num])
-            free(self.neigh_indices_chunks[thread_num])
 
     cdef void _on_Y_after_parallel(self,
         ITYPE_t num_threads,
@@ -966,13 +972,16 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx, idx_n_element, idx_current
-
+            ITYPE_t idx, thread_num
         # Merge associated vectors into one and sort in parallel
         # in ascending order w.r.t the distances if needed
         with nogil, parallel(num_threads=self.effective_omp_n_thread):
             for idx in prange(self.n_X, schedule='static'):
                 self._merge_vectors(idx, num_threads)
+
+            for thread_num in prange(num_threads, schedule='static'):
+                del self.neigh_distances_chunks[thread_num]
+                del self.neigh_indices_chunks[thread_num]
 
             if self.sort_results:
                 for idx in prange(self.n_X, schedule='static'):
@@ -981,7 +990,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                         deref(self.neigh_indices)[idx].data(),
                         deref(self.neigh_indices)[idx].size()
                     )
-
         return
 
     cdef void _on_Y_finalize(self,
@@ -1015,6 +1023,14 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
 
         self.sort_results = sort_results
+
+        if strategy == 'auto':
+            # This is a simple heuristic whose constant for the
+            # comparison has been chosen based on experiments.
+            if 4 * self.chunk_size * self.effective_omp_n_thread < self.n_X:
+                strategy = 'parallel_on_X'
+            else:
+                strategy = 'parallel_on_Y'
 
         if strategy == 'parallel_on_Y':
             self._parallel_on_Y()
