@@ -1826,31 +1826,37 @@ def test_pairwise_deprecated(NearestNeighbors):
         nn._pairwise
 
 
-@pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("d", [5, 10, 100])
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("ratio_train_test", [10, 2, 1, 0.5])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
 def test_fast_sqeuclidean_correctness(
-    n,
-    d,
+    n_samples,
+    n_features,
     ratio_train_test,
     n_neighbors,
     dtype=np.float64,
 ):
     # The fast squared euclidean strategy must return results
     # that are close to the ones obtained with the euclidean distance
-    if n < n_neighbors:
+    if n_samples < n_neighbors:
         pytest.skip(
-            f"Skipping as n (={n}) < n_neighbors (={n_neighbors})",
+            f"Skipping as n_samples (={n_samples}) < n_neighbors (={n_neighbors})",
             allow_module_level=True,
         )
 
     rng = np.random.RandomState(1)
 
     spread = 100
-    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread
+    X_train = (
+        rng.rand(int(n_samples * n_features)).astype(dtype).reshape((-1, n_features))
+        * spread
+    )
     X_test = (
-        rng.rand(int(n * d / ratio_train_test)).astype(dtype).reshape((-1, d)) * spread
+        rng.rand(int(n_samples * n_features / ratio_train_test))
+        .astype(dtype)
+        .reshape((-1, n_features))
+        * spread
     )
 
     neigh = NearestNeighbors(
@@ -1871,8 +1877,8 @@ def test_fast_sqeuclidean_correctness(
     assert_array_equal(eucl_nn, fse_nn)
 
 
-@pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("d", [5, 10, 100, 500])
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("n_features", [5, 10, 100, 500])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
 @pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 @pytest.mark.skip(
@@ -1880,23 +1886,23 @@ def test_fast_sqeuclidean_correctness(
     "have its own study: skipping for now"
 )
 def test_fast_sqeuclidean_translation_invariance(
-    n,
-    d,
+    n_samples,
+    n_features,
     n_neighbors,
     translation,
     dtype=np.float64,
 ):
     # The fast squared euclidean strategy should be translation invariant.
-    if n < n_neighbors:
+    if n_samples < n_neighbors:
         pytest.skip(
-            f"Skipping as n (={n}) < n_neighbors (={n_neighbors})",
+            f"Skipping as n_samples (={n_samples}) < n_neighbors (={n_neighbors})",
             allow_module_level=True,
         )
 
     rng = np.random.RandomState(1)
     spread = 100
-    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread
-    X_test = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread
+    X_train = rng.rand(n_samples, n_features).astype(dtype) * spread
+    X_test = rng.rand(n_samples, n_features).astype(dtype) * spread
 
     neigh = NearestNeighbors(
         n_neighbors=n_neighbors, algorithm="brute", metric="fast_sqeuclidean"
@@ -1916,27 +1922,30 @@ def test_fast_sqeuclidean_translation_invariance(
     assert_array_equal(reference_nns, nns)
 
 
-@pytest.mark.parametrize("n", [10 ** i for i in [3, 4]])
-@pytest.mark.parametrize("d", [2])
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [3, 4]])
+@pytest.mark.parametrize("n_features", [2])
 @pytest.mark.parametrize("ratio_train_test", [10, 1, 0.5])
 @pytest.mark.parametrize("radius", [100, 500])
 @pytest.mark.parametrize("metric", RadiusNeighborhood.valid_metrics())
 def test_fast_radius_neighborhood_reduction_consistency(
-    n,
-    d,
+    n_samples,
+    n_features,
     ratio_train_test,
     radius,
     metric,
     spread=1000,
     dtype=np.float64,
 ):
-    # Temporary transitionalconsistency check
+    # Temporary transitional consistency check
     # TODO: remove once the implementation is stabilized.
     rng = np.random.RandomState(1)
 
-    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread
+    X_train = rng.rand(n_samples, n_features).astype(dtype) * spread
     X_test = (
-        rng.rand(int(n * d / ratio_train_test)).astype(dtype).reshape((-1, d)) * spread
+        rng.rand(int(n_samples * n_features / ratio_train_test))
+        .astype(dtype)
+        .reshape((-1, n_features))
+        * spread
     )
 
     rn = RadiusNeighborhood.get_for(X=X_test, Y=X_train, radius=radius, metric=metric)
