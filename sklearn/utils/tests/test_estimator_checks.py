@@ -4,6 +4,7 @@
 
 import unittest
 import sys
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -713,7 +714,10 @@ def test_check_class_weight_balanced_linear_classifier():
 def test_all_estimators_all_public():
     # all_estimator should not fail when pytest is not installed and return
     # only public estimators
-    estimators = all_estimators()
+    with warnings.catch_warnings(record=True) as record:
+        estimators = all_estimators()
+    # no warnings are raised
+    assert not record
     for est in estimators:
         assert not est.__class__.__name__.startswith("_")
 
