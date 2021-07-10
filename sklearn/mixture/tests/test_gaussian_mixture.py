@@ -1267,34 +1267,41 @@ def test_init_param():
     rand_data = RandomData(rng)
 
     n_components = rand_data.n_components
-    X = rand_data.X['full']
-    gmm = GaussianMixture(n_components=n_components, random_state=rng,
-                          init_params='kmeans')
+    X = rand_data.X["full"]
+    gmm = GaussianMixture(
+        n_components=n_components, random_state=rng, init_params="kmeans"
+    )
     gmm.fit(X)
     default_means = np.sort(gmm.means_.flatten())
 
-    INIT_TYPE = ['random', 'rand_data', 'k-means++', 'kmeans']
+    INIT_TYPE = ["random", "rand_data", "k-means++", "kmeans"]
 
     for init in INIT_TYPE:
-        gmm = GaussianMixture(n_components=n_components, random_state=rng,
-                              init_params=init, tol=1e-06, max_iter=1000)
+        gmm = GaussianMixture(
+            n_components=n_components,
+            random_state=rng,
+            init_params=init,
+            tol=1e-06,
+            max_iter=1000,
+        )
         gmm.fit(X)
-        assert_almost_equal(default_means, np.sort(gmm.means_.flatten()),
-                            decimal=1)
+        assert_almost_equal(default_means, np.sort(gmm.means_.flatten()), decimal=1)
 
     # Check that all initialisations provide unique starting means
 
     rand_data = RandomData(rng, scale=5)
-    X = rand_data.X['full']
+    X = rand_data.X["full"]
 
-    gmm = GaussianMixture(n_components=n_components, random_state=0,
-                          init_params='kmeans', max_iter=1)
+    gmm = GaussianMixture(
+        n_components=n_components, random_state=0, init_params="kmeans", max_iter=1
+    )
     gmm.fit(X)
     default_means_init = {}
 
     for init in INIT_TYPE:
-        gmm = GaussianMixture(n_components=n_components, random_state=0,
-                              init_params=init, max_iter=1)
+        gmm = GaussianMixture(
+            n_components=n_components, random_state=0, init_params=init, max_iter=1
+        )
         gmm.fit(X)
         default_means_init[init] = gmm.means_
 
@@ -1303,6 +1310,6 @@ def test_init_param():
             if i_mean == j_mean:
                 pass
             else:
-                assert np.any(np.not_equal(
-                    default_means_init[i_mean],
-                    default_means_init[j_mean]))
+                assert np.any(
+                    np.not_equal(default_means_init[i_mean], default_means_init[j_mean])
+                )

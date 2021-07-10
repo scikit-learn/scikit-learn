@@ -81,15 +81,13 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         if self.n_components < 1:
             raise ValueError(
                 "Invalid value for 'n_components': %d "
-                "Estimation requires at least one component"
-                % self.n_components
+                "Estimation requires at least one component" % self.n_components
             )
 
         if self.tol < 0.0:
             raise ValueError(
                 "Invalid value for 'tol': %.5f "
-                "Tolerance used by the EM must be non-negative"
-                % self.tol
+                "Tolerance used by the EM must be non-negative" % self.tol
             )
 
         if self.n_init < 1:
@@ -108,8 +106,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "Invalid value for 'reg_covar': %.5f "
                 "regularization on covariance must be "
-                "non-negative"
-                % self.reg_covar
+                "non-negative" % self.reg_covar
             )
 
         # Check all the parameters values of the derived class
@@ -151,17 +148,21 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         elif self.init_params == "random":
             resp = random_state.rand(n_samples, self.n_components)
             resp /= resp.sum(axis=1)[:, np.newaxis]
-        elif self.init_params == 'rand_data':
+        elif self.init_params == "rand_data":
             resp = np.zeros((n_samples, self.n_components))
-            points = random_state.choice(range(n_samples), self.n_components,
-                                         replace=False)
+            points = random_state.choice(
+                range(n_samples), self.n_components, replace=False
+            )
             for n, i in enumerate(points):
                 resp[i, n] = 1
-        elif self.init_params == 'k-means++':
+        elif self.init_params == "k-means++":
             resp = np.zeros((n_samples, self.n_components))
-            _, indices = kmeans_plusplus(X, self.n_components,
-                                         x_squared_norms=row_norms(X, squared=True),
-                                         random_state=random_state)
+            _, indices = kmeans_plusplus(
+                X,
+                self.n_components,
+                x_squared_norms=row_norms(X, squared=True),
+                random_state=random_state,
+            )
             for n, i in enumerate(indices.astype(int)):
                 resp[i, n] = 1
         else:
