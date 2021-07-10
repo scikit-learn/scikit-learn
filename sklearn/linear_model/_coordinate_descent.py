@@ -235,18 +235,18 @@ def lasso_path(
 
     y : {array-like, sparse matrix} of shape (n_samples,) or \
         (n_samples, n_targets)
-        Target values
+        Target values.
 
     eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``
+        ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, default=100
-        Number of alphas along the regularization path
+        Number of alphas along the regularization path.
 
     alphas : ndarray, default=None
         List of alphas where to compute the models.
-        If ``None`` alphas are set automatically
+        If ``None`` alphas are set automatically.
 
     precompute : 'auto', bool or array-like of shape \
             (n_features, n_features), default='auto'
@@ -269,14 +269,14 @@ def lasso_path(
         Amount of verbosity.
 
     return_n_iter : bool, default=False
-        whether to return the number of iterations or not.
+        Whether to return the number of iterations or not.
 
     positive : bool, default=False
         If set to True, forces coefficients to be positive.
         (Only allowed when ``y.ndim == 1``).
 
     **params : kwargs
-        keyword arguments passed to the coordinate descent solver.
+        Keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -293,6 +293,18 @@ def lasso_path(
     n_iters : list of int
         The number of iterations taken by the coordinate descent optimizer to
         reach the specified tolerance for each alpha.
+
+    See Also
+    --------
+    lars_path : Compute Least Angle Regression or Lasso path using LARS
+        algorithm.
+    Lasso : The Lasso is a linear model that estimates sparse coefficients.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoCV : Lasso linear model with iterative fitting along a regularization
+        path.
+    LassoLarsCV : Cross-validated Lasso using the LARS algorithm.
+    sklearn.decomposition.sparse_encode : Estimator that can be used to
+        transform signals into sparse linear combination of atoms from a fixed.
 
     Notes
     -----
@@ -331,15 +343,6 @@ def lasso_path(
     >>> print(coef_path_continuous([5., 1., .5]))
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
-
-    See Also
-    --------
-    lars_path
-    Lasso
-    LassoLars
-    LassoCV
-    LassoLarsCV
-    sklearn.decomposition.sparse_encode
     """
     return enet_path(
         X,
@@ -1481,6 +1484,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         Returns
         -------
         self : object
+            Returns an instance of fitted model.
         """
 
         # Do as _deprecate_normalize but without warning as it's raised
@@ -1840,16 +1844,16 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.linear_model import LassoCV
-    >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(noise=4, random_state=0)
-    >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
-    >>> reg.score(X, y)
-    0.9993...
-    >>> reg.predict(X[:1,])
-    array([-78.4951...])
+    lars_path : Compute Least Angle Regression or Lasso path using LARS
+        algorithm.
+    lasso_path : Compute Lasso path with coordinate descent.
+    Lasso : The Lasso is a linear model that estimates sparse coefficients.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoCV : Lasso linear model with iterative fitting along a regularization
+        path.
+    LassoLarsCV : Cross-validated Lasso using the LARS algorithm.
 
     Notes
     -----
@@ -1860,13 +1864,16 @@ class LassoCV(RegressorMixin, LinearModelCV):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    See Also
+    Examples
     --------
-    lars_path
-    lasso_path
-    LassoLars
-    Lasso
-    LassoLarsCV
+    >>> from sklearn.linear_model import LassoCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
+    >>> reg.score(X, y)
+    0.9993...
+    >>> reg.predict(X[:1,])
+    array([-78.4951...])
     """
 
     path = staticmethod(lasso_path)
@@ -3013,12 +3020,13 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Data
+            Data.
         y : ndarray of shape (n_samples, n_targets)
-            Target. Will be cast to X's dtype if necessary
+            Target. Will be cast to X's dtype if necessary.
 
         Returns
         -------
         self : object
+            Returns an instance of fitted model.
         """
         return super().fit(X, y)
