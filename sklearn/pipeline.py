@@ -957,8 +957,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         for name, trans, weight in self._iter():
             if not hasattr(trans, "get_feature_names"):
                 raise AttributeError(
-                    "Transformer %s (type %s) does not "
-                    "provide get_feature_names." % (str(name), type(trans).__name__)
+                    "Transformer %s (type %s) does not provide get_feature_names."
+                    % (str(name), type(trans).__name__)
                 )
             feature_names.extend([name + "__" + f for f in trans.get_feature_names()])
         return feature_names

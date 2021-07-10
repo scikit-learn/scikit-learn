@@ -224,10 +224,10 @@ class _PLS(
                 # TODO: raise an error in 1.1
                 warnings.warn(
                     f"As of version 0.24, n_components({n_components}) should "
-                    f"be in [1, n_features]."
+                    "be in [1, n_features]."
                     f"n_components={rank_upper_bound} will be used instead. "
-                    f"In version 1.1 (renaming of 0.26), an error will be "
-                    f"raised.",
+                    "In version 1.1 (renaming of 0.26), an error will be "
+                    "raised.",
                     FutureWarning,
                 )
                 n_components = rank_upper_bound
@@ -239,18 +239,18 @@ class _PLS(
                 # TODO: raise an error in 1.1
                 warnings.warn(
                     f"As of version 0.24, n_components({n_components}) should "
-                    f"be in [1, min(n_features, n_samples, n_targets)] = "
+                    "be in [1, min(n_features, n_samples, n_targets)] = "
                     f"[1, {rank_upper_bound}]. "
                     f"n_components={rank_upper_bound} will be used instead. "
-                    f"In version 1.1 (renaming of 0.26), an error will be "
-                    f"raised.",
+                    "In version 1.1 (renaming of 0.26), an error will be "
+                    "raised.",
                     FutureWarning,
                 )
                 n_components = rank_upper_bound
 
         if self.algorithm not in ("svd", "nipals"):
             raise ValueError(
-                "algorithm should be 'svd' or 'nipals', got " f"{self.algorithm}."
+                f"algorithm should be 'svd' or 'nipals', got {self.algorithm}."
             )
 
         self._norm_y_weights = self.deflation_mode == "canonical"  # 1.1
@@ -985,10 +985,10 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             # TODO: raise an error in 1.1
             warnings.warn(
                 f"As of version 0.24, n_components({n_components}) should be "
-                f"in [1, min(n_features, n_samples, n_targets)] = "
+                "in [1, min(n_features, n_samples, n_targets)] = "
                 f"[1, {rank_upper_bound}]. "
                 f"n_components={rank_upper_bound} will be used instead. "
-                f"In version 1.1 (renaming of 0.26), an error will be raised.",
+                "In version 1.1 (renaming of 0.26), an error will be raised.",
                 FutureWarning,
             )
             n_components = rank_upper_bound

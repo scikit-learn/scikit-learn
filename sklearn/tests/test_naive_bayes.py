@@ -837,7 +837,7 @@ def test_alpha():
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
     nb = BernoulliNB(alpha=0.0)
-    msg = "alpha too small will result in numeric errors," " setting alpha = 1.0e-10"
+    msg = "alpha too small will result in numeric errors, setting alpha = 1.0e-10"
     with pytest.warns(UserWarning, match=msg):
         nb.partial_fit(X, y, classes=[0, 1])
     with pytest.warns(UserWarning, match=msg):

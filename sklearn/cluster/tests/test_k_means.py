@@ -425,7 +425,7 @@ def test_warning_n_init_precomputed_centers(Estimator):
     # the init parameter.
     with pytest.warns(
         RuntimeWarning,
-        match="Explicit initial center position passed: " "performing only one init",
+        match="Explicit initial center position passed: performing only one init",
     ):
         Estimator(init=centers, n_clusters=n_clusters, n_init=10).fit(X)
 
@@ -986,7 +986,7 @@ def test_minibatch_kmeans_deprecated_attributes(attr):
     # check that we raise a deprecation warning when accessing `init_size_`
     # FIXME: remove in 1.1
     depr_msg = (
-        f"The attribute `{attr}` is deprecated in 0.24 and will be " f"removed in 1.1"
+        f"The attribute `{attr}` is deprecated in 0.24 and will be removed in 1.1"
     )
     km = MiniBatchKMeans(n_clusters=2, n_init=1, init="random", random_state=0)
     km.fit(X)
@@ -999,7 +999,7 @@ def test_warning_elkan_1_cluster():
     # Check warning messages specific to KMeans
     with pytest.warns(
         RuntimeWarning,
-        match="algorithm='elkan' doesn't make sense for a single" " cluster",
+        match="algorithm='elkan' doesn't make sense for a single cluster",
     ):
         KMeans(n_clusters=1, algorithm="elkan").fit(X)
 

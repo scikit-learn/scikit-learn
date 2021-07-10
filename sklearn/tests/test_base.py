@@ -600,7 +600,7 @@ def test_n_features_in_validation():
 
     assert est.n_features_in_ == 3
 
-    msg = "X does not contain any features, but MyEstimator is expecting " "3 features"
+    msg = "X does not contain any features, but MyEstimator is expecting 3 features"
     with pytest.raises(ValueError, match=msg):
         est._check_n_features("invalid X", reset=False)
 

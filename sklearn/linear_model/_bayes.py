@@ -226,8 +226,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         if self.n_iter < 1:
             raise ValueError(
-                "n_iter should be greater than or equal to 1."
-                " Got {!r}.".format(self.n_iter)
+                "n_iter should be greater than or equal to 1. Got {!r}.".format(
+                    self.n_iter
+                )
             )
 
         X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True)

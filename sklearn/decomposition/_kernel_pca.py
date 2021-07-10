@@ -340,7 +340,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     def _fit_inverse_transform(self, X_transformed, X):
         if hasattr(X, "tocsr"):
             raise NotImplementedError(
-                "Inverse transform not implemented for " "sparse matrices!"
+                "Inverse transform not implemented for sparse matrices!"
             )
 
         n_samples = X_transformed.shape[0]

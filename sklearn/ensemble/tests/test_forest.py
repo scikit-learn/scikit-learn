@@ -172,7 +172,7 @@ def check_regression_criterion(name, criterion):
     score = reg.score(X_reg, y_reg)
     assert (
         score > 0.93
-    ), "Failed with max_features=None, criterion %s " "and score = %f" % (
+    ), "Failed with max_features=None, criterion %s and score = %f" % (
         criterion,
         score,
     )
@@ -182,9 +182,10 @@ def check_regression_criterion(name, criterion):
     )
     reg.fit(X_reg, y_reg)
     score = reg.score(X_reg, y_reg)
-    assert (
-        score > 0.92
-    ), "Failed with max_features=6, criterion %s " "and score = %f" % (criterion, score)
+    assert score > 0.92, "Failed with max_features=6, criterion %s and score = %f" % (
+        criterion,
+        score,
+    )
 
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
@@ -1302,7 +1303,7 @@ def check_class_weight_errors(name):
     clf.fit(X, y)
 
     warn_msg = (
-        "Warm-start fitting without increasing n_estimators does not fit new " "trees."
+        "Warm-start fitting without increasing n_estimators does not fit new trees."
     )
     with pytest.warns(UserWarning, match=warn_msg):
         clf.fit(X, _y)
@@ -1412,7 +1413,7 @@ def check_warm_start_equal_n_estimators(name):
 
     est_2.set_params(random_state=2)
     warn_msg = (
-        "Warm-start fitting without increasing n_estimators does not fit " "new trees."
+        "Warm-start fitting without increasing n_estimators does not fit new trees."
     )
     with pytest.warns(UserWarning, match=warn_msg):
         est_2.fit(X, y)

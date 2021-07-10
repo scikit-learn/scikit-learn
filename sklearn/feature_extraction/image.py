@@ -374,12 +374,12 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
 
     if p_h > i_h:
         raise ValueError(
-            "Height of the patch should be less than the height" " of the image."
+            "Height of the patch should be less than the height of the image."
         )
 
     if p_w > i_w:
         raise ValueError(
-            "Width of the patch should be less than the width" " of the image."
+            "Width of the patch should be less than the width of the image."
         )
 
     image = check_array(image, allow_nd=True)

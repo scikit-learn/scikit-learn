@@ -278,7 +278,7 @@ def test_spectral_embedding_amg_solver_failure():
         _assert_equal_with_sign_flipping(embedding, new_embedding, tol=0.05)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will " "change in version 0.22")
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will change in version 0.22")
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)

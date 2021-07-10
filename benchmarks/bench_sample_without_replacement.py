@@ -72,8 +72,10 @@ if __name__ == "__main__":
         dest="selected_algorithm",
         default=default_algorithms,
         type=str,
-        help="Comma-separated list of transformer to benchmark. "
-        "Default: %default. \nAvailable: %default",
+        help=(
+            "Comma-separated list of transformer to benchmark. "
+            "Default: %default. \nAvailable: %default"
+        ),
     )
 
     # op.add_option("--random-seed",

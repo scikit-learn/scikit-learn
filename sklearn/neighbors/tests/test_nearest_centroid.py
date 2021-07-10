@@ -92,7 +92,7 @@ def test_pickle():
     assert_array_equal(
         score,
         score2,
-        "Failed to generate same score" " after pickling (classification).",
+        "Failed to generate same score after pickling (classification).",
     )
 
 
