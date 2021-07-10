@@ -1606,8 +1606,12 @@ def _get_feature_names(X):
 
     Returns
     -------
-    names: Sequence of str or None
-        Column names of `X`. Unrecognized array containers will return `None`.
+    names: ndarray or None
+        Feature names of `X`. Unrecognized array containers will return `None`.
     """
     if hasattr(X, "columns"):
-        return X.columns
+        feature_names = np.array(X.columns)
+        # multiple index
+        if isinstance(feature_names[0], tuple):
+            raise ValueError("Pandas MultiIndex is not supported as feature names")
+        return feature_names
