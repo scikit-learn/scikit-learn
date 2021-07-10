@@ -82,15 +82,6 @@ Changelog
   are specified in `labels`.
   :pr:`19721` by :user:`Joris Clement <flyingdutchman23>`.
 
-:mod:`sklearn.mixture`
-............................
-
-- |Feature| :class:`mixture.GaussianMixture` and
-  :class:`mixture.BayesianGaussianMixture` can now be initialized using
-  k-means++ and random data points. :issue:`11101` by
-  :user:`Gordon Walsh <g-walsh>`, conflicts solved by
-  :user:`Alberto Ceballos<alceballosa>` and Andres Rios<ariosramirez>.
-
 :mod:`sklearn.model_selection`
 ..............................
 
