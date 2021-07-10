@@ -3442,8 +3442,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         import pandas as pd
     except ImportError:
         raise SkipTest(
-            "pandas is not installed: not checking column name consistency "
-            "for pandas"
+            "pandas is not installed: not checking column name consistency for pandas"
         )
 
     tags = _safe_tags(estimator_orig)
