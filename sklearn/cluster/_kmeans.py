@@ -190,7 +190,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
 
     # Pick first center randomly and track index of point
     center_id = random_state.randint(n_samples)
-    indices = np.empty(n_clusters)
+    indices = np.full(n_clusters, -1, dtype=int)
     if sp.issparse(X):
         centers[0] = X[center_id].toarray()
     else:
