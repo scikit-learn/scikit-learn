@@ -1930,6 +1930,7 @@ class _BaseRidgeCV(LinearModel):
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
