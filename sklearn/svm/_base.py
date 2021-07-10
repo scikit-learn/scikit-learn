@@ -618,7 +618,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def coef_(self):
-        """ndarray : Weights assigned to the features."""
+        """Weights assigned to the features.
+
+        Returns
+        -------
+        coef : ndarray
+            The weights assigned to the features.
+        """
         if self.kernel != "linear":
             raise AttributeError("coef_ is only available when using a linear kernel")
 
@@ -639,7 +645,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def n_support_(self):
-        """ndarray : Number of support vectors for each class."""
+        """Number of support vectors for each class.
+
+        Returns
+        -------
+        n_support : ndarray
+            The number of support vectors for each class.
+        """
         try:
             check_is_fitted(self)
         except NotFittedError:
@@ -944,12 +956,24 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
     @property
     def probA_(self):
-        """ndarray : Parameter learned in Platt scaling."""
+        """Parameter learned in Platt scaling.
+
+        Returns
+        -------
+        _probA : ndarray
+            The parameter learned in Platt scaling.
+        """
         return self._probA
 
     @property
     def probB_(self):
-        """ndarray : Parameter learned in Platt scaling."""
+        """Parameter learned in Platt scaling.
+
+        Returns
+        -------
+        _probB : ndarray
+            The parameter learned in Platt scaling.
+        """
         return self._probB
 
 
