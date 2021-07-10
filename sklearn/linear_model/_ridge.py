@@ -2108,6 +2108,12 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    Ridge : Ridge regression.
+    RidgeClassifier : Ridge classifier.
+    RidgeClassifierCV : Ridge classifier with built-in cross validation.
+
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
@@ -2116,12 +2122,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     >>> clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
     >>> clf.score(X, y)
     0.5166...
-
-    See Also
-    --------
-    Ridge : Ridge regression.
-    RidgeClassifier : Ridge classifier.
-    RidgeClassifierCV : Ridge classifier with built-in cross validation.
     """
 
 
