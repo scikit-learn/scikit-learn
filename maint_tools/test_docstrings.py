@@ -166,7 +166,6 @@ DOCSTRING_IGNORE_LIST = [
     "TweedieRegressor",
     "VarianceThreshold",
     "VotingClassifier",
-    "VotingRegressor",
 ]
 
 
