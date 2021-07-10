@@ -203,9 +203,11 @@ def test_dbscan_metric_params():
 
     with pytest.warns(
         SyntaxWarning,
-        match="Parameter p is found in metric_params. "
-        "The corresponding parameter from __init__ "
-        "is ignored.",
+        match=(
+            "Parameter p is found in metric_params. "
+            "The corresponding parameter from __init__ "
+            "is ignored."
+        ),
     ):
         # Test that checks p is ignored in favor of metric_params={'p': <val>}
         db = DBSCAN(

@@ -71,11 +71,12 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
         C : ndarray of shape (n_samples,)
-            Predicted target values for X
+            Predicted target values for X.
         """
         check_is_fitted(self)
         X = self._check_X(X)
@@ -89,6 +90,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -111,6 +113,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -203,7 +206,7 @@ class GaussianNB(_BaseNB):
         self.var_smoothing = var_smoothing
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Gaussian Naive Bayes according to X, y
+        """Fit Gaussian Naive Bayes according to X, y.
 
         Parameters
         ----------
@@ -407,9 +410,7 @@ class GaussianNB(_BaseNB):
                 priors = np.asarray(self.priors)
                 # Check that the provide prior match the number of classes
                 if len(priors) != n_classes:
-                    raise ValueError(
-                        "Number of priors must match number of" " classes."
-                    )
+                    raise ValueError("Number of priors must match number of classes.")
                 # Check that the sum is 1
                 if not np.isclose(priors.sum(), 1.0):
                     raise ValueError("The sum of the priors should be 1.")
@@ -434,8 +435,8 @@ class GaussianNB(_BaseNB):
 
         if not np.all(unique_y_in_classes):
             raise ValueError(
-                "The target label(s) %s in y do not exist in the "
-                "initial classes %s" % (unique_y[~unique_y_in_classes], classes)
+                "The target label(s) %s in y do not exist in the initial classes %s"
+                % (unique_y[~unique_y_in_classes], classes)
             )
 
         for y_i in unique_y:
@@ -478,8 +479,8 @@ class GaussianNB(_BaseNB):
         return joint_log_likelihood
 
     @deprecated(  # type: ignore
-        "Attribute sigma_ was deprecated in 1.0 and will be removed in"
-        "1.2. Use var_ instead."
+        "Attribute `sigma_` was deprecated in 1.0 and will be removed in"
+        "1.2. Use `var_` instead."
     )
     @property
     def sigma_(self):
@@ -510,7 +511,7 @@ class _BaseDiscreteNB(_BaseNB):
         n_classes = len(self.classes_)
         if class_prior is not None:
             if len(class_prior) != n_classes:
-                raise ValueError("Number of priors must match number of" " classes.")
+                raise ValueError("Number of priors must match number of classes.")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             with warnings.catch_warnings():
@@ -527,19 +528,18 @@ class _BaseDiscreteNB(_BaseNB):
     def _check_alpha(self):
         if np.min(self.alpha) < 0:
             raise ValueError(
-                "Smoothing parameter alpha = %.1e. "
-                "alpha should be > 0." % np.min(self.alpha)
+                "Smoothing parameter alpha = %.1e. alpha should be > 0."
+                % np.min(self.alpha)
             )
         if isinstance(self.alpha, np.ndarray):
             if not self.alpha.shape[0] == self.n_features_in_:
                 raise ValueError(
-                    "alpha should be a scalar or a numpy array "
-                    "with shape [n_features]"
+                    "alpha should be a scalar or a numpy array with shape [n_features]"
                 )
         if np.min(self.alpha) < _ALPHA_MIN:
             warnings.warn(
-                "alpha too small will result in numeric errors, "
-                "setting alpha = %.1e" % _ALPHA_MIN
+                "alpha too small will result in numeric errors, setting alpha = %.1e"
+                % _ALPHA_MIN
             )
             return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
@@ -579,6 +579,7 @@ class _BaseDiscreteNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         first_call = not hasattr(self, "classes_")
         X, y = self._check_X_y(X, y, reset=first_call)
@@ -625,7 +626,7 @@ class _BaseDiscreteNB(_BaseNB):
         return self
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Naive Bayes classifier according to X, y
+        """Fit Naive Bayes classifier according to X, y.
 
         Parameters
         ----------
@@ -642,6 +643,7 @@ class _BaseDiscreteNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X, y = self._check_X_y(X, y)
         _, n_features = X.shape
@@ -682,7 +684,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute coef_ was deprecated in "
+        "Attribute `coef_` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -695,7 +697,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute intercept_ was deprecated in "
+        "Attribute `intercept_` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -712,8 +714,8 @@ class _BaseDiscreteNB(_BaseNB):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute n_features_ was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use 'n_features_in_' instead."
+        "Attribute `n_features_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `n_features_in_` instead."
     )
     @property
     def n_features_(self):
@@ -1052,18 +1054,13 @@ class BernoulliNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(1)
-    >>> X = rng.randint(5, size=(6, 100))
-    >>> Y = np.array([1, 2, 3, 4, 4, 5])
-    >>> from sklearn.naive_bayes import BernoulliNB
-    >>> clf = BernoulliNB()
-    >>> clf.fit(X, Y)
-    BernoulliNB()
-    >>> print(clf.predict(X[2:3]))
-    [3]
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : The Complement Naive Bayes classifier
+        described in Rennie et al. (2003).
+    GaussianNB : Gaussian Naive Bayes (GaussianNB).
+    MultinomialNB : Naive Bayes classifier for multinomial models.
 
     References
     ----------
@@ -1077,6 +1074,19 @@ class BernoulliNB(_BaseDiscreteNB):
 
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> Y = np.array([1, 2, 3, 4, 4, 5])
+    >>> from sklearn.naive_bayes import BernoulliNB
+    >>> clf = BernoulliNB()
+    >>> clf.fit(X, Y)
+    BernoulliNB()
+    >>> print(clf.predict(X[2:3]))
+    [3]
     """
 
     def __init__(self, *, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None):
@@ -1132,7 +1142,7 @@ class BernoulliNB(_BaseDiscreteNB):
 
 
 class CategoricalNB(_BaseDiscreteNB):
-    """Naive Bayes classifier for categorical features
+    """Naive Bayes classifier for categorical features.
 
     The categorical Naive Bayes classifier is suitable for classification with
     discrete features that are categorically distributed. The categories of
@@ -1206,6 +1216,12 @@ class CategoricalNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    ComplementNB : Complement Naive Bayes classifier.
+    GaussianNB : Gaussian Naive Bayes.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
+
     Examples
     --------
     >>> import numpy as np
@@ -1229,7 +1245,7 @@ class CategoricalNB(_BaseDiscreteNB):
         self.min_categories = min_categories
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Naive Bayes classifier according to X, y
+        """Fit Naive Bayes classifier according to X, y.
 
         Parameters
         ----------
@@ -1251,6 +1267,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return super().fit(X, y, sample_weight=sample_weight)
 
@@ -1294,6 +1311,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 
@@ -1327,14 +1345,14 @@ class CategoricalNB(_BaseDiscreteNB):
         if min_categories is not None:
             if not np.issubdtype(min_categories_.dtype, np.signedinteger):
                 raise ValueError(
-                    f"'min_categories' should have integral type. Got "
+                    "'min_categories' should have integral type. Got "
                     f"{min_categories_.dtype} instead."
                 )
             n_categories_ = np.maximum(n_categories_X, min_categories_, dtype=np.int64)
             if n_categories_.shape != n_categories_X.shape:
                 raise ValueError(
                     f"'min_categories' should have shape ({X.shape[1]},"
-                    f") when an array-like is provided. Got"
+                    ") when an array-like is provided. Got"
                     f" {min_categories_.shape} instead."
                 )
             return n_categories_

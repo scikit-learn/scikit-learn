@@ -155,14 +155,15 @@ if __name__ == "__main__":
         "metrics",
         nargs="*",
         default=sorted(METRICS),
-        help="Specifies metrics to benchmark, defaults to all. "
-        "Choices are: {}".format(sorted(METRICS)),
+        help="Specifies metrics to benchmark, defaults to all. Choices are: {}".format(
+            sorted(METRICS)
+        ),
     )
     ap.add_argument(
         "--formats",
         nargs="+",
         choices=sorted(FORMATS),
-        help="Specifies multilabel formats to benchmark " "(defaults to all).",
+        help="Specifies multilabel formats to benchmark (defaults to all).",
     )
     ap.add_argument(
         "--samples", type=int, default=1000, help="The number of samples to generate"
@@ -178,8 +179,9 @@ if __name__ == "__main__":
         "--plot",
         choices=["classes", "density", "samples"],
         default=None,
-        help="Plot time with respect to this parameter varying "
-        "up to the specified value",
+        help=(
+            "Plot time with respect to this parameter varying up to the specified value"
+        ),
     )
     ap.add_argument(
         "--n-steps", default=10, type=int, help="Plot this many points for each metric"
