@@ -529,7 +529,7 @@ def _check_multimetric_scoring(estimator, scoring):
         )
         try:
             keys = set(scoring)
-        except TypeError:
+        except TypeError as e:
             raise ValueError(err_msg)
 
         if len(keys) != len(scoring):
