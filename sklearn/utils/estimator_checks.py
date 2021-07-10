@@ -3479,6 +3479,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
             "Estimator does not have a feature_names_in_ "
             "attribute after fitting with a dataframe"
         )
+    assert_array_equal(estimator.feature_names_in_, names)
 
     check_methods = []
     for method in (
@@ -3499,8 +3500,6 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
 
     for _, method in check_methods:
         method(X)  # works
-
-    assert_array_equal(estimator.feature_names_in_, names)
 
     invalid_names = [
         names[::-1],

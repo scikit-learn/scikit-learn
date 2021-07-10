@@ -642,12 +642,16 @@ def test_feature_names_in():
     with pytest.warns(FutureWarning, match=msg):
         trans.transform(df_bad)
 
-    # does not warn when transforming on numpy array
-    with pytest.warns(None) as record:
+    # warns when fitted on dataframe and transforming a ndarray
+    msg = (
+        "X does not have any feature names, but NoOpTransformer was "
+        "fitted with feature names"
+    )
+    with pytest.warns(UserWarning, match=msg):
         trans.transform(X_np)
-    assert not record
 
-    # fitted on numpy array and transformed on pandas array does not warn
+    # warns when fitted on a ndarray and transforming dataframe
+    msg = "X has feature names, but NoOpTransformer was fitted without feature names"
     trans = NoOpTransformer().fit(X_np)
-    with pytest.warns(None) as record:
+    with pytest.warns(UserWarning, match=msg):
         trans.transform(df)

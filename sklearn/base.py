@@ -422,19 +422,29 @@ class BaseEstimator:
             return
 
         fitted_feature_names = getattr(self, "feature_names_in_", None)
-        if fitted_feature_names is None:
-            # no feature names to check
+        X_feature_names = _get_feature_names(X)
+
+        if fitted_feature_names is None and X_feature_names is None:
+            # no feature names seen in fit and in X
             return
 
-        new_feature_names_in = _get_feature_names(X)
-        if new_feature_names_in is None:
-            # X does not have feature names but estimator was fitted with
-            # data with feature names
+        if X_feature_names is not None and fitted_feature_names is None:
+            warnings.warn(
+                f"X has feature names, but {self.__class__.__name__} was fitted without"
+                " feature names"
+            )
+            return
+
+        if X_feature_names is None and fitted_feature_names is not None:
+            warnings.warn(
+                f"X does not have any feature names, but {self.__class__.__name__} was "
+                "fitted with feature names"
+            )
             return
 
         # valid the `feature_names_in_` attribute
-        if len(fitted_feature_names) != len(new_feature_names_in) or np.any(
-            fitted_feature_names != new_feature_names_in
+        if len(fitted_feature_names) != len(X_feature_names) or np.any(
+            fitted_feature_names != X_feature_names
         ):
             warnings.warn(
                 "The column names should match those that were "
