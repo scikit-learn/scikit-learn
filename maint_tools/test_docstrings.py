@@ -128,7 +128,6 @@ DOCSTRING_IGNORE_LIST = [
     "RandomTreesEmbedding",
     "RandomizedSearchCV",
     "RegressorChain",
-    "RidgeCV",
     "RidgeClassifier",
     "RidgeClassifierCV",
     "RobustScaler",
