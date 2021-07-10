@@ -999,7 +999,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted estimator.
         """
         return super().fit(X, y, sample_weight=sample_weight)
 
