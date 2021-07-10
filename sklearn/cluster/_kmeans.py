@@ -84,7 +84,7 @@ def kmeans_plusplus(
     indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
         given index and center, X[index] = center.
-        
+
     Notes
     -----
     Selects initial cluster centers for k-mean clustering in a smart way
