@@ -2025,7 +2025,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
             ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
-    scoring : string, callable, default=None
+    scoring : str, callable, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
