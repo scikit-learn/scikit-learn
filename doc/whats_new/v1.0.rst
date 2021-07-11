@@ -604,6 +604,11 @@ Changelog
   :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
+- |Enhancement| Added helper decorator :func:`utils.metaestimators.available_if`
+  to provide flexiblity in metaestimators making methods available or
+  unavailable on the basis of state, in a more readable way.
+  :pr:`19948` by `Joel Nothman`_.
+
 - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
