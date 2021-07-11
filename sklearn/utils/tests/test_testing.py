@@ -119,16 +119,12 @@ def test_ignore_warning():
     # Check the function directly
     assert_no_warnings(ignore_warnings(_warning_function))
     assert_no_warnings(ignore_warnings(_warning_function, category=DeprecationWarning))
-    assert_warns(
-        DeprecationWarning, ignore_warnings(_warning_function, category=UserWarning)
-    )
-    assert_warns(
-        UserWarning, ignore_warnings(_multiple_warning_function, category=FutureWarning)
-    )
-    assert_warns(
-        DeprecationWarning,
-        ignore_warnings(_multiple_warning_function, category=UserWarning),
-    )
+    with pytest.warns(DeprecationWarning):
+        ignore_warnings(_warning_function, category=UserWarning)()
+    with pytest.warns(UserWarning):
+        ignore_warnings(_multiple_warning_function, category=FutureWarning)()
+    with pytest.warns(DeprecationWarning):
+        ignore_warnings(_multiple_warning_function, category=UserWarning)()
     assert_no_warnings(
         ignore_warnings(_warning_function, category=(DeprecationWarning, UserWarning))
     )
