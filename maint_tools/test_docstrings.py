@@ -12,12 +12,10 @@ DOCSTRING_IGNORE_LIST = [
     "AdditiveChi2Sampler",
     "AffinityPropagation",
     "AgglomerativeClustering",
-    "BaggingRegressor",
     "BernoulliRBM",
     "Birch",
     "CCA",
     "CalibratedClassifierCV",
-    "CategoricalNB",
     "ClassifierChain",
     "ColumnTransformer",
     "ComplementNB",
@@ -26,8 +24,6 @@ DOCSTRING_IGNORE_LIST = [
     "DictVectorizer",
     "DictionaryLearning",
     "DummyClassifier",
-    "DummyRegressor",
-    "ElasticNet",
     "ElasticNetCV",
     "EllipticEnvelope",
     "EmpiricalCovariance",
@@ -58,38 +54,27 @@ DOCSTRING_IGNORE_LIST = [
     "HistGradientBoostingRegressor",
     "HuberRegressor",
     "IncrementalPCA",
-    "IsolationForest",
     "Isomap",
     "IsotonicRegression",
     "IterativeImputer",
     "KBinsDiscretizer",
     "KNNImputer",
-    "KNeighborsRegressor",
     "KNeighborsTransformer",
     "KernelCenterer",
     "KernelDensity",
     "KernelPCA",
     "KernelRidge",
     "LabelBinarizer",
-    "LabelEncoder",
     "LabelPropagation",
     "LabelSpreading",
-    "Lars",
     "LarsCV",
-    "LassoCV",
-    "LassoLars",
-    "LassoLarsCV",
-    "LassoLarsIC",
     "LatentDirichletAllocation",
     "LedoitWolf",
-    "LinearSVC",
     "LinearSVR",
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
     "MDS",
-    "MLPClassifier",
     "MLPRegressor",
-    "MaxAbsScaler",
     "MeanShift",
     "MinCovDet",
     "MiniBatchDictionaryLearning",
@@ -106,7 +91,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultinomialNB",
     "NMF",
     "NearestCentroid",
-    "NearestNeighbors",
     "NeighborhoodComponentsAnalysis",
     "Normalizer",
     "NuSVC",
@@ -128,7 +112,6 @@ DOCSTRING_IGNORE_LIST = [
     "PassiveAggressiveRegressor",
     "PatchExtractor",
     "Pipeline",
-    "PoissonRegressor",
     "PolynomialCountSketch",
     "PolynomialFeatures",
     "PowerTransformer",
@@ -138,15 +121,12 @@ DOCSTRING_IGNORE_LIST = [
     "RANSACRegressor",
     "RBFSampler",
     "RFE",
-    "RFECV",
     "RadiusNeighborsClassifier",
     "RadiusNeighborsRegressor",
     "RadiusNeighborsTransformer",
-    "RandomForestClassifier",
     "RandomTreesEmbedding",
     "RandomizedSearchCV",
     "RegressorChain",
-    "Ridge",
     "RidgeCV",
     "RidgeClassifier",
     "RidgeClassifierCV",
@@ -184,7 +164,6 @@ DOCSTRING_IGNORE_LIST = [
     "TweedieRegressor",
     "VarianceThreshold",
     "VotingClassifier",
-    "VotingRegressor",
 ]
 
 
@@ -219,10 +198,13 @@ def filter_errors(errors, method, Estimator=None):
         #   (as we may need refer to the name of the returned
         #    object)
         #  - GL01: Docstring text (summary) should start in the line
-        #  immediately after the opening quotes (not in the same line,
-        #  or leaving a blank line in between)
+        #    immediately after the opening quotes (not in the same line,
+        #    or leaving a blank line in between)
+        #  - GL02: If there's a blank line, it should be before the
+        #    first line of the Returns section, not after (it allows to have
+        #    short docstrings for properties).
 
-        if code in ["RT02", "GL01"]:
+        if code in ["RT02", "GL01", "GL02"]:
             continue
 
         # Ignore PR02: Unknown parameters for properties. We sometimes use

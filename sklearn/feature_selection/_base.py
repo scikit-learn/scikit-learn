@@ -99,8 +99,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         return X[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
-        """
-        Reverse the transformation operation.
+        """Reverse the transformation operation.
 
         Parameters
         ----------
