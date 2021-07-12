@@ -1050,5 +1050,5 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         # We need to free the buffers here because they won't be managed
         # by a numpy array then.
-        free(self.neigh_distances)
+        del self.neigh_distances
         return _coerce_vectors_to_np_nd_arrays(self.neigh_indices)
