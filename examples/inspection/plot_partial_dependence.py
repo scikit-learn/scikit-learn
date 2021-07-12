@@ -118,7 +118,8 @@ tic = time()
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 display = plot_partial_dependence(
        est, X_train, features, kind="both", subsample=50,
-       n_jobs=3, grid_resolution=20, random_state=0
+       n_jobs=3, grid_resolution=20, random_state=0,
+       centered=True,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -160,7 +161,8 @@ print('Computing partial dependence plots...')
 tic = time()
 display = plot_partial_dependence(
     est, X_train, features, kind="both", subsample=50,
-    n_jobs=3, grid_resolution=20, random_state=0
+    n_jobs=3, grid_resolution=20, random_state=0,
+    centered=True,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -181,9 +183,10 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # rooms per household.
 #
 # The ICE curves (light blue lines) complement the analysis: we can see that
-# there are some exceptions, where the house price remain constant with median
-# income and average occupants. On the other hand, while the house age (top
-# right) does not have a strong influence on the median house price on average,
+# there are some exceptions (better highlighted with the option
+# `centered=True`), where the house price remain constant with median income
+# and average occupants. On the other hand, while the house age (top right)
+# does not have a strong influence on the median house price on average,
 # there seems to be a number of exceptions where the house price increase when
 # between the ages 15-25. Similar exceptions can be observed for the average
 # number of rooms (bottom left). Therefore, ICE plots show some individual
