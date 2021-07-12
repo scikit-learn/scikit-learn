@@ -87,7 +87,6 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes
         ax = disp.axes_[pos]
         assert ax.get_ylabel() == expected_ylabels[i]
         assert ax.get_xlabel() == diabetes.feature_names[feat_col]
-        assert_allclose(ax.get_ylim(), disp.pdp_lim[1])
 
         line = disp.lines_[pos]
 
@@ -102,8 +101,6 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes
     # two feature position
     ax = disp.axes_[0, 2]
     coutour = disp.contours_[0, 2]
-    expected_levels = np.linspace(*disp.pdp_lim[2], num=8)
-    assert_allclose(coutour.levels, expected_levels)
     assert coutour.get_cmap().name == "jet"
     assert ax.get_xlabel() == diabetes.feature_names[0]
     assert ax.get_ylabel() == diabetes.feature_names[2]
@@ -231,9 +228,6 @@ def test_plot_partial_dependence_str_features(
 
     # contour
     ax = disp.axes_[0, 0]
-    coutour = disp.contours_[0, 0]
-    expect_levels = np.linspace(*disp.pdp_lim[2], num=8)
-    assert_allclose(coutour.levels, expect_levels)
     assert ax.get_xlabel() == "age"
     assert ax.get_ylabel() == "bmi"
 
@@ -270,9 +264,6 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
 
     # contour
     ax = disp.axes_[1]
-    coutour = disp.contours_[1]
-    expect_levels = np.linspace(*disp.pdp_lim[2], num=8)
-    assert_allclose(coutour.levels, expect_levels)
     assert ax.get_xlabel() == "age"
     assert ax.get_ylabel() == "bmi"
 
@@ -700,3 +691,87 @@ def test_partial_dependence_overwrite_labels(
             legend_text = ax.get_legend().get_texts()
             assert len(legend_text) == 1
             assert legend_text[0].get_text() == label
+
+
+def test_partial_dependence_display_deprecation(pyplot, clf_diabetes, diabetes):
+    """Check that we raise the proper warning in the display."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        [0, 2],
+        grid_resolution=25,
+        feature_names=diabetes.feature_names,
+    )
+
+    deprecation_msg = "The `pdp_lim` parameter is deprecated"
+    overwritting_msg = (
+        "`pdp_lim` has been passed in both the constructor and the `plot` method"
+    )
+
+    disp.pdp_lim = None
+    # case when constructor and method parameters are the same
+    with pytest.warns(FutureWarning, match=deprecation_msg):
+        disp.plot(pdp_lim=None)
+    # case when constructor and method parameters are different
+    with pytest.warns(None) as record:
+        disp.plot(pdp_lim=(0, 1))
+    assert len(record) == 2
+    for warning in record:
+        assert warning.message.args[0].startswith((deprecation_msg, overwritting_msg))
+
+
+@pytest.mark.parametrize("kind", ["individual", "average", "both"])
+@pytest.mark.parametrize("centered", [True, False])
+def test_partial_dependence_plot_limits_one_way(
+    pyplot, clf_diabetes, diabetes, kind, centered
+):
+    """Check that the PD limit on the plots are properly set."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        features=(0, 1),
+        kind=kind,
+        grid_resolution=25,
+        feature_names=diabetes.feature_names,
+    )
+
+    range_pd = np.array([-1, 1])
+    for pd in disp.pd_results:
+        if "average" in pd:
+            pd["average"][...] = range_pd[1]
+            pd["average"][0, 0] = range_pd[0]
+        if "individual" in pd:
+            pd["individual"][...] = range_pd[1]
+            pd["individual"][0, 0, 0] = range_pd[0]
+
+    disp.plot(centered=centered)
+    # check that we anchor to zero x-axis when centering
+    y_lim = range_pd if not centered else range_pd - range_pd[0]
+    for ax in disp.axes_.ravel():
+        assert_allclose(ax.get_ylim(), y_lim)
+
+
+@pytest.mark.parametrize("centered", [True, False])
+def test_partial_dependence_plot_limits_two_way(
+    pyplot, clf_diabetes, diabetes, centered
+):
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        features=[(0, 1)],
+        kind="average",
+        grid_resolution=25,
+        feature_names=diabetes.feature_names,
+    )
+
+    range_pd = np.array([-1, 1])
+    for pd in disp.pd_results:
+        pd["average"][...] = range_pd[1]
+        pd["average"][0, 0] = range_pd[0]
+
+    disp.plot(centered=centered)
+    # check that we anchor to zero x-axis when centering
+    range_pd = range_pd if not centered else range_pd - range_pd[0]
+    coutour = disp.contours_[0, 0]
+    expect_levels = np.linspace(*range_pd, num=8)
+    assert_allclose(coutour.levels, expect_levels)
