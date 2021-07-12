@@ -7,8 +7,6 @@ from itertools import combinations
 import numpy as np
 import pytest
 
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.exceptions import ConvergenceWarning
@@ -69,14 +67,16 @@ def test_factor_analysis():
         with pytest.raises(ValueError):
             fa.fit(X[:, :2])
 
-    f = lambda x, y: np.abs(getattr(x, y))  # sign will not be equal
+    def f(x, y):
+        return np.abs(getattr(x, y))  # sign will not be equal
     fa1, fa2 = fas
     for attr in ['loglike_', 'components_', 'noise_variance_']:
         assert_almost_equal(f(fa1, attr), f(fa2, attr))
 
     fa1.max_iter = 1
     fa1.verbose = True
-    assert_warns(ConvergenceWarning, fa1.fit, X)
+    with pytest.warns(ConvergenceWarning):
+        fa1.fit(X)
 
     # Test get_covariance and get_precision with n_components == n_features
     # with n_components < n_features and with n_components == 0
@@ -101,8 +101,8 @@ def test_factor_analysis():
         assert not np.allclose(results[rot1], results[rot2])
         assert np.allclose(projections[rot1], projections[rot2], atol=3)
 
-    assert_raises(ValueError,
-                  FactorAnalysis(rotation='not_implemented').fit_transform, X)
+    with pytest.raises(ValueError):
+        FactorAnalysis(rotation="not_implemented").fit_transform(X)
 
     # test against R's psych::principal with rotate="varimax"
     # (i.e., the values below stem from rotating the components in R)

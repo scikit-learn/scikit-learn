@@ -23,10 +23,10 @@ from ..externals._arff import ArffSparseDataType, ArffContainerType
 from . import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
+from ..utils import is_scalar_nan
 from ..utils import get_chunk_n_rows
 from ..utils import _chunk_generator
 from ..utils import check_pandas_support  # noqa
-from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['fetch_openml']
 
@@ -357,7 +357,10 @@ def _convert_arff_data_dataframe(
     for column in columns_to_keep:
         dtype = _feature_to_dtype(features_dict[column])
         if dtype == 'category':
-            dtype = pd.api.types.CategoricalDtype(attributes[column])
+            cats_without_missing = [cat for cat in attributes[column]
+                                    if cat is not None and
+                                    not is_scalar_nan(cat)]
+            dtype = pd.api.types.CategoricalDtype(cats_without_missing)
         df[column] = df[column].astype(dtype, copy=False)
     return (df, )
 
@@ -686,7 +689,6 @@ def _valid_data_column_names(features_list, target_columns):
     return valid_data_column_names
 
 
-@_deprecate_positional_args
 def fetch_openml(
     name: Optional[str] = None,
     *,
@@ -838,7 +840,7 @@ def fetch_openml(
             raise ValueError(
                 "Dataset data_id={} and version={} passed, but you can only "
                 "specify a numeric data_id or a version, not "
-                "both.".format(data_id, name))
+                "both.".format(data_id, version))
     else:
         raise ValueError(
             "Neither name nor data_id are provided. Please provide name or "

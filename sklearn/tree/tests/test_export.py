@@ -177,32 +177,34 @@ def test_graphviz_toy():
     # Test regression output with plot_options
     clf = DecisionTreeRegressor(max_depth=3,
                                 min_samples_split=2,
-                                criterion="mse",
+                                criterion="squared_error",
                                 random_state=2)
     clf.fit(X, y)
 
     contents1 = export_graphviz(clf, filled=True, leaves_parallel=True,
                                 out_file=None, rotate=True, rounded=True,
                                 fontname="sans")
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname="sans"] ;\n' \
-                'graph [ranksep=equally, splines=polyline] ;\n' \
-                'edge [fontname="sans"] ;\n' \
-                'rankdir=LR ;\n' \
-                '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 6\\n' \
-                'value = 0.0", fillcolor="#f2c09c"] ;\n' \
-                '1 [label="mse = 0.0\\nsamples = 3\\nvalue = -1.0", ' \
-                'fillcolor="#ffffff"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="mse = 0.0\\nsamples = 3\\nvalue = 1.0", ' \
-                'fillcolor="#e58139"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="False"] ;\n' \
-                '{rank=same ; 0} ;\n' \
-                '{rank=same ; 1; 2} ;\n' \
-                '}'
+    contents2 = ('digraph Tree {\n'
+                 'node [shape=box, style="filled, rounded", color="black", '
+                 'fontname="sans"] ;\n'
+                 'graph [ranksep=equally, splines=polyline] ;\n'
+                 'edge [fontname="sans"] ;\n'
+                 'rankdir=LR ;\n'
+                 '0 [label="X[0] <= 0.0\\nsquared_error = 1.0\\nsamples = 6\\n'
+                 'value = 0.0", fillcolor="#f2c09c"] ;\n'
+                 '1 [label="squared_error = 0.0\\nsamples = 3\\'
+                 'nvalue = -1.0", '
+                 'fillcolor="#ffffff"] ;\n'
+                 '0 -> 1 [labeldistance=2.5, labelangle=-45, '
+                 'headlabel="True"] ;\n'
+                 '2 [label="squared_error = 0.0\\nsamples = 3\\nvalue = 1.0", '
+                 'fillcolor="#e58139"] ;\n'
+                 '0 -> 2 [labeldistance=2.5, labelangle=45, '
+                 'headlabel="False"] ;\n'
+                 '{rank=same ; 0} ;\n'
+                 '{rank=same ; 1; 2} ;\n'
+                 '}'
+                 )
 
     assert contents1 == contents2
 
@@ -459,17 +461,6 @@ def test_plot_tree_gini(pyplot):
                                    "samples = 6\nvalue = [3, 3]")
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
-
-
-# FIXME: to be removed in 1.0
-def test_plot_tree_rotate_deprecation(pyplot):
-    tree = DecisionTreeClassifier()
-    tree.fit(X, y)
-    # test that a warning is raised when rotate is used.
-    match = (r"'rotate' has no effect and is deprecated in 0.23. "
-             r"It will be removed in 1.0 \(renaming of 0.25\).")
-    with pytest.warns(FutureWarning, match=match):
-        plot_tree(tree, rotate=True)
 
 
 def test_not_fitted_tree(pyplot):

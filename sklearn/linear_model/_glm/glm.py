@@ -390,6 +390,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 class PoissonRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Poisson distribution.
 
+    This regressor uses the 'log' link function.
+
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
     .. versionadded:: 0.23
@@ -430,6 +432,11 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_iter_ : int
         Actual number of iterations used in the solver.
@@ -472,6 +479,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 class GammaRegressor(GeneralizedLinearRegressor):
     """Generalized Linear Model with a Gamma distribution.
 
+    This regressor uses the 'log' link function.
+
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
     .. versionadded:: 0.23
@@ -512,6 +521,11 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     n_iter_ : int
         Actual number of iterations used in the solver.
@@ -589,6 +603,10 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
 
+    fit_intercept : bool, default=True
+        Specifies if a constant (a.k.a. bias or intercept) should be
+        added to the linear predictor (X @ coef + intercept).
+
     link : {'auto', 'identity', 'log'}, default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
         `X @ coeff + intercept` to prediction `y_pred`. Option 'auto' sets
@@ -596,10 +614,6 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
         - 'identity' for Normal distribution
         - 'log' for Poisson,  Gamma and Inverse Gaussian distributions
-
-    fit_intercept : bool, default=True
-        Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -628,6 +642,11 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
 
     Examples
     ----------

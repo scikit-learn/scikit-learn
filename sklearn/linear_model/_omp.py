@@ -16,13 +16,14 @@ from joblib import Parallel
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import delayed
 from ..model_selection import check_cv
 
-premature = """ Orthogonal matching pursuit ended prematurely due to linear
-dependence in the dictionary. The requested precision might not have been met.
-"""
+premature = (
+    "Orthogonal matching pursuit ended prematurely due to linear"
+    " dependence in the dictionary. The requested precision might"
+    " not have been met."
+)
 
 
 def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
@@ -264,7 +265,6 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         return gamma, indices[:n_active], n_active
 
 
-@_deprecate_positional_args
 def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
                   copy_X=True, return_path=False,
                   return_n_iter=False):
@@ -408,7 +408,6 @@ def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
         return np.squeeze(coef)
 
 
-@_deprecate_positional_args
 def orthogonal_mp_gram(Gram, Xy, *, n_nonzero_coefs=None, tol=None,
                        norms_squared=None, copy_Gram=True,
                        copy_Xy=True, return_path=False,
@@ -593,6 +592,11 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         `n_nonzero_coefs` is None and `tol` is None this value is either set
         to 10% of `n_features` or 1, whichever is greater.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import OrthogonalMatchingPursuit
@@ -626,7 +630,6 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     sklearn.decomposition.sparse_encode
     OrthogonalMatchingPursuitCV
     """
-    @_deprecate_positional_args
     def __init__(self, *, n_nonzero_coefs=None, tol=None, fit_intercept=True,
                  normalize=True, precompute='auto'):
         self.n_nonzero_coefs = n_nonzero_coefs
@@ -837,6 +840,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Number of active features across every target for the model refit with
         the best hyperparameters got by cross-validating across all folds.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> from sklearn.linear_model import OrthogonalMatchingPursuitCV
@@ -864,7 +872,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     sklearn.decomposition.sparse_encode
 
     """
-    @_deprecate_positional_args
     def __init__(self, *, copy=True, fit_intercept=True, normalize=True,
                  max_iter=None, cv=None, n_jobs=None, verbose=False):
         self.copy = copy

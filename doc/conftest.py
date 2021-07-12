@@ -1,11 +1,13 @@
 import os
 from os.path import exists
 from os.path import join
+from os import environ
 import warnings
 
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import check_skip_network
+from sklearn.utils.fixes import parse_version
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
@@ -48,6 +50,12 @@ def setup_loading_other_datasets():
         raise SkipTest("Skipping loading_other_datasets.rst, "
                        "pandas not installed")
 
+    # checks SKLEARN_SKIP_NETWORK_TESTS to see if test should run
+    run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", '1') == "0"
+    if not run_network_tests:
+        raise SkipTest("Skipping loading_other_datasets.rst, tests can be "
+                       "enabled by settting SKLEARN_SKIP_NETWORK_TESTS=0")
+
 
 def setup_compose():
     try:
@@ -73,6 +81,10 @@ def setup_grid_search():
 def setup_preprocessing():
     try:
         import pandas  # noqa
+        if parse_version(pandas.__version__) < parse_version('1.1.0'):
+            raise SkipTest(
+                "Skipping preprocessing.rst, pandas version < 1.1.0"
+                )
     except ImportError:
         raise SkipTest("Skipping preprocessing.rst, pandas not installed")
 
@@ -114,3 +126,12 @@ def pytest_runtest_setup(item):
         setup_preprocessing()
     elif fname.endswith('statistical_inference/unsupervised_learning.rst'):
         setup_unsupervised_learning()
+
+
+def pytest_configure(config):
+    # Use matplotlib agg backend during the tests including doctests
+    try:
+        import matplotlib
+        matplotlib.use('agg')
+    except ImportError:
+        pass

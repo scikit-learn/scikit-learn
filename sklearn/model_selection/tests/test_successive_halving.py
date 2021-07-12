@@ -7,13 +7,29 @@ import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
+<<<<<<< HEAD
 from sklearn.linear_model import SGDClassifier
+=======
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.model_selection import LeavePGroupsOut
+from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupShuffleSplit
+>>>>>>> 0e7761cdc4f244adb4803f1a97f0a9fe4b365a99
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.model_selection import KFold, ShuffleSplit
+from sklearn.svm import LinearSVC
 from sklearn.model_selection._search_successive_halving import (
+<<<<<<< HEAD
     _SubsampleMetaSplitter, _top_k, _refit_callable)
 from sklearn.utils._testing import assert_array_equal
+=======
+    _SubsampleMetaSplitter,
+    _top_k,
+)
+>>>>>>> 0e7761cdc4f244adb4803f1a97f0a9fe4b365a99
 
 
 class FastClassifier(DummyClassifier):
@@ -293,6 +309,7 @@ def test_random_search_discrete_distributions(param_distributions,
      "min_resources_=15 is greater than max_resources_=14"),
     ({'cv': KFold(shuffle=True)}, "must yield consistent folds"),
     ({'cv': ShuffleSplit()}, "must yield consistent folds"),
+    ({"refit": "whatever"}, "refit is expected to be a boolean"),
 ])
 def test_input_errors(Est, params, expected_error_message):
     base_estimator = FastClassifier()
@@ -405,16 +422,6 @@ def test_top_k(k, itr, expected):
     assert np.all(got == expected)
 
 
-def test_refit_callable():
-
-    results = {  # this isn't a 'real world' result dict
-        'iter': np.array([0, 0, 0, 0, 1, 1, 2, 2, 2]),
-        'mean_test_score': np.array([4, 3, 5, 1, 11, 10, 5, 6, 9]),
-        'params': np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']),
-    }
-    assert _refit_callable(results) == 8  # index of 'i'
-
-
 @pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
 def test_cv_results(Est):
     # test that the cv_results_ matches correctly the logic of the
@@ -440,6 +447,12 @@ def test_cv_results(Est):
         sh.set_params(n_candidates=2 * 30, min_resources='exhaust')
 
     sh.fit(X, y)
+
+    # non-regression check for
+    # https://github.com/scikit-learn/scikit-learn/issues/19203
+    assert isinstance(sh.cv_results_['iter'], np.ndarray)
+    assert isinstance(sh.cv_results_['n_resources'], np.ndarray)
+
     cv_results_df = pd.DataFrame(sh.cv_results_)
 
     # just make sure we don't have ties
@@ -606,3 +619,64 @@ def test_halving_grid_search_cv_use_warm_start():
     mask = np.concatenate([[False], mask])
     assert_array_equal(clf.cv_results_['mean_test_score'][mask], 2)
     assert_array_equal(clf.cv_results_['mean_test_score'][~mask], 1)
+
+
+@pytest.mark.parametrize('Est', (HalvingGridSearchCV, HalvingRandomSearchCV))
+def test_groups_support(Est):
+    # Check if ValueError (when groups is None) propagates to
+    # HalvingGridSearchCV and HalvingRandomSearchCV
+    # And also check if groups is correctly passed to the cv object
+    rng = np.random.RandomState(0)
+
+    X, y = make_classification(n_samples=50, n_classes=2, random_state=0)
+    groups = rng.randint(0, 3, 50)
+
+    clf = LinearSVC(random_state=0)
+    grid = {'C': [1]}
+
+    group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2),
+                 GroupKFold(n_splits=3), GroupShuffleSplit(random_state=0)]
+    error_msg = "The 'groups' parameter should not be None."
+    for cv in group_cvs:
+        gs = Est(clf, grid, cv=cv)
+        with pytest.raises(ValueError, match=error_msg):
+            gs.fit(X, y)
+        gs.fit(X, y, groups=groups)
+
+    non_group_cvs = [StratifiedKFold(), StratifiedShuffleSplit(random_state=0)]
+    for cv in non_group_cvs:
+        gs = Est(clf, grid, cv=cv)
+        # Should not raise an error
+        gs.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "SearchCV", [HalvingRandomSearchCV, HalvingGridSearchCV]
+)
+def test_min_resources_null(SearchCV):
+    """Check that we raise an error if the minimum resources is set to 0."""
+    base_estimator = FastClassifier()
+    param_grid = {'a': [1]}
+    X = np.empty(0).reshape(0, 3)
+
+    search = SearchCV(base_estimator, param_grid, min_resources="smallest")
+
+    err_msg = "min_resources_=0: you might have passed an empty dataset X."
+    with pytest.raises(ValueError, match=err_msg):
+        search.fit(X, [])
+
+
+@pytest.mark.parametrize(
+    "SearchCV", [HalvingGridSearchCV, HalvingRandomSearchCV]
+)
+def test_select_best_index(SearchCV):
+    """Check the selection strategy of the halving search."""
+    results = {  # this isn't a 'real world' result dict
+        'iter': np.array([0, 0, 0, 0, 1, 1, 2, 2, 2]),
+        'mean_test_score': np.array([4, 3, 5, 1, 11, 10, 5, 6, 9]),
+        'params': np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']),
+    }
+
+    # we expect the index of 'i'
+    best_index = SearchCV._select_best_index(None, None, results)
+    assert best_index == 8

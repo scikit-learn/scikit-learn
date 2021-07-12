@@ -17,7 +17,6 @@ from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import delayed
 
 
-@_deprecate_positional_args
 def plot_partial_dependence(
     estimator,
     X,
@@ -174,6 +173,9 @@ def plot_partial_dependence(
 
     n_jobs : int, default=None
         The number of CPUs to use to compute the partial dependences.
+        Computation is parallelized over features specified by the `features`
+        parameter.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -247,7 +249,8 @@ def plot_partial_dependence(
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
-    >>> plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
+    >>> plot_partial_dependence(clf, X, [0, (0, 1)])
+    <...>
     """
     check_matplotlib_support('plot_partial_dependence')  # noqa
     import matplotlib.pyplot as plt  # noqa
@@ -536,7 +539,6 @@ class PartialDependenceDisplay:
     partial_dependence : Compute Partial Dependence values.
     plot_partial_dependence : Plot Partial Dependence.
     """
-    @_deprecate_positional_args
     def __init__(
         self,
         pd_results,

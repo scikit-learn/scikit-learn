@@ -6,7 +6,6 @@ import numpy as np
 
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from ._dict_learning import dict_learning, dict_learning_online
@@ -54,10 +53,12 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         for more details.
 
     U_init : ndarray of shape (n_samples, n_components), default=None
-        Initial values for the loadings for warm restart scenarios.
+        Initial values for the loadings for warm restart scenarios. Only used
+        if `U_init` and `V_init` are not None.
 
     V_init : ndarray of shape (n_components, n_features), default=None
-        Initial values for the components for warm restart scenarios.
+        Initial values for the components for warm restart scenarios. Only used
+        if `U_init` and `V_init` are not None.
 
     verbose : int or bool, default=False
         Controls the verbosity; the higher, the more messages. Defaults to 0.
@@ -87,6 +88,11 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -109,7 +115,6 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     MiniBatchSparsePCA
     DictionaryLearning
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
                  max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
                  U_init=None, V_init=None, verbose=False, random_state=None):
@@ -279,6 +284,11 @@ class MiniBatchSparsePCA(SparsePCA):
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -302,7 +312,6 @@ class MiniBatchSparsePCA(SparsePCA):
     SparsePCA
     DictionaryLearning
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=None, method='lars', random_state=None):

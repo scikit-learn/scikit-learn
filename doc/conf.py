@@ -16,6 +16,7 @@ import sys
 import os
 import warnings
 import re
+from datetime import datetime
 from packaging.version import parse
 from pathlib import Path
 from io import StringIO
@@ -78,12 +79,14 @@ source_suffix = '.rst'
 # The encoding of source files.
 #source_encoding = 'utf-8'
 
-# The master toctree document.
-master_doc = 'contents'
+# The main toctree document.
+main_doc = 'contents'
 
 # General information about the project.
 project = 'scikit-learn'
-copyright = '2007 - 2020, scikit-learn developers (BSD License)'
+copyright = (
+    f'2007 - {datetime.now().year}, scikit-learn developers (BSD License)'
+)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -283,7 +286,7 @@ if v.release is None:
         'PEP440'.format(version))
 
 if v.is_devrelease:
-    binder_branch = 'master'
+    binder_branch = 'main'
 else:
     major, minor = v.release[:2]
     binder_branch = '{}.{}.X'.format(major, minor)
@@ -355,7 +358,6 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600}
 
 # enable experimental module so that experimental estimators can be
 # discovered properly by sphinx
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.experimental import enable_halving_search_cv  # noqa
 
@@ -461,30 +463,8 @@ def generate_min_dependency_substitutions(app):
 # we use the issues path for PRs since the issues URL will forward
 issues_github_path = 'scikit-learn/scikit-learn'
 
-# Hack to get kwargs to appear in docstring #18434
-# TODO: Remove when https://github.com/sphinx-doc/sphinx/pull/8234 gets
-# merged
-from sphinx.util import inspect  # noqa
-from sphinx.ext.autodoc import ClassDocumenter  # noqa
-
-
-class PatchedClassDocumenter(ClassDocumenter):
-
-    def _get_signature(self):
-        old_signature = inspect.signature
-
-        def patch_signature(subject, bound_method=False, follow_wrapped=True):
-            # changes the default of follow_wrapped to True
-            return old_signature(subject, bound_method=bound_method,
-                                 follow_wrapped=follow_wrapped)
-        inspect.signature = patch_signature
-        result = super()._get_signature()
-        inspect.signature = old_signature
-        return result
-
 
 def setup(app):
-    app.registry.documenters['class'] = PatchedClassDocumenter
     app.connect('builder-inited', generate_min_dependency_table)
     app.connect('builder-inited', generate_min_dependency_substitutions)
     # to hide/show the prompt in code examples:

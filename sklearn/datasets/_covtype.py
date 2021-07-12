@@ -29,7 +29,6 @@ from ._base import RemoteFileMetadata
 from ..utils import Bunch
 from ._base import _pkl_filepath
 from ..utils import check_random_state
-from ..utils.validation import _deprecate_positional_args
 
 
 # The original data can be found in:
@@ -59,7 +58,6 @@ FEATURE_NAMES += [f"Soil_Type_{i}" for i in range(40)]
 TARGET_NAMES = ["Cover_Type"]
 
 
-@_deprecate_positional_args
 def fetch_covtype(*, data_home=None, download_if_missing=True,
                   random_state=None, shuffle=False, return_X_y=False,
                   as_frame=False):
@@ -120,7 +118,7 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
             Each value corresponds to one of
             the 7 forest covertypes with values
             ranging between 1 to 7.
-        frame : dataframe of shape (581012, 53)
+        frame : dataframe of shape (581012, 55)
             Only present when `as_frame=True`. Contains `data` and `target`.
         DESCR : str
             Description of the forest covertype dataset.

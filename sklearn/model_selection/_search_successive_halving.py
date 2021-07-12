@@ -1,3 +1,4 @@
+from copy import deepcopy
 from math import ceil, floor, log
 from abc import abstractmethod
 from numbers import Integral
@@ -6,10 +7,11 @@ import numpy as np
 from ._search import _check_param_grid
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
-from ..utils.validation import _num_samples
 from ..base import is_classifier
 from ._split import check_cv, _yields_constant_splits
 from ..utils import resample
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import _num_samples
 
 
 __all__ = ['HalvingGridSearchCV', 'HalvingRandomSearchCV']
@@ -37,17 +39,6 @@ class _SubsampleMetaSplitter:
             yield train_idx, test_idx
 
 
-def _refit_callable(results):
-    # Custom refit callable to return the index of the best candidate. We want
-    # the best candidate out of the last iteration. By default BaseSearchCV
-    # would return the best candidate out of all iterations.
-
-    last_iter = np.max(results['iter'])
-    last_iter_indices = np.flatnonzero(results['iter'] == last_iter)
-    best_idx = np.argmax(results['mean_test_score'][last_iter_indices])
-    return last_iter_indices[best_idx]
-
-
 def _top_k(results, k, itr):
     # Return the best candidates of a given iteration
     iteration, mean_test_score, params = (
@@ -72,8 +63,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                  error_score=np.nan, return_train_score=True,
                  max_resources='auto', min_resources='exhaust',
                  resource='n_samples', factor=3, aggressive_elimination=False):
-
-        refit = _refit_callable if refit else False
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, cv=cv,
                          verbose=verbose,
@@ -157,6 +146,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
+                    y = self._validate_data(X="no_validation", y=y)
+                    check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
             else:
@@ -176,6 +167,33 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 f'min_resources_={self.min_resources_} is greater '
                 f'than max_resources_={self.max_resources_}.'
             )
+
+        if self.min_resources_ == 0:
+            raise ValueError(
+                f"min_resources_={self.min_resources_}: you might have passed "
+                f"an empty dataset X."
+            )
+
+        if not isinstance(self.refit, bool):
+            raise ValueError(
+                f"refit is expected to be a boolean. Got {type(self.refit)} "
+                f"instead."
+            )
+
+    @staticmethod
+    def _select_best_index(refit, refit_metric, results):
+        """Custom refit callable to return the index of the best candidate.
+
+        We want the best candidate out of the last iteration. By default
+        BaseSearchCV would return the best candidate out of all iterations.
+
+        Currently, we only support for a single metric thus `refit` and
+        `refit_metric` are not required.
+        """
+        last_iter = np.max(results['iter'])
+        last_iter_indices = np.flatnonzero(results['iter'] == last_iter)
+        best_idx = np.argmax(results['mean_test_score'][last_iter_indices])
+        return last_iter_indices[best_idx]
 
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
@@ -210,7 +228,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         self._n_samples_orig = _num_samples(X)
 
-        super().fit(X, y=y, groups=None, **fit_params)
+        super().fit(X, y=y, groups=groups, **fit_params)
 
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
         self.best_score_ = (
@@ -331,6 +349,18 @@ class BaseSuccessiveHalving(BaseSearchCV):
     def _generate_candidate_params(self):
         pass
 
+    def _more_tags(self):
+        tags = deepcopy(super()._more_tags())
+        tags["_xfail_checks"].update(
+            {
+                "check_fit2d_1sample": (
+                    "Fail during parameter check since min/max resources requires"
+                    " more samples"
+                ),
+            }
+        )
+        return tags
+
 
 class HalvingGridSearchCV(BaseSuccessiveHalving):
     """Search over specified parameter values with successive halving.
@@ -391,11 +421,13 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         iteration.
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
+
             - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-               problem
+              problem
             - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-               classification problem
+              classification problem
             - ``1`` when ``resource != 'n_samples'``
+
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
           highest value smaller than ``max_resources`` that is a multiple of
@@ -425,7 +457,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -570,6 +603,19 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         This is present only if ``refit`` is not False.
 
+    multimetric_ : bool
+        Whether or not the scorers compute several metrics.
+
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     See Also
     --------
     :class:`HalvingRandomSearchCV`:
@@ -691,11 +737,13 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         iteration.
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
+
             - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-               problem
+              problem
             - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-               classification problem
+              classification problem
             - ``1`` when ``resource != 'n_samples'``
+
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
           highest value smaller than ``max_resources`` that is a multiple of
@@ -725,7 +773,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -860,6 +909,19 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         Seconds used for refitting the best model on the whole dataset.
 
         This is present only if ``refit`` is not False.
+
+    multimetric_ : bool
+        Whether or not the scorers compute several metrics.
+
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. This is present only if ``refit`` is specified and
+        the underlying estimator is a classifier.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
 
     See Also
     --------

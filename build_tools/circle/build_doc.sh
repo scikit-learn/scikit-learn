@@ -9,7 +9,7 @@ set -e
 # instead of relying on the subsequent rules.
 #
 # We always build the documentation for jobs that are not related to a specific
-# PR (e.g. a merge to master or a maintenance branch).
+# PR (e.g. a merge to main or a maintenance branch).
 #
 # If this is a PR, do a full build if there are some files in this PR that are
 # under the "doc/" or "examples/" folders, otherwise perform a quick build.
@@ -49,8 +49,8 @@ get_build_type() {
         echo BUILD: not a pull request
         return
     fi
-    git_range="origin/master...$CIRCLE_SHA1"
-    git fetch origin master >&2 || (echo QUICK BUILD: failed to get changed filenames for $git_range; return)
+    git_range="origin/main...$CIRCLE_SHA1"
+    git fetch origin main >&2 || (echo QUICK BUILD: failed to get changed filenames for $git_range; return)
     filenames=$(git diff --name-only $git_range)
     if [ -z "$filenames" ]
     then
@@ -114,7 +114,7 @@ then
     exit 0
 fi
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
+if [[ "$CIRCLE_BRANCH" =~ ^main$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
     # ZIP linked into HTML
     make_args=dist
@@ -172,14 +172,14 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
     "$(get_dep cython $CYTHON_VERSION)" \
     "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
     "$(get_dep sphinx $SPHINX_VERSION)" \
-    "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)" \
     "$(get_dep pandas $PANDAS_VERSION)" \
     joblib memory_profiler packaging seaborn pillow pytest coverage
 
 source activate testenv
-pip install sphinx-gallery
-pip install numpydoc
-pip install sphinx-prompt
+pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
+pip install "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
+pip install "$(get_dep numpydoc $NUMPYDOC_VERSION)"
+pip install "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)"
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
@@ -188,9 +188,9 @@ python setup.py develop
 
 export OMP_NUM_THREADS=1
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
+if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
-    # List available documentation versions if on master
+    # List available documentation versions if on main
     python build_tools/circle/list_versions.py > doc/versions.rst
 fi
 
@@ -205,7 +205,7 @@ cd -
 set +o pipefail
 
 affected_doc_paths() {
-    files=$(git diff --name-only origin/master...$CIRCLE_SHA1)
+    files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
     echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
     sklearn_files=$(echo "$files" | grep '^sklearn/')
@@ -216,7 +216,7 @@ affected_doc_paths() {
 }
 
 affected_doc_warnings() {
-    files=$(git diff --name-only origin/master...$CIRCLE_SHA1)
+    files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
     # Look for sphinx warnings only in files affected by the PR
     if [ -n "$files" ]
     then

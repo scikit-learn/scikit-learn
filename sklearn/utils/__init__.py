@@ -30,8 +30,7 @@ from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar,
-                         _deprecate_positional_args)
+                         check_symmetric, check_scalar)
 from .. import get_config
 
 
@@ -632,7 +631,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
                     random_state=random_state)
 
 
-@_deprecate_positional_args
 def safe_sqr(X, *, copy=True):
     """Element wise squaring of array-likes and sparse matrices.
 
@@ -672,7 +670,6 @@ def _chunk_generator(gen, chunksize):
             return
 
 
-@_deprecate_positional_args
 def gen_batches(n, batch_size, *, min_batch_size=0):
     """Generator to create slices containing batch_size elements, from 0 to n.
 
@@ -690,6 +687,10 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     Yields
     ------
     slice of batch_size elements
+
+    See Also
+    --------
+    gen_even_slices: Generator to create n_packs slices going up to n.
 
     Examples
     --------
@@ -722,7 +723,6 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
         yield slice(start, n)
 
 
-@_deprecate_positional_args
 def gen_even_slices(n, n_packs, *, n_samples=None):
     """Generator to create n_packs slices going up to n.
 
@@ -739,6 +739,11 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     Yields
     ------
     slice
+
+    See Also
+    --------
+    gen_batches: Generator to create slices containing batch_size elements
+        from 0 to n.
 
     Examples
     --------
@@ -905,7 +910,6 @@ def _print_elapsed_time(source, message=None):
                                timeit.default_timer() - start))
 
 
-@_deprecate_positional_args
 def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     """Calculates how many rows can be processed within working_memory.
 

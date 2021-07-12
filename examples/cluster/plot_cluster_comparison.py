@@ -63,8 +63,8 @@ varied = datasets.make_blobs(n_samples=n_samples,
 # ============
 # Set up cluster parameters
 # ============
-plt.figure(figsize=(9 * 2 + 3, 12.5))
-plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
+plt.figure(figsize=(9 * 2 + 3, 13))
+plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.95, wspace=.05,
                     hspace=.01)
 
 plot_num = 1
@@ -135,16 +135,16 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         n_components=params['n_clusters'], covariance_type='full')
 
     clustering_algorithms = (
-        ('MiniBatchKMeans', two_means),
-        ('AffinityPropagation', affinity_propagation),
+        ('MiniBatch\nKMeans', two_means),
+        ('Affinity\nPropagation', affinity_propagation),
         ('MeanShift', ms),
-        ('SpectralClustering', spectral),
+        ('Spectral\nClustering', spectral),
         ('Ward', ward),
-        ('AgglomerativeClustering', average_linkage),
+        ('Agglomerative\nClustering', average_linkage),
         ('DBSCAN', dbscan),
         ('OPTICS', optics),
-        ('Birch', birch),
-        ('GaussianMixture', gmm)
+        ('BIRCH', birch),
+        ('Gaussian\nMixture', gmm)
     )
 
     for name, algorithm in clustering_algorithms:
