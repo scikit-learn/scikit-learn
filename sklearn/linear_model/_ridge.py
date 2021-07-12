@@ -988,10 +988,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         Parameters
         ----------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : ndarray of shape (n_samples,) or (n_samples, n_targets)
-            Target values
+            Target values.
 
         sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
@@ -999,7 +999,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted estimator.
         """
         return super().fit(X, y, sample_weight=sample_weight)
 

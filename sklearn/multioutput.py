@@ -22,8 +22,8 @@ from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
+from .utils.metaestimators import available_if
 from .utils import check_random_state
-from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
@@ -64,13 +64,27 @@ def _partial_fit_estimator(
     return estimator
 
 
+def _available_if_estimator_has(attr):
+    """Returns a function to check if estimator or estimators_ has attr
+
+    Helper for Chain implementations
+    """
+    def _check(self):
+        return (
+            hasattr(self.estimator, attr)
+            or all(hasattr(est, attr) for est in self.estimators_)
+        )
+
+    return available_if(_check)
+
+
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
-    @if_delegate_has_method("estimator")
+    @_available_if_estimator_has("partial_fit")
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incrementally fit the model to data.
         Fit a separate model for each output variable.
@@ -280,7 +294,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
-    @if_delegate_has_method("estimator")
+    @_available_if_estimator_has("partial_fit")
     def partial_fit(self, X, y, sample_weight=None):
         """Incrementally fit the model to data.
         Fit a separate model for each output variable.
@@ -462,6 +476,20 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     def _more_tags(self):
         # FIXME
         return {"_skip_test": True}
+
+
+def _available_if_base_estimator_has(attr):
+    """Returns a function to check if base_estimator or estimators_ has attr
+
+    Helper for Chain implementations
+    """
+    def _check(self):
+        return (
+            hasattr(self.base_estimator, attr)
+            or all(hasattr(est, attr) for est in self.estimators_)
+        )
+
+    return available_if(_check)
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
@@ -700,7 +728,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         ]
         return self
 
-    @if_delegate_has_method("base_estimator")
+    @_available_if_base_estimator_has("predict_proba")
     def predict_proba(self, X):
         """Predict probability estimates.
 
@@ -729,7 +757,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         return Y_prob
 
-    @if_delegate_has_method("base_estimator")
+    @_available_if_base_estimator_has("decision_function")
     def decision_function(self, X):
         """Evaluate the decision_function of the models in the chain.
 

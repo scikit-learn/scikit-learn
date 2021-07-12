@@ -12,7 +12,6 @@ DOCSTRING_IGNORE_LIST = [
     "AdditiveChi2Sampler",
     "AffinityPropagation",
     "AgglomerativeClustering",
-    "BaggingRegressor",
     "BernoulliRBM",
     "Birch",
     "CCA",
@@ -43,7 +42,6 @@ DOCSTRING_IGNORE_LIST = [
     "GaussianNB",
     "GaussianProcessRegressor",
     "GaussianRandomProjection",
-    "GenericUnivariateSelect",
     "GradientBoostingClassifier",
     "GradientBoostingRegressor",
     "GraphicalLasso",
@@ -129,7 +127,6 @@ DOCSTRING_IGNORE_LIST = [
     "RandomTreesEmbedding",
     "RandomizedSearchCV",
     "RegressorChain",
-    "Ridge",
     "RidgeCV",
     "RidgeClassifier",
     "RidgeClassifierCV",
@@ -167,7 +164,6 @@ DOCSTRING_IGNORE_LIST = [
     "TweedieRegressor",
     "VarianceThreshold",
     "VotingClassifier",
-    "VotingRegressor",
 ]
 
 
