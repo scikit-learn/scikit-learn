@@ -189,6 +189,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     increasing_ : bool
         Inferred value for ``increasing``.
 
+    See Also
+    --------
+    LinearRegression : Ordinary least squares Linear Regression.
+
     Notes
     -----
     Ties are broken using the secondary method from de Leeuw, 1977.
@@ -348,7 +352,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, T):
-        """Transform new data by linear interpolation
+        """Transform new data by linear interpolation.
 
         Parameters
         ----------
@@ -361,7 +365,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         Returns
         -------
         y_pred : ndarray of shape (n_samples,)
-            The transformed data
+            The transformed data.
         """
 
         if hasattr(self, "X_thresholds_"):
