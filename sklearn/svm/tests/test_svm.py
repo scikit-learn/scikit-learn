@@ -69,12 +69,18 @@ def test_libsvm_iris():
     pred = _libsvm.predict(iris.data, *model)
     assert np.mean(pred == iris.target) > 0.95
 
-    model = _libsvm.fit(iris.data, iris.target.astype(np.float64), kernel="linear")
+    model = _libsvm.fit(
+        iris.data, iris.target.astype(np.float64), kernel="linear"
+    )
     pred = _libsvm.predict(iris.data, *model, kernel="linear")
     assert np.mean(pred == iris.target) > 0.95
 
     pred = _libsvm.cross_validation(
-        iris.data, iris.target.astype(np.float64), 5, kernel="linear", random_seed=0
+        iris.data,
+        iris.target.astype(np.float64),
+        5,
+        kernel="linear",
+        random_seed=0,
     )
     assert np.mean(pred == iris.target) > 0.95
 
@@ -82,7 +88,11 @@ def test_libsvm_iris():
     # we should get deterministic results (assuming that there is no other
     # thread calling this wrapper calling `srand` concurrently).
     pred2 = _libsvm.cross_validation(
-        iris.data, iris.target.astype(np.float64), 5, kernel="linear", random_seed=0
+        iris.data,
+        iris.target.astype(np.float64),
+        5,
+        kernel="linear",
+        random_seed=0,
     )
     assert_array_equal(pred, pred2)
 
@@ -190,7 +200,9 @@ def test_linearsvr():
     svr = svm.SVR(kernel="linear", C=1e3).fit(diabetes.data, diabetes.target)
     score2 = svr.score(diabetes.data, diabetes.target)
 
-    assert_allclose(np.linalg.norm(lsvr.coef_), np.linalg.norm(svr.coef_), 1, 0.0001)
+    assert_allclose(
+        np.linalg.norm(lsvr.coef_), np.linalg.norm(svr.coef_), 1, 0.0001
+    )
     assert_almost_equal(score1, score2, 2)
 
 
@@ -212,7 +224,10 @@ def test_linearsvr_fit_sampleweight():
     score2 = lsvr_no_weight.score(diabetes.data, diabetes.target)
 
     assert_allclose(
-        np.linalg.norm(lsvr.coef_), np.linalg.norm(lsvr_no_weight.coef_), 1, 0.0001
+        np.linalg.norm(lsvr.coef_),
+        np.linalg.norm(lsvr_no_weight.coef_),
+        1,
+        0.0001,
     )
     assert_almost_equal(score1, score2, 2)
 
@@ -229,7 +244,9 @@ def test_linearsvr_fit_sampleweight():
 
     X_flat = np.repeat(diabetes.data, random_weight, axis=0)
     y_flat = np.repeat(diabetes.target, random_weight, axis=0)
-    lsvr_flat = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=10000).fit(X_flat, y_flat)
+    lsvr_flat = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=10000).fit(
+        X_flat, y_flat
+    )
     score4 = lsvr_flat.score(X_flat, y_flat)
 
     assert_almost_equal(score3, score4, 2)
@@ -255,7 +272,9 @@ def test_oneclass():
     assert_array_equal(pred, [1, -1, -1])
     assert pred.dtype == np.dtype("intp")
     assert_array_almost_equal(clf.intercept_, [-1.218], decimal=3)
-    assert_array_almost_equal(clf.dual_coef_, [[0.750, 0.750, 0.750, 0.750]], decimal=3)
+    assert_array_almost_equal(
+        clf.dual_coef_, [[0.750, 0.750, 0.750, 0.750]], decimal=3
+    )
     with pytest.raises(AttributeError):
         (lambda: clf.coef_)()
 
@@ -325,11 +344,17 @@ def test_probability():
         clf.fit(iris.data, iris.target)
 
         prob_predict = clf.predict_proba(iris.data)
-        assert_array_almost_equal(np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
-        assert np.mean(np.argmax(prob_predict, 1) == clf.predict(iris.data)) > 0.9
+        assert_array_almost_equal(
+            np.sum(prob_predict, 1), np.ones(iris.data.shape[0])
+        )
+        assert (
+            np.mean(np.argmax(prob_predict, 1) == clf.predict(iris.data)) > 0.9
+        )
 
         assert_almost_equal(
-            clf.predict_proba(iris.data), np.exp(clf.predict_log_proba(iris.data)), 8
+            clf.predict_proba(iris.data),
+            np.exp(clf.predict_log_proba(iris.data)),
+            8,
         )
 
 
@@ -382,13 +407,17 @@ def test_decision_function_shape(SVM):
     X, y = make_blobs(n_samples=80, centers=5, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    clf = SVM(kernel="linear", decision_function_shape="ovr").fit(X_train, y_train)
+    clf = SVM(kernel="linear", decision_function_shape="ovr").fit(
+        X_train, y_train
+    )
     dec = clf.decision_function(X_test)
     assert dec.shape == (len(X_test), 5)
     assert_array_equal(clf.predict(X_test), np.argmax(dec, axis=1))
 
     # check shape of ovo_decition_function=True
-    clf = SVM(kernel="linear", decision_function_shape="ovo").fit(X_train, y_train)
+    clf = SVM(kernel="linear", decision_function_shape="ovo").fit(
+        X_train, y_train
+    )
     dec = clf.decision_function(X_train)
     assert dec.shape == (len(X_train), 10)
 
@@ -506,11 +535,23 @@ def test_svm_equivalence_sample_weight_C():
 @pytest.mark.parametrize(
     "Estimator, err_msg",
     [
-        (svm.SVC, "Invalid input - all samples have zero or negative weights."),
+        (
+            svm.SVC,
+            "Invalid input - all samples have zero or negative weights.",
+        ),
         (svm.NuSVC, "(negative dimensions are not allowed|nu is infeasible)"),
-        (svm.SVR, "Invalid input - all samples have zero or negative weights."),
-        (svm.NuSVR, "Invalid input - all samples have zero or negative weights."),
-        (svm.OneClassSVM, "Invalid input - all samples have zero or negative weights."),
+        (
+            svm.SVR,
+            "Invalid input - all samples have zero or negative weights.",
+        ),
+        (
+            svm.NuSVR,
+            "Invalid input - all samples have zero or negative weights.",
+        ),
+        (
+            svm.OneClassSVM,
+            "Invalid input - all samples have zero or negative weights.",
+        ),
     ],
     ids=["SVC", "NuSVC", "SVR", "NuSVR", "OneClassSVM"],
 )
@@ -519,7 +560,9 @@ def test_svm_equivalence_sample_weight_C():
     [[0] * len(Y), [-0.3] * len(Y)],
     ids=["weights-are-zero", "weights-are-negative"],
 )
-def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_weight):
+def test_negative_sample_weights_mask_all_samples(
+    Estimator, err_msg, sample_weight
+):
     est = Estimator(kernel="linear")
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X, Y, sample_weight=sample_weight)
@@ -530,7 +573,8 @@ def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_wei
     [
         (
             svm.SVC,
-            "Invalid input - all samples with positive weights have the same label",
+            "Invalid input - all samples with positive weights have the same"
+            " label",
         ),
         (svm.NuSVC, "specified nu is infeasible"),
     ],
@@ -541,7 +585,9 @@ def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_wei
     [[0, -0.5, 0, 1, 1, 1], [1, 1, 1, 0, -0.1, -0.3]],
     ids=["mask-label-1", "mask-label-2"],
 )
-def test_negative_weights_svc_leave_just_one_label(Classifier, err_msg, sample_weight):
+def test_negative_weights_svc_leave_just_one_label(
+    Classifier, err_msg, sample_weight
+):
     clf = Classifier(kernel="linear")
     with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, Y, sample_weight=sample_weight)
@@ -551,7 +597,10 @@ def test_negative_weights_svc_leave_just_one_label(Classifier, err_msg, sample_w
     "Classifier, model",
     [
         (svm.SVC, {"when-left": [0.3998, 0.4], "when-right": [0.4, 0.3999]}),
-        (svm.NuSVC, {"when-left": [0.3333, 0.3333], "when-right": [0.3333, 0.3333]}),
+        (
+            svm.NuSVC,
+            {"when-left": [0.3333, 0.3333], "when-right": [0.3333, 0.3333]},
+        ),
     ],
     ids=["SVC", "NuSVC"],
 )
@@ -601,7 +650,9 @@ def test_auto_weight():
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
     classes = np.unique(y[unbalanced])
-    class_weights = compute_class_weight("balanced", classes=classes, y=y[unbalanced])
+    class_weights = compute_class_weight(
+        "balanced", classes=classes, y=y[unbalanced]
+    )
     assert np.argmax(class_weights) == 2
 
     for clf in (
@@ -616,9 +667,9 @@ def test_auto_weight():
             X[unbalanced],
             y[unbalanced],
         ).predict(X)
-        assert metrics.f1_score(y, y_pred, average="macro") <= metrics.f1_score(
-            y, y_pred_balanced, average="macro"
-        )
+        assert metrics.f1_score(
+            y, y_pred, average="macro"
+        ) <= metrics.f1_score(y, y_pred_balanced, average="macro")
 
 
 def test_bad_input():
@@ -692,7 +743,11 @@ def test_unicode_kernel():
     clf.fit(X, Y)
     clf.predict_proba(T)
     _libsvm.cross_validation(
-        iris.data, iris.target.astype(np.float64), 5, kernel="linear", random_seed=0
+        iris.data,
+        iris.target.astype(np.float64),
+        5,
+        kernel="linear",
+        random_seed=0,
     )
 
 
@@ -735,7 +790,10 @@ def test_linearsvc_parameters():
 
             with pytest.raises(
                 ValueError,
-                match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"
+                match=(
+                    "Unsupported set of"
+                    " arguments.*penalty='%s.*loss='%s.*dual=%s"
+                )
                 % (penalty, loss, dual),
             ):
                 clf.fit(X, y)
@@ -757,7 +815,10 @@ def test_linear_svx_uppercase_loss_penality_raises_error():
     with pytest.raises(ValueError, match=msg):
         svm.LinearSVC(loss="SQuared_hinge").fit(X, y)
 
-    msg = "The combination of penalty='L2' and loss='squared_hinge' is not supported"
+    msg = (
+        "The combination of penalty='L2' and loss='squared_hinge' is not"
+        " supported"
+    )
     with pytest.raises(ValueError, match=msg):
         svm.LinearSVC(penalty="L2").fit(X, y)
 
@@ -800,7 +861,9 @@ def test_linearsvc_crammer_singer():
     cs_clf.fit(iris.data, iris.target)
 
     # similar prediction for ovr and crammer-singer:
-    assert (ovr_clf.predict(iris.data) == cs_clf.predict(iris.data)).mean() > 0.9
+    assert (
+        ovr_clf.predict(iris.data) == cs_clf.predict(iris.data)
+    ).mean() > 0.9
 
     # classifiers shouldn't be the same
     assert (ovr_clf.coef_ != cs_clf.coef_).all()
@@ -819,9 +882,9 @@ def test_linearsvc_fit_sampleweight():
     n_samples = len(X)
     unit_weight = np.ones(n_samples)
     clf = svm.LinearSVC(random_state=0).fit(X, Y)
-    clf_unitweight = svm.LinearSVC(random_state=0, tol=1e-12, max_iter=1000).fit(
-        X, Y, sample_weight=unit_weight
-    )
+    clf_unitweight = svm.LinearSVC(
+        random_state=0, tol=1e-12, max_iter=1000
+    ).fit(X, Y, sample_weight=unit_weight)
 
     # check if same as sample_weight=None
     assert_array_equal(clf_unitweight.predict(T), clf.predict(T))
@@ -981,13 +1044,18 @@ def test_svc_clone_with_callable_kernel():
     svm_cloned.fit(iris.data, iris.target)
 
     svm_builtin = svm.SVC(
-        kernel="linear", probability=True, random_state=0, decision_function_shape="ovr"
+        kernel="linear",
+        probability=True,
+        random_state=0,
+        decision_function_shape="ovr",
     )
     svm_builtin.fit(iris.data, iris.target)
 
     assert_array_almost_equal(svm_cloned.dual_coef_, svm_builtin.dual_coef_)
     assert_array_almost_equal(svm_cloned.intercept_, svm_builtin.intercept_)
-    assert_array_equal(svm_cloned.predict(iris.data), svm_builtin.predict(iris.data))
+    assert_array_equal(
+        svm_cloned.predict(iris.data), svm_builtin.predict(iris.data)
+    )
 
     assert_array_almost_equal(
         svm_cloned.predict_proba(iris.data),
@@ -1008,7 +1076,10 @@ def test_svc_bad_kernel():
 
 def test_timeout():
     a = svm.SVC(
-        kernel=lambda x, y: np.dot(x, y.T), probability=True, random_state=0, max_iter=1
+        kernel=lambda x, y: np.dot(x, y.T),
+        probability=True,
+        random_state=0,
+        max_iter=1,
     )
     warning_msg = (
         r"Solver terminated early \(max_iter=1\).  Consider pre-processing "
@@ -1044,7 +1115,9 @@ def test_linear_svm_convergence_warnings():
     # Test that warnings are raised if model does not converge
 
     lsvc = svm.LinearSVC(random_state=0, max_iter=2)
-    warning_msg = "Liblinear failed to converge, increase the number of iterations."
+    warning_msg = (
+        "Liblinear failed to converge, increase the number of iterations."
+    )
     with pytest.warns(ConvergenceWarning, match=warning_msg):
         lsvc.fit(X, Y)
     assert lsvc.n_iter_ == 2
@@ -1061,7 +1134,11 @@ def test_svr_coef_sign():
     X = np.random.RandomState(21).randn(10, 3)
     y = np.random.RandomState(12).randn(10)
 
-    for svr in [svm.SVR(kernel="linear"), svm.NuSVR(kernel="linear"), svm.LinearSVR()]:
+    for svr in [
+        svm.SVR(kernel="linear"),
+        svm.NuSVR(kernel="linear"),
+        svm.LinearSVR(),
+    ]:
         svr.fit(X, y)
         assert_array_almost_equal(
             svr.predict(X), np.dot(X, svr.coef_.ravel()) + svr.intercept_
@@ -1120,9 +1197,9 @@ def test_decision_function_shape_two_class():
     for n_classes in [2, 3]:
         X, y = make_blobs(centers=n_classes, random_state=0)
         for estimator in [svm.SVC, svm.NuSVC]:
-            clf = OneVsRestClassifier(estimator(decision_function_shape="ovr")).fit(
-                X, y
-            )
+            clf = OneVsRestClassifier(
+                estimator(decision_function_shape="ovr")
+            ).fit(X, y)
             assert len(clf.predict(X)) == len(y)
 
 
@@ -1175,7 +1252,10 @@ def test_svc_invalid_break_ties_param(SVCClass):
     X, y = make_blobs(random_state=42)
 
     svm = SVCClass(
-        kernel="linear", decision_function_shape="ovo", break_ties=True, random_state=42
+        kernel="linear",
+        decision_function_shape="ovo",
+        break_ties=True,
+        random_state=42,
     ).fit(X, y)
 
     with pytest.raises(ValueError, match="break_ties must be False"):
@@ -1204,7 +1284,10 @@ def test_svc_ovr_tie_breaking(SVCClass):
     assert not np.all(pred == np.argmax(dv, axis=1))
 
     svm = SVCClass(
-        kernel="linear", decision_function_shape="ovr", break_ties=True, random_state=42
+        kernel="linear",
+        decision_function_shape="ovr",
+        break_ties=True,
+        random_state=42,
     ).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
@@ -1347,8 +1430,12 @@ def test_custom_kernel_not_array_input(Estimator):
     assert svc1.score(data, y) == svc3.score(K, y)
     assert svc1.score(data, y) == svc2.score(X, y)
     if hasattr(svc1, "decision_function"):  # classifier
-        assert_allclose(svc1.decision_function(data), svc2.decision_function(X))
-        assert_allclose(svc1.decision_function(data), svc3.decision_function(K))
+        assert_allclose(
+            svc1.decision_function(data), svc2.decision_function(X)
+        )
+        assert_allclose(
+            svc1.decision_function(data), svc3.decision_function(K)
+        )
         assert_array_equal(svc1.predict(data), svc2.predict(X))
         assert_array_equal(svc1.predict(data), svc3.predict(K))
     else:  # regressor

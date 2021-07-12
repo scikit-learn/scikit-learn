@@ -117,7 +117,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
         is_X_sparse = sp.issparse(X)
         if is_X_sparse and self.shrink_threshold:
-            raise ValueError("threshold shrinking not supported for sparse input")
+            raise ValueError(
+                "threshold shrinking not supported for sparse input"
+            )
         check_classification_targets(y)
 
         n_samples, n_features = X.shape
@@ -127,7 +129,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than one; got %d class"
+                "The number of classes has to be greater than one; got %d"
+                " class"
                 % (n_classes)
             )
 
@@ -146,9 +149,13 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             if self.metric == "manhattan":
                 # NumPy does not calculate median of sparse matrices.
                 if not is_X_sparse:
-                    self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
+                    self.centroids_[cur_class] = np.median(
+                        X[center_mask], axis=0
+                    )
                 else:
-                    self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
+                    self.centroids_[cur_class] = csc_median_axis_0(
+                        X[center_mask]
+                    )
             else:
                 if self.metric != "euclidean":
                     warnings.warn(
@@ -160,7 +167,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         if self.shrink_threshold:
             if np.all(np.ptp(X, axis=0) == 0):
-                raise ValueError("All features have zero variance. Division by zero.")
+                raise ValueError(
+                    "All features have zero variance. Division by zero."
+                )
             dataset_centroid_ = np.mean(X, axis=0)
 
             # m parameter for determining deviation
@@ -207,5 +216,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         return self.classes_[
-            pairwise_distances(X, self.centroids_, metric=self.metric).argmin(axis=1)
+            pairwise_distances(X, self.centroids_, metric=self.metric).argmin(
+                axis=1
+            )
         ]

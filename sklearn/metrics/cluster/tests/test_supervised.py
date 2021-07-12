@@ -20,7 +20,11 @@ from sklearn.metrics.cluster._supervised import check_clusterings
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import assert_almost_equal, ignore_warnings
-from numpy.testing import assert_array_equal, assert_array_almost_equal, assert_allclose
+from numpy.testing import (
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_allclose,
+)
 
 
 score_funcs = [
@@ -38,7 +42,8 @@ score_funcs = [
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
         expected = (
-            r"Found input variables with inconsistent numbers " r"of samples: \[2, 3\]"
+            r"Found input variables with inconsistent numbers "
+            r"of samples: \[2, 3\]"
         )
         with pytest.raises(ValueError, match=expected):
             score_func([0, 1], [1, 1, 1])
@@ -69,8 +74,12 @@ def test_perfect_matches():
         assert score_func([0], [1]) == pytest.approx(1.0)
         assert score_func([0, 0, 0], [0, 0, 0]) == pytest.approx(1.0)
         assert score_func([0, 1, 0], [42, 7, 42]) == pytest.approx(1.0)
-        assert score_func([0.0, 1.0, 0.0], [42.0, 7.0, 42.0]) == pytest.approx(1.0)
-        assert score_func([0.0, 1.0, 2.0], [42.0, 7.0, 2.0]) == pytest.approx(1.0)
+        assert score_func([0.0, 1.0, 0.0], [42.0, 7.0, 42.0]) == pytest.approx(
+            1.0
+        )
+        assert score_func([0.0, 1.0, 2.0], [42.0, 7.0, 2.0]) == pytest.approx(
+            1.0
+        )
         assert score_func([0, 1, 2], [42, 7, 2]) == pytest.approx(1.0)
     score_funcs_with_changing_means = [
         normalized_mutual_info_score,
@@ -79,8 +88,12 @@ def test_perfect_matches():
     means = {"min", "geometric", "arithmetic", "max"}
     for score_func in score_funcs_with_changing_means:
         for mean in means:
-            assert score_func([], [], average_method=mean) == pytest.approx(1.0)
-            assert score_func([0], [1], average_method=mean) == pytest.approx(1.0)
+            assert score_func([], [], average_method=mean) == pytest.approx(
+                1.0
+            )
+            assert score_func([0], [1], average_method=mean) == pytest.approx(
+                1.0
+            )
             assert score_func(
                 [0, 0, 0], [0, 0, 0], average_method=mean
             ) == pytest.approx(1.0)
@@ -100,7 +113,9 @@ def test_perfect_matches():
 
 def test_homogeneous_but_not_complete_labeling():
     # homogeneous but not complete clustering
-    h, c, v = homogeneity_completeness_v_measure([0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 2, 2])
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 2, 2]
+    )
     assert_almost_equal(h, 1.00, 2)
     assert_almost_equal(c, 0.69, 2)
     assert_almost_equal(v, 0.81, 2)
@@ -108,7 +123,9 @@ def test_homogeneous_but_not_complete_labeling():
 
 def test_complete_but_not_homogeneous_labeling():
     # complete but not homogeneous clustering
-    h, c, v = homogeneity_completeness_v_measure([0, 0, 1, 1, 2, 2], [0, 0, 1, 1, 1, 1])
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 1, 1, 2, 2], [0, 0, 1, 1, 1, 1]
+    )
     assert_almost_equal(h, 0.58, 2)
     assert_almost_equal(c, 1.00, 2)
     assert_almost_equal(v, 0.73, 2)
@@ -116,7 +133,9 @@ def test_complete_but_not_homogeneous_labeling():
 
 def test_not_complete_and_not_homogeneous_labeling():
     # neither complete nor homogeneous but not so bad either
-    h, c, v = homogeneity_completeness_v_measure([0, 0, 0, 1, 1, 1], [0, 1, 0, 1, 2, 2])
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 0, 1, 1, 1], [0, 1, 0, 1, 2, 2]
+    )
     assert_almost_equal(h, 0.67, 2)
     assert_almost_equal(c, 0.42, 2)
     assert_almost_equal(v, 0.52, 2)
@@ -144,12 +163,16 @@ def test_beta_parameter():
 
 def test_non_consecutive_labels():
     # regression tests for labels with gaps
-    h, c, v = homogeneity_completeness_v_measure([0, 0, 0, 2, 2, 2], [0, 1, 0, 1, 2, 2])
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 0, 2, 2, 2], [0, 1, 0, 1, 2, 2]
+    )
     assert_almost_equal(h, 0.67, 2)
     assert_almost_equal(c, 0.42, 2)
     assert_almost_equal(v, 0.52, 2)
 
-    h, c, v = homogeneity_completeness_v_measure([0, 0, 0, 1, 1, 1], [0, 4, 0, 4, 2, 2])
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 0, 1, 1, 1], [0, 4, 0, 4, 2, 2]
+    )
     assert_almost_equal(h, 0.67, 2)
     assert_almost_equal(c, 0.42, 2)
     assert_almost_equal(v, 0.52, 2)
@@ -166,7 +189,9 @@ def test_non_consecutive_labels():
 
 
 @ignore_warnings(category=FutureWarning)
-def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10, seed=42):
+def uniform_labelings_scores(
+    score_func, n_samples, k_range, n_runs=10, seed=42
+):
     # Compute score for random uniform cluster labelings
     random_labels = np.random.RandomState(seed).randint
     scores = np.zeros((len(k_range), n_runs))
@@ -266,7 +291,9 @@ def test_contingency_matrix():
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
     C = contingency_matrix(labels_a, labels_b)
-    C2 = np.histogram2d(labels_a, labels_b, bins=(np.arange(1, 5), np.arange(1, 5)))[0]
+    C2 = np.histogram2d(
+        labels_a, labels_b, bins=(np.arange(1, 5), np.arange(1, 5))
+    )[0]
     assert_array_almost_equal(C, C2)
     C = contingency_matrix(labels_a, labels_b, eps=0.1)
     assert_array_almost_equal(C, C2 + 0.1)
@@ -287,10 +314,16 @@ def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
     for i in np.logspace(1, 4, 4).astype(int):
         labels_a, labels_b = (np.ones(i, dtype=int), np.arange(i, dtype=int))
-        assert normalized_mutual_info_score(labels_a, labels_b) == pytest.approx(0.0)
+        assert normalized_mutual_info_score(
+            labels_a, labels_b
+        ) == pytest.approx(0.0)
         assert v_measure_score(labels_a, labels_b) == pytest.approx(0.0)
-        assert adjusted_mutual_info_score(labels_a, labels_b) == pytest.approx(0.0)
-        assert normalized_mutual_info_score(labels_a, labels_b) == pytest.approx(0.0)
+        assert adjusted_mutual_info_score(labels_a, labels_b) == pytest.approx(
+            0.0
+        )
+        assert normalized_mutual_info_score(
+            labels_a, labels_b
+        ) == pytest.approx(0.0)
         for method in ["min", "geometric", "arithmetic", "max"]:
             assert adjusted_mutual_info_score(
                 labels_a, labels_b, average_method=method
@@ -318,7 +351,9 @@ def test_v_measure_and_mutual_information(seed=36):
         avg = "arithmetic"
         assert_almost_equal(
             v_measure_score(labels_a, labels_b),
-            normalized_mutual_info_score(labels_a, labels_b, average_method=avg),
+            normalized_mutual_info_score(
+                labels_a, labels_b, average_method=avg
+            ),
         )
 
 
@@ -328,7 +363,9 @@ def test_fowlkes_mallows_score():
     assert_almost_equal(score, 4.0 / np.sqrt(12.0 * 6.0))
 
     # Perfect match but where the label names changed
-    perfect_score = fowlkes_mallows_score([0, 0, 0, 1, 1, 1], [1, 1, 1, 0, 0, 0])
+    perfect_score = fowlkes_mallows_score(
+        [0, 0, 0, 1, 1, 1], [1, 1, 1, 0, 0, 0]
+    )
     assert_almost_equal(perfect_score, 1.0)
 
     # Worst case
@@ -394,7 +431,9 @@ def test_pair_confusion_matrix_fully_dispersed():
     clustering1 = list(range(N))
     clustering2 = clustering1
     expected = np.array([[N * (N - 1), 0], [0, 0]])
-    assert_array_equal(pair_confusion_matrix(clustering1, clustering2), expected)
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
 
 
 def test_pair_confusion_matrix_single_cluster():
@@ -403,7 +442,9 @@ def test_pair_confusion_matrix_single_cluster():
     clustering1 = np.zeros((N,))
     clustering2 = clustering1
     expected = np.array([[0, 0], [0, N * (N - 1)]])
-    assert_array_equal(pair_confusion_matrix(clustering1, clustering2), expected)
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
 
 
 def test_pair_confusion_matrix():
@@ -420,12 +461,17 @@ def test_pair_confusion_matrix():
                 same_cluster_1 = int(clustering1[i] == clustering1[j])
                 same_cluster_2 = int(clustering2[i] == clustering2[j])
                 expected[same_cluster_1, same_cluster_2] += 1
-    assert_array_equal(pair_confusion_matrix(clustering1, clustering2), expected)
+    assert_array_equal(
+        pair_confusion_matrix(clustering1, clustering2), expected
+    )
 
 
 @pytest.mark.parametrize(
     "clustering1, clustering2",
-    [(list(range(100)), list(range(100))), (np.zeros((100,)), np.zeros((100,)))],
+    [
+        (list(range(100)), list(range(100))),
+        (np.zeros((100,)), np.zeros((100,))),
+    ],
 )
 def test_rand_score_edge_cases(clustering1, clustering2):
     # edge case 1: every element is its own cluster

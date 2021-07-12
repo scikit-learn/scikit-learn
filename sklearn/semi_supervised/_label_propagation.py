@@ -163,7 +163,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def _build_graph(self):
         raise NotImplementedError(
-            "Graph construction must be implemented to fit a label propagation model."
+            "Graph construction must be implemented to fit a label propagation"
+            " model."
         )
 
     def predict(self, X):
@@ -217,7 +218,9 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             )
         else:
             weight_matrices = weight_matrices.T
-            probabilities = safe_sparse_dot(weight_matrices, self.label_distributions_)
+            probabilities = safe_sparse_dot(
+                weight_matrices, self.label_distributions_
+            )
         normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
         probabilities /= normalizer
         return probabilities
@@ -262,7 +265,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             alpha is None or alpha <= 0.0 or alpha >= 1.0
         ):
             raise ValueError(
-                "alpha=%s is invalid: it must be inside the open interval (0, 1)"
+                "alpha=%s is invalid: it must be inside the open interval"
+                " (0, 1)"
                 % alpha
             )
         y = np.asarray(y)
@@ -297,7 +301,9 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
             if self._variant == "propagation":
-                normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
+                normalizer = np.sum(self.label_distributions_, axis=1)[
+                    :, np.newaxis
+                ]
                 normalizer[normalizer == 0] = 1
                 self.label_distributions_ /= normalizer
                 self.label_distributions_ = np.where(
@@ -320,7 +326,9 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self.label_distributions_ /= normalizer
 
         # set the transduction item
-        transduction = self.classes_[np.argmax(self.label_distributions_, axis=1)]
+        transduction = self.classes_[
+            np.argmax(self.label_distributions_, axis=1)
+        ]
         self.transduction_ = transduction.ravel()
         return self
 

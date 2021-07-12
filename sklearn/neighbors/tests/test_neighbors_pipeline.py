@@ -112,7 +112,9 @@ def test_isomap():
         ),
         Isomap(n_neighbors=n_neighbors, metric="precomputed"),
     )
-    est_compact = Isomap(n_neighbors=n_neighbors, neighbors_algorithm=algorithm)
+    est_compact = Isomap(
+        n_neighbors=n_neighbors, neighbors_algorithm=algorithm
+    )
 
     Xt_chain = est_chain.fit_transform(X)
     Xt_compact = est_compact.fit_transform(X)

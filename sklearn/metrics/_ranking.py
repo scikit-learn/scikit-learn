@@ -86,7 +86,8 @@ def auc(x, y):
 
     if x.shape[0] < 2:
         raise ValueError(
-            "At least 2 points are needed to compute area under curve, but x.shape = %s"
+            "At least 2 points are needed to compute area under curve, but"
+            " x.shape = %s"
             % x.shape
         )
 
@@ -96,7 +97,9 @@ def auc(x, y):
         if np.all(dx <= 0):
             direction = -1
         else:
-            raise ValueError("x is neither increasing nor decreasing : {}.".format(x))
+            raise ValueError(
+                "x is neither increasing nor decreasing : {}.".format(x)
+            )
 
     area = direction * np.trapz(y, x)
     if isinstance(area, np.memmap):
@@ -229,7 +232,11 @@ def average_precision_score(
         _binary_uninterpolated_average_precision, pos_label=pos_label
     )
     return _average_binary_score(
-        average_precision, y_true, y_score, average, sample_weight=sample_weight
+        average_precision,
+        y_true,
+        y_score,
+        average,
+        sample_weight=sample_weight,
     )
 
 
@@ -324,7 +331,11 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     sl = slice(first_ind, last_ind)
 
     # reverse the output such that list of false positives is decreasing
-    return (fps[sl][::-1] / n_count, fns[sl][::-1] / p_count, thresholds[sl][::-1])
+    return (
+        fps[sl][::-1] / n_count,
+        fns[sl][::-1] / p_count,
+        thresholds[sl][::-1],
+    )
 
 
 def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
@@ -626,7 +637,9 @@ def _multiclass_roc_auc_score(
     average_options = ("macro", "weighted")
     if average not in average_options:
         raise ValueError(
-            "average must be one of {0} for multiclass problems".format(average_options)
+            "average must be one of {0} for multiclass problems".format(
+                average_options
+            )
         )
 
     multiclass_options = ("ovo", "ovr")
@@ -647,10 +660,14 @@ def _multiclass_roc_auc_score(
         if len(classes) != y_score.shape[1]:
             raise ValueError(
                 "Number of given labels, {0}, not equal to the number "
-                "of columns in 'y_score', {1}".format(len(classes), y_score.shape[1])
+                "of columns in 'y_score', {1}".format(
+                    len(classes), y_score.shape[1]
+                )
             )
         if len(np.setdiff1d(y_true, classes)):
-            raise ValueError("'y_true' contains labels not in parameter 'labels'")
+            raise ValueError(
+                "'y_true' contains labels not in parameter 'labels'"
+            )
     else:
         classes = _unique(y_true)
         if len(classes) != y_score.shape[1]:
@@ -719,7 +736,10 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """
     # Check to make sure y_true is valid
     y_type = type_of_target(y_true)
-    if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
+    if not (
+        y_type == "binary"
+        or (y_type == "multiclass" and pos_label is not None)
+    ):
         raise ValueError("{0} format is not supported".format(y_type))
 
     check_consistent_length(y_true, y_score, sample_weight)
@@ -768,7 +788,9 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fps, tps, y_score[threshold_idxs]
 
 
-def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight=None):
+def precision_recall_curve(
+    y_true, probas_pred, *, pos_label=None, sample_weight=None
+):
     """Compute precision-recall pairs for different probability thresholds.
 
     Note: this implementation is restricted to the binary classification task.
@@ -862,7 +884,12 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
 
 def roc_curve(
-    y_true, y_score, *, pos_label=None, sample_weight=None, drop_intermediate=True
+    y_true,
+    y_score,
+    *,
+    pos_label=None,
+    sample_weight=None,
+    drop_intermediate=True,
 ):
     """Compute Receiver operating characteristic (ROC).
 
@@ -977,7 +1004,8 @@ def roc_curve(
 
     if fps[-1] <= 0:
         warnings.warn(
-            "No negative samples in y_true, false positive value should be meaningless",
+            "No negative samples in y_true, false positive value should be"
+            " meaningless",
             UndefinedMetricWarning,
         )
         fpr = np.repeat(np.nan, fps.shape)
@@ -986,7 +1014,8 @@ def roc_curve(
 
     if tps[-1] <= 0:
         warnings.warn(
-            "No positive samples in y_true, true positive value should be meaningless",
+            "No positive samples in y_true, true positive value should be"
+            " meaningless",
             UndefinedMetricWarning,
         )
         tpr = np.repeat(np.nan, tps.shape)
@@ -996,7 +1025,9 @@ def roc_curve(
     return fpr, tpr, thresholds
 
 
-def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None):
+def label_ranking_average_precision_score(
+    y_true, y_score, *, sample_weight=None
+):
     """Compute ranking-based average precision.
 
     Label ranking average precision (LRAP) is the average over each ground
@@ -1201,18 +1232,25 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     loss = np.zeros(n_samples)
     for i, (start, stop) in enumerate(zip(y_true.indptr, y_true.indptr[1:])):
         # Sort and bin the label scores
-        unique_scores, unique_inverse = np.unique(y_score[i], return_inverse=True)
-        true_at_reversed_rank = np.bincount(
-            unique_inverse[y_true.indices[start:stop]], minlength=len(unique_scores)
+        unique_scores, unique_inverse = np.unique(
+            y_score[i], return_inverse=True
         )
-        all_at_reversed_rank = np.bincount(unique_inverse, minlength=len(unique_scores))
+        true_at_reversed_rank = np.bincount(
+            unique_inverse[y_true.indices[start:stop]],
+            minlength=len(unique_scores),
+        )
+        all_at_reversed_rank = np.bincount(
+            unique_inverse, minlength=len(unique_scores)
+        )
         false_at_reversed_rank = all_at_reversed_rank - true_at_reversed_rank
 
         # if the scores are ordered, it's possible to count the number of
         # incorrectly ordered paires in linear time by cumulatively counting
         # how many false labels of a given score have a score higher than the
         # accumulated true labels with lower score.
-        loss[i] = np.dot(true_at_reversed_rank.cumsum(), false_at_reversed_rank)
+        loss[i] = np.dot(
+            true_at_reversed_rank.cumsum(), false_at_reversed_rank
+        )
 
     n_positives = count_nonzero(y_true, axis=1)
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -1322,7 +1360,9 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
     """
-    _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
+    _, inv, counts = np.unique(
+        -y_score, return_inverse=True, return_counts=True
+    )
     ranked = np.zeros(len(counts))
     np.add.at(ranked, inv, y_true)
     ranked /= counts
@@ -1349,7 +1389,13 @@ def _check_dcg_target_type(y_true):
 
 
 def dcg_score(
-    y_true, y_score, *, k=None, log_base=2, sample_weight=None, ignore_ties=False
+    y_true,
+    y_score,
+    *,
+    k=None,
+    log_base=2,
+    sample_weight=None,
+    ignore_ties=False,
 ):
     """Compute Discounted Cumulative Gain.
 
@@ -1506,7 +1552,9 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     return gain
 
 
-def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False):
+def ndcg_score(
+    y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
+):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1726,7 +1774,9 @@ def top_k_accuracy_score(
             )
 
         if len(np.setdiff1d(y_true, classes)):
-            raise ValueError("'y_true' contains labels not in parameter 'labels'.")
+            raise ValueError(
+                "'y_true' contains labels not in parameter 'labels'."
+            )
 
     if k >= n_classes:
         warnings.warn(

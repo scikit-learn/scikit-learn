@@ -99,7 +99,13 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
     """
 
     def __init__(
-        self, *, gamma=1.0, degree=2, coef0=0, n_components=100, random_state=None
+        self,
+        *,
+        gamma=1.0,
+        degree=2,
+        coef0=0,
+        n_components=100,
+        random_state=None,
     ):
         self.gamma = gamma
         self.degree = degree
@@ -138,7 +144,9 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
             0, high=self.n_components, size=(self.degree, n_features)
         )
 
-        self.bitHash_ = random_state.choice(a=[-1, 1], size=(self.degree, n_features))
+        self.bitHash_ = random_state.choice(
+            a=[-1, 1], size=(self.degree, n_features)
+        )
         return self
 
     def transform(self, X):
@@ -162,7 +170,10 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
 
         if sp.issparse(X_gamma) and self.coef0 != 0:
             X_gamma = sp.hstack(
-                [X_gamma, np.sqrt(self.coef0) * np.ones((X_gamma.shape[0], 1))],
+                [
+                    X_gamma,
+                    np.sqrt(self.coef0) * np.ones((X_gamma.shape[0], 1)),
+                ],
                 format="csc",
             )
 
@@ -177,7 +188,9 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
                 " match that of training samples."
             )
 
-        count_sketches = np.zeros((X_gamma.shape[0], self.degree, self.n_components))
+        count_sketches = np.zeros(
+            (X_gamma.shape[0], self.degree, self.n_components)
+        )
 
         if sp.issparse(X_gamma):
             for j in range(X_gamma.shape[1]):
@@ -193,7 +206,9 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
                 for d in range(self.degree):
                     iHashIndex = self.indexHash_[d, j]
                     iHashBit = self.bitHash_[d, j]
-                    count_sketches[:, d, iHashIndex] += iHashBit * X_gamma[:, j]
+                    count_sketches[:, d, iHashIndex] += (
+                        iHashBit * X_gamma[:, j]
+                    )
 
         # For each same, compute a count sketch of phi(x) using the polynomial
         # multiplication (via FFT) of p count sketches of x.
@@ -298,7 +313,9 @@ class RBFSampler(TransformerMixin, BaseEstimator):
             size=(n_features, self.n_components)
         )
 
-        self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+        self.random_offset_ = random_state.uniform(
+            0, 2 * np.pi, size=self.n_components
+        )
         return self
 
     def transform(self, X):
@@ -416,8 +433,12 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
         # transform by inverse CDF of sech
-        self.random_weights_ = 1.0 / np.pi * np.log(np.tan(np.pi / 2.0 * uniform))
-        self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+        self.random_weights_ = (
+            1.0 / np.pi * np.log(np.tan(np.pi / 2.0 * uniform))
+        )
+        self.random_offset_ = random_state.uniform(
+            0, 2 * np.pi, size=self.n_components
+        )
         return self
 
     def transform(self, X):
@@ -439,7 +460,9 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         X = as_float_array(X, copy=True)
         X = self._validate_data(X, copy=False, reset=False)
         if (X <= -self.skewedness).any():
-            raise ValueError("X may not contain entries smaller than -skewedness.")
+            raise ValueError(
+                "X may not contain entries smaller than -skewedness."
+            )
 
         X += self.skewedness
         np.log(X, X)
@@ -604,7 +627,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         step_nz = 2 * X_nz * self.sample_interval_
 
         for j in range(1, self.sample_steps):
-            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * self.sample_interval_))
+            factor_nz = np.sqrt(
+                step_nz / np.cosh(np.pi * j * self.sample_interval_)
+            )
 
             X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
@@ -622,7 +647,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         data_step = np.sqrt(X.data * self.sample_interval_)
         X_step = sp.csr_matrix(
-            (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+            (data_step, indices, indptr),
+            shape=X.shape,
+            dtype=X.dtype,
+            copy=False,
         )
         X_new = [X_step]
 
@@ -630,17 +658,25 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         step_nz = 2 * X.data * self.sample_interval_
 
         for j in range(1, self.sample_steps):
-            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * self.sample_interval_))
+            factor_nz = np.sqrt(
+                step_nz / np.cosh(np.pi * j * self.sample_interval_)
+            )
 
             data_step = factor_nz * np.cos(j * log_step_nz)
             X_step = sp.csr_matrix(
-                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+                (data_step, indices, indptr),
+                shape=X.shape,
+                dtype=X.dtype,
+                copy=False,
             )
             X_new.append(X_step)
 
             data_step = factor_nz * np.sin(j * log_step_nz)
             X_step = sp.csr_matrix(
-                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+                (data_step, indices, indptr),
+                shape=X.shape,
+                dtype=X.dtype,
+                copy=False,
             )
             X_new.append(X_step)
 

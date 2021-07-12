@@ -7,7 +7,9 @@ import pytest
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
-from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.ensemble._hist_gradient_boosting.utils import (
+    get_equivalent_estimator,
+)
 
 
 @pytest.mark.parametrize("seed", range(5))
@@ -19,7 +21,9 @@ from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estima
         (1000, 8),
     ],
 )
-def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf_nodes):
+def test_same_predictions_regression(
+    seed, min_samples_leaf, n_samples, max_leaf_nodes
+):
     # Make sure sklearn has the same predictions as lightgbm for easy targets.
     #
     # In particular when the size of the trees are bound and the number of

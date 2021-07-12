@@ -57,7 +57,9 @@ from ._base import _pkl_filepath
 SAMPLES = RemoteFileMetadata(
     filename="samples.zip",
     url="https://ndownloader.figshare.com/files/5976075",
-    checksum="abb07ad284ac50d9e6d20f1c4211e0fd3c098f7f85955e89d321ee8efe37ac28",
+    checksum=(
+        "abb07ad284ac50d9e6d20f1c4211e0fd3c098f7f85955e89d321ee8efe37ac28"
+    ),
 )
 
 # The original data can be found at:
@@ -65,7 +67,9 @@ SAMPLES = RemoteFileMetadata(
 COVERAGES = RemoteFileMetadata(
     filename="coverages.zip",
     url="https://ndownloader.figshare.com/files/5976078",
-    checksum="4d862674d72e79d6cee77e63b98651ec7926043ba7d39dcb31329cf3f6073807",
+    checksum=(
+        "4d862674d72e79d6cee77e63b98651ec7926043ba7d39dcb31329cf3f6073807"
+    ),
 )
 
 DATA_ARCHIVE_NAME = "species_coverage.pkz"
@@ -227,7 +231,9 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
     if not exists(archive_path):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
-        logger.info("Downloading species data from %s to %s" % (SAMPLES.url, data_home))
+        logger.info(
+            "Downloading species data from %s to %s" % (SAMPLES.url, data_home)
+        )
         samples_path = _fetch_remote(SAMPLES, dirname=data_home)
         with np.load(samples_path) as X:  # samples.zip is a valid npz
             for f in X.files:
@@ -239,7 +245,8 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
         remove(samples_path)
 
         logger.info(
-            "Downloading coverage data from %s to %s" % (COVERAGES.url, data_home)
+            "Downloading coverage data from %s to %s"
+            % (COVERAGES.url, data_home)
         )
         coverages_path = _fetch_remote(COVERAGES, dirname=data_home)
         with np.load(coverages_path) as X:  # coverages.zip is a valid npz
@@ -251,7 +258,9 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
             coverages = np.asarray(coverages, dtype=dtype)
         remove(coverages_path)
 
-        bunch = Bunch(coverages=coverages, test=test, train=train, **extra_params)
+        bunch = Bunch(
+            coverages=coverages, test=test, train=train, **extra_params
+        )
         joblib.dump(bunch, archive_path, compress=9)
     else:
         bunch = joblib.load(archive_path)

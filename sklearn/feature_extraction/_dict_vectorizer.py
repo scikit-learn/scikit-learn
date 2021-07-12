@@ -96,7 +96,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         features encoded as columns of arbitrary data types.
     """
 
-    def __init__(self, *, dtype=np.float64, separator="=", sparse=True, sort=True):
+    def __init__(
+        self, *, dtype=np.float64, separator="=", sparse=True, sort=True
+    ):
         self.dtype = dtype
         self.separator = separator
         self.sparse = sparse

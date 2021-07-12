@@ -111,7 +111,10 @@ def test_config_threadsafe_joblib(backend):
     it is not influenced by the other job setting assume_finite to True.
     """
 
-    if parse_version(joblib.__version__) < parse_version("0.12") and backend == "loky":
+    if (
+        parse_version(joblib.__version__) < parse_version("0.12")
+        and backend == "loky"
+    ):
         pytest.skip("loky backend does not exist in joblib <0.12")  # noqa
 
     assume_finites = [False, True]
@@ -136,7 +139,9 @@ def test_config_threadsafe():
     with ThreadPoolExecutor(max_workers=2) as e:
         items = [
             output
-            for output in e.map(set_assume_finite, assume_finites, sleep_durations)
+            for output in e.map(
+                set_assume_finite, assume_finites, sleep_durations
+            )
         ]
 
     assert items == [False, True]

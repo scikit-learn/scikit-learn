@@ -56,7 +56,9 @@ def test_grid_to_graph():
     assert A.dtype == bool
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=int)
     assert A.dtype == int
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float64)
+    A = grid_to_graph(
+        n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float64
+    )
     assert A.dtype == np.float64
 
 
@@ -108,8 +110,12 @@ def _downsampled_face():
 
         face = misc.face(gray=True)
     face = face.astype(np.float32)
-    face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
-    face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
+    face = (
+        face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
+    )
+    face = (
+        face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
+    )
     face = face.astype(np.float32)
     face /= 16.0
     return face
@@ -309,7 +315,13 @@ def test_extract_patches_strided():
     expected_views = expected_views_1D + expected_views_2D + expected_views_3D
     last_patches = last_patch_1D + last_patch_2D + last_patch_3D
 
-    for (image_shape, patch_size, patch_step, expected_view, last_patch) in zip(
+    for (
+        image_shape,
+        patch_size,
+        patch_step,
+        expected_view,
+        last_patch,
+    ) in zip(
         image_shapes, patch_sizes, patch_steps, expected_views, last_patches
     ):
         image = np.arange(np.prod(image_shape)).reshape(image_shape)
@@ -324,7 +336,8 @@ def test_extract_patches_strided():
             slice(i, i + j, None) for i, j in zip(last_patch, patch_size)
         )
         assert (
-            patches[(-1, None, None) * ndim] == image[last_patch_slices].squeeze()
+            patches[(-1, None, None) * ndim]
+            == image[last_patch_slices].squeeze()
         ).all()
 
 
@@ -335,7 +348,12 @@ def test_extract_patches_square():
     p = 8
     expected_n_patches = ((i_h - p + 1), (i_w - p + 1))
     patches = _extract_patches(face, patch_shape=p)
-    assert patches.shape == (expected_n_patches[0], expected_n_patches[1], p, p)
+    assert patches.shape == (
+        expected_n_patches[0],
+        expected_n_patches[1],
+        p,
+        p,
+    )
 
 
 def test_width_patch():

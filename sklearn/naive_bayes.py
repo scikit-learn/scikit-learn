@@ -283,7 +283,9 @@ class GaussianNB(_BaseNB):
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
             new_mu = np.average(X, axis=0, weights=sample_weight)
-            new_var = np.average((X - new_mu) ** 2, axis=0, weights=sample_weight)
+            new_var = np.average(
+                (X - new_mu) ** 2, axis=0, weights=sample_weight
+            )
         else:
             n_new = X.shape[0]
             new_var = np.var(X, axis=0)
@@ -303,7 +305,9 @@ class GaussianNB(_BaseNB):
         # the sum-of-squared-differences (ssd)
         old_ssd = n_past * var
         new_ssd = n_new * new_var
-        total_ssd = old_ssd + new_ssd + (n_new * n_past / n_total) * (mu - new_mu) ** 2
+        total_ssd = (
+            old_ssd + new_ssd + (n_new * n_past / n_total) * (mu - new_mu) ** 2
+        )
         total_var = total_ssd / n_total
 
         return total_mu, total_var
@@ -351,7 +355,9 @@ class GaussianNB(_BaseNB):
             X, y, classes, _refit=False, sample_weight=sample_weight
         )
 
-    def _partial_fit(self, X, y, classes=None, _refit=False, sample_weight=None):
+    def _partial_fit(
+        self, X, y, classes=None, _refit=False, sample_weight=None
+    ):
         """Actual implementation of Gaussian NB fitting.
 
         Parameters
@@ -410,7 +416,9 @@ class GaussianNB(_BaseNB):
                 priors = np.asarray(self.priors)
                 # Check that the provide prior match the number of classes
                 if len(priors) != n_classes:
-                    raise ValueError("Number of priors must match number of classes.")
+                    raise ValueError(
+                        "Number of priors must match number of classes."
+                    )
                 # Check that the sum is 1
                 if not np.isclose(priors.sum(), 1.0):
                     raise ValueError("The sum of the priors should be 1.")
@@ -420,7 +428,9 @@ class GaussianNB(_BaseNB):
                 self.class_prior_ = priors
             else:
                 # Initialize the priors to zeros for each class
-                self.class_prior_ = np.zeros(len(self.classes_), dtype=np.float64)
+                self.class_prior_ = np.zeros(
+                    len(self.classes_), dtype=np.float64
+                )
         else:
             if X.shape[1] != self.theta_.shape[1]:
                 msg = "Number of features %d does not match previous data %d."
@@ -435,7 +445,8 @@ class GaussianNB(_BaseNB):
 
         if not np.all(unique_y_in_classes):
             raise ValueError(
-                "The target label(s) %s in y do not exist in the initial classes %s"
+                "The target label(s) %s in y do not exist in the initial"
+                " classes %s"
                 % (unique_y[~unique_y_in_classes], classes)
             )
 
@@ -451,7 +462,11 @@ class GaussianNB(_BaseNB):
                 N_i = X_i.shape[0]
 
             new_theta, new_sigma = self._update_mean_variance(
-                self.class_count_[i], self.theta_[i, :], self.var_[i, :], X_i, sw_i
+                self.class_count_[i],
+                self.theta_[i, :],
+                self.var_[i, :],
+                X_i,
+                sw_i,
             )
 
             self.theta_[i, :] = new_theta
@@ -472,7 +487,9 @@ class GaussianNB(_BaseNB):
         for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
             n_ij = -0.5 * np.sum(np.log(2.0 * np.pi * self.var_[i, :]))
-            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / (self.var_[i, :]), 1)
+            n_ij -= 0.5 * np.sum(
+                ((X - self.theta_[i, :]) ** 2) / (self.var_[i, :]), 1
+            )
             joint_log_likelihood.append(jointi + n_ij)
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
@@ -511,7 +528,9 @@ class _BaseDiscreteNB(_BaseNB):
         n_classes = len(self.classes_)
         if class_prior is not None:
             if len(class_prior) != n_classes:
-                raise ValueError("Number of priors must match number of classes.")
+                raise ValueError(
+                    "Number of priors must match number of classes."
+                )
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             with warnings.catch_warnings():
@@ -521,7 +540,9 @@ class _BaseDiscreteNB(_BaseNB):
                 log_class_count = np.log(self.class_count_)
 
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = log_class_count - np.log(self.class_count_.sum())
+            self.class_log_prior_ = log_class_count - np.log(
+                self.class_count_.sum()
+            )
         else:
             self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
@@ -534,11 +555,13 @@ class _BaseDiscreteNB(_BaseNB):
         if isinstance(self.alpha, np.ndarray):
             if not self.alpha.shape[0] == self.n_features_in_:
                 raise ValueError(
-                    "alpha should be a scalar or a numpy array with shape [n_features]"
+                    "alpha should be a scalar or a numpy array with shape"
+                    " [n_features]"
                 )
         if np.min(self.alpha) < _ALPHA_MIN:
             warnings.warn(
-                "alpha too small will result in numeric errors, setting alpha = %.1e"
+                "alpha too small will result in numeric errors, setting alpha"
+                " = %.1e"
                 % _ALPHA_MIN
             )
             return np.maximum(self.alpha, _ALPHA_MIN)
@@ -680,7 +703,9 @@ class _BaseDiscreteNB(_BaseNB):
 
     def _init_counters(self, n_classes, n_features):
         self.class_count_ = np.zeros(n_classes, dtype=np.float64)
-        self.feature_count_ = np.zeros((n_classes, n_features), dtype=np.float64)
+        self.feature_count_ = np.zeros(
+            (n_classes, n_features), dtype=np.float64
+        )
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
@@ -847,7 +872,10 @@ class MultinomialNB(_BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        return safe_sparse_dot(X, self.feature_log_prob_.T) + self.class_log_prior_
+        return (
+            safe_sparse_dot(X, self.feature_log_prob_.T)
+            + self.class_log_prior_
+        )
 
 
 class ComplementNB(_BaseDiscreteNB):
@@ -951,7 +979,9 @@ class ComplementNB(_BaseDiscreteNB):
     https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None, norm=False):
+    def __init__(
+        self, *, alpha=1.0, fit_prior=True, class_prior=None, norm=False
+    ):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -1089,7 +1119,9 @@ class BernoulliNB(_BaseDiscreteNB):
     [3]
     """
 
-    def __init__(self, *, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None):
+    def __init__(
+        self, *, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None
+    ):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
@@ -1237,7 +1269,12 @@ class CategoricalNB(_BaseDiscreteNB):
     """
 
     def __init__(
-        self, *, alpha=1.0, fit_prior=True, class_prior=None, min_categories=None
+        self,
+        *,
+        alpha=1.0,
+        fit_prior=True,
+        class_prior=None,
+        min_categories=None,
     ):
         self.alpha = alpha
         self.fit_prior = fit_prior
@@ -1321,21 +1358,32 @@ class CategoricalNB(_BaseDiscreteNB):
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
         X = self._validate_data(
-            X, dtype="int", accept_sparse=False, force_all_finite=True, reset=False
+            X,
+            dtype="int",
+            accept_sparse=False,
+            force_all_finite=True,
+            reset=False,
         )
         check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y, reset=True):
         X, y = self._validate_data(
-            X, y, dtype="int", accept_sparse=False, force_all_finite=True, reset=reset
+            X,
+            y,
+            dtype="int",
+            accept_sparse=False,
+            force_all_finite=True,
+            reset=reset,
         )
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
     def _init_counters(self, n_classes, n_features):
         self.class_count_ = np.zeros(n_classes, dtype=np.float64)
-        self.category_count_ = [np.zeros((n_classes, 0)) for _ in range(n_features)]
+        self.category_count_ = [
+            np.zeros((n_classes, 0)) for _ in range(n_features)
+        ]
 
     @staticmethod
     def _validate_n_categories(X, min_categories):
@@ -1348,7 +1396,9 @@ class CategoricalNB(_BaseDiscreteNB):
                     "'min_categories' should have integral type. Got "
                     f"{min_categories_.dtype} instead."
                 )
-            n_categories_ = np.maximum(n_categories_X, min_categories_, dtype=np.int64)
+            n_categories_ = np.maximum(
+                n_categories_X, min_categories_, dtype=np.int64
+            )
             if n_categories_.shape != n_categories_X.shape:
                 raise ValueError(
                     f"'min_categories' should have shape ({X.shape[1]},"
@@ -1379,14 +1429,19 @@ class CategoricalNB(_BaseDiscreteNB):
                 cat_count[j, indices] += counts[indices]
 
         self.class_count_ += Y.sum(axis=0)
-        self.n_categories_ = self._validate_n_categories(X, self.min_categories)
+        self.n_categories_ = self._validate_n_categories(
+            X, self.min_categories
+        )
         for i in range(self.n_features_in_):
             X_feature = X[:, i]
             self.category_count_[i] = _update_cat_count_dims(
                 self.category_count_[i], self.n_categories_[i] - 1
             )
             _update_cat_count(
-                X_feature, Y, self.category_count_[i], self.class_count_.shape[0]
+                X_feature,
+                Y,
+                self.category_count_[i],
+                self.class_count_.shape[0],
             )
 
     def _update_feature_log_prob(self, alpha):
@@ -1395,7 +1450,8 @@ class CategoricalNB(_BaseDiscreteNB):
             smoothed_cat_count = self.category_count_[i] + alpha
             smoothed_class_count = smoothed_cat_count.sum(axis=1)
             feature_log_prob.append(
-                np.log(smoothed_cat_count) - np.log(smoothed_class_count.reshape(-1, 1))
+                np.log(smoothed_cat_count)
+                - np.log(smoothed_class_count.reshape(-1, 1))
             )
         self.feature_log_prob_ = feature_log_prob
 

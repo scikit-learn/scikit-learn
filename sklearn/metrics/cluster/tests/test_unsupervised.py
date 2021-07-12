@@ -38,10 +38,18 @@ def test_silhouette():
 
         # Test with sampling
         score_precomputed = silhouette_score(
-            D, y, metric="precomputed", sample_size=int(X.shape[0] / 2), random_state=0
+            D,
+            y,
+            metric="precomputed",
+            sample_size=int(X.shape[0] / 2),
+            random_state=0,
         )
         score_euclidean = silhouette_score(
-            X, y, metric="euclidean", sample_size=int(X.shape[0] / 2), random_state=0
+            X,
+            y,
+            metric="euclidean",
+            sample_size=int(X.shape[0] / 2),
+            random_state=0,
         )
         assert score_precomputed > 0
         assert score_euclidean > 0
@@ -214,7 +222,9 @@ def test_silhouette_paper_example():
             abs=1e-2,
         )
         pytest.approx(
-            score, silhouette_score(D, np.array(labels), metric="precomputed"), abs=1e-2
+            score,
+            silhouette_score(D, np.array(labels), metric="precomputed"),
+            abs=1e-2,
         )
 
 
@@ -303,7 +313,9 @@ def test_calinski_harabasz_score():
     assert 1.0 == calinski_harabasz_score(np.ones((10, 2)), [0] * 5 + [1] * 5)
 
     # Assert the value is 0. when all the mean cluster are equal
-    assert 0.0 == calinski_harabasz_score([[-1, -1], [1, 1]] * 10, [0] * 10 + [1] * 10)
+    assert 0.0 == calinski_harabasz_score(
+        [[-1, -1], [1, 1]] * 10, [0] * 10 + [1] * 10
+    )
 
     # General case (with non numpy arrays)
     X = (
@@ -313,7 +325,9 @@ def test_calinski_harabasz_score():
         + [[3, 1], [4, 0]] * 5
     )
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
-    pytest.approx(calinski_harabasz_score(X, labels), 45 * (40 - 4) / (5 * (4 - 1)))
+    pytest.approx(
+        calinski_harabasz_score(X, labels), 45 * (40 - 4) / (5 * (4 - 1))
+    )
 
 
 def test_davies_bouldin_score():
@@ -321,9 +335,9 @@ def test_davies_bouldin_score():
     assert_raises_on_all_points_same_cluster(davies_bouldin_score)
 
     # Assert the value is 0. when all samples are equals
-    assert davies_bouldin_score(np.ones((10, 2)), [0] * 5 + [1] * 5) == pytest.approx(
-        0.0
-    )
+    assert davies_bouldin_score(
+        np.ones((10, 2)), [0] * 5 + [1] * 5
+    ) == pytest.approx(0.0)
 
     # Assert the value is 0. when all the mean cluster are equal
     assert davies_bouldin_score(

@@ -12,7 +12,9 @@ from ..utils.validation import check_is_fitted
 from ..model_selection import cross_val_score
 
 
-class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
+class SequentialFeatureSelector(
+    SelectorMixin, MetaEstimatorMixin, BaseEstimator
+):
     """Transformer that performs Sequential Feature Selection.
 
     This Sequential Feature Selector adds (forward selection) or
@@ -172,7 +174,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         elif isinstance(self.n_features_to_select, numbers.Real):
             if not 0 < self.n_features_to_select <= 1:
                 raise ValueError(error_msg)
-            self.n_features_to_select_ = int(n_features * self.n_features_to_select)
+            self.n_features_to_select_ = int(
+                n_features * self.n_features_to_select
+            )
         else:
             raise ValueError(error_msg)
 

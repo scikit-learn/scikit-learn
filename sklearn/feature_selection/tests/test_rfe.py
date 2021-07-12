@@ -66,7 +66,9 @@ def test_rfe_features_importance():
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
-    clf = RandomForestClassifier(n_estimators=20, random_state=generator, max_depth=2)
+    clf = RandomForestClassifier(
+        n_estimators=20, random_state=generator, max_depth=2
+    )
     rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
     assert len(rfe.ranking_) == X.shape[1]
@@ -113,7 +115,9 @@ def test_rfe_invalid_n_features_errors(n_features_to_select):
     clf = SVC(kernel="linear")
 
     iris = load_iris()
-    rfe = RFE(estimator=clf, n_features_to_select=n_features_to_select, step=0.1)
+    rfe = RFE(
+        estimator=clf, n_features_to_select=n_features_to_select, step=0.1
+    )
     msg = f"n_features_to_select must be .+ Got {n_features_to_select}"
     with pytest.raises(ValueError, match=msg):
         rfe.fit(iris.data, iris.target)
@@ -347,8 +351,12 @@ def test_number_of_subsets_of_features():
         )
         rfe.fit(X, y)
         # this number also equals to the maximum of ranking_
-        assert np.max(rfe.ranking_) == formula1(n_features, n_features_to_select, step)
-        assert np.max(rfe.ranking_) == formula2(n_features, n_features_to_select, step)
+        assert np.max(rfe.ranking_) == formula1(
+            n_features, n_features_to_select, step
+        )
+        assert np.max(rfe.ranking_) == formula2(
+            n_features, n_features_to_select, step
+        )
 
     # In RFECV, 'fit' calls 'RFE._fit'
     # 'number_of_subsets_of_features' of RFE
@@ -415,8 +423,12 @@ def test_rfe_cv_groups():
 @pytest.mark.parametrize(
     "importance_getter", [attrgetter("regressor_.coef_"), "regressor_.coef_"]
 )
-@pytest.mark.parametrize("selector, expected_n_features", [(RFE, 5), (RFECV, 4)])
-def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features):
+@pytest.mark.parametrize(
+    "selector, expected_n_features", [(RFE, 5), (RFECV, 4)]
+)
+def test_rfe_wrapped_estimator(
+    importance_getter, selector, expected_n_features
+):
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
@@ -441,7 +453,9 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     ],
 )
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
-def test_rfe_importance_getter_validation(importance_getter, err_type, Selector):
+def test_rfe_importance_getter_validation(
+    importance_getter, err_type, Selector
+):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
     estimator = LinearSVR()
     log_estimator = TransformedTargetRegressor(

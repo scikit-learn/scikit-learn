@@ -366,20 +366,29 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         )
         neighbors_model.fit(X)
         # This has worst case O(n^2) memory complexity
-        neighborhoods = neighbors_model.radius_neighbors(X, return_distance=False)
+        neighborhoods = neighbors_model.radius_neighbors(
+            X, return_distance=False
+        )
 
         if sample_weight is None:
-            n_neighbors = np.array([len(neighbors) for neighbors in neighborhoods])
+            n_neighbors = np.array(
+                [len(neighbors) for neighbors in neighborhoods]
+            )
         else:
             n_neighbors = np.array(
-                [np.sum(sample_weight[neighbors]) for neighbors in neighborhoods]
+                [
+                    np.sum(sample_weight[neighbors])
+                    for neighbors in neighborhoods
+                ]
             )
 
         # Initially, all samples are noise.
         labels = np.full(X.shape[0], -1, dtype=np.intp)
 
         # A list of all core samples found.
-        core_samples = np.asarray(n_neighbors >= self.min_samples, dtype=np.uint8)
+        core_samples = np.asarray(
+            n_neighbors >= self.min_samples, dtype=np.uint8
+        )
         dbscan_inner(core_samples, neighborhoods, labels)
 
         self.core_sample_indices_ = np.where(core_samples)[0]

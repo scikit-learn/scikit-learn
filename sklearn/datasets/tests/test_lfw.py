@@ -49,7 +49,9 @@ def setup_module():
     SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
     LFW_HOME = os.path.join(SCIKIT_LEARN_DATA, "lfw_home")
 
-    SCIKIT_LEARN_EMPTY_DATA = tempfile.mkdtemp(prefix="scikit_learn_empty_test_")
+    SCIKIT_LEARN_EMPTY_DATA = tempfile.mkdtemp(
+        prefix="scikit_learn_empty_test_"
+    )
 
     if not os.path.exists(LFW_HOME):
         os.makedirs(LFW_HOME)
@@ -115,12 +117,16 @@ def teardown_module():
 
 def test_load_empty_lfw_people():
     with pytest.raises(IOError):
-        fetch_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA, download_if_missing=False)
+        fetch_lfw_people(
+            data_home=SCIKIT_LEARN_EMPTY_DATA, download_if_missing=False
+        )
 
 
 def test_load_fake_lfw_people():
     lfw_people = fetch_lfw_people(
-        data_home=SCIKIT_LEARN_DATA, min_faces_per_person=3, download_if_missing=False
+        data_home=SCIKIT_LEARN_DATA,
+        min_faces_per_person=3,
+        download_if_missing=False,
     )
 
     # The data is croped around the center as a rectangular bounding box
@@ -186,7 +192,9 @@ def test_load_fake_lfw_people_too_restrictive():
 
 def test_load_empty_lfw_pairs():
     with pytest.raises(IOError):
-        fetch_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA, download_if_missing=False)
+        fetch_lfw_pairs(
+            data_home=SCIKIT_LEARN_EMPTY_DATA, download_if_missing=False
+        )
 
 
 def test_load_fake_lfw_pairs():

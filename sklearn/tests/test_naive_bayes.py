@@ -18,7 +18,12 @@ from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
 from sklearn.naive_bayes import CategoricalNB
 
-DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
+DISCRETE_NAIVE_BAYES_CLASSES = [
+    BernoulliNB,
+    CategoricalNB,
+    ComplementNB,
+    MultinomialNB,
+]
 ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
 
 
@@ -54,7 +59,8 @@ def test_gnb():
     # an Error
     # FIXME Remove this test once the more general partial_fit tests are merged
     with pytest.raises(
-        ValueError, match="The target label.* in y do not exist in the initial classes"
+        ValueError,
+        match="The target label.* in y do not exist in the initial classes",
     ):
         GaussianNB().partial_fit(X, y, classes=[0, 1])
 
@@ -64,7 +70,9 @@ def test_gnb_var():
     clf = GaussianNB()
     clf.fit(X, y)
 
-    with pytest.warns(FutureWarning, match="Attribute `sigma_` was deprecated"):
+    with pytest.warns(
+        FutureWarning, match="Attribute `sigma_` was deprecated"
+    ):
         assert_array_equal(clf.sigma_, clf.var_)
 
 
@@ -145,7 +153,9 @@ def test_gnb_priors_sum_isclose():
             [5, 5],
         ]
     )
-    priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14, 0.11, 0.0])
+    priors = np.array(
+        [0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14, 0.11, 0.0]
+    )
     Y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     clf = GaussianNB(priors=priors)
     # smoke test for issue #9633
@@ -185,7 +195,9 @@ def test_gnb_check_update_with_no_data():
     mean = 0.0
     var = 1.0
     x_empty = np.empty((0, X.shape[1]))
-    tmean, tvar = GaussianNB._update_mean_variance(prev_points, mean, var, x_empty)
+    tmean, tvar = GaussianNB._update_mean_variance(
+        prev_points, mean, var, x_empty
+    )
     assert tmean == mean
     assert tvar == var
 
@@ -208,7 +220,9 @@ def test_gnb_naive_bayes_scale_invariance():
     # Scaling the data should not change the prediction results
     iris = load_iris()
     X, y = iris.data, iris.target
-    labels = [GaussianNB().fit(f * X, y).predict(f * X) for f in [1e-10, 1, 1e10]]
+    labels = [
+        GaussianNB().fit(f * X, y).predict(f * X) for f in [1e-10, 1, 1e10]
+    ]
     assert_array_equal(labels[0], labels[1])
     assert_array_equal(labels[1], labels[2])
 
@@ -242,7 +256,9 @@ def test_discretenb_partial_fit(DiscreteNaiveBayes):
     assert_array_equal(clf1.class_count_, clf2.class_count_)
     if DiscreteNaiveBayes is CategoricalNB:
         for i in range(len(clf1.category_count_)):
-            assert_array_equal(clf1.category_count_[i], clf2.category_count_[i])
+            assert_array_equal(
+                clf1.category_count_[i], clf2.category_count_[i]
+            )
     else:
         assert_array_equal(clf1.feature_count_, clf2.feature_count_)
 
@@ -286,7 +302,8 @@ def test_discretenb_partial_fit(DiscreteNaiveBayes):
 def test_NB_partial_fit_no_first_classes(NaiveBayes):
     # classes is required for first call to partial fit
     with pytest.raises(
-        ValueError, match="classes must be passed on the first call to partial_fit."
+        ValueError,
+        match="classes must be passed on the first call to partial_fit.",
     ):
         NaiveBayes().partial_fit(X2, y2)
 
@@ -404,7 +421,9 @@ def test_discretenb_sample_weight_multiclass(DiscreteNaiveBayes):
 
     # Check sample weight using the partial_fit method
     clf = DiscreteNaiveBayes()
-    clf.partial_fit(X[:2], y[:2], classes=[0, 1, 2], sample_weight=sample_weight[:2])
+    clf.partial_fit(
+        X[:2], y[:2], classes=[0, 1, 2], sample_weight=sample_weight[:2]
+    )
     clf.partial_fit(X[2:3], y[2:3], sample_weight=sample_weight[2:3])
     clf.partial_fit(X[3:], y[3:], sample_weight=sample_weight[3:])
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
@@ -569,7 +588,9 @@ def test_mnb_sample_weight():
     clf.fit([[1, 2], [1, 2], [1, 0]], [0, 0, 1], sample_weight=[1, 1, 4])
     assert_array_equal(clf.predict([[1, 0]]), [1])
     positive_prior = np.exp(clf.intercept_[0])
-    assert_array_almost_equal([1 - positive_prior, positive_prior], [1 / 3.0, 2 / 3.0])
+    assert_array_almost_equal(
+        [1 - positive_prior, positive_prior], [1 / 3.0, 2 / 3.0]
+    )
 
 
 def test_bnb():
@@ -586,7 +607,12 @@ def test_bnb():
 
     # Features are Beijing, Chinese, Japan, Macao, Shanghai, and Tokyo
     X = np.array(
-        [[1, 1, 0, 0, 0, 0], [0, 1, 0, 0, 1, 0], [0, 1, 0, 1, 0, 0], [0, 1, 1, 0, 0, 1]]
+        [
+            [1, 1, 0, 0, 0, 0],
+            [0, 1, 0, 0, 1, 0],
+            [0, 1, 0, 1, 0, 0],
+            [0, 1, 1, 0, 0, 1],
+        ]
     )
 
     # Classes are China (0), Japan (1)
@@ -614,7 +640,9 @@ def test_bnb():
     X_test = np.array([[0, 1, 1, 0, 0, 1]])
 
     # Check the predictive probabilities are correct
-    unnorm_predict_proba = np.array([[0.005183999999999999, 0.02194787379972565]])
+    unnorm_predict_proba = np.array(
+        [[0.005183999999999999, 0.02194787379972565]]
+    )
     predict_proba = unnorm_predict_proba / np.sum(unnorm_predict_proba)
     assert_array_almost_equal(clf.predict_proba(X_test), predict_proba)
 
@@ -655,7 +683,12 @@ def test_cnb():
 
     # Features are Beijing, Chinese, Japan, Macao, Shanghai, and Tokyo.
     X = np.array(
-        [[1, 1, 0, 0, 0, 0], [0, 1, 0, 0, 1, 0], [0, 1, 0, 1, 0, 0], [0, 1, 1, 0, 0, 1]]
+        [
+            [1, 1, 0, 0, 0, 0],
+            [0, 1, 0, 0, 1, 0],
+            [0, 1, 0, 1, 0, 0],
+            [0, 1, 1, 0, 0, 1],
+        ]
     )
 
     # Classes are China (0), Japan (1).
@@ -729,7 +762,9 @@ def test_categoricalnb():
     # Check error is raised for X with negative entries
     X = np.array([[0, -1]])
     y = np.array([1])
-    error_msg = re.escape("Negative values in data passed to CategoricalNB (input X)")
+    error_msg = re.escape(
+        "Negative values in data passed to CategoricalNB (input X)"
+    )
     with pytest.raises(ValueError, match=error_msg):
         clf.predict(X)
     with pytest.raises(ValueError, match=error_msg):
@@ -804,7 +839,9 @@ def test_categoricalnb_with_min_categories(
     y_n_categories = np.array([1, 1, 2, 2])
     expected_prediction = np.array([1])
 
-    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=min_categories)
+    clf = CategoricalNB(
+        alpha=1, fit_prior=False, min_categories=min_categories
+    )
     clf.fit(X_n_categories, y_n_categories)
     X1_count, X2_count = clf.category_count_
     assert_array_equal(X1_count, exp_X1_count)
@@ -827,7 +864,9 @@ def test_categoricalnb_min_categories_errors(min_categories, error_msg):
     X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
     y = np.array([1, 1, 2, 2])
 
-    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=min_categories)
+    clf = CategoricalNB(
+        alpha=1, fit_prior=False, min_categories=min_categories
+    )
     with pytest.raises(ValueError, match=error_msg):
         clf.fit(X, y)
 
@@ -837,7 +876,10 @@ def test_alpha():
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
     nb = BernoulliNB(alpha=0.0)
-    msg = "alpha too small will result in numeric errors, setting alpha = 1.0e-10"
+    msg = (
+        "alpha too small will result in numeric errors, setting alpha ="
+        " 1.0e-10"
+    )
     with pytest.warns(UserWarning, match=msg):
         nb.partial_fit(X, y, classes=[0, 1])
     with pytest.warns(UserWarning, match=msg):
@@ -927,7 +969,9 @@ def test_alpha_vector():
     alpha = np.array([ALPHA_MIN / 2, 0.5])
     m_nb = MultinomialNB(alpha=alpha)
     m_nb.partial_fit(X, y, classes=[0, 1])
-    assert_array_almost_equal(m_nb._check_alpha(), [ALPHA_MIN, 0.5], decimal=12)
+    assert_array_almost_equal(
+        m_nb._check_alpha(), [ALPHA_MIN, 0.5], decimal=12
+    )
 
     # Test correct dimensions
     alpha = np.array([1.0, 2.0, 3.0])

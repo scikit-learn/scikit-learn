@@ -216,7 +216,9 @@ def affinity_propagation(
 
         if it >= convergence_iter:
             se = np.sum(e, axis=1)
-            unconverged = np.sum((se == convergence_iter) + (se == 0)) != n_samples
+            unconverged = (
+                np.sum((se == convergence_iter) + (se == 0)) != n_samples
+            )
             if (not unconverged and (K > 0)) or (it == max_iter):
                 never_converged = False
                 if verbose:

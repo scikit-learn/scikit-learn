@@ -28,7 +28,11 @@ import numpy as np
 import warnings
 
 from .._loss.glm_distribution import TweedieDistribution
-from ..utils.validation import check_array, check_consistent_length, _num_samples
+from ..utils.validation import (
+    check_array,
+    check_consistent_length,
+    _num_samples,
+)
 from ..utils.validation import column_or_1d
 from ..utils.validation import _check_sample_weight
 from ..utils.stats import _weighted_percentile
@@ -97,13 +101,16 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError(
-            "y_true and y_pred have different number of output ({0}!={1})".format(
-                y_true.shape[1], y_pred.shape[1]
-            )
+            "y_true and y_pred have different number of output ({0}!={1})"
+            .format(y_true.shape[1], y_pred.shape[1])
         )
 
     n_outputs = y_true.shape[1]
-    allowed_multioutput_str = ("raw_values", "uniform_average", "variance_weighted")
+    allowed_multioutput_str = (
+        "raw_values",
+        "uniform_average",
+        "variance_weighted",
+    )
     if isinstance(multioutput, str):
         if multioutput not in allowed_multioutput_str:
             raise ValueError(
@@ -115,10 +122,13 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     elif multioutput is not None:
         multioutput = check_array(multioutput, ensure_2d=False)
         if n_outputs == 1:
-            raise ValueError("Custom weights are useful only in multi-output cases.")
+            raise ValueError(
+                "Custom weights are useful only in multi-output cases."
+            )
         elif n_outputs != len(multioutput):
             raise ValueError(
-                "There must be equally many custom weights (%d) as outputs (%d)."
+                "There must be equally many custom weights (%d) as outputs"
+                " (%d)."
                 % (len(multioutput), n_outputs)
             )
     y_type = "continuous" if n_outputs == 1 else "continuous-multioutput"
@@ -186,7 +196,9 @@ def mean_absolute_error(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average(np.abs(y_pred - y_true), weights=sample_weight, axis=0)
+    output_errors = np.average(
+        np.abs(y_pred - y_true), weights=sample_weight, axis=0
+    )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
@@ -198,7 +210,12 @@ def mean_absolute_error(
 
 
 def mean_pinball_loss(
-    y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    alpha=0.5,
+    multioutput="uniform_average",
 ):
     """Pinball loss for quantile regression.
 
@@ -276,7 +293,8 @@ def mean_pinball_loss(
             raise ValueError(
                 "multioutput is expected to be 'raw_values' "
                 "or 'uniform_average' but we got %r"
-                " instead." % multioutput
+                " instead."
+                % multioutput
             )
 
     return np.average(output_errors, weights=multioutput)
@@ -360,7 +378,12 @@ def mean_absolute_percentage_error(
 
 
 def mean_squared_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    squared=True,
 ):
     """Mean squared error regression loss.
 
@@ -423,7 +446,9 @@ def mean_squared_error(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
+    output_errors = np.average(
+        (y_true - y_pred) ** 2, axis=0, weights=sample_weight
+    )
 
     if not squared:
         output_errors = np.sqrt(output_errors)
@@ -439,7 +464,12 @@ def mean_squared_error(
 
 
 def mean_squared_log_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    squared=True,
 ):
     """Mean squared logarithmic error regression loss.
 
@@ -659,14 +689,18 @@ def explained_variance_score(
     )
 
     y_true_avg = np.average(y_true, weights=sample_weight, axis=0)
-    denominator = np.average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
+    denominator = np.average(
+        (y_true - y_true_avg) ** 2, weights=sample_weight, axis=0
+    )
 
     nonzero_numerator = numerator != 0
     nonzero_denominator = denominator != 0
     valid_score = nonzero_numerator & nonzero_denominator
     output_scores = np.ones(y_true.shape[1])
 
-    output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
+    output_scores[valid_score] = 1 - (
+        numerator[valid_score] / denominator[valid_score]
+    )
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -683,7 +717,9 @@ def explained_variance_score(
     return np.average(output_scores, weights=avg_weights)
 
 
-def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"):
+def r2_score(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
     """:math:`R^2` (coefficient of determination) regression score function.
 
     Best possible score is 1.0 and it can be negative (because the
@@ -788,13 +824,16 @@ def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average
 
     numerator = (weight * (y_true - y_pred) ** 2).sum(axis=0, dtype=np.float64)
     denominator = (
-        weight * (y_true - np.average(y_true, axis=0, weights=sample_weight)) ** 2
+        weight
+        * (y_true - np.average(y_true, axis=0, weights=sample_weight)) ** 2
     ).sum(axis=0, dtype=np.float64)
     nonzero_denominator = denominator != 0
     nonzero_numerator = numerator != 0
     valid_score = nonzero_denominator & nonzero_numerator
     output_scores = np.ones([y_true.shape[1]])
-    output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
+    output_scores[valid_score] = 1 - (
+        numerator[valid_score] / denominator[valid_score]
+    )
     # arbitrary set to zero to avoid -inf scores, having a constant
     # y_true is not interesting for scoring a regression anyway
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
@@ -949,7 +988,9 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     >>> mean_poisson_deviance(y_true, y_pred)
     1.4260...
     """
-    return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=1)
+    return mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, power=1
+    )
 
 
 def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
@@ -985,4 +1026,6 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     >>> mean_gamma_deviance(y_true, y_pred)
     1.0568...
     """
-    return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=2)
+    return mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, power=2
+    )

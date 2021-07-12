@@ -70,7 +70,8 @@ def clone(estimator, *, safe=True):
                     "Cannot clone object '%s' (type %s): "
                     "it does not seem to be a scikit-learn "
                     "estimator as it does not implement a "
-                    "'get_params' method." % (repr(estimator), type(estimator))
+                    "'get_params' method."
+                    % (repr(estimator), type(estimator))
                 )
 
     klass = estimator.__class__
@@ -87,7 +88,8 @@ def clone(estimator, *, safe=True):
         if param1 is not param2:
             raise RuntimeError(
                 "Cannot clone object %s, as the constructor "
-                "either does not set or modifies parameter %s" % (estimator, name)
+                "either does not set or modifies parameter %s"
+                % (estimator, name)
             )
     return new_object
 
@@ -178,7 +180,8 @@ class BaseEstimator:
                     "specify their parameters in the signature"
                     " of their __init__ (no varargs)."
                     " %s with constructor %s doesn't "
-                    " follow this convention." % (cls, init_signature)
+                    " follow this convention."
+                    % (cls, init_signature)
                 )
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
@@ -238,7 +241,8 @@ class BaseEstimator:
                 raise ValueError(
                     "Invalid parameter %s for estimator %s. "
                     "Check the list of available parameters "
-                    "with `estimator.get_params().keys()`." % (key, self)
+                    "with `estimator.get_params().keys()`."
+                    % (key, self)
                 )
 
             if delim:

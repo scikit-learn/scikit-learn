@@ -238,7 +238,8 @@ def spectral_embedding(
     except ImportError as e:
         if eigen_solver == "amg":
             raise ValueError(
-                "The eigen_solver was set to 'amg', but pyamg is not available."
+                "The eigen_solver was set to 'amg', but pyamg is not"
+                " available."
             ) from e
 
     if eigen_solver is None:
@@ -246,7 +247,8 @@ def spectral_embedding(
     elif eigen_solver not in ("arpack", "lobpcg", "amg"):
         raise ValueError(
             "Unknown value for eigen_solver: '%s'."
-            "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
+            "Should be 'amg', 'arpack', or 'lobpcg'"
+            % eigen_solver
         )
 
     random_state = check_random_state(random_state)
@@ -258,7 +260,8 @@ def spectral_embedding(
 
     if not _graph_is_connected(adjacency):
         warnings.warn(
-            "Graph is not fully connected, spectral embedding may not work as expected."
+            "Graph is not fully connected, spectral embedding may not work as"
+            " expected."
         )
 
     laplacian, dd = csgraph_laplacian(
@@ -297,7 +300,12 @@ def spectral_embedding(
             laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which="LM", tol=eigen_tol, v0=v0
+                laplacian,
+                k=n_components,
+                sigma=1.0,
+                which="LM",
+                tol=eigen_tol,
+                v0=v0,
             )
             embedding = diffusion_map.T[n_components::-1]
             if norm_laplacian:
@@ -316,7 +324,9 @@ def spectral_embedding(
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
         # lobpcg needs double precision floats
-        laplacian = check_array(laplacian, dtype=np.float64, accept_sparse=True)
+        laplacian = check_array(
+            laplacian, dtype=np.float64, accept_sparse=True
+        )
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # The Laplacian matrix is always singular, having at least one zero
@@ -330,7 +340,9 @@ def spectral_embedding(
         # matrix to the solver and afterward set it back to the original.
         diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
         laplacian += diag_shift
-        ml = smoothed_aggregation_solver(check_array(laplacian, accept_sparse="csr"))
+        ml = smoothed_aggregation_solver(
+            check_array(laplacian, accept_sparse="csr")
+        )
         laplacian -= diag_shift
 
         M = ml.aspreconditioner()
@@ -347,7 +359,9 @@ def spectral_embedding(
 
     if eigen_solver == "lobpcg":
         # lobpcg needs double precision floats
-        laplacian = check_array(laplacian, dtype=np.float64, accept_sparse=True)
+        laplacian = check_array(
+            laplacian, dtype=np.float64, accept_sparse=True
+        )
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
@@ -526,7 +540,10 @@ class SpectralEmbedding(BaseEstimator):
     )
     @property
     def _pairwise(self):
-        return self.affinity in ["precomputed", "precomputed_nearest_neighbors"]
+        return self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
@@ -552,7 +569,9 @@ class SpectralEmbedding(BaseEstimator):
             return self.affinity_matrix_
         if self.affinity == "precomputed_nearest_neighbors":
             estimator = NearestNeighbors(
-                n_neighbors=self.n_neighbors, n_jobs=self.n_jobs, metric="precomputed"
+                n_neighbors=self.n_neighbors,
+                n_jobs=self.n_jobs,
+                metric="precomputed",
             ).fit(X)
             connectivity = estimator.kneighbors_graph(X=X, mode="connectivity")
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
@@ -580,7 +599,9 @@ class SpectralEmbedding(BaseEstimator):
                 )
                 return self.affinity_matrix_
         if self.affinity == "rbf":
-            self.gamma_ = self.gamma if self.gamma is not None else 1.0 / X.shape[1]
+            self.gamma_ = (
+                self.gamma if self.gamma is not None else 1.0 / X.shape[1]
+            )
             self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma_)
             return self.affinity_matrix_
         self.affinity_matrix_ = self.affinity(X)
@@ -628,7 +649,8 @@ class SpectralEmbedding(BaseEstimator):
                 )
         elif not callable(self.affinity):
             raise ValueError(
-                "'affinity' is expected to be an affinity name or a callable. Got: %s"
+                "'affinity' is expected to be an affinity name or a callable."
+                " Got: %s"
                 % self.affinity
             )
 

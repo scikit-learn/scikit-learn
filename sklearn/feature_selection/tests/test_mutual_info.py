@@ -5,7 +5,10 @@ from scipy.sparse import csr_matrix
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_equal, assert_almost_equal
 from sklearn.feature_selection._mutual_info import _compute_mi
-from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
+from sklearn.feature_selection import (
+    mutual_info_regression,
+    mutual_info_classif,
+)
 
 
 def test_compute_mi_dd():
@@ -15,7 +18,9 @@ def test_compute_mi_dd():
     y = np.array([1, 0, 0, 0, 1])
 
     H_x = H_y = -(3 / 5) * np.log(3 / 5) - (2 / 5) * np.log(2 / 5)
-    H_xy = -1 / 5 * np.log(1 / 5) - 2 / 5 * np.log(2 / 5) - 2 / 5 * np.log(2 / 5)
+    H_xy = (
+        -1 / 5 * np.log(1 / 5) - 2 / 5 * np.log(2 / 5) - 2 / 5 * np.log(2 / 5)
+    )
     I_xy = H_x + H_y - H_xy
 
     assert_almost_equal(_compute_mi(x, y, True, True), I_xy)
@@ -40,7 +45,9 @@ def test_compute_mi_cc():
     )
 
     # True theoretical mutual information.
-    I_theory = np.log(sigma_1) + np.log(sigma_2) - 0.5 * np.log(np.linalg.det(cov))
+    I_theory = (
+        np.log(sigma_1) + np.log(sigma_2) - 0.5 * np.log(np.linalg.det(cov))
+    )
 
     rng = check_random_state(0)
     Z = rng.multivariate_normal(mean, cov, size=1000)
@@ -127,7 +134,9 @@ def test_mutual_info_regression():
     # variables after transformation is selected as the target vector,
     # it has the strongest correlation with the variable 2, and
     # the weakest correlation with the variable 1.
-    T = np.array([[1, 0.5, 2, 1], [0, 1, 0.1, 0.0], [0, 0.1, 1, 0.1], [0, 0.1, 0.1, 1]])
+    T = np.array(
+        [[1, 0.5, 2, 1], [0, 1, 0.1, 0.0], [0, 0.1, 1, 0.1], [0, 0.1, 0.1, 1]]
+    )
     cov = T.dot(T.T)
     mean = np.zeros(4)
 
@@ -149,11 +158,17 @@ def test_mutual_info_classif_mixed():
     y = ((0.5 * X[:, 0] + X[:, 2]) > 0.5).astype(int)
     X[:, 2] = X[:, 2] > 0.5
 
-    mi = mutual_info_classif(X, y, discrete_features=[2], n_neighbors=3, random_state=0)
+    mi = mutual_info_classif(
+        X, y, discrete_features=[2], n_neighbors=3, random_state=0
+    )
     assert_array_equal(np.argsort(-mi), [2, 0, 1])
     for n_neighbors in [5, 7, 9]:
         mi_nn = mutual_info_classif(
-            X, y, discrete_features=[2], n_neighbors=n_neighbors, random_state=0
+            X,
+            y,
+            discrete_features=[2],
+            n_neighbors=n_neighbors,
+            random_state=0,
         )
         # Check that the continuous values have an higher MI with greater
         # n_neighbors
@@ -165,7 +180,9 @@ def test_mutual_info_classif_mixed():
 
 
 def test_mutual_info_options():
-    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=float)
+    X = np.array(
+        [[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=float
+    )
     y = np.array([0, 1, 2, 2, 1], dtype=float)
     X_csr = csr_matrix(X)
 
@@ -185,7 +202,9 @@ def test_mutual_info_options():
         mi_2 = mutual_info(X, y, discrete_features=False, random_state=0)
         mi_3 = mutual_info(X_csr, y, discrete_features="auto", random_state=0)
         mi_4 = mutual_info(X_csr, y, discrete_features=True, random_state=0)
-        mi_5 = mutual_info(X, y, discrete_features=[True, False, True], random_state=0)
+        mi_5 = mutual_info(
+            X, y, discrete_features=[True, False, True], random_state=0
+        )
         mi_6 = mutual_info(X, y, discrete_features=[0, 2], random_state=0)
 
         assert_array_equal(mi_1, mi_2)

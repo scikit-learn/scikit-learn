@@ -172,7 +172,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self.max_iter = max_iter
         if svd_method not in ["lapack", "randomized"]:
             raise ValueError(
-                "SVD method %s is not supported. Please consider the documentation"
+                "SVD method %s is not supported. Please consider the"
+                " documentation"
                 % svd_method
             )
         self.svd_method = svd_method
@@ -231,7 +232,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         if self.svd_method == "lapack":
 
             def my_svd(X):
-                _, s, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
+                _, s, Vt = linalg.svd(
+                    X, full_matrices=False, check_finite=False
+                )
                 return (
                     s[:n_components],
                     Vt[:n_components],
@@ -252,7 +255,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         else:
             raise ValueError(
-                "SVD method %s is not supported. Please consider the documentation"
+                "SVD method %s is not supported. Please consider the"
+                " documentation"
                 % self.svd_method
             )
 
@@ -335,7 +339,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         cov = np.dot(self.components_.T, self.components_)
-        cov.flat[:: len(cov) + 1] += self.noise_variance_  # modify diag inplace
+        cov.flat[
+            :: len(cov) + 1
+        ] += self.noise_variance_  # modify diag inplace
         return cov
 
     def get_precision(self):
@@ -360,7 +366,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         components_ = self.components_
         precision = np.dot(components_ / self.noise_variance_, components_.T)
         precision.flat[:: len(precision) + 1] += 1.0
-        precision = np.dot(components_.T, np.dot(linalg.inv(precision), components_))
+        precision = np.dot(
+            components_.T, np.dot(linalg.inv(precision), components_)
+        )
         precision /= self.noise_variance_[:, np.newaxis]
         precision /= -self.noise_variance_[np.newaxis, :]
         precision.flat[:: len(precision) + 1] += 1.0 / self.noise_variance_
@@ -385,7 +393,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         precision = self.get_precision()
         n_features = X.shape[1]
         log_like = -0.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
-        log_like -= 0.5 * (n_features * log(2.0 * np.pi) - fast_logdet(precision))
+        log_like -= 0.5 * (
+            n_features * log(2.0 * np.pi) - fast_logdet(precision)
+        )
         return log_like
 
     def score(self, X, y=None):
@@ -415,7 +425,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
                 : self.n_components
             ]
         else:
-            raise ValueError("'method' must be in %s, not %s" % (implemented, method))
+            raise ValueError(
+                "'method' must be in %s, not %s" % (implemented, method)
+            )
 
 
 def _ortho_rotation(components, method="varimax", tol=1e-6, max_iter=100):

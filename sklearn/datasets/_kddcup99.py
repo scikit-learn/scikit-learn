@@ -31,7 +31,9 @@ from ..utils import shuffle as shuffle_method
 ARCHIVE = RemoteFileMetadata(
     filename="kddcup99_data",
     url="https://ndownloader.figshare.com/files/5976045",
-    checksum="3b6c942aa0356c0ca35b7b595a26c89d343652c9db428893e7494f837b274292",
+    checksum=(
+        "3b6c942aa0356c0ca35b7b595a26c89d343652c9db428893e7494f837b274292"
+    ),
 )
 
 # The original data can be found at:
@@ -39,7 +41,9 @@ ARCHIVE = RemoteFileMetadata(
 ARCHIVE_10_PERCENT = RemoteFileMetadata(
     filename="kddcup99_10_data",
     url="https://ndownloader.figshare.com/files/5976042",
-    checksum="8045aca0d84e70e622d1148d7df782496f6333bf6eb979a1b0837c42a9fd9561",
+    checksum=(
+        "8045aca0d84e70e622d1148d7df782496f6333bf6eb979a1b0837c42a9fd9561"
+    ),
 )
 
 logger = logging.getLogger(__name__)
@@ -181,14 +185,22 @@ def fetch_kddcup99(
             data = data[s]
             target = target[s]
             data = np.c_[data[:, 0], data[:, 4], data[:, 5]]
-            feature_names = [feature_names[0], feature_names[4], feature_names[5]]
+            feature_names = [
+                feature_names[0],
+                feature_names[4],
+                feature_names[5],
+            ]
 
         if subset == "smtp":
             s = data[:, 2] == b"smtp"
             data = data[s]
             target = target[s]
             data = np.c_[data[:, 0], data[:, 4], data[:, 5]]
-            feature_names = [feature_names[0], feature_names[4], feature_names[5]]
+            feature_names = [
+                feature_names[0],
+                feature_names[4],
+                feature_names[5],
+            ]
 
         if subset == "SF":
             data = np.c_[data[:, 0], data[:, 2], data[:, 4], data[:, 5]]
@@ -225,7 +237,9 @@ def fetch_kddcup99(
     )
 
 
-def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=True):
+def _fetch_brute_kddcup99(
+    data_home=None, download_if_missing=True, percent10=True
+):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 

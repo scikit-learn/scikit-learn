@@ -144,7 +144,9 @@ def test_make_classification_informative_features():
                 assert (
                     len(clusters) == n_clusters_per_class
                 ), "Wrong number of clusters per class"
-            assert len(clusters_by_class) == n_classes, "Wrong number of classes"
+            assert (
+                len(clusters_by_class) == n_classes
+            ), "Wrong number of classes"
 
             assert_array_almost_equal(
                 np.bincount(y) / len(y) // weights,
@@ -160,7 +162,9 @@ def test_make_classification_informative_features():
                         np.abs(centroid) / class_sep,
                         np.ones(n_informative),
                         decimal=5,
-                        err_msg="Clusters are not centered on hypercube vertices",
+                        err_msg=(
+                            "Clusters are not centered on hypercube vertices"
+                        ),
                     )
                 else:
                     with pytest.raises(AssertionError):
@@ -169,20 +173,29 @@ def test_make_classification_informative_features():
                             np.ones(n_informative),
                             decimal=5,
                             err_msg=(
-                                "Clusters should not be centered on hypercube vertices"
+                                "Clusters should not be centered on hypercube"
+                                " vertices"
                             ),
                         )
 
     with pytest.raises(ValueError):
-        make(n_features=2, n_informative=2, n_classes=5, n_clusters_per_class=1)
+        make(
+            n_features=2, n_informative=2, n_classes=5, n_clusters_per_class=1
+        )
     with pytest.raises(ValueError):
-        make(n_features=2, n_informative=2, n_classes=3, n_clusters_per_class=2)
+        make(
+            n_features=2, n_informative=2, n_classes=3, n_clusters_per_class=2
+        )
 
 
 @pytest.mark.parametrize(
     "weights, err_type, err_msg",
     [
-        ([], ValueError, "Weights specified but incompatible with number of classes."),
+        (
+            [],
+            ValueError,
+            "Weights specified but incompatible with number of classes.",
+        ),
         (
             [0.25, 0.75, 0.1],
             ValueError,
@@ -213,7 +226,9 @@ def test_make_classification_weights_type(weights, err_type, err_msg):
 @pytest.mark.parametrize("kwargs", [{}, {"n_classes": 3, "n_informative": 3}])
 def test_make_classification_weights_array_or_list_ok(kwargs):
     X1, y1 = make_classification(weights=[0.1, 0.9], random_state=0, **kwargs)
-    X2, y2 = make_classification(weights=np.array([0.1, 0.9]), random_state=0, **kwargs)
+    X2, y2 = make_classification(
+        weights=np.array([0.1, 0.9]), random_state=0, **kwargs
+    )
     assert_almost_equal(X1, X2)
     assert_almost_equal(y1, y2)
 
@@ -339,7 +354,9 @@ def test_make_regression_multitarget():
     assert X.shape == (100, 10), "X shape mismatch"
     assert y.shape == (100, 3), "y shape mismatch"
     assert c.shape == (10, 3), "coef shape mismatch"
-    assert_array_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
+    assert_array_equal(
+        sum(c != 0.0), 3, "Unexpected number of informative features"
+    )
 
     # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
     assert_almost_equal(np.std(y - np.dot(X, c)), 1.0, decimal=1)
@@ -378,7 +395,10 @@ def test_make_blobs_n_samples_list_with_centers():
     centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
     cluster_stds = np.array([0.05, 0.2, 0.4])
     X, y = make_blobs(
-        n_samples=n_samples, centers=centers, cluster_std=cluster_stds, random_state=0
+        n_samples=n_samples,
+        centers=centers,
+        cluster_std=cluster_stds,
+        random_state=0,
     )
 
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
@@ -406,7 +426,10 @@ def test_make_blobs_return_centers():
     n_samples = [10, 20]
     n_features = 3
     X, y, centers = make_blobs(
-        n_samples=n_samples, n_features=n_features, return_centers=True, random_state=0
+        n_samples=n_samples,
+        n_features=n_features,
+        return_centers=True,
+        random_state=0,
     )
 
     assert centers.shape == (len(n_samples), n_features)
@@ -428,15 +451,17 @@ def test_make_blobs_error():
     )
     with pytest.raises(ValueError, match=wrong_std_msg):
         make_blobs(n_samples, centers=centers, cluster_std=cluster_stds[:-1])
-    wrong_type_msg = "Parameter `centers` must be array-like. Got {!r} instead".format(
-        3
+    wrong_type_msg = (
+        "Parameter `centers` must be array-like. Got {!r} instead".format(3)
     )
     with pytest.raises(ValueError, match=wrong_type_msg):
         make_blobs(n_samples, centers=3)
 
 
 def test_make_friedman1():
-    X, y = make_friedman1(n_samples=5, n_features=10, noise=0.0, random_state=0)
+    X, y = make_friedman1(
+        n_samples=5, n_features=10, noise=0.0, random_state=0
+    )
 
     assert X.shape == (5, 10), "X shape mismatch"
     assert y.shape == (5,), "y shape mismatch"
@@ -457,7 +482,9 @@ def test_make_friedman2():
     assert y.shape == (5,), "y shape mismatch"
 
     assert_array_almost_equal(
-        y, (X[:, 0] ** 2 + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5
+        y,
+        (X[:, 0] ** 2 + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2)
+        ** 0.5,
     )
 
 
@@ -491,7 +518,11 @@ def test_make_low_rank_matrix():
 
 def test_make_sparse_coded_signal():
     Y, D, X = make_sparse_coded_signal(
-        n_samples=5, n_components=8, n_features=10, n_nonzero_coefs=3, random_state=0
+        n_samples=5,
+        n_components=8,
+        n_features=10,
+        n_nonzero_coefs=3,
+        random_state=0,
     )
     assert Y.shape == (10, 5), "Y shape mismatch"
     assert D.shape == (10, 8), "D shape mismatch"
@@ -499,7 +530,9 @@ def test_make_sparse_coded_signal():
     for col in X.T:
         assert len(np.flatnonzero(col)) == 3, "Non-zero coefs mismatch"
     assert_array_almost_equal(np.dot(D, X), Y)
-    assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1]))
+    assert_array_almost_equal(
+        np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1])
+    )
 
 
 def test_make_sparse_uncorrelated():
@@ -625,7 +658,9 @@ def test_make_circles():
     for (n_samples, n_outer, n_inner) in [(7, 3, 4), (8, 4, 4)]:
         # Testing odd and even case, because in the past make_circles always
         # created an even number of samples.
-        X, y = make_circles(n_samples, shuffle=False, noise=None, factor=factor)
+        X, y = make_circles(
+            n_samples, shuffle=False, noise=None, factor=factor
+        )
         assert X.shape == (n_samples, 2), "X shape mismatch"
         assert y.shape == (n_samples,), "y shape mismatch"
         center = [0.0, 0.0]

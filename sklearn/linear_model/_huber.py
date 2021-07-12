@@ -103,7 +103,9 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
     signed_outliers[signed_outliers_mask] = -1.0
     X_outliers = axis0_safe_slice(X, outliers_mask, num_outliers)
     sw_outliers = sample_weight[outliers_mask] * signed_outliers
-    grad[:n_features] -= 2.0 * epsilon * (safe_sparse_dot(sw_outliers, X_outliers))
+    grad[:n_features] -= (
+        2.0 * epsilon * (safe_sparse_dot(sw_outliers, X_outliers))
+    )
 
     # Gradient due to the penalty.
     grad[:n_features] += alpha * 2.0 * w
@@ -279,11 +281,14 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         if self.epsilon < 1.0:
             raise ValueError(
-                "epsilon should be greater than or equal to 1.0, got %f" % self.epsilon
+                "epsilon should be greater than or equal to 1.0, got %f"
+                % self.epsilon
             )
 
         if self.warm_start and hasattr(self, "coef_"):
-            parameters = np.concatenate((self.coef_, [self.intercept_, self.scale_]))
+            parameters = np.concatenate(
+                (self.coef_, [self.intercept_, self.scale_])
+            )
         else:
             if self.fit_intercept:
                 parameters = np.zeros(X.shape[1] + 2)
@@ -313,7 +318,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         if opt_res.status == 2:
             raise ValueError(
-                "HuberRegressor convergence failed: l-BFGS-b solver terminated with %s"
+                "HuberRegressor convergence failed: l-BFGS-b solver terminated"
+                " with %s"
                 % opt_res.message
             )
         self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)

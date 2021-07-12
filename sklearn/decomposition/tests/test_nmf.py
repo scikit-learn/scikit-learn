@@ -26,7 +26,8 @@ from sklearn.exceptions import ConvergenceWarning
 )
 def test_convergence_warning(solver, regularization):
     convergence_warning = (
-        "Maximum number of iterations 1 reached. Increase it to improve convergence."
+        "Maximum number of iterations 1 reached. Increase it to improve"
+        " convergence."
     )
     A = np.ones((2, 2))
     with pytest.warns(ConvergenceWarning, match=convergence_warning):
@@ -59,7 +60,10 @@ def test_parameter_checking():
     msg = "Invalid beta_loss parameter: got 'spam' instead of one"
     with pytest.raises(ValueError, match=msg):
         NMF(solver="mu", init=init, beta_loss=name).fit(A)
-    msg = "Invalid beta_loss parameter: solver 'cd' does not handle beta_loss = 1.0"
+    msg = (
+        "Invalid beta_loss parameter: solver 'cd' does not handle beta_loss"
+        " = 1.0"
+    )
     with pytest.raises(ValueError, match=msg):
         NMF(solver="cd", init=init, beta_loss=1.0).fit(A)
 
@@ -112,7 +116,9 @@ def test_initialize_variants():
 # ignore UserWarning raised when both solver='mu' and init='nndsvd'
 @ignore_warnings(category=UserWarning)
 @pytest.mark.parametrize("solver", ("cd", "mu"))
-@pytest.mark.parametrize("init", (None, "nndsvd", "nndsvda", "nndsvdar", "random"))
+@pytest.mark.parametrize(
+    "init", (None, "nndsvd", "nndsvda", "nndsvdar", "random")
+)
 @pytest.mark.parametrize(
     "regularization", (None, "both", "components", "transformation")
 )
@@ -179,7 +185,9 @@ def test_nmf_transform_custom_init():
     H_init = np.abs(avg * random_state.randn(n_components, 5))
     W_init = np.abs(avg * random_state.randn(6, n_components))
 
-    m = NMF(solver="cd", n_components=n_components, init="custom", random_state=0)
+    m = NMF(
+        solver="cd", n_components=n_components, init="custom", random_state=0
+    )
     m.fit_transform(A, W=W_init, H=H_init)
     m.transform(A)
 
@@ -255,7 +263,11 @@ def test_nmf_sparse_transform():
 
     for solver in ("cd", "mu"):
         model = NMF(
-            solver=solver, random_state=0, n_components=2, max_iter=400, init="nndsvd"
+            solver=solver,
+            random_state=0,
+            n_components=2,
+            max_iter=400,
+            init="nndsvd",
         )
         A_fit_tr = model.fit_transform(A)
         A_tr = model.transform(A)
@@ -312,12 +324,14 @@ def test_non_negative_factorization_checking():
     # Test parameters checking is public function
     nnmf = non_negative_factorization
     msg = re.escape(
-        "Number of components must be a positive integer; got (n_components=1.5)"
+        "Number of components must be a positive integer; got"
+        " (n_components=1.5)"
     )
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, A, 1.5, init="random")
     msg = re.escape(
-        "Number of components must be a positive integer; got (n_components='2')"
+        "Number of components must be a positive integer; got"
+        " (n_components='2')"
     )
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, A, "2", init="random")
@@ -431,7 +445,9 @@ def test_nmf_multiplicative_update_sparse():
     X = rng.randn(n_samples, n_features)
     X = np.abs(X)
     X_csr = sp.csr_matrix(X)
-    W0, H0 = nmf._initialize_nmf(X, n_components, init="random", random_state=42)
+    W0, H0 = nmf._initialize_nmf(
+        X, n_components, init="random", random_state=42
+    )
 
     for beta_loss in (-1.2, 0, 0.2, 1.0, 2.0, 2.5):
         # Reference with dense array X
@@ -603,9 +619,11 @@ def test_nmf_regularization():
         H_regul = regul.components_
         H_model = model.components_
 
-        assert (linalg.norm(W_model)) ** 2.0 + (linalg.norm(H_model)) ** 2.0 > (
-            linalg.norm(W_regul)
-        ) ** 2.0 + (linalg.norm(H_regul)) ** 2.0
+        assert (linalg.norm(W_model)) ** 2.0 + (
+            linalg.norm(H_model)
+        ) ** 2.0 > (linalg.norm(W_regul)) ** 2.0 + (
+            linalg.norm(H_regul)
+        ) ** 2.0
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -622,7 +640,9 @@ def test_nmf_decreasing():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.abs(X, X)
-    W0, H0 = nmf._initialize_nmf(X, n_components, init="random", random_state=42)
+    W0, H0 = nmf._initialize_nmf(
+        X, n_components, init="random", random_state=42
+    )
 
     for beta_loss in (-1.2, 0, 0.2, 1.0, 2.0, 2.5):
         for solver in ("cd", "mu"):
@@ -708,9 +728,13 @@ def test_nmf_float32_float64_consistency(solver, regularization):
     np.abs(X, out=X)
     # FIXME : should be removed in 1.1
     init = "nndsvda"
-    nmf32 = NMF(solver=solver, regularization=regularization, random_state=0, init=init)
+    nmf32 = NMF(
+        solver=solver, regularization=regularization, random_state=0, init=init
+    )
     W32 = nmf32.fit_transform(X.astype(np.float32))
-    nmf64 = NMF(solver=solver, regularization=regularization, random_state=0, init=init)
+    nmf64 = NMF(
+        solver=solver, regularization=regularization, random_state=0, init=init
+    )
     W64 = nmf64.fit_transform(X)
 
     assert_allclose(W32, W64, rtol=1e-6, atol=1e-5)

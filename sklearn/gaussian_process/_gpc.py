@@ -217,7 +217,9 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                     )
                     return -lml, -grad
                 else:
-                    return -self.log_marginal_likelihood(theta, clone_kernel=False)
+                    return -self.log_marginal_likelihood(
+                        theta, clone_kernel=False
+                    )
 
             # First optimize starting from theta specified in kernel
             optima = [
@@ -236,9 +238,13 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                     )
                 bounds = self.kernel_.bounds
                 for iteration in range(self.n_restarts_optimizer):
-                    theta_initial = np.exp(self.rng.uniform(bounds[:, 0], bounds[:, 1]))
+                    theta_initial = np.exp(
+                        self.rng.uniform(bounds[:, 0], bounds[:, 1])
+                    )
                     optima.append(
-                        self._constrained_optimization(obj_func, theta_initial, bounds)
+                        self._constrained_optimization(
+                            obj_func, theta_initial, bounds
+                        )
                     )
             # Select result from run with minimal (negative) log-marginal
             # likelihood
@@ -361,7 +367,9 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         """
         if theta is None:
             if eval_gradient:
-                raise ValueError("Gradient can only be evaluated for theta!=None")
+                raise ValueError(
+                    "Gradient can only be evaluated for theta!=None"
+                )
             return self.log_marginal_likelihood_value_
 
         if clone_kernel:
@@ -377,7 +385,9 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         # Compute log-marginal-likelihood Z and also store some temporaries
         # which can be reused for computing Z's gradient
-        Z, (pi, W_sr, L, b, a) = self._posterior_mode(K, return_temporaries=True)
+        Z, (pi, W_sr, L, b, a) = self._posterior_mode(
+            K, return_temporaries=True
+        )
 
         if not eval_gradient:
             return Z
@@ -467,12 +477,18 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
             opt_res = scipy.optimize.minimize(
-                obj_func, initial_theta, method="L-BFGS-B", jac=True, bounds=bounds
+                obj_func,
+                initial_theta,
+                method="L-BFGS-B",
+                jac=True,
+                bounds=bounds,
             )
             _check_optimize_result("lbfgs", opt_res)
             theta_opt, func_min = opt_res.x, opt_res.fun
         elif callable(self.optimizer):
-            theta_opt, func_min = self.optimizer(obj_func, initial_theta, bounds=bounds)
+            theta_opt, func_min = self.optimizer(
+                obj_func, initial_theta, bounds=bounds
+            )
         else:
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
@@ -692,7 +708,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             raise ValueError(
                 "GaussianProcessClassifier requires 2 or more "
                 "distinct classes; got %d class (only class %s "
-                "is present)" % (self.n_classes_, self.classes_[0])
+                "is present)"
+                % (self.n_classes_, self.classes_[0])
             )
         if self.n_classes_ > 2:
             if self.multi_class == "one_vs_rest":
@@ -704,7 +721,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                     self.base_estimator_, n_jobs=self.n_jobs
                 )
             else:
-                raise ValueError("Unknown multi-class mode %s" % self.multi_class)
+                raise ValueError(
+                    "Unknown multi-class mode %s" % self.multi_class
+                )
 
         self.base_estimator_.fit(X, y)
 
@@ -738,9 +757,13 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         check_is_fitted(self)
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = self._validate_data(X, ensure_2d=True, dtype="numeric", reset=False)
+            X = self._validate_data(
+                X, ensure_2d=True, dtype="numeric", reset=False
+            )
         else:
-            X = self._validate_data(X, ensure_2d=False, dtype=None, reset=False)
+            X = self._validate_data(
+                X, ensure_2d=False, dtype=None, reset=False
+            )
 
         return self.base_estimator_.predict(X)
 
@@ -768,9 +791,13 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             )
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = self._validate_data(X, ensure_2d=True, dtype="numeric", reset=False)
+            X = self._validate_data(
+                X, ensure_2d=True, dtype="numeric", reset=False
+            )
         else:
-            X = self._validate_data(X, ensure_2d=False, dtype=None, reset=False)
+            X = self._validate_data(
+                X, ensure_2d=False, dtype=None, reset=False
+            )
 
         return self.base_estimator_.predict_proba(X)
 
@@ -781,7 +808,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             return self.base_estimator_.kernel_
         else:
             return CompoundKernel(
-                [estimator.kernel_ for estimator in self.base_estimator_.estimators_]
+                [
+                    estimator.kernel_
+                    for estimator in self.base_estimator_.estimators_
+                ]
             )
 
     def log_marginal_likelihood(
@@ -826,7 +856,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         if theta is None:
             if eval_gradient:
-                raise ValueError("Gradient can only be evaluated for theta!=None")
+                raise ValueError(
+                    "Gradient can only be evaluated for theta!=None"
+                )
             return self.log_marginal_likelihood_value_
 
         theta = np.asarray(theta)

@@ -32,9 +32,8 @@ def _fit_single_estimator(
         except TypeError as exc:
             if "unexpected keyword argument 'sample_weight'" in str(exc):
                 raise TypeError(
-                    "Underlying estimator {} does not support sample weights.".format(
-                        estimator.__class__.__name__
-                    )
+                    "Underlying estimator {} does not support sample weights."
+                    .format(estimator.__class__.__name__)
                 ) from exc
             raise
     else:
@@ -112,7 +111,9 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     _required_parameters: List[str] = []
 
     @abstractmethod
-    def __init__(self, base_estimator, *, n_estimators=10, estimator_params=tuple()):
+    def __init__(
+        self, base_estimator, *, n_estimators=10, estimator_params=tuple()
+    ):
         # Set parameters
         self.base_estimator = base_estimator
         self.n_estimators = n_estimators
@@ -156,7 +157,9 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         sub-estimators.
         """
         estimator = clone(self.base_estimator_)
-        estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
+        estimator.set_params(
+            **{p: getattr(self, p) for p in self.estimator_params}
+        )
 
         # TODO: Remove in v1.2
         # criterion "mse" and "mae" would cause warnings in every call to
@@ -255,7 +258,9 @@ class _BaseHeterogeneousEnsemble(
                 "to be an estimator."
             )
 
-        is_estimator_type = is_classifier if is_classifier(self) else is_regressor
+        is_estimator_type = (
+            is_classifier if is_classifier(self) else is_regressor
+        )
 
         for est in estimators:
             if est != "drop" and not is_estimator_type(est):

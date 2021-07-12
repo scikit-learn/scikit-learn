@@ -35,7 +35,10 @@ def configuration(parent_package="", top_path=None):
     config.add_extension(
         "_dist_metrics",
         sources=["_dist_metrics.pyx"],
-        include_dirs=[numpy.get_include(), os.path.join(numpy.get_include(), "numpy")],
+        include_dirs=[
+            numpy.get_include(),
+            os.path.join(numpy.get_include(), "numpy"),
+        ],
         libraries=libraries,
     )
 

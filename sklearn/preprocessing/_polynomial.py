@@ -156,11 +156,15 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             combinations = sum(
                 [
                     comb(n_features, i, exact=True)
-                    for i in range(max(1, min_degree), min(max_degree, n_features) + 1)
+                    for i in range(
+                        max(1, min_degree), min(max_degree, n_features) + 1
+                    )
                 ]
             )
         else:
-            combinations = comb(n_features + max_degree, max_degree, exact=True) - 1
+            combinations = (
+                comb(n_features + max_degree, max_degree, exact=True) - 1
+            )
             if min_degree > 0:
                 d = min_degree - 1
                 combinations -= comb(n_features + d, d, exact=True) - 1
@@ -182,7 +186,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             include_bias=self.include_bias,
         )
         return np.vstack(
-            [np.bincount(c, minlength=self.n_features_in_) for c in combinations]
+            [
+                np.bincount(c, minlength=self.n_features_in_)
+                for c in combinations
+            ]
         )
 
     def get_feature_names(self, input_features=None):
@@ -240,12 +247,14 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         if isinstance(self.degree, numbers.Integral):
             if self.degree < 0:
                 raise ValueError(
-                    f"degree must be a non-negative integer, got {self.degree}."
+                    "degree must be a non-negative integer, got"
+                    f" {self.degree}."
                 )
             self._min_degree = 0
             self._max_degree = self.degree
         elif (
-            isinstance(self.degree, collections.abc.Iterable) and len(self.degree) == 2
+            isinstance(self.degree, collections.abc.Iterable)
+            and len(self.degree) == 2
         ):
             self._min_degree, self._max_degree = self.degree
             if not (
@@ -318,7 +327,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         X = self._validate_data(
-            X, order="F", dtype=FLOAT_DTYPES, reset=False, accept_sparse=("csr", "csc")
+            X,
+            order="F",
+            dtype=FLOAT_DTYPES,
+            reset=False,
+            accept_sparse=("csr", "csc"),
         )
 
         n_samples, n_features = X.shape
@@ -329,13 +342,20 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             to_stack = []
             if self.include_bias:
                 to_stack.append(
-                    sparse.csc_matrix(np.ones(shape=(n_samples, 1), dtype=X.dtype))
+                    sparse.csc_matrix(
+                        np.ones(shape=(n_samples, 1), dtype=X.dtype)
+                    )
                 )
             if self._min_degree <= 1:
                 to_stack.append(X)
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 Xp_next = _csr_polynomial_expansion(
-                    X.data, X.indices, X.indptr, X.shape[1], self.interaction_only, deg
+                    X.data,
+                    X.indices,
+                    X.indptr,
+                    X.shape[1],
+                    self.interaction_only,
+                    deg,
                 )
                 if Xp_next is None:
                     break
@@ -370,7 +390,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             # Do as if _min_degree = 0 and cut down array after the
             # computation, i.e. use _n_out_full instead of n_output_features_.
             XP = np.empty(
-                shape=(n_samples, self._n_out_full), dtype=X.dtype, order=self.order
+                shape=(n_samples, self._n_out_full),
+                dtype=X.dtype,
+                order=self.order,
             )
 
             # What follows is a faster implementation of:
@@ -428,7 +450,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 n_XP, n_Xout = self._n_out_full, self.n_output_features_
                 if self.include_bias:
                     Xout = np.empty(
-                        shape=(n_samples, n_Xout), dtype=XP.dtype, order=self.order
+                        shape=(n_samples, n_Xout),
+                        dtype=XP.dtype,
+                        order=self.order,
                     )
                     Xout[:, 0] = 1
                     Xout[:, 1:] = XP[:, n_XP - n_Xout + 1 :]
@@ -591,7 +615,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         if knots == "quantile":
             knots = np.percentile(
                 X,
-                100 * np.linspace(start=0, stop=1, num=n_knots, dtype=np.float64),
+                100
+                * np.linspace(start=0, stop=1, num=n_knots, dtype=np.float64),
                 axis=0,
             )
         else:
@@ -657,7 +682,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         )
         n_samples, n_features = X.shape
 
-        if not (isinstance(self.degree, numbers.Integral) and self.degree >= 0):
+        if not (
+            isinstance(self.degree, numbers.Integral) and self.degree >= 0
+        ):
             raise ValueError(
                 f"degree must be a non-negative integer, got {self.degree}."
             )
@@ -666,9 +693,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             "uniform",
             "quantile",
         ]:
-            if not (isinstance(self.n_knots, numbers.Integral) and self.n_knots >= 2):
+            if not (
+                isinstance(self.n_knots, numbers.Integral)
+                and self.n_knots >= 2
+            ):
                 raise ValueError(
-                    f"n_knots must be a positive integer >= 2, got: {self.n_knots}"
+                    "n_knots must be a positive integer >= 2, got:"
+                    f" {self.n_knots}"
                 )
 
             base_knots = self._get_base_knot_positions(
@@ -677,7 +708,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         else:
             base_knots = check_array(self.knots, dtype=np.float64)
             if base_knots.shape[0] < 2:
-                raise ValueError("Number of knots, knots.shape[0], must be >= 2.")
+                raise ValueError(
+                    "Number of knots, knots.shape[0], must be >= 2."
+                )
             elif base_knots.shape[1] != n_features:
                 raise ValueError("knots.shape[1] == n_features is violated.")
             elif not np.all(np.diff(base_knots, axis=0) > 0):
@@ -795,7 +828,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False, accept_sparse=False, ensure_2d=True)
+        X = self._validate_data(
+            X, reset=False, accept_sparse=False, ensure_2d=True
+        )
 
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]
@@ -834,14 +869,18 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 xmin = spl.t[degree]
                 xmax = spl.t[-degree - 1]
                 mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
-                XBS[mask, (i * n_splines) : ((i + 1) * n_splines)] = spl(X[mask, i])
+                XBS[mask, (i * n_splines) : ((i + 1) * n_splines)] = spl(
+                    X[mask, i]
+                )
 
             # Note for extrapolation:
             # 'continue' is already returned as is by scipy BSplines
             if self.extrapolation == "error":
                 # BSpline with extrapolate=False does not raise an error, but
                 # output np.nan.
-                if np.any(np.isnan(XBS[:, (i * n_splines) : ((i + 1) * n_splines)])):
+                if np.any(
+                    np.isnan(XBS[:, (i * n_splines) : ((i + 1) * n_splines)])
+                ):
                     raise ValueError(
                         "X contains values beyond the limits of the knots."
                     )
@@ -856,9 +895,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 f_max = spl(xmax)
                 mask = X[:, i] < xmin
                 if np.any(mask):
-                    XBS[mask, (i * n_splines) : (i * n_splines + degree)] = f_min[
-                        :degree
-                    ]
+                    XBS[
+                        mask, (i * n_splines) : (i * n_splines + degree)
+                    ] = f_min[:degree]
 
                 mask = X[:, i] > xmax
                 if np.any(mask):
@@ -901,5 +940,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         else:
             # We throw away one spline basis per feature.
             # We chose the last one.
-            indices = [j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0]
+            indices = [
+                j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0
+            ]
             return XBS[:, indices]

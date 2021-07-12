@@ -124,7 +124,10 @@ MULTILABEL_ONLY_SCORERS = [
     "jaccard_samples",
 ]
 
-REQUIRE_POSITIVE_Y_SCORERS = ["neg_mean_poisson_deviance", "neg_mean_gamma_deviance"]
+REQUIRE_POSITIVE_Y_SCORERS = [
+    "neg_mean_poisson_deviance",
+    "neg_mean_gamma_deviance",
+]
 
 
 def _require_positive_y(y):
@@ -161,7 +164,9 @@ def setup_module():
     global X_mm, y_mm, y_ml_mm, TEMP_FOLDER, ESTIMATORS
     TEMP_FOLDER = tempfile.mkdtemp(prefix="sklearn_test_score_objects_")
     X, y = make_classification(n_samples=30, n_features=5, random_state=0)
-    _, y_ml = make_multilabel_classification(n_samples=X.shape[0], random_state=0)
+    _, y_ml = make_multilabel_classification(
+        n_samples=X.shape[0], random_state=0
+    )
     filename = os.path.join(TEMP_FOLDER, "test_data.pkl")
     joblib.dump((X, y, y_ml), filename)
     X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode="r")
@@ -226,7 +231,8 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     # Test all branches of single metric usecases
     estimator = EstimatorWithoutFit()
     pattern = (
-        r"estimator should be an estimator implementing 'fit' method," r" .* was passed"
+        r"estimator should be an estimator implementing 'fit' method,"
+        r" .* was passed"
     )
     with pytest.raises(TypeError, match=pattern):
         scoring_validator(estimator)
@@ -294,7 +300,10 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
     assert isinstance(scorers, dict)
     assert sorted(scorers.keys()) == sorted(list(scoring))
     assert all(
-        [isinstance(scorer, _PredictScorer) for scorer in list(scorers.values())]
+        [
+            isinstance(scorer, _PredictScorer)
+            for scorer in list(scorers.values())
+        ]
     )
 
     if "acc" in scoring:
@@ -303,7 +312,8 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
         )
     if "accuracy" in scoring:
         assert_almost_equal(
-            scorers["accuracy"](estimator, [[1], [2], [3]], [1, 0, 0]), 2.0 / 3.0
+            scorers["accuracy"](estimator, [[1], [2], [3]], [1, 0, 0]),
+            2.0 / 3.0,
         )
     if "precision" in scoring:
         assert_almost_equal(
@@ -319,7 +329,10 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
             "One or more of the elements were callables",
         ),
         ([5], "Non-string types were found"),
-        ((make_scorer(precision_score),), "One of mor eof the elements were callables"),
+        (
+            (make_scorer(precision_score),),
+            "One of mor eof the elements were callables",
+        ),
         ((), "Empty list was given"),
         (("f1", "f1"), "Duplicate elements were found"),
         ({4: "accuracy"}, "Non-string types were found in the keys"),
@@ -362,7 +375,11 @@ def test_check_scoring_gridsearchcv():
     # and doesn't make any assumptions about the estimator apart from having a
     # fit.
     scores = cross_val_score(
-        EstimatorWithFit(), [[1], [2], [3]], [1, 0, 1], scoring=DummyScorer(), cv=3
+        EstimatorWithFit(),
+        [[1], [2], [3]],
+        [1, 0, 1],
+        scoring=DummyScorer(),
+        cv=3,
     )
     assert_array_equal(scores, 1)
 
@@ -530,7 +547,9 @@ def test_thresholded_scorers():
 def test_thresholded_scorers_multilabel_indicator_data():
     # Test that the scorer work with multilabel-indicator format
     # for multilabel and multi-output multi-class classifier
-    X, y = make_multilabel_classification(allow_unlabeled=False, random_state=0)
+    X, y = make_multilabel_classification(
+        allow_unlabeled=False, random_state=0
+    )
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     # Multi-output multi-class predict_proba
@@ -605,7 +624,9 @@ def test_classification_scorer_sample_weight():
     # to ensure that, on the classifier output, weighted and unweighted
     # scores really should be unequal.
     X, y = make_classification(random_state=0)
-    _, y_ml = make_multilabel_classification(n_samples=X.shape[0], random_state=0)
+    _, y_ml = make_multilabel_classification(
+        n_samples=X.shape[0], random_state=0
+    )
     split = train_test_split(X, y, y_ml, random_state=0)
     X_train, X_test, y_train, y_test, y_ml_train, y_ml_test = split
 
@@ -914,7 +935,12 @@ def test_multiclass_roc_proba_scorer_label():
 
 @pytest.mark.parametrize(
     "scorer_name",
-    ["roc_auc_ovr", "roc_auc_ovo", "roc_auc_ovr_weighted", "roc_auc_ovo_weighted"],
+    [
+        "roc_auc_ovr",
+        "roc_auc_ovo",
+        "roc_auc_ovr_weighted",
+        "roc_auc_ovo_weighted",
+    ],
 )
 def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     # Perceptron has no predict_proba
@@ -969,7 +995,9 @@ def string_labeled_classification_problem():
     X, y = shuffle(X, y, random_state=42)
     # only use 2 features to make the problem even harder
     X = X[:, :2]
-    y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
+    y = np.array(
+        ["cancer" if c == 1 else "not cancer" for c in y], dtype=object
+    )
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
@@ -1005,7 +1033,9 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
 
     # check that when calling the scoring function, probability estimates and
     # decision values lead to the same results
-    ap_proba = average_precision_score(y_test, y_pred_proba, pos_label=pos_label)
+    ap_proba = average_precision_score(
+        y_test, y_pred_proba, pos_label=pos_label
+    )
     ap_decision_function = average_precision_score(
         y_test, y_pred_decision, pos_label=pos_label
     )
@@ -1044,7 +1074,9 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
     with pytest.raises(NotImplementedError):
         clf_without_predict_proba.predict_proba(X_test)
 
-    ap_scorer = average_precision_scorer(clf_without_predict_proba, X_test, y_test)
+    ap_scorer = average_precision_scorer(
+        clf_without_predict_proba, X_test, y_test
+    )
     assert ap_scorer == pytest.approx(ap_proba)
 
 
@@ -1052,13 +1084,22 @@ def test_brier_score_loss_pos_label(string_labeled_classification_problem):
     # check that _ProbaScorer leads to the right score when `pos_label` is
     # provided. Currently only the `brier_score_loss` is defined to be such
     # a scorer.
-    clf, X_test, y_test, _, y_pred_proba, _ = string_labeled_classification_problem
+    (
+        clf,
+        X_test,
+        y_test,
+        _,
+        y_pred_proba,
+        _,
+    ) = string_labeled_classification_problem
 
     pos_label = "cancer"
     assert clf.classes_[0] == pos_label
 
     # brier score loss is symmetric
-    brier_pos_cancer = brier_score_loss(y_test, y_pred_proba[:, 0], pos_label="cancer")
+    brier_pos_cancer = brier_score_loss(
+        y_test, y_pred_proba[:, 0], pos_label="cancer"
+    )
     brier_pos_not_cancer = brier_score_loss(
         y_test, y_pred_proba[:, 1], pos_label="not cancer"
     )
@@ -1098,7 +1139,9 @@ def test_non_symmetric_metric_pos_label(
 @pytest.mark.parametrize(
     "scorer",
     [
-        make_scorer(average_precision_score, needs_threshold=True, pos_label="xxx"),
+        make_scorer(
+            average_precision_score, needs_threshold=True, pos_label="xxx"
+        ),
         make_scorer(brier_score_loss, needs_proba=True, pos_label="xxx"),
         make_scorer(f1_score, pos_label="xxx"),
     ],

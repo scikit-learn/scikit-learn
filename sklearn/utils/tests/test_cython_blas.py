@@ -163,15 +163,20 @@ def test_rot(dtype):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize(
-    "opA, transA", [(_no_op, NoTrans), (np.transpose, Trans)], ids=["NoTrans", "Trans"]
+    "opA, transA",
+    [(_no_op, NoTrans), (np.transpose, Trans)],
+    ids=["NoTrans", "Trans"],
 )
-@pytest.mark.parametrize("order", [RowMajor, ColMajor], ids=["RowMajor", "ColMajor"])
+@pytest.mark.parametrize(
+    "order", [RowMajor, ColMajor], ids=["RowMajor", "ColMajor"]
+)
 def test_gemv(dtype, opA, transA, order):
     gemv = _gemv_memview[_numpy_to_cython(dtype)]
 
     rng = np.random.RandomState(0)
     A = np.asarray(
-        opA(rng.random_sample((20, 10)).astype(dtype, copy=False)), order=ORDER[order]
+        opA(rng.random_sample((20, 10)).astype(dtype, copy=False)),
+        order=ORDER[order],
     )
     x = rng.random_sample(10).astype(dtype, copy=False)
     y = rng.random_sample(20).astype(dtype, copy=False)
@@ -184,7 +189,9 @@ def test_gemv(dtype, opA, transA, order):
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("order", [RowMajor, ColMajor], ids=["RowMajor", "ColMajor"])
+@pytest.mark.parametrize(
+    "order", [RowMajor, ColMajor], ids=["RowMajor", "ColMajor"]
+)
 def test_ger(dtype, order):
     ger = _ger_memview[_numpy_to_cython(dtype)]
 
@@ -192,7 +199,8 @@ def test_ger(dtype, order):
     x = rng.random_sample(10).astype(dtype, copy=False)
     y = rng.random_sample(20).astype(dtype, copy=False)
     A = np.asarray(
-        rng.random_sample((10, 20)).astype(dtype, copy=False), order=ORDER[order]
+        rng.random_sample((10, 20)).astype(dtype, copy=False),
+        order=ORDER[order],
     )
     alpha = 2.5
 
@@ -204,24 +212,33 @@ def test_ger(dtype, order):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize(
-    "opB, transB", [(_no_op, NoTrans), (np.transpose, Trans)], ids=["NoTrans", "Trans"]
+    "opB, transB",
+    [(_no_op, NoTrans), (np.transpose, Trans)],
+    ids=["NoTrans", "Trans"],
 )
 @pytest.mark.parametrize(
-    "opA, transA", [(_no_op, NoTrans), (np.transpose, Trans)], ids=["NoTrans", "Trans"]
+    "opA, transA",
+    [(_no_op, NoTrans), (np.transpose, Trans)],
+    ids=["NoTrans", "Trans"],
 )
-@pytest.mark.parametrize("order", [RowMajor, ColMajor], ids=["RowMajor", "ColMajor"])
+@pytest.mark.parametrize(
+    "order", [RowMajor, ColMajor], ids=["RowMajor", "ColMajor"]
+)
 def test_gemm(dtype, opA, transA, opB, transB, order):
     gemm = _gemm_memview[_numpy_to_cython(dtype)]
 
     rng = np.random.RandomState(0)
     A = np.asarray(
-        opA(rng.random_sample((30, 10)).astype(dtype, copy=False)), order=ORDER[order]
+        opA(rng.random_sample((30, 10)).astype(dtype, copy=False)),
+        order=ORDER[order],
     )
     B = np.asarray(
-        opB(rng.random_sample((10, 20)).astype(dtype, copy=False)), order=ORDER[order]
+        opB(rng.random_sample((10, 20)).astype(dtype, copy=False)),
+        order=ORDER[order],
     )
     C = np.asarray(
-        rng.random_sample((30, 20)).astype(dtype, copy=False), order=ORDER[order]
+        rng.random_sample((30, 20)).astype(dtype, copy=False),
+        order=ORDER[order],
     )
     alpha, beta = 2.5, -0.5
 

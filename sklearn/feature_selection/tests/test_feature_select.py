@@ -93,7 +93,11 @@ def test_f_classif():
 @pytest.mark.parametrize("center", [True, False])
 def test_r_regression(center):
     X, y = make_regression(
-        n_samples=2000, n_features=20, n_informative=5, shuffle=False, random_state=0
+        n_samples=2000,
+        n_features=20,
+        n_informative=5,
+        shuffle=False,
+        random_state=0,
     )
 
     corr_coeffs = r_regression(X, y, center=center)
@@ -116,7 +120,11 @@ def test_f_regression():
     # Test whether the F test yields meaningful results
     # on a simple simulated regression problem
     X, y = make_regression(
-        n_samples=200, n_features=20, n_informative=5, shuffle=False, random_state=0
+        n_samples=200,
+        n_features=20,
+        n_informative=5,
+        shuffle=False,
+        random_state=0,
     )
 
     F, pv = f_regression(X, y)
@@ -369,7 +377,9 @@ def test_select_heuristics_classif():
 def assert_best_scores_kept(score_filter):
     scores = score_filter.scores_
     support = score_filter.get_support()
-    assert_allclose(np.sort(scores[support]), np.sort(scores)[-support.sum() :])
+    assert_allclose(
+        np.sort(scores[support]), np.sort(scores)[-support.sum() :]
+    )
 
 
 def test_select_percentile_regression():
@@ -377,7 +387,11 @@ def test_select_percentile_regression():
     # gets the correct items in a simple regression problem
     # with the percentile heuristic
     X, y = make_regression(
-        n_samples=200, n_features=20, n_informative=5, shuffle=False, random_state=0
+        n_samples=200,
+        n_features=20,
+        n_informative=5,
+        shuffle=False,
+        random_state=0,
     )
 
     univariate_filter = SelectPercentile(f_regression, percentile=25)
@@ -406,7 +420,11 @@ def test_select_percentile_regression_full():
     # Test whether the relative univariate feature selection
     # selects all features when '100%' is asked.
     X, y = make_regression(
-        n_samples=200, n_features=20, n_informative=5, shuffle=False, random_state=0
+        n_samples=200,
+        n_features=20,
+        n_informative=5,
+        shuffle=False,
+        random_state=0,
     )
 
     univariate_filter = SelectPercentile(f_regression, percentile=100)
@@ -425,7 +443,11 @@ def test_select_percentile_regression_full():
 
 def test_invalid_percentile():
     X, y = make_regression(
-        n_samples=10, n_features=20, n_informative=2, shuffle=False, random_state=0
+        n_samples=10,
+        n_features=20,
+        n_informative=2,
+        shuffle=False,
+        random_state=0,
     )
 
     with pytest.raises(ValueError):
@@ -570,7 +592,10 @@ def test_select_fdr_regression(alpha, n_informative):
     # should be lower than alpha:
     # FDR = E(FP / (TP + FP)) <= alpha
     false_discovery_rate = np.mean(
-        [single_fdr(alpha, n_informative, random_state) for random_state in range(100)]
+        [
+            single_fdr(alpha, n_informative, random_state)
+            for random_state in range(100)
+        ]
     )
     assert alpha >= false_discovery_rate
 
@@ -585,7 +610,11 @@ def test_select_fwe_regression():
     # gets the correct items in a simple regression problem
     # with the fwe heuristic
     X, y = make_regression(
-        n_samples=200, n_features=20, n_informative=5, shuffle=False, random_state=0
+        n_samples=200,
+        n_features=20,
+        n_informative=5,
+        shuffle=False,
+        random_state=0,
     )
 
     univariate_filter = SelectFwe(f_regression, alpha=0.01)
@@ -790,7 +819,9 @@ def test_mutual_info_classif():
     univariate_filter = SelectPercentile(mutual_info_classif, percentile=40)
     X_r = univariate_filter.fit(X, y).transform(X)
     X_r2 = (
-        GenericUnivariateSelect(mutual_info_classif, mode="percentile", param=40)
+        GenericUnivariateSelect(
+            mutual_info_classif, mode="percentile", param=40
+        )
         .fit(X, y)
         .transform(X)
     )
@@ -830,7 +861,9 @@ def test_mutual_info_regression():
     univariate_filter = SelectPercentile(mutual_info_regression, percentile=20)
     X_r = univariate_filter.fit(X, y).transform(X)
     X_r2 = (
-        GenericUnivariateSelect(mutual_info_regression, mode="percentile", param=20)
+        GenericUnivariateSelect(
+            mutual_info_regression, mode="percentile", param=20
+        )
         .fit(X, y)
         .transform(X)
     )

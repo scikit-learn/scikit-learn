@@ -31,7 +31,9 @@ from ..utils import check_random_state, Bunch
 FACES = RemoteFileMetadata(
     filename="olivettifaces.mat",
     url="https://ndownloader.figshare.com/files/5976027",
-    checksum="b612fb967f2dc77c9c62d3e1266e0c73d5fca46a4b8906c18e454d41af987794",
+    checksum=(
+        "b612fb967f2dc77c9c62d3e1266e0c73d5fca46a4b8906c18e454d41af987794"
+    ),
 )
 
 
@@ -110,7 +112,9 @@ def fetch_olivetti_faces(
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
 
-        print("downloading Olivetti faces from %s to %s" % (FACES.url, data_home))
+        print(
+            "downloading Olivetti faces from %s to %s" % (FACES.url, data_home)
+        )
         mat_path = _fetch_remote(FACES, dirname=data_home)
         mfile = loadmat(file_name=mat_path)
         # delete raw .mat data
@@ -144,4 +148,6 @@ def fetch_olivetti_faces(
     if return_X_y:
         return faces_vectorized, target
 
-    return Bunch(data=faces_vectorized, images=faces, target=target, DESCR=fdescr)
+    return Bunch(
+        data=faces_vectorized, images=faces, target=target, DESCR=fdescr
+    )

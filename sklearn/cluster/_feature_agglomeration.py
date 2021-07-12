@@ -43,7 +43,10 @@ class AgglomerationTransform(TransformerMixin):
             n_samples = X.shape[0]
             # a fast way to compute the mean of grouped features
             nX = np.array(
-                [np.bincount(self.labels_, X[i, :]) / size for i in range(n_samples)]
+                [
+                    np.bincount(self.labels_, X[i, :]) / size
+                    for i in range(n_samples)
+                ]
             )
         else:
             nX = [

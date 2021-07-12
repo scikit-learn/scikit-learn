@@ -294,14 +294,19 @@ class RANSACRegressor(
             min_samples = np.ceil(self.min_samples * X.shape[0])
         elif self.min_samples >= 1:
             if self.min_samples % 1 != 0:
-                raise ValueError("Absolute number of samples must be an integer value.")
+                raise ValueError(
+                    "Absolute number of samples must be an integer value."
+                )
             min_samples = self.min_samples
         else:
-            raise ValueError("Value for `min_samples` must be scalar and positive.")
+            raise ValueError(
+                "Value for `min_samples` must be scalar and positive."
+            )
         if min_samples > X.shape[0]:
             raise ValueError(
                 "`min_samples` may not be larger than number "
-                "of samples: n_samples = %d." % (X.shape[0])
+                "of samples: n_samples = %d."
+                % (X.shape[0])
             )
 
         if self.stop_probability < 0 or self.stop_probability > 1:
@@ -369,7 +374,8 @@ class RANSACRegressor(
             raise ValueError(
                 "%s does not support sample_weight. Samples"
                 " weights are only used for the calibration"
-                " itself." % estimator_name
+                " itself."
+                % estimator_name
             )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
@@ -419,7 +425,9 @@ class RANSACRegressor(
                 base_estimator.fit(X_subset, y_subset)
             else:
                 base_estimator.fit(
-                    X_subset, y_subset, sample_weight=sample_weight[subset_idxs]
+                    X_subset,
+                    y_subset,
+                    sample_weight=sample_weight[subset_idxs],
                 )
 
             # check if estimated model is valid
@@ -448,11 +456,16 @@ class RANSACRegressor(
             y_inlier_subset = y[inlier_idxs_subset]
 
             # score of inlier data set
-            score_subset = base_estimator.score(X_inlier_subset, y_inlier_subset)
+            score_subset = base_estimator.score(
+                X_inlier_subset, y_inlier_subset
+            )
 
             # same number of inliers but worse score -> skip current random
             # sample
-            if n_inliers_subset == n_inliers_best and score_subset < score_best:
+            if (
+                n_inliers_subset == n_inliers_best
+                and score_subset < score_best
+            ):
                 continue
 
             # save current random sample as best sample
@@ -466,12 +479,18 @@ class RANSACRegressor(
             max_trials = min(
                 max_trials,
                 _dynamic_max_trials(
-                    n_inliers_best, n_samples, min_samples, self.stop_probability
+                    n_inliers_best,
+                    n_samples,
+                    min_samples,
+                    self.stop_probability,
                 ),
             )
 
             # break if sufficient number of inliers or score is reached
-            if n_inliers_best >= self.stop_n_inliers or score_best >= self.stop_score:
+            if (
+                n_inliers_best >= self.stop_n_inliers
+                or score_best >= self.stop_score
+            ):
                 break
 
         # if none of the iterations met the required criteria

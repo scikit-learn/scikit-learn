@@ -49,12 +49,18 @@ def test_iforest():
     X_test = np.array([[2, 1], [1, 1]])
 
     grid = ParameterGrid(
-        {"n_estimators": [3], "max_samples": [0.5, 1.0, 3], "bootstrap": [True, False]}
+        {
+            "n_estimators": [3],
+            "max_samples": [0.5, 1.0, 3],
+            "bootstrap": [True, False],
+        }
     )
 
     with ignore_warnings():
         for params in grid:
-            IsolationForest(random_state=rng, **params).fit(X_train).predict(X_test)
+            IsolationForest(random_state=rng, **params).fit(X_train).predict(
+                X_test
+            )
 
 
 def test_iforest_sparse():
@@ -63,7 +69,9 @@ def test_iforest_sparse():
     X_train, X_test, y_train, y_test = train_test_split(
         diabetes.data[:50], diabetes.target[:50], random_state=rng
     )
-    grid = ParameterGrid({"max_samples": [0.5, 1.0], "bootstrap": [True, False]})
+    grid = ParameterGrid(
+        {"max_samples": [0.5, 1.0], "bootstrap": [True, False]}
+    )
 
     for sparse_format in [csc_matrix, csr_matrix]:
         X_train_sparse = sparse_format(X_train)
@@ -107,11 +115,15 @@ def test_iforest_error():
     # np.matrix. See issue #11251.
     with pytest.warns(None) as record:
         IsolationForest(max_samples="auto").fit(X)
-    user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
+    user_warnings = [
+        each for each in record if issubclass(each.category, UserWarning)
+    ]
     assert len(user_warnings) == 0
     with pytest.warns(None) as record:
         IsolationForest(max_samples=np.int64(2)).fit(X)
-    user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
+    user_warnings = [
+        each for each in record if issubclass(each.category, UserWarning)
+    ]
     assert len(user_warnings) == 0
 
     with pytest.raises(ValueError):
@@ -290,8 +302,12 @@ def test_iforest_warm_start():
     "sklearn.ensemble._iforest.get_chunk_n_rows",
     side_effect=Mock(**{"return_value": 3}),
 )
-@pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
-def test_iforest_chunks_works1(mocked_get_chunk, contamination, n_predict_calls):
+@pytest.mark.parametrize(
+    "contamination, n_predict_calls", [(0.25, 3), ("auto", 2)]
+)
+def test_iforest_chunks_works1(
+    mocked_get_chunk, contamination, n_predict_calls
+):
     test_iforest_works(contamination)
     assert mocked_get_chunk.call_count == n_predict_calls
 
@@ -301,8 +317,12 @@ def test_iforest_chunks_works1(mocked_get_chunk, contamination, n_predict_calls)
     "sklearn.ensemble._iforest.get_chunk_n_rows",
     side_effect=Mock(**{"return_value": 10}),
 )
-@pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
-def test_iforest_chunks_works2(mocked_get_chunk, contamination, n_predict_calls):
+@pytest.mark.parametrize(
+    "contamination, n_predict_calls", [(0.25, 3), ("auto", 2)]
+)
+def test_iforest_chunks_works2(
+    mocked_get_chunk, contamination, n_predict_calls
+):
     test_iforest_works(contamination)
     assert mocked_get_chunk.call_count == n_predict_calls
 

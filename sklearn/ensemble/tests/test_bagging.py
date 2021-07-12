@@ -94,8 +94,16 @@ def test_classification():
                 "bootstrap": True,
                 "bootstrap_features": True,
             },
-            {"max_features": 2, "bootstrap": False, "bootstrap_features": True},
-            {"max_samples": 0.5, "bootstrap": True, "bootstrap_features": False},
+            {
+                "max_features": 2,
+                "bootstrap": False,
+                "bootstrap_features": True,
+            },
+            {
+                "max_samples": 0.5,
+                "bootstrap": True,
+                "bootstrap_features": False,
+            },
         ],
         ["predict", "predict_proba", "predict_log_proba", "decision_function"],
     ),
@@ -120,7 +128,9 @@ def test_sparse_classification(sparse_format, params, method):
     X_test_sparse = sparse_format(X_test)
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
-        base_estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
+        base_estimator=CustomSVC(
+            kernel="linear", decision_function_shape="ovr"
+        ),
         random_state=1,
         **params,
     ).fit(X_train_sparse, y_train)
@@ -128,7 +138,9 @@ def test_sparse_classification(sparse_format, params, method):
 
     # Trained on dense format
     dense_classifier = BaggingClassifier(
-        base_estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
+        base_estimator=CustomSVC(
+            kernel="linear", decision_function_shape="ovr"
+        ),
         random_state=1,
         **params,
     ).fit(X_train, y_train)
@@ -214,7 +226,9 @@ def test_sparse_regression():
 
             # Trained on dense format
             dense_results = (
-                BaggingRegressor(base_estimator=CustomSVR(), random_state=1, **params)
+                BaggingRegressor(
+                    base_estimator=CustomSVR(), random_state=1, **params
+                )
                 .fit(X_train, y_train)
                 .predict(X_test)
             )
@@ -250,7 +264,9 @@ def test_bootstrap_samples():
         random_state=rng,
     ).fit(X_train, y_train)
 
-    assert base_estimator.score(X_train, y_train) == ensemble.score(X_train, y_train)
+    assert base_estimator.score(X_train, y_train) == ensemble.score(
+        X_train, y_train
+    )
 
     # with bootstrap, trees are no longer perfect on the training set
     ensemble = BaggingRegressor(
@@ -260,7 +276,9 @@ def test_bootstrap_samples():
         random_state=rng,
     ).fit(X_train, y_train)
 
-    assert base_estimator.score(X_train, y_train) > ensemble.score(X_train, y_train)
+    assert base_estimator.score(X_train, y_train) > ensemble.score(
+        X_train, y_train
+    )
 
     # check that each sampling correspond to a complete bootstrap resample.
     # the size of each bootstrap should be the same as the input data but
@@ -317,24 +335,30 @@ def test_probability():
         ).fit(X_train, y_train)
 
         assert_array_almost_equal(
-            np.sum(ensemble.predict_proba(X_test), axis=1), np.ones(len(X_test))
+            np.sum(ensemble.predict_proba(X_test), axis=1),
+            np.ones(len(X_test)),
         )
 
         assert_array_almost_equal(
-            ensemble.predict_proba(X_test), np.exp(ensemble.predict_log_proba(X_test))
+            ensemble.predict_proba(X_test),
+            np.exp(ensemble.predict_log_proba(X_test)),
         )
 
         # Degenerate case, where some classes are missing
         ensemble = BaggingClassifier(
-            base_estimator=LogisticRegression(), random_state=rng, max_samples=5
+            base_estimator=LogisticRegression(),
+            random_state=rng,
+            max_samples=5,
         ).fit(X_train, y_train)
 
         assert_array_almost_equal(
-            np.sum(ensemble.predict_proba(X_test), axis=1), np.ones(len(X_test))
+            np.sum(ensemble.predict_proba(X_test), axis=1),
+            np.ones(len(X_test)),
         )
 
         assert_array_almost_equal(
-            ensemble.predict_proba(X_test), np.exp(ensemble.predict_log_proba(X_test))
+            ensemble.predict_proba(X_test),
+            np.exp(ensemble.predict_log_proba(X_test)),
         )
 
 
@@ -518,9 +542,9 @@ def test_parallel_regression():
         diabetes.data, diabetes.target, random_state=rng
     )
 
-    ensemble = BaggingRegressor(DecisionTreeRegressor(), n_jobs=3, random_state=0).fit(
-        X_train, y_train
-    )
+    ensemble = BaggingRegressor(
+        DecisionTreeRegressor(), n_jobs=3, random_state=0
+    ).fit(X_train, y_train)
 
     ensemble.set_params(n_jobs=1)
     y1 = ensemble.predict(X_test)
@@ -528,9 +552,9 @@ def test_parallel_regression():
     y2 = ensemble.predict(X_test)
     assert_array_almost_equal(y1, y2)
 
-    ensemble = BaggingRegressor(DecisionTreeRegressor(), n_jobs=1, random_state=0).fit(
-        X_train, y_train
-    )
+    ensemble = BaggingRegressor(
+        DecisionTreeRegressor(), n_jobs=1, random_state=0
+    ).fit(X_train, y_train)
 
     y3 = ensemble.predict(X_test)
     assert_array_almost_equal(y1, y3)
@@ -545,7 +569,9 @@ def test_gridsearch():
     # Grid search with scoring based on decision_function
     parameters = {"n_estimators": (1, 2), "base_estimator__C": (1, 2)}
 
-    GridSearchCV(BaggingClassifier(SVC()), parameters, scoring="roc_auc").fit(X, y)
+    GridSearchCV(BaggingClassifier(SVC()), parameters, scoring="roc_auc").fit(
+        X, y
+    )
 
 
 def test_base_estimator():
@@ -557,7 +583,9 @@ def test_base_estimator():
         iris.data, iris.target, random_state=rng
     )
 
-    ensemble = BaggingClassifier(None, n_jobs=3, random_state=0).fit(X_train, y_train)
+    ensemble = BaggingClassifier(None, n_jobs=3, random_state=0).fit(
+        X_train, y_train
+    )
 
     assert isinstance(ensemble.base_estimator_, DecisionTreeClassifier)
 
@@ -578,23 +606,28 @@ def test_base_estimator():
         diabetes.data, diabetes.target, random_state=rng
     )
 
-    ensemble = BaggingRegressor(None, n_jobs=3, random_state=0).fit(X_train, y_train)
-
-    assert isinstance(ensemble.base_estimator_, DecisionTreeRegressor)
-
-    ensemble = BaggingRegressor(DecisionTreeRegressor(), n_jobs=3, random_state=0).fit(
+    ensemble = BaggingRegressor(None, n_jobs=3, random_state=0).fit(
         X_train, y_train
     )
 
     assert isinstance(ensemble.base_estimator_, DecisionTreeRegressor)
 
-    ensemble = BaggingRegressor(SVR(), n_jobs=3, random_state=0).fit(X_train, y_train)
+    ensemble = BaggingRegressor(
+        DecisionTreeRegressor(), n_jobs=3, random_state=0
+    ).fit(X_train, y_train)
+
+    assert isinstance(ensemble.base_estimator_, DecisionTreeRegressor)
+
+    ensemble = BaggingRegressor(SVR(), n_jobs=3, random_state=0).fit(
+        X_train, y_train
+    )
     assert isinstance(ensemble.base_estimator_, SVR)
 
 
 def test_bagging_with_pipeline():
     estimator = BaggingClassifier(
-        make_pipeline(SelectKBest(k=1), DecisionTreeClassifier()), max_features=2
+        make_pipeline(SelectKBest(k=1), DecisionTreeClassifier()),
+        max_features=2,
     )
     estimator.fit(iris.data, iris.target)
     assert isinstance(estimator[0].steps[-1][1].random_state, int)
@@ -631,7 +664,9 @@ def test_warm_start(random_state=42):
     for n_estimators in [5, 10]:
         if clf_ws is None:
             clf_ws = BaggingClassifier(
-                n_estimators=n_estimators, random_state=random_state, warm_start=True
+                n_estimators=n_estimators,
+                random_state=random_state,
+                warm_start=True,
             )
         else:
             clf_ws.set_params(n_estimators=n_estimators)
@@ -682,13 +717,17 @@ def test_warm_start_equivalence():
     X, y = make_hastie_10_2(n_samples=20, random_state=1)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=43)
 
-    clf_ws = BaggingClassifier(n_estimators=5, warm_start=True, random_state=3141)
+    clf_ws = BaggingClassifier(
+        n_estimators=5, warm_start=True, random_state=3141
+    )
     clf_ws.fit(X_train, y_train)
     clf_ws.set_params(n_estimators=10)
     clf_ws.fit(X_train, y_train)
     y1 = clf_ws.predict(X_test)
 
-    clf = BaggingClassifier(n_estimators=10, warm_start=False, random_state=3141)
+    clf = BaggingClassifier(
+        n_estimators=10, warm_start=False, random_state=3141
+    )
     clf.fit(X_train, y_train)
     y2 = clf.predict(X_test)
 
@@ -925,7 +964,9 @@ def test_bagging_small_max_features():
     X = np.array([[1, 2], [3, 4]])
     y = np.array([1, 0])
 
-    bagging = BaggingClassifier(LogisticRegression(), max_features=0.3, random_state=1)
+    bagging = BaggingClassifier(
+        LogisticRegression(), max_features=0.3, random_state=1
+    )
     bagging.fit(X, y)
 
 
@@ -944,10 +985,14 @@ def test_bagging_get_estimators_indices():
         def fit(self, X, y):
             self._sample_indices = y
 
-    clf = BaggingRegressor(base_estimator=MyEstimator(), n_estimators=1, random_state=0)
+    clf = BaggingRegressor(
+        base_estimator=MyEstimator(), n_estimators=1, random_state=0
+    )
     clf.fit(X, y)
 
-    assert_array_equal(clf.estimators_[0]._sample_indices, clf.estimators_samples_[0])
+    assert_array_equal(
+        clf.estimators_[0]._sample_indices, clf.estimators_samples_[0]
+    )
 
 
 # FIXME: remove in 1.2

@@ -41,7 +41,9 @@ def _calculate_permutation_scores(
             X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
-        scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
+        scores.append(
+            _weights_scorer(scorer, estimator, X_permuted, y, sample_weight)
+        )
 
     if isinstance(scores[0], dict):
         scores = _aggregate_score_dicts(scores)
@@ -216,7 +218,14 @@ def permutation_importance(
 
     scores = Parallel(n_jobs=n_jobs)(
         delayed(_calculate_permutation_scores)(
-            estimator, X, y, sample_weight, col_idx, random_seed, n_repeats, scorer
+            estimator,
+            X,
+            y,
+            sample_weight,
+            col_idx,
+            random_seed,
+            n_repeats,
+            scorer,
         )
         for col_idx in range(X.shape[1])
     )
@@ -226,7 +235,9 @@ def permutation_importance(
             name: _create_importances_bunch(
                 baseline_score[name],
                 # unpack the permuted scores
-                np.array([scores[col_idx][name] for col_idx in range(X.shape[1])]),
+                np.array(
+                    [scores[col_idx][name] for col_idx in range(X.shape[1])]
+                ),
             )
             for name in baseline_score
         }

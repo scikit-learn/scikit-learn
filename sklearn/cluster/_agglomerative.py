@@ -41,7 +41,10 @@ def _fix_connectivity(X, connectivity, affinity):
         - completes it if necessary
     """
     n_samples = X.shape[0]
-    if connectivity.shape[0] != n_samples or connectivity.shape[1] != n_samples:
+    if (
+        connectivity.shape[0] != n_samples
+        or connectivity.shape[1] != n_samples
+    ):
         raise ValueError(
             "Wrong shape for connectivity matrix: %s when X is %s"
             % (connectivity.shape, X.shape)
@@ -64,7 +67,8 @@ def _fix_connectivity(X, connectivity, affinity):
         warnings.warn(
             "the number of connected components of the "
             "connectivity matrix is %d > 1. Completing it to avoid "
-            "stopping the tree early." % n_connected_components,
+            "stopping the tree early."
+            % n_connected_components,
             stacklevel=2,
         )
         # XXX: Can we do without completing the matrix?
@@ -100,7 +104,9 @@ def _single_linkage_tree(
     from scipy.sparse.csgraph import minimum_spanning_tree
 
     # explicitly cast connectivity to ensure safety
-    connectivity = connectivity.astype("float64", **_astype_copy_false(connectivity))
+    connectivity = connectivity.astype(
+        "float64", **_astype_copy_false(connectivity)
+    )
 
     # Ensure zero distances aren't ignored by setting them to "epsilon"
     epsilon_value = np.finfo(dtype=connectivity.data.dtype).eps
@@ -263,7 +269,8 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
             raise ValueError(
                 "Cannot provide more clusters than samples. "
                 "%i n_clusters was asked, and there are %i "
-                "samples." % (n_clusters, n_samples)
+                "samples."
+                % (n_clusters, n_samples)
             )
         n_nodes = 2 * n_samples - n_clusters
 
@@ -293,7 +300,9 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     moments_2 = np.zeros((n_nodes, n_features), order="C")
     moments_2[:n_samples] = X
     inertia = np.empty(len(coord_row), dtype=np.float64, order="C")
-    _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col, inertia)
+    _hierarchical.compute_ward_dist(
+        moments_1, moments_2, coord_row, coord_col, inertia
+    )
     inertia = list(zip(inertia, coord_row, coord_col))
     heapify(inertia)
 
@@ -338,10 +347,15 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
         n_additions = len(coord_row)
         ini = np.empty(n_additions, dtype=np.float64, order="C")
 
-        _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col, ini)
+        _hierarchical.compute_ward_dist(
+            moments_1, moments_2, coord_row, coord_col, ini
+        )
 
         # List comprehension is faster than a for loop
-        [heappush(inertia, (ini[idx], k, coord_col[idx])) for idx in range(n_additions)]
+        [
+            heappush(inertia, (ini[idx], k, coord_col[idx]))
+            for idx in range(n_additions)
+        ]
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
@@ -455,12 +469,15 @@ def linkage_tree(
         join_func = linkage_choices[linkage]
     except KeyError as e:
         raise ValueError(
-            "Unknown linkage option, linkage should be one of %s, but %s was given"
+            "Unknown linkage option, linkage should be one of %s, but %s was"
+            " given"
             % (linkage_choices.keys(), linkage)
         ) from e
 
     if affinity == "cosine" and np.any(~np.any(X, axis=1)):
-        raise ValueError("Cosine affinity cannot be used when X contains zero vectors")
+        raise ValueError(
+            "Cosine affinity cannot be used when X contains zero vectors"
+        )
 
     if connectivity is None:
         from scipy.cluster import hierarchy  # imports PIL
@@ -482,7 +499,8 @@ def linkage_tree(
             # by sklearn.metrics.pairwise_distances.
             if X.shape[0] != X.shape[1]:
                 raise ValueError(
-                    "Distance matrix should be square, Got matrix of shape {X.shape}"
+                    "Distance matrix should be square, Got matrix of shape"
+                    " {X.shape}"
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
@@ -572,14 +590,18 @@ def linkage_tree(
     # without the numpy overhead of slicing CSR indices and data.
     connectivity = connectivity.tolil()
     # We are storing the graph in a list of IntFloatDict
-    for ind, (data, row) in enumerate(zip(connectivity.data, connectivity.rows)):
+    for ind, (data, row) in enumerate(
+        zip(connectivity.data, connectivity.rows)
+    ):
         A[ind] = IntFloatDict(
             np.asarray(row, dtype=np.intp), np.asarray(data, dtype=np.float64)
         )
         # We keep only the upper triangular for the heap
         # Generator expressions are faster than arrays on the following
         inertia.extend(
-            _hierarchical.WeightedEdge(d, ind, r) for r, d in zip(row, data) if r < ind
+            _hierarchical.WeightedEdge(d, ind, r)
+            for r, d in zip(row, data)
+            if r < ind
         )
     del connectivity
 
@@ -885,7 +907,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if self.n_clusters is not None and self.n_clusters <= 0:
             raise ValueError(
-                "n_clusters should be an integer greater than 0. %s was provided."
+                "n_clusters should be an integer greater than 0. %s was"
+                " provided."
                 % str(self.n_clusters)
             )
 
@@ -904,7 +927,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError(
                 "%s was provided as affinity. Ward can only "
-                "work with euclidean distances." % (self.affinity,)
+                "work with euclidean distances."
+                % (self.affinity,)
             )
 
         if self.linkage not in _TREE_BUILDERS:
@@ -933,7 +957,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 # Early stopping is likely to give a speed up only for
                 # a large number of clusters. The actual threshold
                 # implemented here is heuristic
-                compute_full_tree = self.n_clusters < max(100, 0.02 * n_samples)
+                compute_full_tree = self.n_clusters < max(
+                    100, 0.02 * n_samples
+                )
         n_clusters = self.n_clusters
         if compute_full_tree:
             n_clusters = None
@@ -946,7 +972,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         distance_threshold = self.distance_threshold
 
-        return_distance = (distance_threshold is not None) or self.compute_distances
+        return_distance = (
+            distance_threshold is not None
+        ) or self.compute_distances
 
         out = memory.cache(tree_builder)(
             X,
@@ -955,9 +983,12 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             return_distance=return_distance,
             **kwargs,
         )
-        (self.children_, self.n_connected_components_, self.n_leaves_, parents) = out[
-            :4
-        ]
+        (
+            self.children_,
+            self.n_connected_components_,
+            self.n_leaves_,
+            parents,
+        ) = out[:4]
 
         if return_distance:
             self.distances_ = out[-1]
@@ -971,7 +1002,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         # Cut the tree
         if compute_full_tree:
-            self.labels_ = _hc_cut(self.n_clusters_, self.children_, self.n_leaves_)
+            self.labels_ = _hc_cut(
+                self.n_clusters_, self.children_, self.n_leaves_
+            )
         else:
             labels = _hierarchical.hc_get_heads(parents, copy=False)
             # copy to avoid holding a reference on the original array

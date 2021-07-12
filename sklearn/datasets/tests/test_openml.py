@@ -66,7 +66,8 @@ def _test_features_list(data_id):
     sparse = data_description["format"].lower() == "sparse_arff"
     if sparse is True:
         raise ValueError(
-            "This test is not intended for sparse data, to keep code relatively simple"
+            "This test is not intended for sparse data, to keep code"
+            " relatively simple"
         )
     url = _DATA_FILE.format(data_description["file_id"])
     with _open_openml_url(url, data_home=None) as f:
@@ -121,7 +122,10 @@ def _fetch_dataset_from_openml(
 
     # fetch with dataset id
     data_by_id = fetch_openml(
-        data_id=data_id, cache=False, target_column=target_column, as_frame=False
+        data_id=data_id,
+        cache=False,
+        target_column=target_column,
+        as_frame=False,
     )
     assert data_by_id.details["name"] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
@@ -131,7 +135,10 @@ def _fetch_dataset_from_openml(
         assert data_by_id.target_names == [target_column]
     elif isinstance(target_column, list):
         # multi target, so target is array
-        assert data_by_id.target.shape == (expected_observations, len(target_column))
+        assert data_by_id.target.shape == (
+            expected_observations,
+            len(target_column),
+        )
         assert data_by_id.target_names == target_column
     assert data_by_id.data.dtype == expected_data_dtype
     assert data_by_id.target.dtype == expected_target_dtype
@@ -156,10 +163,14 @@ def _fetch_dataset_from_openml(
 
     if compare_default_target:
         # check whether the data by id and data by id target are equal
-        data_by_id_default = fetch_openml(data_id=data_id, cache=False, as_frame=False)
+        data_by_id_default = fetch_openml(
+            data_id=data_id, cache=False, as_frame=False
+        )
         np.testing.assert_allclose(data_by_id.data, data_by_id_default.data)
         if data_by_id.target.dtype == np.float64:
-            np.testing.assert_allclose(data_by_id.target, data_by_id_default.target)
+            np.testing.assert_allclose(
+                data_by_id.target, data_by_id_default.target
+            )
         else:
             assert np.array_equal(data_by_id.target, data_by_id_default.target)
 
@@ -222,7 +233,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 
     def _file_name(url, suffix):
         output = (
-            re.sub(r"\W", "-", url[len("https://openml.org/") :]) + suffix + path_suffix
+            re.sub(r"\W", "-", url[len("https://openml.org/") :])
+            + suffix
+            + path_suffix
         )
         # Shorten the filenames to have better compability with windows 10
         # and filenames > 260 characters
@@ -294,10 +307,16 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
             currdir, "data", "openml", str(data_id), _file_name(url, ".json")
         )
         # load the file itself, to simulate a http error
-        json_data = json.loads(read_fn(json_file_path, "rb").read().decode("utf-8"))
+        json_data = json.loads(
+            read_fn(json_file_path, "rb").read().decode("utf-8")
+        )
         if "error" in json_data:
             raise HTTPError(
-                url=None, code=412, msg="Simulated mock error", hdrs=None, fp=None
+                url=None,
+                code=412,
+                msg="Simulated mock error",
+                hdrs=None,
+                fp=None,
             )
 
         if has_gzip_header:
@@ -333,14 +352,29 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     [
         ({"data_type": "string", "number_of_missing_values": "0"}, object),
         ({"data_type": "string", "number_of_missing_values": "1"}, object),
-        ({"data_type": "numeric", "number_of_missing_values": "0"}, np.float64),
-        ({"data_type": "numeric", "number_of_missing_values": "1"}, np.float64),
+        (
+            {"data_type": "numeric", "number_of_missing_values": "0"},
+            np.float64,
+        ),
+        (
+            {"data_type": "numeric", "number_of_missing_values": "1"},
+            np.float64,
+        ),
         ({"data_type": "real", "number_of_missing_values": "0"}, np.float64),
         ({"data_type": "real", "number_of_missing_values": "1"}, np.float64),
         ({"data_type": "integer", "number_of_missing_values": "0"}, np.int64),
-        ({"data_type": "integer", "number_of_missing_values": "1"}, np.float64),
-        ({"data_type": "nominal", "number_of_missing_values": "0"}, "category"),
-        ({"data_type": "nominal", "number_of_missing_values": "1"}, "category"),
+        (
+            {"data_type": "integer", "number_of_missing_values": "1"},
+            np.float64,
+        ),
+        (
+            {"data_type": "nominal", "number_of_missing_values": "0"},
+            "category",
+        ),
+        (
+            {"data_type": "nominal", "number_of_missing_values": "1"},
+            "category",
+        ),
     ],
 )
 def test_feature_to_dtype(feature, expected_dtype):
@@ -436,7 +470,9 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
     frame_shape = (150, 5)
     target_column = ["petalwidth", "petallength"]
 
-    cat_dtype = CategoricalDtype(["Iris-setosa", "Iris-versicolor", "Iris-virginica"])
+    cat_dtype = CategoricalDtype(
+        ["Iris-setosa", "Iris-versicolor", "Iris-virginica"]
+    )
     data_dtypes = [np.float64, np.float64] + [cat_dtype]
     data_names = ["sepallength", "sepalwidth", "class"]
     target_dtypes = [np.float64, np.float64]
@@ -445,7 +481,10 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
     bunch = fetch_openml(
-        data_id=data_id, as_frame=True, cache=False, target_column=target_column
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        target_column=target_column,
     )
     data = bunch.data
     target = bunch.target
@@ -487,7 +526,10 @@ def test_fetch_openml_anneal_pandas(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
     bunch = fetch_openml(
-        data_id=data_id, as_frame=True, target_column=target_column, cache=False
+        data_id=data_id,
+        as_frame=True,
+        target_column=target_column,
+        cache=False,
     )
     data = bunch.data
     target = bunch.target
@@ -557,7 +599,15 @@ def test_fetch_openml_cpu_pandas(monkeypatch):
         ]
     )
     data_dtypes = [cat_dtype] + [np.float64] * 6
-    feature_names = ["vendor", "MYCT", "MMIN", "MMAX", "CACH", "CHMIN", "CHMAX"]
+    feature_names = [
+        "vendor",
+        "MYCT",
+        "MMIN",
+        "MMAX",
+        "CACH",
+        "CHMIN",
+        "CHMAX",
+    ]
     target_name = "class"
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
@@ -640,7 +690,9 @@ def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
     target_column = "class"
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    X, y = fetch_openml(data_id=data_id, as_frame=True, cache=False, return_X_y=True)
+    X, y = fetch_openml(
+        data_id=data_id, as_frame=True, cache=False, return_X_y=True
+    )
     assert isinstance(X, pd.DataFrame)
     assert X.shape == data_shape
     n_categories = len(
@@ -732,7 +784,11 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
     assert isinstance(frame, pd.DataFrame)
     assert frame.shape == frame_shape
     n_categories = len(
-        [dtype for dtype in frame.dtypes if isinstance(dtype, CategoricalDtype)]
+        [
+            dtype
+            for dtype in frame.dtypes
+            if isinstance(dtype, CategoricalDtype)
+        ]
     )
     n_floats = len([dtype for dtype in frame.dtypes if dtype.kind == "f"])
     assert frame_n_categories == n_categories
@@ -765,7 +821,10 @@ def test_fetch_openml_emotions_pandas(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     bunch = fetch_openml(
-        data_id=data_id, as_frame=True, cache=False, target_column=target_column
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        target_column=target_column,
     )
     data = bunch.data
     target = bunch.target
@@ -781,7 +840,11 @@ def test_fetch_openml_emotions_pandas(monkeypatch):
     assert isinstance(frame, pd.DataFrame)
     assert frame.shape == frame_shape
     n_categories = len(
-        [dtype for dtype in frame.dtypes if isinstance(dtype, CategoricalDtype)]
+        [
+            dtype
+            for dtype in frame.dtypes
+            if isinstance(dtype, CategoricalDtype)
+        ]
     )
     n_floats = len([dtype for dtype in frame.dtypes if dtype.kind == "f"])
     assert expected_frame_categories == n_categories
@@ -1246,7 +1309,9 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         as_frame=False,
     )
 
-    monkeypatch.setattr(sklearn.datasets._openml, "urlopen", _mock_urlopen_raise)
+    monkeypatch.setattr(
+        sklearn.datasets._openml, "urlopen", _mock_urlopen_raise
+    )
 
     X_cached, y_cached = fetch_openml(
         data_id=data_id,
@@ -1268,7 +1333,10 @@ def test_fetch_openml_notarget(monkeypatch, gzip_response):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     data = fetch_openml(
-        data_id=data_id, target_column=target_column, cache=False, as_frame=False
+        data_id=data_id,
+        target_column=target_column,
+        cache=False,
+        as_frame=False,
     )
     assert data.data.shape == (expected_observations, expected_features)
     assert data.target is None
@@ -1324,13 +1392,19 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
     msg = expected_row_id_msg.format(target_col)
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(
-            data_id=data_id, target_column=target_col, cache=False, as_frame=False
+            data_id=data_id,
+            target_column=target_col,
+            cache=False,
+            as_frame=False,
         )
     target_col = "Genotype"
     msg = expected_ignore_msg.format(target_col)
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(
-            data_id=data_id, target_column=target_col, cache=False, as_frame=False
+            data_id=data_id,
+            target_column=target_col,
+            cache=False,
+            as_frame=False,
         )
     # multi column test
     target_col = "MouseID"
@@ -1370,7 +1444,10 @@ def test_string_attribute_without_dataframe(monkeypatch, gzip_response):
 def test_dataset_with_openml_error(monkeypatch, gzip_response):
     data_id = 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    msg = "OpenML registered a problem with the dataset. It might be unusable. Error:"
+    msg = (
+        "OpenML registered a problem with the dataset. It might be unusable."
+        " Error:"
+    )
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(data_id=data_id, cache=False, as_frame=False)
 
@@ -1379,7 +1456,10 @@ def test_dataset_with_openml_error(monkeypatch, gzip_response):
 def test_dataset_with_openml_warning(monkeypatch, gzip_response):
     data_id = 3
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    msg = "OpenML raised a warning on the dataset. It might be unusable. Warning:"
+    msg = (
+        "OpenML raised a warning on the dataset. It might be unusable."
+        " Warning:"
+    )
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(data_id=data_id, cache=False, as_frame=False)
 
@@ -1393,7 +1473,9 @@ def test_illegal_column(monkeypatch, gzip_response):
         fetch_openml(data_id=data_id, target_column="undefined", cache=False)
 
     with pytest.raises(KeyError, match=msg):
-        fetch_openml(data_id=data_id, target_column=["undefined", "class"], cache=False)
+        fetch_openml(
+            data_id=data_id, target_column=["undefined", "class"], cache=False
+        )
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
@@ -1417,7 +1499,10 @@ def test_fetch_openml_raises_illegal_argument():
     with pytest.raises(ValueError, match=msg):
         fetch_openml(data_id=-1, name="nAmE", version="version")
 
-    msg = "Neither name nor data_id are provided. Please provide name or data_id."
+    msg = (
+        "Neither name nor data_id are provided. Please provide name or"
+        " data_id."
+    )
     with pytest.raises(ValueError, match=msg):
         fetch_openml()
 
@@ -1452,7 +1537,9 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
 
     # create a temporary modified arff file
     dataset_dir = os.path.join(currdir, "data", "openml", str(data_id))
-    original_data_path = os.path.join(dataset_dir, "data-v1-dl-1666876.arff.gz")
+    original_data_path = os.path.join(
+        dataset_dir, "data-v1-dl-1666876.arff.gz"
+    )
     corrupt_copy = os.path.join(tmpdir, "test_invalid_checksum.arff")
     with gzip.GzipFile(original_data_path, "rb") as orig_gzip, gzip.GzipFile(
         corrupt_copy, "wb"
@@ -1477,7 +1564,9 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
 
     # validate failed checksum
     with pytest.raises(ValueError) as exc:
-        sklearn.datasets.fetch_openml(data_id=data_id, cache=False, as_frame=as_frame)
+        sklearn.datasets.fetch_openml(
+            data_id=data_id, cache=False, as_frame=as_frame
+        )
     # exception message should have file-path
     assert exc.match("1666876")
 
@@ -1495,7 +1584,12 @@ def test_convert_arff_data_type():
     with pytest.raises(ValueError, match=msg):
         _convert_arff_data(arff, [0], [0], shape=None)
 
-    arff = {"data": list(range(2)), "description": "", "relation": "", "attributes": []}
+    arff = {
+        "data": list(range(2)),
+        "description": "",
+        "relation": "",
+        "attributes": [],
+    }
     msg = r"arff\['data'\] must be a generator when converting to pd.DataFrame"
     with pytest.raises(ValueError, match=msg):
         _convert_arff_data_dataframe(arff, ["a"], {})

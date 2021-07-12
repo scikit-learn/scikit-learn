@@ -43,14 +43,20 @@ from ..utils import Bunch
 ARCHIVE = RemoteFileMetadata(
     filename="cal_housing.tgz",
     url="https://ndownloader.figshare.com/files/5976036",
-    checksum="aaa5c9a6afe2225cc2aed2723682ae403280c4a3695a2ddda4ffb5d8215ea681",
+    checksum=(
+        "aaa5c9a6afe2225cc2aed2723682ae403280c4a3695a2ddda4ffb5d8215ea681"
+    ),
 )
 
 logger = logging.getLogger(__name__)
 
 
 def fetch_california_housing(
-    *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
+    *,
+    data_home=None,
+    download_if_missing=True,
+    return_X_y=False,
+    as_frame=False,
 ):
     """Load the California housing dataset (regression).
 
@@ -128,14 +134,17 @@ def fetch_california_housing(
             raise IOError("Data not found and `download_if_missing` is False")
 
         logger.info(
-            "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)
+            "Downloading Cal. housing from {} to {}".format(
+                ARCHIVE.url, data_home
+            )
         )
 
         archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
 
         with tarfile.open(mode="r:gz", name=archive_path) as f:
             cal_housing = np.loadtxt(
-                f.extractfile("CaliforniaHousing/cal_housing.data"), delimiter=","
+                f.extractfile("CaliforniaHousing/cal_housing.data"),
+                delimiter=",",
             )
             # Columns are not in the same order compared to the previous
             # URL resource on lib.stat.cmu.edu
@@ -186,7 +195,11 @@ def fetch_california_housing(
     ]
     if as_frame:
         frame, X, y = _convert_data_dataframe(
-            "fetch_california_housing", data, target, feature_names, target_names
+            "fetch_california_housing",
+            data,
+            target,
+            feature_names,
+            target_names,
         )
 
     if return_X_y:

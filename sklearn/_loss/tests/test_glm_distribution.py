@@ -39,7 +39,9 @@ def test_family_bounds(family, expected):
 def test_invalid_distribution_bound():
     dist = TweedieDistribution()
     dist._lower_bound = 0
-    with pytest.raises(TypeError, match="must be of type DistributionBoundary"):
+    with pytest.raises(
+        TypeError, match="must be of type DistributionBoundary"
+    ):
         dist.in_y_range([-1, 0, 1])
 
 

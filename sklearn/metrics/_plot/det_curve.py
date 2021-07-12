@@ -104,7 +104,9 @@ class DetCurveDisplay:
             **line_kwargs,
         )
         info_pos_label = (
-            f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
+            f" (Positive label: {self.pos_label})"
+            if self.pos_label is not None
+            else ""
         )
 
         xlabel = "False Positive Rate" + info_pos_label
@@ -117,7 +119,9 @@ class DetCurveDisplay:
         ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]
         tick_locations = sp.stats.norm.ppf(ticks)
         tick_labels = [
-            "{:.0%}".format(s) if (100 * s).is_integer() else "{:.1%}".format(s)
+            "{:.0%}".format(s)
+            if (100 * s).is_integer()
+            else "{:.1%}".format(s)
             for s in ticks
         ]
         ax.set_xticks(tick_locations)
@@ -226,6 +230,8 @@ def plot_det_curve(
 
     name = estimator.__class__.__name__ if name is None else name
 
-    viz = DetCurveDisplay(fpr=fpr, fnr=fnr, estimator_name=name, pos_label=pos_label)
+    viz = DetCurveDisplay(
+        fpr=fpr, fnr=fnr, estimator_name=name, pos_label=pos_label
+    )
 
     return viz.plot(ax=ax, name=name, **kwargs)

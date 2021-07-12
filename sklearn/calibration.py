@@ -43,7 +43,9 @@ from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
 
 
-class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
+class CalibratedClassifierCV(
+    ClassifierMixin, MetaEstimatorMixin, BaseEstimator
+):
     """Probability calibration with isotonic regression or logistic regression.
 
     This class uses cross-validation to both estimate the parameters of a
@@ -270,7 +272,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
             pred_method, method_name = _get_prediction_method(base_estimator)
             n_classes = len(self.classes_)
-            predictions = _compute_predictions(pred_method, method_name, X, n_classes)
+            predictions = _compute_predictions(
+                pred_method, method_name, X, n_classes
+            )
 
             calibrated_classifier = _fit_calibrator(
                 base_estimator,
@@ -425,7 +429,15 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
 
 def _fit_classifier_calibrator_pair(
-    estimator, X, y, train, test, supports_sw, method, classes, sample_weight=None
+    estimator,
+    X,
+    y,
+    train,
+    test,
+    supports_sw,
+    method,
+    classes,
+    sample_weight=None,
 ):
     """Fit a classifier/calibration pair on a given train/test split.
 
@@ -482,7 +494,9 @@ def _fit_classifier_calibrator_pair(
 
     n_classes = len(classes)
     pred_method, method_name = _get_prediction_method(estimator)
-    predictions = _compute_predictions(pred_method, method_name, X_test, n_classes)
+    predictions = _compute_predictions(
+        pred_method, method_name, X_test, n_classes
+    )
 
     calibrated_classifier = _fit_calibrator(
         estimator, predictions, y_test, classes, method, sample_weight=sw_test
@@ -516,7 +530,8 @@ def _get_prediction_method(clf):
         return method, "predict_proba"
     else:
         raise RuntimeError(
-            "'base_estimator' has no 'decision_function' or 'predict_proba' method."
+            "'base_estimator' has no 'decision_function' or 'predict_proba'"
+            " method."
         )
 
 
@@ -601,12 +616,15 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
             calibrator = _SigmoidCalibration()
         else:
             raise ValueError(
-                f"'method' should be one of: 'sigmoid' or 'isotonic'. Got {method}."
+                "'method' should be one of: 'sigmoid' or 'isotonic'. Got"
+                f" {method}."
             )
         calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
         calibrators.append(calibrator)
 
-    pipeline = _CalibratedClassifier(clf, calibrators, method=method, classes=classes)
+    pipeline = _CalibratedClassifier(
+        clf, calibrators, method=method, classes=classes
+    )
     return pipeline
 
 
@@ -643,7 +661,9 @@ class _CalibratedClassifier:
            1.1 (renaming of 0.26). Use `calibrators` instead.
     """
 
-    def __init__(self, base_estimator, calibrators, *, classes, method="sigmoid"):
+    def __init__(
+        self, base_estimator, calibrators, *, classes, method="sigmoid"
+    ):
         self.base_estimator = base_estimator
         self.calibrators = calibrators
         self.classes = classes
@@ -677,10 +697,14 @@ class _CalibratedClassifier:
         """
         n_classes = len(self.classes)
         pred_method, method_name = _get_prediction_method(self.base_estimator)
-        predictions = _compute_predictions(pred_method, method_name, X, n_classes)
+        predictions = _compute_predictions(
+            pred_method, method_name, X, n_classes
+        )
 
         label_encoder = LabelEncoder().fit(self.classes)
-        pos_class_indices = label_encoder.transform(self.base_estimator.classes_)
+        pos_class_indices = label_encoder.transform(
+            self.base_estimator.classes_
+        )
 
         proba = np.zeros((_num_samples(X), n_classes))
         for class_idx, this_pred, calibrator in zip(
@@ -829,7 +853,9 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="uniform"):
+def calibration_curve(
+    y_true, y_prob, *, normalize=False, n_bins=5, strategy="uniform"
+):
     """Compute true and predicted probabilities for a calibration curve.
 
     The method assumes the inputs come from a binary classifier, and
@@ -908,7 +934,8 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
     labels = np.unique(y_true)
     if len(labels) > 2:
         raise ValueError(
-            "Only binary classification is supported. Provided labels %s." % labels
+            "Only binary classification is supported. Provided labels %s."
+            % labels
         )
     y_true = label_binarize(y_true, classes=labels)[:, 0]
 

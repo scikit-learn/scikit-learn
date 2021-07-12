@@ -74,7 +74,9 @@ def test_alpha():
         with ignore_warnings(category=ConvergenceWarning):
             mlp.fit(X, y)
         alpha_vectors.append(
-            np.array([absolute_sum(mlp.coefs_[0]), absolute_sum(mlp.coefs_[1])])
+            np.array(
+                [absolute_sum(mlp.coefs_[0]), absolute_sum(mlp.coefs_[1])]
+            )
         )
 
     for i in range(len(alpha_values) - 1):
@@ -161,11 +163,17 @@ def test_fit():
     # b2 = b2 - eta * b2grad = 1.0 - 0.1 * 0.765 = 0.9235
     assert_almost_equal(
         mlp.coefs_[0],
-        np.array([[0.098, 0.195756], [0.2956664, 0.096008], [0.4939998, -0.002244]]),
+        np.array(
+            [[0.098, 0.195756], [0.2956664, 0.096008], [0.4939998, -0.002244]]
+        ),
         decimal=3,
     )
-    assert_almost_equal(mlp.coefs_[1], np.array([[0.04706], [0.154089]]), decimal=3)
-    assert_almost_equal(mlp.intercepts_[0], np.array([0.098333, 0.09626]), decimal=3)
+    assert_almost_equal(
+        mlp.coefs_[1], np.array([[0.04706], [0.154089]]), decimal=3
+    )
+    assert_almost_equal(
+        mlp.intercepts_[0], np.array([0.098333, 0.09626]), decimal=3
+    )
     assert_almost_equal(mlp.intercepts_[1], np.array(0.9235), decimal=3)
     # Testing output
     #  h1 = g(X1 * W_i1 + b11) = g(0.6 * 0.098 + 0.8 * 0.2956664 +
@@ -204,9 +212,13 @@ def test_gradient():
             )
             mlp.fit(X, y)
 
-            theta = np.hstack([l.ravel() for l in mlp.coefs_ + mlp.intercepts_])
+            theta = np.hstack(
+                [l.ravel() for l in mlp.coefs_ + mlp.intercepts_]
+            )
 
-            layer_units = [X.shape[1]] + [mlp.hidden_layer_sizes] + [mlp.n_outputs_]
+            layer_units = (
+                [X.shape[1]] + [mlp.hidden_layer_sizes] + [mlp.n_outputs_]
+            )
 
             activations = []
             deltas = []
@@ -238,7 +250,8 @@ def test_gradient():
             for i in range(n):
                 dtheta = E[:, i] * epsilon
                 numgrad[i] = (
-                    loss_grad_fun(theta + dtheta)[0] - loss_grad_fun(theta - dtheta)[0]
+                    loss_grad_fun(theta + dtheta)[0]
+                    - loss_grad_fun(theta - dtheta)[0]
                 ) / (epsilon * 2.0)
             assert_almost_equal(numgrad, grad)
 
@@ -265,7 +278,10 @@ def test_lbfgs_classification(X, y):
         mlp.fit(X_train, y_train)
         y_predict = mlp.predict(X_test)
         assert mlp.score(X_train, y_train) > 0.95
-        assert (y_predict.shape[0], y_predict.dtype.kind) == expected_shape_dtype
+        assert (
+            y_predict.shape[0],
+            y_predict.dtype.kind,
+        ) == expected_shape_dtype
 
 
 @pytest.mark.parametrize("X,y", regression_datasets)
@@ -450,7 +466,9 @@ def test_partial_fit_unseen_classes():
     # Tests for labeling errors in partial fit
 
     clf = MLPClassifier(random_state=0)
-    clf.partial_fit([[1], [2], [3]], ["a", "b", "c"], classes=["a", "b", "c", "d"])
+    clf.partial_fit(
+        [[1], [2], [3]], ["a", "b", "c"], classes=["a", "b", "c", "d"]
+    )
     clf.partial_fit([[4]], ["d"])
     assert clf.score([[1], [2], [3], [4]], ["a", "b", "c", "d"]) > 0
 
@@ -545,7 +563,9 @@ def test_predict_proba_binary():
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
 
-    clf = MLPClassifier(hidden_layer_sizes=5, activation="logistic", random_state=1)
+    clf = MLPClassifier(
+        hidden_layer_sizes=5, activation="logistic", random_state=1
+    )
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)
     y_proba = clf.predict_proba(X)
@@ -610,7 +630,9 @@ def test_predict_proba_multilabel():
 
 def test_shuffle():
     # Test that the shuffle parameter affects the training process (it should)
-    X, y = make_regression(n_samples=50, n_features=5, n_targets=1, random_state=0)
+    X, y = make_regression(
+        n_samples=50, n_features=5, n_targets=1, random_state=0
+    )
 
     # The coefficients will be identical if both do or do not shuffle
     for shuffle in [True, False]:
@@ -635,10 +657,18 @@ def test_shuffle():
 
     # The coefficients will be slightly different if shuffle=True
     mlp1 = MLPRegressor(
-        hidden_layer_sizes=1, max_iter=1, batch_size=1, random_state=0, shuffle=True
+        hidden_layer_sizes=1,
+        max_iter=1,
+        batch_size=1,
+        random_state=0,
+        shuffle=True,
     )
     mlp2 = MLPRegressor(
-        hidden_layer_sizes=1, max_iter=1, batch_size=1, random_state=0, shuffle=False
+        hidden_layer_sizes=1,
+        max_iter=1,
+        batch_size=1,
+        random_state=0,
+        shuffle=False,
     )
     mlp1.fit(X, y)
     mlp2.fit(X, y)
@@ -676,7 +706,9 @@ def test_verbose_sgd():
     # Test verbose.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MLPClassifier(solver="sgd", max_iter=2, verbose=10, hidden_layer_sizes=2)
+    clf = MLPClassifier(
+        solver="sgd", max_iter=2, verbose=10, hidden_layer_sizes=2
+    )
     old_stdout = sys.stdout
     sys.stdout = output = StringIO()
 
@@ -692,7 +724,9 @@ def test_early_stopping():
     X = X_digits_binary[:100]
     y = y_digits_binary[:100]
     tol = 0.2
-    clf = MLPClassifier(tol=tol, max_iter=3000, solver="sgd", early_stopping=True)
+    clf = MLPClassifier(
+        tol=tol, max_iter=3000, solver="sgd", early_stopping=True
+    )
     clf.fit(X, y)
     assert clf.max_iter > clf.n_iter_
 
@@ -706,7 +740,9 @@ def test_early_stopping():
 def test_adaptive_learning_rate():
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MLPClassifier(tol=0.5, max_iter=3000, solver="sgd", learning_rate="adaptive")
+    clf = MLPClassifier(
+        tol=0.5, max_iter=3000, solver="sgd", learning_rate="adaptive"
+    )
     clf.fit(X, y)
     assert clf.max_iter > clf.n_iter_
     assert 1e-6 > clf._optimizer.learning_rate
@@ -724,14 +760,16 @@ def test_warm_start():
     y_5classes = np.array([0] * 30 + [1] * 30 + [2] * 30 + [3] * 30 + [4] * 30)
 
     # No error raised
-    clf = MLPClassifier(hidden_layer_sizes=2, solver="lbfgs", warm_start=True).fit(X, y)
+    clf = MLPClassifier(
+        hidden_layer_sizes=2, solver="lbfgs", warm_start=True
+    ).fit(X, y)
     clf.fit(X, y)
     clf.fit(X, y_3classes)
 
     for y_i in (y_2classes, y_3classes_alt, y_4classes, y_5classes):
-        clf = MLPClassifier(hidden_layer_sizes=2, solver="lbfgs", warm_start=True).fit(
-            X, y
-        )
+        clf = MLPClassifier(
+            hidden_layer_sizes=2, solver="lbfgs", warm_start=True
+        ).fit(X, y)
         message = (
             "warm_start can only be used where `y` has the same "
             "classes as in the previous call to fit."
@@ -770,7 +808,10 @@ def test_n_iter_no_change():
     # test multiple n_iter_no_change
     for n_iter_no_change in [2, 5, 10, 50, 100]:
         clf = MLPClassifier(
-            tol=tol, max_iter=max_iter, solver="sgd", n_iter_no_change=n_iter_no_change
+            tol=tol,
+            max_iter=max_iter,
+            solver="sgd",
+            n_iter_no_change=n_iter_no_change,
         )
         clf.fit(X, y)
 
@@ -794,7 +835,10 @@ def test_n_iter_no_change_inf():
     n_iter_no_change = np.inf
     max_iter = 3000
     clf = MLPClassifier(
-        tol=tol, max_iter=max_iter, solver="sgd", n_iter_no_change=n_iter_no_change
+        tol=tol,
+        max_iter=max_iter,
+        solver="sgd",
+        n_iter_no_change=n_iter_no_change,
     )
     clf.fit(X, y)
 
@@ -859,7 +903,9 @@ def test_mlp_param_dtypes(dtype, Estimator):
     # Checks if input dtype is used for network parameters
     # and predictions
     X, y = X_digits.astype(dtype), y_digits
-    mlp = Estimator(alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=50)
+    mlp = Estimator(
+        alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1, max_iter=50
+    )
     mlp.fit(X[:300], y[:300])
     pred = mlp.predict(X[300:])
 

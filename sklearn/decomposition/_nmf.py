@@ -179,9 +179,9 @@ def _special_sparse_dot(W, H, X):
         batch_size = max(n_components, n_vals // n_components)
         for start in range(0, n_vals, batch_size):
             batch = slice(start, start + batch_size)
-            dot_vals[batch] = np.multiply(W[ii[batch], :], H.T[jj[batch], :]).sum(
-                axis=1
-            )
+            dot_vals[batch] = np.multiply(
+                W[ii[batch], :], H.T[jj[batch], :]
+            ).sum(axis=1)
 
         WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
         return WH.tocsr()
@@ -223,7 +223,8 @@ def _check_string_param(solver, regularization, beta_loss, init):
     # 'mu' is the only solver that handles other beta losses than 'frobenius'
     if solver != "mu" and beta_loss not in (2, "frobenius"):
         raise ValueError(
-            "Invalid beta_loss parameter: solver %r does not handle beta_loss = %r"
+            "Invalid beta_loss parameter: solver %r does not handle beta_loss"
+            " = %r"
             % (solver, beta_loss)
         )
 
@@ -242,13 +243,18 @@ def _check_string_param(solver, regularization, beta_loss, init):
 
 def _beta_loss_to_float(beta_loss):
     """Convert string beta_loss to float."""
-    allowed_beta_loss = {"frobenius": 2, "kullback-leibler": 1, "itakura-saito": 0}
+    allowed_beta_loss = {
+        "frobenius": 2,
+        "kullback-leibler": 1,
+        "itakura-saito": 0,
+    }
     if isinstance(beta_loss, str) and beta_loss in allowed_beta_loss:
         beta_loss = allowed_beta_loss[beta_loss]
 
     if not isinstance(beta_loss, numbers.Number):
         raise ValueError(
-            "Invalid beta_loss parameter: got %r instead of one of %r, or a float."
+            "Invalid beta_loss parameter: got %r instead of one of %r, or a"
+            " float."
             % (beta_loss, allowed_beta_loss.keys())
         )
     return beta_loss
@@ -346,8 +352,12 @@ def _initialize_nmf(X, n_components, init="warn", eps=1e-6, random_state=None):
     if init == "random":
         avg = np.sqrt(X.mean() / n_components)
         rng = check_random_state(random_state)
-        H = avg * rng.randn(n_components, n_features).astype(X.dtype, copy=False)
-        W = avg * rng.randn(n_samples, n_components).astype(X.dtype, copy=False)
+        H = avg * rng.randn(n_components, n_features).astype(
+            X.dtype, copy=False
+        )
+        W = avg * rng.randn(n_samples, n_components).astype(
+            X.dtype, copy=False
+        )
         np.abs(H, out=H)
         np.abs(W, out=W)
         return W, H
@@ -412,7 +422,9 @@ def _initialize_nmf(X, n_components, init="warn", eps=1e-6, random_state=None):
     return W, H
 
 
-def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle, random_state):
+def _update_coordinate_descent(
+    X, W, Ht, l1_reg, l2_reg, shuffle, random_state
+):
     """Helper function for _fit_coordinate_descent.
 
     Update W to minimize the objective function, iterating once over all
@@ -852,7 +864,17 @@ def _fit_multiplicative_update(
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
-            X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma, H_sum, HHt, XHt, update_H
+            X,
+            W,
+            H,
+            beta_loss,
+            l1_reg_W,
+            l2_reg_W,
+            gamma,
+            H_sum,
+            HHt,
+            XHt,
+            update_H,
         )
         W *= delta_W
 
@@ -893,7 +915,8 @@ def _fit_multiplicative_update(
     if verbose and (tol == 0 or n_iter % 10 != 0):
         end_time = time.time()
         print(
-            "Epoch %02d reached after %.3f seconds." % (n_iter, end_time - start_time)
+            "Epoch %02d reached after %.3f seconds."
+            % (n_iter, end_time - start_time)
         )
 
     return W, H, n_iter
@@ -1080,7 +1103,9 @@ def non_negative_factorization(
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
+    X = check_array(
+        X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
+    )
 
     est = NMF(
         n_components=n_components,
@@ -1317,10 +1342,14 @@ class NMF(TransformerMixin, BaseEstimator):
             or self._n_components <= 0
         ):
             raise ValueError(
-                "Number of components must be a positive integer; got (n_components=%r)"
+                "Number of components must be a positive integer; got"
+                " (n_components=%r)"
                 % self._n_components
             )
-        if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
+        if (
+            not isinstance(self.max_iter, numbers.Integral)
+            or self.max_iter < 0
+        ):
             raise ValueError(
                 "Maximum number of iterations must be a positive "
                 "integer; got (max_iter=%r)"
@@ -1328,7 +1357,8 @@ class NMF(TransformerMixin, BaseEstimator):
             )
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
-                "Tolerance for stopping criteria must be positive; got (tol=%r)"
+                "Tolerance for stopping criteria must be positive; got"
+                " (tol=%r)"
                 % self.tol
             )
         return self
@@ -1348,19 +1378,23 @@ class NMF(TransformerMixin, BaseEstimator):
             _check_init(H, (self._n_components, n_features), "NMF (input H)")
             if H.dtype != X.dtype:
                 raise TypeError(
-                    "H should have the same dtype as X. Got H.dtype = {}.".format(
-                        H.dtype
-                    )
+                    "H should have the same dtype as X. Got H.dtype = {}."
+                    .format(H.dtype)
                 )
             # 'mu' solver should not be initialized by zeros
             if self.solver == "mu":
                 avg = np.sqrt(X.mean() / self._n_components)
-                W = np.full((n_samples, self._n_components), avg, dtype=X.dtype)
+                W = np.full(
+                    (n_samples, self._n_components), avg, dtype=X.dtype
+                )
             else:
                 W = np.zeros((n_samples, self._n_components), dtype=X.dtype)
         else:
             W, H = _initialize_nmf(
-                X, self._n_components, init=self.init, random_state=self.random_state
+                X,
+                self._n_components,
+                init=self.init,
+                random_state=self.random_state,
             )
         return W, H
 
@@ -1536,7 +1570,10 @@ class NMF(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
 
         with config_context(assume_finite=True):

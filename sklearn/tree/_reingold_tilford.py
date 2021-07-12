@@ -10,7 +10,8 @@ class DrawTree:
         self.y = depth
         self.tree = tree
         self.children = [
-            DrawTree(c, self, depth + 1, i + 1) for i, c in enumerate(tree.children)
+            DrawTree(c, self, depth + 1, i + 1)
+            for i, c in enumerate(tree.children)
         ]
         self.parent = parent
         self.thread = None
@@ -38,7 +39,11 @@ class DrawTree:
         return n
 
     def get_lmost_sibling(self):
-        if not self._lmost_sibling and self.parent and self != self.parent.children[0]:
+        if (
+            not self._lmost_sibling
+            and self.parent
+            and self != self.parent.children[0]
+        ):
             self._lmost_sibling = self.parent.children[0]
         return self._lmost_sibling
 

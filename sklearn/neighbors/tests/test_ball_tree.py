@@ -47,7 +47,9 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     return dist, ind
 
 
-@pytest.mark.parametrize("metric", itertools.chain(BOOLEAN_METRICS, DISCRETE_METRICS))
+@pytest.mark.parametrize(
+    "metric", itertools.chain(BOOLEAN_METRICS, DISCRETE_METRICS)
+)
 @pytest.mark.parametrize("array_type", ["list", "array"])
 def test_ball_tree_query_metrics(metric, array_type):
     rng = check_random_state(0)
@@ -82,5 +84,7 @@ def test_query_haversine():
 def test_array_object_type():
     """Check that we do not accept object dtype array."""
     X = np.array([(1, 2, 3), (2, 5), (5, 5, 1, 2)], dtype=object)
-    with pytest.raises(ValueError, match="setting an array element with a sequence"):
+    with pytest.raises(
+        ValueError, match="setting an array element with a sequence"
+    ):
         BallTree(X)

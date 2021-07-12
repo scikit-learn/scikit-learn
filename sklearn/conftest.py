@@ -57,7 +57,9 @@ def _fetch_fixture(f):
 
 # Adds fixtures for fetching data
 fetch_20newsgroups_fxt = _fetch_fixture(fetch_20newsgroups)
-fetch_20newsgroups_vectorized_fxt = _fetch_fixture(fetch_20newsgroups_vectorized)
+fetch_20newsgroups_vectorized_fxt = _fetch_fixture(
+    fetch_20newsgroups_vectorized
+)
 fetch_california_housing_fxt = _fetch_fixture(fetch_california_housing)
 fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
 fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
@@ -108,7 +110,9 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         # FeatureHasher is not compatible with PyPy
         if (
-            item.name.endswith(("_hash.FeatureHasher", "text.HashingVectorizer"))
+            item.name.endswith(
+                ("_hash.FeatureHasher", "text.HashingVectorizer")
+            )
             and platform.python_implementation() == "PyPy"
         ):
             marker = pytest.mark.skip(
@@ -143,7 +147,9 @@ def pytest_collection_modifyitems(config, items):
             reason = "doctests are only run for numpy >= 1.14"
             skip_doctests = True
         elif _IS_32BIT:
-            reason = "doctest are only run when the default numpy int is 64 bits."
+            reason = (
+                "doctest are only run when the default numpy int is 64 bits."
+            )
             skip_doctests = True
         elif sys.platform.startswith("win32"):
             reason = (

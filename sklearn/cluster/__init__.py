@@ -4,7 +4,12 @@ algorithms.
 """
 
 from ._spectral import spectral_clustering, SpectralClustering
-from ._mean_shift import mean_shift, MeanShift, estimate_bandwidth, get_bin_seeds
+from ._mean_shift import (
+    mean_shift,
+    MeanShift,
+    estimate_bandwidth,
+    get_bin_seeds,
+)
 from ._affinity_propagation import affinity_propagation, AffinityPropagation
 from ._agglomerative import (
     ward_tree,

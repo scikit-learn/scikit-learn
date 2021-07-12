@@ -266,7 +266,9 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
             self.random_state_ = check_random_state(self.random_state)
         if not hasattr(self, "components_"):
             self.components_ = np.asarray(
-                self.random_state_.normal(0, 0.01, (self.n_components, X.shape[1])),
+                self.random_state_.normal(
+                    0, 0.01, (self.n_components, X.shape[1])
+                ),
                 order="F",
             )
         if not hasattr(self, "intercept_hidden_"):
@@ -362,7 +364,9 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        X = self._validate_data(X, accept_sparse="csr", dtype=(np.float64, np.float32))
+        X = self._validate_data(
+            X, accept_sparse="csr", dtype=(np.float64, np.float32)
+        )
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
@@ -373,11 +377,15 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         )
         self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
         self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
-        self.h_samples_ = np.zeros((self.batch_size, self.n_components), dtype=X.dtype)
+        self.h_samples_ = np.zeros(
+            (self.batch_size, self.n_components), dtype=X.dtype
+        )
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(
-            gen_even_slices(n_batches * self.batch_size, n_batches, n_samples=n_samples)
+            gen_even_slices(
+                n_batches * self.batch_size, n_batches, n_samples=n_samples
+            )
         )
         verbose = self.verbose
         begin = time.time()

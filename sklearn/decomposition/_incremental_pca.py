@@ -169,7 +169,9 @@ class IncrementalPCA(_BasePCA):
     TruncatedSVD
     """
 
-    def __init__(self, n_components=None, *, whiten=False, copy=True, batch_size=None):
+    def __init__(
+        self, n_components=None, *, whiten=False, copy=True, batch_size=None
+    ):
         self.n_components = n_components
         self.whiten = whiten
         self.copy = copy
@@ -251,7 +253,10 @@ class IncrementalPCA(_BasePCA):
                     "or use IncrementalPCA.fit to do so in batches."
                 )
             X = self._validate_data(
-                X, copy=self.copy, dtype=[np.float64, np.float32], reset=first_pass
+                X,
+                copy=self.copy,
+                dtype=[np.float64, np.float32],
+                reset=first_pass,
             )
         n_samples, n_features = X.shape
         if first_pass:
@@ -266,13 +271,15 @@ class IncrementalPCA(_BasePCA):
             raise ValueError(
                 "n_components=%r invalid for n_features=%d, need "
                 "more rows than columns for IncrementalPCA "
-                "processing" % (self.n_components, n_features)
+                "processing"
+                % (self.n_components, n_features)
             )
         elif not self.n_components <= n_samples:
             raise ValueError(
                 "n_components=%r must be less or equal to "
                 "the batch number of samples "
-                "%d." % (self.n_components, n_samples)
+                "%d."
+                % (self.n_components, n_samples)
             )
         else:
             self.n_components_ = self.n_components
@@ -332,9 +339,13 @@ class IncrementalPCA(_BasePCA):
         self.mean_ = col_mean
         self.var_ = col_var
         self.explained_variance_ = explained_variance[: self.n_components_]
-        self.explained_variance_ratio_ = explained_variance_ratio[: self.n_components_]
+        self.explained_variance_ratio_ = explained_variance_ratio[
+            : self.n_components_
+        ]
         if self.n_components_ < n_features:
-            self.noise_variance_ = explained_variance[self.n_components_ :].mean()
+            self.noise_variance_ = explained_variance[
+                self.n_components_ :
+            ].mean()
         else:
             self.noise_variance_ = 0.0
         return self
@@ -372,7 +383,9 @@ class IncrementalPCA(_BasePCA):
             n_samples = X.shape[0]
             output = []
             for batch in gen_batches(
-                n_samples, self.batch_size_, min_batch_size=self.n_components or 0
+                n_samples,
+                self.batch_size_,
+                min_batch_size=self.n_components or 0,
             ):
                 output.append(super().transform(X[batch].toarray()))
             return np.vstack(output)

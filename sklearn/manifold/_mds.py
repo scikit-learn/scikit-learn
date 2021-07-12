@@ -91,7 +91,8 @@ def _smacof_single(
         n_components = init.shape[1]
         if n_samples != init.shape[0]:
             raise ValueError(
-                "init matrix should be of shape (%d, %d)" % (n_samples, n_components)
+                "init matrix should be of shape (%d, %d)"
+                % (n_samples, n_components)
             )
         X = init
 
@@ -133,7 +134,10 @@ def _smacof_single(
         if old_stress is not None:
             if (old_stress - stress / dis) < eps:
                 if verbose:
-                    print("breaking at iteration %d with stress %s" % (it, stress))
+                    print(
+                        "breaking at iteration %d with stress %s"
+                        % (it, stress)
+                    )
                 break
         old_stress = stress / dis
 
@@ -257,7 +261,8 @@ def smacof(
         if not n_init == 1:
             warnings.warn(
                 "Explicit initial positions passed: "
-                "performing only one init of the MDS instead of %d" % n_init
+                "performing only one init of the MDS instead of %d"
+                % n_init
             )
             n_init = 1
 
@@ -498,7 +503,8 @@ class MDS(BaseEstimator):
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError(
-                "Proximity must be 'precomputed' or 'euclidean'. Got %s instead"
+                "Proximity must be 'precomputed' or 'euclidean'. Got %s"
+                " instead"
                 % str(self.dissimilarity)
             )
 

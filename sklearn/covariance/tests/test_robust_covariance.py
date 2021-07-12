@@ -63,7 +63,9 @@ def launch_mcd_on_dataset(
     data = rand_gen.randn(n_samples, n_features)
     # add some outliers
     outliers_index = rand_gen.permutation(n_samples)[:n_outliers]
-    outliers_offset = 10.0 * (rand_gen.randint(2, size=(n_outliers, n_features)) - 0.5)
+    outliers_offset = 10.0 * (
+        rand_gen.randint(2, size=(n_outliers, n_features)) - 0.5
+    )
     data[outliers_index] += outliers_offset
     inliers_mask = np.ones(n_samples).astype(bool)
     inliers_mask[outliers_index] = False

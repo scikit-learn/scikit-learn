@@ -186,7 +186,9 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             return_n_iter=True,
         )
         self.components_ = Vt.T
-        components_norm = np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
+        components_norm = np.linalg.norm(self.components_, axis=1)[
+            :, np.newaxis
+        ]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
         self.n_components_ = len(self.components_)
@@ -402,7 +404,9 @@ class MiniBatchSparsePCA(SparsePCA):
         )
         self.components_ = Vt.T
 
-        components_norm = np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
+        components_norm = np.linalg.norm(self.components_, axis=1)[
+            :, np.newaxis
+        ]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
         self.n_components_ = len(self.components_)

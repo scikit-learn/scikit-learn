@@ -288,7 +288,9 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         return probabilities
 
 
-class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, NeighborsBase):
+class RadiusNeighborsClassifier(
+    RadiusNeighborsMixin, ClassifierMixin, NeighborsBase
+):
     """Classifier implementing a vote among neighbors within a given radius
 
     Read more in the :ref:`User Guide <classification>`.
@@ -600,7 +602,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                 "No neighbors found for test samples %r, "
                 "you can try using larger radius, "
                 "giving a label for outliers, "
-                "or considering removing them from your dataset." % outliers
+                "or considering removing them from your dataset."
+                % outliers
             )
 
         weights = _get_weights(neigh_dist, self.weights)
@@ -619,7 +622,9 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             # samples have different size of neighbors within the same radius
             if weights is None:
                 for i, idx in enumerate(pred_labels[inliers]):
-                    proba_inl[i, :] = np.bincount(idx, minlength=classes_k.size)
+                    proba_inl[i, :] = np.bincount(
+                        idx, minlength=classes_k.size
+                    )
             else:
                 for i, idx in enumerate(pred_labels[inliers]):
                     proba_inl[i, :] = np.bincount(

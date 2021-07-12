@@ -122,7 +122,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         hidden_activation = ACTIVATIONS[self.activation]
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 1):
-            activations[i + 1] = safe_sparse_dot(activations[i], self.coefs_[i])
+            activations[i + 1] = safe_sparse_dot(
+                activations[i], self.coefs_[i]
+            )
             activations[i + 1] += self.intercepts_[i]
 
             # For the hidden layers
@@ -169,21 +171,36 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return activation
 
     def _compute_loss_grad(
-        self, layer, n_samples, activations, deltas, coef_grads, intercept_grads
+        self,
+        layer,
+        n_samples,
+        activations,
+        deltas,
+        coef_grads,
+        intercept_grads,
     ):
         """Compute the gradient of loss with respect to coefs and intercept for
         specified layer.
 
         This function does backpropagation for the specified one layer.
         """
-        coef_grads[layer] = safe_sparse_dot(activations[layer].T, deltas[layer])
+        coef_grads[layer] = safe_sparse_dot(
+            activations[layer].T, deltas[layer]
+        )
         coef_grads[layer] += self.alpha * self.coefs_[layer]
         coef_grads[layer] /= n_samples
 
         intercept_grads[layer] = np.mean(deltas[layer], 0)
 
     def _loss_grad_lbfgs(
-        self, packed_coef_inter, X, y, activations, deltas, coef_grads, intercept_grads
+        self,
+        packed_coef_inter,
+        X,
+        y,
+        activations,
+        deltas,
+        coef_grads,
+        intercept_grads,
     ):
         """Compute the MLP loss function and its corresponding derivatives
         with respect to the different parameters given in the initialization.
@@ -232,7 +249,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         grad = _pack(coef_grads, intercept_grads)
         return loss, grad
 
-    def _backprop(self, X, y, activations, deltas, coef_grads, intercept_grads):
+    def _backprop(
+        self, X, y, activations, deltas, coef_grads, intercept_grads
+    ):
         """Compute the MLP loss function and its corresponding derivatives
         with respect to each parameter: weights and bias vectors.
 
@@ -306,7 +325,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             inplace_derivative(activations[i], deltas[i - 1])
 
             self._compute_loss_grad(
-                i - 1, n_samples, activations, deltas, coef_grads, intercept_grads
+                i - 1,
+                n_samples,
+                activations,
+                deltas,
+                coef_grads,
+                intercept_grads,
             )
 
         return loss, coef_grads, intercept_grads
@@ -363,7 +387,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         coef_init = self._random_state.uniform(
             -init_bound, init_bound, (fan_in, fan_out)
         )
-        intercept_init = self._random_state.uniform(-init_bound, init_bound, fan_out)
+        intercept_init = self._random_state.uniform(
+            -init_bound, init_bound, fan_out
+        )
         coef_init = coef_init.astype(dtype, copy=False)
         intercept_init = intercept_init.astype(dtype, copy=False)
         return coef_init, intercept_init
@@ -414,7 +440,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         ]
 
         intercept_grads = [
-            np.empty(n_fan_out_, dtype=X.dtype) for n_fan_out_ in layer_units[1:]
+            np.empty(n_fan_out_, dtype=X.dtype)
+            for n_fan_out_ in layer_units[1:]
         ]
 
         # Run the Stochastic optimization solver
@@ -433,7 +460,13 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # Run the LBFGS solver
         elif self.solver == "lbfgs":
             self._fit_lbfgs(
-                X, y, activations, deltas, coef_grads, intercept_grads, layer_units
+                X,
+                y,
+                activations,
+                deltas,
+                coef_grads,
+                intercept_grads,
+                layer_units,
             )
         return self
 
@@ -456,7 +489,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 "learning_rate_init must be > 0, got %s." % self.learning_rate
             )
         if self.momentum > 1 or self.momentum < 0:
-            raise ValueError("momentum must be >= 0 and <= 1, got %s" % self.momentum)
+            raise ValueError(
+                "momentum must be >= 0 and <= 1, got %s" % self.momentum
+            )
         if not isinstance(self.nesterovs_momentum, bool):
             raise ValueError(
                 "nesterovs_momentum must be either True or False, got %s."
@@ -473,9 +508,13 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 % self.validation_fraction
             )
         if self.beta_1 < 0 or self.beta_1 >= 1:
-            raise ValueError("beta_1 must be >= 0 and < 1, got %s" % self.beta_1)
+            raise ValueError(
+                "beta_1 must be >= 0 and < 1, got %s" % self.beta_1
+            )
         if self.beta_2 < 0 or self.beta_2 >= 1:
-            raise ValueError("beta_2 must be >= 0 and < 1, got %s" % self.beta_2)
+            raise ValueError(
+                "beta_2 must be >= 0 and < 1, got %s" % self.beta_2
+            )
         if self.epsilon <= 0.0:
             raise ValueError("epsilon must be > 0, got %s." % self.epsilon)
         if self.n_iter_no_change <= 0:
@@ -486,11 +525,14 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # raise ValueError if not registered
         if self.activation not in ACTIVATIONS:
             raise ValueError(
-                "The activation '%s' is not supported. Supported activations are %s."
+                "The activation '%s' is not supported. Supported activations"
+                " are %s."
                 % (self.activation, list(sorted(ACTIVATIONS)))
             )
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
-            raise ValueError("learning rate %s is not supported. " % self.learning_rate)
+            raise ValueError(
+                "learning rate %s is not supported. " % self.learning_rate
+            )
         supported_solvers = _STOCHASTIC_SOLVERS + ["lbfgs"]
         if self.solver not in supported_solvers:
             raise ValueError(
@@ -499,7 +541,14 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             )
 
     def _fit_lbfgs(
-        self, X, y, activations, deltas, coef_grads, intercept_grads, layer_units
+        self,
+        X,
+        y,
+        activations,
+        deltas,
+        coef_grads,
+        intercept_grads,
+        layer_units,
     ):
         # Store meta information for the parameters
         self._coef_indptr = []
@@ -616,7 +665,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     # Only shuffle the sample indices instead of X and y to
                     # reduce the memory footprint. These indices will be used
                     # to slice the X and y.
-                    sample_idx = shuffle(sample_idx, random_state=self._random_state)
+                    sample_idx = shuffle(
+                        sample_idx, random_state=self._random_state
+                    )
 
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
@@ -650,7 +701,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 self.t_ += n_samples
                 self.loss_curve_.append(self.loss_)
                 if self.verbose:
-                    print("Iteration %d, loss = %.8f" % (self.n_iter_, self.loss_))
+                    print(
+                        "Iteration %d, loss = %.8f"
+                        % (self.n_iter_, self.loss_)
+                    )
 
                 # update no_improvement_count based on training loss or
                 # validation score according to early_stopping
@@ -675,7 +729,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                             % (self.tol, self.n_iter_no_change)
                         )
 
-                    is_stopping = self._optimizer.trigger_stopping(msg, self.verbose)
+                    is_stopping = self._optimizer.trigger_stopping(
+                        msg, self.verbose
+                    )
                     if is_stopping:
                         break
                     else:
@@ -1115,7 +1171,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         #
         # Note the reliance on short-circuiting here, so that the second
         # or part implies that classes_ is defined.
-        if (not hasattr(self, "classes_")) or (not self.warm_start and not incremental):
+        if (not hasattr(self, "classes_")) or (
+            not self.warm_start and not incremental
+        ):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_

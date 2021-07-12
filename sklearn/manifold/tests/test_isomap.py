@@ -82,7 +82,9 @@ def test_isomap_reconstruction_error():
 
             # make sure error agrees
             reconstruction_error = np.linalg.norm(K - K_iso) / Npts
-            assert_almost_equal(reconstruction_error, clf.reconstruction_error())
+            assert_almost_equal(
+                reconstruction_error, clf.reconstruction_error()
+            )
 
 
 def test_transform():
@@ -112,7 +114,10 @@ def test_pipeline():
     # TODO check that it actually does something useful
     X, y = datasets.make_blobs(random_state=0)
     clf = pipeline.Pipeline(
-        [("isomap", manifold.Isomap()), ("clf", neighbors.KNeighborsClassifier())]
+        [
+            ("isomap", manifold.Isomap()),
+            ("clf", neighbors.KNeighborsClassifier()),
+        ]
     )
     clf.fit(X, y)
     assert 0.9 < clf.score(X, y)
@@ -190,6 +195,8 @@ def test_sparse_input():
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
             clf = manifold.Isomap(
-                n_components=2, eigen_solver=eigen_solver, path_method=path_method
+                n_components=2,
+                eigen_solver=eigen_solver,
+                path_method=path_method,
             )
             clf.fit(X)

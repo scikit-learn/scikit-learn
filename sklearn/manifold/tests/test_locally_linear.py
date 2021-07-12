@@ -60,7 +60,9 @@ def test_lle_simple_grid():
         )
 
         assert reconstruction_error < tol
-        assert_almost_equal(clf.reconstruction_error_, reconstruction_error, decimal=1)
+        assert_almost_equal(
+            clf.reconstruction_error_, reconstruction_error, decimal=1
+        )
 
     # re-embed a noisy version of X using the transform method
     noise = rng.randn(*X.shape) / 100
@@ -77,7 +79,10 @@ def test_lle_manifold():
     n_components = 2
     for method in ["standard", "hessian", "modified", "ltsa"]:
         clf = manifold.LocallyLinearEmbedding(
-            n_neighbors=6, n_components=n_components, method=method, random_state=0
+            n_neighbors=6,
+            n_components=n_components,
+            method=method,
+            random_state=0,
         )
         tol = 1.5 if method == "standard" else 3
 
@@ -90,7 +95,8 @@ def test_lle_manifold():
             clf.fit(X)
             assert clf.embedding_.shape[1] == n_components
             reconstruction_error = (
-                linalg.norm(np.dot(N, clf.embedding_) - clf.embedding_, "fro") ** 2
+                linalg.norm(np.dot(N, clf.embedding_) - clf.embedding_, "fro")
+                ** 2
             )
             details = "solver: %s, method: %s" % (solver, method)
             assert reconstruction_error < tol, details

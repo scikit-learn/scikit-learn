@@ -60,7 +60,8 @@ def _set_order(X, y, order="C"):
     """
     if order not in [None, "C", "F"]:
         raise ValueError(
-            "Unknown value for order. Got {} instead of None, 'C' or 'F'.".format(order)
+            "Unknown value for order. Got {} instead of None, 'C' or 'F'."
+            .format(order)
         )
     sparse_X = sparse.issparse(X)
     sparse_y = sparse.issparse(y)
@@ -154,11 +155,15 @@ def _alpha_grid(
         X_sparse = sparse.isspmatrix(X)
         sparse_center = X_sparse and (fit_intercept or normalize)
         X = check_array(
-            X, accept_sparse="csc", copy=(copy_X and fit_intercept and not X_sparse)
+            X,
+            accept_sparse="csc",
+            copy=(copy_X and fit_intercept and not X_sparse),
         )
         if not X_sparse:
             # X can be touched inplace thanks to the above line
-            X, y, _, _, _ = _preprocess_data(X, y, fit_intercept, normalize, copy=False)
+            X, y, _, _, _ = _preprocess_data(
+                X, y, fit_intercept, normalize, copy=False
+            )
         Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
         if sparse_center:
@@ -185,9 +190,9 @@ def _alpha_grid(
         alphas.fill(np.finfo(float).resolution)
         return alphas
 
-    return np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max), num=n_alphas)[
-        ::-1
-    ]
+    return np.logspace(
+        np.log10(alpha_max * eps), np.log10(alpha_max), num=n_alphas
+    )[::-1]
 
 
 def lasso_path(
@@ -528,7 +533,9 @@ def enet_path(
         n_targets = y.shape[1]
 
     if multi_output and positive:
-        raise ValueError("positive=True is not allowed for multi-output (y.ndim != 1)")
+        raise ValueError(
+            "positive=True is not allowed for multi-output (y.ndim != 1)"
+        )
 
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
@@ -620,7 +627,9 @@ def enet_path(
             # We expect precompute to be already Fortran ordered when bypassing
             # checks
             if check_input:
-                precompute = check_array(precompute, dtype=X.dtype.type, order="C")
+                precompute = check_array(
+                    precompute, dtype=X.dtype.type, order="C"
+                )
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_,
                 l1_reg,
@@ -636,11 +645,21 @@ def enet_path(
             )
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random, positive
+                coef_,
+                l1_reg,
+                l2_reg,
+                X,
+                y,
+                max_iter,
+                tol,
+                rng,
+                random,
+                positive,
             )
         else:
             raise ValueError(
-                "Precompute should be one of True, False, 'auto' or array-like. Got %r"
+                "Precompute should be one of True, False, 'auto' or"
+                " array-like. Got %r"
                 % precompute
             )
         coef_, dual_gap_, eps_, n_iter_ = model
@@ -885,7 +904,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         initial data in memory directly using that format.
         """
         _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
+            self.normalize,
+            default=False,
+            estimator_name=self.__class__.__name__,
         )
 
         if self.alpha == 0:
@@ -908,7 +929,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             or self.l1_ratio > 1
         ):
             raise ValueError(
-                f"l1_ratio must be between 0 and 1; got l1_ratio={self.l1_ratio}"
+                "l1_ratio must be between 0 and 1; got"
+                f" l1_ratio={self.l1_ratio}"
             )
 
         # Remember if X is copied
@@ -942,7 +964,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                     raise ValueError(
                         "Sample weights do not (yet) support sparse matrices."
                     )
-                sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+                sample_weight = _check_sample_weight(
+                    sample_weight, X, dtype=X.dtype
+                )
             # TLDR: Rescale sw to sum up to n_samples.
             # Long: The objective function of Enet
             #
@@ -1085,7 +1109,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         """
         check_is_fitted(self)
         if sparse.isspmatrix(X):
-            return safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+            return (
+                safe_sparse_dot(X, self.coef_.T, dense_output=True)
+                + self.intercept_
+            )
         else:
             return super()._decision_function(X)
 
@@ -1382,7 +1409,9 @@ def _path_residuals(
 
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
-    X_train = check_array(X_train, accept_sparse="csc", dtype=dtype, order=X_order)
+    X_train = check_array(
+        X_train, accept_sparse="csc", dtype=dtype, order=X_order
+    )
     alphas, coefs, _ = path(X_train, y_train, **path_params)
     del X_train, y_train
 
@@ -1520,9 +1549,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 X, y, validate_separately=(check_X_params, check_y_params)
             )
             if sparse.isspmatrix(X):
-                if hasattr(reference_to_old_X, "data") and not np.may_share_memory(
-                    reference_to_old_X.data, X.data
-                ):
+                if hasattr(
+                    reference_to_old_X, "data"
+                ) and not np.may_share_memory(reference_to_old_X.data, X.data):
                     # X is a sparse matrix and has been copied
                     copy_X = False
             elif not np.may_share_memory(reference_to_old_X, X):
@@ -1550,23 +1579,31 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if not self._is_multitask():
             if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError(
-                    "For multi-task outputs, use MultiTask%s" % self.__class__.__name__
+                    "For multi-task outputs, use MultiTask%s"
+                    % self.__class__.__name__
                 )
             y = column_or_1d(y, warn=True)
         else:
             if sparse.isspmatrix(X):
-                raise TypeError("X should be dense but a sparse matrix waspassed")
+                raise TypeError(
+                    "X should be dense but a sparse matrix waspassed"
+                )
             elif y.ndim == 1:
                 raise ValueError(
-                    "For mono-task outputs, use %sCV" % self.__class__.__name__[9:]
+                    "For mono-task outputs, use %sCV"
+                    % self.__class__.__name__[9:]
                 )
 
         if isinstance(sample_weight, numbers.Number):
             sample_weight = None
         if sample_weight is not None:
             if sparse.issparse(X):
-                raise ValueError("Sample weights do not (yet) support sparse matrices.")
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+                raise ValueError(
+                    "Sample weights do not (yet) support sparse matrices."
+                )
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype
+            )
 
         model = self._get_estimator()
 
@@ -1654,7 +1691,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         # The mean is computed over folds.
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.moveaxis(mse_paths, 2, 1))
-        for l1_ratio, l1_alphas, mse_alphas in zip(l1_ratios, alphas, mean_mse):
+        for l1_ratio, l1_alphas, mse_alphas in zip(
+            l1_ratios, alphas, mean_mse
+        ):
             i_best_alpha = np.argmin(mse_alphas)
             this_best_mse = mse_alphas[i_best_alpha]
             if this_best_mse < best_mse:
@@ -2349,7 +2388,9 @@ class MultiTaskElasticNet(Lasso):
         initial data in memory directly using that format.
         """
         _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
+            self.normalize,
+            default=False,
+            estimator_name=self.__class__.__name__,
         )
 
         # Need to validate separately here.

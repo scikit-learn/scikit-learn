@@ -102,7 +102,8 @@ def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
             # check if we should skip if we don't have network support
             marks = [
                 pytest.mark.skipif(
-                    condition=name.startswith("fetch") and _skip_network_tests(),
+                    condition=name.startswith("fetch")
+                    and _skip_network_tests(),
                     reason="Skip because fetcher requires internet network",
                 )
             ]

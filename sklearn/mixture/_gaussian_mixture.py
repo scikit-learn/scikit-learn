@@ -32,7 +32,9 @@ def _check_weights(weights, n_components):
     -------
     weights : array, shape (n_components,)
     """
-    weights = check_array(weights, dtype=[np.float64, np.float32], ensure_2d=False)
+    weights = check_array(
+        weights, dtype=[np.float64, np.float32], ensure_2d=False
+    )
     _check_shape(weights, (n_components,), "weights")
 
     # check range
@@ -46,7 +48,8 @@ def _check_weights(weights, n_components):
     # check normalization
     if not np.allclose(np.abs(1.0 - np.sum(weights)), 0.0):
         raise ValueError(
-            "The parameter 'weights' should be normalized, but got sum(weights) = %.5f"
+            "The parameter 'weights' should be normalized, but got"
+            " sum(weights) = %.5f"
             % np.sum(weights)
         )
     return weights
@@ -84,10 +87,12 @@ def _check_precision_positivity(precision, covariance_type):
 def _check_precision_matrix(precision, covariance_type):
     """Check a precision matrix is symmetric and positive-definite."""
     if not (
-        np.allclose(precision, precision.T) and np.all(linalg.eigvalsh(precision) > 0.0)
+        np.allclose(precision, precision.T)
+        and np.all(linalg.eigvalsh(precision) > 0.0)
     ):
         raise ValueError(
-            "'%s precision' should be symmetric, positive-definite" % covariance_type
+            "'%s precision' should be symmetric, positive-definite"
+            % covariance_type
         )
 
 
@@ -134,7 +139,9 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
         "spherical": (n_components,),
     }
     _check_shape(
-        precisions, precisions_shape[covariance_type], "%s precision" % covariance_type
+        precisions,
+        precisions_shape[covariance_type],
+        "%s precision" % covariance_type,
     )
 
     _check_precisions = {
@@ -254,7 +261,9 @@ def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar):
     variances : array, shape (n_components,)
         The variance values of each components.
     """
-    return _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar).mean(1)
+    return _estimate_gaussian_covariances_diag(
+        resp, X, nk, means, reg_covar
+    ).mean(1)
 
 
 def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
@@ -376,7 +385,10 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
     if covariance_type == "full":
         n_components, _, _ = matrix_chol.shape
         log_det_chol = np.sum(
-            np.log(matrix_chol.reshape(n_components, -1)[:, :: n_features + 1]), 1
+            np.log(
+                matrix_chol.reshape(n_components, -1)[:, :: n_features + 1]
+            ),
+            1,
         )
 
     elif covariance_type == "tied":
@@ -416,7 +428,9 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     n_samples, n_features = X.shape
     n_components, _ = means.shape
     # det(precision_chol) is half of det(precision)
-    log_det = _compute_log_det_cholesky(precisions_chol, covariance_type, n_features)
+    log_det = _compute_log_det_cholesky(
+        precisions_chol, covariance_type, n_features
+    )
 
     if covariance_type == "full":
         log_prob = np.empty((n_samples, n_components))
@@ -670,7 +684,9 @@ class GaussianMixture(BaseMixture):
             )
 
         if self.weights_init is not None:
-            self.weights_init = _check_weights(self.weights_init, self.n_components)
+            self.weights_init = _check_weights(
+                self.weights_init, self.n_components
+            )
 
         if self.means_init is not None:
             self.means_init = _check_means(
@@ -701,7 +717,9 @@ class GaussianMixture(BaseMixture):
         )
         weights /= n_samples
 
-        self.weights_ = weights if self.weights_init is None else self.weights_init
+        self.weights_ = (
+            weights if self.weights_init is None else self.weights_init
+        )
         self.means_ = means if self.means_init is None else self.means_init
 
         if self.precisions_init is None:
@@ -735,7 +753,11 @@ class GaussianMixture(BaseMixture):
             the point of each sample in X.
         """
         n_samples, _ = X.shape
-        self.weights_, self.means_, self.covariances_ = _estimate_gaussian_parameters(
+        (
+            self.weights_,
+            self.means_,
+            self.covariances_,
+        ) = _estimate_gaussian_parameters(
             X, np.exp(log_resp), self.reg_covar, self.covariance_type
         )
         self.weights_ /= n_samples
@@ -789,7 +811,9 @@ class GaussianMixture(BaseMixture):
         """Return the number of free parameters in the model."""
         _, n_features = self.means_.shape
         if self.covariance_type == "full":
-            cov_params = self.n_components * n_features * (n_features + 1) / 2.0
+            cov_params = (
+                self.n_components * n_features * (n_features + 1) / 2.0
+            )
         elif self.covariance_type == "diag":
             cov_params = self.n_components * n_features
         elif self.covariance_type == "tied":

@@ -92,7 +92,10 @@ class VerboseReporter:
         verbose_fmt.append("{remaining_time:>16s}")
 
         # print the header line
-        print(("%10s " + "%16s " * (len(header_fields) - 1)) % tuple(header_fields))
+        print(
+            ("%10s " + "%16s " * (len(header_fields) - 1))
+            % tuple(header_fields)
+        )
 
         self.verbose_fmt = " ".join(verbose_fmt)
         # plot verbose info each time i % verbose_mod == 0
@@ -116,7 +119,9 @@ class VerboseReporter:
         if (i + 1) % self.verbose_mod == 0:
             oob_impr = est.oob_improvement_[j] if do_oob else 0
             remaining_time = (
-                (est.n_estimators - (j + 1)) * (time() - self.start_time) / float(i + 1)
+                (est.n_estimators - (j + 1))
+                * (time() - self.start_time)
+                / float(i + 1)
             )
             if remaining_time > 60:
                 remaining_time = "{0:.2f}m".format(remaining_time / 60.0)
@@ -243,7 +248,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             X = X_csr if X_csr is not None else X
-            tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
+            tree.fit(
+                X, residual, sample_weight=sample_weight, check_input=False
+            )
 
             # update tree leaves
             loss.update_terminal_regions(
@@ -267,12 +274,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check validity of parameters and raise ValueError if not valid."""
         if self.n_estimators <= 0:
             raise ValueError(
-                "n_estimators must be greater than 0 but was %r" % self.n_estimators
+                "n_estimators must be greater than 0 but was %r"
+                % self.n_estimators
             )
 
         if self.learning_rate <= 0.0:
             raise ValueError(
-                "learning_rate must be greater than 0 but was %r" % self.learning_rate
+                "learning_rate must be greater than 0 but was %r"
+                % self.learning_rate
             )
 
         if (
@@ -314,7 +323,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self.loss_ = loss_class()
 
         if not (0.0 < self.subsample <= 1.0):
-            raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
+            raise ValueError(
+                "subsample must be in (0,1] but was %r" % self.subsample
+            )
 
         if self.init is not None:
             # init must be an estimator or 'zero'
@@ -327,7 +338,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 )
 
         if not (0.0 < self.alpha < 1.0):
-            raise ValueError("alpha must be in (0.0, 1.0) but was %r" % self.alpha)
+            raise ValueError(
+                "alpha must be in (0.0, 1.0) but was %r" % self.alpha
+            )
 
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
@@ -352,15 +365,20 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             max_features = self.max_features
         else:  # float
             if 0.0 < self.max_features <= 1.0:
-                max_features = max(int(self.max_features * self.n_features_in_), 1)
+                max_features = max(
+                    int(self.max_features * self.n_features_in_), 1
+                )
             else:
                 raise ValueError("max_features must be in (0, n_features]")
 
         self.max_features_ = max_features
 
-        if not isinstance(self.n_iter_no_change, (numbers.Integral, type(None))):
+        if not isinstance(
+            self.n_iter_no_change, (numbers.Integral, type(None))
+        ):
             raise ValueError(
-                "n_iter_no_change should either be None or an integer. %r was passed"
+                "n_iter_no_change should either be None or an integer. %r was"
+                " passed"
                 % self.n_iter_no_change
             )
 
@@ -371,11 +389,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.init_ is None:
             self.init_ = self.loss_.init_estimator()
 
-        self.estimators_ = np.empty((self.n_estimators, self.loss_.K), dtype=object)
+        self.estimators_ = np.empty(
+            (self.n_estimators, self.loss_.K), dtype=object
+        )
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
-            self.oob_improvement_ = np.zeros((self.n_estimators), dtype=np.float64)
+            self.oob_improvement_ = np.zeros(
+                (self.n_estimators), dtype=np.float64
+            )
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
@@ -483,7 +505,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # trees use different types for X and y, checking them separately.
 
         X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "coo"], dtype=DTYPE, multi_output=True
+            X,
+            y,
+            accept_sparse=["csr", "csc", "coo"],
+            dtype=DTYPE,
+            multi_output=True,
         )
 
         sample_weight_is_none = sample_weight is None
@@ -499,7 +525,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
-            X, X_val, y, y_val, sample_weight, sample_weight_val = train_test_split(
+            (
+                X,
+                X_val,
+                y,
+                y_val,
+                sample_weight,
+                sample_weight_val,
+            ) = train_test_split(
                 X,
                 y,
                 sample_weight,
@@ -557,7 +590,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         else:  # regular estimator whose input checking failed
                             raise
 
-                raw_predictions = self.loss_.get_init_raw_predictions(X, self.init_)
+                raw_predictions = self.loss_.get_init_raw_predictions(
+                    X, self.init_
+                )
 
             begin_at_stage = 0
 
@@ -571,7 +606,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 raise ValueError(
                     "n_estimators=%d must be larger or equal to "
                     "estimators_.shape[0]=%d when "
-                    "warm_start==True" % (self.n_estimators, self.estimators_.shape[0])
+                    "warm_start==True"
+                    % (self.n_estimators, self.estimators_.shape[0])
                 )
             begin_at_stage = self.estimators_.shape[0]
             # The requirements of _decision_function (called in two lines
@@ -650,7 +686,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             # subsampling
             if do_oob:
-                sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
+                sample_mask = _random_sample_mask(
+                    n_samples, n_inbag, random_state
+                )
                 # OOB score before adding this stage
                 old_oob_score = loss_(
                     y[~sample_mask],
@@ -700,7 +738,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             if self.n_iter_no_change is not None:
                 # By calling next(y_val_pred_iter), we get the predictions
                 # for X_val after the addition of the current stage
-                validation_loss = loss_(y_val, next(y_val_pred_iter), sample_weight_val)
+                validation_loss = loss_(
+                    y_val, next(y_val_pred_iter), sample_weight_val
+                )
 
                 # Require validation_score to be better (less) than at least
                 # one of the last n_iter_no_change evaluations
@@ -724,15 +764,17 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 shape=(X.shape[0], self.loss_.K), dtype=np.float64
             )
         else:
-            raw_predictions = self.loss_.get_init_raw_predictions(X, self.init_).astype(
-                np.float64
-            )
+            raw_predictions = self.loss_.get_init_raw_predictions(
+                X, self.init_
+            ).astype(np.float64)
         return raw_predictions
 
     def _raw_predict(self, X):
         """Return the sum of the trees raw predictions (+ init estimator)."""
         raw_predictions = self._raw_predict_init(X)
-        predict_stages(self.estimators_, X, self.learning_rate, raw_predictions)
+        predict_stages(
+            self.estimators_, X, self.learning_rate, raw_predictions
+        )
         return raw_predictions
 
     def _staged_raw_predict(self, X):
@@ -761,7 +803,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
-            predict_stage(self.estimators_, i, X, self.learning_rate, raw_predictions)
+            predict_stage(
+                self.estimators_, i, X, self.learning_rate, raw_predictions
+            )
             yield raw_predictions.copy()
 
     @property
@@ -1261,7 +1305,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             raise ValueError(
                 "y contains %d class after sample_weight "
                 "trimmed classes with zero weights, while a "
-                "minimum of 2 classes are required." % n_trim_classes
+                "minimum of 2 classes are required."
+                % n_trim_classes
             )
         self._n_classes = len(self.classes_)
         # expose n_classes_ attribute
@@ -1346,7 +1391,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             The predicted values.
         """
         raw_predictions = self.decision_function(X)
-        encoded_labels = self.loss_._raw_prediction_to_decision(raw_predictions)
+        encoded_labels = self.loss_._raw_prediction_to_decision(
+            raw_predictions
+        )
         return self.classes_.take(encoded_labels, axis=0)
 
     def staged_predict(self, X):
@@ -1368,7 +1415,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             The predicted value of the input samples.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            encoded_labels = self.loss_._raw_prediction_to_decision(raw_predictions)
+            encoded_labels = self.loss_._raw_prediction_to_decision(
+                raw_predictions
+            )
             yield self.classes_.take(encoded_labels, axis=0)
 
     def predict_proba(self, X):
@@ -1919,6 +1968,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_classes_ attribute.".format(self.__class__.__name__)
+                "{} object has no n_classes_ attribute.".format(
+                    self.__class__.__name__
+                )
             ) from nfe
         return 1

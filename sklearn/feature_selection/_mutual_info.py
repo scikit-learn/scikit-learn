@@ -306,7 +306,13 @@ def _estimate_mi(
 
 
 def mutual_info_regression(
-    X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
+    X,
+    y,
+    *,
+    discrete_features="auto",
+    n_neighbors=3,
+    copy=True,
+    random_state=None,
 ):
     """Estimate mutual information for a continuous target variable.
 
@@ -381,11 +387,19 @@ def mutual_info_regression(
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector", Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
-    return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy, random_state)
+    return _estimate_mi(
+        X, y, discrete_features, False, n_neighbors, copy, random_state
+    )
 
 
 def mutual_info_classif(
-    X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
+    X,
+    y,
+    *,
+    discrete_features="auto",
+    n_neighbors=3,
+    copy=True,
+    random_state=None,
 ):
     """Estimate mutual information for a discrete target variable.
 
@@ -461,4 +475,6 @@ def mutual_info_classif(
            of a Random Vector:, Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
     check_classification_targets(y)
-    return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy, random_state)
+    return _estimate_mi(
+        X, y, discrete_features, True, n_neighbors, copy, random_state
+    )

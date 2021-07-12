@@ -34,7 +34,9 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+@pytest.mark.parametrize(
+    "response_method", ["predict_proba", "decision_function"]
+)
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("drop_intermediate", [True, False])
 @pytest.mark.parametrize("with_strings", [True, False])
@@ -101,8 +103,12 @@ def test_plot_roc_curve(
     assert viz.line_.get_label() == expected_label
 
     expected_pos_label = 1 if pos_label is None else pos_label
-    expected_ylabel = f"True Positive Rate (Positive label: {expected_pos_label})"
-    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
+    expected_ylabel = (
+        f"True Positive Rate (Positive label: {expected_pos_label})"
+    )
+    expected_xlabel = (
+        f"False Positive Rate (Positive label: {expected_pos_label})"
+    )
 
     assert viz.ax_.get_ylabel() == expected_ylabel
     assert viz.ax_.get_xlabel() == expected_xlabel
@@ -114,7 +120,8 @@ def test_plot_roc_curve(
         LogisticRegression(),
         make_pipeline(StandardScaler(), LogisticRegression()),
         make_pipeline(
-            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
+            make_column_transformer((StandardScaler(), [0, 1])),
+            LogisticRegression(),
         ),
     ],
 )
@@ -145,7 +152,9 @@ def test_default_labels(pyplot, roc_auc, estimator_name, expected_label):
     assert disp.line_.get_label() == expected_label
 
 
-@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+@pytest.mark.parametrize(
+    "response_method", ["predict_proba", "decision_function"]
+)
 def test_plot_roc_curve_pos_label(pyplot, response_method):
     # check that we can provide the positive label and display the proper
     # statistics
@@ -158,7 +167,9 @@ def test_plot_roc_curve_pos_label(pyplot, response_method):
     X, y = shuffle(X, y, random_state=42)
     # only use 2 features to make the problem even harder
     X = X[:, :2]
-    y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
+    y = np.array(
+        ["cancer" if c == 1 else "not cancer" for c in y], dtype=object
+    )
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
@@ -174,7 +185,11 @@ def test_plot_roc_curve_pos_label(pyplot, response_method):
     assert classifier.classes_.tolist() == ["cancer", "not cancer"]
 
     disp = plot_roc_curve(
-        classifier, X_test, y_test, pos_label="cancer", response_method=response_method
+        classifier,
+        X_test,
+        y_test,
+        pos_label="cancer",
+        response_method=response_method,
     )
 
     roc_auc_limit = 0.95679

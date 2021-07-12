@@ -60,8 +60,12 @@ from sklearn.utils._testing import TempMemmap
 
 
 # TODO: Remove np.matrix usage in 1.2
-@pytest.mark.filterwarnings("ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
-@pytest.mark.filterwarnings("ignore:the matrix subclass:PendingDeprecationWarning")
+@pytest.mark.filterwarnings(
+    "ignore:np.matrix usage is deprecated in 1.0:FutureWarning"
+)
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning"
+)
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
@@ -75,7 +79,15 @@ def test_as_float_array():
     assert as_float_array(X, copy=False) is not X
     assert X2.dtype == np.float64
     # Test int dtypes <= 32bit
-    tested_dtypes = [bool, np.int8, np.int16, np.int32, np.uint8, np.uint16, np.uint32]
+    tested_dtypes = [
+        bool,
+        np.int8,
+        np.int16,
+        np.int32,
+        np.uint8,
+        np.uint16,
+        np.uint32,
+    ]
     for dtype in tested_dtypes:
         X = X.astype(dtype)
         X2 = as_float_array(X)
@@ -105,7 +117,9 @@ def test_as_float_array():
         assert not np.isnan(M).any()
 
 
-@pytest.mark.parametrize("X", [(np.random.random((10, 2))), (sp.rand(10, 2).tocsr())])
+@pytest.mark.parametrize(
+    "X", [(np.random.random((10, 2))), (sp.rand(10, 2).tocsr())]
+)
 def test_as_float_array_nan(X):
     X[5, 0] = np.nan
     X[6, 1] = np.nan
@@ -114,8 +128,12 @@ def test_as_float_array_nan(X):
 
 
 # TODO: Remove np.matrix usage in 1.2
-@pytest.mark.filterwarnings("ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
-@pytest.mark.filterwarnings("ignore:the matrix subclass:PendingDeprecationWarning")
+@pytest.mark.filterwarnings(
+    "ignore:np.matrix usage is deprecated in 1.0:FutureWarning"
+)
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning"
+)
 def test_np_matrix():
     # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
@@ -161,13 +179,16 @@ def test_ordering():
 
 
 @pytest.mark.parametrize(
-    "value, force_all_finite", [(np.inf, False), (np.nan, "allow-nan"), (np.nan, False)]
+    "value, force_all_finite",
+    [(np.inf, False), (np.nan, "allow-nan"), (np.nan, False)],
 )
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
 def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
     X = retype(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
-    X_checked = check_array(X, force_all_finite=force_all_finite, accept_sparse=True)
+    X_checked = check_array(
+        X, force_all_finite=force_all_finite, accept_sparse=True
+    )
     assert_allclose_dense_sparse(X, X_checked)
 
 
@@ -177,7 +198,11 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
         (np.inf, True, "Input contains NaN, infinity"),
         (np.inf, "allow-nan", "Input contains infinity"),
         (np.nan, True, "Input contains NaN, infinity"),
-        (np.nan, "allow-inf", 'force_all_finite should be a bool or "allow-nan"'),
+        (
+            np.nan,
+            "allow-inf",
+            'force_all_finite should be a bool or "allow-nan"',
+        ),
         (np.nan, 1, "Input contains NaN, infinity"),
     ],
 )
@@ -219,7 +244,10 @@ def test_check_array_force_all_finite_object():
             np.array([[1, np.inf]]),
             "Input contains NaN, infinity or a value too large for.*int",
         ),
-        (np.array([[1, np.nan]], dtype=object), "cannot convert float NaN to integer"),
+        (
+            np.array([[1, np.nan]], dtype=object),
+            "cannot convert float NaN to integer",
+        ),
     ],
 )
 @pytest.mark.parametrize("force_all_finite", [True, False])
@@ -245,11 +273,15 @@ def test_check_array():
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert X_array.ndim == 1
     # ensure_2d=True with 1d array
-    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
+    with pytest.raises(
+        ValueError, match="Expected 2D array, got 1D array instead"
+    ):
         check_array([0, 1, 2], ensure_2d=True)
 
     # ensure_2d=True with scalar array
-    with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
+    with pytest.raises(
+        ValueError, match="Expected 2D array, got scalar array instead"
+    ):
         check_array(10, ensure_2d=True)
 
     # don't allow ndim > 3
@@ -300,7 +332,9 @@ def test_check_array():
 
     Xs = [X_csc, X_coo, X_dok, X_int, X_float]
     accept_sparses = [["csr", "coo"], ["coo", "dok"]]
-    for X, dtype, accept_sparse, copy in product(Xs, dtypes, accept_sparses, copys):
+    for X, dtype, accept_sparse, copy in product(
+        Xs, dtypes, accept_sparses, copys
+    ):
         with warnings.catch_warnings(record=True) as w:
             X_checked = check_array(
                 X, dtype=dtype, accept_sparse=accept_sparse, copy=copy
@@ -601,7 +635,10 @@ def test_check_array_accept_large_sparse_raise_exception(X_64bit):
 
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
-    msg = r"0 feature\(s\) \(shape=\(1, 0\)\) while a minimum of 1 is" " required."
+    msg = (
+        r"0 feature\(s\) \(shape=\(1, 0\)\) while a minimum of 1 is"
+        " required."
+    )
     with pytest.raises(ValueError, match=msg):
         check_array([[]])
 
@@ -612,14 +649,20 @@ def test_check_array_min_samples_and_features_messages():
         check_array([], ensure_2d=False)
 
     # Invalid edge case when checking the default minimum sample of a scalar
-    msg = r"Singleton array array\(42\) cannot be considered a valid" " collection."
+    msg = (
+        r"Singleton array array\(42\) cannot be considered a valid"
+        " collection."
+    )
     with pytest.raises(TypeError, match=msg):
         check_array(42, ensure_2d=False)
 
     # Simulate a model that would need at least 2 samples to be well defined
     X = np.ones((1, 10))
     y = np.ones(1)
-    msg = r"1 sample\(s\) \(shape=\(1, 10\)\) while a minimum of 2 is" " required."
+    msg = (
+        r"1 sample\(s\) \(shape=\(1, 10\)\) while a minimum of 2 is"
+        " required."
+    )
     with pytest.raises(ValueError, match=msg):
         check_X_y(X, y, ensure_min_samples=2)
 
@@ -632,7 +675,10 @@ def test_check_array_min_samples_and_features_messages():
     # with k=3)
     X = np.ones((10, 2))
     y = np.ones(2)
-    msg = r"2 feature\(s\) \(shape=\(10, 2\)\) while a minimum of 3 is" " required."
+    msg = (
+        r"2 feature\(s\) \(shape=\(10, 2\)\) while a minimum of 3 is"
+        " required."
+    )
     with pytest.raises(ValueError, match=msg):
         check_X_y(X, y, ensure_min_features=3)
 
@@ -645,7 +691,10 @@ def test_check_array_min_samples_and_features_messages():
     # 2D dataset.
     X = np.empty(0).reshape(10, 0)
     y = np.ones(10)
-    msg = r"0 feature\(s\) \(shape=\(10, 0\)\) while a minimum of 1 is" " required."
+    msg = (
+        r"0 feature\(s\) \(shape=\(10, 0\)\) while a minimum of 1 is"
+        " required."
+    )
     with pytest.raises(ValueError, match=msg):
         check_X_y(X, y)
 
@@ -673,17 +722,25 @@ def test_check_array_complex_data_error():
         check_array(X)
 
     # list of np arrays
-    X = [np.array([1 + 2j, 3 + 4j, 5 + 7j]), np.array([2 + 3j, 4 + 5j, 6 + 7j])]
+    X = [
+        np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+        np.array([2 + 3j, 4 + 5j, 6 + 7j]),
+    ]
     with pytest.raises(ValueError, match="Complex data not supported"):
         check_array(X)
 
     # tuple of np arrays
-    X = (np.array([1 + 2j, 3 + 4j, 5 + 7j]), np.array([2 + 3j, 4 + 5j, 6 + 7j]))
+    X = (
+        np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+        np.array([2 + 3j, 4 + 5j, 6 + 7j]),
+    )
     with pytest.raises(ValueError, match="Complex data not supported"):
         check_array(X)
 
     # dataframe
-    X = MockDataFrame(np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]))
+    X = MockDataFrame(
+        np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]])
+    )
     with pytest.raises(ValueError, match="Complex data not supported"):
         check_array(X)
 
@@ -897,7 +954,11 @@ def test_check_dataframe_mixed_float_dtypes():
 
     pd = importorskip("pandas")
     df = pd.DataFrame(
-        {"int": [1, 2, 3], "float": [0, 0.1, 2.1], "bool": [True, False, True]},
+        {
+            "int": [1, 2, 3],
+            "float": [0, 0.1, 2.1],
+            "bool": [True, False, True],
+        },
         columns=["int", "float", "bool"],
     )
 
@@ -1012,7 +1073,11 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
     provided"""
     with pytest.warns(None) as record:
         check_scalar(
-            x, "test_name", target_type=target_type, min_val=min_val, max_val=max_val
+            x,
+            "test_name",
+            target_type=target_type,
+            min_val=min_val,
+            max_val=max_val,
         )
     assert len(record) == 0
 
@@ -1031,16 +1096,36 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
                 "<class 'float'>, not <class 'int'>."
             ),
         ),
-        (1, "test_name2", int, 2, 4, ValueError("`test_name2`= 1, must be >= 2.")),
-        (5, "test_name3", int, 2, 4, ValueError("`test_name3`= 5, must be <= 4.")),
+        (
+            1,
+            "test_name2",
+            int,
+            2,
+            4,
+            ValueError("`test_name2`= 1, must be >= 2."),
+        ),
+        (
+            5,
+            "test_name3",
+            int,
+            2,
+            4,
+            ValueError("`test_name3`= 5, must be <= 4."),
+        ),
     ],
 )
-def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val, err_msg):
+def test_check_scalar_invalid(
+    x, target_name, target_type, min_val, max_val, err_msg
+):
     """Test that check_scalar returns the right error if a wrong input is
     given"""
     with pytest.raises(Exception) as raised_error:
         check_scalar(
-            x, target_name, target_type=target_type, min_val=min_val, max_val=max_val
+            x,
+            target_name,
+            target_type=target_type,
+            min_val=min_val,
+            max_val=max_val,
         )
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
@@ -1053,9 +1138,15 @@ _psd_cases_valid = {
         (5, 5e-5j),
         np.array([5, 0]),
         PositiveSpectrumWarning,
-        "There are imaginary parts in eigenvalues \\(1e\\-05 of the maximum real part",
+        "There are imaginary parts in eigenvalues \\(1e\\-05 of the maximum"
+        " real part",
     ),
-    "insignificant neg": ((5, -5e-5), np.array([5, 0]), PositiveSpectrumWarning, ""),
+    "insignificant neg": (
+        (5, -5e-5),
+        np.array([5, 0]),
+        PositiveSpectrumWarning,
+        "",
+    ),
     "insignificant neg float32": (
         np.array([1, -1e-6], dtype=np.float32),
         np.array([1, 0], dtype=np.float32),
@@ -1160,7 +1251,9 @@ def test_check_sample_weight():
     assert_allclose(sample_weight, 2 * np.ones(5))
 
     # check wrong number of dimensions
-    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+    with pytest.raises(
+        ValueError, match="Sample weights must be 1D array or scalar"
+    ):
         _check_sample_weight(np.ones((2, 4)), X=np.ones((2, 2)))
 
     # check incorrect n_samples
@@ -1199,7 +1292,10 @@ def test_allclose_dense_sparse_raise(toarray):
     x = np.arange(9).reshape(3, 3)
     y = toarray(x + 1)
 
-    msg = "Can only compare two sparse matrices, not a sparse matrix and an array"
+    msg = (
+        "Can only compare two sparse matrices, not a sparse matrix and an"
+        " array"
+    )
     with pytest.raises(ValueError, match=msg):
         _allclose_dense_sparse(x, y)
 
@@ -1285,9 +1381,12 @@ def test_check_fit_params(indices):
         assert result[key] is fit_params[key]
 
     assert result["list"] == _safe_indexing(fit_params["list"], indices_)
-    assert_array_equal(result["array"], _safe_indexing(fit_params["array"], indices_))
+    assert_array_equal(
+        result["array"], _safe_indexing(fit_params["array"], indices_)
+    )
     assert_allclose_dense_sparse(
-        result["sparse-col"], _safe_indexing(fit_params["sparse-col"], indices_)
+        result["sparse-col"],
+        _safe_indexing(fit_params["sparse-col"], indices_),
     )
 
 
@@ -1404,7 +1503,9 @@ def test_num_features(constructor_name):
     ],
     ids=["int", "str", "bool", "float", "dict"],
 )
-@pytest.mark.parametrize("constructor_name", ["list", "tuple", "array", "series"])
+@pytest.mark.parametrize(
+    "constructor_name", ["list", "tuple", "array", "series"]
+)
 def test_num_features_errors_1d_containers(X, constructor_name):
     X = _convert_container(X, constructor_name)
     if constructor_name == "array":
@@ -1414,7 +1515,8 @@ def test_num_features_errors_1d_containers(X, constructor_name):
     else:
         expected_type_name = constructor_name
     message = (
-        f"Unable to find the number of features from X of type {expected_type_name}"
+        "Unable to find the number of features from X of type"
+        f" {expected_type_name}"
     )
     if hasattr(X, "shape"):
         message += " with shape (3,)"
@@ -1426,15 +1528,22 @@ def test_num_features_errors_1d_containers(X, constructor_name):
         _num_features(X)
 
 
-@pytest.mark.parametrize("X", [1, "b", False, 3.0], ids=["int", "str", "bool", "float"])
+@pytest.mark.parametrize(
+    "X", [1, "b", False, 3.0], ids=["int", "str", "bool", "float"]
+)
 def test_num_features_errors_scalars(X):
-    msg = f"Unable to find the number of features from X of type {type(X).__qualname__}"
+    msg = (
+        "Unable to find the number of features from X of type"
+        f" {type(X).__qualname__}"
+    )
     with pytest.raises(TypeError, match=msg):
         _num_features(X)
 
 
 # TODO: Remove in 1.2
-@pytest.mark.filterwarnings("ignore:the matrix subclass:PendingDeprecationWarning")
+@pytest.mark.filterwarnings(
+    "ignore:the matrix subclass:PendingDeprecationWarning"
+)
 def test_check_array_deprecated_matrix():
     """Test that matrix support is deprecated in 1.0."""
 

@@ -170,7 +170,9 @@ def test_binary_search_neighbors():
     # Test that when we use all the neighbors the results are identical
     n_neighbors = n_samples - 1
     nn = NearestNeighbors().fit(data)
-    distance_graph = nn.kneighbors_graph(n_neighbors=n_neighbors, mode="distance")
+    distance_graph = nn.kneighbors_graph(
+        n_neighbors=n_neighbors, mode="distance"
+    )
     distances_nn = distance_graph.data.astype(np.float32, copy=False)
     distances_nn = distances_nn.reshape(n_samples, n_neighbors)
     P2 = _binary_search_perplexity(distances_nn, desired_perplexity, verbose=0)
@@ -191,7 +193,9 @@ def test_binary_search_neighbors():
         distance_graph = nn.kneighbors_graph(n_neighbors=k, mode="distance")
         distances_nn = distance_graph.data.astype(np.float32, copy=False)
         distances_nn = distances_nn.reshape(n_samples, k)
-        P2k = _binary_search_perplexity(distances_nn, desired_perplexity, verbose=0)
+        P2k = _binary_search_perplexity(
+            distances_nn, desired_perplexity, verbose=0
+        )
         assert_array_almost_equal(P1_nn, P2, decimal=2)
         idx = np.argsort(P1.ravel())[::-1]
         P1top = P1.ravel()[idx][:topn]
@@ -209,14 +213,20 @@ def test_binary_perplexity_stability():
     random_state = check_random_state(0)
     data = random_state.randn(n_samples, 5)
     nn = NearestNeighbors().fit(data)
-    distance_graph = nn.kneighbors_graph(n_neighbors=n_neighbors, mode="distance")
+    distance_graph = nn.kneighbors_graph(
+        n_neighbors=n_neighbors, mode="distance"
+    )
     distances = distance_graph.data.astype(np.float32, copy=False)
     distances = distances.reshape(n_samples, n_neighbors)
     last_P = None
     desired_perplexity = 3
     for _ in range(100):
-        P = _binary_search_perplexity(distances.copy(), desired_perplexity, verbose=0)
-        P1 = _joint_probabilities_nn(distance_graph, desired_perplexity, verbose=0)
+        P = _binary_search_perplexity(
+            distances.copy(), desired_perplexity, verbose=0
+        )
+        P1 = _joint_probabilities_nn(
+            distance_graph, desired_perplexity, verbose=0
+        )
         # Convert the sparse matrix to a dense one for testing
         P1 = P1.toarray()
         if last_P is None:
@@ -249,7 +259,9 @@ def test_gradient():
     def grad(params):
         return _kl_divergence(params, P, alpha, n_samples, n_components)[1]
 
-    assert_almost_equal(check_grad(fun, grad, X_embedded.ravel()), 0.0, decimal=5)
+    assert_almost_equal(
+        check_grad(fun, grad, X_embedded.ravel()), 0.0, decimal=5
+    )
 
 
 def test_trustworthiness():
@@ -282,7 +294,11 @@ def test_preserve_trustworthiness_approximately(method, init):
     n_components = 2
     X = random_state.randn(50, n_components).astype(np.float32)
     tsne = TSNE(
-        n_components=n_components, init=init, random_state=0, method=method, n_iter=700
+        n_components=n_components,
+        init=init,
+        random_state=0,
+        method=method,
+        n_iter=700,
     )
     X_embedded = tsne.fit_transform(X)
     t = trustworthiness(X, X_embedded, n_neighbors=1)
@@ -328,7 +344,9 @@ def test_fit_csr_matrix(method):
         n_iter=750,
     )
     X_embedded = tsne.fit_transform(X_csr)
-    assert_allclose(trustworthiness(X_csr, X_embedded, n_neighbors=1), 1.0, rtol=1.1e-1)
+    assert_allclose(
+        trustworthiness(X_csr, X_embedded, n_neighbors=1), 1.0, rtol=1.1e-1
+    )
 
 
 # TODO: Remove filterwarnings in 1.2
@@ -434,7 +452,10 @@ def test_high_perplexity_precomputed_sparse_distances():
     dist = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
     bad_dist = sp.csr_matrix(dist)
     tsne = TSNE(
-        metric="precomputed", square_distances=True, init="random", random_state=42
+        metric="precomputed",
+        square_distances=True,
+        init="random",
+        random_state=42,
     )
     msg = "3 neighbors per samples are required, but some samples have only 1"
     with pytest.raises(ValueError, match=msg):
@@ -449,13 +470,18 @@ def test_sparse_precomputed_distance():
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
 
-    D_sparse = kneighbors_graph(X, n_neighbors=100, mode="distance", include_self=True)
+    D_sparse = kneighbors_graph(
+        X, n_neighbors=100, mode="distance", include_self=True
+    )
     D = pairwise_distances(X)
     assert sp.issparse(D_sparse)
     assert_almost_equal(D_sparse.A, D)
 
     tsne = TSNE(
-        metric="precomputed", random_state=0, square_distances=True, init="random"
+        metric="precomputed",
+        random_state=0,
+        square_distances=True,
+        init="random",
     )
     Xt_dense = tsne.fit_transform(D)
 
@@ -517,7 +543,9 @@ def test_distance_not_available():
     with pytest.raises(ValueError, match="Unknown metric not available.*"):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
-    tsne = TSNE(metric="not available", method="barnes_hut", square_distances=True)
+    tsne = TSNE(
+        metric="not available", method="barnes_hut", square_distances=True
+    )
     with pytest.raises(ValueError, match="Metric 'not available' not valid.*"):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
@@ -546,7 +574,9 @@ def test_angle_out_of_range_checks():
     # check the angle parameter range
     for angle in [-1, -1e-6, 1 + 1e-6, 2]:
         tsne = TSNE(angle=angle)
-        with pytest.raises(ValueError, match="'angle' must be between 0.0 - 1.0"):
+        with pytest.raises(
+            ValueError, match="'angle' must be between 0.0 - 1.0"
+        ):
             tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
@@ -557,7 +587,10 @@ def test_pca_initialization_not_compatible_with_precomputed_kernel():
     tsne = TSNE(metric="precomputed", init="pca", square_distances=True)
     with pytest.raises(
         ValueError,
-        match='The parameter init="pca" cannot be used with metric="precomputed".',
+        match=(
+            'The parameter init="pca" cannot be used with'
+            ' metric="precomputed".'
+        ),
     ):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
@@ -704,7 +737,9 @@ def test_skip_num_points_gradient():
             [-2.58720939e-09, 7.52706374e-09],
         ]
     )
-    _run_answer_test(pos_input, pos_output, neighbors, grad_output, False, 0.1, 2)
+    _run_answer_test(
+        pos_input, pos_output, neighbors, grad_output, False, 0.1, 2
+    )
 
 
 def _run_answer_test(
@@ -732,7 +767,15 @@ def _run_answer_test(
     indptr = P.indptr.astype(np.int64)
 
     _barnes_hut_tsne.gradient(
-        P.data, pos_output, neighbors, indptr, grad_bh, 0.5, 2, 1, skip_num_points=0
+        P.data,
+        pos_output,
+        neighbors,
+        indptr,
+        grad_bh,
+        0.5,
+        2,
+        1,
+        skip_num_points=0,
     )
     assert_array_almost_equal(grad_bh, grad_output, decimal=4)
 
@@ -901,7 +944,10 @@ def test_n_iter_without_progress():
             sys.stdout = old_stdout
 
         # The output needs to contain the value of n_iter_without_progress
-        assert "did not make any progress during the last -1 episodes. Finished." in out
+        assert (
+            "did not make any progress during the last -1 episodes. Finished."
+            in out
+        )
 
 
 # TODO: Remove filterwarnings in 1.2
@@ -911,7 +957,9 @@ def test_min_grad_norm():
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     min_grad_norm = 0.002
-    tsne = TSNE(min_grad_norm=min_grad_norm, verbose=2, random_state=0, method="exact")
+    tsne = TSNE(
+        min_grad_norm=min_grad_norm, verbose=2, random_state=0, method="exact"
+    )
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -956,7 +1004,11 @@ def test_accessible_kl_divergence():
     random_state = check_random_state(0)
     X = random_state.randn(50, 2)
     tsne = TSNE(
-        n_iter_without_progress=2, verbose=2, random_state=0, method="exact", n_iter=500
+        n_iter_without_progress=2,
+        verbose=2,
+        random_state=0,
+        method="exact",
+        n_iter=500,
     )
 
     old_stdout = sys.stdout
@@ -1156,7 +1208,9 @@ def test_tsne_different_square_distances(method, metric, square_distances):
     n_components_embedding = 2
 
     # Used to create data with structure; this avoids unstable behavior in TSNE
-    X, _ = make_blobs(n_features=n_components_original, random_state=random_state)
+    X, _ = make_blobs(
+        n_features=n_components_original, random_state=random_state
+    )
     X_precomputed = pairwise_distances(X, metric=metric)
 
     if metric == "euclidean" and square_distances == "legacy":

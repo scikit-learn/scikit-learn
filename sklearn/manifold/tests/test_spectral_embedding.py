@@ -117,22 +117,30 @@ def test_spectral_embedding_two_components(seed=36):
     true_label[0:n_sample] = 1
 
     se_precomp = SpectralEmbedding(
-        n_components=1, affinity="precomputed", random_state=np.random.RandomState(seed)
+        n_components=1,
+        affinity="precomputed",
+        random_state=np.random.RandomState(seed),
     )
     embedded_coordinate = se_precomp.fit_transform(affinity)
     # Some numpy versions are touchy with types
     embedded_coordinate = se_precomp.fit_transform(affinity.astype(np.float32))
     # thresholding on the first components using 0.
     label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
-    assert normalized_mutual_info_score(true_label, label_) == pytest.approx(1.0)
+    assert normalized_mutual_info_score(true_label, label_) == pytest.approx(
+        1.0
+    )
 
 
-@pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
+@pytest.mark.parametrize(
+    "X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"]
+)
 def test_spectral_embedding_precomputed_affinity(X, seed=36):
     # Test spectral embedding with precomputed kernel
     gamma = 1.0
     se_precomp = SpectralEmbedding(
-        n_components=2, affinity="precomputed", random_state=np.random.RandomState(seed)
+        n_components=2,
+        affinity="precomputed",
+        random_state=np.random.RandomState(seed),
     )
     se_rbf = SpectralEmbedding(
         n_components=2,
@@ -142,7 +150,9 @@ def test_spectral_embedding_precomputed_affinity(X, seed=36):
     )
     embed_precomp = se_precomp.fit_transform(rbf_kernel(X, gamma=gamma))
     embed_rbf = se_rbf.fit_transform(X)
-    assert_array_almost_equal(se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
+    assert_array_almost_equal(
+        se_precomp.affinity_matrix_, se_rbf.affinity_matrix_
+    )
     _assert_equal_with_sign_flipping(embed_precomp, embed_rbf, 0.05)
 
 
@@ -151,7 +161,9 @@ def test_precomputed_nearest_neighbors_filtering():
     n_neighbors = 2
     results = []
     for additional_neighbors in [0, 10]:
-        nn = NearestNeighbors(n_neighbors=n_neighbors + additional_neighbors).fit(S)
+        nn = NearestNeighbors(
+            n_neighbors=n_neighbors + additional_neighbors
+        ).fit(S)
         graph = nn.kneighbors_graph(S, mode="connectivity")
         embedding = (
             SpectralEmbedding(
@@ -168,7 +180,9 @@ def test_precomputed_nearest_neighbors_filtering():
     assert_array_equal(results[0], results[1])
 
 
-@pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
+@pytest.mark.parametrize(
+    "X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"]
+)
 def test_spectral_embedding_callable_affinity(X, seed=36):
     # Test spectral embedding with callable affinity
     gamma = 0.9
@@ -187,7 +201,9 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
     )
     embed_rbf = se_rbf.fit_transform(X)
     embed_callable = se_callable.fit_transform(X)
-    assert_array_almost_equal(se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
+    assert_array_almost_equal(
+        se_callable.affinity_matrix_, se_rbf.affinity_matrix_
+    )
     assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
     _assert_equal_with_sign_flipping(embed_rbf, embed_callable, 0.05)
 
@@ -278,7 +294,9 @@ def test_spectral_embedding_amg_solver_failure():
         _assert_equal_with_sign_flipping(embedding, new_embedding, tol=0.05)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will change in version 0.22")
+@pytest.mark.filterwarnings(
+    "ignore:the behavior of nmi will change in version 0.22"
+)
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)
@@ -314,7 +332,9 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
 def test_spectral_embedding_unknown_affinity(seed=36):
     # Test that SpectralClustering fails with an unknown affinity type
     se = SpectralEmbedding(
-        n_components=1, affinity="<unknown>", random_state=np.random.RandomState(seed)
+        n_components=1,
+        affinity="<unknown>",
+        random_state=np.random.RandomState(seed),
     )
     with pytest.raises(ValueError):
         se.fit(S)
@@ -400,7 +420,9 @@ def test_spectral_embedding_first_eigen_vector():
 
 
 # TODO: Remove in 1.1
-@pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
+@pytest.mark.parametrize(
+    "affinity", ["precomputed", "precomputed_nearest_neighbors"]
+)
 def test_spectral_embedding_pairwise_deprecated(affinity):
     se = SpectralEmbedding(affinity=affinity)
     msg = r"Attribute `_pairwise` was deprecated in version 0\.24"

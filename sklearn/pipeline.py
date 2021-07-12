@@ -172,14 +172,15 @@ class Pipeline(_BaseComposition):
         for t in transformers:
             if t is None or t == "passthrough":
                 continue
-            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not hasattr(
-                t, "transform"
-            ):
+            if not (
+                hasattr(t, "fit") or hasattr(t, "fit_transform")
+            ) or not hasattr(t, "transform"):
                 raise TypeError(
                     "All intermediate steps should be "
                     "transformers and implement fit and transform "
                     "or be the string 'passthrough' "
-                    "'%s' (type %s) doesn't" % (t, type(t))
+                    "'%s' (type %s) doesn't"
+                    % (t, type(t))
                 )
 
         # We allow last estimator to be None as an identity transformation
@@ -191,7 +192,8 @@ class Pipeline(_BaseComposition):
             raise TypeError(
                 "Last step of Pipeline should implement fit "
                 "or be the string 'passthrough'. "
-                "'%s' (type %s) doesn't" % (estimator, type(estimator))
+                "'%s' (type %s) doesn't"
+                % (estimator, type(estimator))
             )
 
     def _iter(self, with_final=True, filter_passthrough=True):
@@ -258,10 +260,16 @@ class Pipeline(_BaseComposition):
             return None
         name, _ = self.steps[step_idx]
 
-        return "(step %d of %d) Processing %s" % (step_idx + 1, len(self.steps), name)
+        return "(step %d of %d) Processing %s" % (
+            step_idx + 1,
+            len(self.steps),
+            name,
+        )
 
     def _check_fit_params(self, **fit_params):
-        fit_params_steps = {name: {} for name, step in self.steps if step is not None}
+        fit_params_steps = {
+            name: {} for name, step in self.steps if step is not None
+        }
         for pname, pval in fit_params.items():
             if "__" not in pname:
                 raise ValueError(
@@ -290,7 +298,9 @@ class Pipeline(_BaseComposition):
             with_final=False, filter_passthrough=False
         ):
             if transformer is None or transformer == "passthrough":
-                with _print_elapsed_time("Pipeline", self._log_message(step_idx)):
+                with _print_elapsed_time(
+                    "Pipeline", self._log_message(step_idx)
+                ):
                     continue
 
             if hasattr(memory, "location"):
@@ -355,7 +365,9 @@ class Pipeline(_BaseComposition):
         """
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
-        with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
+        with _print_elapsed_time(
+            "Pipeline", self._log_message(len(self.steps) - 1)
+        ):
             if self._final_estimator != "passthrough":
                 fit_params_last_step = fit_params_steps[self.steps[-1][0]]
                 self._final_estimator.fit(Xt, y, **fit_params_last_step)
@@ -393,14 +405,18 @@ class Pipeline(_BaseComposition):
         Xt = self._fit(X, y, **fit_params_steps)
 
         last_step = self._final_estimator
-        with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
+        with _print_elapsed_time(
+            "Pipeline", self._log_message(len(self.steps) - 1)
+        ):
             if last_step == "passthrough":
                 return Xt
             fit_params_last_step = fit_params_steps[self.steps[-1][0]]
             if hasattr(last_step, "fit_transform"):
                 return last_step.fit_transform(Xt, y, **fit_params_last_step)
             else:
-                return last_step.fit(Xt, y, **fit_params_last_step).transform(Xt)
+                return last_step.fit(Xt, y, **fit_params_last_step).transform(
+                    Xt
+                )
 
     @if_delegate_has_method(delegate="_final_estimator")
     def predict(self, X, **predict_params):
@@ -462,8 +478,12 @@ class Pipeline(_BaseComposition):
         Xt = self._fit(X, y, **fit_params_steps)
 
         fit_params_last_step = fit_params_steps[self.steps[-1][0]]
-        with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
-            y_pred = self.steps[-1][1].fit_predict(Xt, y, **fit_params_last_step)
+        with _print_elapsed_time(
+            "Pipeline", self._log_message(len(self.steps) - 1)
+        ):
+            y_pred = self.steps[-1][1].fit_predict(
+                Xt, y, **fit_params_last_step
+            )
         return y_pred
 
     @if_delegate_has_method(delegate="_final_estimator")
@@ -548,7 +568,9 @@ class Pipeline(_BaseComposition):
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
-        return self.steps[-1][1].predict_log_proba(Xt, **predict_log_proba_params)
+        return self.steps[-1][1].predict_log_proba(
+            Xt, **predict_log_proba_params
+        )
 
     def _can_transform(self):
         return self._final_estimator == "passthrough" or hasattr(
@@ -681,7 +703,9 @@ def _name_estimators(estimators):
     """Generate names for estimators."""
 
     names = [
-        estimator if isinstance(estimator, str) else type(estimator).__name__.lower()
+        estimator
+        if isinstance(estimator, str)
+        else type(estimator).__name__.lower()
         for estimator in estimators
     ]
     namecount = defaultdict(int)
@@ -773,7 +797,9 @@ def _fit_transform_one(
     return res * weight, transformer
 
 
-def _fit_one(transformer, X, y, weight, message_clsname="", message=None, **fit_params):
+def _fit_one(
+    transformer, X, y, weight, message_clsname="", message=None, **fit_params
+):
     """
     Fits ``transformer`` to ``X`` and ``y``.
     """
@@ -854,7 +880,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     _required_parameters = ["transformer_list"]
 
     def __init__(
-        self, transformer_list, *, n_jobs=None, transformer_weights=None, verbose=False
+        self,
+        transformer_list,
+        *,
+        n_jobs=None,
+        transformer_weights=None,
+        verbose=False,
     ):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
@@ -906,12 +937,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         for t in transformers:
             if t == "drop":
                 continue
-            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not hasattr(
-                t, "transform"
-            ):
+            if not (
+                hasattr(t, "fit") or hasattr(t, "fit_transform")
+            ) or not hasattr(t, "transform"):
                 raise TypeError(
                     "All estimators should implement fit and "
-                    "transform. '%s' (type %s) doesn't" % (t, type(t))
+                    "transform. '%s' (type %s) doesn't"
+                    % (t, type(t))
                 )
 
     def _validate_transformer_weights(self):
@@ -950,10 +982,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         for name, trans, weight in self._iter():
             if not hasattr(trans, "get_feature_names"):
                 raise AttributeError(
-                    "Transformer %s (type %s) does not provide get_feature_names."
+                    "Transformer %s (type %s) does not provide"
+                    " get_feature_names."
                     % (str(name), type(trans).__name__)
                 )
-            feature_names.extend([name + "__" + f for f in trans.get_feature_names()])
+            feature_names.extend(
+                [name + "__" + f for f in trans.get_feature_names()]
+            )
         return feature_names
 
     def fit(self, X, y=None, **fit_params):
@@ -1124,4 +1159,6 @@ def make_union(*transformers, n_jobs=None, verbose=False):
      FeatureUnion(transformer_list=[('pca', PCA()),
                                    ('truncatedsvd', TruncatedSVD())])
     """
-    return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)
+    return FeatureUnion(
+        _name_estimators(transformers), n_jobs=n_jobs, verbose=verbose
+    )

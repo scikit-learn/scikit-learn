@@ -245,7 +245,9 @@ def test_incremental_pca_batch_rank():
         ipca = IncrementalPCA(n_components=20, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
 
-    for components_i, components_j in zip(all_components[:-1], all_components[1:]):
+    for components_i, components_j in zip(
+        all_components[:-1], all_components[1:]
+    ):
         assert_allclose_dense_sparse(components_i, components_j)
 
 
@@ -306,9 +308,13 @@ def test_explained_variances():
             pca.explained_variance_, ipca.explained_variance_, decimal=prec
         )
         assert_almost_equal(
-            pca.explained_variance_ratio_, ipca.explained_variance_ratio_, decimal=prec
+            pca.explained_variance_ratio_,
+            ipca.explained_variance_ratio_,
+            decimal=prec,
         )
-        assert_almost_equal(pca.noise_variance_, ipca.noise_variance_, decimal=prec)
+        assert_almost_equal(
+            pca.noise_variance_, ipca.noise_variance_, decimal=prec
+        )
 
 
 def test_singular_values():
@@ -319,7 +325,11 @@ def test_singular_values():
     n_features = 100
 
     X = datasets.make_low_rank_matrix(
-        n_samples, n_features, tail_strength=0.0, effective_rank=10, random_state=rng
+        n_samples,
+        n_features,
+        tail_strength=0.0,
+        effective_rank=10,
+        random_state=rng,
     )
 
     pca = PCA(n_components=10, svd_solver="full", random_state=rng).fit(X)
@@ -330,10 +340,14 @@ def test_singular_values():
     X_pca = pca.transform(X)
     X_ipca = ipca.transform(X)
     assert_array_almost_equal(
-        np.sum(pca.singular_values_ ** 2.0), np.linalg.norm(X_pca, "fro") ** 2.0, 12
+        np.sum(pca.singular_values_ ** 2.0),
+        np.linalg.norm(X_pca, "fro") ** 2.0,
+        12,
     )
     assert_array_almost_equal(
-        np.sum(ipca.singular_values_ ** 2.0), np.linalg.norm(X_ipca, "fro") ** 2.0, 2
+        np.sum(ipca.singular_values_ ** 2.0),
+        np.linalg.norm(X_ipca, "fro") ** 2.0,
+        2,
     )
 
     # Compare to the 2-norms of the score vectors
@@ -350,7 +364,11 @@ def test_singular_values():
     n_features = 110
 
     X = datasets.make_low_rank_matrix(
-        n_samples, n_features, tail_strength=0.0, effective_rank=3, random_state=rng
+        n_samples,
+        n_features,
+        tail_strength=0.0,
+        effective_rank=3,
+        random_state=rng,
     )
 
     pca = PCA(n_components=3, svd_solver="full", random_state=rng)
@@ -377,7 +395,9 @@ def test_whitening():
     n_samples, n_features = X.shape
     for nc in [None, 9]:
         pca = PCA(whiten=True, n_components=nc).fit(X)
-        ipca = IncrementalPCA(whiten=True, n_components=nc, batch_size=250).fit(X)
+        ipca = IncrementalPCA(
+            whiten=True, n_components=nc, batch_size=250
+        ).fit(X)
 
         Xt_pca = pca.transform(X)
         Xt_ipca = ipca.transform(X)

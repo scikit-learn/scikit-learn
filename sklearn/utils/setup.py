@@ -15,7 +15,9 @@ def configuration(parent_package="", top_path=None):
         libraries.append("m")
 
     config.add_extension(
-        "sparsefuncs_fast", sources=["sparsefuncs_fast.pyx"], libraries=libraries
+        "sparsefuncs_fast",
+        sources=["sparsefuncs_fast.pyx"],
+        libraries=libraries,
     )
 
     config.add_extension(
@@ -61,7 +63,9 @@ def configuration(parent_package="", top_path=None):
     gen_from_templates(templates, top_path)
 
     config.add_extension(
-        "_seq_dataset", sources=["_seq_dataset.pyx"], include_dirs=[numpy.get_include()]
+        "_seq_dataset",
+        sources=["_seq_dataset.pyx"],
+        include_dirs=[numpy.get_include()],
     )
 
     config.add_extension(

@@ -87,7 +87,9 @@ def test_factor_analysis():
         fa.fit(X)
         cov = fa.get_covariance()
         precision = fa.get_precision()
-        assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
+        assert_array_almost_equal(
+            np.dot(cov, precision), np.eye(X.shape[1]), 12
+        )
 
     # test rotation
     n_components = 2

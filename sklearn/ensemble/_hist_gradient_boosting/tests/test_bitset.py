@@ -54,7 +54,9 @@ def test_raw_bitset_from_binned_bitset(
     for val in binned_cat_to_insert:
         set_bitset_memoryview(binned_bitset, val)
 
-    set_raw_bitset_from_binned_bitset(raw_bitset, binned_bitset, raw_categories)
+    set_raw_bitset_from_binned_bitset(
+        raw_bitset, binned_bitset, raw_categories
+    )
 
     assert_allclose(expected_raw_bitset, raw_bitset)
     for binned_cat_val, raw_cat_val in enumerate(raw_categories):

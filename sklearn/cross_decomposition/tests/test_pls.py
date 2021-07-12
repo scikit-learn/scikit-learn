@@ -1,6 +1,10 @@
 import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
+from numpy.testing import (
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_allclose,
+)
 
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition._pls import (
@@ -104,10 +108,18 @@ def test_sanity_check_pls_regression():
         ]
     )
 
-    assert_array_almost_equal(np.abs(pls.x_loadings_), np.abs(expected_x_loadings))
-    assert_array_almost_equal(np.abs(pls.x_weights_), np.abs(expected_x_weights))
-    assert_array_almost_equal(np.abs(pls.y_loadings_), np.abs(expected_y_loadings))
-    assert_array_almost_equal(np.abs(pls.y_weights_), np.abs(expected_y_weights))
+    assert_array_almost_equal(
+        np.abs(pls.x_loadings_), np.abs(expected_x_loadings)
+    )
+    assert_array_almost_equal(
+        np.abs(pls.x_weights_), np.abs(expected_x_weights)
+    )
+    assert_array_almost_equal(
+        np.abs(pls.y_loadings_), np.abs(expected_y_loadings)
+    )
+    assert_array_almost_equal(
+        np.abs(pls.y_weights_), np.abs(expected_y_weights)
+    )
 
     # The R / Python difference in the signs should be consistent across
     # loadings, weights, etc.
@@ -154,16 +166,26 @@ def test_sanity_check_pls_regression_constant_column_Y():
         ]
     )
 
-    assert_array_almost_equal(np.abs(expected_x_weights), np.abs(pls.x_weights_))
-    assert_array_almost_equal(np.abs(expected_x_loadings), np.abs(pls.x_loadings_))
+    assert_array_almost_equal(
+        np.abs(expected_x_weights), np.abs(pls.x_weights_)
+    )
+    assert_array_almost_equal(
+        np.abs(expected_x_loadings), np.abs(pls.x_loadings_)
+    )
     # For the PLSRegression with default parameters, y_loadings == y_weights
-    assert_array_almost_equal(np.abs(pls.y_loadings_), np.abs(expected_y_loadings))
-    assert_array_almost_equal(np.abs(pls.y_weights_), np.abs(expected_y_loadings))
+    assert_array_almost_equal(
+        np.abs(pls.y_loadings_), np.abs(expected_y_loadings)
+    )
+    assert_array_almost_equal(
+        np.abs(pls.y_weights_), np.abs(expected_y_loadings)
+    )
 
     x_loadings_sign_flip = np.sign(expected_x_loadings / pls.x_loadings_)
     x_weights_sign_flip = np.sign(expected_x_weights / pls.x_weights_)
     # we ignore the first full-zeros row for y
-    y_loadings_sign_flip = np.sign(expected_y_loadings[1:] / pls.y_loadings_[1:])
+    y_loadings_sign_flip = np.sign(
+        expected_y_loadings[1:] / pls.y_loadings_[1:]
+    )
 
     assert_array_equal(x_loadings_sign_flip, x_weights_sign_flip)
     assert_array_equal(x_loadings_sign_flip[1:], y_loadings_sign_flip)
@@ -212,10 +234,18 @@ def test_sanity_check_pls_canonical():
         ]
     )
 
-    assert_array_almost_equal(np.abs(pls.x_rotations_), np.abs(expected_x_rotations))
-    assert_array_almost_equal(np.abs(pls.x_weights_), np.abs(expected_x_weights))
-    assert_array_almost_equal(np.abs(pls.y_rotations_), np.abs(expected_y_rotations))
-    assert_array_almost_equal(np.abs(pls.y_weights_), np.abs(expected_y_weights))
+    assert_array_almost_equal(
+        np.abs(pls.x_rotations_), np.abs(expected_x_rotations)
+    )
+    assert_array_almost_equal(
+        np.abs(pls.x_weights_), np.abs(expected_x_weights)
+    )
+    assert_array_almost_equal(
+        np.abs(pls.y_rotations_), np.abs(expected_y_rotations)
+    )
+    assert_array_almost_equal(
+        np.abs(pls.y_weights_), np.abs(expected_y_weights)
+    )
 
     x_rotations_sign_flip = np.sign(pls.x_rotations_ / expected_x_rotations)
     x_weights_sign_flip = np.sign(pls.x_weights_ / expected_x_weights)
@@ -244,8 +274,12 @@ def test_sanity_check_pls_canonical_random():
     latents = np.array([l1, l1, l2, l2]).T
     X = latents + rng.normal(size=4 * n).reshape((n, 4))
     Y = latents + rng.normal(size=4 * n).reshape((n, 4))
-    X = np.concatenate((X, rng.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
-    Y = np.concatenate((Y, rng.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
+    X = np.concatenate(
+        (X, rng.normal(size=p_noise * n).reshape(n, p_noise)), axis=1
+    )
+    Y = np.concatenate(
+        (Y, rng.normal(size=q_noise * n).reshape(n, q_noise)), axis=1
+    )
 
     pls = PLSCanonical(n_components=3)
     pls.fit(X, Y)
@@ -316,10 +350,18 @@ def test_sanity_check_pls_canonical_random():
         ]
     )
 
-    assert_array_almost_equal(np.abs(pls.x_loadings_), np.abs(expected_x_loadings))
-    assert_array_almost_equal(np.abs(pls.x_weights_), np.abs(expected_x_weights))
-    assert_array_almost_equal(np.abs(pls.y_loadings_), np.abs(expected_y_loadings))
-    assert_array_almost_equal(np.abs(pls.y_weights_), np.abs(expected_y_weights))
+    assert_array_almost_equal(
+        np.abs(pls.x_loadings_), np.abs(expected_x_loadings)
+    )
+    assert_array_almost_equal(
+        np.abs(pls.x_weights_), np.abs(expected_x_weights)
+    )
+    assert_array_almost_equal(
+        np.abs(pls.y_loadings_), np.abs(expected_y_loadings)
+    )
+    assert_array_almost_equal(
+        np.abs(pls.y_weights_), np.abs(expected_y_weights)
+    )
 
     x_loadings_sign_flip = np.sign(pls.x_loadings_ / expected_x_loadings)
     x_weights_sign_flip = np.sign(pls.x_weights_ / expected_x_weights)
@@ -356,12 +398,14 @@ def test_attibutes_shapes(Est):
     pls = Est(n_components=n_components)
     pls.fit(X, Y)
     assert all(
-        attr.shape[1] == n_components for attr in (pls.x_weights_, pls.y_weights_)
+        attr.shape[1] == n_components
+        for attr in (pls.x_weights_, pls.y_weights_)
     )
     # TODO: remove in 1.1
     with ignore_warnings(category=FutureWarning):
         assert all(
-            attr.shape[1] == n_components for attr in (pls.x_scores_, pls.y_scores_)
+            attr.shape[1] == n_components
+            for attr in (pls.x_scores_, pls.y_scores_)
         )
 
 
@@ -412,7 +456,8 @@ def test_copy(Est):
 
     # Make sure copy=True gives same transform and predictions as predict=False
     assert_array_almost_equal(
-        pls.transform(X, Y, copy=True), pls.transform(X.copy(), Y.copy(), copy=False)
+        pls.transform(X, Y, copy=True),
+        pls.transform(X.copy(), Y.copy(), copy=False),
     )
     assert_array_almost_equal(
         pls.predict(X, copy=True), pls.predict(X.copy(), copy=False)
@@ -438,7 +483,9 @@ def _generate_test_scale_and_stability_datasets():
     X[:, -1] = 1.0
     yield X, Y
 
-    X = np.array([[0.0, 0.0, 1.0], [1.0, 0.0, 0.0], [2.0, 2.0, 2.0], [3.0, 5.0, 4.0]])
+    X = np.array(
+        [[0.0, 0.0, 1.0], [1.0, 0.0, 0.0], [2.0, 2.0, 2.0], [3.0, 5.0, 4.0]]
+    )
     Y = np.array([[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]])
     yield X, Y
 
@@ -475,7 +522,9 @@ def test_n_components_bounds(Est, n_components):
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
     est = Est(n_components=n_components)
-    with pytest.warns(FutureWarning, match="n_components=3 will be used instead"):
+    with pytest.warns(
+        FutureWarning, match="n_components=3 will be used instead"
+    ):
         est.fit(X, Y)
         # make sure upper bound of rank is used as a fallback
         assert est.transform(X).shape[1] == 3
@@ -489,7 +538,9 @@ def test_n_components_bounds_pls_regression(n_components):
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
     est = PLSRegression(n_components=n_components)
-    with pytest.warns(FutureWarning, match="n_components=5 will be used instead"):
+    with pytest.warns(
+        FutureWarning, match="n_components=5 will be used instead"
+    ):
         est.fit(X, Y)
         # make sure upper bound of rank is used as a fallback
         assert est.transform(X).shape[1] == 5
@@ -522,8 +573,12 @@ def test_norm_y_weights_deprecation(Est):
 
 
 # TODO: Remove test in 1.1
-@pytest.mark.parametrize("Estimator", (PLSRegression, PLSCanonical, CCA, PLSSVD))
-@pytest.mark.parametrize("attribute", ("x_mean_", "y_mean_", "x_std_", "y_std_"))
+@pytest.mark.parametrize(
+    "Estimator", (PLSRegression, PLSCanonical, CCA, PLSSVD)
+)
+@pytest.mark.parametrize(
+    "attribute", ("x_mean_", "y_mean_", "x_std_", "y_std_")
+)
 def test_mean_and_std_deprecation(Estimator, attribute):
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
@@ -537,8 +592,12 @@ def test_mean_and_std_deprecation(Estimator, attribute):
 @pytest.mark.parametrize("seed", range(10))
 def test_singular_value_helpers(n_samples, n_features, seed):
     # Make sure SVD and power method give approximately the same results
-    X, Y = make_regression(n_samples, n_features, n_targets=5, random_state=seed)
-    u1, v1, _ = _get_first_singular_vectors_power_method(X, Y, norm_y_weights=True)
+    X, Y = make_regression(
+        n_samples, n_features, n_targets=5, random_state=seed
+    )
+    u1, v1, _ = _get_first_singular_vectors_power_method(
+        X, Y, norm_y_weights=True
+    )
     u2, v2 = _get_first_singular_vectors_svd(X, Y)
 
     _svd_flip_1d(u1, v1)
@@ -578,7 +637,9 @@ def test_svd_flip_1d():
 
 def test_loadings_converges():
     """Test that CCA converges. Non-regression test for #19549."""
-    X, y = make_regression(n_samples=200, n_features=20, n_targets=20, random_state=20)
+    X, y = make_regression(
+        n_samples=200, n_features=20, n_targets=20, random_state=20
+    )
 
     cca = CCA(n_components=10, max_iter=500)
 

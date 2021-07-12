@@ -10,7 +10,10 @@ from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    HistGradientBoostingClassifier,
+)
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import make_pipeline
@@ -116,7 +119,9 @@ def test_max_features():
     assert_allclose(X_new1, X_new2)
 
     # Test max_features against actual model.
-    transformer1 = SelectFromModel(estimator=Lasso(alpha=0.025, random_state=42))
+    transformer1 = SelectFromModel(
+        estimator=Lasso(alpha=0.025, random_state=42)
+    )
     X_new1 = transformer1.fit_transform(X, y)
     scores1 = np.abs(transformer1.estimator_.coef_)
     candidate_indices1 = np.argsort(-scores1, kind="mergesort")
@@ -131,9 +136,12 @@ def test_max_features():
         scores2 = np.abs(transformer2.estimator_.coef_)
         candidate_indices2 = np.argsort(-scores2, kind="mergesort")
         assert_allclose(
-            X[:, candidate_indices1[:n_features]], X[:, candidate_indices2[:n_features]]
+            X[:, candidate_indices1[:n_features]],
+            X[:, candidate_indices2[:n_features]],
         )
-    assert_allclose(transformer1.estimator_.coef_, transformer2.estimator_.coef_)
+    assert_allclose(
+        transformer1.estimator_.coef_, transformer2.estimator_.coef_
+    )
 
 
 def test_max_features_tiebreak():
@@ -174,16 +182,22 @@ def test_threshold_and_max_features():
     )
     est = RandomForestClassifier(n_estimators=50, random_state=0)
 
-    transformer1 = SelectFromModel(estimator=est, max_features=3, threshold=-np.inf)
+    transformer1 = SelectFromModel(
+        estimator=est, max_features=3, threshold=-np.inf
+    )
     X_new1 = transformer1.fit_transform(X, y)
 
     transformer2 = SelectFromModel(estimator=est, threshold=0.04)
     X_new2 = transformer2.fit_transform(X, y)
 
-    transformer3 = SelectFromModel(estimator=est, max_features=3, threshold=0.04)
+    transformer3 = SelectFromModel(
+        estimator=est, max_features=3, threshold=0.04
+    )
     X_new3 = transformer3.fit_transform(X, y)
     assert X_new3.shape[1] == min(X_new1.shape[1], X_new2.shape[1])
-    selected_indices = transformer3.transform(np.arange(X.shape[1])[np.newaxis, :])
+    selected_indices = transformer3.transform(
+        np.arange(X.shape[1])[np.newaxis, :]
+    )
     assert_allclose(X_new3, X[:, selected_indices[0]])
 
 
@@ -278,7 +292,9 @@ def test_2d_coef():
         for order in [1, 2, np.inf]:
             # Fit SelectFromModel a multi-class problem
             transformer = SelectFromModel(
-                estimator=LogisticRegression(), threshold=threshold, norm_order=order
+                estimator=LogisticRegression(),
+                threshold=threshold,
+                norm_order=order,
             )
             transformer.fit(X, y)
             assert hasattr(transformer.estimator_, "coef_")
@@ -326,7 +342,9 @@ def test_prefit():
 
     # Passing a prefit parameter with the selected model
     # and fitting a unfit model with prefit=False should give same results.
-    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True, random_state=0, tol=None)
+    clf = SGDClassifier(
+        alpha=0.1, max_iter=10, shuffle=True, random_state=0, tol=None
+    )
     model = SelectFromModel(clf)
     model.fit(data, y)
     X_transform = model.transform(data)
@@ -361,7 +379,9 @@ def test_threshold_string():
 
 def test_threshold_without_refitting():
     # Test that the threshold can be set without refitting the model.
-    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True, random_state=0, tol=None)
+    clf = SGDClassifier(
+        alpha=0.1, max_iter=10, shuffle=True, random_state=0, tol=None
+    )
     model = SelectFromModel(clf, threshold="0.1 * mean")
     model.fit(data, y)
     X_transform = model.transform(data)

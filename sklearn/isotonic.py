@@ -218,7 +218,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     array([1.8628..., 3.7256...])
     """
 
-    def __init__(self, *, y_min=None, y_max=None, increasing=True, out_of_bounds="nan"):
+    def __init__(
+        self, *, y_min=None, y_max=None, increasing=True, out_of_bounds="nan"
+    ):
         self.y_min = y_min
         self.y_max = y_max
         self.increasing = increasing
@@ -270,7 +272,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         order = np.lexsort((y, X))
         X, y, sample_weight = [array[order] for array in [X, y, sample_weight]]
-        unique_X, unique_y, unique_sample_weight = _make_unique(X, y, sample_weight)
+        unique_X, unique_y, unique_sample_weight = _make_unique(
+            X, y, sample_weight
+        )
 
         X = unique_X
         y = isotonic_regression(

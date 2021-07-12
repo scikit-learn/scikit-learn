@@ -221,20 +221,23 @@ class BayesianRidge(RegressorMixin, LinearModel):
             Returns the instance itself.
         """
         self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
+            self.normalize,
+            default=False,
+            estimator_name=self.__class__.__name__,
         )
 
         if self.n_iter < 1:
             raise ValueError(
-                "n_iter should be greater than or equal to 1. Got {!r}.".format(
-                    self.n_iter
-                )
+                "n_iter should be greater than or equal to 1. Got {!r}."
+                .format(self.n_iter)
             )
 
         X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True)
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype
+            )
 
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X,
@@ -283,18 +286,37 @@ class BayesianRidge(RegressorMixin, LinearModel):
             # update posterior mean coef_ based on alpha_ and lambda_ and
             # compute corresponding rmse
             coef_, rmse_ = self._update_coef_(
-                X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
+                X,
+                y,
+                n_samples,
+                n_features,
+                XT_y,
+                U,
+                Vh,
+                eigen_vals_,
+                alpha_,
+                lambda_,
             )
             if self.compute_score:
                 # compute the log marginal likelihood
                 s = self._log_marginal_likelihood(
-                    n_samples, n_features, eigen_vals_, alpha_, lambda_, coef_, rmse_
+                    n_samples,
+                    n_features,
+                    eigen_vals_,
+                    alpha_,
+                    lambda_,
+                    coef_,
+                    rmse_,
                 )
                 self.scores_.append(s)
 
             # Update alpha and lambda according to (MacKay, 1992)
-            gamma_ = np.sum((alpha_ * eigen_vals_) / (lambda_ + alpha_ * eigen_vals_))
-            lambda_ = (gamma_ + 2 * lambda_1) / (np.sum(coef_ ** 2) + 2 * lambda_2)
+            gamma_ = np.sum(
+                (alpha_ * eigen_vals_) / (lambda_ + alpha_ * eigen_vals_)
+            )
+            lambda_ = (gamma_ + 2 * lambda_1) / (
+                np.sum(coef_ ** 2) + 2 * lambda_2
+            )
             alpha_ = (n_samples - gamma_ + 2 * alpha_1) / (rmse_ + 2 * alpha_2)
 
             # Check for convergence
@@ -311,12 +333,27 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.alpha_ = alpha_
         self.lambda_ = lambda_
         self.coef_, rmse_ = self._update_coef_(
-            X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
+            X,
+            y,
+            n_samples,
+            n_features,
+            XT_y,
+            U,
+            Vh,
+            eigen_vals_,
+            alpha_,
+            lambda_,
         )
         if self.compute_score:
             # compute the log marginal likelihood
             s = self._log_marginal_likelihood(
-                n_samples, n_features, eigen_vals_, alpha_, lambda_, coef_, rmse_
+                n_samples,
+                n_features,
+                eigen_vals_,
+                alpha_,
+                lambda_,
+                coef_,
+                rmse_,
             )
             self.scores_.append(s)
             self.scores_ = np.array(self.scores_)
@@ -364,7 +401,17 @@ class BayesianRidge(RegressorMixin, LinearModel):
             return y_mean, y_std
 
     def _update_coef_(
-        self, X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
+        self,
+        X,
+        y,
+        n_samples,
+        n_features,
+        XT_y,
+        U,
+        Vh,
+        eigen_vals_,
+        alpha_,
+        lambda_,
     ):
         """Update posterior mean and compute corresponding rmse.
 
@@ -375,7 +422,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         if n_samples > n_features:
             coef_ = np.linalg.multi_dot(
-                [Vh.T, Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis], XT_y]
+                [
+                    Vh.T,
+                    Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis],
+                    XT_y,
+                ]
             )
         else:
             coef_ = np.linalg.multi_dot(
@@ -401,7 +452,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
         if n_samples > n_features:
             logdet_sigma = -np.sum(np.log(lambda_ + alpha_ * eigen_vals))
         else:
-            logdet_sigma = np.full(n_features, lambda_, dtype=np.array(lambda_).dtype)
+            logdet_sigma = np.full(
+                n_features, lambda_, dtype=np.array(lambda_).dtype
+            )
             logdet_sigma[:n_samples] += alpha_ * eigen_vals
             logdet_sigma = -np.sum(np.log(logdet_sigma))
 
@@ -602,7 +655,9 @@ class ARDRegression(RegressorMixin, LinearModel):
             Fitted estimator.
         """
         self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
+            self.normalize,
+            default=False,
+            estimator_name=self.__class__.__name__,
         )
 
         X, y = self._validate_data(

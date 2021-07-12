@@ -69,7 +69,9 @@ def test_mean_shift(bandwidth, cluster_all, expected, first_cluster_label):
 def test_mean_shift_negative_bandwidth():
     bandwidth = -1
     ms = MeanShift(bandwidth=bandwidth)
-    msg = r"bandwidth needs to be greater than zero or None," r" got -1\.000000"
+    msg = (
+        r"bandwidth needs to be greater than zero or None," r" got -1\.000000"
+    )
     with pytest.raises(ValueError, match=msg):
         ms.fit(X)
 
@@ -143,7 +145,14 @@ def test_bin_seeds():
     # algorithm
     # Data is just 6 points in the plane
     X = np.array(
-        [[1.0, 1.0], [1.4, 1.4], [1.8, 1.2], [2.0, 1.0], [2.1, 1.1], [0.0, 0.0]]
+        [
+            [1.0, 1.0],
+            [1.4, 1.4],
+            [1.8, 1.2],
+            [2.0, 1.0],
+            [2.1, 1.1],
+            [0.0, 0.0],
+        ]
     )
 
     # With a bin coarseness of 1.0 and min_bin_freq of 1, 3 bins should be

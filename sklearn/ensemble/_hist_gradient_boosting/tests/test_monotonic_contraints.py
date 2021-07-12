@@ -108,7 +108,9 @@ def assert_children_values_bounded(grower, monotonic_cst):
         if right_sibling is not None:
             middle = (node.value + right_sibling.value) / 2
             if monotonic_cst == MonotonicConstraint.POS:
-                assert node.left_child.value <= node.right_child.value <= middle
+                assert (
+                    node.left_child.value <= node.right_child.value <= middle
+                )
                 if not right_sibling.is_leaf:
                     assert (
                         middle
@@ -116,7 +118,9 @@ def assert_children_values_bounded(grower, monotonic_cst):
                         <= right_sibling.right_child.value
                     )
             else:  # NEG
-                assert node.left_child.value >= node.right_child.value >= middle
+                assert (
+                    node.left_child.value >= node.right_child.value >= middle
+                )
                 if not right_sibling.is_leaf:
                     assert (
                         middle
@@ -163,14 +167,20 @@ def test_nodes_values(monotonic_cst, seed):
     rng = np.random.RandomState(seed)
     n_samples = 1000
     n_features = 1
-    X_binned = rng.randint(0, 255, size=(n_samples, n_features), dtype=np.uint8)
+    X_binned = rng.randint(
+        0, 255, size=(n_samples, n_features), dtype=np.uint8
+    )
     X_binned = np.asfortranarray(X_binned)
 
     gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 
     grower = TreeGrower(
-        X_binned, gradients, hessians, monotonic_cst=[monotonic_cst], shrinkage=0.1
+        X_binned,
+        gradients,
+        hessians,
+        monotonic_cst=[monotonic_cst],
+        shrinkage=0.1,
     )
     grower.grow()
 
@@ -212,7 +222,13 @@ def test_predictions(seed):
     f_1 = rng.rand(n_samples)  # negative correslation with y
     X = np.c_[f_0, f_1]
     noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
-    y = 5 * f_0 + np.sin(10 * np.pi * f_0) - 5 * f_1 - np.cos(10 * np.pi * f_1) + noise
+    y = (
+        5 * f_0
+        + np.sin(10 * np.pi * f_0)
+        - 5 * f_1
+        - np.cos(10 * np.pi * f_1)
+        + noise
+    )
 
     gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
     gbdt.fit(X, y)
@@ -272,7 +288,10 @@ def test_input_error():
     gbdt = HistGradientBoostingClassifier(monotonic_cst=[0, 1])
     with pytest.raises(
         ValueError,
-        match="monotonic constraints are not supported for multiclass classification",
+        match=(
+            "monotonic constraints are not supported for multiclass"
+            " classification"
+        ),
     ):
         gbdt.fit(X, y)
 
@@ -298,9 +317,16 @@ def test_bounded_value_min_gain_to_split():
     hessians_are_constant = False
 
     builder = HistogramBuilder(
-        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
+        X_binned,
+        n_bins,
+        all_gradients,
+        all_hessians,
+        hessians_are_constant,
+        n_threads,
     )
-    n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
+    n_bins_non_missing = np.array(
+        [n_bins - 1] * X_binned.shape[1], dtype=np.uint32
+    )
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8

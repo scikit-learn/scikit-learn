@@ -103,7 +103,9 @@ def test_get_visual_block_voting():
     )
     est_html_info = _get_visual_block(clf)
     assert est_html_info.kind == "parallel"
-    assert est_html_info.estimators == tuple(trans[1] for trans in clf.estimators)
+    assert est_html_info.estimators == tuple(
+        trans[1] for trans in clf.estimators
+    )
     assert est_html_info.names == ("log_reg", "mlp")
     assert est_html_info.name_details == (None, None)
 
@@ -114,19 +116,27 @@ def test_get_visual_block_column_transformer():
     )
     est_html_info = _get_visual_block(ct)
     assert est_html_info.kind == "parallel"
-    assert est_html_info.estimators == tuple(trans[1] for trans in ct.transformers)
+    assert est_html_info.estimators == tuple(
+        trans[1] for trans in ct.transformers
+    )
     assert est_html_info.names == ("pca", "svd")
     assert est_html_info.name_details == (["num1", "num2"], [0, 3])
 
 
 def test_estimator_html_repr_pipeline():
     num_trans = Pipeline(
-        steps=[("pass", "passthrough"), ("imputer", SimpleImputer(strategy="median"))]
+        steps=[
+            ("pass", "passthrough"),
+            ("imputer", SimpleImputer(strategy="median")),
+        ]
     )
 
     cat_trans = Pipeline(
         steps=[
-            ("imputer", SimpleImputer(strategy="constant", missing_values="empty")),
+            (
+                "imputer",
+                SimpleImputer(strategy="constant", missing_values="empty"),
+            ),
             ("one-hot", OneHotEncoder(drop="first")),
         ]
     )
@@ -168,7 +178,10 @@ def test_estimator_html_repr_pipeline():
     # top level estimators show estimator with changes
     assert str(pipe) in html_output
     for _, est in pipe.steps:
-        assert f'<div class="sk-toggleable__content"><pre>{str(est)}' in html_output
+        assert (
+            f'<div class="sk-toggleable__content"><pre>{str(est)}'
+            in html_output
+        )
 
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
@@ -204,7 +217,9 @@ def test_stacking_classsifer(final_estimator):
         ("mlp", MLPClassifier(alpha=0.001)),
         ("tree", DecisionTreeClassifier()),
     ]
-    clf = StackingClassifier(estimators=estimators, final_estimator=final_estimator)
+    clf = StackingClassifier(
+        estimators=estimators, final_estimator=final_estimator
+    )
 
     html_output = estimator_html_repr(clf)
 

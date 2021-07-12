@@ -18,7 +18,8 @@ def _check_params(X, metric, p, metric_params):
     for param_name, func_param in params:
         if func_param != est_params[param_name]:
             raise ValueError(
-                "Got %s for %s, while the estimator has %s for the same parameter."
+                "Got %s for %s, while the estimator has %s for the same"
+                " parameter."
                 % (func_param, param_name, est_params[param_name])
             )
 
@@ -415,12 +416,16 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
     def _more_tags(self):
         return {
             "_xfail_checks": {
-                "check_methods_sample_order_invariance": "check is not applicable."
+                "check_methods_sample_order_invariance": (
+                    "check is not applicable."
+                )
             }
         }
 
 
-class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, NeighborsBase):
+class RadiusNeighborsTransformer(
+    RadiusNeighborsMixin, TransformerMixin, NeighborsBase
+):
     """Transform X into a (weighted) graph of neighbors nearer than a radius
 
     The transformed data is a sparse graph as returned by
@@ -585,7 +590,9 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
             The matrix is of CSR format.
         """
         check_is_fitted(self)
-        return self.radius_neighbors_graph(X, mode=self.mode, sort_results=True)
+        return self.radius_neighbors_graph(
+            X, mode=self.mode, sort_results=True
+        )
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
@@ -613,6 +620,8 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
     def _more_tags(self):
         return {
             "_xfail_checks": {
-                "check_methods_sample_order_invariance": "check is not applicable."
+                "check_methods_sample_order_invariance": (
+                    "check is not applicable."
+                )
             }
         }

@@ -24,7 +24,9 @@ class _LineSearchError(RuntimeError):
     pass
 
 
-def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs):
+def _line_search_wolfe12(
+    f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs
+):
     """
     Same as line_search_wolfe1, but fall back to line_search_wolfe2 if
     suitable step length is not found, and raise an exception if a
@@ -36,7 +38,9 @@ def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwarg
         If no suitable step size is found.
 
     """
-    ret = line_search_wolfe1(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs)
+    ret = line_search_wolfe1(
+        f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs
+    )
 
     if ret[0] is None:
         # line search failed: try different one.
@@ -196,8 +200,22 @@ def _newton_cg(
 
         if line_search:
             try:
-                alphak, fc, gc, old_fval, old_old_fval, gfkp1 = _line_search_wolfe12(
-                    func, grad, xk, xsupi, fgrad, old_fval, old_old_fval, args=args
+                (
+                    alphak,
+                    fc,
+                    gc,
+                    old_fval,
+                    old_old_fval,
+                    gfkp1,
+                ) = _line_search_wolfe12(
+                    func,
+                    grad,
+                    xk,
+                    xsupi,
+                    fgrad,
+                    old_fval,
+                    old_old_fval,
+                    args=args,
                 )
             except _LineSearchError:
                 warnings.warn("Line Search failed")
@@ -214,7 +232,9 @@ def _newton_cg(
     return xk, k
 
 
-def _check_optimize_result(solver, result, max_iter=None, extra_warning_msg=None):
+def _check_optimize_result(
+    solver, result, max_iter=None, extra_warning_msg=None
+):
     """Check the OptimizeResult for successful convergence
 
     Parameters

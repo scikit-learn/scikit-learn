@@ -102,7 +102,10 @@ def test_inverse_transform_sparse():
 
     # Check dtype matches
     assert np.int32 == sel.inverse_transform(sparse(Xt).astype(np.int32)).dtype
-    assert np.float32 == sel.inverse_transform(sparse(Xt).astype(np.float32)).dtype
+    assert (
+        np.float32
+        == sel.inverse_transform(sparse(Xt).astype(np.float32)).dtype
+    )
 
     # Check wrong shape raises error
     with pytest.raises(ValueError):

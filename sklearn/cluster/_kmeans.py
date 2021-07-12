@@ -48,7 +48,12 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
 
 
 def kmeans_plusplus(
-    X, n_clusters, *, x_squared_norms=None, random_state=None, n_local_trials=None
+    X,
+    n_clusters,
+    *,
+    x_squared_norms=None,
+    random_state=None,
+    n_local_trials=None,
 ):
     """Init n_clusters seeds according to k-means++
 
@@ -119,7 +124,9 @@ def kmeans_plusplus(
     if x_squared_norms is None:
         x_squared_norms = row_norms(X, squared=True)
     else:
-        x_squared_norms = check_array(x_squared_norms, dtype=X.dtype, ensure_2d=False)
+        x_squared_norms = check_array(
+            x_squared_norms, dtype=X.dtype, ensure_2d=False
+        )
 
     if x_squared_norms.shape[0] != X.shape[0]:
         raise ValueError(
@@ -143,7 +150,9 @@ def kmeans_plusplus(
     return centers, indices
 
 
-def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
+def _kmeans_plusplus(
+    X, n_clusters, x_squared_norms, random_state, n_local_trials=None
+):
     """Computational component for initialization of n_clusters by
     k-means++. Prior validation of data is assumed.
 
@@ -208,9 +217,13 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
         rand_vals = random_state.random_sample(n_local_trials) * current_pot
-        candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq), rand_vals)
+        candidate_ids = np.searchsorted(
+            stable_cumsum(closest_dist_sq), rand_vals
+        )
         # XXX: numerical imprecision can result in a candidate_id out of range
-        np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
+        np.clip(
+            candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids
+        )
 
         # Compute distances to center candidates
         distance_to_candidates = _euclidean_distances(
@@ -218,7 +231,9 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
         )
 
         # update closest distances squared and potential for each candidate
-        np.minimum(closest_dist_sq, distance_to_candidates, out=distance_to_candidates)
+        np.minimum(
+            closest_dist_sq, distance_to_candidates, out=distance_to_candidates
+        )
         candidates_pot = distance_to_candidates.sum(axis=1)
 
         # Decide which candidate is the best
@@ -467,7 +482,9 @@ def _kmeans_single_elkan(
         elkan_iter = elkan_iter_chunked_dense
         _inertia = _inertia_dense
 
-    init_bounds(X, centers, center_half_distances, labels, upper_bounds, lower_bounds)
+    init_bounds(
+        X, centers, center_half_distances, labels, upper_bounds, lower_bounds
+    )
 
     strict_convergence = False
 
@@ -638,7 +655,9 @@ def _kmeans_single_lloyd(
             )
 
             if verbose:
-                inertia = _inertia(X, sample_weight, centers, labels, n_threads)
+                inertia = _inertia(
+                    X, sample_weight, centers, labels, n_threads
+                )
                 print(f"Iteration {i}, inertia {inertia}.")
 
             centers, centers_new = centers_new, centers
@@ -929,17 +948,22 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     def _check_params(self, X):
         # n_init
         if self.n_init <= 0:
-            raise ValueError(f"n_init should be > 0, got {self.n_init} instead.")
+            raise ValueError(
+                f"n_init should be > 0, got {self.n_init} instead."
+            )
         self._n_init = self.n_init
 
         # max_iter
         if self.max_iter <= 0:
-            raise ValueError(f"max_iter should be > 0, got {self.max_iter} instead.")
+            raise ValueError(
+                f"max_iter should be > 0, got {self.max_iter} instead."
+            )
 
         # n_clusters
         if X.shape[0] < self.n_clusters:
             raise ValueError(
-                f"n_samples={X.shape[0]} should be >= n_clusters={self.n_clusters}."
+                f"n_samples={X.shape[0]} should be >="
+                f" n_clusters={self.n_clusters}."
             )
 
         # tol
@@ -967,7 +991,10 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         if not (
             hasattr(self.init, "__array__")
             or callable(self.init)
-            or (isinstance(self.init, str) and self.init in ["k-means++", "random"])
+            or (
+                isinstance(self.init, str)
+                and self.init in ["k-means++", "random"]
+            )
         ):
             raise ValueError(
                 "init should be either 'k-means++', 'random', a ndarray or a "
@@ -1043,7 +1070,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                         f"OMP_NUM_THREADS={active_threads}"
                     )
 
-    def _init_centroids(self, X, x_squared_norms, init, random_state, init_size=None):
+    def _init_centroids(
+        self, X, x_squared_norms, init, random_state, init_size=None
+    ):
         """Compute the initial centroids.
 
         Parameters
@@ -1094,7 +1123,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             centers = init
         elif callable(init):
             centers = init(X, n_clusters, random_state=random_state)
-            centers = check_array(centers, dtype=X.dtype, copy=False, order="C")
+            centers = check_array(
+                centers, dtype=X.dtype, copy=False, order="C"
+            )
             self._validate_center_shape(X, centers)
 
         if sp.issparse(centers):
@@ -1171,7 +1202,10 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         for i in range(self._n_init):
             # Initialize centers
             centers_init = self._init_centroids(
-                X, x_squared_norms=x_squared_norms, init=init, random_state=random_state
+                X,
+                x_squared_norms=x_squared_norms,
+                init=init,
+                random_state=random_state,
             )
             if self.verbose:
                 print("Initialization complete")
@@ -1321,7 +1355,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         return _labels_inertia_threadpool_limit(
-            X, sample_weight, x_squared_norms, self.cluster_centers_, self._n_threads
+            X,
+            sample_weight,
+            x_squared_norms,
+            self.cluster_centers_,
+            self._n_threads,
         )[0]
 
     def score(self, X, y=None, sample_weight=None):
@@ -1351,7 +1389,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         return -_labels_inertia_threadpool_limit(
-            X, sample_weight, x_squared_norms, self.cluster_centers_, self._n_threads
+            X,
+            sample_weight,
+            x_squared_norms,
+            self.cluster_centers_,
+            self._n_threads,
         )[1]
 
     def _more_tags(self):
@@ -1439,11 +1481,23 @@ def _mini_batch_step(
     # Update centers according to the labels
     if sp.issparse(X):
         _minibatch_update_sparse(
-            X, sample_weight, centers, centers_new, weight_sums, labels, n_threads
+            X,
+            sample_weight,
+            centers,
+            centers_new,
+            weight_sums,
+            labels,
+            n_threads,
         )
     else:
         _minibatch_update_dense(
-            X, sample_weight, centers, centers_new, weight_sums, labels, n_threads
+            X,
+            sample_weight,
+            centers,
+            centers_new,
+            weight_sums,
+            labels,
+            n_threads,
         )
 
     # Reassign clusters that have very low weight
@@ -1452,7 +1506,9 @@ def _mini_batch_step(
 
         # pick at most .5 * batch_size samples as new centers
         if to_reassign.sum() > 0.5 * X.shape[0]:
-            indices_dont_reassign = np.argsort(weight_sums)[int(0.5 * X.shape[0]) :]
+            indices_dont_reassign = np.argsort(weight_sums)[
+                int(0.5 * X.shape[0]) :
+            ]
             to_reassign[indices_dont_reassign] = False
         n_reassigns = to_reassign.sum()
 
@@ -1462,7 +1518,10 @@ def _mini_batch_step(
                 X.shape[0], replace=False, size=n_reassigns
             )
             if verbose:
-                print(f"[MiniBatchKMeans] Reassigning {n_reassigns} cluster centers.")
+                print(
+                    f"[MiniBatchKMeans] Reassigning {n_reassigns} cluster"
+                    " centers."
+                )
 
             if sp.issparse(X):
                 assign_rows_csr(
@@ -1737,7 +1796,9 @@ class MiniBatchKMeans(KMeans):
 
         # init_size
         if self.init_size is not None and self.init_size <= 0:
-            raise ValueError(f"init_size should be > 0, got {self.init_size} instead.")
+            raise ValueError(
+                f"init_size should be > 0, got {self.init_size} instead."
+            )
         self._init_size = self.init_size
         if self._init_size is None:
             self._init_size = 3 * self._batch_size
@@ -1789,7 +1850,9 @@ class MiniBatchKMeans(KMeans):
         else:
             alpha = self._batch_size * 2.0 / (n_samples + 1)
             alpha = min(alpha, 1)
-            self._ewa_inertia = self._ewa_inertia * (1 - alpha) + batch_inertia * alpha
+            self._ewa_inertia = (
+                self._ewa_inertia * (1 - alpha) + batch_inertia * alpha
+            )
 
         # Log progress to be able to monitor convergence
         if self.verbose:
@@ -1802,12 +1865,18 @@ class MiniBatchKMeans(KMeans):
         # centers position
         if self._tol > 0.0 and centers_squared_diff <= self._tol:
             if self.verbose:
-                print(f"Converged (small centers change) at step {step}/{n_steps}")
+                print(
+                    "Converged (small centers change) at step"
+                    f" {step}/{n_steps}"
+                )
             return True
 
         # Early stopping heuristic due to lack of improvement on smoothed
         # inertia
-        if self._ewa_inertia_min is None or self._ewa_inertia < self._ewa_inertia_min:
+        if (
+            self._ewa_inertia_min is None
+            or self._ewa_inertia < self._ewa_inertia_min
+        ):
             self._no_improvement = 0
             self._ewa_inertia_min = self._ewa_inertia
         else:
@@ -1893,7 +1962,9 @@ class MiniBatchKMeans(KMeans):
         x_squared_norms = row_norms(X, squared=True)
 
         # Validation set for the init
-        validation_indices = random_state.randint(0, n_samples, self._init_size)
+        validation_indices = random_state.randint(
+            0, n_samples, self._init_size
+        )
         X_valid = X[validation_indices]
         sample_weight_valid = sample_weight[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
@@ -1924,7 +1995,10 @@ class MiniBatchKMeans(KMeans):
             )
 
             if self.verbose:
-                print(f"Inertia for init {init_idx + 1}/{self._n_init}: {inertia}")
+                print(
+                    f"Inertia for init {init_idx + 1}/{self._n_init}:"
+                    f" {inertia}"
+                )
             if best_inertia is None or inertia < best_inertia:
                 init_centers = cluster_centers
                 best_inertia = inertia
@@ -1949,7 +2023,9 @@ class MiniBatchKMeans(KMeans):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
                 # Sample a minibatch from the full dataset
-                minibatch_indices = random_state.randint(0, n_samples, self._batch_size)
+                minibatch_indices = random_state.randint(
+                    0, n_samples, self._batch_size
+                )
 
                 # Perform the actual update step on the minibatch data
                 batch_inertia = _mini_batch_step(

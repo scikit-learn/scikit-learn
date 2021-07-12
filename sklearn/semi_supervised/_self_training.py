@@ -164,7 +164,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Returns an instance of self.
         """
         # we need row slicing support for sparce matrices
-        X, y = self._validate_data(X, y, accept_sparse=["csr", "csc", "lil", "dok"])
+        X, y = self._validate_data(
+            X, y, accept_sparse=["csr", "csc", "lil", "dok"]
+        )
 
         if self.base_estimator is None:
             raise ValueError("base_estimator cannot be None!")
@@ -172,10 +174,14 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.base_estimator_ = clone(self.base_estimator)
 
         if self.max_iter is not None and self.max_iter < 0:
-            raise ValueError(f"max_iter must be >= 0 or None, got {self.max_iter}")
+            raise ValueError(
+                f"max_iter must be >= 0 or None, got {self.max_iter}"
+            )
 
         if not (0 <= self.threshold < 1):
-            raise ValueError(f"threshold must be in [0,1), got {self.threshold}")
+            raise ValueError(
+                f"threshold must be in [0,1), got {self.threshold}"
+            )
 
         if self.criterion not in ["threshold", "k_best"]:
             raise ValueError(
@@ -225,7 +231,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             _validate_estimator(self.base_estimator_)
 
             # Predict on the unlabeled samples
-            prob = self.base_estimator_.predict_proba(X[safe_mask(X, ~has_label)])
+            prob = self.base_estimator_.predict_proba(
+                X[safe_mask(X, ~has_label)]
+            )
             pred = self.base_estimator_.classes_[np.argmax(prob, axis=1)]
             max_proba = np.max(prob, axis=1)
 
@@ -238,7 +246,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                     selected = np.ones_like(max_proba, dtype=bool)
                 else:
                     # NB these are indicies, not a mask
-                    selected = np.argpartition(-max_proba, n_to_select)[:n_to_select]
+                    selected = np.argpartition(-max_proba, n_to_select)[
+                        :n_to_select
+                    ]
 
             # Map selected indices into original array
             selected_full = np.nonzero(~has_label)[0][selected]

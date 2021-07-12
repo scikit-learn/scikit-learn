@@ -175,7 +175,11 @@ def test_min_max_resources(
     assert sh.n_possible_iterations_ == expected_n_possible_iterations
     assert sh.n_resources_ == expected_n_resources
     if min_resources == "exhaust":
-        assert sh.n_possible_iterations_ == sh.n_iterations_ == len(sh.n_resources_)
+        assert (
+            sh.n_possible_iterations_
+            == sh.n_iterations_
+            == len(sh.n_resources_)
+        )
 
 
 @pytest.mark.parametrize("Est", (HalvingRandomSearchCV, HalvingGridSearchCV))
@@ -228,7 +232,14 @@ def test_resource_parameter(Est):
     X, y = make_classification(n_samples=n_samples, random_state=0)
     param_grid = {"a": [1, 2], "b": list(range(10))}
     base_estimator = FastClassifier()
-    sh = Est(base_estimator, param_grid, cv=2, resource="c", max_resources=10, factor=3)
+    sh = Est(
+        base_estimator,
+        param_grid,
+        cv=2,
+        resource="c",
+        max_resources=10,
+        factor=3,
+    )
     sh.fit(X, y)
     assert set(sh.n_resources_) == set([1, 3, 9])
     for r_i, params, param_c in zip(
@@ -315,7 +326,9 @@ def test_random_search_discrete_distributions(
     n_samples = 1024
     X, y = make_classification(n_samples=n_samples, random_state=0)
     base_estimator = FastClassifier()
-    sh = HalvingRandomSearchCV(base_estimator, param_distributions, n_candidates=10)
+    sh = HalvingRandomSearchCV(
+        base_estimator, param_distributions, n_candidates=10
+    )
     sh.fit(X, y)
     assert sh.n_candidates_[0] == expected_n_candidates
 
@@ -324,7 +337,10 @@ def test_random_search_discrete_distributions(
 @pytest.mark.parametrize(
     "params, expected_error_message",
     [
-        ({"scoring": {"accuracy", "accuracy"}}, "Multimetric scoring is not supported"),
+        (
+            {"scoring": {"accuracy", "accuracy"}},
+            "Multimetric scoring is not supported",
+        ),
         (
             {"resource": "not_a_parameter"},
             "Cannot use resource=not_a_parameter which is not supported",
@@ -435,7 +451,10 @@ def test_subsample_splitter_determinism(subsample_test):
     n_samples = 100
     X, y = make_classification(n_samples)
     cv = _SubsampleMetaSplitter(
-        base_cv=KFold(5), fraction=0.5, subsample_test=subsample_test, random_state=None
+        base_cv=KFold(5),
+        fraction=0.5,
+        subsample_test=subsample_test,
+        random_state=None,
     )
 
     folds_a = list(cv.split(X, y, groups=None))
@@ -677,7 +696,9 @@ def test_groups_support(Est):
         gs.fit(X, y)
 
 
-@pytest.mark.parametrize("SearchCV", [HalvingRandomSearchCV, HalvingGridSearchCV])
+@pytest.mark.parametrize(
+    "SearchCV", [HalvingRandomSearchCV, HalvingGridSearchCV]
+)
 def test_min_resources_null(SearchCV):
     """Check that we raise an error if the minimum resources is set to 0."""
     base_estimator = FastClassifier()
@@ -691,7 +712,9 @@ def test_min_resources_null(SearchCV):
         search.fit(X, [])
 
 
-@pytest.mark.parametrize("SearchCV", [HalvingGridSearchCV, HalvingRandomSearchCV])
+@pytest.mark.parametrize(
+    "SearchCV", [HalvingGridSearchCV, HalvingRandomSearchCV]
+)
 def test_select_best_index(SearchCV):
     """Check the selection strategy of the halving search."""
     results = {  # this isn't a 'real world' result dict

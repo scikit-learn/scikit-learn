@@ -289,7 +289,9 @@ class Isomap(TransformerMixin, BaseEstimator):
         n_queries = distances.shape[0]
         G_X = np.zeros((n_queries, n_samples_fit))
         for i in range(n_queries):
-            G_X[i] = np.min(self.dist_matrix_[indices[i]] + distances[i][:, None], 0)
+            G_X[i] = np.min(
+                self.dist_matrix_[indices[i]] + distances[i][:, None], 0
+            )
 
         G_X **= 2
         G_X *= -0.5

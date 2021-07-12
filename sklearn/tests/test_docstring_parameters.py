@@ -91,7 +91,9 @@ def test_docstring_parameters():
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)
         # Exclude non-scikit-learn classes
-        classes = [cls for cls in classes if cls[1].__module__.startswith("sklearn")]
+        classes = [
+            cls for cls in classes if cls[1].__module__.startswith("sklearn")
+        ]
         for cname, cls in classes:
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES or cname.startswith("_"):
@@ -110,7 +112,9 @@ def test_docstring_parameters():
             if _is_deprecated(cls_init):
                 continue
             elif cls_init is not None:
-                this_incorrect += check_docstring_parameters(cls.__init__, cdoc)
+                this_incorrect += check_docstring_parameters(
+                    cls.__init__, cdoc
+                )
 
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
@@ -121,9 +125,14 @@ def test_docstring_parameters():
                 # by default for API reason
                 if method_name in _METHODS_IGNORE_NONE_Y:
                     sig = signature(method)
-                    if "y" in sig.parameters and sig.parameters["y"].default is None:
+                    if (
+                        "y" in sig.parameters
+                        and sig.parameters["y"].default is None
+                    ):
                         param_ignore = ["y"]  # ignore y for fit and score
-                result = check_docstring_parameters(method, ignore=param_ignore)
+                result = check_docstring_parameters(
+                    method, ignore=param_ignore
+                )
                 this_incorrect += result
 
             incorrect += this_incorrect
@@ -138,9 +147,9 @@ def test_docstring_parameters():
             if fname == "configuration" and name.endswith("setup"):
                 continue
             name_ = _get_func_name(func)
-            if not any(d in name_ for d in _DOCSTRING_IGNORES) and not _is_deprecated(
-                func
-            ):
+            if not any(
+                d in name_ for d in _DOCSTRING_IGNORES
+            ) and not _is_deprecated(func):
                 incorrect += check_docstring_parameters(func)
 
     msg = "\n".join(incorrect)
@@ -151,7 +160,9 @@ def test_docstring_parameters():
 @ignore_warnings(category=FutureWarning)
 def test_tabs():
     # Test that there are no tabs in our source files
-    for importer, modname, ispkg in walk_packages(sklearn.__path__, prefix="sklearn."):
+    for importer, modname, ispkg in walk_packages(
+        sklearn.__path__, prefix="sklearn."
+    ):
 
         if IS_PYPY and (
             "_svmlight_format_io" in modname
@@ -189,7 +200,9 @@ def _construct_compose_pipeline_instance(Estimator):
     elif Estimator.__name__ == "Pipeline":
         return Estimator(steps=[("clf", LogisticRegression())])
     elif Estimator.__name__ == "FeatureUnion":
-        return Estimator(transformer_list=[("transformer", FunctionTransformer())])
+        return Estimator(
+            transformer_list=[("transformer", FunctionTransformer())]
+        )
 
 
 def _construct_sparse_coder(Estimator):
@@ -318,7 +331,8 @@ def test_fit_docstring_attributes(name, Estimator):
     undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)
     if undocumented_attrs:
         raise AssertionError(
-            f"Undocumented attributes for {Estimator.__name__}: {undocumented_attrs}"
+            f"Undocumented attributes for {Estimator.__name__}:"
+            f" {undocumented_attrs}"
         )
 
 

@@ -122,7 +122,12 @@ def test_relocate_empty_clusters(array_constr):
 
     if array_constr is np.array:
         _relocate_empty_clusters_dense(
-            X, sample_weight, centers_old, centers_new, weight_in_clusters, labels
+            X,
+            sample_weight,
+            centers_old,
+            centers_new,
+            weight_in_clusters,
+            labels,
         )
     else:
         _relocate_empty_clusters_sparse(
@@ -158,7 +163,9 @@ def test_kmeans_elkan_results(distribution, array_constr, tol):
     X[X < 0] = 0
     X = array_constr(X)
 
-    km_full = KMeans(algorithm="full", n_clusters=5, random_state=0, n_init=1, tol=tol)
+    km_full = KMeans(
+        algorithm="full", n_clusters=5, random_state=0, n_init=1, tol=tol
+    )
     km_elkan = KMeans(
         algorithm="elkan", n_clusters=5, random_state=0, n_init=1, tol=tol
     )
@@ -354,13 +361,17 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
 
     rng = np.random.RandomState(seed)
 
-    X = make_blobs(n_samples=1000, n_features=10, centers=10, random_state=rng)[
-        0
-    ].astype(dtype, copy=False)
+    X = make_blobs(
+        n_samples=1000, n_features=10, centers=10, random_state=rng
+    )[0].astype(dtype, copy=False)
     X = constructor(X)
 
     kmeans = KMeans(
-        algorithm=algo, n_clusters=10, random_state=seed, tol=tol, max_iter=max_iter
+        algorithm=algo,
+        n_clusters=10,
+        random_state=seed,
+        tol=tol,
+        max_iter=max_iter,
     )
 
     labels_1 = kmeans.fit(X).predict(X)
@@ -425,7 +436,9 @@ def test_warning_n_init_precomputed_centers(Estimator):
     # the init parameter.
     with pytest.warns(
         RuntimeWarning,
-        match="Explicit initial center position passed: performing only one init",
+        match=(
+            "Explicit initial center position passed: performing only one init"
+        ),
     ):
         Estimator(init=centers, n_clusters=n_clusters, n_init=10).fit(X)
 
@@ -434,7 +447,9 @@ def test_minibatch_sensible_reassign():
     # check that identical initial clusters are reassigned
     # also a regression test for when there are more desired reassignments than
     # samples.
-    zeroed_X, true_labels = make_blobs(n_samples=100, centers=5, random_state=42)
+    zeroed_X, true_labels = make_blobs(
+        n_samples=100, centers=5, random_state=42
+    )
     zeroed_X[::2, :] = 0
 
     km = MiniBatchKMeans(
@@ -576,7 +591,9 @@ def test_minibatch_iter_steps():
     # Check consistency of n_iter_ and n_steps_ attributes.
     batch_size = 30
     n_samples = X.shape[0]
-    km = MiniBatchKMeans(n_clusters=3, batch_size=batch_size, random_state=0).fit(X)
+    km = MiniBatchKMeans(
+        n_clusters=3, batch_size=batch_size, random_state=0
+    ).fit(X)
 
     # n_iter_ is the number of started epochs
     assert km.n_iter_ == np.ceil((km.n_steps_ * batch_size) / n_samples)
@@ -705,14 +722,18 @@ def test_dense_sparse(Estimator):
 
 
 @pytest.mark.parametrize(
-    "init", ["random", "k-means++", centers], ids=["random", "k-means++", "ndarray"]
+    "init",
+    ["random", "k-means++", centers],
+    ids=["random", "k-means++", "ndarray"],
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_predict_dense_sparse(Estimator, init):
     # check that models trained on sparse input also works for dense input at
     # predict time and vice versa.
     n_init = 10 if isinstance(init, str) else 1
-    km = Estimator(n_clusters=n_clusters, init=init, n_init=n_init, random_state=0)
+    km = Estimator(
+        n_clusters=n_clusters, init=init, n_init=n_init, random_state=0
+    )
 
     km.fit(X_csr)
     assert_array_equal(km.predict(X), km.labels_)
@@ -865,14 +886,18 @@ def test_kmeans_init_fitted_centers(data):
     # Check that starting fitting from a local optimum shouldn't change the
     # solution
     km1 = KMeans(n_clusters=n_clusters).fit(data)
-    km2 = KMeans(n_clusters=n_clusters, init=km1.cluster_centers_, n_init=1).fit(data)
+    km2 = KMeans(
+        n_clusters=n_clusters, init=km1.cluster_centers_, n_init=1
+    ).fit(data)
 
     assert_allclose(km1.cluster_centers_, km2.cluster_centers_)
 
 
 def test_kmeans_warns_less_centers_than_unique_points():
     # Check KMeans when the number of found clusters is smaller than expected
-    X = np.asarray([[0, 0], [0, 1], [1, 0], [1, 0]])  # last point is duplicated
+    X = np.asarray(
+        [[0, 0], [0, 1], [1, 0], [1, 0]]
+    )  # last point is duplicated
     km = KMeans(n_clusters=4)
 
     # KMeans should warn that fewer labels than cluster centers have been used
@@ -975,9 +1000,13 @@ def test_result_equal_in_diff_n_threads(Estimator):
     X = rnd.normal(size=(50, 10))
 
     with threadpool_limits(limits=1, user_api="openmp"):
-        result_1 = Estimator(n_clusters=n_clusters, random_state=0).fit(X).labels_
+        result_1 = (
+            Estimator(n_clusters=n_clusters, random_state=0).fit(X).labels_
+        )
     with threadpool_limits(limits=2, user_api="openmp"):
-        result_2 = Estimator(n_clusters=n_clusters, random_state=0).fit(X).labels_
+        result_2 = (
+            Estimator(n_clusters=n_clusters, random_state=0).fit(X).labels_
+        )
     assert_array_equal(result_1, result_2)
 
 
@@ -986,7 +1015,8 @@ def test_minibatch_kmeans_deprecated_attributes(attr):
     # check that we raise a deprecation warning when accessing `init_size_`
     # FIXME: remove in 1.1
     depr_msg = (
-        f"The attribute `{attr}` is deprecated in 0.24 and will be removed in 1.1"
+        f"The attribute `{attr}` is deprecated in 0.24 and will be removed"
+        " in 1.1"
     )
     km = MiniBatchKMeans(n_clusters=2, n_init=1, init="random", random_state=0)
     km.fit(X)
@@ -1076,7 +1106,9 @@ def test_inertia(dtype):
     distances = ((X_dense - centers[labels]) ** 2).sum(axis=1)
     expected = np.sum(distances * sample_weight)
 
-    inertia_dense = _inertia_dense(X_dense, sample_weight, centers, labels, n_threads=1)
+    inertia_dense = _inertia_dense(
+        X_dense, sample_weight, centers, labels, n_threads=1
+    )
     inertia_sparse = _inertia_sparse(
         X_sparse, sample_weight, centers, labels, n_threads=1
     )
@@ -1102,7 +1134,10 @@ def test_sample_weight_unchanged(Estimator):
     [
         ({"n_init": 0}, r"n_init should be > 0"),
         ({"max_iter": 0}, r"max_iter should be > 0"),
-        ({"n_clusters": n_samples + 1}, r"n_samples.* should be >= n_clusters"),
+        (
+            {"n_clusters": n_samples + 1},
+            r"n_samples.* should be >= n_clusters",
+        ),
         (
             {"init": X[:2]},
             r"The shape of the initial centers .* does not match "
@@ -1213,7 +1248,9 @@ def test_kmeans_plusplus_output(data, dtype):
 @pytest.mark.parametrize("x_squared_norms", [row_norms(X, squared=True), None])
 def test_kmeans_plusplus_norms(x_squared_norms):
     # Check that defining x_squared_norms returns the same as default=None.
-    centers, indices = kmeans_plusplus(X, n_clusters, x_squared_norms=x_squared_norms)
+    centers, indices = kmeans_plusplus(
+        X, n_clusters, x_squared_norms=x_squared_norms
+    )
 
     assert_allclose(X[indices], centers)
 

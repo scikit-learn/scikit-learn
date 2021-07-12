@@ -285,7 +285,8 @@ def test_roc_curve_one_label():
     y_pred = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     # assert there are warnings
     expected_message = (
-        "No negative samples in y_true, false positive value should be meaningless"
+        "No negative samples in y_true, false positive value should be"
+        " meaningless"
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         fpr, tpr, thresholds = roc_curve(y_true, y_pred)
@@ -297,7 +298,8 @@ def test_roc_curve_one_label():
 
     # assert there are warnings
     expected_message = (
-        "No positive samples in y_true, true positive value should be meaningless"
+        "No positive samples in y_true, true positive value should be"
+        " meaningless"
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         fpr, tpr, thresholds = roc_curve([1 - x for x in y_true], y_pred)
@@ -353,7 +355,8 @@ def test_roc_curve_toydata():
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no positive sample in y_true
     expected_message = (
-        "No positive samples in y_true, true positive value should be meaningless"
+        "No positive samples in y_true, true positive value should be"
+        " meaningless"
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
@@ -367,7 +370,8 @@ def test_roc_curve_toydata():
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no negative sample in y_true
     expected_message = (
-        "No negative samples in y_true, false positive value should be meaningless"
+        "No negative samples in y_true, false positive value should be"
+        " meaningless"
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
@@ -406,7 +410,9 @@ def test_roc_curve_toydata():
     y_true = np.array([[1, 0], [0, 1]])
     y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
     assert_almost_equal(roc_auc_score(y_true, y_score, average="macro"), 0.5)
-    assert_almost_equal(roc_auc_score(y_true, y_score, average="weighted"), 0.5)
+    assert_almost_equal(
+        roc_auc_score(y_true, y_score, average="weighted"), 0.5
+    )
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 0.5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 0.5)
 
@@ -468,7 +474,9 @@ def test_auc_errors():
     # x is not in order
     x = [2, 1, 3, 4]
     y = [5, 6, 7, 8]
-    error_message = "x is neither increasing nor decreasing : {}".format(np.array(x))
+    error_message = "x is neither increasing nor decreasing : {}".format(
+        np.array(x)
+    )
     with pytest.raises(ValueError, match=re.escape(error_message)):
         auc(x, y)
 
@@ -508,7 +516,9 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
     average_score_12 = (score_12 + score_21) / 2
 
     # Unweighted, one-vs-one multiclass ROC AUC algorithm
-    ovo_unweighted_score = (average_score_01 + average_score_02 + average_score_12) / 3
+    ovo_unweighted_score = (
+        average_score_01 + average_score_02 + average_score_12
+    ) / 3
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, labels=labels, multi_class="ovo"),
         ovo_unweighted_score,
@@ -521,7 +531,11 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
     ovo_weighted_score = np.average(pair_scores, weights=prevalence)
     assert_almost_equal(
         roc_auc_score(
-            y_true, y_scores, labels=labels, multi_class="ovo", average="weighted"
+            y_true,
+            y_scores,
+            labels=labels,
+            multi_class="ovo",
+            average="weighted",
         ),
         ovo_weighted_score,
     )
@@ -551,13 +565,18 @@ def test_multiclass_ovo_roc_auc_toydata_binary(y_true, labels):
     ovo_score = (score_01 + score_10) / 2
 
     assert_almost_equal(
-        roc_auc_score(y_true, y_scores, labels=labels, multi_class="ovo"), ovo_score
+        roc_auc_score(y_true, y_scores, labels=labels, multi_class="ovo"),
+        ovo_score,
     )
 
     # Weighted, one-vs-one multiclass ROC AUC algorithm
     assert_almost_equal(
         roc_auc_score(
-            y_true, y_scores, labels=labels, multi_class="ovo", average="weighted"
+            y_true,
+            y_scores,
+            labels=labels,
+            multi_class="ovo",
+            average="weighted",
         ),
         ovo_score,
     )
@@ -595,7 +614,11 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
     assert_almost_equal(
         roc_auc_score(
-            y_true, y_scores, multi_class="ovr", labels=labels, average="weighted"
+            y_true,
+            y_scores,
+            multi_class="ovr",
+            labels=labels,
+            average="weighted",
         ),
         result_weighted,
     )
@@ -604,7 +627,11 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
 @pytest.mark.parametrize(
     "msg, y_true, labels",
     [
-        ("Parameter 'labels' must be unique", np.array([0, 1, 2, 2]), [0, 2, 0]),
+        (
+            "Parameter 'labels' must be unique",
+            np.array([0, 1, 2, 2]),
+            [0, 2, 0],
+        ),
         (
             "Parameter 'labels' must be unique",
             np.array(["a", "b", "c", "c"]),
@@ -663,7 +690,9 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     ],
 )
 @pytest.mark.parametrize("multi_class", ["ovo", "ovr"])
-def test_roc_auc_score_multiclass_labels_error(msg, y_true, labels, multi_class):
+def test_roc_auc_score_multiclass_labels_error(
+    msg, y_true, labels, multi_class
+):
     y_scores = np.array(
         [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]]
     )
@@ -698,7 +727,8 @@ def test_roc_auc_score_multiclass_labels_error(msg, y_true, labels, multi_class)
         ),
         (
             (
-                r"Partial AUC computation not available in multiclass setting, "
+                r"Partial AUC computation not available in multiclass"
+                r" setting, "
                 r"'max_fpr' must be set to `None`, received `max_fpr=0.5` "
                 r"instead"
             ),
@@ -811,7 +841,9 @@ def test_binary_clf_curve_zero_sample_weight(curve_func):
     sample_weight = [1, 1, 1, 0.5, 0]
 
     result_1 = curve_func(y_true, y_score, sample_weight=sample_weight)
-    result_2 = curve_func(y_true[:-1], y_score[:-1], sample_weight=sample_weight[:-1])
+    result_2 = curve_func(
+        y_true[:-1], y_score[:-1], sample_weight=sample_weight[:-1]
+    )
 
     for arr_1, arr_2 in zip(result_1, result_2):
         assert_allclose(arr_1, arr_2)
@@ -1152,7 +1184,9 @@ def test_det_curve_bad_input(y_true, y_pred, err_msg):
 
 def test_det_curve_pos_label():
     y_true = ["cancer"] * 3 + ["not cancer"] * 7
-    y_pred_pos_not_cancer = np.array([0.1, 0.4, 0.6, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9])
+    y_pred_pos_not_cancer = np.array(
+        [0.1, 0.4, 0.6, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9]
+    )
     y_pred_pos_cancer = 1 - y_pred_pos_not_cancer
 
     fpr_pos_cancer, fnr_pos_cancer, th_pos_cancer = det_curve(
@@ -1199,13 +1233,17 @@ def check_lrap_toy(lrap_score):
         lrap_score([[0, 1, 1]], [[0.75, 0.5, 0.25]]), (1 / 2 + 2 / 3) / 2
     )
     assert_almost_equal(lrap_score([[1, 0, 0]], [[0.75, 0.5, 0.25]]), 1)
-    assert_almost_equal(lrap_score([[1, 0, 1]], [[0.75, 0.5, 0.25]]), (1 + 2 / 3) / 2)
+    assert_almost_equal(
+        lrap_score([[1, 0, 1]], [[0.75, 0.5, 0.25]]), (1 + 2 / 3) / 2
+    )
     assert_almost_equal(lrap_score([[1, 1, 0]], [[0.75, 0.5, 0.25]]), 1)
     assert_almost_equal(lrap_score([[1, 1, 1]], [[0.75, 0.5, 0.25]]), 1)
 
     assert_almost_equal(lrap_score([[0, 0, 1]], [[0.5, 0.75, 0.25]]), 1 / 3)
     assert_almost_equal(lrap_score([[0, 1, 0]], [[0.5, 0.75, 0.25]]), 1)
-    assert_almost_equal(lrap_score([[0, 1, 1]], [[0.5, 0.75, 0.25]]), (1 + 2 / 3) / 2)
+    assert_almost_equal(
+        lrap_score([[0, 1, 1]], [[0.5, 0.75, 0.25]]), (1 + 2 / 3) / 2
+    )
     assert_almost_equal(lrap_score([[1, 0, 0]], [[0.5, 0.75, 0.25]]), 1 / 2)
     assert_almost_equal(
         lrap_score([[1, 0, 1]], [[0.5, 0.75, 0.25]]), (1 / 2 + 2 / 3) / 2
@@ -1232,7 +1270,9 @@ def check_lrap_toy(lrap_score):
 
     assert_almost_equal(lrap_score([[1, 1, 0]], [[0.5, 0.5, 0.5]]), 2 / 3)
 
-    assert_almost_equal(lrap_score([[1, 1, 1, 0]], [[0.5, 0.5, 0.5, 0.5]]), 3 / 4)
+    assert_almost_equal(
+        lrap_score([[1, 1, 1, 0]], [[0.5, 0.5, 0.5, 0.5]]), 3 / 4
+    )
 
 
 def check_zero_or_all_relevant_labels(lrap_score):
@@ -1263,10 +1303,13 @@ def check_lrap_error_raised(lrap_score):
     with pytest.raises(ValueError):
         lrap_score([0, 1, 0], [0.25, 0.3, 0.2])
     with pytest.raises(ValueError):
-        lrap_score([0, 1, 2], [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
+        lrap_score(
+            [0, 1, 2], [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]]
+        )
     with pytest.raises(ValueError):
         lrap_score(
-            [(0), (1), (2)], [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]]
+            [(0), (1), (2)],
+            [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]],
         )
 
     # Check that y_true.shape != y_score.shape raise the proper exception
@@ -1296,7 +1339,9 @@ def check_lrap_only_ties(lrap_score):
             for pos in range(n_labels - n_relevant):
                 y_true = np.zeros((1, n_labels))
                 y_true[0, pos : pos + n_relevant] = 1
-                assert_almost_equal(lrap_score(y_true, y_score), n_relevant / n_labels)
+                assert_almost_equal(
+                    lrap_score(y_true, y_score), n_relevant / n_labels
+                )
 
 
 def check_lrap_without_tie_and_increasing_score(lrap_score):
@@ -1309,7 +1354,9 @@ def check_lrap_without_tie_and_increasing_score(lrap_score):
         y_true = np.zeros((1, n_labels))
         y_true[0, 0] = 1
         y_true[0, -1] = 1
-        assert_almost_equal(lrap_score(y_true, y_score), (2 / n_labels + 1) / 2)
+        assert_almost_equal(
+            lrap_score(y_true, y_score), (2 / n_labels + 1) / 2
+        )
 
         # Check for growing number of consecutive relevant label
         for n_relevant in range(1, n_labels):
@@ -1405,7 +1452,9 @@ def check_alternative_lrap_implementation(
         check_zero_or_all_relevant_labels,
     ),
 )
-@pytest.mark.parametrize("func", (label_ranking_average_precision_score, _my_lrap))
+@pytest.mark.parametrize(
+    "func", (label_ranking_average_precision_score, _my_lrap)
+)
 def test_label_ranking_avp(check, func):
     check(func)
 
@@ -1420,7 +1469,10 @@ def test_lrap_error_raised():
 def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
 
     check_alternative_lrap_implementation(
-        label_ranking_average_precision_score, n_classes, n_samples, random_state
+        label_ranking_average_precision_score,
+        n_classes,
+        n_samples,
+        random_state,
     )
 
 
@@ -1487,14 +1539,16 @@ def test_coverage_error():
 
     assert_almost_equal(
         coverage_error(
-            [[0, 1, 0], [1, 1, 0], [0, 1, 1]], [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]
+            [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+            [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]],
         ),
         (1 + 3 + 3) / 3.0,
     )
 
     assert_almost_equal(
         coverage_error(
-            [[0, 1, 0], [1, 1, 0], [0, 1, 1]], [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]
+            [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+            [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]],
         ),
         (1 + 3 + 3) / 3.0,
     )
@@ -1520,12 +1574,24 @@ def test_label_ranking_loss():
     assert_almost_equal(label_ranking_loss([[0, 1]], [[0.25, 0.75]]), 0)
     assert_almost_equal(label_ranking_loss([[0, 1]], [[0.75, 0.25]]), 1)
 
-    assert_almost_equal(label_ranking_loss([[0, 0, 1]], [[0.25, 0.5, 0.75]]), 0)
-    assert_almost_equal(label_ranking_loss([[0, 1, 0]], [[0.25, 0.5, 0.75]]), 1 / 2)
-    assert_almost_equal(label_ranking_loss([[0, 1, 1]], [[0.25, 0.5, 0.75]]), 0)
-    assert_almost_equal(label_ranking_loss([[1, 0, 0]], [[0.25, 0.5, 0.75]]), 2 / 2)
-    assert_almost_equal(label_ranking_loss([[1, 0, 1]], [[0.25, 0.5, 0.75]]), 1 / 2)
-    assert_almost_equal(label_ranking_loss([[1, 1, 0]], [[0.25, 0.5, 0.75]]), 2 / 2)
+    assert_almost_equal(
+        label_ranking_loss([[0, 0, 1]], [[0.25, 0.5, 0.75]]), 0
+    )
+    assert_almost_equal(
+        label_ranking_loss([[0, 1, 0]], [[0.25, 0.5, 0.75]]), 1 / 2
+    )
+    assert_almost_equal(
+        label_ranking_loss([[0, 1, 1]], [[0.25, 0.5, 0.75]]), 0
+    )
+    assert_almost_equal(
+        label_ranking_loss([[1, 0, 0]], [[0.25, 0.5, 0.75]]), 2 / 2
+    )
+    assert_almost_equal(
+        label_ranking_loss([[1, 0, 1]], [[0.25, 0.5, 0.75]]), 1 / 2
+    )
+    assert_almost_equal(
+        label_ranking_loss([[1, 1, 0]], [[0.25, 0.5, 0.75]]), 2 / 2
+    )
 
     # Undefined metrics -  the ranking doesn't matter
     assert_almost_equal(label_ranking_loss([[0, 0]], [[0.75, 0.25]]), 0)
@@ -1533,27 +1599,35 @@ def test_label_ranking_loss():
     assert_almost_equal(label_ranking_loss([[0, 0]], [[0.5, 0.5]]), 0)
     assert_almost_equal(label_ranking_loss([[1, 1]], [[0.5, 0.5]]), 0)
 
-    assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.5, 0.75, 0.25]]), 0)
-    assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 0)
+    assert_almost_equal(
+        label_ranking_loss([[0, 0, 0]], [[0.5, 0.75, 0.25]]), 0
+    )
+    assert_almost_equal(
+        label_ranking_loss([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 0
+    )
     assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.25, 0.5, 0.5]]), 0)
     assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 0)
 
     # Non trival case
     assert_almost_equal(
-        label_ranking_loss([[0, 1, 0], [1, 1, 0]], [[0.1, 10.0, -3], [0, 1, 3]]),
+        label_ranking_loss(
+            [[0, 1, 0], [1, 1, 0]], [[0.1, 10.0, -3], [0, 1, 3]]
+        ),
         (0 + 2 / 2) / 2.0,
     )
 
     assert_almost_equal(
         label_ranking_loss(
-            [[0, 1, 0], [1, 1, 0], [0, 1, 1]], [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]
+            [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+            [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]],
         ),
         (0 + 2 / 2 + 1 / 2) / 3.0,
     )
 
     assert_almost_equal(
         label_ranking_loss(
-            [[0, 1, 0], [1, 1, 0], [0, 1, 1]], [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]
+            [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+            [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]],
         ),
         (0 + 2 / 2 + 1 / 2) / 3.0,
     )
@@ -1561,7 +1635,8 @@ def test_label_ranking_loss():
     # Sparse csr matrices
     assert_almost_equal(
         label_ranking_loss(
-            csr_matrix(np.array([[0, 1, 0], [1, 1, 0]])), [[0.1, 10, -3], [3, 1, 3]]
+            csr_matrix(np.array([[0, 1, 0], [1, 1, 0]])),
+            [[0.1, 10, -3], [3, 1, 3]],
         ),
         (0 + 2 / 2) / 2.0,
     )
@@ -1587,8 +1662,12 @@ def test_ranking_loss_ties_handling():
     # Tie handling
     assert_almost_equal(label_ranking_loss([[1, 0]], [[0.5, 0.5]]), 1)
     assert_almost_equal(label_ranking_loss([[0, 1]], [[0.5, 0.5]]), 1)
-    assert_almost_equal(label_ranking_loss([[0, 0, 1]], [[0.25, 0.5, 0.5]]), 1 / 2)
-    assert_almost_equal(label_ranking_loss([[0, 1, 0]], [[0.25, 0.5, 0.5]]), 1 / 2)
+    assert_almost_equal(
+        label_ranking_loss([[0, 0, 1]], [[0.25, 0.5, 0.5]]), 1 / 2
+    )
+    assert_almost_equal(
+        label_ranking_loss([[0, 1, 0]], [[0.25, 0.5, 0.5]]), 1 / 2
+    )
     assert_almost_equal(label_ranking_loss([[0, 1, 1]], [[0.25, 0.5, 0.5]]), 0)
     assert_almost_equal(label_ranking_loss([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 1)
     assert_almost_equal(label_ranking_loss([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 1)
@@ -1611,7 +1690,9 @@ def _test_dcg_score_for(y_true, y_score):
     assert (_dcg_sample_scores(y_true, y_true, k=5) <= ideal).all()
     assert ideal.shape == (y_true.shape[0],)
     assert score.shape == (y_true.shape[0],)
-    assert ideal == pytest.approx((np.sort(y_true)[:, ::-1] / discount).sum(axis=1))
+    assert ideal == pytest.approx(
+        (np.sort(y_true)[:, ::-1] / discount).sum(axis=1)
+    )
 
 
 def test_dcg_ties():
@@ -1621,11 +1702,15 @@ def test_dcg_ties():
     dcg_ignore_ties = _dcg_sample_scores(y_true, y_score, ignore_ties=True)
     discounts = 1 / np.log2(np.arange(2, 7))
     assert dcg == pytest.approx([discounts.sum() * y_true.mean()])
-    assert dcg_ignore_ties == pytest.approx([(discounts * y_true[:, ::-1]).sum()])
+    assert dcg_ignore_ties == pytest.approx(
+        [(discounts * y_true[:, ::-1]).sum()]
+    )
     y_score[0, 3:] = 1
     dcg = _dcg_sample_scores(y_true, y_score)
     dcg_ignore_ties = _dcg_sample_scores(y_true, y_score, ignore_ties=True)
-    assert dcg_ignore_ties == pytest.approx([(discounts * y_true[:, ::-1]).sum()])
+    assert dcg_ignore_ties == pytest.approx(
+        [(discounts * y_true[:, ::-1]).sum()]
+    )
     assert dcg == pytest.approx(
         [
             discounts[:2].sum() * y_true[0, 3:].mean()
@@ -1643,7 +1728,9 @@ def test_ndcg_ignore_ties_with_k():
 
 def test_ndcg_invariant():
     y_true = np.arange(70).reshape(7, 10)
-    y_score = y_true + np.random.RandomState(0).uniform(-0.2, 0.2, size=y_true.shape)
+    y_score = y_true + np.random.RandomState(0).uniform(
+        -0.2, 0.2, size=y_true.shape
+    )
     ndcg = ndcg_score(y_true, y_score)
     ndcg_no_ties = ndcg_score(y_true, y_score, ignore_ties=True)
     assert ndcg == pytest.approx(ndcg_no_ties)
@@ -1671,12 +1758,12 @@ def test_ndcg_toy_examples(ignore_ties):
     assert _dcg_sample_scores(
         y_true, y_score, log_base=10, ignore_ties=ignore_ties
     ) == pytest.approx(3 / np.log10(np.arange(2, 7)))
-    assert ndcg_score(y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
-        (1 / np.log2(np.arange(2, 7))).mean()
-    )
-    assert dcg_score(y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
-        (3 / np.log2(np.arange(2, 7))).mean()
-    )
+    assert ndcg_score(
+        y_true, y_score, ignore_ties=ignore_ties
+    ) == pytest.approx((1 / np.log2(np.arange(2, 7))).mean())
+    assert dcg_score(
+        y_true, y_score, ignore_ties=ignore_ties
+    ) == pytest.approx((3 / np.log2(np.arange(2, 7))).mean())
     y_true = 3 * np.ones((5, 7))
     expected_dcg_score = (3 / np.log2(np.arange(2, 9))).sum()
     assert _dcg_sample_scores(
@@ -1685,10 +1772,12 @@ def test_ndcg_toy_examples(ignore_ties):
     assert _ndcg_sample_scores(
         y_true, y_score, ignore_ties=ignore_ties
     ) == pytest.approx(np.ones(5))
-    assert dcg_score(y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
-        expected_dcg_score
-    )
-    assert ndcg_score(y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(1.0)
+    assert dcg_score(
+        y_true, y_score, ignore_ties=ignore_ties
+    ) == pytest.approx(expected_dcg_score)
+    assert ndcg_score(
+        y_true, y_score, ignore_ties=ignore_ties
+    ) == pytest.approx(1.0)
 
 
 def test_ndcg_score():
@@ -1827,7 +1916,8 @@ def test_top_k_accuracy_score_increasing():
 
     for X, y in zip((X_train, X_test), (y_train, y_test)):
         scores = [
-            top_k_accuracy_score(y, clf.predict_proba(X), k=k) for k in range(2, 10)
+            top_k_accuracy_score(y, clf.predict_proba(X), k=k)
+            for k in range(2, 10)
         ]
 
         assert np.all(np.diff(scores) > 0)
@@ -1851,7 +1941,9 @@ def test_top_k_accuracy_score_ties(y_true, k, true_score):
             [1, 1, 1, 1],
         ]
     )
-    assert top_k_accuracy_score(y_true, y_score, k=k) == pytest.approx(true_score)
+    assert top_k_accuracy_score(y_true, y_score, k=k) == pytest.approx(
+        true_score
+    )
 
 
 @pytest.mark.parametrize(
@@ -1871,7 +1963,8 @@ def test_top_k_accuracy_score_warning(y_true, k):
         ]
     )
     expected_message = (
-        r"'k' \(\d+\) greater than or equal to 'n_classes' \(\d+\) will result in a "
+        r"'k' \(\d+\) greater than or equal to 'n_classes' \(\d+\) will result"
+        r" in a "
         "perfect score and is therefore meaningless."
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
@@ -1898,11 +1991,16 @@ def test_top_k_accuracy_score_warning(y_true, k):
             ["a", "b", "c", "c"],
             "Parameter 'labels' must be unique.",
         ),
-        (["c", "c", "a", "b"], ["a", "c", "b"], "Parameter 'labels' must be ordered."),
+        (
+            ["c", "c", "a", "b"],
+            ["a", "c", "b"],
+            "Parameter 'labels' must be ordered.",
+        ),
         (
             [0, 0, 1, 2],
             [0, 1, 2, 3],
-            r"Number of given labels \(4\) not equal to the number of classes in "
+            r"Number of given labels \(4\) not equal to the number of"
+            r" classes in "
             r"'y_score' \(3\).",
         ),
         (

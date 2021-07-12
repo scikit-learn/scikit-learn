@@ -96,17 +96,27 @@ def test_extract_xi():
     C6 = [5, 6] + 0.2 * rng.randn(n_points_per_cluster, 2)
 
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
-    expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5, -1, [4] * 5]
+    expected_labels = np.r_[
+        [2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5, -1, [4] * 5
+    ]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
     clust = OPTICS(
-        min_samples=3, min_cluster_size=2, max_eps=20, cluster_method="xi", xi=0.4
+        min_samples=3,
+        min_cluster_size=2,
+        max_eps=20,
+        cluster_method="xi",
+        xi=0.4,
     ).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
     # check float min_samples and min_cluster_size
     clust = OPTICS(
-        min_samples=0.1, min_cluster_size=0.08, max_eps=20, cluster_method="xi", xi=0.4
+        min_samples=0.1,
+        min_cluster_size=0.08,
+        max_eps=20,
+        cluster_method="xi",
+        xi=0.4,
     ).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
@@ -117,7 +127,11 @@ def test_extract_xi():
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
     clust = OPTICS(
-        min_samples=3, min_cluster_size=3, max_eps=20, cluster_method="xi", xi=0.3
+        min_samples=3,
+        min_cluster_size=3,
+        max_eps=20,
+        cluster_method="xi",
+        xi=0.3,
     ).fit(X)
     # this may fail if the predecessor correction is not at work!
     assert_array_equal(clust.labels_, expected_labels)
@@ -130,7 +144,11 @@ def test_extract_xi():
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
     clust = OPTICS(
-        min_samples=2, min_cluster_size=2, max_eps=np.inf, cluster_method="xi", xi=0.04
+        min_samples=2,
+        min_cluster_size=2,
+        max_eps=np.inf,
+        cluster_method="xi",
+        xi=0.04,
     ).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
@@ -199,7 +217,9 @@ def test_bad_extract():
     )
 
     # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 0.03, cluster_method="dbscan", eps=0.3, min_samples=10)
+    clust = OPTICS(
+        max_eps=5.0 * 0.03, cluster_method="dbscan", eps=0.3, min_samples=10
+    )
     with pytest.raises(ValueError, match=msg):
         clust.fit(X)
 
@@ -268,7 +288,9 @@ def test_close_extract():
     )
 
     # Compute OPTICS
-    clust = OPTICS(max_eps=1.0, cluster_method="dbscan", eps=0.3, min_samples=10).fit(X)
+    clust = OPTICS(
+        max_eps=1.0, cluster_method="dbscan", eps=0.3, min_samples=10
+    ).fit(X)
     # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
     assert max(clust.labels_) == 2
 
@@ -284,14 +306,17 @@ def test_dbscan_optics_parity(eps, min_samples):
     )
 
     # calculate optics with dbscan extract at 0.3 epsilon
-    op = OPTICS(min_samples=min_samples, cluster_method="dbscan", eps=eps).fit(X)
+    op = OPTICS(min_samples=min_samples, cluster_method="dbscan", eps=eps).fit(
+        X
+    )
 
     # calculate dbscan labels
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
 
     contingency = contingency_matrix(db.labels_, op.labels_)
     agree = min(
-        np.sum(np.max(contingency, axis=0)), np.sum(np.max(contingency, axis=1))
+        np.sum(np.max(contingency, axis=0)),
+        np.sum(np.max(contingency, axis=1)),
     )
     disagree = X.shape[0] - agree
 
@@ -308,16 +333,22 @@ def test_min_samples_edge_case():
     X = np.vstack((C1, C2, C3))
 
     expected_labels = np.r_[[0] * 3, [1] * 3, [2] * 3]
-    clust = OPTICS(min_samples=3, max_eps=7, cluster_method="xi", xi=0.04).fit(X)
+    clust = OPTICS(min_samples=3, max_eps=7, cluster_method="xi", xi=0.04).fit(
+        X
+    )
     assert_array_equal(clust.labels_, expected_labels)
 
     expected_labels = np.r_[[0] * 3, [1] * 3, [-1] * 3]
-    clust = OPTICS(min_samples=3, max_eps=3, cluster_method="xi", xi=0.04).fit(X)
+    clust = OPTICS(min_samples=3, max_eps=3, cluster_method="xi", xi=0.04).fit(
+        X
+    )
     assert_array_equal(clust.labels_, expected_labels)
 
     expected_labels = np.r_[[-1] * 9]
     with pytest.warns(UserWarning, match="All reachability values"):
-        clust = OPTICS(min_samples=4, max_eps=3, cluster_method="xi", xi=0.04).fit(X)
+        clust = OPTICS(
+            min_samples=4, max_eps=3, cluster_method="xi", xi=0.04
+        ).fit(X)
         assert_array_equal(clust.labels_, expected_labels)
 
 
@@ -563,7 +594,10 @@ def test_compare_to_ELKI():
     # ELKI currently does not print the core distances (which are not used much
     # in literature, but we can at least ensure to have this consistency:
     for i in clust1.ordering_[1:]:
-        assert clust1.reachability_[i] >= clust1.core_distances_[clust1.predecessor_[i]]
+        assert (
+            clust1.reachability_[i]
+            >= clust1.core_distances_[clust1.predecessor_[i]]
+        )
 
     # Expected values, computed with (future) ELKI 0.7.5 using
     r2 = [
@@ -759,7 +793,9 @@ def test_compare_to_ELKI():
     assert_allclose(clust2.reachability_[clust2.ordering_], np.array(r2))
 
     index = np.where(clust1.core_distances_ <= 0.5)[0]
-    assert_allclose(clust1.core_distances_[index], clust2.core_distances_[index])
+    assert_allclose(
+        clust1.core_distances_[index], clust2.core_distances_[index]
+    )
 
 
 def test_wrong_cluster_method():
@@ -786,8 +822,12 @@ def test_extract_dbscan():
 def test_precomputed_dists():
     redX = X[::2]
     dists = pairwise_distances(redX, metric="euclidean")
-    clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
-    clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
+    clust1 = OPTICS(
+        min_samples=10, algorithm="brute", metric="precomputed"
+    ).fit(dists)
+    clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(
+        redX
+    )
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
     assert_array_equal(clust1.labels_, clust2.labels_)

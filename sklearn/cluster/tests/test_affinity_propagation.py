@@ -11,7 +11,9 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_array_equal
 
 from sklearn.cluster import AffinityPropagation
-from sklearn.cluster._affinity_propagation import _equal_similarities_and_preferences
+from sklearn.cluster._affinity_propagation import (
+    _equal_similarities_and_preferences,
+)
 from sklearn.cluster import affinity_propagation
 from sklearn.datasets import make_blobs
 from sklearn.metrics import euclidean_distances
@@ -47,7 +49,9 @@ def test_affinity_propagation():
     )
     labels_precomputed = af.fit(S).labels_
 
-    af = AffinityPropagation(preference=preference, verbose=True, random_state=37)
+    af = AffinityPropagation(
+        preference=preference, verbose=True, random_state=37
+    )
     labels = af.fit(X).labels_
 
     assert_array_equal(labels, labels_precomputed)
@@ -129,7 +133,9 @@ def test_affinity_propagation_equal_mutual_similarities():
 
     # setting preference < similarity
     with pytest.warns(UserWarning, match="mutually equal"):
-        cluster_center_indices, labels = affinity_propagation(S, preference=-10)
+        cluster_center_indices, labels = affinity_propagation(
+            S, preference=-10
+        )
 
     # expect one cluster, with arbitrary (first) sample as exemplar
     assert_array_equal([0], cluster_center_indices)
@@ -154,7 +160,9 @@ def test_affinity_propagation_predict_non_convergence():
 
     # Force non-convergence by allowing only a single iteration
     with pytest.warns(ConvergenceWarning):
-        af = AffinityPropagation(preference=-10, max_iter=1, random_state=75).fit(X)
+        af = AffinityPropagation(
+            preference=-10, max_iter=1, random_state=75
+        ).fit(X)
 
     # At prediction time, consider new samples as noise since there are no
     # clusters
@@ -166,7 +174,9 @@ def test_affinity_propagation_predict_non_convergence():
 
 def test_affinity_propagation_non_convergence_regressiontest():
     X = np.array([[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]])
-    af = AffinityPropagation(affinity="euclidean", max_iter=2, random_state=34).fit(X)
+    af = AffinityPropagation(
+        affinity="euclidean", max_iter=2, random_state=34
+    ).fit(X)
     assert_array_equal(np.array([-1, -1, -1]), af.labels_)
 
 
@@ -211,7 +221,9 @@ def test_affinity_propagation_random_state():
     assert np.mean((centers0 - centers76) ** 2) > 1
 
 
-@pytest.mark.parametrize("centers", [csr_matrix(np.zeros((1, 10))), np.zeros((1, 10))])
+@pytest.mark.parametrize(
+    "centers", [csr_matrix(np.zeros((1, 10))), np.zeros((1, 10))]
+)
 def test_affinity_propagation_convergence_warning_dense_sparse(centers):
     """Non-regression, see #13334"""
     rng = np.random.RandomState(42)
@@ -229,11 +241,12 @@ def test_affinity_propagation_float32():
     # Test to fix incorrect clusters due to dtype change
     # (non-regression test for issue #10832)
     X = np.array(
-        [[1, 0, 0, 0], [0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 1]], dtype="float32"
+        [[1, 0, 0, 0], [0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 1]],
+        dtype="float32",
     )
-    afp = AffinityPropagation(preference=1, affinity="precomputed", random_state=0).fit(
-        X
-    )
+    afp = AffinityPropagation(
+        preference=1, affinity="precomputed", random_state=0
+    ).fit(X)
     expected = np.array([0, 1, 1, 2])
     assert_array_equal(afp.labels_, expected)
 

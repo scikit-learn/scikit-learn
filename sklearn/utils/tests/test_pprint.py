@@ -65,7 +65,9 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
 
 class RFE(BaseEstimator):
-    def __init__(self, estimator, n_features_to_select=None, step=1, verbose=0):
+    def __init__(
+        self, estimator, n_features_to_select=None, step=1, verbose=0
+    ):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
@@ -433,7 +435,9 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
     expected = expected[1:]  # remove first \n
     repr_ = pp.pformat(gspipline)
     # Remove address of '<function chi2 at 0x.....>' for reproducibility
-    repr_ = re.sub("function chi2 at 0x.*>", "function chi2 at some_address>", repr_)
+    repr_ = re.sub(
+        "function chi2 at 0x.*>", "function chi2 at some_address>", repr_
+    )
     assert repr_ == expected
 
 
@@ -666,7 +670,9 @@ def test_complexity_print_changed_only():
             return X
 
     estimator = DummyEstimator(
-        make_pipeline(DummyEstimator(DummyEstimator()), DummyEstimator(), "passthrough")
+        make_pipeline(
+            DummyEstimator(DummyEstimator()), DummyEstimator(), "passthrough"
+        )
     )
     with config_context(print_changed_only=False):
         repr(estimator)

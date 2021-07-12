@@ -13,7 +13,9 @@ import numpy as np
 from scipy.special import xlogy
 
 
-DistributionBoundary = namedtuple("DistributionBoundary", ("value", "inclusive"))
+DistributionBoundary = namedtuple(
+    "DistributionBoundary", ("value", "inclusive")
+)
 
 
 class ExponentialDispersionModel(metaclass=ABCMeta):
@@ -214,14 +216,17 @@ class TweedieDistribution(ExponentialDispersionModel):
         # upper bound when the power parameter is updated e.g. in grid
         # search.
         if not isinstance(power, numbers.Real):
-            raise TypeError("power must be a real number, input was {0}".format(power))
+            raise TypeError(
+                "power must be a real number, input was {0}".format(power)
+            )
 
         if power <= 0:
             # Extreme Stable or Normal distribution
             self._lower_bound = DistributionBoundary(-np.Inf, inclusive=False)
         elif 0 < power < 1:
             raise ValueError(
-                "Tweedie distribution is only defined for power<=0 and power>=1."
+                "Tweedie distribution is only defined for power<=0 and"
+                " power>=1."
             )
         elif 1 <= power < 2:
             # Poisson or Compound Poisson distribution
@@ -274,9 +279,8 @@ class TweedieDistribution(ExponentialDispersionModel):
 
         if check_input:
             message = (
-                "Mean Tweedie deviance error with power={} can only be used on ".format(
-                    p
-                )
+                "Mean Tweedie deviance error with power={} can only be"
+                " used on ".format(p)
             )
             if p < 0:
                 # 'Extreme stable', y any realy number, y_pred > 0
@@ -287,18 +291,22 @@ class TweedieDistribution(ExponentialDispersionModel):
                 pass
             elif 0 < p < 1:
                 raise ValueError(
-                    "Tweedie deviance is only defined for power<=0 and power>=1."
+                    "Tweedie deviance is only defined for power<=0 and"
+                    " power>=1."
                 )
             elif 1 <= p < 2:
                 # Poisson and Compount poisson distribution, y >= 0, y_pred > 0
                 if (y < 0).any() or (y_pred <= 0).any():
                     raise ValueError(
-                        message + "non-negative y and strictly positive y_pred."
+                        message
+                        + "non-negative y and strictly positive y_pred."
                     )
             elif p >= 2:
                 # Gamma and Extreme stable distribution, y and y_pred > 0
                 if (y <= 0).any() or (y_pred <= 0).any():
-                    raise ValueError(message + "strictly positive y and y_pred.")
+                    raise ValueError(
+                        message + "strictly positive y and y_pred."
+                    )
             else:  # pragma: nocover
                 # Unreachable statement
                 raise ValueError

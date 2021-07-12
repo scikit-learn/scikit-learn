@@ -186,9 +186,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         if not (3 <= self.n_bins <= 256):
             # min is 3: at least 2 distinct bins and a missing values bin
             raise ValueError(
-                "n_bins={} should be no smaller than 3 and no larger than 256.".format(
-                    self.n_bins
-                )
+                "n_bins={} should be no smaller than 3 and no larger than 256."
+                .format(self.n_bins)
             )
 
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
@@ -202,7 +201,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         if self.is_categorical is None:
             self.is_categorical_ = np.zeros(X.shape[1], dtype=np.uint8)
         else:
-            self.is_categorical_ = np.asarray(self.is_categorical, dtype=np.uint8)
+            self.is_categorical_ = np.asarray(
+                self.is_categorical, dtype=np.uint8
+            )
 
         n_features = X.shape[1]
         known_categories = self.known_categories
@@ -242,7 +243,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
             self.bin_thresholds_.append(thresholds)
 
-        self.n_bins_non_missing_ = np.array(n_bins_non_missing, dtype=np.uint32)
+        self.n_bins_non_missing_ = np.array(
+            n_bins_non_missing, dtype=np.uint32
+        )
         return self
 
     def transform(self, X):
@@ -270,13 +273,19 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
             raise ValueError(
                 "This estimator was fitted with {} features but {} got passed "
-                "to transform()".format(self.n_bins_non_missing_.shape[0], X.shape[1])
+                "to transform()".format(
+                    self.n_bins_non_missing_.shape[0], X.shape[1]
+                )
             )
 
         n_threads = _openmp_effective_n_threads(self.n_threads)
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
         _map_to_bins(
-            X, self.bin_thresholds_, self.missing_values_bin_idx_, n_threads, binned
+            X,
+            self.bin_thresholds_,
+            self.missing_values_bin_idx_,
+            n_threads,
+            binned,
         )
         return binned
 
@@ -312,6 +321,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         # worth cythonizing
         for mapped_f_idx, f_idx in enumerate(categorical_features_indices):
             for raw_cat_val in known_categories[f_idx]:
-                set_bitset_memoryview(known_cat_bitsets[mapped_f_idx], raw_cat_val)
+                set_bitset_memoryview(
+                    known_cat_bitsets[mapped_f_idx], raw_cat_val
+                )
 
         return known_cat_bitsets, f_idx_map

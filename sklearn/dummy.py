@@ -180,9 +180,11 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                         % self.n_outputs_
                     )
 
-        (self.classes_, self.n_classes_, self.class_prior_) = class_distribution(
-            y, sample_weight
-        )
+        (
+            self.classes_,
+            self.n_classes_,
+            self.class_prior_,
+        ) = class_distribution(y, sample_weight)
 
         if self._strategy == "constant":
             for k in range(self.n_outputs_):
@@ -258,7 +260,9 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             elif self._strategy == "constant":
                 classes_ = [np.array([c]) for c in constant]
 
-            y = _random_choice_csc(n_samples, classes_, class_prob, self.random_state)
+            y = _random_choice_csc(
+                n_samples, classes_, class_prob, self.random_state
+            )
         else:
             if self._strategy in ("most_frequent", "prior"):
                 y = np.tile(
@@ -382,8 +386,12 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             "poor_score": True,
             "no_validation": True,
             "_xfail_checks": {
-                "check_methods_subset_invariance": "fails for the predict method",
-                "check_methods_sample_order_invariance": "fails for the predict method",
+                "check_methods_subset_invariance": (
+                    "fails for the predict method"
+                ),
+                "check_methods_sample_order_invariance": (
+                    "fails for the predict method"
+                ),
             },
         }
 
@@ -535,14 +543,17 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 self.constant_ = np.median(y, axis=0)
             else:
                 self.constant_ = [
-                    _weighted_percentile(y[:, k], sample_weight, percentile=50.0)
+                    _weighted_percentile(
+                        y[:, k], sample_weight, percentile=50.0
+                    )
                     for k in range(self.n_outputs_)
                 ]
 
         elif self.strategy == "quantile":
             if self.quantile is None or not np.isscalar(self.quantile):
                 raise ValueError(
-                    "Quantile must be a scalar in the range [0.0, 1.0], but got %s."
+                    "Quantile must be a scalar in the range [0.0, 1.0], but"
+                    " got %s."
                     % self.quantile
                 )
 
@@ -551,7 +562,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 self.constant_ = np.percentile(y, axis=0, q=percentile)
             else:
                 self.constant_ = [
-                    _weighted_percentile(y[:, k], sample_weight, percentile=percentile)
+                    _weighted_percentile(
+                        y[:, k], sample_weight, percentile=percentile
+                    )
                     for k in range(self.n_outputs_)
                 ]
 
@@ -571,7 +584,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
             if self.n_outputs_ != 1 and self.constant.shape[0] != y.shape[1]:
                 raise ValueError(
-                    "Constant target value should have shape (%d, 1)." % y.shape[1]
+                    "Constant target value should have shape (%d, 1)."
+                    % y.shape[1]
                 )
 
             self.constant_ = self.constant

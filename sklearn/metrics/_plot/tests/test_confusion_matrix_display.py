@@ -51,7 +51,9 @@ def test_confusion_matrix_display_validation(pyplot):
         ConfusionMatrixDisplay.from_predictions(y, y_pred_classifier[::2])
 
 
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
 def test_confusion_matrix_display_invalid_option(pyplot, constructor_name):
     """Check the error raise if an invalid parameter value is passed."""
     X, y = make_classification(
@@ -67,12 +69,16 @@ def test_confusion_matrix_display_invalid_option(pyplot, constructor_name):
     err_msg = r"normalize must be one of \{'true', 'pred', 'all', None\}"
     with pytest.raises(ValueError, match=err_msg):
         if constructor_name == "from_estimator":
-            ConfusionMatrixDisplay.from_estimator(classifier, X, y, **extra_params)
+            ConfusionMatrixDisplay.from_estimator(
+                classifier, X, y, **extra_params
+            )
         else:
             ConfusionMatrixDisplay.from_predictions(y, y_pred, **extra_params)
 
 
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
 @pytest.mark.parametrize("with_labels", [True, False])
 @pytest.mark.parametrize("with_display_labels", [True, False])
 def test_confusion_matrix_display_custom_labels(
@@ -100,9 +106,13 @@ def test_confusion_matrix_display_custom_labels(
         "labels": labels,
     }
     if constructor_name == "from_estimator":
-        disp = ConfusionMatrixDisplay.from_estimator(classifier, X, y, **common_kwargs)
+        disp = ConfusionMatrixDisplay.from_estimator(
+            classifier, X, y, **common_kwargs
+        )
     else:
-        disp = ConfusionMatrixDisplay.from_predictions(y, y_pred, **common_kwargs)
+        disp = ConfusionMatrixDisplay.from_predictions(
+            y, y_pred, **common_kwargs
+        )
     assert_allclose(disp.confusion_matrix, cm)
 
     if with_display_labels:
@@ -112,7 +122,9 @@ def test_confusion_matrix_display_custom_labels(
     else:
         expected_display_labels = list(range(n_classes))
 
-    expected_display_labels_str = [str(name) for name in expected_display_labels]
+    expected_display_labels_str = [
+        str(name) for name in expected_display_labels
+    ]
 
     x_ticks = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
     y_ticks = [tick.get_text() for tick in disp.ax_.get_yticklabels()]
@@ -122,7 +134,9 @@ def test_confusion_matrix_display_custom_labels(
     assert_array_equal(y_ticks, expected_display_labels_str)
 
 
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
 @pytest.mark.parametrize("normalize", ["true", "pred", "all", None])
 @pytest.mark.parametrize("include_values", [True, False])
 def test_confusion_matrix_display_plotting(
@@ -153,9 +167,13 @@ def test_confusion_matrix_display_plotting(
         "include_values": include_values,
     }
     if constructor_name == "from_estimator":
-        disp = ConfusionMatrixDisplay.from_estimator(classifier, X, y, **common_kwargs)
+        disp = ConfusionMatrixDisplay.from_estimator(
+            classifier, X, y, **common_kwargs
+        )
     else:
-        disp = ConfusionMatrixDisplay.from_predictions(y, y_pred, **common_kwargs)
+        disp = ConfusionMatrixDisplay.from_predictions(
+            y, y_pred, **common_kwargs
+        )
 
     assert disp.ax_ == ax
 
@@ -182,7 +200,9 @@ def test_confusion_matrix_display_plotting(
 
     expected_display_labels = list(range(n_classes))
 
-    expected_display_labels_str = [str(name) for name in expected_display_labels]
+    expected_display_labels_str = [
+        str(name) for name in expected_display_labels
+    ]
 
     assert_array_equal(disp.display_labels, expected_display_labels)
     assert_array_equal(x_ticks, expected_display_labels_str)
@@ -195,13 +215,17 @@ def test_confusion_matrix_display_plotting(
         assert disp.text_.shape == (n_classes, n_classes)
         fmt = ".2g"
         expected_text = np.array([format(v, fmt) for v in cm.ravel(order="C")])
-        text_text = np.array([t.get_text() for t in disp.text_.ravel(order="C")])
+        text_text = np.array(
+            [t.get_text() for t in disp.text_.ravel(order="C")]
+        )
         assert_array_equal(expected_text, text_text)
     else:
         assert disp.text_ is None
 
 
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
 def test_confusion_matrix_display(pyplot, constructor_name):
     """Check the behaviour of the default constructor without using the class
     methods."""
@@ -223,9 +247,13 @@ def test_confusion_matrix_display(pyplot, constructor_name):
         "xticks_rotation": 45.0,
     }
     if constructor_name == "from_estimator":
-        disp = ConfusionMatrixDisplay.from_estimator(classifier, X, y, **common_kwargs)
+        disp = ConfusionMatrixDisplay.from_estimator(
+            classifier, X, y, **common_kwargs
+        )
     else:
-        disp = ConfusionMatrixDisplay.from_predictions(y, y_pred, **common_kwargs)
+        disp = ConfusionMatrixDisplay.from_predictions(
+            y, y_pred, **common_kwargs
+        )
 
     assert_allclose(disp.confusion_matrix, cm)
     assert disp.text_.shape == (n_classes, n_classes)
@@ -319,7 +347,9 @@ def test_confusion_matrix_pipeline(pyplot, clf):
     assert disp.text_.shape == (n_classes, n_classes)
 
 
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions"]
+)
 def test_confusion_matrix_with_unknown_labels(pyplot, constructor_name):
     """Check that when labels=None, the unique values in `y_pred` and `y_true`
     will be used.
@@ -341,9 +371,13 @@ def test_confusion_matrix_with_unknown_labels(pyplot, constructor_name):
 
     common_kwargs = {"labels": None}
     if constructor_name == "from_estimator":
-        disp = ConfusionMatrixDisplay.from_estimator(classifier, X, y, **common_kwargs)
+        disp = ConfusionMatrixDisplay.from_estimator(
+            classifier, X, y, **common_kwargs
+        )
     else:
-        disp = ConfusionMatrixDisplay.from_predictions(y, y_pred, **common_kwargs)
+        disp = ConfusionMatrixDisplay.from_predictions(
+            y, y_pred, **common_kwargs
+        )
 
     display_labels = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
     expected_labels = [str(i) for i in range(n_classes + 1)]

@@ -121,7 +121,9 @@ def test_20news_as_frame(fetch_20newsgroups_vectorized_fxt):
     assert bunch.target.name == "category_class"
 
 
-def test_as_frame_no_pandas(fetch_20newsgroups_vectorized_fxt, hide_available_pandas):
+def test_as_frame_no_pandas(
+    fetch_20newsgroups_vectorized_fxt, hide_available_pandas
+):
     check_pandas_dependency_message(fetch_20newsgroups_vectorized_fxt)
 
 

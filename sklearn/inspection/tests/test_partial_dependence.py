@@ -47,7 +47,10 @@ y = [-1, -1, -1, 1, 1, 1]
 
 
 # (X, y), n_targets  <-- as expected in the output of partial_dep()
-binary_classification_data = (make_classification(n_samples=50, random_state=0), 1)
+binary_classification_data = (
+    make_classification(n_samples=50, random_state=0),
+    1,
+)
 multiclass_classification_data = (
     make_classification(
         n_samples=50, n_classes=3, n_clusters_per_class=1, random_state=0
@@ -85,7 +88,9 @@ iris = load_iris()
 @pytest.mark.parametrize("grid_resolution", (5, 10))
 @pytest.mark.parametrize("features", ([1], [1, 2]))
 @pytest.mark.parametrize("kind", ("legacy", "average", "individual", "both"))
-def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
+def test_output_shape(
+    Estimator, method, data, grid_resolution, features, kind
+):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
     # - classifiers with binary and multiclass settings
@@ -112,7 +117,10 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     # FIXME: Remove 'legacy' support in 1.1
     pdp, axes = result if kind == "legacy" else (result, result["values"])
 
-    expected_pdp_shape = (n_targets, *[grid_resolution for _ in range(len(features))])
+    expected_pdp_shape = (
+        n_targets,
+        *[grid_resolution for _ in range(len(features))],
+    )
     expected_ice_shape = (
         n_targets,
         n_instances,
@@ -182,7 +190,9 @@ def test_grid_from_X():
 def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
     X = np.asarray([[1, 2], [3, 4]])
     with pytest.raises(ValueError, match=err_msg):
-        _grid_from_X(X, grid_resolution=grid_resolution, percentiles=percentiles)
+        _grid_from_X(
+            X, grid_resolution=grid_resolution, percentiles=percentiles
+        )
 
 
 @pytest.mark.parametrize("target_feature", range(5))
@@ -274,7 +284,9 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
     # The forest will use ensemble.base._set_random_states to set the
     # random_state of the tree sub-estimator. We simulate this here to have
     # equivalent estimators.
-    equiv_random_state = check_random_state(tree_seed).randint(np.iinfo(np.int32).max)
+    equiv_random_state = check_random_state(tree_seed).randint(
+        np.iinfo(np.int32).max
+    )
     gbdt = GradientBoostingRegressor(
         n_estimators=1,
         learning_rate=1,
@@ -282,7 +294,9 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
         max_depth=max_depth,
         random_state=equiv_random_state,
     )
-    tree = DecisionTreeRegressor(max_depth=max_depth, random_state=equiv_random_state)
+    tree = DecisionTreeRegressor(
+        max_depth=max_depth, random_state=equiv_random_state
+    )
 
     forest.fit(X, y)
     gbdt.fit(X, y)
@@ -324,7 +338,9 @@ def test_recursion_decision_function(est, target_feature):
     # the same result as using brute method with
     # response_method=decision_function
 
-    X, y = make_classification(n_classes=2, n_clusters_per_class=1, random_state=1)
+    X, y = make_classification(
+        n_classes=2, n_clusters_per_class=1, random_state=1
+    )
     assert np.mean(y) == 0.5  # make sure the init estimator predicts 0 anyway
 
     est.fit(X, y)
@@ -378,7 +394,11 @@ def test_partial_dependence_easy_target(est, power):
     est.fit(X, y)
 
     pdp = partial_dependence(
-        est, features=[target_variable], X=X, grid_resolution=1000, kind="average"
+        est,
+        features=[target_variable],
+        X=X,
+        grid_resolution=1000,
+        kind="average",
     )
 
     new_X = pdp["values"][0].reshape(-1, 1)
@@ -407,7 +427,9 @@ def test_multiclass_multioutput(Estimator):
     # Make sure error is raised for multiclass-multioutput classifiers
 
     # make multiclass-multioutput dataset
-    X, y = make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
+    X, y = make_classification(
+        n_classes=3, n_clusters_per_class=1, random_state=0
+    )
     y = np.array([y, y]).T
 
     est = Estimator()
@@ -447,12 +469,18 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
                 "response_method": "predict_proba",
                 "method": "recursion",
             },
-            "'recursion' method, the response_method must be 'decision_function'",
+            "'recursion' method, the response_method must be"
+            " 'decision_function'",
         ),
         (
             GradientBoostingClassifier(random_state=0),
-            {"features": [0], "response_method": "predict_proba", "method": "auto"},
-            "'recursion' method, the response_method must be 'decision_function'",
+            {
+                "features": [0],
+                "response_method": "predict_proba",
+                "method": "auto",
+            },
+            "'recursion' method, the response_method must be"
+            " 'decision_function'",
         ),
         (
             GradientBoostingClassifier(random_state=0),
@@ -462,7 +490,8 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         (
             NoPredictProbaNoDecisionFunction(),
             {"features": [0], "response_method": "auto"},
-            "The estimator has no predict_proba and no decision_function method",
+            "The estimator has no predict_proba and no decision_function"
+            " method",
         ),
         (
             NoPredictProbaNoDecisionFunction(),
@@ -477,17 +506,20 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         (
             LinearRegression(),
             {"features": [0], "method": "blahblah"},
-            "blahblah is invalid. Accepted method names are brute, recursion, auto",
+            "blahblah is invalid. Accepted method names are brute, recursion,"
+            " auto",
         ),
         (
             LinearRegression(),
             {"features": [0], "method": "recursion", "kind": "individual"},
-            "The 'recursion' method only applies when 'kind' is set to 'average'",
+            "The 'recursion' method only applies when 'kind' is set to"
+            " 'average'",
         ),
         (
             LinearRegression(),
             {"features": [0], "method": "recursion", "kind": "both"},
-            "The 'recursion' method only applies when 'kind' is set to 'average'",
+            "The 'recursion' method only applies when 'kind' is set to"
+            " 'average'",
         ),
         (
             LinearRegression(),
@@ -523,7 +555,8 @@ def test_partial_dependence_slice_error(with_dataframe, err_msg):
 
 
 @pytest.mark.parametrize(
-    "estimator", [LinearRegression(), GradientBoostingClassifier(random_state=0)]
+    "estimator",
+    [LinearRegression(), GradientBoostingClassifier(random_state=0)],
 )
 @pytest.mark.parametrize("features", [-1, 10000])
 def test_partial_dependence_unknown_feature_indices(estimator, features):
@@ -536,7 +569,8 @@ def test_partial_dependence_unknown_feature_indices(estimator, features):
 
 
 @pytest.mark.parametrize(
-    "estimator", [LinearRegression(), GradientBoostingClassifier(random_state=0)]
+    "estimator",
+    [LinearRegression(), GradientBoostingClassifier(random_state=0)],
 )
 def test_partial_dependence_unknown_feature_string(estimator):
     pd = pytest.importorskip("pandas")
@@ -551,7 +585,8 @@ def test_partial_dependence_unknown_feature_string(estimator):
 
 
 @pytest.mark.parametrize(
-    "estimator", [LinearRegression(), GradientBoostingClassifier(random_state=0)]
+    "estimator",
+    [LinearRegression(), GradientBoostingClassifier(random_state=0)],
 )
 def test_partial_dependence_X_list(estimator):
     # check that array-like objects are accepted
@@ -568,12 +603,14 @@ def test_warning_recursion_non_constant_init():
     gbc.fit(X, y)
 
     with pytest.warns(
-        UserWarning, match="Using recursion method with a non-constant init predictor"
+        UserWarning,
+        match="Using recursion method with a non-constant init predictor",
     ):
         partial_dependence(gbc, X, [0], method="recursion", kind="average")
 
     with pytest.warns(
-        UserWarning, match="Using recursion method with a non-constant init predictor"
+        UserWarning,
+        match="Using recursion method with a non-constant init predictor",
     ):
         partial_dependence(gbc, X, [0], method="recursion", kind="average")
 
@@ -628,7 +665,11 @@ def test_partial_dependence_pipeline():
 
     features = 0
     pdp_pipe = partial_dependence(
-        pipe, iris.data, features=[features], grid_resolution=10, kind="average"
+        pipe,
+        iris.data,
+        features=[features],
+        grid_resolution=10,
+        kind="average",
     )
     pdp_clf = partial_dependence(
         clf,
@@ -640,7 +681,8 @@ def test_partial_dependence_pipeline():
     assert_allclose(pdp_pipe["average"], pdp_clf["average"])
     assert_allclose(
         pdp_pipe["values"][0],
-        pdp_clf["values"][0] * scaler.scale_[features] + scaler.mean_[features],
+        pdp_clf["values"][0] * scaler.scale_[features]
+        + scaler.mean_[features],
     )
 
 
@@ -790,7 +832,9 @@ def test_warning_for_kind_legacy():
     (X, y), n_targets = binary_classification_data
     est.fit(X, y)
 
-    err_msg = "A Bunch will be returned in place of 'predictions' from version 1.1"
+    err_msg = (
+        "A Bunch will be returned in place of 'predictions' from version 1.1"
+    )
     with pytest.warns(FutureWarning, match=err_msg):
         partial_dependence(est, X=X, features=[1, 2])
 

@@ -58,7 +58,9 @@ def test_dbscan_feature():
     metric = "euclidean"
     # Compute DBSCAN
     # parameters chosen for task
-    core_samples, labels = dbscan(X, metric=metric, eps=eps, min_samples=min_samples)
+    core_samples, labels = dbscan(
+        X, metric=metric, eps=eps, min_samples=min_samples
+    )
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
@@ -72,7 +74,9 @@ def test_dbscan_feature():
 
 
 def test_dbscan_sparse():
-    core_sparse, labels_sparse = dbscan(sparse.lil_matrix(X), eps=0.8, min_samples=10)
+    core_sparse, labels_sparse = dbscan(
+        sparse.lil_matrix(X), eps=0.8, min_samples=10
+    )
     core_dense, labels_dense = dbscan(X, eps=0.8, min_samples=10)
     assert_array_equal(core_dense, core_sparse)
     assert_array_equal(labels_dense, labels_sparse)
@@ -89,7 +93,9 @@ def test_dbscan_sparse_precomputed(include_self):
     core_sparse, labels_sparse = dbscan(
         D_sparse, eps=0.8, min_samples=10, metric="precomputed"
     )
-    core_dense, labels_dense = dbscan(D, eps=0.8, min_samples=10, metric="precomputed")
+    core_dense, labels_dense = dbscan(
+        D, eps=0.8, min_samples=10, metric="precomputed"
+    )
     assert_array_equal(core_dense, core_sparse)
     assert_array_equal(labels_dense, labels_sparse)
 
@@ -149,14 +155,20 @@ def test_dbscan_callable():
     # Compute DBSCAN
     # parameters chosen for task
     core_samples, labels = dbscan(
-        X, metric=metric, eps=eps, min_samples=min_samples, algorithm="ball_tree"
+        X,
+        metric=metric,
+        eps=eps,
+        min_samples=min_samples,
+        algorithm="ball_tree",
     )
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
-    db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples, algorithm="ball_tree")
+    db = DBSCAN(
+        metric=metric, eps=eps, min_samples=min_samples, algorithm="ball_tree"
+    )
     labels = db.fit(X).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
@@ -185,7 +197,11 @@ def test_dbscan_metric_params():
 
     # Test that sample labels are the same as passing Minkowski 'p' directly
     db = DBSCAN(
-        metric="minkowski", eps=eps, min_samples=min_samples, algorithm="ball_tree", p=p
+        metric="minkowski",
+        eps=eps,
+        min_samples=min_samples,
+        algorithm="ball_tree",
+        p=p,
     ).fit(X)
     core_sample_2, labels_2 = db.core_sample_indices_, db.labels_
 
@@ -194,7 +210,10 @@ def test_dbscan_metric_params():
 
     # Minkowski with p=1 should be equivalent to Manhattan distance
     db = DBSCAN(
-        metric="manhattan", eps=eps, min_samples=min_samples, algorithm="ball_tree"
+        metric="manhattan",
+        eps=eps,
+        min_samples=min_samples,
+        algorithm="ball_tree",
     ).fit(X)
     core_sample_3, labels_3 = db.core_sample_indices_, db.labels_
 
@@ -256,7 +275,9 @@ def test_dbscan_balltree():
     n_clusters_4 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_4 == n_clusters
 
-    db = DBSCAN(leaf_size=20, eps=eps, min_samples=min_samples, algorithm="ball_tree")
+    db = DBSCAN(
+        leaf_size=20, eps=eps, min_samples=min_samples, algorithm="ball_tree"
+    )
     labels = db.fit(X).labels_
 
     n_clusters_5 = len(set(labels)) - int(-1 in labels)
@@ -310,29 +331,41 @@ def test_weighted_dbscan():
         dbscan([[0], [1]], sample_weight=[2, 3, 4])
 
     # ensure sample_weight has an effect
-    assert_array_equal([], dbscan([[0], [1]], sample_weight=None, min_samples=6)[0])
-    assert_array_equal([], dbscan([[0], [1]], sample_weight=[5, 5], min_samples=6)[0])
-    assert_array_equal([0], dbscan([[0], [1]], sample_weight=[6, 5], min_samples=6)[0])
+    assert_array_equal(
+        [], dbscan([[0], [1]], sample_weight=None, min_samples=6)[0]
+    )
+    assert_array_equal(
+        [], dbscan([[0], [1]], sample_weight=[5, 5], min_samples=6)[0]
+    )
+    assert_array_equal(
+        [0], dbscan([[0], [1]], sample_weight=[6, 5], min_samples=6)[0]
+    )
     assert_array_equal(
         [0, 1], dbscan([[0], [1]], sample_weight=[6, 6], min_samples=6)[0]
     )
 
     # points within eps of each other:
     assert_array_equal(
-        [0, 1], dbscan([[0], [1]], eps=1.5, sample_weight=[5, 1], min_samples=6)[0]
+        [0, 1],
+        dbscan([[0], [1]], eps=1.5, sample_weight=[5, 1], min_samples=6)[0],
     )
     # and effect of non-positive and non-integer sample_weight:
     assert_array_equal(
         [], dbscan([[0], [1]], sample_weight=[5, 0], eps=1.5, min_samples=6)[0]
     )
     assert_array_equal(
-        [0, 1], dbscan([[0], [1]], sample_weight=[5.9, 0.1], eps=1.5, min_samples=6)[0]
+        [0, 1],
+        dbscan([[0], [1]], sample_weight=[5.9, 0.1], eps=1.5, min_samples=6)[
+            0
+        ],
     )
     assert_array_equal(
-        [0, 1], dbscan([[0], [1]], sample_weight=[6, 0], eps=1.5, min_samples=6)[0]
+        [0, 1],
+        dbscan([[0], [1]], sample_weight=[6, 0], eps=1.5, min_samples=6)[0],
     )
     assert_array_equal(
-        [], dbscan([[0], [1]], sample_weight=[6, -1], eps=1.5, min_samples=6)[0]
+        [],
+        dbscan([[0], [1]], sample_weight=[6, -1], eps=1.5, min_samples=6)[0],
     )
 
     # for non-negative sample_weight, cores should be identical to repetition
@@ -351,7 +384,9 @@ def test_weighted_dbscan():
 
     # sample_weight should work with precomputed distance matrix
     D = pairwise_distances(X)
-    core3, label3 = dbscan(D, sample_weight=sample_weight, metric="precomputed")
+    core3, label3 = dbscan(
+        D, sample_weight=sample_weight, metric="precomputed"
+    )
     assert_array_equal(core1, core3)
     assert_array_equal(label1, label3)
 
@@ -426,5 +461,9 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero():
         ]
     )
     matrix = sparse.csr_matrix(ar)
-    labels = DBSCAN(eps=0.2, metric="precomputed", min_samples=2).fit(matrix).labels_
+    labels = (
+        DBSCAN(eps=0.2, metric="precomputed", min_samples=2)
+        .fit(matrix)
+        .labels_
+    )
     assert_array_equal(labels, [-1, -1, 0, 0, 0, 1, 1])

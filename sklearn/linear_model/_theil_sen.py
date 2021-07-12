@@ -199,7 +199,9 @@ def _lstsq(X, y, indices, fit_intercept):
     for index, subset in enumerate(indices):
         X_subpopulation[:, fit_intercept:] = X[subset, :]
         y_subpopulation[:n_subsamples] = y[subset]
-        weights[index] = lstsq(X_subpopulation, y_subpopulation)[1][:n_features]
+        weights[index] = lstsq(X_subpopulation, y_subpopulation)[1][
+            :n_features
+        ]
 
     return weights
 
@@ -402,14 +404,18 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             print("Number of samples: {0}".format(n_samples))
             tol_outliers = int(self.breakdown_ * n_samples)
             print("Tolerable outliers: {0}".format(tol_outliers))
-            print("Number of subpopulations: {0}".format(self.n_subpopulation_))
+            print(
+                "Number of subpopulations: {0}".format(self.n_subpopulation_)
+            )
 
         # Determine indices of subpopulation
         if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
             indices = list(combinations(range(n_samples), n_subsamples))
         else:
             indices = [
-                random_state.choice(n_samples, size=n_subsamples, replace=False)
+                random_state.choice(
+                    n_samples, size=n_subsamples, replace=False
+                )
                 for _ in range(self.n_subpopulation_)
             ]
 

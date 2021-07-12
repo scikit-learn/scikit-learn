@@ -54,7 +54,10 @@ class MyPassiveAggressive(ClassifierMixin):
 
                 if self.loss in ("hinge", "epsilon_insensitive"):
                     step = min(self.C, loss / sqnorm)
-                elif self.loss in ("squared_hinge", "squared_epsilon_insensitive"):
+                elif self.loss in (
+                    "squared_hinge",
+                    "squared_epsilon_insensitive",
+                ):
                     step = loss / (sqnorm + 1.0 / (2 * self.C))
 
                 if self.loss in ("hinge", "squared_hinge"):
@@ -145,7 +148,9 @@ def test_classifier_undefined_methods():
 
 def test_class_weights():
     # Test class weights.
-    X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
+    X2 = np.array(
+        [[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]]
+    )
     y2 = [1, 1, 1, -1, -1]
 
     clf = PassiveAggressiveClassifier(
@@ -179,7 +184,9 @@ def test_equal_class_weight():
     clf.fit(X2, y2)
 
     # Already balanced, so "balanced" weights should have no effect
-    clf_balanced = PassiveAggressiveClassifier(C=0.1, tol=None, class_weight="balanced")
+    clf_balanced = PassiveAggressiveClassifier(
+        C=0.1, tol=None, class_weight="balanced"
+    )
     clf_balanced.fit(X2, y2)
 
     clf_weighted = PassiveAggressiveClassifier(
@@ -194,7 +201,9 @@ def test_equal_class_weight():
 
 def test_wrong_class_weight_label():
     # ValueError due to wrong class_weight label.
-    X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
+    X2 = np.array(
+        [[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]]
+    )
     y2 = [1, 1, 1, -1, -1]
 
     clf = PassiveAggressiveClassifier(class_weight={0: 0.5}, max_iter=100)
@@ -204,7 +213,9 @@ def test_wrong_class_weight_label():
 
 def test_wrong_class_weight_format():
     # ValueError due to wrong class_weight argument type.
-    X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
+    X2 = np.array(
+        [[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]]
+    )
     y2 = [1, 1, 1, -1, -1]
 
     clf = PassiveAggressiveClassifier(class_weight=[0.5], max_iter=100)
@@ -260,7 +271,9 @@ def test_regressor_partial_fit():
                 assert hasattr(reg, "_standard_coef")
 
 
-@pytest.mark.parametrize("loss", ("epsilon_insensitive", "squared_epsilon_insensitive"))
+@pytest.mark.parametrize(
+    "loss", ("epsilon_insensitive", "squared_epsilon_insensitive")
+)
 def test_regressor_correctness(loss):
     y_bin = y.copy()
     y_bin[y != 1] = -1

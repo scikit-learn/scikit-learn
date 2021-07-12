@@ -33,7 +33,9 @@ def test_mmhash3_int_array():
         assert_array_equal(murmurhash3_32(keys, seed), expected)
 
     for seed in [0, 42]:
-        expected = np.array([murmurhash3_32(k, seed, positive=True) for k in keys.flat])
+        expected = np.array(
+            [murmurhash3_32(k, seed, positive=True) for k in keys.flat]
+        )
         expected = expected.reshape(keys.shape)
         assert_array_equal(murmurhash3_32(keys, seed, positive=True), expected)
 
@@ -58,7 +60,9 @@ def test_no_collision_on_byte_range():
     previous_hashes = set()
     for i in range(100):
         h = murmurhash3_32(" " * i, 0)
-        assert h not in previous_hashes, "Found collision on growing empty string"
+        assert (
+            h not in previous_hashes
+        ), "Found collision on growing empty string"
 
 
 def test_uniform_distribution():

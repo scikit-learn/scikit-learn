@@ -36,7 +36,10 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     if array.ndim == 1:
         array = array.reshape((-1, 1))
     # When sample_weight 1D, repeat for each array.shape[1]
-    if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
+    if (
+        array.shape != sample_weight.shape
+        and array.shape[0] == sample_weight.shape[0]
+    ):
         sample_weight = np.tile(sample_weight, (array.shape[1], 1)).T
     sorted_idx = np.argsort(array, axis=0)
     sorted_weights = _take_along_axis(sample_weight, sorted_idx, axis=0)

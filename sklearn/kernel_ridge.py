@@ -139,8 +139,14 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if callable(self.kernel):
             params = self.kernel_params or {}
         else:
-            params = {"gamma": self.gamma, "degree": self.degree, "coef0": self.coef0}
-        return pairwise_kernels(X, Y, metric=self.kernel, filter_params=True, **params)
+            params = {
+                "gamma": self.gamma,
+                "degree": self.degree,
+                "coef0": self.coef0,
+            }
+        return pairwise_kernels(
+            X, Y, metric=self.kernel, filter_params=True, **params
+        )
 
     def _more_tags(self):
         return {"pairwise": self.kernel == "precomputed"}
@@ -176,7 +182,11 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         """
         # Convert data
         X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+            X,
+            y,
+            accept_sparse=("csr", "csc"),
+            multi_output=True,
+            y_numeric=True,
         )
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = _check_sample_weight(sample_weight, X)
@@ -190,7 +200,9 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             ravel = True
 
         copy = self.kernel == "precomputed"
-        self.dual_coef_ = _solve_cholesky_kernel(K, y, alpha, sample_weight, copy)
+        self.dual_coef_ = _solve_cholesky_kernel(
+            K, y, alpha, sample_weight, copy
+        )
         if ravel:
             self.dual_coef_ = self.dual_coef_.ravel()
 

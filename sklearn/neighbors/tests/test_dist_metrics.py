@@ -71,7 +71,9 @@ def test_cdist(metric, X1, X2):
         kwargs = dict(zip(keys, vals))
         if metric == "mahalanobis":
             # See: https://github.com/scipy/scipy/issues/13861
-            pytest.xfail("scipy#13861: cdist with 'mahalanobis' fails onmemmap data")
+            pytest.xfail(
+                "scipy#13861: cdist with 'mahalanobis' fails onmemmap data"
+            )
         elif metric == "wminkowski":
             if sp_version >= parse_version("1.8.0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")
@@ -118,7 +120,9 @@ def test_pdist(metric, X1, X2):
         kwargs = dict(zip(keys, vals))
         if metric == "mahalanobis":
             # See: https://github.com/scipy/scipy/issues/13861
-            pytest.xfail("scipy#13861: pdist with 'mahalanobis' fails onmemmap data")
+            pytest.xfail(
+                "scipy#13861: pdist with 'mahalanobis' fails onmemmap data"
+            )
         elif metric == "wminkowski":
             if sp_version >= parse_version("1.8.0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")
@@ -191,7 +195,9 @@ def test_haversine_metric():
         return 2 * np.arcsin(
             np.sqrt(
                 np.sin(0.5 * (x1[0] - x2[0])) ** 2
-                + np.cos(x1[0]) * np.cos(x2[0]) * np.sin(0.5 * (x1[1] - x2[1])) ** 2
+                + np.cos(x1[0])
+                * np.cos(x2[0])
+                * np.sin(0.5 * (x1[1] - x2[1])) ** 2
             )
         )
 
@@ -206,7 +212,9 @@ def test_haversine_metric():
             D2[i, j] = haversine_slow(x1, x2)
 
     assert_array_almost_equal(D1, D2)
-    assert_array_almost_equal(haversine.dist_to_rdist(D1), np.sin(0.5 * D2) ** 2)
+    assert_array_almost_equal(
+        haversine.dist_to_rdist(D1), np.sin(0.5 * D2) ** 2
+    )
 
 
 def test_pyfunc_metric():

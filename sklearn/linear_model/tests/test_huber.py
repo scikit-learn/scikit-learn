@@ -9,7 +9,12 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.datasets import make_regression
-from sklearn.linear_model import HuberRegressor, LinearRegression, SGDRegressor, Ridge
+from sklearn.linear_model import (
+    HuberRegressor,
+    LinearRegression,
+    SGDRegressor,
+    Ridge,
+)
 from sklearn.linear_model._huber import _huber_loss_and_gradient
 
 
@@ -82,11 +87,15 @@ def test_huber_sample_weights():
     # sure that the number of decimal places used is somewhat insensitive to
     # the amplitude of the coefficients and therefore to the scale of the
     # data and the regularization parameter
-    scale = max(np.mean(np.abs(huber.coef_)), np.mean(np.abs(huber.intercept_)))
+    scale = max(
+        np.mean(np.abs(huber.coef_)), np.mean(np.abs(huber.intercept_))
+    )
 
     huber.fit(X, y, sample_weight=np.ones(y.shape[0]))
     assert_array_almost_equal(huber.coef_ / scale, huber_coef / scale)
-    assert_array_almost_equal(huber.intercept_ / scale, huber_intercept / scale)
+    assert_array_almost_equal(
+        huber.intercept_ / scale, huber_intercept / scale
+    )
 
     X, y = make_regression_with_outliers(n_samples=5, n_features=20)
     X_new = np.vstack((X, np.vstack((X[1], X[1], X[3]))))
@@ -100,7 +109,9 @@ def test_huber_sample_weights():
     huber.fit(X, y, sample_weight=sample_weight)
 
     assert_array_almost_equal(huber.coef_ / scale, huber_coef / scale)
-    assert_array_almost_equal(huber.intercept_ / scale, huber_intercept / scale)
+    assert_array_almost_equal(
+        huber.intercept_ / scale, huber_intercept / scale
+    )
 
     # Test sparse implementation with sample weights.
     X_csr = sparse.csr_matrix(X)
@@ -168,7 +179,9 @@ def test_huber_and_sgd_same_results():
 
 def test_huber_warm_start():
     X, y = make_regression_with_outliers()
-    huber_warm = HuberRegressor(alpha=1.0, max_iter=10000, warm_start=True, tol=1e-1)
+    huber_warm = HuberRegressor(
+        alpha=1.0, max_iter=10000, warm_start=True, tol=1e-1
+    )
 
     huber_warm.fit(X, y)
     huber_warm_coef = huber_warm.coef_.copy()
@@ -206,6 +219,8 @@ def test_huber_better_r2_score():
 
 def test_huber_bool():
     # Test that it does not crash with bool data
-    X, y = make_regression(n_samples=200, n_features=2, noise=4.0, random_state=0)
+    X, y = make_regression(
+        n_samples=200, n_features=2, noise=4.0, random_state=0
+    )
     X_bool = X > 0
     HuberRegressor().fit(X_bool, y)

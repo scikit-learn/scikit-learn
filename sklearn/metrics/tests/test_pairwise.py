@@ -262,7 +262,10 @@ def callable_rbf_kernel(x, y, **kwds):
             _minkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version < parse_version("1.0"),
-                reason="minkowski does not accept the w parameter prior to scipy 1.0.",
+                reason=(
+                    "minkowski does not accept the w parameter prior to scipy"
+                    " 1.0."
+                ),
             ),
         ),
         pytest.param(
@@ -271,7 +274,10 @@ def callable_rbf_kernel(x, y, **kwds):
             _minkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version < parse_version("1.0"),
-                reason="minkowski does not accept the w parameter prior to scipy 1.0.",
+                reason=(
+                    "minkowski does not accept the w parameter prior to scipy"
+                    " 1.0."
+                ),
             ),
         ),
         pytest.param(
@@ -280,7 +286,10 @@ def callable_rbf_kernel(x, y, **kwds):
             _wminkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski and it has been already tested.",
+                reason=(
+                    "wminkowski is now minkowski and it has been already"
+                    " tested."
+                ),
             ),
         ),
         pytest.param(
@@ -289,7 +298,10 @@ def callable_rbf_kernel(x, y, **kwds):
             _wminkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski and it has been already tested.",
+                reason=(
+                    "wminkowski is now minkowski and it has been already"
+                    " tested."
+                ),
             ),
         ),
         (pairwise_kernels, "polynomial", {"degree": 1}),
@@ -321,7 +333,15 @@ def test_pairwise_callable_nonstrict_metric():
 # Test with all metrics that should be in PAIRWISE_KERNEL_FUNCTIONS.
 @pytest.mark.parametrize(
     "metric",
-    ["rbf", "laplacian", "sigmoid", "polynomial", "linear", "chi2", "additive_chi2"],
+    [
+        "rbf",
+        "laplacian",
+        "sigmoid",
+        "polynomial",
+        "linear",
+        "chi2",
+        "additive_chi2",
+    ],
 )
 def test_pairwise_kernels(metric):
     # Test the pairwise_kernels helper function.
@@ -567,7 +587,11 @@ def test_pairwise_distances_chunked_reduce_valid(good_reduce):
             ValueError,
             r"length \(10, 11\)\..* input: 10\.",
         ),
-        (lambda D, s: (D[:9], D), ValueError, r"length \(9, 10\)\..* input: 10\."),
+        (
+            lambda D, s: (D[:9], D),
+            ValueError,
+            r"length \(9, 10\)\..* input: 10\.",
+        ),
         (
             lambda D, s: 7,
             TypeError,
@@ -585,7 +609,9 @@ def test_pairwise_distances_chunked_reduce_valid(good_reduce):
         ),
     ],
 )
-def test_pairwise_distances_chunked_reduce_invalid(bad_reduce, err_type, message):
+def test_pairwise_distances_chunked_reduce_invalid(
+    bad_reduce, err_type, message
+):
     X = np.arange(10).reshape(-1, 1)
     S_chunks = pairwise_distances_chunked(
         X, None, reduce_func=bad_reduce, working_memory=64
@@ -595,7 +621,9 @@ def test_pairwise_distances_chunked_reduce_invalid(bad_reduce, err_type, message
 
 
 def check_pairwise_distances_chunked(X, Y, working_memory, metric="euclidean"):
-    gen = pairwise_distances_chunked(X, Y, working_memory=working_memory, metric=metric)
+    gen = pairwise_distances_chunked(
+        X, Y, working_memory=working_memory, metric=metric
+    )
     assert isinstance(gen, GeneratorType)
     blockwise_distances = list(gen)
     Y = X if Y is None else Y
@@ -614,7 +642,9 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric="euclidean"):
 def test_pairwise_distances_chunked_diagonal(metric):
     rng = np.random.RandomState(0)
     X = rng.normal(size=(1000, 10), scale=1e10)
-    chunks = list(pairwise_distances_chunked(X, working_memory=1, metric=metric))
+    chunks = list(
+        pairwise_distances_chunked(X, working_memory=1, metric=metric)
+    )
     assert len(chunks) > 1
     assert_array_almost_equal(np.diag(np.vstack(chunks)), 0, decimal=10)
 
@@ -633,7 +663,9 @@ def test_pairwise_distances_chunked():
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
     X = rng.random_sample((200, 4))
-    check_pairwise_distances_chunked(X, None, working_memory=1, metric="euclidean")
+    check_pairwise_distances_chunked(
+        X, None, working_memory=1, metric="euclidean"
+    )
     # Test small amounts of memory
     for power in range(-16, 0):
         check_pairwise_distances_chunked(
@@ -645,22 +677,30 @@ def test_pairwise_distances_chunked():
     )
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((100, 4))
-    check_pairwise_distances_chunked(X, Y, working_memory=1, metric="euclidean")
+    check_pairwise_distances_chunked(
+        X, Y, working_memory=1, metric="euclidean"
+    )
     check_pairwise_distances_chunked(
         X.tolist(), Y.tolist(), working_memory=1, metric="euclidean"
     )
     # absurdly large working_memory
-    check_pairwise_distances_chunked(X, Y, working_memory=10000, metric="euclidean")
+    check_pairwise_distances_chunked(
+        X, Y, working_memory=10000, metric="euclidean"
+    )
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.
-    check_pairwise_distances_chunked(X, Y, working_memory=1, metric="cityblock")
+    check_pairwise_distances_chunked(
+        X, Y, working_memory=1, metric="cityblock"
+    )
     # Test that a value error is raised if the metric is unknown
     with pytest.raises(ValueError):
         next(pairwise_distances_chunked(X, Y, metric="blah"))
 
     # Test precomputed returns all at once
     D = pairwise_distances(X)
-    gen = pairwise_distances_chunked(D, working_memory=2 ** -16, metric="precomputed")
+    gen = pairwise_distances_chunked(
+        D, working_memory=2 ** -16, metric="precomputed"
+    )
     assert isinstance(gen, GeneratorType)
     assert next(gen) is D
     with pytest.raises(StopIteration):
@@ -701,7 +741,9 @@ def test_euclidean_distances_with_norms(dtype, y_array_constr):
     D1 = euclidean_distances(X, Y)
     D2 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq)
     D3 = euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq)
-    D4 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq, Y_norm_squared=Y_norm_sq)
+    D4 = euclidean_distances(
+        X, Y, X_norm_squared=X_norm_sq, Y_norm_squared=Y_norm_sq
+    )
     assert_allclose(D2, D1)
     assert_allclose(D3, D1)
     assert_allclose(D4, D1)
@@ -808,7 +850,9 @@ def test_euclidean_distances_sym(dtype, x_array_constr):
 @pytest.mark.parametrize(
     "y_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
 )
-def test_euclidean_distances_upcast(batch_size, x_array_constr, y_array_constr):
+def test_euclidean_distances_upcast(
+    batch_size, x_array_constr, y_array_constr
+):
     # check batches handling when Y != X (#13910)
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10)).astype(np.float32)
@@ -886,14 +930,20 @@ def test_nan_euclidean_distances_equal_to_euclidean_distance(squared):
     assert_allclose(normal_distance, nan_distance)
 
 
-@pytest.mark.parametrize("X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
-@pytest.mark.parametrize("Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
+@pytest.mark.parametrize(
+    "X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])]
+)
+@pytest.mark.parametrize(
+    "Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None]
+)
 def test_nan_euclidean_distances_infinite_values(X, Y):
 
     with pytest.raises(ValueError) as excinfo:
         nan_euclidean_distances(X, Y=Y)
 
-    exp_msg = "Input contains infinity or a value too large for dtype('float64')."
+    exp_msg = (
+        "Input contains infinity or a value too large for dtype('float64')."
+    )
     assert exp_msg == str(excinfo.value)
 
 
@@ -919,13 +969,17 @@ def test_nan_euclidean_distances_2x2(X, X_diag, missing_value):
     dist = nan_euclidean_distances(X, missing_values=missing_value)
     assert_allclose(exp_dist, dist)
 
-    dist_sq = nan_euclidean_distances(X, squared=True, missing_values=missing_value)
+    dist_sq = nan_euclidean_distances(
+        X, squared=True, missing_values=missing_value
+    )
     assert_allclose(exp_dist ** 2, dist_sq)
 
     dist_two = nan_euclidean_distances(X, X, missing_values=missing_value)
     assert_allclose(exp_dist, dist_two)
 
-    dist_two_copy = nan_euclidean_distances(X, X.copy(), missing_values=missing_value)
+    dist_two_copy = nan_euclidean_distances(
+        X, X.copy(), missing_values=missing_value
+    )
     assert_allclose(exp_dist, dist_two_copy)
 
 
@@ -1012,7 +1066,9 @@ def test_nan_euclidean_distances_one_feature_match_positive(missing_value):
     )
     assert np.all(dist_squared >= 0)
 
-    dist = nan_euclidean_distances(X, missing_values=missing_value, squared=False)
+    dist = nan_euclidean_distances(
+        X, missing_values=missing_value, squared=False
+    )
     assert_allclose(dist, 0.0)
 
 
@@ -1217,7 +1273,8 @@ def test_laplacian_kernel():
 
 
 @pytest.mark.parametrize(
-    "metric, pairwise_func", [("linear", linear_kernel), ("cosine", cosine_similarity)]
+    "metric, pairwise_func",
+    [("linear", linear_kernel), ("cosine", cosine_similarity)],
 )
 def test_pairwise_similarity_sparse_output(metric, pairwise_func):
     rng = np.random.RandomState(0)
@@ -1408,7 +1465,8 @@ def test_pairwise_distances_data_derived_params_error(metric):
 
     with pytest.raises(
         ValueError,
-        match=fr"The '(V|VI)' parameter is required for the " fr"{metric} metric",
+        match=fr"The '(V|VI)' parameter is required for the "
+        fr"{metric} metric",
     ):
         pairwise_distances(X, Y, metric=metric)
 
@@ -1454,7 +1512,11 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
         expected_dist = cdist(X, Y, metric=metric)
         # precompute parameters for seuclidean & mahalanobis when x is not y
         if metric == "seuclidean":
-            params = {"V": np.var(np.vstack([X, Y]), axis=0, ddof=1, dtype=np.float64)}
+            params = {
+                "V": np.var(
+                    np.vstack([X, Y]), axis=0, ddof=1, dtype=np.float64
+                )
+            }
         elif metric == "mahalanobis":
             params = {"VI": np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 

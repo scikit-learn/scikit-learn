@@ -91,10 +91,13 @@ def test_cross_validator_with_default_params():
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = (
-        "ShuffleSplit(n_splits=10, random_state=0, test_size=None, train_size=None)"
+        "ShuffleSplit(n_splits=10, random_state=0, test_size=None,"
+        " train_size=None)"
     )
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
-    sgkf_repr = "StratifiedGroupKFold(n_splits=2, random_state=None, shuffle=False)"
+    sgkf_repr = (
+        "StratifiedGroupKFold(n_splits=2, random_state=None, shuffle=False)"
+    )
 
     n_splits_expected = [
         n_samples,
@@ -245,7 +248,9 @@ def test_kfold_valueerrors():
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        check_cv_coverage(sgkf_3, X2, y, groups=naive_groups, expected_n_splits=3)
+        check_cv_coverage(
+            sgkf_3, X2, y, groups=naive_groups, expected_n_splits=3
+        )
 
     # Check that errors are raised if all n_groups for individual
     # classes are less than n_splits.
@@ -261,7 +266,9 @@ def test_kfold_valueerrors():
         KFold(0)
     with pytest.raises(ValueError):
         KFold(1)
-    error_string = "k-fold cross-validation requires at least one train/test split"
+    error_string = (
+        "k-fold cross-validation requires at least one train/test split"
+    )
     with pytest.raises(ValueError, match=error_string):
         StratifiedKFold(0)
     with pytest.raises(ValueError, match=error_string):
@@ -361,7 +368,8 @@ def test_stratified_kfold_no_shuffle():
     y1 = ["1", "1", "1", "0", "0", "0", "0"]
     y2 = [1, 1, 1, 0, 0, 0, 0]
     np.testing.assert_equal(
-        list(StratifiedKFold(2).split(X, y1)), list(StratifiedKFold(2).split(X, y2))
+        list(StratifiedKFold(2).split(X, y1)),
+        list(StratifiedKFold(2).split(X, y2)),
     )
 
     # Check equivalence to KFold
@@ -483,7 +491,9 @@ def test_shuffle_kfold():
     assert sum(all_folds) == 300
 
 
-@pytest.mark.parametrize("kfold", [KFold, StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize(
+    "kfold", [KFold, StratifiedKFold, StratifiedGroupKFold]
+)
 def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     X = np.ones(15)  # Divisible by 3
     y = [0] * 7 + [1] * 8
@@ -643,7 +653,9 @@ def test_stratified_group_kfold_homogeneous_groups(y, groups, expected):
         assert_allclose(split_dist, expect_dist, atol=0.001)
 
 
-@pytest.mark.parametrize("cls_distr", [(0.4, 0.6), (0.3, 0.7), (0.2, 0.8), (0.8, 0.2)])
+@pytest.mark.parametrize(
+    "cls_distr", [(0.4, 0.6), (0.3, 0.7), (0.2, 0.8), (0.8, 0.2)]
+)
 @pytest.mark.parametrize("n_groups", [5, 30, 70])
 def test_stratified_group_kfold_against_group_kfold(cls_distr, n_groups):
     # Check that given sufficient amount of samples StratifiedGroupKFold
@@ -690,7 +702,9 @@ def test_shuffle_split():
 @pytest.mark.parametrize(
     "train_size, exp_train, exp_test", [(None, 9, 1), (8, 8, 2), (0.8, 8, 2)]
 )
-def test_shuffle_split_default_test_size(split_class, train_size, exp_train, exp_test):
+def test_shuffle_split_default_test_size(
+    split_class, train_size, exp_train, exp_test
+):
     # Check that the default value has the expected behavior, i.e. 0.1 if both
     # unspecified or complement train_size unless both are specified.
     X = np.ones(10)
@@ -705,14 +719,18 @@ def test_shuffle_split_default_test_size(split_class, train_size, exp_train, exp
 @pytest.mark.parametrize(
     "train_size, exp_train, exp_test", [(None, 8, 2), (7, 7, 3), (0.7, 7, 3)]
 )
-def test_group_shuffle_split_default_test_size(train_size, exp_train, exp_test):
+def test_group_shuffle_split_default_test_size(
+    train_size, exp_train, exp_test
+):
     # Check that the default value has the expected behavior, i.e. 0.2 if both
     # unspecified or complement train_size unless both are specified.
     X = np.ones(10)
     y = np.ones(10)
     groups = range(10)
 
-    X_train, X_test = next(GroupShuffleSplit(train_size=train_size).split(X, y, groups))
+    X_train, X_test = next(
+        GroupShuffleSplit(train_size=train_size).split(X, y, groups)
+    )
 
     assert len(X_train) == exp_train
     assert len(X_test) == exp_test
@@ -780,12 +798,12 @@ def test_stratified_shuffle_split_iter():
         for train, test in sss:
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
-            p_train = np.bincount(np.unique(y[train], return_inverse=True)[1]) / float(
-                len(y[train])
-            )
-            p_test = np.bincount(np.unique(y[test], return_inverse=True)[1]) / float(
-                len(y[test])
-            )
+            p_train = np.bincount(
+                np.unique(y[train], return_inverse=True)[1]
+            ) / float(len(y[train]))
+            p_test = np.bincount(
+                np.unique(y[test], return_inverse=True)[1]
+            ) / float(len(y[test]))
             assert_array_almost_equal(p_train, p_test, 1)
             assert len(train) + len(test) == y.size
             assert len(train) == train_size
@@ -827,7 +845,9 @@ def test_stratified_shuffle_split_even():
         assert n_splits_actual == n_splits
 
         n_train, n_test = _validate_shuffle_split(
-            n_samples, test_size=1.0 / n_folds, train_size=1.0 - (1.0 / n_folds)
+            n_samples,
+            test_size=1.0 / n_folds,
+            train_size=1.0 - (1.0 / n_folds),
         )
 
         assert len(train) == n_train
@@ -958,9 +978,15 @@ def test_group_shuffle_split():
 
             # Fourth test:
             # unique train and test groups are correct, +- 1 for rounding error
-            assert abs(len(l_test_unique) - round(test_size * len(l_unique))) <= 1
             assert (
-                abs(len(l_train_unique) - round((1.0 - test_size) * len(l_unique))) <= 1
+                abs(len(l_test_unique) - round(test_size * len(l_unique))) <= 1
+            )
+            assert (
+                abs(
+                    len(l_train_unique)
+                    - round((1.0 - test_size) * len(l_unique))
+                )
+                <= 1
             )
 
 
@@ -975,10 +1001,16 @@ def test_leave_one_p_group_out():
     assert repr(lpgo_2) == "LeavePGroupsOut(n_groups=2)"
     assert repr(LeavePGroupsOut(n_groups=3)) == "LeavePGroupsOut(n_groups=3)"
 
-    for j, (cv, p_groups_out) in enumerate(((logo, 1), (lpgo_1, 1), (lpgo_2, 2))):
+    for j, (cv, p_groups_out) in enumerate(
+        ((logo, 1), (lpgo_1, 1), (lpgo_2, 2))
+    ):
         for i, groups_i in enumerate(test_groups):
             n_groups = len(np.unique(groups_i))
-            n_splits = n_groups if p_groups_out == 1 else n_groups * (n_groups - 1) / 2
+            n_splits = (
+                n_groups
+                if p_groups_out == 1
+                else n_groups * (n_groups - 1) / 2
+            )
             X = y = np.ones(len(groups_i))
 
             # Test that the length is correct
@@ -990,7 +1022,10 @@ def test_leave_one_p_group_out():
             for train, test in cv.split(X, y, groups=groups_i):
                 # First test: no train group is in the test set and vice versa
                 assert_array_equal(
-                    np.intersect1d(groups_arr[train], groups_arr[test]).tolist(), []
+                    np.intersect1d(
+                        groups_arr[train], groups_arr[test]
+                    ).tolist(),
+                    [],
                 )
 
                 # Second test: train and test add up to all the data
@@ -1086,7 +1121,9 @@ def test_repeated_cv_value_errors():
             cv(n_repeats=1.5)
 
 
-@pytest.mark.parametrize("RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold])
+@pytest.mark.parametrize(
+    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold]
+)
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
     repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
@@ -1145,7 +1182,9 @@ def test_repeated_stratified_kfold_determinstic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 1, 1, 0, 0]
     random_state = 1944695409
-    rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2, random_state=random_state)
+    rskf = RepeatedStratifiedKFold(
+        n_splits=2, n_repeats=2, random_state=random_state
+    )
 
     # split should produce same and deterministic splits on
     # each call
@@ -1176,7 +1215,9 @@ def test_train_test_split_errors():
 
     pytest.raises(ValueError, train_test_split, range(3), train_size=1.1)
 
-    pytest.raises(ValueError, train_test_split, range(3), test_size=0.6, train_size=0.6)
+    pytest.raises(
+        ValueError, train_test_split, range(3), test_size=0.6, train_size=0.6
+    )
     pytest.raises(
         ValueError,
         train_test_split,
@@ -1184,11 +1225,17 @@ def test_train_test_split_errors():
         test_size=np.float32(0.6),
         train_size=np.float32(0.6),
     )
-    pytest.raises(ValueError, train_test_split, range(3), test_size="wrong_type")
-    pytest.raises(ValueError, train_test_split, range(3), test_size=2, train_size=4)
+    pytest.raises(
+        ValueError, train_test_split, range(3), test_size="wrong_type"
+    )
+    pytest.raises(
+        ValueError, train_test_split, range(3), test_size=2, train_size=4
+    )
     pytest.raises(TypeError, train_test_split, range(3), some_argument=1.1)
     pytest.raises(ValueError, train_test_split, range(3), range(42))
-    pytest.raises(ValueError, train_test_split, range(10), shuffle=False, stratify=True)
+    pytest.raises(
+        ValueError, train_test_split, range(10), shuffle=False, stratify=True
+    )
 
     with pytest.raises(
         ValueError,
@@ -1213,7 +1260,9 @@ def test_train_test_split_errors():
     ],
 )
 def test_train_test_split_invalid_sizes1(train_size, test_size):
-    with pytest.raises(ValueError, match=r"should be .* in the \(0, 1\) range"):
+    with pytest.raises(
+        ValueError, match=r"should be .* in the \(0, 1\) range"
+    ):
         train_test_split(range(10), train_size=train_size, test_size=test_size)
 
 
@@ -1222,7 +1271,9 @@ def test_train_test_split_invalid_sizes1(train_size, test_size):
     [(-10, 0.8), (0, 0.8), (11, 0.8), (0.8, -10), (0.8, 0), (0.8, 11)],
 )
 def test_train_test_split_invalid_sizes2(train_size, test_size):
-    with pytest.raises(ValueError, match=r"should be either positive and smaller"):
+    with pytest.raises(
+        ValueError, match=r"should be either positive and smaller"
+    ):
         train_test_split(range(10), train_size=train_size, test_size=test_size)
 
 
@@ -1268,7 +1319,9 @@ def test_train_test_split():
 
     # test stratification option
     y = np.array([1, 1, 1, 1, 2, 2, 2, 2])
-    for test_size, exp_test_size in zip([2, 4, 0.25, 0.5, 0.75], [2, 4, 2, 4, 6]):
+    for test_size, exp_test_size in zip(
+        [2, 4, 0.25, 0.5, 0.75], [2, 4, 2, 4, 6]
+    ):
         train, test = train_test_split(
             y, test_size=test_size, stratify=y, random_state=0
         )
@@ -1350,7 +1403,15 @@ def test_train_test_split_list_input():
 
 @pytest.mark.parametrize(
     "test_size, train_size",
-    [(2.0, None), (1.0, None), (0.1, 0.95), (None, 1j), (11, None), (10, None), (8, 3)],
+    [
+        (2.0, None),
+        (1.0, None),
+        (0.1, 0.95),
+        (None, 1j),
+        (11, None),
+        (10, None),
+        (8, 3),
+    ],
 )
 def test_shufflesplit_errors(test_size, train_size):
     with pytest.raises(ValueError):
@@ -1361,7 +1422,9 @@ def test_shufflesplit_reproducible():
     # Check that iterating twice on the ShuffleSplit gives the same
     # sequence of train-test when the random_state is given
     ss = ShuffleSplit(random_state=21)
-    assert_array_equal(list(a for a, b in ss.split(X)), list(a for a, b in ss.split(X)))
+    assert_array_equal(
+        list(a for a, b in ss.split(X)), list(a for a, b in ss.split(X))
+    )
 
 
 def test_stratifiedshufflesplit_list_input():
@@ -1394,13 +1457,15 @@ def test_check_cv():
     y_binary = np.array([0, 1, 0, 1, 0, 0, 1, 1, 1])
     cv = check_cv(3, y_binary, classifier=True)
     np.testing.assert_equal(
-        list(StratifiedKFold(3).split(X, y_binary)), list(cv.split(X, y_binary))
+        list(StratifiedKFold(3).split(X, y_binary)),
+        list(cv.split(X, y_binary)),
     )
 
     y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
     cv = check_cv(3, y_multiclass, classifier=True)
     np.testing.assert_equal(
-        list(StratifiedKFold(3).split(X, y_multiclass)), list(cv.split(X, y_multiclass))
+        list(StratifiedKFold(3).split(X, y_multiclass)),
+        list(cv.split(X, y_multiclass)),
     )
     # also works with 2d multiclass
     y_multiclass_2d = y_multiclass.reshape(-1, 1)
@@ -1576,14 +1641,18 @@ def test_group_kfold(kfold):
 
     # groups can also be a list
     cv_iter = list(lkf.split(X, y, groups.tolist()))
-    for (train1, test1), (train2, test2) in zip(lkf.split(X, y, groups), cv_iter):
+    for (train1, test1), (train2, test2) in zip(
+        lkf.split(X, y, groups), cv_iter
+    ):
         assert_array_equal(train1, train2)
         assert_array_equal(test1, test2)
 
     # Should fail if there are more folds than groups
     groups = np.array([1, 1, 1, 2, 2])
     X = y = np.ones(len(groups))
-    with pytest.raises(ValueError, match="Cannot have number of splits.*greater"):
+    with pytest.raises(
+        ValueError, match="Cannot have number of splits.*greater"
+    ):
         next(GroupKFold(n_splits=3).split(X, y, groups))
 
 
@@ -1591,7 +1660,9 @@ def test_time_series_cv():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
 
     # Should fail if there are more folds than samples
-    with pytest.raises(ValueError, match="Cannot have number of folds.*greater"):
+    with pytest.raises(
+        ValueError, match="Cannot have number of folds.*greater"
+    ):
         next(TimeSeriesSplit(n_splits=7).split(X))
 
     tscv = TimeSeriesSplit(2)
@@ -1666,7 +1737,9 @@ def test_time_series_test_size():
     assert_array_equal(test, [7, 8, 9])
 
     # Test with max_train_size
-    splits = TimeSeriesSplit(n_splits=2, test_size=2, max_train_size=4).split(X)
+    splits = TimeSeriesSplit(n_splits=2, test_size=2, max_train_size=4).split(
+        X
+    )
 
     train, test = next(splits)
     assert_array_equal(train, [2, 3, 4, 5])
@@ -1712,7 +1785,9 @@ def test_time_series_gap():
     assert_array_equal(test, [8, 9])
 
     # Test with test_size
-    splits = TimeSeriesSplit(n_splits=2, gap=2, max_train_size=4, test_size=2).split(X)
+    splits = TimeSeriesSplit(
+        n_splits=2, gap=2, max_train_size=4, test_size=2
+    ).split(X)
 
     train, test = next(splits)
     assert_array_equal(train, [0, 1, 2, 3])
@@ -1757,10 +1832,18 @@ def test_nested_cv():
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
         gs = GridSearchCV(
-            Ridge(), param_grid={"alpha": [1, 0.1]}, cv=inner_cv, error_score="raise"
+            Ridge(),
+            param_grid={"alpha": [1, 0.1]},
+            cv=inner_cv,
+            error_score="raise",
         )
         cross_val_score(
-            gs, X=X, y=y, groups=groups, cv=outer_cv, fit_params={"groups": groups}
+            gs,
+            X=X,
+            y=y,
+            groups=groups,
+            cv=outer_cv,
+            fit_params={"groups": groups},
         )
 
 
@@ -1819,7 +1902,9 @@ def test_leave_one_out_empty_trainset():
     # LeaveOneGroup out expect at least 2 groups so no need to check
     cv = LeaveOneOut()
     X, y = [[1]], [0]  # 1 sample
-    with pytest.raises(ValueError, match="Cannot perform LeaveOneOut with n_samples=1"):
+    with pytest.raises(
+        ValueError, match="Cannot perform LeaveOneOut with n_samples=1"
+    ):
         next(cv.split(X, y))
 
 
@@ -1828,15 +1913,20 @@ def test_leave_p_out_empty_trainset():
     cv = LeavePOut(p=2)
     X, y = [[1], [2]], [0, 3]  # 2 samples
     with pytest.raises(
-        ValueError, match="p=2 must be strictly less than the number of samples=2"
+        ValueError,
+        match="p=2 must be strictly less than the number of samples=2",
     ):
         next(cv.split(X, y, groups=[1, 2]))
 
 
-@pytest.mark.parametrize("Klass", (KFold, StratifiedKFold, StratifiedGroupKFold))
+@pytest.mark.parametrize(
+    "Klass", (KFold, StratifiedKFold, StratifiedGroupKFold)
+)
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
-    with pytest.raises(ValueError, match="has no effect since shuffle is False"):
+    with pytest.raises(
+        ValueError, match="has no effect since shuffle is False"
+    ):
         Klass(3, shuffle=False, random_state=0)
 
 
@@ -1862,12 +1952,25 @@ def test_random_state_shuffle_false(Klass):
         (LeavePOut(p=2), True),
         (KFold(shuffle=True, random_state=None), False),
         (KFold(shuffle=True, random_state=None), False),
-        (StratifiedKFold(shuffle=True, random_state=np.random.RandomState(0)), False),
-        (StratifiedKFold(shuffle=True, random_state=np.random.RandomState(0)), False),
+        (
+            StratifiedKFold(
+                shuffle=True, random_state=np.random.RandomState(0)
+            ),
+            False,
+        ),
+        (
+            StratifiedKFold(
+                shuffle=True, random_state=np.random.RandomState(0)
+            ),
+            False,
+        ),
         (RepeatedKFold(random_state=None), False),
         (RepeatedKFold(random_state=np.random.RandomState(0)), False),
         (RepeatedStratifiedKFold(random_state=None), False),
-        (RepeatedStratifiedKFold(random_state=np.random.RandomState(0)), False),
+        (
+            RepeatedStratifiedKFold(random_state=np.random.RandomState(0)),
+            False,
+        ),
         (ShuffleSplit(random_state=None), False),
         (ShuffleSplit(random_state=np.random.RandomState(0)), False),
         (GroupShuffleSplit(random_state=None), False),

@@ -36,7 +36,9 @@ def clf_diabetes(diabetes):
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("grid_resolution", [10, 20])
-def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes):
+def test_plot_partial_dependence(
+    grid_resolution, pyplot, clf_diabetes, diabetes
+):
     # Test partial dependence plot function.
     # Use columns 0 & 2 as 1 is not quantitative (sex)
     feature_names = diabetes.feature_names
@@ -171,7 +173,9 @@ def test_plot_partial_dependence_str_features(
     if feature_names_type is None:
         feature_names = None
     else:
-        feature_names = _convert_container(diabetes.feature_names, feature_names_type)
+        feature_names = _convert_container(
+            diabetes.feature_names, feature_names_type
+        )
 
     grid_resolution = 25
     # check with str features and array feature names and single column
@@ -341,7 +345,9 @@ def test_plot_partial_dependence_incorrent_num_axes(
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
-def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes, diabetes):
+def test_plot_partial_dependence_with_same_axes(
+    pyplot, clf_diabetes, diabetes
+):
     # The first call to plot_partial_dependence will create two new axes to
     # place in the space of the passed in axes, which results in a total of
     # three axes in the figure.
@@ -381,7 +387,9 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes, diabetes):
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
-def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_diabetes, diabetes):
+def test_plot_partial_dependence_feature_name_reuse(
+    pyplot, clf_diabetes, diabetes
+):
     # second call to plot does not change the feature names from the first
     # call
 
@@ -427,7 +435,11 @@ def test_plot_partial_dependence_multiclass(pyplot):
     clf_symbol = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf_symbol.fit(iris.data, target)
     disp_symbol = plot_partial_dependence(
-        clf_symbol, iris.data, [0, 1], target="setosa", grid_resolution=grid_resolution
+        clf_symbol,
+        iris.data,
+        [0, 1],
+        target="setosa",
+        grid_resolution=grid_resolution,
     )
     assert disp_symbol.figure_ is pyplot.gcf()
     assert disp_symbol.axes_.shape == (1, 2)
@@ -453,7 +465,9 @@ def test_plot_partial_dependence_multiclass(pyplot):
     assert any(target_0_data_y != target_1_data_y)
 
 
-multioutput_regression_data = make_regression(n_samples=50, n_targets=2, random_state=0)
+multioutput_regression_data = make_regression(
+    n_samples=50, n_targets=2, random_state=0
+)
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
@@ -558,12 +572,14 @@ dummy_classification_data = make_classification(random_state=0)
         (
             dummy_classification_data,
             {"features": [(1, 2)], "kind": "individual"},
-            "It is not possible to display individual effects for more than one",
+            "It is not possible to display individual effects for more"
+            " than one",
         ),
         (
             dummy_classification_data,
             {"features": [(1, 2)], "kind": "both"},
-            "It is not possible to display individual effects for more than one",
+            "It is not possible to display individual effects for more"
+            " than one",
         ),
         (
             dummy_classification_data,
@@ -573,7 +589,8 @@ dummy_classification_data = make_classification(random_state=0)
         (
             dummy_classification_data,
             {"features": [1], "subsample": 1.2},
-            r"When a floating-point, subsample=1.2 should be in the \(0, 1\) range",
+            r"When a floating-point, subsample=1.2 should be in the \(0, 1\)"
+            r" range",
         ),
     ],
 )
@@ -590,7 +607,10 @@ def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     "params, err_msg",
     [
         ({"target": 4, "features": [0]}, "target not in est.classes_, got 4"),
-        ({"target": None, "features": [0]}, "target must be specified for multi-class"),
+        (
+            {"target": None, "features": [0]},
+            "target must be specified for multi-class",
+        ),
         (
             {"target": 1, "features": [4.5]},
             "Each entry in features must be either an int,",
@@ -646,7 +666,10 @@ def test_plot_partial_dependence_subsampling(
 
     assert disp1.lines_.shape == expected_shape
     assert all(
-        [isinstance(line, matplotlib.lines.Line2D) for line in disp1.lines_.ravel()]
+        [
+            isinstance(line, matplotlib.lines.Line2D)
+            for line in disp1.lines_.ravel()
+        ]
     )
 
 

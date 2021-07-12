@@ -42,16 +42,24 @@ def test_quadtree_similar_point():
     # check the case where points are arbitrarily close on Y axis
     Xs.append(np.array([[1.0, 2.00001], [3.0, 2.00002]], dtype=np.float32))
     # check the case where points are arbitrarily close on both axes
-    Xs.append(np.array([[1.00001, 2.00001], [1.00002, 2.00002]], dtype=np.float32))
+    Xs.append(
+        np.array([[1.00001, 2.00001], [1.00002, 2.00002]], dtype=np.float32)
+    )
 
     # check the case where points are arbitrarily close on both axes
     # close to machine epsilon - x axis
-    Xs.append(np.array([[1, 0.0003817754041], [2, 0.0003817753750]], dtype=np.float32))
+    Xs.append(
+        np.array(
+            [[1, 0.0003817754041], [2, 0.0003817753750]], dtype=np.float32
+        )
+    )
 
     # check the case where points are arbitrarily close on both axes
     # close to machine epsilon - y axis
     Xs.append(
-        np.array([[0.0003817754041, 1.0], [0.0003817753750, 2.0]], dtype=np.float32)
+        np.array(
+            [[0.0003817754041, 1.0], [0.0003817753750, 2.0]], dtype=np.float32
+        )
     )
 
     for X in Xs:
@@ -104,7 +112,8 @@ def test_summarize():
 
     angle = 0.9
     X = np.array(
-        [[-10.0, -10.0], [9.0, 10.0], [10.0, 9.0], [10.0, 10.0]], dtype=np.float32
+        [[-10.0, -10.0], [9.0, 10.0], [10.0, 9.0], [10.0, 10.0]],
+        dtype=np.float32,
     )
     query_pt = X[0, :]
     n_dimensions = X.shape[1]

@@ -9,7 +9,11 @@ import warnings
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model._glm import GeneralizedLinearRegressor
-from sklearn.linear_model import TweedieRegressor, PoissonRegressor, GammaRegressor
+from sklearn.linear_model import (
+    TweedieRegressor,
+    PoissonRegressor,
+    GammaRegressor,
+)
 from sklearn.linear_model._glm.link import (
     IdentityLink,
     LogLink,
@@ -29,7 +33,11 @@ from sklearn.model_selection import train_test_split
 @pytest.fixture(scope="module")
 def regression_data():
     X, y = make_regression(
-        n_samples=107, n_features=10, n_informative=80, noise=0.5, random_state=2
+        n_samples=107,
+        n_features=10,
+        n_informative=80,
+        noise=0.5,
+        random_state=2,
     )
     return X, y
 
@@ -116,7 +124,9 @@ def test_glm_alpha_argument(alpha):
     y = np.array([1, 2])
     X = np.array([[1], [2]])
     glm = GeneralizedLinearRegressor(family="normal", alpha=alpha)
-    with pytest.raises(ValueError, match="Penalty term must be a non-negative"):
+    with pytest.raises(
+        ValueError, match="Penalty term must be a non-negative"
+    ):
         glm.fit(X, y)
 
 
@@ -239,7 +249,9 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, family):
         X, y, sample_weight=sample_weight_1
     )
 
-    glm2 = GeneralizedLinearRegressor(**glm_params).fit(X2, y2, sample_weight=None)
+    glm2 = GeneralizedLinearRegressor(**glm_params).fit(
+        X2, y2, sample_weight=None
+    )
     assert_allclose(glm1.coef_, glm2.coef_)
 
 
@@ -261,7 +273,11 @@ def test_glm_log_regression(fit_intercept, family):
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.exp(np.dot(X, coef))
     glm = GeneralizedLinearRegressor(
-        alpha=0, family=family, link="log", fit_intercept=fit_intercept, tol=1e-7
+        alpha=0,
+        family=family,
+        link="log",
+        fit_intercept=fit_intercept,
+        tol=1e-7,
     )
     if fit_intercept:
         res = glm.fit(X[:, 1:], y)

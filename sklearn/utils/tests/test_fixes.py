@@ -33,15 +33,17 @@ def test_joblib_parallel_args(monkeypatch, joblib_version):
         assert _joblib_parallel_args(non_existing=1) == {"non_existing": 1}
     elif joblib_version == "0.11":
         # arguments are mapped to the corresponding backend
-        assert _joblib_parallel_args(prefer="threads") == {"backend": "threading"}
+        assert _joblib_parallel_args(prefer="threads") == {
+            "backend": "threading"
+        }
         assert _joblib_parallel_args(prefer="processes") == {
             "backend": "multiprocessing"
         }
         with pytest.raises(ValueError):
             _joblib_parallel_args(prefer="invalid")
-        assert _joblib_parallel_args(prefer="processes", require="sharedmem") == {
-            "backend": "threading"
-        }
+        assert _joblib_parallel_args(
+            prefer="processes", require="sharedmem"
+        ) == {"backend": "threading"}
         with pytest.raises(ValueError):
             _joblib_parallel_args(require="invalid")
         with pytest.raises(NotImplementedError):
@@ -50,7 +52,9 @@ def test_joblib_parallel_args(monkeypatch, joblib_version):
         raise ValueError
 
 
-@pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
+@pytest.mark.parametrize(
+    "dtype, val", ([object, 1], [object, "a"], [float, 1])
+)
 def test_object_dtype_isnan(dtype, val):
     X = np.array([[val, np.nan], [np.nan, val]], dtype=dtype)
 
@@ -61,7 +65,9 @@ def test_object_dtype_isnan(dtype, val):
     assert_array_equal(mask, expected_mask)
 
 
-@pytest.mark.parametrize("low,high,base", [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)])
+@pytest.mark.parametrize(
+    "low,high,base", [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)]
+)
 def test_loguniform(low, high, base):
     rv = loguniform(base ** low, base ** high)
     assert isinstance(rv, scipy.stats._distn_infrastructure.rv_frozen)
@@ -78,9 +84,9 @@ def test_loguniform(low, high, base):
     assert np.abs(counts - counts.mean()).max() <= 40
 
     # Test that random_state works
-    assert loguniform(base ** low, base ** high).rvs(random_state=0) == loguniform(
-        base ** low, base ** high
-    ).rvs(random_state=0)
+    assert loguniform(base ** low, base ** high).rvs(
+        random_state=0
+    ) == loguniform(base ** low, base ** high).rvs(random_state=0)
 
 
 def test_linspace():

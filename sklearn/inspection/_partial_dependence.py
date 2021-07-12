@@ -74,7 +74,9 @@ def _grid_from_X(X, percentiles, grid_resolution):
     if not all(0 <= x <= 1 for x in percentiles):
         raise ValueError("'percentiles' values must be in [0, 1].")
     if percentiles[0] >= percentiles[1]:
-        raise ValueError("percentiles[0] must be strictly less than percentiles[1].")
+        raise ValueError(
+            "percentiles[0] must be strictly less than percentiles[1]."
+        )
 
     if grid_resolution <= 1:
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
@@ -108,7 +110,9 @@ def _grid_from_X(X, percentiles, grid_resolution):
 
 
 def _partial_dependence_recursion(est, grid, features):
-    averaged_predictions = est._compute_partial_dependence_recursion(grid, features)
+    averaged_predictions = est._compute_partial_dependence_recursion(
+        grid, features
+    )
     if averaged_predictions.ndim == 1:
         # reshape to (1, n_points) for consistency with
         # _partial_dependence_brute
@@ -146,7 +150,9 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             elif response_method == "predict_proba":
                 raise ValueError("The estimator has no predict_proba method.")
             else:
-                raise ValueError("The estimator has no decision_function method.")
+                raise ValueError(
+                    "The estimator has no decision_function method."
+                )
 
     for new_values in grid:
         X_eval = X.copy()
@@ -169,7 +175,9 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             # average over samples
             averaged_predictions.append(np.mean(pred, axis=0))
         except NotFittedError as e:
-            raise ValueError("'estimator' parameter must be a fitted estimator") from e
+            raise ValueError(
+                "'estimator' parameter must be a fitted estimator"
+            ) from e
 
     n_samples = X.shape[0]
 
@@ -384,7 +392,9 @@ def partial_dependence(
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
     if not (is_classifier(estimator) or is_regressor(estimator)):
-        raise ValueError("'estimator' must be a fitted regressor or classifier.")
+        raise ValueError(
+            "'estimator' must be a fitted regressor or classifier."
+        )
 
     if isinstance(estimator, Pipeline):
         # TODO: to be removed if/when pipeline get a `steps_` attributes
@@ -397,7 +407,9 @@ def partial_dependence(
     else:
         check_is_fitted(estimator)
 
-    if is_classifier(estimator) and isinstance(estimator.classes_[0], np.ndarray):
+    if is_classifier(estimator) and isinstance(
+        estimator.classes_[0], np.ndarray
+    ):
         raise ValueError("Multiclass-multioutput estimators are not supported")
 
     # Use check_array only on lists and other non-array-likes / sparse. Do not
@@ -429,16 +441,24 @@ def partial_dependence(
     if kind != "average" and kind != "legacy":
         if method == "recursion":
             raise ValueError(
-                "The 'recursion' method only applies when 'kind' is set to 'average'"
+                "The 'recursion' method only applies when 'kind' is set to"
+                " 'average'"
             )
         method = "brute"
 
     if method == "auto":
-        if isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
+        if (
+            isinstance(estimator, BaseGradientBoosting)
+            and estimator.init is None
+        ):
             method = "recursion"
         elif isinstance(
             estimator,
-            (BaseHistGradientBoosting, DecisionTreeRegressor, RandomForestRegressor),
+            (
+                BaseHistGradientBoosting,
+                DecisionTreeRegressor,
+                RandomForestRegressor,
+            ),
         ):
             method = "recursion"
         else:
@@ -483,14 +503,18 @@ def partial_dependence(
         # the indexing to be positive. The upper bound will be checked
         # by _get_column_indices()
         if np.any(np.less(features, 0)):
-            raise ValueError("all features must be in [0, {}]".format(X.shape[1] - 1))
+            raise ValueError(
+                "all features must be in [0, {}]".format(X.shape[1] - 1)
+            )
 
     features_indices = np.asarray(
         _get_column_indices(X, features), dtype=np.int32, order="C"
     ).ravel()
 
     grid, values = _grid_from_X(
-        _safe_indexing(X, features_indices, axis=1), percentiles, grid_resolution
+        _safe_indexing(X, features_indices, axis=1),
+        percentiles,
+        grid_resolution,
     )
 
     if method == "brute":

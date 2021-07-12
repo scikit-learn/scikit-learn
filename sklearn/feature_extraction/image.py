@@ -43,8 +43,12 @@ def _make_edges_3d(n_x, n_y, n_z=1):
         The size of the grid in the z direction, defaults to 1
     """
     vertices = np.arange(n_x * n_y * n_z).reshape((n_x, n_y, n_z))
-    edges_deep = np.vstack((vertices[:, :, :-1].ravel(), vertices[:, :, 1:].ravel()))
-    edges_right = np.vstack((vertices[:, :-1].ravel(), vertices[:, 1:].ravel()))
+    edges_deep = np.vstack(
+        (vertices[:, :, :-1].ravel(), vertices[:, :, 1:].ravel())
+    )
+    edges_right = np.vstack(
+        (vertices[:, :-1].ravel(), vertices[:, 1:].ravel())
+    )
     edges_down = np.vstack((vertices[:-1].ravel(), vertices[1:].ravel()))
     edges = np.hstack((edges_deep, edges_right, edges_down))
     return edges
@@ -207,7 +211,9 @@ def grid_to_graph(
     For compatibility, user code relying on this method should wrap its
     calls in ``np.asarray`` to avoid type issues.
     """
-    return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
+    return _to_graph(
+        n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype
+    )
 
 
 ###############################################################################
@@ -239,9 +245,15 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
     all_patches = n_h * n_w
 
     if max_patches:
-        if isinstance(max_patches, (numbers.Integral)) and max_patches < all_patches:
+        if (
+            isinstance(max_patches, (numbers.Integral))
+            and max_patches < all_patches
+        ):
             return max_patches
-        elif isinstance(max_patches, (numbers.Integral)) and max_patches >= all_patches:
+        elif (
+            isinstance(max_patches, (numbers.Integral))
+            and max_patches >= all_patches
+        ):
             return all_patches
         elif isinstance(max_patches, (numbers.Real)) and 0 < max_patches < 1:
             return int(max_patches * all_patches)
@@ -300,7 +312,8 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
     indexing_strides = arr[slices].strides
 
     patch_indices_shape = (
-        (np.array(arr.shape) - np.array(patch_shape)) // np.array(extraction_step)
+        (np.array(arr.shape) - np.array(patch_shape))
+        // np.array(extraction_step)
     ) + 1
 
     shape = tuple(list(patch_indices_shape) + list(patch_shape))
@@ -310,7 +323,9 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
     return patches
 
 
-def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None):
+def extract_patches_2d(
+    image, patch_size, *, max_patches=None, random_state=None
+):
     """Reshape a 2D image into a collection of patches
 
     The resulting patches are allocated in a dedicated array.
@@ -446,7 +461,9 @@ def reconstruct_from_patches_2d(patches, image_size):
         for j in range(i_w):
             # divide by the amount of overlap
             # XXX: is this the most efficient way? memory-wise yes, cpu wise?
-            img[i, j] /= float(min(i + 1, p_h, i_h - i) * min(j + 1, p_w, i_w - j))
+            img[i, j] /= float(
+                min(i + 1, p_h, i_h - i) * min(j + 1, p_w, i_w - j)
+            )
     return img
 
 
@@ -488,7 +505,9 @@ class PatchExtractor(BaseEstimator):
     Patches shape: (545706, 2, 2)
     """
 
-    def __init__(self, *, patch_size=None, max_patches=None, random_state=None):
+    def __init__(
+        self, *, patch_size=None, max_patches=None, random_state=None
+    ):
         self.patch_size = patch_size
         self.max_patches = max_patches
         self.random_state = random_state
@@ -544,7 +563,9 @@ class PatchExtractor(BaseEstimator):
         # extract the patches
         patches = np.empty(patches_shape)
         for ii, image in enumerate(X):
-            patches[ii * n_patches : (ii + 1) * n_patches] = extract_patches_2d(
+            patches[
+                ii * n_patches : (ii + 1) * n_patches
+            ] = extract_patches_2d(
                 image,
                 patch_size,
                 max_patches=self.max_patches,

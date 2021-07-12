@@ -91,7 +91,9 @@ def _changed_params(estimator):
     estimator with non-default values."""
 
     params = estimator.get_params(deep=False)
-    init_func = getattr(estimator.__init__, "deprecated_original", estimator.__init__)
+    init_func = getattr(
+        estimator.__init__, "deprecated_original", estimator.__init__
+    )
     init_params = inspect.signature(init_func).parameters
     init_params = {name: param.default for name, param in init_params.items()}
 
@@ -101,7 +103,10 @@ def _changed_params(estimator):
         if init_params[k] == inspect._empty:  # k has no default value
             return True
         # try to avoid calling repr on nested estimators
-        if isinstance(v, BaseEstimator) and v.__class__ != init_params[k].__class__:
+        if (
+            isinstance(v, BaseEstimator)
+            and v.__class__ != init_params[k].__class__
+        ):
             return True
         # Use repr as a last resort. It may be expensive.
         if repr(v) != repr(init_params[k]) and not (
@@ -190,7 +195,9 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
             object, context, maxlevels, level, changed_only=self._changed_only
         )
 
-    def _pprint_estimator(self, object, stream, indent, allowance, context, level):
+    def _pprint_estimator(
+        self, object, stream, indent, allowance, context, level
+    ):
         stream.write(object.__class__.__name__ + "(")
         if self._indent_at_name:
             indent += len(object.__class__.__name__)
@@ -200,14 +207,18 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         else:
             params = object.get_params(deep=False)
 
-        params = OrderedDict((name, val) for (name, val) in sorted(params.items()))
+        params = OrderedDict(
+            (name, val) for (name, val) in sorted(params.items())
+        )
 
         self._format_params(
             params.items(), stream, indent, allowance + 1, context, level
         )
         stream.write(")")
 
-    def _format_dict_items(self, items, stream, indent, allowance, context, level):
+    def _format_dict_items(
+        self, items, stream, indent, allowance, context, level
+    ):
         return self._format_params_or_dict_items(
             items, stream, indent, allowance, context, level, is_dict=True
         )
@@ -277,7 +288,12 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
             delim = delimnl
             class_ = KeyValTuple if is_dict else KeyValTupleParam
             self._format(
-                class_(ent), stream, indent, allowance if last else 1, context, level
+                class_(ent),
+                stream,
+                indent,
+                allowance if last else 1,
+                context,
+                level,
             )
 
     def _format_items(self, items, stream, indent, allowance, context, level):
@@ -326,9 +342,13 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
                     continue
             write(delim)
             delim = delimnl
-            self._format(ent, stream, indent, allowance if last else 1, context, level)
+            self._format(
+                ent, stream, indent, allowance if last else 1, context, level
+            )
 
-    def _pprint_key_val_tuple(self, object, stream, indent, allowance, context, level):
+    def _pprint_key_val_tuple(
+        self, object, stream, indent, allowance, context, level
+    ):
         """Pretty printing for key-value tuples from dict or parameters."""
         k, v = object
         rep = self._repr(k, context, level)
@@ -340,7 +360,12 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         stream.write(rep)
         stream.write(middle)
         self._format(
-            v, stream, indent + len(rep) + len(middle), allowance, context, level
+            v,
+            stream,
+            indent + len(rep) + len(middle),
+            allowance,
+            context,
+            level,
         )
 
     # Note: need to copy _dispatch to prevent instances of the builtin
@@ -457,7 +482,11 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
             if krecur or vrecur:
                 recursive = True
         del context[objid]
-        return ("%s(%s)" % (typ.__name__, ", ".join(components)), readable, recursive)
+        return (
+            "%s(%s)" % (typ.__name__, ", ".join(components)),
+            readable,
+            recursive,
+        )
 
     rep = repr(object)
     return rep, (rep and not rep.startswith("<")), False

@@ -53,7 +53,9 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
 
     clf = {
         "log": LogisticRegression(penalty="l1", solver="liblinear"),
-        "squared_hinge": LinearSVC(loss="squared_hinge", penalty="l1", dual=False),
+        "squared_hinge": LinearSVC(
+            loss="squared_hinge", penalty="l1", dual=False
+        ),
     }[loss]
 
     clf.fit_intercept = fit_intercept
@@ -66,7 +68,9 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
 
     clf.C = min_c * 1.01
     clf.fit(X, y)
-    assert (np.asarray(clf.coef_) != 0).any() or (np.asarray(clf.intercept_) != 0).any()
+    assert (np.asarray(clf.coef_) != 0).any() or (
+        np.asarray(clf.intercept_) != 0
+    ).any()
 
 
 def test_ill_posed_min_c():
@@ -84,7 +88,9 @@ def test_unsupported_loss():
 _MAX_UNSIGNED_INT = 4294967295
 
 
-@pytest.mark.parametrize("seed, val", [(None, 81), (0, 54), (_MAX_UNSIGNED_INT, 9)])
+@pytest.mark.parametrize(
+    "seed, val", [(None, 81), (0, 54), (_MAX_UNSIGNED_INT, 9)]
+)
 def test_newrand_set_seed(seed, val):
     """Test that `set_seed` produces deterministic results"""
     if seed is not None:
@@ -100,7 +106,9 @@ def test_newrand_set_seed_overflow(seed):
         set_seed_wrap(seed)
 
 
-@pytest.mark.parametrize("range_, n_pts", [(_MAX_UNSIGNED_INT, 10000), (100, 25)])
+@pytest.mark.parametrize(
+    "range_, n_pts", [(_MAX_UNSIGNED_INT, 10000), (100, 25)]
+)
 def test_newrand_bounded_rand_int(range_, n_pts):
     """Test that `bounded_rand_int` follows a uniform distribution"""
     n_iter = 100

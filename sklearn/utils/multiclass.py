@@ -28,7 +28,9 @@ def _unique_multiclass(y):
 
 
 def _unique_indicator(y):
-    return np.arange(check_array(y, accept_sparse=["csr", "csc", "coo"]).shape[1])
+    return np.arange(
+        check_array(y, accept_sparse=["csr", "csc", "coo"]).shape[1]
+    )
 
 
 _FN_UNIQUE_LABELS = {
@@ -87,13 +89,15 @@ def unique_labels(*ys):
         label_type == "multilabel-indicator"
         and len(
             set(
-                check_array(y, accept_sparse=["csr", "csc", "coo"]).shape[1] for y in ys
+                check_array(y, accept_sparse=["csr", "csc", "coo"]).shape[1]
+                for y in ys
             )
         )
         > 1
     ):
         raise ValueError(
-            "Multi-label binary indicator input with different numbers of labels"
+            "Multi-label binary indicator input with different numbers of"
+            " labels"
         )
 
     # Get the unique set of labels
@@ -172,7 +176,8 @@ def is_multilabel(y):
         labels = np.unique(y)
 
         return len(labels) < 3 and (
-            y.dtype.kind in "biu" or _is_integral_float(labels)  # bool, int, uint
+            y.dtype.kind in "biu"
+            or _is_integral_float(labels)  # bool, int, uint
         )
 
 
@@ -307,7 +312,9 @@ def type_of_target(y):
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and not isinstance(y.flat[0], str)):
+    if y.ndim > 2 or (
+        y.dtype == object and len(y) and not isinstance(y.flat[0], str)
+    ):
         return "unknown"  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
     if y.ndim == 2 and y.shape[1] == 0:
@@ -345,14 +352,17 @@ def _check_partial_fit_first_call(clf, classes=None):
 
     """
     if getattr(clf, "classes_", None) is None and classes is None:
-        raise ValueError("classes must be passed on the first call to partial_fit.")
+        raise ValueError(
+            "classes must be passed on the first call to partial_fit."
+        )
 
     elif classes is not None:
         if getattr(clf, "classes_", None) is not None:
             if not np.array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
-                    "to partial_fit, was: %r" % (classes, clf.classes_)
+                    "to partial_fit, was: %r"
+                    % (classes, clf.classes_)
                 )
 
         else:
@@ -405,7 +415,9 @@ def class_distribution(y, sample_weight=None):
             # separate sample weights for zero and non-zero elements
             if sample_weight is not None:
                 nz_samp_weight = sample_weight[col_nonzero]
-                zeros_samp_weight_sum = np.sum(sample_weight) - np.sum(nz_samp_weight)
+                zeros_samp_weight_sum = np.sum(sample_weight) - np.sum(
+                    nz_samp_weight
+                )
             else:
                 nz_samp_weight = None
                 zeros_samp_weight_sum = y.shape[0] - y_nnz[k]
@@ -424,7 +436,9 @@ def class_distribution(y, sample_weight=None):
             # class_prior, make an entry for it
             if 0 not in classes_k and y_nnz[k] < y.shape[0]:
                 classes_k = np.insert(classes_k, 0, 0)
-                class_prior_k = np.insert(class_prior_k, 0, zeros_samp_weight_sum)
+                class_prior_k = np.insert(
+                    class_prior_k, 0, zeros_samp_weight_sum
+                )
 
             classes.append(classes_k)
             n_classes.append(classes_k.shape[0])

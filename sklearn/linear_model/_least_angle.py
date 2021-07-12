@@ -462,7 +462,9 @@ def _lars_path_solver(
 
     """
     if method == "lar" and positive:
-        raise ValueError("Positive constraint not supported for 'lar' coding method.")
+        raise ValueError(
+            "Positive constraint not supported for 'lar' coding method."
+        )
 
     n_samples = n_samples if n_samples is not None else y.size
 
@@ -488,7 +490,9 @@ def _lars_path_solver(
     else:
         n_features = Cov.shape[0]
         if Gram.shape != (n_features, n_features):
-            raise ValueError("The shapes of the inputs Gram and Xy do not match.")
+            raise ValueError(
+                "The shapes of the inputs Gram and Xy do not match."
+            )
 
     if copy_X and X is not None and Gram is None:
         # force copy. setting the array to be fortran-ordered
@@ -579,7 +583,9 @@ def _lars_path_solver(
                 if n_iter > 0:
                     # In the first iteration, all alphas are zero, the formula
                     # below would make ss a NaN
-                    ss = (prev_alpha[0] - alpha_min) / (prev_alpha[0] - alpha[0])
+                    ss = (prev_alpha[0] - alpha_min) / (
+                        prev_alpha[0] - alpha[0]
+                    )
                     coef[:] = prev_coef + ss * (coef - prev_coef)
                 alpha[0] = alpha_min
             if return_path:
@@ -613,7 +619,9 @@ def _lars_path_solver(
             if Gram is None:
                 X.T[n], X.T[m] = swap(X.T[n], X.T[m])
                 c = nrm2(X.T[n_active]) ** 2
-                L[n_active, :n_active] = np.dot(X.T[n_active], X.T[:n_active].T)
+                L[n_active, :n_active] = np.dot(
+                    X.T[n_active], X.T[:n_active].T
+                )
             else:
                 # swap does only work inplace if matrix is fortran
                 # contiguous ...
@@ -669,7 +677,8 @@ def _lars_path_solver(
 
             if verbose > 1:
                 print(
-                    "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], "", n_active, C)
+                    "%s\t\t%s\t\t%s\t\t%s\t\t%s"
+                    % (n_iter, active[-1], "", n_active, C)
                 )
 
         if method == "lasso" and n_iter > 0 and prev_alpha[0] < alpha[0]:
@@ -682,7 +691,8 @@ def _lars_path_solver(
                 "are small and the current value of alpha is no "
                 "longer well controlled. %i iterations, alpha=%.3e, "
                 "previous alpha=%.3e, with an active set of %i "
-                "regressors." % (n_iter, alpha, prev_alpha, n_active),
+                "regressors."
+                % (n_iter, alpha, prev_alpha, n_active),
                 ConvergenceWarning,
             )
             break
@@ -709,7 +719,9 @@ def _lars_path_solver(
                     least_squares, _ = solve_cholesky(
                         L_, sign_active[:n_active], lower=True
                     )
-                    tmp = max(np.sum(least_squares * sign_active[:n_active]), eps)
+                    tmp = max(
+                        np.sum(least_squares * sign_active[:n_active]), eps
+                    )
                     AA = 1.0 / np.sqrt(tmp)
                     i += 1
             least_squares *= AA
@@ -801,7 +813,9 @@ def _lars_path_solver(
                     for i in range(ii, n_active):
                         indices[i], indices[i + 1] = indices[i + 1], indices[i]
                         Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
-                        Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i], Gram[:, i + 1])
+                        Gram[:, i], Gram[:, i + 1] = swap(
+                            Gram[:, i], Gram[:, i + 1]
+                        )
 
                 # Cov_n = Cov_j + x_j * X + increment(betas) TODO:
                 # will this still work with multiple drops ?
@@ -1045,7 +1059,12 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
             if n_targets == 1:
                 self.alphas_, self.active_, self.coef_path_, self.coef_ = [
                     a[0]
-                    for a in (self.alphas_, self.active_, self.coef_path_, self.coef_)
+                    for a in (
+                        self.alphas_,
+                        self.active_,
+                        self.coef_path_,
+                        self.coef_,
+                    )
                 ]
                 self.n_iter_ = self.n_iter_[0]
         else:
@@ -1100,7 +1119,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize,
+            default=True,
+            estimator_name=self.__class__.__name__,
         )
 
         alpha = getattr(self, "alpha", 0.0)
@@ -1633,7 +1654,9 @@ class LarsCV(Lars):
             Returns an instance of self.
         """
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize,
+            default=True,
+            estimator_name=self.__class__.__name__,
         )
 
         X, y = self._validate_data(X, y, y_numeric=True)
@@ -1688,7 +1711,9 @@ class LarsCV(Lars):
             if alphas[-1] != all_alphas[-1]:
                 alphas = np.r_[alphas, all_alphas[-1]]
                 residues = np.r_[residues, residues[-1, np.newaxis]]
-            this_residues = interpolate.interp1d(alphas, residues, axis=0)(all_alphas)
+            this_residues = interpolate.interp1d(alphas, residues, axis=0)(
+                all_alphas
+            )
             this_residues **= 2
             mse_path[:, index] = np.mean(this_residues, axis=-1)
 
@@ -2101,7 +2126,9 @@ class LassoLarsIC(LassoLars):
             Returns an instance of self.
         """
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize,
+            default=True,
+            estimator_name=self.__class__.__name__,
         )
 
         if copy_X is None:

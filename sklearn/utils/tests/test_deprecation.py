@@ -71,6 +71,7 @@ def test_deprecated_property_docstring_exists():
     """Deprecated property contains the original docstring."""
     mock_class_property = getattr(MockClass2, "n_features_")
     assert (
-        "DEPRECATED: n_features_ is deprecated\n\n    Number of input features."
+        "DEPRECATED: n_features_ is deprecated\n\n    Number of input"
+        " features."
         == mock_class_property.__doc__
     )

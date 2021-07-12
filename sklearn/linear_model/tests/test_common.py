@@ -20,7 +20,11 @@ from sklearn.utils import check_random_state
 
 @pytest.mark.parametrize(
     "normalize, n_warnings, warning_category",
-    [(True, 1, FutureWarning), (False, 1, FutureWarning), ("deprecated", 0, None)],
+    [
+        (True, 1, FutureWarning),
+        (False, 1, FutureWarning),
+        ("deprecated", 0, None),
+    ],
 )
 @pytest.mark.parametrize(
     "estimator",

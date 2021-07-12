@@ -93,7 +93,8 @@ def _assess_dimension(spectrum, rank, n_samples):
     for i in range(rank):
         for j in range(i + 1, len(spectrum)):
             pa += log(
-                (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
+                (spectrum[i] - spectrum[j])
+                * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
             ) + log(n_samples)
 
     ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
@@ -462,20 +463,23 @@ class PCA(_BasePCA):
         if n_components == "mle":
             if n_samples < n_features:
                 raise ValueError(
-                    "n_components='mle' is only supported if n_samples >= n_features"
+                    "n_components='mle' is only supported if n_samples >="
+                    " n_features"
                 )
         elif not 0 <= n_components <= min(n_samples, n_features):
             raise ValueError(
                 "n_components=%r must be between 0 and "
                 "min(n_samples, n_features)=%r with "
-                "svd_solver='full'" % (n_components, min(n_samples, n_features))
+                "svd_solver='full'"
+                % (n_components, min(n_samples, n_features))
             )
         elif n_components >= 1:
             if not isinstance(n_components, numbers.Integral):
                 raise ValueError(
                     "n_components=%r must be of type int "
                     "when greater than or equal to 1, "
-                    "was of type=%r" % (n_components, type(n_components))
+                    "was of type=%r"
+                    % (n_components, type(n_components))
                 )
 
         # Center data
@@ -504,7 +508,9 @@ class PCA(_BasePCA):
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
             ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = np.searchsorted(ratio_cumsum, n_components, side="right") + 1
+            n_components = (
+                np.searchsorted(ratio_cumsum, n_components, side="right") + 1
+            )
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
@@ -516,7 +522,9 @@ class PCA(_BasePCA):
         self.components_ = components_[:n_components]
         self.n_components_ = n_components
         self.explained_variance_ = explained_variance_[:n_components]
-        self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
+        self.explained_variance_ratio_ = explained_variance_ratio_[
+            :n_components
+        ]
         self.singular_values_ = singular_values_[:n_components]
 
         return U, S, Vt
@@ -545,7 +553,9 @@ class PCA(_BasePCA):
                 "when greater than or equal to 1, was of type=%r"
                 % (n_components, type(n_components))
             )
-        elif svd_solver == "arpack" and n_components == min(n_samples, n_features):
+        elif svd_solver == "arpack" and n_components == min(
+            n_samples, n_features
+        ):
             raise ValueError(
                 "n_components=%r must be strictly less than "
                 "min(n_samples, n_features)=%r with "
@@ -585,11 +595,15 @@ class PCA(_BasePCA):
         # Get variance explained by singular values
         self.explained_variance_ = (S ** 2) / (n_samples - 1)
         total_var = np.var(X, ddof=1, axis=0)
-        self.explained_variance_ratio_ = self.explained_variance_ / total_var.sum()
+        self.explained_variance_ratio_ = (
+            self.explained_variance_ / total_var.sum()
+        )
         self.singular_values_ = S.copy()  # Store the singular values.
 
         if self.n_components_ < min(n_features, n_samples):
-            self.noise_variance_ = total_var.sum() - self.explained_variance_.sum()
+            self.noise_variance_ = (
+                total_var.sum() - self.explained_variance_.sum()
+            )
             self.noise_variance_ /= min(n_features, n_samples) - n_components
         else:
             self.noise_variance_ = 0.0
@@ -620,7 +634,9 @@ class PCA(_BasePCA):
         n_features = X.shape[1]
         precision = self.get_precision()
         log_like = -0.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
-        log_like -= 0.5 * (n_features * log(2.0 * np.pi) - fast_logdet(precision))
+        log_like -= 0.5 * (
+            n_features * log(2.0 * np.pi) - fast_logdet(precision)
+        )
         return log_like
 
     def score(self, X, y=None):

@@ -102,7 +102,9 @@ def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
     # Test pandas IntegerArray with pd.NA
     pd = pytest.importorskip("pandas", minversion="1.0")
     marker = np.nan
-    imputer = imputer.set_params(add_indicator=add_indicator, missing_values=marker)
+    imputer = imputer.set_params(
+        add_indicator=add_indicator, missing_values=marker
+    )
 
     X = np.array(
         [

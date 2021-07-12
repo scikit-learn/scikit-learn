@@ -28,9 +28,9 @@ n_labeled_samples = 50
 y_train_missing_labels = y_train.copy()
 y_train_missing_labels[n_labeled_samples:] = -1
 mapping = {0: "A", 1: "B", 2: "C", -1: "-1"}
-y_train_missing_strings = np.vectorize(mapping.get)(y_train_missing_labels).astype(
-    object
-)
+y_train_missing_strings = np.vectorize(mapping.get)(
+    y_train_missing_labels
+).astype(object)
 y_train_missing_strings[y_train_missing_labels == -1] = -1
 
 
@@ -49,7 +49,9 @@ def test_none_classifier():
         st.fit(X_train, y_train_missing_labels)
 
 
-@pytest.mark.parametrize("max_iter, threshold", [(-1, 1.0), (-100, -2), (-10, 10)])
+@pytest.mark.parametrize(
+    "max_iter, threshold", [(-1, 1.0), (-100, -2), (-10, 10)]
+)
 def test_invalid_params(max_iter, threshold):
     # Test negative iterations
     base_estimator = SVC(gamma="scale", probability=True)
@@ -71,7 +73,9 @@ def test_invalid_params_selection_crit():
 
 
 def test_warns_k_best():
-    st = SelfTrainingClassifier(KNeighborsClassifier(), criterion="k_best", k_best=1000)
+    st = SelfTrainingClassifier(
+        KNeighborsClassifier(), criterion="k_best", k_best=1000
+    )
     with pytest.warns(UserWarning, match="k_best is larger than"):
         st.fit(X_train, y_train_missing_labels)
 
@@ -80,7 +84,10 @@ def test_warns_k_best():
 
 @pytest.mark.parametrize(
     "base_estimator",
-    [KNeighborsClassifier(), SVC(gamma="scale", probability=True, random_state=0)],
+    [
+        KNeighborsClassifier(),
+        SVC(gamma="scale", probability=True, random_state=0),
+    ],
 )
 @pytest.mark.parametrize("selection_crit", ["threshold", "k_best"])
 def test_classification(base_estimator, selection_crit):
@@ -90,14 +97,20 @@ def test_classification(base_estimator, selection_crit):
     threshold = 0.75
     max_iter = 10
     st = SelfTrainingClassifier(
-        base_estimator, max_iter=max_iter, threshold=threshold, criterion=selection_crit
+        base_estimator,
+        max_iter=max_iter,
+        threshold=threshold,
+        criterion=selection_crit,
     )
     st.fit(X_train, y_train_missing_labels)
     pred = st.predict(X_test)
     proba = st.predict_proba(X_test)
 
     st_string = SelfTrainingClassifier(
-        base_estimator, max_iter=max_iter, criterion=selection_crit, threshold=threshold
+        base_estimator,
+        max_iter=max_iter,
+        criterion=selection_crit,
+        threshold=threshold,
     )
     st_string.fit(X_train, y_train_missing_strings)
     pred_string = st_string.predict(X_test)
@@ -112,7 +125,9 @@ def test_classification(base_estimator, selection_crit):
     # assert that labeled samples have labeled_iter = 0
     assert_array_equal(st.labeled_iter_ == 0, labeled)
     # assert that labeled samples do not change label during training
-    assert_array_equal(y_train_missing_labels[labeled], st.transduction_[labeled])
+    assert_array_equal(
+        y_train_missing_labels[labeled], st.transduction_[labeled]
+    )
 
     # assert that the max of the iterations is less than the total amount of
     # iterations
@@ -149,7 +164,9 @@ def test_k_best():
 
 def test_sanity_classification():
     base_estimator = SVC(gamma="scale", probability=True)
-    base_estimator.fit(X_train[n_labeled_samples:], y_train[n_labeled_samples:])
+    base_estimator.fit(
+        X_train[n_labeled_samples:], y_train[n_labeled_samples:]
+    )
 
     st = SelfTrainingClassifier(base_estimator)
     st.fit(X_train, y_train_missing_labels)
@@ -165,7 +182,9 @@ def test_sanity_classification():
 def test_none_iter():
     # Check that the all samples were labeled after a 'reasonable' number of
     # iterations.
-    st = SelfTrainingClassifier(KNeighborsClassifier(), threshold=0.55, max_iter=None)
+    st = SelfTrainingClassifier(
+        KNeighborsClassifier(), threshold=0.55, max_iter=None
+    )
     st.fit(X_train, y_train_missing_labels)
 
     assert st.n_iter_ < 10
@@ -174,9 +193,14 @@ def test_none_iter():
 
 @pytest.mark.parametrize(
     "base_estimator",
-    [KNeighborsClassifier(), SVC(gamma="scale", probability=True, random_state=0)],
+    [
+        KNeighborsClassifier(),
+        SVC(gamma="scale", probability=True, random_state=0),
+    ],
 )
-@pytest.mark.parametrize("y", [y_train_missing_labels, y_train_missing_strings])
+@pytest.mark.parametrize(
+    "y", [y_train_missing_labels, y_train_missing_strings]
+)
 def test_zero_iterations(base_estimator, y):
     # Check classification for zero iterations.
     # Fitting a SelfTrainingClassifier with zero iterations should give the
@@ -187,7 +211,9 @@ def test_zero_iterations(base_estimator, y):
 
     clf1.fit(X_train, y)
 
-    clf2 = base_estimator.fit(X_train[:n_labeled_samples], y[:n_labeled_samples])
+    clf2 = base_estimator.fit(
+        X_train[:n_labeled_samples], y[:n_labeled_samples]
+    )
 
     assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
     assert clf1.termination_condition_ == "max_iter"

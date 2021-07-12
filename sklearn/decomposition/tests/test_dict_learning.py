@@ -41,7 +41,9 @@ def test_sparse_encode_shapes_omp():
         X_ = rng.randn(n_samples, n_features)
         dictionary = rng.randn(n_components, n_features)
         for algorithm, n_jobs in itertools.product(algorithms, [1, 3]):
-            code = sparse_encode(X_, dictionary, algorithm=algorithm, n_jobs=n_jobs)
+            code = sparse_encode(
+                X_, dictionary, algorithm=algorithm, n_jobs=n_jobs
+            )
             assert code.shape == (n_samples, n_components)
 
 
@@ -106,14 +108,18 @@ def test_max_iter():
     # check that the underlying model fails to converge
     with pytest.warns(ConvergenceWarning):
         model = SparseCoder(
-            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=1
+            D_multi,
+            transform_algorithm=transform_algorithm,
+            transform_max_iter=1,
         )
         model.fit_transform(X)
 
     # check that the underlying model converges w/o warnings
     with pytest.warns(None) as record:
         model = SparseCoder(
-            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
+            D_multi,
+            transform_algorithm=transform_algorithm,
+            transform_max_iter=2000,
         )
         model.fit_transform(X)
     assert not record.list
@@ -137,7 +143,9 @@ def test_dict_learning_lars_positive_parameter():
 )
 @pytest.mark.parametrize("positive_code", [False, True])
 @pytest.mark.parametrize("positive_dict", [False, True])
-def test_dict_learning_positivity(transform_algorithm, positive_code, positive_dict):
+def test_dict_learning_positivity(
+    transform_algorithm, positive_code, positive_dict
+):
     n_components = 5
     dico = DictionaryLearning(
         n_components,
@@ -195,7 +203,10 @@ def test_dict_learning_lars_code_positivity():
 def test_dict_learning_reconstruction():
     n_components = 12
     dico = DictionaryLearning(
-        n_components, transform_algorithm="omp", transform_alpha=0.001, random_state=0
+        n_components,
+        transform_algorithm="omp",
+        transform_alpha=0.001,
+        random_state=0,
     )
     code = dico.fit(X).transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
@@ -413,7 +424,9 @@ def test_dict_learning_online_estimator_shapes():
 
 def test_dict_learning_online_overcomplete():
     n_components = 12
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, random_state=0).fit(X)
+    dico = MiniBatchDictionaryLearning(
+        n_components, n_iter=20, random_state=0
+    ).fit(X)
     assert dico.components_.shape == (n_components, n_features)
 
 
@@ -541,7 +554,9 @@ def test_sparse_encode_error_default_sparsity():
     rng = np.random.RandomState(0)
     X = rng.randn(100, 64)
     D = rng.randn(2, 64)
-    code = ignore_warnings(sparse_encode)(X, D, algorithm="omp", n_nonzero_coefs=None)
+    code = ignore_warnings(sparse_encode)(
+        X, D, algorithm="omp", n_nonzero_coefs=None
+    )
     assert code.shape == (100, 2)
 
 
@@ -659,7 +674,9 @@ def test_update_dict():
     assert_allclose(newd_batch, newd_online)
 
 
-@pytest.mark.parametrize("Estimator", [DictionaryLearning, MiniBatchDictionaryLearning])
+@pytest.mark.parametrize(
+    "Estimator", [DictionaryLearning, MiniBatchDictionaryLearning]
+)
 def test_warning_default_transform_alpha(Estimator):
     dl = Estimator(alpha=0.1)
     with pytest.warns(FutureWarning, match="default transform_alpha"):

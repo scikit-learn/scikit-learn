@@ -177,7 +177,10 @@ def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
 
     # raise an error when the name is not unique
     if issubclass(Ensemble, ClassifierMixin):
-        estimators = [("lr", LogisticRegression()), ("lr", LogisticRegression())]
+        estimators = [
+            ("lr", LogisticRegression()),
+            ("lr", LogisticRegression()),
+        ]
     else:
         estimators = [("lr", LinearRegression()), ("lr", LinearRegression())]
     ensemble = Ensemble(estimators=estimators)
@@ -244,7 +247,9 @@ def test_ensemble_heterogeneous_estimators_all_dropped(X, y, estimator):
 )
 # FIXME: we should move this test in `estimator_checks` once we are able
 # to construct meta-estimator instances
-def test_heterogeneous_ensemble_support_missing_values(Ensemble, Estimator, X, y):
+def test_heterogeneous_ensemble_support_missing_values(
+    Ensemble, Estimator, X, y
+):
     # check that Voting and Stacking predictor delegate the missing values
     # validation to the underlying estimator.
     X = X.copy()

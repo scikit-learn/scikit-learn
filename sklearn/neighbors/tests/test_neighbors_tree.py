@@ -79,7 +79,8 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
 
 @pytest.mark.parametrize("Cls", [KDTree, BallTree])
 @pytest.mark.parametrize(
-    "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]
+    "kernel",
+    ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"],
 )
 @pytest.mark.parametrize("h", [0.01, 0.1, 1])
 @pytest.mark.parametrize("rtol", [0, 1e-5])
@@ -121,7 +122,9 @@ def test_neighbor_tree_query_radius(Cls, n_samples=100, n_features=10):
 
 
 @pytest.mark.parametrize("Cls", [KDTree, BallTree])
-def test_neighbor_tree_query_radius_distance(Cls, n_samples=100, n_features=10):
+def test_neighbor_tree_query_radius_distance(
+    Cls, n_samples=100, n_features=10
+):
     rng = check_random_state(0)
     X = 2 * rng.random_sample(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
@@ -131,7 +134,9 @@ def test_neighbor_tree_query_radius_distance(Cls, n_samples=100, n_features=10):
     rad = np.sqrt(((X - query_pt) ** 2).sum(1))
 
     for r in np.linspace(rad[0], rad[-1], 100):
-        ind, dist = tree.query_radius([query_pt], r + eps, return_distance=True)
+        ind, dist = tree.query_radius(
+            [query_pt], r + eps, return_distance=True
+        )
 
         ind = ind[0]
         dist = dist[0]
@@ -178,7 +183,9 @@ def test_neighbors_heap(NeighborsHeap, n_pts=5, n_nbrs=10):
         assert_array_almost_equal(i_in[:n_nbrs], i_heap[row])
 
 
-@pytest.mark.parametrize("nodeheap_sort", [nodeheap_sort_bt, nodeheap_sort_kdt])
+@pytest.mark.parametrize(
+    "nodeheap_sort", [nodeheap_sort_bt, nodeheap_sort_kdt]
+)
 def test_node_heap(nodeheap_sort, n_nodes=50):
     rng = check_random_state(0)
     vals = rng.random_sample(n_nodes).astype(DTYPE, copy=False)
@@ -251,7 +258,9 @@ def test_nn_tree_query(Cls, metric, k, dualtree, breadth_first):
     kwargs = METRICS[metric]
 
     kdt = Cls(X, leaf_size=1, metric=metric, **kwargs)
-    dist1, ind1 = kdt.query(Y, k, dualtree=dualtree, breadth_first=breadth_first)
+    dist1, ind1 = kdt.query(
+        Y, k, dualtree=dualtree, breadth_first=breadth_first
+    )
     dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
 
     # don't check indices here: if there are any duplicate distances,

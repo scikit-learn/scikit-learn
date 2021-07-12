@@ -68,7 +68,9 @@ class RocCurveDisplay:
     >>> plt.show()
     """
 
-    def __init__(self, *, fpr, tpr, roc_auc=None, estimator_name=None, pos_label=None):
+    def __init__(
+        self, *, fpr, tpr, roc_auc=None, estimator_name=None, pos_label=None
+    ):
         self.estimator_name = estimator_name
         self.fpr = fpr
         self.tpr = tpr
@@ -116,7 +118,9 @@ class RocCurveDisplay:
 
         (self.line_,) = ax.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
-            f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
+            f" (Positive label: {self.pos_label})"
+            if self.pos_label is not None
+            else ""
         )
 
         xlabel = "False Positive Rate" + info_pos_label
@@ -234,7 +238,11 @@ def plot_roc_curve(
     name = estimator.__class__.__name__ if name is None else name
 
     viz = RocCurveDisplay(
-        fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name, pos_label=pos_label
+        fpr=fpr,
+        tpr=tpr,
+        roc_auc=roc_auc,
+        estimator_name=name,
+        pos_label=pos_label,
     )
 
     return viz.plot(ax=ax, name=name, **kwargs)

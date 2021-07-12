@@ -49,7 +49,9 @@ def _check_zero_division(zero_division):
     elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
         return
     raise ValueError(
-        'Got zero_division={0}. Must be one of ["warn", 0, 1]'.format(zero_division)
+        'Got zero_division={0}. Must be one of ["warn", 0, 1]'.format(
+            zero_division
+        )
     )
 
 
@@ -90,9 +92,8 @@ def _check_targets(y_true, y_pred):
 
     if len(y_type) > 1:
         raise ValueError(
-            "Classification metrics can't handle a mix of {0} and {1} targets".format(
-                type_true, type_pred
-            )
+            "Classification metrics can't handle a mix of {0} and {1} targets"
+            .format(type_true, type_pred)
         )
 
     # We can't have more than one value on y_type => The set is no more needed
@@ -322,7 +323,9 @@ def confusion_matrix(
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if normalize not in ["true", "pred", "all", None]:
-        raise ValueError("normalize must be one of {'true', 'pred', 'all', None}")
+        raise ValueError(
+            "normalize must be one of {'true', 'pred', 'all', None}"
+        )
 
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
@@ -515,9 +518,13 @@ def multilabel_confusion_matrix(
             # Pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
         if len(y_pred):
-            pred_sum = np.bincount(y_pred, weights=sample_weight, minlength=len(labels))
+            pred_sum = np.bincount(
+                y_pred, weights=sample_weight, minlength=len(labels)
+            )
         if len(y_true):
-            true_sum = np.bincount(y_true, weights=sample_weight, minlength=len(labels))
+            true_sum = np.bincount(
+                y_true, weights=sample_weight, minlength=len(labels)
+            )
 
         # Retain only selected labels
         indices = np.searchsorted(sorted_labels, labels[:n_labels])
@@ -535,7 +542,8 @@ def multilabel_confusion_matrix(
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d > %d" % (np.max(labels), np.max(present_labels))
+                    "Got %d > %d"
+                    % (np.max(labels), np.max(present_labels))
                 )
             if np.min(labels) < 0:
                 raise ValueError(
@@ -554,8 +562,12 @@ def multilabel_confusion_matrix(
         tp_sum = count_nonzero(
             true_and_pred, axis=sum_axis, sample_weight=sample_weight
         )
-        pred_sum = count_nonzero(y_pred, axis=sum_axis, sample_weight=sample_weight)
-        true_sum = count_nonzero(y_true, axis=sum_axis, sample_weight=sample_weight)
+        pred_sum = count_nonzero(
+            y_pred, axis=sum_axis, sample_weight=sample_weight
+        )
+        true_sum = count_nonzero(
+            y_true, axis=sum_axis, sample_weight=sample_weight
+        )
 
     fp = pred_sum - tp_sum
     fn = true_sum - tp_sum
@@ -577,7 +589,9 @@ def multilabel_confusion_matrix(
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
+def cohen_kappa_score(
+    y1, y2, *, labels=None, weights=None, sample_weight=None
+):
     r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -633,7 +647,9 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     .. [3] `Wikipedia entry for the Cohen's kappa
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_.
     """
-    confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
+    confusion = confusion_matrix(
+        y1, y2, labels=labels, sample_weight=sample_weight
+    )
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -1255,7 +1271,13 @@ def fbeta_score(
 
 
 def _prf_divide(
-    numerator, denominator, metric, modifier, average, warn_for, zero_division="warn"
+    numerator,
+    denominator,
+    metric,
+    modifier,
+    average,
+    warn_for,
+    zero_division="warn",
 ):
     """Performs division and handles divide-by-zero.
 
@@ -1346,7 +1368,8 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
                 average_options.remove("samples")
             raise ValueError(
                 "Target is %s but average='binary'. Please "
-                "choose another average setting, one of %r." % (y_type, average_options)
+                "choose another average setting, one of %r."
+                % (y_type, average_options)
             )
     elif pos_label not in (None, 1):
         warnings.warn(
@@ -1549,7 +1572,13 @@ def precision_recall_fscore_support(
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
     precision = _prf_divide(
-        tp_sum, pred_sum, "precision", "predicted", average, warn_for, zero_division
+        tp_sum,
+        pred_sum,
+        "precision",
+        "predicted",
+        average,
+        warn_for,
+        zero_division,
     )
     recall = _prf_divide(
         tp_sum, true_sum, "recall", "true", average, warn_for, zero_division
@@ -1559,7 +1588,9 @@ def precision_recall_fscore_support(
     # and BOTH prec and rec are ill-defined
     if zero_division == "warn" and ("f-score",) == warn_for:
         if (pred_sum[true_sum == 0] == 0).any():
-            _warn_prf(average, "true nor predicted", "F-score is", len(true_sum))
+            _warn_prf(
+                average, "true nor predicted", "F-score is", len(true_sum)
+            )
 
     # if tp == 0 F will be 1 only if all predictions are zero, all labels are
     # zero, and zero_division=1. In all other case, 0
@@ -1590,7 +1621,12 @@ def precision_recall_fscore_support(
                     None,
                 )
             else:
-                return (np.float64(0.0), zero_division_value, np.float64(0.0), None)
+                return (
+                    np.float64(0.0),
+                    zero_division_value,
+                    np.float64(0.0),
+                    None,
+                )
 
     elif average == "samples":
         weights = sample_weight
@@ -1864,7 +1900,9 @@ def recall_score(
     return r
 
 
-def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False):
+def balanced_accuracy_score(
+    y_true, y_pred, *, sample_weight=None, adjusted=False
+):
     """Compute the balanced accuracy.
 
     The balanced accuracy in binary and multiclass classification problems to
@@ -2072,9 +2110,8 @@ def classification_report(
     if target_names is not None and len(labels) != len(target_names):
         if labels_given:
             warnings.warn(
-                "labels size, {0}, does not match size of target_names, {1}".format(
-                    len(labels), len(target_names)
-                )
+                "labels size, {0}, does not match size of target_names, {1}"
+                .format(len(labels), len(target_names))
             )
         else:
             raise ValueError(
@@ -2137,7 +2174,9 @@ def classification_report(
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:
-            report_dict[line_heading] = dict(zip(headers, [i.item() for i in avg]))
+            report_dict[line_heading] = dict(
+                zip(headers, [i.item() for i in avg])
+            )
         else:
             if line_heading == "accuracy":
                 row_fmt_accuracy = (
@@ -2150,7 +2189,9 @@ def classification_report(
                     line_heading, "", "", *avg[2:], width=width, digits=digits
                 )
             else:
-                report += row_fmt.format(line_heading, *avg, width=width, digits=digits)
+                report += row_fmt.format(
+                    line_heading, *avg, width=width, digits=digits
+                )
 
     if output_dict:
         if "accuracy" in report_dict.keys():
@@ -2240,8 +2281,12 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         weight_average = np.mean(sample_weight)
 
     if y_type.startswith("multilabel"):
-        n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
-        return n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
+        n_differences = count_nonzero(
+            y_true - y_pred, sample_weight=sample_weight
+        )
+        return n_differences / (
+            y_true.shape[0] * y_true.shape[1] * weight_average
+        )
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
@@ -2250,7 +2295,13 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
 
 def log_loss(
-    y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None, labels=None
+    y_true,
+    y_pred,
+    *,
+    eps=1e-15,
+    normalize=True,
+    sample_weight=None,
+    labels=None,
 ):
     r"""Log loss, aka logistic loss or cross-entropy loss.
 
@@ -2508,7 +2559,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
         mask = np.ones_like(pred_decision, dtype=bool)
         mask[np.arange(y_true.shape[0]), y_true] = False
         margin = pred_decision[~mask]
-        margin -= np.max(pred_decision[mask].reshape(y_true.shape[0], -1), axis=1)
+        margin -= np.max(
+            pred_decision[mask].reshape(y_true.shape[0], -1), axis=1
+        )
 
     else:
         # Handles binary class case

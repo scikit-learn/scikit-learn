@@ -109,7 +109,9 @@ def f_oneway(*args):
     msw = sswn / float(dfwn)
     constant_features_idx = np.where(msw == 0.0)[0]
     if np.nonzero(msb)[0].size != msb.size and constant_features_idx.size:
-        warnings.warn("Features %s are constant." % constant_features_idx, UserWarning)
+        warnings.warn(
+            "Features %s are constant." % constant_features_idx, UserWarning
+        )
     f = msb / msw
     # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()
@@ -268,7 +270,9 @@ def r_regression(X, y, *, center=True):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     """
-    X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"], dtype=np.float64)
+    X, y = check_X_y(
+        X, y, accept_sparse=["csr", "csc", "coo"], dtype=np.float64
+    )
     n_samples = X.shape[0]
 
     # Compute centered values
@@ -281,7 +285,9 @@ def r_regression(X, y, *, center=True):
         else:
             X_means = X.mean(axis=0)
         # Compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means ** 2)
+        X_norms = np.sqrt(
+            row_norms(X.T, squared=True) - n_samples * X_means ** 2
+        )
     else:
         X_norms = row_norms(X.T)
 
@@ -591,7 +597,8 @@ class SelectKBest(_BaseFilter):
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
             raise ValueError(
                 "k should be >=0, <= n_features = %d; got %r. "
-                "Use k='all' to return all features." % (X.shape[1], self.k)
+                "Use k='all' to return all features."
+                % (X.shape[1], self.k)
             )
 
     def _get_support_mask(self):
@@ -915,7 +922,8 @@ class GenericUnivariateSelect(_BaseFilter):
     def _check_params(self, X, y):
         if self.mode not in self._selection_modes:
             raise ValueError(
-                "The mode passed should be one of %s, %r, (type %s) was passed."
+                "The mode passed should be one of %s, %r, (type %s) was"
+                " passed."
                 % (self._selection_modes.keys(), self.mode, type(self.mode))
             )
 

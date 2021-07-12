@@ -51,7 +51,9 @@ class BaseLoss(ABC):
     # (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) for the theory.
     need_update_leaves_values = False
 
-    def init_gradients_and_hessians(self, n_samples, prediction_dim, sample_weight):
+    def init_gradients_and_hessians(
+        self, n_samples, prediction_dim, sample_weight
+    ):
         """Return initial gradients and hessians.
 
         Unless hessians are constant, arrays are initialized with undefined
@@ -272,7 +274,9 @@ class LeastAbsoluteDeviation(BaseLoss):
                 self.n_threads,
             )
 
-    def update_leaves_values(self, grower, y_true, raw_predictions, sample_weight):
+    def update_leaves_values(
+        self, grower, y_true, raw_predictions, sample_weight
+    ):
         # Update the values predicted by the tree with
         # median(y_true - raw_predictions).
         # See note about need_update_leaves_values in BaseLoss.
@@ -283,7 +287,9 @@ class LeastAbsoluteDeviation(BaseLoss):
         for leaf in grower.finalized_leaves:
             indices = leaf.sample_indices
             if sample_weight is None:
-                median_res = np.median(y_true[indices] - raw_predictions[indices])
+                median_res = np.median(
+                    y_true[indices] - raw_predictions[indices]
+                )
             else:
                 median_res = _weighted_percentile(
                     y_true[indices] - raw_predictions[indices],
@@ -378,7 +384,8 @@ class BinaryCrossEntropy(BaseLoss):
             raise ValueError(
                 "loss='binary_crossentropy' is not defined for multiclass"
                 " classification with n_classes=%d, use"
-                " loss='categorical_crossentropy' instead" % prediction_dim
+                " loss='categorical_crossentropy' instead"
+                % prediction_dim
             )
         proba_positive_class = np.average(y_train, weights=sample_weight)
         eps = np.finfo(y_train.dtype).eps
@@ -396,7 +403,12 @@ class BinaryCrossEntropy(BaseLoss):
         gradients = gradients.reshape(-1)
         hessians = hessians.reshape(-1)
         _update_gradients_hessians_binary_crossentropy(
-            gradients, hessians, y_true, raw_predictions, sample_weight, self.n_threads
+            gradients,
+            hessians,
+            y_true,
+            raw_predictions,
+            sample_weight,
+            self.n_threads,
         )
 
     def predict_proba(self, raw_predictions):
@@ -445,7 +457,12 @@ class CategoricalCrossEntropy(BaseLoss):
         self, gradients, hessians, y_true, raw_predictions, sample_weight
     ):
         _update_gradients_hessians_categorical_crossentropy(
-            gradients, hessians, y_true, raw_predictions, sample_weight, self.n_threads
+            gradients,
+            hessians,
+            y_true,
+            raw_predictions,
+            sample_weight,
+            self.n_threads,
         )
 
     def predict_proba(self, raw_predictions):

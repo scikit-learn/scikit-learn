@@ -223,7 +223,8 @@ class _VectorizerMixin:
 
         if doc is np.nan:
             raise ValueError(
-                "np.nan is an invalid document, expected byte or unicode string."
+                "np.nan is an invalid document, expected byte or unicode"
+                " string."
             )
 
         return doc
@@ -334,7 +335,9 @@ class _VectorizerMixin:
                 'Invalid value for "strip_accents": %s' % self.strip_accents
             )
 
-        return partial(_preprocess, accent_function=strip_accents, lower=self.lowercase)
+        return partial(
+            _preprocess, accent_function=strip_accents, lower=self.lowercase
+        )
 
     def build_tokenizer(self):
         """Return a function that splits a string into a sequence of tokens.
@@ -418,7 +421,9 @@ class _VectorizerMixin:
         """
 
         if callable(self.analyzer):
-            return partial(_analyze, analyzer=self.analyzer, decoder=self.decode)
+            return partial(
+                _analyze, analyzer=self.analyzer, decoder=self.decode
+            )
 
         preprocess = self.build_preprocessor()
 
@@ -442,7 +447,9 @@ class _VectorizerMixin:
         elif self.analyzer == "word":
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
-            self._check_stop_words_consistency(stop_words, preprocess, tokenize)
+            self._check_stop_words_consistency(
+                stop_words, preprocess, tokenize
+            )
             return partial(
                 _analyze,
                 ngrams=self._word_ngrams,
@@ -454,7 +461,8 @@ class _VectorizerMixin:
 
         else:
             raise ValueError(
-                "%s is not a valid tokenization scheme/analyzer" % self.analyzer
+                "%s is not a valid tokenization scheme/analyzer"
+                % self.analyzer
             )
 
     def _validate_vocabulary(self):
@@ -475,9 +483,12 @@ class _VectorizerMixin:
                     raise ValueError("Vocabulary contains repeated indices.")
                 for i in range(len(vocabulary)):
                     if i not in indices:
-                        msg = "Vocabulary of size %d doesn't contain index %d." % (
-                            len(vocabulary),
-                            i,
+                        msg = (
+                            "Vocabulary of size %d doesn't contain index %d."
+                            % (
+                                len(vocabulary),
+                                i,
+                            )
                         )
                         raise ValueError(msg)
             if not vocabulary:
@@ -782,7 +793,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         # triggers a parameter validation
         if isinstance(X, str):
             raise ValueError(
-                "Iterable over raw text documents expected, string object received."
+                "Iterable over raw text documents expected, string object"
+                " received."
             )
 
         self._warn_for_unused_params()
@@ -808,7 +820,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         """
         if isinstance(X, str):
             raise ValueError(
-                "Iterable over raw text documents expected, string object received."
+                "Iterable over raw text documents expected, string object"
+                " received."
             )
 
         self._validate_params()
@@ -1099,7 +1112,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
         if max_features is not None:
-            if not isinstance(max_features, numbers.Integral) or max_features <= 0:
+            if (
+                not isinstance(max_features, numbers.Integral)
+                or max_features <= 0
+            ):
                 raise ValueError(
                     "max_features=%r, neither a positive integer nor None"
                     % max_features
@@ -1160,7 +1176,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         kept_indices = np.where(mask)[0]
         if len(kept_indices) == 0:
             raise ValueError(
-                "After pruning, no terms remain. Try a lower min_df or a higher max_df."
+                "After pruning, no terms remain. Try a lower min_df or a"
+                " higher max_df."
             )
         return X[:, kept_indices], removed_terms
 
@@ -1212,7 +1229,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             vocabulary = dict(vocabulary)
             if not vocabulary:
                 raise ValueError(
-                    "empty vocabulary; perhaps the documents only contain stop words"
+                    "empty vocabulary; perhaps the documents only contain stop"
+                    " words"
                 )
 
         if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
@@ -1277,7 +1295,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # TfidfVectorizer.
         if isinstance(raw_documents, str):
             raise ValueError(
-                "Iterable over raw text documents expected, string object received."
+                "Iterable over raw text documents expected, string object"
+                " received."
             )
 
         self._validate_params()
@@ -1286,7 +1305,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         min_df = self.min_df
         max_features = self.max_features
 
-        vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary_)
+        vocabulary, X = self._count_vocab(
+            raw_documents, self.fixed_vocabulary_
+        )
 
         if self.binary:
             X.data.fill(1)
@@ -1294,13 +1315,19 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         if not self.fixed_vocabulary_:
             n_doc = X.shape[0]
             max_doc_count = (
-                max_df if isinstance(max_df, numbers.Integral) else max_df * n_doc
+                max_df
+                if isinstance(max_df, numbers.Integral)
+                else max_df * n_doc
             )
             min_doc_count = (
-                min_df if isinstance(min_df, numbers.Integral) else min_df * n_doc
+                min_df
+                if isinstance(min_df, numbers.Integral)
+                else min_df * n_doc
             )
             if max_doc_count < min_doc_count:
-                raise ValueError("max_df corresponds to < documents than min_df")
+                raise ValueError(
+                    "max_df corresponds to < documents than min_df"
+                )
             if max_features is not None:
                 X = self._sort_features(X, vocabulary)
             X, self.stop_words_ = self._limit_features(
@@ -1330,7 +1357,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         """
         if isinstance(raw_documents, str):
             raise ValueError(
-                "Iterable over raw text documents expected, string object received."
+                "Iterable over raw text documents expected, string object"
+                " received."
             )
         self._check_vocabulary()
 
@@ -1384,7 +1412,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         self._check_vocabulary()
 
-        return [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))]
+        return [
+            t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))
+        ]
 
     def _more_tags(self):
         return {"X_types": ["string"]}
@@ -1518,7 +1548,9 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     (4, 8)
     """
 
-    def __init__(self, *, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False):
+    def __init__(
+        self, *, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False
+    ):
         self.norm = norm
         self.use_idf = use_idf
         self.smooth_idf = smooth_idf
@@ -1598,7 +1630,9 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             # idf_ being a property, the automatic attributes detection
             # does not work as usual and we need to specify the attribute
             # name:
-            check_is_fitted(self, attributes=["idf_"], msg="idf vector is not fitted")
+            check_is_fitted(
+                self, attributes=["idf_"], msg="idf vector is not fitted"
+            )
 
             # *= doesn't work
             X = X * self._idf_diag
@@ -1888,7 +1922,10 @@ class TfidfVectorizer(CountVectorizer):
         )
 
         self._tfidf = TfidfTransformer(
-            norm=norm, use_idf=use_idf, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf
+            norm=norm,
+            use_idf=use_idf,
+            smooth_idf=smooth_idf,
+            sublinear_tf=sublinear_tf,
         )
 
     # Broadcast the TF-IDF parameters to the underlying transformer instance

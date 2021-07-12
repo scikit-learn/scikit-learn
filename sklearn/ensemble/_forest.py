@@ -177,9 +177,13 @@ def _parallel_build_trees(
         if class_weight == "subsample":
             with catch_warnings():
                 simplefilter("ignore", DeprecationWarning)
-                curr_sample_weight *= compute_sample_weight("auto", y, indices=indices)
+                curr_sample_weight *= compute_sample_weight(
+                    "auto", y, indices=indices
+                )
         elif class_weight == "balanced_subsample":
-            curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
+            curr_sample_weight *= compute_sample_weight(
+                "balanced", y, indices=indices
+            )
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
     else:
@@ -249,7 +253,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_jobs=self.n_jobs,
             verbose=self.verbose,
             **_joblib_parallel_args(prefer="threads"),
-        )(delayed(tree.apply)(X, check_input=False) for tree in self.estimators_)
+        )(
+            delayed(tree.apply)(X, check_input=False)
+            for tree in self.estimators_
+        )
 
         return np.array(results).T
 
@@ -322,7 +329,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         # Validate or convert input data
         if issparse(y):
-            raise ValueError("sparse multilabel-indicator for y is not supported.")
+            raise ValueError(
+                "sparse multilabel-indicator for y is not supported."
+            )
         X, y = self._validate_data(
             X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE
         )
@@ -399,7 +408,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 )
 
         if not self.bootstrap and self.oob_score:
-            raise ValueError("Out of bag estimation only available if bootstrap=True")
+            raise ValueError(
+                "Out of bag estimation only available if bootstrap=True"
+            )
 
         random_state = check_random_state(self.random_state)
 
@@ -511,7 +522,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 (n_samples, 1, n_outputs)
             The OOB predictions.
       """
-        X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+        X = self._validate_data(
+            X, dtype=DTYPE, accept_sparse="csr", reset=False
+        )
 
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
@@ -540,7 +553,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 n_samples_bootstrap,
             )
 
-            y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
+            y_pred = self._get_oob_predictions(
+                estimator, X[unsampled_indices, :]
+            )
             oob_pred[unsampled_indices, ...] += y_pred
             n_oob_pred[unsampled_indices, :] += 1
 
@@ -712,7 +727,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         self.oob_decision_function_ = super()._compute_oob_predictions(X, y)
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
-            self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
+            self.oob_decision_function_ = self.oob_decision_function_.squeeze(
+                axis=-1
+            )
         self.oob_score_ = accuracy_score(
             y, np.argmax(self.oob_decision_function_, axis=1)
         )
@@ -767,7 +784,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                     class_weight = "balanced"
                 else:
                     class_weight = self.class_weight
-                expanded_class_weight = compute_sample_weight(class_weight, y_original)
+                expanded_class_weight = compute_sample_weight(
+                    class_weight, y_original
+                )
 
         return y, expanded_class_weight
 
@@ -801,7 +820,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             n_samples = proba[0].shape[0]
             # all dtypes should be the same, so just take the first
             class_type = self.classes_[0].dtype
-            predictions = np.empty((n_samples, self.n_outputs_), dtype=class_type)
+            predictions = np.empty(
+                (n_samples, self.n_outputs_), dtype=class_type
+            )
 
             for k in range(self.n_outputs_):
                 predictions[:, k] = self.classes_[k].take(
@@ -850,7 +871,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             verbose=self.verbose,
             **_joblib_parallel_args(require="sharedmem"),
         )(
-            delayed(_accumulate_prediction)(e.predict_proba, X, all_proba, lock)
+            delayed(_accumulate_prediction)(
+                e.predict_proba, X, all_proba, lock
+            )
             for e in self.estimators_
         )
 
@@ -1013,7 +1036,9 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
         """
-        self.oob_prediction_ = super()._compute_oob_predictions(X, y).squeeze(axis=1)
+        self.oob_prediction_ = (
+            super()._compute_oob_predictions(X, y).squeeze(axis=1)
+        )
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)

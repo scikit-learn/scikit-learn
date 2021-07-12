@@ -59,16 +59,24 @@ def _check_behavior_2d(clf):
 def _check_behavior_2d_for_constant(clf):
     # 2d case only
     X = np.array([[0], [0], [0], [0]])  # ignored
-    y = np.array([[1, 0, 5, 4, 3], [2, 0, 1, 2, 5], [1, 0, 4, 5, 2], [1, 3, 3, 2, 0]])
+    y = np.array(
+        [[1, 0, 5, 4, 3], [2, 0, 1, 2, 5], [1, 0, 4, 5, 2], [1, 3, 3, 2, 0]]
+    )
     est = clone(clf)
     est.fit(X, y)
     y_pred = est.predict(X)
     assert y.shape == y_pred.shape
 
 
-def _check_equality_regressor(statistic, y_learn, y_pred_learn, y_test, y_pred_test):
-    assert_array_almost_equal(np.tile(statistic, (y_learn.shape[0], 1)), y_pred_learn)
-    assert_array_almost_equal(np.tile(statistic, (y_test.shape[0], 1)), y_pred_test)
+def _check_equality_regressor(
+    statistic, y_learn, y_pred_learn, y_test, y_pred_test
+):
+    assert_array_almost_equal(
+        np.tile(statistic, (y_learn.shape[0], 1)), y_pred_learn
+    )
+    assert_array_almost_equal(
+        np.tile(statistic, (y_test.shape[0], 1)), y_pred_test
+    )
 
 
 def test_most_frequent_and_prior_strategy():
@@ -87,7 +95,8 @@ def test_most_frequent_and_prior_strategy():
             )
         else:
             assert_array_almost_equal(
-                clf.predict_proba([X[0]]), clf.class_prior_.reshape((1, -1)) > 0.5
+                clf.predict_proba([X[0]]),
+                clf.class_prior_.reshape((1, -1)) > 0.5,
             )
 
 
@@ -312,7 +321,9 @@ def test_median_strategy_multioutput_regressor():
     y_pred_learn = est.predict(X_learn)
     y_pred_test = est.predict(X_test)
 
-    _check_equality_regressor(median, y_learn, y_pred_learn, y_test, y_pred_test)
+    _check_equality_regressor(
+        median, y_learn, y_pred_learn, y_test, y_pred_test
+    )
     _check_behavior_2d(est)
 
 
@@ -359,7 +370,9 @@ def test_quantile_strategy_multioutput_regressor():
     y_pred_learn = est.predict(X_learn)
     y_pred_test = est.predict(X_test)
 
-    _check_equality_regressor(median, y_learn, y_pred_learn, y_test, y_pred_test)
+    _check_equality_regressor(
+        median, y_learn, y_pred_learn, y_test, y_pred_test
+    )
     _check_behavior_2d(est)
 
     # Correctness oracle
@@ -445,7 +458,9 @@ def test_constant_strategy_multioutput_regressor():
     y_pred_learn = est.predict(X_learn)
     y_pred_test = est.predict(X_test)
 
-    _check_equality_regressor(constants, y_learn, y_pred_learn, y_test, y_pred_test)
+    _check_equality_regressor(
+        constants, y_learn, y_pred_learn, y_test, y_pred_test
+    )
     _check_behavior_2d_for_constant(est)
 
 
@@ -513,7 +528,8 @@ def test_constant_strategy_multioutput():
     clf = DummyClassifier(strategy="constant", random_state=0, constant=[1, 0])
     clf.fit(X, y)
     assert_array_equal(
-        clf.predict(X), np.hstack([np.ones((n_samples, 1)), np.zeros((n_samples, 1))])
+        clf.predict(X),
+        np.hstack([np.ones((n_samples, 1)), np.zeros((n_samples, 1))]),
     )
     _check_predict_proba(clf, X, y)
 
@@ -576,7 +592,8 @@ def test_constant_strategy_sparse_target():
     y_pred = clf.predict(X)
     assert sp.issparse(y_pred)
     assert_array_equal(
-        y_pred.toarray(), np.hstack([np.ones((n_samples, 1)), np.zeros((n_samples, 1))])
+        y_pred.toarray(),
+        np.hstack([np.ones((n_samples, 1)), np.zeros((n_samples, 1))]),
     )
 
 
@@ -585,7 +602,9 @@ def test_uniform_strategy_sparse_target_warning():
     y = sp.csc_matrix(np.array([[2, 1], [2, 2], [1, 4], [4, 2], [1, 1]]))
 
     clf = DummyClassifier(strategy="uniform", random_state=0)
-    with pytest.warns(UserWarning, match="the uniform strategy would not save memory"):
+    with pytest.warns(
+        UserWarning, match="the uniform strategy would not save memory"
+    ):
         clf.fit(X, y)
 
     X = [[0]] * 500
@@ -645,7 +664,9 @@ def test_dummy_regressor_sample_weight(n_samples=10):
     est = DummyRegressor(strategy="median").fit(X, y, sample_weight)
     assert est.constant_ == _weighted_percentile(y, sample_weight, 50.0)
 
-    est = DummyRegressor(strategy="quantile", quantile=0.95).fit(X, y, sample_weight)
+    est = DummyRegressor(strategy="quantile", quantile=0.95).fit(
+        X, y, sample_weight
+    )
     assert est.constant_ == _weighted_percentile(y, sample_weight, 95.0)
 
 
@@ -698,7 +719,9 @@ def test_regressor_score_with_None(y, y_test):
     assert reg.score(None, y_test) == 1.0
 
 
-@pytest.mark.parametrize("strategy", ["mean", "median", "quantile", "constant"])
+@pytest.mark.parametrize(
+    "strategy", ["mean", "median", "quantile", "constant"]
+)
 def test_regressor_prediction_independent_of_X(strategy):
     y = [0, 2, 1, 1]
     X1 = [[0]] * 4

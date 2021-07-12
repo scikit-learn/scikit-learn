@@ -105,7 +105,9 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     p_ = float(X.shape[1])
     for ii in range(max_iter):
         gwtx, g_wtx = g(np.dot(W, X), fun_args)
-        W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_ - g_wtx[:, np.newaxis] * W)
+        W1 = _sym_decorrelation(
+            np.dot(gwtx, X.T) / p_ - g_wtx[:, np.newaxis] * W
+        )
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
         lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
@@ -296,7 +298,13 @@ def fastica(
     if whiten:
         if return_X_mean:
             if return_n_iter:
-                return (est.whitening_, est._unmixing, sources, est.mean_, est.n_iter_)
+                return (
+                    est.whitening_,
+                    est._unmixing,
+                    sources,
+                    est.mean_,
+                    est.n_iter_,
+                )
             else:
                 return est.whitening_, est._unmixing, sources, est.mean_
         else:
@@ -431,7 +439,9 @@ class FastICA(TransformerMixin, BaseEstimator):
         super().__init__()
         if max_iter < 1:
             raise ValueError(
-                "max_iter should be greater than 1, got (max_iter={})".format(max_iter)
+                "max_iter should be greater than 1, got (max_iter={})".format(
+                    max_iter
+                )
             )
         self.n_components = n_components
         self.algorithm = algorithm
@@ -501,7 +511,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         if n_components > min(n_samples, n_features):
             n_components = min(n_samples, n_features)
             warnings.warn(
-                "n_components is too large: it will be set to %s" % n_components
+                "n_components is too large: it will be set to %s"
+                % n_components
             )
 
         if self.whiten:
@@ -527,7 +538,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         w_init = self.w_init
         if w_init is None:
             w_init = np.asarray(
-                random_state.normal(size=(n_components, n_components)), dtype=X1.dtype
+                random_state.normal(size=(n_components, n_components)),
+                dtype=X1.dtype,
             )
 
         else:

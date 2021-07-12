@@ -317,7 +317,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
             if eps > self.max_eps:
                 raise ValueError(
-                    "Specify an epsilon smaller than %s. Got %s." % (self.max_eps, eps)
+                    "Specify an epsilon smaller than %s. Got %s."
+                    % (self.max_eps, eps)
                 )
 
             labels_ = cluster_optics_dbscan(
@@ -373,7 +374,9 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     core_distances.fill(np.nan)
 
     chunk_n_rows = get_chunk_n_rows(
-        row_bytes=16 * min_samples, max_n_rows=n_samples, working_memory=working_memory
+        row_bytes=16 * min_samples,
+        max_n_rows=n_samples,
+        working_memory=working_memory,
     )
     slices = gen_batches(n_samples, chunk_n_rows)
     for sl in slices:
@@ -382,7 +385,16 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
 
 
 def compute_optics_graph(
-    X, *, min_samples, max_eps, metric, p, metric_params, algorithm, leaf_size, n_jobs
+    X,
+    *,
+    min_samples,
+    max_eps,
+    metric,
+    p,
+    metric_params,
+    algorithm,
+    leaf_size,
+    n_jobs,
 ):
     """Computes the OPTICS reachability graph.
 
@@ -578,7 +590,9 @@ def _set_reach_dist(
     # Assume that radius_neighbors is faster without distances
     # and we don't need all distances, nevertheless, this means
     # we may be doing some work twice.
-    indices = nbrs.radius_neighbors(P, radius=max_eps, return_distance=False)[0]
+    indices = nbrs.radius_neighbors(P, radius=max_eps, return_distance=False)[
+        0
+    ]
 
     # Getting indices of neighbors that have not been processed
     unproc = np.compress(~np.take(processed, indices), indices)
@@ -596,7 +610,11 @@ def _set_reach_dist(
             # in the dict params
             _params["p"] = p
         dists = pairwise_distances(
-            P, np.take(X, unproc, axis=0), metric=metric, n_jobs=None, **_params
+            P,
+            np.take(X, unproc, axis=0),
+            metric=metric,
+            n_jobs=None,
+            **_params,
         ).ravel()
 
     rdists = np.maximum(dists, core_distances_[point_index])
@@ -795,7 +813,9 @@ def _update_filter_sdas(sdas, mib, xi_complement, reachability_plot):
     if np.isinf(mib):
         return []
     res = [
-        sda for sda in sdas if mib <= reachability_plot[sda["start"]] * xi_complement
+        sda
+        for sda in sdas
+        if mib <= reachability_plot[sda["start"]] * xi_complement
     ]
     for sda in res:
         sda["mib"] = max(sda["mib"], mib)
@@ -905,9 +925,13 @@ def _xi_cluster(
 
         # steep downward areas
         if steep_downward[steep_index]:
-            sdas = _update_filter_sdas(sdas, mib, xi_complement, reachability_plot)
+            sdas = _update_filter_sdas(
+                sdas, mib, xi_complement, reachability_plot
+            )
             D_start = steep_index
-            D_end = _extend_region(steep_downward, upward, D_start, min_samples)
+            D_end = _extend_region(
+                steep_downward, upward, D_start, min_samples
+            )
             D = {"start": D_start, "end": D_end, "mib": 0.0}
             sdas.append(D)
             index = D_end + 1
@@ -915,9 +939,13 @@ def _xi_cluster(
 
         # steep upward areas
         else:
-            sdas = _update_filter_sdas(sdas, mib, xi_complement, reachability_plot)
+            sdas = _update_filter_sdas(
+                sdas, mib, xi_complement, reachability_plot
+            )
             U_start = steep_index
-            U_end = _extend_region(steep_upward, downward, U_start, min_samples)
+            U_end = _extend_region(
+                steep_upward, downward, U_start, min_samples
+            )
             index = U_end + 1
             mib = reachability_plot[index]
 
@@ -936,7 +964,8 @@ def _xi_cluster(
                     # Find the first index from the left side which is almost
                     # at the same level as the end of the detected cluster.
                     while (
-                        reachability_plot[c_start + 1] > reachability_plot[c_end + 1]
+                        reachability_plot[c_start + 1]
+                        > reachability_plot[c_end + 1]
                         and c_start < D["end"]
                     ):
                         c_start += 1
@@ -947,13 +976,20 @@ def _xi_cluster(
                     # Our implementation corrects a mistake in the original
                     # paper, i.e., in Definition 11 4c, r(x) < r(sD) should be
                     # r(x) > r(sD).
-                    while reachability_plot[c_end - 1] > D_max and c_end > U_start:
+                    while (
+                        reachability_plot[c_end - 1] > D_max
+                        and c_end > U_start
+                    ):
                         c_end -= 1
 
                 # predecessor correction
                 if predecessor_correction:
                     c_start, c_end = _correct_predecessor(
-                        reachability_plot, predecessor_plot, ordering, c_start, c_end
+                        reachability_plot,
+                        predecessor_plot,
+                        ordering,
+                        c_start,
+                        c_end,
                     )
                 if c_start is None:
                     continue

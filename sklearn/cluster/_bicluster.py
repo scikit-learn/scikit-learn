@@ -108,9 +108,8 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         legal_svd_methods = ("randomized", "arpack")
         if self.svd_method not in legal_svd_methods:
             raise ValueError(
-                "Unknown SVD method: '{0}'. svd_method must be one of {1}.".format(
-                    self.svd_method, legal_svd_methods
-                )
+                "Unknown SVD method: '{0}'. svd_method must be one of {1}."
+                .format(self.svd_method, legal_svd_methods)
             )
 
     def fit(self, X, y=None):
@@ -313,14 +312,22 @@ class SpectralCoclustering(BaseSpectral):
         random_state=None,
     ):
         super().__init__(
-            n_clusters, svd_method, n_svd_vecs, mini_batch, init, n_init, random_state
+            n_clusters,
+            svd_method,
+            n_svd_vecs,
+            mini_batch,
+            init,
+            n_init,
+            random_state,
         )
 
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, v = self._svd(normalized_data, n_sv, n_discard=1)
-        z = np.vstack((row_diag[:, np.newaxis] * u, col_diag[:, np.newaxis] * v))
+        z = np.vstack(
+            (row_diag[:, np.newaxis] * u, col_diag[:, np.newaxis] * v)
+        )
 
         _, labels = self._k_means(z, self.n_clusters)
 
@@ -328,7 +335,9 @@ class SpectralCoclustering(BaseSpectral):
         self.row_labels_ = labels[:n_rows]
         self.column_labels_ = labels[n_rows:]
 
-        self.rows_ = np.vstack([self.row_labels_ == c for c in range(self.n_clusters)])
+        self.rows_ = np.vstack(
+            [self.row_labels_ == c for c in range(self.n_clusters)]
+        )
         self.columns_ = np.vstack(
             [self.column_labels_ == c for c in range(self.n_clusters)]
         )
@@ -465,7 +474,13 @@ class SpectralBiclustering(BaseSpectral):
         random_state=None,
     ):
         super().__init__(
-            n_clusters, svd_method, n_svd_vecs, mini_batch, init, n_init, random_state
+            n_clusters,
+            svd_method,
+            n_svd_vecs,
+            mini_batch,
+            init,
+            n_init,
+            random_state,
         )
         self.method = method
         self.n_components = n_components
@@ -501,15 +516,13 @@ class SpectralBiclustering(BaseSpectral):
             )
         if self.n_best < 1:
             raise ValueError(
-                "Parameter n_best must be greater than 0, but its value is {}".format(
-                    self.n_best
-                )
+                "Parameter n_best must be greater than 0, but its value is {}"
+                .format(self.n_best)
             )
         if self.n_best > self.n_components:
             raise ValueError(
-                "n_best cannot be larger than n_components, but {} >  {}".format(
-                    self.n_best, self.n_components
-                )
+                "n_best cannot be larger than n_components, but {} >  {}"
+                .format(self.n_best, self.n_components)
             )
 
     def _fit(self, X):
@@ -536,9 +549,13 @@ class SpectralBiclustering(BaseSpectral):
 
         best_vt = self._fit_best_piecewise(vt, self.n_best, n_col_clusters)
 
-        self.row_labels_ = self._project_and_cluster(X, best_vt.T, n_row_clusters)
+        self.row_labels_ = self._project_and_cluster(
+            X, best_vt.T, n_row_clusters
+        )
 
-        self.column_labels_ = self._project_and_cluster(X.T, best_ut.T, n_col_clusters)
+        self.column_labels_ = self._project_and_cluster(
+            X.T, best_ut.T, n_col_clusters
+        )
 
         self.rows_ = np.vstack(
             [
@@ -568,8 +585,12 @@ class SpectralBiclustering(BaseSpectral):
             centroid, labels = self._k_means(v.reshape(-1, 1), n_clusters)
             return centroid[labels].ravel()
 
-        piecewise_vectors = np.apply_along_axis(make_piecewise, axis=1, arr=vectors)
-        dists = np.apply_along_axis(norm, axis=1, arr=(vectors - piecewise_vectors))
+        piecewise_vectors = np.apply_along_axis(
+            make_piecewise, axis=1, arr=vectors
+        )
+        dists = np.apply_along_axis(
+            norm, axis=1, arr=(vectors - piecewise_vectors)
+        )
         result = vectors[np.argsort(dists)[:n_best]]
         return result
 

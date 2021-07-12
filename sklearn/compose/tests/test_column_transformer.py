@@ -98,7 +98,9 @@ def test_column_transformer():
     ]
 
     for selection, res in cases:
-        ct = ColumnTransformer([("trans", Trans(), selection)], remainder="drop")
+        ct = ColumnTransformer(
+            [("trans", Trans(), selection)], remainder="drop"
+        )
         assert_array_equal(ct.fit_transform(X_array), res)
         assert_array_equal(ct.fit(X_array).transform(X_array), res)
 
@@ -109,7 +111,9 @@ def test_column_transformer():
         assert_array_equal(ct.fit_transform(X_array), res)
         assert_array_equal(ct.fit(X_array).transform(X_array), res)
 
-    ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", Trans(), [1])])
+    ct = ColumnTransformer(
+        [("trans1", Trans(), [0]), ("trans2", Trans(), [1])]
+    )
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
@@ -173,7 +177,9 @@ def test_column_transformer_dataframe():
     ]
 
     for selection, res in cases:
-        ct = ColumnTransformer([("trans", Trans(), selection)], remainder="drop")
+        ct = ColumnTransformer(
+            [("trans", Trans(), selection)], remainder="drop"
+        )
         assert_array_equal(ct.fit_transform(X_df), res)
         assert_array_equal(ct.fit(X_df).transform(X_df), res)
 
@@ -192,7 +198,9 @@ def test_column_transformer_dataframe():
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] != "remainder"
 
-    ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", Trans(), [1])])
+    ct = ColumnTransformer(
+        [("trans1", Trans(), [0]), ("trans2", Trans(), [1])]
+    )
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
     assert len(ct.transformers_) == 2
@@ -217,7 +225,8 @@ def test_column_transformer_dataframe():
 
     # test multiple columns
     both = ColumnTransformer(
-        [("trans", Trans(), ["first", "second"])], transformer_weights={"trans": 0.1}
+        [("trans", Trans(), ["first", "second"])],
+        transformer_weights={"trans": 0.1},
     )
     assert_array_equal(both.fit_transform(X_df), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_df).transform(X_df), 0.1 * X_res_both)
@@ -244,7 +253,9 @@ def test_column_transformer_dataframe():
                 X = X.to_frame()
             return X
 
-    ct = ColumnTransformer([("trans", TransAssert(), "first")], remainder="drop")
+    ct = ColumnTransformer(
+        [("trans", TransAssert(), "first")], remainder="drop"
+    )
     ct.fit_transform(X_df)
     ct = ColumnTransformer([("trans", TransAssert(), ["first", "second"])])
     ct.fit_transform(X_df)
@@ -269,7 +280,9 @@ def test_column_transformer_dataframe():
     ids=["list", "bool", "bool_int"],
 )
 @pytest.mark.parametrize("callable_column", [False, True])
-def test_column_transformer_empty_columns(pandas, column_selection, callable_column):
+def test_column_transformer_empty_columns(
+    pandas, column_selection, callable_column
+):
     # test case that ensures that the column transformer does also work when
     # a given transformer doesn't have any columns to work on
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -302,7 +315,9 @@ def test_column_transformer_empty_columns(pandas, column_selection, callable_col
     assert len(ct.transformers_) == 2
     assert isinstance(ct.transformers_[0][1], TransRaise)
 
-    ct = ColumnTransformer([("trans", TransRaise(), column)], remainder="passthrough")
+    ct = ColumnTransformer(
+        [("trans", TransRaise(), column)], remainder="passthrough"
+    )
     assert_array_equal(ct.fit_transform(X), X_res_both)
     assert_array_equal(ct.fit(X).transform(X), X_res_both)
     assert len(ct.transformers_) == 2  # including remainder
@@ -320,50 +335,80 @@ def test_column_transformer_output_indices():
     # Checks for the output_indices_ attribute
     X_array = np.arange(6).reshape(3, 2)
 
-    ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", Trans(), [1])])
+    ct = ColumnTransformer(
+        [("trans1", Trans(), [0]), ("trans2", Trans(), [1])]
+    )
     X_trans = ct.fit_transform(X_array)
     assert ct.output_indices_ == {
         "trans1": slice(0, 1),
         "trans2": slice(1, 2),
         "remainder": slice(0, 0),
     }
-    assert_array_equal(X_trans[:, [0]], X_trans[:, ct.output_indices_["trans1"]])
-    assert_array_equal(X_trans[:, [1]], X_trans[:, ct.output_indices_["trans2"]])
+    assert_array_equal(
+        X_trans[:, [0]], X_trans[:, ct.output_indices_["trans1"]]
+    )
+    assert_array_equal(
+        X_trans[:, [1]], X_trans[:, ct.output_indices_["trans2"]]
+    )
 
     # test with transformer_weights and multiple columns
     ct = ColumnTransformer(
         [("trans", Trans(), [0, 1])], transformer_weights={"trans": 0.1}
     )
     X_trans = ct.fit_transform(X_array)
-    assert ct.output_indices_ == {"trans": slice(0, 2), "remainder": slice(0, 0)}
-    assert_array_equal(X_trans[:, [0, 1]], X_trans[:, ct.output_indices_["trans"]])
-    assert_array_equal(X_trans[:, []], X_trans[:, ct.output_indices_["remainder"]])
+    assert ct.output_indices_ == {
+        "trans": slice(0, 2),
+        "remainder": slice(0, 0),
+    }
+    assert_array_equal(
+        X_trans[:, [0, 1]], X_trans[:, ct.output_indices_["trans"]]
+    )
+    assert_array_equal(
+        X_trans[:, []], X_trans[:, ct.output_indices_["remainder"]]
+    )
 
     # test case that ensures that the attribute does also work when
     # a given transformer doesn't have any columns to work on
-    ct = ColumnTransformer([("trans1", Trans(), [0, 1]), ("trans2", TransRaise(), [])])
+    ct = ColumnTransformer(
+        [("trans1", Trans(), [0, 1]), ("trans2", TransRaise(), [])]
+    )
     X_trans = ct.fit_transform(X_array)
     assert ct.output_indices_ == {
         "trans1": slice(0, 2),
         "trans2": slice(0, 0),
         "remainder": slice(0, 0),
     }
-    assert_array_equal(X_trans[:, [0, 1]], X_trans[:, ct.output_indices_["trans1"]])
-    assert_array_equal(X_trans[:, []], X_trans[:, ct.output_indices_["trans2"]])
-    assert_array_equal(X_trans[:, []], X_trans[:, ct.output_indices_["remainder"]])
+    assert_array_equal(
+        X_trans[:, [0, 1]], X_trans[:, ct.output_indices_["trans1"]]
+    )
+    assert_array_equal(
+        X_trans[:, []], X_trans[:, ct.output_indices_["trans2"]]
+    )
+    assert_array_equal(
+        X_trans[:, []], X_trans[:, ct.output_indices_["remainder"]]
+    )
 
-    ct = ColumnTransformer([("trans", TransRaise(), [])], remainder="passthrough")
+    ct = ColumnTransformer(
+        [("trans", TransRaise(), [])], remainder="passthrough"
+    )
     X_trans = ct.fit_transform(X_array)
-    assert ct.output_indices_ == {"trans": slice(0, 0), "remainder": slice(0, 2)}
+    assert ct.output_indices_ == {
+        "trans": slice(0, 0),
+        "remainder": slice(0, 2),
+    }
     assert_array_equal(X_trans[:, []], X_trans[:, ct.output_indices_["trans"]])
-    assert_array_equal(X_trans[:, [0, 1]], X_trans[:, ct.output_indices_["remainder"]])
+    assert_array_equal(
+        X_trans[:, [0, 1]], X_trans[:, ct.output_indices_["remainder"]]
+    )
 
 
 def test_column_transformer_output_indices_df():
     # Checks for the output_indices_ attribute with data frames
     pd = pytest.importorskip("pandas")
 
-    X_df = pd.DataFrame(np.arange(6).reshape(3, 2), columns=["first", "second"])
+    X_df = pd.DataFrame(
+        np.arange(6).reshape(3, 2), columns=["first", "second"]
+    )
 
     ct = ColumnTransformer(
         [("trans1", Trans(), ["first"]), ("trans2", Trans(), ["second"])]
@@ -374,20 +419,34 @@ def test_column_transformer_output_indices_df():
         "trans2": slice(1, 2),
         "remainder": slice(0, 0),
     }
-    assert_array_equal(X_trans[:, [0]], X_trans[:, ct.output_indices_["trans1"]])
-    assert_array_equal(X_trans[:, [1]], X_trans[:, ct.output_indices_["trans2"]])
-    assert_array_equal(X_trans[:, []], X_trans[:, ct.output_indices_["remainder"]])
+    assert_array_equal(
+        X_trans[:, [0]], X_trans[:, ct.output_indices_["trans1"]]
+    )
+    assert_array_equal(
+        X_trans[:, [1]], X_trans[:, ct.output_indices_["trans2"]]
+    )
+    assert_array_equal(
+        X_trans[:, []], X_trans[:, ct.output_indices_["remainder"]]
+    )
 
-    ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", Trans(), [1])])
+    ct = ColumnTransformer(
+        [("trans1", Trans(), [0]), ("trans2", Trans(), [1])]
+    )
     X_trans = ct.fit_transform(X_df)
     assert ct.output_indices_ == {
         "trans1": slice(0, 1),
         "trans2": slice(1, 2),
         "remainder": slice(0, 0),
     }
-    assert_array_equal(X_trans[:, [0]], X_trans[:, ct.output_indices_["trans1"]])
-    assert_array_equal(X_trans[:, [1]], X_trans[:, ct.output_indices_["trans2"]])
-    assert_array_equal(X_trans[:, []], X_trans[:, ct.output_indices_["remainder"]])
+    assert_array_equal(
+        X_trans[:, [0]], X_trans[:, ct.output_indices_["trans1"]]
+    )
+    assert_array_equal(
+        X_trans[:, [1]], X_trans[:, ct.output_indices_["trans2"]]
+    )
+    assert_array_equal(
+        X_trans[:, []], X_trans[:, ct.output_indices_["remainder"]]
+    )
 
 
 def test_column_transformer_sparse_array():
@@ -398,19 +457,28 @@ def test_column_transformer_sparse_array():
     X_res_both = X_sparse
 
     for col in [0, [0], slice(0, 1)]:
-        for remainder, res in [("drop", X_res_first), ("passthrough", X_res_both)]:
+        for remainder, res in [
+            ("drop", X_res_first),
+            ("passthrough", X_res_both),
+        ]:
             ct = ColumnTransformer(
-                [("trans", Trans(), col)], remainder=remainder, sparse_threshold=0.8
+                [("trans", Trans(), col)],
+                remainder=remainder,
+                sparse_threshold=0.8,
             )
             assert sparse.issparse(ct.fit_transform(X_sparse))
             assert_allclose_dense_sparse(ct.fit_transform(X_sparse), res)
-            assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse), res)
+            assert_allclose_dense_sparse(
+                ct.fit(X_sparse).transform(X_sparse), res
+            )
 
     for col in [[0, 1], slice(0, 2)]:
         ct = ColumnTransformer([("trans", Trans(), col)], sparse_threshold=0.8)
         assert sparse.issparse(ct.fit_transform(X_sparse))
         assert_allclose_dense_sparse(ct.fit_transform(X_sparse), X_res_both)
-        assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse), X_res_both)
+        assert_allclose_dense_sparse(
+            ct.fit(X_sparse).transform(X_sparse), X_res_both
+        )
 
 
 def test_column_transformer_list():
@@ -469,12 +537,16 @@ def test_column_transformer_mixed_cols_sparse():
     # See: https://github.com/scikit-learn/scikit-learn/issues/11912
     X_trans = ct.fit_transform(df)
     assert X_trans.getformat() == "csr"
-    assert_array_equal(X_trans.toarray(), np.array([[1, 0, 1, 1], [0, 1, 2, 0]]))
+    assert_array_equal(
+        X_trans.toarray(), np.array([[1, 0, 1, 1], [0, 1, 2, 0]])
+    )
 
     ct = make_column_transformer(
         (OneHotEncoder(), [0]), ("passthrough", [0]), sparse_threshold=1.0
     )
-    with pytest.raises(ValueError, match="For a sparse output, all columns should"):
+    with pytest.raises(
+        ValueError, match="For a sparse output, all columns should"
+    ):
         # this fails since strings `a` and `b` cannot be
         # coerced into a numeric.
         ct.fit_transform(df)
@@ -600,7 +672,10 @@ def test_column_transformer_invalid_columns(remainder):
     ct = ColumnTransformer([("trans", Trans(), col)], remainder=remainder)
     ct.fit(X_array)
     X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
-    msg = "X has 3 features, but ColumnTransformer is expecting 2 features as input."
+    msg = (
+        "X has 3 features, but ColumnTransformer is expecting 2 features as"
+        " input."
+    )
     with pytest.raises(ValueError, match=msg):
         ct.transform(X_array_more)
     X_array_fewer = np.array(
@@ -609,7 +684,8 @@ def test_column_transformer_invalid_columns(remainder):
         ]
     ).T
     err_msg = (
-        "X has 1 features, but ColumnTransformer is expecting 2 features as input."
+        "X has 1 features, but ColumnTransformer is expecting 2 features as"
+        " input."
     )
     with pytest.raises(ValueError, match=err_msg):
         ct.transform(X_array_fewer)
@@ -662,7 +738,9 @@ def test_make_column_transformer_kwargs():
     )
     assert (
         ct.transformers
-        == make_column_transformer((scaler, "first"), (norm, ["second"])).transformers
+        == make_column_transformer(
+            (scaler, "first"), (norm, ["second"])
+        ).transformers
     )
     assert ct.n_jobs == 3
     assert ct.remainder == "drop"
@@ -777,7 +855,10 @@ def test_column_transformer_get_feature_names_raises():
         ct.get_feature_names()
     # raise correct error when no feature names are available
     ct.fit(X_array)
-    msg = r"Transformer trans \(type Trans\) does not provide " r"get_feature_names"
+    msg = (
+        r"Transformer trans \(type Trans\) does not provide "
+        r"get_feature_names"
+    )
     with pytest.raises(AttributeError, match=msg):
         ct.get_feature_names()
 
@@ -793,20 +874,26 @@ def test_column_transformer_get_feature_names_raises():
             ("a", "b", "c"),
         ),
         (
-            np.array([[{1: 1, 2: 2}, {1: 3, 2: 4}], [{3: 5}, {3: 6}]], dtype=object).T,
+            np.array(
+                [[{1: 1, 2: 2}, {1: 3, 2: 4}], [{3: 5}, {3: 6}]], dtype=object
+            ).T,
             ("1", "2", "3"),
         ),
     ],
 )
 def test_column_transformer_get_feature_names(X, keys):
-    ct = ColumnTransformer([("col" + str(i), DictVectorizer(), i) for i in range(2)])
+    ct = ColumnTransformer(
+        [("col" + str(i), DictVectorizer(), i) for i in range(2)]
+    )
     ct.fit(X)
     assert ct.get_feature_names() == [f"col0__{key}" for key in keys[:2]] + [
         f"col1__{keys[2]}"
     ]
 
     # drop transformer
-    ct = ColumnTransformer([("col0", DictVectorizer(), 0), ("col1", "drop", 1)])
+    ct = ColumnTransformer(
+        [("col0", DictVectorizer(), 0), ("col1", "drop", 1)]
+    )
     ct.fit(X)
     assert ct.get_feature_names() == [f"col0__{key}" for key in keys[:2]]
 
@@ -815,11 +902,17 @@ def test_column_transformer_get_feature_names(X, keys):
     ct.fit(X)
     assert ct.get_feature_names() == ["x0", "x1"]
 
-    ct = ColumnTransformer([("trans", DictVectorizer(), 0)], remainder="passthrough")
+    ct = ColumnTransformer(
+        [("trans", DictVectorizer(), 0)], remainder="passthrough"
+    )
     ct.fit(X)
-    assert ct.get_feature_names() == [f"trans__{key}" for key in keys[:2]] + ["x1"]
+    assert ct.get_feature_names() == [f"trans__{key}" for key in keys[:2]] + [
+        "x1"
+    ]
 
-    ct = ColumnTransformer([("trans", "passthrough", [1])], remainder="passthrough")
+    ct = ColumnTransformer(
+        [("trans", "passthrough", [1])], remainder="passthrough"
+    )
     ct.fit(X)
     assert ct.get_feature_names() == ["x1", "x0"]
 
@@ -830,7 +923,8 @@ def test_column_transformer_get_feature_names(X, keys):
     assert ct.get_feature_names() == ["x1", "x0"]
 
     ct = ColumnTransformer(
-        [("trans", "passthrough", np.array([False, True]))], remainder="passthrough"
+        [("trans", "passthrough", np.array([False, True]))],
+        remainder="passthrough",
     )
     ct.fit(X)
     assert ct.get_feature_names() == ["x1", "x0"]
@@ -846,7 +940,8 @@ def test_column_transformer_get_feature_names_dataframe():
     # passthough transformer with a dataframe
     pd = pytest.importorskip("pandas")
     X = np.array(
-        [[{"a": 1, "b": 2}, {"a": 3, "b": 4}], [{"c": 5}, {"c": 6}]], dtype=object
+        [[{"a": 1, "b": 2}, {"a": 3, "b": 4}], [{"c": 5}, {"c": 6}]],
+        dtype=object,
     ).T
     X_df = pd.DataFrame(X, columns=["col0", "col1"])
 
@@ -858,7 +953,9 @@ def test_column_transformer_get_feature_names_dataframe():
     ct.fit(X_df)
     assert ct.get_feature_names() == ["col0", "col1"]
 
-    ct = ColumnTransformer([("col0", DictVectorizer(), 0)], remainder="passthrough")
+    ct = ColumnTransformer(
+        [("col0", DictVectorizer(), 0)], remainder="passthrough"
+    )
     ct.fit(X_df)
     assert ct.get_feature_names() == ["col0__a", "col0__b", "col1"]
 
@@ -876,7 +973,8 @@ def test_column_transformer_get_feature_names_dataframe():
     assert ct.get_feature_names() == ["col1", "col0"]
 
     ct = ColumnTransformer(
-        [("trans", "passthrough", np.array([False, True]))], remainder="passthrough"
+        [("trans", "passthrough", np.array([False, True]))],
+        remainder="passthrough",
     )
     ct.fit(X_df)
     assert ct.get_feature_names() == ["col1", "col0"]
@@ -887,7 +985,9 @@ def test_column_transformer_get_feature_names_dataframe():
     ct.fit(X_df)
     assert ct.get_feature_names() == ["col1", "col0"]
 
-    ct = ColumnTransformer([("trans", "passthrough", [1])], remainder="passthrough")
+    ct = ColumnTransformer(
+        [("trans", "passthrough", [1])], remainder="passthrough"
+    )
     ct.fit(X_df)
     assert ct.get_feature_names() == ["col1", "col0"]
 
@@ -912,7 +1012,9 @@ def test_column_transformer_special_strings():
 
     # 'passthrough'
     X_array = np.array([[0.0, 1.0, 2.0], [2.0, 4.0, 6.0]]).T
-    ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", "passthrough", [1])])
+    ct = ColumnTransformer(
+        [("trans1", Trans(), [0]), ("trans2", "passthrough", [1])]
+    )
     exp = X_array
     assert_array_equal(ct.fit_transform(X_array), exp)
     assert_array_equal(ct.fit(X_array).transform(X_array), exp)
@@ -921,7 +1023,9 @@ def test_column_transformer_special_strings():
 
     # None itself / other string is not valid
     for val in [None, "other"]:
-        ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", None, [1])])
+        ct = ColumnTransformer(
+            [("trans1", Trans(), [0]), ("trans2", None, [1])]
+        )
         msg = "All estimators should implement"
         with pytest.raises(TypeError, match=msg):
             ct.fit_transform(X_array)
@@ -974,7 +1078,10 @@ def test_column_transformer_remainder():
 
     # error on invalid arg
     ct = ColumnTransformer([("trans1", Trans(), [0])], remainder=1)
-    msg = "remainder keyword needs to be one of 'drop', 'passthrough', or estimator."
+    msg = (
+        "remainder keyword needs to be one of 'drop', 'passthrough', or"
+        " estimator."
+    )
     with pytest.raises(ValueError, match=msg):
         ct.fit(X_array)
 
@@ -1059,7 +1166,9 @@ def test_column_transformer_remainder_transformer(key):
 def test_column_transformer_no_remaining_remainder_transformer():
     X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
 
-    ct = ColumnTransformer([("trans1", Trans(), [0, 1, 2])], remainder=DoubleTrans())
+    ct = ColumnTransformer(
+        [("trans1", Trans(), [0, 1, 2])], remainder=DoubleTrans()
+    )
 
     assert_array_equal(ct.fit_transform(X_array), X_array)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_array)
@@ -1087,7 +1196,9 @@ def test_column_transformer_sparse_remainder_transformer():
     X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
 
     ct = ColumnTransformer(
-        [("trans1", Trans(), [0])], remainder=SparseMatrixTrans(), sparse_threshold=0.8
+        [("trans1", Trans(), [0])],
+        remainder=SparseMatrixTrans(),
+        sparse_threshold=0.8,
     )
 
     X_trans = ct.fit_transform(X_array)
@@ -1107,7 +1218,9 @@ def test_column_transformer_sparse_remainder_transformer():
 def test_column_transformer_drop_all_sparse_remainder_transformer():
     X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
     ct = ColumnTransformer(
-        [("trans1", "drop", [0])], remainder=SparseMatrixTrans(), sparse_threshold=0.8
+        [("trans1", "drop", [0])],
+        remainder=SparseMatrixTrans(),
+        sparse_threshold=0.8,
     )
 
     X_trans = ct.fit_transform(X_array)
@@ -1188,9 +1301,12 @@ def test_column_transformer_no_estimators():
                 remainder=DoubleTrans(),
             ),
             (
-                r"\[ColumnTransformer\].*\(1 of 3\) Processing trans1.* total=.*\n"
-                r"\[ColumnTransformer\].*\(2 of 3\) Processing trans2.* total=.*\n"
-                r"\[ColumnTransformer\].*\(3 of 3\) Processing remainder.* total=.*\n$"
+                r"\[ColumnTransformer\].*\(1 of 3\) Processing trans1.*"
+                r" total=.*\n"
+                r"\[ColumnTransformer\].*\(2 of 3\) Processing trans2.*"
+                r" total=.*\n"
+                r"\[ColumnTransformer\].*\(3 of 3\) Processing remainder.*"
+                r" total=.*\n$"
             ),
         ),
         (
@@ -1199,9 +1315,12 @@ def test_column_transformer_no_estimators():
                 remainder="passthrough",
             ),
             (
-                r"\[ColumnTransformer\].*\(1 of 3\) Processing trans1.* total=.*\n"
-                r"\[ColumnTransformer\].*\(2 of 3\) Processing trans2.* total=.*\n"
-                r"\[ColumnTransformer\].*\(3 of 3\) Processing remainder.* total=.*\n$"
+                r"\[ColumnTransformer\].*\(1 of 3\) Processing trans1.*"
+                r" total=.*\n"
+                r"\[ColumnTransformer\].*\(2 of 3\) Processing trans2.*"
+                r" total=.*\n"
+                r"\[ColumnTransformer\].*\(3 of 3\) Processing remainder.*"
+                r" total=.*\n$"
             ),
         ),
         (
@@ -1210,8 +1329,10 @@ def test_column_transformer_no_estimators():
                 remainder="passthrough",
             ),
             (
-                r"\[ColumnTransformer\].*\(1 of 2\) Processing trans1.* total=.*\n"
-                r"\[ColumnTransformer\].*\(2 of 2\) Processing remainder.* total=.*\n$"
+                r"\[ColumnTransformer\].*\(1 of 2\) Processing trans1.*"
+                r" total=.*\n"
+                r"\[ColumnTransformer\].*\(2 of 2\) Processing remainder.*"
+                r" total=.*\n$"
             ),
         ),
         (
@@ -1220,30 +1341,41 @@ def test_column_transformer_no_estimators():
                 remainder="passthrough",
             ),
             (
-                r"\[ColumnTransformer\].*\(1 of 3\) Processing trans1.* total=.*\n"
-                r"\[ColumnTransformer\].*\(2 of 3\) Processing trans2.* total=.*\n"
-                r"\[ColumnTransformer\].*\(3 of 3\) Processing remainder.* total=.*\n$"
-            ),
-        ),
-        (
-            ColumnTransformer([("trans1", Trans(), [0])], remainder="passthrough"),
-            (
-                r"\[ColumnTransformer\].*\(1 of 2\) Processing trans1.* total=.*\n"
-                r"\[ColumnTransformer\].*\(2 of 2\) Processing remainder.* total=.*\n$"
+                r"\[ColumnTransformer\].*\(1 of 3\) Processing trans1.*"
+                r" total=.*\n"
+                r"\[ColumnTransformer\].*\(2 of 3\) Processing trans2.*"
+                r" total=.*\n"
+                r"\[ColumnTransformer\].*\(3 of 3\) Processing remainder.*"
+                r" total=.*\n$"
             ),
         ),
         (
             ColumnTransformer(
-                [("trans1", Trans(), [0]), ("trans2", Trans(), [1])], remainder="drop"
+                [("trans1", Trans(), [0])], remainder="passthrough"
             ),
             (
-                r"\[ColumnTransformer\].*\(1 of 2\) Processing trans1.* total=.*\n"
-                r"\[ColumnTransformer\].*\(2 of 2\) Processing trans2.* total=.*\n$"
+                r"\[ColumnTransformer\].*\(1 of 2\) Processing trans1.*"
+                r" total=.*\n"
+                r"\[ColumnTransformer\].*\(2 of 2\) Processing remainder.*"
+                r" total=.*\n$"
+            ),
+        ),
+        (
+            ColumnTransformer(
+                [("trans1", Trans(), [0]), ("trans2", Trans(), [1])],
+                remainder="drop",
+            ),
+            (
+                r"\[ColumnTransformer\].*\(1 of 2\) Processing trans1.*"
+                r" total=.*\n"
+                r"\[ColumnTransformer\].*\(2 of 2\) Processing trans2.*"
+                r" total=.*\n$"
             ),
         ),
         (
             ColumnTransformer([("trans1", Trans(), [0])], remainder="drop"),
-            r"\[ColumnTransformer\].*\(1 of 1\) Processing trans1.* total=.*\n$",
+            r"\[ColumnTransformer\].*\(1 of 1\) Processing trans1.*"
+            r" total=.*\n$",
         ),
     ],
 )
@@ -1333,7 +1465,9 @@ def test_n_features_in():
     # transformer.
 
     X = [[1, 2], [3, 4], [5, 6]]
-    ct = ColumnTransformer([("a", DoubleTrans(), [0]), ("b", DoubleTrans(), [1])])
+    ct = ColumnTransformer(
+        [("a", DoubleTrans(), [0]), ("b", DoubleTrans(), [1])]
+    )
     assert not hasattr(ct, "n_features_in_")
     ct.fit(X)
     assert ct.n_features_in_ == 2
@@ -1357,7 +1491,9 @@ def test_n_features_in():
         (["col_int", "col_float", "col_str"], None, [np.number, object], None),
     ],
 )
-def test_make_column_selector_with_select_dtypes(cols, pattern, include, exclude):
+def test_make_column_selector_with_select_dtypes(
+    cols, pattern, include, exclude
+):
     pd = pytest.importorskip("pandas")
 
     X_df = pd.DataFrame(
@@ -1396,7 +1532,9 @@ def test_column_transformer_with_make_column_selector():
     ohe = OneHotEncoder()
     scaler = StandardScaler()
 
-    ct_selector = make_column_transformer((ohe, cat_selector), (scaler, num_selector))
+    ct_selector = make_column_transformer(
+        (ohe, cat_selector), (scaler, num_selector)
+    )
     ct_direct = make_column_transformer(
         (ohe, ["col_cat", "col_str"]), (scaler, ["col_float", "col_int"])
     )
@@ -1529,7 +1667,9 @@ def test_column_transformer_reordered_column_names_remainder(
     X_trans_array = np.array([[2, 4, 6], [0, 1, 2]]).T
     X_trans_df = pd.DataFrame(X_trans_array, columns=["second", "first"])
 
-    tf = ColumnTransformer([("bycol", Trans(), explicit_colname)], remainder=remainder)
+    tf = ColumnTransformer(
+        [("bycol", Trans(), explicit_colname)], remainder=remainder
+    )
 
     tf.fit(X_fit_df)
     X_fit_trans = tf.transform(X_fit_df)

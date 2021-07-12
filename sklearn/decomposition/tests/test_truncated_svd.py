@@ -59,7 +59,11 @@ def test_too_many_components(algorithm, X_sparse):
 @pytest.mark.parametrize("fmt", ("array", "csr", "csc", "coo", "lil"))
 def test_sparse_formats(fmt, X_sparse):
     n_samples = X_sparse.shape[0]
-    Xfmt = X_sparse.toarray() if fmt == "dense" else getattr(X_sparse, "to" + fmt)()
+    Xfmt = (
+        X_sparse.toarray()
+        if fmt == "dense"
+        else getattr(X_sparse, "to" + fmt)()
+    )
     tsvd = TruncatedSVD(n_components=11)
     Xtrans = tsvd.fit_transform(Xfmt)
     assert Xtrans.shape == (n_samples, 11)
@@ -125,7 +129,8 @@ def test_explained_variance_components_10_20(X_sparse, kind, solver):
 
     # Assert that 20 components has higher explained variance than 10
     assert (
-        svd_20.explained_variance_ratio_.sum() > svd_10.explained_variance_ratio_.sum()
+        svd_20.explained_variance_ratio_.sum()
+        > svd_10.explained_variance_ratio_.sum()
     )
 
 
@@ -136,7 +141,9 @@ def test_singular_values_consistency(solver):
     n_samples, n_features = 100, 80
     X = rng.randn(n_samples, n_features)
 
-    pca = TruncatedSVD(n_components=2, algorithm=solver, random_state=rng).fit(X)
+    pca = TruncatedSVD(n_components=2, algorithm=solver, random_state=rng).fit(
+        X
+    )
 
     # Compare to the Frobenius norm
     X_pca = pca.transform(X)

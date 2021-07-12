@@ -133,7 +133,9 @@ class _MultimetricScorer:
         if counter[_ThresholdScorer]:
             if is_regressor(estimator) and counter[_PredictScorer]:
                 return True
-            elif counter[_ProbaScorer] and not hasattr(estimator, "decision_function"):
+            elif counter[_ProbaScorer] and not hasattr(
+                estimator, "decision_function"
+            ):
                 return True
         return False
 
@@ -147,7 +149,9 @@ class _BaseScorer:
     @staticmethod
     def _check_pos_label(pos_label, classes):
         if pos_label not in list(classes):
-            raise ValueError(f"pos_label={pos_label} is not a valid label: {classes}")
+            raise ValueError(
+                f"pos_label={pos_label} is not a valid label: {classes}"
+            )
 
     def _select_proba_binary(self, y_pred, classes):
         """Select the column of the positive label in `y_pred` when
@@ -261,7 +265,9 @@ class _PredictScorer(_BaseScorer):
                 y_true, y_pred, sample_weight=sample_weight, **self._kwargs
             )
         else:
-            return self._sign * self._score_func(y_true, y_pred, **self._kwargs)
+            return self._sign * self._score_func(
+                y_true, y_pred, **self._kwargs
+            )
 
 
 class _ProbaScorer(_BaseScorer):
@@ -358,7 +364,9 @@ class _ThresholdScorer(_BaseScorer):
                     # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
                 elif y_type == "binary" and "pos_label" in self._kwargs:
-                    self._check_pos_label(self._kwargs["pos_label"], clf.classes_)
+                    self._check_pos_label(
+                        self._kwargs["pos_label"], clf.classes_
+                    )
                     if self._kwargs["pos_label"] == clf.classes_[0]:
                         # The implicit positive class of the binary classifier
                         # does not match `pos_label`: we need to invert the
@@ -406,7 +414,8 @@ def get_scorer(scoring):
             raise ValueError(
                 "%r is not a valid scoring value. "
                 "Use sorted(sklearn.metrics.SCORERS.keys()) "
-                "to get valid options." % scoring
+                "to get valid options."
+                % scoring
             )
     else:
         scorer = scoring
@@ -446,7 +455,8 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     """
     if not hasattr(estimator, "fit"):
         raise TypeError(
-            "estimator should be an estimator implementing 'fit' method, %r was passed"
+            "estimator should be an estimator implementing 'fit' method, %r"
+            " was passed"
             % estimator
         )
     if isinstance(scoring, str):
@@ -465,7 +475,8 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
                 "function rather than a scorer. A scorer should "
                 "require an estimator as its first parameter. "
                 "Please use `make_scorer` to convert a metric "
-                "to a scorer." % scoring
+                "to a scorer."
+                % scoring
             )
         return get_scorer(scoring)
     elif scoring is None:
@@ -476,7 +487,8 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         else:
             raise TypeError(
                 "If no scoring is specified, the estimator passed should "
-                "have a 'score' method. The estimator %r does not." % estimator
+                "have a 'score' method. The estimator %r does not."
+                % estimator
             )
     elif isinstance(scoring, Iterable):
         raise ValueError(
@@ -486,7 +498,8 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         )
     else:
         raise ValueError(
-            "scoring value should either be a callable, string or None. %r was passed"
+            "scoring value should either be a callable, string or None. %r was"
+            " passed"
             % scoring
         )
 
@@ -525,7 +538,8 @@ def _check_multimetric_scoring(estimator, scoring):
 
     if isinstance(scoring, (list, tuple, set)):
         err_msg = (
-            "The list/tuple elements must be unique strings of predefined scorers. "
+            "The list/tuple elements must be unique strings of predefined"
+            " scorers. "
         )
         invalid = False
         try:
@@ -555,7 +569,8 @@ def _check_multimetric_scoring(estimator, scoring):
                         f"in the given list. Got {scoring!r}"
                     )
             scorers = {
-                scorer: check_scoring(estimator, scoring=scorer) for scorer in scoring
+                scorer: check_scoring(estimator, scoring=scorer)
+                for scorer in scoring
             }
         else:
             raise ValueError(f"{err_msg} Empty list was given. {scoring!r}")
@@ -681,7 +696,9 @@ def make_scorer(
 explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
 max_error_scorer = make_scorer(max_error, greater_is_better=False)
-neg_mean_squared_error_scorer = make_scorer(mean_squared_error, greater_is_better=False)
+neg_mean_squared_error_scorer = make_scorer(
+    mean_squared_error, greater_is_better=False
+)
 neg_mean_squared_log_error_scorer = make_scorer(
     mean_squared_log_error, greater_is_better=False
 )
@@ -716,18 +733,26 @@ top_k_accuracy_scorer = make_scorer(
 roc_auc_scorer = make_scorer(
     roc_auc_score, greater_is_better=True, needs_threshold=True
 )
-average_precision_scorer = make_scorer(average_precision_score, needs_threshold=True)
-roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_proba=True, multi_class="ovo")
+average_precision_scorer = make_scorer(
+    average_precision_score, needs_threshold=True
+)
+roc_auc_ovo_scorer = make_scorer(
+    roc_auc_score, needs_proba=True, multi_class="ovo"
+)
 roc_auc_ovo_weighted_scorer = make_scorer(
     roc_auc_score, needs_proba=True, multi_class="ovo", average="weighted"
 )
-roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_proba=True, multi_class="ovr")
+roc_auc_ovr_scorer = make_scorer(
+    roc_auc_score, needs_proba=True, multi_class="ovr"
+)
 roc_auc_ovr_weighted_scorer = make_scorer(
     roc_auc_score, needs_proba=True, multi_class="ovr", average="weighted"
 )
 
 # Score function for probabilistic classification
-neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False, needs_proba=True)
+neg_log_loss_scorer = make_scorer(
+    log_loss, greater_is_better=False, needs_proba=True
+)
 neg_brier_score_scorer = make_scorer(
     brier_score_loss, greater_is_better=False, needs_proba=True
 )
@@ -793,4 +818,6 @@ for name, metric in [
     SCORERS[name] = make_scorer(metric, average="binary")
     for average in ["macro", "micro", "samples", "weighted"]:
         qualified_name = "{0}_{1}".format(name, average)
-        SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=average)
+        SCORERS[qualified_name] = make_scorer(
+            metric, pos_label=None, average=average
+        )

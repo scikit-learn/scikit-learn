@@ -26,10 +26,14 @@ def test_binomial_deviance():
     bd = BinomialDeviance(2)
 
     # pred has the same BD for y in {0, 1}
-    assert bd(np.array([0.0]), np.array([0.0])) == bd(np.array([1.0]), np.array([0.0]))
+    assert bd(np.array([0.0]), np.array([0.0])) == bd(
+        np.array([1.0]), np.array([0.0])
+    )
 
     assert bd(np.array([1.0, 1, 1]), np.array([100.0, 100, 100])) == approx(0)
-    assert bd(np.array([1.0, 0, 0]), np.array([100.0, -100, -100])) == approx(0)
+    assert bd(np.array([1.0, 0, 0]), np.array([100.0, -100, -100])) == approx(
+        0
+    )
 
     # check if same results as alternative definition of deviance, from ESLII
     # Eq. (10.18): -loglike = log(1 + exp(-2*z*f))

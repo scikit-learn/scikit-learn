@@ -52,15 +52,21 @@ def test_regression_dataset(n_bins):
     )
     grower.grow()
 
-    predictor = grower.make_predictor(binning_thresholds=mapper.bin_thresholds_)
+    predictor = grower.make_predictor(
+        binning_thresholds=mapper.bin_thresholds_
+    )
 
     known_cat_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
     f_idx_map = np.zeros(0, dtype=np.uint32)
 
-    y_pred_train = predictor.predict(X_train, known_cat_bitsets, f_idx_map, n_threads)
+    y_pred_train = predictor.predict(
+        X_train, known_cat_bitsets, f_idx_map, n_threads
+    )
     assert r2_score(y_train, y_pred_train) > 0.82
 
-    y_pred_test = predictor.predict(X_test, known_cat_bitsets, f_idx_map, n_threads)
+    y_pred_test = predictor.predict(
+        X_test, known_cat_bitsets, f_idx_map, n_threads
+    )
     assert r2_score(y_test, y_pred_test) > 0.67
 
 
@@ -103,7 +109,9 @@ def test_infinite_values_and_thresholds(num_threshold, expected_predictions):
     known_cat_bitset = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
     f_idx_map = np.zeros(0, dtype=np.uint32)
 
-    predictor = TreePredictor(nodes, binned_cat_bitsets, raw_categorical_bitsets)
+    predictor = TreePredictor(
+        nodes, binned_cat_bitsets, raw_categorical_bitsets
+    )
     predictions = predictor.predict(X, known_cat_bitset, f_idx_map, n_threads)
 
     assert np.all(predictions == expected_predictions)
@@ -151,7 +159,9 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
         raw_categorical_bitsets[0], binned_cat_bitsets[0], categories
     )
 
-    predictor = TreePredictor(nodes, binned_cat_bitsets, raw_categorical_bitsets)
+    predictor = TreePredictor(
+        nodes, binned_cat_bitsets, raw_categorical_bitsets
+    )
 
     # Check binned data gives correct predictions
     prediction_binned = predictor.predict_binned(

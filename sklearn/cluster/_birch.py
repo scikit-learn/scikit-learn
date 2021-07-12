@@ -169,7 +169,9 @@ class _CFNode:
         self.centroids_ = self.init_centroids_[: n_samples + 1, :]
         self.squared_norm_ = self.init_sq_norm_[: n_samples + 1]
 
-    def update_split_subclusters(self, subcluster, new_subcluster1, new_subcluster2):
+    def update_split_subclusters(
+        self, subcluster, new_subcluster1, new_subcluster2
+    ):
         """Remove a subcluster from a node and update it with the
         split subclusters.
         """
@@ -197,7 +199,9 @@ class _CFNode:
 
         # If the subcluster has a child, we need a recursive strategy.
         if closest_subcluster.child_ is not None:
-            split_child = closest_subcluster.child_.insert_cf_subcluster(subcluster)
+            split_child = closest_subcluster.child_.insert_cf_subcluster(
+                subcluster
+            )
 
             if not split_child:
                 # If it is determined that the child need not be split, we
@@ -228,9 +232,13 @@ class _CFNode:
 
         # good to go!
         else:
-            merged = closest_subcluster.merge_subcluster(subcluster, self.threshold)
+            merged = closest_subcluster.merge_subcluster(
+                subcluster, self.threshold
+            )
             if merged:
-                self.init_centroids_[closest_index] = closest_subcluster.centroid_
+                self.init_centroids_[
+                    closest_index
+                ] = closest_subcluster.centroid_
                 self.init_sq_norm_[closest_index] = closest_subcluster.sq_norm_
                 return False
 
@@ -569,7 +577,9 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 self.root_.append_subcluster(new_subcluster1)
                 self.root_.append_subcluster(new_subcluster2)
 
-        centroids = np.concatenate([leaf.centroids_ for leaf in self._get_leaves()])
+        centroids = np.concatenate(
+            [leaf.centroids_ for leaf in self._get_leaves()]
+        )
         self.subcluster_centers_ = centroids
 
         self._global_clustering(X)
@@ -627,7 +637,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             and X.shape[1] != self.subcluster_centers_.shape[1]
         ):
             raise ValueError(
-                "Training data and predicted data do not have same number of features."
+                "Training data and predicted data do not have same number of"
+                " features."
             )
 
     def predict(self, X):
@@ -699,7 +710,9 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             )
 
         # To use in predict to avoid recalculation.
-        self._subcluster_norms = row_norms(self.subcluster_centers_, squared=True)
+        self._subcluster_norms = row_norms(
+            self.subcluster_centers_, squared=True
+        )
 
         if clusterer is None or not_enough_centroids:
             self.subcluster_labels_ = np.arange(len(centroids))
@@ -714,7 +727,9 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             # The global clustering step that clusters the subclusters of
             # the leaves. It assumes the centroids of the subclusters as
             # samples and finds the final centroids.
-            self.subcluster_labels_ = clusterer.fit_predict(self.subcluster_centers_)
+            self.subcluster_labels_ = clusterer.fit_predict(
+                self.subcluster_centers_
+            )
 
         if compute_labels:
             self.labels_ = self.predict(X)

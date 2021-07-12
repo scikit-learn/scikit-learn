@@ -51,7 +51,9 @@ def load_files_root(tmpdir_factory):
 @pytest.fixture
 def test_category_dir_1(load_files_root):
     test_category_dir1 = tempfile.mkdtemp(dir=load_files_root)
-    sample_file = tempfile.NamedTemporaryFile(dir=test_category_dir1, delete=False)
+    sample_file = tempfile.NamedTemporaryFile(
+        dir=test_category_dir1, delete=False
+    )
     sample_file.write(b"Hello World!\n")
     sample_file.close()
     yield str(test_category_dir1)
@@ -87,7 +89,9 @@ def test_default_empty_load_files(load_files_root):
     assert res.DESCR is None
 
 
-def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files_root):
+def test_default_load_files(
+    test_category_dir_1, test_category_dir_2, load_files_root
+):
     if IS_PYPY:
         pytest.xfail("[PyPy] fails due to string containing NUL characters")
     res = load_files(load_files_root)
@@ -104,7 +108,10 @@ def test_load_files_w_categories_desc_and_encoding(
         pytest.xfail("[PyPy] fails due to string containing NUL characters")
     category = os.path.abspath(test_category_dir_1).split("/").pop()
     res = load_files(
-        load_files_root, description="test", categories=category, encoding="utf-8"
+        load_files_root,
+        description="test",
+        categories=category,
+        encoding="utf-8",
     )
     assert len(res.filenames) == 1
     assert len(res.target_names) == 1
@@ -130,9 +137,13 @@ def test_load_sample_images():
         images = res.images
 
         # assert is china image
-        assert np.all(images[0][0, 0, :] == np.array([174, 201, 231], dtype=np.uint8))
+        assert np.all(
+            images[0][0, 0, :] == np.array([174, 201, 231], dtype=np.uint8)
+        )
         # assert is flower image
-        assert np.all(images[1][0, 0, :] == np.array([2, 19, 13], dtype=np.uint8))
+        assert np.all(
+            images[1][0, 0, :] == np.array([2, 19, 13], dtype=np.uint8)
+        )
         assert res.DESCR
     except ImportError:
         warnings.warn("Could not load sample images, PIL is not available.")
@@ -175,7 +186,9 @@ def test_load_missing_sample_image_error():
         (load_boston, (506, 13), (506,), None, True, ["filename"]),
     ],
 )
-def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, filenames):
+def test_loader(
+    loader_func, data_shape, target_shape, n_target, has_descr, filenames
+):
     bunch = loader_func()
 
     assert isinstance(bunch, Bunch)

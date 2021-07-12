@@ -21,7 +21,9 @@ from sklearn.utils._testing import (
     SkipTest,
 )
 from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
-from sklearn.utils.estimator_checks import check_class_weight_balanced_linear_classifier
+from sklearn.utils.estimator_checks import (
+    check_class_weight_balanced_linear_classifier,
+)
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import _set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
@@ -29,7 +31,9 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
-from sklearn.utils.estimator_checks import check_estimator_get_tags_default_keys
+from sklearn.utils.estimator_checks import (
+    check_estimator_get_tags_default_keys,
+)
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.fixes import np_version, parse_version
@@ -211,14 +215,19 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
     def fit(self, X, y, sample_weight=None):
         # Convert data
         X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+            X,
+            y,
+            accept_sparse=("csr", "csc"),
+            multi_output=True,
+            y_numeric=True,
         )
         # Function is only called after we verify that pandas is installed
         from pandas import Series
 
         if isinstance(sample_weight, Series):
             raise ValueError(
-                "Estimator does not accept 'sample_weight'of type pandas.Series"
+                "Estimator does not accept 'sample_weight'of type"
+                " pandas.Series"
             )
         return self
 
@@ -237,7 +246,9 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
 
         label_encoder = LabelEncoder().fit(y)
         classes = label_encoder.classes_
-        class_weight = compute_class_weight(self.class_weight, classes=classes, y=y)
+        class_weight = compute_class_weight(
+            self.class_weight, classes=classes, y=y
+        )
 
         # Intentionally modify the balanced class_weight
         # to simulate a bug and raise an exception
@@ -263,7 +274,11 @@ class NotInvariantPredict(BaseEstimator):
     def fit(self, X, y):
         # Convert data
         X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+            X,
+            y,
+            accept_sparse=("csr", "csc"),
+            multi_output=True,
+            y_numeric=True,
         )
         return self
 
@@ -278,7 +293,11 @@ class NotInvariantPredict(BaseEstimator):
 class NotInvariantSampleOrder(BaseEstimator):
     def fit(self, X, y):
         X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+            X,
+            y,
+            accept_sparse=("csr", "csc"),
+            multi_output=True,
+            y_numeric=True,
         )
         # store the original X to check for sample order later
         self._X = X
@@ -309,7 +328,9 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
         if sp.issparse(X):
             if X.getformat() == "coo":
                 if X.row.dtype == "int64" or X.col.dtype == "int64":
-                    raise ValueError("Estimator doesn't support 64-bit indices")
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices"
+                    )
             elif X.getformat() in ["csc", "csr"]:
                 assert "int64" not in (
                     X.indices.dtype,
@@ -358,14 +379,18 @@ class EstimatorInconsistentForPandas(BaseEstimator):
 
 class UntaggedBinaryClassifier(SGDClassifier):
     # Toy classifier that only supports binary classification, will fail tests.
-    def fit(self, X, y, coef_init=None, intercept_init=None, sample_weight=None):
+    def fit(
+        self, X, y, coef_init=None, intercept_init=None, sample_weight=None
+    ):
         super().fit(X, y, coef_init, intercept_init, sample_weight)
         if len(self.classes_) > 2:
             raise ValueError("Only 2 classes are supported")
         return self
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        super().partial_fit(X=X, y=y, classes=classes, sample_weight=sample_weight)
+        super().partial_fit(
+            X=X, y=y, classes=classes, sample_weight=sample_weight
+        )
         if len(self.classes_) > 2:
             raise ValueError("Only 2 classes are supported")
         return self
@@ -419,7 +444,9 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # a deprecated fit method
 
     class TestEstimatorWithDeprecatedFitMethod(BaseEstimator):
-        @deprecated("Deprecated for the purpose of testing check_fit_score_takes_y")
+        @deprecated(
+            "Deprecated for the purpose of testing check_fit_score_takes_y"
+        )
         def fit(self, X, y):
             return self
 
@@ -508,9 +535,9 @@ def test_check_estimator():
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = "predict"
-    msg = ("{method} of {name} is not invariant when applied to a subset.").format(
-        method=method, name=name
-    )
+    msg = (
+        "{method} of {name} is not invariant when applied to a subset."
+    ).format(method=method, name=name)
     with raises(AssertionError, match=msg):
         check_estimator(NotInvariantPredict())
     # check for sparse matrix input handling
@@ -679,11 +706,15 @@ def test_check_estimator_get_tags_default_keys():
         r" for the following default tags: {'allow_nan'}"
     )
     with raises(AssertionError, match=err_msg):
-        check_estimator_get_tags_default_keys(estimator.__class__.__name__, estimator)
+        check_estimator_get_tags_default_keys(
+            estimator.__class__.__name__, estimator
+        )
 
     # noop check when _get_tags is not available
     estimator = MinimalTransformer()
-    check_estimator_get_tags_default_keys(estimator.__class__.__name__, estimator)
+    check_estimator_get_tags_default_keys(
+        estimator.__class__.__name__, estimator
+    )
 
 
 def run_tests_without_pytest():
@@ -703,7 +734,10 @@ def run_tests_without_pytest():
 
 def test_check_class_weight_balanced_linear_classifier():
     # check that ill-computed balanced weights raises an exception
-    msg = "Classifier estimator_name is not computing class_weight=balanced properly"
+    msg = (
+        "Classifier estimator_name is not computing class_weight=balanced"
+        " properly"
+    )
     with raises(AssertionError, match=msg):
         check_class_weight_balanced_linear_classifier(
             "estimator_name", BadBalancedWeightsClassifier
@@ -737,6 +771,10 @@ def test_minimal_class_implementation_checks():
     # BaseEstimator.
     # FIXME
     raise SkipTest
-    minimal_estimators = [MinimalTransformer(), MinimalRegressor(), MinimalClassifier()]
+    minimal_estimators = [
+        MinimalTransformer(),
+        MinimalRegressor(),
+        MinimalClassifier(),
+    ]
     for estimator in minimal_estimators:
         check_estimator(estimator)

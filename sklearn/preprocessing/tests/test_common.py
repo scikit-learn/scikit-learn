@@ -44,7 +44,13 @@ def _get_valid_samples_by_column(X, col):
         (StandardScaler(with_mean=False), scale, True, False, []),
         (PowerTransformer("yeo-johnson"), power_transform, False, False, []),
         (PowerTransformer("box-cox"), power_transform, False, True, []),
-        (QuantileTransformer(n_quantiles=10), quantile_transform, True, False, []),
+        (
+            QuantileTransformer(n_quantiles=10),
+            quantile_transform,
+            True,
+            False,
+            [],
+        ),
         (RobustScaler(), robust_scale, False, False, []),
         (RobustScaler(with_centering=False), robust_scale, True, False, []),
     ],
@@ -57,7 +63,8 @@ def test_missing_value_handling(
     X = iris.data.copy()
     n_missing = 50
     X[
-        rng.randint(X.shape[0], size=n_missing), rng.randint(X.shape[1], size=n_missing)
+        rng.randint(X.shape[0], size=n_missing),
+        rng.randint(X.shape[1], size=n_missing),
     ] = np.nan
     if strictly_positive:
         X += np.nanmin(X) + 0.1
@@ -105,8 +112,12 @@ def test_missing_value_handling(
         assert_allclose(Xt_col, Xt[:, [i]])
         # check non-NaN is handled as before - the 1st column is all nan
         if not np.isnan(X_test[:, i]).all():
-            Xt_col_nonan = est.transform(_get_valid_samples_by_column(X_test, i))
-            assert_array_equal(Xt_col_nonan, Xt_col[~np.isnan(Xt_col.squeeze())])
+            Xt_col_nonan = est.transform(
+                _get_valid_samples_by_column(X_test, i)
+            )
+            assert_array_equal(
+                Xt_col_nonan, Xt_col[~np.isnan(Xt_col.squeeze())]
+            )
 
     if support_sparse:
         est_dense = clone(est)

@@ -16,7 +16,12 @@ from joblib import Parallel, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import deprecated
-from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
+from ..utils import (
+    check_array,
+    check_random_state,
+    gen_even_slices,
+    gen_batches,
+)
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
@@ -26,7 +31,9 @@ from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 def _check_positive_coding(method, positive):
     if positive and method in ["omp", "lars"]:
         raise ValueError(
-            "Positive constraint not supported for '{}' coding method.".format(method)
+            "Positive constraint not supported for '{}' coding method.".format(
+                method
+            )
         )
 
 
@@ -199,7 +206,9 @@ def _sparse_encode(
             np.seterr(**err_mgt)
 
     elif algorithm == "threshold":
-        new_code = (np.sign(cov) * np.maximum(np.abs(cov) - regularization, 0)).T
+        new_code = (
+            np.sign(cov) * np.maximum(np.abs(cov) - regularization, 0)
+        ).T
         if positive:
             np.clip(new_code, 0, None, out=new_code)
 
@@ -215,7 +224,8 @@ def _sparse_encode(
     else:
         raise ValueError(
             'Sparse coding method must be "lasso_lars" '
-            '"lasso_cd", "lasso", "threshold" or "omp", got %s.' % algorithm
+            '"lasso_cd", "lasso", "threshold" or "omp", got %s.'
+            % algorithm
         )
     if new_code.ndim != 2:
         return new_code.reshape(n_samples, n_components)
@@ -614,7 +624,9 @@ def dict_learning(
     MiniBatchSparsePCA
     """
     if method not in ("lars", "cd"):
-        raise ValueError("Coding method %r not supported as a fit algorithm." % method)
+        raise ValueError(
+            "Coding method %r not supported as a fit algorithm." % method
+        )
 
     _check_positive_coding(method, positive_code)
 
@@ -665,7 +677,8 @@ def dict_learning(
             sys.stdout.flush()
         elif verbose:
             print(
-                "Iteration % 3i (elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
+                "Iteration % 3i (elapsed time: % 3is, % 4.1fmn, current cost %"
+                " 7.3f)"
                 % (ii, dt, dt / 60, current_cost)
             )
 
@@ -693,9 +706,9 @@ def dict_learning(
         )
 
         # Cost function
-        current_cost = 0.5 * np.sum((X - code @ dictionary) ** 2) + alpha * np.sum(
-            np.abs(code)
-        )
+        current_cost = 0.5 * np.sum(
+            (X - code @ dictionary) ** 2
+        ) + alpha * np.sum(np.abs(code))
         errors.append(current_cost)
 
         if ii > 0:
@@ -884,7 +897,9 @@ def dict_learning_online(
     if dict_init is not None:
         dictionary = dict_init
     else:
-        _, S, dictionary = randomized_svd(X, n_components, random_state=random_state)
+        _, S, dictionary = randomized_svd(
+            X, n_components, random_state=random_state
+        )
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
     if n_components <= r:
@@ -905,7 +920,9 @@ def dict_learning_online(
 
     # Fortran-order dict better suited for the sparse coding which is the
     # bottleneck of this algorithm.
-    dictionary = check_array(dictionary, order="F", dtype=np.float64, copy=False)
+    dictionary = check_array(
+        dictionary, order="F", dtype=np.float64, copy=False
+    )
     dictionary = np.require(dictionary, requirements="W")
 
     X_train = check_array(X_train, order="C", dtype=np.float64, copy=False)
@@ -934,7 +951,8 @@ def dict_learning_online(
         elif verbose:
             if verbose > 10 or ii % ceil(100.0 / verbose) == 0:
                 print(
-                    "Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" % (ii, dt, dt / 60)
+                    "Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
+                    % (ii, dt, dt / 60)
                 )
 
         this_code = sparse_encode(

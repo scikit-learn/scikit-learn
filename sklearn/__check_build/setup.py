@@ -9,7 +9,9 @@ def configuration(parent_package="", top_path=None):
 
     config = Configuration("__check_build", parent_package, top_path)
     config.add_extension(
-        "_check_build", sources=["_check_build.pyx"], include_dirs=[numpy.get_include()]
+        "_check_build",
+        sources=["_check_build.pyx"],
+        include_dirs=[numpy.get_include()],
     )
 
     return config

@@ -12,7 +12,10 @@ from sklearn.utils._encode import _check_unknown
 @pytest.mark.parametrize(
     "values, expected",
     [
-        (np.array([2, 1, 3, 1, 3], dtype="int64"), np.array([1, 2, 3], dtype="int64")),
+        (
+            np.array([2, 1, 3, 1, 3], dtype="int64"),
+            np.array([1, 2, 3], dtype="int64"),
+        ),
         (
             np.array(["b", "a", "c", "a", "c"], dtype=object),
             np.array(["a", "b", "c"], dtype=object),
@@ -34,7 +37,9 @@ def test_encode_with_check_unknown():
     values = np.array([1, 2, 3, 4])
 
     # Default is True, raise error
-    with pytest.raises(ValueError, match="y contains previously unseen labels"):
+    with pytest.raises(
+        ValueError, match="y contains previously unseen labels"
+    ):
         _encode(values, uniques=uniques, check_unknown=True)
 
     # dont raise error if False
@@ -43,7 +48,9 @@ def test_encode_with_check_unknown():
     # parameter is ignored for object dtype
     uniques = np.array(["a", "b", "c"], dtype=object)
     values = np.array(["a", "b", "c", "d"], dtype=object)
-    with pytest.raises(ValueError, match="y contains previously unseen labels"):
+    with pytest.raises(
+        ValueError, match="y contains previously unseen labels"
+    ):
         _encode(values, uniques=uniques, check_unknown=False)
 
 
@@ -59,9 +66,24 @@ def _assert_check_unknown(values, uniques, expected_diff, expected_mask):
 @pytest.mark.parametrize(
     "values, uniques, expected_diff, expected_mask",
     [
-        (np.array([1, 2, 3, 4]), np.array([1, 2, 3]), [4], [True, True, True, False]),
-        (np.array([2, 1, 4, 5]), np.array([2, 5, 1]), [4], [True, True, False, True]),
-        (np.array([2, 1, np.nan]), np.array([2, 5, 1]), [np.nan], [True, True, False]),
+        (
+            np.array([1, 2, 3, 4]),
+            np.array([1, 2, 3]),
+            [4],
+            [True, True, True, False],
+        ),
+        (
+            np.array([2, 1, 4, 5]),
+            np.array([2, 5, 1]),
+            [4],
+            [True, True, False, True],
+        ),
+        (
+            np.array([2, 1, np.nan]),
+            np.array([2, 5, 1]),
+            [np.nan],
+            [True, True, False],
+        ),
         (
             np.array([2, 1, 4, np.nan]),
             np.array([2, 5, 1, np.nan]),
@@ -184,7 +206,9 @@ def test_unique_util_missing_values_numeric():
 
 def test_unique_util_with_all_missing_values():
     # test for all types of missing values for object dtype
-    values = np.array([np.nan, "a", "c", "c", None, float("nan"), None], dtype=object)
+    values = np.array(
+        [np.nan, "a", "c", "c", None, float("nan"), None], dtype=object
+    )
 
     uniques = _unique(values)
     assert_array_equal(uniques[:-1], ["a", "c", None])
@@ -198,16 +222,24 @@ def test_unique_util_with_all_missing_values():
 
 def test_check_unknown_with_both_missing_values():
     # test for both types of missing values for object dtype
-    values = np.array([np.nan, "a", "c", "c", None, np.nan, None], dtype=object)
+    values = np.array(
+        [np.nan, "a", "c", "c", None, np.nan, None], dtype=object
+    )
 
-    diff = _check_unknown(values, known_values=np.array(["a", "c"], dtype=object))
+    diff = _check_unknown(
+        values, known_values=np.array(["a", "c"], dtype=object)
+    )
     assert diff[0] is None
     assert np.isnan(diff[1])
 
     diff, valid_mask = _check_unknown(
-        values, known_values=np.array(["a", "c"], dtype=object), return_mask=True
+        values,
+        known_values=np.array(["a", "c"], dtype=object),
+        return_mask=True,
     )
 
     assert diff[0] is None
     assert np.isnan(diff[1])
-    assert_array_equal(valid_mask, [False, True, True, True, False, False, False])
+    assert_array_equal(
+        valid_mask, [False, True, True, True, False, False, False]
+    )

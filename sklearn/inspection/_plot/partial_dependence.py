@@ -264,7 +264,9 @@ def plot_partial_dependence(
             not (0 <= target_idx < len(estimator.classes_))
             or estimator.classes_[target_idx] != target
         ):
-            raise ValueError("target not in est.classes_, got {}".format(target))
+            raise ValueError(
+                "target not in est.classes_, got {}".format(target)
+            )
     else:
         # regression and binary classification
         target_idx = 0
@@ -328,14 +330,18 @@ def plot_partial_dependence(
         axes = np.asarray(ax, dtype=object)
         if axes.size != len(features):
             raise ValueError(
-                "Expected ax to have {} axes, got {}".format(len(features), axes.size)
+                "Expected ax to have {} axes, got {}".format(
+                    len(features), axes.size
+                )
             )
 
     for i in chain.from_iterable(features):
         if i >= len(feature_names):
             raise ValueError(
                 "All entries of features must be less than "
-                "len(feature_names) = {0}, got {1}.".format(len(feature_names), i)
+                "len(feature_names) = {0}, got {1}.".format(
+                    len(feature_names), i
+                )
             )
 
     if isinstance(subsample, numbers.Integral):
@@ -378,9 +384,13 @@ def plot_partial_dependence(
     )
     if is_regressor(estimator) and n_tasks > 1:
         if target is None:
-            raise ValueError("target must be specified for multi-output regressors")
+            raise ValueError(
+                "target must be specified for multi-output regressors"
+            )
         if not 0 <= target <= n_tasks:
-            raise ValueError("target must be in [0, n_tasks], got {}.".format(target))
+            raise ValueError(
+                "target must be in [0, n_tasks], got {}.".format(target)
+            )
         target_idx = target
 
     # get global min and max average predictions of PD grouped by plot type
@@ -413,7 +423,9 @@ def plot_partial_dependence(
         subsample=subsample,
         random_state=random_state,
     )
-    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw)
+    return display.plot(
+        ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw
+    )
 
 
 class PartialDependenceDisplay:
@@ -626,7 +638,8 @@ class PartialDependenceDisplay:
         # plot the subsampled ice
         for ice_idx, ice in enumerate(ice_lines_subsampled):
             line_idx = np.unravel_index(
-                pd_plot_idx * n_total_lines_by_plot + ice_idx, self.lines_.shape
+                pd_plot_idx * n_total_lines_by_plot + ice_idx,
+                self.lines_.shape,
             )
             self.lines_[line_idx] = ax.plot(
                 feature_values, ice.ravel(), **individual_line_kw
@@ -736,7 +749,9 @@ class PartialDependenceDisplay:
                 line_kw,
             )
 
-        trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+        trans = transforms.blended_transform_factory(
+            ax.transData, ax.transAxes
+        )
         # create the decile line for the vertical axis
         vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
         self.deciles_vlines_[vlines_idx] = ax.vlines(
@@ -812,7 +827,9 @@ class PartialDependenceDisplay:
         )
         ax.clabel(CS, fmt="%2.2f", colors="k", fontsize=10, inline=True)
 
-        trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+        trans = transforms.blended_transform_factory(
+            ax.transData, ax.transAxes
+        )
         # create the decile line for the vertical axis
         xlim, ylim = ax.get_xlim(), ax.get_ylim()
         vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
@@ -904,7 +921,9 @@ class PartialDependenceDisplay:
 
         n_features = len(self.features)
         if self.kind in ("individual", "both"):
-            n_ice_lines = self._get_sample_count(len(self.pd_results[0].individual[0]))
+            n_ice_lines = self._get_sample_count(
+                len(self.pd_results[0].individual[0])
+            )
             if self.kind == "individual":
                 n_lines = n_ice_lines
             else:
@@ -949,7 +968,9 @@ class PartialDependenceDisplay:
             ax = np.asarray(ax, dtype=object)
             if ax.size != n_features:
                 raise ValueError(
-                    "Expected ax to have {} axes, got {}".format(n_features, ax.size)
+                    "Expected ax to have {} axes, got {}".format(
+                        n_features, ax.size
+                    )
                 )
 
             if ax.ndim == 2:

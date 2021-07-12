@@ -264,7 +264,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         if self.contamination != "auto":
             if not (0.0 < self.contamination <= 0.5):
                 raise ValueError(
-                    "contamination must be in (0, 0.5], got: %f" % self.contamination
+                    "contamination must be in (0, 0.5], got: %f"
+                    % self.contamination
                 )
 
         if isinstance(self.max_samples, str):
@@ -309,7 +310,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
             return self
 
         # else, define offset_ wrt contamination parameter
-        self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)
+        self.offset_ = np.percentile(
+            self.score_samples(X), 100.0 * self.contamination
+        )
 
         return self
 
@@ -464,12 +467,17 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 + _average_path_length(n_samples_leaf)
                 - 1.0
             )
-        denominator = len(self.estimators_) * _average_path_length([self.max_samples_])
+        denominator = len(self.estimators_) * _average_path_length(
+            [self.max_samples_]
+        )
         scores = 2 ** (
             # For a single training sample, denominator and depth are 0.
             # Therefore, we set the score manually to 1.
             -np.divide(
-                depths, denominator, out=np.ones_like(depths), where=denominator != 0
+                depths,
+                denominator,
+                out=np.ones_like(depths),
+                where=denominator != 0,
             )
         )
         return scores

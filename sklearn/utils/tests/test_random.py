@@ -112,7 +112,9 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     classes = [np.array([0, 1]), np.array([0, 1, 2])]
     class_probabilities = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
 
-    got = _random_choice_csc(n_samples, classes, class_probabilities, random_state)
+    got = _random_choice_csc(
+        n_samples, classes, class_probabilities, random_state
+    )
     assert sp.issparse(got)
 
     for k in range(len(classes)):
@@ -136,13 +138,16 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     classes = [np.array([0, 1]), np.array([0, 1, 2])]
     class_probabilities = [np.array([0.0, 1.0]), np.array([0.0, 1.0, 0.0])]
 
-    got = _random_choice_csc(n_samples, classes, class_probabilities, random_state)
+    got = _random_choice_csc(
+        n_samples, classes, class_probabilities, random_state
+    )
     assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = (
             np.bincount(
-                got.getcol(k).toarray().ravel(), minlength=len(class_probabilities[k])
+                got.getcol(k).toarray().ravel(),
+                minlength=len(class_probabilities[k]),
             )
             / n_samples
         )

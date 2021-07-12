@@ -32,7 +32,9 @@ def configuration(parent_package="", top_path=None):
     gen_from_templates(templates, top_path)
 
     config.add_extension(
-        "_sag_fast", sources=["_sag_fast.pyx"], include_dirs=numpy.get_include()
+        "_sag_fast",
+        sources=["_sag_fast.pyx"],
+        include_dirs=numpy.get_include(),
     )
 
     # add other directories

@@ -56,11 +56,15 @@ def test_find_binning_thresholds_random_data():
         assert bin_thresholds[i].dtype == DATA.dtype
 
     assert_allclose(
-        bin_thresholds[0][[64, 128, 192]], np.array([-0.7, 0.0, 0.7]), atol=1e-1
+        bin_thresholds[0][[64, 128, 192]],
+        np.array([-0.7, 0.0, 0.7]),
+        atol=1e-1,
     )
 
     assert_allclose(
-        bin_thresholds[1][[64, 128, 192]], np.array([9.99, 10.00, 10.01]), atol=1e-2
+        bin_thresholds[1][[64, 128, 192]],
+        np.array([9.99, 10.00, 10.01]),
+        atol=1e-2,
     )
 
 
@@ -75,8 +79,10 @@ def test_find_binning_thresholds_low_n_bins():
 
 @pytest.mark.parametrize("n_bins", (2, 257))
 def test_invalid_n_bins(n_bins):
-    err_msg = "n_bins={} should be no smaller than 3 and no larger than 256".format(
-        n_bins
+    err_msg = (
+        "n_bins={} should be no smaller than 3 and no larger than 256".format(
+            n_bins
+        )
     )
     with pytest.raises(ValueError, match=err_msg):
         _BinMapper(n_bins=n_bins).fit(DATA)
@@ -92,7 +98,8 @@ def test_bin_mapper_n_features_transform():
 @pytest.mark.parametrize("max_bins", [16, 128, 255])
 def test_map_to_bins(max_bins):
     bin_thresholds = [
-        _find_binning_thresholds(DATA[:, i], max_bins=max_bins) for i in range(2)
+        _find_binning_thresholds(DATA[:, i], max_bins=max_bins)
+        for i in range(2)
     ]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
     last_bin_idx = max_bins
@@ -125,7 +132,9 @@ def test_bin_mapper_random_data(max_bins):
     assert binned.shape == (n_samples, n_features)
     assert binned.dtype == np.uint8
     assert_array_equal(binned.min(axis=0), np.array([0, 0]))
-    assert_array_equal(binned.max(axis=0), np.array([max_bins - 1, max_bins - 1]))
+    assert_array_equal(
+        binned.max(axis=0), np.array([max_bins - 1, max_bins - 1])
+    )
     assert len(mapper.bin_thresholds_) == n_features
     for bin_thresholds_feature in mapper.bin_thresholds_:
         assert bin_thresholds_feature.shape == (max_bins - 1,)
@@ -139,7 +148,9 @@ def test_bin_mapper_random_data(max_bins):
             assert abs(count - expected_count_per_bin) < tol
 
 
-@pytest.mark.parametrize("n_samples, max_bins", [(5, 5), (5, 10), (5, 11), (42, 255)])
+@pytest.mark.parametrize(
+    "n_samples, max_bins", [(5, 5), (5, 10), (5, 11), (42, 255)]
+)
 def test_bin_mapper_small_random_data(n_samples, max_bins):
     data = np.random.RandomState(42).normal(size=n_samples).reshape(-1, 1)
     assert len(np.unique(data)) == n_samples
@@ -151,7 +162,9 @@ def test_bin_mapper_small_random_data(n_samples, max_bins):
 
     assert binned.shape == data.shape
     assert binned.dtype == np.uint8
-    assert_array_equal(binned.ravel()[np.argsort(data.ravel())], np.arange(n_samples))
+    assert_array_equal(
+        binned.ravel()[np.argsort(data.ravel())], np.arange(n_samples)
+    )
 
 
 @pytest.mark.parametrize(
@@ -243,7 +256,9 @@ def test_n_bins_non_missing(n_bins, diff):
     X = list(range(n_unique_values)) * 2
     X = np.array(X).reshape(-1, 1)
     mapper = _BinMapper(n_bins=n_bins).fit(X)
-    assert np.all(mapper.n_bins_non_missing_ == min(n_bins - 1, n_unique_values))
+    assert np.all(
+        mapper.n_bins_non_missing_ == min(n_bins - 1, n_unique_values)
+    )
 
 
 def test_subsample():
@@ -340,7 +355,15 @@ def test_categorical_feature(n_bins):
     # we make sure that categories are mapped into [0, n_categories - 1] and
     # that nans are mapped to the last bin
     X = np.array(
-        [[4] * 500 + [1] * 3 + [10] * 4 + [0] * 4 + [13] + [7] * 5 + [np.nan] * 2],
+        [
+            [4] * 500
+            + [1] * 3
+            + [10] * 4
+            + [0] * 4
+            + [13]
+            + [7] * 5
+            + [np.nan] * 2
+        ],
         dtype=X_DTYPE,
     ).T
     known_categories = [np.unique(X[~np.isnan(X)])]
@@ -403,7 +426,8 @@ def test_categorical_with_numerical_features(n_bins):
 def test_make_known_categories_bitsets():
     # Check the output of make_known_categories_bitsets
     X = np.array(
-        [[14, 2, 30], [30, 4, 70], [40, 10, 180], [40, 240, 180]], dtype=X_DTYPE
+        [[14, 2, 30], [30, 4, 70], [40, 10, 180], [40, 240, 180]],
+        dtype=X_DTYPE,
     )
 
     bin_mapper = _BinMapper(
@@ -441,11 +465,16 @@ def test_make_known_categories_bitsets():
 @pytest.mark.parametrize(
     "is_categorical, known_categories, match",
     [
-        (np.array([True]), [None], "Known categories for feature 0 must be provided"),
+        (
+            np.array([True]),
+            [None],
+            "Known categories for feature 0 must be provided",
+        ),
         (
             np.array([False]),
             np.array([1, 2, 3]),
-            "isn't marked as a categorical feature, but categories were passed",
+            "isn't marked as a categorical feature, but categories were"
+            " passed",
         ),
     ],
 )

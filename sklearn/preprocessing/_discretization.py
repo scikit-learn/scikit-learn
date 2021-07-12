@@ -129,7 +129,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     """
 
-    def __init__(self, n_bins=5, *, encode="onehot", strategy="quantile", dtype=None):
+    def __init__(
+        self, n_bins=5, *, encode="onehot", strategy="quantile", dtype=None
+    ):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
@@ -169,15 +171,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         valid_encode = ("onehot", "onehot-dense", "ordinal")
         if self.encode not in valid_encode:
             raise ValueError(
-                "Valid options for 'encode' are {}. Got encode={!r} instead.".format(
-                    valid_encode, self.encode
-                )
+                "Valid options for 'encode' are {}. Got encode={!r} instead."
+                .format(valid_encode, self.encode)
             )
         valid_strategy = ("uniform", "quantile", "kmeans")
         if self.strategy not in valid_strategy:
             raise ValueError(
                 "Valid options for 'strategy' are {}. "
-                "Got strategy={!r} instead.".format(valid_strategy, self.strategy)
+                "Got strategy={!r} instead.".format(
+                    valid_strategy, self.strategy
+                )
             )
 
         n_features = X.shape[1]
@@ -212,7 +215,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
                 # 1D k-means procedure
                 km = KMeans(
-                    n_clusters=n_bins[jj], init=init, n_init=1, algorithm="full"
+                    n_clusters=n_bins[jj],
+                    init=init,
+                    n_init=1,
+                    algorithm="full",
                 )
                 centers = km.fit(column[:, None]).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
@@ -228,7 +234,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     warnings.warn(
                         "Bins whose width are too small (i.e., <= "
                         "1e-8) in feature %d are removed. Consider "
-                        "decreasing the number of bins." % jj
+                        "decreasing the number of bins."
+                        % jj
                     )
                     n_bins[jj] = len(bin_edges[jj]) - 1
 
@@ -270,7 +277,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_bins = check_array(orig_bins, dtype=int, copy=True, ensure_2d=False)
 
         if n_bins.ndim > 1 or n_bins.shape[0] != n_features:
-            raise ValueError("n_bins must be a scalar or array of shape (n_features,).")
+            raise ValueError(
+                "n_bins must be a scalar or array of shape (n_features,)."
+            )
 
         bad_nbins_value = (n_bins < 2) | (n_bins != orig_bins)
 
@@ -359,9 +368,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_features = self.n_bins_.shape[0]
         if Xinv.shape[1] != n_features:
             raise ValueError(
-                "Incorrect number of features. Expecting {}, received {}.".format(
-                    n_features, Xinv.shape[1]
-                )
+                "Incorrect number of features. Expecting {}, received {}."
+                .format(n_features, Xinv.shape[1])
             )
 
         for jj in range(n_features):

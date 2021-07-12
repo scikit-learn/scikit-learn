@@ -125,7 +125,9 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
         _raise_typeerror(X)
 
 
-def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=None):
+def incr_mean_variance_axis(
+    X, *, axis, last_mean, last_var, last_n, weights=None
+):
     """Compute incremental mean and variance along an axis on a CSR or
     CSC matrix.
 
@@ -195,7 +197,9 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
         last_n = np.full(last_mean.shape, last_n, dtype=last_mean.dtype)
 
     if not (np.size(last_mean) == np.size(last_var) == np.size(last_n)):
-        raise ValueError("last_mean, last_var, last_n do not have the same shapes.")
+        raise ValueError(
+            "last_mean, last_var, last_n do not have the same shapes."
+        )
 
     if axis == 1:
         if np.size(last_mean) != X.shape[0]:
@@ -216,7 +220,11 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
         weights = _check_sample_weight(weights, X, dtype=X.dtype)
 
     return _incr_mean_var_axis0(
-        X, last_mean=last_mean, last_var=last_var, last_n=last_n, weights=weights
+        X,
+        last_mean=last_mean,
+        last_var=last_var,
+        last_n=last_n,
+        weights=weights,
     )
 
 
@@ -438,11 +446,15 @@ def _min_or_max_axis(X, axis, min_or_max):
 
     if axis == 0:
         res = sp.coo_matrix(
-            (value, (np.zeros(len(value)), major_index)), dtype=X.dtype, shape=(1, M)
+            (value, (np.zeros(len(value)), major_index)),
+            dtype=X.dtype,
+            shape=(1, M),
         )
     else:
         res = sp.coo_matrix(
-            (value, (major_index, np.zeros(len(value)))), dtype=X.dtype, shape=(M, 1)
+            (value, (major_index, np.zeros(len(value)))),
+            dtype=X.dtype,
+            shape=(M, 1),
         )
     return res.A.ravel()
 
@@ -474,7 +486,10 @@ def _sparse_min_max(X, axis):
 
 
 def _sparse_nan_min_max(X, axis):
-    return (_sparse_min_or_max(X, axis, np.fmin), _sparse_min_or_max(X, axis, np.fmax))
+    return (
+        _sparse_min_or_max(X, axis, np.fmin),
+        _sparse_min_or_max(X, axis, np.fmax),
+    )
 
 
 def min_max_axis(X, axis, ignore_nan=False):
@@ -555,7 +570,9 @@ def count_nonzero(X, axis=None, sample_weight=None):
             return np.bincount(X.indices, minlength=X.shape[1])
         else:
             weights = np.repeat(sample_weight, np.diff(X.indptr))
-            return np.bincount(X.indices, minlength=X.shape[1], weights=weights)
+            return np.bincount(
+                X.indices, minlength=X.shape[1], weights=weights
+            )
     else:
         raise ValueError("Unsupported axis: {0}".format(axis))
 

@@ -99,7 +99,9 @@ def test_derivatives(loss, x0, y_true):
     def fprime2(x: np.ndarray) -> np.ndarray:
         return get_hessians(y_true, x)
 
-    optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2, maxiter=70, tol=2e-8)
+    optimum = newton(
+        func, x0=x0, fprime=fprime, fprime2=fprime2, maxiter=70, tol=2e-8
+    )
 
     # Need to ravel arrays because assert_allclose requires matching dimensions
     y_true = y_true.ravel()
@@ -120,7 +122,8 @@ def test_derivatives(loss, x0, y_true):
     ],
 )
 @pytest.mark.skipif(
-    Y_DTYPE != np.float64, reason="Need 64 bits float precision for numerical checks"
+    Y_DTYPE != np.float64,
+    reason="Need 64 bits float precision for numerical checks",
 )
 def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     # Make sure gradients and hessians computed in the loss are correct, by
@@ -136,7 +139,9 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
         y_true = rng.poisson(size=n_samples).astype(Y_DTYPE)
     else:
         y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
-    raw_predictions = rng.normal(size=(prediction_dim, n_samples)).astype(Y_DTYPE)
+    raw_predictions = rng.normal(size=(prediction_dim, n_samples)).astype(
+        Y_DTYPE
+    )
     loss = _LOSSES[loss](sample_weight=None, n_threads=n_threads)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
@@ -227,7 +232,9 @@ def test_baseline_binary_crossentropy():
         y_train = y_train.astype(np.float64)
         baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
         assert_all_finite(baseline_prediction)
-        assert np.allclose(loss.inverse_link_function(baseline_prediction), y_train[0])
+        assert np.allclose(
+            loss.inverse_link_function(baseline_prediction), y_train[0]
+        )
 
     # Make sure baseline prediction is equal to link_function(p), where p
     # is the proba of the positive class. We want predict_proba() to return p,
@@ -258,7 +265,9 @@ def test_baseline_categorical_crossentropy():
     # Same logic as for above test. Here inverse_link_function = softmax and
     # link_function = log
     y_train = rng.randint(0, prediction_dim + 1, size=100).astype(np.float32)
-    baseline_prediction = loss.get_baseline_prediction(y_train, None, prediction_dim)
+    baseline_prediction = loss.get_baseline_prediction(
+        y_train, None, prediction_dim
+    )
     assert baseline_prediction.shape == (prediction_dim, 1)
     for k in range(prediction_dim):
         p = (y_train == k).mean()
@@ -302,7 +311,9 @@ def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):
 
     loss_ = _LOSSES[loss](sample_weight=sample_weight, n_threads=n_threads)
 
-    baseline_prediction = loss_.get_baseline_prediction(y_true, None, prediction_dim)
+    baseline_prediction = loss_.get_baseline_prediction(
+        y_true, None, prediction_dim
+    )
     raw_predictions = np.zeros(
         shape=(prediction_dim, n_samples), dtype=baseline_prediction.dtype
     )
@@ -342,7 +353,9 @@ def test_init_gradient_and_hessians_sample_weight():
     sample_weight = np.ones(n_samples)
     loss = _LOSSES["squared_error"](sample_weight=sample_weight)
     _, hessians = loss.init_gradients_and_hessians(
-        n_samples=n_samples, prediction_dim=prediction_dim, sample_weight=sample_weight
+        n_samples=n_samples,
+        prediction_dim=prediction_dim,
+        sample_weight=sample_weight,
     )
     assert not loss.hessians_are_constant
     assert hessians.shape == (prediction_dim, n_samples)

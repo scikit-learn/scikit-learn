@@ -169,7 +169,9 @@ def _take_along_axis(arr, indices, axis):
             )
 
         shape_ones = (1,) * indices.ndim
-        dest_dims = list(range(axis)) + [None] + list(range(axis + 1, indices.ndim))
+        dest_dims = (
+            list(range(axis)) + [None] + list(range(axis + 1, indices.ndim))
+        )
 
         # build a fancy index, consisting of orthogonal aranges, with the
         # requested index inserted at the right location
@@ -209,7 +211,9 @@ class _FuncWrapper:
             return self.function(*args, **kwargs)
 
 
-def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0):
+def linspace(
+    start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0
+):
     """Implements a simplified linspace function as of numpy verion >= 1.16.
 
     As of numpy 1.16, the arguments start and stop can be array-like and
@@ -241,7 +245,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
             )
 
         if start.ndim != 1 or stop.ndim != 1 or start.shape != stop.shape:
-            raise ValueError("start and stop must be 1d array-like of same shape.")
+            raise ValueError(
+                "start and stop must be 1d array-like of same shape."
+            )
         n_start = start.shape[0]
         out = np.empty((num, n_start), dtype=dtype)
         step = np.empty(n_start, dtype=np.float)

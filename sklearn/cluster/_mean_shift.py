@@ -28,7 +28,9 @@ from ..metrics.pairwise import pairwise_distances_argmin
 from .._config import config_context
 
 
-def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_jobs=None):
+def estimate_bandwidth(
+    X, *, quantile=0.3, n_samples=None, random_state=0, n_jobs=None
+):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
     That this function takes time at least quadratic in n_samples. For large
@@ -91,7 +93,9 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     completed_iterations = 0
     while True:
         # Find mean of points within bandwidth
-        i_nbrs = nbrs.radius_neighbors([my_mean], bandwidth, return_distance=False)[0]
+        i_nbrs = nbrs.radius_neighbors(
+            [my_mean], bandwidth, return_distance=False
+        )[0]
         points_within = X[i_nbrs]
         if len(points_within) == 0:
             break  # Depending on seeding strategy this condition may occur
@@ -245,7 +249,8 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     )
     if len(bin_seeds) == len(X):
         warnings.warn(
-            "Binning data failed with provided bin_size=%f, using data points as seeds."
+            "Binning data failed with provided bin_size=%f, using data points"
+            " as seeds."
             % bin_size
         )
         return X
@@ -407,7 +412,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
         elif bandwidth <= 0:
             raise ValueError(
-                "bandwidth needs to be greater than zero or None, got %f" % bandwidth
+                "bandwidth needs to be greater than zero or None, got %f"
+                % bandwidth
             )
 
         seeds = self.seeds
@@ -439,8 +445,9 @@ class MeanShift(ClusterMixin, BaseEstimator):
         if not center_intensity_dict:
             # nothing near seeds
             raise ValueError(
-                "No point was within bandwidth=%f of any seed. Try a different seeding"
-                " strategy                              or increase the bandwidth."
+                "No point was within bandwidth=%f of any seed. Try a different"
+                " seeding strategy                              or increase"
+                " the bandwidth."
                 % bandwidth
             )
 
@@ -461,15 +468,17 @@ class MeanShift(ClusterMixin, BaseEstimator):
         )
         for i, center in enumerate(sorted_centers):
             if unique[i]:
-                neighbor_idxs = nbrs.radius_neighbors([center], return_distance=False)[
-                    0
-                ]
+                neighbor_idxs = nbrs.radius_neighbors(
+                    [center], return_distance=False
+                )[0]
                 unique[neighbor_idxs] = 0
                 unique[i] = 1  # leave the current point as unique
         cluster_centers = sorted_centers[unique]
 
         # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-        nbrs = NearestNeighbors(n_neighbors=1, n_jobs=self.n_jobs).fit(cluster_centers)
+        nbrs = NearestNeighbors(n_neighbors=1, n_jobs=self.n_jobs).fit(
+            cluster_centers
+        )
         labels = np.zeros(n_samples, dtype=int)
         distances, idxs = nbrs.kneighbors(X)
         if self.cluster_all:

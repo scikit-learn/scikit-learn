@@ -12,7 +12,10 @@ def test_feature_hasher_dicts():
     h = FeatureHasher(n_features=16)
     assert "dict" == h.input_type
 
-    raw_X = [{"foo": "bar", "dada": 42, "tzara": 37}, {"foo": "baz", "gaga": "string1"}]
+    raw_X = [
+        {"foo": "bar", "dada": 42, "tzara": 37},
+        {"foo": "baz", "gaga": "string1"},
+    ]
     X1 = FeatureHasher(n_features=16).transform(raw_X)
     gen = (iter(d.items()) for d in raw_X)
     X2 = FeatureHasher(n_features=16, input_type="pair").transform(gen)
@@ -48,7 +51,9 @@ def test_feature_hasher_strings():
 def test_hashing_transform_seed():
     # check the influence of the seed when computing the hashes
     # import is here to avoid importing on pypy
-    from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
+    from sklearn.feature_extraction._hashing_fast import (
+        transform as _hashing_transform,
+    )
 
     raw_X = [
         ["foo", "bar", "baz", "foo".encode("ascii")],
@@ -59,7 +64,9 @@ def test_hashing_transform_seed():
     indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str, False)
 
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
-    indices_0, indptr_0, _ = _hashing_transform(raw_X_, 2 ** 7, str, False, seed=0)
+    indices_0, indptr_0, _ = _hashing_transform(
+        raw_X_, 2 ** 7, str, False, seed=0
+    )
     assert_array_equal(indices, indices_0)
     assert_array_equal(indptr, indptr_0)
 
@@ -150,10 +157,14 @@ def test_hasher_zeros():
 def test_hasher_alternate_sign():
     X = [list("Thequickbrownfoxjumped")]
 
-    Xt = FeatureHasher(alternate_sign=True, input_type="string").fit_transform(X)
+    Xt = FeatureHasher(alternate_sign=True, input_type="string").fit_transform(
+        X
+    )
     assert Xt.data.min() < 0 and Xt.data.max() > 0
 
-    Xt = FeatureHasher(alternate_sign=False, input_type="string").fit_transform(X)
+    Xt = FeatureHasher(
+        alternate_sign=False, input_type="string"
+    ).fit_transform(X)
     assert Xt.data.min() > 0
 
 

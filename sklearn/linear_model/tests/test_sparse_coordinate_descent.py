@@ -159,7 +159,9 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     n_samples, n_features, max_iter = 100, 100, 1000
     n_informative = 10
 
-    X, y = make_sparse_data(n_samples, n_features, n_informative, positive=positive)
+    X, y = make_sparse_data(
+        n_samples, n_features, n_informative, positive=positive
+    )
 
     X_train, X_test = X[n_samples // 2 :], X[: n_samples // 2]
     y_train, y_test = y[n_samples // 2 :], y[: n_samples // 2]
@@ -201,10 +203,18 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
 
 
 def test_sparse_enet_not_as_toy_dataset():
-    _test_sparse_enet_not_as_toy_dataset(alpha=0.1, fit_intercept=False, positive=False)
-    _test_sparse_enet_not_as_toy_dataset(alpha=0.1, fit_intercept=True, positive=False)
-    _test_sparse_enet_not_as_toy_dataset(alpha=1e-3, fit_intercept=False, positive=True)
-    _test_sparse_enet_not_as_toy_dataset(alpha=1e-3, fit_intercept=True, positive=True)
+    _test_sparse_enet_not_as_toy_dataset(
+        alpha=0.1, fit_intercept=False, positive=False
+    )
+    _test_sparse_enet_not_as_toy_dataset(
+        alpha=0.1, fit_intercept=True, positive=False
+    )
+    _test_sparse_enet_not_as_toy_dataset(
+        alpha=1e-3, fit_intercept=False, positive=True
+    )
+    _test_sparse_enet_not_as_toy_dataset(
+        alpha=1e-3, fit_intercept=True, positive=True
+    )
 
 
 def test_sparse_lasso_not_as_toy_dataset():

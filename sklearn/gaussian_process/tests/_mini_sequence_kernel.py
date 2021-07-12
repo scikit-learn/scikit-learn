@@ -11,7 +11,9 @@ class MiniSeqKernel(GenericKernelMixin, StationaryKernelMixin, Kernel):
     length.
     """
 
-    def __init__(self, baseline_similarity=0.5, baseline_similarity_bounds=(1e-5, 1)):
+    def __init__(
+        self, baseline_similarity=0.5, baseline_similarity_bounds=(1e-5, 1)
+    ):
         self.baseline_similarity = baseline_similarity
         self.baseline_similarity_bounds = baseline_similarity_bounds
 
@@ -23,7 +25,11 @@ class MiniSeqKernel(GenericKernelMixin, StationaryKernelMixin, Kernel):
 
     def _f(self, s1, s2):
         return sum(
-            [1.0 if c1 == c2 else self.baseline_similarity for c1 in s1 for c2 in s2]
+            [
+                1.0 if c1 == c2 else self.baseline_similarity
+                for c1 in s1
+                for c2 in s2
+            ]
         )
 
     def _g(self, s1, s2):

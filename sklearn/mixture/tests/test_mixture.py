@@ -8,7 +8,9 @@ from sklearn.mixture import GaussianMixture
 from sklearn.mixture import BayesianGaussianMixture
 
 
-@pytest.mark.parametrize("estimator", [GaussianMixture(), BayesianGaussianMixture()])
+@pytest.mark.parametrize(
+    "estimator", [GaussianMixture(), BayesianGaussianMixture()]
+)
 def test_gaussian_mixture_n_iter(estimator):
     # check that n_iter is the number of iteration performed.
     rng = np.random.RandomState(0)
@@ -19,7 +21,9 @@ def test_gaussian_mixture_n_iter(estimator):
     assert estimator.n_iter_ == max_iter
 
 
-@pytest.mark.parametrize("estimator", [GaussianMixture(), BayesianGaussianMixture()])
+@pytest.mark.parametrize(
+    "estimator", [GaussianMixture(), BayesianGaussianMixture()]
+)
 def test_mixture_n_components_greater_than_n_samples_error(estimator):
     """Check error when n_components <= n_samples"""
     rng = np.random.RandomState(0)

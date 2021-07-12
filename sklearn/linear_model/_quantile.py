@@ -139,17 +139,20 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             alpha = np.sum(sample_weight) * self.alpha
         else:
             raise ValueError(
-                f"Penalty alpha must be a non-negative number, got {self.alpha}"
+                "Penalty alpha must be a non-negative number, got"
+                f" {self.alpha}"
             )
 
         if self.quantile >= 1.0 or self.quantile <= 0.0:
             raise ValueError(
-                f"Quantile should be strictly between 0.0 and 1.0, got {self.quantile}"
+                "Quantile should be strictly between 0.0 and 1.0, got"
+                f" {self.quantile}"
             )
 
         if not isinstance(self.fit_intercept, bool):
             raise ValueError(
-                f"The argument fit_intercept must be bool, got {self.fit_intercept}"
+                "The argument fit_intercept must be bool, got"
+                f" {self.fit_intercept}"
             )
 
         if self.solver not in (
@@ -159,8 +162,12 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             "interior-point",
             "revised simplex",
         ):
-            raise ValueError(f"Invalid value for argument solver, got {self.solver}")
-        elif self.solver == "revised simplex" and sp_version < parse_version("1.3.0"):
+            raise ValueError(
+                f"Invalid value for argument solver, got {self.solver}"
+            )
+        elif self.solver == "revised simplex" and sp_version < parse_version(
+            "1.3.0"
+        ):
             raise ValueError(
                 "Solver 'revised simplex' is only available "
                 f"with scipy>=1.3.0, got {sp_version}"

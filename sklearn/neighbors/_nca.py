@@ -323,14 +323,18 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         # Check the preferred dimensionality of the projected space
         if self.n_components is not None:
-            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
+            check_scalar(
+                self.n_components, "n_components", numbers.Integral, min_val=1
+            )
 
             if self.n_components > X.shape[1]:
                 raise ValueError(
                     "The preferred dimensionality of the "
                     "projected space `n_components` ({}) cannot "
                     "be greater than the given data "
-                    "dimensionality ({})!".format(self.n_components, X.shape[1])
+                    "dimensionality ({})!".format(
+                        self.n_components, X.shape[1]
+                    )
                 )
 
         # If warm_start is enabled, check that the inputs are consistent
@@ -439,12 +443,15 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
             if init == "identity":
                 transformation = np.eye(n_components, X.shape[1])
             elif init == "random":
-                transformation = self.random_state_.randn(n_components, X.shape[1])
+                transformation = self.random_state_.randn(
+                    n_components, X.shape[1]
+                )
             elif init in {"pca", "lda"}:
                 init_time = time.time()
                 if init == "pca":
                     pca = PCA(
-                        n_components=n_components, random_state=self.random_state_
+                        n_components=n_components,
+                        random_state=self.random_state_,
                     )
                     if self.verbose:
                         print("Finding principal components... ", end="")
@@ -452,11 +459,16 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
                     pca.fit(X)
                     transformation = pca.components_
                 elif init == "lda":
-                    from ..discriminant_analysis import LinearDiscriminantAnalysis
+                    from ..discriminant_analysis import (
+                        LinearDiscriminantAnalysis,
+                    )
 
                     lda = LinearDiscriminantAnalysis(n_components=n_components)
                     if self.verbose:
-                        print("Finding most discriminative components... ", end="")
+                        print(
+                            "Finding most discriminative components... ",
+                            end="",
+                        )
                         sys.stdout.flush()
                     lda.fit(X, y)
                     transformation = lda.scalings_.T[:n_components]

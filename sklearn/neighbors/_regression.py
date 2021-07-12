@@ -246,7 +246,9 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         return y_pred
 
 
-class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBase):
+class RadiusNeighborsRegressor(
+    RadiusNeighborsMixin, RegressorMixin, NeighborsBase
+):
     """Regression based on neighbors within a fixed radius.
 
     The target is predicted by local interpolation of the targets

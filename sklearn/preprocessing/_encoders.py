@@ -39,9 +39,15 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         """
         if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
             # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None, force_all_finite=force_all_finite)
-            if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
-                X = check_array(X, dtype=object, force_all_finite=force_all_finite)
+            X_temp = check_array(
+                X, dtype=None, force_all_finite=force_all_finite
+            )
+            if not hasattr(X, "dtype") and np.issubdtype(
+                X_temp.dtype, np.str_
+            ):
+                X = check_array(
+                    X, dtype=object, force_all_finite=force_all_finite
+                )
             else:
                 X = X_temp
             needs_validation = False
@@ -56,7 +62,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
             Xi = check_array(
-                Xi, ensure_2d=False, dtype=None, force_all_finite=needs_validation
+                Xi,
+                ensure_2d=False,
+                dtype=None,
+                force_all_finite=needs_validation,
             )
             X_columns.append(Xi)
 
@@ -92,12 +101,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
-                        "Unsorted categories are not supported for numerical categories"
+                        "Unsorted categories are not supported for numerical"
+                        " categories"
                     )
                     # if there are nans, nan should be the last element
                     stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
                     if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]) or (
-                        np.isnan(sorted_cats[-1]) and not np.isnan(sorted_cats[-1])
+                        np.isnan(sorted_cats[-1])
+                        and not np.isnan(sorted_cats[-1])
                     ):
                         raise ValueError(error_msg)
 
@@ -112,7 +123,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             self.categories_.append(cats)
 
     def _transform(
-        self, X, handle_unknown="error", force_all_finite=True, warn_on_unknown=False
+        self,
+        X,
+        handle_unknown="error",
+        force_all_finite=True,
+        warn_on_unknown=False,
     ):
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
@@ -136,7 +151,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
-            diff, valid_mask = _check_unknown(Xi, self.categories_[i], return_mask=True)
+            diff, valid_mask = _check_unknown(
+                Xi, self.categories_[i], return_mask=True
+            )
 
             if not np.all(valid_mask):
                 if handle_unknown == "error":
@@ -159,7 +176,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         and self.categories_[i].itemsize > Xi.itemsize
                     ):
                         Xi = Xi.astype(self.categories_[i].dtype)
-                    elif self.categories_[i].dtype.kind == "O" and Xi.dtype.kind == "U":
+                    elif (
+                        self.categories_[i].dtype.kind == "O"
+                        and Xi.dtype.kind == "U"
+                    ):
                         # categories are objects and Xi are numpy strings.
                         # Cast Xi to an object dtype to prevent truncation
                         # when setting invalid values.
@@ -170,7 +190,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     Xi[~valid_mask] = self.categories_[i][0]
             # We use check_unknown=False, since _check_unknown was
             # already called above.
-            X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
+            X_int[:, i] = _encode(
+                Xi, uniques=self.categories_[i], check_unknown=False
+            )
         if columns_with_unknown:
             warnings.warn(
                 "Found unknown categories in columns "
@@ -357,9 +379,8 @@ class OneHotEncoder(_BaseEncoder):
     def _validate_keywords(self):
         if self.handle_unknown not in ("error", "ignore"):
             msg = (
-                "handle_unknown should be either 'error' or 'ignore', got {0}.".format(
-                    self.handle_unknown
-                )
+                "handle_unknown should be either 'error' or 'ignore', got {0}."
+                .format(self.handle_unknown)
             )
             raise ValueError(msg)
 
@@ -371,7 +392,10 @@ class OneHotEncoder(_BaseEncoder):
                 return np.zeros(len(self.categories_), dtype=object)
             elif self.drop == "if_binary":
                 return np.array(
-                    [0 if len(cats) == 2 else None for cats in self.categories_],
+                    [
+                        0 if len(cats) == 2 else None
+                        for cats in self.categories_
+                    ],
                     dtype=object,
                 )
             else:
@@ -453,7 +477,9 @@ class OneHotEncoder(_BaseEncoder):
             Fitted encoder.
         """
         self._validate_keywords()
-        self._fit(X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan")
+        self._fit(
+            X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan"
+        )
         self.drop_idx_ = self._compute_drop_idx()
         return self
 
@@ -500,7 +526,9 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
-        warn_on_unknown = self.handle_unknown == "ignore" and self.drop is not None
+        warn_on_unknown = (
+            self.handle_unknown == "ignore" and self.drop is not None
+        )
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
@@ -579,7 +607,9 @@ class OneHotEncoder(_BaseEncoder):
         n_samples, _ = X.shape
         n_features = len(self.categories_)
         if self.drop_idx_ is None:
-            n_transformed_features = sum(len(cats) for cats in self.categories_)
+            n_transformed_features = sum(
+                len(cats) for cats in self.categories_
+            )
         else:
             n_transformed_features = sum(
                 len(cats) - 1 if to_drop is not None else len(cats)
@@ -588,7 +618,8 @@ class OneHotEncoder(_BaseEncoder):
 
         # validate shape of passed X
         msg = (
-            "Shape of the passed X data is not correct. Expected {0} columns, got {1}."
+            "Shape of the passed X data is not correct. Expected {0} columns,"
+            " got {1}."
         )
         if X.shape[1] != n_transformed_features:
             raise ValueError(msg.format(n_transformed_features, X.shape[1]))
@@ -627,7 +658,9 @@ class OneHotEncoder(_BaseEncoder):
                     if self.drop_idx_ is None or self.drop_idx_[i] is None:
                         found_unknown[i] = unknown
                     else:
-                        X_tr[unknown, i] = self.categories_[i][self.drop_idx_[i]]
+                        X_tr[unknown, i] = self.categories_[i][
+                            self.drop_idx_[i]
+                        ]
             else:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
@@ -911,7 +944,8 @@ class OrdinalEncoder(_BaseEncoder):
 
         # validate shape of passed X
         msg = (
-            "Shape of the passed X data is not correct. Expected {0} columns, got {1}."
+            "Shape of the passed X data is not correct. Expected {0} columns,"
+            " got {1}."
         )
         if X.shape[1] != n_features:
             raise ValueError(msg.format(n_features, X.shape[1]))
@@ -932,7 +966,9 @@ class OrdinalEncoder(_BaseEncoder):
 
             if self.handle_unknown == "use_encoded_value":
                 unknown_labels = labels == self.unknown_value
-                X_tr[:, i] = self.categories_[i][np.where(unknown_labels, 0, labels)]
+                X_tr[:, i] = self.categories_[i][
+                    np.where(unknown_labels, 0, labels)
+                ]
                 found_unknown[i] = unknown_labels
             else:
                 X_tr[:, i] = self.categories_[i][labels]

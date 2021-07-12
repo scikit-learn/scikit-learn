@@ -104,7 +104,9 @@ def _get_first_singular_vectors_power_method(
 
     n_iter = i + 1
     if n_iter == max_iter:
-        warnings.warn("Maximum number of iterations reached", ConvergenceWarning)
+        warnings.warn(
+            "Maximum number of iterations reached", ConvergenceWarning
+        )
 
     return x_weights, y_weights, n_iter
 
@@ -156,7 +158,11 @@ def _svd_flip_1d(u, v):
 
 
 class _PLS(
-    TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator, metaclass=ABCMeta
+    TransformerMixin,
+    RegressorMixin,
+    MultiOutputMixin,
+    BaseEstimator,
+    metaclass=ABCMeta,
 ):
     """Partial Least Squares (PLS)
 
@@ -257,9 +263,14 @@ class _PLS(
         norm_y_weights = self._norm_y_weights
 
         # Scale (in place)
-        Xk, Yk, self._x_mean, self._y_mean, self._x_std, self._y_std = _center_scale_xy(
-            X, Y, self.scale
-        )
+        (
+            Xk,
+            Yk,
+            self._x_mean,
+            self._y_mean,
+            self._x_std,
+            self._y_std,
+        ) = _center_scale_xy(X, Y, self.scale)
 
         self.x_weights_ = np.zeros((p, n_components))  # U
         self.y_weights_ = np.zeros((q, n_components))  # V
@@ -345,11 +356,15 @@ class _PLS(
         # Compute transformation matrices (rotations_). See User Guide.
         self.x_rotations_ = np.dot(
             self.x_weights_,
-            pinv2(np.dot(self.x_loadings_.T, self.x_weights_), check_finite=False),
+            pinv2(
+                np.dot(self.x_loadings_.T, self.x_weights_), check_finite=False
+            ),
         )
         self.y_rotations_ = np.dot(
             self.y_weights_,
-            pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
+            pinv2(
+                np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False
+            ),
         )
 
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
@@ -993,9 +1008,14 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             )
             n_components = rank_upper_bound
 
-        X, Y, self._x_mean, self._y_mean, self._x_std, self._y_std = _center_scale_xy(
-            X, Y, self.scale
-        )
+        (
+            X,
+            Y,
+            self._x_mean,
+            self._y_mean,
+            self._x_std,
+            self._y_std,
+        ) = _center_scale_xy(X, Y, self.scale)
 
         # Compute SVD of cross-covariance matrix
         C = np.dot(X.T, Y)

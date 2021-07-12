@@ -87,7 +87,9 @@ def test_linear_regression_sample_weights():
                 dummy_column = np.ones(shape=(n_samples, 1))
                 X_aug = np.concatenate((dummy_column, X), axis=1)
 
-            coefs2 = linalg.solve(X_aug.T.dot(W).dot(X_aug), X_aug.T.dot(W).dot(y))
+            coefs2 = linalg.solve(
+                X_aug.T.dot(W).dot(X_aug), X_aug.T.dot(W).dot(y)
+            )
 
             if intercept is False:
                 assert_array_almost_equal(coefs1, coefs2)
@@ -133,7 +135,10 @@ def test_fit_intercept():
     # Test assertions on betas shape.
     X2 = np.array([[0.38349978, 0.61650022], [0.58853682, 0.41146318]])
     X3 = np.array(
-        [[0.27677969, 0.70693172, 0.01628859], [0.08385139, 0.20692515, 0.70922346]]
+        [
+            [0.27677969, 0.70693172, 0.01628859],
+            [0.08385139, 0.20692515, 0.70922346],
+        ]
     )
     y = np.array([1, 1])
 
@@ -194,7 +199,9 @@ def test_deprecate_normalize(normalize, default):
     n_warnings = 0 if expected is None else 1
     assert len(record) == n_warnings
     if n_warnings:
-        assert all([warning in str(record[0].message) for warning in warning_msg])
+        assert all(
+            [warning in str(record[0].message) for warning in warning_msg]
+        )
 
 
 def test_linear_regression_sparse(random_state=0):
@@ -426,7 +433,9 @@ def test_preprocess_data_multioutput():
         assert_array_almost_equal(y_mean, expected_y_mean)
         assert_array_almost_equal(yt, y - y_mean)
 
-        _, yt, _, y_mean, _ = _preprocess_data(X, y, fit_intercept=True, normalize=True)
+        _, yt, _, y_mean, _ = _preprocess_data(
+            X, y, fit_intercept=True, normalize=True
+        )
         assert_array_almost_equal(y_mean, expected_y_mean)
         assert_array_almost_equal(yt, y - y_mean)
 
@@ -463,7 +472,9 @@ def test_preprocess_data_weighted(is_sparse):
     )
     constant_mask = X_sample_weight_var < 10 * np.finfo(X.dtype).eps
     assert_array_equal(constant_mask, [0, 0, 1, 1])
-    expected_X_scale = np.sqrt(X_sample_weight_var) * np.sqrt(sample_weight.sum())
+    expected_X_scale = np.sqrt(X_sample_weight_var) * np.sqrt(
+        sample_weight.sum()
+    )
 
     # near constant features should not be scaled
     expected_X_scale[constant_mask] = 1
@@ -515,11 +526,14 @@ def test_preprocess_data_weighted(is_sparse):
     # The two are equivalent up to a ratio of np.sqrt(n_samples) if unweighted
     # or np.sqrt(sample_weight.sum()) if weighted.
     if is_sparse:
-        scaler = StandardScaler(with_mean=False).fit(X, sample_weight=sample_weight)
+        scaler = StandardScaler(with_mean=False).fit(
+            X, sample_weight=sample_weight
+        )
 
         # Non-constant features are scaled similarly with np.sqrt(n_samples)
         assert_array_almost_equal(
-            scaler.transform(X).toarray()[:, :2] / np.sqrt(sample_weight.sum()),
+            scaler.transform(X).toarray()[:, :2]
+            / np.sqrt(sample_weight.sum()),
             Xt.toarray()[:, :2],
         )
 
@@ -528,7 +542,9 @@ def test_preprocess_data_weighted(is_sparse):
             scaler.transform(X).toarray()[:, 2:], Xt.toarray()[:, 2:]
         )
     else:
-        scaler = StandardScaler(with_mean=True).fit(X, sample_weight=sample_weight)
+        scaler = StandardScaler(with_mean=True).fit(
+            X, sample_weight=sample_weight
+        )
         assert_array_almost_equal(scaler.mean_, X_mean)
         assert_array_almost_equal(
             scaler.transform(X) / np.sqrt(sample_weight.sum()),
@@ -593,7 +609,9 @@ def test_preprocess_copy_data_no_checks(is_sparse, to_copy):
     if is_sparse:
         X = sparse.csr_matrix(X)
 
-    X_, y_, _, _, _ = _preprocess_data(X, y, True, copy=to_copy, check_input=False)
+    X_, y_, _, _, _ = _preprocess_data(
+        X, y, True, copy=to_copy, check_input=False
+    )
 
     if to_copy and is_sparse:
         assert not np.may_share_memory(X_.data, X.data)
@@ -635,7 +653,13 @@ def test_dtype_preprocess_data():
                 return_mean=True,
             )
 
-            Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_scale_3264 = _preprocess_data(
+            (
+                Xt_3264,
+                yt_3264,
+                X_mean_3264,
+                y_mean_3264,
+                X_scale_3264,
+            ) = _preprocess_data(
                 X_32,
                 y_64,
                 fit_intercept=fit_intercept,
@@ -643,7 +667,13 @@ def test_dtype_preprocess_data():
                 return_mean=True,
             )
 
-            Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_scale_6432 = _preprocess_data(
+            (
+                Xt_6432,
+                yt_6432,
+                X_mean_6432,
+                y_mean_6432,
+                X_scale_6432,
+            ) = _preprocess_data(
                 X_64,
                 y_32,
                 fit_intercept=fit_intercept,

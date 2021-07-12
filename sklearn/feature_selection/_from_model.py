@@ -51,7 +51,8 @@ def _calculate_threshold(estimator, importances, threshold):
 
         else:
             raise ValueError(
-                "Expected threshold='mean' or threshold='median' got %s" % threshold
+                "Expected threshold='mean' or threshold='median' got %s"
+                % threshold
             )
 
     else:
@@ -248,13 +249,14 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 )
             elif self.max_features < 0 or self.max_features > X.shape[1]:
                 raise ValueError(
-                    "'max_features' should be 0 and {} features.Got {} instead.".format(
-                        X.shape[1], self.max_features
-                    )
+                    "'max_features' should be 0 and {} features.Got {}"
+                    " instead.".format(X.shape[1], self.max_features)
                 )
 
         if self.prefit:
-            raise NotFittedError("Since 'prefit=True', call transform directly")
+            raise NotFittedError(
+                "Since 'prefit=True', call transform directly"
+            )
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
         return self
@@ -289,7 +291,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
         """
         if self.prefit:
-            raise NotFittedError("Since 'prefit=True', call transform directly")
+            raise NotFittedError(
+                "Since 'prefit=True', call transform directly"
+            )
         if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)

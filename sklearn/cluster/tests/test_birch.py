@@ -26,7 +26,11 @@ def test_n_samples_leaves_roots():
     brc.fit(X)
     n_samples_root = sum([sc.n_samples_ for sc in brc.root_.subclusters_])
     n_samples_leaves = sum(
-        [sc.n_samples_ for leaf in brc._get_leaves() for sc in leaf.subclusters_]
+        [
+            sc.n_samples_
+            for leaf in brc._get_leaves()
+            for sc in leaf.subclusters_
+        ]
     )
     assert n_samples_leaves == X.shape[0]
     assert n_samples_root == X.shape[0]
@@ -40,7 +44,9 @@ def test_partial_fit():
     brc_partial = Birch(n_clusters=None)
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
-    assert_array_almost_equal(brc_partial.subcluster_centers_, brc.subcluster_centers_)
+    assert_array_almost_equal(
+        brc_partial.subcluster_centers_, brc.subcluster_centers_
+    )
 
     # Test that same global labels are obtained after calling partial_fit
     # with None
@@ -52,7 +58,9 @@ def test_partial_fit():
 def test_birch_predict():
     # Test the predict method predicts the nearest centroid.
     rng = np.random.RandomState(0)
-    X = generate_clustered_data(n_clusters=3, n_features=3, n_samples_per_cluster=10)
+    X = generate_clustered_data(
+        n_clusters=3, n_features=3, n_samples_per_cluster=10
+    )
 
     # n_samples * n_samples_per_cluster
     shuffle_indices = np.arange(30)
@@ -105,7 +113,9 @@ def test_sparse_X():
     brc_sparse.fit(csr)
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
-    assert_array_almost_equal(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
+    assert_array_almost_equal(
+        brc.subcluster_centers_, brc_sparse.subcluster_centers_
+    )
 
 
 def test_partial_fit_second_call_error_checks():
@@ -134,10 +144,14 @@ def test_branching_factor():
     branching_factor = 9
 
     # Purposefully set a low threshold to maximize the subclusters.
-    brc = Birch(n_clusters=None, branching_factor=branching_factor, threshold=0.01)
+    brc = Birch(
+        n_clusters=None, branching_factor=branching_factor, threshold=0.01
+    )
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
-    brc = Birch(n_clusters=3, branching_factor=branching_factor, threshold=0.01)
+    brc = Birch(
+        n_clusters=3, branching_factor=branching_factor, threshold=0.01
+    )
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
 

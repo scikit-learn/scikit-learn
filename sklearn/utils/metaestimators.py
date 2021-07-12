@@ -65,18 +65,21 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
 
     def _validate_names(self, names):
         if len(set(names)) != len(names):
-            raise ValueError("Names provided are not unique: {0!r}".format(list(names)))
+            raise ValueError(
+                "Names provided are not unique: {0!r}".format(list(names))
+            )
         invalid_names = set(names).intersection(self.get_params(deep=False))
         if invalid_names:
             raise ValueError(
-                "Estimator names conflict with constructor arguments: {0!r}".format(
-                    sorted(invalid_names)
-                )
+                "Estimator names conflict with constructor arguments: {0!r}"
+                .format(sorted(invalid_names))
             )
         invalid_names = [name for name in names if "__" in name]
         if invalid_names:
             raise ValueError(
-                "Estimator names must not contain __: got {0!r}".format(invalid_names)
+                "Estimator names must not contain __: got {0!r}".format(
+                    invalid_names
+                )
             )
 
 
@@ -150,7 +153,9 @@ def available_if(check):
     >>> obj.say_hello()
     Hello
     """
-    return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
+    return lambda fn: _AvailableIfDescriptor(
+        fn, check, attribute_name=fn.__name__
+    )
 
 
 class _IffHasAttrDescriptor(_AvailableIfDescriptor):
@@ -207,7 +212,9 @@ def if_delegate_has_method(delegate):
     if not isinstance(delegate, tuple):
         delegate = (delegate,)
 
-    return lambda fn: _IffHasAttrDescriptor(fn, delegate, attribute_name=fn.__name__)
+    return lambda fn: _IffHasAttrDescriptor(
+        fn, delegate, attribute_name=fn.__name__
+    )
 
 
 def _safe_split(estimator, X, y, indices, train_indices=None):

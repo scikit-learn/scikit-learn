@@ -19,7 +19,11 @@ from sklearn.feature_selection import SelectKBest, chi2
 @pytest.mark.parametrize("sort", (True, False))
 @pytest.mark.parametrize("iterable", (True, False))
 def test_dictvectorizer(sparse, dtype, sort, iterable):
-    D = [{"foo": 1, "bar": 3}, {"bar": 4, "baz": 2}, {"bar": 1, "quux": 1, "quuux": 2}]
+    D = [
+        {"foo": 1, "bar": 3},
+        {"bar": 4, "baz": 2},
+        {"bar": 1, "quux": 1, "quuux": 2},
+    ]
 
     v = DictVectorizer(sparse=sparse, dtype=dtype, sort=sort)
     X = v.fit_transform(iter(D) if iterable else D)
@@ -42,8 +46,12 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
 def test_feature_selection():
     # make two feature dicts with two useful features and a bunch of useless
     # ones, in terms of chi2
-    d1 = dict([("useless%d" % i, 10) for i in range(20)], useful1=1, useful2=20)
-    d2 = dict([("useless%d" % i, 10) for i in range(20)], useful1=20, useful2=1)
+    d1 = dict(
+        [("useless%d" % i, 10) for i in range(20)], useful1=1, useful2=20
+    )
+    d2 = dict(
+        [("useless%d" % i, 10) for i in range(20)], useful1=20, useful2=1
+    )
 
     for indices in (True, False):
         v = DictVectorizer().fit([d1, d2])
@@ -102,7 +110,11 @@ def test_iterable_not_string_error():
         "Unsupported type <class 'int'> in iterable value. "
         "Only iterables of string are supported."
     )
-    D2 = [{"foo": "1", "bar": "2"}, {"foo": "3", "baz": "1"}, {"foo": [1, "three"]}]
+    D2 = [
+        {"foo": "1", "bar": "2"},
+        {"foo": "3", "baz": "1"},
+        {"foo": [1, "three"]},
+    ]
     v = DictVectorizer(sparse=False)
     with pytest.raises(TypeError) as error:
         v.fit(D2)
@@ -194,14 +206,18 @@ def test_dictvectorizer_dense_sparse_equivalence():
     assert_allclose(dense_vector_fit, sparse_vector_fit.toarray())
 
     dense_vector_transform = dense_vectorizer.transform(movie_entry_transform)
-    sparse_vector_transform = sparse_vectorizer.transform(movie_entry_transform)
+    sparse_vector_transform = sparse_vectorizer.transform(
+        movie_entry_transform
+    )
 
     assert not sp.issparse(dense_vector_transform)
     assert sp.issparse(sparse_vector_transform)
 
     assert_allclose(dense_vector_transform, sparse_vector_transform.toarray())
 
-    dense_inverse_transform = dense_vectorizer.inverse_transform(dense_vector_transform)
+    dense_inverse_transform = dense_vectorizer.inverse_transform(
+        dense_vector_transform
+    )
     sparse_inverse_transform = sparse_vectorizer.inverse_transform(
         sparse_vector_transform
     )

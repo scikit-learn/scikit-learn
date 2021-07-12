@@ -48,7 +48,11 @@ def _top_k(results, k, itr):
     # Return the best candidates of a given iteration
     iteration, mean_test_score, params = (
         np.asarray(a)
-        for a in (results["iter"], results["mean_test_score"], results["params"])
+        for a in (
+            results["iter"],
+            results["mean_test_score"],
+            results["params"],
+        )
     )
     iter_indices = np.flatnonzero(iteration == itr)
     sorted_indices = np.argsort(mean_test_score[iter_indices])
@@ -128,19 +132,24 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 f"by estimator {self.estimator.__class__.__name__}"
             )
 
-        if isinstance(self.max_resources, str) and self.max_resources != "auto":
+        if (
+            isinstance(self.max_resources, str)
+            and self.max_resources != "auto"
+        ):
             raise ValueError(
                 "max_resources must be either 'auto' or a positive integer"
             )
         if self.max_resources != "auto" and (
-            not isinstance(self.max_resources, Integral) or self.max_resources <= 0
+            not isinstance(self.max_resources, Integral)
+            or self.max_resources <= 0
         ):
             raise ValueError(
                 "max_resources must be either 'auto' or a positive integer"
             )
 
         if self.min_resources not in ("smallest", "exhaust") and (
-            not isinstance(self.min_resources, Integral) or self.min_resources <= 0
+            not isinstance(self.min_resources, Integral)
+            or self.min_resources <= 0
         ):
             raise ValueError(
                 "min_resources must be either 'smallest', 'exhaust', "
@@ -154,13 +163,16 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # min_resources is. Similarly min_resources=exhaust needs to
                 # know the actual number of candidates.
                 raise ValueError(
-                    "n_candidates and min_resources cannot be both set to 'exhaust'."
+                    "n_candidates and min_resources cannot be both set to"
+                    " 'exhaust'."
                 )
             if self.n_candidates != "exhaust" and (
-                not isinstance(self.n_candidates, Integral) or self.n_candidates <= 0
+                not isinstance(self.n_candidates, Integral)
+                or self.n_candidates <= 0
             ):
                 raise ValueError(
-                    "n_candidates must be either 'exhaust' or a positive integer"
+                    "n_candidates must be either 'exhaust' or a positive"
+                    " integer"
                 )
 
         self.min_resources_ = self.min_resources
@@ -202,7 +214,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         if not isinstance(self.refit, bool):
             raise ValueError(
-                f"refit is expected to be a boolean. Got {type(self.refit)} instead."
+                f"refit is expected to be a boolean. Got {type(self.refit)}"
+                " instead."
             )
 
     @staticmethod
@@ -257,7 +270,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
         super().fit(X, y=y, groups=groups, **fit_params)
 
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
-        self.best_score_ = self.cv_results_["mean_test_score"][self.best_index_]
+        self.best_score_ = self.cv_results_["mean_test_score"][
+            self.best_index_
+        ]
 
         return self
 
@@ -275,7 +290,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         # n_required_iterations is the number of iterations needed so that the
         # last iterations evaluates less than `factor` candidates.
-        n_required_iterations = 1 + floor(log(len(candidate_params), self.factor))
+        n_required_iterations = 1 + floor(
+            log(len(candidate_params), self.factor)
+        )
 
         if self.min_resources == "exhaust":
             # To exhaust the resources, we want to start with the biggest
@@ -321,7 +338,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # value of n_resources at the first iteration) for as many
                 # iterations as needed (while candidates are being
                 # eliminated), and then go on as usual.
-                power = max(0, itr - n_required_iterations + n_possible_iterations)
+                power = max(
+                    0, itr - n_required_iterations + n_possible_iterations
+                )
 
             n_resources = int(self.factor ** power * self.min_resources_)
             # guard, probably not needed
@@ -380,8 +399,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
         tags["_xfail_checks"].update(
             {
                 "check_fit2d_1sample": (
-                    "Fail during parameter check since min/max resources requires"
-                    " more samples"
+                    "Fail during parameter check since min/max resources"
+                    " requires more samples"
                 ),
             }
         )
@@ -1038,7 +1057,9 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         if n_candidates_first_iter == "exhaust":
             # This will generate enough candidate so that the last iteration
             # uses as much resources as possible
-            n_candidates_first_iter = self.max_resources_ // self.min_resources_
+            n_candidates_first_iter = (
+                self.max_resources_ // self.min_resources_
+            )
         return ParameterSampler(
             self.param_distributions,
             n_candidates_first_iter,

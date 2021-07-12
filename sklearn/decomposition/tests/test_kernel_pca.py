@@ -44,7 +44,10 @@ def test_kernel_pca():
 
             # transform fit data
             kpca = KernelPCA(
-                4, kernel=kernel, eigen_solver=eigen_solver, fit_inverse_transform=inv
+                4,
+                kernel=kernel,
+                eigen_solver=eigen_solver,
+                fit_inverse_transform=inv,
             )
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
@@ -113,9 +116,13 @@ def test_kernel_pca_deterministic_output():
     for solver in eigen_solver:
         transformed_X = np.zeros((20, 2))
         for i in range(20):
-            kpca = KernelPCA(n_components=2, eigen_solver=solver, random_state=rng)
+            kpca = KernelPCA(
+                n_components=2, eigen_solver=solver, random_state=rng
+            )
             transformed_X[i, :] = kpca.fit_transform(X)[0]
-        assert_allclose(transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2))
+        assert_allclose(
+            transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2)
+        )
 
 
 def test_kernel_pca_sparse():
@@ -172,7 +179,11 @@ def test_kernel_pca_linear_kernel(solver, n_features):
     # can be trimmed due to roundoff error
     n_comps = 3 if solver == "arpack" else 4
     assert_array_almost_equal(
-        np.abs(KernelPCA(n_comps, eigen_solver=solver).fit(X_fit).transform(X_pred)),
+        np.abs(
+            KernelPCA(n_comps, eigen_solver=solver)
+            .fit(X_fit)
+            .transform(X_pred)
+        ),
         np.abs(
             PCA(n_comps, svd_solver=solver if solver != "dense" else "full")
             .fit(X_fit)
@@ -232,7 +243,9 @@ def test_leave_zero_eig():
     # Assert that even with all np warnings on, there is no div by zero warning
     with pytest.warns(None) as record:
         with np.errstate(all="warn"):
-            k = KernelPCA(n_components=2, remove_zero_eig=False, eigen_solver="dense")
+            k = KernelPCA(
+                n_components=2, remove_zero_eig=False, eigen_solver="dense"
+            )
             # Fit, then transform
             A = k.fit(X_fit).transform(X_fit)
             # Do both at once
@@ -263,7 +276,10 @@ def test_kernel_pca_precomputed():
 
         X_kpca2 = (
             KernelPCA(
-                4, eigen_solver=eigen_solver, kernel="precomputed", random_state=0
+                4,
+                eigen_solver=eigen_solver,
+                kernel="precomputed",
+                random_state=0,
             )
             .fit(np.dot(X_fit, X_fit.T))
             .transform(np.dot(X_pred, X_fit.T))
@@ -275,7 +291,10 @@ def test_kernel_pca_precomputed():
 
         X_kpca_train2 = (
             KernelPCA(
-                4, eigen_solver=eigen_solver, kernel="precomputed", random_state=0
+                4,
+                eigen_solver=eigen_solver,
+                kernel="precomputed",
+                random_state=0,
             )
             .fit(np.dot(X_fit, X_fit.T))
             .transform(np.dot(X_fit, X_fit.T))
@@ -297,14 +316,20 @@ def test_kernel_pca_precomputed_non_symmetric(solver):
     # a non symmetric gram matrix
     K = [[1, 2], [3, 40]]
     kpca = KernelPCA(
-        kernel="precomputed", eigen_solver=solver, n_components=1, random_state=0
+        kernel="precomputed",
+        eigen_solver=solver,
+        n_components=1,
+        random_state=0,
     )
     kpca.fit(K)  # no error
 
     # same test with centered kernel
     Kc = [[9, -9], [-9, 9]]
     kpca_c = KernelPCA(
-        kernel="precomputed", eigen_solver=solver, n_components=1, random_state=0
+        kernel="precomputed",
+        eigen_solver=solver,
+        n_components=1,
+        random_state=0,
     )
     kpca_c.fit(Kc)
 
@@ -333,7 +358,9 @@ def test_gridsearch_pipeline():
     """
     X, y = make_circles(n_samples=400, factor=0.3, noise=0.05, random_state=0)
     kpca = KernelPCA(kernel="rbf", n_components=2)
-    pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron(max_iter=5))])
+    pipeline = Pipeline(
+        [("kernel_pca", kpca), ("Perceptron", Perceptron(max_iter=5))]
+    )
     param_grid = dict(kernel_pca__gamma=2.0 ** np.arange(-2, 2))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     grid_search.fit(X, y)
@@ -348,7 +375,9 @@ def test_gridsearch_pipeline_precomputed():
     """
     X, y = make_circles(n_samples=400, factor=0.3, noise=0.05, random_state=0)
     kpca = KernelPCA(kernel="precomputed", n_components=2)
-    pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron(max_iter=5))])
+    pipeline = Pipeline(
+        [("kernel_pca", kpca), ("Perceptron", Perceptron(max_iter=5))]
+    )
     param_grid = dict(Perceptron__max_iter=np.arange(1, 5))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     X_kernel = rbf_kernel(X, gamma=2.0)
@@ -392,7 +421,9 @@ def test_kernel_conditioning():
 
     # create a pathological X leading to small non-zero eigenvalue
     X = [[5, 1], [5 + 1e-8, 1e-8], [5 + 1e-8, 0]]
-    kpca = KernelPCA(kernel="linear", n_components=2, fit_inverse_transform=True)
+    kpca = KernelPCA(
+        kernel="linear", n_components=2, fit_inverse_transform=True
+    )
     kpca.fit(X)
 
     # check that the small non-zero eigenvalue was correctly set to zero
@@ -431,7 +462,9 @@ def test_precomputed_kernel_not_psd(solver):
     # 1. ask for enough components to get a significant negative one
     kpca = KernelPCA(kernel="precomputed", eigen_solver=solver, n_components=7)
     # make sure that the appropriate error is raised
-    with pytest.raises(ValueError, match="There are significant negative eigenvalues"):
+    with pytest.raises(
+        ValueError, match="There are significant negative eigenvalues"
+    ):
         kpca.fit(K)
 
     # 2. ask for a small enough n_components to get only positive ones
@@ -513,14 +546,20 @@ def test_32_64_decomposition_shape():
     https://github.com/scikit-learn/scikit-learn/issues/18146
     """
     X, y = make_blobs(
-        n_samples=30, centers=[[0, 0, 0], [1, 1, 1]], random_state=0, cluster_std=0.1
+        n_samples=30,
+        centers=[[0, 0, 0], [1, 1, 1]],
+        random_state=0,
+        cluster_std=0.1,
     )
     X = StandardScaler().fit_transform(X)
     X -= X.min()
 
     # Compare the shapes (corresponds to the number of non-zero eigenvalues)
     kpca = KernelPCA()
-    assert kpca.fit_transform(X).shape == kpca.fit_transform(X.astype(np.float32)).shape
+    assert (
+        kpca.fit_transform(X).shape
+        == kpca.fit_transform(X.astype(np.float32)).shape
+    )
 
 
 # TODO: Remove in 1.1

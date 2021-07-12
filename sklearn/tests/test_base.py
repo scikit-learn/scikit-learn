@@ -245,7 +245,9 @@ def test_is_classifier():
     assert is_classifier(svc)
     assert is_classifier(GridSearchCV(svc, {"C": [0.1, 1]}))
     assert is_classifier(Pipeline([("svc", svc)]))
-    assert is_classifier(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
+    assert is_classifier(
+        Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))])
+    )
 
 
 def test_set_params():
@@ -469,7 +471,10 @@ def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
         type(estimator).__module__ = "notsklearn"
 
         serialized = estimator.__getstate__()
-        assert serialized == {"_attribute_not_pickled": None, "attribute_pickled": 5}
+        assert serialized == {
+            "_attribute_not_pickled": None,
+            "attribute_pickled": 5,
+        }
 
         serialized["attribute_pickled"] = 4
         estimator.__setstate__(serialized)
@@ -600,7 +605,10 @@ def test_n_features_in_validation():
 
     assert est.n_features_in_ == 3
 
-    msg = "X does not contain any features, but MyEstimator is expecting 3 features"
+    msg = (
+        "X does not contain any features, but MyEstimator is expecting 3"
+        " features"
+    )
     with pytest.raises(ValueError, match=msg):
         est._check_n_features("invalid X", reset=False)
 

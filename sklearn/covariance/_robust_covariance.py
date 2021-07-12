@@ -144,7 +144,9 @@ def _c_step(
         precision = linalg.pinvh(covariance)
 
     previous_det = np.inf
-    while det < previous_det and remaining_iterations > 0 and not np.isinf(det):
+    while (
+        det < previous_det and remaining_iterations > 0 and not np.isinf(det)
+    ):
         # save old estimates values
         previous_location = location
         previous_covariance = covariance
@@ -175,7 +177,8 @@ def _c_step(
         if verbose:
             print(
                 "Optimal couple (location, covariance) found before"
-                " ending iterations (%d left)" % (remaining_iterations)
+                " ending iterations (%d left)"
+                % (remaining_iterations)
             )
         results = location, covariance, det, support, dist
     elif det > previous_det:
@@ -304,7 +307,8 @@ def select_candidates(
         n_trials = estimates_list[0].shape[0]
     else:
         raise TypeError(
-            "Invalid 'n_trials' parameter, expected tuple or  integer, got %s (%s)"
+            "Invalid 'n_trials' parameter, expected tuple or  integer, got %s"
+            " (%s)"
             % (n_trials, type(n_trials))
         )
 
@@ -338,9 +342,13 @@ def select_candidates(
                     random_state=random_state,
                 )
             )
-    all_locs_sub, all_covs_sub, all_dets_sub, all_supports_sub, all_ds_sub = zip(
-        *all_estimates
-    )
+    (
+        all_locs_sub,
+        all_covs_sub,
+        all_dets_sub,
+        all_supports_sub,
+        all_ds_sub,
+    ) = zip(*all_estimates)
     # find the `n_best` best results among the `n_trials` ones
     index_best = np.argsort(all_dets_sub)[:select]
     best_locations = np.asarray(all_locs_sub)[index_best]
@@ -444,7 +452,9 @@ def fast_mcd(
             # take the middle points' mean to get the robust location estimate
             location = (
                 0.5
-                * (X_sorted[n_support + halves_start] + X_sorted[halves_start]).mean()
+                * (
+                    X_sorted[n_support + halves_start] + X_sorted[halves_start]
+                ).mean()
             )
             support = np.zeros(n_samples, dtype=bool)
             X_centered = X - location
@@ -469,7 +479,9 @@ def fast_mcd(
         n_subsets = n_samples // 300
         n_samples_subsets = n_samples // n_subsets
         samples_shuffle = random_state.permutation(n_samples)
-        h_subset = int(np.ceil(n_samples_subsets * (n_support / float(n_samples))))
+        h_subset = int(
+            np.ceil(n_samples_subsets * (n_support / float(n_samples)))
+        )
         # b. perform a total of 500 trials
         n_trials_tot = 500
         # c. select 10 best (location, covariance) for each subset
@@ -478,12 +490,16 @@ def fast_mcd(
         n_best_tot = n_subsets * n_best_sub
         all_best_locations = np.zeros((n_best_tot, n_features))
         try:
-            all_best_covariances = np.zeros((n_best_tot, n_features, n_features))
+            all_best_covariances = np.zeros(
+                (n_best_tot, n_features, n_features)
+            )
         except MemoryError:
             # The above is too big. Let's try with something much small
             # (and less optimal)
             n_best_tot = 10
-            all_best_covariances = np.zeros((n_best_tot, n_features, n_features))
+            all_best_covariances = np.zeros(
+                (n_best_tot, n_features, n_features)
+            )
             n_best_sub = 2
         for i in range(n_subsets):
             low_bound = i * n_samples_subsets
@@ -504,14 +520,21 @@ def fast_mcd(
         # 2. Pool the candidate supports into a merged set
         # (possibly the full dataset)
         n_samples_merged = min(1500, n_samples)
-        h_merged = int(np.ceil(n_samples_merged * (n_support / float(n_samples))))
+        h_merged = int(
+            np.ceil(n_samples_merged * (n_support / float(n_samples)))
+        )
         if n_samples > 1500:
             n_best_merged = 10
         else:
             n_best_merged = 1
         # find the best couples (location, covariance) on the merged set
         selection = random_state.permutation(n_samples)[:n_samples_merged]
-        locations_merged, covariances_merged, supports_merged, d = select_candidates(
+        (
+            locations_merged,
+            covariances_merged,
+            supports_merged,
+            d,
+        ) = select_candidates(
             X[selection],
             h_merged,
             n_trials=(all_best_locations, all_best_covariances),
@@ -530,7 +553,12 @@ def fast_mcd(
             dist[selection] = d[0]
         else:
             # select the best couple on the full dataset
-            locations_full, covariances_full, supports_full, d = select_candidates(
+            (
+                locations_full,
+                covariances_full,
+                supports_full,
+                d,
+            ) = select_candidates(
                 X,
                 n_support,
                 n_trials=(locations_merged, covariances_merged),
@@ -716,7 +744,8 @@ class MinCovDet(EmpiricalCovariance):
         # check that the empirical covariance is full rank
         if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
             warnings.warn(
-                "The covariance matrix associated to your dataset is not full rank"
+                "The covariance matrix associated to your dataset is not full"
+                " rank"
             )
         # compute and store raw estimates
         raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(
@@ -835,5 +864,7 @@ class MinCovDet(EmpiricalCovariance):
         self.location_ = location_reweighted
         self.support_ = support_reweighted
         X_centered = data - self.location_
-        self.dist_ = np.sum(np.dot(X_centered, self.get_precision()) * X_centered, 1)
+        self.dist_ = np.sum(
+            np.dot(X_centered, self.get_precision()) * X_centered, 1
+        )
         return location_reweighted, covariance_reweighted, support_reweighted

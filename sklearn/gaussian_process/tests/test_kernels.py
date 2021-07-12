@@ -86,7 +86,9 @@ def test_kernel_gradient(kernel):
         K = kernel_clone(X, eval_gradient=False)
         return K
 
-    K_gradient_approx = _approx_fprime(kernel.theta, eval_kernel_for_theta, 1e-10)
+    K_gradient_approx = _approx_fprime(
+        kernel.theta, eval_kernel_for_theta, 1e-10
+    )
 
     assert_almost_equal(K_gradient, K_gradient_approx, 4)
 
@@ -98,7 +100,8 @@ def test_kernel_gradient(kernel):
         for kernel in kernels
         # skip non-basic kernels
         if not (
-            isinstance(kernel, KernelOperator) or isinstance(kernel, Exponentiation)
+            isinstance(kernel, KernelOperator)
+            or isinstance(kernel, Exponentiation)
         )
     ],
 )
@@ -111,11 +114,12 @@ def test_kernel_theta(kernel):
     init_sign = signature(kernel.__class__.__init__).parameters.values()
     args = [p.name for p in init_sign if p.name != "self"]
     theta_vars = map(
-        lambda s: s[0 : -len("_bounds")], filter(lambda s: s.endswith("_bounds"), args)
+        lambda s: s[0 : -len("_bounds")],
+        filter(lambda s: s.endswith("_bounds"), args),
     )
-    assert set(hyperparameter.name for hyperparameter in kernel.hyperparameters) == set(
-        theta_vars
-    )
+    assert set(
+        hyperparameter.name for hyperparameter in kernel.hyperparameters
+    ) == set(theta_vars)
 
     # Check that values returned in theta are consistent with
     # hyperparameter values (being their logarithms)
@@ -139,7 +143,9 @@ def test_kernel_theta(kernel):
             assert_array_equal(K_gradient[..., :i], K_gradient_new[..., :i])
         if i + 1 < len(kernel.hyperparameters):
             assert theta[i + 1 :] == new_kernel.theta[i:]
-            assert_array_equal(K_gradient[..., i + 1 :], K_gradient_new[..., i:])
+            assert_array_equal(
+                K_gradient[..., i + 1 :], K_gradient_new[..., i:]
+            )
 
     # Check that values of theta are modified correctly
     for i, hyperparameter in enumerate(kernel.hyperparameters):
@@ -218,7 +224,9 @@ def test_kernel_stationary(kernel):
 def test_kernel_input_type(kernel):
     # Test whether kernels is for vectors or structured data
     if isinstance(kernel, Exponentiation):
-        assert kernel.requires_vector_input == kernel.kernel.requires_vector_input
+        assert (
+            kernel.requires_vector_input == kernel.kernel.requires_vector_input
+        )
     if isinstance(kernel, KernelOperator):
         assert kernel.requires_vector_input == (
             kernel.k1.requires_vector_input or kernel.k2.requires_vector_input
@@ -229,7 +237,9 @@ def test_compound_kernel_input_type():
     kernel = CompoundKernel([WhiteKernel(noise_level=3.0)])
     assert not kernel.requires_vector_input
 
-    kernel = CompoundKernel([WhiteKernel(noise_level=3.0), RBF(length_scale=2.0)])
+    kernel = CompoundKernel(
+        [WhiteKernel(noise_level=3.0), RBF(length_scale=2.0)]
+    )
     assert kernel.requires_vector_input
 
 
@@ -349,7 +359,8 @@ def test_set_get_params(kernel):
         size = hyperparameter.n_elements
         if size > 1:  # anisotropic kernels
             assert_almost_equal(
-                np.exp(kernel.theta[index : index + size]), params[hyperparameter.name]
+                np.exp(kernel.theta[index : index + size]),
+                params[hyperparameter.name],
             )
             index += size
         else:

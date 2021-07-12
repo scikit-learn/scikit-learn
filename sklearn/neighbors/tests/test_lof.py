@@ -43,7 +43,9 @@ def test_lof():
     assert np.min(score[:-2]) > np.max(score[-2:])
 
     # Assert predict() works:
-    clf = neighbors.LocalOutlierFactor(contamination=0.25, n_neighbors=5).fit(X)
+    clf = neighbors.LocalOutlierFactor(contamination=0.25, n_neighbors=5).fit(
+        X
+    )
     assert_array_equal(clf._predict(), 6 * [1] + 2 * [-1])
     assert_array_equal(clf.fit_predict(X), 6 * [1] + 2 * [-1])
 
@@ -75,9 +77,13 @@ def test_lof_values():
     clf1 = neighbors.LocalOutlierFactor(
         n_neighbors=2, contamination=0.1, novelty=True
     ).fit(X_train)
-    clf2 = neighbors.LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
+    clf2 = neighbors.LocalOutlierFactor(n_neighbors=2, novelty=True).fit(
+        X_train
+    )
     s_0 = 2.0 * sqrt(2.0) / (1.0 + sqrt(2.0))
-    s_1 = (1.0 + sqrt(2)) * (1.0 / (4.0 * sqrt(2.0)) + 1.0 / (2.0 + 2.0 * sqrt(2)))
+    s_1 = (1.0 + sqrt(2)) * (
+        1.0 / (4.0 * sqrt(2.0)) + 1.0 / (2.0 + 2.0 * sqrt(2))
+    )
     # check predict()
     assert_array_almost_equal(-clf1.negative_outlier_factor_, [s_0, s_1, s_1])
     assert_array_almost_equal(-clf2.negative_outlier_factor_, [s_0, s_1, s_1])
@@ -132,7 +138,9 @@ def test_score_samples():
     clf1 = neighbors.LocalOutlierFactor(
         n_neighbors=2, contamination=0.1, novelty=True
     ).fit(X_train)
-    clf2 = neighbors.LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
+    clf2 = neighbors.LocalOutlierFactor(n_neighbors=2, novelty=True).fit(
+        X_train
+    )
     assert_array_equal(
         clf1.score_samples([[2.0, 2.0]]),
         clf1.decision_function([[2.0, 2.0]]) + clf1.offset_,

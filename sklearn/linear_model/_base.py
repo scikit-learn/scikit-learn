@@ -26,7 +26,12 @@ from scipy import sparse
 from scipy.special import expit
 from joblib import Parallel
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+    MultiOutputMixin,
+)
 from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
@@ -116,7 +121,9 @@ def _deprecate_normalize(normalize, default, estimator_name):
     if estimator_name == "Ridge" or estimator_name == "RidgeClassifier":
         alpha_msg = "Set parameter alpha to: original_alpha * n_samples. "
     elif "Lasso" in estimator_name:
-        alpha_msg = "Set parameter alpha to: original_alpha * np.sqrt(n_samples). "
+        alpha_msg = (
+            "Set parameter alpha to: original_alpha * np.sqrt(n_samples). "
+        )
     elif "ElasticNet" in estimator_name:
         alpha_msg = (
             "Set parameter alpha to original_alpha * np.sqrt(n_samples) if "
@@ -139,7 +146,8 @@ def _deprecate_normalize(normalize, default, estimator_name):
         )
     elif normalize != "deprecated" and normalize and not default:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0 and will be removed in 1.2.\n"
+            "'normalize' was deprecated in version 1.0 and will be removed in"
+            " 1.2.\n"
             + pipeline_msg
             + alpha_msg,
             FutureWarning,
@@ -200,7 +208,9 @@ def make_dataset(X, y, sample_weight, random_state=None):
         ArrayData = ArrayDataset64
 
     if sp.issparse(X):
-        dataset = CSRData(X.data, X.indptr, X.indices, y, sample_weight, seed=seed)
+        dataset = CSRData(
+            X.data, X.indptr, X.indices, y, sample_weight, seed=seed
+        )
         intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
         X = np.ascontiguousarray(X)
@@ -244,7 +254,9 @@ def _preprocess_data(
         sample_weight = np.asarray(sample_weight)
 
     if check_input:
-        X = check_array(X, copy=copy, accept_sparse=["csr", "csc"], dtype=FLOAT_DTYPES)
+        X = check_array(
+            X, copy=copy, accept_sparse=["csr", "csc"], dtype=FLOAT_DTYPES
+        )
     elif copy:
         if sp.issparse(X):
             X = X.copy()
@@ -255,7 +267,9 @@ def _preprocess_data(
 
     if fit_intercept:
         if sp.issparse(X):
-            X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
+            X_offset, X_var = mean_variance_axis(
+                X, axis=0, weights=sample_weight
+            )
             if not return_mean:
                 X_offset[:] = X.dtype.type(0)
         else:
@@ -324,9 +338,13 @@ def _rescale_data(X, y, sample_weight):
     n_samples = X.shape[0]
     sample_weight = np.asarray(sample_weight)
     if sample_weight.ndim == 0:
-        sample_weight = np.full(n_samples, sample_weight, dtype=sample_weight.dtype)
+        sample_weight = np.full(
+            n_samples, sample_weight, dtype=sample_weight.dtype
+        )
     sample_weight = np.sqrt(sample_weight)
-    sw_matrix = sparse.dia_matrix((sample_weight, 0), shape=(n_samples, n_samples))
+    sw_matrix = sparse.dia_matrix(
+        (sample_weight, 0), shape=(n_samples, n_samples)
+    )
     X = safe_sparse_dot(sw_matrix, X)
     y = safe_sparse_dot(sw_matrix, y)
     return X, y
@@ -342,8 +360,13 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
     def _decision_function(self, X):
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
-        return safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        X = self._validate_data(
+            X, accept_sparse=["csr", "csc", "coo"], reset=False
+        )
+        return (
+            safe_sparse_dot(X, self.coef_.T, dense_output=True)
+            + self.intercept_
+        )
 
     def predict(self, X):
         """
@@ -405,7 +428,10 @@ class LinearClassifierMixin(ClassifierMixin):
         check_is_fitted(self)
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
-        scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        scores = (
+            safe_sparse_dot(X, self.coef_.T, dense_output=True)
+            + self.intercept_
+        )
         return scores.ravel() if scores.shape[1] == 1 else scores
 
     def predict(self, X):
@@ -645,7 +671,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         """
 
         _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
+            self.normalize,
+            default=False,
+            estimator_name=self.__class__.__name__,
         )
 
         n_jobs_ = self.n_jobs
@@ -653,11 +681,17 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         accept_sparse = False if self.positive else ["csr", "csc", "coo"]
 
         X, y = self._validate_data(
-            X, y, accept_sparse=accept_sparse, y_numeric=True, multi_output=True
+            X,
+            y,
+            accept_sparse=accept_sparse,
+            y_numeric=True,
+            multi_output=True,
         )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype
+            )
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X,
@@ -679,7 +713,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(optimize.nnls)(X, y[:, j]) for j in range(y.shape[1])
+                    delayed(optimize.nnls)(X, y[:, j])
+                    for j in range(y.shape[1])
                 )
                 self.coef_, self._residues = map(np.vstack, zip(*outs))
         elif sp.issparse(X):
@@ -708,7 +743,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 self.coef_ = np.vstack([out[0] for out in outs])
                 self._residues = np.vstack([out[3] for out in outs])
         else:
-            self.coef_, self._residues, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            (
+                self.coef_,
+                self._residues,
+                self.rank_,
+                self.singular_,
+            ) = linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:
@@ -848,7 +888,9 @@ def _pre_fit(
 
     if precompute is True:
         # make sure that the 'precompute' array is contiguous.
-        precompute = np.empty(shape=(n_features, n_features), dtype=X.dtype, order="C")
+        precompute = np.empty(
+            shape=(n_features, n_features), dtype=X.dtype, order="C"
+        )
         np.dot(X.T, X, out=precompute)
 
     if not hasattr(precompute, "__array__"):
@@ -865,7 +907,9 @@ def _pre_fit(
             # contiguous: the goal is to make it fast to extract the data for a
             # specific target.
             n_targets = y.shape[1]
-            Xy = np.empty(shape=(n_features, n_targets), dtype=common_dtype, order="F")
+            Xy = np.empty(
+                shape=(n_features, n_targets), dtype=common_dtype, order="F"
+            )
             np.dot(y.T, X, out=Xy.T)
 
     return X, y, X_offset, y_offset, X_scale, precompute, Xy

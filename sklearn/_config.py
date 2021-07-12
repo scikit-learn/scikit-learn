@@ -40,7 +40,10 @@ def get_config():
 
 
 def set_config(
-    assume_finite=None, working_memory=None, print_changed_only=None, display=None
+    assume_finite=None,
+    working_memory=None,
+    print_changed_only=None,
+    display=None,
 ):
     """Set global scikit-learn configuration
 

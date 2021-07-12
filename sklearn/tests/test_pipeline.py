@@ -304,7 +304,9 @@ def test_pipeline_sample_weight_unsupported():
     assert pipe.score(X) == 3
     assert pipe.score(X, sample_weight=None) == 3
 
-    msg = re.escape("score() got an unexpected keyword argument 'sample_weight'")
+    msg = re.escape(
+        "score() got an unexpected keyword argument 'sample_weight'"
+    )
     with pytest.raises(TypeError, match=msg):
         pipe.score(X, sample_weight=np.array([2, 3]))
 
@@ -419,7 +421,9 @@ def test_fit_predict_on_pipeline():
     separate_pred = km.fit_predict(scaled)
 
     # use a pipeline to do the transform and clustering in one step
-    pipe = Pipeline([("scaler", scaler_for_pipeline), ("Kmeans", km_for_pipeline)])
+    pipe = Pipeline(
+        [("scaler", scaler_for_pipeline), ("Kmeans", km_for_pipeline)]
+    )
     pipeline_pred = pipe.fit_predict(iris.data)
 
     assert_array_almost_equal(pipeline_pred, separate_pred)
@@ -477,7 +481,9 @@ def test_feature_union():
 
     # check if it does the expected thing
     assert_array_almost_equal(X_transformed[:, :-1], svd.fit_transform(X))
-    assert_array_equal(X_transformed[:, -1], select.fit_transform(X, y).ravel())
+    assert_array_equal(
+        X_transformed[:, -1], select.fit_transform(X, y).ravel()
+    )
 
     # test if it also works for sparse input
     # We use a different svd object to control the random_state stream
@@ -567,7 +573,8 @@ def test_pipeline_fit_transform():
 
 
 @pytest.mark.parametrize(
-    "start, end", [(0, 1), (0, 2), (1, 2), (1, 3), (None, 1), (1, None), (None, None)]
+    "start, end",
+    [(0, 1), (0, 2), (1, 2), (1, 3), (None, 1), (1, None), (None, None)],
 )
 def test_pipeline_slice(start, end):
     pipe = Pipeline(
@@ -638,7 +645,8 @@ def test_set_pipeline_steps():
     # With invalid data
     pipeline.set_params(steps=[("junk", ())])
     msg = re.escape(
-        "Last step of Pipeline should implement fit or be the string 'passthrough'."
+        "Last step of Pipeline should implement fit or be the string"
+        " 'passthrough'."
     )
     with pytest.raises(TypeError, match=msg):
         pipeline.fit([[1]], [1])
@@ -829,9 +837,15 @@ def test_feature_union_weights():
 
     # We use a different pca object to control the random_state stream
     assert_array_almost_equal(X_transformed[:, :-1], 10 * pca.fit_transform(X))
-    assert_array_equal(X_transformed[:, -1], select.fit_transform(X, y).ravel())
-    assert_array_almost_equal(X_fit_transformed[:, :-1], 10 * pca.fit_transform(X))
-    assert_array_equal(X_fit_transformed[:, -1], select.fit_transform(X, y).ravel())
+    assert_array_equal(
+        X_transformed[:, -1], select.fit_transform(X, y).ravel()
+    )
+    assert_array_almost_equal(
+        X_fit_transformed[:, :-1], 10 * pca.fit_transform(X)
+    )
+    assert_array_equal(
+        X_fit_transformed[:, -1], select.fit_transform(X, y).ravel()
+    )
     assert X_fit_transformed_wo_method.shape == (X.shape[0], 7)
 
 
@@ -869,15 +883,21 @@ def test_feature_union_parallel():
     fs_parallel.fit(X)
     X_transformed_parallel = fs_parallel.transform(X)
     assert X_transformed.shape == X_transformed_parallel.shape
-    assert_array_equal(X_transformed.toarray(), X_transformed_parallel.toarray())
+    assert_array_equal(
+        X_transformed.toarray(), X_transformed_parallel.toarray()
+    )
 
     # fit_transform should behave the same
     X_transformed_parallel2 = fs_parallel2.fit_transform(X)
-    assert_array_equal(X_transformed.toarray(), X_transformed_parallel2.toarray())
+    assert_array_equal(
+        X_transformed.toarray(), X_transformed_parallel2.toarray()
+    )
 
     # transformers should stay fit after fit_transform
     X_transformed_parallel2 = fs_parallel2.transform(X)
-    assert_array_equal(X_transformed.toarray(), X_transformed_parallel2.toarray())
+    assert_array_equal(
+        X_transformed.toarray(), X_transformed_parallel2.toarray()
+    )
 
 
 def test_feature_union_feature_names():
@@ -892,7 +912,9 @@ def test_feature_union_feature_names():
 
     ft = FeatureUnion([("tr1", Transf())]).fit([[1]])
 
-    msg = re.escape("Transformer tr1 (type Transf) does not provide get_feature_names")
+    msg = re.escape(
+        "Transformer tr1 (type Transf) does not provide get_feature_names"
+    )
     with pytest.raises(AttributeError, match=msg):
         ft.get_feature_names()
 
@@ -985,10 +1007,15 @@ def test_set_feature_union_step_drop():
 def test_step_name_validation():
     error_message_1 = r"Estimator names must not contain __: got \['a__q'\]"
     error_message_2 = r"Names provided are not unique: \['a', 'a'\]"
-    error_message_3 = r"Estimator names conflict with constructor arguments: \['%s'\]"
+    error_message_3 = (
+        r"Estimator names conflict with constructor arguments: \['%s'\]"
+    )
     bad_steps1 = [("a__q", Mult(2)), ("b", Mult(3))]
     bad_steps2 = [("a", Mult(2)), ("a", Mult(3))]
-    for cls, param in [(Pipeline, "steps"), (FeatureUnion, "transformer_list")]:
+    for cls, param in [
+        (Pipeline, "steps"),
+        (FeatureUnion, "transformer_list"),
+    ]:
         # we validate in construction (despite scikit-learn convention)
         bad_steps3 = [("a", Mult(2)), (param, Mult(3))]
         for bad_steps, message in [
@@ -1033,7 +1060,9 @@ def test_pipeline_wrong_memory():
     y = iris.target
     # Define memory as an integer
     memory = 1
-    cached_pipe = Pipeline([("transf", DummyTransf()), ("svc", SVC())], memory=memory)
+    cached_pipe = Pipeline(
+        [("transf", DummyTransf()), ("svc", SVC())], memory=memory
+    )
 
     msg = re.escape(
         "'memory' should be None, a string or have the same interface "
@@ -1054,7 +1083,9 @@ class WrongDummyMemory:
 
 def test_pipeline_with_cache_attribute():
     X = np.array([[1, 2]])
-    pipe = Pipeline([("transf", Transf()), ("clf", Mult())], memory=DummyMemory())
+    pipe = Pipeline(
+        [("transf", Transf()), ("clf", Mult())], memory=DummyMemory()
+    )
     pipe.fit(X, y=None)
     dummy = WrongDummyMemory()
     pipe = Pipeline([("transf", Transf()), ("clf", Mult())], memory=dummy)
@@ -1080,7 +1111,9 @@ def test_pipeline_memory():
         clf = SVC(probability=True, random_state=0)
         transf = DummyTransf()
         pipe = Pipeline([("transf", clone(transf)), ("svc", clf)])
-        cached_pipe = Pipeline([("transf", transf), ("svc", clf)], memory=memory)
+        cached_pipe = Pipeline(
+            [("transf", transf), ("svc", clf)], memory=memory
+        )
 
         # Memoize the transformer at the first fit
         cached_pipe.fit(X, y)
@@ -1090,10 +1123,13 @@ def test_pipeline_memory():
         # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
         assert_array_equal(pipe.predict_proba(X), cached_pipe.predict_proba(X))
-        assert_array_equal(pipe.predict_log_proba(X), cached_pipe.predict_log_proba(X))
+        assert_array_equal(
+            pipe.predict_log_proba(X), cached_pipe.predict_log_proba(X)
+        )
         assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
         assert_array_equal(
-            pipe.named_steps["transf"].means_, cached_pipe.named_steps["transf"].means_
+            pipe.named_steps["transf"].means_,
+            cached_pipe.named_steps["transf"].means_,
         )
         assert not hasattr(transf, "means_")
         # Check that we are reading the cache while fitting
@@ -1102,10 +1138,13 @@ def test_pipeline_memory():
         # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
         assert_array_equal(pipe.predict_proba(X), cached_pipe.predict_proba(X))
-        assert_array_equal(pipe.predict_log_proba(X), cached_pipe.predict_log_proba(X))
+        assert_array_equal(
+            pipe.predict_log_proba(X), cached_pipe.predict_log_proba(X)
+        )
         assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
         assert_array_equal(
-            pipe.named_steps["transf"].means_, cached_pipe.named_steps["transf"].means_
+            pipe.named_steps["transf"].means_,
+            cached_pipe.named_steps["transf"].means_,
         )
         assert ts == cached_pipe.named_steps["transf"].timestamp_
         # Create a new pipeline with cloned estimators
@@ -1119,7 +1158,9 @@ def test_pipeline_memory():
 
         # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe_2.predict(X))
-        assert_array_equal(pipe.predict_proba(X), cached_pipe_2.predict_proba(X))
+        assert_array_equal(
+            pipe.predict_proba(X), cached_pipe_2.predict_proba(X)
+        )
         assert_array_equal(
             pipe.predict_log_proba(X), cached_pipe_2.predict_log_proba(X)
         )
@@ -1152,7 +1193,8 @@ def test_make_pipeline_memory():
 def test_pipeline_param_error():
     clf = make_pipeline(LogisticRegression())
     with pytest.raises(
-        ValueError, match="Pipeline.fit does not accept the sample_weight parameter"
+        ValueError,
+        match="Pipeline.fit does not accept the sample_weight parameter",
     ):
         clf.fit([[0], [0]], [0, 1], sample_weight=[1, 1])
 
@@ -1167,7 +1209,13 @@ parameter_grid_test_verbose = (
                 r"\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$",
             ),
             (
-                Pipeline([("transf", Transf()), ("noop", None), ("clf", FitParamT())]),
+                Pipeline(
+                    [
+                        ("transf", Transf()),
+                        ("noop", None),
+                        ("clf", FitParamT()),
+                    ]
+                ),
                 r"\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n"
                 r"\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n"
                 r"\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$",
@@ -1201,12 +1249,17 @@ parameter_grid_test_verbose = (
             ),
             (
                 FeatureUnion([("mult1", Mult()), ("mult2", Mult())]),
-                r"\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n"
-                r"\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$",
+                r"\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.*"
+                r" total=.*\n"
+                r"\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.*"
+                r" total=.*\n$",
             ),
             (
-                FeatureUnion([("mult1", "drop"), ("mult2", Mult()), ("mult3", "drop")]),
-                r"\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$",
+                FeatureUnion(
+                    [("mult1", "drop"), ("mult2", Mult()), ("mult3", "drop")]
+                ),
+                r"\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.*"
+                r" total=.*\n$",
             ),
         ],
         ["fit", "fit_transform", "fit_predict"],

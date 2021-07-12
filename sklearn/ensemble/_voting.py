@@ -52,7 +52,11 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         """Get the weights of not `None` estimators."""
         if self.weights is None:
             return None
-        return [w for est, w in zip(self.estimators, self.weights) if est[1] != "drop"]
+        return [
+            w
+            for est, w in zip(self.estimators, self.weights)
+            if est[1] != "drop"
+        ]
 
     def _predict(self, X):
         """Collect results from clf.predict calls."""
@@ -63,7 +67,9 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
 
-        if self.weights is not None and len(self.weights) != len(self.estimators):
+        if self.weights is not None and len(self.weights) != len(
+            self.estimators
+        ):
             raise ValueError(
                 "Number of `estimators` and weights must be equal"
                 "; got %d weights, %d estimators"
@@ -306,7 +312,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         if self.voting not in ("soft", "hard"):
             raise ValueError(
-                "Voting must be 'soft' or 'hard'; got (voting=%r)" % self.voting
+                "Voting must be 'soft' or 'hard'; got (voting=%r)"
+                % self.voting
             )
 
         self.le_ = LabelEncoder().fit(y)
@@ -335,7 +342,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         else:  # 'hard' voting
             predictions = self._predict(X)
             maj = np.apply_along_axis(
-                lambda x: np.argmax(np.bincount(x, weights=self._weights_not_none)),
+                lambda x: np.argmax(
+                    np.bincount(x, weights=self._weights_not_none)
+                ),
                 axis=1,
                 arr=predictions,
             )
@@ -485,7 +494,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     [ 3.3  5.7 11.8 19.7 28.  40.3]
     """
 
-    def __init__(self, estimators, *, weights=None, n_jobs=None, verbose=False):
+    def __init__(
+        self, estimators, *, weights=None, n_jobs=None, verbose=False
+    ):
         super().__init__(estimators=estimators)
         self.weights = weights
         self.n_jobs = n_jobs
@@ -533,7 +544,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             The predicted values.
         """
         check_is_fitted(self)
-        return np.average(self._predict(X), axis=1, weights=self._weights_not_none)
+        return np.average(
+            self._predict(X), axis=1, weights=self._weights_not_none
+        )
 
     def transform(self, X):
         """Return predictions for X for each estimator.

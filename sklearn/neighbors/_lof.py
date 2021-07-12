@@ -285,7 +285,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         if self.contamination != "auto":
             if not (0.0 < self.contamination <= 0.5):
                 raise ValueError(
-                    "contamination must be in (0, 0.5], got: %f" % self.contamination
+                    "contamination must be in (0, 0.5], got: %f"
+                    % self.contamination
                 )
 
         n_samples = self.n_samples_fit_
@@ -520,9 +521,13 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         distances_X, neighbors_indices_X = self.kneighbors(
             X, n_neighbors=self.n_neighbors_
         )
-        X_lrd = self._local_reachability_density(distances_X, neighbors_indices_X)
+        X_lrd = self._local_reachability_density(
+            distances_X, neighbors_indices_X
+        )
 
-        lrd_ratios_array = self._lrd[neighbors_indices_X] / X_lrd[:, np.newaxis]
+        lrd_ratios_array = (
+            self._lrd[neighbors_indices_X] / X_lrd[:, np.newaxis]
+        )
 
         # as bigger is better:
         return -np.mean(lrd_ratios_array, axis=1)
@@ -548,7 +553,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         local_reachability_density : ndarray of shape (n_queries,)
             The local reachability density of each sample.
         """
-        dist_k = self._distances_fit_X_[neighbors_indices, self.n_neighbors_ - 1]
+        dist_k = self._distances_fit_X_[
+            neighbors_indices, self.n_neighbors_ - 1
+        ]
         reach_dist_array = np.maximum(distances_X, dist_k)
 
         # 1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:

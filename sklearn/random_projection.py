@@ -120,7 +120,9 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     n_samples = np.asarray(n_samples)
 
     if np.any(eps <= 0.0) or np.any(eps >= 1):
-        raise ValueError("The JL bound is defined for eps in ]0, 1[, got %r" % eps)
+        raise ValueError(
+            "The JL bound is defined for eps in ]0, 1[, got %r" % eps
+        )
 
     if np.any(n_samples) <= 0:
         raise ValueError(
@@ -149,7 +151,9 @@ def _check_input_size(n_components, n_features):
             "n_components must be strictly positive, got %d" % n_components
         )
     if n_features <= 0:
-        raise ValueError("n_features must be strictly positive, got %d" % n_features)
+        raise ValueError(
+            "n_features must be strictly positive, got %d" % n_features
+        )
 
 
 def _gaussian_random_matrix(n_components, n_features, random_state=None):
@@ -187,12 +191,16 @@ def _gaussian_random_matrix(n_components, n_features, random_state=None):
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)
     components = rng.normal(
-        loc=0.0, scale=1.0 / np.sqrt(n_components), size=(n_components, n_features)
+        loc=0.0,
+        scale=1.0 / np.sqrt(n_components),
+        size=(n_components, n_features),
     )
     return components
 
 
-def _sparse_random_matrix(n_components, n_features, density="auto", random_state=None):
+def _sparse_random_matrix(
+    n_components, n_features, density="auto", random_state=None
+):
     """Generalized Achlioptas random sparse matrix for random projection.
 
     Setting density to 1 / 3 will yield the original matrix by Dimitris
@@ -299,7 +307,12 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(
-        self, n_components="auto", *, eps=0.1, dense_output=False, random_state=None
+        self,
+        n_components="auto",
+        *,
+        eps=0.1,
+        dense_output=False,
+        random_state=None,
     ):
         self.n_components = n_components
         self.eps = eps
@@ -356,7 +369,8 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             if self.n_components_ <= 0:
                 raise ValueError(
                     "eps=%f and n_samples=%d lead to a target dimension of "
-                    "%d which is invalid" % (self.eps, n_samples, self.n_components_)
+                    "%d which is invalid"
+                    % (self.eps, n_samples, self.n_components_)
                 )
 
             elif self.n_components_ > n_features:
@@ -369,7 +383,8 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             if self.n_components <= 0:
                 raise ValueError(
-                    "n_components must be greater than 0, got %s" % self.n_components
+                    "n_components must be greater than 0, got %s"
+                    % self.n_components
                 )
 
             elif self.n_components > n_features:
@@ -384,7 +399,9 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             self.n_components_ = self.n_components
 
         # Generate a projection matrix of size [n_components, n_features]
-        self.components_ = self._make_random_matrix(self.n_components_, n_features)
+        self.components_ = self._make_random_matrix(
+            self.n_components_, n_features
+        )
 
         # Check contract
         assert self.components_.shape == (self.n_components_, n_features), (
@@ -414,10 +431,13 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "Impossible to perform projection:"
                 "X at fit stage had a different number of features. "
-                "(%s != %s)" % (X.shape[1], self.components_.shape[1])
+                "(%s != %s)"
+                % (X.shape[1], self.components_.shape[1])
             )
 
-        X_new = safe_sparse_dot(X, self.components_.T, dense_output=self.dense_output)
+        X_new = safe_sparse_dot(
+            X, self.components_.T, dense_output=self.dense_output
+        )
         return X_new
 
 
@@ -674,5 +694,8 @@ class SparseRandomProjection(BaseRandomProjection):
         random_state = check_random_state(self.random_state)
         self.density_ = _check_density(self.density, n_features)
         return _sparse_random_matrix(
-            n_components, n_features, density=self.density_, random_state=random_state
+            n_components,
+            n_features,
+            density=self.density_,
+            random_state=random_state,
         )

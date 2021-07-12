@@ -14,7 +14,11 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import fails_if_pypy
 
 import sklearn
-from sklearn.datasets import load_svmlight_file, load_svmlight_files, dump_svmlight_file
+from sklearn.datasets import (
+    load_svmlight_file,
+    load_svmlight_files,
+    dump_svmlight_file,
+)
 
 currdir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
@@ -88,7 +92,9 @@ def test_load_svmlight_files():
     assert X_train.dtype == np.float32
     assert X_test.dtype == np.float32
 
-    X1, y1, X2, y2, X3, y3 = load_svmlight_files([datafile] * 3, dtype=np.float64)
+    X1, y1, X2, y2, X3, y3 = load_svmlight_files(
+        [datafile] * 3, dtype=np.float64
+    )
     assert X1.dtype == X2.dtype
     assert X2.dtype == X3.dtype
     assert X3.dtype == np.float64
@@ -185,11 +191,14 @@ def test_load_with_qid():
     for X, y, qid in (res1, res2):
         assert_array_equal(y, [3, 2, 7])
         assert_array_equal(qid, [1, 1, 2])
-        assert_array_equal(X.toarray(), [[0.53, 0.12], [0.13, 0.1], [0.87, 0.12]])
+        assert_array_equal(
+            X.toarray(), [[0.53, 0.12], [0.13, 0.1], [0.87, 0.12]]
+        )
 
 
 @pytest.mark.skip(
-    "testing the overflow of 32 bit sparse indexing requires a large amount of memory"
+    "testing the overflow of 32 bit sparse indexing requires a large amount of"
+    " memory"
 )
 def test_load_large_qid():
     """
@@ -197,7 +206,9 @@ def test_load_large_qid():
     """
     data = b"\n".join(
         (
-            "3 qid:{0} 1:0.53 2:0.12\n2 qid:{0} 1:0.13 2:0.1".format(i).encode()
+            "3 qid:{0} 1:0.53 2:0.12\n2 qid:{0} 1:0.13 2:0.1".format(
+                i
+            ).encode()
             for i in range(1, 40 * 1000 * 1000)
         )
     )
@@ -268,7 +279,9 @@ def test_dump():
 
                     assert ["one", "zero"][zero_based] + "-based" in comment
 
-                    X2, y2 = load_svmlight_file(f, dtype=dtype, zero_based=zero_based)
+                    X2, y2 = load_svmlight_file(
+                        f, dtype=dtype, zero_based=zero_based
+                    )
                     assert X2.dtype == dtype
                     assert_array_equal(X2.sorted_indices().indices, X2.indices)
 

@@ -38,7 +38,9 @@ def test_permutation_importance_correlated_feature_regression(n_jobs):
     n_repeats = 5
 
     X, y = load_diabetes(return_X_y=True)
-    y_with_little_noise = (y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
+    y_with_little_noise = (
+        y + rng.normal(scale=0.001, size=y.shape[0])
+    ).reshape(-1, 1)
 
     X = np.hstack([X, y_with_little_noise])
 
@@ -67,7 +69,9 @@ def test_permutation_importance_correlated_feature_regression_pandas(n_jobs):
 
     dataset = load_iris()
     X, y = dataset.data, dataset.target
-    y_with_little_noise = (y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
+    y_with_little_noise = (
+        y + rng.normal(scale=0.001, size=y.shape[0])
+    ).reshape(-1, 1)
 
     # Adds feature correlated with y as the last column
     X = pd.DataFrame(X, columns=dataset.feature_names)
@@ -105,7 +109,9 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, seed=42):
     # while leaving some classes unexplained to make the problem harder.
     classes = np.arange(n_classes)
     y = rng.choice(classes, size=n_samples)
-    X = np.hstack([(y == c).reshape(-1, 1) for c in classes[:n_informative_features]])
+    X = np.hstack(
+        [(y == c).reshape(-1, 1) for c in classes[:n_informative_features]]
+    )
     X = X.astype(np.float32)
 
     # Not all target classes are explained by the binary class indicator
@@ -137,7 +143,12 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, seed=42):
     # Let's check that permutation-based feature importances do not have this
     # problem.
     r = permutation_importance(
-        clf, X_test, y_test, n_repeats=n_repeats, random_state=rng, n_jobs=n_jobs
+        clf,
+        X_test,
+        y_test,
+        n_repeats=n_repeats,
+        random_state=rng,
+        n_jobs=n_jobs,
     )
 
     assert r.importances.shape == (X.shape[1], n_repeats)
@@ -171,7 +182,9 @@ def test_permutation_importance_mixed_types():
 
     clf = make_pipeline(SimpleImputer(), LogisticRegression(solver="lbfgs"))
     clf.fit(X, y)
-    result = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
+    result = permutation_importance(
+        clf, X, y, n_repeats=n_repeats, random_state=rng
+    )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
 
@@ -181,7 +194,9 @@ def test_permutation_importance_mixed_types():
 
     # use another random state
     rng = np.random.RandomState(0)
-    result2 = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
+    result2 = permutation_importance(
+        clf, X, y, n_repeats=n_repeats, random_state=rng
+    )
     assert result2.importances.shape == (X.shape[1], n_repeats)
 
     assert not np.allclose(result.importances, result2.importances)
@@ -197,7 +212,9 @@ def test_permutation_importance_mixed_types_pandas():
     n_repeats = 5
 
     # Last column is correlated with y
-    X = pd.DataFrame({"col1": [1.0, 2.0, 3.0, np.nan], "col2": ["a", "b", "a", "b"]})
+    X = pd.DataFrame(
+        {"col1": [1.0, 2.0, 3.0, np.nan], "col2": ["a", "b", "a", "b"]}
+    )
     y = np.array([0, 1, 0, 1])
 
     num_preprocess = make_pipeline(SimpleImputer(), StandardScaler())
@@ -207,7 +224,9 @@ def test_permutation_importance_mixed_types_pandas():
     clf = make_pipeline(preprocess, LogisticRegression(solver="lbfgs"))
     clf.fit(X, y)
 
-    result = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
+    result = permutation_importance(
+        clf, X, y, n_repeats=n_repeats, random_state=rng
+    )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
     # the correlated feature with y is the last column and should
@@ -259,7 +278,8 @@ def test_permutation_importance_equivalence_sequential_parallel():
         lr, X, y, n_repeats=5, random_state=0, n_jobs=2
     )
     assert_allclose(
-        importance_processes["importances"], importance_sequential["importances"]
+        importance_processes["importances"],
+        importance_sequential["importances"],
     )
 
     # thread-based parallelism:
@@ -268,7 +288,8 @@ def test_permutation_importance_equivalence_sequential_parallel():
             lr, X, y, n_repeats=5, random_state=0, n_jobs=2
         )
     assert_allclose(
-        importance_threading["importances"], importance_sequential["importances"]
+        importance_threading["importances"],
+        importance_sequential["importances"],
     )
 
 
@@ -374,7 +395,12 @@ def test_permutation_importance_sample_weight():
     # the two features importance should equal to 1 on expectation (when using
     # mean absolutes error as the loss function).
     pi = permutation_importance(
-        lr, x, y, random_state=1, scoring="neg_mean_absolute_error", n_repeats=200
+        lr,
+        x,
+        y,
+        random_state=1,
+        scoring="neg_mean_absolute_error",
+        n_repeats=200,
     )
     x1_x2_imp_ratio_w_none = pi.importances_mean[0] / pi.importances_mean[1]
     assert x1_x2_imp_ratio_w_none == pytest.approx(1, 0.01)
@@ -392,7 +418,9 @@ def test_permutation_importance_sample_weight():
         sample_weight=w,
     )
     x1_x2_imp_ratio_w_ones = pi.importances_mean[0] / pi.importances_mean[1]
-    assert x1_x2_imp_ratio_w_ones == pytest.approx(x1_x2_imp_ratio_w_none, 0.01)
+    assert x1_x2_imp_ratio_w_ones == pytest.approx(
+        x1_x2_imp_ratio_w_none, 0.01
+    )
 
     # When the ratio between the weights of the first half of the samples and
     # the second half of the samples approaches to infinity, the ratio of
@@ -430,7 +458,9 @@ def test_permutation_importance_no_weights_scoring_function():
     # test that permutation_importance does not return error when
     # sample_weight is None
     try:
-        permutation_importance(lr, x, y, random_state=1, scoring=my_scorer, n_repeats=1)
+        permutation_importance(
+            lr, x, y, random_state=1, scoring=my_scorer, n_repeats=1
+        )
     except TypeError:
         pytest.fail(
             "permutation_test raised an error when using a scorer "
@@ -442,7 +472,13 @@ def test_permutation_importance_no_weights_scoring_function():
     # not None
     with pytest.raises(TypeError):
         permutation_importance(
-            lr, x, y, random_state=1, scoring=my_scorer, n_repeats=1, sample_weight=w
+            lr,
+            x,
+            y,
+            random_state=1,
+            scoring=my_scorer,
+            n_repeats=1,
+            sample_weight=w,
         )
 
 
@@ -461,7 +497,9 @@ def test_permutation_importance_no_weights_scoring_function():
             ["r2", "neg_mean_squared_error"],
             lambda estimator, X, y: {
                 "r2": r2_score(y, estimator.predict(X)),
-                "neg_mean_squared_error": -mean_squared_error(y, estimator.predict(X)),
+                "neg_mean_squared_error": -mean_squared_error(
+                    y, estimator.predict(X)
+                ),
             },
         ),
     ],

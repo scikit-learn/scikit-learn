@@ -92,7 +92,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.n_init < 1:
             raise ValueError(
-                "Invalid value for 'n_init': %d Estimation requires at least one run"
+                "Invalid value for 'n_init': %d Estimation requires at least"
+                " one run"
                 % self.n_init
             )
 
@@ -141,7 +142,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             resp = np.zeros((n_samples, self.n_components))
             label = (
                 cluster.KMeans(
-                    n_clusters=self.n_components, n_init=1, random_state=random_state
+                    n_clusters=self.n_components,
+                    n_init=1,
+                    random_state=random_state,
                 )
                 .fit(X)
                 .labels_
@@ -225,7 +228,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
+        X = self._validate_data(
+            X, dtype=[np.float64, np.float32], ensure_min_samples=2
+        )
         if X.shape[0] < self.n_components:
             raise ValueError(
                 "Expected n_samples >= n_components "
@@ -257,7 +262,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
                 log_prob_norm, log_resp = self._e_step(X)
                 self._m_step(X, log_resp)
-                lower_bound = self._compute_lower_bound(log_resp, log_prob_norm)
+                lower_bound = self._compute_lower_bound(
+                    log_resp, log_prob_norm
+                )
 
                 change = lower_bound - prev_lower_bound
                 self._print_verbose_msg_iter_end(n_iter, change)
@@ -278,7 +285,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 "Initialization %d did not converge. "
                 "Try different init parameters, "
                 "or increase max_iter, tol "
-                "or check for degenerate data." % (init + 1),
+                "or check for degenerate data."
+                % (init + 1),
                 ConvergenceWarning,
             )
 
@@ -431,7 +439,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         if n_samples < 1:
             raise ValueError(
                 "Invalid value for 'n_samples': %d . The sampling requires at "
-                "least one sample." % (self.n_components)
+                "least one sample."
+                % (self.n_components)
             )
 
         _, n_features = self.means_.shape
@@ -450,7 +459,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         elif self.covariance_type == "tied":
             X = np.vstack(
                 [
-                    rng.multivariate_normal(mean, self.covariances_, int(sample))
+                    rng.multivariate_normal(
+                        mean, self.covariances_, int(sample)
+                    )
                     for (mean, sample) in zip(self.means_, n_samples_comp)
                 ]
             )
@@ -465,7 +476,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         y = np.concatenate(
-            [np.full(sample, j, dtype=int) for j, sample in enumerate(n_samples_comp)]
+            [
+                np.full(sample, j, dtype=int)
+                for j, sample in enumerate(n_samples_comp)
+            ]
         )
 
         return (X, y)

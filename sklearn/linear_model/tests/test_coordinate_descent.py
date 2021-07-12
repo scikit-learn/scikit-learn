@@ -86,7 +86,9 @@ filterwarnings_normalize = pytest.mark.filterwarnings(
 @pytest.mark.parametrize(
     "normalize, n_warnings", [(True, 1), (False, 1), ("deprecated", 0)]
 )
-def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warnings):
+def test_assure_warning_when_normalize(
+    CoordinateDescentModel, normalize, n_warnings
+):
     # check that we issue a FutureWarning when normalize was set
     rng = check_random_state(0)
     n_samples = 200
@@ -270,7 +272,9 @@ def test_lasso_dual_gap():
     assert_allclose(clf.dual_gap_, primal - dual)
 
 
-def build_dataset(n_samples=50, n_features=200, n_informative_features=10, n_targets=1):
+def build_dataset(
+    n_samples=50, n_features=200, n_informative_features=10, n_targets=1
+):
     """
     build an ill-posed linear regression problem with many noisy features and
     comparatively few samples
@@ -294,7 +298,9 @@ def test_lasso_cv():
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, cv=3).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True, cv=3)
+    clf = LassoCV(
+        n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True, cv=3
+    )
     clf.fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
@@ -328,7 +334,9 @@ def test_lasso_cv_with_some_model_selection():
     X = diabetes.data
     y = diabetes.target
 
-    pipe = make_pipeline(StandardScaler(), LassoCV(cv=ShuffleSplit(random_state=0)))
+    pipe = make_pipeline(
+        StandardScaler(), LassoCV(cv=ShuffleSplit(random_state=0))
+    )
     pipe.fit(X, y)
 
 
@@ -337,7 +345,9 @@ def test_lasso_cv_positive_constraint():
     max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    clf_unconstrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2, n_jobs=1)
+    clf_unconstrained = LassoCV(
+        n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2, n_jobs=1
+    )
     clf_unconstrained.fit(X, y)
     assert min(clf_unconstrained.coef_) < 0
 
@@ -413,7 +423,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     model_normalize = LinearModel(normalize=True, fit_intercept=True, **params)
 
     pipeline = make_pipeline(
-        StandardScaler(), LinearModel(normalize=False, fit_intercept=True, **params)
+        StandardScaler(),
+        LinearModel(normalize=False, fit_intercept=True, **params),
     )
 
     is_multitask = model_normalize._get_tags()["multioutput_only"]
@@ -443,7 +454,9 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     pipeline.fit(X_train, y_train)
     y_pred_standardize = pipeline.predict(X_test)
 
-    assert_allclose(model_normalize.coef_ * pipeline[0].scale_, pipeline[1].coef_)
+    assert_allclose(
+        model_normalize.coef_ * pipeline[0].scale_, pipeline[1].coef_
+    )
     assert pipeline[1].intercept_ == pytest.approx(y_train.mean())
     assert model_normalize.intercept_ == pytest.approx(
         y_train.mean() - model_normalize.coef_.dot(X_train.mean(0))
@@ -488,7 +501,9 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
         pytest.skip(f"{model_name} does not support sample_weight with sparse")
 
     rng = np.random.RandomState(0)
-    X, y = make_regression(n_samples=20, n_features=5, noise=1e-2, random_state=rng)
+    X, y = make_regression(
+        n_samples=20, n_features=5, noise=1e-2, random_state=rng
+    )
 
     if is_classifier(estimator):
         y = np.sign(y)
@@ -507,7 +522,9 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     sample_weight = rng.uniform(low=0.1, high=100, size=X_train.shape[0])
 
     # linear estimator with built-in feature normalization
-    reg_with_normalize = estimator(normalize=True, fit_intercept=True, **params)
+    reg_with_normalize = estimator(
+        normalize=True, fit_intercept=True, **params
+    )
     reg_with_normalize.fit(X_train, y_train, sample_weight=sample_weight)
 
     # linear estimator in a pipeline with a StandardScaler, normalize=False
@@ -541,7 +558,9 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     # Check intercept computation when normalize is True
     y_train_mean = np.average(y_train, weights=sample_weight)
     if is_sparse:
-        X_train_mean, _ = mean_variance_axis(X_train, axis=0, weights=sample_weight)
+        X_train_mean, _ = mean_variance_axis(
+            X_train, axis=0, weights=sample_weight
+        )
     else:
         X_train_mean = np.average(X_train, weights=sample_weight, axis=0)
     assert reg_with_normalize.intercept_ == pytest.approx(
@@ -641,7 +660,11 @@ def test_enet_path():
     # Here we have a small number of iterations, and thus the
     # ElasticNet might not converge. This is to speed up tests
     clf = ElasticNetCV(
-        alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
+        alphas=[0.01, 0.05, 0.1],
+        eps=2e-3,
+        l1_ratio=[0.5, 0.7],
+        cv=3,
+        max_iter=max_iter,
     )
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
@@ -698,7 +721,9 @@ def test_path_parameters():
     X, y, _, _ = build_dataset()
     max_iter = 100
 
-    clf = ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter, l1_ratio=0.5, tol=1e-3)
+    clf = ElasticNetCV(
+        n_alphas=50, eps=1e-3, max_iter=max_iter, l1_ratio=0.5, tol=1e-3
+    )
     clf.fit(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
     assert 50 == clf.n_alphas
@@ -849,7 +874,10 @@ def test_multi_task_lasso_readonly_data():
 def test_enet_multitarget():
     n_targets = 3
     X, y, _, _ = build_dataset(
-        n_samples=10, n_features=8, n_informative_features=10, n_targets=n_targets
+        n_samples=10,
+        n_features=8,
+        n_informative_features=10,
+        n_targets=n_targets,
     )
     estimator = ElasticNet(alpha=0.01)
     estimator.fit(X, y)
@@ -884,7 +912,12 @@ def test_multitask_enet_and_lasso_cv():
 
     X, y, _, _ = build_dataset(n_targets=3)
     clf = MultiTaskElasticNetCV(
-        n_alphas=10, eps=1e-3, max_iter=100, l1_ratio=[0.3, 0.5], tol=1e-3, cv=3
+        n_alphas=10,
+        eps=1e-3,
+        max_iter=100,
+        l1_ratio=[0.3, 0.5],
+        tol=1e-3,
+        cv=3,
     )
     clf.fit(X, y)
     assert 0.5 == clf.l1_ratio_
@@ -946,7 +979,10 @@ def test_sparse_input_dtype_enet_and_lassocv():
 
 def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
-    for clf in [ElasticNetCV(precompute="invalid"), LassoCV(precompute="invalid")]:
+    for clf in [
+        ElasticNetCV(precompute="invalid"),
+        LassoCV(precompute="invalid"),
+    ]:
         err_msg = ".*should be.*True.*False.*auto.* array-like.*Got 'invalid'"
         with pytest.raises(ValueError, match=err_msg):
             clf.fit(X, y)
@@ -1079,7 +1115,9 @@ def test_random_descent():
     new_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
     clf_cyclic = MultiTaskElasticNet(selection="cyclic", tol=1e-8)
     clf_cyclic.fit(X, new_y)
-    clf_random = MultiTaskElasticNet(selection="random", tol=1e-8, random_state=42)
+    clf_random = MultiTaskElasticNet(
+        selection="random", tol=1e-8, random_state=42
+    )
     clf_random.fit(X, new_y)
     assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
@@ -1228,7 +1266,9 @@ def test_enet_float_precision():
                 )
                 ignore_warnings(clf_precompute.fit)(X, y)
                 assert_array_almost_equal(clf.coef_, clf_precompute.coef_)
-                assert_array_almost_equal(clf.intercept_, clf_precompute.intercept_)
+                assert_array_almost_equal(
+                    clf.intercept_, clf_precompute.intercept_
+                )
 
                 # test multi task enet
                 multi_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
@@ -1248,7 +1288,9 @@ def test_enet_float_precision():
                     coef[(v, np.float32)], coef[(v, np.float64)], decimal=4
                 )
                 assert_array_almost_equal(
-                    intercept[(v, np.float32)], intercept[(v, np.float64)], decimal=4
+                    intercept[(v, np.float32)],
+                    intercept[(v, np.float64)],
+                    decimal=4,
                 )
 
 
@@ -1351,7 +1393,9 @@ def test_sparse_input_convergence_warning():
     X, y, _, _ = build_dataset(n_samples=1000, n_features=500)
 
     with pytest.warns(ConvergenceWarning):
-        ElasticNet(max_iter=1, tol=0).fit(sparse.csr_matrix(X, dtype=np.float32), y)
+        ElasticNet(max_iter=1, tol=0).fit(
+            sparse.csr_matrix(X, dtype=np.float32), y
+        )
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
@@ -1368,7 +1412,9 @@ def test_sparse_input_convergence_warning():
         (False, False),
     ],
 )
-def test_lassoCV_does_not_set_precompute(monkeypatch, precompute, inner_precompute):
+def test_lassoCV_does_not_set_precompute(
+    monkeypatch, precompute, inner_precompute
+):
     X, y, _, _ = build_dataset()
     calls = 0
 
@@ -1379,7 +1425,9 @@ def test_lassoCV_does_not_set_precompute(monkeypatch, precompute, inner_precompu
             calls += 1
             assert self.precompute == inner_precompute
 
-    monkeypatch.setattr("sklearn.linear_model._coordinate_descent.Lasso", LassoMock)
+    monkeypatch.setattr(
+        "sklearn.linear_model._coordinate_descent.Lasso", LassoMock
+    )
     clf = LassoCV(precompute=precompute)
     clf.fit(X, y)
     assert calls > 0
@@ -1399,7 +1447,9 @@ def test_multi_task_lasso_cv_dtype():
 @pytest.mark.parametrize("alpha", [0.01])
 @pytest.mark.parametrize("normalize", [False, True])
 @pytest.mark.parametrize("precompute", [False, True])
-def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize, precompute):
+def test_enet_sample_weight_consistency(
+    fit_intercept, alpha, normalize, precompute
+):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
@@ -1564,7 +1614,9 @@ def test_enet_cv_grid_search(sample_weight):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
 @pytest.mark.parametrize("precompute", [False, True])
-def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, precompute):
+def test_enet_cv_sample_weight_consistency(
+    fit_intercept, l1_ratio, precompute
+):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
@@ -1624,14 +1676,18 @@ def test_enet_cv_sample_weight_sparse(estimator):
 
 @pytest.mark.parametrize("backend", ["loky", "threading"])
 @pytest.mark.parametrize(
-    "estimator", [ElasticNetCV, MultiTaskElasticNetCV, LassoCV, MultiTaskLassoCV]
+    "estimator",
+    [ElasticNetCV, MultiTaskElasticNetCV, LassoCV, MultiTaskLassoCV],
 )
 def test_linear_models_cv_fit_for_all_backends(backend, estimator):
     # LinearModelsCV.fit performs inplace operations on input data which is
     # memmapped when using loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
 
-    if parse_version(joblib.__version__) < parse_version("0.12") and backend == "loky":
+    if (
+        parse_version(joblib.__version__) < parse_version("0.12")
+        and backend == "loky"
+    ):
         pytest.skip("loky backend does not exist in joblib <0.12")
 
     # Create a problem sufficiently large to cause memmapping (1MB).
@@ -1736,7 +1792,9 @@ def test_sample_weight_invariance(estimator):
         .fit(X_trimmed, y_trimmed, sample_weight=sw_trimmed)
     )
     reg_null_weighted = (
-        clone(estimator).set_params(**params).fit(X, y, sample_weight=sw_with_null)
+        clone(estimator)
+        .set_params(**params)
+        .fit(X, y, sample_weight=sw_with_null)
     )
     assert_allclose(reg_null_weighted.coef_, reg_trimmed.coef_)
     assert_allclose(reg_null_weighted.intercept_, reg_trimmed.intercept_)
@@ -1747,9 +1805,13 @@ def test_sample_weight_invariance(estimator):
     y_dup = np.concatenate([y, y], axis=0)
     sw_dup = np.concatenate([sw, sw], axis=0)
 
-    reg_2sw = clone(estimator).set_params(**params).fit(X, y, sample_weight=2 * sw)
+    reg_2sw = (
+        clone(estimator).set_params(**params).fit(X, y, sample_weight=2 * sw)
+    )
     reg_dup = (
-        clone(estimator).set_params(**params).fit(X_dup, y_dup, sample_weight=sw_dup)
+        clone(estimator)
+        .set_params(**params)
+        .fit(X_dup, y_dup, sample_weight=sw_dup)
     )
 
     assert_allclose(reg_2sw.coef_, reg_dup.coef_)

@@ -11,7 +11,12 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
 )
 
-X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
+X = [
+    [-2, 1.5, -4, -1],
+    [-1, 2.5, -3, -0.5],
+    [0, 3.5, -2, 0.5],
+    [1, 4.5, -1, 2],
+]
 
 
 @pytest.mark.parametrize(
@@ -175,7 +180,9 @@ def test_encode_options():
     Xt_3 = est.transform(X)
     assert sp.issparse(Xt_3)
     assert_array_equal(
-        OneHotEncoder(categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse=True)
+        OneHotEncoder(
+            categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse=True
+        )
         .fit_transform(Xt_1)
         .toarray(),
         Xt_3.toarray(),
@@ -196,9 +203,19 @@ def test_invalid_strategy_option():
 @pytest.mark.parametrize(
     "strategy, expected_2bins, expected_3bins, expected_5bins",
     [
-        ("uniform", [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 2, 2], [0, 0, 1, 1, 4, 4]),
+        (
+            "uniform",
+            [0, 0, 0, 0, 1, 1],
+            [0, 0, 0, 0, 2, 2],
+            [0, 0, 1, 1, 4, 4],
+        ),
         ("kmeans", [0, 0, 0, 0, 1, 1], [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 3, 4]),
-        ("quantile", [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 2, 2], [0, 1, 2, 3, 4, 4]),
+        (
+            "quantile",
+            [0, 0, 0, 1, 1, 1],
+            [0, 0, 1, 1, 2, 2],
+            [0, 1, 2, 3, 4, 4],
+        ),
     ],
 )
 def test_nonuniform_strategies(
@@ -289,7 +306,8 @@ def test_overwrite():
 
 
 @pytest.mark.parametrize(
-    "strategy, expected_bin_edges", [("quantile", [0, 1, 3]), ("kmeans", [0, 1.5, 3])]
+    "strategy, expected_bin_edges",
+    [("quantile", [0, 1, 3]), ("kmeans", [0, 1.5, 3])],
 )
 def test_redundant_bins(strategy, expected_bin_edges):
     X = [[0], [0], [0], [0], [3], [3]]
@@ -314,7 +332,9 @@ def test_percentile_numeric_stability():
 
 
 @pytest.mark.parametrize("in_dtype", [np.float16, np.float32, np.float64])
-@pytest.mark.parametrize("out_dtype", [None, np.float16, np.float32, np.float64])
+@pytest.mark.parametrize(
+    "out_dtype", [None, np.float16, np.float32, np.float64]
+)
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_consistent_dtype(in_dtype, out_dtype, encode):
     X_input = np.array(X, dtype=in_dtype)

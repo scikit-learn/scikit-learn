@@ -29,7 +29,8 @@ def test_buchheim(tree, n_nodes):
             # these trees are always binary
             # parents are centered above children
             assert (
-                draw_tree.x == (draw_tree.children[0].x + draw_tree.children[1].x) / 2
+                draw_tree.x
+                == (draw_tree.children[0].x + draw_tree.children[1].x) / 2
             )
         return res
 

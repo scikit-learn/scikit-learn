@@ -54,7 +54,9 @@ logger = logging.getLogger(__name__)
 ARCHIVE = RemoteFileMetadata(
     filename="20news-bydate.tar.gz",
     url="https://ndownloader.figshare.com/files/5975967",
-    checksum="8f1b2514ca22a5ade8fbb9cfa5727df95fa587f4c87b786e15c759fa66d95610",
+    checksum=(
+        "8f1b2514ca22a5ade8fbb9cfa5727df95fa587f4c87b786e15c759fa66d95610"
+    ),
 )
 
 CACHE_NAME = "20news-bydate.pkz"
@@ -105,7 +107,8 @@ def strip_newsgroup_header(text):
 
 
 _QUOTE_RE = re.compile(
-    r"(writes in|writes:|wrote:|says:|said:" r"|^In article|^Quoted from|^\||^>)"
+    r"(writes in|writes:|wrote:|says:|said:"
+    r"|^In article|^Quoted from|^\||^>)"
 )
 
 
@@ -120,7 +123,9 @@ def strip_newsgroup_quoting(text):
     text : str
         The text from which to remove the signature block.
     """
-    good_lines = [line for line in text.split("\n") if not _QUOTE_RE.search(line)]
+    good_lines = [
+        line for line in text.split("\n") if not _QUOTE_RE.search(line)
+    ]
     return "\n".join(good_lines)
 
 
@@ -250,7 +255,9 @@ def fetch_20newsgroups(
         try:
             with open(cache_path, "rb") as f:
                 compressed_content = f.read()
-            uncompressed_content = codecs.decode(compressed_content, "zlib_codec")
+            uncompressed_content = codecs.decode(
+                compressed_content, "zlib_codec"
+            )
             cache = pickle.loads(uncompressed_content)
         except Exception as e:
             print(80 * "_")
@@ -260,7 +267,9 @@ def fetch_20newsgroups(
 
     if cache is None:
         if download_if_missing:
-            logger.info("Downloading 20news dataset. This may take a few minutes.")
+            logger.info(
+                "Downloading 20news dataset. This may take a few minutes."
+            )
             cache = _download_20newsgroups(
                 target_dir=twenty_home, cache_path=cache_path
             )
@@ -506,7 +515,8 @@ def fetch_20newsgroups_vectorized(
         target = np.concatenate((data_train.target, data_test.target))
     else:
         raise ValueError(
-            "%r is not a valid subset: should be one of ['train', 'test', 'all']"
+            "%r is not a valid subset: should be one of ['train', 'test',"
+            " 'all']"
             % subset
         )
 

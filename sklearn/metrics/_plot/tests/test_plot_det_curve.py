@@ -20,7 +20,9 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+@pytest.mark.parametrize(
+    "response_method", ["predict_proba", "decision_function"]
+)
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("with_strings", [True, False])
 def test_plot_det_curve(
@@ -76,7 +78,11 @@ def test_plot_det_curve(
     assert viz.line_.get_label() == "LogisticRegression"
 
     expected_pos_label = 1 if pos_label is None else pos_label
-    expected_ylabel = f"False Negative Rate (Positive label: {expected_pos_label})"
-    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
+    expected_ylabel = (
+        f"False Negative Rate (Positive label: {expected_pos_label})"
+    )
+    expected_xlabel = (
+        f"False Positive Rate (Positive label: {expected_pos_label})"
+    )
     assert viz.ax_.get_ylabel() == expected_ylabel
     assert viz.ax_.get_xlabel() == expected_xlabel

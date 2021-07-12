@@ -65,14 +65,21 @@ def test_correct_shapes():
 
 
 def test_correct_shapes_gram():
-    assert orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape == (n_features,)
-    assert orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5).shape == (n_features, 3)
+    assert orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape == (
+        n_features,
+    )
+    assert orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5).shape == (
+        n_features,
+        3,
+    )
 
 
 def test_n_nonzero_coefs():
     assert np.count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5)) <= 5
     assert (
-        np.count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5, precompute=True))
+        np.count_nonzero(
+            orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5, precompute=True)
+        )
         <= 5
     )
 
@@ -94,13 +101,15 @@ def test_with_without_gram():
 
 def test_with_without_gram_tol():
     assert_array_almost_equal(
-        orthogonal_mp(X, y, tol=1.0), orthogonal_mp(X, y, tol=1.0, precompute=True)
+        orthogonal_mp(X, y, tol=1.0),
+        orthogonal_mp(X, y, tol=1.0, precompute=True),
     )
 
 
 def test_unreachable_accuracy():
     assert_array_almost_equal(
-        orthogonal_mp(X, y, tol=0), orthogonal_mp(X, y, n_nonzero_coefs=n_features)
+        orthogonal_mp(X, y, tol=0),
+        orthogonal_mp(X, y, n_nonzero_coefs=n_features),
     )
     warning_message = (
         "Orthogonal matching pursuit ended prematurely "
@@ -117,7 +126,11 @@ def test_unreachable_accuracy():
 @pytest.mark.parametrize("positional_params", [(X, y), (G, Xy)])
 @pytest.mark.parametrize(
     "keyword_params",
-    [{"tol": -1}, {"n_nonzero_coefs": -1}, {"n_nonzero_coefs": n_features + 1}],
+    [
+        {"tol": -1},
+        {"n_nonzero_coefs": -1},
+        {"n_nonzero_coefs": n_features + 1},
+    ],
 )
 def test_bad_input(positional_params, keyword_params):
     with pytest.raises(ValueError):
@@ -143,7 +156,11 @@ def test_orthogonal_mp_gram_readonly():
     Xy_readonly = Xy.copy()
     Xy_readonly.setflags(write=False)
     gamma_gram = orthogonal_mp_gram(
-        G_readonly, Xy_readonly[:, 0], n_nonzero_coefs=5, copy_Gram=False, copy_Xy=False
+        G_readonly,
+        Xy_readonly[:, 0],
+        n_nonzero_coefs=5,
+        copy_Gram=False,
+        copy_Xy=False,
     )
     assert_array_equal(idx, np.flatnonzero(gamma_gram))
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
@@ -214,7 +231,9 @@ def test_no_atoms():
     y_empty = np.zeros_like(y)
     Xy_empty = np.dot(X.T, y_empty)
     gamma_empty = ignore_warnings(orthogonal_mp)(X, y_empty, n_nonzero_coefs=1)
-    gamma_empty_gram = ignore_warnings(orthogonal_mp)(G, Xy_empty, n_nonzero_coefs=1)
+    gamma_empty_gram = ignore_warnings(orthogonal_mp)(
+        G, Xy_empty, n_nonzero_coefs=1
+    )
     assert np.all(gamma_empty == 0)
     assert np.all(gamma_empty_gram == 0)
 
@@ -231,8 +250,12 @@ def test_omp_path():
 
 
 def test_omp_return_path_prop_with_gram():
-    path = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=True, precompute=True)
-    last = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=False, precompute=True)
+    path = orthogonal_mp(
+        X, y, n_nonzero_coefs=5, return_path=True, precompute=True
+    )
+    last = orthogonal_mp(
+        X, y, n_nonzero_coefs=5, return_path=False, precompute=True
+    )
     assert path.shape == (n_features, n_targets, 5)
     assert_array_almost_equal(path[:, :, -1], last)
 
@@ -249,7 +272,9 @@ def test_omp_cv():
     assert ompcv.n_nonzero_coefs_ == n_nonzero_coefs
     assert_array_almost_equal(ompcv.coef_, gamma_)
     omp = OrthogonalMatchingPursuit(
-        normalize=True, fit_intercept=False, n_nonzero_coefs=ompcv.n_nonzero_coefs_
+        normalize=True,
+        fit_intercept=False,
+        n_nonzero_coefs=ompcv.n_nonzero_coefs_,
     )
     omp.fit(X, y_)
     assert_array_almost_equal(ompcv.coef_, omp.coef_)

@@ -80,7 +80,9 @@ def test_n_features_to_select_float(direction, n_features_to_select, expected):
         (1, [2]),  # f2 is more predictive than f0 so it's kept
     ],
 )
-def test_sanity(seed, direction, n_features_to_select, expected_selected_features):
+def test_sanity(
+    seed, direction, n_features_to_select, expected_selected_features
+):
     # Basic sanity check: 3 features, only f0 and f2 are correlated with the
     # target, f2 having a stronger correlation than f0. We expect f1 to be
     # dropped, and f2 to always be selected.
@@ -97,7 +99,9 @@ def test_sanity(seed, direction, n_features_to_select, expected_selected_feature
         cv=2,
     )
     sfs.fit(X, y)
-    assert_array_equal(sfs.get_support(indices=True), expected_selected_features)
+    assert_array_equal(
+        sfs.get_support(indices=True), expected_selected_features
+    )
 
 
 def test_sparse_support():

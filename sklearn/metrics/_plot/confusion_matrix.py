@@ -562,7 +562,11 @@ def plot_confusion_matrix(
 
     y_pred = estimator.predict(X)
     cm = confusion_matrix(
-        y_true, y_pred, sample_weight=sample_weight, labels=labels, normalize=normalize
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        labels=labels,
+        normalize=normalize,
     )
 
     if display_labels is None:
@@ -571,7 +575,9 @@ def plot_confusion_matrix(
         else:
             display_labels = labels
 
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=display_labels)
+    disp = ConfusionMatrixDisplay(
+        confusion_matrix=cm, display_labels=display_labels
+    )
     return disp.plot(
         include_values=include_values,
         cmap=cmap,

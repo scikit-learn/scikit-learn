@@ -2,7 +2,10 @@ from collections import defaultdict
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-from sklearn.utils.graph import graph_shortest_path, single_source_shortest_path_length
+from sklearn.utils.graph import (
+    graph_shortest_path,
+    single_source_shortest_path_length,
+)
 
 
 def floyd_warshall_slow(graph, directed=False):
@@ -78,7 +81,9 @@ def test_shortest_path():
         for i in range(dist_matrix.shape[0]):
             # Non-reachable nodes have distance 0 in graph_py
             dist_dict = defaultdict(int)
-            dist_dict.update(single_source_shortest_path_length(dist_matrix, i))
+            dist_dict.update(
+                single_source_shortest_path_length(dist_matrix, i)
+            )
 
             for j in range(graph_py[i].shape[0]):
                 assert_array_almost_equal(dist_dict[j], graph_py[i, j])

@@ -60,7 +60,9 @@ def test_graphical_lasso(random_state=0):
     Z = X - X.mean(0)
     precs = list()
     for assume_centered in (False, True):
-        prec_ = GraphicalLasso(assume_centered=assume_centered).fit(Z).precision_
+        prec_ = (
+            GraphicalLasso(assume_centered=assume_centered).fit(Z).precision_
+        )
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
 
@@ -87,7 +89,9 @@ def test_graphical_lasso_iris():
     X = datasets.load_iris().data
     emp_cov = empirical_covariance(X)
     for method in ("cd", "lars"):
-        cov, icov = graphical_lasso(emp_cov, alpha=1.0, return_costs=False, mode=method)
+        cov, icov = graphical_lasso(
+            emp_cov, alpha=1.0, return_costs=False, mode=method
+        )
         assert_array_almost_equal(cov, cov_R)
         assert_array_almost_equal(icov, icov_R)
 
@@ -97,11 +101,15 @@ def test_graph_lasso_2D():
     # obtained by calling `quic(emp_cov, lam=.1, tol=1e-8)`
     cov_skggm = np.array([[3.09550269, 1.186972], [1.186972, 0.57713289]])
 
-    icov_skggm = np.array([[1.52836773, -3.14334831], [-3.14334831, 8.19753385]])
+    icov_skggm = np.array(
+        [[1.52836773, -3.14334831], [-3.14334831, 8.19753385]]
+    )
     X = datasets.load_iris().data[:, 2:]
     emp_cov = empirical_covariance(X)
     for method in ("cd", "lars"):
-        cov, icov = graphical_lasso(emp_cov, alpha=0.1, return_costs=False, mode=method)
+        cov, icov = graphical_lasso(
+            emp_cov, alpha=0.1, return_costs=False, mode=method
+        )
         assert_array_almost_equal(cov, cov_skggm)
         assert_array_almost_equal(icov, icov_skggm)
 
@@ -115,9 +123,24 @@ def test_graphical_lasso_iris_singular():
     cov_R = np.array(
         [
             [0.08, 0.056666662595, 0.00229729713223, 0.00153153142149],
-            [0.056666662595, 0.082222222222, 0.00333333333333, 0.00222222222222],
-            [0.002297297132, 0.003333333333, 0.00666666666667, 0.00009009009009],
-            [0.001531531421, 0.002222222222, 0.00009009009009, 0.00222222222222],
+            [
+                0.056666662595,
+                0.082222222222,
+                0.00333333333333,
+                0.00222222222222,
+            ],
+            [
+                0.002297297132,
+                0.003333333333,
+                0.00666666666667,
+                0.00009009009009,
+            ],
+            [
+                0.001531531421,
+                0.002222222222,
+                0.00009009009009,
+                0.00222222222222,
+            ],
         ]
     )
     icov_R = np.array(
@@ -174,9 +197,9 @@ def test_graphical_lasso_cv_grid_scores_and_cv_alphas_deprecated():
     )
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
-    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
-        X
-    )
+    cov = GraphicalLassoCV(
+        cv=splits, alphas=n_alphas, n_refinements=n_refinements
+    ).fit(X)
 
     total_alphas = n_refinements * n_alphas + 1
     msg = (
@@ -210,9 +233,9 @@ def test_graphical_lasso_cv_scores():
     )
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
-    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
-        X
-    )
+    cov = GraphicalLassoCV(
+        cv=splits, alphas=n_alphas, n_refinements=n_refinements
+    ).fit(X)
 
     cv_results = cov.cv_results_
     # alpha and one for each split

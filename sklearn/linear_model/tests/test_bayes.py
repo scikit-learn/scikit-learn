@@ -75,7 +75,9 @@ def test_bayesian_ridge_score_values():
     M = 1.0 / alpha_ * np.eye(n_samples) + 1.0 / lambda_ * np.dot(X, X.T)
     M_inv = pinvh(M)
     score += -0.5 * (
-        fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)) + n_samples * log(2 * np.pi)
+        fast_logdet(M)
+        + np.dot(y.T, np.dot(M_inv, y))
+        + n_samples * log(2 * np.pi)
     )
 
     # compute score with BayesianRidge
@@ -155,8 +157,12 @@ def test_prediction_bayesian_ridge_ard_with_constant_input():
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
-    y = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
-    expected = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
+    y = np.full(
+        n_samples, constant_value, dtype=np.array(constant_value).dtype
+    )
+    expected = np.full(
+        n_samples, constant_value, dtype=np.array(constant_value).dtype
+    )
 
     for clf in [BayesianRidge(), ARDRegression()]:
         y_pred = clf.fit(X, y).predict(X)
@@ -172,7 +178,9 @@ def test_std_bayesian_ridge_ard_with_constant_input():
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
-    y = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
+    y = np.full(
+        n_samples, constant_value, dtype=np.array(constant_value).dtype
+    )
     expected_upper_boundary = 0.01
 
     for clf in [BayesianRidge(), ARDRegression()]:

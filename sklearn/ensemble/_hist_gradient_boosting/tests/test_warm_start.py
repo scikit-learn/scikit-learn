@@ -39,11 +39,14 @@ def test_max_iter_with_warm_start_validation(GradientBoosting, X, y):
     # is smaller than the number of iterations from the previous fit when warm
     # start is True.
 
-    estimator = GradientBoosting(max_iter=10, early_stopping=False, warm_start=True)
+    estimator = GradientBoosting(
+        max_iter=10, early_stopping=False, warm_start=True
+    )
     estimator.fit(X, y)
     estimator.set_params(max_iter=5)
     err_msg = (
-        "max_iter=5 must be larger than or equal to n_iter_=10 when warm_start==True"
+        "max_iter=5 must be larger than or equal to n_iter_=10 when"
+        " warm_start==True"
     )
     with pytest.raises(ValueError, match=err_msg):
         estimator.fit(X, y)
@@ -145,7 +148,9 @@ def test_warm_start_equal_n_estimators(GradientBoosting, X, y):
     gb_1.fit(X, y)
 
     gb_2 = clone(gb_1)
-    gb_2.set_params(max_iter=gb_1.max_iter, warm_start=True, n_iter_no_change=5)
+    gb_2.set_params(
+        max_iter=gb_1.max_iter, warm_start=True, n_iter_no_change=5
+    )
     gb_2.fit(X, y)
 
     # Check that both predictors are equal
@@ -164,7 +169,9 @@ def test_warm_start_clear(GradientBoosting, X, y):
     gb_1 = GradientBoosting(n_iter_no_change=5, random_state=42)
     gb_1.fit(X, y)
 
-    gb_2 = GradientBoosting(n_iter_no_change=5, random_state=42, warm_start=True)
+    gb_2 = GradientBoosting(
+        n_iter_no_change=5, random_state=42, warm_start=True
+    )
     gb_2.fit(X, y)  # inits state
     gb_2.set_params(warm_start=False)
     gb_2.fit(X, y)  # clears old state and equals est
@@ -199,7 +206,9 @@ def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
             return np.random.RandomState(0)
 
     random_state = _get_rng(rng_type)
-    gb_1 = GradientBoosting(early_stopping=True, max_iter=2, random_state=random_state)
+    gb_1 = GradientBoosting(
+        early_stopping=True, max_iter=2, random_state=random_state
+    )
     gb_1.set_params(scoring=check_scoring(gb_1))
     gb_1.fit(X, y)
     random_seed_1_1 = gb_1._random_seed
@@ -209,7 +218,10 @@ def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
 
     random_state = _get_rng(rng_type)
     gb_2 = GradientBoosting(
-        early_stopping=True, max_iter=2, random_state=random_state, warm_start=True
+        early_stopping=True,
+        max_iter=2,
+        random_state=random_state,
+        warm_start=True,
     )
     gb_2.set_params(scoring=check_scoring(gb_2))
     gb_2.fit(X, y)  # inits state

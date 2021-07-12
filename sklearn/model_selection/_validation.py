@@ -261,7 +261,9 @@ def cross_validate(
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
+    parallel = Parallel(
+        n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch
+    )
     results = parallel(
         delayed(_fit_and_score)(
             clone(estimator),
@@ -613,7 +615,9 @@ def _fit_and_score(
         if split_progress is not None:
             progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
         if candidate_progress and verbose > 9:
-            progress_msg += f"; {candidate_progress[0]+1}/{candidate_progress[1]}"
+            progress_msg += (
+                f"; {candidate_progress[0]+1}/{candidate_progress[1]}"
+            )
 
     if verbose > 1:
         if parameters is None:
@@ -669,7 +673,8 @@ def _fit_and_score(
             warnings.warn(
                 "Estimator fit failed. The score on this train-test"
                 " partition for these parameters will be set to %f. "
-                "Details: \n%s" % (error_score, format_exc()),
+                "Details: \n%s"
+                % (error_score, format_exc()),
                 FitFailedWarning,
             )
         result["fit_failed"] = True
@@ -680,7 +685,9 @@ def _fit_and_score(
         test_scores = _score(estimator, X_test, y_test, scorer, error_score)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer, error_score)
+            train_scores = _score(
+                estimator, X_train, y_train, scorer, error_score
+            )
 
     if verbose > 1:
         total_time = score_time + fit_time
@@ -697,7 +704,9 @@ def _fit_and_score(
             else:
                 result_msg += ", score="
                 if return_train_score:
-                    result_msg += f"(train={train_scores:.3f}, test={test_scores:.3f})"
+                    result_msg += (
+                        f"(train={train_scores:.3f}, test={test_scores:.3f})"
+                    )
                 else:
                     result_msg += f"{test_scores:.3f}"
         result_msg += f" total time={logger.short_format_time(total_time)}"
@@ -752,7 +761,9 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
                 UserWarning,
             )
 
-    error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
+    error_msg = (
+        "scoring must return a number, got %s (%s) instead. (scorer=%s)"
+    )
     if isinstance(scores, dict):
         for name, score in scores.items():
             if hasattr(score, "item"):
@@ -936,7 +947,9 @@ def cross_val_predict(
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
+    parallel = Parallel(
+        n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch
+    )
     predictions = parallel(
         delayed(_fit_and_predict)(
             clone(estimator), X, y, train, test, verbose, fit_params, method
@@ -969,7 +982,9 @@ def cross_val_predict(
         return predictions[inv_test_indices]
 
 
-def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, method):
+def _fit_and_predict(
+    estimator, X, y, train, test, verbose, fit_params, method
+):
     """Fit estimator and predict values for a given dataset split.
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1085,7 +1100,9 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
                     "number of classes ({}) in fold. "
                     "Irregular decision_function outputs "
                     "are not currently supported by "
-                    "cross_val_predict".format(predictions.shape, method, len(classes))
+                    "cross_val_predict".format(
+                        predictions.shape, method, len(classes)
+                    )
                 )
             if len(classes) <= 2:
                 # In this special case, `predictions` contains a 1D array.
@@ -1491,12 +1508,16 @@ def learning_curve(
     # Because the lengths of folds can be significantly different, it is
     # not guaranteed that we use all of the available training data when we
     # use the first 'n_max_training_samples' samples.
-    train_sizes_abs = _translate_train_sizes(train_sizes, n_max_training_samples)
+    train_sizes_abs = _translate_train_sizes(
+        train_sizes, n_max_training_samples
+    )
     n_unique_ticks = train_sizes_abs.shape[0]
     if verbose > 0:
         print("[learning_curve] Training set sizes: " + str(train_sizes_abs))
 
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
+    parallel = Parallel(
+        n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose
+    )
 
     if shuffle:
         rng = check_random_state(random_state)
@@ -1624,7 +1645,8 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
         warnings.warn(
             "Removed duplicate entries from 'train_sizes'. Number "
             "of ticks will be less than the size of "
-            "'train_sizes': %d instead of %d." % (train_sizes_abs.shape[0], n_ticks),
+            "'train_sizes': %d instead of %d."
+            % (train_sizes_abs.shape[0], n_ticks),
             RuntimeWarning,
         )
 
@@ -1653,11 +1675,15 @@ def _incremental_fit_estimator(
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
-        X_partial_train, y_partial_train = _safe_split(estimator, X, y, partial_train)
+        X_partial_train, y_partial_train = _safe_split(
+            estimator, X, y, partial_train
+        )
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
         if y_partial_train is None:
-            estimator.partial_fit(X_partial_train, classes=classes, **fit_params)
+            estimator.partial_fit(
+                X_partial_train, classes=classes, **fit_params
+            )
         else:
             estimator.partial_fit(
                 X_partial_train, y_partial_train, classes=classes, **fit_params
@@ -1667,8 +1693,12 @@ def _incremental_fit_estimator(
 
         start_score = time.time()
 
-        test_scores.append(_score(estimator, X_test, y_test, scorer, error_score))
-        train_scores.append(_score(estimator, X_train, y_train, scorer, error_score))
+        test_scores.append(
+            _score(estimator, X_test, y_test, scorer, error_score)
+        )
+        train_scores.append(
+            _score(estimator, X_train, y_train, scorer, error_score)
+        )
 
         score_time = time.time() - start_score
         score_times.append(score_time)
@@ -1804,7 +1834,9 @@ def validation_curve(
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
 
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
+    parallel = Parallel(
+        n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose
+    )
     results = parallel(
         delayed(_fit_and_score)(
             clone(estimator),

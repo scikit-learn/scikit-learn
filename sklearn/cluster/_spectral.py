@@ -19,7 +19,12 @@ from ._kmeans import k_means
 
 
 def discretize(
-    vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20, random_state=None
+    vectors,
+    *,
+    copy=True,
+    max_svd_restarts=30,
+    n_iter_max=20,
+    random_state=None,
 ):
     """Search for a partition matrix (clustering) which is closest to the
     eigenvector embedding.
@@ -89,7 +94,9 @@ def discretize(
     # search easier.
     norm_ones = np.sqrt(n_samples)
     for i in range(vectors.shape[1]):
-        vectors[:, i] = (vectors[:, i] / np.linalg.norm(vectors[:, i])) * norm_ones
+        vectors[:, i] = (
+            vectors[:, i] / np.linalg.norm(vectors[:, i])
+        ) * norm_ones
         if vectors[0, i] != 0:
             vectors[:, i] = -1 * vectors[:, i] * np.sign(vectors[0, i])
 
@@ -144,7 +151,9 @@ def discretize(
                 break
 
             ncut_value = 2.0 * (n_samples - S.sum())
-            if (abs(ncut_value - last_objective_value) < eps) or (n_iter > n_iter_max):
+            if (abs(ncut_value - last_objective_value) < eps) or (
+                n_iter > n_iter_max
+            ):
                 has_converged = True
             else:
                 # otherwise calculate rotation and continue
@@ -273,7 +282,8 @@ def spectral_clustering(
     if assign_labels not in ("kmeans", "discretize"):
         raise ValueError(
             "The 'assign_labels' parameter should be "
-            "'kmeans' or 'discretize', but '%s' was given" % assign_labels
+            "'kmeans' or 'discretize', but '%s' was given"
+            % assign_labels
         )
 
     random_state = check_random_state(random_state)
@@ -298,7 +308,11 @@ def spectral_clustering(
 
     if assign_labels == "kmeans":
         _, labels, _ = k_means(
-            maps, n_clusters, random_state=random_state, n_init=n_init, verbose=verbose
+            maps,
+            n_clusters,
+            random_state=random_state,
+            n_init=n_init,
+            verbose=verbose,
         )
     else:
         labels = discretize(maps, random_state=random_state)
@@ -566,12 +580,17 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         if self.affinity == "nearest_neighbors":
             connectivity = kneighbors_graph(
-                X, n_neighbors=self.n_neighbors, include_self=True, n_jobs=self.n_jobs
+                X,
+                n_neighbors=self.n_neighbors,
+                include_self=True,
+                n_jobs=self.n_jobs,
             )
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == "precomputed_nearest_neighbors":
             estimator = NearestNeighbors(
-                n_neighbors=self.n_neighbors, n_jobs=self.n_jobs, metric="precomputed"
+                n_neighbors=self.n_neighbors,
+                n_jobs=self.n_jobs,
+                metric="precomputed",
             ).fit(X)
             connectivity = estimator.kneighbors_graph(X=X, mode="connectivity")
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
@@ -642,4 +661,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     )
     @property
     def _pairwise(self):
-        return self.affinity in ["precomputed", "precomputed_nearest_neighbors"]
+        return self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]

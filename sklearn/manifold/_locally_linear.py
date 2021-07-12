@@ -111,11 +111,19 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
     data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
-    return csr_matrix((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
+    return csr_matrix(
+        (data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples)
+    )
 
 
 def null_space(
-    M, k, k_skip=1, eigen_solver="arpack", tol=1e-6, max_iter=100, random_state=None
+    M,
+    k,
+    k_skip=1,
+    eigen_solver="arpack",
+    tol=1e-6,
+    max_iter=100,
+    random_state=None,
 ):
     """
     Find the null space of a matrix M.
@@ -174,7 +182,8 @@ def null_space(
                 "'%s'. Note that eigen_solver='arpack' can fail when the "
                 "weight matrix is singular or otherwise ill-behaved. In that "
                 "case, eigen_solver='dense' is recommended. See online "
-                "documentation for more information." % e
+                "documentation for more information."
+                % e
             ) from e
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
@@ -318,7 +327,8 @@ def locally_linear_embedding(
         )
     if n_neighbors >= N:
         raise ValueError(
-            "Expected n_neighbors <= n_samples,  but n_samples = %d, n_neighbors = %d"
+            "Expected n_neighbors <= n_samples,  but n_samples = %d,"
+            " n_neighbors = %d"
             % (N, n_neighbors)
         )
 
@@ -378,7 +388,9 @@ def locally_linear_embedding(
 
             j = 1 + n_components
             for k in range(n_components):
-                Yi[:, j : j + n_components - k] = U[:, k : k + 1] * U[:, k:n_components]
+                Yi[:, j : j + n_components - k] = (
+                    U[:, k : k + 1] * U[:, k:n_components]
+                )
                 j += n_components - k
 
             Q, R = qr(Yi)
@@ -397,7 +409,9 @@ def locally_linear_embedding(
 
     elif method == "modified":
         if n_neighbors < n_components:
-            raise ValueError("modified LLE requires n_neighbors >= n_components")
+            raise ValueError(
+                "modified LLE requires n_neighbors >= n_components"
+            )
 
         neighbors = nbrs.kneighbors(
             X, n_neighbors=n_neighbors + 1, return_distance=False
@@ -482,7 +496,11 @@ def locally_linear_embedding(
             # Then the weight matrix is
             #  >> Wi = np.dot(Vi,Hi) + (1-alpha_i) * w_reg[i,:,None]
             # We do this much more efficiently:
-            Wi = Vi - 2 * np.outer(np.dot(Vi, h), h) + (1 - alpha_i) * w_reg[i, :, None]
+            Wi = (
+                Vi
+                - 2 * np.outer(np.dot(Vi, h), h)
+                + (1 - alpha_i) * w_reg[i, :, None]
+            )
 
             # Update M as follows:
             # >> W_hat = np.zeros( (N,s_i) )
@@ -542,7 +560,9 @@ def locally_linear_embedding(
     )
 
 
-class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator):
+class LocallyLinearEmbedding(
+    TransformerMixin, _UnstableArchMixin, BaseEstimator
+):
     """Locally Linear Embedding
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.

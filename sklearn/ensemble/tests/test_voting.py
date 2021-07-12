@@ -59,7 +59,10 @@ def test_voting_classifier_estimator_init(params, err_msg):
 
 def test_predictproba_hardvoting():
     eclf = VotingClassifier(
-        estimators=[("lr1", LogisticRegression()), ("lr2", LogisticRegression())],
+        estimators=[
+            ("lr1", LogisticRegression()),
+            ("lr2", LogisticRegression()),
+        ],
         voting="hard",
     )
     msg = "predict_proba is not available when voting='hard'"
@@ -73,7 +76,10 @@ def test_predictproba_hardvoting():
 
 def test_notfitted():
     eclf = VotingClassifier(
-        estimators=[("lr1", LogisticRegression()), ("lr2", LogisticRegression())],
+        estimators=[
+            ("lr1", LogisticRegression()),
+            ("lr2", LogisticRegression()),
+        ],
         voting="soft",
     )
     ereg = VotingRegressor([("dr", DummyRegressor())])
@@ -109,7 +115,9 @@ def test_tie_situation():
     """Check voting classifier selects smaller class label in tie situation."""
     clf1 = LogisticRegression(random_state=123, solver="liblinear")
     clf2 = RandomForestClassifier(random_state=123)
-    eclf = VotingClassifier(estimators=[("lr", clf1), ("rf", clf2)], voting="hard")
+    eclf = VotingClassifier(
+        estimators=[("lr", clf1), ("rf", clf2)], voting="hard"
+    )
     assert clf1.fit(X, y).predict(X)[73] == 2
     assert clf2.fit(X, y).predict(X)[73] == 1
     assert eclf.fit(X, y).predict(X)[73] == 1
@@ -135,7 +143,8 @@ def test_weights_regressor():
     reg2 = DummyRegressor(strategy="median")
     reg3 = DummyRegressor(strategy="quantile", quantile=0.2)
     ereg = VotingRegressor(
-        [("mean", reg1), ("median", reg2), ("quantile", reg3)], weights=[1, 2, 10]
+        [("mean", reg1), ("median", reg2), ("quantile", reg3)],
+        weights=[1, 2, 10],
     )
 
     X_r_train, X_r_test, y_r_train, y_r_test = train_test_split(
@@ -148,7 +157,9 @@ def test_weights_regressor():
     ereg_pred = ereg.fit(X_r_train, y_r_train).predict(X_r_test)
 
     avg = np.average(
-        np.asarray([reg1_pred, reg2_pred, reg3_pred]), axis=0, weights=[1, 2, 10]
+        np.asarray([reg1_pred, reg2_pred, reg3_pred]),
+        axis=0,
+        weights=[1, 2, 10],
     )
     assert_almost_equal(ereg_pred, avg, decimal=2)
 
@@ -156,7 +167,8 @@ def test_weights_regressor():
         [("mean", reg1), ("median", reg2), ("quantile", reg3)], weights=None
     )
     ereg_weights_equal = VotingRegressor(
-        [("mean", reg1), ("median", reg2), ("quantile", reg3)], weights=[1, 1, 1]
+        [("mean", reg1), ("median", reg2), ("quantile", reg3)],
+        weights=[1, 1, 1],
     )
     ereg_weights_none.fit(X_r_train, y_r_train)
     ereg_weights_equal.fit(X_r_train, y_r_train)
@@ -172,7 +184,14 @@ def test_predict_on_toy_problem():
     clf3 = GaussianNB()
 
     X = np.array(
-        [[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2], [2.1, 1.4], [3.1, 2.3]]
+        [
+            [-1.1, -1.5],
+            [-1.2, -1.4],
+            [-3.4, -2.2],
+            [1.1, 1.2],
+            [2.1, 1.4],
+            [3.1, 2.3],
+        ]
     )
 
     y = np.array([1, 1, 1, 2, 2, 2])
@@ -216,7 +235,12 @@ def test_predict_proba_on_toy_problem():
     clf2_res = np.array([[0.8, 0.2], [0.8, 0.2], [0.2, 0.8], [0.3, 0.7]])
 
     clf3_res = np.array(
-        [[0.9985082, 0.0014918], [0.99845843, 0.00154157], [0.0, 1.0], [0.0, 1.0]]
+        [
+            [0.9985082, 0.0014918],
+            [0.99845843, 0.00154157],
+            [0.0, 1.0],
+            [0.0, 1.0],
+        ]
     )
 
     t00 = (2 * clf1_res[0][0] + clf2_res[0][0] + clf3_res[0][0]) / 4
@@ -237,10 +261,12 @@ def test_predict_proba_on_toy_problem():
     assert_almost_equal(t31, eclf_res[3][1], decimal=1)
 
     with pytest.raises(
-        AttributeError, match="predict_proba is not available when voting='hard'"
+        AttributeError,
+        match="predict_proba is not available when voting='hard'",
     ):
         eclf = VotingClassifier(
-            estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="hard"
+            estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)],
+            voting="hard",
         )
         eclf.fit(X, y).predict_proba(X)
 
@@ -288,10 +314,14 @@ def test_parallel_fit():
     y = np.array([1, 1, 2, 2])
 
     eclf1 = VotingClassifier(
-        estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="soft", n_jobs=1
+        estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)],
+        voting="soft",
+        n_jobs=1,
     ).fit(X, y)
     eclf2 = VotingClassifier(
-        estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="soft", n_jobs=2
+        estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)],
+        voting="soft",
+        n_jobs=2,
     ).fit(X, y)
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
@@ -325,7 +355,10 @@ def test_sample_weight():
     eclf3 = VotingClassifier(
         estimators=[("lr", clf1), ("svc", clf3), ("knn", clf4)], voting="soft"
     )
-    msg = "Underlying estimator KNeighborsClassifier does not support sample weights."
+    msg = (
+        "Underlying estimator KNeighborsClassifier does not support sample"
+        " weights."
+    )
     with pytest.raises(TypeError, match=msg):
         eclf3.fit(X, y, sample_weight)
 
@@ -405,7 +438,8 @@ def test_set_estimator_drop():
     assert dict(eclf2.estimators)["rf"] == "drop"
     assert len(eclf2.estimators_) == 2
     assert all(
-        isinstance(est, (LogisticRegression, GaussianNB)) for est in eclf2.estimators_
+        isinstance(est, (LogisticRegression, GaussianNB))
+        for est in eclf2.estimators_
     )
     assert eclf2.get_params()["rf"] == "drop"
 
@@ -451,7 +485,9 @@ def test_set_estimator_drop():
         eclf1.transform(X1),
         np.array([[[0.7, 0.3], [0.3, 0.7]], [[1.0, 0.0], [0.0, 1.0]]]),
     )
-    assert_array_almost_equal(eclf2.transform(X1), np.array([[[1.0, 0.0], [0.0, 1.0]]]))
+    assert_array_almost_equal(
+        eclf2.transform(X1), np.array([[[1.0, 0.0], [0.0, 1.0]]])
+    )
     eclf1.set_params(voting="hard")
     eclf2.set_params(voting="hard")
     assert_array_equal(eclf1.transform(X1), np.array([[0, 0], [1, 1]]))
@@ -466,7 +502,9 @@ def test_estimator_weights_format():
         estimators=[("lr", clf1), ("rf", clf2)], weights=[1, 2], voting="soft"
     )
     eclf2 = VotingClassifier(
-        estimators=[("lr", clf1), ("rf", clf2)], weights=np.array((1, 2)), voting="soft"
+        estimators=[("lr", clf1), ("rf", clf2)],
+        weights=np.array((1, 2)),
+        voting="soft",
     )
     eclf1.fit(X, y)
     eclf2.fit(X, y)

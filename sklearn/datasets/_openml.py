@@ -45,7 +45,9 @@ def _get_local_path(openml_path: str, data_home: str) -> str:
     return os.path.join(data_home, "openml.org", openml_path + ".gz")
 
 
-def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Callable:
+def _retry_with_clean_cache(
+    openml_path: str, data_home: Optional[str]
+) -> Callable:
     """If the first call to the decorated function fails, the local cached
     file is removed, and the function is called again. If ``data_home`` is
     ``None``, then the function is called once.
@@ -206,7 +208,8 @@ def _split_sparse_columns(
     """
     arff_data_new: ArffSparseDataType = (list(), list(), list())
     reindexed_columns = {
-        column_idx: array_idx for array_idx, column_idx in enumerate(include_columns)
+        column_idx: array_idx
+        for array_idx, column_idx in enumerate(include_columns)
     }
     for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
         if col_idx in include_columns:
@@ -224,7 +227,8 @@ def _sparse_data_to_array(
     num_obs = max(arff_data[1]) + 1
     y_shape = (num_obs, len(include_columns))
     reindexed_columns = {
-        column_idx: array_idx for array_idx, column_idx in enumerate(include_columns)
+        column_idx: array_idx
+        for array_idx, column_idx in enumerate(include_columns)
     }
     # TODO: improve for efficiency
     y = np.empty(y_shape, dtype=np.float64)
@@ -266,13 +270,17 @@ def _convert_arff_data(
     arff_data = arff["data"]
     if isinstance(arff_data, Generator):
         if shape is None:
-            raise ValueError("shape must be provided when arr['data'] is a Generator")
+            raise ValueError(
+                "shape must be provided when arr['data'] is a Generator"
+            )
         if shape[0] == -1:
             count = -1
         else:
             count = shape[0] * shape[1]
         data = np.fromiter(
-            itertools.chain.from_iterable(arff_data), dtype="float64", count=count
+            itertools.chain.from_iterable(arff_data),
+            dtype="float64",
+            count=count,
         )
         data = data.reshape(*shape)
         X = data[:, col_slice_x]
@@ -302,7 +310,9 @@ def _feature_to_dtype(feature: Dict[str, str]):
     elif feature["data_type"] == "nominal":
         return "category"
     # only numeric, integer, real are left
-    elif feature["number_of_missing_values"] != "0" or feature["data_type"] in [
+    elif feature["number_of_missing_values"] != "0" or feature[
+        "data_type"
+    ] in [
         "numeric",
         "real",
     ]:
@@ -431,7 +441,9 @@ def _get_data_info_by_name(
         # given name / version regardless of active, deactivated, etc. )
         # TODO: feature request OpenML.
         url += "/status/deactivated"
-        error_msg = "Dataset {} with version {} not found.".format(name, version)
+        error_msg = "Dataset {} with version {} not found.".format(
+            name, version
+        )
         json_data = _get_json_content_from_openml_api(
             url, error_msg, data_home=data_home
         )
@@ -451,7 +463,9 @@ def _get_data_description_by_id(
     return json_data["data_set_description"]
 
 
-def _get_data_features(data_id: int, data_home: Optional[str]) -> OpenmlFeaturesType:
+def _get_data_features(
+    data_id: int, data_home: Optional[str]
+) -> OpenmlFeaturesType:
     # OpenML function:
     # https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
@@ -462,7 +476,9 @@ def _get_data_features(data_id: int, data_home: Optional[str]) -> OpenmlFeatures
     return json_data["data_features"]["feature"]
 
 
-def _get_data_qualities(data_id: int, data_home: Optional[str]) -> OpenmlQualitiesType:
+def _get_data_qualities(
+    data_id: int, data_home: Optional[str]
+) -> OpenmlQualitiesType:
     # OpenML API function:
     # https://www.openml.org/api_docs#!/data/get_data_qualities_id
     url = _DATA_QUALITIES.format(data_id)
@@ -563,9 +579,13 @@ def _download_data_to_bunch(
     # XXX: col_slice_y should be all nominal or all numeric
     _verify_target_data_type(features_dict, target_columns)
 
-    col_slice_y = [int(features_dict[col_name]["index"]) for col_name in target_columns]
+    col_slice_y = [
+        int(features_dict[col_name]["index"]) for col_name in target_columns
+    ]
 
-    col_slice_x = [int(features_dict[col_name]["index"]) for col_name in data_columns]
+    col_slice_x = [
+        int(features_dict[col_name]["index"]) for col_name in data_columns
+    ]
     for col_idx in col_slice_y:
         feat = features_list[col_idx]
         nr_missing = int(feat["number_of_missing_values"])
@@ -591,7 +611,9 @@ def _download_data_to_bunch(
     if as_frame:
         columns = data_columns + target_columns
         parse_arff = partial(
-            _convert_arff_data_dataframe, columns=columns, features_dict=features_dict
+            _convert_arff_data_dataframe,
+            columns=columns,
+            features_dict=features_dict,
         )
 
         def postprocess(frame):
@@ -630,7 +652,9 @@ def _download_data_to_bunch(
                 y = np.hstack(
                     [
                         np.take(
-                            np.asarray(nominal_attributes.pop(col_name), dtype="O"),
+                            np.asarray(
+                                nominal_attributes.pop(col_name), dtype="O"
+                            ),
                             y[:, i : i + 1].astype(int, copy=False),
                         )
                         for i, col_name in enumerate(target_columns)
@@ -638,7 +662,8 @@ def _download_data_to_bunch(
                 )
             elif any(is_classification):
                 raise ValueError(
-                    "Mix of nominal and non-nominal targets is not currently supported"
+                    "Mix of nominal and non-nominal targets is not currently"
+                    " supported"
                 )
 
             # reshape y back to 1-D array, if there is only 1 target column;
@@ -673,7 +698,9 @@ def _verify_target_data_type(features_dict, target_columns):
     # verifies the data type of the y array in case there are multiple targets
     # (throws an error if these targets do not comply with sklearn support)
     if not isinstance(target_columns, list):
-        raise ValueError("target_column should be list, got: %s" % type(target_columns))
+        raise ValueError(
+            "target_column should be list, got: %s" % type(target_columns)
+        )
     found_types = set()
     for target_column in target_columns:
         if target_column not in features_dict:
@@ -687,7 +714,11 @@ def _verify_target_data_type(features_dict, target_columns):
         if features_dict[target_column]["is_ignore"] == "true":
             warn("target_column={} has flag is_ignore.".format(target_column))
         if features_dict[target_column]["is_row_identifier"] == "true":
-            warn("target_column={} has flag is_row_identifier.".format(target_column))
+            warn(
+                "target_column={} has flag is_row_identifier.".format(
+                    target_column
+                )
+            )
     if len(found_types) > 1:
         raise ValueError(
             "Can only handle homogeneous multi-target datasets, "
@@ -868,7 +899,8 @@ def fetch_openml(
             )
     else:
         raise ValueError(
-            "Neither name nor data_id are provided. Please provide name or data_id."
+            "Neither name nor data_id are provided. Please provide name or"
+            " data_id."
         )
 
     data_description = _get_data_description_by_id(data_id, data_home)

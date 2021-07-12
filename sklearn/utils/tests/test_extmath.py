@@ -320,7 +320,9 @@ def test_row_norms(dtype):
             Xcsr.indices = Xcsr.indices.astype(csr_index_dtype, copy=False)
         assert Xcsr.indices.dtype == csr_index_dtype
         assert Xcsr.indptr.dtype == csr_index_dtype
-        assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True), precision)
+        assert_array_almost_equal(
+            sq_norm, row_norms(Xcsr, squared=True), precision
+        )
         assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr), precision)
 
 
@@ -349,7 +351,11 @@ def test_randomized_svd_low_rank_with_noise():
         # compute the singular values of X using the fast approximate
         # method without the iterated power method
         _, sa, _ = randomized_svd(
-            X, k, n_iter=0, power_iteration_normalizer=normalizer, random_state=0
+            X,
+            k,
+            n_iter=0,
+            power_iteration_normalizer=normalizer,
+            random_state=0,
         )
 
         # the approximation does not tolerate the noise:
@@ -389,7 +395,11 @@ def test_randomized_svd_infinite_rank():
         # compute the singular values of X using the fast approximate method
         # without the iterated power method
         _, sa, _ = randomized_svd(
-            X, k, n_iter=0, power_iteration_normalizer=normalizer, random_state=0
+            X,
+            k,
+            n_iter=0,
+            power_iteration_normalizer=normalizer,
+            random_state=0,
         )
 
         # the approximation does not tolerate the noise:
@@ -398,7 +408,11 @@ def test_randomized_svd_infinite_rank():
         # compute the singular values of X using the fast approximate method
         # with iterated power method
         _, sap, _ = randomized_svd(
-            X, k, n_iter=5, power_iteration_normalizer=normalizer, random_state=0
+            X,
+            k,
+            n_iter=5,
+            power_iteration_normalizer=normalizer,
+            random_state=0,
         )
 
         # the iterated power method is still managing to get most of the
@@ -422,17 +436,25 @@ def test_randomized_svd_transpose_consistency():
     )
     assert X.shape == (n_samples, n_features)
 
-    U1, s1, V1 = randomized_svd(X, k, n_iter=3, transpose=False, random_state=0)
+    U1, s1, V1 = randomized_svd(
+        X, k, n_iter=3, transpose=False, random_state=0
+    )
     U2, s2, V2 = randomized_svd(X, k, n_iter=3, transpose=True, random_state=0)
-    U3, s3, V3 = randomized_svd(X, k, n_iter=3, transpose="auto", random_state=0)
+    U3, s3, V3 = randomized_svd(
+        X, k, n_iter=3, transpose="auto", random_state=0
+    )
     U4, s4, V4 = linalg.svd(X, full_matrices=False)
 
     assert_almost_equal(s1, s4[:k], decimal=3)
     assert_almost_equal(s2, s4[:k], decimal=3)
     assert_almost_equal(s3, s4[:k], decimal=3)
 
-    assert_almost_equal(np.dot(U1, V1), np.dot(U4[:, :k], V4[:k, :]), decimal=2)
-    assert_almost_equal(np.dot(U2, V2), np.dot(U4[:, :k], V4[:k, :]), decimal=2)
+    assert_almost_equal(
+        np.dot(U1, V1), np.dot(U4[:, :k], V4[:k, :]), decimal=2
+    )
+    assert_almost_equal(
+        np.dot(U2, V2), np.dot(U4[:, :k], V4[:k, :]), decimal=2
+    )
 
     # in this case 'auto' is equivalent to transpose
     assert_almost_equal(s2, s3)
@@ -448,12 +470,20 @@ def test_randomized_svd_power_iteration_normalizer():
 
     # Check that it diverges with many (non-normalized) power iterations
     U, s, Vt = randomized_svd(
-        X, n_components, n_iter=2, power_iteration_normalizer="none", random_state=0
+        X,
+        n_components,
+        n_iter=2,
+        power_iteration_normalizer="none",
+        random_state=0,
     )
     A = X - U.dot(np.diag(s).dot(Vt))
     error_2 = linalg.norm(A, ord="fro")
     U, s, Vt = randomized_svd(
-        X, n_components, n_iter=20, power_iteration_normalizer="none", random_state=0
+        X,
+        n_components,
+        n_iter=20,
+        power_iteration_normalizer="none",
+        random_state=0,
     )
     A = X - U.dot(np.diag(s).dot(Vt))
     error_20 = linalg.norm(A, ord="fro")
@@ -495,7 +525,9 @@ def test_randomized_svd_sparse_warnings():
             "csr_matrix is more efficient.".format(cls.__name__)
         )
         with pytest.warns(sparse.SparseEfficiencyWarning, match=warn_msg):
-            randomized_svd(X, n_components, n_iter=1, power_iteration_normalizer="none")
+            randomized_svd(
+                X, n_components, n_iter=1, power_iteration_normalizer="none"
+            )
 
 
 def test_svd_flip():
@@ -552,7 +584,9 @@ def test_randomized_svd_sign_flip_with_transpose():
     mat = np.arange(10 * 8).reshape(10, -1)
 
     # Without transpose
-    u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True, random_state=0)
+    u_flipped, _, v_flipped = randomized_svd(
+        mat, 3, flip_sign=True, random_state=0
+    )
     u_based, v_based = max_loading_is_positive(u_flipped, v_flipped)
     assert u_based
     assert not v_based
@@ -620,7 +654,9 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mult = 10
     X = rng.rand(1000, 20).astype(dtype) * mult
     sample_weight = rng.rand(X.shape[0]) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+    mean, var, _ = _incremental_mean_and_var(
+        X, 0, 0, 0, sample_weight=sample_weight
+    )
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = (
@@ -633,7 +669,8 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
 @pytest.mark.parametrize("mean", [0, 1e7, -1e7])
 @pytest.mark.parametrize("var", [1, 1e-8, 1e5])
 @pytest.mark.parametrize(
-    "weight_loc, weight_scale", [(0, 1), (0, 1e-8), (1, 1e-8), (10, 1), (1e7, 1)]
+    "weight_loc, weight_scale",
+    [(0, 1), (0, 1e-8), (1, 1e-8), (10, 1), (1e7, 1)],
 )
 def test_incremental_weighted_mean_and_variance(
     mean, var, weight_loc, weight_scale, rng
@@ -645,7 +682,11 @@ def test_incremental_weighted_mean_and_variance(
         for chunk_size in [1, n // 10 + 1, n // 4 + 1, n // 2 + 1, n]:
             last_mean, last_weight_sum, last_var = 0, 0, 0
             for batch in gen_batches(n, chunk_size):
-                last_mean, last_var, last_weight_sum = _incremental_mean_and_var(
+                (
+                    last_mean,
+                    last_var,
+                    last_weight_sum,
+                ) = _incremental_mean_and_var(
                     X[batch],
                     last_mean,
                     last_var,
@@ -696,7 +737,11 @@ def test_incremental_weighted_mean_and_variance_ignore_nan(dtype):
     ).astype(dtype)
 
     X_means, X_variances, X_count = _incremental_mean_and_var(
-        X, old_means, old_variances, old_weight_sum, sample_weight=sample_weights_X
+        X,
+        old_means,
+        old_variances,
+        old_weight_sum,
+        sample_weight=sample_weights_X,
     )
     X_nan_means, X_nan_variances, X_nan_count = _incremental_mean_and_var(
         X_nan,
@@ -742,7 +787,9 @@ def test_incremental_mean_and_variance_ignore_nan():
     old_variances = np.array([4225.0, 4225.0, 4225.0, 4225.0])
     old_sample_count = np.array([2, 2, 2, 2], dtype=np.int32)
 
-    X = np.array([[170, 170, 170, 170], [430, 430, 430, 430], [300, 300, 300, 300]])
+    X = np.array(
+        [[170, 170, 170, 170], [430, 430, 430, 430], [300, 300, 300, 300]]
+    )
 
     X_nan = np.array(
         [
@@ -791,7 +838,9 @@ def test_incremental_variance_numerical_stability():
     # Naive online implementation
     # https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
     # This works only for chunks for size 1
-    def naive_mean_variance_update(x, last_mean, last_variance, last_sample_count):
+    def naive_mean_variance_update(
+        x, last_mean, last_variance, last_sample_count
+    ):
         updated_sample_count = last_sample_count + 1
         samples_ratio = last_sample_count / float(updated_sample_count)
         updated_mean = x / updated_sample_count + last_mean * samples_ratio
@@ -855,12 +904,21 @@ def test_incremental_variance_ddof():
                 incremental_variances = batch.var(axis=0)
                 # Assign this twice so that the test logic is consistent
                 incremental_count = batch.shape[0]
-                sample_count = np.full(batch.shape[1], batch.shape[0], dtype=np.int32)
+                sample_count = np.full(
+                    batch.shape[1], batch.shape[0], dtype=np.int32
+                )
             else:
                 result = _incremental_mean_and_var(
-                    batch, incremental_means, incremental_variances, sample_count
+                    batch,
+                    incremental_means,
+                    incremental_variances,
+                    sample_count,
                 )
-                (incremental_means, incremental_variances, incremental_count) = result
+                (
+                    incremental_means,
+                    incremental_variances,
+                    incremental_count,
+                ) = result
                 sample_count += batch.shape[0]
 
             calculated_means = np.mean(X[:j], axis=0)

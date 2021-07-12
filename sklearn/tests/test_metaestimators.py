@@ -49,7 +49,9 @@ DELEGATING_METAESTIMATORS = [
         skip_methods=["score"],
     ),
     DelegatorData("RFE", RFE, skip_methods=["transform", "inverse_transform"]),
-    DelegatorData("RFECV", RFECV, skip_methods=["transform", "inverse_transform"]),
+    DelegatorData(
+        "RFECV", RFECV, skip_methods=["transform", "inverse_transform"]
+    ),
     DelegatorData(
         "BaggingClassifier",
         BaggingClassifier,
@@ -199,7 +201,9 @@ def _generate_meta_estimator_instances_with_pipeline():
                 estimator = make_pipeline(TfidfVectorizer(), Ridge())
                 param_grid = {"ridge__alpha": [0.1, 1.0]}
             else:
-                estimator = make_pipeline(TfidfVectorizer(), LogisticRegression())
+                estimator = make_pipeline(
+                    TfidfVectorizer(), LogisticRegression()
+                )
                 param_grid = {"logisticregression__C": [0.1, 1.0]}
 
             if "param_grid" in sig or "param_distributions" in sig:
@@ -215,7 +219,9 @@ def _generate_meta_estimator_instances_with_pipeline():
                 ("trans1", make_pipeline(TfidfVectorizer(), MaxAbsScaler())),
                 (
                     "trans2",
-                    make_pipeline(TfidfVectorizer(), StandardScaler(with_mean=False)),
+                    make_pipeline(
+                        TfidfVectorizer(), StandardScaler(with_mean=False)
+                    ),
                 ),
             ]
             yield Estimator(transformer_list)
@@ -224,16 +230,26 @@ def _generate_meta_estimator_instances_with_pipeline():
             # stacking, voting
             if is_regressor(Estimator):
                 estimator = [
-                    ("est1", make_pipeline(TfidfVectorizer(), Ridge(alpha=0.1))),
+                    (
+                        "est1",
+                        make_pipeline(TfidfVectorizer(), Ridge(alpha=0.1)),
+                    ),
                     ("est2", make_pipeline(TfidfVectorizer(), Ridge(alpha=1))),
                 ]
             else:
                 estimator = [
                     (
                         "est1",
-                        make_pipeline(TfidfVectorizer(), LogisticRegression(C=0.1)),
+                        make_pipeline(
+                            TfidfVectorizer(), LogisticRegression(C=0.1)
+                        ),
                     ),
-                    ("est2", make_pipeline(TfidfVectorizer(), LogisticRegression(C=1))),
+                    (
+                        "est2",
+                        make_pipeline(
+                            TfidfVectorizer(), LogisticRegression(C=1)
+                        ),
+                    ),
                 ]
             yield Estimator(estimator)
 

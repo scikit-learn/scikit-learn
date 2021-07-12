@@ -116,7 +116,9 @@ class PrecisionRecallDisplay:
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
-            line_kwargs["label"] = f"{name} (AP = {self.average_precision:0.2f})"
+            line_kwargs["label"] = (
+                f"{name} (AP = {self.average_precision:0.2f})"
+            )
         elif self.average_precision is not None:
             line_kwargs["label"] = f"AP = {self.average_precision:0.2f}"
         elif name is not None:
@@ -130,7 +132,9 @@ class PrecisionRecallDisplay:
 
         (self.line_,) = ax.plot(self.recall, self.precision, **line_kwargs)
         info_pos_label = (
-            f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
+            f" (Positive label: {self.pos_label})"
+            if self.pos_label is not None
+            else ""
         )
 
         xlabel = "Recall" + info_pos_label

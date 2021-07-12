@@ -569,7 +569,9 @@ def _randomized_eigsh(
         # value will be -t, and the left (U) and right (V) singular vectors
         # will have opposite signs.
         # Fastest way: see <https://stackoverflow.com/a/61974002/7262247>
-        diag_VtU = np.einsum("ji,ij->j", Vt[:n_components, :], U[:, :n_components])
+        diag_VtU = np.einsum(
+            "ji,ij->j", Vt[:n_components, :], U[:, :n_components]
+        )
         signs = np.sign(diag_VtU)
         eigvals = eigvals * signs
 
@@ -988,7 +990,9 @@ def _incremental_mean_and_var(
                 # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
                 # dtype arg of np.matmul only exists since version 1.16
                 new_unnormalized_variance = _safe_accumulator_op(
-                    np.matmul, sample_weight, np.where(np.isnan(X), 0, (X - T) ** 2)
+                    np.matmul,
+                    sample_weight,
+                    np.where(np.isnan(X), 0, (X - T) ** 2),
                 )
                 correction = _safe_accumulator_op(
                     np.matmul, sample_weight, np.where(np.isnan(X), 0, X - T)
@@ -1071,7 +1075,11 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     expected = np.sum(arr, axis=axis, dtype=np.float64)
     if not np.all(
         np.isclose(
-            out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
+            out.take(-1, axis=axis),
+            expected,
+            rtol=rtol,
+            atol=atol,
+            equal_nan=True,
         )
     ):
         warnings.warn(

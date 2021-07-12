@@ -139,7 +139,9 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         return Xt
 
 
-def _get_feature_importances(estimator, getter, transform_func=None, norm_order=1):
+def _get_feature_importances(
+    estimator, getter, transform_func=None, norm_order=1
+):
     """
     Retrieve and aggregate (ndim > 1)  the feature importances
     from an estimator. Also optionally applies transformation.
@@ -184,7 +186,9 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
         else:
             getter = attrgetter(getter)
     elif not callable(getter):
-        raise ValueError("`importance_getter` has to be a string or `callable`")
+        raise ValueError(
+            "`importance_getter` has to be a string or `callable`"
+        )
     importances = getter(estimator)
 
     if transform_func is None:

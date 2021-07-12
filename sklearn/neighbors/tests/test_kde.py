@@ -35,16 +35,24 @@ def compute_kernel_slow(Y, X, kernel, h):
 
 
 def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true):
-    kde = KernelDensity(kernel=kernel, bandwidth=bandwidth, atol=atol, rtol=rtol)
+    kde = KernelDensity(
+        kernel=kernel, bandwidth=bandwidth, atol=atol, rtol=rtol
+    )
     log_dens = kde.fit(X).score_samples(Y)
-    assert_allclose(np.exp(log_dens), dens_true, atol=atol, rtol=max(1e-7, rtol))
     assert_allclose(
-        np.exp(kde.score(Y)), np.prod(dens_true), atol=atol, rtol=max(1e-7, rtol)
+        np.exp(log_dens), dens_true, atol=atol, rtol=max(1e-7, rtol)
+    )
+    assert_allclose(
+        np.exp(kde.score(Y)),
+        np.prod(dens_true),
+        atol=atol,
+        rtol=max(1e-7, rtol),
     )
 
 
 @pytest.mark.parametrize(
-    "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]
+    "kernel",
+    ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"],
 )
 @pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1])
 def test_kernel_density(kernel, bandwidth):
@@ -138,14 +146,21 @@ def test_kde_badargs():
         KernelDensity(algorithm="kd_tree", metric="blah")
     kde = KernelDensity()
     with pytest.raises(ValueError):
-        kde.fit(np.random.random((200, 10)), sample_weight=np.random.random((200, 10)))
+        kde.fit(
+            np.random.random((200, 10)),
+            sample_weight=np.random.random((200, 10)),
+        )
     with pytest.raises(ValueError):
-        kde.fit(np.random.random((200, 10)), sample_weight=-np.random.random(200))
+        kde.fit(
+            np.random.random((200, 10)), sample_weight=-np.random.random(200)
+        )
 
 
 def test_kde_pipeline_gridsearch():
     # test that kde plays nice in pipelines and grid-searches
-    X, _ = make_blobs(cluster_std=0.1, random_state=1, centers=[[0, 1], [1, 0], [0, 0]])
+    X, _ = make_blobs(
+        cluster_std=0.1, random_state=1, centers=[[0, 1], [1, 0], [0, 0]]
+    )
     pipe1 = make_pipeline(
         StandardScaler(with_mean=False, with_std=False),
         KernelDensity(kernel="gaussian"),

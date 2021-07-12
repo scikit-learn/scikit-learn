@@ -161,7 +161,9 @@ class LeaveOneOut(BaseCrossValidator):
         n_samples = _num_samples(X)
         if n_samples <= 1:
             raise ValueError(
-                "Cannot perform LeaveOneOut with n_samples={}.".format(n_samples)
+                "Cannot perform LeaveOneOut with n_samples={}.".format(
+                    n_samples
+                )
             )
         return range(n_samples)
 
@@ -243,9 +245,8 @@ class LeavePOut(BaseCrossValidator):
         n_samples = _num_samples(X)
         if n_samples <= self.p:
             raise ValueError(
-                "p={} must be strictly less than the number of samples={}".format(
-                    self.p, n_samples
-                )
+                "p={} must be strictly less than the number of samples={}"
+                .format(self.p, n_samples)
             )
         for combination in combinations(range(n_samples), self.p):
             yield np.array(combination)
@@ -278,7 +279,8 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         if not isinstance(n_splits, numbers.Integral):
             raise ValueError(
                 "The number of folds must be of Integral type. "
-                "%s of type %s was passed." % (n_splits, type(n_splits))
+                "%s of type %s was passed."
+                % (n_splits, type(n_splits))
             )
         n_splits = int(n_splits)
 
@@ -290,7 +292,9 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             )
 
         if not isinstance(shuffle, bool):
-            raise TypeError("shuffle must be True or False; got {0}".format(shuffle))
+            raise TypeError(
+                "shuffle must be True or False; got {0}".format(shuffle)
+            )
 
         if not shuffle and random_state is not None:  # None is the default
             raise ValueError(
@@ -432,7 +436,9 @@ class KFold(_BaseKFold):
     """
 
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
-        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+        super().__init__(
+            n_splits=n_splits, shuffle=shuffle, random_state=random_state
+        )
 
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
@@ -516,7 +522,8 @@ class GroupKFold(_BaseKFold):
         if self.n_splits > n_groups:
             raise ValueError(
                 "Cannot have number of splits n_splits=%d greater"
-                " than the number of groups: %d." % (self.n_splits, n_groups)
+                " than the number of groups: %d."
+                % (self.n_splits, n_groups)
             )
 
         # Weight groups by their number of occurrences
@@ -641,7 +648,9 @@ class StratifiedKFold(_BaseKFold):
     """
 
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
-        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+        super().__init__(
+            n_splits=n_splits, shuffle=shuffle, random_state=random_state
+        )
 
     def _make_test_folds(self, X, y=None):
         rng = check_random_state(self.random_state)
@@ -670,7 +679,8 @@ class StratifiedKFold(_BaseKFold):
         if np.all(self.n_splits > y_counts):
             raise ValueError(
                 "n_splits=%d cannot be greater than the"
-                " number of members in each class." % (self.n_splits)
+                " number of members in each class."
+                % (self.n_splits)
             )
         if self.n_splits > min_groups:
             warnings.warn(
@@ -835,7 +845,9 @@ class StratifiedGroupKFold(_BaseKFold):
     """
 
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
-        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+        super().__init__(
+            n_splits=n_splits, shuffle=shuffle, random_state=random_state
+        )
 
     def _iter_test_indices(self, X, y, groups):
         # Implementation is based on this kaggle kernel:
@@ -869,7 +881,8 @@ class StratifiedGroupKFold(_BaseKFold):
         if np.all(self.n_splits > y_cnt):
             raise ValueError(
                 "n_splits=%d cannot be greater than the"
-                " number of members in each class." % (self.n_splits)
+                " number of members in each class."
+                % (self.n_splits)
             )
         n_smallest_class = np.min(y_cnt)
         if self.n_splits > n_smallest_class:
@@ -925,7 +938,9 @@ class StratifiedGroupKFold(_BaseKFold):
         for i in range(self.n_splits):
             y_counts_per_fold[i] += group_y_counts
             # Summarise the distribution over classes in each proposed fold
-            std_per_class = np.std(y_counts_per_fold / y_cnt.reshape(1, -1), axis=0)
+            std_per_class = np.std(
+                y_counts_per_fold / y_cnt.reshape(1, -1), axis=0
+            )
             y_counts_per_fold[i] -= group_y_counts
             fold_eval = np.mean(std_per_class)
             samples_in_fold = np.sum(y_counts_per_fold[i])
@@ -1031,7 +1046,9 @@ class TimeSeriesSplit(_BaseKFold):
     where ``n_samples`` is the number of samples.
     """
 
-    def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
+    def __init__(
+        self, n_splits=5, *, max_train_size=None, test_size=None, gap=0
+    ):
         super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
         self.test_size = test_size
@@ -1066,7 +1083,9 @@ class TimeSeriesSplit(_BaseKFold):
         n_folds = n_splits + 1
         gap = self.gap
         test_size = (
-            self.test_size if self.test_size is not None else n_samples // n_folds
+            self.test_size
+            if self.test_size is not None
+            else n_samples // n_folds
         )
 
         # Make sure we have enough samples for the given split parameters
@@ -1082,7 +1101,9 @@ class TimeSeriesSplit(_BaseKFold):
             )
 
         indices = np.arange(n_samples)
-        test_starts = range(n_samples - n_splits * test_size, n_samples, test_size)
+        test_starts = range(
+            n_samples - n_splits * test_size, n_samples, test_size
+        )
 
         for test_start in test_starts:
             train_end = test_start - gap
@@ -1149,7 +1170,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
         if len(unique_groups) <= 1:
             raise ValueError(
                 "The groups parameter contains fewer than 2 unique groups "
-                "(%s). LeaveOneGroupOut expects at least 2." % unique_groups
+                "(%s). LeaveOneGroupOut expects at least 2."
+                % unique_groups
             )
         for i in unique_groups:
             yield groups == i
@@ -1277,7 +1299,8 @@ class LeavePGroupsOut(BaseCrossValidator):
                 "The groups parameter contains fewer than (or equal to) "
                 "n_groups (%d) numbers of unique groups (%s). LeavePGroupsOut "
                 "expects that at least n_groups + 1 (%d) unique groups be "
-                "present" % (self.n_groups, unique_groups, self.n_groups + 1)
+                "present"
+                % (self.n_groups, unique_groups, self.n_groups + 1)
             )
         combi = combinations(range(len(unique_groups)), self.n_groups)
         for indices in combi:
@@ -1372,7 +1395,9 @@ class _RepeatedSplits(metaclass=ABCMeta):
             raise ValueError("Number of repetitions must be greater than 0.")
 
         if any(key in cvargs for key in ("random_state", "shuffle")):
-            raise ValueError("cvargs must not contain random_state or shuffle.")
+            raise ValueError(
+                "cvargs must not contain random_state or shuffle."
+            )
 
         self.cv = cv
         self.n_repeats = n_repeats
@@ -1491,7 +1516,10 @@ class RepeatedKFold(_RepeatedSplits):
 
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
-            KFold, n_repeats=n_repeats, random_state=random_state, n_splits=n_splits
+            KFold,
+            n_repeats=n_repeats,
+            random_state=random_state,
+            n_splits=n_splits,
         )
 
 
@@ -1558,7 +1586,12 @@ class BaseShuffleSplit(metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(
-        self, n_splits=10, *, test_size=None, train_size=None, random_state=None
+        self,
+        n_splits=10,
+        *,
+        test_size=None,
+        train_size=None,
+        random_state=None,
     ):
         self.n_splits = n_splits
         self.test_size = test_size
@@ -1693,7 +1726,12 @@ class ShuffleSplit(BaseShuffleSplit):
     """
 
     def __init__(
-        self, n_splits=10, *, test_size=None, train_size=None, random_state=None
+        self,
+        n_splits=10,
+        *,
+        test_size=None,
+        train_size=None,
+        random_state=None,
     ):
         super().__init__(
             n_splits=n_splits,
@@ -1907,7 +1945,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     """
 
     def __init__(
-        self, n_splits=10, *, test_size=None, train_size=None, random_state=None
+        self,
+        n_splits=10,
+        *,
+        test_size=None,
+        train_size=None,
+        random_state=None,
     ):
         super().__init__(
             n_splits=n_splits,
@@ -1947,18 +1990,21 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         if n_train < n_classes:
             raise ValueError(
                 "The train_size = %d should be greater or "
-                "equal to the number of classes = %d" % (n_train, n_classes)
+                "equal to the number of classes = %d"
+                % (n_train, n_classes)
             )
         if n_test < n_classes:
             raise ValueError(
                 "The test_size = %d should be greater or "
-                "equal to the number of classes = %d" % (n_test, n_classes)
+                "equal to the number of classes = %d"
+                % (n_test, n_classes)
             )
 
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
         class_indices = np.split(
-            np.argsort(y_indices, kind="mergesort"), np.cumsum(class_counts)[:-1]
+            np.argsort(y_indices, kind="mergesort"),
+            np.cumsum(class_counts)[:-1],
         )
 
         rng = check_random_state(self.random_state)
@@ -1975,7 +2021,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
             for i in range(n_classes):
                 permutation = rng.permutation(class_counts[i])
-                perm_indices_class_i = class_indices[i].take(permutation, mode="clip")
+                perm_indices_class_i = class_indices[i].take(
+                    permutation, mode="clip"
+                )
 
                 train.extend(perm_indices_class_i[: n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i] : n_i[i] + t_i[i]])
@@ -2023,7 +2071,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         return super().split(X, y, groups)
 
 
-def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=None):
+def _validate_shuffle_split(
+    n_samples, test_size, train_size, default_test_size=None
+):
     """
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
@@ -2063,10 +2113,16 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
     if test_size is not None and test_size_type not in ("i", "f"):
         raise ValueError("Invalid value for test_size: {}".format(test_size))
 
-    if train_size_type == "f" and test_size_type == "f" and train_size + test_size > 1:
+    if (
+        train_size_type == "f"
+        and test_size_type == "f"
+        and train_size + test_size > 1
+    ):
         raise ValueError(
             "The sum of test_size and train_size = {}, should be in the (0, 1)"
-            " range. Reduce test_size and/or train_size.".format(train_size + test_size)
+            " range. Reduce test_size and/or train_size.".format(
+                train_size + test_size
+            )
         )
 
     if test_size_type == "f":
@@ -2089,7 +2145,8 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
             "The sum of train_size and test_size = %d, "
             "should be smaller than the number of "
             "samples %d. Reduce test_size and/or "
-            "train_size." % (n_train + n_test, n_samples)
+            "train_size."
+            % (n_train + n_test, n_samples)
         )
 
     n_train, n_test = int(n_train), int(n_test)
@@ -2098,7 +2155,9 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
         raise ValueError(
             "With n_samples={}, test_size={} and train_size={}, the "
             "resulting train set will be empty. Adjust any of the "
-            "aforementioned parameters.".format(n_samples, test_size, train_size)
+            "aforementioned parameters.".format(
+                n_samples, test_size, train_size
+            )
         )
 
     return n_train, n_test
@@ -2311,7 +2370,8 @@ def check_cv(cv=5, y=None, *, classifier=False):
             raise ValueError(
                 "Expected cv as an integer, cross-validation "
                 "object (from sklearn.model_selection) "
-                "or an iterable. Got %s." % cv
+                "or an iterable. Got %s."
+                % cv
             )
         return _CVIterableWrapper(cv)
 
@@ -2426,7 +2486,8 @@ def train_test_split(
     if shuffle is False:
         if stratify is not None:
             raise ValueError(
-                "Stratified train/test split is not implemented for shuffle=False"
+                "Stratified train/test split is not implemented for"
+                " shuffle=False"
             )
 
         train = np.arange(n_train)
@@ -2438,7 +2499,9 @@ def train_test_split(
         else:
             CVClass = ShuffleSplit
 
-        cv = CVClass(test_size=n_test, train_size=n_train, random_state=random_state)
+        cv = CVClass(
+            test_size=n_test, train_size=n_train, random_state=random_state
+        )
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 

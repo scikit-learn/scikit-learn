@@ -65,7 +65,9 @@ def test_simple():
     try:
         sys.stdout = StringIO()
 
-        _, _, coef_path_ = linear_model.lars_path(X, y, method="lar", verbose=10)
+        _, _, coef_path_ = linear_model.lars_path(
+            X, y, method="lar", verbose=10
+        )
 
         sys.stdout = old_stdout
 
@@ -113,9 +115,15 @@ def _assert_same_lars_path_result(output1, output2):
 def test_lars_path_gram_equivalent(method, return_path):
     _assert_same_lars_path_result(
         linear_model.lars_path_gram(
-            Xy=Xy, Gram=G, n_samples=n_samples, method=method, return_path=return_path
+            Xy=Xy,
+            Gram=G,
+            n_samples=n_samples,
+            method=method,
+            return_path=return_path,
         ),
-        linear_model.lars_path(X, y, Gram=G, method=method, return_path=return_path),
+        linear_model.lars_path(
+            X, y, Gram=G, method=method, return_path=return_path
+        ),
     )
 
 
@@ -195,7 +203,9 @@ def test_collinearity():
 def test_no_path():
     # Test that the ``return_path=False`` option returns the correct output
     alphas_, _, coef_path_ = linear_model.lars_path(X, y, method="lar")
-    alpha_, _, coef = linear_model.lars_path(X, y, method="lar", return_path=False)
+    alpha_, _, coef = linear_model.lars_path(
+        X, y, method="lar", return_path=False
+    )
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert alpha_ == alphas_[-1]
@@ -231,7 +241,8 @@ def test_no_path_all_precomputed():
 
 @filterwarnings_normalize
 @pytest.mark.parametrize(
-    "classifier", [linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC]
+    "classifier",
+    [linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC],
 )
 def test_lars_precompute(classifier):
     # Check for different values of precompute
@@ -259,7 +270,10 @@ def test_rank_deficient_design():
     # deficient input data (with n_features < rank) in the same way
     # as coordinate descent Lasso
     y = [5, 0, 5]
-    for X in ([[5, 0], [0, 5], [10, 10]], [[10, 10, 0], [1e-32, 0, 0], [0, 0, 1]]):
+    for X in (
+        [[5, 0], [0, 5], [10, 10]],
+        [[10, 10, 0], [1e-32, 0, 0], [0, 0, 1]],
+    ):
         # To be able to use the coefs to compute the objective function,
         # we need to turn off normalization
         lars = linear_model.LassoLars(0.1, normalize=False)
@@ -512,7 +526,10 @@ def test_lars_cv_max_iter(recwarn):
     # FIXME: when 'normalize' is removed set exchange below for:
     # assert len(recorded_warnings) == []
     assert len(recorded_warnings) == 1
-    assert "normalize' will be set to False in version 1.2" in recorded_warnings[0]
+    assert (
+        "normalize' will be set to False in version 1.2"
+        in recorded_warnings[0]
+    )
 
 
 @filterwarnings_normalize
@@ -625,7 +642,9 @@ def test_lasso_lars_vs_lasso_cd_positive():
     # not normalized data
     X = 3 * diabetes.data
 
-    alphas, _, lasso_path = linear_model.lars_path(X, y, method="lasso", positive=True)
+    alphas, _, lasso_path = linear_model.lars_path(
+        X, y, method="lasso", positive=True
+    )
     lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8, positive=True)
     for c, a in zip(lasso_path.T, alphas):
         if a == 0:
@@ -657,7 +676,9 @@ def test_lasso_lars_vs_lasso_cd_positive():
     # normalized data
     X = diabetes.data - diabetes.data.sum(axis=0)
     X /= np.linalg.norm(X, axis=0)
-    alphas, _, lasso_path = linear_model.lars_path(X, y, method="lasso", positive=True)
+    alphas, _, lasso_path = linear_model.lars_path(
+        X, y, method="lasso", positive=True
+    )
     lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8, positive=True)
     for c, a in zip(lasso_path.T[:-1], alphas[:-1]):  # don't include alpha=0
         lasso_cd.alpha = a
@@ -675,7 +696,9 @@ def test_lasso_lars_vs_R_implementation():
     # 2) fit_intercept=True and normalize=True
 
     # Let's generate the data used in the bug report 7778
-    y = np.array([-6.45006793, -3.51251449, -8.52445396, 6.12277822, -19.42109366])
+    y = np.array(
+        [-6.45006793, -3.51251449, -8.52445396, 6.12277822, -19.42109366]
+    )
     x = np.array(
         [
             [0.47299829, 0, 0, 0, 0],
@@ -867,7 +890,9 @@ def test_lars_with_jitter(est):
 
 
 def test_X_none_gram_not_none():
-    with pytest.raises(ValueError, match="X cannot be None if Gram is not None"):
+    with pytest.raises(
+        ValueError, match="X cannot be None if Gram is not None"
+    ):
         lars_path(X=None, y=[1], Gram="not None")
 
 
@@ -934,9 +959,15 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
     y_64 = rng.rand(6)
 
     model_64 = LARS(**args).fit(X_64, y_64)
-    model_32 = LARS(**args).fit(X_64.astype(np.float32), y_64.astype(np.float32))
+    model_32 = LARS(**args).fit(
+        X_64.astype(np.float32), y_64.astype(np.float32)
+    )
 
     assert_allclose(model_64.coef_, model_32.coef_, rtol=rtol, atol=atol)
     if has_coef_path:
-        assert_allclose(model_64.coef_path_, model_32.coef_path_, rtol=rtol, atol=atol)
-    assert_allclose(model_64.intercept_, model_32.intercept_, rtol=rtol, atol=atol)
+        assert_allclose(
+            model_64.coef_path_, model_32.coef_path_, rtol=rtol, atol=atol
+        )
+    assert_allclose(
+        model_64.intercept_, model_32.intercept_, rtol=rtol, atol=atol
+    )

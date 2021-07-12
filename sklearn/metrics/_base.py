@@ -20,7 +20,9 @@ from ..utils import check_array, check_consistent_length
 from ..utils.multiclass import type_of_target
 
 
-def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight=None):
+def _average_binary_score(
+    binary_metric, y_true, y_score, average, sample_weight=None
+):
     """Average a binary metric for multilabel classification.
 
     Parameters
@@ -65,7 +67,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
     """
     average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
-        raise ValueError("average has to be one of {0}".format(average_options))
+        raise ValueError(
+            "average has to be one of {0}".format(average_options)
+        )
 
     y_type = type_of_target(y_true)
     if y_type not in ("binary", "multilabel-indicator"):
@@ -115,7 +119,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
     for c in range(n_classes):
         y_true_c = y_true.take([c], axis=not_average_axis).ravel()
         y_score_c = y_score.take([c], axis=not_average_axis).ravel()
-        score[c] = binary_metric(y_true_c, y_score_c, sample_weight=score_weight)
+        score[c] = binary_metric(
+            y_true_c, y_score_c, sample_weight=score_weight
+        )
 
     # Average the results
     if average is not None:
@@ -129,7 +135,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         return score
 
 
-def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro"):
+def _average_multiclass_ovo_score(
+    binary_metric, y_true, y_score, average="macro"
+):
     """Average one-versus-one scores for multiclass classification.
 
     Uses the binary metric for one-vs-one multiclass classification,

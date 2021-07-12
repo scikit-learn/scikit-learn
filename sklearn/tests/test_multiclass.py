@@ -11,7 +11,10 @@ from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
-from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.multiclass import (
+    check_classification_targets,
+    type_of_target,
+)
 from sklearn.utils import (
     check_array,
     shuffle,
@@ -289,7 +292,9 @@ def test_ovr_binary():
             X_test = np.array([[0, 0, 4]])
             probabilities = clf.predict_proba(X_test)
             assert 2 == len(probabilities[0])
-            assert clf.classes_[np.argmax(probabilities, axis=1)] == clf.predict(X_test)
+            assert clf.classes_[
+                np.argmax(probabilities, axis=1)
+            ] == clf.predict(X_test)
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
@@ -304,7 +309,11 @@ def test_ovr_binary():
     ):
         conduct_test(base_clf)
 
-    for base_clf in (MultinomialNB(), SVC(probability=True), LogisticRegression()):
+    for base_clf in (
+        MultinomialNB(),
+        SVC(probability=True),
+        LogisticRegression(),
+    ):
         conduct_test(base_clf, test_predict_proba=True)
 
 
@@ -445,11 +454,15 @@ def test_ovr_multilabel_decision_function():
 
 
 def test_ovr_single_label_decision_function():
-    X, Y = datasets.make_classification(n_samples=100, n_features=20, random_state=0)
+    X, Y = datasets.make_classification(
+        n_samples=100, n_features=20, random_state=0
+    )
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
     clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
-    assert_array_equal(clf.decision_function(X_test).ravel() > 0, clf.predict(X_test))
+    assert_array_equal(
+        clf.decision_function(X_test).ravel() > 0, clf.predict(X_test)
+    )
 
 
 def test_ovr_gridsearch():
@@ -491,7 +504,9 @@ def test_ovr_coef_():
             assert shape[0] == n_classes
             assert shape[1] == iris.data.shape[1]
             # don't densify sparse coefficients
-            assert sp.issparse(ovr.estimators_[0].coef_) == sp.issparse(ovr.coef_)
+            assert sp.issparse(ovr.estimators_[0].coef_) == sp.issparse(
+                ovr.coef_
+            )
 
 
 # TODO: Remove this test in version 1.1
@@ -674,7 +689,9 @@ def test_ovo_ties():
     # not defaulting to the smallest label
     X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
     y = np.array([2, 0, 1, 2])
-    multi_clf = OneVsOneClassifier(Perceptron(shuffle=False, max_iter=4, tol=None))
+    multi_clf = OneVsOneClassifier(
+        Perceptron(shuffle=False, max_iter=4, tol=None)
+    )
     ovo_prediction = multi_clf.fit(X, y).predict(X)
     ovo_decision = multi_clf.decision_function(X)
 
@@ -701,7 +718,9 @@ def test_ovo_ties2():
     # cycle through labels so that each label wins once
     for i in range(3):
         y = (y_ref + i) % 3
-        multi_clf = OneVsOneClassifier(Perceptron(shuffle=False, max_iter=4, tol=None))
+        multi_clf = OneVsOneClassifier(
+            Perceptron(shuffle=False, max_iter=4, tol=None)
+        )
         ovo_prediction = multi_clf.fit(X, y).predict(X)
         assert ovo_prediction[0] == i % 3
 
@@ -746,7 +765,9 @@ def test_ecoc_exceptions():
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
+    ecoc = OutputCodeClassifier(
+        LinearSVC(random_state=0), code_size=2, random_state=0
+    )
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert len(ecoc.estimators_) == n_classes * 2
 
@@ -820,7 +841,8 @@ def test_pairwise_indices():
 
     for idx in precomputed_indices:
         assert (
-            idx.shape[0] * n_estimators / (n_estimators - 1) == linear_kernel.shape[0]
+            idx.shape[0] * n_estimators / (n_estimators - 1)
+            == linear_kernel.shape[0]
         )
 
 

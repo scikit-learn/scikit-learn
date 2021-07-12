@@ -74,11 +74,13 @@ def test_polynomial_and_spline_array_order(est):
         ({"include_bias": "string"}, "include_bias must be bool."),
         (
             {"extrapolation": "periodic", "n_knots": 3, "degree": 3},
-            "Periodic splines require degree < n_knots. Got n_knots=3 and degree=3.",
+            "Periodic splines require degree < n_knots. Got n_knots=3 and"
+            " degree=3.",
         ),
         (
             {"extrapolation": "periodic", "knots": [[0], [1]], "degree": 2},
-            "Periodic splines require degree < n_knots. Got n_knots=2 and degree=2.",
+            "Periodic splines require degree < n_knots. Got n_knots=2 and"
+            " degree=2.",
         ),
     ],
 )
@@ -155,7 +157,9 @@ def test_spline_transformer_feature_names():
 @pytest.mark.parametrize("n_knots", range(3, 5))
 @pytest.mark.parametrize("knots", ["uniform", "quantile"])
 @pytest.mark.parametrize("extrapolation", ["constant", "periodic"])
-def test_spline_transformer_unity_decomposition(degree, n_knots, knots, extrapolation):
+def test_spline_transformer_unity_decomposition(
+    degree, n_knots, knots, extrapolation
+):
     """Test that B-splines are indeed a decomposition of unity.
 
     Splines basis functions must sum up to 1 per row, if we stay in between
@@ -210,13 +214,22 @@ def test_spline_transformer_linear_regression(bias, intercept):
         ("uniform", 5, 3),
         ("uniform", 12, 8),
         (
-            [[-1.0, 0.0], [0, 1.0], [0.1, 2.0], [0.2, 3.0], [0.3, 4.0], [1, 5.0]],
+            [
+                [-1.0, 0.0],
+                [0, 1.0],
+                [0.1, 2.0],
+                [0.2, 3.0],
+                [0.3, 4.0],
+                [1, 5.0],
+            ],
             None,
             3,
         ),
     ],
 )
-def test_spline_transformer_periodicity_of_extrapolation(knots, n_knots, degree):
+def test_spline_transformer_periodicity_of_extrapolation(
+    knots, n_knots, degree
+):
     """Test that the SplineTransformer is periodic for multiple features."""
     X_1 = linspace((-1, 0), (1, 5), 10)
     X_2 = linspace((1, 5), (3, 10), 10)
@@ -412,7 +425,9 @@ def test_spline_transformer_kbindiscretizer():
     )
     splines = splt.fit_transform(X)
 
-    kbd = KBinsDiscretizer(n_bins=n_bins, encode="onehot-dense", strategy="quantile")
+    kbd = KBinsDiscretizer(
+        n_bins=n_bins, encode="onehot-dense", strategy="quantile"
+    )
     kbins = kbd.fit_transform(X)
 
     # Though they should be exactly equal, we test approximately with high
@@ -425,7 +440,9 @@ def test_spline_transformer_kbindiscretizer():
 @pytest.mark.parametrize("degree", [3, 5])
 def test_spline_transformer_n_features_out(n_knots, include_bias, degree):
     """Test that transform results in n_features_out_ features."""
-    splt = SplineTransformer(n_knots=n_knots, degree=degree, include_bias=include_bias)
+    splt = SplineTransformer(
+        n_knots=n_knots, degree=degree, include_bias=include_bias
+    )
     X = np.linspace(0, 1, 10)[:, None]
     splt.fit(X)
 
@@ -489,7 +506,9 @@ def test_polynomial_features_one_feature(
     if sparse_X:
         X = sparse_X(X)
     tf = PolynomialFeatures(
-        degree=degree, include_bias=include_bias, interaction_only=interaction_only
+        degree=degree,
+        include_bias=include_bias,
+        interaction_only=interaction_only,
     ).fit(X)
     out = tf.transform(X)
     if sparse_X:
@@ -563,7 +582,9 @@ def test_polynomial_features_two_features(
     if sparse_X:
         X = sparse_X(X)
     tf = PolynomialFeatures(
-        degree=degree, include_bias=include_bias, interaction_only=interaction_only
+        degree=degree,
+        include_bias=include_bias,
+        interaction_only=interaction_only,
     ).fit(X)
     out = tf.transform(X)
     if sparse_X:
@@ -578,7 +599,18 @@ def test_polynomial_feature_names():
     poly = PolynomialFeatures(degree=2, include_bias=True).fit(X)
     feature_names = poly.get_feature_names()
     assert_array_equal(
-        ["1", "x0", "x1", "x2", "x0^2", "x0 x1", "x0 x2", "x1^2", "x1 x2", "x2^2"],
+        [
+            "1",
+            "x0",
+            "x1",
+            "x2",
+            "x0^2",
+            "x0 x1",
+            "x0 x2",
+            "x1^2",
+            "x1 x2",
+            "x2^2",
+        ],
         feature_names,
     )
     assert len(feature_names) == poly.transform(X).shape[1]
@@ -749,7 +781,9 @@ def test_num_combinations(
         (3, False, True, np.float64),
     ],
 )
-def test_polynomial_features_csr_X_floats(deg, include_bias, interaction_only, dtype):
+def test_polynomial_features_csr_X_floats(
+    deg, include_bias, interaction_only, dtype
+):
     X_csr = sparse_random(1000, 10, 0.5, random_state=0).tocsr()
     X = X_csr.toarray()
 
@@ -781,12 +815,16 @@ def test_polynomial_features_csr_X_floats(deg, include_bias, interaction_only, d
         (2, 3, False),
     ],
 )
-def test_polynomial_features_csr_X_zero_row(zero_row_index, deg, interaction_only):
+def test_polynomial_features_csr_X_zero_row(
+    zero_row_index, deg, interaction_only
+):
     X_csr = sparse_random(3, 10, 1.0, random_state=0).tocsr()
     X_csr[zero_row_index, :] = 0.0
     X = X_csr.toarray()
 
-    est = PolynomialFeatures(deg, include_bias=False, interaction_only=interaction_only)
+    est = PolynomialFeatures(
+        deg, include_bias=False, interaction_only=interaction_only
+    )
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 

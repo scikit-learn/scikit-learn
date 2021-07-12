@@ -35,7 +35,10 @@ def test_transform_target_regressor_error():
     )
     with pytest.raises(
         ValueError,
-        match="'transformer' and functions 'func'/'inverse_func' cannot both be set.",
+        match=(
+            "'transformer' and functions 'func'/'inverse_func' cannot both be"
+            " set."
+        ),
     ):
         regr.fit(X, y)
     # fit with sample_weight with a regressor which does not support it
@@ -128,7 +131,11 @@ def test_transform_target_regressor_functions_multioutput():
 
 
 @pytest.mark.parametrize(
-    "X,y", [friedman, (friedman[0], np.vstack((friedman[1], friedman[1] ** 2 + 1)).T)]
+    "X,y",
+    [
+        friedman,
+        (friedman[0], np.vstack((friedman[1], friedman[1] ** 2 + 1)).T),
+    ],
 )
 def test_transform_target_regressor_1d_transformer(X, y):
     # All transformer in scikit-learn expect 2D data. FunctionTransformer with
@@ -159,7 +166,11 @@ def test_transform_target_regressor_1d_transformer(X, y):
 
 
 @pytest.mark.parametrize(
-    "X,y", [friedman, (friedman[0], np.vstack((friedman[1], friedman[1] ** 2 + 1)).T)]
+    "X,y",
+    [
+        friedman,
+        (friedman[0], np.vstack((friedman[1], friedman[1] ** 2 + 1)).T),
+    ],
 )
 def test_transform_target_regressor_2d_transformer(X, y):
     # Check consistency with transformer accepting only 2D array and a 1D/2D y
@@ -230,7 +241,9 @@ def test_transform_target_regressor_3d_target():
     def unflatten_data(data):
         return data.reshape(data.shape[0], -1, 2)
 
-    transformer = FunctionTransformer(func=flatten_data, inverse_func=unflatten_data)
+    transformer = FunctionTransformer(
+        func=flatten_data, inverse_func=unflatten_data
+    )
     regr = TransformedTargetRegressor(
         regressor=LinearRegression(), transformer=transformer
     )
@@ -352,7 +365,8 @@ class DummyRegressorWithExtraFitParams(DummyRegressor):
 def test_transform_target_regressor_pass_fit_parameters():
     X, y = friedman
     regr = TransformedTargetRegressor(
-        regressor=DummyRegressorWithExtraFitParams(), transformer=DummyTransformer()
+        regressor=DummyRegressorWithExtraFitParams(),
+        transformer=DummyTransformer(),
     )
 
     regr.fit(X, y, check_input=False)
@@ -363,7 +377,8 @@ def test_transform_target_regressor_route_pipeline():
     X, y = friedman
 
     regr = TransformedTargetRegressor(
-        regressor=DummyRegressorWithExtraFitParams(), transformer=DummyTransformer()
+        regressor=DummyRegressorWithExtraFitParams(),
+        transformer=DummyTransformer(),
     )
     estimators = [("normalize", StandardScaler()), ("est", regr)]
 

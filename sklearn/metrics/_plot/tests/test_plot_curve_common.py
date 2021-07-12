@@ -54,7 +54,8 @@ def test_plot_curve_error_non_binary(pyplot, data, plot_func):
         ),
         (
             "bad_method",
-            "response_method must be 'predict_proba', 'decision_function' or 'auto'",
+            "response_method must be 'predict_proba', 'decision_function' or"
+            " 'auto'",
         ),
     ],
 )
@@ -80,7 +81,9 @@ def test_plot_curve_error_no_response(
 
 
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
-def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func):
+def test_plot_curve_estimator_name_multiple_calls(
+    pyplot, data_binary, plot_func
+):
     # non-regression test checking that the `name` used when calling
     # `plot_func` is used as well when calling `disp.plot()`
     X, y = data_binary
@@ -103,7 +106,8 @@ def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func
         LogisticRegression(),
         make_pipeline(StandardScaler(), LogisticRegression()),
         make_pipeline(
-            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
+            make_column_transformer((StandardScaler(), [0, 1])),
+            LogisticRegression(),
         ),
     ],
 )

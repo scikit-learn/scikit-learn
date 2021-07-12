@@ -22,8 +22,12 @@ def test_delegated_docstring():
     assert "This is a mock delegated function" in str(
         MockMetaEstimator.__dict__["func"].__doc__
     )
-    assert "This is a mock delegated function" in str(MockMetaEstimator.func.__doc__)
-    assert "This is a mock delegated function" in str(MockMetaEstimator().func.__doc__)
+    assert "This is a mock delegated function" in str(
+        MockMetaEstimator.func.__doc__
+    )
+    assert "This is a mock delegated function" in str(
+        MockMetaEstimator().func.__doc__
+    )
 
 
 class MetaEst:
@@ -70,10 +74,16 @@ class HasNoPredict:
 def test_if_delegate_has_method():
     assert hasattr(MetaEst(HasPredict()), "predict")
     assert not hasattr(MetaEst(HasNoPredict()), "predict")
-    assert not hasattr(MetaEstTestTuple(HasNoPredict(), HasNoPredict()), "predict")
+    assert not hasattr(
+        MetaEstTestTuple(HasNoPredict(), HasNoPredict()), "predict"
+    )
     assert hasattr(MetaEstTestTuple(HasPredict(), HasNoPredict()), "predict")
-    assert not hasattr(MetaEstTestTuple(HasNoPredict(), HasPredict()), "predict")
-    assert not hasattr(MetaEstTestList(HasNoPredict(), HasPredict()), "predict")
+    assert not hasattr(
+        MetaEstTestTuple(HasNoPredict(), HasPredict()), "predict"
+    )
+    assert not hasattr(
+        MetaEstTestList(HasNoPredict(), HasPredict()), "predict"
+    )
     assert hasattr(MetaEstTestList(HasPredict(), HasPredict()), "predict")
 
 
@@ -103,4 +113,6 @@ def test_available_if_docstring():
 
 def test_available_if():
     assert hasattr(AvailableParameterEstimator(), "available_func")
-    assert not hasattr(AvailableParameterEstimator(available=False), "available_func")
+    assert not hasattr(
+        AvailableParameterEstimator(available=False), "available_func"
+    )
