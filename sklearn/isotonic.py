@@ -118,7 +118,7 @@ def isotonic_regression(
     order = np.s_[:] if increasing else np.s_[::-1]
     y = check_array(y, ensure_2d=False, dtype=[np.float64, np.float32])
     y = np.array(y[order], dtype=y.dtype)
-    sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype)
+    sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype, copy=True)
     sample_weight = np.ascontiguousarray(sample_weight[order])
 
     _inplace_contiguous_isotonic_regression(y, sample_weight)
