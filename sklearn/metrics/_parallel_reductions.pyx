@@ -16,8 +16,10 @@ np.import_array()
 
 from libc.stdlib cimport free, malloc
 from libcpp.vector cimport vector
+from cpython.object cimport PyObject
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
+from cpython.ref cimport Py_INCREF
 
 from scipy.sparse import issparse
 
@@ -45,12 +47,6 @@ from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 from ..utils._typedefs import ITYPE, DTYPE
 
-# As type covariance is not supported for C++ container via Cython,
-# we need to redefine a fused type
-ctypedef fused vector_vector_DITYPE_t:
-    vector[vector[ITYPE_t]]
-    vector[vector[DTYPE_t]]
-
 # TODO: This has been introduced in Cython 3.0, change for `libcpp.algorithm.move` once Cython 3 is used
 # Introduction in Cython:
 # https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L47
@@ -59,21 +55,65 @@ cdef extern from "<algorithm>" namespace "std" nogil:
 
 ######################
 ## std::vector to np.ndarray coercion
-# TODO: for now using this simple solution: https://stackoverflow.com/a/23873586
-# A better solution would make sure of using the same allocator implementations.
-# Those implementations depend on the runtimes' allocator which can be different
-# in some configuration and thus would make the program crash.
+# As type covariance is not supported for C++ container via Cython,
+# we need to redefine fused types.
+ctypedef fused vector_DITYPE_t:
+    vector[ITYPE_t]
+    vector[DTYPE_t]
+
+ctypedef fused vector_vector_DITYPE_t:
+    vector[vector[ITYPE_t]]
+    vector[vector[DTYPE_t]]
 
 cdef extern from "numpy/arrayobject.h":
-    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject *obj) nogil except -1
 
-cdef np.ndarray[DITYPE_t, ndim=1] buffer_to_numpy_array(DITYPE_t * ptr, np.npy_intp size):
-    """ Create a numpy ndarray given a buffer and its size. """
-    typenum = DTYPECODE if DITYPE_t is DTYPE_t else ITYPECODE
-    cdef np.ndarray[DITYPE_t, ndim=1] arr = np.PyArray_SimpleNewFromData(1, &size, typenum, ptr)
+cdef class StdVectorSentinel:
+    """Wraps a reference to a vector which will be
+    deallocated with this object."""
+    pass
+
+cdef class StdVectorSentinelDTYPE(StdVectorSentinel):
+    cdef vector[DTYPE_t] vec
+
+    @staticmethod
+    cdef StdVectorSentinel create_for(vector[DTYPE_t] * vec_ptr):
+        sentinel = StdVectorSentinelDTYPE()
+        sentinel.vec.swap(deref(vec_ptr))
+        return sentinel
+
+cdef class StdVectorSentinelITYPE(StdVectorSentinel):
+    cdef vector[ITYPE_t] vec
+
+    @staticmethod
+    cdef StdVectorSentinel create_for(vector[ITYPE_t] * vec_ptr):
+        sentinel = StdVectorSentinelITYPE()
+        sentinel.vec.swap(deref(vec_ptr))
+        return sentinel
+
+
+cdef np.ndarray vector_to_numpy_array(vector_DITYPE_t * vect_ptr):
+    """ Create a numpy ndarray given a C++ vector.
+
+    This registers a Sentinel as the base object for the numpy array
+    freeing the C++ vector it encapsulates when it must.
+    """
+    typenum = DTYPECODE if vector_DITYPE_t is vector[DTYPE_t] else ITYPECODE
+    cdef:
+        np.npy_intp size = deref(vect_ptr).size()
+        np.ndarray arr = np.PyArray_SimpleNewFromData(1, &size, typenum, deref(vect_ptr).data())
+        StdVectorSentinel sentinel
+
+    if vector_DITYPE_t is vector[DTYPE_t]:
+        sentinel = StdVectorSentinelDTYPE.create_for(vect_ptr)
+    else:
+        sentinel = StdVectorSentinelITYPE.create_for(vect_ptr)
 
     # Makes the numpy array responsible to the life-cycle of its buffer.
-    PyArray_ENABLEFLAGS(arr, np.NPY_OWNDATA)
+    # A reference to the sentinel will be stolen by the call bellow,
+    # so we increase its reference count.
+    Py_INCREF(sentinel)
+    PyArray_SetBaseObject(arr, <PyObject*>sentinel)
     return arr
 
 cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(vector_vector_DITYPE_t* vecs):
@@ -82,8 +122,7 @@ cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(vector_vector_DI
         np.ndarray[object, ndim=1] np_arrays_of_np_arrays = np.empty(n, dtype=np.ndarray)
 
     for i in range(n):
-        np_arrays_of_np_arrays[i] = buffer_to_numpy_array(deref(vecs)[i].data(),
-                                                           deref(vecs)[i].size())
+        np_arrays_of_np_arrays[i] = vector_to_numpy_array(&(deref(vecs)[i]))
 
     return np_arrays_of_np_arrays
 
@@ -823,16 +862,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         # std::vector::data, their buffer can't be stolen: their
         # life-time is tight to the buffer's.
         #
-        # To solve this, we allocate dynamically allocate vectors which won't be
-        # freed, but their buffer eventually will as the ownership will be
-        # transferred to numpy arrays.
-        #
-        # TODO: Find a proper way to handle buffers' lifetime
-        # It's "OK-ish" as numpy arrays are then responsible for their buffer
-        # lifetime which consist of most of the vectors actual data (residual
-        # metadata exist, don't account but won't be deleted).
-        #
-        # Still, meh.
+        # To solve this, we dynamically allocate vectors and then
+        # encapsulate them in a StdVectorSentinel responsible for
+        # freeing them when needed
         vector[vector[ITYPE_t]] * neigh_indices
         vector[vector[DTYPE_t]] * neigh_distances
 
@@ -1016,10 +1048,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
            bint return_distance = False,
            bint sort_results = False
     ):
-        # This won't be freed for reasons stated at their definition.
         self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
-
-        # This will be freed then solely if return_distance = False
         self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
 
         self.sort_results = sort_results
@@ -1044,11 +1073,14 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     def _finalise_compute(self,
            bint return_distance
     ):
-        if return_distance:
-            return (_coerce_vectors_to_np_nd_arrays(self.neigh_distances),
-                    _coerce_vectors_to_np_nd_arrays(self.neigh_indices))
 
-        # We need to free the buffers here because they won't be managed
-        # by a numpy array then.
+        if return_distance:
+            res = (_coerce_vectors_to_np_nd_arrays(self.neigh_distances),
+                    _coerce_vectors_to_np_nd_arrays(self.neigh_indices))
+        else:
+            res = _coerce_vectors_to_np_nd_arrays(self.neigh_indices)
+
         del self.neigh_distances
-        return _coerce_vectors_to_np_nd_arrays(self.neigh_indices)
+        del self.neigh_indices
+
+        return res
