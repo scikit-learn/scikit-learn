@@ -298,8 +298,8 @@ class BisectKMeans(KMeans):
         # bisect_strategy
         if self.bisect_strategy not in ["biggest_sse", "largest_cluster"]:
             raise ValueError(
-                f"Bisect Strategy must be 'biggest_sse', "
-                f"or 'largest_cluster' "
+                "Bisect Strategy must be 'biggest_sse', "
+                "or 'largest_cluster' "
                 f"got {self.bisect_strategy} instead."
             )
 
@@ -606,26 +606,26 @@ class BisectKMeans(KMeans):
         del tree_dict[-1]
 
         # Sort Leaf centers by their root
-        ordered_centers = [0, 1]
-        while len(ordered_centers) != self.n_clusters:
-            new_order = []
+        centers_hierarchical = [0, 1]
+        while len(centers_hierarchical) != self.n_clusters:
+            nested_centers = []
 
-            for idx in ordered_centers:
-                center_id = (
-                    [idx]
-                    if tree_dict[idx]["children"] is None
-                    else tree_dict[idx]["children"]
+            for center_id in centers_hierarchical:
+                center_ids = (
+                    [center_id]
+                    if tree_dict[center_id]["children"] is None
+                    else tree_dict[center_id]["children"]
                 )
-                new_order.extend(center_id)
+                nested_centers.extend(center_ids)
 
-            ordered_centers = new_order
+            centers_hierarchical = nested_centers
 
         # Initialize Labels
         labels = np.full(X.shape[0], -1, dtype=np.intc)
 
         centers = []
 
-        for i, center_id in enumerate(ordered_centers):
+        for i, center_id in enumerate(centers_hierarchical):
             # Save cluster centers in hierarchical order
             centers.append(tree_dict[center_id]["center"])
 
@@ -671,6 +671,7 @@ class BisectKMeans(KMeans):
         # So after optimization part below may be replaced
         # with simple '_check_labels_threadpool_limit' function
 
+        # With only one cluster all points have same label
         if self.n_clusters == 1:
             return np.zeros(X.shape[0], dtype=np.intc)
 
@@ -682,16 +683,16 @@ class BisectKMeans(KMeans):
             all_centers += self._X_mean
 
         # Init labels for first two clusters
-        ordered_centers = [0, 1]
+        centers_hierarchical = [0, 1]
         labels = _check_labels_threadpool_limit(
             X, sample_weight, x_squared_norms, all_centers[:2], self._n_threads
         )
 
         # Go down the tree with samples to assign them to proper leaves
-        while len(ordered_centers) != self.n_clusters:
-            new_order = []
+        while len(centers_hierarchical) != self.n_clusters:
+            nested_centers = []
 
-            for idx in ordered_centers:
+            for idx in centers_hierarchical:
                 center_ids = [idx]
 
                 if self._inner_tree[idx]["children"] is not None:
@@ -713,13 +714,13 @@ class BisectKMeans(KMeans):
                     # Move new assignment to predicted labels
                     labels[picked_samples] = new_labels
 
-                new_order.extend(center_ids)
-            ordered_centers = new_order
+                nested_centers.extend(center_ids)
+            centers_hierarchical = nested_centers
 
         # Copy of labels will be used to make sure that samples are picked correctly
         temp_labels = labels.copy()
 
-        for i, center_id in enumerate(ordered_centers):
+        for i, center_id in enumerate(centers_hierarchical):
             # Assign labels to proper data points
             labels[temp_labels == center_id] = i
 
