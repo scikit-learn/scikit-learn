@@ -267,8 +267,6 @@ cdef class PairwiseDistancesReduction:
                         Y_end = Y_start + self.Y_n_samples_chunk
 
                     self._reduce_on_chunks(
-                        self.X,
-                        self.Y,
                         X_start, X_end,
                         Y_start, Y_end,
                         thread_num,
@@ -326,8 +324,6 @@ cdef class PairwiseDistancesReduction:
                         Y_end = Y_start + self.Y_n_samples_chunk
 
                     self._reduce_on_chunks(
-                        self.X,
-                        self.Y,
                         X_start, X_end,
                         Y_start, Y_end,
                         thread_num,
@@ -348,8 +344,6 @@ cdef class PairwiseDistancesReduction:
     # Placeholder methods which have to be implemented
 
     cdef int _reduce_on_chunks(self,
-        const DTYPE_t[:, ::1] X,
-        const DTYPE_t[:, ::1] Y,
         ITYPE_t X_start,
         ITYPE_t X_end,
         ITYPE_t Y_start,
@@ -493,8 +487,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             raise RuntimeError("Trying to free heaps_approx_distances_chunks which is NULL")
 
     cdef int _reduce_on_chunks(self,
-        const DTYPE_t[:, ::1] X,
-        const DTYPE_t[:, ::1] Y,
         ITYPE_t X_start,
         ITYPE_t X_end,
         ITYPE_t Y_start,
@@ -503,8 +495,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     ) nogil except -1:
         cdef:
             ITYPE_t i, j
-            const DTYPE_t[:, ::1] X_c = X[X_start:X_end, :]
-            const DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
+            const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
+            const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             ITYPE_t k = self.k
             DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
@@ -776,8 +768,6 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
 
     @final
     cdef int _reduce_on_chunks(self,
-        const DTYPE_t[:, ::1] X,
-        const DTYPE_t[:, ::1] Y,
         ITYPE_t X_start,
         ITYPE_t X_end,
         ITYPE_t Y_start,
@@ -792,8 +782,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         """
         cdef:
             ITYPE_t i, j
-            const DTYPE_t[:, ::1] X_c = X[X_start:X_end, :]
-            const DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
+            const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
+            const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             ITYPE_t k = self.k
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
             DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
@@ -930,8 +920,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
     @final
     cdef int _reduce_on_chunks(self,
-        const DTYPE_t[:, ::1] X,
-        const DTYPE_t[:, ::1] Y,
         ITYPE_t X_start,
         ITYPE_t X_end,
         ITYPE_t Y_start,
@@ -940,8 +928,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     ) nogil except -1:
         cdef:
             ITYPE_t i, j
-            const DTYPE_t[:, ::1] X_c = X[X_start:X_end, :]
-            const DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
+            const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
+            const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             DTYPE_t dist_i_j
 
         for i in range(X_c.shape[0]):
