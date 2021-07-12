@@ -96,7 +96,7 @@ def _check_labels_threadpool_limit(
 
 
 class BisectKMeans(KMeans):
-    """Bisecting K-Means clustering
+    """Bisecting K-Means clustering.
 
     Read more in the :ref:`User Guide <bisect_k_means>`.
 
@@ -120,7 +120,7 @@ class BisectKMeans(KMeans):
         random state and return an initialization.
 
     n_init : int, default=10
-        Number of time the k-means algorithm will be run with different
+        Number of time the inner k-means algorithm will be run with different
         centroid seeds in each bisection.
         That will result producing for each bisection best output of n_init
         consecutive runs in terms of inertia.
@@ -197,8 +197,11 @@ class BisectKMeans(KMeans):
     Notes
     -----
     Bisection cannot be performed if n_cluster < 2.
+    Despite that in case when n_cluster == 1 - centroid will be created and points
+    will be assigned to it.
 
-    Also it might be inefficient when n_cluster is equal to 2
+    Also it might be inefficient when n_cluster is equal to 2, due to unnecassary
+    calculations for that case.
 
     Examples
     --------
@@ -248,7 +251,7 @@ class BisectKMeans(KMeans):
 
     def _compute_bisect_errors(self, X, centers, labels, sample_weight):
         """
-        Calculate the squared error of each sample and group them by label.
+        Calculate the sum of squared errors (inertia) and group them by label (center).
 
         Parameters
         ----------
@@ -636,7 +639,8 @@ class BisectKMeans(KMeans):
         return centers, labels
 
     def predict(self, X, sample_weight=None):
-        """Predict the closest cluster each sample in X belongs to.
+        """Predict which cluster each sample in X belongs to by going down
+        the hierarchical tree in searching of closest leaf cluster.
 
         In the vector quantization literature, `cluster_centers_` is called
         the code book and each value returned by `predict` is the index of
