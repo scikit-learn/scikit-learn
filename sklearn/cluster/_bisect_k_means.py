@@ -23,7 +23,7 @@ from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 
 from ..utils.validation import check_array
-# from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
 
@@ -638,3 +638,89 @@ class BisectKMeans(KMeans):
         self._inner_tree = tree_dict
 
         return centers, labels
+
+    def predict(self, X, sample_weight=None):
+        """Predict the closest cluster each sample in X belongs to.
+
+        In the vector quantization literature, `cluster_centers_` is called
+        the code book and each value returned by `predict` is the index of
+        the closest code in the code book.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data to predict.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight.
+
+        Returns
+        -------
+        labels : ndarray of shape (n_samples,)
+            Index of the cluster each sample belongs to.
+        """
+        check_is_fitted(self)
+
+        X = self._check_test_data(X)
+        x_squared_norms = row_norms(X, squared=True)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        # Note: Well optimized Bisect K-Means should produce clusters with same or
+        # even lower inertia than K-Means.
+        # So after optimization part below may be replaced
+        # with simple '_check_labels_threadpool_limit' function
+
+        if self.n_clusters == 1:
+            return np.zeros(X.shape[0], dtype=np.intc)
+
+        # Get all clusters from inner tree as array
+        all_centers = np.array([val["center"] for val in self._inner_tree.values()])
+
+        # Centers stored in tree have subtracted mean for calculating centroids
+        if not sp.issparse(X):
+            all_centers += self._X_mean
+
+        # Init labels for first two clusters
+        ordered_centers = [0, 1]
+        labels = _check_labels_threadpool_limit(
+            X, sample_weight, x_squared_norms, all_centers[:2], self._n_threads
+        )
+
+        # Go down the tree with samples to assign them to proper leaves
+        while len(ordered_centers) != self.n_clusters:
+            new_order = []
+
+            for idx in ordered_centers:
+                center_ids = [idx]
+
+                if self._inner_tree[idx]["children"] is not None:
+                    center_ids = self._inner_tree[idx]["children"]
+                    picked_samples = labels == idx
+
+                    new_labels = _check_labels_threadpool_limit(
+                        X[picked_samples],
+                        sample_weight[picked_samples],
+                        x_squared_norms[picked_samples],
+                        all_centers[center_ids[0] : (center_ids[1] + 1)],
+                        self._n_threads,
+                    )
+
+                    # Label with id of center
+                    new_labels[new_labels == 0] = center_ids[0]
+                    new_labels[new_labels == 1] = center_ids[1]
+
+                    # Move new assignment to predicted labels
+                    labels[picked_samples] = new_labels
+
+                new_order.extend(center_ids)
+            ordered_centers = new_order
+
+        # Copy of labels will be used to make sure that samples are picked correctly
+        temp_labels = labels.copy()
+
+        for i, center_id in enumerate(ordered_centers):
+            # Assign labels to proper data points
+            labels[temp_labels == center_id] = i
+
+        return labels

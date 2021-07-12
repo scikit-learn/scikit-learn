@@ -219,6 +219,7 @@ def _yield_transformer_checks(transformer):
         "LocallyLinearEmbedding",
         "RandomizedLasso",
         "LogisticRegressionCV",
+        "BisectKMeans",
     ]
 
     name = transformer.__class__.__name__
