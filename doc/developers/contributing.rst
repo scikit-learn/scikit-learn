@@ -222,7 +222,7 @@ latest up-to-date workflow.
   `Video <https://youtu.be/dyxS9KKCNzA>`__,
   `Transcript
   <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
-  
+
 .. note::
   In January 2021, the default branch name changed from ``master`` to ``main``
   for the scikit-learn GitHub repository to use more inclusive terms.
@@ -1115,8 +1115,8 @@ use the decorator ``deprecated`` on a property. Please note that the
 decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
-    @deprecated("Attribute labels_ was deprecated in version 0.13 and "
-                "will be removed in 0.15. Use 'classes_' instead")
+    @deprecated("Attribute `labels_` was deprecated in version 0.13 and "
+                "will be removed in 0.15. Use `classes_` instead")
     @property
     def labels_(self):
         return self.classes_
@@ -1228,6 +1228,15 @@ use, and so can respond critically about whether the PR meets your needs. While
 each pull request needs to be signed off by two core developers, you can speed
 up this process by providing your feedback.
 
+.. note::
+
+  The difference between an objective improvement and a subjective nit isn't
+  always clear. Reviewers should recall that code review is primarily about
+  reducing risk in the project. When reviewing code, one should aim at
+  preventing situations which may require a bug fix, a deprecation, or a
+  retraction. Regarding docs: typos, grammar issues and disambiguations are
+  better addressed immediately.
+
 Here are a few important aspects that need to be covered in any code review,
 from high-level questions to a more detailed check-list.
 
@@ -1293,8 +1302,8 @@ contributor to keep involved in the project. [1]_
   understood. Resist the temptation to immediately go line by line, or to open
   with small pervasive issues.
 - Do not let perfect be the enemy of the good. If you find yourself making
-  many small suggestions that are a matter of subjective taste rather than
-  somewhat objective, the following approaches are suggested:
+  many small suggestions that don't fall into the :ref:`code_review`, consider
+  the following approaches:
 
   - refrain from submitting these;
   - prefix them as "Nit" so that the contributor knows it's OK not to address;
