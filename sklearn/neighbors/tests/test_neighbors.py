@@ -19,7 +19,6 @@ from sklearn.base import clone
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import EfficiencyWarning
 from sklearn.exceptions import NotFittedError
-from sklearn.metrics._parallel_reductions import RadiusNeighborhood
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -1920,42 +1919,3 @@ def test_fast_sqeuclidean_translation_invariance(
 
     assert_allclose(reference_dist, dist)
     assert_array_equal(reference_nns, nns)
-
-
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [3, 4]])
-@pytest.mark.parametrize("n_features", [2])
-@pytest.mark.parametrize("ratio_train_test", [10, 1, 0.5])
-@pytest.mark.parametrize("radius", [100, 500])
-@pytest.mark.parametrize("metric", RadiusNeighborhood.valid_metrics())
-def test_fast_radius_neighborhood_reduction_consistency(
-    n_samples,
-    n_features,
-    ratio_train_test,
-    radius,
-    metric,
-    spread=1000,
-    dtype=np.float64,
-):
-    # Temporary transitional consistency check
-    # TODO: remove once the implementation is stabilized.
-    rng = np.random.RandomState(1)
-
-    X_train = rng.rand(n_samples, n_features).astype(dtype) * spread
-    X_test = (
-        rng.rand(int(n_samples * n_features / ratio_train_test))
-        .astype(dtype)
-        .reshape((-1, n_features))
-        * spread
-    )
-
-    rn = RadiusNeighborhood.get_for(X=X_test, Y=X_train, radius=radius, metric=metric)
-    dists, indices = rn.compute(return_distance=True, sort_results=True)
-    nn = NearestNeighbors(radius=radius, metric=metric)
-    nn.fit(X_train)
-    reference_dists, references_indices = nn.radius_neighbors(
-        X_test, return_distance=True, sort_results=True
-    )
-
-    for i in range(X_test.shape[0]):
-        assert_allclose(reference_dists[i], dists[i])
-        assert_array_equal(references_indices[i], indices[i])
