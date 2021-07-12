@@ -746,7 +746,7 @@ def test_partial_dependence_plot_limits_one_way(
 
     disp.plot(centered=centered)
     # check that we anchor to zero x-axis when centering
-    y_lim = range_pd if not centered else range_pd - range_pd[0]
+    y_lim = range_pd - range_pd[0] if centered and kind != "average" else range_pd
     for ax in disp.axes_.ravel():
         assert_allclose(ax.get_ylim(), y_lim)
 
@@ -770,8 +770,7 @@ def test_partial_dependence_plot_limits_two_way(
         pd["average"][0, 0] = range_pd[0]
 
     disp.plot(centered=centered)
-    # check that we anchor to zero x-axis when centering
-    range_pd = range_pd if not centered else range_pd - range_pd[0]
+    # centering should not have any effect on the limits
     coutour = disp.contours_[0, 0]
     expect_levels = np.linspace(*range_pd, num=8)
     assert_allclose(coutour.levels, expect_levels)

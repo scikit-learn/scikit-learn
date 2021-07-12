@@ -239,8 +239,9 @@ def plot_partial_dependence(
         .. versionadded:: 0.24
 
     centered : bool, default=False
-        In case of 1-way PD and ICE plots, centered the plotted lines. The first value
-        of the lines will start at the zero of the x-axis. By default
+        Only has an effect when `kind='both'` or `kind='individual'`. When `True`,
+        the ICE and PD lines are centered around the origin of the x-axis. By
+        default, no centering is done.
 
         .. versionadded:: 1.0
 
@@ -756,7 +757,7 @@ class PartialDependenceDisplay:
                 ax,
                 pd_line_idx,
                 line_kw,
-                centered,
+                centered and self.kind == "both",
             )
 
         trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
@@ -911,8 +912,9 @@ class PartialDependenceDisplay:
             .. versionadded:: 1.0
 
         centered : bool, default=False
-            In case of 1-way PD and ICE plots, centered the plotted lines. The first
-            value of the lines will start at the zero of the x-axis. By default
+            Only has an effect when `kind='both'` or `kind='individual'`. When `True`,
+            the ICE and PD lines are centered around the origin of the x-axis. By
+            default, no centering is done.
 
             .. versionadded:: 1.0
 
@@ -948,11 +950,8 @@ class PartialDependenceDisplay:
             for pdp in self.pd_results:
                 values = pdp["values"]
                 preds = pdp.average if self.kind == "average" else pdp.individual
-                if centered:
-                    if self.kind == "average":
-                        preds_offset = preds[self.target_idx, 0]
-                    else:
-                        preds_offset = preds[self.target_idx, :, 0, None]
+                if centered and self.kind in ("both", "individual"):
+                    preds_offset = preds[self.target_idx, :, 0, None]
                 else:
                     preds_offset = 0.0
                 min_pd = (preds[self.target_idx] - preds_offset).min()
