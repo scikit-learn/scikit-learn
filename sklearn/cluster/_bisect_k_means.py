@@ -97,16 +97,8 @@ def _check_labels_threadpool_limit(
 
 class BisectKMeans(KMeans):
     """Bisecting K-Means clustering
-    K-Means variant that splits consecutively data with two centroids.
-    Centroids with lower SSE (inertia) are kept as new cluster centers.
-    Centroids with higher SSE are further split until the desired
-    number of cluster is reached.
 
-    That algorithm can produce partitional/hierarchical clustering and
-    should be able to recognize clusters of any shape and size.
-
-    That approach is also preferable to agglomerative clustering
-    if the number of clusters is small, compared to the number of data points.
+    Read more in the :ref:`User Guide <bisect_k_means>`.
 
     Parameters
     ----------
@@ -170,14 +162,14 @@ class BisectKMeans(KMeans):
         For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
         might change in the future for a better heuristic.
 
-    bisect_strategy : {"biggest_sse", "largest_cluster"},
-        default="biggest_sse"
+    bisect_strategy : {"biggest_sse", "largest_cluster"}, default="biggest_sse"
         Defines how should bisection by performed:
 
         - "biggest_sse" means that Bisect K-Means will always check
             all calculated cluster for cluster with biggest SSE
-            (Sum of squared errors) and bisect it. That way calculated clusters
-            will be more balanced.
+            (Sum of squared errors) and bisect it. This approach concentrates on
+            precision, but may be costly in terms of execution time (especially for
+            larger ammount of data points).
 
         - "largest_cluster" - Bisect K-Means will always split cluster with
             largest amount of points assigned to it from all clusters
@@ -197,6 +189,10 @@ class BisectKMeans(KMeans):
     inertia_ : float
         Sum of squared distances of samples to their closest cluster center,
         weighted by the sample weights if provided.
+
+    See Also
+    --------
+    KMeans : Original implementation of K-Means algorithm.
 
     Notes
     -----

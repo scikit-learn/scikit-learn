@@ -763,6 +763,8 @@ until target number of clusters is reached.
 
 With that approach, it is possible to produce either an un-nested (flat)
 clustering or a hierarchical clustering.
+That approach is also preferable to agglomerative clustering
+if the number of clusters is small, compared to the number of data points.
 
 Cluster to split is picked depending on parameter ``bisect_strategy``:
 - Cluster with largest amount of data points (with ``largest_cluster``)
