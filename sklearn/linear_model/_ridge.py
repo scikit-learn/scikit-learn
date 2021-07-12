@@ -2111,7 +2111,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     See Also
     --------
     Ridge : Ridge regression.
-    RidgeClassifier : Ridge classifier.
+    RidgeClassifier : classifier based on ridge regression on {-1, 1} labels.
     RidgeClassifierCV : Ridge classifier with built-in cross validation.
 
     Examples
