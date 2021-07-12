@@ -431,8 +431,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         super().__init__()
         if max_iter < 1:
             raise ValueError(
-                "max_iter should be greater than 1, got "
-                "(max_iter={})".format(max_iter)
+                "max_iter should be greater than 1, got (max_iter={})".format(max_iter)
             )
         self.n_components = n_components
         self.algorithm = algorithm
@@ -486,7 +485,8 @@ class FastICA(TransformerMixin, BaseEstimator):
             exc = ValueError if isinstance(self.fun, str) else TypeError
             raise exc(
                 "Unknown function %r;"
-                " should be one of 'logcosh', 'exp', 'cube' or callable" % self.fun
+                " should be one of 'logcosh', 'exp', 'cube' or callable"
+                % self.fun
             )
 
         n_features, n_samples = XT.shape
@@ -552,7 +552,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             W, n_iter = _ica_def(X1, **kwargs)
         else:
             raise ValueError(
-                "Invalid algorithm: must be either `parallel` or" " `deflation`."
+                "Invalid algorithm: must be either `parallel` or `deflation`."
             )
         del X1
 

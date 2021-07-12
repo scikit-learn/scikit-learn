@@ -260,6 +260,6 @@ def test_sparse_input_for_fit_predict():
 # TODO: Remove in 1.1
 def test_affinity_propagation_pairwise_is_deprecated():
     afp = AffinityPropagation(affinity="precomputed")
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         afp._pairwise
