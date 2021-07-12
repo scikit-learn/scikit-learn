@@ -1,7 +1,7 @@
 .. _bug_triaging:
 
 Bug triaging and issue curation
-================================
+===============================
 
 The `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
 is important to the communication in the project: it helps
@@ -10,7 +10,7 @@ priorities. For this reason, it is important to curate it, adding labels
 to issues and closing issues that are not necessary.
 
 Working on issues to improve them
---------------------------------------
+---------------------------------
 
 Improving issues increases their chances of being successfully resolved.
 Guidelines on submitting good issues can be found :ref:`here
@@ -36,7 +36,7 @@ The following actions are typically useful:
 
    Online discussions may be harder than it seems at first glance, in
    particular given that a person new to open-source may have a very
-   different understanding of the process than a seasonned maintainer.
+   different understanding of the process than a seasoned maintainer.
 
    Overall, it is useful to stay positive and assume good will. `The
    following article
@@ -44,19 +44,21 @@ The following actions are typically useful:
    explores how to lead online discussions in the context of open source.
 
 Working on PRs to help review
-------------------------------
+-----------------------------
 
 Reviewing code is also encouraged. Contributors and users are welcome to
 participate to the review process following our :ref:`review guidelines
 <code_review>`.
 
 Triaging operations for members of the core and triage teams
--------------------------------------------------------------
+------------------------------------------------------------
 
 In addition to the above, members of the core team and the triage team
 can do the following important tasks:
 
-- Update labels for issues and PRs
+- Update :ref:`labels for issues and PRs <issue_tracker_tags>`: see the list of
+  the `available github labels
+  <https://github.com/scikit-learn/scikit-learn/labels>`_.
 
 - :ref:`Determine if a PR must be relabeled as stalled <stalled_pull_request>`
   or needs help (this is typically very important in the context
@@ -78,7 +80,7 @@ can do the following important tasks:
 welcoming and polite when triaging.
 
 See the github description for `roles in the organization
-<https://docs.github.com/en/github/setting-up-and-managing-organizations-and-teams/repository-permission-levels-for-an-organization>`_
+<https://docs.github.com/en/github/setting-up-and-managing-organizations-and-teams/repository-permission-levels-for-an-organization>`_.
 
 .. topic:: Closing issues: a tough call
 
@@ -89,7 +91,7 @@ See the github description for `roles in the organization
     should be closed.
 
 A typical workflow for triaging issues
-----------------------------------------
+--------------------------------------
 
 The following workflow [1]_ is a good way to approach issue triaging:
 
@@ -119,7 +121,6 @@ The following workflow [1]_ is a good way to approach issue triaging:
    If the new issue provides relevant information, such as a better or
    slightly different example, add it to the original issue as a comment
    or an edit to the original post.
-
 
 #. Make sure that the title accurately reflects the issue. If you have the
    necessary permissions edit it yourself if it's not clear.

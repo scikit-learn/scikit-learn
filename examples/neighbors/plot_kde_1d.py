@@ -103,6 +103,7 @@ def format_func(x, loc):
     else:
         return '%ih' % x
 
+
 for i, kernel in enumerate(['gaussian', 'tophat', 'epanechnikov',
                             'exponential', 'linear', 'cosine']):
     axi = ax.ravel()[i]
