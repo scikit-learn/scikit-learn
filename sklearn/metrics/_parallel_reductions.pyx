@@ -429,11 +429,12 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     cdef:
         ITYPE_t k
 
-        DTYPE_t ** heaps_approx_distances_chunks
-        ITYPE_t ** heaps_indices_chunks
-
         ITYPE_t[:, ::1] argkmin_indices
         DTYPE_t[:, ::1] argkmin_distances
+
+        # Used as array of pointers to private datastructures used in threads.
+        DTYPE_t ** heaps_approx_distances_chunks
+        ITYPE_t ** heaps_indices_chunks
 
     @classmethod
     def valid_metrics(cls):
@@ -471,7 +472,9 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_X, self.k), FLOAT_INF, dtype=DTYPE)
 
-        # Pointers to thread heaps used in threads for `parallel_on_Y` solely
+        # Allocating pointers to datastructures but not the datastructures themselves.
+        # There's potentially more pointers than actual thread used for the
+        # reduction but as many datastructures as threads.
         self.heaps_approx_distances_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
 
@@ -674,11 +677,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         else:
             raise RuntimeError(f"strategy '{strategy}' not supported.")
 
-        return self._finalise_compute(return_distance)
-
-    def _finalise_compute(self,
-           bint return_distance
-    ):
         if return_distance:
             # We need to recompute distances because we relied on
             # approximate distances.
@@ -840,6 +838,10 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
 
 
 cdef class RadiusNeighborhood(PairwiseDistancesReduction):
+    """Returns the indices of neighbors of a first set
+    of vectors (rows of X) present in another set of vectors
+    (rows of Y) for a given a radius and distance.
+    """
 
     cdef:
         DTYPE_t radius
@@ -868,6 +870,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         vector[vector[ITYPE_t]] * neigh_indices
         vector[vector[DTYPE_t]] * neigh_distances
 
+        # Used as array of pointers to private datastructures used in threads.
         vector[vector[ITYPE_t]] ** neigh_indices_chunks
         vector[vector[DTYPE_t]] ** neigh_distances_chunks
 
@@ -900,7 +903,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self.radius = radius
         self.sort_results = False
 
-        # Pointers to datastructures used in threads
+        # Allocating pointers to datastructures but not the datastructures themselves.
+        # There's potentially more pointers than actual thread used for the
+        # reduction but as many datastructures as threads.
         self.neigh_distances_chunks = <vector[vector[DTYPE_t]] **> malloc(
             sizeof(self.neigh_distances) * self.effective_omp_n_thread)
         self.neigh_indices_chunks = <vector[vector[ITYPE_t]] **> malloc(
@@ -941,7 +946,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     ) nogil:
 
         # As this strategy is embarrassingly parallel, we can set the
-        # thread  vectors' pointers to the main vectors'.
+        # thread vectors' pointers to the main vectors'.
         self.neigh_distances_chunks[thread_num] = self.neigh_distances
         self.neigh_indices_chunks[thread_num] = self.neigh_indices
 
@@ -1048,6 +1053,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
            bint return_distance = False,
            bint sort_results = False
     ):
+        # Temporary datastructures which will be coerced to
+        # numpy arrays on return and then freed.
         self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
         self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
 
@@ -1067,12 +1074,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             self._parallel_on_X()
         else:
             raise RuntimeError(f"strategy '{strategy}' not supported.")
-
-        return self._finalise_compute(return_distance)
-
-    def _finalise_compute(self,
-           bint return_distance
-    ):
 
         if return_distance:
             res = (_coerce_vectors_to_np_nd_arrays(self.neigh_distances),
