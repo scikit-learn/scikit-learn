@@ -456,6 +456,9 @@ class PartialDependenceDisplay:
 
         Ignored in binary classification or classical regression settings.
 
+    deciles : dict
+        Deciles for feature indices in ``features``.
+
     pdp_lim : dict or None
         Global min and max average predictions, such that all plots will have
         the same scale and y limits. `pdp_lim[1]` is the global min and max for
@@ -466,9 +469,6 @@ class PartialDependenceDisplay:
         .. deprecated:: 1.0
            Pass the parameter `pdp_lim` to
            :meth:`~sklearn.inspection.PartialDependenceDisplay.plot` instead.
-
-    deciles : dict
-        Deciles for feature indices in ``features``.
 
     kind : {'average', 'individual', 'both'}, default='average'
         Whether to plot the partial dependence averaged across all the samples
