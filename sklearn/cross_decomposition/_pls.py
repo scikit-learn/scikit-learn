@@ -519,7 +519,7 @@ class _PLS(
 
     @property
     def x_scores_(self):
-        '''Attribute `x_scores_` was deprecated in version 0.24.'''
+        """Attribute `x_scores_` was deprecated in version 0.24."""
         # TODO: raise error in 1.1 instead
         if not isinstance(self, PLSRegression):
             pass
@@ -533,7 +533,7 @@ class _PLS(
 
     @property
     def y_scores_(self):
-        '''Attribute `y_scores_` was deprecated in version 0.24.'''
+        """Attribute `y_scores_` was deprecated in version 0.24."""
         # TODO: raise error in 1.1 instead
         if not isinstance(self, PLSRegression):
             warnings.warn(
