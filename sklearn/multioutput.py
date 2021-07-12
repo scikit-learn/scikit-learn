@@ -69,10 +69,10 @@ def _available_if_estimator_has(attr):
 
     Helper for Chain implementations
     """
+
     def _check(self):
-        return (
-            hasattr(self.estimator, attr)
-            or all(hasattr(est, attr) for est in self.estimators_)
+        return hasattr(self.estimator, attr) or all(
+            hasattr(est, attr) for est in self.estimators_
         )
 
     return available_if(_check)
@@ -483,10 +483,10 @@ def _available_if_base_estimator_has(attr):
 
     Helper for Chain implementations
     """
+
     def _check(self):
-        return (
-            hasattr(self.base_estimator, attr)
-            or all(hasattr(est, attr) for est in self.estimators_)
+        return hasattr(self.base_estimator, attr) or all(
+            hasattr(est, attr) for est in self.estimators_
         )
 
     return available_if(_check)
