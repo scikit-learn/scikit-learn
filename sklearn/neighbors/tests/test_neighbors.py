@@ -1284,9 +1284,11 @@ def test_neighbors_badargs():
 
 def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5):
     # Test computing the neighbors for various metrics
-    # create a symmetric matrix
-    V = rng.rand(n_features, n_features)
-    VI = np.dot(V, V.T)
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(n_samples, n_features)
+    test = rng.rand(n_query_pts, n_features)
+    V = np.cov(X.T)
 
     metrics = [
         ("euclidean", {}),
@@ -1298,18 +1300,25 @@ def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbor
         ("chebyshev", {}),
         ("seuclidean", dict(V=rng.rand(n_features))),
         ("wminkowski", dict(p=3, w=rng.rand(n_features))),
-        ("mahalanobis", dict(VI=VI)),
+        ("mahalanobis", dict(V=V)),
         ("haversine", {}),
     ]
     algorithms = ["brute", "ball_tree", "kd_tree"]
-    X = rng.rand(n_samples, n_features)
-
-    test = rng.rand(n_query_pts, n_features)
 
     for metric, metric_params in metrics:
         if metric == "wminkowski" and sp_version >= parse_version("1.8.0"):
             # wminkowski will be removed in SciPy 1.8.0
             continue
+
+        # Haversine distance only accepts 2D data
+        if metric == "haversine":
+            feature_sl = slice(None, 2)
+            X_train = np.ascontiguousarray(X[:, feature_sl])
+            X_test = np.ascontiguousarray(test[:, feature_sl])
+        else:
+            X_train = X
+            X_test = test
+
         results = {}
         p = metric_params.pop("p", 2)
         for algorithm in algorithms:
@@ -1329,20 +1338,15 @@ def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbor
                 metric_params=metric_params,
             )
 
-            # Haversine distance only accepts 2D data
-            feature_sl = slice(None, 2) if metric == "haversine" else slice(None)
+            neigh.fit(X_train)
 
-            neigh.fit(X[:, feature_sl])
+            results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
-            results[algorithm] = neigh.kneighbors(
-                test[:, feature_sl], return_distance=True
-            )
-
-        assert_array_almost_equal(results["brute"][0], results["ball_tree"][0])
-        assert_array_almost_equal(results["brute"][1], results["ball_tree"][1])
+        assert_allclose(results["brute"][0], results["ball_tree"][0])
+        assert_allclose(results["brute"][1], results["ball_tree"][1])
         if "kd_tree" in results:
-            assert_array_almost_equal(results["brute"][0], results["kd_tree"][0])
-            assert_array_almost_equal(results["brute"][1], results["kd_tree"][1])
+            assert_allclose(results["brute"][0], results["kd_tree"][0])
+            assert_allclose(results["brute"][1], results["kd_tree"][1])
 
 
 def test_callable_metric():
@@ -1574,16 +1578,16 @@ def test_k_and_radius_neighbors_duplicates(algorithm):
     nn.fit(X)
     dist, ind = nn.kneighbors()
     assert_array_equal(dist, np.zeros((3, 1)))
-    assert_array_equal(ind, [[1], [0], [1]])
+    assert_array_equal(ind, [[2], [2], [0]])
 
     # Test that zeros are explicitly marked in kneighbors_graph.
     kng = nn.kneighbors_graph(mode="distance")
     assert_array_equal(kng.A, np.zeros((3, 3)))
     assert_array_equal(kng.data, np.zeros(3))
-    assert_array_equal(kng.indices, [1.0, 0.0, 1.0])
+    assert_array_equal(kng.indices, [2.0, 2.0, 0.0])
     assert_array_equal(
         nn.kneighbors_graph().A,
-        np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]),
     )
 
 
@@ -1821,31 +1825,37 @@ def test_pairwise_deprecated(NearestNeighbors):
         nn._pairwise
 
 
-@pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("d", [5, 10, 100])
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("ratio_train_test", [10, 2, 1, 0.5])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
 def test_fast_sqeuclidean_correctness(
-    n,
-    d,
+    n_samples,
+    n_features,
     ratio_train_test,
     n_neighbors,
     dtype=np.float64,
 ):
     # The fast squared euclidean strategy must return results
     # that are close to the ones obtained with the euclidean distance
-    if n < n_neighbors:
+    if n_samples < n_neighbors:
         pytest.skip(
-            f"Skipping as n (={n}) < n_neighbors (={n_neighbors})",
+            f"Skipping as n_samples (={n_samples}) < n_neighbors (={n_neighbors})",
             allow_module_level=True,
         )
 
     rng = np.random.RandomState(1)
 
     spread = 100
-    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread
+    X_train = (
+        rng.rand(int(n_samples * n_features)).astype(dtype).reshape((-1, n_features))
+        * spread
+    )
     X_test = (
-        rng.rand(int(n * d / ratio_train_test)).astype(dtype).reshape((-1, d)) * spread
+        rng.rand(int(n_samples * n_features / ratio_train_test))
+        .astype(dtype)
+        .reshape((-1, n_features))
+        * spread
     )
 
     neigh = NearestNeighbors(
@@ -1866,8 +1876,8 @@ def test_fast_sqeuclidean_correctness(
     assert_array_equal(eucl_nn, fse_nn)
 
 
-@pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("d", [5, 10, 100, 500])
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("n_features", [5, 10, 100, 500])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
 @pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 @pytest.mark.skip(
@@ -1875,23 +1885,23 @@ def test_fast_sqeuclidean_correctness(
     "have its own study: skipping for now"
 )
 def test_fast_sqeuclidean_translation_invariance(
-    n,
-    d,
+    n_samples,
+    n_features,
     n_neighbors,
     translation,
     dtype=np.float64,
 ):
     # The fast squared euclidean strategy should be translation invariant.
-    if n < n_neighbors:
+    if n_samples < n_neighbors:
         pytest.skip(
-            f"Skipping as n (={n}) < n_neighbors (={n_neighbors})",
+            f"Skipping as n_samples (={n_samples}) < n_neighbors (={n_neighbors})",
             allow_module_level=True,
         )
 
     rng = np.random.RandomState(1)
     spread = 100
-    X_train = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread
-    X_test = rng.rand(int(n * d)).astype(dtype).reshape((-1, d)) * spread
+    X_train = rng.rand(n_samples, n_features).astype(dtype) * spread
+    X_test = rng.rand(n_samples, n_features).astype(dtype) * spread
 
     neigh = NearestNeighbors(
         n_neighbors=n_neighbors, algorithm="brute", metric="fast_sqeuclidean"

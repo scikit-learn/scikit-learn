@@ -652,12 +652,7 @@ def pairwise_distances_argmin_min(
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    if (
-        # TODO: support sparse arrays
-        not issparse(X)
-        and not issparse(X)
-        and metric in ArgKmin.valid_metrics()
-    ):
+    if ArgKmin.is_usable_for(X, Y, metric):
         values, indices = ArgKmin.get_for(
             X=X, Y=Y, k=1, metric=metric, metric_kwargs=metric_kwargs
         ).compute(strategy="auto", return_distance=True)

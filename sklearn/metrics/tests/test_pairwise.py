@@ -442,7 +442,6 @@ def test_pairwise_distances_argmin_min():
 
     expected_idx = [0, 1]
     expected_vals = [2, 2]
-    expected_vals_sq = [4, 4]
 
     # euclidean metric
     idx, vals = pairwise_distances_argmin_min(X, Y, metric="euclidean")
@@ -460,10 +459,12 @@ def test_pairwise_distances_argmin_min():
 
     # euclidean metric squared
     idx, vals = pairwise_distances_argmin_min(
-        X, Y, metric="euclidean", metric_kwargs={"squared": True}
+        X,
+        Y,
+        metric="fast_sqeuclidean",
     )
     assert_array_almost_equal(idx, expected_idx)
-    assert_array_almost_equal(vals, expected_vals_sq)
+    assert_array_almost_equal(vals, expected_vals)
 
     # Non-euclidean scikit-learn metric
     idx, vals = pairwise_distances_argmin_min(X, Y, metric="manhattan")
@@ -1468,19 +1469,21 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     assert_allclose(dist, expected_dist, rtol=rtol)
 
 
-@pytest.mark.parametrize("n", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("d", [5, 10, 100])
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("X_translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 @pytest.mark.parametrize("Y_translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 @pytest.mark.parametrize("sign", [1, -1])
-def test_fast_sqeuclidean_correctness(n, d, X_translation, Y_translation, sign):
+def test_fast_sqeuclidean_correctness(
+    n_samples, n_features, X_translation, Y_translation, sign
+):
     # The fast squared euclidean strategy must return results
     # that are close to the ones obtained with the euclidean distance
     rng = np.random.RandomState(1)
 
     spread = 100
-    X = X_translation + rng.rand(int(n * d)).reshape((-1, d)) * spread
-    Y = Y_translation + rng.rand(int(n * d)).reshape((-1, d)) * spread * sign
+    X = X_translation + rng.rand(n_samples, n_features) * spread
+    Y = Y_translation + rng.rand(n_samples, n_features) * spread * sign
 
     argmins, distances = pairwise_distances_argmin_min(X, Y, metric="euclidean")
     fsq_argmins, fsq_distances = pairwise_distances_argmin_min(

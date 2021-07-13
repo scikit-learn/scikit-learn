@@ -22,6 +22,7 @@ def configuration(parent_package="", top_path=None):
     config.add_extension(
         "_parallel_reductions",
         sources=["_parallel_reductions.pyx"],
+        language="c++",
         libraries=libraries,
     )
 

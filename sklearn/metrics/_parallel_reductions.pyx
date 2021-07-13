@@ -12,9 +12,16 @@ import numpy as np
 cimport numpy as np
 cimport openmp
 
-from libc.stdlib cimport free, malloc
+np.import_array()
 
+from libc.stdlib cimport free, malloc
+from libcpp.vector cimport vector
+from cpython.object cimport PyObject
+from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
+from cpython.ref cimport Py_INCREF
+
+from scipy.sparse import issparse
 
 from ._dist_metrics cimport DistanceMetric
 from ._dist_metrics import METRIC_MAPPING
@@ -36,8 +43,90 @@ from ..utils._cython_blas cimport (
 
 from ..utils._heap cimport _simultaneous_sort, _push
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._typedefs cimport ITYPE_t, DTYPE_t
+from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
+from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 from ..utils._typedefs import ITYPE, DTYPE
+
+# TODO: This has been introduced in Cython 3.0, change for `libcpp.algorithm.move` once Cython 3 is used
+# Introduction in Cython:
+# https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L47
+cdef extern from "<algorithm>" namespace "std" nogil:
+    OutputIt move[InputIt, OutputIt](InputIt first, InputIt last, OutputIt d_first) except +
+
+######################
+## std::vector to np.ndarray coercion
+# As type covariance is not supported for C++ container via Cython,
+# we need to redefine fused types.
+ctypedef fused vector_DITYPE_t:
+    vector[ITYPE_t]
+    vector[DTYPE_t]
+
+ctypedef fused vector_vector_DITYPE_t:
+    vector[vector[ITYPE_t]]
+    vector[vector[DTYPE_t]]
+
+cdef extern from "numpy/arrayobject.h":
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject *obj) nogil except -1
+
+cdef class StdVectorSentinel:
+    """Wraps a reference to a vector which will be
+    deallocated with this object."""
+    pass
+
+cdef class StdVectorSentinelDTYPE(StdVectorSentinel):
+    cdef vector[DTYPE_t] vec
+
+    @staticmethod
+    cdef StdVectorSentinel create_for(vector[DTYPE_t] * vec_ptr):
+        sentinel = StdVectorSentinelDTYPE()
+        sentinel.vec.swap(deref(vec_ptr))
+        return sentinel
+
+cdef class StdVectorSentinelITYPE(StdVectorSentinel):
+    cdef vector[ITYPE_t] vec
+
+    @staticmethod
+    cdef StdVectorSentinel create_for(vector[ITYPE_t] * vec_ptr):
+        sentinel = StdVectorSentinelITYPE()
+        sentinel.vec.swap(deref(vec_ptr))
+        return sentinel
+
+
+cdef np.ndarray vector_to_numpy_array(vector_DITYPE_t * vect_ptr):
+    """ Create a numpy ndarray given a C++ vector.
+
+    This registers a Sentinel as the base object for the numpy array
+    freeing the C++ vector it encapsulates when it must.
+    """
+    typenum = DTYPECODE if vector_DITYPE_t is vector[DTYPE_t] else ITYPECODE
+    cdef:
+        np.npy_intp size = deref(vect_ptr).size()
+        np.ndarray arr = np.PyArray_SimpleNewFromData(1, &size, typenum, deref(vect_ptr).data())
+        StdVectorSentinel sentinel
+
+    if vector_DITYPE_t is vector[DTYPE_t]:
+        sentinel = StdVectorSentinelDTYPE.create_for(vect_ptr)
+    else:
+        sentinel = StdVectorSentinelITYPE.create_for(vect_ptr)
+
+    # Makes the numpy array responsible to the life-cycle of its buffer.
+    # A reference to the sentinel will be stolen by the call bellow,
+    # so we increase its reference count.
+    Py_INCREF(sentinel)
+    PyArray_SetBaseObject(arr, <PyObject*>sentinel)
+    return arr
+
+cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(vector_vector_DITYPE_t* vecs):
+    cdef:
+        ITYPE_t n = deref(vecs).size()
+        np.ndarray[object, ndim=1] np_arrays_of_np_arrays = np.empty(n, dtype=np.ndarray)
+
+    for i in range(n):
+        np_arrays_of_np_arrays[i] = vector_to_numpy_array(&(deref(vecs)[i]))
+
+    return np_arrays_of_np_arrays
+
+#####################
 
 
 cdef class PairwiseDistancesReduction:
@@ -75,7 +164,17 @@ cdef class PairwiseDistancesReduction:
 
     @classmethod
     def valid_metrics(cls):
-        return {*METRIC_MAPPING.keys()}
+        excluded = {"pyfunc", "sokalmichener", "matching", "jaccard"}
+        return sorted({*METRIC_MAPPING.keys()}.difference(excluded))
+
+    @classmethod
+    def is_usable_for(cls, X, Y, metric) -> bool:
+        # TODO: support sparse arrays
+        return (not issparse(X) and
+                not issparse(X) and
+                X.dtype == Y.dtype == np.float64
+                and metric in cls.valid_metrics())
+
 
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults
@@ -146,7 +245,7 @@ cdef class PairwiseDistancesReduction:
         with nogil, parallel(num_threads=num_threads):
             thread_num = openmp.omp_get_thread_num()
 
-            # Allocating thread local datastructures
+            # Allocating thread datastructures
             self._on_X_parallel_init(thread_num)
 
             for X_chunk_idx in prange(self.X_n_chunks, schedule='static'):
@@ -156,8 +255,8 @@ cdef class PairwiseDistancesReduction:
                 else:
                     X_end = X_start + self.X_n_samples_chunk
 
-                # Reinitializing thread local datastructures for the new X chunk
-                self._on_X_prange_iter_init(thread_num, X_chunk_idx, X_start, X_end)
+                # Reinitializing thread datastructures for the new X chunk
+                self._on_X_prange_iter_init(thread_num, X_start, X_end)
 
                 for Y_chunk_idx in range(self.Y_n_chunks):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
@@ -174,12 +273,12 @@ cdef class PairwiseDistancesReduction:
                         thread_num,
                     )
 
-                # Adjusting thread local datastructures on the full pass on Y
-                self._on_X_prange_iter_finalize(thread_num, X_chunk_idx, X_start, X_end)
+                # Adjusting thread datastructures on the full pass on Y
+                self._on_X_prange_iter_finalize(thread_num, X_start, X_end)
 
             # end: for X_chunk_idx
 
-            # Deallocating thread local datastructures
+            # Deallocating thread datastructures
             self._on_X_parallel_finalize(thread_num)
 
         # end: with nogil, parallel
@@ -196,8 +295,12 @@ cdef class PairwiseDistancesReduction:
         """
         cdef:
             ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx
-            ITYPE_t num_threads = min(self.X_n_chunks, self.effective_omp_n_thread)
+            ITYPE_t num_threads = min(self.Y_n_chunks, self.effective_omp_n_thread)
             ITYPE_t thread_num
+
+        # TODO: put the "with nogil, parallel"-context here
+        # Allocating datastructures
+        self._on_Y_init(num_threads)
 
         for X_chunk_idx in range(self.X_n_chunks):
             X_start = X_chunk_idx * self.X_n_samples_chunk
@@ -207,10 +310,9 @@ cdef class PairwiseDistancesReduction:
                 X_end = X_start + self.X_n_samples_chunk
 
             with nogil, parallel(num_threads=num_threads):
-                # Thread local buffers
                 thread_num = openmp.omp_get_thread_num()
 
-                # Allocating thread local datastructures
+                # Initializing datastructures used in this thread
                 self._on_Y_parallel_init(thread_num)
 
                 for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
@@ -230,12 +332,13 @@ cdef class PairwiseDistancesReduction:
                     )
                 # end: prange
 
-                # Synchronizing thread local datastructures with the main ones
-                # This can potentially block
-                self._on_Y_parallel_finalize(thread_num, X_chunk_idx, X_start, X_end)
+            # Synchronizing the thread datastructures with the main ones
+            # This can potentially block
+            self._on_Y_after_parallel(num_threads, X_start, X_end)
             # end: with nogil, parallel
 
         # end: for X_chunk_idx
+        # Deallocating temporary datastructures
         # Adjusting main datastructures before returning
         self._on_Y_finalize(num_threads)
         return
@@ -254,9 +357,6 @@ cdef class PairwiseDistancesReduction:
         on a pair of chunks"""
         return -1
 
-    def __dealloc__(self):
-        pass
-
     # Placeholder methods which can be implemented
 
     cdef void _on_X_parallel_init(self,
@@ -271,7 +371,6 @@ cdef class PairwiseDistancesReduction:
 
     cdef void _on_X_prange_iter_init(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
@@ -279,9 +378,13 @@ cdef class PairwiseDistancesReduction:
 
     cdef void _on_X_prange_iter_finalize(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _on_Y_init(self,
+        ITYPE_t num_threads,
     ) nogil:
         return
 
@@ -290,16 +393,15 @@ cdef class PairwiseDistancesReduction:
     ) nogil:
         return
 
-    cdef void _on_Y_parallel_finalize(self,
-        ITYPE_t thread_num,
-        ITYPE_t X_chunk_idx,
+    cdef void _on_Y_after_parallel(self,
+        ITYPE_t num_threads,
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
         return
 
     cdef void _on_Y_finalize(self,
-        ITYPE_t thread_num,
+        ITYPE_t num_threads,
     ) nogil:
         return
 
@@ -327,11 +429,12 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     cdef:
         ITYPE_t k
 
-        DTYPE_t ** heaps_approx_distances_chunks
-        ITYPE_t ** heaps_indices_chunks
-
         ITYPE_t[:, ::1] argkmin_indices
         DTYPE_t[:, ::1] argkmin_distances
+
+        # Used as array of pointers to private datastructures used in threads.
+        DTYPE_t ** heaps_approx_distances_chunks
+        ITYPE_t ** heaps_indices_chunks
 
     @classmethod
     def valid_metrics(cls):
@@ -369,12 +472,13 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_X, self.k), FLOAT_INF, dtype=DTYPE)
 
-        # Pointers to thread local heaps used in threads for `parallel_on_Y` solely
+        # Allocating pointers to datastructures but not the datastructures themselves.
+        # There's potentially more pointers than actual thread used for the
+        # reduction but as many datastructures as threads.
         self.heaps_approx_distances_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
 
     def __dealloc__(self):
-        PairwiseDistancesReduction.__dealloc__(self)
         if self.heaps_indices_chunks is not NULL:
             free(self.heaps_indices_chunks)
         else:
@@ -402,9 +506,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
-            ITYPE_t n_x = X_end - X_start
-            ITYPE_t n_y = Y_end - Y_start
-
         # Pushing the distance and their associated indices on heaps
         # which keep tracks of the argkmin.
         for i in range(X_c.shape[0]):
@@ -421,20 +522,17 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     cdef void _on_X_prange_iter_init(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
 
         # As this strategy is embarrassingly parallel, we can set the
-        # thread-local heaps pointers to the proper position
-        # on the main heaps
+        # thread heaps pointers to the proper position on the main heaps
         self.heaps_approx_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
         self.heaps_indices_chunks[thread_num] = &self.argkmin_indices[X_start, 0]
 
     cdef void _on_X_prange_iter_finalize(self,
             ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
@@ -449,63 +547,74 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 self.k
             )
 
-    cdef void _on_Y_parallel_init(self,
-            ITYPE_t thread_num,
+    cdef void _on_Y_init(self,
+            ITYPE_t num_threads,
     ) nogil:
         cdef:
             # number of scalar elements
             ITYPE_t heaps_size = self.X_n_samples_chunk * self.k
+            ITYPE_t thread_num
 
-        # As chunks of X are shared across threads, so must their
-        # heaps. To solve this, each thread has its own locals
-        # heaps which are then synchronised back in the main ones.
-        self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heaps_size * sizeof(DTYPE_t))
-        self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(heaps_size * sizeof(ITYPE_t))
+        for thread_num in prange(num_threads, schedule='static', nogil=True,
+                                 num_threads=num_threads):
+            # As chunks of X are shared across threads, so must their
+            # heaps. To solve this, each thread has its own heaps
+            # which are then synchronised back in the main ones.
+            self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heaps_size * sizeof(DTYPE_t))
+            self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(heaps_size * sizeof(ITYPE_t))
 
+    cdef void _on_Y_parallel_init(self,
+            ITYPE_t thread_num,
+    ) nogil:
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
             self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
             self.heaps_indices_chunks[thread_num][idx] = -1
 
-    cdef void _on_Y_parallel_finalize(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
+    cdef void _on_Y_after_parallel(self,
+            ITYPE_t num_threads,
             ITYPE_t X_start,
             ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx
-        with gil:
-            # Synchronising the thread local heaps
-            # with the main heaps
-            for idx in range(X_end - X_start):
-                for jdx in range(self.k):
-                    _push(
-                        &self.argkmin_distances[X_start + idx, 0],
-                        &self.argkmin_indices[X_start + idx, 0],
-                        self.k,
-                        self.heaps_approx_distances_chunks[thread_num][idx * self.k + jdx],
-                        self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
-                    )
+            ITYPE_t idx, jdx, thread_num
+        with nogil, parallel(num_threads=self.effective_omp_n_thread):
+            # Synchronising the thread heaps with the main heaps
+            # This is done in parallel samples-wise (no need for locks)
+            #
+            # NOTE: can this lead to false sharing?
+            for idx in prange(X_end - X_start, schedule="static"):
+                for thread_num in range(num_threads):
+                    for jdx in range(self.k):
+                        _push(
+                            &self.argkmin_distances[X_start + idx, 0],
+                            &self.argkmin_indices[X_start + idx, 0],
+                            self.k,
+                            self.heaps_approx_distances_chunks[thread_num][idx * self.k + jdx],
+                            self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
+                        )
 
-        free(self.heaps_approx_distances_chunks[thread_num])
-        free(self.heaps_indices_chunks[thread_num])
 
     cdef void _on_Y_finalize(self,
-            ITYPE_t thread_num,
+        ITYPE_t num_threads,
     ) nogil:
         cdef:
-            ITYPE_t idx
+            ITYPE_t idx, thread_num
 
-        # Sort the main heaps into arrays in parallel
-        # in ascending order w.r.t the distances
-        for idx in prange(self.n_X, schedule='static', nogil=True,
-                          num_threads=self.effective_omp_n_thread):
-            _simultaneous_sort(
-                &self.argkmin_distances[idx, 0],
-                &self.argkmin_indices[idx, 0],
-                self.k,
-            )
+        with nogil, parallel(num_threads=self.effective_omp_n_thread):
+            # Deallocating temporary datastructures
+            for thread_num in prange(num_threads, schedule='static'):
+                free(self.heaps_approx_distances_chunks[thread_num])
+                free(self.heaps_indices_chunks[thread_num])
+
+            # Sort the main heaps into arrays in parallel
+            # in ascending order w.r.t the distances
+            for idx in prange(self.n_X, schedule='static'):
+                _simultaneous_sort(
+                    &self.argkmin_distances[idx, 0],
+                    &self.argkmin_indices[idx, 0],
+                    self.k,
+                )
         return
 
     cdef void _exact_distances(self,
@@ -614,7 +723,6 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
 
     def __dealloc__(self):
-        ArgKmin.__dealloc__(self)
         if self.dist_middle_terms_chunks is not NULL:
             free(self.dist_middle_terms_chunks)
         else:
@@ -634,22 +742,25 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         ArgKmin._on_X_parallel_finalize(self, thread_num)
         free(self.dist_middle_terms_chunks[thread_num])
 
-    cdef void _on_Y_parallel_init(self,
-            ITYPE_t thread_num,
+    cdef void _on_Y_init(self,
+            ITYPE_t num_threads,
     ) nogil:
-        ArgKmin._on_Y_parallel_init(self, thread_num)
-        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
-        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
-            self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t))
+        cdef ITYPE_t thread_num
+        ArgKmin._on_Y_init(self, num_threads)
 
-    cdef void _on_Y_parallel_finalize(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_chunk_idx,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
+        for thread_num in range(num_threads):
+            # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+            self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
+                self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t))
+
+    cdef void _on_Y_finalize(self,
+            ITYPE_t num_threads,
     ) nogil:
-        ArgKmin._on_Y_parallel_finalize(self, thread_num, X_chunk_idx, X_start, X_end)
-        free(self.dist_middle_terms_chunks[thread_num])
+        cdef ITYPE_t thread_num
+        ArgKmin._on_Y_finalize(self, num_threads)
+
+        for thread_num in range(num_threads):
+            free(self.dist_middle_terms_chunks[thread_num])
 
     cdef int _reduce_on_chunks(self,
         const DTYPE_t[:, ::1] X,
@@ -699,9 +810,12 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             ITYPE_t n = Y_c.shape[0]
             ITYPE_t K = X_c.shape[1]
             DTYPE_t alpha = - 2.
-            DTYPE_t * A = & X_c[0, 0]
+            # TODO: necessarily casting because APIs exposed
+            # via scipy.linalg.cython_blas aren't reflecting
+            # the const-identifier for arguments
+            DTYPE_t * A = <DTYPE_t*> & X_c[0, 0]
             ITYPE_t lda = X_c.shape[1]
-            DTYPE_t * B = & Y_c[0, 0]
+            DTYPE_t * B = <DTYPE_t*> & Y_c[0, 0]
             ITYPE_t ldb = X_c.shape[1]
             DTYPE_t beta = 0.
             DTYPE_t * C = dist_middle_terms
@@ -721,3 +835,253 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
                       dist_middle_terms[i * Y_c.shape[0] + j] + self.Y_sq_norms[j + Y_start],
                       j + Y_start)
         return 0
+
+
+cdef class RadiusNeighborhood(PairwiseDistancesReduction):
+    """Returns the indices of neighbors of a first set
+    of vectors (rows of X) present in another set of vectors
+    (rows of Y) for a given a radius and distance.
+    """
+
+    cdef:
+        DTYPE_t radius
+
+        # Distances metrics compute approximated distance
+        # ("reduced distance" in the original wording),
+        # which are proxies necessitating less computations.
+        # We get the proxy for the radius to be able to compare
+
+        # NOTE: not used for now.
+        DTYPE_t radius_proxy
+
+        # We want resizable buffers which we will to wrapped within numpy
+        # arrays at the end.
+        #
+        # std::vector comes as a handy interface for efficient resizable
+        # buffers.
+        #
+        # Though it is possible to access their buffer address with
+        # std::vector::data, their buffer can't be stolen: their
+        # life-time is tight to the buffer's.
+        #
+        # To solve this, we dynamically allocate vectors and then
+        # encapsulate them in a StdVectorSentinel responsible for
+        # freeing them when needed
+        vector[vector[ITYPE_t]] * neigh_indices
+        vector[vector[DTYPE_t]] * neigh_distances
+
+        # Used as array of pointers to private datastructures used in threads.
+        vector[vector[ITYPE_t]] ** neigh_indices_chunks
+        vector[vector[DTYPE_t]] ** neigh_distances_chunks
+
+        bint sort_results
+
+
+    @classmethod
+    def get_for(cls,
+                X,
+                Y,
+                DTYPE_t radius,
+                str metric="euclidean",
+                ITYPE_t chunk_size=CHUNK_SIZE,
+                dict metric_kwargs=dict(),
+        ):
+        return RadiusNeighborhood(X=X, Y=Y,
+                       distance_metric=DistanceMetric.get_metric(metric, **metric_kwargs),
+                       radius=radius,
+                       chunk_size=chunk_size)
+
+    def __init__(self,
+                 X,
+                 Y,
+                 DistanceMetric distance_metric,
+                 DTYPE_t radius,
+                 ITYPE_t chunk_size = CHUNK_SIZE,
+    ):
+        PairwiseDistancesReduction.__init__(self, X, Y, distance_metric, chunk_size)
+
+        self.radius = radius
+        self.sort_results = False
+
+        # Allocating pointers to datastructures but not the datastructures themselves.
+        # There's potentially more pointers than actual thread used for the
+        # reduction but as many datastructures as threads.
+        self.neigh_distances_chunks = <vector[vector[DTYPE_t]] **> malloc(
+            sizeof(self.neigh_distances) * self.effective_omp_n_thread)
+        self.neigh_indices_chunks = <vector[vector[ITYPE_t]] **> malloc(
+            sizeof(self.neigh_indices) * self.effective_omp_n_thread)
+
+    def __dealloc(self):
+        free(self.neigh_distances_chunks)
+        free(self.neigh_indices_chunks)
+
+    cdef int _reduce_on_chunks(self,
+        const DTYPE_t[:, ::1] X,
+        const DTYPE_t[:, ::1] Y,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil except -1:
+        cdef:
+            ITYPE_t i, j
+            const DTYPE_t[:, ::1] X_c = X[X_start:X_end, :]
+            const DTYPE_t[:, ::1] Y_c = Y[Y_start:Y_end, :]
+            DTYPE_t dist_i_j
+
+        for i in range(X_c.shape[0]):
+            for j in range(Y_c.shape[0]):
+                dist_i_j = self.distance_metric.dist(&X_c[i, 0], &Y_c[j, 0], self.d)
+                if dist_i_j <= self.radius:
+                    deref(self.neigh_distances_chunks[thread_num])[X_start + i].push_back(dist_i_j)
+                    deref(self.neigh_indices_chunks[thread_num])[X_start + i].push_back(Y_start + j)
+
+        return 0
+
+    cdef void _on_X_prange_iter_init(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
+
+        # As this strategy is embarrassingly parallel, we can set the
+        # thread vectors' pointers to the main vectors'.
+        self.neigh_distances_chunks[thread_num] = self.neigh_distances
+        self.neigh_indices_chunks[thread_num] = self.neigh_indices
+
+    cdef void _on_X_prange_iter_finalize(self,
+            ITYPE_t thread_num,
+            ITYPE_t X_start,
+            ITYPE_t X_end,
+    ) nogil:
+        cdef:
+            ITYPE_t idx, jdx
+
+        # Sorting neighbors for each query vector of X
+        if self.sort_results:
+            for idx in range(X_start, X_end):
+                _simultaneous_sort(
+                    deref(self.neigh_distances)[idx].data(),
+                    deref(self.neigh_indices)[idx].data(),
+                    deref(self.neigh_indices)[idx].size()
+                )
+
+    cdef void _on_Y_parallel_init(self,
+        ITYPE_t thread_num,
+    ) nogil:
+        # As chunks of X are shared across threads, so must their
+        # vectors. To solve this, each thread has its own vectors
+        # which are then synchronised merged back in the main ones.
+        self.neigh_distances_chunks[thread_num] = new vector[vector[DTYPE_t]](self.n_X)
+        self.neigh_indices_chunks[thread_num] = new vector[vector[ITYPE_t]](self.n_X)
+
+    cdef void _merge_vectors(self,
+        ITYPE_t idx,
+        ITYPE_t num_threads,
+    ) nogil:
+        cdef:
+            ITYPE_t thread_num
+            ITYPE_t idx_n_elements = 0
+            ITYPE_t last_element_idx = deref(self.neigh_indices)[idx].size()
+
+        # Resizing buffers only once for the given
+        for thread_num in range(num_threads):
+            idx_n_elements += deref(self.neigh_distances_chunks[thread_num])[idx].size()
+
+        deref(self.neigh_distances)[idx].resize(last_element_idx + idx_n_elements)
+        deref(self.neigh_indices)[idx].resize(last_element_idx + idx_n_elements)
+
+        # Moving the elements by range using the range first element
+        # as the reference for the insertion
+        for thread_num in range(num_threads):
+            move(
+                deref(self.neigh_distances_chunks[thread_num])[idx].begin(),
+                deref(self.neigh_distances_chunks[thread_num])[idx].end(),
+                deref(self.neigh_distances)[idx].begin() + last_element_idx
+            )
+            move(
+                deref(self.neigh_indices_chunks[thread_num])[idx].begin(),
+                deref(self.neigh_indices_chunks[thread_num])[idx].end(),
+                deref(self.neigh_indices)[idx].begin() + last_element_idx
+            )
+            last_element_idx += deref(self.neigh_distances_chunks[thread_num])[idx].size()
+
+
+    cdef void _on_Y_after_parallel(self,
+        ITYPE_t num_threads,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil:
+        cdef:
+            ITYPE_t idx, thread_num
+        # Merge associated vectors into one
+        # This is done in parallel samples-wise (no need for locks)
+        with nogil, parallel(num_threads=self.effective_omp_n_thread):
+            for idx in prange(self.n_X, schedule='static'):
+                self._merge_vectors(idx, num_threads)
+
+            # The content of the vector have been std::moved,
+            # Hence they can't be used anymore and can only
+            # be deleted.
+            for thread_num in prange(num_threads, schedule='static'):
+                del self.neigh_distances_chunks[thread_num]
+                del self.neigh_indices_chunks[thread_num]
+
+        return
+
+    cdef void _on_Y_finalize(self,
+        ITYPE_t num_threads,
+    ) nogil:
+        cdef:
+            ITYPE_t idx, jdx, thread_num, idx_n_element, idx_current
+
+        # Sort in parallel in ascending order w.r.t the distances if needed
+        if self.sort_results:
+            for idx in prange(self.n_X, schedule='static', nogil=True,
+                              num_threads=self.effective_omp_n_thread):
+                _simultaneous_sort(
+                    deref(self.neigh_distances)[idx].data(),
+                    deref(self.neigh_indices)[idx].data(),
+                    deref(self.neigh_indices)[idx].size()
+                )
+
+        return
+
+    def compute(self,
+           str strategy = "auto",
+           bint return_distance = False,
+           bint sort_results = False
+    ):
+        # Temporary datastructures which will be coerced to
+        # numpy arrays on return and then freed.
+        self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
+        self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
+
+        self.sort_results = sort_results
+
+        if strategy == 'auto':
+            # This is a simple heuristic whose constant for the
+            # comparison has been chosen based on experiments.
+            if 4 * self.chunk_size * self.effective_omp_n_thread < self.n_X:
+                strategy = 'parallel_on_X'
+            else:
+                strategy = 'parallel_on_Y'
+
+        if strategy == 'parallel_on_Y':
+            self._parallel_on_Y()
+        elif strategy == 'parallel_on_X':
+            self._parallel_on_X()
+        else:
+            raise RuntimeError(f"strategy '{strategy}' not supported.")
+
+        if return_distance:
+            res = (_coerce_vectors_to_np_nd_arrays(self.neigh_distances),
+                    _coerce_vectors_to_np_nd_arrays(self.neigh_indices))
+        else:
+            res = _coerce_vectors_to_np_nd_arrays(self.neigh_indices)
+
+        del self.neigh_distances
+        del self.neigh_indices
+
+        return res
