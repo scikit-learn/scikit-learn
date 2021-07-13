@@ -527,6 +527,7 @@ def test_permutation_importance_multi_metric(list_single_scorer, multi_scorer):
 
         assert_allclose(multi_result.importances, single_result.importances)
 
+
 def test_error_max_samples():
     pd = pytest.importorskip("pandas")
     rng = np.random.RandomState(42)
@@ -545,10 +546,10 @@ def test_error_max_samples():
 
     # Test max_samples
     with pytest.raises(ValueError):
-        result = permutation_importance(
+        permutation_importance(
             clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples=len(y)+1
         )
     with pytest.raises(ValueError):
-        result = permutation_importance(
+        permutation_importance(
             clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples="string"
         )
