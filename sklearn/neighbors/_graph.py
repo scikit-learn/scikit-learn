@@ -18,8 +18,8 @@ def _check_params(X, metric, p, metric_params):
     for param_name, func_param in params:
         if func_param != est_params[param_name]:
             raise ValueError(
-                "Got %s for %s, while the estimator has %s for "
-                "the same parameter." % (func_param, param_name, est_params[param_name])
+                "Got %s for %s, while the estimator has %s for the same parameter."
+                % (func_param, param_name, est_params[param_name])
             )
 
 

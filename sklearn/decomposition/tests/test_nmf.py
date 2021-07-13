@@ -26,7 +26,7 @@ from sklearn.exceptions import ConvergenceWarning
 )
 def test_convergence_warning(solver, regularization):
     convergence_warning = (
-        "Maximum number of iterations 1 reached. " "Increase it to improve convergence."
+        "Maximum number of iterations 1 reached. Increase it to improve convergence."
     )
     A = np.ones((2, 2))
     with pytest.warns(ConvergenceWarning, match=convergence_warning):
@@ -59,7 +59,7 @@ def test_parameter_checking():
     msg = "Invalid beta_loss parameter: got 'spam' instead of one"
     with pytest.raises(ValueError, match=msg):
         NMF(solver="mu", init=init, beta_loss=name).fit(A)
-    msg = "Invalid beta_loss parameter: solver 'cd' does not handle " "beta_loss = 1.0"
+    msg = "Invalid beta_loss parameter: solver 'cd' does not handle beta_loss = 1.0"
     with pytest.raises(ValueError, match=msg):
         NMF(solver="cd", init=init, beta_loss=1.0).fit(A)
 
@@ -312,12 +312,12 @@ def test_non_negative_factorization_checking():
     # Test parameters checking is public function
     nnmf = non_negative_factorization
     msg = re.escape(
-        "Number of components must be a positive integer; " "got (n_components=1.5)"
+        "Number of components must be a positive integer; got (n_components=1.5)"
     )
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, A, 1.5, init="random")
     msg = re.escape(
-        "Number of components must be a positive integer; " "got (n_components='2')"
+        "Number of components must be a positive integer; got (n_components='2')"
     )
     with pytest.raises(ValueError, match=msg):
         nnmf(A, A, A, "2", init="random")

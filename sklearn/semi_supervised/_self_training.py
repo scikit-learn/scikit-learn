@@ -172,14 +172,14 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.base_estimator_ = clone(self.base_estimator)
 
         if self.max_iter is not None and self.max_iter < 0:
-            raise ValueError("max_iter must be >= 0 or None," f" got {self.max_iter}")
+            raise ValueError(f"max_iter must be >= 0 or None, got {self.max_iter}")
 
         if not (0 <= self.threshold < 1):
-            raise ValueError("threshold must be in [0,1)," f" got {self.threshold}")
+            raise ValueError(f"threshold must be in [0,1), got {self.threshold}")
 
         if self.criterion not in ["threshold", "k_best"]:
             raise ValueError(
-                f"criterion must be either 'threshold' "
+                "criterion must be either 'threshold' "
                 f"or 'k_best', got {self.criterion}."
             )
 

@@ -351,6 +351,16 @@ cdef class DistanceMetric:
         more efficient measure which preserves the rank of the true distance.
         For example, in the Euclidean distance metric, the reduced distance
         is the squared-euclidean distance.
+
+        Parameters
+        ----------
+        rdist : double
+            Reduced distance.
+
+        Returns
+        -------
+        double
+            True distance.
         """
         return rdist
 
@@ -361,6 +371,16 @@ cdef class DistanceMetric:
         more efficient measure which preserves the rank of the true distance.
         For example, in the Euclidean distance metric, the reduced distance
         is the squared-euclidean distance.
+
+        Parameters
+        ----------
+        dist : double
+            True distance.
+
+        Returns
+        -------
+        double
+            Reduced distance.
         """
         return dist
 
@@ -378,6 +398,7 @@ cdef class DistanceMetric:
         Y : array-like (optional)
             Array of shape (Ny, D), representing Ny points in D dimensions.
             If not specified, then Y=X.
+
         Returns
         -------
         dist : ndarray

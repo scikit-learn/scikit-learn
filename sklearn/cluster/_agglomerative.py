@@ -43,8 +43,8 @@ def _fix_connectivity(X, connectivity, affinity):
     n_samples = X.shape[0]
     if connectivity.shape[0] != n_samples or connectivity.shape[1] != n_samples:
         raise ValueError(
-            "Wrong shape for connectivity matrix: %s "
-            "when X is %s" % (connectivity.shape, X.shape)
+            "Wrong shape for connectivity matrix: %s when X is %s"
+            % (connectivity.shape, X.shape)
         )
 
     # Make the connectivity matrix symmetric:
@@ -455,8 +455,8 @@ def linkage_tree(
         join_func = linkage_choices[linkage]
     except KeyError as e:
         raise ValueError(
-            "Unknown linkage option, linkage should be one "
-            "of %s, but %s was given" % (linkage_choices.keys(), linkage)
+            "Unknown linkage option, linkage should be one of %s, but %s was given"
+            % (linkage_choices.keys(), linkage)
         ) from e
 
     if affinity == "cosine" and np.any(~np.any(X, axis=1)):
@@ -482,7 +482,7 @@ def linkage_tree(
             # by sklearn.metrics.pairwise_distances.
             if X.shape[0] != X.shape[1]:
                 raise ValueError(
-                    "Distance matrix should be square, " "Got matrix of shape {X.shape}"
+                    "Distance matrix should be square, Got matrix of shape {X.shape}"
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
@@ -885,8 +885,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if self.n_clusters is not None and self.n_clusters <= 0:
             raise ValueError(
-                "n_clusters should be an integer greater than 0."
-                " %s was provided." % str(self.n_clusters)
+                "n_clusters should be an integer greater than 0. %s was provided."
+                % str(self.n_clusters)
             )
 
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
@@ -898,7 +898,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if self.distance_threshold is not None and not self.compute_full_tree:
             raise ValueError(
-                "compute_full_tree must be True if " "distance_threshold is set."
+                "compute_full_tree must be True if distance_threshold is set."
             )
 
         if self.linkage == "ward" and self.affinity != "euclidean":
@@ -909,8 +909,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if self.linkage not in _TREE_BUILDERS:
             raise ValueError(
-                "Unknown linkage type %s. "
-                "Valid options are %s" % (self.linkage, _TREE_BUILDERS.keys())
+                "Unknown linkage type %s. Valid options are %s"
+                % (self.linkage, _TREE_BUILDERS.keys())
             )
         tree_builder = _TREE_BUILDERS[self.linkage]
 

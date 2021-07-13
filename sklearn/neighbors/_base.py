@@ -369,7 +369,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
-                    "in very poor performance." % self.metric
+                    "in very poor performance."
+                    % self.metric
                 )
         elif self.metric not in VALID_METRICS[alg_check]:
             raise ValueError(
@@ -393,9 +394,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             effective_p = self.p
 
         if self.metric in ["wminkowski", "minkowski"] and effective_p < 1:
-            raise ValueError(
-                "p must be greater or equal to one for " "minkowski metric"
-            )
+            raise ValueError("p must be greater or equal to one for minkowski metric")
 
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
@@ -453,7 +452,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             p = self.effective_metric_params_.pop("p", 2)
             if p < 1:
                 raise ValueError(
-                    "p must be greater or equal to one for " "minkowski metric"
+                    "p must be greater or equal to one for minkowski metric"
                 )
             elif p == 1:
                 self.effective_metric_ = "manhattan"
@@ -501,7 +500,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if issparse(X):
             if self.algorithm not in ("auto", "brute"):
-                warnings.warn("cannot use tree with sparse input: " "using brute force")
+                warnings.warn("cannot use tree with sparse input: using brute force")
             if self.effective_metric_ not in VALID_METRICS_SPARSE[
                 "brute"
             ] and not callable(self.effective_metric_):
@@ -569,8 +568,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError("Expected n_neighbors > 0. Got %d" % self.n_neighbors)
             elif not isinstance(self.n_neighbors, numbers.Integral):
                 raise TypeError(
-                    "n_neighbors does not take %s value, "
-                    "enter integer value" % type(self.n_neighbors)
+                    "n_neighbors does not take %s value, enter integer value"
+                    % type(self.n_neighbors)
                 )
 
         return self
@@ -582,7 +581,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -645,7 +644,7 @@ class KNeighborsMixin:
         return result
 
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
-        """Finds the K-neighbors of a point.
+        """Find the K-neighbors of a point.
 
         Returns indices of and distances to the neighbors of each point.
 
@@ -669,7 +668,7 @@ class KNeighborsMixin:
         -------
         neigh_dist : ndarray of shape (n_queries, n_neighbors)
             Array representing the lengths to points, only present if
-            return_distance=True
+            return_distance=True.
 
         neigh_ind : ndarray of shape (n_queries, n_neighbors)
             Indices of the nearest points in the population matrix.
@@ -705,8 +704,8 @@ class KNeighborsMixin:
             raise ValueError("Expected n_neighbors > 0. Got %d" % n_neighbors)
         elif not isinstance(n_neighbors, numbers.Integral):
             raise TypeError(
-                "n_neighbors does not take %s value, "
-                "enter integer value" % type(n_neighbors)
+                "n_neighbors does not take %s value, enter integer value"
+                % type(n_neighbors)
             )
 
         if X is not None:
@@ -772,7 +771,8 @@ class KNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
+                    "or set algorithm='brute'"
+                    % self._fit_method
                 )
             old_joblib = parse_version(joblib.__version__) < parse_version("0.12")
             if old_joblib:
@@ -827,7 +827,7 @@ class KNeighborsMixin:
             return neigh_ind
 
     def kneighbors_graph(self, X=None, n_neighbors=None, mode="connectivity"):
-        """Computes the (weighted) graph of k-Neighbors for points in X
+        """Compute the (weighted) graph of k-Neighbors for points in X.
 
         Parameters
         ----------
@@ -848,7 +848,9 @@ class KNeighborsMixin:
         mode : {'connectivity', 'distance'}, default='connectivity'
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
-            edges are Euclidean distance between points.
+            edges are distances between points, type of distance
+            depends on the selected metric parameter in
+            NearestNeighbors class.
 
         Returns
         -------
@@ -856,6 +858,10 @@ class KNeighborsMixin:
             `n_samples_fit` is the number of samples in the fitted data.
             `A[i, j]` gives the weight of the edge connecting `i` to `j`.
             The matrix is of CSR format.
+
+        See Also
+        --------
+        NearestNeighbors.radius_neighbors_graph: Computes a graph of neighbors.
 
         Examples
         --------
@@ -869,10 +875,6 @@ class KNeighborsMixin:
         array([[1., 0., 1.],
                [0., 1., 1.],
                [1., 0., 1.]])
-
-        See Also
-        --------
-        NearestNeighbors.radius_neighbors_graph
         """
         check_is_fitted(self)
         if n_neighbors is None:
@@ -962,7 +964,7 @@ class RadiusNeighborsMixin:
     def radius_neighbors(
         self, X=None, radius=None, return_distance=True, sort_results=False
     ):
-        """Finds the neighbors within a given radius of a point or points.
+        """Find the neighbors within a given radius of a point or points.
 
         Return the indices and distances of each point from the dataset
         lying in a ball with size ``radius`` around the points of the query
@@ -1005,6 +1007,14 @@ class RadiusNeighborsMixin:
             from the population matrix that lie within a ball of size
             ``radius`` around the query points.
 
+        Notes
+        -----
+        Because the number of neighbors of each point is not necessarily
+        equal, the results for multiple query points cannot be fit in a
+        standard data array.
+        For efficiency, `radius_neighbors` returns arrays of objects, where
+        each object is a 1D array of indices or distances.
+
         Examples
         --------
         In the following example, we construct a NeighborsClassifier
@@ -1026,14 +1036,6 @@ class RadiusNeighborsMixin:
         The first array returned contains the distances to all points which
         are closer than 1.6, while the second array returned contains their
         indices.  In general, multiple points can be queried at the same time.
-
-        Notes
-        -----
-        Because the number of neighbors of each point is not necessarily
-        equal, the results for multiple query points cannot be fit in a
-        standard data array.
-        For efficiency, `radius_neighbors` returns arrays of objects, where
-        each object is a 1D array of indices or distances.
         """
         check_is_fitted(self)
 
@@ -1100,7 +1102,7 @@ class RadiusNeighborsMixin:
             if sort_results:
                 if not return_distance:
                     raise ValueError(
-                        "return_distance must be True " "if sort_results is True."
+                        "return_distance must be True if sort_results is True."
                     )
                 for ii in range(len(neigh_dist)):
                     order = np.argsort(neigh_dist[ii], kind="mergesort")
@@ -1112,7 +1114,8 @@ class RadiusNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
+                    "or set algorithm='brute'"
+                    % self._fit_method
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)
@@ -1162,7 +1165,7 @@ class RadiusNeighborsMixin:
     def radius_neighbors_graph(
         self, X=None, radius=None, mode="connectivity", sort_results=False
     ):
-        """Computes the (weighted) graph of Neighbors for points in X
+        """Compute the (weighted) graph of Neighbors for points in X.
 
         Neighborhoods are restricted the points at a distance lower than
         radius.
@@ -1181,7 +1184,9 @@ class RadiusNeighborsMixin:
         mode : {'connectivity', 'distance'}, default='connectivity'
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
-            edges are Euclidean distance between points.
+            edges are distances between points, type of distance
+            depends on the selected metric parameter in
+            NearestNeighbors class.
 
         sort_results : bool, default=False
             If True, in each row of the result, the non-zero entries will be
@@ -1197,6 +1202,11 @@ class RadiusNeighborsMixin:
             `A[i, j]` gives the weight of the edge connecting `i` to `j`.
             The matrix is of CSR format.
 
+        See Also
+        --------
+        kneighbors_graph : Compute the (weighted) graph of k-Neighbors for
+            points in X.
+
         Examples
         --------
         >>> X = [[0], [3], [1]]
@@ -1209,10 +1219,6 @@ class RadiusNeighborsMixin:
         array([[1., 0., 1.],
                [0., 1., 0.],
                [1., 0., 1.]])
-
-        See Also
-        --------
-        kneighbors_graph
         """
         check_is_fitted(self)
 

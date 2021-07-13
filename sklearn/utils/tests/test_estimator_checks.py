@@ -4,6 +4,7 @@
 
 import unittest
 import sys
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -13,7 +14,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (
     raises,
-    assert_warns,
     ignore_warnings,
     MinimalClassifier,
     MinimalRegressor,
@@ -218,7 +218,7 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
 
         if isinstance(sample_weight, Series):
             raise ValueError(
-                "Estimator does not accept 'sample_weight'" "of type pandas.Series"
+                "Estimator does not accept 'sample_weight'of type pandas.Series"
             )
         return self
 
@@ -419,7 +419,7 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # a deprecated fit method
 
     class TestEstimatorWithDeprecatedFitMethod(BaseEstimator):
-        @deprecated("Deprecated for the purpose of testing " "check_fit_score_takes_y")
+        @deprecated("Deprecated for the purpose of testing check_fit_score_takes_y")
         def fit(self, X, y):
             return self
 
@@ -446,7 +446,10 @@ def test_check_estimator():
     msg = "get_params result does not match what was passed to set_params"
     with raises(AssertionError, match=msg):
         check_estimator(ModifiesValueInsteadOfRaisingError())
-    assert_warns(UserWarning, check_estimator, RaisesErrorInSetParams())
+    with warnings.catch_warnings(record=True) as records:
+        check_estimator(RaisesErrorInSetParams())
+    assert UserWarning in [rec.category for rec in records]
+
     with raises(AssertionError, match=msg):
         check_estimator(ModifiesAnotherValue())
     # check that we have a fit method
@@ -508,7 +511,7 @@ def test_check_estimator():
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = "predict"
-    msg = ("{method} of {name} is not invariant when applied " "to a subset.").format(
+    msg = ("{method} of {name} is not invariant when applied to a subset.").format(
         method=method, name=name
     )
     with raises(AssertionError, match=msg):
@@ -703,7 +706,7 @@ def run_tests_without_pytest():
 
 def test_check_class_weight_balanced_linear_classifier():
     # check that ill-computed balanced weights raises an exception
-    msg = "Classifier estimator_name is not computing class_weight=balanced " "properly"
+    msg = "Classifier estimator_name is not computing class_weight=balanced properly"
     with raises(AssertionError, match=msg):
         check_class_weight_balanced_linear_classifier(
             "estimator_name", BadBalancedWeightsClassifier
@@ -713,7 +716,10 @@ def test_check_class_weight_balanced_linear_classifier():
 def test_all_estimators_all_public():
     # all_estimator should not fail when pytest is not installed and return
     # only public estimators
-    estimators = all_estimators()
+    with warnings.catch_warnings(record=True) as record:
+        estimators = all_estimators()
+    # no warnings are raised
+    assert not record
     for est in estimators:
         assert not est.__class__.__name__.startswith("_")
 
@@ -727,7 +733,9 @@ if __name__ == "__main__":
 def test_xfail_ignored_in_check_estimator():
     # Make sure checks marked as xfail are just ignored and not run by
     # check_estimator(), but still raise a warning.
-    assert_warns(SkipTestWarning, check_estimator, NuSVC())
+    with warnings.catch_warnings(record=True) as records:
+        check_estimator(NuSVC())
+    assert SkipTestWarning in [rec.category for rec in records]
 
 
 # FIXME: this test should be uncommented when the checks will be granular
