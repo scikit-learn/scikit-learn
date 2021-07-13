@@ -128,7 +128,6 @@ DOCSTRING_IGNORE_LIST = [
     "RobustScaler",
     "SGDOneClassSVM",
     "SGDRegressor",
-    "SVC",
     "SVR",
     "SelectFdr",
     "SelectFpr",
