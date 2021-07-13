@@ -12,7 +12,6 @@ from math import sqrt
 from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
-from ..utils.extmath import row_norms
 from ..utils import deprecated
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
@@ -648,11 +647,10 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse="csr", reset=False)
-        kwargs = {"Y_norm_squared": self._subcluster_norms}
 
         with config_context(assume_finite=True):
             argmin = pairwise_distances_argmin(
-                X, self.subcluster_centers_, metric_kwargs=kwargs
+                X, self.subcluster_centers_, metric="fast_sqeuclidean"
             )
         return self.subcluster_labels_[argmin]
 
@@ -697,9 +695,6 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             raise ValueError(
                 "n_clusters should be an instance of ClusterMixin or an int"
             )
-
-        # To use in predict to avoid recalculation.
-        self._subcluster_norms = row_norms(self.subcluster_centers_, squared=True)
 
         if clusterer is None or not_enough_centroids:
             self.subcluster_labels_ = np.arange(len(centroids))
