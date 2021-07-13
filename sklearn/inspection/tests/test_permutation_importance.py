@@ -547,7 +547,7 @@ def test_error_max_samples():
     # Test max_samples
     with pytest.raises(ValueError):
         permutation_importance(
-            clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples=len(y)+1
+            clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples=len(y) + 1
         )
     with pytest.raises(ValueError):
         permutation_importance(
