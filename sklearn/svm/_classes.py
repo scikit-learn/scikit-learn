@@ -1492,12 +1492,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     See Also
     --------
-    sklearn.linear_model.SGDOneClassSVM :
-        Solves linear One-Class SVM using Stochastic Gradient Descent.
-    sklearn.neighbors.LocalOutlierFactor :
-        Unsupervised Outlier Detection using Local Outlier Factor (LOF).
-    sklearn.ensemble.IsolationForest :
-        Isolation Forest Algorithm.
+    sklearn.linear_model.SGDOneClassSVM : Solves linear One-Class SVM using
+        Stochastic Gradient Descent.
+    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection using
+        Local Outlier Factor (LOF).
+    sklearn.ensemble.IsolationForest : Isolation Forest Algorithm.
 
     Examples
     --------
