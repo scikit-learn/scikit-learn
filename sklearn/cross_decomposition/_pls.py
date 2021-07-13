@@ -472,7 +472,7 @@ class _PLS(
         Returns
         -------
         self : object
-            Return x_scores if Y is not given, (x_scores, y_scores) otherwise.
+            Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         return self.fit(X, y).transform(X, y)
 
