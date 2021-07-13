@@ -96,8 +96,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
     See Also
     --------
-    PCA : Base Principal Component Analysis implementation.
-    MiniBatchSparsePCA : Variant of SparsePCA that is faster but less accurate.
+    PCA : Principal Component Analysis implementation.
+    MiniBatchSparsePCA : Mini batch variant of `SparsePCA` that is faster but less accurate.
     DictionaryLearning : Generic dictionary learning problem using a sparse code.
 
     Examples
