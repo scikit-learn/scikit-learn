@@ -115,7 +115,7 @@ def test_initialize_variants():
 @pytest.mark.parametrize("solver", ("cd", "mu"))
 @pytest.mark.parametrize("init", (None, "nndsvd", "nndsvda", "nndsvdar", "random"))
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
-@pytest.mark.parametrize("alpha_H", (0.0, 1.0))
+@pytest.mark.parametrize("alpha_H", (0.0, 1.0, "same"))
 def test_nmf_fit_nn_output(solver, init, alpha_W, alpha_H):
     # Test that the decomposition does not contain negative values
     A = np.c_[5.0 - np.arange(1, 6), 5.0 + np.arange(1, 6)]
@@ -205,7 +205,7 @@ def test_n_components_greater_n_features():
 
 @pytest.mark.parametrize("solver", ["cd", "mu"])
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
-@pytest.mark.parametrize("alpha_H", (0.0, 1.0))
+@pytest.mark.parametrize("alpha_H", (0.0, 1.0, "same"))
 def test_nmf_sparse_input(solver, alpha_W, alpha_H):
     # Test that sparse matrices are accepted as input
     from scipy.sparse import csc_matrix
@@ -254,7 +254,7 @@ def test_nmf_sparse_transform():
 @pytest.mark.parametrize("init", ["random", "nndsvd"])
 @pytest.mark.parametrize("solver", ("cd", "mu"))
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
-@pytest.mark.parametrize("alpha_H", (0.0, 1.0))
+@pytest.mark.parametrize("alpha_H", (0.0, 1.0, "same"))
 def test_non_negative_factorization_consistency(init, solver, alpha_W, alpha_H):
     # Test that the function is called in the same way, either directly
     # or through the NMF class
@@ -524,7 +524,8 @@ def test_nmf_negative_beta_loss():
         _assert_nmf_no_nan(X_csr, beta_loss)
 
 
-def test_nmf_regularization():
+@pytest.mark.parametrize("solver", ("cd", "mu"))
+def test_nmf_regularization(solver):
     # Test the effect of L1 and L2 regularizations
     n_samples = 6
     n_features = 5
@@ -536,69 +537,67 @@ def test_nmf_regularization():
     init = "nndsvda"
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.0
-    for solver in ["cd", "mu"]:
-        regul = nmf.NMF(
-            n_components=n_components,
-            solver=solver,
-            alpha_W=0.5,
-            l1_ratio=l1_ratio,
-            random_state=42,
-            init=init,
-        )
-        model = nmf.NMF(
-            n_components=n_components,
-            solver=solver,
-            alpha_W=0.0,
-            l1_ratio=l1_ratio,
-            random_state=42,
-            init=init,
-        )
 
-        W_regul = regul.fit_transform(X)
-        W_model = model.fit_transform(X)
+    regul = nmf.NMF(
+        n_components=n_components,
+        solver=solver,
+        alpha_W=0.5,
+        l1_ratio=l1_ratio,
+        random_state=42,
+        init=init,
+    )
+    model = nmf.NMF(
+        n_components=n_components,
+        solver=solver,
+        alpha_W=0.0,
+        l1_ratio=l1_ratio,
+        random_state=42,
+        init=init,
+    )
 
-        H_regul = regul.components_
-        H_model = model.components_
+    W_regul = regul.fit_transform(X)
+    W_model = model.fit_transform(X)
 
-        print(H_regul)
+    H_regul = regul.components_
+    H_model = model.components_
 
-        W_regul_n_zeros = W_regul[W_regul == 0].size
-        W_model_n_zeros = W_model[W_model == 0].size
-        H_regul_n_zeros = H_regul[H_regul == 0].size
-        H_model_n_zeros = H_model[H_model == 0].size
+    W_regul_n_zeros = W_regul[W_regul == 0].size
+    W_model_n_zeros = W_model[W_model == 0].size
+    H_regul_n_zeros = H_regul[H_regul == 0].size
+    H_model_n_zeros = H_model[H_model == 0].size
 
-        assert W_regul_n_zeros > W_model_n_zeros
-        assert H_regul_n_zeros > H_model_n_zeros
+    assert W_regul_n_zeros > W_model_n_zeros
+    assert H_regul_n_zeros > H_model_n_zeros
 
     # L2 regularization should decrease the mean of the coefficients
     l1_ratio = 0.0
-    for solver in ["cd", "mu"]:
-        regul = nmf.NMF(
-            n_components=n_components,
-            solver=solver,
-            alpha_W=0.5,
-            l1_ratio=l1_ratio,
-            random_state=42,
-            init=init,
-        )
-        model = nmf.NMF(
-            n_components=n_components,
-            solver=solver,
-            alpha_W=0.0,
-            l1_ratio=l1_ratio,
-            random_state=42,
-            init=init,
-        )
 
-        W_regul = regul.fit_transform(X)
-        W_model = model.fit_transform(X)
+    regul = nmf.NMF(
+        n_components=n_components,
+        solver=solver,
+        alpha_W=0.5,
+        l1_ratio=l1_ratio,
+        random_state=42,
+        init=init,
+    )
+    model = nmf.NMF(
+        n_components=n_components,
+        solver=solver,
+        alpha_W=0.0,
+        l1_ratio=l1_ratio,
+        random_state=42,
+        init=init,
+    )
 
-        H_regul = regul.components_
-        H_model = model.components_
+    W_regul = regul.fit_transform(X)
+    W_model = model.fit_transform(X)
 
-        assert (linalg.norm(W_model)) ** 2.0 + (linalg.norm(H_model)) ** 2.0 > (
-            linalg.norm(W_regul)
-        ) ** 2.0 + (linalg.norm(H_regul)) ** 2.0
+    H_regul = regul.components_
+    H_model = model.components_
+
+    assert (linalg.norm(W_model)) ** 2.0 + (linalg.norm(H_model)) ** 2.0 > (
+        linalg.norm(W_regul)
+    ) ** 2.0 + (linalg.norm(H_regul)) ** 2.0
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -681,7 +680,7 @@ def test_nmf_underflow():
 )
 @pytest.mark.parametrize("solver", ["cd", "mu"])
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
-@pytest.mark.parametrize("alpha_H", (0.0, 1.0))
+@pytest.mark.parametrize("alpha_H", (0.0, 1.0, "same"))
 def test_nmf_dtype_match(dtype_in, dtype_out, solver, alpha_W, alpha_H):
     # Check that NMF preserves dtype (float32 and float64)
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)

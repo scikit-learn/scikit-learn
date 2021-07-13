@@ -200,6 +200,7 @@ def _compute_regularization(alpha, alpha_W, alpha_H, l1_ratio, regularization):
         l2_reg_W = alpha_W * (1.0 - l1_ratio)
         l2_reg_H = alpha_H * (1.0 - l1_ratio)
     else:
+        # TODO remove in 1.2
         l1_reg_W, l2_reg_W, l1_reg_H, l2_reg_H = 0.0, 0.0, 0.0, 0.0
         if regularization in ("both", "transformation"):
             l1_reg_W = alpha * l1_ratio
@@ -1011,14 +1012,15 @@ def non_negative_factorization(
             Use `alpha_W` and `alpha_H` instead.
 
     alpha_W : float, default=0.
-        Constant that multiplies the regularization terms of `W`. Set it to zero to
-        have no regularization on `W`.
+        Constant that multiplies the regularization terms of `W`. Set it to zero
+        (default) to have no regularization on `W`.
 
         .. versionadded:: 1.0
 
     alpha_H : float or "same", default="same"
         Constant that multiplies the regularization terms of `H`. Set it to zero to
-        have no regularization on `H`. If "same", it takes the same value as `alpha_W`.
+        have no regularization on `H`. If "same" (default), it takes the same value as
+        `alpha_W`.
 
         .. versionadded:: 1.0
 
@@ -1215,14 +1217,15 @@ class NMF(TransformerMixin, BaseEstimator):
             Use `alpha_W` and `alpha_H` instead.
 
     alpha_W : float, default=0.
-        Constant that multiplies the regularization terms of `W`. Set it to zero to
-        have no regularization on `W`.
+        Constant that multiplies the regularization terms of `W`. Set it to zero
+        (default) to have no regularization on `W`.
 
         .. versionadded:: 1.0
 
     alpha_H : float or "same", default="same"
         Constant that multiplies the regularization terms of `H`. Set it to zero to
-        have no regularization on `H`. If "same", it takes the same value as `alpha_W`.
+        have no regularization on `H`. If "same" (default), it takes the same value as
+        `alpha_W`.
 
         .. versionadded:: 1.0
 
@@ -1461,10 +1464,9 @@ class NMF(TransformerMixin, BaseEstimator):
         return W, H
 
     def _scale_regularization(self, X):
-        # TODO clean up in 1.2
         n_samples, n_features = X.shape
         if self.alpha_W != 0 or self.alpha_H != "same":
-            # if alpha_W or alpha_H is not left to it's default value we ignore alpha
+            # if alpha_W or alpha_H is not left to its default value we ignore alpha
             # and regularization, and we scale the regularization terms.
             l1_reg_W = n_features * self._l1_reg_W
             l1_reg_H = n_samples * self._l1_reg_H
@@ -1472,6 +1474,7 @@ class NMF(TransformerMixin, BaseEstimator):
             l2_reg_H = n_samples * self._l2_reg_H
         else:
             # Otherwise we keep the old behavior with no scaling
+            # TODO remove in 1.2
             l1_reg_W = self._l1_reg_W
             l1_reg_H = self._l1_reg_H
             l2_reg_W = self._l2_reg_W
