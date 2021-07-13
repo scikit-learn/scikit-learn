@@ -171,7 +171,7 @@ cdef class PairwiseDistancesReduction:
     def is_usable_for(cls, X, Y, metric) -> bool:
         # TODO: support sparse arrays
         return (not issparse(X) and
-                not issparse(X) and
+                not issparse(Y) and
                 X.dtype == Y.dtype == np.float64
                 and metric in cls.valid_metrics())
 
