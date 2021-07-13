@@ -4,6 +4,7 @@
 
 import unittest
 import sys
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -13,7 +14,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (
     raises,
-    assert_warns,
     ignore_warnings,
     MinimalClassifier,
     MinimalRegressor,
@@ -446,7 +446,10 @@ def test_check_estimator():
     msg = "get_params result does not match what was passed to set_params"
     with raises(AssertionError, match=msg):
         check_estimator(ModifiesValueInsteadOfRaisingError())
-    assert_warns(UserWarning, check_estimator, RaisesErrorInSetParams())
+    with warnings.catch_warnings(record=True) as records:
+        check_estimator(RaisesErrorInSetParams())
+    assert UserWarning in [rec.category for rec in records]
+
     with raises(AssertionError, match=msg):
         check_estimator(ModifiesAnotherValue())
     # check that we have a fit method
@@ -727,7 +730,9 @@ if __name__ == "__main__":
 def test_xfail_ignored_in_check_estimator():
     # Make sure checks marked as xfail are just ignored and not run by
     # check_estimator(), but still raise a warning.
-    assert_warns(SkipTestWarning, check_estimator, NuSVC())
+    with warnings.catch_warnings(record=True) as records:
+        check_estimator(NuSVC())
+    assert SkipTestWarning in [rec.category for rec in records]
 
 
 # FIXME: this test should be uncommented when the checks will be granular
