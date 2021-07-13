@@ -218,7 +218,7 @@ class Pipeline(_BaseComposition):
         return len(self.steps)
 
     def __getitem__(self, ind):
-        """Returns a sub-pipeline or a single esimtator in the pipeline
+        """Returns a sub-pipeline or a single estimator in the pipeline
 
         Indexing with an integer will return an estimator; using a slice
         returns another Pipeline instance which copies a slice of this
