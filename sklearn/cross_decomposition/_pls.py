@@ -1094,7 +1094,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Returns
         -------
         x_scores : array-like or tuple of array-like
-            The transformed data `X_tranformed` if `Y` is not None, \
+            The transformed data `X_tranformed` if `Y` is not None,
             `(X_transformed, Y_transformed)` otherwise.
         """
         check_is_fitted(self)
