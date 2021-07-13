@@ -1358,21 +1358,21 @@ class NMF(TransformerMixin, BaseEstimator):
         ):
             raise ValueError(
                 "Number of components must be a positive integer; got "
-                f"(n_components={self._n_components})"
+                f"(n_components={self._n_components!r})"
             )
 
         # max_iter
         if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
             raise ValueError(
                 "Maximum number of iterations must be a positive "
-                f"integer; got (max_iter={self.max_iter})"
+                f"integer; got (max_iter={self.max_iter!r})"
             )
 
         # tol
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
                 "Tolerance for stopping criteria must be positive; got "
-                f"(tol={self.tol})"
+                f"(tol={self.tol!r})"
             )
 
         # beta_loss
@@ -1382,14 +1382,14 @@ class NMF(TransformerMixin, BaseEstimator):
         allowed_solver = ("cd", "mu")
         if self.solver not in allowed_solver:
             raise ValueError(
-                f"Invalid solver parameter: got {self.solver} instead of one of "
+                f"Invalid solver parameter: got {self.solver!r} instead of one of "
                 f"{allowed_solver}"
             )
         if self.solver != "mu" and self.beta_loss not in (2, "frobenius"):
             # 'mu' is the only solver that handles other beta losses than 'frobenius'
             raise ValueError(
-                f"Invalid beta_loss parameter: solver {self.solver} does not handle "
-                f"beta_loss = {self.beta_loss}"
+                f"Invalid beta_loss parameter: solver {self.solver!r} does not handle "
+                f"beta_loss = {self.beta_loss!r}"
             )
         if self.solver == "mu" and self.init == "nndsvd":
             warnings.warn(
@@ -1421,7 +1421,7 @@ class NMF(TransformerMixin, BaseEstimator):
             allowed_regularization = ("both", "components", "transformation", None)
             if self.regularization not in allowed_regularization:
                 raise ValueError(
-                    f"Invalid regularization parameter: got {self.regularization} "
+                    f"Invalid regularization parameter: got {self.regularization!r} "
                     f"instead of one of {allowed_regularization}"
                 )
             regularization = self.regularization
