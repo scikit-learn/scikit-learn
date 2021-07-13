@@ -1490,6 +1490,14 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
+    See Also
+    --------
+    sklearn.linear_model.SGDOneClassSVM : Solves linear One-Class SVM using
+        Stochastic Gradient Descent.
+    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection using
+        Local Outlier Factor (LOF).
+    sklearn.ensemble.IsolationForest : Isolation Forest Algorithm.
+
     Examples
     --------
     >>> from sklearn.svm import OneClassSVM
@@ -1499,10 +1507,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
-
-    See also
-    --------
-    sklearn.linear_model.SGDOneClassSVM
     """
 
     _impl = "one_class"
@@ -1541,7 +1545,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         )
 
     def fit(self, X, y=None, sample_weight=None, **params):
-        """Detects the soft boundary of the set of samples X.
+        """Detect the soft boundary of the set of samples X.
 
         Parameters
         ----------
@@ -1549,21 +1553,24 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             Set of samples, where n_samples is the number of samples and
             n_features is the number of features.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
-        y : Ignored
-            not used, present for API consistency by convention.
+        **params : dict
+            Additional fit parameters.
 
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
         If X is not a C-ordered contiguous array it is copied.
-
         """
         super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight, **params)
         self.offset_ = -self._intercept_
