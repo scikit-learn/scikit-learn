@@ -596,11 +596,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             )
 
             if sample_weight is None:
-                knots = np.percentile(
-                    X,
-                    percentiles,
-                    axis=0,
-                )
+                knots = np.percentile(X, percentiles, axis=0)
             else:
                 knots = np.array(
                     [
