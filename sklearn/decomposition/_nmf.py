@@ -1005,7 +1005,7 @@ def non_negative_factorization(
     max_iter : int, default=200
         Maximum number of iterations before timing out.
 
-    alpha : float, default=0.
+    alpha : float, default=0.0
         Constant that multiplies the regularization terms. Set it to zero to have no
         regularization. When using `alpha` instead of `alpha_W` and `alpha_H`, the
         regularization terms are not scaled by the `n_features` (resp. `n_samples`)
@@ -1015,7 +1015,7 @@ def non_negative_factorization(
             The `alpha` parameter is deprecated in 1.0 and will be removed in 1.2.
             Use `alpha_W` and `alpha_H` instead.
 
-    alpha_W : float, default=0.
+    alpha_W : float, default=0.0
         Constant that multiplies the regularization terms of `W`. Set it to zero
         (default) to have no regularization on `W`.
 
@@ -1028,7 +1028,7 @@ def non_negative_factorization(
 
         .. versionadded:: 1.0
 
-    l1_ratio : float, default=0.
+    l1_ratio : float, default=0.0
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
         (aka Frobenius Norm).
@@ -1211,7 +1211,7 @@ class NMF(TransformerMixin, BaseEstimator):
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    alpha : float, default=0.
+    alpha : float, default=0.0
         Constant that multiplies the regularization terms. Set it to zero to
         have no regularization. When using `alpha` instead of `alpha_W` and `alpha_H`,
         the regularization terms are not scaled by the `n_features` (resp. `n_samples`)
@@ -1224,7 +1224,7 @@ class NMF(TransformerMixin, BaseEstimator):
             The `alpha` parameter is deprecated in 1.0 and will be removed in 1.2.
             Use `alpha_W` and `alpha_H` instead.
 
-    alpha_W : float, default=0.
+    alpha_W : float, default=0.0
         Constant that multiplies the regularization terms of `W`. Set it to zero
         (default) to have no regularization on `W`.
 
@@ -1237,7 +1237,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    l1_ratio : float, default=0.
+    l1_ratio : float, default=0.0
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
         (aka Frobenius Norm).
