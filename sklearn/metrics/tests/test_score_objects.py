@@ -312,14 +312,14 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
 
 
 @pytest.mark.parametrize(
-    "scoring",
+    "scoring, msg",
     [
         (
             (make_scorer(precision_score), make_scorer(accuracy_score)),
             "One or more of the elements were callables",
         ),
         ([5], "Non-string types were found"),
-        ((make_scorer(precision_score),), "One of mor eof the elements were callables"),
+        ((make_scorer(precision_score),), "One or more of the elements were callables"),
         ((), "Empty list was given"),
         (("f1", "f1"), "Duplicate elements were found"),
         ({4: "accuracy"}, "Non-string types were found in the keys"),
@@ -335,14 +335,13 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
         "empty dict",
     ],
 )
-def test_check_scoring_and_check_multimetric_scoring_errors(scoring):
+def test_check_scoring_and_check_multimetric_scoring_errors(scoring, msg):
     # Make sure it raises errors when scoring parameter is not valid.
     # More weird corner cases are tested at test_validation.py
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
 
-    error_message_regexp = ".*must be unique strings.*"
-    with pytest.raises(ValueError, match=error_message_regexp):
+    with pytest.raises(ValueError, match=msg):
         _check_multimetric_scoring(estimator, scoring=scoring)
 
 

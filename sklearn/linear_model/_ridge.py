@@ -1930,6 +1930,7 @@ class _BaseRidgeCV(LinearModel):
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
@@ -2024,7 +2025,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
             ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
-    scoring : string, callable, default=None
+    scoring : str, callable, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
@@ -2107,6 +2108,12 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    Ridge : Ridge regression.
+    RidgeClassifier : Classifier based on ridge regression on {-1, 1} labels.
+    RidgeClassifierCV : Ridge classifier with built-in cross validation.
+
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
@@ -2115,12 +2122,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     >>> clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
     >>> clf.score(X, y)
     0.5166...
-
-    See Also
-    --------
-    Ridge : Ridge regression.
-    RidgeClassifier : Ridge classifier.
-    RidgeClassifierCV : Ridge classifier with built-in cross validation.
     """
 
 
