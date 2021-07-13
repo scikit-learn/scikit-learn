@@ -1349,21 +1349,21 @@ class NMF(TransformerMixin, BaseEstimator):
             or self._n_components <= 0
         ):
             raise ValueError(
-                f"Number of components must be a positive integer; got "
+                "Number of components must be a positive integer; got "
                 f"(n_components={self._n_components})"
             )
 
         # max_iter
         if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
             raise ValueError(
-                f"Maximum number of iterations must be a positive "
+                "Maximum number of iterations must be a positive "
                 f"integer; got (max_iter={self.max_iter})"
             )
 
         # tol
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
-                f"Tolerance for stopping criteria must be positive; got "
+                "Tolerance for stopping criteria must be positive; got "
                 f"(tol={self.tol})"
             )
 
