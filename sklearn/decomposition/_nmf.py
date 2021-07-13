@@ -904,13 +904,13 @@ def non_negative_factorization(
 
             0.5 * ||X - WH||_{loss}^2
 
-            + alpha\_W * l1_{ratio} * n\_features * ||vec(W)||_1
+            + alpha\_W * l1_{ratio} * n\_features * ||vec(W)||_1  # noqa
 
-            + alpha\_H * l1_{ratio} * n\_samples * ||vec(H)||_1
+            + alpha\_H * l1_{ratio} * n\_samples * ||vec(H)||_1  # noqa
 
-            + 0.5 * alpha\_W * (1 - l1_{ratio}) * n\_features * ||W||_{Fro}^2
+            + 0.5 * alpha\_W * (1 - l1_{ratio}) * n\_features * ||W||_{Fro}^2  # noqa
 
-            + 0.5 * alpha\_H * (1 - l1_{ratio}) * n\_samples * ||H||_{Fro}^2
+            + 0.5 * alpha\_H * (1 - l1_{ratio}) * n\_samples * ||H||_{Fro}^2  # noqa
 
     Where:
 
@@ -1122,13 +1122,13 @@ class NMF(TransformerMixin, BaseEstimator):
 
             0.5 * ||X - WH||_{loss}^2
 
-            + alpha\_W * l1_{ratio} * n\_features * ||vec(W)||_1
+            + alpha\_W * l1_{ratio} * n\_features * ||vec(W)||_1  # noqa
 
-            + alpha\_H * l1_{ratio} * n\_samples * ||vec(H)||_1
+            + alpha\_H * l1_{ratio} * n\_samples * ||vec(H)||_1  # noqa
 
-            + 0.5 * alpha\_W * (1 - l1_{ratio}) * n\_features * ||W||_{Fro}^2
+            + 0.5 * alpha\_W * (1 - l1_{ratio}) * n\_features * ||W||_{Fro}^2  # noqa
 
-            + 0.5 * alpha\_H * (1 - l1_{ratio}) * n\_samples * ||H||_{Fro}^2
+            + 0.5 * alpha\_H * (1 - l1_{ratio}) * n\_samples * ||H||_{Fro}^2  # noqa
 
     Where:
 
