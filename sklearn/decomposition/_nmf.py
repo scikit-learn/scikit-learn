@@ -922,6 +922,10 @@ def non_negative_factorization(
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
 
+    The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
+    `H` to keep their impact balanced with respect to one another and to the data fit
+    term as independant as possible of the size `n_samples` of the training set.
+
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
 
@@ -1135,6 +1139,10 @@ class NMF(TransformerMixin, BaseEstimator):
     The generic norm :math:`||X - WH||_{loss}` may represent
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
+
+    The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
+    `H` to keep their impact balanced with respect to one another and to the data fit
+    term as independant as possible of the size `n_samples` of the training set.
 
     The objective function is minimized with an alternating minimization of W
     and H.
