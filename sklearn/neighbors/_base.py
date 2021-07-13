@@ -750,6 +750,13 @@ class KNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
+            # TODO: support sparse matrices
+            # When ArgKmin is not supported and when the
+            # user asked for "fast_sqeuclidean", we need to
+            # revert to "euclidean"
+            if self.effective_metric_ == "fast_sqeuclidean":
+                self.effective_metric_ = "euclidean"
+
             reduce_func = partial(
                 self._kneighbors_reduce_func,
                 n_neighbors=n_neighbors,

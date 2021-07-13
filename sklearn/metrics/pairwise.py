@@ -660,6 +660,13 @@ def pairwise_distances_argmin_min(
         values = np.ndarray.flatten(values)
         indices = np.ndarray.flatten(indices)
     else:
+        # TODO: support sparse matrices
+        # When ArgKmin is not supported and when the
+        # user asked for "fast_sqeuclidean", we need to
+        # revert to "euclidean"
+        if metric == "fast_sqeuclidean":
+            metric = "euclidean"
+
         indices, values = zip(
             *pairwise_distances_chunked(
                 X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs
