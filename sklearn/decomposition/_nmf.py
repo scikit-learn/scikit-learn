@@ -1349,23 +1349,22 @@ class NMF(TransformerMixin, BaseEstimator):
             or self._n_components <= 0
         ):
             raise ValueError(
-                "Number of components must be a positive integer; got (n_components=%r)"
-                % self._n_components
+                f"Number of components must be a positive integer; got "
+                f"(n_components={self._n_components})"
             )
 
         # max_iter
         if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
             raise ValueError(
-                "Maximum number of iterations must be a positive "
-                "integer; got (max_iter=%r)"
-                % self.max_iter
+                f"Maximum number of iterations must be a positive "
+                f"integer; got (max_iter={self.max_iter})"
             )
 
         # tol
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
-                "Tolerance for stopping criteria must be positive; got (tol=%r)"
-                % self.tol
+                f"Tolerance for stopping criteria must be positive; got "
+                f"(tol={self.tol})"
             )
 
         # beta_loss
@@ -1375,14 +1374,14 @@ class NMF(TransformerMixin, BaseEstimator):
         allowed_solver = ("cd", "mu")
         if self.solver not in allowed_solver:
             raise ValueError(
-                "Invalid solver parameter: got %r instead of one of %r"
-                % (self.solver, allowed_solver)
+                f"Invalid solver parameter: got {self.solver} instead of one of "
+                f"{allowed_solver}"
             )
         if self.solver != "mu" and self.beta_loss not in (2, "frobenius"):
             # 'mu' is the only solver that handles other beta losses than 'frobenius'
             raise ValueError(
-                "Invalid beta_loss parameter: solver %r does not handle beta_loss = %r"
-                % (self.solver, self.beta_loss)
+                f"Invalid beta_loss parameter: solver {self.solver} does not handle "
+                f"beta_loss = {self.beta_loss}"
             )
         if self.solver == "mu" and self.init == "nndsvd":
             warnings.warn(
@@ -1397,8 +1396,8 @@ class NMF(TransformerMixin, BaseEstimator):
         # TODO clean up in 1.2
         if self.alpha != "deprecated":
             warnings.warn(
-                "'alpha' was deprecated in version 1.0 and will be removed "
-                "in 1.2. Use 'alpha_W' and 'alpha_H' instead",
+                "`alpha` was deprecated in version 1.0 and will be removed "
+                "in 1.2. Use `alpha_W` and `alpha_H` instead",
                 FutureWarning,
             )
             alpha = self.alpha
@@ -1407,15 +1406,15 @@ class NMF(TransformerMixin, BaseEstimator):
 
         if self.regularization != "deprecated":
             warnings.warn(
-                "'regularization' was deprecated in version 1.0 and will be "
-                "removed in 1.2. Use 'alpha_W' and 'alpha_H' instead",
+                "`regularization` was deprecated in version 1.0 and will be "
+                "removed in 1.2. Use `alpha_W` and `alpha_H` instead",
                 FutureWarning,
             )
             allowed_regularization = ("both", "components", "transformation", None)
             if self.regularization not in allowed_regularization:
                 raise ValueError(
-                    "Invalid regularization parameter: got %r instead of one of %r"
-                    % (self.regularization, allowed_regularization)
+                    f"Invalid regularization parameter: got {self.regularization} "
+                    f"instead of one of {allowed_regularization}"
                 )
             regularization = self.regularization
         else:
