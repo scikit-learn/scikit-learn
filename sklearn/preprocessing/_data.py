@@ -1072,6 +1072,19 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
 
+    See Also
+    --------
+    maxabs_scale : Equivalent function without the estimator API.
+
+    Notes
+    -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
     Examples
     --------
     >>> from sklearn.preprocessing import MaxAbsScaler
@@ -1085,19 +1098,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     array([[ 0.5, -1. ,  1. ],
            [ 1. ,  0. ,  0. ],
            [ 0. ,  1. , -0.5]])
-
-    See Also
-    --------
-    maxabs_scale : Equivalent function without the estimator API.
-
-    Notes
-    -----
-    NaNs are treated as missing values: disregarded in fit, and maintained in
-    transform.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     def __init__(self, *, copy=True):
@@ -1186,7 +1186,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Scale the data
+        """Scale the data.
 
         Parameters
         ----------
@@ -1216,7 +1216,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return X
 
     def inverse_transform(self, X):
-        """Scale back the data to the original representation
+        """Scale back the data to the original representation.
 
         Parameters
         ----------
