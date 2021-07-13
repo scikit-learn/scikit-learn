@@ -410,7 +410,7 @@ class _PLS(
         Returns
         -------
         self : object
-            Return x_reconstructed : array-like of shape (n_samples, n_features).
+            Return the reconstructed array.
 
         Notes
         -----
