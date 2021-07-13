@@ -67,7 +67,6 @@ DOCSTRING_IGNORE_LIST = [
     "LabelBinarizer",
     "LabelPropagation",
     "LabelSpreading",
-    "LarsCV",
     "LatentDirichletAllocation",
     "LedoitWolf",
     "LinearSVR",
