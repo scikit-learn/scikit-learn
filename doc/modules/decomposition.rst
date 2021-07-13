@@ -833,17 +833,15 @@ term as independant as possible of the size of the training set. Then the priors
 are:
 
 .. math::
-    \alpha_W \rho n\_features ||W||_1 + \alpha_H \rho n\_samples ||H||_1
-    + \frac{\alpha_W(1-\rho)}{2} n\_features ||W||_{\mathrm{Fro}} ^ 2
-    + \frac{\alpha_H(1-\rho)}{2} n\_samples ||H||_{\mathrm{Fro}} ^ 2
+    (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
+    + (\alpha_H \rho ||H||_1 + \frac{\alpha_H(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2) * n\_samples
 
 and the regularized objective function is:
 
 .. math::
     d_{\mathrm{Fro}}(X, WH)
-    + \alpha_W \rho n\_features ||W||_1 + \alpha_H \rho n\_samples ||H||_1
-    + \frac{\alpha_W(1-\rho)}{2} n\_features ||W||_{\mathrm{Fro}} ^ 2
-    + \frac{\alpha_H(1-\rho)}{2} n\_samples ||H||_{\mathrm{Fro}} ^ 2
+    + (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
+    + (\alpha_H \rho ||H||_1 + \frac{\alpha_H(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2) * n\_samples
 
 NMF with a beta-divergence
 --------------------------
