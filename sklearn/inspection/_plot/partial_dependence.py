@@ -902,7 +902,7 @@ class PartialDependenceDisplay:
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
 
-        pdp_lim : dict, default=None
+        pdp_lim : dict of a tuple of 2 floats, default=None
             Global min and max average predictions, such that all plots will have the
             same scale and y limits. `pdp_lim[1]` is the global min and max for single
             partial dependence curves. `pdp_lim[2]` is the global min and max for
@@ -927,6 +927,7 @@ class PartialDependenceDisplay:
         import matplotlib.pyplot as plt  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
 
+        # FIXME: remove in 1.2
         if self.pdp_lim != "deprecated":
             if pdp_lim is not None and self.pdp_lim != pdp_lim:
                 warnings.warn(
@@ -939,7 +940,7 @@ class PartialDependenceDisplay:
             pdp_lim = self.pdp_lim
             warnings.warn(
                 "The `pdp_lim` parameter is deprecated in version 1.0 and will be "
-                "removed in version 1.1. Provide `pdp_lim` to the `plot` method."
+                "removed in version 1.2. Provide `pdp_lim` to the `plot` method."
                 "instead.",
                 FutureWarning,
             )

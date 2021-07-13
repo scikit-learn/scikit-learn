@@ -695,6 +695,7 @@ def test_partial_dependence_overwrite_labels(
             assert legend_text[0].get_text() == label
 
 
+# FIXME: remove in 1.2
 def test_partial_dependence_display_deprecation(pyplot, clf_diabetes, diabetes):
     """Check that we raise the proper warning in the display."""
     disp = plot_partial_dependence(
