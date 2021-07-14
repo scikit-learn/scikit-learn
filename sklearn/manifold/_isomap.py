@@ -4,10 +4,11 @@
 # License: BSD 3 clause (C) 2011
 
 import numpy as np
+from scipy.sparse.csgraph import shortest_path
+
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.validation import check_is_fitted
-from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 
@@ -186,9 +187,14 @@ class Isomap(TransformerMixin, BaseEstimator):
             n_jobs=self.n_jobs,
         )
 
-        self.dist_matrix_ = graph_shortest_path(
+        self.dist_matrix_ = shortest_path(
             kng, method=self.path_method, directed=False
         )
+        if np.any(np.isinf(self.dist_matrix_)):
+            raise RuntimeError("Infinite values in the shortest path matrix, "
+                               "likely due to more than one connected "
+                               "component. Increase the number of neighbors "
+                               "to fix the problem.")
         G = self.dist_matrix_ ** 2
         G *= -0.5
 

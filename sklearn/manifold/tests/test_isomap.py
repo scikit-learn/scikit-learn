@@ -94,7 +94,7 @@ def test_transform():
     X, y = datasets.make_s_curve(n_samples, random_state=0)
 
     # Compute isomap embedding
-    iso = manifold.Isomap(n_components=n_components, n_neighbors=2)
+    iso = manifold.Isomap(n_components=n_components)
     X_iso = iso.fit_transform(X)
 
     # Re-embed a noisy version of the points
@@ -190,6 +190,14 @@ def test_sparse_input():
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
             clf = manifold.Isomap(
-                n_components=2, eigen_solver=eigen_solver, path_method=path_method
+                n_components=2, eigen_solver=eigen_solver, path_method=path_method,
+                n_neighbors=8
             )
             clf.fit(X)
+
+
+def test_multiple_connected_components():
+    # Test that an error is raised if there are more than one connected component.
+    X = np.array([0, 1, 2, 5, 6, 7])[:, None]
+    with pytest.raises(RuntimeError, match="more than one connected component"):
+        manifold.Isomap(n_neighbors=2).fit(X)

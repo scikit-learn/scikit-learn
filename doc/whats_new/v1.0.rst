@@ -43,6 +43,9 @@ random sampling procedures.
 - |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
   affinity matrix computation.
 
+- |Fix| :class:`manifold.Isomap` now raises an error when the nearest neighbors
+  graph has more than one connected components.
+
 - |Fix| The splitting criterion of :class:`tree.DecisionTreeClassifier` and
   :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
   of rounding errors. Previously some extra spurious splits could occur.
@@ -483,6 +486,10 @@ Changelog
   initialization will change to `pca` in 1.2. PCA initialization will
   be scaled to have standard deviation 1e-4 in 1.2.
   :pr:`19491` by :user:`Dmitry Kobak <dkobak>`.
+
+- |Fix| :class:`manifold.Isomap` now uses `scipy.sparse.csgraph.shortest_path`
+  to compute the graph shortest path, instead of scikit-learn's less-maintained
+  version. :pr:`20529` by `Roman Yurchak`_ and `Tom Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................
