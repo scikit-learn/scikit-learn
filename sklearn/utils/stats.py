@@ -44,6 +44,12 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     # Find index of median prediction for each sample
     weight_cdf = stable_cumsum(sorted_weights, axis=0)
     adjusted_percentile = percentile / 100 * weight_cdf[-1]
+
+    mask = adjusted_percentile == 0
+    adjusted_percentile[mask] = np.nextafter(
+        adjusted_percentile[mask], adjusted_percentile[mask] + 1
+    )
+
     percentile_idx = np.array(
         [
             np.searchsorted(weight_cdf[:, i], adjusted_percentile[i])
