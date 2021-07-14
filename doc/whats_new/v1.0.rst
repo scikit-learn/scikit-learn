@@ -44,7 +44,7 @@ random sampling procedures.
   affinity matrix computation.
 
 - |Fix| :class:`manifold.Isomap` now raises an error when the nearest neighbors
-  graph has more than one connected components.
+  graph has more than one connected component.
 
 - |Fix| The splitting criterion of :class:`tree.DecisionTreeClassifier` and
   :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
