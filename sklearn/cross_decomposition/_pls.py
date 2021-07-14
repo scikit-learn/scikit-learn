@@ -439,7 +439,7 @@ class _PLS(
 
         Returns
         -------
-        y_pred : array of shape (n_samples,)
+        y_pred : ndarray of shape (n_samples,)
             Returns predicted values.
 
         Notes
