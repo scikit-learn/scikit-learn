@@ -169,7 +169,7 @@ def _estimators_has(attr):
     """Check if self.estimator or self.estimators_[0] has attr.
 
     If `self.estimators_[0]` has the attr, then its safe to assume that other
-    values has it tool. This function is used together with `avaliable_if`.
+    values has it too. This function is used together with `avaliable_if`.
     """
     return lambda self: (
         hasattr(self.estimator, attr)
