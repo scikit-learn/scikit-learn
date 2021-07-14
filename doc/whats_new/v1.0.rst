@@ -489,7 +489,7 @@ Changelog
 
 - |Fix| :class:`manifold.Isomap` now uses `scipy.sparse.csgraph.shortest_path`
   to compute the graph shortest path, instead of scikit-learn's less-maintained
-  version. :pr:`20529` by `Roman Yurchak`_ and `Tom Dupre la Tour`_.
+  version. :pr:`20531` by `Roman Yurchak`_ and `Tom Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................
