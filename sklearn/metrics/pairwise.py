@@ -657,8 +657,8 @@ def pairwise_distances_argmin_min(
         values, indices = ArgKmin.get_for(
             X=X, Y=Y, k=1, metric=metric, metric_kwargs=metric_kwargs
         ).compute(strategy="auto", return_distance=True)
-        values = np.ndarray.flatten(values)
-        indices = np.ndarray.flatten(indices)
+        values = values.flatten()
+        indices = indices.flatten()
     else:
         # TODO: support sparse matrices
         # When ArgKmin is not supported and when the
