@@ -1040,7 +1040,7 @@ def non_negative_factorization(
         transformation (W), both or none of them.
 
         .. deprecated:: 1.0
-            The `alpha` parameter is deprecated in 1.0 and will be removed in 1.2.
+            The `regularization` parameter is deprecated in 1.0 and will be removed in 1.2.
             Use `alpha_W` and `alpha_H` instead.
 
     random_state : int, RandomState instance or None, default=None
