@@ -82,10 +82,10 @@ def _yield_checks(estimator):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_not_an_array
         yield check_sample_weights_list
-        yield check_sample_weights_not_overwritten
         if not pairwise:
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
+            yield check_sample_weights_not_overwritten
             yield partial(check_sample_weights_invariance, kind="ones")
             yield partial(check_sample_weights_invariance, kind="zeros")
     yield check_estimators_fit_returns_self
