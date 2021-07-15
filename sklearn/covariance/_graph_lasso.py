@@ -375,7 +375,7 @@ class GraphicalLasso(EmpiricalCovariance):
     See Also
     --------
     graphical_lasso : L1-penalized covariance estimator.
-    GraphicalLassoCV : Sparse inverse covariance w/
+    GraphicalLassoCV : Sparse inverse covariance with
         cross-validated choice of the l1 penalty.
 
     Examples
