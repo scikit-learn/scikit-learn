@@ -43,8 +43,9 @@ random sampling procedures.
 - |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
   affinity matrix computation.
 
-- |Fix| :class:`manifold.Isomap` now raises an error when the nearest neighbors
-  graph has more than one connected component.
+- |Fix| :class:`manifold.Isomap` now connects disconnected components of the
+  neighbors graph along some minimum distance pairs, instead of changing
+  every infinite distances to zero.
 
 - |Fix| The splitting criterion of :class:`tree.DecisionTreeClassifier` and
   :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
@@ -488,8 +489,10 @@ Changelog
   :pr:`19491` by :user:`Dmitry Kobak <dkobak>`.
 
 - |Fix| :class:`manifold.Isomap` now uses `scipy.sparse.csgraph.shortest_path`
-  to compute the graph shortest path, instead of scikit-learn's less-maintained
-  version. :pr:`20531` by `Roman Yurchak`_ and `Tom Dupre la Tour`_.
+  to compute the graph shortest path. It also connects disconnected components
+  of the neighbors graph along some minimum distance pairs, instead of changing
+  every infinite distances to zero. :pr:`20531` by `Roman Yurchak`_ and `Tom
+  Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................

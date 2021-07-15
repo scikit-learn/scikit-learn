@@ -199,7 +199,16 @@ def test_sparse_input():
 
 
 def test_multiple_connected_components():
-    # Test that an error is raised if there are more than one connected component.
+    # Test that no error is raised if there are more than 1 connected component
     X = np.array([0, 1, 2, 5, 6, 7])[:, None]
-    with pytest.raises(RuntimeError, match="more than one connected component"):
+    with pytest.warns(UserWarning, match="number of connected components"):
         manifold.Isomap(n_neighbors=2).fit(X)
+
+
+def test_multiple_connected_components_metric_precomputed():
+    # Test that an error is raised if there are more than 1 connected component
+    # and that the metric is "precomputed".
+    X = np.array([0, 1, 2, 5, 6, 7])[:, None]
+    X_graph = neighbors.kneighbors_graph(X, n_neighbors=2, mode="distance")
+    with pytest.raises(RuntimeError, match="number of connected components"):
+        manifold.Isomap(n_neighbors=1, metric="precomputed").fit(X_graph)

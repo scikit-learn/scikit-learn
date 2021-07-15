@@ -2,15 +2,18 @@
 
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD 3 clause (C) 2011
+import warnings
 
 import numpy as np
 from scipy.sparse.csgraph import shortest_path
+from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
+from ..metrics.pairwise import pairwise_distances
 
 
 class Isomap(TransformerMixin, BaseEstimator):
@@ -187,13 +190,46 @@ class Isomap(TransformerMixin, BaseEstimator):
             n_jobs=self.n_jobs,
         )
 
-        self.dist_matrix_ = shortest_path(kng, method=self.path_method, directed=False)
-        if np.any(np.isinf(self.dist_matrix_)):
-            raise RuntimeError(
-                "Infinite values in the shortest path matrix, likely due to "
-                "more than one connected component. Increasing the number of "
-                "neighbors can fix the problem."
+        # Compute the number of connected components, and connect the different
+        # components to be able to compute a shortest path between all pairs
+        # of samples in the graph.
+        n_connected_components, labels = connected_components(kng)
+        if n_connected_components > 1:
+            if self.metric == "precomputed":
+                raise RuntimeError(
+                    "The number of connected components of the neighbors graph"
+                    f" is {n_connected_components} > 1. The graph cannot be "
+                    "completed with metric='precomputed', and Isomap cannot be"
+                    "fitted. Increase the number of neighbors to avoid this "
+                    "issue."
+                )
+            warnings.warn(
+                "The number of connected components of the neighbors graph "
+                f"is {n_connected_components} > 1. Completing the graph to fit"
+                " Isomap might be slow. Increase the number of neighbors to "
+                "avoid this issue.",
+                stacklevel=2,
             )
+
+            for i in range(n_connected_components):
+                idx_i = np.where(labels == i)[0]
+                Xi = X[idx_i]
+                for j in range(i):
+                    idx_j = np.where(labels == j)[0]
+                    Xj = X[idx_j]
+                    D = pairwise_distances(
+                        Xi,
+                        Xj,
+                        metric=self.nbrs_.effective_metric_,
+                        **self.nbrs_.effective_metric_params_,
+                    )
+                    ii, jj = np.where(D == np.min(D))
+                    ii, jj = ii[0], jj[0]
+                    kng[idx_i[ii], idx_j[jj]] = 0
+                    kng[idx_j[jj], idx_i[ii]] = 0
+
+        self.dist_matrix_ = shortest_path(kng, method=self.path_method, directed=False)
+
         G = self.dist_matrix_ ** 2
         G *= -0.5
 
