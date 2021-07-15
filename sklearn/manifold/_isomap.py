@@ -187,14 +187,13 @@ class Isomap(TransformerMixin, BaseEstimator):
             n_jobs=self.n_jobs,
         )
 
-        self.dist_matrix_ = shortest_path(
-            kng, method=self.path_method, directed=False
-        )
+        self.dist_matrix_ = shortest_path(kng, method=self.path_method, directed=False)
         if np.any(np.isinf(self.dist_matrix_)):
-            raise RuntimeError("Infinite values in the shortest path matrix, "
-                               "likely due to more than one connected "
-                               "component. Increase the number of neighbors "
-                               "to fix the problem.")
+            raise RuntimeError(
+                "Infinite values in the shortest path matrix, likely due to "
+                "more than one connected component. Increasing the number of "
+                "neighbors can fix the problem."
+            )
         G = self.dist_matrix_ ** 2
         G *= -0.5
 

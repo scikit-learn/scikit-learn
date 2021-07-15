@@ -190,8 +190,10 @@ def test_sparse_input():
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
             clf = manifold.Isomap(
-                n_components=2, eigen_solver=eigen_solver, path_method=path_method,
-                n_neighbors=8
+                n_components=2,
+                eigen_solver=eigen_solver,
+                path_method=path_method,
+                n_neighbors=8,
             )
             clf.fit(X)
 
