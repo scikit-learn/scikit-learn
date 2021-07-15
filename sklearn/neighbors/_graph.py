@@ -68,8 +68,8 @@ def kneighbors_graph(
         The distance metric used to calculate the neighbors within a
         given radius for each sample point. The default distance is
         'euclidean' ('minkowski' metric with the param equal to 2.)
-        See the documentation of :class:`metrics.DistanceMetric`
-        for a list of available metrics.
+        For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -161,8 +161,8 @@ def radius_neighbors_graph(
         The distance metric used to calculate the neighbors within a
         given radius for each sample point. The default distance is
         'euclidean' ('minkowski' metric with the param equal to 2.)
-        See the documentation of :class:`metrics.DistanceMetric`
-        for a list of available metrics.
+        For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
