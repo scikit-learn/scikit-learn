@@ -54,7 +54,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         during training.
 
     verbose : int, default=0
-        The verbosity level. The default, zero, means silent mode.
+        The verbosity level. The default, zero, means silent mode. Range
+        of values is [0, inf].
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for:
