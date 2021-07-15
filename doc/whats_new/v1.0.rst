@@ -259,6 +259,11 @@ Changelog
   unused atoms during the dictionary update was not working as expected.
   :pr:`19198` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |API| The `alpha` and `regularization` parameters of :class:`decomposition.NMF` and
+  :func:`decomposition.non_negative_factorization` are deprecated and will be removed
+  in 1.2. Use the new parameters `alpha_W` and `alpha_H` instead. :pr:`20512` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
