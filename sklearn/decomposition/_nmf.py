@@ -1265,7 +1265,7 @@ class NMF(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.24
 
         .. deprecated:: 1.0
-            The `alpha` parameter is deprecated in 1.0 and will be removed in 1.2.
+            The `regularization` parameter is deprecated in 1.0 and will be removed in 1.2.
             Use `alpha_W` and `alpha_H` instead.
 
     Attributes
