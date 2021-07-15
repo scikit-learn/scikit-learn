@@ -1097,8 +1097,10 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             raise RuntimeError(f"strategy '{strategy}' not supported.")
 
         if return_distance:
-            res = (_coerce_vectors_to_np_nd_arrays(self.neigh_distances),
-                    _coerce_vectors_to_np_nd_arrays(self.neigh_indices))
+            res = (
+                _coerce_vectors_to_np_nd_arrays(self.neigh_distances),
+                _coerce_vectors_to_np_nd_arrays(self.neigh_indices),
+            )
         else:
             res = _coerce_vectors_to_np_nd_arrays(self.neigh_indices)
 
