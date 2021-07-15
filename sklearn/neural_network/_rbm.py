@@ -257,8 +257,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         X : ndarray of shape (n_samples, n_features)
             Training data.
 
-        y : Array-like of shape (n_samples,) or (n_samples, n_outputs),
-            default=None
+        y : Array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
             Target values (None for unsupervised transformations).
 
         Returns
@@ -365,8 +364,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
-        y : Array-like of shape (n_samples,) or (n_samples, n_outputs),
-            default=None
+        y : Array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
             Target values (None for unsupervised transformations).
 
         Returns
