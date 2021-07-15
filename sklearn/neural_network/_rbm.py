@@ -82,7 +82,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
     h_samples_ : array-like of shape (batch_size, n_components)
         Hidden Activation sampled from the model distribution,
-        where batch_size in the number of examples per minibatch and
+        where batch_size is the number of examples per minibatch and
         n_components is the number of hidden units.
 
     n_features_in_ : int
@@ -90,15 +90,10 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
 
-    >>> import numpy as np
-    >>> from sklearn.neural_network import BernoulliRBM
-    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> model = BernoulliRBM(n_components=2)
-    >>> model.fit(X)
-    BernoulliRBM(n_components=2)
+    gibbs: Gibbs sampling step.
 
     References
     ----------
@@ -110,6 +105,16 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
     [2] Tieleman, T. Training Restricted Boltzmann Machines using
         Approximations to the Likelihood Gradient. International Conference
         on Machine Learning (ICML) 2008
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> from sklearn.neural_network import BernoulliRBM
+    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
+    >>> model = BernoulliRBM(n_components=2)
+    >>> model.fit(X)
+    BernoulliRBM(n_components=2)
     """
 
     def __init__(
@@ -245,13 +250,14 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         return v_
 
     def partial_fit(self, X, y=None):
-        """Fit the model to the data X which should contain a partial
-        segment of the data.
+        """Fit the model to the partial segment of the data X.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
             Training data.
+
+        y : self
 
         Returns
         -------
@@ -356,6 +362,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
+
+        y : self
 
         Returns
         -------
