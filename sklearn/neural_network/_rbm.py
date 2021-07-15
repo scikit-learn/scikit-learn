@@ -82,7 +82,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
     h_samples_ : array-like of shape (batch_size, n_components)
         Hidden Activation sampled from the model distribution,
-        where batch_size is the number of examples per minibatch and
+        where `batch_size` is the number of examples per minibatch and
         n_components is the number of hidden units.
 
     n_features_in_ : int
