@@ -78,7 +78,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
     components_ : array-like of shape (n_components, n_features)
         Weight matrix, where `n_features` is the number of
-        visible units and n_components is the number of hidden units.
+        visible units and `n_components` is the number of hidden units.
 
     h_samples_ : array-like of shape (batch_size, n_components)
         Hidden Activation sampled from the model distribution,
