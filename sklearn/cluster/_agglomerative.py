@@ -160,7 +160,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        feature matrix representing `n_samples` samples to be clustered
+        feature matrix representing `n_samples` samples to be clustered.
 
     connectivity : sparse matrix, default=None
         connectivity matrix. Defines for each sample the neighboring samples
@@ -188,7 +188,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
         A node `i` greater than or equal to `n_samples` is a non-leaf
         node and has children `children_[i - n_samples]`. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
-        are merged to form node `n_samples + i`
+        are merged to form node `n_samples + i`.
 
     n_connected_components : int
         The number of connected components in the graph.
@@ -687,7 +687,6 @@ def _hc_cut(n_clusters, children, n_leaves):
     -------
     labels : array [n_samples]
         Cluster labels for each point.
-
     """
     if n_clusters > n_leaves:
         raise ValueError(
@@ -880,7 +879,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
+            Returns the cluster.
         """
         X = self._validate_data(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
@@ -983,8 +983,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         return self
 
     def fit_predict(self, X, y=None):
-        """Fit the hierarchical clustering from features or distance matrix,
-        and return cluster labels.
+        """Fit the hierarchical clustering from features, or distance matrix.
 
         Parameters
         ----------
@@ -1007,8 +1006,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     """Agglomerate features.
 
-    Similar to AgglomerativeClustering, but recursively merges features
-    instead of samples.
+    Recursively merges pair of clusters of features.
 
     Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
