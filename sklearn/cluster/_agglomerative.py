@@ -177,8 +177,8 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
         rather be used. This option is valid only when specifying a connectivity
         matrix.
 
-    return_distance : bool, default=None
-        If True, return the distance between the clusters.
+    return_distance : bool, default=False
+        If `True`, return the distance between the clusters.
 
     Returns
     -------
