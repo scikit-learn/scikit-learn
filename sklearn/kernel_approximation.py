@@ -157,6 +157,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            Projected array.
         """
 
         check_is_fitted(self)
@@ -321,6 +322,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            Projected array.
         """
         check_is_fitted(self)
 
@@ -438,13 +440,14 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            New data, where `n_samples` in the number of samples
+            New data, where `n_samples` is the number of samples
             and `n_features` is the number of features. All values of X must be
             strictly greater than "-skewedness".
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            Projected array.
         """
         check_is_fitted(self)
 
