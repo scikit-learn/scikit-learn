@@ -19,19 +19,7 @@ models, :ref:`Logistic_regression`, :ref:`gaussian_naive_bayes`,
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD Style.
-
-import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
-import numpy as np
-
-from sklearn.datasets import make_classification
-from sklearn.naive_bayes import GaussianNB
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import LinearSVC
-from sklearn.calibration import CalibrationDisplay
-
-# %%
+#
 # Dataset
 # -------
 #
@@ -40,6 +28,8 @@ from sklearn.calibration import CalibrationDisplay
 # redundant (random combinations of the informative features) and the
 # remaining 16 are uninformative (random numbers). Of the 100,000 samples,
 # 100 will be used for model fitting and the remaining for testing.
+
+from sklearn.datasets import make_classification
 
 X, y = make_classification(
   n_samples=100_000, n_features=20, n_informative=2, n_redundant=2,
@@ -98,6 +88,16 @@ y_test = y[train_samples:]
 #   :class:`~sklearn.ensemble.RandomForestClassifier`, which is typical for
 #   maximum-margin methods [1]_ as they focus on difficult to classify samples
 #   that are close to the decision boundary (the support vectors).
+
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+import numpy as np
+
+from sklearn.calibration import CalibrationDisplay
+from sklearn.ensemble import RandomForestClassifiers
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import LinearSVC
 
 
 class NaivelyCalibratedLinearSVC(LinearSVC):
