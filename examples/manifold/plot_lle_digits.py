@@ -171,13 +171,13 @@ for name, transformer in embeddings.items():
 # Finally, we can plot the resulting projection given by each method.
 from itertools import zip_longest
 
-fig, axs = plt.subplots(nrows=7, ncols=2, figsize=(12, 25))
+fig, axs = plt.subplots(nrows=7, ncols=2, figsize=(15, 30))
 
 for name, ax in zip_longest(timing, axs.ravel()):
     if name is None:
         ax.axis("off")
         continue
-    title = f"{name} of the digits (time {timing[name]:.3f}s)"
+    title = f"{name} (time {timing[name]:.3f}s)"
     plot_embedding(projections[name], title, ax)
 
 plt.show()
