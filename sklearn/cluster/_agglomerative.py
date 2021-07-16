@@ -399,7 +399,7 @@ def linkage_tree(
         Which linkage criteria to use. The linkage criterion determines which
         distance to use between sets of observation.
             - 'average' uses the average of the distances of each observation of
-              the two sets
+              the two sets.
             - 'complete' or maximum linkage uses the maximum distances between
               all observations of the two sets.
             - 'single' uses the minimum of the distances between all
@@ -407,7 +407,7 @@ def linkage_tree(
 
     affinity : str or callable, default='euclidean'.
         which metric to use. Can be 'euclidean', 'manhattan', or any
-        distance known to paired distance (see metric.pairwise)
+        distance known to paired distance (see metric.pairwise).
 
     return_distance : bool, default=False
         whether or not to return the distances between the clusters.
@@ -1032,11 +1032,11 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         features following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
         the data into a connectivity matrix, such as derived from
-        kneighbors_graph. Default is None, i.e, the
+        kneighbors_graph. Default is `None`, i.e, the
         hierarchical clustering algorithm is unstructured.
 
     compute_full_tree : 'auto' or bool, default='auto'
-        Stop early the construction of the tree at n_clusters. This is useful
+        Stop early the construction of the tree at `n_clusters`. This is useful
         to decrease computation time if the number of clusters is not small
         compared to the number of features. This option is useful only when
         specifying a connectivity matrix. Note also that when varying the
@@ -1109,7 +1109,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         A node `i` greater than or equal to `n_features` is a non-leaf
         node and has children `children_[i - n_features]`. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
-        are merged to form node `n_features + i`
+        are merged to form node `n_features + i`.
 
     distances_ : array-like of shape (n_nodes-1,)
         Distances between nodes in the corresponding place in `children_`.
@@ -1162,9 +1162,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            The data
+            The data.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
