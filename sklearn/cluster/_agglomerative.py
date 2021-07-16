@@ -395,18 +395,18 @@ def linkage_tree(
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
-    linkage : {"average", "complete", "single"}, default="complete"
+    linkage : {'average', 'complete', 'single'}, default='complete'
         Which linkage criteria to use. The linkage criterion determines which
         distance to use between sets of observation.
-            - "average" uses the average of the distances of each observation of
+            - 'average' uses the average of the distances of each observation of
               the two sets
-            - "complete" or maximum linkage uses the maximum distances between
+            - 'complete' or maximum linkage uses the maximum distances between
               all observations of the two sets.
-            - "single" uses the minimum of the distances between all
+            - 'single' uses the minimum of the distances between all
               observations of the two sets.
 
-    affinity : str or callable, default="euclidean".
-        which metric to use. Can be "euclidean", "manhattan", or any
+    affinity : str or callable, default='euclidean'.
+        which metric to use. Can be 'euclidean', 'manhattan', or any
         distance known to paired distance (see metric.pairwise)
 
     return_distance : bool, default=False
@@ -686,7 +686,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     Returns
     -------
     labels : array [n_samples]
-        cluster labels for each point.
+        Cluster labels for each point.
 
     """
     if n_clusters > n_leaves:
@@ -720,8 +720,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     """
     Agglomerative Clustering
 
-    Recursively merges the pair of clusters that minimally increases
-    a given linkage distance.
+    Recursively merges pair of clusters of sample data; uses linkage distance.
 
     Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
@@ -801,7 +800,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ``n_clusters``.
 
     labels_ : ndarray of shape (n_samples)
-        cluster labels for each point
+        Cluster labels for each point.
 
     n_leaves_ : int
         Number of leaves in the hierarchical tree.
@@ -823,12 +822,15 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         A node `i` greater than or equal to `n_samples` is a non-leaf
         node and has children `children_[i - n_samples]`. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
-        are merged to form node `n_samples + i`
+        are merged to form node `n_samples + i`.
 
     distances_ : array-like of shape (n_nodes-1,)
         Distances between nodes in the corresponding place in `children_`.
         Only computed if `distance_threshold` is used or `compute_distances`
         is set to `True`.
+
+    See Also
+    ----------
 
     Examples
     --------
@@ -841,7 +843,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     AgglomerativeClustering()
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
-
     """
 
     def __init__(
@@ -1052,12 +1053,12 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         distance to use between sets of features. The algorithm will merge
         the pairs of cluster that minimize this criterion.
 
-        - ward minimizes the variance of the clusters being merged.
-        - average uses the average of the distances of each feature of
-          the two sets.
-        - complete or maximum linkage uses the maximum distances between
+        - 'ward' minimizes the variance of the clusters being merged.
+        - 'complete' or maximum linkage uses the maximum distances between
           all features of the two sets.
-        - single uses the minimum of the distances between all features
+        - 'average' uses the average of the distances of each feature of
+          the two sets.
+        - 'single' uses the minimum of the distances between all features
           of the two sets.
 
     pooling_func : callable, default=np.mean
@@ -1087,7 +1088,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         ``n_clusters``.
 
     labels_ : array-like of (n_features,)
-        cluster labels for each feature.
+        Cluster labels for each feature.
 
     n_leaves_ : int
         Number of leaves in the hierarchical tree.
