@@ -201,7 +201,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
         is specified, elsewhere 'None' is returned.
 
     distances : ndarray of shape (n_nodes-1,)
-        Only returned if return_distance is set to True (for compatibility).
+        Only returned if `return_distance` is set to `True` (for compatibility).
         The distances between the centers of the nodes. `distances[i]`
         corresponds to a weighted Euclidean distance between
         the nodes `children[i, 1]` and `children[i, 2]`. If the nodes refer to
@@ -717,7 +717,7 @@ def _hc_cut(n_clusters, children, n_leaves):
 
 class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     """
-    Agglomerative Clustering
+    Agglomerative Clustering.
 
     Recursively merges pair of clusters of sample data; uses linkage distance.
 
@@ -829,7 +829,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         is set to `True`.
 
     See Also
-    ----------
+    --------
+    ward_tree : Hierarchical clustering with ward linkage.
 
     Examples
     --------
