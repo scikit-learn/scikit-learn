@@ -120,7 +120,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+                default=None
             Target values (None for unsupervised transformations).
 
         Returns
@@ -219,7 +219,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     gamma : float, default=1.0
-        Parameter of RBF kernel: exp(-gamma * x^2)
+        Parameter of RBF kernel: exp(-gamma * x^2).
 
     n_components : int, default=100
         Number of Monte Carlo samples per original feature.
@@ -344,7 +344,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         "skewedness" parameter of the kernel. Needs to be cross-validated.
 
     n_components : int, default=100
-        number of Monte Carlo samples per original feature.
+        Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
     random_state : int, RandomState instance or None, default=None
@@ -813,7 +813,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+                default=None
             Target values (None for unsupervised transformations).
         """
         X = self._validate_data(X, accept_sparse="csr")
