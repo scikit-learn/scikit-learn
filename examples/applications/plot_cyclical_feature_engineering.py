@@ -33,10 +33,16 @@ df = bike_sharing.frame
 import matplotlib.pyplot as plt
 
 
+fig, ax = plt.subplots(figsize=(12, 4))
 average_week_demand = df.groupby(["weekday", "hour"]).mean()["count"]
-average_week_demand.plot(figsize=(12, 4))
-_ = plt.title("Average number of bike rentals during the week")
-
+average_week_demand.plot(ax=ax)
+_ = ax.set(
+    title="Average hourly bike demand during the week",
+    xticks=[i * 24 for i in range(7)],
+    xticklabels=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    xlabel="Time of the week",
+    ylabel="Number of bike rentals"
+)
 
 # %%
 #
