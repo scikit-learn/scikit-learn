@@ -409,7 +409,7 @@ class _PLS(
 
         Returns
         -------
-        self : object
+        self : ndarray of shape (n_samples, n_features)
             Return the reconstructed array.
 
         Notes
