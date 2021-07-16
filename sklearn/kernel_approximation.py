@@ -543,7 +543,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self.sample_interval = sample_interval
 
     def fit(self, X, y=None):
-        """Set the parameters
+        """Set the parameters.
 
         Parameters
         ----------
