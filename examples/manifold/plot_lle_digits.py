@@ -64,7 +64,7 @@ def plot_embedding(X, title, ax):
 
     shown_images = np.array([[1.0, 1.0]])  # just something big
     for i in range(X.shape[0]):
-        plt.text(
+        ax.text(
             X[i, 0],
             X[i, 1],
             str(y[i]),
@@ -154,10 +154,10 @@ for name, transformer in embeddings.items():
     timing[name] = time() - start_time
 
 # %%
-fig, axs = plt.subplots(nrows=5, ncols=3, figsize=(15, 10))
+fig, axs = plt.subplots(nrows=5, ncols=3, figsize=(15, 15))
 
 for name, ax in zip(timing, axs.ravel()):
-    title = f"{name} of the digits (time {timing[name]}s)"
+    title = f"{name} of the digits (time {timing[name]:.3f}s)"
     plot_embedding(projections[name], title, ax)
 
 plt.show()
