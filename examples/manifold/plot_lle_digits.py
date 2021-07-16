@@ -19,7 +19,7 @@ print(__doc__)
 # %%
 # Load digits dataset
 # -------------------
-# We will load the digits dataset and only use 6 of the 10 available classes.
+# We will load the digits dataset and only use six first of the ten available classes.
 from sklearn.datasets import load_digits
 
 digits = load_digits(n_class=6)
@@ -176,6 +176,7 @@ fig, axs = plt.subplots(nrows=5, ncols=3, figsize=(15, 15))
 for name, ax in zip_longest(timing, axs.ravel()):
     if name is None:
         ax.axis("off")
+        continue
     title = f"{name} of the digits (time {timing[name]:.3f}s)"
     plot_embedding(projections[name], title, ax)
 
