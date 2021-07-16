@@ -568,27 +568,25 @@ class BisectKMeans(KMeans):
             # "Create Hierarchy":
             # Cluster with smaller metrics value (SSE or ammount of points)
             # will be at 'left side' and cluster with higher at 'right side'
-            lower_id = 0 if metrics_values[0] <= metrics_values[1] else 1
-            centers_id = [lower_id, 1 - lower_id]
+            ordered_labels = (0, 1) if metrics_values[0] <= metrics_values[1] else (1, 0)
 
             # Assign calculated nested clusters to their root
             tree_dict[biggest_id]["children"] = [last_center_id, last_center_id + 1]
 
-            for id in range(2):
-                child_id = tree_dict[biggest_id]["children"][id]
-                picked_id = centers_id[id]
+            for ii, label in enumerate(ordered_labels):
+                child_id = tree_dict[biggest_id]["children"][ii]
 
                 # Save Results on Tree
-                tree_dict[child_id] = {"children": None, "center": _centers[picked_id]}
+                tree_dict[child_id] = {"children": None, "center": _centers[label]}
 
                 # Create Mask for samples for selecting proper data points
                 samples_mask = leaves_dict[biggest_id]["samples"].copy()
-                samples_mask[picked_samples] = _labels == picked_id
+                samples_mask[picked_samples] = _labels == label
 
                 # Save recently generated leaves
                 leaves_dict[child_id] = {
                     "samples": samples_mask,
-                    "error_or_size": metrics_values[picked_id],
+                    "error_or_size": metrics_values[label],
                 }
 
             # Split cluster is no longer leaf
