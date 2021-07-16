@@ -90,7 +90,7 @@ def plot_embedding(X, title, ax):
 #   representation on which we apply a dimensionality reduction method.
 #   However, it is often useful to cast a dataset into a representation in
 #   which the classes are linearly-separable.
-# * the :class:`~sklearn.linear_model.LinearDiscriminantAnalysis` and
+# * the :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis` and
 #   the :class:`~sklearn.neighbors.NeighborhoodComponentsAnalysis`, are supervised
 #   dimensionality reduction method, i.e. they make use of the provided labels,
 #   contrary to other methods.
@@ -171,7 +171,7 @@ for name, transformer in embeddings.items():
 # Finally, we can plot the resulting projection given by each method.
 from itertools import zip_longest
 
-fig, axs = plt.subplots(nrows=5, ncols=3, figsize=(15, 15))
+fig, axs = plt.subplots(nrows=7, ncols=2, figsize=(12, 25))
 
 for name, ax in zip_longest(timing, axs.ravel()):
     if name is None:
