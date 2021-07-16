@@ -471,7 +471,7 @@ class _PLS(
 
         Returns
         -------
-        self : object
+        self : ndarray of shape (n_samples, n_components)
             Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         return self.fit(X, y).transform(X, y)
