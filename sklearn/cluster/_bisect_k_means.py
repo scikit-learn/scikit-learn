@@ -428,13 +428,6 @@ class BisectKMeans(KMeans):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
 
-        # Validate init array
-        init = self.init
-
-        if hasattr(init, "__array__"):
-            init = check_array(init, dtype=X.dtype, copy=True, order="C")
-            self._validate_center_shape(X, init)
-
         if self._algorithm == "full":
             self._kmeans_single = _kmeans_single_lloyd
             self._check_mkl_vcomp(X, X.shape[0])
@@ -535,12 +528,12 @@ class BisectKMeans(KMeans):
         }
 
         # ID of biggest center stored in centers_dict
-        biggest_id = -1
+        parent_id = -1
 
         last_center_id = 0
 
         for n_iter in range(self.n_clusters - 1):
-            picked_samples = leaves_dict[biggest_id]["samples"]
+            picked_samples = leaves_dict[parent_id]["samples"]
 
             # Pick data and weights to bisect
             picked_data = X[picked_samples]
@@ -568,19 +561,21 @@ class BisectKMeans(KMeans):
             # "Create Hierarchy":
             # Cluster with smaller metrics value (SSE or ammount of points)
             # will be at 'left side' and cluster with higher at 'right side'
-            ordered_labels = (0, 1) if metrics_values[0] <= metrics_values[1] else (1, 0)
+            ordered_labels = (
+                (0, 1) if metrics_values[0] <= metrics_values[1] else (1, 0)
+            )
 
             # Assign calculated nested clusters to their root
-            tree_dict[biggest_id]["children"] = [last_center_id, last_center_id + 1]
+            tree_dict[parent_id]["children"] = [last_center_id, last_center_id + 1]
 
             for ii, label in enumerate(ordered_labels):
-                child_id = tree_dict[biggest_id]["children"][ii]
+                child_id = tree_dict[parent_id]["children"][ii]
 
                 # Save Results on Tree
                 tree_dict[child_id] = {"children": None, "center": _centers[label]}
 
                 # Create Mask for samples for selecting proper data points
-                samples_mask = leaves_dict[biggest_id]["samples"].copy()
+                samples_mask = leaves_dict[parent_id]["samples"].copy()
                 samples_mask[picked_samples] = _labels == label
 
                 # Save recently generated leaves
@@ -590,14 +585,12 @@ class BisectKMeans(KMeans):
                 }
 
             # Split cluster is no longer leaf
-            del leaves_dict[biggest_id]
+            del leaves_dict[parent_id]
 
             last_center_id += 2
 
             # Pick new 'biggest cluster' to split
-            biggest_id, _ = max(
-                leaves_dict.items(), key=lambda x: x[1]["error_or_size"]
-            )
+            parent_id, _ = max(leaves_dict.items(), key=lambda x: x[1]["error_or_size"])
 
         # Delete Initial cluster
         del tree_dict[-1]
@@ -637,8 +630,10 @@ class BisectKMeans(KMeans):
         return centers, labels
 
     def predict(self, X, sample_weight=None):
-        """Predict which cluster each sample in X belongs to by going down
-        the hierarchical tree in searching of closest leaf cluster.
+        """Predict which cluster each sample in X belongs to
+
+        Prediction is made by going down the hierarchical tree
+        in searching of closest leaf cluster.
 
         In the vector quantization literature, `cluster_centers_` is called
         the code book and each value returned by `predict` is the index of
@@ -663,11 +658,6 @@ class BisectKMeans(KMeans):
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        # Note: Well optimized Bisect K-Means should produce clusters with same or
-        # even lower inertia than K-Means.
-        # So after optimization part below may be replaced
-        # with simple '_check_labels_threadpool_limit' function
 
         # With only one cluster all points have same label
         if self.n_clusters == 1:
