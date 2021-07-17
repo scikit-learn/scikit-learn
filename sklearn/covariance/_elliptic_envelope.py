@@ -90,7 +90,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     See Also
     --------
-    EmpiricalCovariance : Maximum likelihood covariance estimator
+    EmpiricalCovariance : Maximum likelihood covariance estimator.
     MinCovDet : Minimum Covariance Determinant
         (robust estimator of covariance).
     GraphicalLasso : Sparse inverse covariance estimation
