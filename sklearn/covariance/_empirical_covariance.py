@@ -200,7 +200,7 @@ class EmpiricalCovariance(BaseEstimator):
         return precision
 
     def fit(self, X, y=None):
-        """Fit the Maximum Likelihood Estimator covariance model to X.
+        """Fit the maximum liklihood covariance estimator to X.
 
         Parameters
         ----------
