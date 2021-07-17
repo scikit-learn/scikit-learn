@@ -22,7 +22,6 @@ from ._k_means_lloyd import lloyd_iter_chunked_sparse
 from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 
-from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
@@ -644,9 +643,8 @@ class BisectKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            The weights for each observation in X. If None, all observations
-            are assigned equal weight.
+        sample_weight : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -657,7 +655,11 @@ class BisectKMeans(KMeans):
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        # sample_weight is needed for labeling in _check_labels_threadpool_limit()
+        # as argument, but not used there since its not updating centers.
+        # In this case, it doesn't have to be shape of X - only must be ndarray
+        sample_weight = np.zeros(1)
 
         # With only one cluster all points have same label
         if self.n_clusters == 1:
@@ -689,7 +691,7 @@ class BisectKMeans(KMeans):
 
                     new_labels = _check_labels_threadpool_limit(
                         X[picked_samples],
-                        sample_weight[picked_samples],
+                        sample_weight,
                         x_squared_norms[picked_samples],
                         all_centers[center_ids[0] : (center_ids[1] + 1)],
                         self._n_threads,
