@@ -594,32 +594,17 @@ class BisectKMeans(KMeans):
         # Delete Initial cluster
         del tree_dict[-1]
 
-        # Sort Leaf centers by their root
-        centers_hierarchical = [0, 1]
-        while len(centers_hierarchical) != self.n_clusters:
-            nested_centers = []
-
-            for center_id in centers_hierarchical:
-                center_ids = (
-                    [center_id]
-                    if tree_dict[center_id]["children"] is None
-                    else tree_dict[center_id]["children"]
-                )
-                nested_centers.extend(center_ids)
-
-            centers_hierarchical = nested_centers
-
         # Initialize Labels
         labels = np.full(X.shape[0], -1, dtype=np.intc)
 
         centers = []
 
-        for i, center_id in enumerate(centers_hierarchical):
-            # Save cluster centers in hierarchical order
-            centers.append(tree_dict[center_id]["center"])
+        for i, (leaf_id, leaf) in enumerate(leaves_dict.items()):
+            # Save leaf cluster centers
+            centers.append(tree_dict[leaf_id]["center"])
 
             # Assign labels to proper data points
-            labels[leaves_dict[center_id]["samples"]] = i
+            labels[leaf["samples"]] = i
 
         centers = np.asarray(centers)
 
@@ -707,10 +692,15 @@ class BisectKMeans(KMeans):
                 nested_centers.extend(center_ids)
             centers_hierarchical = nested_centers
 
+        # Get all ids of leaves for proper assignment
+        leaves_ids = [
+            x[0] for x in self._inner_tree.items() if x[1]["children"] is None
+        ]
+
         # Copy of labels will be used to make sure that samples are picked correctly
         temp_labels = labels.copy()
 
-        for i, center_id in enumerate(centers_hierarchical):
+        for i, center_id in enumerate(leaves_ids):
             # Assign labels to proper data points
             labels[temp_labels == center_id] = i
 
