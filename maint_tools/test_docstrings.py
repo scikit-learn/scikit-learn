@@ -23,7 +23,6 @@ DOCSTRING_IGNORE_LIST = [
     "DictionaryLearning",
     "DummyClassifier",
     "ElasticNetCV",
-    "EllipticEnvelope",
     "EmpiricalCovariance",
     "ExtraTreeClassifier",
     "ExtraTreeRegressor",
