@@ -91,10 +91,13 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     See Also
     --------
     EmpiricalCovariance : Maximum likelihood covariance estimator.
-    MinCovDet : Minimum Covariance Determinant
-        (robust estimator of covariance).
     GraphicalLasso : Sparse inverse covariance estimation
         with an l1-penalized estimator.
+    LedoitWolf : LedoitWolf Estimator.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    OAS : Oracle Approximating Shrinkage Estimator.
+    ShrunkCovariance : Covariance estimator with shrinkage.
 
     Notes
     -----
