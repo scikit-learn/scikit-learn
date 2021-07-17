@@ -37,11 +37,13 @@ def test_three_clusters(bisect_strategy):
 
 
 def test_sparse():
-    """Test Bisecting K-Means with sparse data"""
+    """Test Bisecting K-Means with sparse data
+    Also test if results obtained from fit(X) are the same as fit(X).predict(X)
+    """
 
     rng = np.random.RandomState(0)
 
-    X = rng.rand(40, 2)
+    X = rng.rand(20, 2)
     X[X < 0.8] = 0
     X_csr = sp.csr_matrix(X)
 
@@ -53,5 +55,22 @@ def test_sparse():
     bisect_means.fit(X)
     normal_centers = bisect_means.cluster_centers_
 
+    # Check if results is the same for dense and sparse data
     assert_array_almost_equal(normal_centers, sparse_centers)
+
+    # Check if labels obtained from fit(X) are equal to fit(X).predict(X)
     assert_array_almost_equal(bisect_means.labels_, bisect_means.predict(X))
+
+
+@pytest.mark.parametrize("n_clusters", [4, 5])
+def test_n_clusters(n_clusters):
+    """Test if resulting labels are in range [0, n_clusters - 1]"""
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 2)
+
+    bisect_means = BisectKMeans(n_clusters=n_clusters, random_state=0)
+    bisect_means.fit(X)
+
+    assert (n_clusters - 1) == np.max(bisect_means.labels_)
+    assert 0 == np.min(bisect_means.labels_)

@@ -453,7 +453,7 @@ class BisectKMeans(KMeans):
             x_squared_norms = row_norms(X, squared=True)
 
             clusters = self._init_centroids(
-                X, x_squared_norms, init, random_state, n_centroids=1
+                X, x_squared_norms, self.init, random_state, n_centroids=1
             )
             warnings.warn(
                 "Bisection won't be performed - needs at least two clusters to run."
