@@ -794,11 +794,29 @@ for ax, pred, label in zip(axes, predictions, labels):
 # the predictions of the gradient boosted trees are closer to the diagonal than
 # for the kernel models.
 #
-# Finally, we note that we could have obtained slightly better results for
-# kernel models by using more components (higher rank kernel approximation) at
-# the cost of longer fit and prediction times. For `n_components`, the
+# Concluding remarks
+# ------------------
+#
+# We note that we could have obtained slightly better results for kernel models
+# by using more components (higher rank kernel approximation) at the cost of
+# longer fit and prediction durations. For large values of `n_components`, the
 # performance of the one-hot features would even match the spline features.
 #
 # The `Nystroem` + `RidgeCV` classifier could also have been replaced by
-# `sklearn.neural_network.MLPRegressor` with one or two hidden layers and we
-# would have obtained quite similar results.
+# :class:`~sklearn.neural_network.MLPRegressor` with one or two hidden layers
+# and we would have obtained quite similar results.
+#
+# The dataset we used in this case study is sampled on a hourly basis. However
+# cyclic spline-based features could model time-within-day or time-within-week
+# very efficiently with finer-grained time resolutions (for instance with
+# measurements taken every minute instead of every hours) without introducing
+# more features. One-hot encoding time representations would not offer this
+# flexibility.
+#
+# Finally, in this notebook we used `RidgeCV` because it is very efficient from
+# a computational point of view. However it models the target variable as a
+# Gaussian random variable with constant variance. For positive regression
+# problems, it is likely that using a Poisson or Gamma distribution would make
+# more sense. This could be achieved by using
+# `GridSearchCV(TweedieRegressor(power=2), param_grid({"alpha": alphas}))`
+# instead of `RidgeCV`
