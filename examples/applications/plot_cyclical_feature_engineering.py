@@ -80,7 +80,7 @@ _ = ax.set(
 # The input feature data frame is a time annotated hourly log of variables
 # describing the weather conditions. It includes both numerical and categorical
 # variables. Note that the time information has already been expanded into
-# seßveral complementary columns.
+# several complementary columns.
 #
 X = df.drop("count", axis="columns")
 X
@@ -454,7 +454,7 @@ _ = plt.title("Periodic spline-based encoding for the 'hour' feature")
 # We can now build a predictive pipeline using this alternative periodic
 # feature engineering strategy.
 #
-# It is possible to use fewer splines that discrete levels for those ordinal
+# It is possible to use fewer splines than discrete levels for those ordinal
 # values. This makes spline-based encoding more efficient than one-hot encoding
 # while preserving most of the expressivity:
 cyclic_spline_transformer = ColumnTransformer(
@@ -543,21 +543,21 @@ _ = ax.legend()
 #
 # - as expected, the **trigonometric features** (sine and cosine) do not have
 #   these discontinuities at midnight but the linear regression model fails to
-#   properly leverage those features to properly model intra-day variations.
+#   leverage those features to properly model intra-day variations.
 #   Using trigonometric features for higher harmonics or additional
 #   trigonometric features for the natural period with different phases could
 #   potentially fix this problem.
 #
 # - the **periodic spline-based features** fix those two problems at once: they
 #   give more expressivity to the linear model by making it possible to focus
-#   on a specific hours thanks to the use of 12 splines. Furthermore the
+#   on specific hours thanks to the use of 12 splines. Furthermore the
 #   `extrapolation="periodic"` option enforces a smooth representation between
 #   `hour=23` and `hour=0`.
 #
 # - the **one-hot encoded features** behave similarly to the periodic
 #   spline-based features but are more spiky: for instance they can better
-#   model the morning peak during the week days since this peak last fewer than
-#   an hour. However, we will see in the following that what can be an
+#   model the morning peak during the week days since this peak lasts shorter
+#   than an hour. However, we will see in the following that what can be an
 #   advantage for linear models is not necessarily one for more expressive
 #   models.
 #
@@ -700,8 +700,8 @@ _ = ax.legend()
 
 
 # %%
-# First note that trees can naturally model non-linear feature interactions
-# since by default decision trees are allowed to grow beyond a depth of 2
+# First, note that trees can naturally model non-linear feature interactions
+# since, by default, decision trees are allowed to grow beyond a depth of 2
 # levels.
 #
 # Here we can observe that the combinations of spline features and non-linear
