@@ -490,6 +490,8 @@ Changelog
   custom token pattern which capture more than one group is provided.
   :pr:`15427` by :user:`Gangesh Gudmalwar <ggangesh>` and
   :user:`Erin R Hoffman <hoffm386>`.
+  
+- [API] removed :func:`feature_extraction.extract_patches`.
 
 :mod:`sklearn.feature_selection`
 ................................
