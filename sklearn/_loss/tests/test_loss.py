@@ -71,16 +71,10 @@ def random_y_true_raw_prediction(
         high = min(high, y_bound[1])
         y_true = rng.uniform(low, high, size=n_samples)
         # set some values at special boundaries
-        if (
-            loss.interval_y_true.low == 0
-            and loss.interval_y_true.low_inclusive
-        ):
+        if loss.interval_y_true.low == 0 and loss.interval_y_true.low_inclusive:
             y_true[:: (n_samples // 3)] = 0
-        if (
-            loss.interval_y_true.high == 1
-            and loss.interval_y_true.high_inclusive
-        ):
-            y_true[1:: (n_samples // 3)] = 1
+        if loss.interval_y_true.high == 1 and loss.interval_y_true.high_inclusive:
+            y_true[1 :: (n_samples // 3)] = 1
 
     return y_true, raw_prediction
 
@@ -96,9 +90,7 @@ def numerical_derivative(func, x, eps):
     f_minus_1h = func(x - h)
     f_plus_1h = func(x + h)
     f_plus_2h = func(x + 2 * h)
-    return (-f_plus_2h + 8 * f_plus_1h - 8 * f_minus_1h + f_minus_2h) / (
-        12.0 * eps
-    )
+    return (-f_plus_2h + 8 * f_plus_1h - 8 * f_minus_1h + f_minus_2h) / (12.0 * eps)
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
@@ -119,14 +111,15 @@ def test_loss_boundary(loss):
 
     assert loss.in_y_true_range(y_true)
 
+    n = y_true.shape[0]
     low, high = _inclusive_low_high(loss.interval_y_pred)
     if loss.is_multiclass:
-        y_pred = np.empty((10, 3))
-        y_pred[:, 0] = np.linspace(low, high, num=10)
+        y_pred = np.empty((n, 3))
+        y_pred[:, 0] = np.linspace(low, high, num=n)
         y_pred[:, 1] = 0.5 * (1 - y_pred[:, 0])
         y_pred[:, 2] = 0.5 * (1 - y_pred[:, 0])
     else:
-        y_pred = np.linspace(low, high, num=10)
+        y_pred = np.linspace(low, high, num=n)
 
     assert loss.in_y_pred_range(y_pred)
 
@@ -185,8 +178,7 @@ def test_loss_boundary_y_true(loss, y_true_success, y_true_fail):
 
 
 @pytest.mark.parametrize(
-    "loss, y_pred_success, y_pred_fail",
-    Y_COMMON_PARAMS + Y_PRED_PARAMS  # type: ignore
+    "loss, y_pred_success, y_pred_fail", Y_COMMON_PARAMS + Y_PRED_PARAMS  # type: ignore
 )
 def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
     """Test boundaries of y_pred for loss functions."""
@@ -203,9 +195,7 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
 @pytest.mark.parametrize("out1", [None, 1])
 @pytest.mark.parametrize("out2", [None, 1])
 @pytest.mark.parametrize("n_threads", [1, 2])
-def test_loss_dtype(
-    loss, dtype_in, dtype_out, sample_weight, out1, out2, n_threads
-):
+def test_loss_dtype(loss, dtype_in, dtype_out, sample_weight, out1, out2, n_threads):
     """Test acceptance of dtypes in loss functions.
 
     Check that loss accepts if all input arrays are either all float32 or all
@@ -450,14 +440,10 @@ def test_sample_weight_multiplies_gradients(loss, sample_weight):
         rng = np.random.RandomState(42)
         sample_weight = rng.normal(size=n_samples).astype(np.float64)
 
-    baseline_prediction = loss.fit_intercept_only(
-        y_true=y_true, sample_weight=None
-    )
+    baseline_prediction = loss.fit_intercept_only(y_true=y_true, sample_weight=None)
 
     if loss.n_classes <= 2:
-        raw_prediction = np.zeros(
-            shape=(n_samples,), dtype=baseline_prediction.dtype
-        )
+        raw_prediction = np.zeros(shape=(n_samples,), dtype=baseline_prediction.dtype)
     else:
         raw_prediction = np.zeros(
             shape=(n_samples, loss.n_classes), dtype=baseline_prediction.dtype
@@ -555,7 +541,9 @@ def test_gradients_hessians_numerically(loss, sample_weight):
 
         def loss_func(x):
             return loss.loss(
-                y_true=y_true, raw_prediction=x, sample_weight=sample_weight,
+                y_true=y_true,
+                raw_prediction=x,
+                sample_weight=sample_weight,
             )
 
         g_numeric = numerical_derivative(loss_func, raw_prediction, eps=1e-6)
@@ -563,7 +551,9 @@ def test_gradients_hessians_numerically(loss, sample_weight):
 
         def grad_func(x):
             return loss.gradient(
-                y_true=y_true, raw_prediction=x, sample_weight=sample_weight,
+                y_true=y_true,
+                raw_prediction=x,
+                sample_weight=sample_weight,
             )
 
         h_numeric = numerical_derivative(grad_func, raw_prediction, eps=1e-6)
@@ -588,9 +578,7 @@ def test_gradients_hessians_numerically(loss, sample_weight):
                     sample_weight=sample_weight,
                 )
 
-            g_numeric = numerical_derivative(
-                loss_func, raw_prediction[:, k], eps=1e-5
-            )
+            g_numeric = numerical_derivative(loss_func, raw_prediction[:, k], eps=1e-5)
             assert_allclose(g[:, k], g_numeric, rtol=5e-6, atol=1e-10)
 
             def grad_func(x):
@@ -602,9 +590,7 @@ def test_gradients_hessians_numerically(loss, sample_weight):
                     sample_weight=sample_weight,
                 )[:, k]
 
-            h_numeric = numerical_derivative(
-                grad_func, raw_prediction[:, k], eps=1e-6
-            )
+            h_numeric = numerical_derivative(grad_func, raw_prediction[:, k], eps=1e-6)
             if loss.approx_hessian:
                 assert np.all(h >= h_numeric)
             else:
@@ -676,9 +662,7 @@ def test_derivatives(loss, x0, y_true):
     optimum = optimum.ravel()
     assert_allclose(loss.inverse(optimum), y_true)
     assert_allclose(func(optimum), 0, atol=1e-14)
-    assert_allclose(
-        loss.gradient(y_true=y_true, raw_prediction=optimum), 0, atol=5e-7
-    )
+    assert_allclose(loss.gradient(y_true=y_true, raw_prediction=optimum), 0, atol=5e-7)
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
@@ -740,7 +724,7 @@ def test_loss_intercept_only(loss, sample_weight):
             method="SLSQP",
             constraints={
                 "type": "eq",
-                "fun": lambda x: np.ones((1, loss.n_classes)) @ x
+                "fun": lambda x: np.ones((1, loss.n_classes)) @ x,
             },
         )
         grad = loss.gradient(
@@ -784,9 +768,7 @@ def test_specific_fit_intercept_only(loss, func, random_dist):
     assert baseline_prediction == approx(loss.link(func(y_train)))
     assert loss.inverse(baseline_prediction) == approx(func(y_train))
     if isinstance(loss, IdentityLink):
-        assert_allclose(
-            loss.inverse(baseline_prediction), baseline_prediction
-        )
+        assert_allclose(loss.inverse(baseline_prediction), baseline_prediction)
 
     # Test baseline at boundary
     if loss.interval_y_true.low_inclusive:
@@ -835,5 +817,5 @@ def test_binary_and_categorical_crossentropy():
     raw_cce[:, 1] = 0.5 * raw_prediction
     assert_allclose(
         bce.loss(y_true=y_train, raw_prediction=raw_prediction),
-        cce.loss(y_true=y_train, raw_prediction=raw_cce)
+        cce.loss(y_true=y_train, raw_prediction=raw_cce),
     )
