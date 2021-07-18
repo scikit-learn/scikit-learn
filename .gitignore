@@ -76,6 +76,7 @@ _configtest.o.d
 .mypy_cache/
 
 # files generated from a template
+sklearn/_loss/_loss.pyx
 sklearn/utils/_seq_dataset.pyx
 sklearn/utils/_seq_dataset.pxd
 sklearn/utils/_weight_vector.pyx
