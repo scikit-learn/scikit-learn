@@ -41,7 +41,7 @@ _ = ax.set(
     xticks=[i * 24 for i in range(7)],
     xticklabels=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     xlabel="Time of the week",
-    ylabel="Number of bike rentals"
+    ylabel="Number of bike rentals",
 )
 
 # %%
@@ -129,7 +129,10 @@ X["season"].value_counts()
 from sklearn.model_selection import TimeSeriesSplit
 
 ts_cv = TimeSeriesSplit(
-    n_splits=5, gap=48, max_train_size=10000, test_size=1000,
+    n_splits=5,
+    gap=48,
+    max_train_size=10000,
+    test_size=1000,
 )
 
 # %%
@@ -493,14 +496,10 @@ one_hot_linear_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 one_hot_linear_predictions = one_hot_linear_pipeline.predict(X.iloc[test_0])
 
 cyclic_cossin_linear_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
-cyclic_cossin_linear_predictions = cyclic_cossin_linear_pipeline.predict(
-    X.iloc[test_0]
-)
+cyclic_cossin_linear_predictions = cyclic_cossin_linear_pipeline.predict(X.iloc[test_0])
 
 cyclic_spline_linear_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
-cyclic_spline_linear_predictions = cyclic_spline_linear_pipeline.predict(
-    X.iloc[test_0]
-)
+cyclic_spline_linear_predictions = cyclic_spline_linear_pipeline.predict(X.iloc[test_0])
 
 # %%
 # We visualize those predictions by zooming on the last 96 hours (4 days) of
@@ -593,6 +592,49 @@ cyclic_spline_linear_pipeline[:-1].transform(X).shape
 # features (in this case "workingday" and features derived from "hours"). This
 # issue will be addressed in the following section.
 #
+# %%
+# Modeling pairwise interactions with splines and polynomial features
+# -------------------------------------------------------------------
+#
+# Linear models alone cannot model interaction effects between input features.
+# It does not help that some features are marginally non-linear as is the case
+# with features constructed by `SplineTransformer` (or one-hot encoding or
+# binning).
+#
+# However, it is possible to use the `PolynomialFeatures` class on coarse
+# grained splined encoded hours to model the "workingday"/"hours" interaction
+# explicit without introducing too many new variables:
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import FeatureUnion
+
+
+hour_workday_interaction = make_pipeline(
+    ColumnTransformer(
+        [
+            ("cyclic_hour", periodic_spline_transformer(24, n_splines=8), ["hour"]),
+            ("workingday", FunctionTransformer(lambda x: x == "True"), ["workingday"]),
+        ]
+    ),
+    PolynomialFeatures(degree=2, interaction_only=True, include_bias=False),
+)
+
+# %%
+# Those features are then combined with the ones already computed in the
+# previous spline-base pipeline. We can observe a nice performance improvemnt
+# by modeling this pairwise interaction explicitly:
+
+cyclic_spline_interactions_pipeline = make_pipeline(
+    FeatureUnion(
+        [
+            ("marginal", cyclic_spline_transformer),
+            ("interactions", hour_workday_interaction),
+        ]
+    ),
+    RidgeCV(alphas=alphas),
+)
+evaluate(cyclic_spline_interactions_pipeline, X, y, cv=ts_cv)
+
+# %%
 # Modeling non-linear feature interactions with kernels
 # -----------------------------------------------------
 #
@@ -602,16 +644,13 @@ cyclic_spline_linear_pipeline[:-1].transform(X).shape
 # might not be the same during the working days and the week-ends and holidays
 # for instance.
 #
-# Linear models cannot capture interaction effects between input features
-# themselves. It does not help that some features are marginally non-linear as
-# is the case with features constructed by `SplineTransformer` (or one-hot
-# encoding or binning).
+# To model all such interactions, we could either use a polynomial expansion on
+# all marginal features at once, after their spline-based expansion. However
+# this would create a quadratic number of features which can cause overfitting
+# and computational tractability issues.
 #
-# To capture such interactions we could either use a partial polynomial
-# expansion `PolynomicalFeatures(degree=2, interaction_only=True)` or use the
-# Nyström method to compute an approximate polynomial kernel expansion.
-#
-# Let us try the latter for computational reasons:
+# Alternatively we can use the Nyström method to compute an approximate
+# polynomial kernel expansion. Let us try the latter:
 from sklearn.kernel_approximation import Nystroem
 
 
