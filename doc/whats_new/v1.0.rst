@@ -320,6 +320,14 @@ Changelog
 - |Fix| Allow multiple scorers input to
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
+  
+:mod:`sklearn.kernel_approximation`
+.......................
+
+- |Fix| Fix a bug of the attribute ``component_indices_`` in
+  :class:`sklearn.kernel_approximation.Nystroem`. 
+  The attribute ``component_indices_`` should have a dimension of ``n_components``.
+  :pr:`20554` by :user:`Xiangyin Kong <kxytim>`.  
 
 :mod:`sklearn.linear_model`
 ...........................
