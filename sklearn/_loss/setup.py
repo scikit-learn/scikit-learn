@@ -1,9 +1,15 @@
 import numpy
 from numpy.distutils.misc_util import Configuration
+from sklearn._build_utils import gen_from_templates
 
 
 def configuration(parent_package="", top_path=None):
     config = Configuration("_loss", parent_package, top_path)
+
+    # generate _loss.pyx from template
+    templates = ["sklearn/_loss/_loss.pyx.tp"]
+    gen_from_templates(templates, top_path)
+
     config.add_extension(
         "_loss",
         sources=["_loss.pyx"],
