@@ -454,14 +454,14 @@ _ = plt.title("Periodic spline-based encoding for the 'hour' feature")
 # We can now build a predictive pipeline using this alternative periodic
 # feature engineering strategy.
 #
-# For the `"hours"` columns we use only 12 splines for a period of 24 hours to
-# avoid over-representing this feature compared to months (12 natural splines)
-# and weekday (7 natural splines).
+# It is possible to use fewer splines that discrete levels for those ordinal
+# values. This makes spline-based encoding more efficient than one-hot encoding
+# while preserving most of the expressivity:
 cyclic_spline_transformer = ColumnTransformer(
     transformers=[
         ("categorical", one_hot_encoder, categorical_columns),
-        ("cyclic_month", periodic_spline_transformer(12), ["month"]),
-        ("cyclic_weekday", periodic_spline_transformer(7), ["weekday"]),
+        ("cyclic_month", periodic_spline_transformer(12, n_splines=6), ["month"]),
+        ("cyclic_weekday", periodic_spline_transformer(7, n_splines=3), ["weekday"]),
         ("cyclic_hour", periodic_spline_transformer(24, n_splines=12), ["hour"]),
     ],
     remainder=MinMaxScaler(),
@@ -542,9 +542,9 @@ _ = ax.legend()
 #   to 0. We can expect similar artifacts at the end of each week or each year.
 #
 # - as expected, the **trigonometric features** (sine and cosine) do not have
-#   this discontinuities at midnight but the linear regression model still
-#   fails to leverage those features to properly model intra-day variations.
-#   Using trigonmetric features for higher harmonics or additional
+#   these discontinuities at midnight but the linear regression model fails to
+#   properly leverage those features to properly model intra-day variations.
+#   Using trigonometric features for higher harmonics or additional
 #   trigonometric features for the natural period with different phases could
 #   potentially fix this problem.
 #
