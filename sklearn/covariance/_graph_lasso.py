@@ -372,6 +372,12 @@ class GraphicalLasso(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    graphical_lasso : L1-penalized covariance estimator.
+    GraphicalLassoCV : Sparse inverse covariance with
+        cross-validated choice of the l1 penalty.
+
     Examples
     --------
     >>> import numpy as np
@@ -392,10 +398,6 @@ class GraphicalLasso(EmpiricalCovariance):
            [0.019, 0.034, 0.093, 0.69 ]])
     >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
-
-    See Also
-    --------
-    graphical_lasso, GraphicalLassoCV
     """
 
     def __init__(
@@ -418,12 +420,12 @@ class GraphicalLasso(EmpiricalCovariance):
         self.verbose = verbose
 
     def fit(self, X, y=None):
-        """Fits the GraphicalLasso model to X.
+        """Fit the GraphicalLasso model to X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Data from which to compute the covariance estimate
+            Data from which to compute the covariance estimate.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -431,6 +433,7 @@ class GraphicalLasso(EmpiricalCovariance):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
         X = self._validate_data(
