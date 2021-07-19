@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
 from sklearn.exceptions import NotFittedError
@@ -74,47 +73,6 @@ def test_plot_precision_recall_curve_deprecation(pyplot):
     deprecation_warning = "Function plot_precision_recall_curve is deprecated"
     with pytest.warns(FutureWarning, match=deprecation_warning):
         plot_precision_recall_curve(clf, X, y)
-
-
-@pytest.mark.parametrize(
-    "response_method, msg",
-    [
-        (
-            "predict_proba",
-            "response method predict_proba is not defined in MyClassifier",
-        ),
-        (
-            "decision_function",
-            "response method decision_function is not defined in MyClassifier",
-        ),
-        (
-            "auto",
-            "response method decision_function or predict_proba is not "
-            "defined in MyClassifier",
-        ),
-        (
-            "bad_method",
-            "response_method must be 'predict_proba', 'decision_function' or 'auto'",
-        ),
-    ],
-)
-def test_precision_recall_display_bad_response(pyplot, response_method, msg):
-    """Check that the proper error is raised when passing a `response_method`
-    not compatible with the estimator."""
-    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
-
-    class MyClassifier(ClassifierMixin, BaseEstimator):
-        def fit(self, X, y):
-            self.fitted_ = True
-            self.classes_ = [0, 1]
-            return self
-
-    clf = MyClassifier().fit(X, y)
-
-    with pytest.raises(ValueError, match=msg):
-        PrecisionRecallDisplay.from_estimator(
-            clf, X, y, response_method=response_method
-        )
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
