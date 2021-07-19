@@ -12,17 +12,20 @@ from ...utils import check_matplotlib_support, deprecated
 class PrecisionRecallDisplay:
     """Precision Recall visualization.
 
-    It is recommend to use :func:`~sklearn.metrics.plot_precision_recall_curve`
-    to create a visualizer. All parameters are stored as attributes.
+    It is recommend to use
+    :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` or
+    :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions` to create
+    a :class:`~sklearn.metrics.PredictionRecallDisplay`. All parameters are
+    stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
     -----------
-    precision : ndarray
+    precision : ndarray of shape (n_samples,)
         Precision values.
 
-    recall : ndarray
+    recall : ndarray of shape (n_samples,)
         Recall values.
 
     average_precision : float, default=None
@@ -52,8 +55,10 @@ class PrecisionRecallDisplay:
     --------
     precision_recall_curve : Compute precision-recall pairs for different
         probability thresholds.
-    plot_precision_recall_curve : Plot Precision Recall Curve for binary
-        classifiers.
+    PrecisionRecallDisplay.from_estimator : Plot Precision Recall Curve given
+        a binary classifier.
+    PrecisionRecallDisplay.from_predictions : Plot Precision Recall Curve
+        using predictions from a binary classifier.
 
     Examples
     --------
