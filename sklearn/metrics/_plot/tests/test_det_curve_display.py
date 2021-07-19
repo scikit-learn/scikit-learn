@@ -10,12 +10,8 @@ from sklearn.metrics import det_curve
 from sklearn.metrics import DetCurveDisplay
 
 
-@pytest.mark.parametrize(
-    "constructor_name", ["from_estimator", "from_predictions"]
-)
-@pytest.mark.parametrize(
-    "response_method", ["predict_proba", "decision_function"]
-)
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("with_strings", [True, False])
 def test_det_curve_display(
@@ -70,6 +66,7 @@ def test_det_curve_display(
 
     # cannot fail thanks to pyplot fixture
     import matplotlib as mpl  # noqal
+
     assert isinstance(disp.line_, mpl.lines.Line2D)
     assert disp.line_.get_alpha() == 0.8
     assert isinstance(disp.ax_, mpl.axes.Axes)
@@ -77,12 +74,8 @@ def test_det_curve_display(
     assert disp.line_.get_label() == "LogisticRegression"
 
     expected_pos_label = 1 if pos_label is None else pos_label
-    expected_ylabel = (
-        f"False Negative Rate (Positive label: {expected_pos_label})"
-    )
-    expected_xlabel = (
-        f"False Positive Rate (Positive label: {expected_pos_label})"
-    )
+    expected_ylabel = f"False Negative Rate (Positive label: {expected_pos_label})"
+    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
     assert disp.ax_.get_ylabel() == expected_ylabel
     assert disp.ax_.get_xlabel() == expected_xlabel
 
@@ -95,7 +88,9 @@ def test_det_curve_display(
     ],
 )
 def test_det_curve_display_default_name(
-    pyplot, constructor_name, expected_clf_name,
+    pyplot,
+    constructor_name,
+    expected_clf_name,
 ):
     # Check the default name display in the figure when `name` is not provided
     X, y = load_iris(return_X_y=True)
