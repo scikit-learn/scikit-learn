@@ -22,10 +22,10 @@ class PrecisionRecallDisplay:
 
     Parameters
     -----------
-    precision : ndarray of shape (n_samples,)
+    precision : ndarray
         Precision values.
 
-    recall : ndarray of shape (n_samples,)
+    recall : ndarray
         Recall values.
 
     average_precision : float, default=None
