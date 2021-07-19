@@ -82,13 +82,12 @@ class DetCurveDisplay:
         *,
         sample_weight=None,
         response_method="auto",
+        pos_label=None,
         name=None,
         ax=None,
-        pos_label=None,
         **kwargs,
     ):
-        """Plot detection error tradeoff (DET) curve given an estimator and
-        some data.
+        """Plot DET curve given an estimator and data.
 
         Read more in the :ref:`User Guide <visualizations>`.
 
@@ -116,6 +115,11 @@ class DetCurveDisplay:
             to 'auto', :term:`predict_proba` is tried first and if it does not
             exist :term:`decision_function` is tried next.
 
+        pos_label : str or int, default=None
+            The label of the positive class. When `pos_label=None`, if `y_true`
+            is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
+            error will be raised.
+
         name : str, default=None
             Name of DET curve for labeling. If `None`, use the name of the
             estimator.
@@ -123,11 +127,6 @@ class DetCurveDisplay:
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
-
-        pos_label : str or int, default=None
-            The label of the positive class. When `pos_label=None`, if `y_true`
-            is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
-            error will be raised.
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -146,7 +145,7 @@ class DetCurveDisplay:
 
         Examples
         --------
-        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+        >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import make_classification
         >>> from sklearn.metrics import DetCurveDisplay
         >>> from sklearn.model_selection import train_test_split
@@ -155,9 +154,10 @@ class DetCurveDisplay:
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
-        >>> metrics.DetCurveDisplay.from_estimator(
-        ...    clf, X_test, y_test)  # doctest: +SKIP
-        >>> plt.show()  # doctest: +SKIP
+        >>> DetCurveDisplay.from_estimator(
+        ...    clf, X_test, y_test)
+        <...>
+        >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
@@ -187,12 +187,12 @@ class DetCurveDisplay:
         y_pred,
         *,
         sample_weight=None,
+        pos_label=None,
         name=None,
         ax=None,
-        pos_label=None,
         **kwargs,
     ):
-        """Plot detection error tradeoff (DET) curve given the true and
+        """Plot DET curve given the true and
         predicted labels.
 
         Read more in the :ref:`User Guide <visualizations>`.
@@ -205,11 +205,17 @@ class DetCurveDisplay:
             True labels.
 
         y_pred : array-like of shape (n_samples,)
-            The predicted labels given by the method `predict` of an
-            classifier.
+            Target scores, can either be probability estimates of the positive
+            class, confidence values, or non-thresholded measure of decisions
+            (as returned by `decision_function` on some classifiers).
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
+
+        pos_label : str or int, default=None
+            The label of the positive class. When `pos_label=None`, if `y_true`
+            is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
+            error will be raised.
 
         name : str, default=None
             Name of DET curve for labeling. If `None`, name will be set to
@@ -218,11 +224,6 @@ class DetCurveDisplay:
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
-
-        pos_label : str or int, default=None
-            The label of the positive class. When `pos_label=None`, if `y_true`
-            is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
-            error will be raised.
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -241,7 +242,7 @@ class DetCurveDisplay:
 
         Examples
         --------
-        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+        >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import make_classification
         >>> from sklearn.metrics import DetCurveDisplay
         >>> from sklearn.model_selection import train_test_split
@@ -251,9 +252,10 @@ class DetCurveDisplay:
         ...     X, y, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
         >>> y_pred = clf.decision_function(X_test)
-        >>> metrics.DetCurveDisplay.from_predictions(
-        ...    y_test, y_pred)  # doctest: +SKIP
-        >>> plt.show()  # doctest: +SKIP
+        >>> DetCurveDisplay.from_predictions(
+        ...    y_test, y_pred)
+        <...>
+        >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
         fpr, fnr, _ = det_curve(
