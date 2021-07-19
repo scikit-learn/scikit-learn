@@ -1,9 +1,11 @@
+import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import average_precision_score, precision_recall_curve
 from sklearn.svm import SVC, SVR
 
 from sklearn.metrics import PrecisionRecallDisplay, plot_precision_recall_curve
@@ -115,15 +117,84 @@ def test_precision_recall_display_bad_response(pyplot, response_method, msg):
 def test_precision_recall_display_plotting(pyplot, constructor_name, response_method):
     """Check the overall plotting rendering."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    pos_label = 1
+
     classifier = LogisticRegression().fit(X, y)
     classifier.fit(X, y)
 
     y_pred = getattr(classifier, response_method)(X)
+    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, pos_label]
 
     # safe guard for the binary if/else construction
     assert constructor_name in ("from_estimator", "from_predictions")
 
     if constructor_name == "from_estimator":
-        PrecisionRecallDisplay.from_estimator(classifier, X, y)
+        display = PrecisionRecallDisplay.from_estimator(
+            classifier, X, y, response_method=response_method
+        )
     else:
-        PrecisionRecallDisplay.from_predictions(y, y_pred)
+        display = PrecisionRecallDisplay.from_predictions(
+            y, y_pred, pos_label=pos_label
+        )
+
+    precision, recall, _ = precision_recall_curve(y, y_pred, pos_label=pos_label)
+    average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
+
+    np.testing.assert_allclose(display.precision, precision)
+    np.testing.assert_allclose(display.recall, recall)
+    assert display.average_precision == pytest.approx(average_precision)
+
+    import matplotlib as mpl
+
+    assert isinstance(display.line_, mpl.lines.Line2D)
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert isinstance(display.figure_, mpl.figure.Figure)
+
+    assert display.ax_.get_xlabel() == "Recall (Positive label: 1)"
+    assert display.ax_.get_ylabel() == "Precision (Positive label: 1)"
+
+    # plotting passing some new parameters
+    display.plot(alpha=0.8, name="MySpecialEstimator")
+    expected_label = f"MySpecialEstimator (AP = {average_precision:0.2f})"
+    assert display.line_.get_label() == expected_label
+    assert display.line_.get_alpha() == pytest.approx(0.8)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, default_label",
+    [
+        ("from_estimator", "LogisticRegression (AP = {:.2f})"),
+        ("from_predictions", "AP = {:.2f}"),
+    ],
+)
+def test_precision_recall_display_name(pyplot, constructor_name, default_label):
+    """Check the behaviour of the name parameters"""
+    X, y = make_classification(n_classes=2, n_samples=100, random_state=0)
+    pos_label = 1
+
+    classifier = LogisticRegression().fit(X, y)
+    classifier.fit(X, y)
+
+    y_pred = classifier.predict_proba(X)[:, pos_label]
+
+    # safe guard for the binary if/else construction
+    assert constructor_name in ("from_estimator", "from_predictions")
+
+    if constructor_name == "from_estimator":
+        display = PrecisionRecallDisplay.from_estimator(classifier, X, y)
+    else:
+        display = PrecisionRecallDisplay.from_predictions(
+            y, y_pred, pos_label=pos_label
+        )
+
+    average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
+
+    # check that the default name is used
+    assert display.line_.get_label() == default_label.format(average_precision)
+
+    # check that the name can be set
+    display.plot(name="MySpecialEstimator")
+    assert (
+        display.line_.get_label()
+        == f"MySpecialEstimator (AP = {average_precision:.2f})"
+    )
