@@ -25,6 +25,9 @@ pytestmark = pytest.mark.filterwarnings(
 )
 
 
+@pytest.mark.filterwarnings(
+    "ignore: Function `plot_precision_recall_curve` is deprecated"
+)
 def test_errors(pyplot):
     X, y_multiclass = make_classification(
         n_classes=3, n_samples=50, n_informative=3, random_state=0
