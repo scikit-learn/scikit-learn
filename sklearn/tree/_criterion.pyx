@@ -211,7 +211,7 @@ cdef class Criterion:
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
 
-    def __cinit__(self, SIZE_t n_outputs,
+    def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples,
                   np.ndarray[SIZE_t, ndim=1] n_classes):
         """Initialize attributes for this criterion.
 
@@ -230,7 +230,7 @@ cdef class ClassificationCriterion(Criterion):
         self.end = 0
 
         self.n_outputs = n_outputs
-        self.n_samples = 0
+        self.n_samples = n_samples
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -273,7 +273,7 @@ cdef class ClassificationCriterion(Criterion):
 
     def __reduce__(self):
         return (type(self),
-                (self.n_outputs,
+                (self.n_outputs, self.n_samples,
                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
                 self.__getstate__())
 

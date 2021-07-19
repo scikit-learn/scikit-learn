@@ -2178,11 +2178,12 @@ def test_criterion_copy():
 
     for copy_func in [copy.copy, copy.deepcopy, _pickle_copy]:
         for _, typename in CRITERIA_CLF.items():
-            criteria = typename(n_outputs, n_classes)
+            criteria = typename(n_outputs, n_samples, n_classes)
             result = copy_func(criteria).__reduce__()
-            typename_, (n_outputs_, n_classes_), _ = result
+            typename_, (n_outputs_, n_samples_, n_classes_), _ = result
             assert typename == typename_
             assert n_outputs == n_outputs_
+            assert n_samples == n_samples_
             assert_array_equal(n_classes, n_classes_)
 
         for _, typename in CRITERIA_REG.items():
