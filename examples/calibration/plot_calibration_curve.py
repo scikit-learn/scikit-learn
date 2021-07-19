@@ -260,7 +260,9 @@ plt.show()
 # Both kinds of calibration (sigmoid and isotonic) can fix this issue and
 # yield similar results.
 #
-# As before, we show the Brier loss, precision, recall and F1 score below.
+# As before, we show the :ref:`brier_score_loss`, :ref:`log_loss`,
+# :ref:`precision, recall, F1 score <precision_recall_f_measure_metrics>` and
+# :ref:`ROC AUC <roc_metrics>`.
 
 scores = defaultdict(list)
 for i, (clf, name) in enumerate(clf_list):
@@ -281,8 +283,9 @@ for i, (clf, name) in enumerate(clf_list):
     score_df.round(decimals=3)
 
 # %%
-# As above, calibration improves both :ref:`brier_score_loss` and
-# :ref:`log_loss`.
+# As with :class:`~sklearn.naive_bayes.GaussianNB` above, calibration improves
+# both :ref:`brier_score_loss` and :ref:`log_loss` but does not alter the
+# prediction accuracy measures (precision, recall and F1 score) much.
 #
 # Summary
 # -------
