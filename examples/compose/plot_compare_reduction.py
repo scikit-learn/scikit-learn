@@ -26,8 +26,6 @@ fitting of a transformer is costly.
 ###############################################################################
 
 # Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
-#
-# License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
