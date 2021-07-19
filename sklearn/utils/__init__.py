@@ -1158,7 +1158,13 @@ def all_estimators(type_filter=None):
         return True
 
     all_classes = []
-    modules_to_ignore = {"tests", "externals", "setup", "conftest"}
+    modules_to_ignore = {
+        "tests",
+        "externals",
+        "setup",
+        "conftest",
+        "enable_hist_gradient_boosting",
+    }
     root = str(Path(__file__).parent.parent)  # sklearn package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
