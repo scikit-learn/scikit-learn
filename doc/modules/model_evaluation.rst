@@ -796,9 +796,10 @@ score:
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format. The
-:func:`plot_precision_recall_curve` function plots the precision recall as
-follows.
+binary classification and multilabel indicator format.
+The :func:`PredictionRecallDisplay.from_estimator` and
+:func:`PredictionRecallDisplay.from_predictions` functions will plot the
+precision-recall curve as follows.
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
         :target: ../auto_examples/model_selection/plot_precision_recall.html#plot-the-precision-recall-curve
