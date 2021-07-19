@@ -21,13 +21,13 @@ Note that the use of ``memory`` to enable caching becomes interesting when the
 fitting of a transformer is costly.
 """
 
-# Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
-#
-# License: BSD 3 clause
-
 # %%
 # Illustration of ``Pipeline`` and ``GridSearchCV``
 ###############################################################################
+
+# Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
+#
+# License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
