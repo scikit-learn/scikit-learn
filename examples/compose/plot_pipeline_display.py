@@ -19,16 +19,11 @@ again the same transformers over and over.
 
 Note that the use of ``memory`` to enable caching becomes interesting when the
 fitting of a transformer is costly.
-
-# %%
-Illustration of ``Pipeline`` and ``GridSearchCV``
-###############################################################################
-
-This section illustrates the use of a ``Pipeline`` with ``GridSearchCV``
 """
 
 # Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
-
+#
+# License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,6 +33,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.decomposition import PCA, NMF
 from sklearn.feature_selection import SelectKBest, chi2
+
+# %%
+# Illustration of ``Pipeline`` and ``GridSearchCV``
+###############################################################################
 
 print(__doc__)
 
