@@ -79,10 +79,11 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
         proba = np.c_[proba_neg_class, proba_pos_class]
         return proba
 
+
 # %%
 
 from sklearn.calibration import CalibrationDisplay
-from sklearn.ensemble import RandomForestClassifiers
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 

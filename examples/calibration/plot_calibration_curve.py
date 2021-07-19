@@ -197,7 +197,11 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
         proba = np.c_[proba_neg_class, proba_pos_class]
         return proba
 
-# %%#
+
+# %%
+
+from sklearn.svm import LinearSVC
+
 lr = LogisticRegression(C=1.)
 svc = NaivelyCalibratedLinearSVC(max_iter=10_000)
 svc_isotonic = CalibratedClassifierCV(svc, cv=2, method='isotonic')
