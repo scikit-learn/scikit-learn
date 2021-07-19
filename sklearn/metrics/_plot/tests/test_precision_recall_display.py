@@ -7,9 +7,11 @@ from sklearn.datasets import load_breast_cancer, make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, precision_recall_curve
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
+from sklearn.utils import shuffle
 
 from sklearn.metrics import PrecisionRecallDisplay, plot_precision_recall_curve
 
@@ -246,3 +248,97 @@ def test_precision_recall_display_string_labels(pyplot):
         y, y_pred, pos_label=lr.classes_[1]
     )
     assert display.average_precision == pytest.approx(avg_prec)
+
+
+@pytest.mark.parametrize(
+    "average_precision, estimator_name, expected_label",
+    [
+        (0.9, None, "AP = 0.90"),
+        (None, "my_est", "my_est"),
+        (0.8, "my_est2", "my_est2 (AP = 0.80)"),
+    ],
+)
+def test_default_labels(pyplot, average_precision, estimator_name, expected_label):
+    """Check the default labels used in the display."""
+    precision = np.array([1, 0.5, 0])
+    recall = np.array([0, 0.5, 1])
+    display = PrecisionRecallDisplay(
+        precision,
+        recall,
+        average_precision=average_precision,
+        estimator_name=estimator_name,
+    )
+    display.plot()
+    assert display.line_.get_label() == expected_label
+
+
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_method):
+    # check that we can provide the positive label and display the proper
+    # statistics
+    X, y = load_breast_cancer(return_X_y=True)
+    # create an highly imbalanced version of the breast cancer dataset
+    idx_positive = np.flatnonzero(y == 1)
+    idx_negative = np.flatnonzero(y == 0)
+    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
+    X, y = X[idx_selected], y[idx_selected]
+    X, y = shuffle(X, y, random_state=42)
+    # only use 2 features to make the problem even harder
+    X = X[:, :2]
+    y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        stratify=y,
+        random_state=0,
+    )
+
+    classifier = LogisticRegression()
+    classifier.fit(X_train, y_train)
+
+    # sanity check to be sure the positive class is classes_[0] and that we
+    # are betrayed by the class imbalance
+    assert classifier.classes_.tolist() == ["cancer", "not cancer"]
+
+    y_pred = getattr(classifier, response_method)(X_test)
+    y_pred_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 0]
+    y_pred_not_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+
+    if constructor_name == "from_estimator":
+        display = PrecisionRecallDisplay.from_estimator(
+            classifier,
+            X_test,
+            y_test,
+            pos_label="cancer",
+            response_method=response_method,
+        )
+    else:
+        display = PrecisionRecallDisplay.from_predictions(
+            y_test,
+            y_pred_cancer,
+            pos_label="cancer",
+        )
+    # we should obtain the statistics of the "cancer" class
+    avg_prec_limit = 0.65
+    assert display.average_precision < avg_prec_limit
+    assert -np.trapz(display.precision, display.recall) < avg_prec_limit
+
+    # otherwise we should obtain the statistics of the "not cancer" class
+    if constructor_name == "from_estimator":
+        display = PrecisionRecallDisplay.from_estimator(
+            classifier,
+            X_test,
+            y_test,
+            response_method=response_method,
+            pos_label="not cancer",
+        )
+    else:
+        display = PrecisionRecallDisplay.from_predictions(
+            y_test,
+            y_pred_not_cancer,
+            pos_label="not cancer",
+        )
+    avg_prec_limit = 0.95
+    assert display.average_precision > avg_prec_limit
+    assert -np.trapz(display.precision, display.recall) > avg_prec_limit
