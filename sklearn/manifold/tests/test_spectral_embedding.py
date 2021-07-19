@@ -201,6 +201,10 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
 @pytest.mark.filterwarnings(
     "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*"
 )
+# TODO: Remove when pyamg removes the use of pinv2
+@pytest.mark.filterwarnings(
+    "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
+)
 def test_spectral_embedding_amg_solver(seed=36):
     # Test spectral embedding with amg solver
     pytest.importorskip("pyamg")
@@ -250,6 +254,10 @@ def test_spectral_embedding_amg_solver(seed=36):
 @pytest.mark.filterwarnings(
     "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*"
 )
+# TODO: Remove when pyamg removes the use of pinv2
+@pytest.mark.filterwarnings(
+    "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
+)
 def test_spectral_embedding_amg_solver_failure():
     # Non-regression test for amg solver failure (issue #13393 on github)
     pytest.importorskip("pyamg")
@@ -270,7 +278,7 @@ def test_spectral_embedding_amg_solver_failure():
         _assert_equal_with_sign_flipping(embedding, new_embedding, tol=0.05)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will " "change in version 0.22")
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will change in version 0.22")
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)
@@ -395,6 +403,6 @@ def test_spectral_embedding_first_eigen_vector():
 @pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
 def test_spectral_embedding_pairwise_deprecated(affinity):
     se = SpectralEmbedding(affinity=affinity)
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         se._pairwise

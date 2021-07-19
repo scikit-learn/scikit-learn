@@ -85,7 +85,7 @@ def empirical_covariance(X, *, assume_centered=False):
 
     if X.shape[0] == 1:
         warnings.warn(
-            "Only one sample available. " "You may want to reshape your data array"
+            "Only one sample available. You may want to reshape your data array"
         )
 
     if assume_centered:
@@ -218,8 +218,7 @@ class EmpiricalCovariance(BaseEstimator):
         return self
 
     def score(self, X_test, y=None):
-        """Computes the log-likelihood of a Gaussian data set with
-        `self.covariance_` as an estimator of its covariance matrix.
+        """Compute the log-likelihood of a Gaussian data set with `self.covariance_`.
 
         Parameters
         ----------
@@ -247,8 +246,7 @@ class EmpiricalCovariance(BaseEstimator):
         return res
 
     def error_norm(self, comp_cov, norm="frobenius", scaling=True, squared=True):
-        """Computes the Mean Squared Error between two covariance estimators.
-        (In the sense of the Frobenius norm).
+        """Compute the Mean Squared Error between two covariance estimators.
 
         Parameters
         ----------
@@ -299,7 +297,7 @@ class EmpiricalCovariance(BaseEstimator):
         return result
 
     def mahalanobis(self, X):
-        """Computes the squared Mahalanobis distances of given observations.
+        """Compute the squared Mahalanobis distances of given observations.
 
         Parameters
         ----------

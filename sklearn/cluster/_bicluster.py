@@ -108,8 +108,9 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         legal_svd_methods = ("randomized", "arpack")
         if self.svd_method not in legal_svd_methods:
             raise ValueError(
-                "Unknown SVD method: '{0}'. svd_method must be"
-                " one of {1}.".format(self.svd_method, legal_svd_methods)
+                "Unknown SVD method: '{0}'. svd_method must be one of {1}.".format(
+                    self.svd_method, legal_svd_methods
+                )
             )
 
     def fit(self, X, y=None):
@@ -475,8 +476,9 @@ class SpectralBiclustering(BaseSpectral):
         legal_methods = ("bistochastic", "scale", "log")
         if self.method not in legal_methods:
             raise ValueError(
-                "Unknown method: '{0}'. method must be"
-                " one of {1}.".format(self.method, legal_methods)
+                "Unknown method: '{0}'. method must be one of {1}.".format(
+                    self.method, legal_methods
+                )
             )
         try:
             int(self.n_clusters)
@@ -499,14 +501,15 @@ class SpectralBiclustering(BaseSpectral):
             )
         if self.n_best < 1:
             raise ValueError(
-                "Parameter n_best must be greater than 0,"
-                " but its value is {}".format(self.n_best)
+                "Parameter n_best must be greater than 0, but its value is {}".format(
+                    self.n_best
+                )
             )
         if self.n_best > self.n_components:
             raise ValueError(
-                "n_best cannot be larger than"
-                " n_components, but {} >  {}"
-                "".format(self.n_best, self.n_components)
+                "n_best cannot be larger than n_components, but {} >  {}".format(
+                    self.n_best, self.n_components
+                )
             )
 
     def _fit(self, X):

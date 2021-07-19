@@ -135,7 +135,7 @@ def test_to_ascii():
 @pytest.mark.parametrize("Vectorizer", (CountVectorizer, HashingVectorizer))
 def test_word_analyzer_unigrams(Vectorizer):
     wa = Vectorizer(strip_accents="ascii").build_analyzer()
-    text = "J'ai mangé du kangourou  ce midi, " "c'était pas très bon."
+    text = "J'ai mangé du kangourou  ce midi, c'était pas très bon."
     expected = [
         "ai",
         "mange",
@@ -161,7 +161,7 @@ def test_word_analyzer_unigrams(Vectorizer):
 
     # with custom preprocessor
     wa = Vectorizer(preprocessor=uppercase).build_analyzer()
-    text = "J'ai mangé du kangourou  ce midi, " " c'était pas très bon."
+    text = "J'ai mangé du kangourou  ce midi,  c'était pas très bon."
     expected = [
         "AI",
         "MANGE",
@@ -178,7 +178,7 @@ def test_word_analyzer_unigrams(Vectorizer):
 
     # with custom tokenizer
     wa = Vectorizer(tokenizer=split_tokenize, strip_accents="ascii").build_analyzer()
-    text = "J'ai mangé du kangourou  ce midi, " "c'était pas très bon."
+    text = "J'ai mangé du kangourou  ce midi, c'était pas très bon."
     expected = [
         "j'ai",
         "mange",
@@ -432,7 +432,7 @@ def test_countvectorizer_custom_token_pattern_with_several_group():
 
 
 def test_countvectorizer_uppercase_in_vocab():
-    vocabulary = ["Sample", "Upper", "Case" "Vocabulary"]
+    vocabulary = ["Sample", "Upper", "CaseVocabulary"]
     message = (
         "Upper case characters found in"
         " vocabulary while 'lowercase'"
@@ -578,7 +578,7 @@ def test_vectorizer():
     # ascii preprocessor?
     v3.set_params(strip_accents="ascii", lowercase=False)
     processor = v3.build_preprocessor()
-    text = "J'ai mangé du kangourou  ce midi, " "c'était pas très bon."
+    text = "J'ai mangé du kangourou  ce midi, c'était pas très bon."
     expected = strip_accents_ascii(text)
     result = processor(text)
     assert expected == result
@@ -1051,7 +1051,7 @@ def test_pickling_built_processors(factory):
     """
     vec = CountVectorizer()
     function = factory(vec)
-    text = "J'ai mangé du kangourou  ce midi, " "c'était pas très bon."
+    text = "J'ai mangé du kangourou  ce midi, c'était pas très bon."
     roundtripped_function = pickle.loads(pickle.dumps(function))
     expected = function(text)
     result = roundtripped_function(text)
@@ -1222,7 +1222,7 @@ def test_vectorizer_vocab_clone():
     "Vectorizer", (CountVectorizer, TfidfVectorizer, HashingVectorizer)
 )
 def test_vectorizer_string_object_as_input(Vectorizer):
-    message = "Iterable over raw text documents expected, " "string object received."
+    message = "Iterable over raw text documents expected, string object received."
     vec = Vectorizer()
 
     with pytest.raises(ValueError, match=message):
@@ -1550,7 +1550,7 @@ def test_unused_parameters_warn(
         token_pattern=token_pattern,
         analyzer=analyzer,
     )
-    msg = "The parameter %s will not be used" " since %s %s" % (
+    msg = "The parameter %s will not be used since %s %s" % (
         unused_name,
         ovrd_name,
         ovrd_msg,
