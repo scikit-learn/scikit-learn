@@ -1,7 +1,6 @@
 import pytest
 
-from sklearn.base import ClassifierMixin
-from sklearn.base import clone
+from sklearn.base import ClassifierMixin, clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
 from sklearn.exceptions import NotFittedError
@@ -25,30 +24,49 @@ def data_binary(data):
 
 
 @pytest.mark.parametrize("Display", [DetCurveDisplay])
-def test_plot_curve_error_non_binary(pyplot, data, Display):
+def test_display_curve_error_non_binary(pyplot, data, Display):
+    """Check that a proper error is raised when only binary classification is
+    supported."""
     X, y = data
     clf = DecisionTreeClassifier().fit(X, y)
 
     msg = "DecisionTreeClassifier should be a binary classifier"
     with pytest.raises(ValueError, match=msg):
-        DetCurveDisplay.from_estimator(clf, X, y)
+        Display.from_estimator(clf, X, y)
 
 
 @pytest.mark.parametrize(
     "response_method, msg",
-    [("predict_proba", "response method predict_proba is not defined in "
-                       "MyClassifier"),
-     ("decision_function", "response method decision_function is not defined "
-                           "in MyClassifier"),
-     ("auto", "response method decision_function or predict_proba is not "
-              "defined in MyClassifier"),
-     ("bad_method", "response_method must be 'predict_proba', "
-                    "'decision_function' or 'auto'")]
+    [
+        (
+            "predict_proba",
+            "response method predict_proba is not defined in MyClassifier",
+        ),
+        (
+            "decision_function",
+            "response method decision_function is not defined in MyClassifier",
+        ),
+        (
+            "auto",
+            "response method decision_function or predict_proba is not "
+            "defined in MyClassifier",
+        ),
+        (
+            "bad_method",
+            "response_method must be 'predict_proba', 'decision_function' or 'auto'",
+        ),
+    ],
 )
 @pytest.mark.parametrize("Display", [DetCurveDisplay])
-def test_plot_curve_error_no_response(
-    pyplot, data_binary, response_method, msg, Display,
+def test_display_curve_error_no_response(
+    pyplot,
+    data_binary,
+    response_method,
+    msg,
+    Display,
 ):
+    """Check that a proper error is raised when the response method requested
+    is not defined for the given trained classifier."""
     X, y = data_binary
 
     class MyClassifier(ClassifierMixin):
@@ -63,14 +81,15 @@ def test_plot_curve_error_no_response(
 
 
 @pytest.mark.parametrize("Display", [DetCurveDisplay])
-@pytest.mark.parametrize(
-    "constructor_name", ["from_estimator", "from_predictions"]
-)
-def test_plot_curve_estimator_name_multiple_calls(
-    pyplot, data_binary, Display, constructor_name,
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_display_curve_estimator_name_multiple_calls(
+    pyplot,
+    data_binary,
+    Display,
+    constructor_name,
 ):
-    # non-regression test checking that the `name` used when calling
-    # `Display.from_estimator()` is used as well when calling `disp.plot()`
+    """Check that passing `name` when calling `plot` will overwrite the original name
+    in the legend."""
     X, y = data_binary
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
@@ -94,12 +113,19 @@ def test_plot_curve_estimator_name_multiple_calls(
 
 
 @pytest.mark.parametrize(
-    "clf", [LogisticRegression(),
-            make_pipeline(StandardScaler(), LogisticRegression()),
-            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
-                          LogisticRegression())])
+    "clf",
+    [
+        LogisticRegression(),
+        make_pipeline(StandardScaler(), LogisticRegression()),
+        make_pipeline(
+            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
+        ),
+    ],
+)
 @pytest.mark.parametrize("Display", [DetCurveDisplay])
-def test_plot_det_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
+def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
+    """Check that a proper error is raised when the classifier is not
+    fitted."""
     X, y = data_binary
     # clone since we parametrize the test and the classifier will be fitted
     # when testing the second and subsequent plotting function
