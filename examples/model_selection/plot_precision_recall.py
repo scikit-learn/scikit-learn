@@ -128,7 +128,7 @@ classifier.fit(X_train, y_train)
 
 # %%
 # Plot the Precision-Recall curve
-# ................................
+# ...............................
 #
 # To plot the precision-recall curve, you should use
 # :class:`~sklearn.metrics.PrecisionRecallDisplay`. Indeed, there is two
@@ -157,7 +157,7 @@ _ = display.ax_.set_title("2-class Precision-Recall curve")
 
 # %%
 # In multi-label settings
-# ------------------------
+# -----------------------
 #
 # The precision-recall curve does not support the multilabel setting. However,
 # one can decide how to handle this case. We show such an example below.
@@ -193,7 +193,7 @@ y_score = classifier.decision_function(X_test)
 
 # %%
 # The average precision score in multi-label settings
-# ....................................................
+# ...................................................
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import average_precision_score
 
@@ -213,7 +213,7 @@ average_precision["micro"] = average_precision_score(Y_test, y_score, average="m
 
 # %%
 # Plot the micro-averaged Precision-Recall curve
-# ...............................................
+# ..............................................
 display = PrecisionRecallDisplay(
     recall=recall["micro"],
     precision=precision["micro"],
@@ -224,7 +224,7 @@ _ = display.ax_.set_title("Micro-averaged over all classes")
 
 # %%
 # Plot Precision-Recall curve for each class and iso-f1 curves
-# .............................................................
+# ............................................................
 import matplotlib.pyplot as plt
 from itertools import cycle
 
