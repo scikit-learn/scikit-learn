@@ -282,8 +282,8 @@ for i, (clf, name) in enumerate(clf_list):
 
 # %%
 # As above, calibration improves both :ref:`brier_score_loss` and
-# :ref:`log_loss`
-# -
+# :ref:`log_loss`.
+#
 # Summary
 # -------
 #
