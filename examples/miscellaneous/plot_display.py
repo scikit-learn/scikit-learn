@@ -25,7 +25,8 @@ steps = [('reduce_dim', PCA()), ('clf', SVC())]
 pipe = Pipeline(steps)
 pipe
 
-# to visualize the diagram, change display='diagram'
+# %%
+# To visualize the diagram, change display='diagram'
 set_config(display='diagram')
 
 pipe
