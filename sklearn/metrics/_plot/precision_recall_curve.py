@@ -4,7 +4,7 @@ from .base import _get_response
 from .. import average_precision_score
 from .. import precision_recall_curve
 from .._base import _check_pos_label_consistency
-from .._classification import check_consistent_length, unique_labels
+from .._classification import check_consistent_length
 
 from ...utils import check_matplotlib_support, deprecated
 
@@ -282,8 +282,7 @@ class PrecisionRecallDisplay:
 
         pos_label : str or int, default=None
             The class considered as the positive class when computing the
-            precision and recall metrics. By default, `estimators.classes_[1]`
-            is considered as the positive class.
+            precision and recall metrics.
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -318,11 +317,7 @@ class PrecisionRecallDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
 
-        # for error consistency with other Displays used for binary
-        # classification, we need to make the following checks
         check_consistent_length(y_true, y_pred, sample_weight)
-        # check for mixed types
-        unique_labels(y_true, y_pred)
         pos_label = _check_pos_label_consistency(pos_label, y_true)
 
         precision, recall, _ = precision_recall_curve(
