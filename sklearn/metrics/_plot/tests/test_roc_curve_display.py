@@ -3,19 +3,19 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 
-# from sklearn.compose import make_column_transformer
+from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
 
-# from sklearn.datasets import load_breast_cancer
-# from sklearn.exceptions import NotFittedError
+from sklearn.datasets import load_breast_cancer
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc
 
-# from sklearn.model_selection import train_test_split
-# from sklearn.pipeline import make_pipeline
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import shuffle
 
 
 from sklearn.metrics import RocCurveDisplay
@@ -43,7 +43,7 @@ def data_binary(data):
         ("from_predictions", "Classifier"),
     ],
 )
-def test_roc_curve_display(
+def test_roc_curve_display_plotting(
     pyplot,
     response_method,
     data_binary,
@@ -53,6 +53,7 @@ def test_roc_curve_display(
     constructor_name,
     default_name,
 ):
+    """Check the overall plotting behaviour."""
     X, y = data_binary
 
     pos_label = None
@@ -124,87 +125,125 @@ def test_roc_curve_display(
     assert display.ax_.get_xlabel() == expected_xlabel
 
 
-# @pytest.mark.parametrize(
-#     "clf",
-#     [
-#         LogisticRegression(),
-#         make_pipeline(StandardScaler(), LogisticRegression()),
-#         make_pipeline(
-#             make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
-#         ),
-#     ],
-# )
-# def test_roc_curve_not_fitted_errors(pyplot, data_binary, clf):
-#     X, y = data_binary
-#     with pytest.raises(NotFittedError):
-#         plot_roc_curve(clf, X, y)
-#     clf.fit(X, y)
-#     disp = plot_roc_curve(clf, X, y)
-#     assert clf.__class__.__name__ in disp.line_.get_label()
-#     assert disp.estimator_name == clf.__class__.__name__
+@pytest.mark.parametrize(
+    "clf",
+    [
+        LogisticRegression(),
+        make_pipeline(StandardScaler(), LogisticRegression()),
+        make_pipeline(
+            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
+        ),
+    ],
+)
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructor_name):
+    """Check the behaviour with complex pipeline."""
+    X, y = data_binary
+
+    if constructor_name == "from_estimator":
+        with pytest.raises(NotFittedError):
+            RocCurveDisplay.from_estimator(clf, X, y)
+
+    clf.fit(X, y)
+
+    if constructor_name == "from_estimator":
+        display = RocCurveDisplay.from_estimator(clf, X, y)
+        name = clf.__class__.__name__
+    else:
+        display = RocCurveDisplay.from_predictions(y, y)
+        name = "Classifier"
+
+    assert name in display.line_.get_label()
+    assert display.estimator_name == name
 
 
-# @pytest.mark.parametrize(
-#     "roc_auc, estimator_name, expected_label",
-#     [
-#         (0.9, None, "AUC = 0.90"),
-#         (None, "my_est", "my_est"),
-#         (0.8, "my_est2", "my_est2 (AUC = 0.80)"),
-#     ],
-# )
-# def test_default_labels(pyplot, roc_auc, estimator_name, expected_label):
-#     fpr = np.array([0, 0.5, 1])
-#     tpr = np.array([0, 0.5, 1])
-#     disp = RocCurveDisplay(
-#         fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=estimator_name
-#     ).plot()
-#     assert disp.line_.get_label() == expected_label
+@pytest.mark.parametrize(
+    "roc_auc, estimator_name, expected_label",
+    [
+        (0.9, None, "AUC = 0.90"),
+        (None, "my_est", "my_est"),
+        (0.8, "my_est2", "my_est2 (AUC = 0.80)"),
+    ],
+)
+def test_roc_curve_display_default_labels(
+    pyplot, roc_auc, estimator_name, expected_label
+):
+    """Check the default labels used in the display."""
+    fpr = np.array([0, 0.5, 1])
+    tpr = np.array([0, 0.5, 1])
+    disp = RocCurveDisplay(
+        fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=estimator_name
+    ).plot()
+    assert disp.line_.get_label() == expected_label
 
 
-# @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
-# def test_plot_roc_curve_pos_label(pyplot, response_method):
-#     # check that we can provide the positive label and display the proper
-#     # statistics
-#     X, y = load_breast_cancer(return_X_y=True)
-#     # create an highly imbalanced
-#     idx_positive = np.flatnonzero(y == 1)
-#     idx_negative = np.flatnonzero(y == 0)
-#     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
-#     X, y = X[idx_selected], y[idx_selected]
-#     X, y = shuffle(X, y, random_state=42)
-#     # only use 2 features to make the problem even harder
-#     X = X[:, :2]
-#     y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
-#     X_train, X_test, y_train, y_test = train_test_split(
-#         X,
-#         y,
-#         stratify=y,
-#         random_state=0,
-#     )
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
+    # check that we can provide the positive label and display the proper
+    # statistics
+    X, y = load_breast_cancer(return_X_y=True)
+    # create an highly imbalanced
+    idx_positive = np.flatnonzero(y == 1)
+    idx_negative = np.flatnonzero(y == 0)
+    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
+    X, y = X[idx_selected], y[idx_selected]
+    X, y = shuffle(X, y, random_state=42)
+    # only use 2 features to make the problem even harder
+    X = X[:, :2]
+    y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        stratify=y,
+        random_state=0,
+    )
 
-#     classifier = LogisticRegression()
-#     classifier.fit(X_train, y_train)
+    classifier = LogisticRegression()
+    classifier.fit(X_train, y_train)
 
-#     # sanity check to be sure the positive class is classes_[0] and that we
-#     # are betrayed by the class imbalance
-#     assert classifier.classes_.tolist() == ["cancer", "not cancer"]
+    # sanity check to be sure the positive class is classes_[0] and that we
+    # are betrayed by the class imbalance
+    assert classifier.classes_.tolist() == ["cancer", "not cancer"]
 
-#     disp = plot_roc_curve(
-#         classifier, X_test, y_test, pos_label="cancer",
-#         response_method=response_method
-#     )
+    y_pred = getattr(classifier, response_method)(X_test)
+    y_pred_cancer = -1 * y_pred if y_pred.ndim == 1 else y_pred[:, 0]
+    y_pred_not_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
 
-#     roc_auc_limit = 0.95679
+    if constructor_name == "from_estimator":
+        display = RocCurveDisplay.from_estimator(
+            classifier,
+            X_test,
+            y_test,
+            pos_label="cancer",
+            response_method=response_method,
+        )
+    else:
+        display = RocCurveDisplay.from_predictions(
+            y_test,
+            y_pred_cancer,
+            pos_label="cancer",
+        )
 
-#     assert disp.roc_auc == pytest.approx(roc_auc_limit)
-#     assert np.trapz(disp.tpr, disp.fpr) == pytest.approx(roc_auc_limit)
+    roc_auc_limit = 0.95679
 
-#     disp = plot_roc_curve(
-#         classifier,
-#         X_test,
-#         y_test,
-#         response_method=response_method,
-#     )
+    assert display.roc_auc == pytest.approx(roc_auc_limit)
+    assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
 
-#     assert disp.roc_auc == pytest.approx(roc_auc_limit)
-#     assert np.trapz(disp.tpr, disp.fpr) == pytest.approx(roc_auc_limit)
+    if constructor_name == "from_estimator":
+        display = RocCurveDisplay.from_estimator(
+            classifier,
+            X_test,
+            y_test,
+            response_method=response_method,
+            pos_label="not cancer",
+        )
+    else:
+        display = RocCurveDisplay.from_predictions(
+            y_test,
+            y_pred_not_cancer,
+            pos_label="not cancer",
+        )
+
+    assert display.roc_auc == pytest.approx(roc_auc_limit)
+    assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
