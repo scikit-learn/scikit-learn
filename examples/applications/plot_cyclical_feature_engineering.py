@@ -446,7 +446,7 @@ splines_df = pd.DataFrame(
     splines,
     columns=[f"spline_{i}" for i in range(splines.shape[1])],
 )
-pd.concat([hour_df, splines_df], axis="columns").plot(x="hour")
+pd.concat([hour_df, splines_df], axis="columns").plot(x="hour", cmap=plt.cm.tab20b)
 _ = plt.title("Periodic spline-based encoding for the 'hour' feature")
 
 
