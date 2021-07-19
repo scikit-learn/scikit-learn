@@ -300,6 +300,11 @@ Changelog
   interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
   :user:`murata-yu`.
 
+- |Fix| Fixed a bug in :class:`ensemble.AdaBoostClassifier` and
+  :class:`ensemble.AdaBoostRegressor` where the `sample_weight` parameter
+  got overwritten during `fit`.
+  :pr:`20534` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
