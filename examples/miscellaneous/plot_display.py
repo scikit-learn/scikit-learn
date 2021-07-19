@@ -9,13 +9,12 @@ classifier followed by dimensionality reduction.
 The default configuration for displaying a pipeline is 'text' where
 `set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
 use `set_config(display='diagram')` and then call the pipeline object.
+"""
 
 # %%
-Illustration of ``Pipeline`` and ``SVC`` and ``PCA``
+# Illustration of `Pipeline` and `PCA` and `SVC`
 ###############################################################################
-
-This section illustrates the use of a ``Pipeline`` with ``SVC`` and ``PCA``
-"""
+# This section constructs a pipeline and displays its text representation.
 
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
