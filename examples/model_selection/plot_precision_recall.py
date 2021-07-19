@@ -92,52 +92,81 @@ matrix as a binary prediction (micro-averaging).
 """
 # %%
 # In binary classification settings
-# --------------------------------------------------------
+# ---------------------------------
 #
-# Create simple data
-# ..................
+# Dataset and model
+# .................
 #
-# Try to differentiate the two first classes of the iris data
-from sklearn import svm, datasets
-from sklearn.model_selection import train_test_split
+# We will try to create a linear model to differentiate two types of irises.
+# We will use a Linear SVC classifier.
 import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
 
-iris = datasets.load_iris()
-X = iris.data
-y = iris.target
+X, y = load_iris(return_X_y=True)
 
 # Add noisy features
 random_state = np.random.RandomState(0)
 n_samples, n_features = X.shape
-X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
+X = np.concatenate([X, random_state.randn(n_samples, 200 * n_features)], axis=1)
 
 # Limit to the two first classes, and split into training and test
 X_train, X_test, y_train, y_test = train_test_split(
     X[y < 2], y[y < 2], test_size=0.5, random_state=random_state
 )
 
-# Create a simple classifier
-classifier = svm.LinearSVC(random_state=random_state)
+# %%
+# Linear SVC will expect each feature to have a similar range of values. Thus,
+# we will first scale the data using a
+# :class:`~sklearn.preprocessing.StandardScaler`.
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import LinearSVC
+
+classifier = make_pipeline(StandardScaler(), LinearSVC(random_state=random_state))
 classifier.fit(X_train, y_train)
-y_score = classifier.decision_function(X_test)
 
 # %%
 # Plot the Precision-Recall curve
 # ................................
+#
+# To plot the precision-recall curve, you should use
+# :class:`~sklearn.metrics.PrecisionRecallDisplay`. Indeed, there is two
+# methods available depending if you already computed the predictions of the
+# classifier or not.
+#
+# Let's first plot the precision-recall curve without the classifier
+# predictions. Thus, we should use
+# :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` that will
+# compute the predictions for us before to plot the curve.
 from sklearn.metrics import PrecisionRecallDisplay
 
-display = PrecisionRecallDisplay.from_estimator(classifier, X_test, y_test)
-display.ax_.set_title("2-class Precision-Recall curve")
+display = PrecisionRecallDisplay.from_estimator(
+    classifier, X_test, y_test, name="LinearSVC"
+)
+_ = display.ax_.set_title("2-class Precision-Recall curve")
+
+# %%
+# In the case, that we already got the estimated probabilities or scores for
+# our model, then we can use
+# :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions`.
+y_score = classifier.decision_function(X_test)
+
+display = PrecisionRecallDisplay.from_predictions(y_test, y_score, name="LinearSVC")
+_ = display.ax_.set_title("2-class Precision-Recall curve")
 
 # %%
 # In multi-label settings
 # ------------------------
 #
+# The precision-recall curve does not support the multilabel setting. However,
+# one can decide how to handle this case. We show such an example below.
+#
 # Create multi-label data, fit, and predict
-# ...........................................
+# .........................................
 #
 # We create a multi-label dataset, to illustrate the precision-recall in
-# multi-label settings
+# multi-label settings.
 
 from sklearn.preprocessing import label_binarize
 
@@ -150,11 +179,14 @@ X_train, X_test, Y_train, Y_test = train_test_split(
     X, Y, test_size=0.5, random_state=random_state
 )
 
-# We use OneVsRestClassifier for multi-label prediction
+# %%
+# We use :class:`~sklearn.multiclass.OneVsRestClassifier` for multi-label
+# prediction.
 from sklearn.multiclass import OneVsRestClassifier
 
-# Run classifier
-classifier = OneVsRestClassifier(svm.LinearSVC(random_state=random_state))
+classifier = OneVsRestClassifier(
+    make_pipeline(StandardScaler(), LinearSVC(random_state=random_state))
+)
 classifier.fit(X_train, Y_train)
 y_score = classifier.decision_function(X_test)
 
@@ -235,5 +267,3 @@ ax.legend(handles=handles, labels=labels, loc="best")
 ax.set_title("Extension of Precision-Recall curve to multi-class")
 
 plt.show()
-
-# %%
