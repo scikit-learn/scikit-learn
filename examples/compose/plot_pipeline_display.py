@@ -25,6 +25,10 @@ fitting of a transformer is costly.
 #
 # License: BSD 3 clause
 
+# %%
+# Illustration of ``Pipeline`` and ``GridSearchCV``
+###############################################################################
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
@@ -33,10 +37,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.decomposition import PCA, NMF
 from sklearn.feature_selection import SelectKBest, chi2
-
-# %%
-# Illustration of ``Pipeline`` and ``GridSearchCV``
-###############################################################################
 
 print(__doc__)
 
