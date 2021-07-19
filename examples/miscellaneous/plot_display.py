@@ -1,6 +1,6 @@
 """
 =================================================================
-Pipeline: chaining a SVC and PCA
+Displaying a Pipeline chaining a PCA and SVC
 =================================================================
 
 This example constructs a pipeline that does support vector
