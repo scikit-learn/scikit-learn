@@ -106,6 +106,7 @@ y = minmax_scale(y_full)
 # plasma does not exist in matplotlib < 1.5
 cmap = getattr(cm, 'plasma_r', cm.hot_r)
 
+
 def create_axes(title, figsize=(16, 6)):
     fig = plt.figure(figsize=figsize)
     fig.suptitle(title)
