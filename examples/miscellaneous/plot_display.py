@@ -3,8 +3,8 @@
 Displaying a Pipeline chaining a PCA and SVC
 =================================================================
 
-This example constructs a pipeline that does support vector
-classifier followed by dimensionality reduction.
+This example constructs a pipeline that does dimensionality reduction followed by a
+support vector classifier.
 
 The default configuration for displaying a pipeline is 'text' where
 `set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
