@@ -284,7 +284,8 @@ class PrecisionRecallDisplay:
             precision and recall metrics.
 
         name : str, default=None
-            Name for labeling curve. If `None`, no name is used.
+            Name for labeling curve. If `None`, name will be set to
+            `"Classifier"`.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
@@ -331,6 +332,8 @@ class PrecisionRecallDisplay:
         average_precision = average_precision_score(
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
         )
+
+        name = name if name is not None else "Classifier"
 
         viz = PrecisionRecallDisplay(
             precision=precision,

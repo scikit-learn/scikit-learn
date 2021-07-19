@@ -127,7 +127,7 @@ def test_precision_recall_display_plotting(pyplot, constructor_name, response_me
     "constructor_name, default_label",
     [
         ("from_estimator", "LogisticRegression (AP = {:.2f})"),
-        ("from_predictions", "AP = {:.2f}"),
+        ("from_predictions", "Classifier (AP = {:.2f})"),
     ],
 )
 def test_precision_recall_display_name(pyplot, constructor_name, default_label):
