@@ -447,6 +447,14 @@ Changelog
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
 
+  - |API| :class:`metrics.PrecisionRecallDisplay` exposes two class methods
+  :func:`~metrics.PrecisionRecallDisplay.from_estimator` and
+  :func:`~metrics.PrecisionRecallDisplay.from_predictions` allowing to create
+  a precision-recall curve using an estimator or the predictions.
+  :func:`metrics.plot_precision_recall_curve` is deprecated in favor of these
+  two class methods and will be removed in 1.2.
+  :pr:`20552` by `Guillaume Lemaitre`_.
+
 - |Enhancement| A fix to raise an error in :func:`metrics.hinge_loss` when
   ``pred_decision`` is 1d whereas it is a multiclass classification or when
   ``pred_decision`` parameter is not consistent with the ``labels`` parameter.
