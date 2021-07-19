@@ -603,7 +603,7 @@ cyclic_spline_linear_pipeline[:-1].transform(X).shape
 #
 # However, it is possible to use the `PolynomialFeatures` class on coarse
 # grained splined encoded hours to model the "workingday"/"hours" interaction
-# explicit without introducing too many new variables:
+# explicitly without introducing too many new variables:
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import FeatureUnion
 
