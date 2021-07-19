@@ -179,6 +179,7 @@ import numpy as np
 
 from sklearn.svm import LinearSVC
 
+
 class NaivelyCalibratedLinearSVC(LinearSVC):
     """LinearSVC with `predict_proba` method that naively scales
     `decision_function` output for binary classification."""
