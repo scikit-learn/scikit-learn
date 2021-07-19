@@ -43,7 +43,7 @@ from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
-from .metrics._plot.base import _check_classifier_response_method
+from .metrics._plot.base import _get_response
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -955,11 +955,11 @@ class CalibrationDisplay:
 
     Parameters
     -----------
-    prob_true : ndarray
+    prob_true : ndarray of shape (n_bins,)
         The proportion of samples whose class is the positive class (fraction
         of positives), in each bin.
 
-    prob_pred : ndarray
+    prob_pred : ndarray of shape (n_bins,)
         The mean predicted probability in each bin.
 
     y_prob : ndarray of shape (n_samples,)
@@ -1003,7 +1003,7 @@ class CalibrationDisplay:
     >>> y_prob = clf.predict_proba(X_test)[:, 1]
     >>> prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
-    >>> disp.plot() # doctest: +SKIP
+    >>> disp.plot()
     """
 
     def __init__(self, prob_true, prob_pred, y_prob, *, name=None):
@@ -1160,7 +1160,7 @@ class CalibrationDisplay:
         >>> clf.fit(X_train, y_train)
         LogisticRegression(random_state=0)
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
-        >>> plt.show()  # doctest: +SKIP
+        >>> plt.show()
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
@@ -1168,21 +1168,11 @@ class CalibrationDisplay:
         if not is_classifier(estimator):
             raise ValueError("'estimator' should be a fitted classifier.")
 
-        prediction_method = _check_classifier_response_method(
-            estimator, response_method="predict_proba"
+        # FIXME: `pos_label` should not be set to None
+        # We should allow any int or string in `calibration_curve`.
+        y_pred, pos_label = _get_response(
+            X, estimator, response_method="predict_proba", pos_label=None
         )
-        y_prob = prediction_method(X)
-
-        binary_error = "Only binary classification is supported."
-        if not len(estimator.classes_) == 2:
-            raise ValueError(binary_error)
-        if y_prob.ndim == 1:
-            raise ValueError("'estimator.predict_proba' needs to return a 2d " "array.")
-        else:
-            if y_prob.shape[1] != 2:
-                raise ValueError(binary_error)
-            else:
-                y_prob = y_prob[:, 1]
 
         name = name if name is not None else estimator.__class__.__name__
         return cls.from_predictions(
@@ -1283,7 +1273,7 @@ class CalibrationDisplay:
         LogisticRegression(random_state=0)
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
-        >>> plt.show()  # doctest: +SKIP
+        >>> plt.show()
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)

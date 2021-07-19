@@ -39,6 +39,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
 # Calibration curves
 # ------------------
 #
+# Gaussian Naive Bayes
+# ^^^^^^^^^^^^^^^^^^^^
+#
 # First, we will compare:
 #
 # * :class:`~sklearn.linear_model.LogisticRegression` (used as baseline
@@ -51,7 +54,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
 # Calibration curves for all 4 conditions are plotted below, with the average
 # predicted probability for each bin on the x-axis and the fraction of positive
 # classes in each bin on the y-axis.
-#
 
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
@@ -70,21 +72,23 @@ clf_list = [(lr, 'Logistic'),
             (gnb_isotonic, 'Naive Bayes + Isotonic'),
             (gnb_sigmoid, 'Naive Bayes + Sigmoid')]
 
+# %%
 fig = plt.figure(figsize=(10, 10))
 gs = GridSpec(4, 2)
 colors = plt.cm.get_cmap('Dark2')
 
-ax1 = fig.add_subplot(gs[:2, :2])
-viz_objects = {}
+ax_calibration_curve = fig.add_subplot(gs[:2, :2])
+calibration_displays = {}
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
-    viz = CalibrationDisplay.from_estimator(
-        clf, X_test, y_test, n_bins=10, name=name, ax=ax1, color=colors(i)
+    display = CalibrationDisplay.from_estimator(
+        clf, X_test, y_test, n_bins=10, name=name, ax=ax_calibration_curve,
+        color=colors(i)
     )
-    viz_objects[name] = viz
+    calibration_displays[name] = display
 
-ax1.grid()
-ax1.set_title('Calibration plots (Naive Bayes)')
+ax_calibration_curve.grid()
+ax_calibration_curve.set_title('Calibration plots (Naive Bayes)')
 
 # Add histogram
 grid_positions = [(2, 0), (2, 1), (3, 0), (3, 1)]
@@ -93,7 +97,7 @@ for i, (_, name) in enumerate(clf_list):
     ax = fig.add_subplot(gs[row, col])
 
     ax.hist(
-        viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
+        calibration_displays[name].y_prob, range=(0, 1), bins=10, label=name,
         color=colors(i)
     )
     ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
@@ -107,18 +111,48 @@ plt.show()
 # the redundant features which violate the assumption of feature-independence
 # and result in an overly confident classifier, which is indicated by the
 # typical transposed-sigmoid curve. Calibration of the probabilities of
-# :class:`~sklearn.naive_bayes.GaussianNB` with isotonic regression can fix
-# this issue as can be seen from the nearly diagonal calibration curve. Sigmoid
-# regression also improves calibration slightly,
+# :class:`~sklearn.naive_bayes.GaussianNB` with :ref:`isotonic` can fix
+# this issue as can be seen from the nearly diagonal calibration curve.
+# :ref:sigmoid regression `<sigmoid_regressor>` also improves calibration
+# slightly,
 # albeit not as strongly as the non-parametric isotonic regression. This can be
 # attributed to the fact that we have plenty of calibration data such that the
 # greater flexibility of the non-parametric model can be exploited.
 #
-# Below we show the Brier loss, log loss, precision, recall, F1 score (see
-# :ref:`User Guide <precision_recall_f_measure_metrics>`) and :ref:`ROC AUC
-# <roc_metrics>`. Notice that
-# although calibration improves the Brier loss (a metric composed of
-# calibration term and refinement term) and :ref:`log_loss`, it does not
+# Below we will make a quantitative analysis considering several classification
+# metrics: :ref:`brier_score_loss`, :ref:`log_loss`,
+# :ref:`precision, recall, F1 score <precision_recall_f_measure_metrics>` and
+# :ref:`ROC AUC <roc_metrics>`.
+
+from collections import defaultdict
+
+import pandas as pd
+
+from sklearn.metrics import (precision_score, recall_score, f1_score,
+                             brier_score_loss, log_loss, roc_auc_score)
+
+scores = defaultdict(list)
+for i, (clf, name) in enumerate(clf_list):
+    clf.fit(X_train, y_train)
+    y_prob = clf.predict_proba(X_test)
+    y_pred = clf.predict(X_test)
+    scores["Classifier"].append(name)
+
+    for metric in [brier_score_loss, log_loss]:
+        score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
+        scores[score_name].append(metric(y_test, y_prob[:, 1]))
+
+    for metric in [precision_score, recall_score, f1_score, roc_auc_score]:
+        score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
+        scores[score_name].append(metric(y_test, y_pred))
+
+    score_df = pd.DataFrame(scores).set_index("Classifier")
+    score_df.round(decimals=3)
+
+# %%
+# Notice that although calibration improves the :ref:`brier_score_loss` (a
+# metric composed
+# of calibration term and refinement term) and :ref:`log_loss`, it does not
 # significantly alter the prediction accuracy measures (precision, recall and
 # F1 score).
 # This is because calibration should not significantly change prediction
@@ -129,43 +163,9 @@ plt.show()
 # Further, ROC AUC, should not change at all because calibration is a
 # monotonic transformation. Indeed, no rank metrics are affected by
 # calibration.
-
-import pandas as pd
-
-from sklearn.metrics import (precision_score, recall_score, f1_score,
-                             brier_score_loss, log_loss, roc_auc_score)
-
-index = []
-brier = []
-logloss = []
-precision = []
-recall = []
-f1 = []
-roc_auc = []
-
-for i, (clf, name) in enumerate(clf_list):
-    clf.fit(X_train, y_train)
-    y_proba = clf.predict_proba(X_test)
-    y_pred = clf.predict(X_test)
-
-    # Create DataFrame index
-    index.append(name)
-    # Store column data
-    brier.append(brier_score_loss(y_test, y_proba[:, 1]))
-    logloss.append(log_loss(y_test, y_proba[:, 1]))
-    precision.append(precision_score(y_test, y_pred))
-    recall.append(recall_score(y_test, y_pred))
-    f1.append(f1_score(y_test, y_pred))
-    roc_auc.append(roc_auc_score(y_test, y_pred))
-
-score_df = pd.DataFrame(
-    data={'Brier loss': brier, 'Log loss': logloss, 'Precision': precision,
-          'Recall': recall, 'F1': f1, 'ROC AUC': roc_auc},
-    index=index,
-)
-score_df.round(3)
-
-# %%
+#
+# Linear support vector classifier
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Next, we will compare:
 #
 # * :class:`~sklearn.linear_model.LogisticRegression` (baseline)
@@ -174,7 +174,6 @@ score_df.round(3)
 #   :term:`decision_function` into [0, 1] by applying min-max scaling.
 # * :class:`~sklearn.svm.LinearSVC` with isotonic and sigmoid
 #   calibration (see :ref:`User Guide <calibration>`)
-#
 
 import numpy as np
 
@@ -198,7 +197,7 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
         proba = np.c_[proba_neg_class, proba_pos_class]
         return proba
 
-
+# %%#
 lr = LogisticRegression(C=1.)
 svc = NaivelyCalibratedLinearSVC(max_iter=10_000)
 svc_isotonic = CalibratedClassifierCV(svc, cv=2, method='isotonic')
@@ -209,20 +208,22 @@ clf_list = [(lr, 'Logistic'),
             (svc_isotonic, 'SVC + Isotonic'),
             (svc_sigmoid, 'SVC + Sigmoid')]
 
+# %%
 fig = plt.figure(figsize=(10, 10))
 gs = GridSpec(4, 2)
 
-ax1 = fig.add_subplot(gs[:2, :2])
-viz_objects = {}
+ax_calibration_curve = fig.add_subplot(gs[:2, :2])
+calibration_displays = {}
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
-    viz = CalibrationDisplay.from_estimator(
-        clf, X_test, y_test, n_bins=10, name=name, ax=ax1, color=colors(i)
+    display = CalibrationDisplay.from_estimator(
+        clf, X_test, y_test, n_bins=10, name=name, ax=ax_calibration_curve,
+        color=colors(i)
     )
-    viz_objects[name] = viz
+    calibration_displays[name] = display
 
-ax1.grid()
-ax1.set_title('Calibration plots (SVC)')
+ax_calibration_curve.grid()
+ax_calibration_curve.set_title('Calibration plots (SVC)')
 
 # Add histogram
 grid_positions = [(2, 0), (2, 1), (3, 0), (3, 1)]
@@ -231,7 +232,7 @@ for i, (_, name) in enumerate(clf_list):
     ax = fig.add_subplot(gs[row, col])
 
     ax.hist(
-        viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
+        calibration_displays[name].y_prob, range=(0, 1), bins=10, label=name,
         color=colors(i)
     )
     ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
@@ -253,41 +254,32 @@ plt.show()
 # in Niculescu-Mizil & Caruana [1]_.
 #
 # Both kinds of calibration (sigmoid and isotonic) can fix this issue and
-# yield nearly identical results.
+# yield similar results.
 #
 # As before, we show the Brier loss, precision, recall and F1 score below.
 
-index = []
-brier = []
-logloss = []
-precision = []
-recall = []
-f1 = []
-roc_auc = []
-
+scores = defaultdict(list)
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
-    y_proba = clf.predict_proba(X_test)
+    y_prob = clf.predict_proba(X_test)
     y_pred = clf.predict(X_test)
+    scores["Classifier"].append(name)
 
-    # Create DataFrame index
-    index.append(name)
-    # Store column data
-    brier.append(brier_score_loss(y_test, y_proba[:, 1]))
-    logloss.append(log_loss(y_test, y_proba[:, 1]))
-    precision.append(precision_score(y_test, y_pred))
-    recall.append(recall_score(y_test, y_pred))
-    f1.append(f1_score(y_test, y_pred))
-    roc_auc.append(roc_auc_score(y_test, y_pred))
+    for metric in [brier_score_loss, log_loss]:
+        score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
+        scores[score_name].append(metric(y_test, y_prob[:, 1]))
 
-score_df = pd.DataFrame(
-    data={'Brier loss': brier, 'Log loss': logloss, 'Precision': precision,
-          'Recall': recall, 'F1': f1, 'ROC AUC': roc_auc},
-    index=index,
-)
-score_df.round(3)
+    for metric in [precision_score, recall_score, f1_score, roc_auc_score]:
+        score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
+        scores[score_name].append(metric(y_test, y_pred))
+
+    score_df = pd.DataFrame(scores).set_index("Classifier")
+    score_df.round(decimals=3)
 
 # %%
+# As above, calibration improves both :ref:`brier_score_loss` and
+# :ref:`log_loss`
+# -
 # Summary
 # -------
 #

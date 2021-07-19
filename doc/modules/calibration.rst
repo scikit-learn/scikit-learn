@@ -175,6 +175,8 @@ mean a better calibrated model.
 :class:`CalibratedClassifierCV` supports the use of two 'calibration'
 regressors: 'sigmoid' and 'isotonic'.
 
+.. _sigmoid_regressor:
+
 Sigmoid
 ^^^^^^^
 

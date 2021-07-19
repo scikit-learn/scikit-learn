@@ -634,28 +634,21 @@ def iris_data_binary(iris_data):
     return X[y < 2], y[y < 2]
 
 
-def test_calibration_display_reg(pyplot, iris_data):
+def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
     X, y = iris_data
-    reg = LinearRegression().fit(X, y)
+    X_binary, y_binary = iris_data_binary
 
+    reg = LinearRegression().fit(X, y)
     msg = "'estimator' should be a fitted classifier"
     with pytest.raises(ValueError, match=msg):
         CalibrationDisplay.from_estimator(reg, X, y)
 
-
-def test_calibration_display_no_predict_proba(pyplot, iris_data_binary):
-    X, y = iris_data_binary
     clf = LinearSVC().fit(X, y)
-
     msg = "response method predict_proba is not defined in"
     with pytest.raises(ValueError, match=msg):
         CalibrationDisplay.from_estimator(clf, X, y)
 
-
-def test_calibration_display_not_fitted(pyplot, iris_data_binary):
-    X, y = iris_data_binary
     clf = LogisticRegression()
-
     with pytest.raises(NotFittedError):
         CalibrationDisplay.from_estimator(clf, X, y)
 
