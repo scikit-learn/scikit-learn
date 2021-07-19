@@ -19,7 +19,8 @@ from sklearn.compose import make_column_transformer
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
+    "matplotlib.*",
+    "ignore:Function plot_roc_curve is deprecated",
 )
 
 

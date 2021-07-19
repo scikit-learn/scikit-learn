@@ -452,6 +452,14 @@ Changelog
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
 
+- |API| :class:`metrics.RocCurveDisplay` exposes two class methods
+  :func:`~metrics.RocCurveDisplay.from_estimator` and
+  :func:`~metrics.RocCurveDisplay.from_predictions` allowing to create
+  a confusion matrix plot using an estimator or the predictions.
+  :func:`metrics.plot_roc_cure` is deprecated in favor of these two
+  class methods and will be removed in 1.2.
+  :pr:`20569` by `Guillaume Lemaitre`_.
+
 - |Enhancement| A fix to raise an error in :func:`metrics.hinge_loss` when
   ``pred_decision`` is 1d whereas it is a multiclass classification or when
   ``pred_decision`` parameter is not consistent with the ``labels`` parameter.
