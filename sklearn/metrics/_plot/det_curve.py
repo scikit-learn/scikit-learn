@@ -3,6 +3,7 @@ import scipy as sp
 from .base import _get_response
 
 from .. import det_curve
+from .._base import _check_pos_label_consistency
 
 from ...utils import check_matplotlib_support
 from ...utils import deprecated
@@ -265,9 +266,7 @@ class DetCurveDisplay:
             sample_weight=sample_weight,
         )
 
-        # If pos_label is still None, the positive class has been set to 1 in
-        # the det_curve computation and we can safely set it for the display.
-        pos_label = 1 if pos_label is None else pos_label
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
         name = "Classifier" if name is None else name
 
         viz = DetCurveDisplay(
