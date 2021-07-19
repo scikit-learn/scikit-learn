@@ -2,10 +2,13 @@ import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.compose import make_column_transformer
 from sklearn.datasets import make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, precision_recall_curve
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
 
 from sklearn.metrics import PrecisionRecallDisplay, plot_precision_recall_curve
@@ -198,3 +201,21 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
         display.line_.get_label()
         == f"MySpecialEstimator (AP = {average_precision:.2f})"
     )
+
+
+@pytest.mark.parametrize(
+    "clf",
+    [
+        make_pipeline(StandardScaler(), LogisticRegression()),
+        make_pipeline(
+            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
+        ),
+    ],
+)
+def test_precision_recall_display_pipeline(pyplot, clf):
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    with pytest.raises(NotFittedError):
+        PrecisionRecallDisplay.from_estimator(clf, X, y)
+    clf.fit(X, y)
+    display = PrecisionRecallDisplay.from_estimator(clf, X, y)
+    assert display.estimator_name == clf.__class__.__name__
