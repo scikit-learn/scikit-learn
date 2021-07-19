@@ -171,7 +171,7 @@ for name, transformer in embeddings.items():
 # Finally, we can plot the resulting projection given by each method.
 from itertools import zip_longest
 
-fig, axs = plt.subplots(nrows=7, ncols=2, figsize=(15, 30))
+fig, axs = plt.subplots(nrows=7, ncols=2, figsize=(17, 24))
 
 for name, ax in zip_longest(timing, axs.ravel()):
     if name is None:
