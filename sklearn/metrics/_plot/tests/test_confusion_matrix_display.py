@@ -12,7 +12,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-from sklearn.svm import SVR
 
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
@@ -23,32 +22,6 @@ pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
     "matplotlib.*"
 )
-
-
-def test_confusion_matrix_display_validation(pyplot):
-    """Check that we raise the proper error when validating parameters."""
-    X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=5, random_state=0
-    )
-
-    regressor = SVR().fit(X, y)
-    y_pred_regressor = regressor.predict(X)
-    y_pred_classifier = SVC().fit(X, y).predict(X)
-
-    err_msg = "ConfusionMatrixDisplay.from_estimator only supports classifiers"
-    with pytest.raises(ValueError, match=err_msg):
-        ConfusionMatrixDisplay.from_estimator(regressor, X, y)
-
-    err_msg = "Mix type of y not allowed, got types"
-    with pytest.raises(ValueError, match=err_msg):
-        # Force `y_true` to be seen as a regression problem
-        ConfusionMatrixDisplay.from_predictions(y + 0.5, y_pred_classifier)
-    with pytest.raises(ValueError, match=err_msg):
-        ConfusionMatrixDisplay.from_predictions(y, y_pred_regressor)
-
-    err_msg = "Found input variables with inconsistent numbers of samples"
-    with pytest.raises(ValueError, match=err_msg):
-        ConfusionMatrixDisplay.from_predictions(y, y_pred_classifier[::2])
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])

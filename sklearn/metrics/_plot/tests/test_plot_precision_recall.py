@@ -18,16 +18,15 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.compose import make_column_transformer
 
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
+    # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
+    "matplotlib.*",
+    # TODO: Remove in 1.2 (as well as all the tests below)
+    "ignore:Function plot_precision_recall_curve is deprecated",
 )
 
 
-@pytest.mark.filterwarnings(
-    "ignore: Function `plot_precision_recall_curve` is deprecated"
-)
 def test_errors(pyplot):
     X, y_multiclass = make_classification(
         n_classes=3, n_samples=50, n_informative=3, random_state=0
