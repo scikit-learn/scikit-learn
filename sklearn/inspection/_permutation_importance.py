@@ -191,13 +191,13 @@ def permutation_importance(
         Sample weights used in scoring.
 
     max_samples : int or float, default=1.0
-        The number of samples to draw from X to compute feature importance in each repeat (without
-        replacement).
+        The number of samples to draw from X to compute feature importance
+        in each repeat (without replacement).
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples.
         No effect if max_samples is equal to 1.0 or X.shape[0].
 
-        .. versionadded:: 1.0.dev0
+        .. versionadded:: 1.0
 
     Returns
     -------
