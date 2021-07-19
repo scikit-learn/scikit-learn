@@ -36,8 +36,7 @@ def test_is_in_range(interval):
 
     # x contains lower bound
     assert (
-        is_in_interval_range(np.r_[x, interval.low], interval)
-        == interval.low_inclusive
+        is_in_interval_range(np.r_[x, interval.low], interval) == interval.low_inclusive
     )
 
     # x contains upper bound
@@ -47,9 +46,9 @@ def test_is_in_range(interval):
     )
 
     # x contains upper and lower bound
-    assert is_in_interval_range(
-        np.r_[x, interval.low, interval.high], interval
-    ) == (interval.low_inclusive and interval.high_inclusive)
+    assert is_in_interval_range(np.r_[x, interval.low, interval.high], interval) == (
+        interval.low_inclusive and interval.high_inclusive
+    )
 
 
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
@@ -60,9 +59,7 @@ def test_link_inverse_identity(link):
     n_samples, n_classes = 100, None
     if link.multiclass:
         n_classes = 10
-        raw_prediction = rng.normal(
-            loc=0, scale=10, size=(n_samples, n_classes)
-        )
+        raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples, n_classes))
         if isinstance(link, MultinomialLogit):
             raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
     else:
@@ -83,9 +80,7 @@ def test_link_out_argument(link):
     n_samples, n_classes = 100, None
     if link.multiclass:
         n_classes = 10
-        raw_prediction = rng.normal(
-            loc=0, scale=10, size=(n_samples, n_classes)
-        )
+        raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples, n_classes))
         if isinstance(link, MultinomialLogit):
             raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
     else:

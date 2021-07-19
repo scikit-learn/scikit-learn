@@ -12,9 +12,7 @@ from scipy.stats import gmean
 from ..utils.extmath import softmax
 
 
-Interval = namedtuple(
-    "Interval", ("low", "high", "low_inclusive", "high_inclusive")
-)
+Interval = namedtuple("Interval", ("low", "high", "low_inclusive", "high_inclusive"))
 
 
 def is_in_interval_range(x, interval):
