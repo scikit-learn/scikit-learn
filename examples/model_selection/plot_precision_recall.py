@@ -122,15 +122,6 @@ classifier.fit(X_train, y_train)
 y_score = classifier.decision_function(X_test)
 
 # %%
-# Compute the average precision score
-# ...................................
-from sklearn.metrics import average_precision_score
-
-average_precision = average_precision_score(y_test, y_score)
-
-print("Average precision-recall score: {0:0.2f}".format(average_precision))
-
-# %%
 # Plot the Precision-Recall curve
 # ................................
 from sklearn.metrics import PrecisionRecallDisplay
@@ -233,10 +224,11 @@ for i, color in zip(range(n_classes), colors):
     )
     display.plot(ax=ax, name=f"Precision-recall for class {i}", color=color)
 
+# add the legend for the iso-f1 curves
 handles, labels = display.ax_.get_legend_handles_labels()
 handles.extend([l])
 labels.extend(["iso-f1 curves"])
-
+# set the legend and the axes
 ax.set_xlim([0.0, 1.0])
 ax.set_ylim([0.0, 1.05])
 ax.legend(handles=handles, labels=labels, loc="best")
