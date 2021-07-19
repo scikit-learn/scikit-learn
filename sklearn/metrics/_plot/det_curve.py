@@ -438,7 +438,7 @@ def plot_det_curve(
     >>> clf = svm.SVC(random_state=0)
     >>> clf.fit(X_train, y_train)
     SVC(random_state=0)
-    >>> metrics.plot_det_curve(clf, X_test, y_test)
+    >>> metrics.plot_det_curve(clf, X_test, y_test) # doctest: +SKIP
     <...>
     >>> plt.show()
     """
