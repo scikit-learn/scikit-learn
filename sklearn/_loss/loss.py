@@ -354,9 +354,7 @@ class BaseLoss(BaseLink, cLossFunction):
             n_threads=n_threads,
         )
 
-    def __call__(
-        self, y_true, raw_prediction, sample_weight=None, n_threads=1
-    ):
+    def __call__(self, y_true, raw_prediction, sample_weight=None, n_threads=1):
         """Compute the weighted average loss.
 
         Parameters
@@ -473,11 +471,7 @@ class HalfSquaredError(IdentityLink, BaseLoss, cHalfSquaredError):
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
-        if (
-            gradient is not None
-            and gradient.ndim == 2
-            and gradient.shape[1] == 1
-        ):
+        if gradient is not None and gradient.ndim == 2 and gradient.shape[1] == 1:
             gradient = gradient.squeeze(1)
 
         # gradient = raw_prediction - y_true is easier in numpy
@@ -588,7 +582,7 @@ class PinballLoss(IdentityLink, BaseLoss, cPinballLoss):
             self.constant_hessian = False
         if quantile <= 0 or quantile >= 1:
             raise ValueError(
-                f"PinballLoss aka quantile loss only accepts "
+                "PinballLoss aka quantile loss only accepts "
                 f"0 < quantile < 1; {quantile} was given."
             )
 
@@ -601,9 +595,7 @@ class PinballLoss(IdentityLink, BaseLoss, cPinballLoss):
         if sample_weight is None:
             return np.percentile(y_true, 100 * self.quantile, axis=0)
         else:
-            return _weighted_percentile(
-                y_true, sample_weight, 100 * self.quantile
-            )
+            return _weighted_percentile(y_true, sample_weight, 100 * self.quantile)
 
 
 class HalfPoissonLoss(LogLink, BaseLoss, cHalfPoissonLoss):
@@ -776,17 +768,13 @@ class BinaryCrossEntropy(LogitLink, BaseLoss, cBinaryCrossEntropy):
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
-        proba = np.empty(
-            (raw_prediction.shape[0], 2), dtype=raw_prediction.dtype
-        )
+        proba = np.empty((raw_prediction.shape[0], 2), dtype=raw_prediction.dtype)
         proba[:, 1] = self.inverse(raw_prediction)
         proba[:, 0] = 1 - proba[:, 1]
         return proba
 
 
-class CategoricalCrossEntropy(
-    MultinomialLogit, BaseLoss, cCategoricalCrossEntropy
-):
+class CategoricalCrossEntropy(MultinomialLogit, BaseLoss, cCategoricalCrossEntropy):
     """Categorical cross-entropy loss, for multiclass classification.
 
     Domain:
