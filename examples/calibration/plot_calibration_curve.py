@@ -177,6 +177,7 @@ for i, (clf, name) in enumerate(clf_list):
 
 import numpy as np
 
+from sklearn.svm import LinearSVC
 
 class NaivelyCalibratedLinearSVC(LinearSVC):
     """LinearSVC with `predict_proba` method that naively scales
@@ -199,8 +200,6 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
 
 
 # %%
-
-from sklearn.svm import LinearSVC
 
 lr = LogisticRegression(C=1.)
 svc = NaivelyCalibratedLinearSVC(max_iter=10_000)
