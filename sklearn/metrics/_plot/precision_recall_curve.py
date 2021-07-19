@@ -160,9 +160,9 @@ class PrecisionRecallDisplay:
         y,
         *,
         sample_weight=None,
+        pos_label=None,
         response_method="auto",
         name=None,
-        pos_label=None,
         ax=None,
         **kwargs,
     ):
@@ -183,6 +183,11 @@ class PrecisionRecallDisplay:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+        pos_label : str or int, default=None
+            The class considered as the positive class when computing the
+            precision and recall metrics. By default, `estimators.classes_[1]`
+            is considered as the positive class.
+
         response_method : {'predict_proba', 'decision_function', 'auto'}, \
             default='auto'
             Specifies whether to use :term:`predict_proba` or
@@ -195,11 +200,6 @@ class PrecisionRecallDisplay:
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
-
-        pos_label : str or int, default=None
-            The class considered as the positive class when computing the
-            precision and recall metrics. By default, `estimators.classes_[1]`
-            is considered as the positive class.
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -261,8 +261,8 @@ class PrecisionRecallDisplay:
         y_pred,
         *,
         sample_weight=None,
-        name=None,
         pos_label=None,
+        name=None,
         ax=None,
         **kwargs,
     ):
@@ -279,15 +279,15 @@ class PrecisionRecallDisplay:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+        pos_label : str or int, default=None
+            The class considered as the positive class when computing the
+            precision and recall metrics.
+
         name : str, default=None
             Name for labeling curve. If `None`, no name is used.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
-
-        pos_label : str or int, default=None
-            The class considered as the positive class when computing the
-            precision and recall metrics.
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
