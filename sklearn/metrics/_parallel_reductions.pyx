@@ -1074,6 +1074,10 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
            bint return_distance = False,
            bint sort_results = False
     ):
+        if sort_results and not return_distance:
+            raise ValueError("return_distance must be True "
+                             "if sort_results is True.")
+
         # Temporary datastructures which will be coerced to
         # numpy arrays on return and then freed.
         self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
