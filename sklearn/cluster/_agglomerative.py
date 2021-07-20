@@ -160,7 +160,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        feature matrix representing `n_samples` samples to be clustered.
+        Feature matrix representing `n_samples` samples to be clustered.
 
     connectivity : sparse matrix, default=None
         connectivity matrix. Defines for each sample the neighboring samples
@@ -379,7 +379,7 @@ def linkage_tree(
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        feature matrix representing `n_samples` samples to be clustered.
+        Feature matrix representing `n_samples` samples to be clustered.
 
     connectivity : sparse matrix, default=None
         connectivity matrix. Defines for each sample the neighboring samples
@@ -1032,7 +1032,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         features following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
         the data into a connectivity matrix, such as derived from
-        kneighbors_graph. Default is `None`, i.e, the
+        `kneighbors_graph`. Default is `None`, i.e, the
         hierarchical clustering algorithm is unstructured.
 
     compute_full_tree : 'auto' or bool, default='auto'
