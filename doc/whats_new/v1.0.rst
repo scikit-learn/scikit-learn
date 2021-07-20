@@ -300,6 +300,11 @@ Changelog
   interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
   :user:`murata-yu`.
 
+- |Fix| Fixed a bug in :class:`ensemble.AdaBoostClassifier` and
+  :class:`ensemble.AdaBoostRegressor` where the `sample_weight` parameter
+  got overwritten during `fit`.
+  :pr:`20534` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -620,6 +625,13 @@ Changelog
 
 - |Fix| Propreties that are decorated with :func:`utils.deprecated` correctly
   wraps the property's docstring. :pr:`20385` by `Thomas Fan`_.
+
+- |Fix| :func:`utils.stats._weighted_percentile` now correctly ignores
+  zero-weighted observations smaller than the smallest observation with
+  positive weight for ``percentile=0``. Affected classes are
+  :class:`dummy.DummyRegressor` for ``quantile=0`` and
+  :class:`ensemble.HuberLossFunction` and :class:`ensemble.HuberLossFunction`
+  for ``alpha=0``. :pr:`20528` by :user:`Malte Londschien <mlondschien>`.
 
 :mod:`sklearn.validation`
 .........................
