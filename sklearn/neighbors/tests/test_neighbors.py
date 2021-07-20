@@ -119,23 +119,29 @@ def test_unsupervised_kneighbors(
         indices_no_dist = results_nodist[i]
         distances, next_distances = results[i][0], results[i + 1][0]
         indices, next_indices = results[i][1], results[i + 1][1]
-        assert_array_equal(
+        assert_allclose(
             indices_no_dist,
             indices,
-            err_msg=f"The '{algorithm}' algorithm returns different"
-            f"indices depending on 'return_distances'.",
+            err_msg=(
+                f"The '{algorithm}' algorithm returns different"
+                "indices depending on 'return_distances'."
+            ),
         )
-        assert_array_equal(
+        assert_allclose(
             indices,
             next_indices,
-            err_msg=f"The '{algorithm}' and '{next_algorithm}' "
-            f"algorithms return different indices.",
+            err_msg=(
+                f"The '{algorithm}' and '{next_algorithm}' "
+                "algorithms return different indices."
+            ),
         )
-        assert_array_equal(
+        assert_allclose(
             distances,
             next_distances,
-            err_msg=f"The '{algorithm}' and '{next_algorithm}' "
-            f"algorithms return different distances.",
+            err_msg=(
+                f"The '{algorithm}' and '{next_algorithm}' "
+                "algorithms return different distances."
+            ),
         )
 
 
@@ -1555,37 +1561,37 @@ def test_k_and_radius_neighbors_duplicates(algorithm):
 
     # Do not do anything special to duplicates.
     kng = nn.kneighbors_graph([[0], [1]], mode="distance")
-    assert_array_equal(kng.A, np.array([[0.0, 0.0], [0.0, 0.0]]))
-    assert_array_equal(kng.data, [0.0, 0.0])
-    assert_array_equal(kng.indices, [0, 1])
+    assert_allclose(kng.A, np.array([[0.0, 0.0], [0.0, 0.0]]))
+    assert_allclose(kng.data, [0.0, 0.0])
+    assert_allclose(kng.indices, [0, 1])
 
     dist, ind = nn.radius_neighbors([[0], [1]], radius=1.5)
     check_object_arrays(dist, [[0, 1], [1, 0]])
     check_object_arrays(ind, [[0, 1], [0, 1]])
 
     rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5)
-    assert_array_equal(rng.A, np.ones((2, 2)))
+    assert_allclose(rng.A, np.ones((2, 2)))
 
     rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5, mode="distance")
     rng.sort_indices()
-    assert_array_equal(rng.A, [[0, 1], [1, 0]])
-    assert_array_equal(rng.indices, [0, 1, 0, 1])
-    assert_array_equal(rng.data, [0, 1, 1, 0])
+    assert_allclose(rng.A, [[0, 1], [1, 0]])
+    assert_allclose(rng.indices, [0, 1, 0, 1])
+    assert_allclose(rng.data, [0, 1, 1, 0])
 
     # Mask the first duplicates when n_duplicates > n_neighbors.
     X = np.ones((3, 1))
     nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm="brute")
     nn.fit(X)
     dist, ind = nn.kneighbors()
-    assert_array_equal(dist, np.zeros((3, 1)))
-    assert_array_equal(ind, [[2], [2], [0]])
+    assert_allclose(dist, np.zeros((3, 1)))
+    assert_allclose(ind, [[2], [2], [0]])
 
     # Test that zeros are explicitly marked in kneighbors_graph.
     kng = nn.kneighbors_graph(mode="distance")
-    assert_array_equal(kng.A, np.zeros((3, 3)))
-    assert_array_equal(kng.data, np.zeros(3))
-    assert_array_equal(kng.indices, [2.0, 2.0, 0.0])
-    assert_array_equal(
+    assert_allclose(kng.A, np.zeros((3, 3)))
+    assert_allclose(kng.data, np.zeros(3))
+    assert_allclose(kng.indices, [2.0, 2.0, 0.0])
+    assert_allclose(
         nn.kneighbors_graph().A,
         np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]),
     )
@@ -1881,8 +1887,9 @@ def test_fast_sqeuclidean_correctness(
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
 @pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 @pytest.mark.skip(
-    reason="Long test, translation invariance should "
-    "have its own study: skipping for now"
+    reason=(
+        "Long test, translation invariance should have its own study: skipping for now"
+    )
 )
 def test_fast_sqeuclidean_translation_invariance(
     n_samples,
