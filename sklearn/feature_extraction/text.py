@@ -407,7 +407,10 @@ class _VectorizerMixin:
             return "error"
 
     def build_analyzer(self):
-        """Return a callable that handles preprocessing, tokenization and n-grams generation.
+        """Return a callable to process input data.
+
+        The callable handles that handles preprocessing, tokenization, and
+        n-grams generation.
 
         Returns
         -------
@@ -1404,7 +1407,7 @@ def _make_int_array():
 
 
 class TfidfTransformer(TransformerMixin, BaseEstimator):
-    """Transform a count matrix to a normalized tf or tf-idf representation
+    """Transform a count matrix to a normalized tf or tf-idf representation.
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
     document-frequency. This is a common term weighting scheme in information
@@ -1454,7 +1457,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         similarity between two vectors is their dot product when l2 norm has
         been applied.
         * 'l1': Sum of absolute values of vector elements is 1.
-        See :func:`preprocessing.normalize`
+        See :func:`preprocessing.normalize`.
 
     use_idf : bool, default=True
         Enable inverse-document-frequency reweighting.
@@ -1507,7 +1510,6 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
     References
     ----------
-
     .. [Yates2011] R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
                    Information Retrieval. Addison Wesley, pp. 68-74.
 
@@ -1529,6 +1531,14 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         ----------
         X : sparse matrix of shape n_samples, n_features)
             A matrix of term/token counts.
+
+        y : None
+            This parameter is not needed to compute tf-idf.
+
+        Returns
+        -------
+        self : object
+            Fitted transformer.
         """
         X = self._validate_data(X, accept_sparse=("csr", "csc"))
         if not sp.issparse(X):
@@ -1558,12 +1568,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, copy=True):
-        """Transform a count matrix to a tf or tf-idf representation
+        """Transform a count matrix to a tf or tf-idf representation.
 
         Parameters
         ----------
         X : sparse matrix of (n_samples, n_features)
-            a matrix of term/token counts
+            A matrix of term/token counts.
 
         copy : bool, default=True
             Whether to copy X and operate on the copy or perform in-place
@@ -1572,6 +1582,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         Returns
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
+            Tf-idf-weighted document-term matrix.
         """
         X = self._validate_data(
             X, accept_sparse="csr", dtype=FLOAT_DTYPES, copy=copy, reset=False
@@ -1599,6 +1610,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
     @property
     def idf_(self):
+        """Inverse document frequency vector, only defined if `use_idf=True`.
+
+        Returns
+        -------
+        ndarray of shape (n_features,)
+        """
         # if _idf_diag is not set, this will raise an attribute error,
         # which means hasattr(self, "idf_") is False
         return np.ravel(self._idf_diag.sum(axis=0))
