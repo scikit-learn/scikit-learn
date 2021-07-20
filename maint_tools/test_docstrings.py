@@ -134,7 +134,6 @@ DOCSTRING_IGNORE_LIST = [
     "SelectPercentile",
     "SelfTrainingClassifier",
     "SequentialFeatureSelector",
-    "ShrunkCovariance",
     "SimpleImputer",
     "SkewedChi2Sampler",
     "SparseCoder",
