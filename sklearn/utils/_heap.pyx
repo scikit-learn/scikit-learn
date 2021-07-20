@@ -84,7 +84,7 @@ cdef int _simultaneous_sort(
     return 0
 
 
-cdef int _push(
+cdef inline int _push(
     floating* dist,
     ITYPE_t* idx,
     ITYPE_t size,
