@@ -91,8 +91,8 @@ def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
 
     .. deprecated:: 1.0
-        assert_warns is deprecated in 1.0 and will be removed in 1.2.
-        Use pytest.warns instead.
+        `assert_warns` is deprecated in 1.0 and will be removed in 1.2.
+        Use `pytest.warns` instead.
 
     Parameters
     ----------
@@ -143,8 +143,8 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     """Test that a certain warning occurs and with a certain message.
 
     .. deprecated:: 1.0
-        assert_warns_message is deprecated in 1.0 and will be removed in 1.2.
-        Use pytest.warns instead.
+        `assert_warns_message` is deprecated in 1.0 and will be removed in 1.2.
+        Use `pytest.warns` instead.
 
     Parameters
     ----------
