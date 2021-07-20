@@ -1047,17 +1047,17 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         is inferior to the maximum between 100 or `0.02 * n_samples`.
         Otherwise, "auto" is equivalent to `False`.
 
-    linkage : {'ward', 'complete', 'average', 'single'}, default='ward'
+    linkage : {"ward", "complete", "average", "single"}, default="ward"
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of features. The algorithm will merge
         the pairs of cluster that minimize this criterion.
 
-        - 'ward' minimizes the variance of the clusters being merged.
-        - 'complete' or maximum linkage uses the maximum distances between
+        - "ward" minimizes the variance of the clusters being merged.
+        - "complete" or maximum linkage uses the maximum distances between
           all features of the two sets.
-        - 'average' uses the average of the distances of each feature of
+        - "average" uses the average of the distances of each feature of
           the two sets.
-        - 'single' uses the minimum of the distances between all features
+        - "single" uses the minimum of the distances between all features
           of the two sets.
 
     pooling_func : callable, default=np.mean
