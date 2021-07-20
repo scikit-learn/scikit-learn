@@ -116,7 +116,7 @@ def test_same_min_max(strategy):
     warnings.simplefilter("always")
     X = np.array([[1, -2], [1, -1], [1, 0], [1, 1]])
     est = KBinsDiscretizer(strategy=strategy, n_bins=3, encode="ordinal")
-    warning_message = "Feature 0 is constant and will be replaced " "with 0."
+    warning_message = "Feature 0 is constant and will be replaced with 0."
     with pytest.warns(UserWarning, match=warning_message):
         est.fit(X)
     assert est.n_bins_[0] == 1

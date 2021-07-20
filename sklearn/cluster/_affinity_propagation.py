@@ -332,6 +332,18 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AgglomerativeClustering : Recursively merges the pair of
+        clusters that minimally increases a given linkage distance.
+    FeatureAgglomeration : Similar to AgglomerativeClustering,
+        but recursively merges features instead of samples.
+    KMeans : K-Means clustering.
+    MiniBatchKMeans : Mini-Batch K-Means clustering.
+    MeanShift : Mean shift clustering using a flat kernel.
+    SpectralClustering : Apply clustering to a projection
+        of the normalized Laplacian.
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
@@ -400,7 +412,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -427,7 +439,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         Returns
         -------
         self
-
+            Returns the instance itself.
         """
         if self.affinity == "precomputed":
             accept_sparse = False
@@ -440,8 +452,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError(
-                "Affinity must be 'precomputed' or "
-                "'euclidean'. Got %s instead" % str(self.affinity)
+                "Affinity must be 'precomputed' or 'euclidean'. Got %s instead"
+                % str(self.affinity)
             )
 
         (
@@ -483,7 +495,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         X = self._validate_data(X, reset=False, accept_sparse="csr")
         if not hasattr(self, "cluster_centers_"):
             raise ValueError(
-                "Predict method is not supported when " "affinity='precomputed'."
+                "Predict method is not supported when affinity='precomputed'."
             )
 
         if self.cluster_centers_.shape[0] > 0:
@@ -499,8 +511,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             return np.array([-1] * X.shape[0])
 
     def fit_predict(self, X, y=None):
-        """Fit the clustering from features or affinity matrix, and return
-        cluster labels.
+        """Fit clustering from features/affinity matrix; return cluster labels.
 
         Parameters
         ----------

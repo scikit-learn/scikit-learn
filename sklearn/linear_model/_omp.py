@@ -386,7 +386,7 @@ def orthogonal_mp(
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError(
-            "The number of atoms cannot be more than the number " "of features"
+            "The number of atoms cannot be more than the number of features"
         )
     if precompute == "auto":
         precompute = X.shape[0] > X.shape[1]
@@ -550,7 +550,7 @@ def orthogonal_mp_gram(
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > len(Gram):
         raise ValueError(
-            "The number of atoms cannot be more than the number " "of features"
+            "The number of atoms cannot be more than the number of features"
         )
 
     if return_path:

@@ -94,7 +94,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         if self.add_indicator:
             if not hasattr(self, "indicator_"):
                 raise ValueError(
-                    "Make sure to call _fit_indicator before " "_transform_indicator"
+                    "Make sure to call _fit_indicator before _transform_indicator"
                 )
             return self.indicator_.transform(X)
 
@@ -237,8 +237,9 @@ class SimpleImputer(_BaseImputer):
         allowed_strategies = ["mean", "median", "most_frequent", "constant"]
         if self.strategy not in allowed_strategies:
             raise ValueError(
-                "Can only use these strategies: {0} "
-                " got strategy={1}".format(allowed_strategies, self.strategy)
+                "Can only use these strategies: {0}  got strategy={1}".format(
+                    allowed_strategies, self.strategy
+                )
             )
 
         if self.strategy in ("most_frequent", "constant"):
@@ -272,8 +273,9 @@ class SimpleImputer(_BaseImputer):
         except ValueError as ve:
             if "could not convert" in str(ve):
                 new_ve = ValueError(
-                    "Cannot use {} strategy with non-numeric "
-                    "data:\n{}".format(self.strategy, ve)
+                    "Cannot use {} strategy with non-numeric data:\n{}".format(
+                        self.strategy, ve
+                    )
                 )
                 raise new_ve from None
             else:
@@ -483,7 +485,7 @@ class SimpleImputer(_BaseImputer):
                 missing = np.arange(X.shape[1])[invalid_mask]
                 if self.verbose:
                     warnings.warn(
-                        "Deleting features without " "observed values: %s" % missing
+                        "Deleting features without observed values: %s" % missing
                     )
                 X = X[:, valid_statistics_indexes]
 
@@ -783,9 +785,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         """
         if precomputed:
             if not (hasattr(X, "dtype") and X.dtype.kind == "b"):
-                raise ValueError(
-                    "precomputed is True but the input data is " "not a mask"
-                )
+                raise ValueError("precomputed is True but the input data is not a mask")
             self._precomputed = True
         else:
             self._precomputed = False
@@ -808,8 +808,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             or isinstance(self.sparse, bool)
         ):
             raise ValueError(
-                "'sparse' has to be a boolean or 'auto'. "
-                "Got {!r} instead.".format(self.sparse)
+                "'sparse' has to be a boolean or 'auto'. Got {!r} instead.".format(
+                    self.sparse
+                )
             )
 
         missing_features_info = self._get_missing_features_info(X)
@@ -859,9 +860,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             X = self._validate_input(X, in_fit=False)
         else:
             if not (hasattr(X, "dtype") and X.dtype.kind == "b"):
-                raise ValueError(
-                    "precomputed is True but the input data is " "not a mask"
-                )
+                raise ValueError("precomputed is True but the input data is not a mask")
 
         imputer_mask, features = self._get_missing_features_info(X)
 
