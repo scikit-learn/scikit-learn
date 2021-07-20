@@ -1561,7 +1561,7 @@ def test_k_and_radius_neighbors_duplicates(algorithm):
 
     # Do not do anything special to duplicates.
     kng = nn.kneighbors_graph([[0], [1]], mode="distance")
-    assert_allclose(kng.A, np.array([[0.0, 0.0], [0.0, 0.0]]))
+    assert_allclose(kng.toarray(), np.array([[0.0, 0.0], [0.0, 0.0]]))
     assert_allclose(kng.data, [0.0, 0.0])
     assert_allclose(kng.indices, [0, 1])
 
@@ -1570,11 +1570,11 @@ def test_k_and_radius_neighbors_duplicates(algorithm):
     check_object_arrays(ind, [[0, 1], [0, 1]])
 
     rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5)
-    assert_allclose(rng.A, np.ones((2, 2)))
+    assert_allclose(rng.toarray(), np.ones((2, 2)))
 
     rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5, mode="distance")
     rng.sort_indices()
-    assert_allclose(rng.A, [[0, 1], [1, 0]])
+    assert_allclose(rng.toarray(), [[0, 1], [1, 0]])
     assert_allclose(rng.indices, [0, 1, 0, 1])
     assert_allclose(rng.data, [0, 1, 1, 0])
 
@@ -1588,11 +1588,11 @@ def test_k_and_radius_neighbors_duplicates(algorithm):
 
     # Test that zeros are explicitly marked in kneighbors_graph.
     kng = nn.kneighbors_graph(mode="distance")
-    assert_allclose(kng.A, np.zeros((3, 3)))
+    assert_allclose(kng.toarray(), np.zeros((3, 3)))
     assert_allclose(kng.data, np.zeros(3))
     assert_allclose(kng.indices, [2.0, 2.0, 0.0])
     assert_allclose(
-        nn.kneighbors_graph().A,
+        nn.kneighbors_graph().toarray(),
         np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]),
     )
 
