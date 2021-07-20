@@ -1252,7 +1252,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
+
         y : None
             This parameter is ignored.
 
@@ -1274,7 +1275,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
+
         y : None
             This parameter is ignored.
 
@@ -1332,7 +1334,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
 
         Returns
         -------
@@ -1453,11 +1455,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     ----------
     norm : {'l1', 'l2'}, default='l2'
         Each output row will have unit norm, either:
-        * 'l2': Sum of squares of vector elements is 1. The cosine
-        similarity between two vectors is their dot product when l2 norm has
-        been applied.
-        * 'l1': Sum of absolute values of vector elements is 1.
-        See :func:`preprocessing.normalize`.
+
+        - 'l2': Sum of squares of vector elements is 1. The cosine
+          similarity between two vectors is their dot product when l2 norm has
+          been applied.
+        - 'l1': Sum of absolute values of vector elements is 1.
+          See :func:`preprocessing.normalize`.
 
     use_idf : bool, default=True
         Enable inverse-document-frequency reweighting.
@@ -1483,6 +1486,25 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
+
+    TfidfVectorizer : Convert a collection of raw documents to a matrix of
+        TF-IDF features.
+
+    HashingVectorizer : Convert a collection of text documents to a matrix
+        of token occurrences.
+
+    References
+    ----------
+    .. [Yates2011] R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
+                   Information Retrieval. Addison Wesley, pp. 68-74.
+
+    .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
+                   Introduction to Information Retrieval. Cambridge University
+                   Press, pp. 118-120.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
@@ -1507,15 +1529,6 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
            1.        , 1.91629073, 1.91629073])
     >>> pipe.transform(corpus).shape
     (4, 8)
-
-    References
-    ----------
-    .. [Yates2011] R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
-                   Information Retrieval. Addison Wesley, pp. 68-74.
-
-    .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
-                   Introduction to Information Retrieval. Cambridge University
-                   Press, pp. 118-120.
     """
 
     def __init__(self, *, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False):
@@ -1770,11 +1783,12 @@ class TfidfVectorizer(CountVectorizer):
 
     norm : {'l1', 'l2'}, default='l2'
         Each output row will have unit norm, either:
-        * 'l2': Sum of squares of vector elements is 1. The cosine
-        similarity between two vectors is their dot product when l2 norm has
-        been applied.
-        * 'l1': Sum of absolute values of vector elements is 1.
-        See :func:`preprocessing.normalize`.
+
+        - 'l2': Sum of squares of vector elements is 1. The cosine
+          similarity between two vectors is their dot product when l2 norm has
+          been applied.
+        - 'l1': Sum of absolute values of vector elements is 1.
+          See :func:`preprocessing.normalize`.
 
     use_idf : bool, default=True
         Enable inverse-document-frequency reweighting.
@@ -1894,6 +1908,7 @@ class TfidfVectorizer(CountVectorizer):
 
     @property
     def norm(self):
+        """Norm of each row output, can be either "l1" or "l2"."""
         return self._tfidf.norm
 
     @norm.setter
@@ -1902,6 +1917,7 @@ class TfidfVectorizer(CountVectorizer):
 
     @property
     def use_idf(self):
+        """Whether or not IDF re-weighting is used."""
         return self._tfidf.use_idf
 
     @use_idf.setter
@@ -1910,6 +1926,7 @@ class TfidfVectorizer(CountVectorizer):
 
     @property
     def smooth_idf(self):
+        """Whether or not IDF weights are smoothed."""
         return self._tfidf.smooth_idf
 
     @smooth_idf.setter
@@ -1918,6 +1935,7 @@ class TfidfVectorizer(CountVectorizer):
 
     @property
     def sublinear_tf(self):
+        """Whether or not sublinear TF scaling is applied."""
         return self._tfidf.sublinear_tf
 
     @sublinear_tf.setter
@@ -1926,6 +1944,12 @@ class TfidfVectorizer(CountVectorizer):
 
     @property
     def idf_(self):
+        """Inverse document frequency vector, only defined if `use_idf=True`.
+
+        Returns
+        -------
+        ndarray of shape (n_features,)
+        """
         return self._tfidf.idf_
 
     @idf_.setter
@@ -1953,7 +1977,8 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
+
         y : None
             This parameter is not needed to compute tfidf.
 
@@ -1977,7 +2002,8 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
+
         y : None
             This parameter is ignored.
 
@@ -2002,7 +2028,7 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
 
         Returns
         -------

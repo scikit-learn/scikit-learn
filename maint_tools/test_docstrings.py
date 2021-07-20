@@ -139,7 +139,6 @@ DOCSTRING_IGNORE_LIST = [
     "StackingClassifier",
     "StackingRegressor",
     "TSNE",
-    "TfidfVectorizer",
     "TheilSenRegressor",
     "TransformedTargetRegressor",
     "TruncatedSVD",
