@@ -104,7 +104,7 @@ class ShrunkCovariance(EmpiricalCovariance):
     EmpiricalCovariance : Maximum likelihood covariance estimator.
     GraphicalLasso : Sparse inverse covariance estimation
         with an l1-penalized estimator.
-    GraphicalLassoCV : Sparse inverse covariance w/ cross-validated
+    GraphicalLassoCV : Sparse inverse covariance with cross-validated
         choice of the l1 penalty.
     LedoitWolf : LedoitWolf Estimator.
     MinCovDet : Minimum Covariance Determinant
