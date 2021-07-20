@@ -676,3 +676,21 @@ def test_isotonic_2darray_more_than_1_feature():
 
     with pytest.raises(ValueError, match=msg):
         iso_reg.transform(X_2d)
+
+
+def test_isotonic_regression_sample_weight_not_overwritten():
+    """Check that calling `fit` will not overwrite `sample_weight`.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20508
+    """
+    from sklearn.datasets import make_regression
+
+    X, y = make_regression(n_samples=10, n_features=1, random_state=41)
+    sample_weight_original = np.ones(shape=y.shape)
+    sample_weight_fit = sample_weight_original.copy()
+
+    isotonic_regression(y, sample_weight=sample_weight_fit)
+    assert_allclose(sample_weight_fit, sample_weight_original)
+
+    IsotonicRegression().fit(X, y, sample_weight=sample_weight_fit)
+    assert_allclose(sample_weight_fit, sample_weight_original)
