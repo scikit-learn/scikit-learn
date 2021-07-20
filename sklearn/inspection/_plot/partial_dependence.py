@@ -919,9 +919,9 @@ class PartialDependenceDisplay:
         if categorical:
             heatmap_idx = np.unravel_index(pd_plot_idx, self.heatmaps_.shape)
             _, _, im, _ = plot_heatmap(
-                avg_preds[self.target_idx].T,
-                self.feature_names[feature_idx[1]],
+                avg_preds[self.target_idx],
                 self.feature_names[feature_idx[0]],
+                self.feature_names[feature_idx[1]],
                 feature_values[0],
                 feature_values[1],
                 xticks_rotation="vertical",

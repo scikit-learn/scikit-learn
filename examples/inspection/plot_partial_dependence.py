@@ -296,6 +296,14 @@ print(f"Test R2 score: {hgbdt_model.score(X_test, y_test):.2f}")
 print("Computing partial dependence plots...")
 tic = time()
 _, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8))
+features = [
+    "temp",
+    "humidity",
+    "windspeed",
+    "season",
+    "weather",
+    "hour",
+]
 display = plot_partial_dependence(
     hgbdt_model,
     X_train,
@@ -348,7 +356,7 @@ _ = display.figure_.suptitle(
 # selected ICEs for the temperature and humidity features.
 print("Computing partial dependence plots and individual conditional expectation...")
 tic = time()
-_, ax = plt.subplots(ncols=2, figsize=(6, 4))
+_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True)
 features = ["temp", "humidity"]
 display = plot_partial_dependence(
     hgbdt_model,
@@ -410,7 +418,7 @@ _ = display.figure_.suptitle(
 # 2-way interaction is also supported for categorical data.
 print("Computing partial dependence plots...")
 features = ["season", "weather", ("season", "weather")]
-_, ax = plt.subplots(ncols=3, figsize=(9, 4))
+_, ax = plt.subplots(ncols=3, figsize=(14, 4))
 tic = time()
 display = plot_partial_dependence(
     hgbdt_model,

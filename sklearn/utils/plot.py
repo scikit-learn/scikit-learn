@@ -1,5 +1,3 @@
-from itertools import product
-
 import numpy as np
 
 from ..utils import check_matplotlib_support
@@ -9,8 +7,8 @@ def plot_heatmap(
     data,
     ylabel,
     xlabel,
-    ytick_labels,
-    xtick_labels,
+    yticklabels,
+    xticklabels,
     *,
     xticks_rotation="horizontal",
     ax=None,
@@ -23,7 +21,7 @@ def plot_heatmap(
 
     Parameters
     ----------
-    data : array-like
+    data : ndarray of shape (n_rows, n_columns)
         Data to plot the heatmap.
 
     ylabel : str
@@ -32,14 +30,14 @@ def plot_heatmap(
     xlabel : str
         Label for x-axis.
 
-    ytick_labels : array-like of str
+    yticklabels : array-like of str
         Labels for y-axis ticks.
 
-    xtick_labels : array-like of str
+    xticklabels : array-like of str
         Labels for x-axis ticks.
 
     xticks_rotation : {'vertical', 'horizontal'} or float, \
-                     default='horizontal'
+            default='horizontal'
         Rotation of xtick labels.
 
     ax : matplotlib axes, default=None
@@ -82,7 +80,6 @@ def plot_heatmap(
     else:
         fig = ax.figure
 
-    n_classes = data.shape[0]
     im = ax.imshow(data, interpolation="nearest", cmap=cmap)
     text = None
     cmap_min, cmap_max = im.cmap(0), im.cmap(1.0)
@@ -93,26 +90,29 @@ def plot_heatmap(
         # print text with appropriate color depending on background
         thresh = (data.max() + data.min()) / 2.0
 
-        for i, j in product(range(n_classes), range(n_classes)):
-            color = cmap_max if data[i, j] < thresh else cmap_min
+        for flat_index in range(data.size):
+            row, col = np.unravel_index(flat_index, data.shape)
+            color = cmap_max if data[row, col] < thresh else cmap_min
 
             if values_format is None:
-                text_data = format(data[i, j], ".2g")
+                text_data = format(data[row, col], ".2g")
                 if data.dtype.kind != "f":
-                    text_d = format(data[i, j], "d")
+                    text_d = format(data[row, col], "d")
                     if len(text_d) < len(text_data):
                         text_data = text_d
             else:
-                text_data = format(data[i, j], values_format)
-            text[i, j] = ax.text(j, i, text_data, ha="center", va="center", color=color)
+                text_data = format(data[row, col], values_format)
+            text[row, col] = ax.text(
+                col, row, text_data, ha="center", va="center", color=color
+            )
 
     if colorbar:
         fig.colorbar(im, ax=ax)
     ax.set(
-        xticks=np.arange(n_classes),
-        yticks=np.arange(n_classes),
-        xticklabels=xtick_labels,
-        yticklabels=ytick_labels,
+        xticks=np.arange(len(xticklabels)),
+        yticks=np.arange(len(yticklabels)),
+        xticklabels=xticklabels,
+        yticklabels=yticklabels,
         ylabel=ylabel,
         xlabel=xlabel,
     )
