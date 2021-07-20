@@ -39,7 +39,6 @@ DOCSTRING_IGNORE_LIST = [
     "GaussianRandomProjection",
     "GradientBoostingClassifier",
     "GradientBoostingRegressor",
-    "GraphicalLassoCV",
     "GridSearchCV",
     "HalvingGridSearchCV",
     "HalvingRandomSearchCV",
