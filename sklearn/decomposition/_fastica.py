@@ -165,6 +165,8 @@ def fastica(
 ):
     """Perform Fast Independent Component Analysis.
 
+    The implementation is based on [1]_.
+
     Read more in the :ref:`User Guide <ICA>`.
 
     Parameters
@@ -257,7 +259,6 @@ def fastica(
 
     Notes
     -----
-
     The data matrix X is considered to be a linear combination of
     non-Gaussian (independent) components i.e. X = AS where columns of S
     contain the independent components and A is a linear mixing
@@ -273,10 +274,11 @@ def fastica(
     before the algorithm is applied. This makes it slightly
     faster for Fortran-ordered input.
 
-    Implemented using FastICA:
-    *A. Hyvarinen and E. Oja, Independent Component Analysis:
-    Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430*
+    References
+    ----------
+    .. [1] A. Hyvarinen and E. Oja, "Fast Independent Component Analysis",
+           Algorithms and Applications, Neural Networks, 13(4-5), 2000,
+           pp. 411-430.
     """
 
     est = FastICA(
@@ -319,6 +321,8 @@ def fastica(
 
 class FastICA(TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
+
+    The implementation is based on [1]_.
 
     Read more in the :ref:`User Guide <ICA>`.
 
@@ -402,12 +406,11 @@ class FastICA(TransformerMixin, BaseEstimator):
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     SparsePCA : Sparse Principal Components Analysis (SparsePCA).
 
-    Notes
-    -----
-    Implementation based on
-    *A. Hyvarinen and E. Oja, Independent Component Analysis:
-    Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430*
+    References
+    ----------
+    .. [1] A. Hyvarinen and E. Oja, Independent Component Analysis:
+           Algorithms and Applications, Neural Networks, 13(4-5), 2000,
+           pp. 411-430.
 
     Examples
     --------
@@ -465,8 +468,8 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        S : ndarray of shape (n_samples, n_components)
-            Sources matrix.
+        S : ndarray of shape (n_samples, n_components) or None
+            Sources matrix. `None` if `compute_sources` is `False`.
         """
         XT = self._validate_data(
             X, copy=self.whiten, dtype=FLOAT_DTYPES, ensure_min_samples=2
@@ -599,8 +602,9 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        S : ndarray of shape (n_samples, n_components)
-            Sources matrix.
+        X_new : ndarray of shape (n_samples, n_components)
+            Estimated sources obtained by transforming the data with the
+            estimated unmixing matrix.
         """
         return self._fit(X, compute_sources=True)
 
@@ -639,7 +643,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
-            Transformed data obtained with unmixing matrix.
+            Estimated sources obtained by transforming the data with the
+            estimated unmixing matrix.
         """
         check_is_fitted(self)
 
@@ -665,7 +670,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_features)
-            Transformed data obtained with the mixing matrix.
+            Reconstructed data obtained with the mixing matrix.
         """
         check_is_fitted(self)
 
