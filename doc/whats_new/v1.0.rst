@@ -637,7 +637,7 @@ Changelog
   :func:`utils._testing.assert_warns_message` are deprecated in 1.0 and will
   be removed in 1.2. Used `pytest.warns` context manager instead. Note that
   these functions were not documented and part from the public API.
-  :pr:`20521` by :user:`Olivier Grisel <ogrisel>`_.
+  :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.validation`
 .........................
