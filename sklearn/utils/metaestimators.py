@@ -13,7 +13,7 @@ from ..utils import _safe_indexing
 from ..base import BaseEstimator
 from ..base import _is_pairwise
 
-__all__ = ["if_delegate_has_method"]
+__all__ = ["available_if", "if_delegate_has_method"]
 
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
@@ -80,7 +80,80 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
             )
 
 
-class _IffHasAttrDescriptor:
+class _AvailableIfDescriptor:
+    """Implements a conditional property using the descriptor protocol.
+
+    Using this class to create a decorator will raise an ``AttributeError``
+    if check(self) returns a falsey value. Note that if check raises an error
+    this will also result in hasattr returning false.
+
+    See https://docs.python.org/3/howto/descriptor.html for an explanation of
+    descriptors.
+    """
+
+    def __init__(self, fn, check, attribute_name):
+        self.fn = fn
+        self.check = check
+        self.attribute_name = attribute_name
+
+        # update the docstring of the descriptor
+        update_wrapper(self, fn)
+
+    def __get__(self, obj, owner=None):
+        if obj is not None:
+            # delegate only on instances, not the classes.
+            # this is to allow access to the docstrings.
+            if not self.check(obj):
+                raise AttributeError(
+                    f"This {repr(owner.__name__)}"
+                    " has no attribute"
+                    f" {repr(self.attribute_name)}"
+                )
+
+        # lambda, but not partial, allows help() to work with update_wrapper
+        out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
+        # update the docstring of the returned function
+        update_wrapper(out, self.fn)
+        return out
+
+
+def available_if(check):
+    """An attribute that is available only if check returns a truthy value
+
+    Parameters
+    ----------
+    check : callable
+        When passed the object with the decorated method, this should return
+        a truthy value if the attribute is available, and either return False
+        or raise an AttributeError if not available.
+
+    Examples
+    --------
+    >>> from sklearn.utils.metaestimators import available_if
+    >>> class HelloIfEven:
+    ...    def __init__(self, x):
+    ...        self.x = x
+    ...
+    ...    def _x_is_even(self):
+    ...        return self.x % 2 == 0
+    ...
+    ...    @available_if(_x_is_even)
+    ...    def say_hello(self):
+    ...        print("Hello")
+    ...
+    >>> obj = HelloIfEven(1)
+    >>> hasattr(obj, "say_hello")
+    False
+    >>> obj.x = 2
+    >>> hasattr(obj, "say_hello")
+    True
+    >>> obj.say_hello()
+    Hello
+    """
+    return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
+
+
+class _IffHasAttrDescriptor(_AvailableIfDescriptor):
     """Implements a conditional property using the descriptor protocol.
 
     Using this class to create a decorator will raise an ``AttributeError``
@@ -97,34 +170,22 @@ class _IffHasAttrDescriptor:
     """
 
     def __init__(self, fn, delegate_names, attribute_name):
-        self.fn = fn
+        super().__init__(fn, self._check, attribute_name)
         self.delegate_names = delegate_names
-        self.attribute_name = attribute_name
 
-        # update the docstring of the descriptor
-        update_wrapper(self, fn)
+    def _check(self, obj):
+        delegate = None
+        for delegate_name in self.delegate_names:
+            try:
+                delegate = attrgetter(delegate_name)(obj)
+                break
+            except AttributeError:
+                continue
 
-    def __get__(self, obj, type=None):
-        # raise an AttributeError if the attribute is not present on the object
-        if obj is not None:
-            # delegate only on instances, not the classes.
-            # this is to allow access to the docstrings.
-            for delegate_name in self.delegate_names:
-                try:
-                    delegate = attrgetter(delegate_name)(obj)
-                except AttributeError:
-                    continue
-                else:
-                    getattr(delegate, self.attribute_name)
-                    break
-            else:
-                attrgetter(self.delegate_names[-1])(obj)
-
-        # lambda, but not partial, allows help() to work with update_wrapper
-        out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)
-        # update the docstring of the returned function
-        update_wrapper(out, self.fn)
-        return out
+        if delegate is None:
+            return False
+        # raise original AttributeError
+        return getattr(delegate, self.attribute_name) or True
 
 
 def if_delegate_has_method(delegate):
