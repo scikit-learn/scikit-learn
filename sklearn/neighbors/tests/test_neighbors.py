@@ -1557,24 +1557,30 @@ def test_k_and_radius_neighbors_X_None():
 def test_k_and_radius_neighbors_duplicates(algorithm):
     # Test behavior of kneighbors when duplicates are present in query
     nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
-    nn.fit([[0], [1]])
+    duplicates = [[0], [1], [3]]
+
+    nn.fit(duplicates)
 
     # Do not do anything special to duplicates.
-    kng = nn.kneighbors_graph([[0], [1]], mode="distance")
-    assert_allclose(kng.toarray(), np.array([[0.0, 0.0], [0.0, 0.0]]))
-    assert_allclose(kng.data, [0.0, 0.0])
-    assert_allclose(kng.indices, [0, 1])
+    kng = nn.kneighbors_graph(duplicates, mode="distance")
+    assert_allclose(
+        kng.toarray(), np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+    )
+    assert_allclose(kng.data, [0.0, 0.0, 0.0])
+    assert_allclose(kng.indices, [0, 1, 2])
 
     dist, ind = nn.radius_neighbors([[0], [1]], radius=1.5)
     check_object_arrays(dist, [[0, 1], [1, 0]])
     check_object_arrays(ind, [[0, 1], [0, 1]])
 
-    rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5)
-    assert_allclose(rng.toarray(), np.ones((2, 2)))
+    rng = nn.radius_neighbors_graph(duplicates, radius=1.5)
+    assert_allclose(
+        rng.toarray(), np.array([[1.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    )
 
     rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5, mode="distance")
     rng.sort_indices()
-    assert_allclose(rng.toarray(), [[0, 1], [1, 0]])
+    assert_allclose(rng.toarray(), [[0, 1, 0], [1, 0, 0]])
     assert_allclose(rng.indices, [0, 1, 0, 1])
     assert_allclose(rng.data, [0, 1, 1, 0])
 
