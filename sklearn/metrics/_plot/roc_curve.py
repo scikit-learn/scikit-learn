@@ -68,8 +68,8 @@ class RocCurveDisplay:
     >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
     >>> roc_auc = metrics.auc(fpr, tpr)
-    >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,\
-                                          estimator_name='example estimator')
+    >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
+    ...                                   estimator_name='example estimator')
     >>> display.plot()
     <...>
     >>> plt.show()
@@ -204,7 +204,7 @@ class RocCurveDisplay:
         See Also
         --------
         roc_curve : Compute Receiver operating characteristic (ROC) curve.
-        RocCurveDisplay.from_predictions : ROC Curve visualization given the \
+        RocCurveDisplay.from_predictions : ROC Curve visualization given the
             probabilities of scores of a classifier.
         roc_auc_score : Compute the area under the ROC curve.
 
@@ -278,15 +278,15 @@ class RocCurveDisplay:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : str or int, default=None
-            The label of the positive class. When `pos_label=None`, if `y_true`
-            is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
-            error will be raised.
-
         drop_intermediate : bool, default=True
             Whether to drop some suboptimal thresholds which would not appear
             on a plotted ROC curve. This is useful in order to create lighter
             ROC curves.
+
+        pos_label : str or int, default=None
+            The label of the positive class. When `pos_label=None`, if `y_true`
+            is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
+            error will be raised.
 
         name : str, default=None
             Name of ROC curve for labeling. If `None`, name will be set to
@@ -307,7 +307,7 @@ class RocCurveDisplay:
         See Also
         --------
         roc_curve : Compute Receiver operating characteristic (ROC) curve.
-        RocCurveDisplay.from_estimator : ROC Curve visualization given an \
+        RocCurveDisplay.from_estimator : ROC Curve visualization given an
             estimator and some data.
         roc_auc_score : Compute the area under the ROC curve.
 
