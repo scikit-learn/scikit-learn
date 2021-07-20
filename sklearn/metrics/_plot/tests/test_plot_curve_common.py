@@ -13,6 +13,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import plot_det_curve
 from sklearn.metrics import plot_roc_curve
 
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:Function plot_roc_curve is deprecated",
+)
+
 
 @pytest.fixture(scope="module")
 def data():
