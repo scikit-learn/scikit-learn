@@ -48,7 +48,6 @@ DOCSTRING_IGNORE_LIST = [
     "HuberRegressor",
     "IncrementalPCA",
     "Isomap",
-    "IsotonicRegression",
     "IterativeImputer",
     "KBinsDiscretizer",
     "KNNImputer",
