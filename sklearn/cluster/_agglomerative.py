@@ -1032,7 +1032,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         features following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
         the data into a connectivity matrix, such as derived from
-        kneighbors_graph. Default is `None`, i.e, the
+        `kneighbors_graph`. Default is `None`, i.e, the
         hierarchical clustering algorithm is unstructured.
 
     compute_full_tree : 'auto' or bool, default='auto'
