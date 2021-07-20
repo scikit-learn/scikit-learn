@@ -657,7 +657,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         y : None
             Ignored.
 
-        sample_weights : array-like of shape (n_samples,), default = None
+        sample_weight : array-like of shape (n_samples,), default = None
             Individual weights for each sample. Used to calculate quantiles if
             knots = `"quantile"`.
 
