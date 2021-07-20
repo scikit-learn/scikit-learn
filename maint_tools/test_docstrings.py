@@ -27,7 +27,6 @@ DOCSTRING_IGNORE_LIST = [
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
     "FactorAnalysis",
-    "FastICA",
     "FeatureAgglomeration",
     "FeatureHasher",
     "FeatureUnion",
