@@ -405,7 +405,7 @@ def linkage_tree(
             - "single" uses the minimum of the distances between all
               observations of the two sets.
 
-    affinity : str or callable, default='euclidean'.
+    affinity : str or callable, default='euclidean'
         which metric to use. Can be 'euclidean', 'manhattan', or any
         distance known to paired distance (see metric.pairwise).
 
@@ -1157,7 +1157,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
-        """Fit the hierarchical clustering on the data
+        """Fit the hierarchical clustering on the data.
 
         Parameters
         ----------
