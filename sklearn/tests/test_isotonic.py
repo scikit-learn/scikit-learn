@@ -5,6 +5,7 @@ import copy
 
 import pytest
 
+from sklearn.datasets import make_regression
 from sklearn.isotonic import (
     check_increasing,
     isotonic_regression,
@@ -684,10 +685,9 @@ def test_isotonic_regression_sample_weight_not_overwritten():
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/20508
     """
-    from sklearn.datasets import make_regression
-
     X, y = make_regression(n_samples=10, n_features=1, random_state=41)
-    sample_weight_original = np.ones(shape=y.shape)
+    sample_weight_original = np.ones_like(y)
+    sample_weight_original[0] = 10
     sample_weight_fit = sample_weight_original.copy()
 
     isotonic_regression(y, sample_weight=sample_weight_fit)
