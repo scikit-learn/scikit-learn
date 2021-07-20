@@ -679,7 +679,8 @@ def test_isotonic_2darray_more_than_1_feature():
 
 
 def test_isotonic_regression_sample_weight_not_overwritten():
-    """Check that calling `fit` will not overwrite `sample_weight`.
+    """Check that calling fitting function of isotonic regression will not
+    overwrite `sample_weight`.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/20508
     """
