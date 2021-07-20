@@ -17,12 +17,12 @@ from scipy.sparse import issparse
 
 class AgglomerationTransform(TransformerMixin):
     """
-    A class for feature agglomeration via the transform interface
+    A class for feature agglomeration via the transform interface.
     """
 
     def transform(self, X):
         """
-        Transform a new matrix using the built clustering
+        Transform a new matrix using the built clustering.
 
         Parameters
         ----------
@@ -57,12 +57,12 @@ class AgglomerationTransform(TransformerMixin):
         """
         Inverse the transformation.
         Return a vector of size nb_features with the values of Xred assigned
-        to each group of features
+        to each group of features.
 
         Parameters
         ----------
         Xred : array-like of shape (n_samples, n_clusters) or (n_clusters,)
-            The values to be assigned to each cluster of samples
+            The values to be assigned to each cluster of samples.
 
         Returns
         -------
