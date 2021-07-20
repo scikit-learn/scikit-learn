@@ -14,6 +14,7 @@ from ...utils.validation import (
     check_consistent_length,
     _check_sample_weight,
 )
+from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -263,8 +264,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # data.
         self._in_fit = True
 
+        # `_openmp_effective_n_threads` is used to take cgroups CPU quotes
+        # into account when determine the maximum number of threads to use.
+        n_threads = _openmp_effective_n_threads()
+
         if isinstance(self.loss, str):
-            self._loss = self._get_loss(sample_weight=sample_weight)
+            self._loss = self._get_loss(
+                sample_weight=sample_weight, n_threads=n_threads
+            )
         elif isinstance(self.loss, BaseLoss):
             self._loss = self.loss
 
@@ -328,6 +335,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             is_categorical=self.is_categorical_,
             known_categories=known_categories,
             random_state=self._random_seed,
+            n_threads=n_threads,
         )
         X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
@@ -449,9 +457,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self.validation_score_ = self.validation_score_.tolist()
 
             # Compute raw predictions
-            raw_predictions = self._raw_predict(X_binned_train)
+            raw_predictions = self._raw_predict(X_binned_train, n_threads=n_threads)
             if self.do_early_stopping_ and self._use_validation_data:
-                raw_predictions_val = self._raw_predict(X_binned_val)
+                raw_predictions_val = self._raw_predict(
+                    X_binned_val, n_threads=n_threads
+                )
             else:
                 raw_predictions_val = None
 
@@ -510,6 +520,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
                     shrinkage=self.learning_rate,
+                    n_threads=n_threads,
                 )
                 grower.grow()
 
@@ -530,7 +541,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # Update raw_predictions with the predictions of the newly
                 # created tree.
                 tic_pred = time()
-                _update_raw_predictions(raw_predictions[k, :], grower)
+                _update_raw_predictions(raw_predictions[k, :], grower, n_threads)
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
 
@@ -541,7 +552,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     if self._use_validation_data:
                         for k, pred in enumerate(self._predictors[-1]):
                             raw_predictions_val[k, :] += pred.predict_binned(
-                                X_binned_val, self._bin_mapper.missing_values_bin_idx_
+                                X_binned_val,
+                                self._bin_mapper.missing_values_bin_idx_,
+                                n_threads,
                             )
 
                     should_early_stop = self._check_early_stopping_loss(
@@ -809,13 +822,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         print(log_msg)
 
-    def _raw_predict(self, X):
+    def _raw_predict(self, X, n_threads=None):
         """Return the sum of the leaves values over all predictors.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             The input samples.
+        n_threads : int, default=None
+            Number of OpenMP threads to use. `_openmp_effective_n_threads` is called
+            to determine the effective number of threads use, which takes cgroups CPU
+            quotes into account. See the docstring of `_openmp_effective_n_threads`
+            for details.
 
         Returns
         -------
@@ -837,10 +855,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             dtype=self._baseline_prediction.dtype,
         )
         raw_predictions += self._baseline_prediction
-        self._predict_iterations(X, self._predictors, raw_predictions, is_binned)
+
+        # We intentionally decouple the number of threads used at prediction
+        # time from the number of threads used at fit time because the model
+        # can be deployed on a different machine for prediction purposes.
+        n_threads = _openmp_effective_n_threads(n_threads)
+        self._predict_iterations(
+            X, self._predictors, raw_predictions, is_binned, n_threads
+        )
         return raw_predictions
 
-    def _predict_iterations(self, X, predictors, raw_predictions, is_binned):
+    def _predict_iterations(self, X, predictors, raw_predictions, is_binned, n_threads):
         """Add the predictions of the predictors to raw_predictions."""
         if not is_binned:
             (
@@ -853,13 +878,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if is_binned:
                     predict = partial(
                         predictor.predict_binned,
-                        missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_,  # noqa
+                        missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_,
+                        n_threads=n_threads,
                     )
                 else:
                     predict = partial(
                         predictor.predict,
                         known_cat_bitsets=known_cat_bitsets,
                         f_idx_map=f_idx_map,
+                        n_threads=n_threads,
                     )
                 raw_predictions[k, :] += predict(X)
 
@@ -894,12 +921,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             dtype=self._baseline_prediction.dtype,
         )
         raw_predictions += self._baseline_prediction
+
+        # We intentionally decouple the number of threads used at prediction
+        # time from the number of threads used at fit time because the model
+        # can be deployed on a different machine for prediction purposes.
+        n_threads = _openmp_effective_n_threads()
         for iteration in range(len(self._predictors)):
             self._predict_iterations(
                 X,
                 self._predictors[iteration : iteration + 1],
                 raw_predictions,
                 is_binned=False,
+                n_threads=n_threads,
             )
             yield raw_predictions.copy()
 
@@ -949,7 +982,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return {"allow_nan": True}
 
     @abstractmethod
-    def _get_loss(self, sample_weight):
+    def _get_loss(self, sample_weight, n_threads):
         pass
 
     @abstractmethod
@@ -1241,7 +1274,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 )
         return y
 
-    def _get_loss(self, sample_weight):
+    def _get_loss(self, sample_weight, n_threads):
         # TODO: Remove in v1.2
         if self.loss == "least_squares":
             warnings.warn(
@@ -1250,7 +1283,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 "equivalent.",
                 FutureWarning,
             )
-            return _LOSSES["squared_error"](sample_weight=sample_weight)
+            return _LOSSES["squared_error"](
+                sample_weight=sample_weight, n_threads=n_threads
+            )
         elif self.loss == "least_absolute_deviation":
             warnings.warn(
                 "The loss 'least_absolute_deviation' was deprecated in v1.0 "
@@ -1258,9 +1293,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 "which is equivalent.",
                 FutureWarning,
             )
-            return _LOSSES["absolute_error"](sample_weight=sample_weight)
+            return _LOSSES["absolute_error"](
+                sample_weight=sample_weight, n_threads=n_threads
+            )
 
-        return _LOSSES[self.loss](sample_weight=sample_weight)
+        return _LOSSES[self.loss](sample_weight=sample_weight, n_threads=n_threads)
 
 
 class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
@@ -1610,7 +1647,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
-    def _get_loss(self, sample_weight):
+    def _get_loss(self, sample_weight, n_threads):
         if self.loss == "categorical_crossentropy" and self.n_trees_per_iteration_ == 1:
             raise ValueError(
                 "'categorical_crossentropy' is not suitable for "
@@ -1620,8 +1657,12 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         if self.loss == "auto":
             if self.n_trees_per_iteration_ == 1:
-                return _LOSSES["binary_crossentropy"](sample_weight=sample_weight)
+                return _LOSSES["binary_crossentropy"](
+                    sample_weight=sample_weight, n_threads=n_threads
+                )
             else:
-                return _LOSSES["categorical_crossentropy"](sample_weight=sample_weight)
+                return _LOSSES["categorical_crossentropy"](
+                    sample_weight=sample_weight, n_threads=n_threads
+                )
 
-        return _LOSSES[self.loss](sample_weight=sample_weight)
+        return _LOSSES[self.loss](sample_weight=sample_weight, n_threads=n_threads)

@@ -825,25 +825,23 @@ In :class:`NMF`, L1 and L2 priors can be added to the loss function in order
 to regularize the model. The L2 prior uses the Frobenius norm, while the L1
 prior uses an elementwise L1 norm. As in :class:`ElasticNet`, we control the
 combination of L1 and L2 with the :attr:`l1_ratio` (:math:`\rho`) parameter,
-and the intensity of the regularization with the :attr:`alpha`
-(:math:`\alpha`) parameter. Then the priors terms are:
+and the intensity of the regularization with the :attr:`alpha_W` and :attr:`alpha_H`
+(:math:`\alpha_W` and :math:`\alpha_H`) parameters. The priors are scaled by the number
+of samples (:math:`n\_samples`) for `H` and the number of features (:math:`n\_features`)
+for `W` to keep their impact balanced with respect to one another and to the data fit
+term as independant as possible of the size of the training set. Then the priors terms
+are:
 
 .. math::
-    \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
+    (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
+    + (\alpha_H \rho ||H||_1 + \frac{\alpha_H(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2) * n\_samples
 
 and the regularized objective function is:
 
 .. math::
     d_{\mathrm{Fro}}(X, WH)
-    + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
-
-:class:`NMF` regularizes both W and H by default. The :attr:`regularization`
-parameter allows for finer control, with which only W, only H,
-or both can be regularized.
+    + (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
+    + (\alpha_H \rho ||H||_1 + \frac{\alpha_H(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2) * n\_samples
 
 NMF with a beta-divergence
 --------------------------
