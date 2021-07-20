@@ -208,13 +208,19 @@ def test_spline_transformer_linear_regression(bias, intercept):
     ["knots", "n_knots", "sample_weight", "expected_knots"],
     [
         ("uniform", 3, None, np.array([[0, 2], [3, 8], [6, 14]])),
+        (
+            "uniform",
+            3,
+            np.array([0, 0, 1, 1, 0, 3, 1]),
+            np.array([[2, 2], [4, 8], [6, 14]]),
+        ),
         ("uniform", 4, None, np.array([[0, 2], [2, 6], [4, 10], [6, 14]])),
         ("quantile", 3, None, np.array([[0, 2], [3, 3], [6, 14]])),
         (
             "quantile",
             3,
             np.array([0, 0, 1, 1, 0, 3, 1]),
-            np.array([[0, 2], [5, 8], [6, 14]]),
+            np.array([[2, 2], [5, 8], [6, 14]]),
         ),
     ],
 )

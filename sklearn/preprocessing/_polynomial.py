@@ -609,8 +609,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # knots == 'uniform':
             # Note that the variable `knots` has already been validated and
             # `else` is therefore safe.
-            x_min = np.amin(X, axis=0)
-            x_max = np.amax(X, axis=0)
+            # Disregard observations with zero weight.
+            mask = slice(None, None, 1) if sample_weight is None else sample_weight > 0
+            x_min = np.amin(X[mask], axis=0)
+            x_max = np.amax(X[mask], axis=0)
+
             knots = linspace(
                 start=x_min,
                 stop=x_max,
