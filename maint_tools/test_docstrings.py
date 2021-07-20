@@ -108,7 +108,6 @@ DOCSTRING_IGNORE_LIST = [
     "RBFSampler",
     "RFE",
     "RadiusNeighborsClassifier",
-    "RadiusNeighborsRegressor",
     "RadiusNeighborsTransformer",
     "RandomTreesEmbedding",
     "RandomizedSearchCV",
