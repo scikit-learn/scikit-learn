@@ -5,11 +5,11 @@ from ..utils import check_matplotlib_support
 
 def plot_heatmap(
     data,
+    *,
     ylabel,
     xlabel,
     yticklabels,
     xticklabels,
-    *,
     xticks_rotation="horizontal",
     ax=None,
     cmap="viridis",
@@ -17,7 +17,9 @@ def plot_heatmap(
     values_format=None,
     colorbar=True,
 ):
-    """Plot heatmap visualization.
+    """Plot a heatmap.
+
+    .. versionadded:: 1.0
 
     Parameters
     ----------
@@ -30,10 +32,10 @@ def plot_heatmap(
     xlabel : str
         Label for x-axis.
 
-    yticklabels : array-like of str
+    yticklabels : array-like of shape (n_rows,), dtype=str
         Labels for y-axis ticks.
 
-    xticklabels : array-like of str
+    xticklabels : array-like of shape (n_columns,), dtype=str
         Labels for x-axis ticks.
 
     xticks_rotation : {'vertical', 'horizontal'} or float, \
@@ -70,7 +72,7 @@ def plot_heatmap(
 
     text : ndarray of shape (n_classes, n_classes), dtype=matplotlib Text, \
             or None
-        Array of matplotlib axes. `None` if `include_values` is false.
+        Array of matplotlib axes. `None` if `include_values` is `False`.
     """
     check_matplotlib_support("utils.plot.plot_heatmap")
     import matplotlib.pyplot as plt

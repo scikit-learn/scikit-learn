@@ -4,7 +4,7 @@ from .. import confusion_matrix
 from ...utils import check_matplotlib_support
 from ...utils import deprecated
 from ...utils.multiclass import unique_labels
-from ...utils.plot import plot_heatmap
+from ...utils._plot import plot_heatmap
 from ...base import is_classifier
 
 
@@ -123,10 +123,10 @@ class ConfusionMatrixDisplay:
             display_labels = self.display_labels
         fig, ax, im, text = plot_heatmap(
             cm,
-            "True label",
-            "Predicted label",
-            display_labels,
-            display_labels,
+            ylabel="True label",
+            xlabel="Predicted label",
+            yticklabels=display_labels,
+            xticklabels=display_labels,
             xticks_rotation=xticks_rotation,
             ax=ax,
             cmap=cmap,
