@@ -141,6 +141,8 @@ def _update_doc_distribution(
 class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     """Latent Dirichlet Allocation with online variational Bayes algorithm.
 
+    The implementation is based on [1]_ and [2]_.
+
     .. versionadded:: 0.17
 
     Read more in the :ref:`User Guide <LatentDirichletAllocation>`.
@@ -287,13 +289,11 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     References
     ----------
     .. [1] "Online Learning for Latent Dirichlet Allocation", Matthew D.
-        Hoffman, David M. Blei, Francis Bach, 2010
+           Hoffman, David M. Blei, Francis Bach, 2010
+           https://github.com/blei-lab/onlineldavb
 
-    [2] "Stochastic Variational Inference", Matthew D. Hoffman, David M. Blei,
-        Chong Wang, John Paisley, 2013
-
-    [3] Matthew D. Hoffman's onlineldavb code. Link:
-        https://github.com/blei-lab/onlineldavb
+    .. [2] "Stochastic Variational Inference", Matthew D. Hoffman,
+           David M. Blei, Chong Wang, John Paisley, 2013
 
     Examples
     --------
@@ -548,7 +548,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self:
+        self
             Partially fitted estimator.
         """
         self._check_params()
@@ -598,7 +598,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self:
+        self
             Fitted estimator.
         """
         self._check_params()
