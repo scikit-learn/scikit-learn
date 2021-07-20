@@ -61,14 +61,14 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
 
 class ShrunkCovariance(EmpiricalCovariance):
-    """Covariance estimator with shrinkage
+    """Covariance estimator with shrinkage.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
     store_precision : bool, default=True
-        Specify if the estimated precision is stored
+        Specify if the estimated precision is stored.
 
     assume_centered : bool, default=False
         If True, data will not be centered before computation.
@@ -97,6 +97,28 @@ class ShrunkCovariance(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    EllipticEnvelope : An object for detecting outliers in
+        a Gaussian distributed dataset.
+    EmpiricalCovariance : Maximum likelihood covariance estimator.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with cross-validated
+        choice of the l1 penalty.
+    LedoitWolf : LedoitWolf Estimator.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    OAS : Oracle Approximating Shrinkage Estimator.
+
+    Notes
+    -----
+    The regularized covariance is given by:
+
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+
+    where mu = trace(cov) / n_features
+
     Examples
     --------
     >>> import numpy as np
@@ -114,14 +136,6 @@ class ShrunkCovariance(EmpiricalCovariance):
            [0.2536..., 0.4110...]])
     >>> cov.location_
     array([0.0622..., 0.0193...])
-
-    Notes
-    -----
-    The regularized covariance is given by:
-
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
-
-    where mu = trace(cov) / n_features
     """
 
     def __init__(self, *, store_precision=True, assume_centered=False, shrinkage=0.1):
@@ -131,8 +145,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         self.shrinkage = shrinkage
 
     def fit(self, X, y=None):
-        """Fit the shrunk covariance model according to the given training data
-        and parameters.
+        """Fit the shrunk covariance model to X.
 
         Parameters
         ----------
@@ -146,6 +159,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid a potential
