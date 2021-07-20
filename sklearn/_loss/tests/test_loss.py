@@ -743,7 +743,7 @@ def test_loss_intercept_only(loss, sample_weight):
     [
         (HalfSquaredError(), np.mean, "normal"),
         (AbsoluteError(), np.median, "normal"),
-        (PinballLoss(quantile=0.25), lambda x: np.quantile(x, q=0.25), "normal"),
+        (PinballLoss(quantile=0.25), lambda x: np.percentile(x, q=25), "normal"),
         (HalfPoissonLoss(), np.mean, "poisson"),
         (HalfGammaLoss(), np.mean, "exponential"),
         (HalfTweedieLoss(), np.mean, "exponential"),
