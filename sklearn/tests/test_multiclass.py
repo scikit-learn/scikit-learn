@@ -519,7 +519,7 @@ def test_ovr_deprecated_coef_intercept():
     ovr = ovr.fit(iris.data, iris.target)
 
     msg = (
-        r"Attribute {0} was deprecated in version 0.24 "
+        r"Attribute `{0}` was deprecated in version 0.24 "
         r"and will be removed in 1.1 \(renaming of 0.26\). If you observe "
         r"this warning while using RFE or SelectFromModel, "
         r"use the importance_getter parameter instead."
@@ -601,8 +601,9 @@ def test_ovo_partial_fit_predict():
     ovo = OneVsOneClassifier(MultinomialNB())
     error_y = [0, 1, 2, 3, 4, 5, 2]
     message_re = escape(
-        "Mini-batch contains {0} while "
-        "it must be subset of {1}".format(np.unique(error_y), np.unique(y))
+        "Mini-batch contains {0} while it must be subset of {1}".format(
+            np.unique(error_y), np.unique(y)
+        )
     )
     with pytest.raises(ValueError, match=message_re):
         ovo.partial_fit(X[:7], error_y, np.unique(y))
@@ -857,7 +858,7 @@ def test_pairwise_tag(MultiClassClassifier):
 def test_pairwise_deprecated(MultiClassClassifier):
     clf_precomputed = svm.SVC(kernel="precomputed")
     ov_clf = MultiClassClassifier(clf_precomputed)
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         ov_clf._pairwise
 

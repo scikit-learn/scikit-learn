@@ -223,7 +223,7 @@ class _VectorizerMixin:
 
         if doc is np.nan:
             raise ValueError(
-                "np.nan is an invalid document, expected byte or " "unicode string."
+                "np.nan is an invalid document, expected byte or unicode string."
             )
 
         return doc
@@ -396,7 +396,8 @@ class _VectorizerMixin:
                     "Your stop_words may be inconsistent with "
                     "your preprocessing. Tokenizing the stop "
                     "words generated tokens %r not in "
-                    "stop_words." % sorted(inconsistent)
+                    "stop_words."
+                    % sorted(inconsistent)
                 )
             return not inconsistent
         except Exception:
@@ -473,7 +474,7 @@ class _VectorizerMixin:
                     raise ValueError("Vocabulary contains repeated indices.")
                 for i in range(len(vocabulary)):
                     if i not in indices:
-                        msg = "Vocabulary of size %d doesn't contain index " "%d." % (
+                        msg = "Vocabulary of size %d doesn't contain index %d." % (
                             len(vocabulary),
                             i,
                         )
@@ -501,7 +502,8 @@ class _VectorizerMixin:
         if min_n > max_m:
             raise ValueError(
                 "Invalid value for ngram_range=%s "
-                "lower boundary larger than the upper boundary." % str(self.ngram_range)
+                "lower boundary larger than the upper boundary."
+                % str(self.ngram_range)
             )
 
     def _warn_for_unused_params(self):
@@ -779,7 +781,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         # triggers a parameter validation
         if isinstance(X, str):
             raise ValueError(
-                "Iterable over raw text documents expected, " "string object received."
+                "Iterable over raw text documents expected, string object received."
             )
 
         self._warn_for_unused_params()
@@ -805,7 +807,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         """
         if isinstance(X, str):
             raise ValueError(
-                "Iterable over raw text documents expected, " "string object received."
+                "Iterable over raw text documents expected, string object received."
             )
 
         self._validate_params()
@@ -1161,8 +1163,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         kept_indices = np.where(mask)[0]
         if len(kept_indices) == 0:
             raise ValueError(
-                "After pruning, no terms remain. Try a lower"
-                " min_df or a higher max_df."
+                "After pruning, no terms remain. Try a lower min_df or a higher max_df."
             )
         return X[:, kept_indices], removed_terms
 
@@ -1214,7 +1215,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             vocabulary = dict(vocabulary)
             if not vocabulary:
                 raise ValueError(
-                    "empty vocabulary; perhaps the documents only" " contain stop words"
+                    "empty vocabulary; perhaps the documents only contain stop words"
                 )
 
         if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
@@ -1284,7 +1285,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # TfidfVectorizer.
         if isinstance(raw_documents, str):
             raise ValueError(
-                "Iterable over raw text documents expected, " "string object received."
+                "Iterable over raw text documents expected, string object received."
             )
 
         self._validate_params()
@@ -1337,7 +1338,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         """
         if isinstance(raw_documents, str):
             raise ValueError(
-                "Iterable over raw text documents expected, " "string object received."
+                "Iterable over raw text documents expected, string object received."
             )
         self._check_vocabulary()
 
@@ -1916,8 +1917,8 @@ class TfidfVectorizer(CountVectorizer):
         if hasattr(self, "vocabulary_"):
             if len(self.vocabulary_) != len(value):
                 raise ValueError(
-                    "idf length = %d must be equal "
-                    "to vocabulary size = %d" % (len(value), len(self.vocabulary))
+                    "idf length = %d must be equal to vocabulary size = %d"
+                    % (len(value), len(self.vocabulary))
                 )
         self._tfidf.idf_ = value
 

@@ -322,7 +322,10 @@ class BaseEstimator:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "
                     "using version {2}. This might lead to breaking code or "
-                    "invalid results. Use at your own risk.".format(
+                    "invalid results. Use at your own risk. "
+                    "For more info please refer to:\n"
+                    "https://scikit-learn.org/stable/modules/model_persistence"
+                    ".html#security-maintainability-limitations".format(
                         self.__class__.__name__, pickle_version, __version__
                     ),
                     UserWarning,
@@ -452,7 +455,7 @@ class BaseEstimator:
         if y is None and self._get_tags()["requires_y"]:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "
-                f"requires y to be passed, but the target y is None."
+                "requires y to be passed, but the target y is None."
             )
 
         no_val_X = isinstance(X, str) and X == "no_validation"
@@ -558,17 +561,16 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination :math:`R^2` of the
-        prediction.
+        """Return the coefficient of determination of the prediction.
 
-        The coefficient :math:`R^2` is defined as :math:`(1 - \\frac{u}{v})`,
-        where :math:`u` is the residual sum of squares ``((y_true - y_pred)
-        ** 2).sum()`` and :math:`v` is the total sum of squares ``((y_true -
-        y_true.mean()) ** 2).sum()``. The best possible score is 1.0 and it
-        can be negative (because the model can be arbitrarily worse). A
-        constant model that always predicts the expected value of `y`,
-        disregarding the input features, would get a :math:`R^2` score of
-        0.0.
+        The coefficient of determination :math:`R^2` is defined as
+        :math:`(1 - \\frac{u}{v})`, where :math:`u` is the residual
+        sum of squares ``((y_true - y_pred)** 2).sum()`` and :math:`v`
+        is the total sum of squares ``((y_true - y_true.mean()) ** 2).sum()``.
+        The best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always predicts
+        the expected value of `y`, disregarding the input features, would get
+        a :math:`R^2` score of 0.0.
 
         Parameters
         ----------
@@ -790,8 +792,8 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, dataframe} of shape \
-            (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
 
         y : Ignored
             Not used, present for API consistency by convention.

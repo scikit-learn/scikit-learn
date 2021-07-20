@@ -259,8 +259,20 @@ Changelog
   unused atoms during the dictionary update was not working as expected.
   :pr:`19198` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |API| The `alpha` and `regularization` parameters of :class:`decomposition.NMF` and
+  :func:`decomposition.non_negative_factorization` are deprecated and will be removed
+  in 1.2. Use the new parameters `alpha_W` and `alpha_H` instead. :pr:`20512` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.ensemble`
 .......................
+
+- |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` take cgroups quotas
+  into account when deciding the number of threads used by OpenMP. This
+  avoids performance problems caused by over-subscription when using those
+  classes in a docker container for instance. :pr:`20477`
+  by `Thomas Fan`_.
 
 - |Fix| Do not allow to compute out-of-bag (OOB) score in
   :class:`ensemble.RandomForestClassifier` and
@@ -287,6 +299,11 @@ Changelog
   :class:`ensemble.RandomForestRegressor`, where `max_samples=1.0` is
   interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
   :user:`murata-yu`.
+
+- |Fix| Fixed a bug in :class:`ensemble.AdaBoostClassifier` and
+  :class:`ensemble.AdaBoostRegressor` where the `sample_weight` parameter
+  got overwritten during `fit`.
+  :pr:`20534` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -368,6 +385,13 @@ Changelog
   :user:`Alexandre Gramfort <agramfort>`.
   Same for BayesianRidge, ARDRegression in:
   :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
+  Same for :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.MultiTaskLasso`, :class:`linear_model.MultiTaskLassoCV`,
+  :class:`linear_model.MultiTaskElasticNet`,
+  :class:`linear_model.MultiTaskElasticNetCV`, in:
+  :pr:`17785` by :user:`Maria Telenczuk <maikia>` and
+  :user:`Alexandre Gramfort <agramfort>`.
   The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
   :class:`linear_model.OrthogonalMatchingPursuitCV` will default to
   False in 1.2 and will be removed in 1.4.
@@ -397,6 +421,12 @@ Changelog
 - |Fix| Sample weight invariance for class:`Ridge` was fixed in :pr:`19616` by
   :user:`Oliver Grisel <ogrisel>` and
   :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Feature| Added new solver `lbfgs` (available with `solver="lbfgs"`)
+  and `positive` argument to class:`linear_model.Ridge`.
+  When `positive` is set to True, forces the coefficients to be positive
+  (only supported by `lbfgs`).
+  :pr:`20231` by :user:`Toshihiro Nakae <tnakae>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -449,7 +479,7 @@ Changelog
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
 :mod:`sklearn.mixture`
-..............................
+......................
 
 - |Fix| Ensure that the best parameters are set appropriately
   in the case of divergency for :class:`mixture.GaussianMixture` and
@@ -485,7 +515,7 @@ Changelog
 
 
 :mod:`sklearn.neighbors`
-..........................
+........................
 
 - |Enhancement| The creation of :class:`neighbors.KDTree` and
   :class:`neighbors.BallTree` has been improved for their worst-cases time
@@ -584,12 +614,30 @@ Changelog
   :pr:`19459` by :user:`Cindy Bezuidenhout <cinbez>` and
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
+- |Enhancement| Added helper decorator :func:`utils.metaestimators.available_if`
+  to provide flexiblity in metaestimators making methods available or
+  unavailable on the basis of state, in a more readable way.
+  :pr:`19948` by `Joel Nothman`_.
+
 - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| Propreties that are decorated with :func:`utils.deprecated` correctly
   wraps the property's docstring. :pr:`20385` by `Thomas Fan`_.
+
+- |Fix| :func:`utils.stats._weighted_percentile` now correctly ignores
+  zero-weighted observations smaller than the smallest observation with
+  positive weight for ``percentile=0``. Affected classes are
+  :class:`dummy.DummyRegressor` for ``quantile=0`` and
+  :class:`ensemble.HuberLossFunction` and :class:`ensemble.HuberLossFunction`
+  for ``alpha=0``. :pr:`20528` by :user:`Malte Londschien <mlondschien>`.
+
+- |API| :func:`utils._testing.assert_warns` and
+  :func:`utils._testing.assert_warns_message` are deprecated in 1.0 and will
+  be removed in 1.2. Used `pytest.warns` context manager instead. Note that
+  these functions were not documented and part from the public API.
+  :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.validation`
 .........................

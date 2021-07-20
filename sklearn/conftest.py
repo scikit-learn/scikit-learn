@@ -50,7 +50,7 @@ def _fetch_fixture(f):
         except IOError as e:
             if str(e) != "Data not found and `download_if_missing` is False":
                 raise
-            pytest.skip("test is enabled when " "SKLEARN_SKIP_NETWORK_TESTS=0")
+            pytest.skip("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
 
     return pytest.fixture(lambda: wrapped)
 
@@ -159,7 +159,12 @@ def pytest_collection_modifyitems(config, items):
 
         for item in items:
             if isinstance(item, DoctestItem):
-                item.add_marker(skip_marker)
+                # work-around an internal error with pytest if adding a skip
+                # mark to a doctest in a contextmanager, see
+                # https://github.com/pytest-dev/pytest/issues/8796 for more
+                # details.
+                if item.name != "sklearn._config.config_context":
+                    item.add_marker(skip_marker)
     elif not _pilutil.pillow_installed:
         skip_marker = pytest.mark.skip(reason="pillow (or PIL) not installed!")
         for item in items:
