@@ -395,14 +395,14 @@ def linkage_tree(
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
-    linkage : {'average', 'complete', 'single'}, default='complete'
+    linkage : {"average", "complete", "single"}, default="complete"
         Which linkage criteria to use. The linkage criterion determines which
         distance to use between sets of observation.
-            - 'average' uses the average of the distances of each observation of
+            - "average" uses the average of the distances of each observation of
               the two sets.
-            - 'complete' or maximum linkage uses the maximum distances between
+            - "complete" or maximum linkage uses the maximum distances between
               all observations of the two sets.
-            - 'single' uses the minimum of the distances between all
+            - "single" uses the minimum of the distances between all
               observations of the two sets.
 
     affinity : str or callable, default='euclidean'.
