@@ -12,6 +12,9 @@ Evaluating a predictive linear model involves :ref:`cross-validation
 """
 
 print(__doc__)
+import sklearn
+
+sklearn.set_config(display="diagram")
 
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
@@ -189,8 +192,9 @@ _ = plt.subplots_adjust(left=0.3)
 # In the above analysis, we saw that the values of lambda did not vary much.
 # Indeed, we can retrain this model and optimized the value of `alpha` on the
 # full training set.
-alphas = np.logspace(-1, 2.5, num=50)
-production_model = make_pipeline(StandardScaler(), RidgeCV(alphas=alphas))
+from sklearn.base import clone
+
+production_model = clone(model)
 production_model.fit(X_train, y_train)
 
 # %%
@@ -198,7 +202,7 @@ production_model.fit(X_train, y_train)
 # out data. Now, we can use it to further check if the model performs as we
 # would expect from the analysis done within the cross-validation framework.
 print(
-    f"The performance of our production model: "
+    "The performance of our production model: "
     f"R2={production_model.score(X_test, y_test):.2f}"
 )
 
