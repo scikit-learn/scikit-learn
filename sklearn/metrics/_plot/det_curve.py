@@ -195,7 +195,10 @@ def plot_det_curve(
     --------
     det_curve : Compute error rates for different probability thresholds.
     DetCurveDisplay : DET curve visualization.
-    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
 
     Examples
     --------

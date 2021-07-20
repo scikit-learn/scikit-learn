@@ -10,8 +10,11 @@ from ...utils import check_matplotlib_support, deprecated
 class RocCurveDisplay:
     """ROC Curve visualization.
 
-    It is recommend to use :func:`~sklearn.metrics.plot_roc_curve` to create a
-    visualizer. All parameters are stored as attributes.
+    It is recommend to use
+    :func:`~sklearn.metrics.RocCurveDisplay.from_estimator` or
+    :func:`~sklearn.metrics.RocCurveDisplay.from_predictions` to create
+    a :class:`~sklearn.metrics.RocCurveDisplay`. All parameters are
+    stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
 
@@ -50,7 +53,10 @@ class RocCurveDisplay:
     See Also
     --------
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
     roc_auc_score : Compute the area under the ROC curve.
 
     Examples
@@ -253,7 +259,7 @@ class RocCurveDisplay:
         ax=None,
         **kwargs,
     ):
-        """Plot ROC curve given the prediction of a classifier.
+        """Plot ROC curve given the true and predicted values.
 
         Read more in the :ref:`User Guide <visualizations>`.
 
@@ -272,7 +278,7 @@ class RocCurveDisplay:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-                pos_label : str or int, default=None
+        pos_label : str or int, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
             is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
             error will be raised.
