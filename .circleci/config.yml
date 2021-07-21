@@ -19,6 +19,7 @@ jobs:
       - SPHINX_GALLERY_VERSION: 'min'
       - NUMPYDOC_VERSION: 'min'
       - SPHINX_PROMPT_VERSION: 'min'
+      - SPHINXEXT_OPENGRAPH_VERSION: 'min'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -63,6 +64,7 @@ jobs:
       - SPHINX_GALLERY_VERSION: 'latest'
       - NUMPYDOC_VERSION: 'latest'
       - SPHINX_PROMPT_VERSION: 'latest'
+      - SPHINXEXT_OPENGRAPH_VERSION: 'latest'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh

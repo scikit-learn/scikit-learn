@@ -119,16 +119,12 @@ def test_ignore_warning():
     # Check the function directly
     assert_no_warnings(ignore_warnings(_warning_function))
     assert_no_warnings(ignore_warnings(_warning_function, category=DeprecationWarning))
-    assert_warns(
-        DeprecationWarning, ignore_warnings(_warning_function, category=UserWarning)
-    )
-    assert_warns(
-        UserWarning, ignore_warnings(_multiple_warning_function, category=FutureWarning)
-    )
-    assert_warns(
-        DeprecationWarning,
-        ignore_warnings(_multiple_warning_function, category=UserWarning),
-    )
+    with pytest.warns(DeprecationWarning):
+        ignore_warnings(_warning_function, category=UserWarning)()
+    with pytest.warns(UserWarning):
+        ignore_warnings(_multiple_warning_function, category=FutureWarning)()
+    with pytest.warns(DeprecationWarning):
+        ignore_warnings(_multiple_warning_function, category=UserWarning)()
     assert_no_warnings(
         ignore_warnings(_warning_function, category=(DeprecationWarning, UserWarning))
     )
@@ -228,7 +224,11 @@ class TestWarns(unittest.TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             filters_orig = warnings.filters[:]
-            assert assert_warns(UserWarning, f) == 3
+
+            # TODO: remove in 1.2
+            with pytest.warns(FutureWarning):
+                assert assert_warns(UserWarning, f) == 3
+
             # test that assert_warns doesn't have side effects on warnings
             # filters
             assert warnings.filters == filters_orig
@@ -236,6 +236,8 @@ class TestWarns(unittest.TestCase):
             assert_no_warnings(f)
         assert assert_no_warnings(lambda x: x, 1) == 1
 
+    # TODO: remove in 1.2
+    @ignore_warnings(category=FutureWarning)
     def test_warn_wrong_warning(self):
         def f():
             warnings.warn("yo", FutureWarning)
