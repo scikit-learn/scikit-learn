@@ -324,6 +324,10 @@ Changelog
   when the variance threshold is negative.
   :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
 
+- |FIX| Fix a bug in :func:`isotonic.isotonic_regression` where the
+  `sample_weight` passed by a user were overwritten during the fit.
+  :pr:`20515` by :user:`Carsten Allefeld <allefeld>`.
+
 :mod:`sklearn.inspection`
 .........................
 
