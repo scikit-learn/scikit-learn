@@ -1181,19 +1181,19 @@ def test_kneighbors_graph():
     assert_array_almost_equal(A.toarray(), [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
 
-def test_kneighbors_graph_sparse(seed=36):
+@pytest.mark.parametrize("n_neighbors", [1, 2, 3])
+@pytest.mark.parametrize("mode", ["connectivity", "distance"])
+def test_kneighbors_graph_sparse(n_neighbors, mode, seed=36):
     # Test kneighbors_graph to build the k-Nearest Neighbor graph
     # for sparse input.
     rng = np.random.RandomState(seed)
     X = rng.randn(10, 10)
     Xcsr = csr_matrix(X)
 
-    for n_neighbors in [1, 2, 3]:
-        for mode in ["connectivity", "distance"]:
-            assert_array_almost_equal(
-                neighbors.kneighbors_graph(X, n_neighbors, mode=mode).toarray(),
-                neighbors.kneighbors_graph(Xcsr, n_neighbors, mode=mode).toarray(),
-            )
+    assert_array_almost_equal(
+        neighbors.kneighbors_graph(X, n_neighbors, mode=mode).toarray(),
+        neighbors.kneighbors_graph(Xcsr, n_neighbors, mode=mode).toarray(),
+    )
 
 
 def test_radius_neighbors_graph():
