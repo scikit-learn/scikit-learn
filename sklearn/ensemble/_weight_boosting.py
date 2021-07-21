@@ -925,8 +925,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         In case of perfect fit, the learning procedure is stopped early.
 
     learning_rate : float, default=1.0
-        Weight applied to each classifier at each boosting iteration. A higher
-        learning rate increases the contribution of each classifier. There is
+        Weight applied to each regressor at each boosting iteration. A higher
+        learning rate increases the contribution of each regressor. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
 
     loss : {'linear', 'square', 'exponential'}, default='linear'
@@ -947,7 +947,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
 
-    estimators_ : list of classifiers
+    estimators_ : list of regressors
         The collection of fitted sub-estimators.
 
     estimator_weights_ : ndarray of floats
@@ -1168,7 +1168,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """Predict regression value for X.
 
         The predicted regression value of an input sample is computed
-        as the weighted median prediction of the classifiers in the ensemble.
+        as the weighted median prediction of the regressors in the ensemble.
 
         Parameters
         ----------
@@ -1190,7 +1190,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """Return staged predictions for X.
 
         The predicted regression value of an input sample is computed
-        as the weighted median prediction of the classifiers in the ensemble.
+        as the weighted median prediction of the regressors in the ensemble.
 
         This generator method yields the ensemble prediction after each
         iteration of boosting and therefore allows monitoring, such as to
