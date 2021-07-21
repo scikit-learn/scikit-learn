@@ -209,6 +209,13 @@ Changelog
   an adequate transformer.
   :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |API| Deprecates the following keys in `cv_results_`: `'mean_score'`,
+  `'std_score'`, and `'split(k)_score` in favor of `'mean_test_score'`
+  `'std_test_score'`, and `'split(k)_test_score``. :pr`_____` by `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
