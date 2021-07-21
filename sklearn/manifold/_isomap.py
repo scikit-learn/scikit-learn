@@ -193,6 +193,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         # Compute the number of connected components, and connect the different
         # components to be able to compute a shortest path between all pairs
         # of samples in the graph.
+        # Similar fix to cluster._agglomerative._fix_connectivity.
         n_connected_components, labels = connected_components(kng)
         if n_connected_components > 1:
             if self.metric == "precomputed":

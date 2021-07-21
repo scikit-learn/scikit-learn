@@ -71,8 +71,9 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
 
 @deprecated(
     "`graph_shortest_path` is deprecated in 1.0 (renaming of 0.25) and will "
-    "be removed in 1.2. Use `scipy.sparse.csgraph.shortest_path` instead.")
-def graph_shortest_path(dist_matrix, directed=True, method='auto'):
+    "be removed in 1.2. Use `scipy.sparse.csgraph.shortest_path` instead."
+)
+def graph_shortest_path(dist_matrix, directed=True, method="auto"):
     """Shortest-path graph search on a positive directed or undirected graph.
 
     Parameters
@@ -112,5 +113,4 @@ def graph_shortest_path(dist_matrix, directed=True, method='auto'):
     distances.  Negative distances can lead to infinite cycles that must
     be handled by specialized algorithms.
     """
-    return sparse.csgraph.shortest_path(dist_matrix, method=method,
-                                        directed=directed)
+    return sparse.csgraph.shortest_path(dist_matrix, method=method, directed=directed)
