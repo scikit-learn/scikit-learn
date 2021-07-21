@@ -191,7 +191,7 @@ def corrected_std(differences, n_train, n_test):
         Variance-corrected standard deviation of the set of differences.
     """
     # kr = k times r, r times repeated k-fold crossvalidation,
-    # kr equals the number of times the model was fit and evaluated
+    # kr equals the number of times the model was evaluated
     kr = len(differences)
     corrected_var = (
         np.var(differences, ddof=1) * (1 / kr + n_test / n_train)
