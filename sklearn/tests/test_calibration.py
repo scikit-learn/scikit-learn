@@ -664,7 +664,7 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
     params = (clf, X, y) if constructor_name == "from_estimator" else (y, y_prob)
 
     msg = (
-        "Only binary classification is supported."
+        "should be a binary classifier."
         if constructor_name == "from_estimator"
         else "y should be a 1d array, got an array of shape"
     )

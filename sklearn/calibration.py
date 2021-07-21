@@ -1170,7 +1170,7 @@ class CalibrationDisplay:
 
         # FIXME: `pos_label` should not be set to None
         # We should allow any int or string in `calibration_curve`.
-        y_prob, pos_label = _get_response(
+        y_prob, _ = _get_response(
             X, estimator, response_method="predict_proba", pos_label=None
         )
 
