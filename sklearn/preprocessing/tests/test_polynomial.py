@@ -227,6 +227,8 @@ def test_spline_transformer_linear_regression(bias, intercept):
 def test_spline_transformer_get_base_knot_positions(
     knots, n_knots, sample_weight, expected_knots
 ):
+    # Check the behaviour to find the positions of the knots with and without
+    # `sample_weight`
     X = np.array([[0, 2], [0, 2], [2, 2], [3, 3], [4, 6], [5, 8], [6, 14]])
     base_knots = SplineTransformer._get_base_knot_positions(
         X=X, knots=knots, n_knots=n_knots, sample_weight=sample_weight
