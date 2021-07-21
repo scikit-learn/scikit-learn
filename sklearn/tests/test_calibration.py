@@ -660,16 +660,14 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
     clf.fit(X, y)
     y_prob = clf.predict_proba(X)
 
-    constructor = getattr(CalibrationDisplay, constructor_name)
-    params = (clf, X, y) if constructor_name == "from_estimator" else (y, y_prob)
-
-    msg = (
-        "should be a binary classifier."
-        if constructor_name == "from_estimator"
-        else "y should be a 1d array, got an array of shape"
-    )
-    with pytest.raises(ValueError, match=msg):
-        constructor(*params)
+    if constructor_name == "from_estimator":
+        msg = "should be a binary classifier."
+        with pytest.raises(ValueError, match=msg):
+            CalibrationDisplay.from_estimator(clf, X, y)
+    else:
+        msg = "y should be a 1d array, got an array of shape
+        with pytest.raises(ValueError, match=msg):
+            CalibrationDisplay.from_predictions(y, y_prob)
 
 
 @pytest.mark.parametrize("n_bins", [5, 10])
