@@ -10,7 +10,7 @@ cdef int _simultaneous_sort(
     ITYPE_t size
 ) nogil except -1
 
-cdef inline int _push(
+cdef int _push(
     floating* dist,
     ITYPE_t* idx,
     ITYPE_t size,
