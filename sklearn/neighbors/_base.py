@@ -635,10 +635,7 @@ class KNeighborsMixin:
         # argpartition doesn't guarantee sorted order, so we sort again
         neigh_ind = neigh_ind[sample_range, np.argsort(dist[sample_range, neigh_ind])]
         if return_distance:
-            if self.effective_metric_ == "euclidean":
-                result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
-            else:
-                result = dist[sample_range, neigh_ind], neigh_ind
+            result = dist[sample_range, neigh_ind], neigh_ind
         else:
             result = neigh_ind
         return result
@@ -959,10 +956,7 @@ class RadiusNeighborsMixin:
         neigh_ind = [np.where(d <= radius)[0] for d in dist]
 
         if return_distance:
-            if self.effective_metric_ == "euclidean":
-                dist = [np.sqrt(d[neigh_ind[i]]) for i, d in enumerate(dist)]
-            else:
-                dist = [d[neigh_ind[i]] for i, d in enumerate(dist)]
+            dist = [d[neigh_ind[i]] for i, d in enumerate(dist)]
             results = dist, neigh_ind
         else:
             results = neigh_ind
