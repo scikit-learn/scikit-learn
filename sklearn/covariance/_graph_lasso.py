@@ -961,7 +961,7 @@ class GraphicalLassoCV(GraphicalLasso):
         )
         grid_scores = np.array(grid_scores)
 
-        # TODO(1.2): Use normal dict
+        # TODO(1.2): Use normal dict for cv_results_ instead of _DictWithDeprecatedKeys
         self.cv_results_ = _DictWithDeprecatedKeys(alphas=np.array(alphas))
 
         for i in range(grid_scores.shape[1]):
