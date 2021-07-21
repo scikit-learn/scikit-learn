@@ -281,10 +281,10 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 #
 # Bayesian estimation can be carried out in many forms to answer our question,
 # but in this example we will implement the approach suggested by Benavoli and
-# collegues [4]_.
+# colleagues [4]_.
 #
 # One way of defining our posterior using a closed-form expression is to select
-# a prior conjugate to the likelihood function. Benavoli and collegues [4]_
+# a prior conjugate to the likelihood function. Benavoli and colleagues [4]_
 # show that when comparing the performance of two classifiers we can model the
 # prior as a Normal-Gamma distribution (with both mean and variance unknown)
 # conjugate to a normal likelihood, to thus express the posterior as a normal
@@ -308,7 +308,7 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 #
 # Let's compute and plot the posterior:
 
-# intitialize random variable
+# initialize random variable
 t_post = t(
     df, loc=np.mean(differences),
     scale=corrected_std(differences, n_train, n_test)
@@ -329,7 +329,7 @@ plt.show()
 
 # %%
 # We can calculate the probability that the first model is better than the
-# second by computing the area under the curve of the posterior distirbution
+# second by computing the area under the curve of the posterior distribution
 # from zero to infinity. And also the reverse: we can calculate the probability
 # that the second model is better than the first by computing the area under
 # the curve from minus infinity to zero.
