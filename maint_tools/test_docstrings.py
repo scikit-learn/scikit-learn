@@ -80,7 +80,6 @@ DOCSTRING_IGNORE_LIST = [
     "Normalizer",
     "NuSVR",
     "Nystroem",
-    "OAS",
     "OPTICS",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
