@@ -614,7 +614,7 @@ class BisectKMeans(KMeans):
         return centers, labels
 
     def predict(self, X, sample_weight=None):
-        """Predict which cluster each sample in X belongs to
+        """Predict which cluster each sample in X belongs to.
 
         Prediction is made by going down the hierarchical tree
         in searching of closest leaf cluster.
