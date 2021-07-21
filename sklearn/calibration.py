@@ -1003,7 +1003,7 @@ class CalibrationDisplay:
     >>> y_prob = clf.predict_proba(X_test)[:, 1]
     >>> prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
-    >>> disp.plot()
+    >>> _ = disp.plot()
     """
 
     def __init__(self, prob_true, prob_pred, y_prob, *, name=None):
