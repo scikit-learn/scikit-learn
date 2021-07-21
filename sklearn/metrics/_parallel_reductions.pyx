@@ -173,8 +173,7 @@ cdef class PairwiseDistancesReduction:
         # TODO: support sparse arrays
         return (not issparse(X) and
                 not issparse(Y) and
-                X.dtype == Y.dtype == np.float64
-                and metric in cls.valid_metrics())
+                metric in cls.valid_metrics())
 
 
     def __cinit__(self):
