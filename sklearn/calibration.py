@@ -1082,11 +1082,11 @@ class CalibrationDisplay:
         ax=None,
         **kwargs,
     ):
-        """Plot calibration curve, also known as reliability diagrams, for
-        binary classifiers, using an estimator and data.
+        """Plot calibration curve using an binary classifier and data.
 
-        The average predicted probability for each bin is plotted on the x-axis
-        and the fraction of positive classes in each bin is plotted on the
+        Calibration curve, also known as reliability diagram, uses inputs
+        from a binary classifier and plots the average predicted probability
+        for each bin against the fraction of positive classes, on the
         y-axis.
 
         Extra keyword arguments will be passed to
@@ -1200,11 +1200,11 @@ class CalibrationDisplay:
         ax=None,
         **kwargs,
     ):
-        """Plot calibration curve, also known as reliability diagrams, for
-        binary classifiers, using true and predicted labels.
+        """Plot calibration curve using true labels and predicted probabilities.
 
-        The average predicted probability for each bin is plotted on the x-axis
-        and the fraction of positive classes in each bin is plotted on the
+        Calibration curve, also known as reliability diagram, uses inputs
+        from a binary classifier and plots the average predicted probability
+        for each bin against the fraction of positive classes, on the
         y-axis.
 
         Extra keyword arguments will be passed to
