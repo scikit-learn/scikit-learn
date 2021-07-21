@@ -542,52 +542,12 @@ cdef class NeighborsHeap:
     cdef int _push(self, ITYPE_t row, DTYPE_t val,
                    ITYPE_t i_val) nogil except -1:
         """push (val, i_val) into the given row"""
-        cdef ITYPE_t i, ic1, ic2, i_swap
-        cdef ITYPE_t size = self.distances.shape[1]
-        cdef DTYPE_t* dist_arr = &self.distances[row, 0]
-        cdef ITYPE_t* ind_arr = &self.indices[row, 0]
+        cdef:
+            ITYPE_t size = self.distances.shape[1]
+            DTYPE_t* dist_arr = &self.distances[row, 0]
+            ITYPE_t* ind_arr = &self.indices[row, 0]
+        return _push(dist_arr, ind_arr, size, val, i_val)
 
-        # check if val should be in heap
-        if val > dist_arr[0]:
-            return 0
-
-        # insert val at position zero
-        dist_arr[0] = val
-        ind_arr[0] = i_val
-
-        # descend the heap, swapping values until the max heap criterion is met
-        i = 0
-        while True:
-            ic1 = 2 * i + 1
-            ic2 = ic1 + 1
-
-            if ic1 >= size:
-                break
-            elif ic2 >= size:
-                if dist_arr[ic1] > val:
-                    i_swap = ic1
-                else:
-                    break
-            elif dist_arr[ic1] >= dist_arr[ic2]:
-                if val < dist_arr[ic1]:
-                    i_swap = ic1
-                else:
-                    break
-            else:
-                if val < dist_arr[ic2]:
-                    i_swap = ic2
-                else:
-                    break
-
-            dist_arr[i] = dist_arr[i_swap]
-            ind_arr[i] = ind_arr[i_swap]
-
-            i = i_swap
-
-        dist_arr[i] = val
-        ind_arr[i] = i_val
-
-        return 0
 
     cdef int _sort(self) except -1:
         """simultaneously sort the distances and indices"""
