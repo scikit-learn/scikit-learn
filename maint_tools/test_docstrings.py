@@ -61,7 +61,6 @@ DOCSTRING_IGNORE_LIST = [
     "MDS",
     "MLPRegressor",
     "MeanShift",
-    "MinCovDet",
     "MiniBatchDictionaryLearning",
     "MiniBatchKMeans",
     "MiniBatchSparsePCA",
