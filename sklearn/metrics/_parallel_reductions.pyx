@@ -129,6 +129,309 @@ cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(vector_vector_DI
 
 #####################
 
+cdef class DistanceComputer:
+    """ Abstract class responsible to compute
+    distances between vectors of array-like.
+    """
+
+    @classmethod
+    def get_for(cls,
+                X,
+                Y,
+                str metric="euclidean",
+                dict metric_kwargs=dict(),
+        ) -> DistanceComputer:
+        cdef:
+            DistanceMetric distance_metric = DistanceMetric.get_metric(metric, **metric_kwargs)
+
+        if X.shape[1] != Y.shape[1]:
+            raise RuntimeError("Vectors of X and Y must have the "
+                               "same dimension but currently are "
+                               f"respectively {X.shape[1]}-dimensional "
+                               f"and {Y.shape[1]}-dimensional.")
+
+        distance_metric._validate_data(X)
+        distance_metric._validate_data(Y)
+
+        if not issparse(X) and not issparse(Y):
+            return DenseDenseDistanceComputer(X, Y, distance_metric)
+        if issparse(X) and not issparse(Y):
+            return SparseDenseDistanceComputer(X, Y, distance_metric)
+        if not issparse(X) and issparse(Y):
+            return DenseSparseDistanceComputer(X, Y, distance_metric)
+        return SparseSparseDistanceComputer(X, Y, distance_metric)
+
+    @property
+    def n_X(self):
+        raise RuntimeError()
+
+    @property
+    def n_Y(self):
+        raise RuntimeError()
+
+    cdef DTYPE_t approx_dist(self,
+        ITYPE_t i,
+        ITYPE_t j,
+    ) nogil except -1:
+        return self.dist(i, j)
+
+    cdef DTYPE_t dist(self,
+        ITYPE_t i,
+        ITYPE_t j,
+    ) nogil except -1:
+        return -1
+
+cdef class DenseDenseDistanceComputer(DistanceComputer):
+    """ Compute distances between vectors of two arrays.
+
+    X: ndarray of shape (n_X, d)
+        Rows represent vectors
+    Y: ndarray of shape (n_Y, d)
+        Rows represent vectors
+    """
+    cdef:
+        DistanceMetric distance_metric
+
+        const DTYPE_t[:, ::1] X  # shape: (n_X, d)
+        const DTYPE_t[:, ::1] Y  # shape: (n_Y, d)
+        ITYPE_t d
+
+    def __cinit__(self):
+        # Initializing memory view to prevent memory errors and seg-faults
+        # in rare cases where __init__ is not called
+        self.X = np.empty((1, 1), dtype=DTYPE, order='c')
+        self.Y = np.empty((1, 1), dtype=DTYPE, order='c')
+
+    def __init__(self, X, Y, DistanceMetric distance_metric):
+        self.distance_metric = distance_metric
+        self.X = check_array(X, dtype=DTYPE, order='C')
+        self.Y = check_array(Y, dtype=DTYPE, order='C')
+        self.d = X.shape[1]
+
+    @property
+    @final
+    def n_X(self):
+        return self.X.shape[0]
+
+    @property
+    @final
+    def n_Y(self):
+        return self.Y.shape[0]
+
+    @final
+    cdef DTYPE_t approx_dist(self,
+        ITYPE_t i,
+        ITYPE_t j,
+    ) nogil except -1:
+        return self.distance_metric.rdist(&self.X[i, 0],
+                                          &self.Y[j, 0],
+                                          self.d)
+
+    @final
+    cdef DTYPE_t dist(self,
+        ITYPE_t i,
+        ITYPE_t j,
+    ) nogil except -1:
+        return self.distance_metric.dist(&self.X[i, 0],
+                                         &self.Y[j, 0],
+                                         self.d)
+
+cdef class SparseSparseDistanceComputer(DistanceComputer):
+    """ Compute distances between vectors of two sparse matrices.
+
+    X: sparse matrix of shape (n_X, d)
+        Rows represent vectors
+    Y: sparse matrix of shape (n_X, d)
+        Rows represent vectors
+    """
+    cdef:
+        DistanceMetric distance_metric
+
+        const DTYPE_t[:] X_data
+        const ITYPE_t[:] X_indices,
+        const ITYPE_t[:] X_indptr,
+
+        const DTYPE_t[:] Y_data
+        const ITYPE_t[:] Y_indices
+        const ITYPE_t[:] Y_indptr
+
+    @property
+    @final
+    def n_X(self):
+        return self.X_indptr.shape[0] - 1
+
+    @property
+    @final
+    def n_Y(self):
+        return self.Y_indptr.shape[0] -1
+
+    def __init__(self, X, Y, DistanceMetric distance_metric):
+        self.distance_metric = distance_metric
+
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+        Y = check_array(Y, dtype=DTYPE, accept_sparse='csr')
+
+        self.X_data = X.data
+        self.X_indices = X.indices
+        self.X_indptr = X.indptr
+
+        self.Y_data = Y.data
+        self.Y_indices = Y.indices
+        self.Y_indptr = Y.indptr
+
+    @final
+    cdef DTYPE_t approx_dist(self,
+        ITYPE_t i,
+        ITYPE_t j,
+    ) nogil except -1:
+        cdef:
+            ITYPE_t xi_start = self.X_indptr[i]
+            ITYPE_t xi_end = self.X_indptr[i + 1]
+            ITYPE_t yj_start = self.Y_indptr[j]
+            ITYPE_t yj_end = self.Y_indptr[j + 1]
+
+        return self.distance_metric.sparse_rdist(self.X_data[xi_start:xi_end],
+                                          self.X_indices[xi_start:xi_end],
+                                          self.Y_data[yj_start:yj_end],
+                                          self.Y_indices[yj_start:yj_end])
+
+    @final
+    cdef DTYPE_t dist(self,
+        ITYPE_t i,
+        ITYPE_t j,
+    ) nogil except -1:
+        cdef:
+            ITYPE_t xi_start = self.X_indptr[i]
+            ITYPE_t xi_end = self.X_indptr[i + 1]
+            ITYPE_t yj_start = self.Y_indptr[j]
+            ITYPE_t yj_end = self.Y_indptr[j + 1]
+
+        return self.distance_metric.sparse_dist(self.X_data[xi_start:xi_end],
+                                         self.X_indices[xi_start:xi_end],
+                                         self.Y_data[yj_start:yj_end],
+                                         self.Y_indices[yj_start:yj_end])
+
+
+cdef class SparseDenseDistanceComputer(DistanceComputer):
+    """ Compute distances between vectors of two sparse matrices.
+
+    X: sparse matrix of shape (n_X, d)
+        Rows represent vectors
+    Y: ndarray of shape (n_Y, d)
+        Rows represent vectors
+    """
+    cdef:
+        DistanceMetric distance_metric
+
+        const DTYPE_t[:] X_data
+        const ITYPE_t[:] X_indices,
+        const ITYPE_t[:] X_indptr,
+
+        const DTYPE_t[:, ::1] Y  # shape: (n_Y, d)
+        const ITYPE_t[:] Y_indices
+
+
+    def __init__(self, X, Y, DistanceMetric distance_metric):
+        self.distance_metric = distance_metric
+
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+        self.X_data = X.data
+        self.X_indices = X.indices
+        self.X_indptr = X.indptr
+
+        self.Y = check_array(Y, dtype=DTYPE)
+        self.Y_indices = np.arange(self.Y.shape[1])
+
+    @property
+    @final
+    def n_X(self):
+        return self.X_indptr.shape[0] - 1
+
+    @property
+    @final
+    def n_Y(self):
+        return self.Y.shape[0]
+
+    @final
+    cdef DTYPE_t approx_dist(self,
+        ITYPE_t i,
+        ITYPE_t j,
+    ) nogil except -1:
+        cdef:
+            ITYPE_t xi_start = self.X_indptr[i]
+            ITYPE_t xi_end = self.X_indptr[i + 1]
+
+        # TODO: the 2D to 1D memory-view conversion might make computation slower, see:
+        #
+        # Ideally, we could pass pointers and indices and access elements
+        # then in distance_metric.dist
+        return self.distance_metric.sparse_rdist(self.X_data[xi_start:xi_end],
+                                          self.X_indices[xi_start:xi_end],
+                                          self.Y[j, :],
+                                          self.Y_indices)
+
+    @final
+    cdef DTYPE_t dist(self,
+        ITYPE_t i,
+        ITYPE_t j,
+    ) nogil except -1:
+        cdef:
+            ITYPE_t xi_start = self.X_indptr[i]
+            ITYPE_t xi_end = self.X_indptr[i + 1]
+
+        # TODO: same as previous comment
+        return self.distance_metric.sparse_dist(self.X_data[xi_start:xi_end],
+                                         self.X_indices[xi_start:xi_end],
+                                         self.Y[j, :],
+                                         self.Y_indices)
+
+
+cdef class DenseSparseDistanceComputer(DistanceComputer):
+    """ Compute distances between vectors of a sparse matrix and
+     vectors of an array.
+
+    X: ndarray of shape (n_X, d)
+        Rows represent vectors
+    Y: sparse matrix of shape (n_Y, d)
+        Rows represent vectors
+    """
+    cdef:
+        # As distance metrics are commutative functions, we can
+        # simply rely on the other strategy and swap arguments
+        DistanceComputer distance_computer
+
+    def __init__(self, X, Y, distance_metric):
+        # Swapping arguments on the constructor
+        self.distance_computer = SparseSparseDistanceComputer(Y, X, distance_metric)
+
+    @property
+    @final
+    def n_X(self):
+        # Swapping interface
+        return self.distance_computer.n_Y
+
+    @property
+    @final
+    def n_Y(self):
+        # Swapping interface
+        return self.distance_computer.n_X
+
+    @final
+    cdef DTYPE_t approx_dist(self,
+        ITYPE_t i,
+        ITYPE_t j,
+    ) nogil except -1:
+        # Swapping arguments on the same interface
+        return self.distance_computer.approx_dist(j, i)
+
+    @final
+    cdef DTYPE_t dist(self,
+        ITYPE_t i,
+        ITYPE_t j,
+    ) nogil except -1:
+        # Swapping arguments on the same interface
+        return self.distance_computer.dist(j, i)
+
 
 cdef class PairwiseDistancesReduction:
     """Abstract class to computes a reduction on pairwise
@@ -139,10 +442,6 @@ cdef class PairwiseDistancesReduction:
     on chunks whose size can be set using ``chunk_size``.
     Parameters
     ----------
-    X: ndarray of shape (n, d)
-        Rows represent vectors
-    Y: ndarray of shape (m, d)
-        Rows represent vectors
     distance_metric: DistanceMetric
         The distance to use
     chunk_size: int
@@ -150,15 +449,10 @@ cdef class PairwiseDistancesReduction:
     """
 
     cdef:
-        const DTYPE_t[:, ::1] X  # shape: (n_X, d)
-        const DTYPE_t[:, ::1] Y  # shape: (n_Y, d)
-
-        DistanceMetric distance_metric
+        DistanceComputer distance_computer
 
         ITYPE_t effective_omp_n_thread
         ITYPE_t n_samples_chunk, chunk_size
-
-        ITYPE_t d
 
         ITYPE_t n_X, X_n_samples_chunk, X_n_chunks, X_n_samples_rem
         ITYPE_t n_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_rem
@@ -176,16 +470,8 @@ cdef class PairwiseDistancesReduction:
                 metric in cls.valid_metrics())
 
 
-    def __cinit__(self):
-        # Initializing memory view to prevent memory errors and seg-faults
-        # in rare cases where __init__ is not called
-        self.X = np.empty((1, 1), dtype=DTYPE, order='c')
-        self.Y = np.empty((1, 1), dtype=DTYPE, order='c')
-
     def __init__(self,
-                 X,
-                 Y,
-                 DistanceMetric distance_metric,
+                 DistanceComputer distance_computer,
                  ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         cdef:
@@ -193,28 +479,17 @@ cdef class PairwiseDistancesReduction:
 
         self.effective_omp_n_thread = _openmp_effective_n_threads()
 
-        self.X = check_array(X, dtype=DTYPE)
-        self.Y = check_array(Y, dtype=DTYPE)
-
-        assert X.shape[1] == Y.shape[1], "Vectors of X and Y must have the " \
-                                         "same dimension but currently are " \
-                                         f"respectively {X.shape[1]}-dimensional " \
-                                         f"and {Y.shape[1]}-dimensional."
-        distance_metric._validate_data(X)
-        distance_metric._validate_data(Y)
-
-        self.d = X.shape[1]
         self.chunk_size = chunk_size
         self.n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
-        self.distance_metric = distance_metric
+        self.distance_computer = distance_computer
 
-        self.n_Y = Y.shape[0]
+        self.n_Y = distance_computer.n_Y
         self.Y_n_samples_chunk = min(self.n_Y, self.n_samples_chunk)
         Y_n_full_chunks = self.n_Y // self.Y_n_samples_chunk
         self.Y_n_samples_rem = self.n_Y % self.Y_n_samples_chunk
 
-        self.n_X = X.shape[0]
+        self.n_X = distance_computer.n_X
         self.X_n_samples_chunk = min(self.n_X, self.n_samples_chunk)
         X_n_full_chunks = self.n_X // self.X_n_samples_chunk
         self.X_n_samples_rem = self.n_X % self.X_n_samples_chunk
@@ -411,10 +686,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     Parameters
     ----------
-    X: ndarray of shape (n, d)
-        Rows represent vectors
-    Y: ndarray of shape (m, d)
-        Rows represent vectors
     distance_metric: DistanceMetric
         The distance to use
     k: int
@@ -447,21 +718,18 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 dict metric_kwargs=dict(),
         ):
         # This factory comes to handle specialisation on fast_sqeuclidean.
-        if metric == "fast_sqeuclidean":
+        if metric == "fast_sqeuclidean" and not issparse(X) and not issparse(Y):
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
-        return ArgKmin(X=X, Y=Y,
-                       distance_metric=DistanceMetric.get_metric(metric, **metric_kwargs),
+        return ArgKmin(distance_computer=DistanceComputer.get_for(X, Y, metric, metric_kwargs),
                        k=k,
                        chunk_size=chunk_size)
 
     def __init__(self,
-                 X,
-                 Y,
-                 DistanceMetric distance_metric,
+                 DistanceComputer distance_computer,
                  ITYPE_t k,
                  ITYPE_t chunk_size = CHUNK_SIZE,
     ):
-        PairwiseDistancesReduction.__init__(self, X, Y, distance_metric, chunk_size)
+        PairwiseDistancesReduction.__init__(self, distance_computer, chunk_size)
 
         self.k = k
 
@@ -495,22 +763,20 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     ) nogil except -1:
         cdef:
             ITYPE_t i, j
-            const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
-            const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
+            ITYPE_t n_X = X_end - X_start
+            ITYPE_t n_Y = Y_end - Y_start
             ITYPE_t k = self.k
             DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
         # Pushing the distance and their associated indices on heaps
         # which keep tracks of the argkmin.
-        for i in range(X_c.shape[0]):
-            for j in range(Y_c.shape[0]):
+        for i in range(n_X):
+            for j in range(n_Y):
                 _push(heaps_approx_distances + i * self.k,
                       heaps_indices + i * self.k,
                       k,
-                      self.distance_metric.rdist(&X_c[i, 0],
-                                                 &Y_c[j, 0],
-                                                 self.d),
+                      self.distance_computer.approx_dist(X_start + i, Y_start + j),
                       Y_start + j)
 
         return 0
@@ -627,9 +893,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         for i in prange(self.n_X, schedule='static', nogil=True,
                         num_threads=self.effective_omp_n_thread):
             for j in range(self.k):
-                distances[i, j] = self.distance_metric.dist(&self.X[i, 0],
-                                                 &self.Y[Y_indices[i, j], 0],
-                                                 self.d)
+                distances[i, j] = self.distance_computer.dist(i, Y_indices[i, j])
 
     @final
     def compute(self,
@@ -702,22 +966,26 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
     """
 
     cdef:
+        const DTYPE_t[:, ::1] X
+        const DTYPE_t[:, ::1] Y
         DTYPE_t[::1] Y_sq_norms
 
         # Buffers for GEMM
         DTYPE_t ** dist_middle_terms_chunks
 
     def __init__(self,
-                  X,
-                  Y,
-                  ITYPE_t k,
-                  ITYPE_t chunk_size = CHUNK_SIZE,
+        const DTYPE_t[:, ::1] X,
+        const DTYPE_t[:, ::1] Y,
+        ITYPE_t k,
+        ITYPE_t chunk_size = CHUNK_SIZE,
     ):
-        ArgKmin.__init__(self, X, Y,
-                         # The distance metric here is used for exact distances computations
-                         distance_metric=DistanceMetric.get_metric("euclidean"),
+        ArgKmin.__init__(self,
+                         # The distance computer here is used for exact distances computations
+                         distance_computer=DistanceComputer.get_for(X, Y, metric="euclidean"),
                          k=k,
                          chunk_size=chunk_size)
+        self.X = X
+        self.Y = Y
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
         # Temporary datastructures used in threads
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
@@ -889,19 +1157,17 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                 ITYPE_t chunk_size=CHUNK_SIZE,
                 dict metric_kwargs=dict(),
         ):
-        return RadiusNeighborhood(X=X, Y=Y,
-                       distance_metric=DistanceMetric.get_metric(metric, **metric_kwargs),
+        return RadiusNeighborhood(
+                       distance_computer=DistanceComputer.get_for(X, Y, metric, metric_kwargs),
                        radius=radius,
                        chunk_size=chunk_size)
 
     def __init__(self,
-                 X,
-                 Y,
-                 DistanceMetric distance_metric,
+                 DistanceComputer distance_computer,
                  DTYPE_t radius,
                  ITYPE_t chunk_size = CHUNK_SIZE,
     ):
-        PairwiseDistancesReduction.__init__(self, X, Y, distance_metric, chunk_size)
+        PairwiseDistancesReduction.__init__(self, distance_computer, chunk_size)
 
         self.radius = radius
         self.sort_results = False
@@ -928,16 +1194,14 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     ) nogil except -1:
         cdef:
             ITYPE_t i, j
-            const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
-            const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             DTYPE_t dist_i_j
 
-        for i in range(X_c.shape[0]):
-            for j in range(Y_c.shape[0]):
-                dist_i_j = self.distance_metric.dist(&X_c[i, 0], &Y_c[j, 0], self.d)
+        for i in range(X_start, X_end):
+            for j in range(Y_start, Y_end):
+                dist_i_j = self.distance_computer.dist(i, j)
                 if dist_i_j <= self.radius:
-                    deref(self.neigh_distances_chunks[thread_num])[X_start + i].push_back(dist_i_j)
-                    deref(self.neigh_indices_chunks[thread_num])[X_start + i].push_back(Y_start + j)
+                    deref(self.neigh_distances_chunks[thread_num])[i].push_back(dist_i_j)
+                    deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
 
         return 0
 
