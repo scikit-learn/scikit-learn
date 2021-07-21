@@ -210,6 +210,8 @@ class Isomap(TransformerMixin, BaseEstimator):
                 "avoid this issue.",
                 stacklevel=2,
             )
+            # use array validated by NearestNeighbors
+            X = self.nbrs_._fit_X
 
             for i in range(n_connected_components):
                 idx_i = np.where(labels == i)[0]
