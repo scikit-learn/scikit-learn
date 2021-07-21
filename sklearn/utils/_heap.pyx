@@ -96,7 +96,7 @@ cdef inline int _push(
         ITYPE_t current_idx, left_child_idx, right_child_idx, swap_idx
 
     # check if val should be in heap
-    if val > dist[0]:
+    if val >= dist[0]:
         return 0
 
     # insert val at position zero
