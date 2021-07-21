@@ -551,6 +551,9 @@ Changelog
   :class:`preprocessing.SplineTransformer` also supports periodic
   splines via the ``extrapolation`` argument.
   :pr:`19483` by :user:`Malte Londschien <mlondschien>`.
+  :class:`preprocessing.SplineTransformer` supports sample weights for
+  knot position strategy ``"quantile"``.
+  :pr:`20526` by :user:`Malte Londschien <mlondschien>`.
 
 - |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
   missing values by default. :pr:`19069` by `Thomas Fan`_.
