@@ -537,7 +537,7 @@ def oas(X, *, assume_centered=False):
 
 
 class OAS(EmpiricalCovariance):
-    """Oracle Approximating Shrinkage Estimator
+    """Oracle Approximating Shrinkage Estimator.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
@@ -583,6 +583,34 @@ class OAS(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    EllipticEnvelope : An object for detecting outliers in
+        a Gaussian distributed dataset.
+    EmpiricalCovariance : Maximum likelihood covariance estimator.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with cross-validated
+        choice of the l1 penalty.
+    LedoitWolf : LedoitWolf Estimator.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    ShrunkCovariance : Covariance estimator with shrinkage.
+
+    Notes
+    -----
+    The regularised covariance is:
+
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+
+    where mu = trace(cov) / n_features
+    and shrinkage is given by the OAS formula (see References)
+
+    References
+    ----------
+    "Shrinkage Algorithms for MMSE Covariance Estimation"
+    Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
+
     Examples
     --------
     >>> import numpy as np
@@ -603,25 +631,10 @@ class OAS(EmpiricalCovariance):
            [-1.2431...,  3.3889...]])
     >>> oas.shrinkage_
     0.0195...
-
-    Notes
-    -----
-    The regularised covariance is:
-
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
-
-    where mu = trace(cov) / n_features
-    and shrinkage is given by the OAS formula (see References)
-
-    References
-    ----------
-    "Shrinkage Algorithms for MMSE Covariance Estimation"
-    Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
     """
 
     def fit(self, X, y=None):
-        """Fit the Oracle Approximating Shrinkage covariance model
-        according to the given training data and parameters.
+        """Fit the Oracle Approximating Shrinkage covariance model to X.
 
         Parameters
         ----------
@@ -634,6 +647,7 @@ class OAS(EmpiricalCovariance):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid computing the
