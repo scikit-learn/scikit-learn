@@ -338,7 +338,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
 
 
 class LedoitWolf(EmpiricalCovariance):
-    """LedoitWolf Estimator
+    """LedoitWolf Estimator.
 
     Ledoit-Wolf is a particular form of shrinkage, where the shrinkage
     coefficient is computed using O. Ledoit and M. Wolf's formula as
@@ -385,6 +385,35 @@ class LedoitWolf(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    EllipticEnvelope : An object for detecting outliers in
+        a Gaussian distributed dataset.
+    EmpiricalCovariance : Maximum likelihood covariance estimator.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with cross-validated
+        choice of the l1 penalty.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    OAS : Oracle Approximating Shrinkage Estimator.
+    ShrunkCovariance : Covariance estimator with shrinkage.
+
+    Notes
+    -----
+    The regularised covariance is:
+
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+
+    where mu = trace(cov) / n_features
+    and shrinkage is given by the Ledoit and Wolf formula (see References)
+
+    References
+    ----------
+    "A Well-Conditioned Estimator for Large-Dimensional Covariance Matrices",
+    Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
+    February 2004, pages 365-411.
+
     Examples
     --------
     >>> import numpy as np
@@ -401,21 +430,6 @@ class LedoitWolf(EmpiricalCovariance):
            [0.1616..., 0.8022...]])
     >>> cov.location_
     array([ 0.0595... , -0.0075...])
-
-    Notes
-    -----
-    The regularised covariance is:
-
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
-
-    where mu = trace(cov) / n_features
-    and shrinkage is given by the Ledoit and Wolf formula (see References)
-
-    References
-    ----------
-    "A Well-Conditioned Estimator for Large-Dimensional Covariance Matrices",
-    Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
-    February 2004, pages 365-411.
     """
 
     def __init__(self, *, store_precision=True, assume_centered=False, block_size=1000):
@@ -425,8 +439,7 @@ class LedoitWolf(EmpiricalCovariance):
         self.block_size = block_size
 
     def fit(self, X, y=None):
-        """Fit the Ledoit-Wolf shrunk covariance model according to the given
-        training data and parameters.
+        """Fit the Ledoit-Wolf shrunk covariance model to X.
 
         Parameters
         ----------
@@ -439,6 +452,7 @@ class LedoitWolf(EmpiricalCovariance):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
