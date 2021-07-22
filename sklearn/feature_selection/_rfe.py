@@ -730,8 +730,8 @@ class RFECV(RFE):
     # TODO: Remove in v1.2 when grid_scores_ is removed
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "The grid_scores_ attribute is deprecated in version 1.0 in favor "
-        "of cv_results_ and will be removed in version 1.2."
+        "The `grid_scores_` attribute is deprecated in version 1.0 in favor "
+        "of `cv_results_` and will be removed in version 1.2."
     )
     @property
     def grid_scores_(self):
