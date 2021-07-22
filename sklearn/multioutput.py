@@ -372,7 +372,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
     >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X, y)
     >>> clf.predict(X[-2:])
-    array([[1, 1, 0], [1, 1, 1]])
+    array([[1, 1, 1], [1, 1, 1]])
     """
 
     def __init__(self, estimator, *, n_jobs=None):
