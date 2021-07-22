@@ -33,6 +33,8 @@ from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import NuSVR
+from sklearn.utils.metadata_requests import RequestType
+from sklearn.utils.metadata_requests import metadata_request_factory
 
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier, GradientBoostingRegressor]
@@ -1455,3 +1457,12 @@ def test_loss_deprecated(old_loss, new_loss):
     est2 = GradientBoostingRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
+
+
+@pytest.mark.parametrize("Estimator", GRADIENT_BOOSTING_ESTIMATORS)
+def test_metadata_request(Estimator):
+    est = Estimator()
+    assert (
+        metadata_request_factory(est).fit.requests["sample_weight"]
+        == RequestType.ERROR_IF_PASSED
+    )

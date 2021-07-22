@@ -265,18 +265,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return raw_predictions
 
-    def _check_params(self):
-        """Check validity of parameters and raise ValueError if not valid."""
-        if self.n_estimators <= 0:
-            raise ValueError(
-                "n_estimators must be greater than 0 but was %r" % self.n_estimators
-            )
+    def _get_loss(self, n_classes=None):
+        """Return the right loss object.
 
-        if self.learning_rate <= 0.0:
-            raise ValueError(
-                "learning_rate must be greater than 0 but was %r" % self.learning_rate
-            )
-
+        Parameters
+        ----------
+        n_classes : int, default=None
+            Relevant if loss is "deviance". self.classes_ is used if not given.
+        """
         if (
             self.loss not in self._SUPPORTED_LOSS
             or self.loss not in _gb_losses.LOSS_FUNCTIONS
@@ -299,21 +295,37 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 FutureWarning,
             )
 
+        if n_classes is None:
+            n_classes = len(self.classes_)
         if self.loss == "deviance":
             loss_class = (
                 _gb_losses.MultinomialDeviance
-                if len(self.classes_) > 2
+                if n_classes > 2
                 else _gb_losses.BinomialDeviance
             )
         else:
             loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
 
         if is_classifier(self):
-            self.loss_ = loss_class(self.n_classes_)
+            return loss_class(n_classes)
         elif self.loss in ("huber", "quantile"):
-            self.loss_ = loss_class(self.alpha)
+            return loss_class(self.alpha)
         else:
-            self.loss_ = loss_class()
+            return loss_class()
+
+    def _check_params(self):
+        """Check validity of parameters and raise ValueError if not valid."""
+        if self.n_estimators <= 0:
+            raise ValueError(
+                "n_estimators must be greater than 0 but was %r" % self.n_estimators
+            )
+
+        if self.learning_rate <= 0.0:
+            raise ValueError(
+                "learning_rate must be greater than 0 but was %r" % self.learning_rate
+            )
+
+        self.loss_ = self._get_loss()
 
         if not (0.0 < self.subsample <= 1.0):
             raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
@@ -894,16 +906,21 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             of the method, and the key to the second dict is the name of the
             argument requested by the method.
         """
-        self._check_params()
+        router = MetadataRouter().add(super(), mask=False)
         init = self.init
         if self.init is None:
-            init = self.loss_.init_estimator().fit_requests(sample_weight=True)
+            # we pass n_classes=2 since the estimators are the same regardless.
+            init = (
+                self._get_loss(n_classes=2)
+                .init_estimator()
+                .fit_requests(sample_weight=True)
+            )
+            # here overwrite="ignore" because we should not expose a
+            # `sample_weight=True` if init is None.
+            router.add(init, mapping={"fit": "fit"}, mask=True, overwrite="ignore")
+        else:
+            router.add(init, mapping={"fit": "fit"}, mask=True, overwrite="on-default")
 
-        router = (
-            MetadataRouter()
-            .add(super(), mask=False)
-            .add(init, mapping={"fit": "fit"}, mask=True, overwrite="on-default")
-        )
         return router.get_metadata_request()
 
 

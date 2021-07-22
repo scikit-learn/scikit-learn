@@ -117,13 +117,15 @@ class MethodMetadataRequest:
             - "on-default": only overwrite the alias is it is
               RequestType.ERROR_IF_PASSED
 
+            - "ignore": ignore the requested metadata if it already exists.
+
         expected_metadata : str, default=None
             If provided, all props should be the same as this value. It used to
             handle default values.
         """
-        if overwrite not in {True, False, "on-default"}:
+        if overwrite not in {True, False, "on-default", "ignore"}:
             raise ValueError(
-                "overwrite can only be one of {True, False, 'on-default'}."
+                "overwrite can only be one of {True, False, 'on-default', 'ignore'}."
             )
         if expected_metadata is not None and expected_metadata != prop:
             raise ValueError(
@@ -150,8 +152,10 @@ class MethodMetadataRequest:
 
         if alias == RequestType.UNUSED and prop in self.requests:
             del self.requests[prop]
-        elif prop not in self.requests or overwrite:
+        elif prop not in self.requests or overwrite is True:
             self.requests[prop] = alias
+        elif prop in self.requests and overwrite == "ignore":
+            pass
         elif (
             overwrite == "on-default"
             and not isinstance(self.requests[prop], str)
@@ -182,6 +186,7 @@ class MethodMetadataRequest:
               with an existing one.
             - "on-default": only overwrite the alias is it is
               RequestType.ERROR_IF_PASSED
+            - "ignore": ignore the requested metadata if it already exists.
 
         expected_metadata : str, default=None
             If provided, all props should be the same as this value. It used to
@@ -445,6 +450,7 @@ class MetadataRequest:
               with an existing one.
             - "on-default": only overwrite the alias is it is
               RequestType.ERROR_IF_PASSED
+            - "ignore": ignore the requested metadata if it already exists.
 
         expected_metadata : str, default=None
             If provided, all props should be the same as this value. It used to
@@ -557,6 +563,7 @@ class MetadataRouter:
               with an existing one.
             - "on-default": only overwrite the alias if it is
               RequestType.ERROR_IF_PASSED
+            - "ignore": ignore the requested metadata if it already exists.
 
         mask : bool, default=False
             If the requested metadata should be masked by the alias. If
