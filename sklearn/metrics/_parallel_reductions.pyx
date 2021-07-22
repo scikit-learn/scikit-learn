@@ -10,7 +10,6 @@
 
 import numpy as np
 cimport numpy as np
-cimport openmp
 
 np.import_array()
 
@@ -43,9 +42,11 @@ from ..utils._cython_blas cimport (
 )
 
 from ..utils._heap cimport _simultaneous_sort, _push
-from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._openmp_helpers cimport _openmp_thread_num
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
+
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs import ITYPE, DTYPE
 
 # TODO: This has been introduced in Cython 3.0, change for `libcpp.algorithm.move` once Cython 3 is used
@@ -519,7 +520,7 @@ cdef class PairwiseDistancesReduction:
             ITYPE_t thread_num
 
         with nogil, parallel(num_threads=num_threads):
-            thread_num = openmp.omp_get_thread_num()
+            thread_num = _openmp_thread_num()
 
             # Allocating thread datastructures
             self._on_X_parallel_init(thread_num)
@@ -585,7 +586,7 @@ cdef class PairwiseDistancesReduction:
                 X_end = X_start + self.X_n_samples_chunk
 
             with nogil, parallel(num_threads=num_threads):
-                thread_num = openmp.omp_get_thread_num()
+                thread_num = _openmp_thread_num()
 
                 # Initializing datastructures used in this thread
                 self._on_Y_parallel_init(thread_num)
