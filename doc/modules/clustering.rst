@@ -782,10 +782,8 @@ create quite visible hierarchy.
   >>> import numpy as np
   >>> X = np.random.RandomState(0).uniform(-10, 10, (20, 2))
   >>>
-  >>> kmeans = KMeans(n_clusters=3, random_state=0).fit(X)
-  >>> b_means = BisectKMeans(n_clusters=n_clusters,
-                             random_state=0,
-                             bisect_strategy='largest_cluster').fit(X)
+  >>> kmeans = KMeans(n_clusters=4, random_state=0).fit(X)
+  >>> b_means = BisectKMeans(n_clusters=4, random_state=0, bisect_strategy='largest_cluster').fit(X)
   >>> kmeans.cluster_centers_
         [[-7.739  5.236]
          [ 0.294  3.564]
