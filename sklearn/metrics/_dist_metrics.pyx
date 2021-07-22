@@ -316,6 +316,35 @@ cdef class DistanceMetric:
         """
         return self.dist(x1, x2, size)
 
+    cdef DTYPE_t sparse_dist(self, const DTYPE_t[:] x1_data,
+                      const ITYPE_t[:] x1_indices,
+                      const DTYPE_t[:] x2_data,
+                      const ITYPE_t[:] x2_indices,
+                      ) nogil except -1:
+        """Compute the reduced distance between vectors x1 and x2
+        given non null coordinates and their corresponding indices.
+
+        This should be overridden in a base class.
+        """
+        return -999
+
+    cdef DTYPE_t sparse_rdist(self, const DTYPE_t[:] x1_data,
+                      const ITYPE_t[:] x1_indices,
+                      const DTYPE_t[:] x2_data,
+                      const ITYPE_t[:] x2_indices,
+                      ) nogil except -1:
+        """Compute the reduced distance between vectors x1 and x2
+        given non null coordinates and their corresponding indices.
+
+        This can optionally be overridden in a base class.
+
+        The reduced distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute.  For example, for the
+        Euclidean metric, the reduced distance is the squared-euclidean
+        distance.
+        """
+        return self.sparse_dist(x1_data, x1_indices, x2_data, x2_indices)
+
     cdef int pdist(self, const DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1:
         """compute the pairwise distances between points in X"""
         cdef ITYPE_t i1, i2
