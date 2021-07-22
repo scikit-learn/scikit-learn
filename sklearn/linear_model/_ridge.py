@@ -2197,7 +2197,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     Attributes
     ----------
     cv_values_ : ndarray of shape (n_samples, n_targets, n_alphas), optional
-        Cross-validation values for each alpha (if ``store_cv_values=True`` and
+        Cross-validation values for each alpha (only if ``store_cv_values=True`` and
         ``cv=None``). After ``fit()`` has been called, this attribute will
         contain the mean squared errors if `scoring is None` otherwise it
         will contain standardized per point prediction values.
