@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
+from .._config import config_context
 from ..utils import check_array
 
 
@@ -211,7 +212,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
     """
-    X = np.asarray(X)
+    X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         return 0.0
@@ -310,7 +311,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
     """
-    X = np.asarray(X)
+    X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
@@ -461,9 +462,10 @@ class LedoitWolf(EmpiricalCovariance):
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        covariance, shrinkage = ledoit_wolf(
-            X - self.location_, assume_centered=True, block_size=self.block_size
-        )
+        with config_context(assume_finite=True):
+            covariance, shrinkage = ledoit_wolf(
+                X - self.location_, assume_centered=True, block_size=self.block_size
+            )
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)
 
