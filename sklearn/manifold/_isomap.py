@@ -5,6 +5,7 @@
 import warnings
 
 import numpy as np
+import scipy
 from scipy.sparse.csgraph import shortest_path
 from scipy.sparse.csgraph import connected_components
 
@@ -14,6 +15,7 @@ from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_distances
+from ..externals._packaging.version import parse as parse_version
 
 
 class Isomap(TransformerMixin, BaseEstimator):
@@ -230,6 +232,11 @@ class Isomap(TransformerMixin, BaseEstimator):
                     ii, jj = ii[0], jj[0]
                     kng[idx_i[ii], idx_j[jj]] = 0
                     kng[idx_j[jj], idx_i[ii]] = 0
+
+        if parse_version(scipy.__version__) < parse_version("1.3.2"):
+            # make identical samples have a nonzero distance, to account for
+            # issues in old scipy Floyd-Warshall implementation.
+            kng.data += 1e-15
 
         self.dist_matrix_ = shortest_path(kng, method=self.path_method, directed=False)
 
