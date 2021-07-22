@@ -574,7 +574,7 @@ class SVC(BaseSVC):
         weight one.
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     verbose : bool, default=False
         Enable verbose output. Note that this setting takes advantage of a
@@ -675,22 +675,6 @@ class SVC(BaseSVC):
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> y = np.array([1, 1, 2, 2])
-    >>> from sklearn.svm import SVC
-    >>> clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
-    >>> clf.fit(X, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('svc', SVC(gamma='auto'))])
-
-    >>> print(clf.predict([[-0.8, -1]]))
-    [1]
-
     See Also
     --------
     SVR : Support Vector Machine for Regression implemented using libsvm.
@@ -707,6 +691,22 @@ class SVC(BaseSVC):
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    >>> y = np.array([1, 1, 2, 2])
+    >>> from sklearn.svm import SVC
+    >>> clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
+    >>> clf.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svc', SVC(gamma='auto'))])
+
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
     """
 
     _impl = "c_svc"
@@ -823,7 +823,7 @@ class NuSVC(BaseSVC):
         SVC. If not given, all classes are supposed to have
         weight one. The "balanced" mode uses the values of y to automatically
         adjust weights inversely proportional to class frequencies as
-        ``n_samples / (n_classes * np.bincount(y))``
+        ``n_samples / (n_classes * np.bincount(y))``.
 
     verbose : bool, default=False
         Enable verbose output. Note that this setting takes advantage of a
@@ -927,20 +927,6 @@ class NuSVC(BaseSVC):
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> y = np.array([1, 1, 2, 2])
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> from sklearn.svm import NuSVC
-    >>> clf = make_pipeline(StandardScaler(), NuSVC())
-    >>> clf.fit(X, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()), ('nusvc', NuSVC())])
-    >>> print(clf.predict([[-0.8, -1]]))
-    [1]
-
     See Also
     --------
     SVC : Support Vector Machine for classification using libsvm.
@@ -956,6 +942,20 @@ class NuSVC(BaseSVC):
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    >>> y = np.array([1, 1, 2, 2])
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.svm import NuSVC
+    >>> clf = make_pipeline(StandardScaler(), NuSVC())
+    >>> clf.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()), ('nusvc', NuSVC())])
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
     """
 
     _impl = "nu_svc"
@@ -1490,6 +1490,14 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
+    See Also
+    --------
+    sklearn.linear_model.SGDOneClassSVM : Solves linear One-Class SVM using
+        Stochastic Gradient Descent.
+    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection using
+        Local Outlier Factor (LOF).
+    sklearn.ensemble.IsolationForest : Isolation Forest Algorithm.
+
     Examples
     --------
     >>> from sklearn.svm import OneClassSVM
@@ -1499,10 +1507,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
-
-    See also
-    --------
-    sklearn.linear_model.SGDOneClassSVM
     """
 
     _impl = "one_class"
@@ -1541,7 +1545,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         )
 
     def fit(self, X, y=None, sample_weight=None, **params):
-        """Detects the soft boundary of the set of samples X.
+        """Detect the soft boundary of the set of samples X.
 
         Parameters
         ----------
@@ -1549,21 +1553,24 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             Set of samples, where n_samples is the number of samples and
             n_features is the number of features.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
-        y : Ignored
-            not used, present for API consistency by convention.
+        **params : dict
+            Additional fit parameters.
 
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
         If X is not a C-ordered contiguous array it is copied.
-
         """
         super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight, **params)
         self.offset_ = -self._intercept_
