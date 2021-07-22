@@ -122,7 +122,7 @@ def test_same_min_max(strategy):
     est = KBinsDiscretizer(
         strategy=strategy, n_bins=3, encode="ordinal", subsample=None
     )
-    warning_message = "Feature 0 is constant and will be replaced " "with 0."
+    warning_message = "Feature 0 is constant and will be replaced with 0."
     with pytest.warns(UserWarning, match=warning_message):
         est.fit(X)
     assert est.n_bins_[0] == 1

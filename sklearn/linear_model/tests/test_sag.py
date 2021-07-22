@@ -141,7 +141,7 @@ def sag_sparse(
 ):
     if step_size * alpha == 1.0:
         raise ZeroDivisionError(
-            "Sparse sag does not handle the case " "step_size * alpha == 1"
+            "Sparse sag does not handle the case step_size * alpha == 1"
         )
     n_samples, n_features = X.shape[0], X.shape[1]
 
