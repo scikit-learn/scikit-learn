@@ -64,7 +64,7 @@ def test_gnb_var():
     clf = GaussianNB()
     clf.fit(X, y)
 
-    with pytest.warns(FutureWarning, match="Attribute sigma_ was deprecated"):
+    with pytest.warns(FutureWarning, match="Attribute `sigma_` was deprecated"):
         assert_array_equal(clf.sigma_, clf.var_)
 
 
@@ -837,7 +837,7 @@ def test_alpha():
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
     nb = BernoulliNB(alpha=0.0)
-    msg = "alpha too small will result in numeric errors," " setting alpha = 1.0e-10"
+    msg = "alpha too small will result in numeric errors, setting alpha = 1.0e-10"
     with pytest.warns(UserWarning, match=msg):
         nb.partial_fit(X, y, classes=[0, 1])
     with pytest.warns(UserWarning, match=msg):
@@ -981,5 +981,5 @@ def test_n_features_deprecation(Estimator):
     y = np.array([1, 0])
     est = Estimator().fit(X, y)
 
-    with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
+    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_

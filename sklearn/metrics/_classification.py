@@ -49,7 +49,7 @@ def _check_zero_division(zero_division):
     elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
         return
     raise ValueError(
-        "Got zero_division={0}." ' Must be one of ["warn", 0, 1]'.format(zero_division)
+        'Got zero_division={0}. Must be one of ["warn", 0, 1]'.format(zero_division)
     )
 
 
@@ -90,8 +90,9 @@ def _check_targets(y_true, y_pred):
 
     if len(y_type) > 1:
         raise ValueError(
-            "Classification metrics can't handle a mix of {0} "
-            "and {1} targets".format(type_true, type_pred)
+            "Classification metrics can't handle a mix of {0} and {1} targets".format(
+                type_true, type_pred
+            )
         )
 
     # We can't have more than one value on y_type => The set is no more needed
@@ -113,11 +114,11 @@ def _check_targets(y_true, y_pred):
                 # `y_pred` given by the classifier will also be encoded with
                 # strings. So we raise a meaningful error
                 raise TypeError(
-                    f"Labels in y_true and y_pred should be of the same type. "
+                    "Labels in y_true and y_pred should be of the same type. "
                     f"Got y_true={np.unique(y_true)} and "
                     f"y_pred={np.unique(y_pred)}. Make sure that the "
-                    f"predictions provided by the classifier coincides with "
-                    f"the true labels."
+                    "predictions provided by the classifier coincides with "
+                    "the true labels."
                 ) from e
             if len(unique_values) > 2:
                 y_type = "multiclass"
@@ -321,7 +322,7 @@ def confusion_matrix(
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if normalize not in ["true", "pred", "all", None]:
-        raise ValueError("normalize must be one of {'true', 'pred', " "'all', None}")
+        raise ValueError("normalize must be one of {'true', 'pred', 'all', None}")
 
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
@@ -540,7 +541,8 @@ def multilabel_confusion_matrix(
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0" % np.min(labels)
+                    "Got %d < 0"
+                    % np.min(labels)
                 )
 
         if n_labels is not None:
@@ -2608,7 +2610,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError(
-            f"Only binary classification is supported. The type of the target "
+            "Only binary classification is supported. The type of the target "
             f"is {y_type}."
         )
 

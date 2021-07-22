@@ -482,8 +482,9 @@ def test_warning_bounds():
             gpr_sum.fit(X, y)
 
     assert len(record) == 2
-    assert record[0].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[0].message.args[0]
+        == "The optimal value found for "
         "dimension 0 of parameter "
         "k1__noise_level is close to the "
         "specified upper bound 0.001. "
@@ -491,8 +492,9 @@ def test_warning_bounds():
         "fit again may find a better value."
     )
 
-    assert record[1].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[1].message.args[0]
+        == "The optimal value found for "
         "dimension 0 of parameter "
         "k2__length_scale is close to the "
         "specified lower bound 1000.0. "
@@ -511,8 +513,9 @@ def test_warning_bounds():
             gpr_dims.fit(X_tile, y)
 
     assert len(record) == 2
-    assert record[0].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[0].message.args[0]
+        == "The optimal value found for "
         "dimension 0 of parameter "
         "length_scale is close to the "
         "specified lower bound 10.0. "
@@ -520,8 +523,9 @@ def test_warning_bounds():
         "fit again may find a better value."
     )
 
-    assert record[1].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[1].message.args[0]
+        == "The optimal value found for "
         "dimension 1 of parameter "
         "length_scale is close to the "
         "specified lower bound 10.0. "

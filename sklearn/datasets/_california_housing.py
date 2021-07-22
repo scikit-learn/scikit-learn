@@ -43,7 +43,7 @@ from ..utils import Bunch
 ARCHIVE = RemoteFileMetadata(
     filename="cal_housing.tgz",
     url="https://ndownloader.figshare.com/files/5976036",
-    checksum=("aaa5c9a6afe2225cc2aed2723682ae40" "3280c4a3695a2ddda4ffb5d8215ea681"),
+    checksum="aaa5c9a6afe2225cc2aed2723682ae403280c4a3695a2ddda4ffb5d8215ea681",
 )
 
 logger = logging.getLogger(__name__)

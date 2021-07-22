@@ -462,9 +462,7 @@ def _lars_path_solver(
 
     """
     if method == "lar" and positive:
-        raise ValueError(
-            "Positive constraint not supported for 'lar' " "coding method."
-        )
+        raise ValueError("Positive constraint not supported for 'lar' coding method.")
 
     n_samples = n_samples if n_samples is not None else y.size
 
@@ -490,7 +488,7 @@ def _lars_path_solver(
     else:
         n_features = Cov.shape[0]
         if Gram.shape != (n_features, n_features):
-            raise ValueError("The shapes of the inputs Gram and Xy" " do not match.")
+            raise ValueError("The shapes of the inputs Gram and Xy do not match.")
 
     if copy_X and X is not None and Gram is None:
         # force copy. setting the array to be fortran-ordered
@@ -844,7 +842,7 @@ def _lars_path_solver(
 
 
 class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
-    """Least Angle Regression model a.k.a. LAR
+    """Least Angle Regression model a.k.a. LAR.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -942,6 +940,13 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    lars_path: Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    LarsCV : Cross-validated Least Angle Regression model.
+    sklearn.decomposition.sparse_encode : Sparse coding.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -950,12 +955,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     Lars(n_nonzero_coefs=1, normalize=False)
     >>> print(reg.coef_)
     [ 0. -1.11...]
-
-    See Also
-    --------
-    lars_path, LarsCV
-    sklearn.decomposition.sparse_encode
-
     """
 
     method = "lar"
@@ -1096,7 +1095,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
@@ -1131,7 +1130,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 class LassoLars(Lars):
-    """Lasso model fit with Least Angle Regression a.k.a. Lars
+    """Lasso model fit with Least Angle Regression a.k.a. Lars.
 
     It is a Linear Model trained with an L1 prior as regularizer.
 
@@ -1151,7 +1150,7 @@ class LassoLars(Lars):
         should prefer the LinearRegression object.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -1253,6 +1252,20 @@ class LassoLars(Lars):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    lars_path : Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    lasso_path : Compute Lasso path with coordinate descent.
+    Lasso : Linear Model trained with L1 prior as
+        regularizer (aka the Lasso).
+    LassoCV : Lasso linear model with iterative fitting
+        along a regularization path.
+    LassoLarsCV: Cross-validated Lasso, using the LARS algorithm.
+    LassoLarsIC : Lasso model fit with Lars using BIC
+        or AIC for model selection.
+    sklearn.decomposition.sparse_encode : Sparse coding.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1261,17 +1274,6 @@ class LassoLars(Lars):
     LassoLars(alpha=0.01, normalize=False)
     >>> print(reg.coef_)
     [ 0.         -0.955...]
-
-    See Also
-    --------
-    lars_path
-    lasso_path
-    Lasso
-    LassoCV
-    LassoLarsCV
-    LassoLarsIC
-    sklearn.decomposition.sparse_encode
-
     """
 
     method = "lasso"
@@ -1462,7 +1464,7 @@ class LarsCV(Lars):
     Parameters
     ----------
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -1508,7 +1510,7 @@ class LarsCV(Lars):
 
     max_n_alphas : int, default=1000
         The maximum number of points on the path used to compute the
-        residuals in the cross-validation
+        residuals in the cross-validation.
 
     n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
@@ -1562,6 +1564,20 @@ class LarsCV(Lars):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    lars_path : Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    lasso_path : Compute Lasso path with coordinate descent.
+    Lasso : Linear Model trained with L1 prior as
+        regularizer (aka the Lasso).
+    LassoCV : Lasso linear model with iterative fitting
+        along a regularization path.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoLarsIC : Lasso model fit with Lars using BIC
+        or AIC for model selection.
+    sklearn.decomposition.sparse_encode : Sparse coding.
+
     Examples
     --------
     >>> from sklearn.linear_model import LarsCV
@@ -1574,10 +1590,6 @@ class LarsCV(Lars):
     0.2961...
     >>> reg.predict(X[:1,])
     array([154.3996...])
-
-    See Also
-    --------
-    lars_path, LassoLars, LassoLarsCV
     """
 
     method = "lar"
@@ -1628,7 +1640,7 @@ class LarsCV(Lars):
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
@@ -1646,7 +1658,8 @@ class LarsCV(Lars):
         if hasattr(Gram, "__array__"):
             warnings.warn(
                 'Parameter "precompute" cannot be an array in '
-                '%s. Automatically switch to "auto" instead.' % self.__class__.__name__
+                '%s. Automatically switch to "auto" instead.'
+                % self.__class__.__name__
             )
             Gram = "auto"
 
@@ -1730,7 +1743,7 @@ class LassoLarsCV(LarsCV):
     Parameters
     ----------
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -1776,7 +1789,7 @@ class LassoLarsCV(LarsCV):
 
     max_n_alphas : int, default=1000
         The maximum number of points on the path used to compute the
-        residuals in the cross-validation
+        residuals in the cross-validation.
 
     n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
@@ -1841,6 +1854,31 @@ class LassoLarsCV(LarsCV):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    lars_path : Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    lasso_path : Compute Lasso path with coordinate descent.
+    Lasso : Linear Model trained with L1 prior as
+        regularizer (aka the Lasso).
+    LassoCV : Lasso linear model with iterative fitting
+        along a regularization path.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoLarsIC : Lasso model fit with Lars using BIC
+        or AIC for model selection.
+    sklearn.decomposition.sparse_encode : Sparse coding.
+
+    Notes
+    -----
+    The object solves the same problem as the LassoCV object. However,
+    unlike the LassoCV, it find the relevant alphas values by itself.
+    In general, because of this property, it will be more stable.
+    However, it is more fragile to heavily multicollinear datasets.
+
+    It is more efficient than the LassoCV if only a small number of
+    features are selected compared to the total number, for instance if
+    there are very few samples compared to the number of features.
+
     Examples
     --------
     >>> from sklearn.linear_model import LassoLarsCV
@@ -1853,22 +1891,6 @@ class LassoLarsCV(LarsCV):
     0.3972...
     >>> reg.predict(X[:1,])
     array([-78.4831...])
-
-    Notes
-    -----
-
-    The object solves the same problem as the LassoCV object. However,
-    unlike the LassoCV, it find the relevant alphas values by itself.
-    In general, because of this property, it will be more stable.
-    However, it is more fragile to heavily multicollinear datasets.
-
-    It is more efficient than the LassoCV if only a small number of
-    features are selected compared to the total number, for instance if
-    there are very few samples compared to the number of features.
-
-    See Also
-    --------
-    lars_path, LassoLars, LarsCV, LassoCV
     """
 
     method = "lasso"
@@ -1904,7 +1926,7 @@ class LassoLarsCV(LarsCV):
 
 
 class LassoLarsIC(LassoLars):
-    """Lasso model fit with Lars using BIC or AIC for model selection
+    """Lasso model fit with Lars using BIC or AIC for model selection.
 
     The optimization objective for Lasso is::
 
@@ -1924,7 +1946,7 @@ class LassoLarsIC(LassoLars):
         The type of criterion to use.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -2006,14 +2028,18 @@ class LassoLarsIC(LassoLars):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
-    >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    LassoLarsIC(criterion='bic', normalize=False)
-    >>> print(reg.coef_)
-    [ 0.  -1.11...]
+    lars_path : Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    lasso_path : Compute Lasso path with coordinate descent.
+    Lasso : Linear Model trained with L1 prior as
+        regularizer (aka the Lasso).
+    LassoCV : Lasso linear model with iterative fitting
+        along a regularization path.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoLarsCV: Cross-validated Lasso, using the LARS algorithm.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     Notes
     -----
@@ -2026,9 +2052,14 @@ class LassoLarsIC(LassoLars):
     https://en.wikipedia.org/wiki/Akaike_information_criterion
     https://en.wikipedia.org/wiki/Bayesian_information_criterion
 
-    See Also
+    Examples
     --------
-    lars_path, LassoLars, LassoLarsCV
+    >>> from sklearn import linear_model
+    >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
+    >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
+    LassoLarsIC(criterion='bic', normalize=False)
+    >>> print(reg.coef_)
+    [ 0.  -1.11...]
     """
 
     def __init__(
@@ -2064,10 +2095,10 @@ class LassoLarsIC(LassoLars):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            training data.
+            Training data.
 
         y : array-like of shape (n_samples,)
-            target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to X's dtype if necessary.
 
         copy_X : bool, default=None
             If provided, this parameter will override the choice
@@ -2077,7 +2108,7 @@ class LassoLarsIC(LassoLars):
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
