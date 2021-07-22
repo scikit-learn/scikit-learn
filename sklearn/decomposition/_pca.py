@@ -214,7 +214,7 @@ class PCA(_BasePCA):
     ----------
     components_ : ndarray of shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
-        maximum variance in the data. Equivalently, the right singular 
+        maximum variance in the data. Equivalently, the right singular
         vectors of the centered input data, parallel to its eigenvectors.
         The components are sorted by ``explained_variance_``.
 

@@ -72,7 +72,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     ----------
     components_ : ndarray of shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
-        maximum variance in the data. Equivalently, the right singular 
+        maximum variance in the data. Equivalently, the right singular
         vectors of the centered input data, parallel to its eigenvectors.
         The components are sorted by ``explained_variance_``.
 
@@ -128,7 +128,6 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     sign of the ``components_`` and the output from transform depend on the
     algorithm and random state. To work around this, fit instances of this
     class to data once, then keep the instance around to do transformations.
-
     """
 
     def __init__(
