@@ -489,6 +489,10 @@ Changelog
   :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
+- |Fix| avoid overflow in :func:`metrics.cluster.adjust_rand_score` with large
+  amount of data.
+  :pr:`20312` by :user:`Divyanshu Deoli <divyanshudeoli>`.
+
 :mod:`sklearn.mixture`
 ......................
 
