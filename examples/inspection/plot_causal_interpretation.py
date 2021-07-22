@@ -1,7 +1,7 @@
 """
-================================================
-Causal Interpretation of Machine Learning Models
-================================================
+=============================================================
+Failure of Machine Learning Models to infer causal effects
+=============================================================
 
 Machine Learning models are great for measuring statistical associations.
 Unfortunately, unless we're willing to make strong assumptions about the data,
@@ -22,9 +22,6 @@ prevent us from identifying that causal effect.
 
 print(__doc__)
 
-import numpy as np
-from sklearn.linear_model import LinearRegression
-
 # %%
 # The dataset: simulated hourly wages
 # -----------------------------------
@@ -39,19 +36,23 @@ from sklearn.linear_model import LinearRegression
 # random component. Note that all variables have a positivie effect on
 # hourly wages.
 
-N = 10000
-experiences = np.random.normal(20, 10, size=N).astype(int)
+import numpy as np
+
+n_samples = 10000
+experiences = np.random.normal(20, 10, size=n_samples).astype(int)
 experiences[experiences < 0] = 0
-abilities = np.random.normal(0, 0.15, size=N)
-parent_hourly_wages = 50 * np.random.beta(2, 8, size=N)
+abilities = np.random.normal(0, 0.15, size=n_samples)
+parent_hourly_wages = 50 * np.random.beta(2, 8, size=n_samples)
 parent_hourly_wages[parent_hourly_wages < 0] = 0
 
 
 college_degrees = (9 * abilities + 0.02 * parent_hourly_wages
                    + np.random.randn() > 0.7).astype(int)
 
-hourly_wages = 0.2 * experiences + parent_hourly_wages + 2 \
-    * college_degrees + 5 * abilities + np.random.normal(0, 1, size=N)
+hourly_wages = (
+  0.2 * experiences + parent_hourly_wages + 2
+  * college_degrees + 5 * abilities + np.random.normal(0, 1, size=n_samples)
+)
 
 hourly_wages[hourly_wages < 0] = 0
 
@@ -67,10 +68,10 @@ import pandas as pd
 import seaborn as sns
 
 df = pd.DataFrame({
-    'hourly_wage': hourly_wages,
+    'hourly wage': hourly_wages,
     'experience': experiences,
-    'parent_hourly_wage': parent_hourly_wages,
-    'college_degree': college_degrees,
+    'parent hourly wage': parent_hourly_wages,
+    'college degree': college_degrees,
     'ability': abilities
     })
 
@@ -85,24 +86,49 @@ _ = sns.pairplot(df, diag_kind='kde')
 # in the first model and show that our estimate of the college degree
 # coefficient is close to 2 which is the true causal effect from our
 # data generating process. In real life, intellectual ability is either
-# never observed or poorly measured (e.g. IQ score).
+# never observed or only poorly measured (e.g. IQ score).
 # Researchers are forced to "omit" the ability feature from their models,
-# thereby inflating the estimate via a positive OVB.
-
-clf_with = LinearRegression()
-clf_with.fit(np.stack([experiences, parent_hourly_wages, college_degrees,
-             abilities], axis=1), hourly_wages)
-
-clf_without = LinearRegression()
-clf_without.fit(np.stack([experiences, parent_hourly_wages, college_degrees],
-                axis=1), hourly_wages)
+# thereby inflating the estimate via a positive OVB. Despite an
+# excellent R2 score, the model omitting the ability feature
+# shows a coefficient that is far off the true value.
 
 
-print('College degree coefficient with ability control: {}'.format(
-    clf_with.coef_[2]))
 
-print('College degree coefficient without ability control: {}'.format(
-    clf_without.coef_[2]))
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+
+X = df[['experience', 'parent hourly wage', 'college degree', 'ability']]
+y = df['hourly wage']
+
+X_train, X_test, y_train, y_test = train_test_split(
+  X, y, test_size=0.2, random_state=42)
+
+regressor_with_ability = LinearRegression()
+regressor_with_ability.fit(X_train, y_train)
+y_pred_with_ability = regressor_with_ability.predict(X_test)
+R2_with_ability = r2_score(y_test, y_pred_with_ability)
+
+regressor_without_ability = LinearRegression()
+regressor_without_ability.fit(X_train.drop(columns='ability'), y_train)
+y_pred_without_ability = regressor_without_ability.predict(
+  X_test.drop(columns='ability')
+  )
+R2_without_ability = r2_score(y_test, y_pred_without_ability)
+
+print(
+  f"R2 score with ability: {R2_with_ability}"
+)
+print(
+  f"College degree coefficient with ability: {regressor_with_ability.coef_[2]}"
+)
+print(
+  f"R2 score without ability: {R2_without_ability}"
+)
+print(
+  f"College degree coefficient without ability: {regressor_without_ability.coef_[2]}"
+)
+
 
 # %%
 # Lessons learned
