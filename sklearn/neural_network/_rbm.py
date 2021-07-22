@@ -388,8 +388,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
             if verbose:
                 end = time.time()
                 print(
-                    "[%s] Iteration %d, pseudo-likelihood = %.2f,"
-                    " time = %.2fs"
+                    "[%s] Iteration %d, pseudo-likelihood = %.2f, time = %.2fs"
                     % (
                         type(self).__name__,
                         iteration,

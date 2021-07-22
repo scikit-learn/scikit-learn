@@ -58,9 +58,9 @@ def check_clusterings(labels_true, labels_pred):
 
     if "continuous" in (type_pred, type_label):
         msg = (
-            f"Clustering metrics expects discrete values but received"
+            "Clustering metrics expects discrete values but received"
             f" {type_label} values for label, and {type_pred} values "
-            f"for target"
+            "for target"
         )
         warnings.warn(msg, UserWarning)
 
@@ -86,7 +86,7 @@ def _generalized_average(U, V, average_method):
         return max(U, V)
     else:
         raise ValueError(
-            "'average_method' must be 'min', 'geometric', " "'arithmetic', or 'max'"
+            "'average_method' must be 'min', 'geometric', 'arithmetic', or 'max'"
         )
 
 
