@@ -250,45 +250,44 @@ def load_csv_data(
     descr_file_name=None,
     descr_module=DESCR_MODULE,
 ):
-    """Loads data_file_name from data_module with importlib.resources.
+    """Loads `data_file_name` from `data_module with `importlib.resources`.
 
     Parameters
     ----------
-    data_file_name : string
-        Name of csv file to be loaded from
-        data_module/data_file_name. For example 'wine_data.csv'.
+    data_file_name : str
+        Name of csv file to be loaded from `data_module/data_file_name`.
+        For example `'wine_data.csv'`.
 
-    data_module : string or module, optional
-        module where data lives;
-        default "sklearn.datasets.data" (DATA_MODULE).
+    data_module : str or module, default='sklearn.datasets.data'
+        Module where data lives. The default is `'sklearn.datasets.data'`.
 
-    descr_file_name : string, optional
-        (See `load_descr`) Name of rst file to be loaded from
-        descr_module/descr_file_name. For example 'wine_data.rst';
+    descr_file_name : str, default=None
+        Name of rst file to be loaded from `descr_module/descr_file_name`.
+        For example `'wine_data.rst'`. See also :func:`load_descr`.
         If not None, also returns the corresponding description of
         the dataset.
 
-    descr_module : string or module, optional
-        (See `load_descr`) module where descr_file_name lives;
-        default "sklearn.datasets.descr" (DESCR_MODULE);
+    descr_module : str or module, default='sklearn.datasets.descr'
+        Module where `descr_file_name` lives. See also :func:`load_descr`.
+        The default is `'sklearn.datasets.descr'`.
 
     Returns
     -------
-    data : Numpy array
+    data : ndarray of shape (n_samples, n_features)
         A 2D array with each row representing one sample and each column
         representing the features of a given sample.
 
-    target : Numpy array
-        A 1D array holding target variables for all the samples in `data.
-        For example target[0] is the target varible for data[0].
+    target : ndarry of shape (n_samples,)
+        A 1D array holding target variables for all the samples in `data`.
+        For example target[0] is the target variable for data[0].
 
-    target_names : Numpy array
+    target_names : ndarry of shape (n_samples,)
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
 
-    descr : string, optional
-        Description of the dataset (content of descr_file_name). Only returned
-        if descr_file_name is not None.
+    descr : str, optional
+        Description of the dataset (the content of `descr_file_name`).
+        Only returned if `descr_file_name` is not None.
     """
     with resources.open_text(data_module, data_file_name) as csv_file:
         data_file = csv.reader(csv_file)
@@ -320,7 +319,7 @@ def load_gzip_compressed_csv_data(
     encoding="utf-8",
     **kwargs,
 ):
-    """Loads data_file_name from data_module with importlib.resources and np.loadtxt
+    """Loads gzip-compressed `data_file_name` from `data_module` with `importlib.resources`.
 
     1) Open resource file with `importlib.resources.open_binary`
     2) Decompress file obj with `gzip.open`
@@ -328,41 +327,40 @@ def load_gzip_compressed_csv_data(
 
     Parameters
     ----------
-    data_file_name : string
-        Name of gzip-compressed csv (.csv.gz) file to be loaded from
-        data_module/data_file_name. For example 'diabetes_data.csv.gz'.
+    data_file_name : str
+        Name of gzip-compressed csv file  (`'*.csv.gz'`) to be loaded from
+        `data_module/data_file_name`. For example `'diabetes_data.csv.gz'`.
 
-    data_module : string or module, optional
-        module where data lives;
-        default "sklearn.datasets.data" (DATA_MODULE).
+    data_module : str or module, default='sklearn.datasets.data'
+        Module where data lives. The default is `'sklearn.datasets.data'`.
 
-    descr_file_name : string, optional
-        (See `load_descr`) Name of rst file to be loaded from
-        descr_module/descr_file_name. For example 'wine_data.rst';
+    descr_file_name : str, default=None
+        Name of rst file to be loaded from `descr_module/descr_file_name`.
+        For example `'wine_data.rst'`. See also :func:`load_descr`.
         If not None, also returns the corresponding description of
         the dataset.
 
-    descr_module : string or module, optional
-        (See `load_descr`) module where descr_file_name lives;
-        default "sklearn.datasets.descr" (DESCR_MODULE);
+    descr_module : str or module, default='sklearn.datasets.descr'
+        Module where `descr_file_name` lives. See also :func:`load_descr`.
+        The default  is `'sklearn.datasets.descr'`.
 
-    encoding : string, optional
+    encoding : str, default="utf-8"
         Name of the encoding that the gzip-decompressed file will be
-        decoded with; default "utf-8"
+        decoded with. The default is 'utf-8'.
 
     **kwargs : dict, optional
         Keyword arguments to be passed to `np.loadtxt`;
-        e.g. delimiter=","
+        e.g. delimiter=','.
 
     Returns
     -------
-    data : Numpy array
+    data : ndarray of shape (n_samples, n_features)
         A 2D array with each row representing one sample and each column
-            representing the features and/or target of a given sample.
+        representing the features and/or target of a given sample.
 
-    descr : string, optional
-        Description of the dataset (content of descr_file_name). Only returned
-        if descr_file_name is not None.
+    descr : str, optional
+        Description of the dataset (the content of `descr_file_name`).
+        Only returned if `descr_file_name` is not None.
     """
     with resources.open_binary(data_module, data_file_name) as compressed_file:
         compressed_file = gzip.open(compressed_file, mode="rt", encoding=encoding)
@@ -377,21 +375,24 @@ def load_gzip_compressed_csv_data(
 
 
 def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
-    """Loads descr_file_name from descr_module with importlib.resources.
+    """Load `descr_file_name` from `descr_module` with `importlib.resources`.
 
     Parameters
     ----------
-    descr_file_name : string
-        Name of rst file to be loaded from
-        descr_module/descr_file_name. For example 'wine_data.rst'.
+    descr_file_name : str, default=None
+        Name of rst file to be loaded from `descr_module/descr_file_name`.
+        For example `'wine_data.rst'`. See also :func:`load_descr`.
+        If not None, also returns the corresponding description of
+        the dataset.
 
-    descr_module : string or module, optional
-        module where descr_file_name lives;
-        default "sklearn.datasets.descr" (DESCR_MODULE).
+    descr_module : str or module, default='sklearn.datasets.descr'
+        Module where `descr_file_name` lives. See also :func:`load_descr`.
+        The default  is `'sklearn.datasets.descr'`.
 
     Returns
     -------
-    string; content of descr_file_name
+    fdescr : str
+        Content of `descr_file_name`.
     """
     fdescr = resources.read_text(descr_module, descr_file_name)
 
@@ -1233,8 +1234,7 @@ def load_sample_images():
 
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
-    filenames = list()
-    images = list()
+    filenames, images = [], []
     for filename in sorted(resources.contents(IMAGES_MODULE)):
         if filename.endswith(".jpg"):
             filenames.append(filename)
@@ -1329,12 +1329,12 @@ def _fetch_remote(remote, dirname=None):
         Named tuple containing remote dataset meta information: url, filename
         and checksum
 
-    dirname : string
+    dirname : str
         Directory to save the file to.
 
     Returns
     -------
-    file_path: string
+    file_path: str
         Full path of the created file.
     """
 
