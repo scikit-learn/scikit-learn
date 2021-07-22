@@ -73,7 +73,7 @@ Changelog
 - |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
-  
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -297,10 +297,6 @@ Changelog
 
 :mod:`sklearn.covariance`
 .........................
-
-- |Fix| Adds arrays check to :func:`covariance.ledoit_wolf` and
-  :func:`covariance.ledoit_wolf_shrinkage`
-  :pr:`20416` by `Hugo Defois <defoishugo>`.
 
 - |API| Deprecates `cv_alphas_` in favor of `cv_results_['alphas']` and
   `grid_scores_` in favor of split scores in `cv_results_` in

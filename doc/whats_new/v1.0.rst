@@ -209,6 +209,13 @@ Changelog
   an adequate transformer.
   :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| Adds arrays check to :func:`covariance.ledoit_wolf` and
+  :func:`covariance.ledoit_wolf_shrinkage`
+  :pr:`20416` by `Hugo Defois <defoishugo>`.
+
 :mod:`sklearn.datasets`
 .......................
 
