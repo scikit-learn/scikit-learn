@@ -92,8 +92,6 @@ _ = sns.pairplot(df, diag_kind='kde')
 # excellent R2 score, the model omitting the ability feature
 # shows a coefficient that is far off the true value.
 
-
-
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
