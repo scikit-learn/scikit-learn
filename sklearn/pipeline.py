@@ -37,7 +37,14 @@ def _final_estimator_has(attr):
     """Check that final_estimator has `attr`.
 
     Used together with `avaliable_if` in `Pipeline`."""
-    return lambda self: getattr(self._final_estimator, attr) or True
+
+    def check(self):
+        if not hasattr(self._final_estimator, attr):
+            # raise original `AttributeError`
+            return getattr(self._final_estimator, attr)
+        return True
+
+    return check
 
 
 class Pipeline(_BaseComposition):
