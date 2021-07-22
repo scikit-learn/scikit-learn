@@ -15,7 +15,7 @@ def test_int_float_dict():
         assert d[key] == value
     assert len(d) == len(keys)
 
-    d.append(120, 3.)
+    d.append(120, 3.0)
     assert d[120] == 3.0
     assert len(d) == len(keys) + 1
     for i in range(2000):

@@ -11,17 +11,18 @@ from sklearn.utils import check_array
 
 class StepSelector(SelectorMixin, BaseEstimator):
     """Retain every `step` features (beginning with 0)"""
+
     def __init__(self, step=2):
         self.step = step
 
     def fit(self, X, y=None):
-        X = check_array(X, accept_sparse='csc')
+        X = check_array(X, accept_sparse="csc")
         self.n_input_feats = X.shape[1]
         return self
 
     def _get_support_mask(self):
         mask = np.zeros(self.n_input_feats, dtype=bool)
-        mask[::self.step] = True
+        mask[:: self.step] = True
         return mask
 
 
@@ -32,10 +33,10 @@ Xt = np.arange(0, 20, 2).reshape(2, 5)
 Xinv = X.copy()
 Xinv[:, 1::2] = 0
 y = [0, 1]
-feature_names = list('ABCDEFGHIJ')
+feature_names = list("ABCDEFGHIJ")
 feature_names_t = feature_names[::2]
 feature_names_inv = np.array(feature_names)
-feature_names_inv[1::2] = ''
+feature_names_inv[1::2] = ""
 
 
 def test_transform_dense():
@@ -81,10 +82,8 @@ def test_inverse_transform_dense():
     assert_array_equal(Xinv, Xinv_actual)
 
     # Check dtype matches
-    assert (np.int32 ==
-                 sel.inverse_transform(Xt.astype(np.int32)).dtype)
-    assert (np.float32 ==
-                 sel.inverse_transform(Xt.astype(np.float32)).dtype)
+    assert np.int32 == sel.inverse_transform(Xt.astype(np.int32)).dtype
+    assert np.float32 == sel.inverse_transform(Xt.astype(np.float32)).dtype
 
     # Check 1d list and other dtype:
     names_inv_actual = sel.inverse_transform([feature_names_t])
@@ -102,10 +101,8 @@ def test_inverse_transform_sparse():
     assert_array_equal(Xinv, Xinv_actual.toarray())
 
     # Check dtype matches
-    assert (np.int32 ==
-                 sel.inverse_transform(sparse(Xt).astype(np.int32)).dtype)
-    assert (np.float32 ==
-                 sel.inverse_transform(sparse(Xt).astype(np.float32)).dtype)
+    assert np.int32 == sel.inverse_transform(sparse(Xt).astype(np.int32)).dtype
+    assert np.float32 == sel.inverse_transform(sparse(Xt).astype(np.float32)).dtype
 
     # Check wrong shape raises error
     with pytest.raises(ValueError):

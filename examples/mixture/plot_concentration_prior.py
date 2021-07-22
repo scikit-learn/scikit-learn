@@ -84,6 +84,7 @@ def plot_results(ax1, ax2, estimator, X, y, title, plot_title=False):
         ax1.set_ylabel('Estimated Mixtures')
         ax2.set_ylabel('Weight of each component')
 
+
 # Parameters of the dataset
 random_state, n_components, n_features = 2, 3, 2
 colors = np.array(['#0072B2', '#F0E442', '#D55E00'])
@@ -100,16 +101,16 @@ means = np.array([[.0, -.70],
 estimators = [
     ("Finite mixture with a Dirichlet distribution\nprior and "
      r"$\gamma_0=$", BayesianGaussianMixture(
-        weight_concentration_prior_type="dirichlet_distribution",
-        n_components=2 * n_components, reg_covar=0, init_params='random',
-        max_iter=1500, mean_precision_prior=.8,
-        random_state=random_state), [0.001, 1, 1000]),
+         weight_concentration_prior_type="dirichlet_distribution",
+         n_components=2 * n_components, reg_covar=0, init_params='random',
+         max_iter=1500, mean_precision_prior=.8,
+         random_state=random_state), [0.001, 1, 1000]),
     ("Infinite mixture with a Dirichlet process\n prior and" r"$\gamma_0=$",
      BayesianGaussianMixture(
-        weight_concentration_prior_type="dirichlet_process",
-        n_components=2 * n_components, reg_covar=0, init_params='random',
-        max_iter=1500, mean_precision_prior=.8,
-        random_state=random_state), [1, 1000, 100000])]
+         weight_concentration_prior_type="dirichlet_process",
+         n_components=2 * n_components, reg_covar=0, init_params='random',
+         max_iter=1500, mean_precision_prior=.8,
+         random_state=random_state), [1, 1000, 100000])]
 
 # Generate data
 rng = np.random.RandomState(random_state)
