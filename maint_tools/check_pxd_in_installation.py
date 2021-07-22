@@ -20,9 +20,7 @@ print("> Found pxd files:")
 for pxd_file in pxd_files:
     print(" -", pxd_file)
 
-print(
-    "\n> Trying to compile a cython extension cimporting all corresponding " "modules\n"
-)
+print("\n> Trying to compile a cython extension cimporting all corresponding modules\n")
 with tempfile.TemporaryDirectory() as tmpdir:
     tmpdir = pathlib.Path(tmpdir)
     # A cython test file which cimports all modules corresponding to found

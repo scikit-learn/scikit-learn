@@ -55,11 +55,11 @@ def test_errors(pyplot):
     [
         (
             "predict_proba",
-            "response method predict_proba is not defined in " "MyClassifier",
+            "response method predict_proba is not defined in MyClassifier",
         ),
         (
             "decision_function",
-            "response method decision_function is not defined " "in MyClassifier",
+            "response method decision_function is not defined in MyClassifier",
         ),
         (
             "auto",
@@ -68,7 +68,7 @@ def test_errors(pyplot):
         ),
         (
             "bad_method",
-            "response_method must be 'predict_proba', " "'decision_function' or 'auto'",
+            "response_method must be 'predict_proba', 'decision_function' or 'auto'",
         ),
     ],
 )
