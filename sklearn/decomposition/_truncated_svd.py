@@ -71,6 +71,10 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
+        Principal axes in feature space, representing the directions of
+        maximum variance in the data. Equivalently, the right singular 
+        vectors of the centered input data, parallel to its eigenvectors.
+        The components are sorted by ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         The variance of the training samples transformed by a projection to
