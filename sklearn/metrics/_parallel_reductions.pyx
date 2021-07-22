@@ -746,13 +746,9 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     def __dealloc__(self):
         if self.heaps_indices_chunks is not NULL:
             free(self.heaps_indices_chunks)
-        else:
-            raise RuntimeError("Trying to free heaps_indices_chunks which is NULL")
 
         if self.heaps_approx_distances_chunks is not NULL:
             free(self.heaps_approx_distances_chunks)
-        else:
-            raise RuntimeError("Trying to free heaps_approx_distances_chunks which is NULL")
 
     cdef int _reduce_on_chunks(self,
         ITYPE_t X_start,
@@ -993,8 +989,6 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
     def __dealloc__(self):
         if self.dist_middle_terms_chunks is not NULL:
             free(self.dist_middle_terms_chunks)
-        else:
-            raise RuntimeError("Trying to free dist_middle_terms_chunks which is NULL")
 
     @final
     cdef void _on_X_parallel_init(self,
@@ -1181,8 +1175,11 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             sizeof(self.neigh_indices) * self.effective_omp_n_thread)
 
     def __dealloc(self):
-        free(self.neigh_distances_chunks)
-        free(self.neigh_indices_chunks)
+        if self.neigh_distances_chunks is not NULL:
+            free(self.neigh_distances_chunks)
+
+        if self.neigh_indices_chunks is not NULL:
+            free(self.neigh_indices_chunks)
 
     @final
     cdef int _reduce_on_chunks(self,
