@@ -216,6 +216,10 @@ Changelog
   `'std_score'`, and `'split(k)_score` in favor of `'mean_test_score'`
   `'std_test_score'`, and `'split(k)_test_score``. :pr`20583` by `Thomas Fan`_.
 
+- |Fix| Adds arrays check to :func:`covariance.ledoit_wolf` and
+  :func:`covariance.ledoit_wolf_shrinkage`
+  :pr:`20416` by `Hugo Defois <defoishugo>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -330,6 +334,10 @@ Changelog
 - |API| Raises an error in :class:`feature_selection.VarianceThreshold`
   when the variance threshold is negative.
   :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
+
+- |FIX| Fix a bug in :func:`isotonic.isotonic_regression` where the
+  `sample_weight` passed by a user were overwritten during the fit.
+  :pr:`20515` by :user:`Carsten Allefeld <allefeld>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -485,6 +493,10 @@ Changelog
   :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
+- |Fix| avoid overflow in :func:`metrics.cluster.adjust_rand_score` with large
+  amount of data.
+  :pr:`20312` by :user:`Divyanshu Deoli <divyanshudeoli>`.
+
 :mod:`sklearn.mixture`
 ......................
 
@@ -558,6 +570,9 @@ Changelog
   :class:`preprocessing.SplineTransformer` also supports periodic
   splines via the ``extrapolation`` argument.
   :pr:`19483` by :user:`Malte Londschien <mlondschien>`.
+  :class:`preprocessing.SplineTransformer` supports sample weights for
+  knot position strategy ``"quantile"``.
+  :pr:`20526` by :user:`Malte Londschien <mlondschien>`.
 
 - |Feature| :class:`preprocessing.OrdinalEncoder` supports passing through
   missing values by default. :pr:`19069` by `Thomas Fan`_.
