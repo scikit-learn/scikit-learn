@@ -31,7 +31,7 @@ from ..utils import check_random_state, Bunch
 FACES = RemoteFileMetadata(
     filename="olivettifaces.mat",
     url="https://ndownloader.figshare.com/files/5976027",
-    checksum=("b612fb967f2dc77c9c62d3e1266e0c73" "d5fca46a4b8906c18e454d41af987794"),
+    checksum="b612fb967f2dc77c9c62d3e1266e0c73d5fca46a4b8906c18e454d41af987794",
 )
 
 

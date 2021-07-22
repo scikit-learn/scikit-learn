@@ -143,13 +143,14 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
             return CatBoostRegressor(**catboost_params)
 
 
-def sum_parallel(G_H_DTYPE_C [:] array):
+def sum_parallel(G_H_DTYPE_C [:] array, int n_threads):
 
     cdef:
         Y_DTYPE_C out = 0.
         int i = 0
 
-    for i in prange(array.shape[0], schedule='static', nogil=True):
+    for i in prange(array.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
         out += array[i]
 
     return out

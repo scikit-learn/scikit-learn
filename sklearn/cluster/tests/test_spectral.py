@@ -305,6 +305,6 @@ def test_verbose(assign_labels, capsys):
 @pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
 def test_pairwise_is_deprecated(affinity):
     sp = SpectralClustering(affinity=affinity)
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         sp._pairwise

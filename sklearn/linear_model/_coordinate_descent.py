@@ -60,8 +60,7 @@ def _set_order(X, y, order="C"):
     """
     if order not in [None, "C", "F"]:
         raise ValueError(
-            "Unknown value for order. Got {} instead of "
-            "None, 'C' or 'F'.".format(order)
+            "Unknown value for order. Got {} instead of None, 'C' or 'F'.".format(order)
         )
     sparse_X = sparse.issparse(X)
     sparse_y = sparse.issparse(y)
@@ -236,18 +235,18 @@ def lasso_path(
 
     y : {array-like, sparse matrix} of shape (n_samples,) or \
         (n_samples, n_targets)
-        Target values
+        Target values.
 
     eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``
+        ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, default=100
-        Number of alphas along the regularization path
+        Number of alphas along the regularization path.
 
     alphas : ndarray, default=None
         List of alphas where to compute the models.
-        If ``None`` alphas are set automatically
+        If ``None`` alphas are set automatically.
 
     precompute : 'auto', bool or array-like of shape \
             (n_features, n_features), default='auto'
@@ -270,14 +269,14 @@ def lasso_path(
         Amount of verbosity.
 
     return_n_iter : bool, default=False
-        whether to return the number of iterations or not.
+        Whether to return the number of iterations or not.
 
     positive : bool, default=False
         If set to True, forces coefficients to be positive.
         (Only allowed when ``y.ndim == 1``).
 
     **params : kwargs
-        keyword arguments passed to the coordinate descent solver.
+        Keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -294,6 +293,18 @@ def lasso_path(
     n_iters : list of int
         The number of iterations taken by the coordinate descent optimizer to
         reach the specified tolerance for each alpha.
+
+    See Also
+    --------
+    lars_path : Compute Least Angle Regression or Lasso path using LARS
+        algorithm.
+    Lasso : The Lasso is a linear model that estimates sparse coefficients.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoCV : Lasso linear model with iterative fitting along a regularization
+        path.
+    LassoLarsCV : Cross-validated Lasso using the LARS algorithm.
+    sklearn.decomposition.sparse_encode : Estimator that can be used to
+        transform signals into sparse linear combination of atoms from a fixed.
 
     Notes
     -----
@@ -332,15 +343,6 @@ def lasso_path(
     >>> print(coef_path_continuous([5., 1., .5]))
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
-
-    See Also
-    --------
-    lars_path
-    Lasso
-    LassoLars
-    LassoCV
-    LassoLarsCV
-    sklearn.decomposition.sparse_encode
     """
     return enet_path(
         X,
@@ -526,9 +528,7 @@ def enet_path(
         n_targets = y.shape[1]
 
     if multi_output and positive:
-        raise ValueError(
-            "positive=True is not allowed for multi-output" " (y.ndim != 1)"
-        )
+        raise ValueError("positive=True is not allowed for multi-output (y.ndim != 1)")
 
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
@@ -640,8 +640,8 @@ def enet_path(
             )
         else:
             raise ValueError(
-                "Precompute should be one of True, False, "
-                "'auto' or array-like. Got %r" % precompute
+                "Precompute should be one of True, False, 'auto' or array-like. Got %r"
+                % precompute
             )
         coef_, dual_gap_, eps_, n_iter_ = model
         coefs[..., i] = coef_
@@ -787,6 +787,19 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
+    SGDRegressor : Implements elastic net regression with incremental training.
+    SGDClassifier : Implements logistic regression with elastic net penalty
+        (``SGDClassifier(loss="log", penalty="elasticnet")``).
+
+    Notes
+    -----
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a Fortran-contiguous numpy array.
+
     Examples
     --------
     >>> from sklearn.linear_model import ElasticNet
@@ -802,20 +815,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     1.451...
     >>> print(regr.predict([[0, 0]]))
     [1.451...]
-
-
-    Notes
-    -----
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
-
-    See Also
-    --------
-    ElasticNetCV : Elastic net model with best model selection by
-        cross-validation.
-    SGDRegressor : Implements elastic net regression with incremental training.
-    SGDClassifier : Implements logistic regression with elastic net penalty
-        (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """
 
     path = staticmethod(enet_path)
@@ -899,8 +898,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if isinstance(self.precompute, str):
             raise ValueError(
-                "precompute should be one of True, False or"
-                " array-like. Got %r" % self.precompute
+                "precompute should be one of True, False or array-like. Got %r"
+                % self.precompute
             )
 
         if (
@@ -909,7 +908,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             or self.l1_ratio > 1
         ):
             raise ValueError(
-                "l1_ratio must be between 0 and 1; " f"got l1_ratio={self.l1_ratio}"
+                f"l1_ratio must be between 0 and 1; got l1_ratio={self.l1_ratio}"
             )
 
         # Remember if X is copied
@@ -941,7 +940,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             if check_input:
                 if sparse.issparse(X):
                     raise ValueError(
-                        "Sample weights do not (yet) support " "sparse matrices."
+                        "Sample weights do not (yet) support sparse matrices."
                     )
                 sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             # TLDR: Rescale sw to sum up to n_samples.
@@ -1485,6 +1484,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         Returns
         -------
         self : object
+            Returns an instance of fitted model.
         """
 
         # Do as _deprecate_normalize but without warning as it's raised
@@ -1550,25 +1550,22 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if not self._is_multitask():
             if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError(
-                    "For multi-task outputs, use "
-                    "MultiTask%s" % self.__class__.__name__
+                    "For multi-task outputs, use MultiTask%s" % self.__class__.__name__
                 )
             y = column_or_1d(y, warn=True)
         else:
             if sparse.isspmatrix(X):
-                raise TypeError("X should be dense but a sparse matrix was" "passed")
+                raise TypeError("X should be dense but a sparse matrix waspassed")
             elif y.ndim == 1:
                 raise ValueError(
-                    "For mono-task outputs, use " "%sCV" % self.__class__.__name__[9:]
+                    "For mono-task outputs, use %sCV" % self.__class__.__name__[9:]
                 )
 
         if isinstance(sample_weight, numbers.Number):
             sample_weight = None
         if sample_weight is not None:
             if sparse.issparse(X):
-                raise ValueError(
-                    "Sample weights do not (yet) support " "sparse matrices."
-                )
+                raise ValueError("Sample weights do not (yet) support sparse matrices.")
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         model = self._get_estimator()
@@ -1847,16 +1844,16 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.linear_model import LassoCV
-    >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(noise=4, random_state=0)
-    >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
-    >>> reg.score(X, y)
-    0.9993...
-    >>> reg.predict(X[:1,])
-    array([-78.4951...])
+    lars_path : Compute Least Angle Regression or Lasso path using LARS
+        algorithm.
+    lasso_path : Compute Lasso path with coordinate descent.
+    Lasso : The Lasso is a linear model that estimates sparse coefficients.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoCV : Lasso linear model with iterative fitting along a regularization
+        path.
+    LassoLarsCV : Cross-validated Lasso using the LARS algorithm.
 
     Notes
     -----
@@ -1867,13 +1864,16 @@ class LassoCV(RegressorMixin, LinearModelCV):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    See Also
+    Examples
     --------
-    lars_path
-    lasso_path
-    LassoLars
-    Lasso
-    LassoLarsCV
+    >>> from sklearn.linear_model import LassoCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
+    >>> reg.score(X, y)
+    0.9993...
+    >>> reg.predict(X[:1,])
+    array([-78.4951...])
     """
 
     path = staticmethod(lasso_path)
@@ -3020,12 +3020,13 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Data
+            Data.
         y : ndarray of shape (n_samples, n_targets)
-            Target. Will be cast to X's dtype if necessary
+            Target. Will be cast to X's dtype if necessary.
 
         Returns
         -------
         self : object
+            Returns an instance of fitted model.
         """
         return super().fit(X, y)
