@@ -784,9 +784,7 @@ def test_extract_dbscan():
 
 
 def test_precomputed_dists():
-    # This slicing makes the array F-ordered.
-    # but we need C-ordering.
-    redX = np.ascontiguousarray(X[::2])
+    redX = X[::2]
     dists = pairwise_distances(redX, metric="euclidean")
     clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
     clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
