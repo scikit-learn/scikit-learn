@@ -665,7 +665,7 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
         with pytest.raises(ValueError, match=msg):
             CalibrationDisplay.from_estimator(clf, X, y)
     else:
-        msg = "y should be a 1d array, got an array of shape"
+        msg = "Only binary classification is supported"
         with pytest.raises(ValueError, match=msg):
             CalibrationDisplay.from_predictions(y, y_prob)
 
