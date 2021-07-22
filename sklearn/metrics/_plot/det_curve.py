@@ -49,7 +49,7 @@ class DetCurveDisplay:
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> from sklearn import metrics
     >>> y = np.array([0, 0, 1, 1])
@@ -58,9 +58,11 @@ class DetCurveDisplay:
     >>> display = metrics.DetCurveDisplay(
     ...     fpr=fpr, fnr=fnr, estimator_name='example estimator'
     ... )
-    >>> display.plot()  # doctest: +SKIP
-    >>> plt.show()      # doctest: +SKIP
+    >>> display.plot()
+    <...>
+    >>> plt.show()
     """
+
     def __init__(self, *, fpr, fnr, estimator_name=None, pos_label=None):
         self.fpr = fpr
         self.fnr = fnr
@@ -85,7 +87,7 @@ class DetCurveDisplay:
         display : :class:`~sklearn.metrics.plot.DetCurveDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support('DetCurveDisplay.plot')
+        check_matplotlib_support("DetCurveDisplay.plot")
 
         name = self.estimator_name if name is None else name
         line_kwargs = {} if name is None else {"label": name}
@@ -96,13 +98,14 @@ class DetCurveDisplay:
         if ax is None:
             _, ax = plt.subplots()
 
-        self.line_, = ax.plot(
+        (self.line_,) = ax.plot(
             sp.stats.norm.ppf(self.fpr),
             sp.stats.norm.ppf(self.fnr),
             **line_kwargs,
         )
-        info_pos_label = (f" (Positive label: {self.pos_label})"
-                          if self.pos_label is not None else "")
+        info_pos_label = (
+            f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
+        )
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "False Negative Rate" + info_pos_label
@@ -114,7 +117,7 @@ class DetCurveDisplay:
         ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]
         tick_locations = sp.stats.norm.ppf(ticks)
         tick_labels = [
-            '{:.0%}'.format(s) if (100*s).is_integer() else '{:.1%}'.format(s)
+            "{:.0%}".format(s) if (100 * s).is_integer() else "{:.1%}".format(s)
             for s in ticks
         ]
         ax.set_xticks(tick_locations)
@@ -139,7 +142,7 @@ def plot_det_curve(
     name=None,
     ax=None,
     pos_label=None,
-    **kwargs
+    **kwargs,
 ):
     """Plot detection error tradeoff (DET) curve.
 
@@ -196,7 +199,7 @@ def plot_det_curve(
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn import datasets, metrics, model_selection, svm
     >>> X, y = datasets.make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = model_selection.train_test_split(
@@ -204,26 +207,25 @@ def plot_det_curve(
     >>> clf = svm.SVC(random_state=0)
     >>> clf.fit(X_train, y_train)
     SVC(random_state=0)
-    >>> metrics.plot_det_curve(clf, X_test, y_test)  # doctest: +SKIP
-    >>> plt.show()                                   # doctest: +SKIP
+    >>> metrics.plot_det_curve(clf, X_test, y_test)
+    <...>
+    >>> plt.show()
     """
-    check_matplotlib_support('plot_det_curve')
+    check_matplotlib_support("plot_det_curve")
 
     y_pred, pos_label = _get_response(
         X, estimator, response_method, pos_label=pos_label
     )
 
     fpr, fnr, _ = det_curve(
-        y, y_pred, pos_label=pos_label, sample_weight=sample_weight,
+        y,
+        y_pred,
+        pos_label=pos_label,
+        sample_weight=sample_weight,
     )
 
     name = estimator.__class__.__name__ if name is None else name
 
-    viz = DetCurveDisplay(
-        fpr=fpr,
-        fnr=fnr,
-        estimator_name=name,
-        pos_label=pos_label
-    )
+    viz = DetCurveDisplay(fpr=fpr, fnr=fnr, estimator_name=name, pos_label=pos_label)
 
     return viz.plot(ax=ax, name=name, **kwargs)
