@@ -8,6 +8,10 @@
 # cython: binding=False
 # distutils: define_macros=CYTHON_TRACE_NOGIL=0
 
+DEF CHUNK_SIZE = 256  # number of vectors
+DEF MIN_CHUNK_SAMPLES = 20
+DEF FLOAT_INF = 1e36
+
 import numpy as np
 cimport numpy as np
 
@@ -21,16 +25,7 @@ from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
 from cpython.ref cimport Py_INCREF
 
-from scipy.sparse import issparse
-
 from ._dist_metrics cimport DistanceMetric
-from ._dist_metrics import METRIC_MAPPING
-from ..utils import check_array
-
-DEF CHUNK_SIZE = 256  # number of vectors
-DEF MIN_CHUNK_SAMPLES = 20
-DEF FLOAT_INF = 1e36
-
 from ..utils._cython_blas cimport (
   BLAS_Order,
   BLAS_Trans,
@@ -40,12 +35,15 @@ from ..utils._cython_blas cimport (
   Trans,
   _gemm,
 )
-
 from ..utils._heap cimport _simultaneous_sort, _push
 from ..utils._openmp_helpers cimport _openmp_thread_num
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 
+
+from scipy.sparse import issparse
+from ._dist_metrics import METRIC_MAPPING
+from ..utils import check_array
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs import ITYPE, DTYPE
 
