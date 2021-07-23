@@ -9,7 +9,6 @@ from ._nmf import (
     NMF,
     MiniBatchNMF,
     non_negative_factorization,
-    non_negative_factorization_online,
 )
 from ._pca import PCA
 from ._incremental_pca import IncrementalPCA
@@ -46,7 +45,6 @@ __all__ = [
     "dict_learning_online",
     "fastica",
     "non_negative_factorization",
-    "non_negative_factorization_online",
     "randomized_svd",
     "sparse_encode",
     "FactorAnalysis",

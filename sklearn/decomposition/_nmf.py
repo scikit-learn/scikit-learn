@@ -1136,216 +1136,6 @@ def non_negative_factorization(
     return W, H, n_iter
 
 
-def non_negative_factorization_online(
-    X,
-    W=None,
-    H=None,
-    n_components=None,
-    *,
-    init=None,
-    update_H=True,
-    beta_loss="frobenius",
-    tol=1e-4,
-    max_iter=200,
-    alpha=0.0,
-    l1_ratio=0.0,
-    regularization=None,
-    random_state=None,
-    verbose=0,
-    shuffle=False,
-    batch_size=1024,
-    forget_factor=0.7,
-    fresh_restarts=True,
-    fresh_restarts_max_iter=30,
-    transform_max_iter=None,
-):
-    """Compute Online Non-negative Matrix Factorization (MiniBatchNMF).
-
-    Find two non-negative matrices (W, H) whose product approximates the non-
-    negative matrix X. This factorization can be used for example for
-    dimensionality reduction, source separation or topic extraction.
-
-    The objective function is:
-
-        .. math::
-
-            0.5 * ||X - WH||_{loss}^2 + alpha * l1_{ratio} * ||vec(W)||_1
-
-            + alpha * l1_{ratio} * ||vec(H)||_1
-
-            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
-
-            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
-
-    Where:
-
-    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
-
-    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
-
-    The generic norm :math:`||X - WH||_{loss}^2` may represent
-    the Frobenius norm or another supported beta-divergence loss.
-    The choice between options is controlled by the `beta_loss` parameter.
-
-    The objective function is minimized with an alternating minimization of W
-    and H. If H is given and update_H=False, it solves for W only.
-
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-        Constant matrix.
-
-    W : array-like of shape (n_samples, n_components), default=None
-        If init='custom', it is used as initial guess for the solution.
-
-    H : array-like of shape (n_components, n_features), default=None
-        If init='custom', it is used as initial guess for the solution.
-        If update_H=False, it is used as a constant, to solve for W only.
-
-    n_components : int, default=None
-        Number of components, if n_components is not set all features
-        are kept.
-
-    init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
-        Method used to initialize the procedure.
-
-        Valid options:
-
-        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
-
-        - 'random': non-negative random matrices, scaled with:
-            sqrt(X.mean() / n_components)
-
-        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
-            initialization (better for sparseness)
-
-        - 'nndsvda': NNDSVD with zeros filled with the average of X
-            (better when sparsity is not desired)
-
-        - 'nndsvdar': NNDSVD with zeros filled with small random values
-            (generally faster, less accurate alternative to NNDSVDa
-            for when sparsity is not desired)
-
-        - 'custom': use custom matrices W and H if `update_H=True`. If
-          `update_H=False`, then only custom matrix H is used.
-
-    update_H : bool, default=True
-        Set to True, both W and H will be estimated from initial guesses.
-        Set to False, only W will be estimated.
-
-    beta_loss : float or {'frobenius', 'kullback-leibler', \
-            'itakura-saito'}, default='frobenius'
-        Beta divergence to be minimized, measuring the distance between X
-        and the dot product WH. Note that values different from 'frobenius'
-        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
-        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
-        matrix X cannot contain zeros.
-
-    tol : float, default=1e-4
-        Tolerance of the stopping condition.
-
-    max_iter : int, default=200
-        Maximum number of iterations before timing out.
-
-    alpha : float, default=0.
-        Constant that multiplies the regularization terms.
-
-    l1_ratio : float, default=0.
-        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an elementwise L2 penalty
-        (aka Frobenius Norm).
-        For l1_ratio = 1 it is an elementwise L1 penalty.
-        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
-
-    regularization : {'both', 'components', 'transformation'}, default=None
-        Select whether the regularization affects the components (H), the
-        transformation (W), both or none of them.
-
-    random_state : int, RandomState instance or None, default=None
-        Used for NMF initialisation (when ``init`` == 'nndsvdar' or
-        'random'), and in Coordinate Descent. Pass an int for reproducible
-        results across multiple function calls.
-        See :term:`Glossary <random_state>`.
-
-    verbose : int, default=0
-        The verbosity level.
-
-    batch_size : int, default=1024
-        Number of samples per batch.
-
-    forget_factor : float, default=0.7
-        Amount of rescaling of past information. Its value could be 1 with
-        finite datasets. Choosing values < 1 is recommended with online
-        learning as more recent batches will weight more than past batches.
-
-    fresh_restarts : bool, default=False
-        Whether to completely solve for W at each step. Doing fresh restarts can lead to
-        a better solution for a same number of epochs but is much slower.
-
-    fresh_restarts_max_iter : int, default=30
-        Maximum number of iterations when solving for W at each step. Only used when
-        doing fresh restarts. These iterations may be stopped early based on a small
-        change of W controlled by `tol`.
-
-    transform_max_iter : int, default=None
-        Maximum number of iterations when solving for W at transform time. If left to
-        None it defaults to `max_iter`.
-
-    Returns
-    -------
-    W : ndarray of shape (n_samples, n_components)
-        Solution to the non-negative least squares problem.
-
-    H : ndarray of shape (n_components, n_features)
-        Solution to the non-negative least squares problem.
-
-    n_iter : int
-        Actual number of iterations over the full dataset.
-
-    n_steps : int
-        The number mini-batches processed.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
-    >>> from sklearn.decomposition import non_negative_factorization_online
-    >>> W, H, n_iter, n_steps = non_negative_factorization_online(X, n_components=2,
-    ... init='random', random_state=0)
-
-    References
-    ----------
-    Lefevre, A., Bach, F., Fevotte, C. (2011). Online algorithms for
-    nonnegative matrix factorization with the Itakura-Saito divergence.
-    WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
-    https://hal.archives-ouvertes.fr/hal-00602050)
-    """
-    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
-
-    est = MiniBatchNMF(
-        n_components=n_components,
-        init=init,
-        batch_size=batch_size,
-        beta_loss=beta_loss,
-        tol=tol,
-        max_iter=max_iter,
-        random_state=random_state,
-        alpha=alpha,
-        l1_ratio=l1_ratio,
-        regularization=regularization,
-        verbose=verbose,
-        forget_factor=forget_factor,
-        fresh_restarts=fresh_restarts,
-        fresh_restarts_max_iter=fresh_restarts_max_iter,
-        transform_max_iter=transform_max_iter,
-    )
-
-    with config_context(assume_finite=True):
-        W, H, n_iter, n_steps = est._fit_transform(X, W=W, H=H, update_H=update_H)
-
-    return W, H, n_iter, n_steps
-
-
 class NMF(TransformerMixin, BaseEstimator):
     """Non-Negative Matrix Factorization (NMF).
 
@@ -1707,9 +1497,9 @@ class NMF(TransformerMixin, BaseEstimator):
             )
         return W, H
 
-    def _scale_regularization(self, X):
+    def _scale_regularization(self, X, force_scaling=False):
         n_samples, n_features = X.shape
-        if self.alpha_W != 0 or self.alpha_H != "same":
+        if self.alpha_W != 0 or self.alpha_H != "same" or force_scaling:
             # if alpha_W or alpha_H is not left to its default value we ignore alpha
             # and regularization, and we scale the regularization terms.
             l1_reg_W = n_features * self._l1_reg_W
@@ -1833,10 +1623,10 @@ class NMF(TransformerMixin, BaseEstimator):
                 H,
                 self.tol,
                 self.max_iter,
-                self._l1_reg_W,
-                self._l1_reg_H,
-                self._l2_reg_W,
-                self._l2_reg_H,
+                l1_reg_W,
+                l1_reg_H,
+                l2_reg_W,
+                l2_reg_H,
                 update_H=update_H,
                 verbose=self.verbose,
                 shuffle=self.shuffle,
@@ -1850,10 +1640,10 @@ class NMF(TransformerMixin, BaseEstimator):
                 self._beta_loss,
                 self.max_iter,
                 self.tol,
-                self._l1_reg_W,
-                self._l1_reg_H,
-                self._l2_reg_W,
-                self._l2_reg_H,
+                l1_reg_W,
+                l1_reg_H,
+                l2_reg_W,
+                l2_reg_H,
                 update_H,
                 self.verbose,
             )
@@ -1942,13 +1732,15 @@ class MiniBatchNMF(NMF):
 
         .. math::
 
-            0.5 * ||X - WH||_{loss}^2 + alpha * l1_{ratio} * ||vec(W)||_1
+            0.5 * ||X - WH||_{loss}^2
 
-            + alpha * l1_{ratio} * ||vec(H)||_1
+            + alpha\\_W * l1_{ratio} * n\\_features * ||vec(W)||_1
 
-            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
+            + alpha\\_H * l1_{ratio} * n\\_samples * ||vec(H)||_1
 
-            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
+            + 0.5 * alpha\\_W * (1 - l1_{ratio}) * n\\_features * ||W||_{Fro}^2
+
+            + 0.5 * alpha\\_H * (1 - l1_{ratio}) * n\\_samples * ||H||_{Fro}^2
 
     Where:
 
@@ -2027,15 +1819,14 @@ class MiniBatchNMF(NMF):
         Maximum number of iterations over the complete dataset before
         timing out.
 
-    random_state : int, RandomState instance, default=None
-        Used for initialisation (when ``init`` == 'nndsvdar' or
-        'random'), and in Coordinate Descent. Pass an int for reproducible
-        results across multiple function calls.
-        See :term:`Glossary <random_state>`.
+    alpha_W : float, default=0.0
+        Constant that multiplies the regularization terms of `W`. Set it to zero
+        (default) to have no regularization on `W`.
 
-    alpha : double, default: 0.
-        Constant that multiplies the regularization terms. Set it to zero to
-        have no regularization.
+    alpha_H : float or "same", default="same"
+        Constant that multiplies the regularization terms of `H`. Set it to zero to
+        have no regularization on `H`. If "same" (default), it takes the same value as
+        `alpha_W`.
 
     l1_ratio : double, default: 0.
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
@@ -2043,13 +1834,6 @@ class MiniBatchNMF(NMF):
         (aka Frobenius Norm).
         For l1_ratio = 1 it is an elementwise L1 penalty.
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
-
-    regularization : {'both', 'components', 'transformation'}, default=None
-        Select whether the regularization affects the components (H), the
-        transformation (W), both or none of them.
-
-    verbose : bool, default=False
-        Whether to be verbose.
 
     forget_factor : float, default=0.7
         Amount of rescaling of past information. Its value could be 1 with
@@ -2068,6 +1852,15 @@ class MiniBatchNMF(NMF):
     transform_max_iter : int, default=None
         Maximum number of iterations when solving for W at transform time. If left to
         None it defaults to `max_iter`.
+
+    random_state : int, RandomState instance, default=None
+        Used for initialisation (when ``init`` == 'nndsvdar' or
+        'random'), and in Coordinate Descent. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    verbose : bool, default=False
+        Whether to be verbose.
 
     Attributes
     ----------
@@ -2129,15 +1922,15 @@ class MiniBatchNMF(NMF):
         tol=1e-4,
         max_no_improvement=10,
         max_iter=200,
-        random_state=None,
-        alpha=0.0,
+        alpha_W=0.0,
+        alpha_H="same",
         l1_ratio=0.0,
-        regularization="both",
-        verbose=0,
         forget_factor=0.7,
         fresh_restarts=False,
         fresh_restarts_max_iter=30,
         transform_max_iter=None,
+        random_state=None,
+        verbose=0,
     ):
 
         super().__init__(
@@ -2148,11 +1941,11 @@ class MiniBatchNMF(NMF):
             tol=tol,
             max_iter=max_iter,
             random_state=random_state,
-            alpha=alpha,
+            alpha_W=alpha_W,
+            alpha_H=alpha_H,
             l1_ratio=l1_ratio,
             verbose=verbose,
             shuffle=False,
-            regularization=regularization,
         )
 
         self.max_no_improvement = max_no_improvement
@@ -2208,9 +2001,12 @@ class MiniBatchNMF(NMF):
         W = np.full((X.shape[0], self._n_components), avg, dtype=X.dtype)
         W_buffer = W.copy()
 
+        # get scaled regularization terms
+        l1_reg_W, _, l2_reg_W, _ = self._scale_regularization(X, force_scaling=True)
+
         for i in range(max_iter):
             delta_W, *_ = _multiplicative_update_w(
-                X, W, H, self._beta_loss, self._l1_reg_W, self._l2_reg_W, self._gamma
+                X, W, H, self._beta_loss, l1_reg_W, l2_reg_W, self._gamma
             )
             W *= delta_W
 
@@ -2226,12 +2022,17 @@ class MiniBatchNMF(NMF):
         """Perform the update of W and H for one minibatch"""
         batch_size = X.shape[0]
 
+        # get scaled regularization terms
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(
+            X, force_scaling=True
+        )
+
         # update W
         if self.fresh_restarts or W is None:
             W = self._solve_W(X, H, self.fresh_restarts_max_iter)
         else:
             delta_W, *_ = _multiplicative_update_w(
-                X, W, H, self._beta_loss, self._l1_reg_W, self._l2_reg_W, self._gamma
+                X, W, H, self._beta_loss, l1_reg_W, l2_reg_W, self._gamma
             )
             W *= delta_W
 
@@ -2241,10 +2042,10 @@ class MiniBatchNMF(NMF):
 
         batch_cost = (
             _beta_divergence(X, W, H, self._beta_loss)
-            + self._l1_reg_W * W.sum()
-            + self._l1_reg_H * H.sum()
-            + self._l2_reg_W * (W ** 2).sum()
-            + self._l2_reg_H * (H ** 2).sum()
+            + l1_reg_W * W.sum()
+            + l1_reg_H * H.sum()
+            + l2_reg_W * (W ** 2).sum()
+            + l2_reg_H * (H ** 2).sum()
         )
         batch_cost /= batch_size
 
@@ -2257,8 +2058,8 @@ class MiniBatchNMF(NMF):
                 self._components_numerator,
                 self._components_denominator,
                 self._beta_loss,
-                self._l1_reg_H,
-                self._l2_reg_H,
+                l1_reg_H,
+                l2_reg_H,
                 self._gamma,
                 self._rho,
             )

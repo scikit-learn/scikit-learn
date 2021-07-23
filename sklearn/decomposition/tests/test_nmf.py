@@ -164,7 +164,7 @@ def test_nmf_fit_close(Estimator, solver):
     assert pnmf.fit(X).reconstruction_err_ < 0.1
 
 
-def test_nmf_true_reconstruction(regularization):
+def test_nmf_true_reconstruction():
     # Test that the fit is not too far away from an exact solution
     # (by construction)
     n_samples = 15
@@ -192,7 +192,6 @@ def test_nmf_true_reconstruction(regularization):
         init=init,
         beta_loss=beta_loss,
         max_iter=max_iter,
-        regularization=regularization,
         random_state=0,
     )
     transf = model.fit_transform(X)
@@ -207,7 +206,6 @@ def test_nmf_true_reconstruction(regularization):
         init=init,
         beta_loss=beta_loss,
         batch_size=batch_size,
-        regularization=regularization,
         random_state=0,
         max_iter=max_iter,
     )
@@ -236,7 +234,7 @@ def test_nmf_transform(solver):
     assert_allclose(ft, t, atol=1e-1)
 
 
-def test_minibatch_nmf_transform(regularization):
+def test_minibatch_nmf_transform():
     # Test that fit_transform is equivalent to fit.transform for MiniBatchNMF
     # Only guaranteed with fresh restarts
     rng = np.random.mtrand.RandomState(42)
@@ -266,7 +264,7 @@ def test_nmf_transform_custom_init(Estimator):
     m.transform(A)
 
 
-@pytest.mark.parametrize("solver", ["cd", "mu"])
+@pytest.mark.parametrize("solver", ("cd", "mu"))
 def test_nmf_inverse_transform(solver):
     # Test that NMF.inverse_transform returns close values
     random_state = np.random.RandomState(0)
@@ -276,25 +274,20 @@ def test_nmf_inverse_transform(solver):
         n_components=4,
         init="random",
         random_state=0,
-        tol=1e-6,
         max_iter=1000,
     )
     ft = m.fit_transform(A)
     A_new = m.inverse_transform(ft)
-    assert_allclose(A, A_new, rtol=1e-3)
+    assert_array_almost_equal(A, A_new, decimal=2)
 
 
-@pytest.mark.parametrize(
-    "regularization", (None, "both", "components", "transformation")
-)
-def test_mbnmf_inverse_transform(regularization):
+def test_mbnmf_inverse_transform():
     # Test that MiniBatchNMF.inverse_transform returns close values
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
     m = MiniBatchNMF(
         n_components=4,
         random_state=0,
-        regularization=regularization,
         max_iter=500,
         tol=1e-6,
         fresh_restarts=True,
@@ -335,7 +328,8 @@ def test_nmf_sparse_input(Estimator, solver, alpha_W, alpha_H):
         alpha_W=alpha_W,
         alpha_H=alpha_H,
         random_state=0,
-        tol=1e-2,
+        tol=0,
+        max_iter=100,
     )
     est2 = clone(est1)
 
@@ -647,10 +641,10 @@ def test_nmf_negative_beta_loss(forget_factor):
 
 
 @pytest.mark.parametrize(
-    ["Estimator", "solver", "beta_loss"],
-    [[NMF, "cd", 2], [NMF, "mu", 2], [MiniBatchNMF, "mu", 1]],
+    ["Estimator", "solver"],
+    [[NMF, "cd"], [NMF, "mu"], [MiniBatchNMF, "mu"]],
 )
-def test_nmf_regularization(Estimator, solver, beta_loss):
+def test_nmf_regularization(Estimator, solver):
     # Test the effect of L1 and L2 regularizations
     n_samples = 6
     n_features = 5
@@ -658,10 +652,12 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(n_samples, n_features))
 
+    max_iter = 100
+    tol = 0
     init = "nndsvdar"
+
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.0
-    max_iter = 500
     regul = Estimator(
         n_components=n_components,
         solver=solver,
@@ -670,7 +666,7 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
         random_state=42,
         init=init,
         max_iter=max_iter,
-        beta_loss=beta_loss,
+        tol=tol,
     )
     model = Estimator(
         n_components=n_components,
@@ -680,7 +676,7 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
         random_state=42,
         init=init,
         max_iter=max_iter,
-        beta_loss=beta_loss,
+        tol=tol,
     )
 
     W_regul = regul.fit_transform(X)
@@ -689,10 +685,11 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
     H_regul = regul.components_
     H_model = model.components_
 
-    W_regul_n_zeros = W_regul[W_regul == 0].size
-    W_model_n_zeros = W_model[W_model == 0].size
-    H_regul_n_zeros = H_regul[H_regul == 0].size
-    H_model_n_zeros = H_model[H_model == 0].size
+    eps = np.finfo(np.float64).eps
+    W_regul_n_zeros = W_regul[W_regul <= eps].size
+    W_model_n_zeros = W_model[W_model <= eps].size
+    H_regul_n_zeros = H_regul[H_regul <= eps].size
+    H_model_n_zeros = H_model[H_model <= eps].size
 
     assert W_regul_n_zeros > W_model_n_zeros
     assert H_regul_n_zeros > H_model_n_zeros
@@ -708,6 +705,7 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
         random_state=42,
         init=init,
         max_iter=max_iter,
+        tol=tol,
     )
     model = Estimator(
         n_components=n_components,
@@ -717,6 +715,7 @@ def test_nmf_regularization(Estimator, solver, beta_loss):
         random_state=42,
         init=init,
         max_iter=max_iter,
+        tol=tol,
     )
 
     W_regul = regul.fit_transform(X)
