@@ -48,10 +48,10 @@ class MockClassifier:
     transform = predict
 
     def score(self, X=None, y=None):
-        return 0.
+        return 0.0
 
     def get_params(self, deep=True):
-        return {'foo_param': self.foo_param}
+        return {"foo_param": self.foo_param}
 
     def set_params(self, **params):
         return self
@@ -66,8 +66,7 @@ def test_rfe_features_importance():
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
-    clf = RandomForestClassifier(n_estimators=20,
-                                 random_state=generator, max_depth=2)
+    clf = RandomForestClassifier(n_estimators=20, random_state=generator, max_depth=2)
     rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
     assert len(rfe.ranking_) == X.shape[1]
@@ -114,8 +113,7 @@ def test_rfe_invalid_n_features_errors(n_features_to_select):
     clf = SVC(kernel="linear")
 
     iris = load_iris()
-    rfe = RFE(estimator=clf, n_features_to_select=n_features_to_select,
-              step=0.1)
+    rfe = RFE(estimator=clf, n_features_to_select=n_features_to_select, step=0.1)
     msg = f"n_features_to_select must be .+ Got {n_features_to_select}"
     with pytest.raises(ValueError, match=msg):
         rfe.fit(iris.data, iris.target)
@@ -159,7 +157,7 @@ def test_rfecv():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    y = list(iris.target)   # regression test: list should be supported
+    y = list(iris.target)  # regression test: list should be supported
 
     # Test using the score function
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1)
@@ -187,7 +185,7 @@ def test_rfecv():
     assert_array_equal(X_r, iris.data)
 
     # Test using a scorer
-    scorer = get_scorer('accuracy')
+    scorer = get_scorer("accuracy")
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=scorer)
     rfecv.fit(X, y)
     X_r = rfecv.transform(X)
@@ -196,6 +194,7 @@ def test_rfecv():
     # Test fix on grid_scores
     def test_scorer(estimator, X, y):
         return 1.0
+
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=test_scorer)
     rfecv.fit(X, y)
     assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))
@@ -220,7 +219,7 @@ def test_rfecv():
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
     # Verifying that steps < 1 don't blow up.
-    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=.2)
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=0.2)
     X_sparse = sparse.csr_matrix(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
@@ -231,7 +230,7 @@ def test_rfecv_mockclassifier():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    y = list(iris.target)   # regression test: list should be supported
+    y = list(iris.target)  # regression test: list should be supported
 
     # Test using the score function
     rfecv = RFECV(estimator=MockClassifier(), step=1)
@@ -245,6 +244,7 @@ def test_rfecv_verbose_output():
     # Check verbose=1 is producing an output.
     from io import StringIO
     import sys
+
     sys.stdout = StringIO()
 
     generator = check_random_state(0)
@@ -264,29 +264,31 @@ def test_rfecv_grid_scores_size():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    y = list(iris.target)   # regression test: list should be supported
+    y = list(iris.target)  # regression test: list should be supported
 
     # Non-regression test for varying combinations of step and
     # min_features_to_select.
     for step, min_features_to_select in [[2, 1], [2, 2], [3, 3]]:
-        rfecv = RFECV(estimator=MockClassifier(), step=step,
-                      min_features_to_select=min_features_to_select)
+        rfecv = RFECV(
+            estimator=MockClassifier(),
+            step=step,
+            min_features_to_select=min_features_to_select,
+        )
         rfecv.fit(X, y)
 
-        score_len = np.ceil(
-            (X.shape[1] - min_features_to_select) / step) + 1
+        score_len = np.ceil((X.shape[1] - min_features_to_select) / step) + 1
         assert len(rfecv.grid_scores_) == score_len
         assert len(rfecv.ranking_) == X.shape[1]
         assert rfecv.n_features_ >= min_features_to_select
 
 
 def test_rfe_estimator_tags():
-    rfe = RFE(SVC(kernel='linear'))
+    rfe = RFE(SVC(kernel="linear"))
     assert rfe._estimator_type == "classifier"
     # make sure that cross-validation is stratified
     iris = load_iris()
     score = cross_val_score(rfe, iris.data, iris.target)
-    assert score.min() > .7
+    assert score.min() > 0.7
 
 
 def test_rfe_min_step():
@@ -333,18 +335,20 @@ def test_number_of_subsets_of_features():
     n_features_to_select_list = [3, 3]
     step_list = [2, 3]
     for n_features, n_features_to_select, step in zip(
-            n_features_list, n_features_to_select_list, step_list):
+        n_features_list, n_features_to_select_list, step_list
+    ):
         generator = check_random_state(43)
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
-        rfe = RFE(estimator=SVC(kernel="linear"),
-                  n_features_to_select=n_features_to_select, step=step)
+        rfe = RFE(
+            estimator=SVC(kernel="linear"),
+            n_features_to_select=n_features_to_select,
+            step=step,
+        )
         rfe.fit(X, y)
         # this number also equals to the maximum of ranking_
-        assert (np.max(rfe.ranking_) ==
-                formula1(n_features, n_features_to_select, step))
-        assert (np.max(rfe.ranking_) ==
-                formula2(n_features, n_features_to_select, step))
+        assert np.max(rfe.ranking_) == formula1(n_features, n_features_to_select, step)
+        assert np.max(rfe.ranking_) == formula2(n_features, n_features_to_select, step)
 
     # In RFECV, 'fit' calls 'RFE._fit'
     # 'number_of_subsets_of_features' of RFE
@@ -365,10 +369,12 @@ def test_number_of_subsets_of_features():
         rfecv = RFECV(estimator=SVC(kernel="linear"), step=step)
         rfecv.fit(X, y)
 
-        assert (rfecv.grid_scores_.shape[0] ==
-                formula1(n_features, n_features_to_select, step))
-        assert (rfecv.grid_scores_.shape[0] ==
-                formula2(n_features, n_features_to_select, step))
+        assert rfecv.grid_scores_.shape[0] == formula1(
+            n_features, n_features_to_select, step
+        )
+        assert rfecv.grid_scores_.shape[0] == formula2(
+            n_features, n_features_to_select, step
+        )
 
 
 def test_rfe_cv_n_jobs():
@@ -377,7 +383,7 @@ def test_rfe_cv_n_jobs():
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
-    rfecv = RFECV(estimator=SVC(kernel='linear'))
+    rfecv = RFECV(estimator=SVC(kernel="linear"))
     rfecv.fit(X, y)
     rfecv_ranking = rfecv.ranking_
     rfecv_grid_scores = rfecv.grid_scores_
@@ -399,28 +405,26 @@ def test_rfe_cv_groups():
     est_groups = RFECV(
         estimator=RandomForestClassifier(random_state=generator),
         step=1,
-        scoring='accuracy',
-        cv=GroupKFold(n_splits=2)
+        scoring="accuracy",
+        cv=GroupKFold(n_splits=2),
     )
     est_groups.fit(X, y, groups=groups)
     assert est_groups.n_features_ > 0
 
 
 @pytest.mark.parametrize(
-    'importance_getter',
-    [attrgetter('regressor_.coef_'), 'regressor_.coef_'])
-@pytest.mark.parametrize('selector, expected_n_features',
-                         [(RFE, 5), (RFECV, 4)])
-def test_rfe_wrapped_estimator(importance_getter, selector,
-                               expected_n_features):
+    "importance_getter", [attrgetter("regressor_.coef_"), "regressor_.coef_"]
+)
+@pytest.mark.parametrize("selector, expected_n_features", [(RFE, 5), (RFECV, 4)])
+def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features):
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = LinearSVR(random_state=0)
 
-    log_estimator = TransformedTargetRegressor(regressor=estimator,
-                                               func=np.log,
-                                               inverse_func=np.exp)
+    log_estimator = TransformedTargetRegressor(
+        regressor=estimator, func=np.log, inverse_func=np.exp
+    )
 
     selector = selector(log_estimator, importance_getter=importance_getter)
     sel = selector.fit(X, y)
@@ -429,14 +433,15 @@ def test_rfe_wrapped_estimator(importance_getter, selector,
 
 @pytest.mark.parametrize(
     "importance_getter, err_type",
-    [("auto", ValueError),
-     ("random", AttributeError),
-     (lambda x: x.importance, AttributeError),
-     ([0], ValueError)]
+    [
+        ("auto", ValueError),
+        ("random", AttributeError),
+        (lambda x: x.importance, AttributeError),
+        ([0], ValueError),
+    ],
 )
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
-def test_rfe_importance_getter_validation(importance_getter, err_type,
-                                          Selector):
+def test_rfe_importance_getter_validation(importance_getter, err_type, Selector):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
     estimator = LinearSVR()
     log_estimator = TransformedTargetRegressor(
@@ -471,17 +476,17 @@ def test_w_pipeline_2d_coef_():
     pipeline = make_pipeline(StandardScaler(), LogisticRegression())
 
     data, y = load_iris(return_X_y=True)
-    sfm = RFE(pipeline, n_features_to_select=2,
-              importance_getter='named_steps.logisticregression.coef_')
+    sfm = RFE(
+        pipeline,
+        n_features_to_select=2,
+        importance_getter="named_steps.logisticregression.coef_",
+    )
 
     sfm.fit(data, y)
     assert sfm.transform(data).shape[1] == 2
 
 
-@pytest.mark.parametrize('ClsRFE', [
-    RFE,
-    RFECV
-    ])
+@pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
 def test_multioutput(ClsRFE):
     X = np.random.normal(size=(10, 3))
     y = np.random.randint(2, size=(10, 2))
