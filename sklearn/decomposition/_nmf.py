@@ -1524,9 +1524,10 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be decomposed
+            Data matrix to be decomposed.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         W : array-like of shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
@@ -1666,13 +1667,18 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be decomposed
+            Data matrix to be decomposed.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
+
+        **params : dict
+            Additional fit parameters.
 
         Returns
         -------
         self
+            Returns the instance itself.
         """
         self.fit_transform(X, **params)
         return self
@@ -1713,14 +1719,14 @@ class NMF(TransformerMixin, BaseEstimator):
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Data matrix of original shape.
 
-        .. versionadded:: 0.18
+            .. versionadded:: 0.18
         """
         check_is_fitted(self)
         return np.dot(W, self.components_)
 
 
 class MiniBatchNMF(NMF):
-    """Mini-Batch and online Non-Negative Matrix Factorization (NMF)
+    """Mini-Batch Non-Negative Matrix Factorization (NMF).
 
     .. versionadded:: 1.0
 
@@ -1815,7 +1821,7 @@ class MiniBatchNMF(NMF):
         To disable convergence detection based on cost function, set
         `max_no_improvement` to None.
 
-    max_iter : integer, default: 200
+    max_iter : int, default: 200
         Maximum number of iterations over the complete dataset before
         timing out.
 
@@ -1828,7 +1834,7 @@ class MiniBatchNMF(NMF):
         have no regularization on `H`. If "same" (default), it takes the same value as
         `alpha_W`.
 
-    l1_ratio : double, default: 0.
+    l1_ratio : double, default: 0.0
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
         (aka Frobenius Norm).
@@ -1886,14 +1892,11 @@ class MiniBatchNMF(NMF):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-    Examples
+    See Also
     --------
-    >>> import numpy as np
-    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
-    >>> from sklearn.decomposition import MiniBatchNMF
-    >>> model = MiniBatchNMF(n_components=2, init='random', random_state=0)
-    >>> W = model.fit_transform(X)
-    >>> H = model.components_
+    NMF : Non-negative matrix factorization.
+    MiniBatchDictionaryLearning : Finds a dictionary that can best be used to represent
+        data using a sparse code.
 
     References
     ----------
@@ -1909,6 +1912,15 @@ class MiniBatchNMF(NMF):
     nonnegative matrix factorization with the Itakura-Saito divergence.
     WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
     https://hal.archives-ouvertes.fr/hal-00602050)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import MiniBatchNMF
+    >>> model = MiniBatchNMF(n_components=2, init='random', random_state=0)
+    >>> W = model.fit_transform(X)
+    >>> H = model.components_
     """
 
     def __init__(
@@ -2139,9 +2151,10 @@ class MiniBatchNMF(NMF):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Data matrix to be decomposed
+            Data matrix to be decomposed.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         W : array-like, shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
@@ -2189,6 +2202,7 @@ class MiniBatchNMF(NMF):
             Data matrix to be decomposed
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         W : array-like of shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
@@ -2287,26 +2301,28 @@ class MiniBatchNMF(NMF):
         return W
 
     def partial_fit(self, X, y=None, W=None, H=None):
-        """Updates the model using the data in X as a mini-batch.
+        """Update the model using the data in X as a mini-batch.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be decomposed
+            Data matrix to be decomposed.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         W : array-like of shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
-            Only used for the first call to `partial_fit`
+            Only used for the first call to `partial_fit`.
 
         H : array-like of shape (n_components, n_features)
             If init='custom', it is used as initial guess for the solution.
-            Only used for the first call to `partial_fit`
+            Only used for the first call to `partial_fit`.
 
         Returns
         -------
         self
+            Returns the instance itself.
         """
         has_components = hasattr(self, "components_")
 
