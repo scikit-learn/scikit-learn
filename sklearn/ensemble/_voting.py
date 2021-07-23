@@ -281,21 +281,19 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         updated_clfs = tuple()
         for clf in clfs:
-            if clf == 'drop':
+            if clf == "drop":
                 continue
             already_clone = False
 
             for k, v in clf.get_params(deep=True).items():
-                if not k.endswith('class_weight') or \
-                        not isinstance(v, Mapping):
+                if not k.endswith("class_weight") or not isinstance(v, Mapping):
                     continue
 
                 if not already_clone:
                     clf, already_clone = clone(clf), True
-                updated_class_weight = {label_mapping[i]: w
-                                        for i, w in v.items()}
+                updated_class_weight = {label_mapping[i]: w for i, w in v.items()}
                 clf.set_params(**{k: updated_class_weight})
-            updated_clfs += (clf, )
+            updated_clfs += (clf,)
         return names, updated_clfs
 
     def fit(self, X, y, sample_weight=None):
