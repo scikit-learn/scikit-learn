@@ -143,18 +143,24 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    eigenvalues_, lambdas_ : ndarray of shape (n_components,)
+    eigenvalues_ : ndarray of shape (n_components,)
         Eigenvalues of the centered kernel matrix in decreasing order.
         If `n_components` and `remove_zero_eig` are not set,
         then all values are stored.
+
+    lambdas_ : ndarray of shape (n_components,)
+        Same as `eigenvalues_` but this attribute is deprecated.
 
         .. deprecated:: 1.0
            `lambdas_` was renamed to `eigenvalues_` in version 1.0 and will be
            removed in 1.2.
 
-    eigenvectors_, alphas_ : ndarray of shape (n_samples, n_components)
+    eigenvectors_ : ndarray of shape (n_samples, n_components)
         Eigenvectors of the centered kernel matrix. If `n_components` and
         `remove_zero_eig` are not set, then all components are stored.
+
+    alphas_ : ndarray of shape (n_samples, n_components)
+        Same as `eigenvectors_` but this attribute is deprecated.
 
         .. deprecated:: 1.0
            `alphas_` was renamed to `eigenvectors_` in version 1.0 and will be
