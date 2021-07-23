@@ -57,10 +57,10 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         will be approximated.
 
     n_components : int, default=100
-        Dimensionality of the output feature space. Usually, n_components
+        Dimensionality of the output feature space. Usually, `n_components`
         should be greater than the number of features in input samples in
         order to achieve good performance. The optimal score / run time
-        balance is typically achieved around n_components = 10 * n_features,
+        balance is typically achieved around `n_components` = 10 * `n_features`,
         but this depends on the specific dataset being used.
 
     random_state : int, RandomState instance, default=None
@@ -116,8 +116,12 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` in the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
+                default=None
+            Target values (None for unsupervised transformations).
 
         Returns
         -------
@@ -147,12 +151,13 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like}, shape (n_samples, n_features)
-            New data, where n_samples in the number of samples
-            and n_features is the number of features.
+            New data, where `n_samples` in the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            Projected array.
         """
 
         check_is_fitted(self)
@@ -215,7 +220,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     gamma : float, default=1.0
-        Parameter of RBF kernel: exp(-gamma * x^2)
+        Parameter of RBF kernel: exp(-gamma * x^2).
 
     n_components : int, default=100
         Number of Monte Carlo samples per original feature.
@@ -281,8 +286,12 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` in the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
+                default=None
+            Target values (None for unsupervised transformations).
 
         Returns
         -------
@@ -307,12 +316,13 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            New data, where n_samples in the number of samples
-            and n_features is the number of features.
+            New data, where `n_samples` in the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            Projected array.
         """
         check_is_fitted(self)
 
@@ -336,7 +346,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         "skewedness" parameter of the kernel. Needs to be cross-validated.
 
     n_components : int, default=100
-        number of Monte Carlo samples per original feature.
+        Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
     random_state : int, RandomState instance or None, default=None
@@ -402,8 +412,12 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` in the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
+                default=None
+            Target values (None for unsupervised transformations).
 
         Returns
         -------
@@ -426,13 +440,14 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            New data, where n_samples in the number of samples
-            and n_features is the number of features. All values of X must be
+            New data, where `n_samples` is the number of samples
+            and `n_features` is the number of features. All values of X must be
             strictly greater than "-skewedness".
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            Projected array.
         """
         check_is_fitted(self)
 
@@ -471,19 +486,42 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     ----------
     sample_steps : int, default=2
         Gives the number of (complex) sampling points.
+
     sample_interval : float, default=None
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
     Attributes
     ----------
     sample_interval_ : float
-        Stored sampling interval. Specified as a parameter if sample_steps not
-        in {1,2,3}.
+        Stored sampling interval. Specified as a parameter if `sample_steps`
+        not in {1,2,3}.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    See Also
+    --------
+    SkewedChi2Sampler : A Fourier-approximation to a non-additive variant of
+        the chi squared kernel.
+
+    sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
+
+    sklearn.metrics.pairwise.additive_chi2_kernel : The exact additive chi
+        squared kernel.
+
+    Notes
+    -----
+    This estimator approximates a slightly different version of the additive
+    chi squared kernel then ``metric.additive_chi2`` computes.
+
+    References
+    ----------
+    See `"Efficient additive kernels via explicit feature maps"
+    <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>`_
+    A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
+    2011
 
     Examples
     --------
@@ -498,28 +536,6 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     SGDClassifier(max_iter=5, random_state=0)
     >>> clf.score(X_transformed, y)
     0.9499...
-
-    Notes
-    -----
-    This estimator approximates a slightly different version of the additive
-    chi squared kernel then ``metric.additive_chi2`` computes.
-
-    See Also
-    --------
-    SkewedChi2Sampler : A Fourier-approximation to a non-additive variant of
-        the chi squared kernel.
-
-    sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
-
-    sklearn.metrics.pairwise.additive_chi2_kernel : The exact additive chi
-        squared kernel.
-
-    References
-    ----------
-    See `"Efficient additive kernels via explicit feature maps"
-    <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>`_
-    A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
-    2011
     """
 
     def __init__(self, *, sample_steps=2, sample_interval=None):
@@ -527,13 +543,17 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self.sample_interval = sample_interval
 
     def fit(self, X, y=None):
-        """Set the parameters
+        """Set the parameters.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
+            default=None
+            Target values (None for unsupervised transformations).
 
         Returns
         -------
@@ -565,13 +585,15 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data, where `n_samples` in the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
         X_new : {ndarray, sparse matrix}, \
                shape = (n_samples, n_features * (2*sample_steps + 1))
-            Whether the return value is an array of sparse matrix depends on
+            Whether the return value is an array or sparse matrix depends on
             the type of the input X.
         """
         msg = (
@@ -664,7 +686,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
     ----------
     kernel : string or callable, default='rbf'
         Kernel map to be approximated. A callable should accept two arguments
-        and the keyword arguments passed to this object as kernel_params, and
+        and the keyword arguments passed to this object as `kernel_params`, and
         should return a floating point number.
 
     gamma : float, default=None
@@ -690,14 +712,14 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the uniform sampling without
-        replacement of n_components of the training data to construct the basis
-        kernel.
+        replacement of `n_components` of the training data to construct the
+        basis kernel.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
-        down the kernel matrix into n_jobs even slices and computing them in
+        down the kernel matrix into `n_jobs` even slices and computing them in
         parallel.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -789,8 +811,13 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Training data.
+        X : array-like, shape (n_samples, n_features)
+            Training data, where `n_samples` in the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
+                default=None
+            Target values (None for unsupervised transformations).
         """
         X = self._validate_data(X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
