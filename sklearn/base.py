@@ -397,8 +397,9 @@ class BaseEstimator:
             )
 
     def _check_feature_names(self, X, *, reset):
-        """Validate feature names and set or check the `feature_names_in_`
-        attribute.
+        """Set or check the `feature_names_in_` attribute.
+
+        .. versionadded:: 1.0
 
         Parameters
         ----------
@@ -442,12 +443,12 @@ class BaseEstimator:
             )
             return
 
-        # valid the `feature_names_in_` attribute
+        # validate the feature names against the `feature_names_in_` attribute
         if len(fitted_feature_names) != len(X_feature_names) or np.any(
             fitted_feature_names != X_feature_names
         ):
             warnings.warn(
-                "The column names should match those that were "
+                "The feature names should match those that were "
                 "passed during fit. Starting version 1.2, an error will be raised",
                 FutureWarning,
             )

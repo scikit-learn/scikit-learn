@@ -1449,7 +1449,7 @@ def test_check_array_deprecated_matrix():
 
 
 @pytest.mark.parametrize("names", [[f"col_{i}" for i in range(3)], list(range(3))])
-def test_get_feature_names_pandas(names):
+def test_get_feature_names_pandas_error(names):
     """Get feature names with pandas dataframes."""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=names)

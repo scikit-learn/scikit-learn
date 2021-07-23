@@ -3522,6 +3522,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         "decision_function",
         "predict_proba",
         "score",
+        "score_samples",
         "predict_log_proba",
     ):
         if not hasattr(estimator, method):
@@ -3545,7 +3546,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         X_bad = pd.DataFrame(X, columns=invalid_name)
 
         expected_msg = (
-            "The column names should match those that were passed "
+            "The feature names should match those that were passed "
             "during fit. Starting version 1.2, an error will be raised"
         )
         for name, method in check_methods:
