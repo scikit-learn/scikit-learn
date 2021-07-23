@@ -30,7 +30,7 @@ def test_bad_direction():
 
 
 @pytest.mark.parametrize("direction", ("forward", "backward"))
-@pytest.mark.parametrize("n_features_to_select", (1, 5, 9, None))
+@pytest.mark.parametrize("n_features_to_select", (1, 5, 9))
 def test_n_features_to_select(direction, n_features_to_select):
     # Make sure n_features_to_select is respected
 
@@ -130,7 +130,6 @@ def test_stopping_criterion(direction):
         (0.1, 1),
         (1.0, 10),
         (0.5, 5),
-        (None, 5),
     ),
 )
 def test_n_features_to_select_float(direction, n_features_to_select, expected):

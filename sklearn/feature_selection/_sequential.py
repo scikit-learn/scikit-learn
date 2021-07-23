@@ -233,7 +233,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         old_score = -np.inf
         for _ in range(n_iterations):
-            new_feature_idx, new_score = self._get_best_new_feature(
+            new_feature_idx, new_score = self._get_best_new_feature_score(
                 cloned_estimator, X, y, current_mask
             )
             is_auto_select = (
