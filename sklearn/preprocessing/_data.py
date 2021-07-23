@@ -207,7 +207,9 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                 " See docstring for motivation and alternatives."
             )
         if axis != 0:
-            raise ValueError(f"Can only scale sparse matrix on axis=0, got axis={axis}")
+            raise ValueError(
+                "Can only scale sparse matrix on axis=0,  got axis=%d" % axis
+            )
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
