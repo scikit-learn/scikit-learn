@@ -120,7 +120,8 @@ def test_sanity_check_pls_regression():
 
 
 @pytest.mark.parametrize("Estimator", (PLSRegression, PLSCanonical, CCA))
-def test_pls_estimators_single_target_shape(Estimator):
+@pytest.mark.parametrize("n_size", (10, 1))
+def test_pls_estimators_single_target_shape(Estimator, n_size):
     # Check shape for single-target predictions on PLS estimators
     # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/19352
     X = np.random.randn(10, 3)
@@ -129,16 +130,10 @@ def test_pls_estimators_single_target_shape(Estimator):
     pls = Estimator(n_components=Y.shape[1])
     pls.fit(X, Y)
 
-    X_test = np.random.randn(10, 3)
+    X_test = np.random.randn(n_size, 3)
     Y_pred = pls.predict(X_test)
 
-    assert Y_pred.shape == (10,)
-
-    # Test behavior when X is a single observation
-    X_test = np.random.randn(1, 3)
-    Y_pred = pls.predict(X_test)
-
-    assert Y_pred.shape == (1,)
+    assert Y_pred.shape == (n_size,)
 
 
 def test_sanity_check_pls_regression_constant_column_Y():

@@ -84,8 +84,14 @@ def test_imputation_shape(strategy):
     X_imputed = iterative_imputer.fit_transform(X)
     assert X_imputed.shape == (10, 2)
 
+
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
+def test_imputation_plsregression_shape(strategy):
     # Test shape with PLSRegression
     # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/19352
+    X = np.random.randn(10, 2)
+    X[::2] = np.nan
+
     iterative_imputer = IterativeImputer(
         initial_strategy=strategy, estimator=PLSRegression(n_components=1)
     )
