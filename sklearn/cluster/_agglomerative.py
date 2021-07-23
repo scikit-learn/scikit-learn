@@ -33,12 +33,12 @@ from ._feature_agglomeration import AgglomerationTransform
 
 def _fix_connectivity(X, connectivity, affinity):
     """
-    Fixes the connectivity matrix
+    Fixes the connectivity matrix.
 
         - copies it
         - makes it symmetric
         - converts it to LIL if necessary
-        - completes it if necessary
+        - completes it if necessary.
     """
     n_samples = X.shape[0]
     if connectivity.shape[0] != n_samples or connectivity.shape[1] != n_samples:

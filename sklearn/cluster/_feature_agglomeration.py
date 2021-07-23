@@ -67,7 +67,7 @@ class AgglomerationTransform(TransformerMixin):
         Returns
         -------
         X : ndarray of shape (n_samples, n_features) or (n_features,)
-            A vector of size n_samples with the values of Xred assigned to
+            A vector of size `n_samples` with the values of `Xred` assigned to
             each of the cluster of samples.
         """
         check_is_fitted(self)
