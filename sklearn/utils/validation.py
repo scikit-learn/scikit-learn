@@ -1609,8 +1609,8 @@ def _get_feature_names(X):
         Feature names of `X`. Unrecognized array containers will return `None`.
     """
     if hasattr(X, "columns"):
-        feature_names = X.columns
+        feature_names = np.asarray(X.columns)
         # Only strings are supported
         if not isinstance(feature_names[0], str):
-            raise ValueError("Pandas MultiIndex is not supported as feature names")
+            raise ValueError("Only strings ")
         return np.asarray(feature_names)

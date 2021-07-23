@@ -3537,17 +3537,25 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         method(X)  # works
 
     invalid_names = [
-        names[::-1],
-        [f"another_prefix_{i}" for i in range(n_features)],
-        names[:3],
+        (names[::-1], "Feature names must be in the same order as they were in fit."),
+        (
+            [f"another_prefix_{i}" for i in range(n_features)],
+            "Feature names unseen at fit time:\n- another_prefix_0\n-"
+            " another_prefix_1\n",
+        ),
+        (
+            names[:3],
+            f"Feature names seen at fit time, yet now missing:\n- {min(names[3:])}\n",
+        ),
     ]
 
-    for invalid_name in invalid_names:
+    for invalid_name, additional_message in invalid_names:
         X_bad = pd.DataFrame(X, columns=invalid_name)
 
-        expected_msg = (
+        expected_msg = re.escape(
             "The feature names should match those that were passed "
-            "during fit. Starting version 1.2, an error will be raised"
+            "during fit. Starting version 1.2, an error will be raised.\n"
+            f"{additional_message}"
         )
         for name, method in check_methods:
             # TODO In 1.2, this will be an error.

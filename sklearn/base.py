@@ -447,11 +447,40 @@ class BaseEstimator:
         if len(fitted_feature_names) != len(X_feature_names) or np.any(
             fitted_feature_names != X_feature_names
         ):
-            warnings.warn(
+            message = (
                 "The feature names should match those that were "
-                "passed during fit. Starting version 1.2, an error will be raised",
-                FutureWarning,
+                "passed during fit. Starting version 1.2, an error will be raised.\n"
             )
+            fitted_feature_names_set = set(fitted_feature_names)
+            X_feature_names_set = set(X_feature_names)
+
+            unexpected_names = sorted(X_feature_names_set - fitted_feature_names_set)
+            missing_names = sorted(fitted_feature_names_set - X_feature_names_set)
+
+            def add_names(names):
+                output = ""
+                max_n_names = 5
+                for i, name in enumerate(names):
+                    if i >= max_n_names:
+                        output += "- ...\n"
+                        break
+                    output += f"- {name}\n"
+                return output
+
+            if unexpected_names:
+                message += "Feature names unseen at fit time:\n"
+                message += add_names(unexpected_names)
+
+            if missing_names:
+                message += "Feature names seen at fit time, yet now missing:\n"
+                message += add_names(missing_names)
+
+            if not missing_names and not missing_names:
+                message += (
+                    "Feature names must be in the same order as they were in fit.\n"
+                )
+
+            warnings.warn(message, FutureWarning)
 
     def _validate_data(
         self,
