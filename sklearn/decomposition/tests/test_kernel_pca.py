@@ -309,8 +309,8 @@ def test_kernel_pca_precomputed_non_symmetric(solver):
     kpca_c.fit(Kc)
 
     # comparison between the non-centered and centered versions
-    assert_array_equal(kpca.alphas_, kpca_c.alphas_)
-    assert_array_equal(kpca.lambdas_, kpca_c.lambdas_)
+    assert_array_equal(kpca.eigenvectors_, kpca_c.eigenvectors_)
+    assert_array_equal(kpca.eigenvalues_, kpca_c.eigenvalues_)
 
 
 def test_kernel_pca_invalid_kernel():
