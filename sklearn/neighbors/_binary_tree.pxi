@@ -1512,11 +1512,16 @@ cdef class BinaryTree:
             - 'linear'
             - 'cosine'
             Default is kernel = 'gaussian'
-        atol, rtol : float, default=0, 1e-8
-            Specify the desired relative and absolute tolerance of the result.
-            If the true result is K_true, then the returned result K_ret
+        atol : float, default=0
+            Specify the desired absolute tolerance of the result.
+            If the true result is `K_true`, then the returned result `K_ret`
             satisfies ``abs(K_true - K_ret) < atol + rtol * K_ret``
-            The default is zero (i.e. machine precision) for both.
+            The default is zero (i.e. machine precision).
+        rtol : float, default=1e-8
+            Specify the desired relative tolerance of the result.
+            If the true result is `K_true`, then the returned result `K_ret`
+            satisfies ``abs(K_true - K_ret) < atol + rtol * K_ret``
+            The default is `1e-8` (i.e. machine precision).
         breadth_first : bool, default=False
             If True, use a breadth-first search.  If False (default) use a
             depth-first search.  Breadth-first is generally faster for

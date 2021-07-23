@@ -149,6 +149,7 @@ def title(y_pred, y_test, target_names, i):
     true_name = target_names[y_test[i]].rsplit(' ', 1)[-1]
     return 'predicted: %s\ntrue:      %s' % (pred_name, true_name)
 
+
 prediction_titles = [title(y_pred, y_test, target_names, i)
                      for i in range(y_pred.shape[0])]
 
