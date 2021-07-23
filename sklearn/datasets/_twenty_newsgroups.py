@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 ARCHIVE = RemoteFileMetadata(
     filename="20news-bydate.tar.gz",
     url="https://ndownloader.figshare.com/files/5975967",
-    checksum=("8f1b2514ca22a5ade8fbb9cfa5727df9" "5fa587f4c87b786e15c759fa66d95610"),
+    checksum="8f1b2514ca22a5ade8fbb9cfa5727df95fa587f4c87b786e15c759fa66d95610",
 )
 
 CACHE_NAME = "20news-bydate.pkz"
@@ -260,7 +260,7 @@ def fetch_20newsgroups(
 
     if cache is None:
         if download_if_missing:
-            logger.info("Downloading 20news dataset. " "This may take a few minutes.")
+            logger.info("Downloading 20news dataset. This may take a few minutes.")
             cache = _download_20newsgroups(
                 target_dir=twenty_home, cache_path=cache_path
             )
@@ -443,7 +443,7 @@ def fetch_20newsgroups_vectorized(
     data_home = get_data_home(data_home=data_home)
     filebase = "20newsgroup_vectorized"
     if remove:
-        filebase += "remove-" + ("-".join(remove))
+        filebase += "remove-" + "-".join(remove)
     target_file = _pkl_filepath(data_home, filebase + ".pkl")
 
     # we shuffle but use a fixed seed for the memoization
@@ -473,8 +473,8 @@ def fetch_20newsgroups_vectorized(
         except ValueError as e:
             raise ValueError(
                 f"The cached dataset located in {target_file} was fetched "
-                f"with an older scikit-learn version and it is not compatible "
-                f"with the scikit-learn version imported. You need to "
+                "with an older scikit-learn version and it is not compatible "
+                "with the scikit-learn version imported. You need to "
                 f"manually delete the file: {target_file}."
             ) from e
     else:
@@ -506,8 +506,8 @@ def fetch_20newsgroups_vectorized(
         target = np.concatenate((data_train.target, data_test.target))
     else:
         raise ValueError(
-            "%r is not a valid subset: should be one of "
-            "['train', 'test', 'all']" % subset
+            "%r is not a valid subset: should be one of ['train', 'test', 'all']"
+            % subset
         )
 
     module_path = dirname(__file__)

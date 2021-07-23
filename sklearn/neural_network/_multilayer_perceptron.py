@@ -459,18 +459,18 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             raise ValueError("momentum must be >= 0 and <= 1, got %s" % self.momentum)
         if not isinstance(self.nesterovs_momentum, bool):
             raise ValueError(
-                "nesterovs_momentum must be either True or False,"
-                " got %s." % self.nesterovs_momentum
+                "nesterovs_momentum must be either True or False, got %s."
+                % self.nesterovs_momentum
             )
         if not isinstance(self.early_stopping, bool):
             raise ValueError(
-                "early_stopping must be either True or False,"
-                " got %s." % self.early_stopping
+                "early_stopping must be either True or False, got %s."
+                % self.early_stopping
             )
         if self.validation_fraction < 0 or self.validation_fraction >= 1:
             raise ValueError(
-                "validation_fraction must be >= 0 and < 1, "
-                "got %s" % self.validation_fraction
+                "validation_fraction must be >= 0 and < 1, got %s"
+                % self.validation_fraction
             )
         if self.beta_1 < 0 or self.beta_1 >= 1:
             raise ValueError("beta_1 must be >= 0 and < 1, got %s" % self.beta_1)
@@ -486,16 +486,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # raise ValueError if not registered
         if self.activation not in ACTIVATIONS:
             raise ValueError(
-                "The activation '%s' is not supported. Supported "
-                "activations are %s." % (self.activation, list(sorted(ACTIVATIONS)))
+                "The activation '%s' is not supported. Supported activations are %s."
+                % (self.activation, list(sorted(ACTIVATIONS)))
             )
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " % self.learning_rate)
         supported_solvers = _STOCHASTIC_SOLVERS + ["lbfgs"]
         if self.solver not in supported_solvers:
             raise ValueError(
-                "The solver %s is not supported. "
-                " Expected one of: %s" % (self.solver, ", ".join(supported_solvers))
+                "The solver %s is not supported.  Expected one of: %s"
+                % (self.solver, ", ".join(supported_solvers))
             )
 
     def _fit_lbfgs(
@@ -742,7 +742,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        self : returns a trained MLP model.
+        self : object
+            Returns a trained MLP model.
         """
         return self._fit(X, y, incremental=False)
 
@@ -765,7 +766,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError(
                 "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic." % self.solver
+                " optimizers. %s is not stochastic."
+                % self.solver
             )
         return self._partial_fit
 
@@ -824,7 +826,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
         If the solver is 'lbfgs', the classifier will not use minibatch.
-        When set to "auto", `batch_size=min(200, n_samples)`
+        When set to "auto", `batch_size=min(200, n_samples)`.
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default='constant'
         Learning rate schedule for weight updates.
@@ -903,27 +905,27 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         If early stopping is False, then the training stops when the training
         loss does not improve by more than tol for n_iter_no_change consecutive
         passes over the training set.
-        Only effective when solver='sgd' or 'adam'
+        Only effective when solver='sgd' or 'adam'.
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
-        Only used if early_stopping is True
+        Only used if early_stopping is True.
 
     beta_1 : float, default=0.9
         Exponential decay rate for estimates of first moment vector in adam,
-        should be in [0, 1). Only used when solver='adam'
+        should be in [0, 1). Only used when solver='adam'.
 
     beta_2 : float, default=0.999
         Exponential decay rate for estimates of second moment vector in adam,
-        should be in [0, 1). Only used when solver='adam'
+        should be in [0, 1). Only used when solver='adam'.
 
     epsilon : float, default=1e-8
-        Value for numerical stability in adam. Only used when solver='adam'
+        Value for numerical stability in adam. Only used when solver='adam'.
 
     n_iter_no_change : int, default=10
         Maximum number of epochs to not meet ``tol`` improvement.
-        Only effective when solver='sgd' or 'adam'
+        Only effective when solver='sgd' or 'adam'.
 
         .. versionadded:: 0.20
 
@@ -978,21 +980,10 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     out_activation_ : str
         Name of the output activation function.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.neural_network import MLPClassifier
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.model_selection import train_test_split
-    >>> X, y = make_classification(n_samples=100, random_state=1)
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
-    ...                                                     random_state=1)
-    >>> clf = MLPClassifier(random_state=1, max_iter=300).fit(X_train, y_train)
-    >>> clf.predict_proba(X_test[:1])
-    array([[0.038..., 0.961...]])
-    >>> clf.predict(X_test[:5, :])
-    array([1, 0, 1, 0, 1])
-    >>> clf.score(X_test, y_test)
-    0.8...
+    MLPRegressor : Multi-layer Perceptron regressor.
+    BernoulliRBM : Bernoulli Restricted Boltzmann Machine (RBM).
 
     Notes
     -----
@@ -1022,6 +1013,22 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
+
+    Examples
+    --------
+    >>> from sklearn.neural_network import MLPClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(n_samples=100, random_state=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
+    ...                                                     random_state=1)
+    >>> clf = MLPClassifier(random_state=1, max_iter=300).fit(X_train, y_train)
+    >>> clf.predict_proba(X_test[:1])
+    array([[0.038..., 0.961...]])
+    >>> clf.predict(X_test[:5, :])
+    array([1, 0, 1, 0, 1])
+    >>> clf.score(X_test, y_test)
+    0.8...
     """
 
     def __init__(
@@ -1117,13 +1124,13 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             if self.warm_start:
                 if set(classes) != set(self.classes_):
                     raise ValueError(
-                        f"warm_start can only be used where `y` has the same "
-                        f"classes as in the previous call to fit. Previously "
+                        "warm_start can only be used where `y` has the same "
+                        "classes as in the previous call to fit. Previously "
                         f"got {self.classes_}, `y` has {classes}"
                     )
             elif len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
                 raise ValueError(
-                    f"`y` has classes not in `self.classes_`. "
+                    "`y` has classes not in `self.classes_`. "
                     f"`self.classes_` has {self.classes_}. 'y' has {classes}."
                 )
 
@@ -1133,7 +1140,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         return X, y
 
     def predict(self, X):
-        """Predict using the multi-layer perceptron classifier
+        """Predict using the multi-layer perceptron classifier.
 
         Parameters
         ----------
@@ -1180,7 +1187,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError(
                 "partial_fit is only available for stochastic"
-                " optimizer. %s is not stochastic" % self.solver
+                " optimizer. %s is not stochastic"
+                % self.solver
             )
         return self._partial_fit
 
@@ -1209,7 +1217,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         log_y_prob : ndarray of shape (n_samples, n_classes)
             The predicted log-probability of the sample for each class
             in the model, where classes are ordered as they are in
-            `self.classes_`. Equivalent to log(predict_proba(X))
+            `self.classes_`. Equivalent to `log(predict_proba(X))`.
         """
         y_prob = self.predict_proba(X)
         return np.log(y_prob, out=y_prob)

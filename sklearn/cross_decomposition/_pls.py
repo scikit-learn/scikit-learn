@@ -201,6 +201,11 @@ class _PLS(
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target vectors, where `n_samples` is the number of samples and
             `n_targets` is the number of response variables.
+
+        Returns
+        -------
+        self : object
+            Fitted model.
         """
 
         check_consistent_length(X, Y)
@@ -224,10 +229,10 @@ class _PLS(
                 # TODO: raise an error in 1.1
                 warnings.warn(
                     f"As of version 0.24, n_components({n_components}) should "
-                    f"be in [1, n_features]."
+                    "be in [1, n_features]."
                     f"n_components={rank_upper_bound} will be used instead. "
-                    f"In version 1.1 (renaming of 0.26), an error will be "
-                    f"raised.",
+                    "In version 1.1 (renaming of 0.26), an error will be "
+                    "raised.",
                     FutureWarning,
                 )
                 n_components = rank_upper_bound
@@ -239,18 +244,18 @@ class _PLS(
                 # TODO: raise an error in 1.1
                 warnings.warn(
                     f"As of version 0.24, n_components({n_components}) should "
-                    f"be in [1, min(n_features, n_samples, n_targets)] = "
+                    "be in [1, min(n_features, n_samples, n_targets)] = "
                     f"[1, {rank_upper_bound}]. "
                     f"n_components={rank_upper_bound} will be used instead. "
-                    f"In version 1.1 (renaming of 0.26), an error will be "
-                    f"raised.",
+                    "In version 1.1 (renaming of 0.26), an error will be "
+                    "raised.",
                     FutureWarning,
                 )
                 n_components = rank_upper_bound
 
         if self.algorithm not in ("svd", "nipals"):
             raise ValueError(
-                "algorithm should be 'svd' or 'nipals', got " f"{self.algorithm}."
+                f"algorithm should be 'svd' or 'nipals', got {self.algorithm}."
             )
 
         self._norm_y_weights = self.deflation_mode == "canonical"  # 1.1
@@ -372,7 +377,8 @@ class _PLS(
 
         Returns
         -------
-        `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
+        x_scores, y_scores : array-like or tuple of array-like
+            Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         check_is_fitted(self)
         X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
@@ -403,7 +409,8 @@ class _PLS(
 
         Returns
         -------
-        x_reconstructed : array-like of shape (n_samples, n_features)
+        self : ndarray of shape (n_samples, n_features)
+            Return the reconstructed array.
 
         Notes
         -----
@@ -429,6 +436,11 @@ class _PLS(
 
         copy : bool, default=True
             Whether to copy `X` and `Y`, or perform in-place normalization.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_targets)
+            Returns predicted values.
 
         Notes
         -----
@@ -460,13 +472,14 @@ class _PLS(
 
         Returns
         -------
-        x_scores if Y is not given, (x_scores, y_scores) otherwise.
+        self : ndarray of shape (n_samples, n_components)
+            Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         return self.fit(X, y).transform(X, y)
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute norm_y_weights was deprecated in version 0.24 and "
+        "Attribute `norm_y_weights` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -474,7 +487,7 @@ class _PLS(
         return self._norm_y_weights
 
     @deprecated(  # type: ignore
-        "Attribute x_mean_ was deprecated in version 0.24 and "
+        "Attribute `x_mean_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -482,7 +495,7 @@ class _PLS(
         return self._x_mean
 
     @deprecated(  # type: ignore
-        "Attribute y_mean_ was deprecated in version 0.24 and "
+        "Attribute `y_mean_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -490,7 +503,7 @@ class _PLS(
         return self._y_mean
 
     @deprecated(  # type: ignore
-        "Attribute x_std_ was deprecated in version 0.24 and "
+        "Attribute `x_std_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -498,7 +511,7 @@ class _PLS(
         return self._x_std
 
     @deprecated(  # type: ignore
-        "Attribute y_std_ was deprecated in version 0.24 and "
+        "Attribute `y_std_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -507,11 +520,12 @@ class _PLS(
 
     @property
     def x_scores_(self):
+        """Attribute `x_scores_` was deprecated in version 0.24."""
         # TODO: raise error in 1.1 instead
         if not isinstance(self, PLSRegression):
             pass
             warnings.warn(
-                "Attribute x_scores_ was deprecated in version 0.24 and "
+                "Attribute `x_scores_` was deprecated in version 0.24 and "
                 "will be removed in 1.1 (renaming of 0.26). Use "
                 "est.transform(X) on the training data instead.",
                 FutureWarning,
@@ -520,10 +534,11 @@ class _PLS(
 
     @property
     def y_scores_(self):
+        """Attribute `y_scores_` was deprecated in version 0.24."""
         # TODO: raise error in 1.1 instead
         if not isinstance(self, PLSRegression):
             warnings.warn(
-                "Attribute y_scores_ was deprecated in version 0.24 and "
+                "Attribute `y_scores_` was deprecated in version 0.24 and "
                 "will be removed in 1.1 (renaming of 0.26). Use "
                 "est.transform(X) on the training data instead.",
                 FutureWarning,
@@ -783,7 +798,7 @@ class CCA(_PLS):
         Whether to scale `X` and `Y`.
 
     max_iter : int, default=500
-        the maximum number of iterations of the power method.
+        The maximum number of iterations of the power method.
 
     tol : float, default=1e-06
         The tolerance used as convergence criteria in the power method: the
@@ -844,6 +859,11 @@ class CCA(_PLS):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+    See Also
+    --------
+    PLSCanonical : Partial Least Squares transformer and regressor.
+    PLSSVD : Partial Least Square SVD.
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import CCA
@@ -853,11 +873,6 @@ class CCA(_PLS):
     >>> cca.fit(X, Y)
     CCA(n_components=1)
     >>> X_c, Y_c = cca.transform(X, Y)
-
-    See Also
-    --------
-    PLSCanonical
-    PLSSVD
     """
 
     def __init__(
@@ -986,10 +1001,10 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             # TODO: raise an error in 1.1
             warnings.warn(
                 f"As of version 0.24, n_components({n_components}) should be "
-                f"in [1, min(n_features, n_samples, n_targets)] = "
+                "in [1, min(n_features, n_samples, n_targets)] = "
                 f"[1, {rank_upper_bound}]. "
                 f"n_components={rank_upper_bound} will be used instead. "
-                f"In version 1.1 (renaming of 0.26), an error will be raised.",
+                "In version 1.1 (renaming of 0.26), an error will be raised.",
                 FutureWarning,
             )
             n_components = rank_upper_bound
@@ -1014,7 +1029,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute x_scores_ was deprecated in version 0.24 and "
+        "Attribute `x_scores_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26). Use est.transform(X) on "
         "the training data instead."
     )
@@ -1024,7 +1039,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute y_scores_ was deprecated in version 0.24 and "
+        "Attribute `y_scores_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26). Use est.transform(X, Y) "
         "on the training data instead."
     )
@@ -1033,7 +1048,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return self._y_scores
 
     @deprecated(  # type: ignore
-        "Attribute x_mean_ was deprecated in version 0.24 and "
+        "Attribute `x_mean_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1041,7 +1056,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return self._x_mean
 
     @deprecated(  # type: ignore
-        "Attribute y_mean_ was deprecated in version 0.24 and "
+        "Attribute `y_mean_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1049,7 +1064,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return self._y_mean
 
     @deprecated(  # type: ignore
-        "Attribute x_std_ was deprecated in version 0.24 and "
+        "Attribute `x_std_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1057,7 +1072,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return self._x_std
 
     @deprecated(  # type: ignore
-        "Attribute y_std_ was deprecated in version 0.24 and "
+        "Attribute `y_std_` was deprecated in version 0.24 and "
         "will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1079,7 +1094,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        out : array-like or tuple of array-like
+        x_scores : array-like or tuple of array-like
             The transformed data `X_tranformed` if `Y` is not None,
             `(X_transformed, Y_transformed)` otherwise.
         """

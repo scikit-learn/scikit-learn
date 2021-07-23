@@ -121,7 +121,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             y_numeric=is_regressor(self),
         )
 
-        sample_weight = _check_sample_weight(sample_weight, X, np.float64)
+        sample_weight = _check_sample_weight(sample_weight, X, np.float64, copy=True)
         sample_weight /= sample_weight.sum()
         if np.any(sample_weight < 0):
             raise ValueError("sample_weight cannot contain negative weights")
@@ -258,7 +258,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         """
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError(
-                "Estimator not fitted, " "call `fit` before `feature_importances_`."
+                "Estimator not fitted, call `fit` before `feature_importances_`."
             )
 
         try:
@@ -328,7 +328,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
 
-    learning_rate : float, default=1.
+    learning_rate : float, default=1.0
         Weight applied to each classifier at each boosting iteration. A higher
         learning rate increases the contribution of each classifier. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
@@ -924,9 +924,9 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
 
-    learning_rate : float, default=1.
-        Weight applied to each classifier at each boosting iteration. A higher
-        learning rate increases the contribution of each classifier. There is
+    learning_rate : float, default=1.0
+        Weight applied to each regressor at each boosting iteration. A higher
+        learning rate increases the contribution of each regressor. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
 
     loss : {'linear', 'square', 'exponential'}, default='linear'
@@ -947,7 +947,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
 
-    estimators_ : list of classifiers
+    estimators_ : list of regressors
         The collection of fitted sub-estimators.
 
     estimator_weights_ : ndarray of floats
@@ -969,6 +969,19 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AdaBoostClassifier : An AdaBoost classifier.
+    GradientBoostingRegressor : Gradient Boosting Classification Tree.
+    sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
+
+    References
+    ----------
+    .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
+           on-Line Learning and an Application to Boosting", 1995.
+
+    .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
+
     Examples
     --------
     >>> from sklearn.ensemble import AdaBoostRegressor
@@ -982,19 +995,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     array([4.7972...])
     >>> regr.score(X, y)
     0.9771...
-
-    See Also
-    --------
-    AdaBoostClassifier, GradientBoostingRegressor,
-    sklearn.tree.DecisionTreeRegressor
-
-    References
-    ----------
-    .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
-           on-Line Learning and an Application to Boosting", 1995.
-
-    .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
-
     """
 
     def __init__(
@@ -1036,6 +1036,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         Returns
         -------
         self : object
+            Fitted AdaBoostRegressor estimator.
         """
         # Check loss
         if self.loss not in ("linear", "square", "exponential"):
@@ -1167,7 +1168,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """Predict regression value for X.
 
         The predicted regression value of an input sample is computed
-        as the weighted median prediction of the classifiers in the ensemble.
+        as the weighted median prediction of the regressors in the ensemble.
 
         Parameters
         ----------
@@ -1189,7 +1190,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """Return staged predictions for X.
 
         The predicted regression value of an input sample is computed
-        as the weighted median prediction of the classifiers in the ensemble.
+        as the weighted median prediction of the regressors in the ensemble.
 
         This generator method yields the ensemble prediction after each
         iteration of boosting and therefore allows monitoring, such as to

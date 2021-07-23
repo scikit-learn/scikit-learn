@@ -271,14 +271,14 @@ def graphical_lasso(
                 covariance_[indices != idx, idx] = coefs
             if not np.isfinite(precision_.sum()):
                 raise FloatingPointError(
-                    "The system is too ill-conditioned " "for this solver"
+                    "The system is too ill-conditioned for this solver"
                 )
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
             if verbose:
                 print(
-                    "[graphical_lasso] Iteration "
-                    "% 3i, cost % 3.2e, dual gap %.3e" % (i, cost, d_gap)
+                    "[graphical_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e"
+                    % (i, cost, d_gap)
                 )
             if return_costs:
                 costs.append((cost, d_gap))
@@ -286,13 +286,12 @@ def graphical_lasso(
                 break
             if not np.isfinite(cost) and i > 0:
                 raise FloatingPointError(
-                    "Non SPD result: the system is "
-                    "too ill-conditioned for this solver"
+                    "Non SPD result: the system is too ill-conditioned for this solver"
                 )
         else:
             warnings.warn(
-                "graphical_lasso: did not converge after "
-                "%i iteration: dual gap: %.3e" % (max_iter, d_gap),
+                "graphical_lasso: did not converge after %i iteration: dual gap: %.3e"
+                % (max_iter, d_gap),
                 ConvergenceWarning,
             )
     except FloatingPointError as e:
@@ -373,6 +372,12 @@ class GraphicalLasso(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    graphical_lasso : L1-penalized covariance estimator.
+    GraphicalLassoCV : Sparse inverse covariance with
+        cross-validated choice of the l1 penalty.
+
     Examples
     --------
     >>> import numpy as np
@@ -393,10 +398,6 @@ class GraphicalLasso(EmpiricalCovariance):
            [0.019, 0.034, 0.093, 0.69 ]])
     >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
-
-    See Also
-    --------
-    graphical_lasso, GraphicalLassoCV
     """
 
     def __init__(
@@ -419,12 +420,12 @@ class GraphicalLasso(EmpiricalCovariance):
         self.verbose = verbose
 
     def fit(self, X, y=None):
-        """Fits the GraphicalLasso model to X.
+        """Fit the GraphicalLasso model to X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Data from which to compute the covariance estimate
+            Data from which to compute the covariance estimate.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -432,6 +433,7 @@ class GraphicalLasso(EmpiricalCovariance):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
         X = self._validate_data(
@@ -635,7 +637,7 @@ class GraphicalLassoCV(GraphicalLasso):
         stable.
 
     n_jobs : int, default=None
-        number of jobs to run in parallel.
+        Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -708,6 +710,24 @@ class GraphicalLassoCV(GraphicalLasso):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    graphical_lasso : L1-penalized covariance estimator.
+    GraphicalLasso : Sparse inverse covariance with
+        cross-validated choice of the l1 penalty.
+
+    Notes
+    -----
+    The search for the optimal penalization parameter (alpha) is done on an
+    iteratively refined grid: first the cross-validated scores on a grid are
+    computed, then a new refined grid is centered around the maximum, and so
+    on.
+
+    One of the challenges which is faced here is that the solvers can
+    fail to converge to a well-conditioned estimate. The corresponding
+    values of alpha then come out as missing values, but the optimum may
+    be close to these missing values.
+
     Examples
     --------
     >>> import numpy as np
@@ -728,22 +748,6 @@ class GraphicalLassoCV(GraphicalLasso):
            [0.017, 0.036, 0.094, 0.69 ]])
     >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
-
-    See Also
-    --------
-    graphical_lasso, GraphicalLasso
-
-    Notes
-    -----
-    The search for the optimal penalization parameter (alpha) is done on an
-    iteratively refined grid: first the cross-validated scores on a grid are
-    computed, then a new refined grid is centered around the maximum, and so
-    on.
-
-    One of the challenges which is faced here is that the solvers can
-    fail to converge to a well-conditioned estimate. The corresponding
-    values of alpha then come out as missing values, but the optimum may
-    be close to these missing values.
     """
 
     def __init__(
@@ -774,12 +778,12 @@ class GraphicalLassoCV(GraphicalLasso):
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
-        """Fits the GraphicalLasso covariance model to X.
+        """Fit the GraphicalLasso covariance model to X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Data from which to compute the covariance estimate
+            Data from which to compute the covariance estimate.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -787,6 +791,7 @@ class GraphicalLassoCV(GraphicalLasso):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2, estimator=self)
@@ -885,8 +890,8 @@ class GraphicalLassoCV(GraphicalLasso):
 
             if self.verbose and n_refinements > 1:
                 print(
-                    "[GraphicalLassoCV] Done refinement % 2i out of"
-                    " %i: % 3is" % (i + 1, n_refinements, time.time() - t0)
+                    "[GraphicalLassoCV] Done refinement % 2i out of %i: % 3is"
+                    % (i + 1, n_refinements, time.time() - t0)
                 )
 
         path = list(zip(*path))
@@ -931,8 +936,9 @@ class GraphicalLassoCV(GraphicalLasso):
     # TODO: Remove in 1.1 when grid_scores_ is deprecated
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "The grid_scores_ attribute is deprecated in version 0.24 in favor "
-        "of cv_results_ and will be removed in version 1.1 (renaming of 0.26)."
+        "The `grid_scores_` attribute is deprecated in version 0.24 in favor "
+        "of `cv_results_` and will be removed in version 1.1 "
+        "(renaming of 0.26)."
     )
     @property
     def grid_scores_(self):
@@ -945,8 +951,8 @@ class GraphicalLassoCV(GraphicalLasso):
     # TODO: Remove in 1.1 when cv_alphas_ is deprecated
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "The cv_alphas_ attribute is deprecated in version 0.24 in favor "
-        "of cv_results_['alpha'] and will be removed in version 1.1 "
+        "The `cv_alphas_` attribute is deprecated in version 0.24 in favor "
+        "of `cv_results_['alpha']` and will be removed in version 1.1 "
         "(renaming of 0.26)."
     )
     @property
