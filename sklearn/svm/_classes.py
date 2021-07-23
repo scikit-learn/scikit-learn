@@ -1932,16 +1932,6 @@ class SVDD(OutlierMixin, BaseLibSVM):
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
-    Examples
-    --------
-    >>> from sklearn.svm import SVDD
-    >>> X = [[0], [0.44], [0.45], [0.46], [1]]
-    >>> clf = SVDD(gamma='auto').fit(X)
-    >>> clf.predict(X)
-    array([-1,  1,  1,  1, -1])
-    >>> clf.score_samples(X)
-    array([0.5298..., 0.8047..., 0.8056..., 0.8061..., 0.4832...])
-
     See Also
     --------
     OneClassSVM : Support vector method for outlier detection via a separating
@@ -1958,22 +1948,55 @@ class SVDD(OutlierMixin, BaseLibSVM):
            to support vector data description (SVDD)." Technical
            Report, Department of Computer Science, National Taiwan
            University.
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVDD
+    >>> X = [[0], [0.44], [0.45], [0.46], [1]]
+    >>> clf = SVDD(gamma='auto').fit(X)
+    >>> clf.predict(X)
+    array([-1,  1,  1,  1, -1])
+    >>> clf.score_samples(X)
+    array([0.5298..., 0.8047..., 0.8056..., 0.8061..., 0.4832...])
     """
 
-    _impl = 'svdd_l1'
+    _impl = "svdd_l1"
 
-    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
-                 coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
-                 verbose=False, max_iter=-1):
+    def __init__(
+        self,
+        *,
+        kernel="rbf",
+        degree=3,
+        gamma="scale",
+        coef0=0.0,
+        tol=1e-3,
+        nu=0.5,
+        shrinking=True,
+        cache_size=200,
+        verbose=False,
+        max_iter=-1,
+    ):
 
         super().__init__(
-            kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
-            tol=tol, C=0., nu=nu, epsilon=0., shrinking=shrinking,
-            probability=False, cache_size=cache_size, class_weight=None,
-            verbose=verbose, max_iter=max_iter, random_state=None)
+            kernel=kernel,
+            degree=degree,
+            gamma=gamma,
+            coef0=coef0,
+            tol=tol,
+            C=0.0,
+            nu=nu,
+            epsilon=0.0,
+            shrinking=shrinking,
+            probability=False,
+            cache_size=cache_size,
+            class_weight=None,
+            verbose=verbose,
+            max_iter=max_iter,
+            random_state=None,
+        )
 
     def fit(self, X, y=None, sample_weight=None, **params):
-        """Learns the soft minimum volume hypersphere around the sample X.
+        """Learn a soft minimum-volume hypersphere around the sample X.
 
         Parameters
         ----------
@@ -1981,24 +2004,26 @@ class SVDD(OutlierMixin, BaseLibSVM):
             Set of samples, where n_samples is the number of samples and
             n_features is the number of features.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
-        y : Ignored
-            not used, present for API consistency by convention.
+        **params : dict
+            Additional fit parameters.
 
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
         If X is not a C-ordered contiguous array it is copied.
-
         """
-        super().fit(X, np.ones(_num_samples(X)),
-                    sample_weight=sample_weight, **params)
+        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight, **params)
         self.offset_ = -self._intercept_
         return self
 
@@ -2056,8 +2081,9 @@ class SVDD(OutlierMixin, BaseLibSVM):
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }

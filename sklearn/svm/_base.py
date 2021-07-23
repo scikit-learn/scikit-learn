@@ -27,8 +27,7 @@ from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
 
-LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr',
-               'svdd_l1']
+LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr", "svdd_l1"]
 
 
 def _one_vs_one_coef(dual_coef, n_support, support_vectors):
