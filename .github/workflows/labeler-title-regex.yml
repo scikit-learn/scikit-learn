@@ -3,6 +3,10 @@ on:
   pull_request_target:
     types: [opened, edited]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
 
   labeler:
@@ -12,8 +16,8 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: '3.9'
-    - name: Install ghapi
-      run: pip install -Uq ghapi
+    - name: Install PyGithub
+      run: pip install -Uq PyGithub
     - name: Label pull request
       run: python .github/scripts/label_title_regex.py
       env:

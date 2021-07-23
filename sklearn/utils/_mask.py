@@ -45,8 +45,7 @@ def _get_mask(X, value_to_mask):
 
     Xt = _get_dense_mask(X.data, value_to_mask)
 
-    sparse_constructor = (sp.csr_matrix if X.format == 'csr'
-                          else sp.csc_matrix)
+    sparse_constructor = sp.csr_matrix if X.format == "csr" else sp.csc_matrix
     Xt_sparse = sparse_constructor(
         (Xt, X.indices.copy(), X.indptr.copy()), shape=X.shape, dtype=bool
     )
