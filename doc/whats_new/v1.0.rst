@@ -322,11 +322,11 @@ Changelog
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
   
 :mod:`sklearn.kernel_approximation`
-.......................
+...................................
 
-- |Fix| Fix a bug of the attribute ``component_indices_`` in
-  :class:`sklearn.kernel_approximation.Nystroem`. 
-  The attribute ``component_indices_`` should have a dimension of ``n_components``.
+- |Fix| Fix a bug in :class:`sklearn.kernel_approximation.Nystroem`
+   where the attribute `component_indices_` did not corresponds
+   to the subset of samples indices used to generate the approximated kernel.
   :pr:`20554` by :user:`Xiangyin Kong <kxytim>`.  
 
 :mod:`sklearn.linear_model`
