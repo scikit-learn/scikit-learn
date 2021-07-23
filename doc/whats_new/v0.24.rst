@@ -42,8 +42,22 @@ Changelog
   with `sample_weight` parameter and `least_absolute_deviation` loss function.
   :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
 
+:mod:`feature_extraction`
+.........................
+
+- |Fix| Fixed a bug to support multiple strings for a category when
+  `sparse=False` in :class:`feature_extraction.DictVectorizer`.
+  :pr:`19982` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.gaussian_process`
 ...............................
+
+- |Fix| Avoid explicitly forming inverse covariance matrix in
+  :class:`gaussian_process.GaussianProcessRegressor` when set to output
+  standard deviation. With certain covariance matrices this inverse is unstable
+  to compute explicitly. Calling Cholesky solver mitigates this issue in
+  computation.
+  :pr:`19939` by :user:`Ian Halvic <iwhalvic>`.
 
 - |Fix| Avoid division by zero when scaling constant target in
   :class:`gaussian_process.GaussianProcessRegressor`. It was due to a std. dev.
@@ -59,7 +73,7 @@ Changelog
 - |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
-  
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -201,6 +215,9 @@ random sampling procedures.
   a `random_state` parameter.
 
 - |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`.
+
+- |Fix| Change in the random sampling procedures for the center initialization
+  of :class:`cluster.KMeans`.
 
 Details are listed in the changelog below.
 

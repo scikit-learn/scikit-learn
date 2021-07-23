@@ -103,14 +103,22 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    eigenvalues_ : ndarray of shape (n_components,)
+    eigenvalues_, lambdas_ : ndarray of shape (n_components,)
         Eigenvalues of the centered kernel matrix in decreasing order.
         If `n_components` and `remove_zero_eig` are not set,
         then all values are stored.
 
-    eigenvectors_ : ndarray of shape (n_samples, n_components)
+        .. deprecated:: 1.0
+           `lambdas_` was renamed to `eigenvalues_` in version 1.0 and will be
+           removed in 1.2.
+
+    eigenvectors_, alphas_ : ndarray of shape (n_samples, n_components)
         Eigenvectors of the centered kernel matrix. If `n_components` and
         `remove_zero_eig` are not set, then all components are stored.
+
+        .. deprecated:: 1.0
+           `alphas_` was renamed to `eigenvectors_` in version 1.0 and will be
+           removed in 1.2.
 
     dual_coef_ : ndarray of shape (n_samples, n_features)
         Inverse transform matrix. Only available when
@@ -124,13 +132,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
         a reference. This attribute is used for the calls to transform.
 
-    .. deprecated:: 1.0
-        ``lambdas_`` was renamed to ``eigenvalues_`` in version 1.0 and will be
-        removed in 1.2.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
-    .. deprecated:: 1.0
-        ``alphas_`` was renamed to ``eigenvectors_`` in version 1.0 and will be
-        removed in 1.2.
+        .. versionadded:: 0.24
 
     Examples
     --------
@@ -150,15 +155,29 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         component analysis. In Advances in kernel methods,
         MIT Press, Cambridge, MA, USA 327-352.
     """
+
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, kernel="linear",
-                 gamma=None, degree=3, coef0=1, kernel_params=None,
-                 alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
-                 tol=0, max_iter=None, remove_zero_eig=False,
-                 random_state=None, copy_X=True, n_jobs=None):
-        if fit_inverse_transform and kernel == 'precomputed':
-            raise ValueError(
-                "Cannot fit_inverse_transform with a precomputed kernel.")
+    def __init__(
+        self,
+        n_components=None,
+        *,
+        kernel="linear",
+        gamma=None,
+        degree=3,
+        coef0=1,
+        kernel_params=None,
+        alpha=1.0,
+        fit_inverse_transform=False,
+        eigen_solver="auto",
+        tol=0,
+        max_iter=None,
+        remove_zero_eig=False,
+        random_state=None,
+        copy_X=True,
+        n_jobs=None,
+    ):
+        if fit_inverse_transform and kernel == "precomputed":
+            raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
         self.n_components = n_components
         self.kernel = kernel
         self.kernel_params = kernel_params
@@ -177,8 +196,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute _pairwise was deprecated in version 0.24 and will be "
+        "removed in 1.1 (renaming of 0.26)."
+    )
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
@@ -187,15 +208,13 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         if callable(self.kernel):
             params = self.kernel_params or {}
         else:
-            params = {"gamma": self.gamma,
-                      "degree": self.degree,
-                      "coef0": self.coef0}
-        return pairwise_kernels(X, Y, metric=self.kernel,
-                                filter_params=True, n_jobs=self.n_jobs,
-                                **params)
+            params = {"gamma": self.gamma, "degree": self.degree, "coef0": self.coef0}
+        return pairwise_kernels(
+            X, Y, metric=self.kernel, filter_params=True, n_jobs=self.n_jobs, **params
+        )
 
     def _fit_transform(self, K):
-        """ Fit's using kernel K"""
+        """Fit's using kernel K"""
         # center kernel
         K = self._centerer.fit_transform(K)
 
@@ -205,30 +224,33 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             n_components = min(K.shape[0], self.n_components)
 
         # compute eigenvectors
-        if self.eigen_solver == 'auto':
+        if self.eigen_solver == "auto":
             if K.shape[0] > 200 and n_components < 10:
-                eigen_solver = 'arpack'
+                eigen_solver = "arpack"
             else:
-                eigen_solver = 'dense'
+                eigen_solver = "dense"
         else:
             eigen_solver = self.eigen_solver
 
-        if eigen_solver == 'dense':
+        if eigen_solver == "dense":
             self.eigenvalues_, self.eigenvectors_ = linalg.eigh(
-                K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1))
-        elif eigen_solver == 'arpack':
+                K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1)
+            )
+        elif eigen_solver == "arpack":
             v0 = _init_arpack_v0(K.shape[0], self.random_state)
-            self.eigenvalues_, self.eigenvectors_ = \
-                eigsh(K, n_components, which="LA", tol=self.tol,
-                      maxiter=self.max_iter, v0=v0)
+            self.eigenvalues_, self.eigenvectors_ = eigsh(
+                K, n_components, which="LA", tol=self.tol, maxiter=self.max_iter, v0=v0
+            )
 
         # make sure that the eigenvalues are ok and fix numerical issues
-        self.eigenvalues_ = _check_psd_eigenvalues(self.eigenvalues_,
-                                                   enable_warnings=False)
+        self.eigenvalues_ = _check_psd_eigenvalues(
+            self.eigenvalues_, enable_warnings=False
+        )
 
         # flip eigenvectors' sign to enforce deterministic output
-        self.eigenvectors_, _ = svd_flip(self.eigenvectors_,
-                                         np.zeros_like(self.eigenvectors_).T)
+        self.eigenvectors_, _ = svd_flip(
+            self.eigenvectors_, np.zeros_like(self.eigenvectors_).T
+        )
 
         # sort eigenvectors in descending order
         indices = self.eigenvalues_.argsort()[::-1]
@@ -263,12 +285,13 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     def _fit_inverse_transform(self, X_transformed, X):
         if hasattr(X, "tocsr"):
-            raise NotImplementedError("Inverse transform not implemented for "
-                                      "sparse matrices!")
+            raise NotImplementedError(
+                "Inverse transform not implemented for sparse matrices!"
+            )
 
         n_samples = X_transformed.shape[0]
         K = self._get_kernel(X_transformed)
-        K.flat[::n_samples + 1] += self.alpha
+        K.flat[:: n_samples + 1] += self.alpha
         self.dual_coef_ = linalg.solve(K, X, sym_pos=True, overwrite_a=True)
         self.X_transformed_fit_ = X_transformed
 
@@ -286,7 +309,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse='csr', copy=self.copy_X)
+        X = self._validate_data(X, accept_sparse="csr", copy=self.copy_X)
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)
         self._fit_transform(K)
@@ -335,7 +358,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse='csr', reset=False)
+        X = self._validate_data(X, accept_sparse="csr", reset=False)
 
         # Compute centered gram matrix between X and training data X_fit_
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
@@ -343,9 +366,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # scale eigenvectors (properly account for null-space for dot product)
         non_zeros = np.flatnonzero(self.eigenvalues_)
         scaled_eigenvectors = np.zeros_like(self.eigenvectors_)
-        scaled_eigenvectors[:, non_zeros] = (
-            self.eigenvectors_[:, non_zeros]
-            / np.sqrt(self.eigenvalues_[non_zeros])
+        scaled_eigenvectors[:, non_zeros] = self.eigenvectors_[:, non_zeros] / np.sqrt(
+            self.eigenvalues_[non_zeros]
         )
 
         # Project with a scalar product between K and the scaled eigenvectors
@@ -387,30 +409,36 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         "Learning to Find Pre-Images", G BakIr et al, 2004.
         """
         if not self.fit_inverse_transform:
-            raise NotFittedError("The fit_inverse_transform parameter was not"
-                                 " set to True when instantiating and hence "
-                                 "the inverse transform is not available.")
+            raise NotFittedError(
+                "The fit_inverse_transform parameter was not"
+                " set to True when instantiating and hence "
+                "the inverse transform is not available."
+            )
 
         K = self._get_kernel(X, self.X_transformed_fit_)
         return np.dot(K, self.dual_coef_)
 
     def _more_tags(self):
-        return {'preserves_dtype': [np.float64, np.float32],
-                'pairwise': self.kernel == 'precomputed'}
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+            "pairwise": self.kernel == "precomputed",
+        }
 
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
-    @deprecated("Attribute 'lambdas_' was deprecated in "  # type: ignore
-                "version 1.0 and will be removed in 1.2. Use "
-                "'eigenvalues_' instead")
+    @deprecated(  # type: ignore
+        "Attribute `lambdas_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `eigenvalues_` instead."
+    )
     @property
     def lambdas_(self):
         return self.eigenvalues_
 
     # mypy error: Decorated property not supported
-    @deprecated("Attribute 'alphas_' was deprecated in "  # type: ignore
-                "version 1.0 and will be removed in 1.2. Use "
-                "'eigenvectors_' instead")
+    @deprecated(  # type: ignore
+        "Attribute `alphas_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `eigenvectors_` instead."
+    )
     @property
     def alphas_(self):
         return self.eigenvectors_
