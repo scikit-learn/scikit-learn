@@ -295,9 +295,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 FutureWarning,
             )
 
-        if n_classes is None:
-            n_classes = len(self.classes_)
         if self.loss == "deviance":
+            if n_classes is None:
+                n_classes = len(self.classes_)
             loss_class = (
                 _gb_losses.MultinomialDeviance
                 if n_classes > 2
@@ -307,6 +307,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
 
         if is_classifier(self):
+            if n_classes is None:
+                n_classes = len(self.classes_)
             return loss_class(n_classes)
         elif self.loss in ("huber", "quantile"):
             return loss_class(self.alpha)
