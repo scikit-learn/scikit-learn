@@ -834,7 +834,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Attributes
     ----------
-    named_transformers_ : :class:`~sklearn.utils.Bunch`
+    named_transformers : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
         Read-only attribute to access any transformer parameter by user
         given name. Keys are transformer names and values are
@@ -878,7 +878,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self._validate_transformers()
 
     @property
-    def named_transformers_(self):
+    def named_transformers(self):
         # Use Bunch object to improve autocomplete
         return Bunch(**dict(self.transformer_list))
 

@@ -510,16 +510,16 @@ def test_feature_union():
     fs.fit(X, y)
 
 
-def test_feature_union_named_transformers_():
+def test_feature_union_named_transformers():
     transf = Transf()
     noinvtransf = NoInvTransf()
     fs = FeatureUnion([("transf", transf), ("noinvtransf", noinvtransf)])
-    assert fs.named_transformers_["transf"] == transf
-    assert fs.named_transformers_["noinvtransf"] == noinvtransf
+    assert fs.named_transformers["transf"] == transf
+    assert fs.named_transformers["noinvtransf"] == noinvtransf
 
     # test named attribute
-    assert fs.named_transformers_.transf == transf
-    assert fs.named_transformers_.noinvtransf == noinvtransf
+    assert fs.named_transformers.transf == transf
+    assert fs.named_transformers.noinvtransf == noinvtransf
 
 
 def test_make_union():
