@@ -560,6 +560,7 @@ From text
    feature_selection.chi2
    feature_selection.f_classif
    feature_selection.f_regression
+   feature_selection.r_regression
    feature_selection.mutual_info_classif
    feature_selection.mutual_info_regression
 
@@ -762,6 +763,7 @@ Linear classifiers
    linear_model.RidgeClassifier
    linear_model.RidgeClassifierCV
    linear_model.SGDClassifier
+   linear_model.SGDOneClassSVM
 
 Classical linear regressors
 ---------------------------
@@ -837,6 +839,7 @@ Any estimator using the Huber loss would also be robust to outliers, e.g.
    :template: class.rst
 
    linear_model.HuberRegressor
+   linear_model.QuantileRegressor
    linear_model.RANSACRegressor
    linear_model.TheilSenRegressor
 
@@ -1602,6 +1605,7 @@ Plotting
    utils.graph_shortest_path.graph_shortest_path
    utils.indexable
    utils.metaestimators.if_delegate_has_method
+   utils.metaestimators.available_if
    utils.multiclass.type_of_target
    utils.multiclass.is_multilabel
    utils.multiclass.unique_labels

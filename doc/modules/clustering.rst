@@ -202,7 +202,7 @@ As a result, the computation is often done several times, with different
 initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
-(generally) distant from each other, leading to provably better results than
+(generally) distant from each other, leading to probably better results than
 random initialization, as shown in the reference. 
 
 K-means++ can also be called independently to select seeds for other 
@@ -1653,7 +1653,7 @@ Drawbacks
 
   * E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
     hierarchical clusterings". Journal of the American Statistical Association.
-    http://wildfire.stat.ucla.edu/pdflibrary/fowlkes.pdf
+    https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008
 
   * `Wikipedia entry for the Fowlkes-Mallows Index
     <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_

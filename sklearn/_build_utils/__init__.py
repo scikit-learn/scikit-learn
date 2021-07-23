@@ -16,13 +16,14 @@ from .openmp_helpers import check_openmp_support
 from .._min_dependencies import CYTHON_MIN_VERSION
 
 
-DEFAULT_ROOT = 'sklearn'
+DEFAULT_ROOT = "sklearn"
 
 
 def _check_cython_version():
-    message = ('Please install Cython with a version >= {0} in order '
-               'to build a scikit-learn from source.').format(
-                    CYTHON_MIN_VERSION)
+    message = (
+        "Please install Cython with a version >= {0} in order "
+        "to build a scikit-learn from source."
+    ).format(CYTHON_MIN_VERSION)
     try:
         import Cython
     except ModuleNotFoundError as e:
@@ -30,8 +31,9 @@ def _check_cython_version():
         raise ModuleNotFoundError(message) from e
 
     if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
-        message += (' The current version of Cython is {} installed in {}.'
-                    .format(Cython.__version__, Cython.__path__))
+        message += " The current version of Cython is {} installed in {}.".format(
+            Cython.__version__, Cython.__path__
+        )
         raise ValueError(message)
 
 
@@ -61,6 +63,7 @@ def cythonize_extensions(top_path, config):
     n_jobs = 1
     with contextlib.suppress(ImportError):
         import joblib
+
         if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
             # earlier joblib versions don't account for CPU affinity
             # constraints, and may over-estimate the number of available
@@ -71,8 +74,10 @@ def cythonize_extensions(top_path, config):
         config.ext_modules,
         nthreads=n_jobs,
         compile_time_env={
-            'SKLEARN_OPENMP_PARALLELISM_ENABLED': sklearn._OPENMP_SUPPORTED},
-        compiler_directives={'language_level': 3})
+            "SKLEARN_OPENMP_PARALLELISM_ENABLED": sklearn._OPENMP_SUPPORTED
+        },
+        compiler_directives={"language_level": 3},
+    )
 
 
 def gen_from_templates(templates, top_path):
@@ -81,11 +86,13 @@ def gen_from_templates(templates, top_path):
     from Cython import Tempita
 
     for template in templates:
-        outfile = template.replace('.tp', '')
+        outfile = template.replace(".tp", "")
 
         # if the template is not updated, no need to output the cython file
-        if not (os.path.exists(outfile) and
-                os.stat(template).st_mtime < os.stat(outfile).st_mtime):
+        if not (
+            os.path.exists(outfile)
+            and os.stat(template).st_mtime < os.stat(outfile).st_mtime
+        ):
 
             with open(template, "r") as f:
                 tmpl = f.read()
