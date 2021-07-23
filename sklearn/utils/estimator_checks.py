@@ -78,14 +78,16 @@ def _yield_checks(estimator):
     yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
-    yield check_sample_weights_pandas_series
-    yield check_sample_weights_not_an_array
-    yield check_sample_weights_list
-    yield check_sample_weights_shape
-    if has_fit_parameter(estimator, "sample_weight") and not pairwise:
-        # We skip pairwise because the data is not pairwise
-        yield partial(check_sample_weights_invariance, kind="ones")
-        yield partial(check_sample_weights_invariance, kind="zeros")
+    if has_fit_parameter(estimator, "sample_weight"):
+        yield check_sample_weights_pandas_series
+        yield check_sample_weights_not_an_array
+        yield check_sample_weights_list
+        if not pairwise:
+            # We skip pairwise because the data is not pairwise
+            yield check_sample_weights_shape
+            yield check_sample_weights_not_overwritten
+            yield partial(check_sample_weights_invariance, kind="ones")
+            yield partial(check_sample_weights_invariance, kind="zeros")
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
@@ -803,52 +805,9 @@ def check_sample_weights_pandas_series(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
     estimator = clone(estimator_orig)
-    if has_fit_parameter(estimator, "sample_weight"):
-        try:
-            import pandas as pd
+    try:
+        import pandas as pd
 
-            X = np.array(
-                [
-                    [1, 1],
-                    [1, 2],
-                    [1, 3],
-                    [1, 4],
-                    [2, 1],
-                    [2, 2],
-                    [2, 3],
-                    [2, 4],
-                    [3, 1],
-                    [3, 2],
-                    [3, 3],
-                    [3, 4],
-                ]
-            )
-            X = pd.DataFrame(_pairwise_estimator_convert_X(X, estimator_orig))
-            y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
-            weights = pd.Series([1] * 12)
-            if _safe_tags(estimator, key="multioutput_only"):
-                y = pd.DataFrame(y)
-            try:
-                estimator.fit(X, y, sample_weight=weights)
-            except ValueError:
-                raise ValueError(
-                    "Estimator {0} raises error if "
-                    "'sample_weight' parameter is of "
-                    "type pandas.Series".format(name)
-                )
-        except ImportError:
-            raise SkipTest(
-                "pandas is not installed: not testing for "
-                "input of type pandas.Series to class weight."
-            )
-
-
-@ignore_warnings(category=(FutureWarning))
-def check_sample_weights_not_an_array(name, estimator_orig):
-    # check that estimators will accept a 'sample_weight' parameter of
-    # type _NotAnArray in the 'fit' function.
-    estimator = clone(estimator_orig)
-    if has_fit_parameter(estimator, "sample_weight"):
         X = np.array(
             [
                 [1, 1],
@@ -865,70 +824,105 @@ def check_sample_weights_not_an_array(name, estimator_orig):
                 [3, 4],
             ]
         )
-        X = _NotAnArray(_pairwise_estimator_convert_X(X, estimator_orig))
-        y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
-        weights = _NotAnArray([1] * 12)
+        X = pd.DataFrame(_pairwise_estimator_convert_X(X, estimator_orig))
+        y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+        weights = pd.Series([1] * 12)
         if _safe_tags(estimator, key="multioutput_only"):
-            y = _NotAnArray(y.data.reshape(-1, 1))
-        estimator.fit(X, y, sample_weight=weights)
+            y = pd.DataFrame(y)
+        try:
+            estimator.fit(X, y, sample_weight=weights)
+        except ValueError:
+            raise ValueError(
+                "Estimator {0} raises error if "
+                "'sample_weight' parameter is of "
+                "type pandas.Series".format(name)
+            )
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not testing for "
+            "input of type pandas.Series to class weight."
+        )
+
+
+@ignore_warnings(category=(FutureWarning))
+def check_sample_weights_not_an_array(name, estimator_orig):
+    # check that estimators will accept a 'sample_weight' parameter of
+    # type _NotAnArray in the 'fit' function.
+    estimator = clone(estimator_orig)
+    X = np.array(
+        [
+            [1, 1],
+            [1, 2],
+            [1, 3],
+            [1, 4],
+            [2, 1],
+            [2, 2],
+            [2, 3],
+            [2, 4],
+            [3, 1],
+            [3, 2],
+            [3, 3],
+            [3, 4],
+        ]
+    )
+    X = _NotAnArray(_pairwise_estimator_convert_X(X, estimator_orig))
+    y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+    weights = _NotAnArray([1] * 12)
+    if _safe_tags(estimator, key="multioutput_only"):
+        y = _NotAnArray(y.data.reshape(-1, 1))
+    estimator.fit(X, y, sample_weight=weights)
 
 
 @ignore_warnings(category=(FutureWarning))
 def check_sample_weights_list(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type list in the 'fit' function.
-    if has_fit_parameter(estimator_orig, "sample_weight"):
-        estimator = clone(estimator_orig)
-        rnd = np.random.RandomState(0)
-        n_samples = 30
-        X = _pairwise_estimator_convert_X(
-            rnd.uniform(size=(n_samples, 3)), estimator_orig
-        )
-        y = np.arange(n_samples) % 3
-        y = _enforce_estimator_tags_y(estimator, y)
-        sample_weight = [3] * n_samples
-        # Test that estimators don't raise any exception
-        estimator.fit(X, y, sample_weight=sample_weight)
+    estimator = clone(estimator_orig)
+    rnd = np.random.RandomState(0)
+    n_samples = 30
+    X = _pairwise_estimator_convert_X(rnd.uniform(size=(n_samples, 3)), estimator_orig)
+    y = np.arange(n_samples) % 3
+    y = _enforce_estimator_tags_y(estimator, y)
+    sample_weight = [3] * n_samples
+    # Test that estimators don't raise any exception
+    estimator.fit(X, y, sample_weight=sample_weight)
 
 
 @ignore_warnings(category=FutureWarning)
 def check_sample_weights_shape(name, estimator_orig):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
-    if has_fit_parameter(estimator_orig, "sample_weight") and not _is_pairwise(
-        estimator_orig
-    ):
-        estimator = clone(estimator_orig)
-        X = np.array(
-            [
-                [1, 3],
-                [1, 3],
-                [1, 3],
-                [1, 3],
-                [2, 1],
-                [2, 1],
-                [2, 1],
-                [2, 1],
-                [3, 3],
-                [3, 3],
-                [3, 3],
-                [3, 3],
-                [4, 1],
-                [4, 1],
-                [4, 1],
-                [4, 1],
-            ]
-        )
-        y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2])
-        y = _enforce_estimator_tags_y(estimator, y)
+    estimator = clone(estimator_orig)
+    X = np.array(
+        [
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+        ]
+    )
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2])
+    y = _enforce_estimator_tags_y(estimator, y)
 
-        estimator.fit(X, y, sample_weight=np.ones(len(y)))
+    estimator.fit(X, y, sample_weight=np.ones(len(y)))
 
-        with raises(ValueError):
-            estimator.fit(X, y, sample_weight=np.ones(2 * len(y)))
+    with raises(ValueError):
+        estimator.fit(X, y, sample_weight=np.ones(2 * len(y)))
 
-        with raises(ValueError):
-            estimator.fit(X, y, sample_weight=np.ones((len(y), 2)))
+    with raises(ValueError):
+        estimator.fit(X, y, sample_weight=np.ones((len(y), 2)))
 
 
 @ignore_warnings(category=FutureWarning)
@@ -998,6 +992,46 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
             X_pred1 = getattr(estimator1, method)(X1)
             X_pred2 = getattr(estimator2, method)(X1)
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
+
+
+def check_sample_weights_not_overwritten(name, estimator_orig):
+    # check that estimators don't override the passed sample_weight parameter
+    estimator = clone(estimator_orig)
+    set_random_state(estimator, random_state=0)
+
+    X = np.array(
+        [
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+        ],
+        dtype=np.float64,
+    )
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2], dtype=int)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    sample_weight_original = np.ones(y.shape[0])
+    sample_weight_original[0] = 10.0
+
+    sample_weight_fit = sample_weight_original.copy()
+
+    estimator.fit(X, y, sample_weight=sample_weight_fit)
+
+    err_msg = "{name} overwrote the original `sample_weight` given during fit"
+    assert_allclose(sample_weight_fit, sample_weight_original, err_msg=err_msg)
 
 
 @ignore_warnings(category=(FutureWarning, UserWarning))
