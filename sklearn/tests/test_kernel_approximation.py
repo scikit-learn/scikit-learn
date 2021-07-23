@@ -331,8 +331,8 @@ def test_nystroem_precomputed_kernel():
         ny = Nystroem(kernel="precomputed", n_components=X.shape[0], **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
-            
-           
+
+
 def test_nystroem_component_indices():
     """Check that `component_indices_` corresponds to the subset of
     training points used to construct the feature map.
@@ -341,8 +341,8 @@ def test_nystroem_component_indices():
     """
     X, _ = make_classification(n_samples=100, n_features=20)
     feature_map_nystroem = Nystroem(
-        n_components=10, random_state=0,
+        n_components=10,
+        random_state=0,
     )
     feature_map_nystroem.fit(X)
     assert feature_map_nystroem.component_indices_.shape == (10,)
- 
