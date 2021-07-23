@@ -312,7 +312,7 @@ def test_pairwise_is_deprecated(affinity):
 
 def test_spectral_clustering_np_matrix_raises():
     """Check that spectral_clustering raises an informative error when passed
-    a np.matrix."""
+    a np.matrix. See #10993"""
     X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
 
     msg = r"spectral_clustering does not support passing in affinity as an np\.matrix"

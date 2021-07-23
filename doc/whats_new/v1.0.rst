@@ -188,6 +188,9 @@ Changelog
   mini batches processed. :pr:`17622`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |API| :func:`cluster.spectral_clustering` raises an improved error when passed
+  a `np.matrix`. :pr:`20560` by `Thomas Fan`_.
+
 :mod:`sklearn.compose`
 ......................
 
