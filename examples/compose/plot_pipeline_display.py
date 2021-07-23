@@ -8,7 +8,7 @@ support vector classifier.
 
 The default configuration for displaying a pipeline is 'text' where
 `set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
-use `set_config(display='diagram')` and then call the pipeline object.
+use `set_config(display='diagram')` and then output the pipeline object.
 """
 
 # %%
