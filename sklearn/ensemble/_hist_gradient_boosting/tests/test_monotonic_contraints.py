@@ -12,6 +12,9 @@ from sklearn.ensemble._hist_gradient_boosting.splitting import (
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
+n_threads = _openmp_effective_n_threads()
 
 
 def is_increasing(a):
@@ -262,15 +265,14 @@ def test_input_error():
     for monotonic_cst in ([1, 3], [1, -3]):
         gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
         with pytest.raises(
-            ValueError, match="must be None or an array-like of " "-1, 0 or 1"
+            ValueError, match="must be None or an array-like of -1, 0 or 1"
         ):
             gbdt.fit(X, y)
 
     gbdt = HistGradientBoostingClassifier(monotonic_cst=[0, 1])
     with pytest.raises(
         ValueError,
-        match="monotonic constraints are not supported "
-        "for multiclass classification",
+        match="monotonic constraints are not supported for multiclass classification",
     ):
         gbdt.fit(X, y)
 
@@ -296,7 +298,7 @@ def test_bounded_value_min_gain_to_split():
     hessians_are_constant = False
 
     builder = HistogramBuilder(
-        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant
+        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)

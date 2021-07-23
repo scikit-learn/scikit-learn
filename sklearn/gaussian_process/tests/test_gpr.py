@@ -482,8 +482,9 @@ def test_warning_bounds():
             gpr_sum.fit(X, y)
 
     assert len(record) == 2
-    assert record[0].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[0].message.args[0]
+        == "The optimal value found for "
         "dimension 0 of parameter "
         "k1__noise_level is close to the "
         "specified upper bound 0.001. "
@@ -491,8 +492,9 @@ def test_warning_bounds():
         "fit again may find a better value."
     )
 
-    assert record[1].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[1].message.args[0]
+        == "The optimal value found for "
         "dimension 0 of parameter "
         "k2__length_scale is close to the "
         "specified lower bound 1000.0. "
@@ -511,8 +513,9 @@ def test_warning_bounds():
             gpr_dims.fit(X_tile, y)
 
     assert len(record) == 2
-    assert record[0].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[0].message.args[0]
+        == "The optimal value found for "
         "dimension 0 of parameter "
         "length_scale is close to the "
         "specified lower bound 10.0. "
@@ -520,8 +523,9 @@ def test_warning_bounds():
         "fit again may find a better value."
     )
 
-    assert record[1].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[1].message.args[0]
+        == "The optimal value found for "
         "dimension 1 of parameter "
         "length_scale is close to the "
         "specified lower bound 10.0. "
@@ -608,3 +612,43 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
     pred1, std = gpr.predict(X_test, return_std=True)
     pred2, cov = gpr.predict(X_test, return_cov=True)
     assert_allclose(std, np.sqrt(np.diagonal(cov)), rtol=1e-5)
+
+
+@pytest.mark.parametrize(
+    "params, TypeError, err_msg",
+    [
+        ({"kernel": RBF(), "optimizer": "unknown"}, ValueError, "Unknown optimizer"),
+        ({"alpha": np.zeros(100)}, ValueError, "alpha must be a scalar or an array"),
+        (
+            {
+                "kernel": WhiteKernel(noise_level_bounds=(-np.inf, np.inf)),
+                "n_restarts_optimizer": 2,
+            },
+            ValueError,
+            "requires that all bounds are finite",
+        ),
+    ],
+)
+def test_gpr_fit_error(params, TypeError, err_msg):
+    """Check that expected error are raised during fit."""
+    gpr = GaussianProcessRegressor(**params)
+    with pytest.raises(TypeError, match=err_msg):
+        gpr.fit(X, y)
+
+
+def test_gpr_lml_error():
+    """Check that we raise the proper error in the LML method."""
+    gpr = GaussianProcessRegressor(kernel=RBF()).fit(X, y)
+
+    err_msg = "Gradient can only be evaluated for theta!=None"
+    with pytest.raises(ValueError, match=err_msg):
+        gpr.log_marginal_likelihood(eval_gradient=True)
+
+
+def test_gpr_predict_error():
+    """Check that we raise the proper error during predict."""
+    gpr = GaussianProcessRegressor(kernel=RBF()).fit(X, y)
+
+    err_msg = "At most one of return_std or return_cov can be requested."
+    with pytest.raises(RuntimeError, match=err_msg):
+        gpr.predict(X, return_cov=True, return_std=True)
