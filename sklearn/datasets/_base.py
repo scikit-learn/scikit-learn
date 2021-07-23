@@ -84,6 +84,29 @@ def _convert_data_dataframe(
     return combined_df, X, y
 
 
+def _check_valid_document(file_name, allowed_extensions):
+    """Checks if the file with file_name should be loaded in for `load_files`.
+
+    Parameters
+    ----------
+    file_name: str
+        The name of the file to check.
+
+    allowed_extensions : frozenset of str or None
+        List of desired file extensions to filter the files to be loaded.
+        If `None`, then all files are considered valid.
+
+    Returns
+    -------
+    data : bool
+        Indicates whether or not the file should be loaded in `load_files`.
+    """
+
+    if not allowed_extensions:
+        return True
+    return os.path.splitext(file_name)[1] in allowed_extensions
+
+
 def load_files(
     container_path,
     *,
@@ -95,7 +118,6 @@ def load_files(
     decode_error="strict",
     random_state=0,
     allowed_extensions=None,
-    ignored_extensions=None,
 ):
     """Load text files with categories as subfolder names.
 
@@ -133,10 +155,8 @@ def load_files(
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
 
-    If you want files with a specific file extension (e.g. .txt) then you
-    can pass a list of those file extensions to allowed_extensions. Similarly,
-    in cases where you want to ignore certain extensions, you can pass a list
-    of those extensions to ignored_extensions.
+    If you want files with a specific file extension (e.g. `.txt`) then you
+    can pass a list of those file extensions to `allowed_extensions`.
 
     Read more in the :ref:`User Guide <datasets>`.
 
@@ -179,11 +199,8 @@ def load_files(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    allowed_extensions :list of str, default=None
-        List of desired file extensions
-
-    ignored_extensions : list of str, default=None
-        List of file extensions to exclude from loading
+    allowed_extensions : list of str, default=None
+        List of desired file extensions to filter the files to be loaded.
 
     Returns
     -------
@@ -203,18 +220,8 @@ def load_files(
             The filenames holding the dataset.
     """
 
-    try:
-        assert not (allowed_extensions and ignored_extensions)
-    except AssertionError:
-        raise ValueError(
-            "Ignored extensions and allowed extensions cannot"
-            " both be present. Please choose one or the"
-            " other."
-        )
-
-    allowed_extensions = None if allowed_extensions is None else set(allowed_extensions)
-
-    ignored_extensions = None if ignored_extensions is None else set(ignored_extensions)
+    if allowed_extensions is not None:
+        allowed_extensions = frozenset(allowed_extensions)
 
     target = []
     target_names = []
@@ -233,7 +240,7 @@ def load_files(
         documents = [
             join(folder_path, d)
             for d in sorted(listdir(folder_path))
-            if _check_valid_document(d, allowed_extensions, ignored_extensions)
+            if _check_valid_document(d, allowed_extensions)
         ]
         target.extend(len(documents) * [label])
         filenames.extend(documents)
@@ -267,34 +274,6 @@ def load_files(
     return Bunch(
         filenames=filenames, target_names=target_names, target=target, DESCR=description
     )
-
-
-def _check_valid_document(file_name, allowed_extensions, ignored_extensions):
-    """
-    Checks if the file with file_name should be loaded in for load_files
-    Parameters
-    ----------
-    file_name: str
-        The name of the file to check
-    allowed_extensions : set of str or None
-        List of desired file extensions
-    ignored_extensions : set of str or None
-        List of file extensions to exclude
-    Returns
-    -------
-    data : Boolean
-        Indicates whether or not the file should be
-        loaded in load_files
-    """
-
-    if not allowed_extensions and not ignored_extensions:
-        return True
-
-    extension = os.path.splitext(file_name)[1]
-    if allowed_extensions:
-        return extension in allowed_extensions
-    else:
-        return extension not in ignored_extensions
 
 
 def load_data(module_path, data_file_name):

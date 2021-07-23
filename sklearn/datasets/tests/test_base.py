@@ -120,36 +120,8 @@ def test_load_files_wo_load_content(
     assert res.get("data") is None
 
 
-def test_load_files_w_allowed_and_ignored_extensions(load_files_root):
-    msg = (
-        "Ignored extensions and allowed extensions cannot both be present."
-        " Please choose one or the other."
-    )
-
-    with pytest.raises(ValueError, match=msg):
-        load_files(
-            load_files_root, allowed_extensions=[".txt"], ignored_extensions=[".txt"]
-        )
-
-
-def test_load_files_w_ignore_list(tmp_path):
-    """Test load_files with ignore_extensions."""
-    d = tmp_path / "sub"
-    d.mkdir()
-    p1 = d / "file1.txt"
-    p1.touch()
-    p2 = d / "file2.json"
-    p2.touch()
-    p3 = d / "file3.json"
-    p3.touch()
-    res = load_files(tmp_path, ignored_extensions=[".txt"])
-    assert str(p1) not in res.filenames
-    assert str(p2) in res.filenames
-    assert str(p3) in res.filenames
-
-
-def test_load_files_w_allow_list(tmp_path):
-    """Test load_files with_allow_extensions."""
+def test_load_files_allowed_extensions(tmp_path):
+    """Check the behaviour of `allowed_extension` in `load_files`."""
     d = tmp_path / "sub"
     d.mkdir()
     p1 = d / "file1.txt"
