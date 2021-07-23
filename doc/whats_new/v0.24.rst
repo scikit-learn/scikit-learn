@@ -12,13 +12,6 @@ Version 0.24.2
 Changelog
 ---------
 
-:mod:`sklearn.utils`
-......................
-
-- |Enhancement| Raise informative error message in :func:`type_of_target` when
-  labels encoded as bytes are used.
-  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
-
 :mod:`sklearn.compose`
 ......................
 

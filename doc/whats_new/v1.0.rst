@@ -637,6 +637,10 @@ Changelog
   unavailable on the basis of state, in a more readable way.
   :pr:`19948` by `Joel Nothman`_.
 
+- |Enhancement| Raise informative error message in :func:`type_of_target` when
+  labels encoded as bytes are used.
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
+
 - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
