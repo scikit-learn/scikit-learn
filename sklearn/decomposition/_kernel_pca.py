@@ -1,6 +1,7 @@
 """Kernel Principal Components Analysis."""
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
+#         Sylvain Marie <sylvain.marie@schneider-electric.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -8,14 +9,13 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils._arpack import _init_arpack_v0
-from ..utils.extmath import svd_flip
+from ..utils.extmath import svd_flip, _randomized_eigsh
 from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
 from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
-from ..utils.validation import _deprecate_positional_args
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):
@@ -23,6 +23,12 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
+
+    It uses the `scipy.linalg.eigh` LAPACK implementation of the full SVD or
+    the `scipy.sparse.linalg.eigsh` ARPACK implementation of the truncated SVD,
+    depending on the shape of the input data and the number of components to
+    extract. It can also use a randomized truncated SVD by the method of
+    Halko et al. 2009, see `eigen_solver`.
 
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
@@ -59,10 +65,37 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Learn the inverse transform for non-precomputed kernels.
         (i.e. learn to find the pre-image of a point)
 
-    eigen_solver : {'auto', 'dense', 'arpack'}, default='auto'
-        Select eigensolver to use. If n_components is much less than
-        the number of training samples, arpack may be more efficient
-        than the dense eigensolver.
+    eigen_solver : {'auto', 'dense', 'arpack', 'randomized'}, \
+        default='auto'
+        Select eigensolver to use. If `n_components` is much
+        less than the number of training samples, randomized (or arpack to a
+        smaller extend) may be more efficient than the dense eigensolver.
+        Randomized SVD is performed according to the method of Halko et al.
+
+        auto :
+            the solver is selected by a default policy based on n_samples
+            (the number of training samples) and `n_components`:
+            if the number of components to extract is less than 10 (strict) and
+            the number of samples is more than 200 (strict), the 'arpack'
+            method is enabled. Otherwise the exact full eigenvalue
+            decomposition is computed and optionally truncated afterwards
+            ('dense' method).
+        dense :
+            run exact full eigenvalue decomposition calling the standard
+            LAPACK solver via `scipy.linalg.eigh`, and select the components
+            by postprocessing
+        arpack :
+            run SVD truncated to n_components calling ARPACK solver using
+            `scipy.sparse.linalg.eigsh`. It requires strictly
+            0 < n_components < n_samples
+        randomized :
+            run randomized SVD by the method of Halko et al. The current
+            implementation selects eigenvalues based on their module; therefore
+            using this method can lead to unexpected results if the kernel is
+            not positive semi-definite.
+
+        .. versionchanged:: 1.0
+           `'randomized'` was added.
 
     tol : float, default=0
         Convergence tolerance for arpack.
@@ -72,6 +105,13 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Maximum number of iterations for arpack.
         If None, optimal value will be chosen by arpack.
 
+    iterated_power : int >= 0, or 'auto', default='auto'
+        Number of iterations for the power method computed by
+        svd_solver == 'randomized'. When 'auto', it is set to 7 when
+        `n_components < 0.1 * min(X.shape)`, other it is set to 4.
+
+        .. versionadded:: 1.0
+
     remove_zero_eig : bool, default=False
         If True, then all components with zero eigenvalues are removed, so
         that the number of components in the output may be < n_components
@@ -80,8 +120,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         with zero eigenvalues are removed regardless.
 
     random_state : int, RandomState instance or None, default=None
-        Used when ``eigen_solver`` == 'arpack'. Pass an int for reproducible
-        results across multiple function calls.
+        Used when ``eigen_solver`` == 'arpack' or 'randomized'. Pass an int
+        for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.18
@@ -154,9 +194,17 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         and Klaus-Robert Mueller. 1999. Kernel principal
         component analysis. In Advances in kernel methods,
         MIT Press, Cambridge, MA, USA 327-352.
+
+    For eigen_solver == 'arpack', refer to `scipy.sparse.linalg.eigsh`.
+
+    For eigen_solver == 'randomized', see:
+        Finding structure with randomness: Stochastic algorithms
+        for constructing approximate matrix decompositions Halko, et al., 2009
+        (arXiv:909)
+        A randomized algorithm for the decomposition of matrices
+        Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
 
-    @_deprecate_positional_args
     def __init__(
         self,
         n_components=None,
@@ -171,6 +219,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         eigen_solver="auto",
         tol=0,
         max_iter=None,
+        iterated_power="auto",
         remove_zero_eig=False,
         random_state=None,
         copy_X=True,
@@ -187,9 +236,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self.alpha = alpha
         self.fit_inverse_transform = fit_inverse_transform
         self.eigen_solver = eigen_solver
-        self.remove_zero_eig = remove_zero_eig
         self.tol = tol
         self.max_iter = max_iter
+        self.iterated_power = iterated_power
+        self.remove_zero_eig = remove_zero_eig
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.copy_X = copy_X
@@ -197,12 +247,31 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in version 0.24 and will be "
-        "removed in 1.1 (renaming of 0.26)."
+        "Attribute `_pairwise` was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `lambdas_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `eigenvalues_` instead."
+    )
+    @property
+    def lambdas_(self):
+        return self.eigenvalues_
+
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `alphas_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `eigenvectors_` instead."
+    )
+    @property
+    def alphas_(self):
+        return self.eigenvectors_
 
     def _get_kernel(self, X, Y=None):
         if callable(self.kernel):
@@ -218,9 +287,14 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # center kernel
         K = self._centerer.fit_transform(K)
 
+        # adjust n_components according to user inputs
         if self.n_components is None:
-            n_components = K.shape[0]
+            n_components = K.shape[0]  # use all dimensions
         else:
+            if self.n_components < 1:
+                raise ValueError(
+                    f"`n_components` should be >= 1, got: {self.n_component}"
+                )
             n_components = min(K.shape[0], self.n_components)
 
         # compute eigenvectors
@@ -233,6 +307,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             eigen_solver = self.eigen_solver
 
         if eigen_solver == "dense":
+            # Note: eigvals specifies the indices of smallest/largest to return
             self.eigenvalues_, self.eigenvectors_ = linalg.eigh(
                 K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1)
             )
@@ -241,6 +316,16 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             self.eigenvalues_, self.eigenvectors_ = eigsh(
                 K, n_components, which="LA", tol=self.tol, maxiter=self.max_iter, v0=v0
             )
+        elif eigen_solver == "randomized":
+            self.eigenvalues_, self.eigenvectors_ = _randomized_eigsh(
+                K,
+                n_components=n_components,
+                n_iter=self.iterated_power,
+                random_state=self.random_state,
+                selection="module",
+            )
+        else:
+            raise ValueError("Unsupported value for `eigen_solver`: %r" % eigen_solver)
 
         # make sure that the eigenvalues are ok and fix numerical issues
         self.eigenvalues_ = _check_psd_eigenvalues(
@@ -271,12 +356,12 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # if u is an eigenvector of Phi(X)Phi(X)'
         #     then Phi(X)'u is an eigenvector of Phi(X)'Phi(X)
         #
-        # At this stage our self.eigenvectors_ (the v) have norm 1, we need to
-        # scale them so that eigenvectors in kernel feature space (the u) have
-        # norm=1 instead
+        # At this stage our self.eigenvectors_ (the v) have norm 1, we need to scale
+        # them so that eigenvectors in kernel feature space (the u) have norm=1
+        # instead
         #
         # We COULD scale them here:
-        #  self.eigenvectors_ = self.eigenvectors_ / np.sqrt(self.eigenvalues_)
+        #       self.eigenvectors_ = self.eigenvectors_ / np.sqrt(self.eigenvalues_)
         #
         # But choose to perform that LATER when needed, in `fit()` and in
         # `transform()`.
@@ -365,13 +450,13 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         # scale eigenvectors (properly account for null-space for dot product)
         non_zeros = np.flatnonzero(self.eigenvalues_)
-        scaled_eigenvectors = np.zeros_like(self.eigenvectors_)
-        scaled_eigenvectors[:, non_zeros] = self.eigenvectors_[:, non_zeros] / np.sqrt(
+        scaled_alphas = np.zeros_like(self.eigenvectors_)
+        scaled_alphas[:, non_zeros] = self.eigenvectors_[:, non_zeros] / np.sqrt(
             self.eigenvalues_[non_zeros]
         )
 
         # Project with a scalar product between K and the scaled eigenvectors
-        return np.dot(K, scaled_eigenvectors)
+        return np.dot(K, scaled_alphas)
 
     def inverse_transform(self, X):
         """Transform X back to original space.
@@ -423,22 +508,3 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             "preserves_dtype": [np.float64, np.float32],
             "pairwise": self.kernel == "precomputed",
         }
-
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `lambdas_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `eigenvalues_` instead."
-    )
-    @property
-    def lambdas_(self):
-        return self.eigenvalues_
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `alphas_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `eigenvectors_` instead."
-    )
-    @property
-    def alphas_(self):
-        return self.eigenvectors_
