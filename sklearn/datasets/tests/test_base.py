@@ -131,9 +131,7 @@ def test_load_files_allowed_extensions(tmp_path):
     p3 = d / "file3.json"
     p3.touch()
     res = load_files(tmp_path, allowed_extensions=[".txt"])
-    assert str(p1) in res.filenames
-    assert str(p2) not in res.filenames
-    assert str(p3) not in res.filenames
+    assert set([str(p1)]) == set(res.filenames)
 
 
 def test_load_sample_images():
