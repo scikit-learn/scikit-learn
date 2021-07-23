@@ -598,6 +598,11 @@ Changelog
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| The `fit` method of :class:`preprocessing.OrdinalEncoder` will not
+  raise error when `handle_unknown='ignore'` and unknown categories are given
+  to `fit`.
+  :pr:`19906` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 - |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
