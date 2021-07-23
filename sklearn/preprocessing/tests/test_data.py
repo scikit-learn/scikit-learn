@@ -2633,7 +2633,12 @@ def test_minmax_scaler_clip(feature_range):
 
 
 def test_standard_scaler_raise_error_for_1d_input():
-    """inverse_transform raises an error for 1d input."""
+    """Check that `inverse_transform` from `StandardScaler` raises an error
+    with 1D array.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19518
+    """
     scaler = StandardScaler().fit(X_2d)
-    with pytest.raises(ValueError):
+    err_msg = "Expected 2D array, got 1D array instead"
+    with pytest.raises(ValueError, match=err_msg):
         scaler.inverse_transform(X_2d[:, 0])
