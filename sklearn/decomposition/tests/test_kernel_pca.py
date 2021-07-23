@@ -547,7 +547,7 @@ def test_kernel_pcc_pairwise_is_deprecated():
 def test_kernel_pca_lambdas_deprecated():
     kp = KernelPCA()
     kp.eigenvalues_ = None
-    msg = r"Attribute 'lambdas_' was deprecated in version 1\.0"
+    msg = r"Attribute `lambdas_` was deprecated in version 1\.0"
     with pytest.warns(FutureWarning, match=msg):
         kp.lambdas_
 
@@ -556,6 +556,6 @@ def test_kernel_pca_lambdas_deprecated():
 def test_kernel_pca_alphas_deprecated():
     kp = KernelPCA(kernel="precomputed")
     kp.eigenvectors_ = None
-    msg = r"Attribute 'alphas_' was deprecated in version 1\.0"
+    msg = r"Attribute `alphas_` was deprecated in version 1\.0"
     with pytest.warns(FutureWarning, match=msg):
         kp.alphas_
