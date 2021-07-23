@@ -18,28 +18,42 @@ from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
 from ..utils.random import sample_without_replacement
-from ..utils.validation import _deprecate_positional_args
 
 
 def _generate_hypercube(samples, dimensions, rng):
-    """Returns distinct binary samples of length dimensions.
-    """
+    """Returns distinct binary samples of length dimensions."""
     if dimensions > 30:
-        return np.hstack([rng.randint(2, size=(samples, dimensions - 30)),
-                          _generate_hypercube(samples, 30, rng)])
-    out = sample_without_replacement(2 ** dimensions, samples,
-                                     random_state=rng).astype(dtype='>u4',
-                                                              copy=False)
-    out = np.unpackbits(out.view('>u1')).reshape((-1, 32))[:, -dimensions:]
+        return np.hstack(
+            [
+                rng.randint(2, size=(samples, dimensions - 30)),
+                _generate_hypercube(samples, 30, rng),
+            ]
+        )
+    out = sample_without_replacement(2 ** dimensions, samples, random_state=rng).astype(
+        dtype=">u4", copy=False
+    )
+    out = np.unpackbits(out.view(">u1")).reshape((-1, 32))[:, -dimensions:]
     return out
 
 
-@_deprecate_positional_args
-def make_classification(n_samples=100, n_features=20, *, n_informative=2,
-                        n_redundant=2, n_repeated=0, n_classes=2,
-                        n_clusters_per_class=2, weights=None, flip_y=0.01,
-                        class_sep=1.0, hypercube=True, shift=0.0, scale=1.0,
-                        shuffle=True, random_state=None):
+def make_classification(
+    n_samples=100,
+    n_features=20,
+    *,
+    n_informative=2,
+    n_redundant=2,
+    n_repeated=0,
+    n_classes=2,
+    n_clusters_per_class=2,
+    weights=None,
+    flip_y=0.01,
+    class_sep=1.0,
+    hypercube=True,
+    shift=0.0,
+    scale=1.0,
+    shuffle=True,
+    random_state=None,
+):
     """Generate a random n-class classification problem.
 
     This initially creates clusters of points normally distributed (std=1)
@@ -160,20 +174,26 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
 
     # Count features, clusters and samples
     if n_informative + n_redundant + n_repeated > n_features:
-        raise ValueError("Number of informative, redundant and repeated "
-                         "features must sum to less than the number of total"
-                         " features")
+        raise ValueError(
+            "Number of informative, redundant and repeated "
+            "features must sum to less than the number of total"
+            " features"
+        )
     # Use log2 to avoid overflow errors
     if n_informative < np.log2(n_classes * n_clusters_per_class):
         msg = "n_classes({}) * n_clusters_per_class({}) must be"
         msg += " smaller or equal 2**n_informative({})={}"
-        raise ValueError(msg.format(n_classes, n_clusters_per_class,
-                                    n_informative, 2**n_informative))
+        raise ValueError(
+            msg.format(
+                n_classes, n_clusters_per_class, n_informative, 2 ** n_informative
+            )
+        )
 
     if weights is not None:
         if len(weights) not in [n_classes, n_classes - 1]:
-            raise ValueError("Weights specified but incompatible with number "
-                             "of classes.")
+            raise ValueError(
+                "Weights specified but incompatible with number of classes."
+            )
         if len(weights) == n_classes - 1:
             if isinstance(weights, list):
                 weights = weights + [1.0 - sum(weights)]
@@ -189,7 +209,8 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
     # Distribute samples among clusters by weight
     n_samples_per_cluster = [
         int(n_samples * weights[k % n_classes] / n_clusters_per_class)
-        for k in range(n_clusters)]
+        for k in range(n_clusters)
+    ]
 
     for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
@@ -199,8 +220,9 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
     y = np.zeros(n_samples, dtype=int)
 
     # Build the polytope whose vertices become cluster centroids
-    centroids = _generate_hypercube(n_clusters, n_informative,
-                                    generator).astype(float, copy=False)
+    centroids = _generate_hypercube(n_clusters, n_informative, generator).astype(
+        float, copy=False
+    )
     centroids *= 2 * class_sep
     centroids -= class_sep
     if not hypercube:
@@ -225,14 +247,15 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
     # Create redundant features
     if n_redundant > 0:
         B = 2 * generator.rand(n_informative, n_redundant) - 1
-        X[:, n_informative:n_informative + n_redundant] = \
-            np.dot(X[:, :n_informative], B)
+        X[:, n_informative : n_informative + n_redundant] = np.dot(
+            X[:, :n_informative], B
+        )
 
     # Repeat some features
     if n_repeated > 0:
         n = n_informative + n_redundant
         indices = ((n - 1) * generator.rand(n_repeated) + 0.5).astype(np.intp)
-        X[:, n:n + n_repeated] = X[:, indices]
+        X[:, n : n + n_repeated] = X[:, indices]
 
     # Fill useless features
     if n_useless > 0:
@@ -264,13 +287,19 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
     return X, y
 
 
-@_deprecate_positional_args
-def make_multilabel_classification(n_samples=100, n_features=20, *,
-                                   n_classes=5,
-                                   n_labels=2, length=50, allow_unlabeled=True,
-                                   sparse=False, return_indicator='dense',
-                                   return_distributions=False,
-                                   random_state=None):
+def make_multilabel_classification(
+    n_samples=100,
+    n_features=20,
+    *,
+    n_classes=5,
+    n_labels=2,
+    length=50,
+    allow_unlabeled=True,
+    sparse=False,
+    return_indicator="dense",
+    return_distributions=False,
+    random_state=None,
+):
     """Generate a random multilabel classification problem.
 
     For each sample, the generative process is:
@@ -350,14 +379,16 @@ def make_multilabel_classification(n_samples=100, n_features=20, *,
     """
     if n_classes < 1:
         raise ValueError(
-            "'n_classes' should be an integer greater than 0. Got {} instead."
-            .format(n_classes)
+            "'n_classes' should be an integer greater than 0. Got {} instead.".format(
+                n_classes
             )
+        )
     if length < 1:
         raise ValueError(
-            "'length' should be an integer greater than 0. Got {} instead."
-            .format(length)
+            "'length' should be an integer greater than 0. Got {} instead.".format(
+                length
             )
+        )
 
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
@@ -378,8 +409,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, *,
         y = set()
         while len(y) != y_size:
             # pick a class with probability P(c)
-            c = np.searchsorted(cumulative_p_c,
-                                generator.rand(y_size - len(y)))
+            c = np.searchsorted(cumulative_p_c, generator.rand(y_size - len(y)))
             y.update(c)
         y = list(y)
 
@@ -400,8 +430,8 @@ def make_multilabel_classification(n_samples=100, n_features=20, *,
         words = np.searchsorted(cumulative_p_w_sample, generator.rand(n_words))
         return words, y
 
-    X_indices = array.array('i')
-    X_indptr = array.array('i', [0])
+    X_indices = array.array("i")
+    X_indptr = array.array("i", [0])
     Y = []
     for i in range(n_samples):
         words, y = sample_example()
@@ -409,25 +439,22 @@ def make_multilabel_classification(n_samples=100, n_features=20, *,
         X_indptr.append(len(X_indices))
         Y.append(y)
     X_data = np.ones(len(X_indices), dtype=np.float64)
-    X = sp.csr_matrix((X_data, X_indices, X_indptr),
-                      shape=(n_samples, n_features))
+    X = sp.csr_matrix((X_data, X_indices, X_indptr), shape=(n_samples, n_features))
     X.sum_duplicates()
     if not sparse:
         X = X.toarray()
 
     # return_indicator can be True due to backward compatibility
-    if return_indicator in (True, 'sparse', 'dense'):
-        lb = MultiLabelBinarizer(sparse_output=(return_indicator == 'sparse'))
+    if return_indicator in (True, "sparse", "dense"):
+        lb = MultiLabelBinarizer(sparse_output=(return_indicator == "sparse"))
         Y = lb.fit([range(n_classes)]).transform(Y)
     elif return_indicator is not False:
-        raise ValueError("return_indicator must be either 'sparse', 'dense' "
-                         'or False.')
+        raise ValueError("return_indicator must be either 'sparse', 'dense' or False.")
     if return_distributions:
         return X, Y, p_c, p_w_c
     return X, Y
 
 
-@_deprecate_positional_args
 def make_hastie_10_2(n_samples=12000, *, random_state=None):
     """Generates data for binary classification used in
     Hastie et al. 2009, Example 10.2.
@@ -476,11 +503,20 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     return X, y
 
 
-@_deprecate_positional_args
-def make_regression(n_samples=100, n_features=100, *, n_informative=10,
-                    n_targets=1, bias=0.0, effective_rank=None,
-                    tail_strength=0.5, noise=0.0, shuffle=True, coef=False,
-                    random_state=None):
+def make_regression(
+    n_samples=100,
+    n_features=100,
+    *,
+    n_informative=10,
+    n_targets=1,
+    bias=0.0,
+    effective_rank=None,
+    tail_strength=0.5,
+    noise=0.0,
+    shuffle=True,
+    coef=False,
+    random_state=None,
+):
     """Generate a random regression problem.
 
     The input set can either be well conditioned (by default) or have a low
@@ -563,18 +599,19 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
 
     else:
         # Randomly generate a low rank, fat tail input set
-        X = make_low_rank_matrix(n_samples=n_samples,
-                                 n_features=n_features,
-                                 effective_rank=effective_rank,
-                                 tail_strength=tail_strength,
-                                 random_state=generator)
+        X = make_low_rank_matrix(
+            n_samples=n_samples,
+            n_features=n_features,
+            effective_rank=effective_rank,
+            tail_strength=tail_strength,
+            random_state=generator,
+        )
 
     # Generate a ground truth model with only n_informative features being non
     # zeros (the other features are not correlated to y and should be ignored
     # by a sparsifying regularizers such as L1 or elastic net)
     ground_truth = np.zeros((n_features, n_targets))
-    ground_truth[:n_informative, :] = 100 * generator.rand(n_informative,
-                                                           n_targets)
+    ground_truth[:n_informative, :] = 100 * generator.rand(n_informative, n_targets)
 
     y = np.dot(X, ground_truth) + bias
 
@@ -600,9 +637,9 @@ def make_regression(n_samples=100, n_features=100, *, n_informative=10,
         return X, y
 
 
-@_deprecate_positional_args
-def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
-                 factor=.8):
+def make_circles(
+    n_samples=100, *, shuffle=True, noise=None, random_state=None, factor=0.8
+):
     """Make a large circle containing a smaller circle in 2d.
 
     A simple toy dataset to visualize clustering and classification
@@ -655,8 +692,9 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
         try:
             n_samples_out, n_samples_in = n_samples
         except ValueError as e:
-            raise ValueError('`n_samples` can be either an int or '
-                             'a two-element tuple.') from e
+            raise ValueError(
+                "`n_samples` can be either an int or a two-element tuple."
+            ) from e
 
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we set endpoint=False
@@ -667,10 +705,12 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
     inner_circ_x = np.cos(linspace_in) * factor
     inner_circ_y = np.sin(linspace_in) * factor
 
-    X = np.vstack([np.append(outer_circ_x, inner_circ_x),
-                   np.append(outer_circ_y, inner_circ_y)]).T
-    y = np.hstack([np.zeros(n_samples_out, dtype=np.intp),
-                   np.ones(n_samples_in, dtype=np.intp)])
+    X = np.vstack(
+        [np.append(outer_circ_x, inner_circ_x), np.append(outer_circ_y, inner_circ_y)]
+    ).T
+    y = np.hstack(
+        [np.zeros(n_samples_out, dtype=np.intp), np.ones(n_samples_in, dtype=np.intp)]
+    )
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
@@ -680,7 +720,6 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
     return X, y
 
 
-@_deprecate_positional_args
 def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     """Make two interleaving half circles.
 
@@ -723,20 +762,23 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
         try:
             n_samples_out, n_samples_in = n_samples
         except ValueError as e:
-            raise ValueError('`n_samples` can be either an int or '
-                             'a two-element tuple.') from e
+            raise ValueError(
+                "`n_samples` can be either an int or a two-element tuple."
+            ) from e
 
     generator = check_random_state(random_state)
 
     outer_circ_x = np.cos(np.linspace(0, np.pi, n_samples_out))
     outer_circ_y = np.sin(np.linspace(0, np.pi, n_samples_out))
     inner_circ_x = 1 - np.cos(np.linspace(0, np.pi, n_samples_in))
-    inner_circ_y = 1 - np.sin(np.linspace(0, np.pi, n_samples_in)) - .5
+    inner_circ_y = 1 - np.sin(np.linspace(0, np.pi, n_samples_in)) - 0.5
 
-    X = np.vstack([np.append(outer_circ_x, inner_circ_x),
-                   np.append(outer_circ_y, inner_circ_y)]).T
-    y = np.hstack([np.zeros(n_samples_out, dtype=np.intp),
-                   np.ones(n_samples_in, dtype=np.intp)])
+    X = np.vstack(
+        [np.append(outer_circ_x, inner_circ_x), np.append(outer_circ_y, inner_circ_y)]
+    ).T
+    y = np.hstack(
+        [np.zeros(n_samples_out, dtype=np.intp), np.ones(n_samples_in, dtype=np.intp)]
+    )
 
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
@@ -747,10 +789,17 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     return X, y
 
 
-@_deprecate_positional_args
-def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
-               center_box=(-10.0, 10.0), shuffle=True, random_state=None,
-               return_centers=False):
+def make_blobs(
+    n_samples=100,
+    n_features=2,
+    *,
+    centers=None,
+    cluster_std=1.0,
+    center_box=(-10.0, 10.0),
+    shuffle=True,
+    random_state=None,
+    return_centers=False,
+):
     """Generate isotropic Gaussian blobs for clustering.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -836,8 +885,9 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
 
         if isinstance(centers, numbers.Integral):
             n_centers = centers
-            centers = generator.uniform(center_box[0], center_box[1],
-                                        size=(n_centers, n_features))
+            centers = generator.uniform(
+                center_box[0], center_box[1], size=(n_centers, n_features)
+            )
 
         else:
             centers = check_array(centers)
@@ -848,16 +898,20 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
         # Set n_centers by looking at [n_samples] arg
         n_centers = len(n_samples)
         if centers is None:
-            centers = generator.uniform(center_box[0], center_box[1],
-                                        size=(n_centers, n_features))
+            centers = generator.uniform(
+                center_box[0], center_box[1], size=(n_centers, n_features)
+            )
         try:
             assert len(centers) == n_centers
         except TypeError as e:
-            raise ValueError("Parameter `centers` must be array-like. "
-                             "Got {!r} instead".format(centers)) from e
+            raise ValueError(
+                "Parameter `centers` must be array-like. Got {!r} instead".format(
+                    centers
+                )
+            ) from e
         except AssertionError as e:
             raise ValueError(
-                f"Length of `n_samples` not consistent with number of "
+                "Length of `n_samples` not consistent with number of "
                 f"centers. Got n_samples = {n_samples} and centers = {centers}"
             ) from e
         else:
@@ -866,10 +920,12 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
 
     # stds: if cluster_std is given as list, it must be consistent
     # with the n_centers
-    if (hasattr(cluster_std, "__len__") and len(cluster_std) != n_centers):
-        raise ValueError("Length of `clusters_std` not consistent with "
-                         "number of centers. Got centers = {} "
-                         "and cluster_std = {}".format(centers, cluster_std))
+    if hasattr(cluster_std, "__len__") and len(cluster_std) != n_centers:
+        raise ValueError(
+            "Length of `clusters_std` not consistent with "
+            "number of centers. Got centers = {} "
+            "and cluster_std = {}".format(centers, cluster_std)
+        )
 
     if isinstance(cluster_std, numbers.Real):
         cluster_std = np.full(len(centers), cluster_std)
@@ -886,8 +942,7 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
             n_samples_per_center[i] += 1
 
     for i, (n, std) in enumerate(zip(n_samples_per_center, cluster_std)):
-        X.append(generator.normal(loc=centers[i], scale=std,
-                                  size=(n, n_features)))
+        X.append(generator.normal(loc=centers[i], scale=std, size=(n, n_features)))
         y += [i] * n
 
     X = np.concatenate(X)
@@ -906,9 +961,7 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
         return X, y
 
 
-@_deprecate_positional_args
-def make_friedman1(n_samples=100, n_features=10, *, noise=0.0,
-                   random_state=None):
+def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None):
     """Generate the "Friedman #1" regression problem.
 
     This dataset is described in Friedman [1] and Breiman [2].
@@ -964,13 +1017,17 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0,
     generator = check_random_state(random_state)
 
     X = generator.rand(n_samples, n_features)
-    y = 10 * np.sin(np.pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
-        + 10 * X[:, 3] + 5 * X[:, 4] + noise * generator.randn(n_samples)
+    y = (
+        10 * np.sin(np.pi * X[:, 0] * X[:, 1])
+        + 20 * (X[:, 2] - 0.5) ** 2
+        + 10 * X[:, 3]
+        + 5 * X[:, 4]
+        + noise * generator.randn(n_samples)
+    )
 
     return X, y
 
 
-@_deprecate_positional_args
 def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     """Generate the "Friedman #2" regression problem.
 
@@ -1029,14 +1086,13 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     X[:, 3] *= 10
     X[:, 3] += 1
 
-    y = (X[:, 0] ** 2
-         + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
-        + noise * generator.randn(n_samples)
+    y = (
+        X[:, 0] ** 2 + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2
+    ) ** 0.5 + noise * generator.randn(n_samples)
 
     return X, y
 
 
-@_deprecate_positional_args
 def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     """Generate the "Friedman #3" regression problem.
 
@@ -1095,15 +1151,21 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     X[:, 3] *= 10
     X[:, 3] += 1
 
-    y = np.arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) / X[:, 0]) \
-        + noise * generator.randn(n_samples)
+    y = np.arctan(
+        (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) / X[:, 0]
+    ) + noise * generator.randn(n_samples)
 
     return X, y
 
 
-@_deprecate_positional_args
-def make_low_rank_matrix(n_samples=100, n_features=100, *, effective_rank=10,
-                         tail_strength=0.5, random_state=None):
+def make_low_rank_matrix(
+    n_samples=100,
+    n_features=100,
+    *,
+    effective_rank=10,
+    tail_strength=0.5,
+    random_state=None,
+):
     """Generate a mostly low rank matrix with bell-shaped singular values.
 
     Most of the variance can be explained by a bell-shaped curve of width
@@ -1156,26 +1218,25 @@ def make_low_rank_matrix(n_samples=100, n_features=100, *, effective_rank=10,
     n = min(n_samples, n_features)
 
     # Random (ortho normal) vectors
-    u, _ = linalg.qr(generator.randn(n_samples, n), mode='economic',
-                     check_finite=False)
-    v, _ = linalg.qr(generator.randn(n_features, n), mode='economic',
-                     check_finite=False)
+    u, _ = linalg.qr(generator.randn(n_samples, n), mode="economic", check_finite=False)
+    v, _ = linalg.qr(
+        generator.randn(n_features, n), mode="economic", check_finite=False
+    )
 
     # Index of the singular values
     singular_ind = np.arange(n, dtype=np.float64)
 
     # Build the singular profile by assembling signal and noise components
-    low_rank = ((1 - tail_strength) *
-                np.exp(-1.0 * (singular_ind / effective_rank) ** 2))
+    low_rank = (1 - tail_strength) * np.exp(-1.0 * (singular_ind / effective_rank) ** 2)
     tail = tail_strength * np.exp(-0.1 * singular_ind / effective_rank)
     s = np.identity(n) * (low_rank + tail)
 
     return np.dot(np.dot(u, s), v.T)
 
 
-@_deprecate_positional_args
-def make_sparse_coded_signal(n_samples, *, n_components, n_features,
-                             n_nonzero_coefs, random_state=None):
+def make_sparse_coded_signal(
+    n_samples, *, n_components, n_features, n_nonzero_coefs, random_state=None
+):
     """Generate a signal as a sparse combination of dictionary elements.
 
     Returns a matrix Y = DX, such as D is (n_features, n_components),
@@ -1236,9 +1297,7 @@ def make_sparse_coded_signal(n_samples, *, n_components, n_features,
     return map(np.squeeze, (Y, D, X))
 
 
-@_deprecate_positional_args
-def make_sparse_uncorrelated(n_samples=100, n_features=10, *,
-                             random_state=None):
+def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None):
     """Generate a random regression problem with sparse uncorrelated design.
 
     This dataset is described in Celeux et al [1]. as::
@@ -1281,15 +1340,14 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *,
     generator = check_random_state(random_state)
 
     X = generator.normal(loc=0, scale=1, size=(n_samples, n_features))
-    y = generator.normal(loc=(X[:, 0] +
-                              2 * X[:, 1] -
-                              2 * X[:, 2] -
-                              1.5 * X[:, 3]), scale=np.ones(n_samples))
+    y = generator.normal(
+        loc=(X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3]),
+        scale=np.ones(n_samples),
+    )
 
     return X, y
 
 
-@_deprecate_positional_args
 def make_spd_matrix(n_dim, *, random_state=None):
     """Generate a random symmetric, positive-definite matrix.
 
@@ -1323,10 +1381,15 @@ def make_spd_matrix(n_dim, *, random_state=None):
     return X
 
 
-@_deprecate_positional_args
-def make_sparse_spd_matrix(dim=1, *, alpha=0.95, norm_diag=False,
-                           smallest_coef=.1, largest_coef=.9,
-                           random_state=None):
+def make_sparse_spd_matrix(
+    dim=1,
+    *,
+    alpha=0.95,
+    norm_diag=False,
+    smallest_coef=0.1,
+    largest_coef=0.9,
+    random_state=None,
+):
     """Generate a sparse symmetric definite positive matrix.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -1375,9 +1438,9 @@ def make_sparse_spd_matrix(dim=1, *, alpha=0.95, norm_diag=False,
     chol = -np.eye(dim)
     aux = random_state.rand(dim, dim)
     aux[aux < alpha] = 0
-    aux[aux > alpha] = (smallest_coef
-                        + (largest_coef - smallest_coef)
-                        * random_state.rand(np.sum(aux > alpha)))
+    aux[aux > alpha] = smallest_coef + (
+        largest_coef - smallest_coef
+    ) * random_state.rand(np.sum(aux > alpha))
     aux = np.tril(aux, k=-1)
 
     # Permute the lines: we don't want to have asymmetries in the final
@@ -1390,7 +1453,7 @@ def make_sparse_spd_matrix(dim=1, *, alpha=0.95, norm_diag=False,
     if norm_diag:
         # Form the diagonal vector into a row matrix
         d = np.diag(prec).reshape(1, prec.shape[0])
-        d = 1. / np.sqrt(d)
+        d = 1.0 / np.sqrt(d)
 
         prec *= d
         prec *= d.T
@@ -1398,7 +1461,6 @@ def make_sparse_spd_matrix(dim=1, *, alpha=0.95, norm_diag=False,
     return prec
 
 
-@_deprecate_positional_args
 def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None):
     """Generate a swiss roll dataset.
 
@@ -1451,7 +1513,6 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None):
     return X, t
 
 
-@_deprecate_positional_args
 def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     """Generate an S curve dataset.
 
@@ -1494,10 +1555,16 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     return X, t
 
 
-@_deprecate_positional_args
-def make_gaussian_quantiles(*, mean=None, cov=1., n_samples=100,
-                            n_features=2, n_classes=3,
-                            shuffle=True, random_state=None):
+def make_gaussian_quantiles(
+    *,
+    mean=None,
+    cov=1.0,
+    n_samples=100,
+    n_features=2,
+    n_classes=3,
+    shuffle=True,
+    random_state=None,
+):
     r"""Generate isotropic Gaussian and label samples by quantile.
 
     This classification dataset is constructed by taking a multi-dimensional
@@ -1562,8 +1629,7 @@ def make_gaussian_quantiles(*, mean=None, cov=1., n_samples=100,
         mean = np.array(mean)
 
     # Build multivariate normal distribution
-    X = generator.multivariate_normal(mean, cov * np.identity(n_features),
-                                      (n_samples,))
+    X = generator.multivariate_normal(mean, cov * np.identity(n_features), (n_samples,))
 
     # Sort by distance from origin
     idx = np.argsort(np.sum((X - mean[np.newaxis, :]) ** 2, axis=1))
@@ -1572,8 +1638,12 @@ def make_gaussian_quantiles(*, mean=None, cov=1., n_samples=100,
     # Label by quantile
     step = n_samples // n_classes
 
-    y = np.hstack([np.repeat(np.arange(n_classes), step),
-                   np.repeat(n_classes - 1, n_samples - step * n_classes)])
+    y = np.hstack(
+        [
+            np.repeat(np.arange(n_classes), step),
+            np.repeat(n_classes - 1, n_samples - step * n_classes),
+        ]
+    )
 
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
@@ -1590,9 +1660,16 @@ def _shuffle(data, random_state=None):
     return result, row_idx, col_idx
 
 
-@_deprecate_positional_args
-def make_biclusters(shape, n_clusters, *, noise=0.0, minval=10,
-                    maxval=100, shuffle=True, random_state=None):
+def make_biclusters(
+    shape,
+    n_clusters,
+    *,
+    noise=0.0,
+    minval=10,
+    maxval=100,
+    shuffle=True,
+    random_state=None,
+):
     """Generate an array with constant block diagonal structure for
     biclustering.
 
@@ -1651,17 +1728,15 @@ def make_biclusters(shape, n_clusters, *, noise=0.0, minval=10,
     consts = generator.uniform(minval, maxval, n_clusters)
 
     # row and column clusters of approximately equal sizes
-    row_sizes = generator.multinomial(n_rows,
-                                      np.repeat(1.0 / n_clusters,
-                                                n_clusters))
-    col_sizes = generator.multinomial(n_cols,
-                                      np.repeat(1.0 / n_clusters,
-                                                n_clusters))
+    row_sizes = generator.multinomial(n_rows, np.repeat(1.0 / n_clusters, n_clusters))
+    col_sizes = generator.multinomial(n_cols, np.repeat(1.0 / n_clusters, n_clusters))
 
-    row_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
-                                zip(range(n_clusters), row_sizes)))
-    col_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
-                                zip(range(n_clusters), col_sizes)))
+    row_labels = np.hstack(
+        list(np.repeat(val, rep) for val, rep in zip(range(n_clusters), row_sizes))
+    )
+    col_labels = np.hstack(
+        list(np.repeat(val, rep) for val, rep in zip(range(n_clusters), col_sizes))
+    )
 
     result = np.zeros(shape, dtype=np.float64)
     for i in range(n_clusters):
@@ -1682,9 +1757,16 @@ def make_biclusters(shape, n_clusters, *, noise=0.0, minval=10,
     return result, rows, cols
 
 
-@_deprecate_positional_args
-def make_checkerboard(shape, n_clusters, *, noise=0.0, minval=10,
-                      maxval=100, shuffle=True, random_state=None):
+def make_checkerboard(
+    shape,
+    n_clusters,
+    *,
+    noise=0.0,
+    minval=10,
+    maxval=100,
+    shuffle=True,
+    random_state=None,
+):
     """Generate an array with block checkerboard structure for
     biclustering.
 
@@ -1747,17 +1829,19 @@ def make_checkerboard(shape, n_clusters, *, noise=0.0, minval=10,
 
     # row and column clusters of approximately equal sizes
     n_rows, n_cols = shape
-    row_sizes = generator.multinomial(n_rows,
-                                      np.repeat(1.0 / n_row_clusters,
-                                                n_row_clusters))
-    col_sizes = generator.multinomial(n_cols,
-                                      np.repeat(1.0 / n_col_clusters,
-                                                n_col_clusters))
+    row_sizes = generator.multinomial(
+        n_rows, np.repeat(1.0 / n_row_clusters, n_row_clusters)
+    )
+    col_sizes = generator.multinomial(
+        n_cols, np.repeat(1.0 / n_col_clusters, n_col_clusters)
+    )
 
-    row_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
-                                zip(range(n_row_clusters), row_sizes)))
-    col_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
-                                zip(range(n_col_clusters), col_sizes)))
+    row_labels = np.hstack(
+        list(np.repeat(val, rep) for val, rep in zip(range(n_row_clusters), row_sizes))
+    )
+    col_labels = np.hstack(
+        list(np.repeat(val, rep) for val, rep in zip(range(n_col_clusters), col_sizes))
+    )
 
     result = np.zeros(shape, dtype=np.float64)
     for i in range(n_row_clusters):
@@ -1773,11 +1857,19 @@ def make_checkerboard(shape, n_clusters, *, noise=0.0, minval=10,
         row_labels = row_labels[row_idx]
         col_labels = col_labels[col_idx]
 
-    rows = np.vstack([row_labels == label
-                      for label in range(n_row_clusters)
-                      for _ in range(n_col_clusters)])
-    cols = np.vstack([col_labels == label
-                      for _ in range(n_row_clusters)
-                      for label in range(n_col_clusters)])
+    rows = np.vstack(
+        [
+            row_labels == label
+            for label in range(n_row_clusters)
+            for _ in range(n_col_clusters)
+        ]
+    )
+    cols = np.vstack(
+        [
+            col_labels == label
+            for _ in range(n_row_clusters)
+            for label in range(n_col_clusters)
+        ]
+    )
 
     return result, rows, cols
