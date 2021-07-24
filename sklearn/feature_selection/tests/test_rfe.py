@@ -110,37 +110,6 @@ def test_rfe():
     assert_array_almost_equal(X_r, X_r_sparse.toarray())
 
 
-def test_rfe_sample_weights():
-    X, y = load_iris(return_X_y=True)
-
-    clf = SVC(kernel="linear")
-    rfe = RFE(estimator=clf, n_features_to_select=1)
-
-    class_targeted, class_weight_factor = 2, 2
-
-    # Case 1 - original dataset
-    rfe_without_sample_weight = clone(rfe).fit(X, y)
-
-    # Case 2 - double the weight of one class's samples
-    sample_weight = np.ones(y.shape[0])
-    sample_weight[y == class_targeted] = class_weight_factor
-
-    rfe_with_sample_weight = clone(rfe).fit(X, y, sample_weight=sample_weight)
-
-    # Case 3 - duplicate the samples of one class]
-    X_duplicate = np.concatenate((X, X[y == class_targeted]), axis=0)
-    n_extra = (y == class_targeted).sum()
-    extra_Y = np.ones(n_extra, dtype=int) * class_targeted
-    y_duplicate = np.concatenate((y, extra_Y), axis=0)
-
-    rfe_duplicate = clone(rfe).fit(X_duplicate, y_duplicate)
-
-    with raises(AssertionError):
-        assert_array_equal(rfe_without_sample_weight, rfe_with_sample_weight)
-
-    assert_array_equal(rfe_with_sample_weight.ranking_, rfe_duplicate.ranking_)
-
-
 def test_RFE_fit_score_params():
     # Make sure RFE passes the metadata down to fit and score methods of the
     # underlying estimator
