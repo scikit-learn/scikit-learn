@@ -1587,30 +1587,3 @@ def _check_fit_params(X, fit_params, indices=None):
             )
 
     return fit_params_validated
-
-
-def _get_feature_names(X):
-    """Get feature names from X.
-
-    Support for other array containers should place its implementation here.
-
-    Parameters
-    ----------
-    X : {ndarray, dataframe} of shape (n_samples, n_features)
-        Array container to extract feature names.
-
-        - pandas DataFrame : The columns will be considered to be feature
-          names.
-        - All other array containers will return `None`.
-
-    Returns
-    -------
-    names: ndarray or None
-        Feature names of `X`. Unrecognized array containers will return `None`.
-    """
-    if hasattr(X, "columns"):
-        feature_names = np.asarray(X.columns)
-        # Only strings are supported
-        if not isinstance(feature_names[0], str):
-            raise ValueError("Only strings ")
-        return np.asarray(feature_names)

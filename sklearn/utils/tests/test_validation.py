@@ -48,7 +48,6 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _allclose_dense_sparse,
     _num_features,
-    _get_feature_names,
     FLOAT_DTYPES,
 )
 from sklearn.utils.validation import _check_fit_params
@@ -1446,31 +1445,3 @@ def test_check_array_deprecated_matrix():
     )
     with pytest.warns(FutureWarning, match=msg):
         check_array(X)
-
-
-@pytest.mark.parametrize("names", [[f"col_{i}" for i in range(3)], list(range(3))])
-def test_get_feature_names_pandas_error(names):
-    """Get feature names with pandas dataframes."""
-    pd = pytest.importorskip("pandas")
-    X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=names)
-
-    names = _get_feature_names(X)
-    assert_array_equal(names, names)
-
-
-def test_get_feature_names_numpy():
-    """Get feature names return None for numpy arrays."""
-    X = np.array([[1, 2, 3], [4, 5, 6]])
-    names = _get_feature_names(X)
-    assert names is None
-
-
-def test_get_feature_names_error_multi_index_fail():
-    """Check that MultiIndex raises an error."""
-    pd = pytest.importorskip("pandas")
-    names = pd.MultiIndex.from_product([["one", "two"], ["A", "B"]])
-    X = pd.DataFrame([[1, 2, 3, 4]], columns=names)
-
-    msg = "Pandas MultiIndex is not supported as feature names"
-    with pytest.raises(ValueError, match=msg):
-        _get_feature_names(X)
