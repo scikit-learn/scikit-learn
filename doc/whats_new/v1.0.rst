@@ -266,6 +266,12 @@ Changelog
   unused atoms during the dictionary update was not working as expected.
   :pr:`19198` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |API| Rename variable names in :class:`KernelPCA` to improve
+  readability. `lambdas_` and `alphas_` are renamed to `eigenvalues_`
+  and `eigenvectors_`, respectively. `lambdas_` and `alphas_` are
+  deprecated and will be removed in 1.2.
+  :pr:`19908` by :user:`Kei Ishikawa <kstoneriv3>`.
+
 - |API| The `alpha` and `regularization` parameters of :class:`decomposition.NMF` and
   :func:`decomposition.non_negative_factorization` are deprecated and will be removed
   in 1.2. Use the new parameters `alpha_W` and `alpha_H` instead. :pr:`20512` by
@@ -433,6 +439,10 @@ Changelog
   :user:`Oliver Grisel <ogrisel>` and
   :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| The :func:`preprocessing.StandardScaler.inverse_transform` method
+  now raises error when the input data is 1D.
+  :pr:`19752` by :user:`Zhehao Liu <Max1993Liu>`.
+
 - |Feature| Added new solver `lbfgs` (available with `solver="lbfgs"`)
   and `positive` argument to class:`linear_model.Ridge`.
   When `positive` is set to True, forces the coefficients to be positive
@@ -488,6 +498,10 @@ Changelog
   and :func:`metrics.roc_curve`.
   :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
+
+- |Fix| avoid overflow in :func:`metrics.cluster.adjust_rand_score` with large
+  amount of data.
+  :pr:`20312` by :user:`Divyanshu Deoli <divyanshudeoli>`.
 
 :mod:`sklearn.mixture`
 ......................
@@ -587,6 +601,11 @@ Changelog
 - |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| The `fit` method of :class:`preprocessing.OrdinalEncoder` will not
+  raise error when `handle_unknown='ignore'` and unknown categories are given
+  to `fit`.
+  :pr:`19906` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 - |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
