@@ -11,7 +11,7 @@ import numbers
 from joblib import Parallel, effective_n_jobs
 
 
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import available_if
 from ..utils.metaestimators import _safe_split
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
@@ -40,6 +40,20 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
             estimator, X_test[:, features], y_test, scorer
         ),
     ).scores_
+
+
+def _estimator_has(attr):
+    """Check if the provided estimator has the attribute.
+
+    We check if the attribute is available in the fitted estimator first
+    (i.e. `self.estimator_`). If not available, we check the estimator
+    passed at initialization (i.e. `self.estimator`).
+    """
+    return lambda self: (
+        hasattr(self.estimator_, attr)
+        if hasattr(self, "estimator_")
+        else hasattr(self.estimator, attr)
+    )
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -307,7 +321,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         return self
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimator_has("predict"))
     def predict(self, X):
         """Reduce X to the selected features and then predict using the underlying estimator.
 
@@ -324,7 +338,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict(self.transform(X))
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimator_has("score"))
     def score(self, X, y):
         """Reduce X to the selected features and return the score of the underlying estimator.
 
@@ -349,7 +363,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.support_
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Compute the decision function of ``X``.
 
@@ -371,7 +385,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.decision_function(self.transform(X))
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
@@ -391,7 +405,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict_proba(self.transform(X))
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
 
