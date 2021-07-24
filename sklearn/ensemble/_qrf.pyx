@@ -536,7 +536,7 @@ class _RandomSampleForestQuantileRegressor(_DefaultForestQuantileRegressor):
             mask = est.y_weights_ > 0
 
             leaves = est.y_train_leaves_[mask]
-            idx = np.arange(self.n_samples_)[mask]
+            idx = np.arange(self.n_samples_, dtype=np.intp)[mask]
 
             unique_leaves = np.unique(leaves)
 
