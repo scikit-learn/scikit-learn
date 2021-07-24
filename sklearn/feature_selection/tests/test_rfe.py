@@ -8,7 +8,6 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
-from sklearn.base import clone
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
@@ -23,7 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import ignore_warnings, raises
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
