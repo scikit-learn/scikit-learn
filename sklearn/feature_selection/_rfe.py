@@ -288,7 +288,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # Set final attributes
         features = np.arange(n_features)[support_]
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X[:, features], y)
+        self.estimator_.fit(X[:, features], y, **fit_params)
 
         # Compute step score when only n_features_to_select features left
         if step_score:
@@ -317,7 +317,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict(self.transform(X))
 
     @if_delegate_has_method(delegate="estimator")
-    def score(self, X, y):
+    def score(self, X, y, **fit_params):
         """Reduce X to the selected features and return the score of the underlying estimator.
 
         Parameters
@@ -327,9 +327,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         y : array of shape [n_samples]
             The target values.
+
+        **fit_params : dict, default=None
+            Parameters to pass to the score method of the estimator.
+
+            .. versionadded:: 1.0
         """
         check_is_fitted(self)
-        return self.estimator_.score(self.transform(X), y)
+        return self.estimator_.score(self.transform(X), y, **fit_params)
 
     def _get_support_mask(self):
         check_is_fitted(self)

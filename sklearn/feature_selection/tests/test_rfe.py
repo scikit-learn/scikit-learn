@@ -9,6 +9,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
 from sklearn.base import clone
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
@@ -138,6 +139,31 @@ def test_rfe_sample_weights():
         assert_array_equal(rfe_without_sample_weight, rfe_with_sample_weight)
 
     assert_array_equal(rfe_with_sample_weight.ranking_, rfe_duplicate.ranking_)
+
+
+def test_RFE_fit_score_params():
+    # Make sure RFE passes the metadata down to fit and score methods of the
+    # underlying estimator
+    class TestEstimator(BaseEstimator, ClassifierMixin):
+        def fit(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("fit: prop cannot be None")
+            self.svc_ = SVC(kernel="linear").fit(X, y)
+            self.coef_ = self.svc_.coef_
+            return self
+
+        def score(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("score: prop cannot be None")
+            return self.svc_.score(X, y)
+
+    X, y = load_iris(return_X_y=True)
+    with pytest.raises(ValueError, match="fit: prop cannot be None"):
+        RFE(estimator=TestEstimator()).fit(X, y)
+    with pytest.raises(ValueError, match="score: prop cannot be None"):
+        RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y)
+
+    RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y, prop="foo")
 
 
 @pytest.mark.parametrize("n_features_to_select", [-1, 2.1])
