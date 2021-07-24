@@ -59,7 +59,6 @@ DOCSTRING_IGNORE_LIST = [
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
     "MDS",
-    "MLPRegressor",
     "MeanShift",
     "MiniBatchDictionaryLearning",
     "MiniBatchKMeans",
