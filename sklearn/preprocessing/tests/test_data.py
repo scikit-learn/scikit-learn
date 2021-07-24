@@ -233,9 +233,7 @@ def test_standard_scaler_constant_features(
 ):
 
     if isinstance(scaler, RobustScaler) and add_sample_weight:
-        pytest.skip(
-            f"{scaler.__class__.__name__} does not yet support" f" sample_weight"
-        )
+        pytest.skip(f"{scaler.__class__.__name__} does not yet support sample_weight")
 
     rng = np.random.RandomState(0)
     n_samples = 100
@@ -1075,7 +1073,7 @@ def test_scale_input_finiteness_validation():
     # Check if non finite inputs raise ValueError
     X = [[np.inf, 5, 6, 7, 8]]
     with pytest.raises(
-        ValueError, match="Input contains infinity " "or a value too large"
+        ValueError, match="Input contains infinity or a value too large"
     ):
         scale(X)
 
@@ -1262,7 +1260,7 @@ def test_quantile_transform_check_error():
         [[0, 25, 50, 0, 0, 0, 75, 0, 0, 100], [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]
     )
     err_msg = (
-        "X has 2 features, but QuantileTransformer is expecting " "3 features as input."
+        "X has 2 features, but QuantileTransformer is expecting 3 features as input."
     )
     with pytest.raises(ValueError, match=err_msg):
         transformer.inverse_transform(X_bad_feat)
@@ -2231,7 +2229,7 @@ def test_cv_pipeline_precomputed():
     assert pipeline._get_tags()["pairwise"]
 
     # TODO: Remove in 1.1
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         assert pipeline._pairwise
 
@@ -2245,7 +2243,7 @@ def test_cv_pipeline_precomputed():
 # TODO: Remove in 1.1
 def test_pairwise_deprecated():
     kcent = KernelCenterer()
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         kcent._pairwise
 
@@ -2308,7 +2306,7 @@ def test_quantile_transform_valid_axis():
     X = np.array([[0, 25, 50, 75, 100], [2, 4, 6, 8, 10], [2.6, 4.1, 2.3, 9.5, 0.1]])
 
     with pytest.raises(
-        ValueError, match="axis should be either equal " "to 0 or 1. Got axis=2"
+        ValueError, match="axis should be either equal to 0 or 1. Got axis=2"
     ):
         quantile_transform(X.T, axis=2)
 
@@ -2632,3 +2630,15 @@ def test_minmax_scaler_clip(feature_range):
         X_transformed,
         [[feature_range[0], feature_range[0], feature_range[1], feature_range[1]]],
     )
+
+
+def test_standard_scaler_raise_error_for_1d_input():
+    """Check that `inverse_transform` from `StandardScaler` raises an error
+    with 1D array.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19518
+    """
+    scaler = StandardScaler().fit(X_2d)
+    err_msg = "Expected 2D array, got 1D array instead"
+    with pytest.raises(ValueError, match=err_msg):
+        scaler.inverse_transform(X_2d[:, 0])

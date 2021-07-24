@@ -74,11 +74,11 @@ def test_polynomial_and_spline_array_order(est):
         ({"include_bias": "string"}, "include_bias must be bool."),
         (
             {"extrapolation": "periodic", "n_knots": 3, "degree": 3},
-            "Periodic splines require degree < n_knots. Got n_knots=" "3 and degree=3.",
+            "Periodic splines require degree < n_knots. Got n_knots=3 and degree=3.",
         ),
         (
             {"extrapolation": "periodic", "knots": [[0], [1]], "degree": 2},
-            "Periodic splines require degree < n_knots. Got n_knots=2 and " "degree=2.",
+            "Periodic splines require degree < n_knots. Got n_knots=2 and degree=2.",
         ),
     ],
 )
@@ -202,6 +202,38 @@ def test_spline_transformer_linear_regression(bias, intercept):
     )
     pipe.fit(X, y)
     assert_allclose(pipe.predict(X), y, rtol=1e-3)
+
+
+@pytest.mark.parametrize(
+    ["knots", "n_knots", "sample_weight", "expected_knots"],
+    [
+        ("uniform", 3, None, np.array([[0, 2], [3, 8], [6, 14]])),
+        (
+            "uniform",
+            3,
+            np.array([0, 0, 1, 1, 0, 3, 1]),
+            np.array([[2, 2], [4, 8], [6, 14]]),
+        ),
+        ("uniform", 4, None, np.array([[0, 2], [2, 6], [4, 10], [6, 14]])),
+        ("quantile", 3, None, np.array([[0, 2], [3, 3], [6, 14]])),
+        (
+            "quantile",
+            3,
+            np.array([0, 0, 1, 1, 0, 3, 1]),
+            np.array([[2, 2], [5, 8], [6, 14]]),
+        ),
+    ],
+)
+def test_spline_transformer_get_base_knot_positions(
+    knots, n_knots, sample_weight, expected_knots
+):
+    # Check the behaviour to find the positions of the knots with and without
+    # `sample_weight`
+    X = np.array([[0, 2], [0, 2], [2, 2], [3, 3], [4, 6], [5, 8], [6, 14]])
+    base_knots = SplineTransformer._get_base_knot_positions(
+        X=X, knots=knots, n_knots=n_knots, sample_weight=sample_weight
+    )
+    assert_allclose(base_knots, expected_knots)
 
 
 @pytest.mark.parametrize(
@@ -848,7 +880,7 @@ def test_polynomial_features_deprecated_n_input_features():
     # check that we raise a deprecation warning when accessing
     # `n_input_features_`. FIXME: remove in 1.2
     depr_msg = (
-        "The attribute n_input_features_ was deprecated in version "
+        "The attribute `n_input_features_` was deprecated in version "
         "1.0 and will be removed in 1.2."
     )
     X = np.arange(10).reshape(5, 2)

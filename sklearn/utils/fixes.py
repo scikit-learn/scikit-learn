@@ -241,7 +241,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
             )
 
         if start.ndim != 1 or stop.ndim != 1 or start.shape != stop.shape:
-            raise ValueError("start and stop must be 1d array-like of same" " shape.")
+            raise ValueError("start and stop must be 1d array-like of same shape.")
         n_start = start.shape[0]
         out = np.empty((num, n_start), dtype=dtype)
         step = np.empty(n_start, dtype=np.float)

@@ -34,7 +34,7 @@ from sklearn.ensemble import StackingRegressor
 
 
 def test_multi_target_regression():
-    X, y = datasets.make_regression(n_targets=3)
+    X, y = datasets.make_regression(n_targets=3, random_state=0)
     X_train, y_train = X[:50], y[:50]
     X_test, y_test = X[50:], y[50:]
 
@@ -52,7 +52,7 @@ def test_multi_target_regression():
 
 
 def test_multi_target_regression_partial_fit():
-    X, y = datasets.make_regression(n_targets=3)
+    X, y = datasets.make_regression(n_targets=3, random_state=0)
     X_train, y_train = X[:50], y[:50]
     X_test, y_test = X[50:], y[50:]
 
@@ -76,7 +76,7 @@ def test_multi_target_regression_partial_fit():
 
 def test_multi_target_regression_one_target():
     # Test multi target regression raises
-    X, y = datasets.make_regression(n_targets=1)
+    X, y = datasets.make_regression(n_targets=1, random_state=0)
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     msg = "at least two dimensions"
     with pytest.raises(ValueError, match=msg):
@@ -84,7 +84,7 @@ def test_multi_target_regression_one_target():
 
 
 def test_multi_target_sparse_regression():
-    X, y = datasets.make_regression(n_targets=3)
+    X, y = datasets.make_regression(n_targets=3, random_state=0)
     X_train, y_train = X[:50], y[:50]
     X_test = X[50:]
 
@@ -601,7 +601,7 @@ class DummyClassifierWithFitParams(DummyClassifier):
         ),
         (
             MultiOutputRegressor(DummyRegressorWithFitParams()),
-            datasets.make_regression(n_targets=3),
+            datasets.make_regression(n_targets=3, random_state=0),
         ),
     ],
 )
@@ -616,7 +616,7 @@ def test_multioutput_estimator_with_fit_params(estimator, dataset):
 def test_regressor_chain_w_fit_params():
     # Make sure fit_params are properly propagated to the sub-estimators
     rng = np.random.RandomState(0)
-    X, y = datasets.make_regression(n_targets=3)
+    X, y = datasets.make_regression(n_targets=3, random_state=0)
     weight = rng.rand(y.shape[0])
 
     class MySGD(SGDRegressor):

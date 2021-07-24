@@ -97,7 +97,7 @@ def test_linear_regression_sample_weights():
 
 
 def test_raises_value_error_if_positive_and_sparse():
-    error_msg = "A sparse matrix was passed, " "but dense data is required."
+    error_msg = "A sparse matrix was passed, but dense data is required."
     # X must not be sparse if positive == True
     X = sparse.eye(10)
     y = np.ones(10)

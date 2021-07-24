@@ -11,7 +11,6 @@ import scipy.sparse as sp
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_allclose_dense_sparse,
-    assert_warns_message,
     assert_no_warnings,
     _convert_container,
 )
@@ -538,14 +537,12 @@ def test_gen_even_slices():
 
     # check that passing negative n_chunks raises an error
     slices = gen_even_slices(10, -1)
-    with pytest.raises(
-        ValueError, match="gen_even_slices got n_packs=-1," " must be >=1"
-    ):
+    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1, must be >=1"):
         next(slices)
 
 
 @pytest.mark.parametrize(
-    ("row_bytes", "max_n_rows", "working_memory", "expected", "warning"),
+    ("row_bytes", "max_n_rows", "working_memory", "expected", "warn_msg"),
     [
         (1024, None, 1, 1024, None),
         (1024, None, 0.99999999, 1023, None),
@@ -559,35 +556,30 @@ def test_gen_even_slices():
             None,
             1,
             1,
-            "Could not adhere to working_memory config. "
-            "Currently 1MiB, 2MiB required.",
+            "Could not adhere to working_memory config. Currently 1MiB, 2MiB required.",
         ),
     ],
 )
-def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warning):
-    if warning is not None:
-
-        def check_warning(*args, **kw):
-            return assert_warns_message(UserWarning, warning, *args, **kw)
-
-    else:
-        check_warning = assert_no_warnings
-
-    actual = check_warning(
-        get_chunk_n_rows,
-        row_bytes=row_bytes,
-        max_n_rows=max_n_rows,
-        working_memory=working_memory,
-    )
+def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warn_msg):
+    warning = None if warn_msg is None else UserWarning
+    with pytest.warns(warning, match=warn_msg) as w:
+        actual = get_chunk_n_rows(
+            row_bytes=row_bytes,
+            max_n_rows=max_n_rows,
+            working_memory=working_memory,
+        )
 
     assert actual == expected
     assert type(actual) is type(expected)
+    if warn_msg is None:
+        assert len(w) == 0
     with config_context(working_memory=working_memory):
-        actual = check_warning(
-            get_chunk_n_rows, row_bytes=row_bytes, max_n_rows=max_n_rows
-        )
+        with pytest.warns(warning, match=warn_msg) as w:
+            actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
         assert actual == expected
         assert type(actual) is type(expected)
+        if warn_msg is None:
+            assert len(w) == 0
 
 
 @pytest.mark.parametrize(
