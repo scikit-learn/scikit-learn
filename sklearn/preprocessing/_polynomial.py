@@ -15,7 +15,9 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.fixes import linspace
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
+from ..utils.stats import _weighted_percentile
+
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 
@@ -240,7 +242,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         if isinstance(self.degree, numbers.Integral):
             if self.degree < 0:
                 raise ValueError(
-                    f"degree must be a non-negative integer, " f"got {self.degree}."
+                    f"degree must be a non-negative integer, got {self.degree}."
                 )
             self._min_degree = 0
             self._max_degree = self.degree
@@ -255,15 +257,15 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 and self._min_degree <= self._max_degree
             ):
                 raise ValueError(
-                    f"degree=(min_degree, max_degree) must "
-                    f"be non-negative integers that fulfil "
-                    f"min_degree <= max_degree, got "
+                    "degree=(min_degree, max_degree) must "
+                    "be non-negative integers that fulfil "
+                    "min_degree <= max_degree, got "
                     f"{self.degree}."
                 )
         else:
             raise ValueError(
-                f"degree must be a non-negative int or tuple "
-                f"(min_degree, max_degree), got "
+                "degree must be a non-negative int or tuple "
+                "(min_degree, max_degree), got "
                 f"{self.degree}."
             )
 
@@ -440,7 +442,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "The attribute n_input_features_ was "
+        "The attribute `n_input_features_` was "
         "deprecated in version 1.0 and will be removed in 1.2."
     )
     @property
@@ -576,7 +578,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.order = order
 
     @staticmethod
-    def _get_base_knot_positions(X, n_knots=10, knots="uniform"):
+    def _get_base_knot_positions(X, n_knots=10, knots="uniform", sample_weight=None):
         """Calculate base knot positions.
 
         Base knots such that first knot <= feature <= last knot. For the
@@ -589,17 +591,29 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Knot positions (points) of base interval.
         """
         if knots == "quantile":
-            knots = np.percentile(
-                X,
-                100 * np.linspace(start=0, stop=1, num=n_knots, dtype=np.float64),
-                axis=0,
+            percentiles = 100 * np.linspace(
+                start=0, stop=1, num=n_knots, dtype=np.float64
             )
+
+            if sample_weight is None:
+                knots = np.percentile(X, percentiles, axis=0)
+            else:
+                knots = np.array(
+                    [
+                        _weighted_percentile(X, sample_weight, percentile)
+                        for percentile in percentiles
+                    ]
+                )
+
         else:
             # knots == 'uniform':
             # Note that the variable `knots` has already been validated and
             # `else` is therefore safe.
-            x_min = np.amin(X, axis=0)
-            x_max = np.amax(X, axis=0)
+            # Disregard observations with zero weight.
+            mask = slice(None, None, 1) if sample_weight is None else sample_weight > 0
+            x_min = np.amin(X[mask], axis=0)
+            x_max = np.amax(X[mask], axis=0)
+
             knots = linspace(
                 start=x_min,
                 stop=x_max,
@@ -632,7 +646,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 feature_names.append(f"{input_features[i]}_sp_{j}")
         return feature_names
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Compute knot positions of splines.
 
         Parameters
@@ -642,6 +656,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         y : None
             Ignored.
+
+        sample_weight : array-like of shape (n_samples,), default = None
+            Individual weights for each sample. Used to calculate quantiles if
+            `knots="quantile"`. For `knots="uniform"`, zero weighted
+            observations are ignored for finding the min and max of `X`.
 
         Returns
         -------
@@ -655,11 +674,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             ensure_min_samples=2,
             ensure_2d=True,
         )
-        n_samples, n_features = X.shape
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        _, n_features = X.shape
 
         if not (isinstance(self.degree, numbers.Integral) and self.degree >= 0):
             raise ValueError(
-                f"degree must be a non-negative integer, got " f"{self.degree}."
+                f"degree must be a non-negative integer, got {self.degree}."
             )
 
         if isinstance(self.knots, str) and self.knots in [
@@ -668,16 +690,16 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ]:
             if not (isinstance(self.n_knots, numbers.Integral) and self.n_knots >= 2):
                 raise ValueError(
-                    "n_knots must be a positive integer >= 2, " f"got: {self.n_knots}"
+                    f"n_knots must be a positive integer >= 2, got: {self.n_knots}"
                 )
 
             base_knots = self._get_base_knot_positions(
-                X, n_knots=self.n_knots, knots=self.knots
+                X, n_knots=self.n_knots, knots=self.knots, sample_weight=sample_weight
             )
         else:
             base_knots = check_array(self.knots, dtype=np.float64)
             if base_knots.shape[0] < 2:
-                raise ValueError("Number of knots, knots.shape[0], must be >= " "2.")
+                raise ValueError("Number of knots, knots.shape[0], must be >= 2.")
             elif base_knots.shape[1] != n_features:
                 raise ValueError("knots.shape[1] == n_features is violated.")
             elif not np.all(np.diff(base_knots, axis=0) > 0):
@@ -866,6 +888,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         mask,
                         ((i + 1) * n_splines - degree) : ((i + 1) * n_splines),
                     ] = f_max[-degree:]
+
             elif self.extrapolation == "linear":
                 # Continue the degree first and degree last spline bases
                 # linearly beyond the boundaries, with slope = derivative at

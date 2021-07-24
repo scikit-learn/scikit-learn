@@ -314,12 +314,12 @@ def locally_linear_embedding(
 
     if n_components > d_in:
         raise ValueError(
-            "output dimension must be less than or equal " "to input dimension"
+            "output dimension must be less than or equal to input dimension"
         )
     if n_neighbors >= N:
         raise ValueError(
-            "Expected n_neighbors <= n_samples, "
-            " but n_samples = %d, n_neighbors = %d" % (N, n_neighbors)
+            "Expected n_neighbors <= n_samples,  but n_samples = %d, n_neighbors = %d"
+            % (N, n_neighbors)
         )
 
     if n_neighbors <= 0:
@@ -397,7 +397,7 @@ def locally_linear_embedding(
 
     elif method == "modified":
         if n_neighbors < n_components:
-            raise ValueError("modified LLE requires " "n_neighbors >= n_components")
+            raise ValueError("modified LLE requires n_neighbors >= n_components")
 
         neighbors = nbrs.kneighbors(
             X, n_neighbors=n_neighbors + 1, return_distance=False

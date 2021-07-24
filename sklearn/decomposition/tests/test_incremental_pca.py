@@ -73,9 +73,11 @@ def test_incremental_pca_sparse(matrix_class):
 
     with pytest.raises(
         TypeError,
-        match="IncrementalPCA.partial_fit does not support "
-        "sparse input. Either convert data to dense "
-        "or use IncrementalPCA.fit to do so in batches.",
+        match=(
+            "IncrementalPCA.partial_fit does not support "
+            "sparse input. Either convert data to dense "
+            "or use IncrementalPCA.fit to do so in batches."
+        ),
     ):
         ipca.partial_fit(X_sparse)
 
@@ -124,10 +126,12 @@ def test_incremental_pca_validation():
     for n_components in [-1, 0, 0.99, 4]:
         with pytest.raises(
             ValueError,
-            match="n_components={} invalid"
-            " for n_features={}, need more rows than"
-            " columns for IncrementalPCA"
-            " processing".format(n_components, n_features),
+            match=(
+                "n_components={} invalid"
+                " for n_features={}, need more rows than"
+                " columns for IncrementalPCA"
+                " processing".format(n_components, n_features)
+            ),
         ):
             IncrementalPCA(n_components, batch_size=10).fit(X)
 
@@ -135,9 +139,11 @@ def test_incremental_pca_validation():
     n_components = 3
     with pytest.raises(
         ValueError,
-        match="n_components={} must be"
-        " less or equal to the batch number of"
-        " samples {}".format(n_components, n_samples),
+        match=(
+            "n_components={} must be"
+            " less or equal to the batch number of"
+            " samples {}".format(n_components, n_samples)
+        ),
     ):
         IncrementalPCA(n_components=n_components).partial_fit(X)
 
