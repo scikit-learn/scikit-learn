@@ -204,7 +204,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **fit_params : dict
-            Additional parameter passed to the fit function of the estimator.
+            Additional parameters passed to the `fit` method of the estimator.
 
         Returns
         -------
