@@ -667,10 +667,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 warnings.warn(
                     "The DataFrame's indexes for each transformer do not "
                     "match. A numpy array or a sparse matrix will be "
-                    "returned.")
+                    "returned."
+                )
                 return self._hstack_np(Xs)
 
             import pandas as pd
+
+            print([X.dtypes for X in Xs])
             return pd.concat(Xs, axis=1)
 
         return self._hstack_np(Xs)

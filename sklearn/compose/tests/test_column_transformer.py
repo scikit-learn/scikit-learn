@@ -1618,10 +1618,13 @@ def test_get_feature_names_empty_selection(selector):
 
 
 class DataFrameTransformer(TransformerMixin, BaseEstimator):
-    def __init__(self, prefix="X", index_start=0, reverse_index=False):
+    def __init__(
+        self, prefix="X", index_start=0, reverse_index=False, sparse_output=False
+    ):
         self.prefix = prefix
         self.index_start = index_start
         self.reverse_index = reverse_index
+        self.sparse_output = sparse_output
 
     def fit(self, X, y=None):
         return self
@@ -1635,10 +1638,15 @@ class DataFrameTransformer(TransformerMixin, BaseEstimator):
         if self.reverse_index:
             index = index[::-1]
 
+        if self.sparse_output:
+            return pd.DataFrame.sparse.from_spmatrix(
+                sparse.csr_matrix(X.values), columns=columns, index=index
+            )
         return pd.DataFrame(X.values, columns=columns, index=index)
 
 
-def test_pandas_index_aligned_hstack():
+@pytest.mark.parametrize("first_sparse_output", [True, False])
+def test_pandas_index_aligned_hstack(first_sparse_output):
     """When transformers all output dataframes, ColumnTransformer will
     output dataframes."""
     pd = pytest.importorskip("pandas")
@@ -1646,7 +1654,15 @@ def test_pandas_index_aligned_hstack():
 
     ct = ColumnTransformer(
         [
-            ("first", DataFrameTransformer(prefix="first", index_start=1), ["X"]),
+            (
+                "first",
+                DataFrameTransformer(
+                    prefix="first",
+                    index_start=1,
+                    sparse_output=first_sparse_output,
+                ),
+                ["X"],
+            ),
             (
                 "second",
                 DataFrameTransformer(prefix="second", index_start=1),
@@ -1664,13 +1680,16 @@ def test_pandas_index_aligned_hstack():
         columns=["first0", "second0", "second1"],
         index=[1, 2, 3],
     )
+    if first_sparse_output:
+        X_expected["first0"] = X_expected["first0"].astype(pd.SparseDtype("int", 0))
 
     X_trans = ct.transform(X)
     pd.testing.assert_frame_equal(X_trans, X_expected)
 
 
 @pytest.mark.parametrize("first_kwargs", [{"index_start": 2}, {"reverse_index": True}])
-def test_pandas_index_not_aligned_warns(first_kwargs):
+@pytest.mark.parametrize("first_sparse_output", [True, False])
+def test_pandas_index_not_aligned_warns(first_kwargs, first_sparse_output):
     """When transformers all output dataframes, ColumnTransformer will
     warn and output numpy arrays."""
     pd = pytest.importorskip("pandas")
@@ -1678,7 +1697,13 @@ def test_pandas_index_not_aligned_warns(first_kwargs):
 
     ct = ColumnTransformer(
         [
-            ("first", DataFrameTransformer(prefix="first", **first_kwargs), ["X"]),
+            (
+                "first",
+                DataFrameTransformer(
+                    prefix="first", sparse_output=first_sparse_output, **first_kwargs
+                ),
+                ["X"],
+            ),
             ("second", DataFrameTransformer(prefix="second"), ["X", "Y"]),
         ]
     )
