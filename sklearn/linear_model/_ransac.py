@@ -9,9 +9,14 @@ import warnings
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..base import MultiOutputMixin
-from ..utils import check_random_state, check_consistent_length
+from ..utils import check_random_state, _safe_indexing
 from ..utils.random import sample_without_replacement
-from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import (
+    check_is_fitted,
+    _check_sample_weight,
+    _num_samples,
+    _num_features,
+)
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
 from ..exceptions import ConvergenceWarning
@@ -273,25 +278,19 @@ class RANSACRegressor(
             `max_trials` randomly chosen sub-samples.
 
         """
-        # Need to validate separately here.
-        # We can't pass multi_ouput=True because that would allow y to be csr.
-        check_X_params = dict(accept_sparse="csr")
-        check_y_params = dict(ensure_2d=False)
-        X, y = self._validate_data(
-            X, y, validate_separately=(check_X_params, check_y_params)
-        )
-        check_consistent_length(X, y)
-
         if self.base_estimator is not None:
             base_estimator = clone(self.base_estimator)
         else:
             base_estimator = LinearRegression()
 
+        n_samples = _num_samples(X)
+        n_features = _num_features(X)
+
         if self.min_samples is None:
             # assume linear model by default
-            min_samples = X.shape[1] + 1
+            min_samples = n_features + 1
         elif 0 < self.min_samples < 1:
-            min_samples = np.ceil(self.min_samples * X.shape[0])
+            min_samples = np.ceil(self.min_samples * n_samples)
         elif self.min_samples >= 1:
             if self.min_samples % 1 != 0:
                 raise ValueError("Absolute number of samples must be an integer value.")
@@ -301,7 +300,7 @@ class RANSACRegressor(
         if min_samples > X.shape[0]:
             raise ValueError(
                 "`min_samples` may not be larger than number "
-                "of samples: n_samples = %d." % (X.shape[0])
+                "of samples: n_samples = %d." % n_samples
             )
 
         if self.stop_probability < 0 or self.stop_probability > 1:
@@ -384,8 +383,6 @@ class RANSACRegressor(
         self.n_skips_invalid_data_ = 0
         self.n_skips_invalid_model_ = 0
 
-        # number of data samples
-        n_samples = X.shape[0]
         sample_idxs = np.arange(n_samples)
 
         self.n_trials_ = 0
@@ -404,8 +401,8 @@ class RANSACRegressor(
             subset_idxs = sample_without_replacement(
                 n_samples, min_samples, random_state=random_state
             )
-            X_subset = X[subset_idxs]
-            y_subset = y[subset_idxs]
+            X_subset = _safe_indexing(X, subset_idxs, axis=0)
+            y_subset = _safe_indexing(y, subset_idxs, axis=0)
 
             # check if random sample set is valid
             if self.is_data_valid is not None and not self.is_data_valid(
@@ -444,8 +441,8 @@ class RANSACRegressor(
 
             # extract inlier data set
             inlier_idxs_subset = sample_idxs[inlier_mask_subset]
-            X_inlier_subset = X[inlier_idxs_subset]
-            y_inlier_subset = y[inlier_idxs_subset]
+            X_inlier_subset = _safe_indexing(X, inlier_idxs_subset, axis=0)
+            y_inlier_subset = _safe_indexing(y, inlier_idxs_subset, axis=0)
 
             # score of inlier data set
             score_subset = base_estimator.score(X_inlier_subset, y_inlier_subset)
@@ -521,6 +518,10 @@ class RANSACRegressor(
 
         self.estimator_ = base_estimator
         self.inlier_mask_ = inlier_mask_best
+        if hasattr(self.estimator_, "n_features_in_"):
+            self.n_features_in_ = self.estimator_.n_features_in_
+        if hasattr(self.estimator_, "feature_names_in_"):
+            self.feature_names_in_ = self.estimator_.feature_names_in_
         return self
 
     def predict(self, X):
@@ -538,8 +539,6 @@ class RANSACRegressor(
             Returns predicted values.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
-
         return self.estimator_.predict(X)
 
     def score(self, X, y):
@@ -561,8 +560,6 @@ class RANSACRegressor(
             Score of the prediction.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
-
         return self.estimator_.score(X, y)
 
     def _more_tags(self):
