@@ -1451,11 +1451,10 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     See Also
     --------
-    AdamOptimizer : Stochastic gradient descent optimizer with Adam.
-    BaseOptimizer : Base (Stochastic) gradient descent optimizer.
     BernoulliRBM : Bernoulli Restricted Boltzmann Machine (RBM).
     MLPClassifier : Multi-layer Perceptron classifier.
-    SGDOptimizer : Stochastic gradient descent optimizer with momentum.
+    sklearn.linear_model.SGDRegressor : Linear model fitted by minimizing
+        a regularized empirical loss with SGD.
 
     Notes
     -----
