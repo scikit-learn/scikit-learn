@@ -339,7 +339,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         y : array of shape [n_samples]
             The target values.
 
-        **fit_params : dict, default=None
+        **fit_params : dict
             Parameters to pass to the score method of the estimator.
 
             .. versionadded:: 1.0
