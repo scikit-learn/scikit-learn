@@ -203,7 +203,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         y : array-like of shape (n_samples,)
             The target values.
 
-        **fit_params : kwargs
+        **fit_params : dict
             Additional parameter passed to the fit function of the estimator.
 
         Returns
