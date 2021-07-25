@@ -637,7 +637,7 @@ def test_feature_names_in():
     trans = NoOpTransformer().fit(df)
     assert_array_equal(trans.feature_names_in_, df.columns)
 
-    msg = "The column names should match those that were passed"
+    msg = "The feature names should match those that were passed"
     df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
     with pytest.warns(FutureWarning, match=msg):
         trans.transform(df_bad)
