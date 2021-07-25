@@ -511,6 +511,7 @@ def test_feature_union():
 
 
 def test_feature_union_named_transformers():
+    """Check the behaviour of `named_transformers` attribute."""
     transf = Transf()
     noinvtransf = NoInvTransf()
     fs = FeatureUnion([("transf", transf), ("noinvtransf", noinvtransf)])
