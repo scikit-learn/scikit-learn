@@ -784,7 +784,7 @@ create quite visible hierarchy.
   >>>
   >>> kmeans = KMeans(n_clusters=4, random_state=0).fit(X)
   >>> b_means = BisectKMeans(n_clusters=4, random_state=0, bisect_strategy='largest_cluster').fit(X)
-  >>> with np.set_printoptions(preision = 3): \
+  >>> with np.set_printoptions(preision = 3): /
   >>>   kmeans.cluster_centers_
             [[-7.739  5.236]
             [ 0.294  3.564]
