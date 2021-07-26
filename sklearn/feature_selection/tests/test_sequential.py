@@ -82,7 +82,9 @@ def test_n_features_to_auto_select(direction, tol):
 
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 def test_n_features_to_select_stopping_criterion(direction):
-    # Make sure n_features_to_select is respected
+    """Check the behaviour stopping criterion for feature selection
+    depending on the values of `n_features_to_select` and `tol`.
+    """
 
     X, y = make_regression(n_features=50, n_informative=10, random_state=0)
 
