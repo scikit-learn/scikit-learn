@@ -257,9 +257,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         return self
 
     def _get_best_new_feature_score(self, estimator, X, y, current_mask):
-        # Return the best new feature to add to the current_mask, i.e. return
-        # the best new feature to add (resp. remove) when doing forward
-        # selection (resp. backward selection)
+        # Return the best new feature and its score to add to the current_mask,
+        # i.e. return the best new feature and its score to add (resp. remove)
+        # when doing forward selection (resp. backward selection).
+        # Feature will be added if the current score and past score are greater
+        # than tol when n_feature is auto,
         candidate_feature_indices = np.flatnonzero(~current_mask)
         scores = {}
         for feature_idx in candidate_feature_indices:
