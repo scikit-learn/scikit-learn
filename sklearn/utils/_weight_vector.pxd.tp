@@ -29,8 +29,8 @@ cdef extern from "math.h":
 
 
 cdef class WeightVector{{name}}(object):
-    cdef np.ndarray w
-    cdef np.ndarray aw
+    cdef readonly np.ndarray w
+    cdef readonly np.ndarray aw
     cdef {{c_type}} *w_data_ptr
     cdef {{c_type}} *aw_data_ptr
     cdef {{c_type}} wscale

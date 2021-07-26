@@ -66,6 +66,9 @@ cdef class WeightVector{{name}}(object):
         The squared norm of ``w``.
     """
 
+    cdef readonly np.ndarray w
+    cdef readonly np.ndarray aw
+
     def __cinit__(self,
                   np.ndarray[{{c_type}}, ndim=1, mode='c'] w,
                   np.ndarray[{{c_type}}, ndim=1, mode='c'] aw):
