@@ -380,6 +380,10 @@ _ = plt.title("Trigonometric encoding for the 'hour' feature")
 # representation.
 fig, ax = plt.subplots(figsize=(7, 5))
 sp = ax.scatter(hour_df["hour_sin"], hour_df["hour_cos"], c=hour_df["hour"])
+ax.set(
+    xlabel="sin(hour)",
+    ylabel="cos(hour)",
+)
 _ = fig.colorbar(sp)
 
 # %%
