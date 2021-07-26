@@ -51,7 +51,9 @@ def test_n_features_to_select(direction, n_features_to_select):
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 @pytest.mark.parametrize("tol", (1e-3, None))
 def test_n_features_to_auto_select(direction, tol):
-    # Make sure n_features_to_select is respected
+    """Check the behaviour of `n_features_to_select="auto"` with different 
+    values for the parameter `tol`.
+    """
 
     X, y = make_regression(n_features=10)
     sfs = SequentialFeatureSelector(
