@@ -32,7 +32,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         An unfitted estimator.
 
     n_features_to_select : "auto", int or float, default='warn'
-        If 'auto', the behaviour depends on the `tol` parameter:
+        If `"auto"`, the behaviour depends on the `tol` parameter:
 
         - if `tol` is not None, then features are selected until the score
           improvement does not exceed `tol`.
