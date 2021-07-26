@@ -5,6 +5,9 @@ import string
 import timeit
 
 import pytest
+import os
+import sklearn
+import pathlib
 import numpy as np
 import scipy.sparse as sp
 
@@ -31,6 +34,7 @@ from sklearn.utils import is_scalar_nan
 from sklearn.utils import _to_object_array
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
+from sklearn._build_utils import gen_from_templates
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))
@@ -685,3 +689,22 @@ def test_to_object_array(sequence):
     assert isinstance(out, np.ndarray)
     assert out.dtype.kind == "O"
     assert out.ndim == 1
+
+
+@pytest.mark.parametrize("file_extension", ["pyx", "pxd"])
+def test_files_generation_from_templates(file_extension):
+    base_dir = base_dir = pathlib.Path(sklearn.__file__).parent.parent
+    template_filename = f"dummy.{file_extension}.tp"
+    template_file = base_dir / template_filename
+
+    f = open(template_file, "a")
+    f.close()
+
+    templates = [template_filename]
+    gen_from_templates(templates)
+
+    generated_file = base_dir / f"dummy.{file_extension}"
+    assert generated_file.exists()
+
+    template_file.unlink()
+    generated_file.unlink()
