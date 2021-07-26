@@ -164,7 +164,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 "in 1.2. To keep the same behaviour as with None "
                 "(i.e. select half of the features) and avoid "
                 "this warning, you should manually set "
-                "n_features_to_select='auto' and set tol=None.",
+                "`n_features_to_select='auto'` and set `tol=None`.",
                 FutureWarning,
             )
 
