@@ -51,7 +51,7 @@ def test_n_features_to_select(direction, n_features_to_select):
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 @pytest.mark.parametrize("tol", (1e-3, None))
 def test_n_features_to_select_auto(direction, tol):
-    """Check the behaviour of `n_features_to_select="auto"` with different 
+    """Check the behaviour of `n_features_to_select="auto"` with different
     values for the parameter `tol`.
     """
 
