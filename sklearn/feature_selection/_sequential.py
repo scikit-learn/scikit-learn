@@ -164,7 +164,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 "(i.e. select half of the features) and avoid "
                 "this warning, you should manually set "
                 "n_features_to_select='auto' and set tol=None.",
-                PendingDeprecationWarning,
+                FutureWarning,
             )
 
     def fit(self, X, y):
