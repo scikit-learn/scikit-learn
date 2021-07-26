@@ -18,8 +18,6 @@ dtypes = [('64', 'double'),
 
 }}
 
-# cython: language_level=3
-
 cimport numpy as np
 
 {{for name, c_type in dtypes}}
