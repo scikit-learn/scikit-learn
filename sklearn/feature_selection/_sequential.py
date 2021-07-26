@@ -50,7 +50,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
            should manually set `n_features_to_select="auto"` and
            set `tol=None`.
 
-    tol : float, default=0.0
+    tol : float, default=None
         If the score is not incremented by at least `tol` between two
         consecutive feature addition or removal, stop adding or removing even
         if `n_features_to_select` has not been reached. `tol` is enabled only
