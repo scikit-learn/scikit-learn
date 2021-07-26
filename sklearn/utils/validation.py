@@ -1589,7 +1589,7 @@ def _check_fit_params(X, fit_params, indices=None):
     return fit_params_validated
 
 
-def _get_feature_names(X):
+def _get_feature_names(X, *, warn_on_invalid=False):
     """Get feature names from X.
 
     Support for other array containers should place its implementation here.
@@ -1604,6 +1604,9 @@ def _get_feature_names(X):
           returned.
         - All other array containers will return `None`.
 
+    warn_on_invalid: bool, default=False
+        Warn when column names are invalid.
+
     Returns
     -------
     names: ndarray or None
@@ -1613,11 +1616,10 @@ def _get_feature_names(X):
         feature_names = np.asarray(X.columns)
         # Only strings are supported
         if not all(isinstance(item, str) for item in feature_names):
-            warnings.warn(
-                "Feature name support requires all feature names to be strings. "
-                "Passing non-str feature names will raise an error in 1.2",
-                FutureWarning,
-            )
-
+            if warn_on_invalid:
+                warnings.warn(
+                    "Feature name support requires all feature names to be strings. ",
+                    FutureWarning,
+                )
             return
         return feature_names

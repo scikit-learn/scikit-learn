@@ -1464,7 +1464,7 @@ def test_get_feature_names_pandas_warns(names):
 
     msg = "Feature name support requires all feature names to be strings"
     with pytest.warns(FutureWarning, match=msg):
-        names = _get_feature_names(X)
+        names = _get_feature_names(X, warn_on_invalid=True)
     assert names is None
 
 

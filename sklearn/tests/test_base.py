@@ -644,7 +644,7 @@ def test_feature_names_in():
 
     # warns when fitted on dataframe and transforming a ndarray
     msg = (
-        "X does not have any feature names, but NoOpTransformer was "
+        "X does not have valid feature names, but NoOpTransformer was "
         "fitted with feature names"
     )
     with pytest.warns(UserWarning, match=msg):
@@ -655,3 +655,18 @@ def test_feature_names_in():
     trans = NoOpTransformer().fit(X_np)
     with pytest.warns(UserWarning, match=msg):
         trans.transform(df)
+
+    # fit on dataframe with invalid feature names warns on fit
+    df_int_names = pd.DataFrame(X_np)
+    trans = NoOpTransformer()
+
+    msg = "Feature name support requires all feature names to be strings"
+    with pytest.warns(FutureWarning, match=msg):
+        trans.fit(df_int_names)
+
+    # fit on dataframe with invalid feature names -> do not warn on transform
+    Xs = [X_np, df_int_names]
+    for X in Xs:
+        with pytest.warns(None) as record:
+            trans.transform(X)
+        assert not record

@@ -417,13 +417,13 @@ class BaseEstimator:
         """
 
         if reset:
-            feature_names_in = _get_feature_names(X)
+            feature_names_in = _get_feature_names(X, warn_on_invalid=True)
             if feature_names_in is not None:
                 self.feature_names_in_ = feature_names_in
             return
 
         fitted_feature_names = getattr(self, "feature_names_in_", None)
-        X_feature_names = _get_feature_names(X)
+        X_feature_names = _get_feature_names(X, warn_on_invalid=False)
 
         if fitted_feature_names is None and X_feature_names is None:
             # no feature names seen in fit and in X
@@ -438,8 +438,8 @@ class BaseEstimator:
 
         if X_feature_names is None and fitted_feature_names is not None:
             warnings.warn(
-                f"X does not have any feature names, but {self.__class__.__name__} was "
-                "fitted with feature names"
+                "X does not have valid feature names, but"
+                f" {self.__class__.__name__} was fitted with feature names"
             )
             return
 
