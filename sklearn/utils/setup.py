@@ -49,6 +49,10 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
     )
 
+    config.add_extension(
+        "_openmp_helpers", sources=["_openmp_helpers.pyx"], libraries=libraries
+    )
+
     # generate files from a template
     templates = [
         "sklearn/utils/_seq_dataset.pyx.tp",
@@ -59,10 +63,6 @@ def configuration(parent_package="", top_path=None):
     ]
 
     gen_from_templates(templates, top_path)
-
-    config.add_extension(
-        "_openmp_helpers", sources=["_openmp_helpers.pyx"], libraries=libraries
-    )
 
     config.add_extension(
         "_seq_dataset", sources=["_seq_dataset.pyx"], include_dirs=[numpy.get_include()]
