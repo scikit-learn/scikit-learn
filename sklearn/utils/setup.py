@@ -59,7 +59,6 @@ def configuration(parent_package="", top_path=None):
         "sklearn/utils/_seq_dataset.pxd.tp",
         "sklearn/utils/_weight_vector.pyx.tp",
         "sklearn/utils/_weight_vector.pxd.tp",
-        "sklearn/linear_model/_sag_fast.pyx.tp",
     ]
 
     gen_from_templates(templates)
