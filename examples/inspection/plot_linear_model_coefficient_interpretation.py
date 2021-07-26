@@ -655,11 +655,11 @@ plt.subplots_adjust(left=.3)
 # caution.
 
 # %%
-# Causal interpretation
-# ---------------------
+# Wrong causal interpretation
+# ---------------------------
 #
 # Policy makers might want to know the effect of education on wage to
-# assess whether or not avcertain policy designed to entice people to
+# assess whether or not a certain policy designed to entice people to
 # pursue more education would make economic sense.
 # While Machine Learning models are great for measuring statistical
 # associations, they are generally unable to infer causal effects.

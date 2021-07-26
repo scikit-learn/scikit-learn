@@ -1,7 +1,7 @@
 """
-=============================================================
-Failure of Machine Learning Models to infer causal effects
-=============================================================
+===================================================
+Failure of Machine Learning to infer causal effects
+===================================================
 
 Machine Learning models are great for measuring statistical associations.
 Unfortunately, unless we're willing to make strong assumptions about the data,
@@ -38,16 +38,17 @@ print(__doc__)
 
 import numpy as np
 
+np.random.seed(42)
 n_samples = 10000
+
 experiences = np.random.normal(20, 10, size=n_samples).astype(int)
 experiences[experiences < 0] = 0
 abilities = np.random.normal(0, 0.15, size=n_samples)
 parent_hourly_wages = 50 * np.random.beta(2, 8, size=n_samples)
 parent_hourly_wages[parent_hourly_wages < 0] = 0
 
-
 college_degrees = (9 * abilities + 0.02 * parent_hourly_wages
-                   + np.random.randn() > 0.7).astype(int)
+                   + np.random.randn(n_samples) > 0.7).astype(int)
 
 hourly_wages = (
   0.2 * experiences + parent_hourly_wages + 2
@@ -132,12 +133,12 @@ print(
 # Lessons learned
 # ---------------
 #
-# Machine learning models are not reliable for inferring causation causal effect.
-# While we showed this with a linear model, OVB can strike any type of models.
+# Machine learning models are not reliable for inferring causal effects.
+# While we showed this with a linear model, OVB can strike any type of model.
 #
 # Whenever interpreting a coefficient or a change in predictions
-# brought about by a change in one of the features, it is important to think of
-# potentially unobsered variables and whether they could be correlated with both
+# brought about by a change in one of the features, it is important to keep in
+# mind potentially unobsered variables that could be correlated with both
 # the feature in question and the target variable.
 # Such variables are called `Confounding Variables
 # <https://en.wikipedia.org/wiki/Confounding>`_.
