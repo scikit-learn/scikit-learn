@@ -43,7 +43,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         .. versionadded:: 1.0
            The option `"auto"` was added in version 1.0.
-           
+
         .. deprecation:: 1.0
            The default changed from `None` to `"warn"` in 1.0 and will become
            `"auto"` in 1.2. To keep the same behaviour as with `None`, you
