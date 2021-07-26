@@ -127,7 +127,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
 class GaussianNB(_BaseNB):
     """
-    Gaussian Naive Bayes (GaussianNB)
+    Gaussian Naive Bayes (GaussianNB).
 
     Can perform online updates to model parameters via :meth:`partial_fit`.
     For details on algorithm used to update feature means and variance online,
@@ -183,6 +183,13 @@ class GaussianNB(_BaseNB):
     theta_ : ndarray of shape (n_classes, n_features)
         mean of each feature per class.
 
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : Complement Naive Bayes classifier.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
+
     Examples
     --------
     >>> import numpy as np
@@ -226,6 +233,7 @@ class GaussianNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X, y = self._validate_data(X, y)
         return self._partial_fit(
@@ -346,6 +354,7 @@ class GaussianNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return self._partial_fit(
             X, y, classes, _refit=False, sample_weight=sample_weight
@@ -724,7 +733,7 @@ class _BaseDiscreteNB(_BaseNB):
 
 class MultinomialNB(_BaseDiscreteNB):
     """
-    Naive Bayes classifier for multinomial models
+    Naive Bayes classifier for multinomial models.
 
     The multinomial Naive Bayes classifier is suitable for classification with
     discrete features (e.g., word counts for text classification). The
@@ -796,18 +805,12 @@ class MultinomialNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(1)
-    >>> X = rng.randint(5, size=(6, 100))
-    >>> y = np.array([1, 2, 3, 4, 5, 6])
-    >>> from sklearn.naive_bayes import MultinomialNB
-    >>> clf = MultinomialNB()
-    >>> clf.fit(X, y)
-    MultinomialNB()
-    >>> print(clf.predict(X[2:3]))
-    [3]
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : Complement Naive Bayes classifier.
+    GaussianNB : Gaussian Naive Bayes.
 
     Notes
     -----
@@ -820,6 +823,19 @@ class MultinomialNB(_BaseDiscreteNB):
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> from sklearn.naive_bayes import MultinomialNB
+    >>> clf = MultinomialNB()
+    >>> clf.fit(X, y)
+    MultinomialNB()
+    >>> print(clf.predict(X[2:3]))
+    [3]
     """
 
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
@@ -930,6 +946,20 @@ class ComplementNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    GaussianNB : Gaussian Naive Bayes.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
+
+    References
+    ----------
+    Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
+    Tackling the poor assumptions of naive bayes text classifiers. In ICML
+    (Vol. 3, pp. 616-623).
+    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
+
     Examples
     --------
     >>> import numpy as np
@@ -942,13 +972,6 @@ class ComplementNB(_BaseDiscreteNB):
     ComplementNB()
     >>> print(clf.predict(X[2:3]))
     [3]
-
-    References
-    ----------
-    Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
-    Tackling the poor assumptions of naive bayes text classifiers. In ICML
-    (Vol. 3, pp. 616-623).
-    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None, norm=False):
@@ -1218,6 +1241,7 @@ class CategoricalNB(_BaseDiscreteNB):
 
     See Also
     --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
     ComplementNB : Complement Naive Bayes classifier.
     GaussianNB : Gaussian Naive Bayes.
     MultinomialNB : Naive Bayes classifier for multinomial models.

@@ -613,13 +613,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     )
     @property
     def n_features_(self):
-        """Number of features when fitting the estimator.
-
-        Returns
-        -------
-        n_features_in_ : int
-            The number of features when fitting the estimator.
-        """
+        """Number of features when fitting the estimator."""
         return self.n_features_in_
 
 
@@ -1293,7 +1287,9 @@ class RandomForestClassifier(ForestClassifier):
 
     See Also
     --------
-    DecisionTreeClassifier, ExtraTreesClassifier
+    sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
+    sklearn.ensemble.ExtraTreesClassifier : Ensemble of extremely randomized
+        tree classifiers.
 
     Notes
     -----

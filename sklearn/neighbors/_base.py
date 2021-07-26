@@ -1,4 +1,4 @@
-"""Base and mixin classes for nearest neighbors"""
+"""Base and mixin classes for nearest neighbors."""
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -88,7 +88,7 @@ def _check_weights(weights):
 
 
 def _get_weights(dist, weights):
-    """Get the weights from an array of distances and a parameter ``weights``
+    """Get the weights from an array of distances and a parameter ``weights``.
 
     Parameters
     ----------
@@ -135,7 +135,7 @@ def _get_weights(dist, weights):
 
 
 def _is_sorted_by_data(graph):
-    """Returns whether the graph's non-zero entries are sorted by data
+    """Return whether the graph's non-zero entries are sorted by data.
 
     The non-zero entries are stored in graph.data and graph.indices.
     For each row (or sample), the non-zero entries can be either:
@@ -162,7 +162,7 @@ def _is_sorted_by_data(graph):
 
 
 def _check_precomputed(X):
-    """Check precomputed distance matrix
+    """Check precomputed distance matrix.
 
     If the precomputed distance matrix is sparse, it checks that the non-zero
     entries are sorted by distances. If not, the matrix is copied and sorted.
@@ -223,7 +223,7 @@ def _check_precomputed(X):
 
 
 def _kneighbors_from_graph(graph, n_neighbors, return_distance):
-    """Decompose a nearest neighbors sparse graph into distances and indices
+    """Decompose a nearest neighbors sparse graph into distances and indices.
 
     Parameters
     ----------
@@ -275,7 +275,7 @@ def _kneighbors_from_graph(graph, n_neighbors, return_distance):
 
 
 def _radius_neighbors_from_graph(graph, radius, return_distance):
-    """Decompose a nearest neighbors sparse graph into distances and indices
+    """Decompose a nearest neighbors sparse graph into distances and indices.
 
     Parameters
     ----------
@@ -589,7 +589,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
 
 def _tree_query_parallel_helper(tree, *args, **kwargs):
-    """Helper for the Parallel calls in KNeighborsMixin.kneighbors
+    """Helper for the Parallel calls in KNeighborsMixin.kneighbors.
 
     The Cython method tree.query is not directly picklable by cloudpickle
     under PyPy.
@@ -598,10 +598,10 @@ def _tree_query_parallel_helper(tree, *args, **kwargs):
 
 
 class KNeighborsMixin:
-    """Mixin for k-neighbors searches"""
+    """Mixin for k-neighbors searches."""
 
     def _kneighbors_reduce_func(self, dist, start, n_neighbors, return_distance):
-        """Reduce a chunk of distances to the nearest neighbors
+        """Reduce a chunk of distances to the nearest neighbors.
 
         Callback to :func:`sklearn.metrics.pairwise.pairwise_distances_chunked`
 
@@ -851,7 +851,8 @@ class KNeighborsMixin:
 
         See Also
         --------
-        NearestNeighbors.radius_neighbors_graph: Computes a graph of neighbors.
+        NearestNeighbors.radius_neighbors_graph : Compute the (weighted) graph
+            of Neighbors for points in X.
 
         Examples
         --------
@@ -901,7 +902,7 @@ class KNeighborsMixin:
 
 
 def _tree_query_radius_parallel_helper(tree, *args, **kwargs):
-    """Helper for the Parallel calls in RadiusNeighborsMixin.radius_neighbors
+    """Helper for the Parallel calls in RadiusNeighborsMixin.radius_neighbors.
 
     The Cython method tree.query_radius is not directly picklable by
     cloudpickle under PyPy.
@@ -910,10 +911,10 @@ def _tree_query_radius_parallel_helper(tree, *args, **kwargs):
 
 
 class RadiusNeighborsMixin:
-    """Mixin for radius-based neighbors searches"""
+    """Mixin for radius-based neighbors searches."""
 
     def _radius_neighbors_reduce_func(self, dist, start, radius, return_distance):
-        """Reduce a chunk of distances to the nearest neighbors
+        """Reduce a chunk of distances to the nearest neighbors.
 
         Callback to :func:`sklearn.metrics.pairwise.pairwise_distances_chunked`
 
