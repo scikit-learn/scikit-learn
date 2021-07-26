@@ -42,10 +42,13 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         If float between 0 and 1, it is the fraction of features to select.
 
         .. versionadded:: 1.0
-            The default changed from None to 'warn' in 1.0 and will become
-            'auto' in 1.2. To keep the same behaviour as with `None`, you
-            should manually set `n_features_to_select='auto'` and
-            set `tol=None`
+           The option `"auto"` was added in version 1.0.
+           
+        .. deprecation:: 1.0
+           The default changed from `None` to `"warn"` in 1.0 and will become
+           `"auto"` in 1.2. To keep the same behaviour as with `None`, you
+           should manually set `n_features_to_select="auto"` and
+           set `tol=None`.
 
     tol : float, default=0.0
         If the score is not incremented by at least `tol` between two
