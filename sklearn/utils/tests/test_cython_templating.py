@@ -2,8 +2,6 @@ import pathlib
 import pytest
 import sklearn
 
-TEMPITA_EXTENSION = "tp"
-
 
 def test_files_generated_by_templates_are_git_ignored():
     gitignore_file = pathlib.Path(sklearn.__file__).parent.parent / ".gitignore"
@@ -14,7 +12,7 @@ def test_files_generated_by_templates_are_git_ignored():
     ignored_files = open(gitignore_file, "r").readlines()
     ignored_files = list(map(lambda line: line.strip("\n"), ignored_files))
 
-    for filename in base_dir.glob(f"**/*.{TEMPITA_EXTENSION}"):
+    for filename in base_dir.glob("**/*.tp"):
         filename = str(filename).split("scikit-learn/")[-1]
-        filename_wo_tempita_suffix = filename.strip(f".{TEMPITA_EXTENSION}")
+        filename_wo_tempita_suffix = filename.strip(".tp")
         assert filename_wo_tempita_suffix in ignored_files
