@@ -81,7 +81,7 @@ def test_n_features_to_auto_select(direction, tol):
 
 
 @pytest.mark.parametrize("direction", ("forward", "backward"))
-def test_stopping_criterion(direction):
+def test_n_features_to_select_stopping_criterion(direction):
     # Make sure n_features_to_select is respected
 
     X, y = make_regression(n_features=50, n_informative=10, random_state=0)
