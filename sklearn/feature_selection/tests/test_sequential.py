@@ -223,3 +223,8 @@ def test_pipeline_support():
     pipe = make_pipeline(StandardScaler(), sfs)
     pipe.fit(X, y)
     pipe.transform(X)
+
+
+def test_raise_deprecation_warning():
+    with pytest.warns(FutureWarning):
+        SequentialFeatureSelector(LinearRegression())
