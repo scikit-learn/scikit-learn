@@ -1010,7 +1010,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             X,
             accept_sparse="csr",
             copy=copy,
-            ensure_2d=False,
+            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )

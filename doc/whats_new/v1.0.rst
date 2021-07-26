@@ -439,6 +439,10 @@ Changelog
   :user:`Oliver Grisel <ogrisel>` and
   :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| The :func:`preprocessing.StandardScaler.inverse_transform` method
+  now raises error when the input data is 1D.
+  :pr:`19752` by :user:`Zhehao Liu <Max1993Liu>`.
+
 - |Feature| Added new solver `lbfgs` (available with `solver="lbfgs"`)
   and `positive` argument to class:`linear_model.Ridge`.
   When `positive` is set to True, forces the coefficients to be positive
@@ -597,6 +601,11 @@ Changelog
 - |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| The `fit` method of :class:`preprocessing.OrdinalEncoder` will not
+  raise error when `handle_unknown='ignore'` and unknown categories are given
+  to `fit`.
+  :pr:`19906` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 - |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
