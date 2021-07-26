@@ -226,5 +226,6 @@ def test_pipeline_support():
 
 
 def test_raise_deprecation_warning():
-    with pytest.warns(FutureWarning):
+    warn_msg = "Leaving ...."
+    with pytest.warns(FutureWarning, match=warn_msg):
         SequentialFeatureSelector(LinearRegression())
