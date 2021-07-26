@@ -559,10 +559,10 @@ _ = ax.legend()
 #   than an hour. However, we will see in the following that what can be an
 #   advantage for linear models is not necessarily one for more expressive
 #   models.
-#
+
+# %%
 # We can also compare the number of features extracted by each feature
 # engineering pipeline:
-# %%
 naive_linear_pipeline[:-1].transform(X).shape
 
 # %%
@@ -591,7 +591,7 @@ cyclic_spline_linear_pipeline[:-1].transform(X).shape
 # explained by the lack of non-additive modeling of the interactions between
 # features (in this case "workingday" and features derived from "hours"). This
 # issue will be addressed in the following section.
-#
+
 # %%
 # Modeling pairwise interactions with splines and polynomial features
 # -------------------------------------------------------------------
@@ -819,4 +819,4 @@ for ax, pred, label in zip(axes, predictions, labels):
 # problems, it is likely that using a Poisson or Gamma distribution would make
 # more sense. This could be achieved by using
 # `GridSearchCV(TweedieRegressor(power=2), param_grid({"alpha": alphas}))`
-# instead of `RidgeCV`
+# instead of `RidgeCV`.
