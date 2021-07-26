@@ -62,7 +62,7 @@ def configuration(parent_package="", top_path=None):
         "sklearn/linear_model/_sag_fast.pyx.tp",
     ]
 
-    gen_from_templates(templates, top_path)
+    gen_from_templates(templates)
 
     config.add_extension(
         "_seq_dataset", sources=["_seq_dataset.pyx"], include_dirs=[numpy.get_include()]
