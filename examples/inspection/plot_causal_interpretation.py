@@ -133,17 +133,18 @@ print(
 # Lessons learned
 # ---------------
 #
-# Machine learning models are not reliable for inferring causal effects.
+# Machine learning models are not designed for the estimation of causal effects.
 # While we showed this with a linear model, OVB can strike any type of model.
 #
 # Whenever interpreting a coefficient or a change in predictions
 # brought about by a change in one of the features, it is important to keep in
-# mind potentially unobsered variables that could be correlated with both
+# mind potentially unobserved variables that could be correlated with both
 # the feature in question and the target variable.
 # Such variables are called `Confounding Variables
 # <https://en.wikipedia.org/wiki/Confounding>`_.
-# To avoid these, researchers usually conduct experiments in which
-# the treatment variable (e.g. college degree) is randomized. When an experiment
+# In order to still estimate causal effect in the presence of confounding,
+# researchers usually conduct experiments in which the treatment
+# variable (e.g. college degree) is randomized. When an experiment
 # is prohibitively expensive or unethical, researchers
 # can somethimes use other causal inference techniques such
 # as `Instrumental Variables

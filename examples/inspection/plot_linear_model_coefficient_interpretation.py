@@ -687,11 +687,11 @@ plt.subplots_adjust(left=.3)
 # -------------------------------
 #
 # Keep in mind that the outcome `y` and features `X` are the product
-# of a Data Generating Process that is hidden from us. Machine
+# of a data generating process that is hidden from us. Machine
 # learning models are trained to approximate the unobserved
 # mathematical function that links `X` to `y` from sample data. As a
 # result, any interpretation made about a model may not necessarily
-# generalize to the true Data Generating Process. This is especially
+# generalize to the true data generating process. This is especially
 # true when the model is of bad quality or when the sample data is
 # not representative of the population.
 
@@ -714,4 +714,4 @@ plt.subplots_adjust(left=.3)
 # * Coefficient are unlikely to have any causal meaning. They tend
 #   to be biased by unobserved confounders.
 # * Inspection tools may not necessarily provide insights on the true
-#   Data Generating Process.
+#   data generating process.
