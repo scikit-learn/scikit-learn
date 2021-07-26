@@ -389,6 +389,8 @@ def adjusted_rand_score(labels_true, labels_pred):
     adjusted_mutual_info_score : Adjusted Mutual Information.
     """
     (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
+    # convert to Python integer types, to avoid overflow or underflow
+    tn, fp, fn, tp = int(tn), int(fp), int(fn), int(tp)
 
     # Special cases: empty data or full agreement
     if fn == 0 and fp == 0:

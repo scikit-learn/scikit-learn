@@ -447,3 +447,17 @@ def test_rand_score():
     expected_denominator = D00 + D01 + D10 + D11
     expected = expected_numerator / expected_denominator
     assert_allclose(rand_score(clustering1, clustering2), expected)
+
+
+def test_adjusted_rand_score_overflow():
+    """Check that large amount of data will not lead to overflow in
+    `adjusted_rand_score`.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20305
+    """
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, 10_000_000, dtype=np.int8)
+    y_pred = rng.randint(0, 2, 10_000_000, dtype=np.int8)
+    with pytest.warns(None) as record:
+        adjusted_rand_score(y_true, y_pred)
+    assert len(record) == 0
