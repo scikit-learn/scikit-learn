@@ -74,8 +74,7 @@ cdef extern from "numpy/arrayobject.h":
 
 
 cdef class StdVectorSentinel:
-    """Wraps a reference to a vector which will be
-    deallocated with this object."""
+    """Wraps a reference to a vector which will be deallocated with this object."""
     pass
 
 
@@ -100,7 +99,7 @@ cdef class StdVectorSentinelITYPE(StdVectorSentinel):
 
 
 cdef np.ndarray vector_to_numpy_array(vector_DITYPE_t * vect_ptr):
-    """ Create a numpy ndarray given a C++ vector.
+    """Create a numpy ndarray given a C++ vector.
 
     This registers a Sentinel as the base object for the numpy array
     freeing the C++ vector it encapsulates when it must.
@@ -204,7 +203,7 @@ cdef class DistanceComputer:
 
 
 cdef class DenseDenseDistanceComputer(DistanceComputer):
-    """ Compute distances between vectors of two arrays.
+    """Compute distances between vectors of two arrays.
 
     X: ndarray of shape (n_X, d)
         Rows represent vectors
@@ -260,7 +259,7 @@ cdef class DenseDenseDistanceComputer(DistanceComputer):
 
 
 cdef class SparseSparseDistanceComputer(DistanceComputer):
-    """ Compute distances between vectors of two sparse matrices.
+    """Compute distances between vectors of two sparse matrices.
 
     X: sparse matrix of shape (n_X, d)
         Rows represent vectors
@@ -336,7 +335,7 @@ cdef class SparseSparseDistanceComputer(DistanceComputer):
 
 
 cdef class SparseDenseDistanceComputer(DistanceComputer):
-    """ Compute distances between vectors of two sparse matrices.
+    """Compute distances between vectors of two sparse matrices.
 
     X: sparse matrix of shape (n_X, d)
         Rows represent vectors
@@ -410,8 +409,7 @@ cdef class SparseDenseDistanceComputer(DistanceComputer):
 
 
 cdef class DenseSparseDistanceComputer(DistanceComputer):
-    """ Compute distances between vectors of a sparse matrix and
-     vectors of an array.
+    """Compute distances between vectors of a sparse matrix and vectors of an array.
 
     X: ndarray of shape (n_X, d)
         Rows represent vectors
@@ -651,7 +649,7 @@ cdef class PairwiseDistancesReduction:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil except -1:
-        """ Abstract method: Sub-classes implemented the reduction
+        """Abstract method: Sub-classes implemented the reduction
         on a pair of chunks"""
         return -1
 
