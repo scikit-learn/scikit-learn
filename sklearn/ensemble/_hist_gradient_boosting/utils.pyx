@@ -43,7 +43,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
 
     lightgbm_loss_mapping = {
         'squared_error': 'regression_l2',
-        'least_absolute_deviation': 'regression_l1',
+        'absolute_error': 'regression_l1',
         'binary_crossentropy': 'binary',
         'categorical_crossentropy': 'multiclass'
     }
@@ -76,7 +76,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     # XGB
     xgboost_loss_mapping = {
         'squared_error': 'reg:linear',
-        'least_absolute_deviation': 'LEAST_ABSOLUTE_DEV_NOT_SUPPORTED',
+        'absolute_error': 'LEAST_ABSOLUTE_DEV_NOT_SUPPORTED',
         'binary_crossentropy': 'reg:logistic',
         'categorical_crossentropy': 'multi:softmax'
     }
@@ -101,7 +101,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     catboost_loss_mapping = {
         'squared_error': 'RMSE',
         # catboost does not support MAE when leaf_estimation_method is Newton
-        'least_absolute_deviation': 'LEAST_ASBOLUTE_DEV_NOT_SUPPORTED',
+        'absolute_error': 'LEAST_ASBOLUTE_DEV_NOT_SUPPORTED',
         'binary_crossentropy': 'Logloss',
         'categorical_crossentropy': 'MultiClass'
     }
@@ -143,13 +143,14 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
             return CatBoostRegressor(**catboost_params)
 
 
-def sum_parallel(G_H_DTYPE_C [:] array):
+def sum_parallel(G_H_DTYPE_C [:] array, int n_threads):
 
     cdef:
         Y_DTYPE_C out = 0.
         int i = 0
 
-    for i in prange(array.shape[0], schedule='static', nogil=True):
+    for i in prange(array.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
         out += array[i]
 
     return out
