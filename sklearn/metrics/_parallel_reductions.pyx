@@ -8,10 +8,6 @@
 # cython: binding=False
 # distutils: define_macros=CYTHON_TRACE_NOGIL=0
 
-DEF CHUNK_SIZE = 256  # number of vectors
-DEF MIN_CHUNK_SAMPLES = 20
-DEF FLOAT_INF = 1e36
-
 import numpy as np
 cimport numpy as np
 
@@ -47,7 +43,13 @@ from ..utils import check_array
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs import ITYPE, DTYPE
 
-# TODO: This has been introduced in Cython 3.0, change for `libcpp.algorithm.move` once Cython 3 is used
+
+DEF CHUNK_SIZE = 256  # number of vectors
+DEF MIN_CHUNK_SAMPLES = 20
+DEF FLOAT_INF = 1e36
+
+# TODO: This has been introduced in Cython 3.0, change for
+# `libcpp.algorithm.move` once Cython 3 is used
 # Introduction in Cython:
 # https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L47
 cdef extern from "<algorithm>" namespace "std" nogil:
@@ -61,17 +63,21 @@ ctypedef fused vector_DITYPE_t:
     vector[ITYPE_t]
     vector[DTYPE_t]
 
+
 ctypedef fused vector_vector_DITYPE_t:
     vector[vector[ITYPE_t]]
     vector[vector[DTYPE_t]]
 
+
 cdef extern from "numpy/arrayobject.h":
     int PyArray_SetBaseObject(np.ndarray arr, PyObject *obj) nogil except -1
+
 
 cdef class StdVectorSentinel:
     """Wraps a reference to a vector which will be
     deallocated with this object."""
     pass
+
 
 cdef class StdVectorSentinelDTYPE(StdVectorSentinel):
     cdef vector[DTYPE_t] vec
@@ -81,6 +87,7 @@ cdef class StdVectorSentinelDTYPE(StdVectorSentinel):
         sentinel = StdVectorSentinelDTYPE()
         sentinel.vec.swap(deref(vec_ptr))
         return sentinel
+
 
 cdef class StdVectorSentinelITYPE(StdVectorSentinel):
     cdef vector[ITYPE_t] vec
@@ -101,7 +108,8 @@ cdef np.ndarray vector_to_numpy_array(vector_DITYPE_t * vect_ptr):
     typenum = DTYPECODE if vector_DITYPE_t is vector[DTYPE_t] else ITYPECODE
     cdef:
         np.npy_intp size = deref(vect_ptr).size()
-        np.ndarray arr = np.PyArray_SimpleNewFromData(1, &size, typenum, deref(vect_ptr).data())
+        np.ndarray arr = np.PyArray_SimpleNewFromData(1, &size, typenum,
+                                                      deref(vect_ptr).data())
         StdVectorSentinel sentinel
 
     if vector_DITYPE_t is vector[DTYPE_t]:
@@ -116,10 +124,14 @@ cdef np.ndarray vector_to_numpy_array(vector_DITYPE_t * vect_ptr):
     PyArray_SetBaseObject(arr, <PyObject*>sentinel)
     return arr
 
-cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(vector_vector_DITYPE_t* vecs):
+
+cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(
+    vector_vector_DITYPE_t* vecs
+    ):
     cdef:
         ITYPE_t n = deref(vecs).size()
-        np.ndarray[object, ndim=1] np_arrays_of_np_arrays = np.empty(n, dtype=np.ndarray)
+        np.ndarray[object, ndim=1] np_arrays_of_np_arrays = np.empty(n,
+                                                                     dtype=np.ndarray)
 
     for i in range(n):
         np_arrays_of_np_arrays[i] = vector_to_numpy_array(&(deref(vecs)[i]))
@@ -129,8 +141,17 @@ cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(vector_vector_DI
 #####################
 
 cdef class DistanceComputer:
-    """ Abstract class responsible to compute
-    distances between vectors of array-like.
+    """Abstract class to compute distances between vectors.
+
+    Compute distances for one pair of vectors at a time.
+    Vectors can be stored as rows of np.ndarrays or CSR matrices.
+
+    This class avoids the overhead of dispatching distance computations
+    based on the physical representation of the vectors (sparse vs. dense)
+    for each row of the collection.
+
+    This makes use of cython.final to remove the overhead of method calls'
+    dispatch.
     """
 
     @classmethod
@@ -141,7 +162,8 @@ cdef class DistanceComputer:
                 dict metric_kwargs=dict(),
         ) -> DistanceComputer:
         cdef:
-            DistanceMetric distance_metric = DistanceMetric.get_metric(metric, **metric_kwargs)
+            DistanceMetric distance_metric = DistanceMetric.get_metric(metric,
+                                                                       **metric_kwargs)
 
         if X.shape[1] != Y.shape[1]:
             raise RuntimeError("Vectors of X and Y must have the "
@@ -179,6 +201,7 @@ cdef class DistanceComputer:
         ITYPE_t j,
     ) nogil except -1:
         return -1
+
 
 cdef class DenseDenseDistanceComputer(DistanceComputer):
     """ Compute distances between vectors of two arrays.
@@ -234,6 +257,7 @@ cdef class DenseDenseDistanceComputer(DistanceComputer):
         return self.distance_metric.dist(&self.X[i, 0],
                                          &self.Y[j, 0],
                                          self.d)
+
 
 cdef class SparseSparseDistanceComputer(DistanceComputer):
     """ Compute distances between vectors of two sparse matrices.
@@ -401,7 +425,7 @@ cdef class DenseSparseDistanceComputer(DistanceComputer):
 
     def __init__(self, X, Y, distance_metric):
         # Swapping arguments on the constructor
-        self.distance_computer = SparseSparseDistanceComputer(Y, X, distance_metric)
+        self.distance_computer = SparseDenseDistanceComputer(Y, X, distance_metric)
 
     @property
     @final
@@ -453,11 +477,12 @@ cdef class PairwiseDistancesReduction:
         ITYPE_t effective_omp_n_thread
         ITYPE_t n_samples_chunk, chunk_size
 
-        ITYPE_t n_X, X_n_samples_chunk, X_n_chunks, X_n_samples_rem
-        ITYPE_t n_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_rem
+        ITYPE_t n_X, X_n_samples_chunk, X_n_chunks, X_n_samples_remainder
+        ITYPE_t n_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_remainder
 
     @classmethod
     def valid_metrics(cls):
+        # TODO: support those distances
         excluded = {"pyfunc", "sokalmichener", "matching", "jaccard"}
         return sorted({*METRIC_MAPPING.keys()}.difference(excluded))
 
@@ -486,12 +511,12 @@ cdef class PairwiseDistancesReduction:
         self.n_Y = distance_computer.n_Y
         self.Y_n_samples_chunk = min(self.n_Y, self.n_samples_chunk)
         Y_n_full_chunks = self.n_Y // self.Y_n_samples_chunk
-        self.Y_n_samples_rem = self.n_Y % self.Y_n_samples_chunk
+        self.Y_n_samples_remainder = self.n_Y % self.Y_n_samples_chunk
 
         self.n_X = distance_computer.n_X
         self.X_n_samples_chunk = min(self.n_X, self.n_samples_chunk)
         X_n_full_chunks = self.n_X // self.X_n_samples_chunk
-        self.X_n_samples_rem = self.n_X % self.X_n_samples_chunk
+        self.X_n_samples_remainder = self.n_X % self.X_n_samples_chunk
 
         # Counting remainder chunk in total number of chunks
         self.Y_n_chunks = Y_n_full_chunks + (
@@ -525,8 +550,9 @@ cdef class PairwiseDistancesReduction:
 
             for X_chunk_idx in prange(self.X_n_chunks, schedule='static'):
                 X_start = X_chunk_idx * self.X_n_samples_chunk
-                if X_chunk_idx == self.X_n_chunks - 1 and self.X_n_samples_rem > 0:
-                    X_end = X_start + self.X_n_samples_rem
+                if (X_chunk_idx == self.X_n_chunks - 1
+                    and self.X_n_samples_remainder > 0):
+                    X_end = X_start + self.X_n_samples_remainder
                 else:
                     X_end = X_start + self.X_n_samples_chunk
 
@@ -535,8 +561,9 @@ cdef class PairwiseDistancesReduction:
 
                 for Y_chunk_idx in range(self.Y_n_chunks):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
-                    if Y_chunk_idx == self.Y_n_chunks - 1 and self.Y_n_samples_rem > 0:
-                        Y_end = Y_start + self.Y_n_samples_rem
+                    if (Y_chunk_idx == self.Y_n_chunks - 1
+                        and self.Y_n_samples_remainder > 0):
+                        Y_end = Y_start + self.Y_n_samples_remainder
                     else:
                         Y_end = Y_start + self.Y_n_samples_chunk
 
@@ -578,8 +605,8 @@ cdef class PairwiseDistancesReduction:
 
         for X_chunk_idx in range(self.X_n_chunks):
             X_start = X_chunk_idx * self.X_n_samples_chunk
-            if X_chunk_idx == self.X_n_chunks - 1 and self.X_n_samples_rem > 0:
-                X_end = X_start + self.X_n_samples_rem
+            if X_chunk_idx == self.X_n_chunks - 1 and self.X_n_samples_remainder > 0:
+                X_end = X_start + self.X_n_samples_remainder
             else:
                 X_end = X_start + self.X_n_samples_chunk
 
@@ -592,8 +619,8 @@ cdef class PairwiseDistancesReduction:
                 for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
                     if Y_chunk_idx == self.Y_n_chunks - 1 \
-                            and self.Y_n_samples_rem > 0:
-                        Y_end = Y_start + self.Y_n_samples_rem
+                            and self.Y_n_samples_remainder > 0:
+                        Y_end = Y_start + self.Y_n_samples_remainder
                     else:
                         Y_end = Y_start + self.Y_n_samples_chunk
 
@@ -603,11 +630,11 @@ cdef class PairwiseDistancesReduction:
                         thread_num,
                     )
                 # end: prange
+            # end: with nogil, parallel
 
             # Synchronizing the thread datastructures with the main ones
             # This can potentially block
             self._on_Y_after_parallel(num_threads, X_start, X_end)
-            # end: with nogil, parallel
 
         # end: for X_chunk_idx
         # Deallocating temporary datastructures
@@ -631,26 +658,26 @@ cdef class PairwiseDistancesReduction:
     # Placeholder methods which can be implemented
 
     cdef void _on_X_parallel_init(self,
-            ITYPE_t thread_num,
+        ITYPE_t thread_num,
     ) nogil:
         return
 
     cdef void _on_X_parallel_finalize(self,
-            ITYPE_t thread_num
+        ITYPE_t thread_num
     ) nogil:
         return
 
     cdef void _on_X_prange_iter_init(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
         return
 
     cdef void _on_X_prange_iter_finalize(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
         return
 
@@ -716,7 +743,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 ITYPE_t chunk_size=CHUNK_SIZE,
                 dict metric_kwargs=dict(),
         ):
-        # This factory comes to handle specialisation on fast_sqeuclidean.
+        # This factory comes to handle specialisations.
+        # TODO: take the size of X vs chunk_size into account for this choice.
         if metric == "fast_sqeuclidean" and not issparse(X) and not issparse(Y):
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
         return ArgKmin(distance_computer=DistanceComputer.get_for(X, Y, metric, metric_kwargs),
@@ -724,9 +752,9 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                        chunk_size=chunk_size)
 
     def __init__(self,
-                 DistanceComputer distance_computer,
-                 ITYPE_t k,
-                 ITYPE_t chunk_size = CHUNK_SIZE,
+        DistanceComputer distance_computer,
+        ITYPE_t k,
+        ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         PairwiseDistancesReduction.__init__(self, distance_computer, chunk_size)
 
@@ -739,8 +767,10 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         # Allocating pointers to datastructures but not the datastructures themselves.
         # There's potentially more pointers than actual thread used for the
         # reduction but as many datastructures as threads.
-        self.heaps_approx_distances_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
-        self.heaps_indices_chunks = <ITYPE_t **> malloc(sizeof(ITYPE_t *) * self.effective_omp_n_thread)
+        self.heaps_approx_distances_chunks = <DTYPE_t **> malloc(
+            sizeof(DTYPE_t *) * self.effective_omp_n_thread)
+        self.heaps_indices_chunks = <ITYPE_t **> malloc(
+            sizeof(ITYPE_t *) * self.effective_omp_n_thread)
 
     def __dealloc__(self):
         if self.heaps_indices_chunks is not NULL:
@@ -778,9 +808,9 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     @final
     cdef void _on_X_prange_iter_init(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
 
         # As this strategy is embarrassingly parallel, we can set the
@@ -790,9 +820,9 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     @final
     cdef void _on_X_prange_iter_finalize(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
         cdef:
             ITYPE_t idx, jdx
@@ -806,7 +836,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             )
 
     cdef void _on_Y_init(self,
-            ITYPE_t num_threads,
+        ITYPE_t num_threads,
     ) nogil:
         cdef:
             # number of scalar elements
@@ -818,12 +848,14 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             # As chunks of X are shared across threads, so must their
             # heaps. To solve this, each thread has its own heaps
             # which are then synchronised back in the main ones.
-            self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(heaps_size * sizeof(DTYPE_t))
-            self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(heaps_size * sizeof(ITYPE_t))
+            self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(
+                heaps_size * sizeof(DTYPE_t))
+            self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(
+                heaps_size * sizeof(ITYPE_t))
 
     @final
     cdef void _on_Y_parallel_init(self,
-            ITYPE_t thread_num,
+        ITYPE_t thread_num,
     ) nogil:
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
@@ -832,9 +864,9 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     @final
     cdef void _on_Y_after_parallel(self,
-            ITYPE_t num_threads,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
+        ITYPE_t num_threads,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
         cdef:
             ITYPE_t idx, jdx, thread_num
@@ -892,8 +924,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     @final
     def compute(self,
-           str strategy = "auto",
-           bint return_distance = False
+       str strategy = "auto",
+       bint return_distance = False
     ):
         """Computes the reduction of vectors (rows) of X on Y.
 
@@ -944,6 +976,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
         return np.asarray(self.argkmin_indices)
 
+
 cdef class FastSquaredEuclideanArgKmin(ArgKmin):
     """Fast specialized alternative for ArgKmin on
     EuclideanDistance.
@@ -975,15 +1008,16 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         ArgKmin.__init__(self,
-                         # The distance computer here is used for exact distances computations
-                         distance_computer=DistanceComputer.get_for(X, Y, metric="euclidean"),
-                         k=k,
-                         chunk_size=chunk_size)
+            # The distance computer here is used for exact distances computations
+            distance_computer=DistanceComputer.get_for(X, Y, metric="euclidean"),
+            k=k,
+            chunk_size=chunk_size)
         self.X = X
         self.Y = Y
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
         # Temporary datastructures used in threads
-        self.dist_middle_terms_chunks = <DTYPE_t **> malloc(sizeof(DTYPE_t *) * self.effective_omp_n_thread)
+        self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
+            sizeof(DTYPE_t *) * self.effective_omp_n_thread)
 
     def __dealloc__(self):
         if self.dist_middle_terms_chunks is not NULL:
@@ -994,6 +1028,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             ITYPE_t thread_num,
     ) nogil:
         ArgKmin._on_X_parallel_init(self, thread_num)
+
         # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
         self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
             self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t))
@@ -1156,9 +1191,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                        chunk_size=chunk_size)
 
     def __init__(self,
-                 DistanceComputer distance_computer,
-                 DTYPE_t radius,
-                 ITYPE_t chunk_size = CHUNK_SIZE,
+        DistanceComputer distance_computer,
+        DTYPE_t radius,
+        ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         PairwiseDistancesReduction.__init__(self, distance_computer, chunk_size)
 
@@ -1203,9 +1238,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
     @final
     cdef void _on_X_prange_iter_init(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
 
         # As this strategy is embarrassingly parallel, we can set the
@@ -1215,9 +1250,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
     @final
     cdef void _on_X_prange_iter_finalize(self,
-            ITYPE_t thread_num,
-            ITYPE_t X_start,
-            ITYPE_t X_end,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
         cdef:
             ITYPE_t idx, jdx
@@ -1317,9 +1352,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
     @final
     def compute(self,
-           str strategy = "auto",
-           bint return_distance = False,
-           bint sort_results = False
+        str strategy = "auto",
+        bint return_distance = False,
+        bint sort_results = False
     ):
         if sort_results and not return_distance:
             raise ValueError("return_distance must be True "
