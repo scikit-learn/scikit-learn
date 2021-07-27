@@ -290,13 +290,19 @@ def cross_validate(
     results = _aggregate_score_dicts(results)
 
     # If all the fits failed raise an informative warning in the main process
-    # if results["fit_failed"].all():
-    #     all_fits_failed_message = (
-    #         "All the fit on the training sets failed. Something seems wrong in the"
-    #         f" configuration of {estimator}\n.You can try to debug this further by"
-    #         " setting 'error_score='raise'."
-    #     )
-    #     warnings.warn(all_fits_failed_message)
+    num_failed_fits = results["fit_failed"].sum()
+    num_fits = len(results["fit_failed"])
+
+    if num_failed_fits > 0:
+        some_fits_failed_message = (
+            f"\n{num_failed_fits}/{num_fits} fits on the training sets failed."
+            " Something seems wrong in the configuration of your"
+            f" model:\n{estimator}.\nYou can try to debug this further by setting"
+            " 'error_score='raise'.\n\nHere are more details about the failures:\n"
+            "\n----------\n"
+            + "----------\n".join(results["fit_error"])
+        )
+        warnings.warn(some_fits_failed_message, FitFailedWarning)
 
     ret = {}
     ret["fit_time"] = results["fit_time"]
@@ -675,15 +681,17 @@ def _fit_and_score(
                 test_scores = error_score
                 if return_train_score:
                     train_scores = error_score
-            warnings.warn(
-                "Estimator fit failed. The score on this train-test"
-                " partition for these parameters will be set to %f. "
-                "Details: \n%s" % (error_score, format_exc()),
-                FitFailedWarning,
-            )
+            # warnings.warn(
+            #     "Estimator fit failed. The score on this train-test"
+            #     " partition for these parameters will be set to %f. "
+            #     "Details: \n%s" % (error_score, format_exc()),
+            #     FitFailedWarning,
+            # )
         result["fit_failed"] = True
+        result["fit_error"] = format_exc()
     else:
         result["fit_failed"] = False
+        result["fit_error"] = None
 
         fit_time = time.time() - start_time
         test_scores = _score(estimator, X_test, y_test, scorer, error_score)
@@ -1445,6 +1453,7 @@ def learning_curve(
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
+        # TODO is someone relying on this behaviour (that the warning is raised at the point where the fit failed)
         If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
