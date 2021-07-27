@@ -139,11 +139,13 @@ cdef np.ndarray[object, ndim=1] _coerce_vectors_to_np_nd_arrays(
 
 #####################
 
-cdef class DistanceComputer:
-    """Abstract class to compute distances between vectors.
+cdef class DatasetsPair:
+    """Abstract class which wraps a pair of datasets (X, Y).
 
-    Compute distances for one pair of vectors at a time.
-    Vectors can be stored as rows of np.ndarrays or CSR matrices.
+    X and Y can be stored as rows of np.ndarrays or CSR matrices in subclasses.
+
+    This class allows compute distances via :class:`sklearn.metrics.DistanceMetric`
+    for one pair of vectors at a time given the pair of their indices (i, j).
 
     This class avoids the overhead of dispatching distance computations
     based on the physical representation of the vectors (sparse vs. dense)
@@ -159,7 +161,7 @@ cdef class DistanceComputer:
                 Y,
                 str metric="euclidean",
                 dict metric_kwargs=dict(),
-        ) -> DistanceComputer:
+        ) -> DatasetsPair:
         cdef:
             DistanceMetric distance_metric = DistanceMetric.get_metric(metric,
                                                                        **metric_kwargs)
@@ -174,12 +176,12 @@ cdef class DistanceComputer:
         distance_metric._validate_data(Y)
 
         if not issparse(X) and not issparse(Y):
-            return DenseDenseDistanceComputer(X, Y, distance_metric)
+            return DenseDenseDatasetsPair(X, Y, distance_metric)
         if issparse(X) and not issparse(Y):
-            return SparseDenseDistanceComputer(X, Y, distance_metric)
+            return SparseDenseDatasetsPair(X, Y, distance_metric)
         if not issparse(X) and issparse(Y):
-            return DenseSparseDistanceComputer(X, Y, distance_metric)
-        return SparseSparseDistanceComputer(X, Y, distance_metric)
+            return DenseSparseDatasetsPair(X, Y, distance_metric)
+        return SparseSparseDatasetsPair(X, Y, distance_metric)
 
     @property
     def n_X(self):
@@ -202,7 +204,7 @@ cdef class DistanceComputer:
         return -1
 
 
-cdef class DenseDenseDistanceComputer(DistanceComputer):
+cdef class DenseDenseDatasetsPair(DatasetsPair):
     """Compute distances between vectors of two arrays.
 
     X: ndarray of shape (n_X, d)
@@ -258,7 +260,7 @@ cdef class DenseDenseDistanceComputer(DistanceComputer):
                                          self.d)
 
 
-cdef class SparseSparseDistanceComputer(DistanceComputer):
+cdef class SparseSparseDatasetsPair(DatasetsPair):
     """Compute distances between vectors of two sparse matrices.
 
     X: sparse matrix of shape (n_X, d)
@@ -334,7 +336,7 @@ cdef class SparseSparseDistanceComputer(DistanceComputer):
                                          self.Y_indices[yj_start:yj_end])
 
 
-cdef class SparseDenseDistanceComputer(DistanceComputer):
+cdef class SparseDenseDatasetsPair(DatasetsPair):
     """Compute distances between vectors of two sparse matrices.
 
     X: sparse matrix of shape (n_X, d)
@@ -384,7 +386,7 @@ cdef class SparseDenseDistanceComputer(DistanceComputer):
             ITYPE_t xi_end = self.X_indptr[i + 1]
 
         # TODO: the 2D to 1D memory-view conversion might make computation slower, see:
-        #
+        # https://github.com/scikit-learn/scikit-learn/issues/17299
         # Ideally, we could pass pointers and indices and access elements
         # then in distance_metric.dist
         return self.distance_metric.sparse_rdist(self.X_data[xi_start:xi_end],
@@ -408,7 +410,7 @@ cdef class SparseDenseDistanceComputer(DistanceComputer):
                                          self.Y_indices)
 
 
-cdef class DenseSparseDistanceComputer(DistanceComputer):
+cdef class DenseSparseDatasetsPair(DatasetsPair):
     """Compute distances between vectors of a sparse matrix and vectors of an array.
 
     X: ndarray of shape (n_X, d)
@@ -419,23 +421,23 @@ cdef class DenseSparseDistanceComputer(DistanceComputer):
     cdef:
         # As distance metrics are commutative functions, we can
         # simply rely on the other strategy and swap arguments
-        DistanceComputer distance_computer
+        DatasetsPair datasets_pair
 
     def __init__(self, X, Y, distance_metric):
         # Swapping arguments on the constructor
-        self.distance_computer = SparseDenseDistanceComputer(Y, X, distance_metric)
+        self.datasets_pair = SparseDenseDatasetsPair(Y, X, distance_metric)
 
     @property
     @final
     def n_X(self):
         # Swapping interface
-        return self.distance_computer.n_Y
+        return self.datasets_pair.n_Y
 
     @property
     @final
     def n_Y(self):
         # Swapping interface
-        return self.distance_computer.n_X
+        return self.datasets_pair.n_X
 
     @final
     cdef DTYPE_t proxy_dist(self,
@@ -443,7 +445,7 @@ cdef class DenseSparseDistanceComputer(DistanceComputer):
         ITYPE_t j,
     ) nogil except -1:
         # Swapping arguments on the same interface
-        return self.distance_computer.proxy_dist(j, i)
+        return self.datasets_pair.proxy_dist(j, i)
 
     @final
     cdef DTYPE_t dist(self,
@@ -451,7 +453,7 @@ cdef class DenseSparseDistanceComputer(DistanceComputer):
         ITYPE_t j,
     ) nogil except -1:
         # Swapping arguments on the same interface
-        return self.distance_computer.dist(j, i)
+        return self.datasets_pair.dist(j, i)
 
 
 cdef class PairwiseDistancesReduction:
@@ -470,7 +472,7 @@ cdef class PairwiseDistancesReduction:
     """
 
     cdef:
-        DistanceComputer distance_computer
+        DatasetsPair datasets_pair
 
         ITYPE_t effective_omp_n_thread
         ITYPE_t n_samples_chunk, chunk_size
@@ -493,7 +495,7 @@ cdef class PairwiseDistancesReduction:
 
 
     def __init__(self,
-                 DistanceComputer distance_computer,
+                 DatasetsPair datasets_pair,
                  ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         cdef:
@@ -504,14 +506,14 @@ cdef class PairwiseDistancesReduction:
         self.chunk_size = chunk_size
         self.n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
-        self.distance_computer = distance_computer
+        self.datasets_pair = datasets_pair
 
-        self.n_Y = distance_computer.n_Y
+        self.n_Y = datasets_pair.n_Y
         self.Y_n_samples_chunk = min(self.n_Y, self.n_samples_chunk)
         Y_n_full_chunks = self.n_Y // self.Y_n_samples_chunk
         self.Y_n_samples_remainder = self.n_Y % self.Y_n_samples_chunk
 
-        self.n_X = distance_computer.n_X
+        self.n_X = datasets_pair.n_X
         self.X_n_samples_chunk = min(self.n_X, self.n_samples_chunk)
         X_n_full_chunks = self.n_X // self.X_n_samples_chunk
         self.X_n_samples_remainder = self.n_X % self.X_n_samples_chunk
@@ -710,8 +712,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     Parameters
     ----------
-    distance_metric: DistanceMetric
-        The distance to use
+    datasets_pair: DatasetsPair
+        The dataset pairs (X, Y) for the reduction
     k: int
         The k for the argkmin reduction
     chunk_size: int
@@ -745,16 +747,16 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         # TODO: take the size of X vs chunk_size into account for this choice.
         if metric == "fast_sqeuclidean" and not issparse(X) and not issparse(Y):
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
-        return ArgKmin(distance_computer=DistanceComputer.get_for(X, Y, metric, metric_kwargs),
+        return ArgKmin(datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                        k=k,
                        chunk_size=chunk_size)
 
     def __init__(self,
-        DistanceComputer distance_computer,
+        DatasetsPair datasets_pair,
         ITYPE_t k,
         ITYPE_t chunk_size = CHUNK_SIZE,
     ):
-        PairwiseDistancesReduction.__init__(self, distance_computer, chunk_size)
+        PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size)
 
         self.k = k
 
@@ -799,7 +801,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 _push(heaps_proxy_distances + i * self.k,
                       heaps_indices + i * self.k,
                       k,
-                      self.distance_computer.proxy_dist(X_start + i, Y_start + j),
+                      self.datasets_pair.proxy_dist(X_start + i, Y_start + j),
                       Y_start + j)
 
         return 0
@@ -918,7 +920,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         for i in prange(self.n_X, schedule='static', nogil=True,
                         num_threads=self.effective_omp_n_thread):
             for j in range(self.k):
-                distances[i, j] = self.distance_computer.dist(i, Y_indices[i, j])
+                distances[i, j] = self.datasets_pair.dist(i, Y_indices[i, j])
 
     @final
     def compute(self,
@@ -1006,8 +1008,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         ArgKmin.__init__(self,
-            # The distance computer here is used for exact distances computations
-            distance_computer=DistanceComputer.get_for(X, Y, metric="euclidean"),
+            # The datasets pair here is used for exact distances computations
+            datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             k=k,
             chunk_size=chunk_size)
         self.X = X
@@ -1135,15 +1137,27 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
 
 
 cdef class RadiusNeighborhood(PairwiseDistancesReduction):
-    """Returns the indices of neighbors of a first set
-    of vectors (rows of X) present in another set of vectors
+    """Returns indices in a vector-set Y of radius-based neighbors of vector-set X.
+
+    The neighbors of a first set of vectors X present in
+    the second in present another.
+
+    present in another set of vectors
     (rows of Y) for a given a radius and distance.
+    Parameters
+    ----------
+    datasets_pair: DatasetsPair
+        The dataset pairs (X, Y) for the reduction
+    radius: int
+        The radius defining the neighborhood
+    chunk_size: int
+        The number of vectors per chunk
     """
 
     cdef:
         DTYPE_t radius
 
-        # Distances metrics compute rank preserving distance
+        # DistanceMetric compute rank preserving distance via rdist
         # ("reduced distance" in the original wording),
         # which are proxies necessitating less computations.
         # We get the proxy for the radius to be able to compare
@@ -1184,16 +1198,16 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                 dict metric_kwargs=dict(),
         ):
         return RadiusNeighborhood(
-                       distance_computer=DistanceComputer.get_for(X, Y, metric, metric_kwargs),
+                       datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                        radius=radius,
                        chunk_size=chunk_size)
 
     def __init__(self,
-        DistanceComputer distance_computer,
+        DatasetsPair datasets_pair,
         DTYPE_t radius,
         ITYPE_t chunk_size = CHUNK_SIZE,
     ):
-        PairwiseDistancesReduction.__init__(self, distance_computer, chunk_size)
+        PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size)
 
         self.radius = radius
         self.sort_results = False
@@ -1227,7 +1241,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
-                dist_i_j = self.distance_computer.dist(i, j)
+                dist_i_j = self.datasets_pair.dist(i, j)
                 if dist_i_j <= self.radius:
                     deref(self.neigh_distances_chunks[thread_num])[i].push_back(dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
