@@ -38,6 +38,7 @@ from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 
 
 from scipy.sparse import issparse
+from threadpoolctl import threadpool_limits
 from ._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._openmp_helpers import _openmp_effective_n_threads
@@ -968,12 +969,15 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             else:
                 strategy = 'parallel_on_Y'
 
-        if strategy == 'parallel_on_Y':
-            self._parallel_on_Y()
-        elif strategy == 'parallel_on_X':
-            self._parallel_on_X()
-        else:
-            raise RuntimeError(f"strategy '{strategy}' not supported.")
+        # Limit the number of threads in second level of nested parallelism for BLAS
+        # to avoid threads over-subscription (in GEMM for instance).
+        with threadpool_limits(limits=1, user_api="blas"):
+            if strategy == 'parallel_on_Y':
+                self._parallel_on_Y()
+            elif strategy == 'parallel_on_X':
+                self._parallel_on_X()
+            else:
+                raise RuntimeError(f"strategy '{strategy}' not supported.")
 
         if return_distance:
             # We need to recompute distances because we relied on
@@ -1394,12 +1398,15 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             else:
                 strategy = 'parallel_on_Y'
 
-        if strategy == 'parallel_on_Y':
-            self._parallel_on_Y()
-        elif strategy == 'parallel_on_X':
-            self._parallel_on_X()
-        else:
-            raise RuntimeError(f"strategy '{strategy}' not supported.")
+        # Limit the number of threads in second level of nested parallelism for BLAS
+        # to avoid threads over-subscription (in GEMM for instance).
+        with threadpool_limits(limits=1, user_api="blas"):
+            if strategy == 'parallel_on_Y':
+                self._parallel_on_Y()
+            elif strategy == 'parallel_on_X':
+                self._parallel_on_X()
+            else:
+                raise RuntimeError(f"strategy '{strategy}' not supported.")
 
         if return_distance:
             res = (
