@@ -651,8 +651,7 @@ cdef class PairwiseDistancesReduction:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil except -1:
-        """Abstract method: Sub-classes implemented the reduction
-        on a pair of chunks"""
+        """Implemented the reduction on a pair of chunks."""
         return -1
 
     # Placeholder methods which can be implemented
@@ -660,11 +659,7 @@ cdef class PairwiseDistancesReduction:
     cdef void _on_X_parallel_init(self,
         ITYPE_t thread_num,
     ) nogil:
-        return
-
-    cdef void _on_X_parallel_finalize(self,
-        ITYPE_t thread_num
-    ) nogil:
+        """Allocate datastructures used in a thread given its number."""
         return
 
     cdef void _on_X_prange_iter_init(self,
@@ -672,6 +667,7 @@ cdef class PairwiseDistancesReduction:
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
+        """Initialise datastructures used in a thread given its number."""
         return
 
     cdef void _on_X_prange_iter_finalize(self,
@@ -679,16 +675,25 @@ cdef class PairwiseDistancesReduction:
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
+        """Interact with datastructures after a reduction on chunks."""
+        return
+
+    cdef void _on_X_parallel_finalize(self,
+        ITYPE_t thread_num
+    ) nogil:
+        """Interact with datastructures after executing all the reductions."""
         return
 
     cdef void _on_Y_init(self,
         ITYPE_t num_threads,
     ) nogil:
+        """Allocate datastructures used in threads."""
         return
 
     cdef void _on_Y_parallel_init(self,
         ITYPE_t thread_num,
     ) nogil:
+        """Initialise datastructures used in a thread given its number."""
         return
 
     cdef void _on_Y_after_parallel(self,
@@ -696,11 +701,13 @@ cdef class PairwiseDistancesReduction:
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
+        """Interact with datastructures after a threads parallel region."""
         return
 
     cdef void _on_Y_finalize(self,
         ITYPE_t num_threads,
     ) nogil:
+        """Interact with datastructures after executing all the reductions."""
         return
 
 cdef class ArgKmin(PairwiseDistancesReduction):
