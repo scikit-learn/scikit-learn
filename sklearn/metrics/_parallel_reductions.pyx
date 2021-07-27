@@ -751,7 +751,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 dict metric_kwargs=dict(),
         ):
         # This factory comes to handle specialisations.
-        # TODO: take the size of X vs chunk_size into account for this choice.
         if metric == "fast_sqeuclidean" and not issparse(X) and not issparse(Y):
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
         return ArgKmin(datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
@@ -766,10 +765,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size)
 
         self.k = k
-
-        # Results returned by ArgKmin.compute used as the main heaps
-        self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
-        self.argkmin_distances = np.full((self.n_X, self.k), FLOAT_INF, dtype=DTYPE)
 
         # Allocating pointers to datastructures but not the datastructures themselves.
         # There's potentially more pointers than actual thread used for the
@@ -960,6 +955,11 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         indices: ndarray of shape (n, k)
             Indices of each X vector argkmin in Y.
         """
+
+        # Results returned by ArgKmin.compute used as the main heaps
+        self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
+        self.argkmin_distances = np.full((self.n_X, self.k), FLOAT_INF, dtype=DTYPE)
+
         if strategy == 'auto':
             # This is a simple heuristic whose constant for the
             # comparison has been chosen based on experiments.
