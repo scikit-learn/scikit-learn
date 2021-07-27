@@ -24,7 +24,9 @@ def test_bad_n_features_to_select(n_features_to_select):
 
 def test_bad_direction():
     X, y = make_regression(n_features=5)
-    sfs = SequentialFeatureSelector(LinearRegression(), direction="bad")
+    sfs = SequentialFeatureSelector(
+        LinearRegression(), n_features_to_select="auto", direction="bad"
+    )
     with pytest.raises(ValueError, match="must be either 'forward' or"):
         sfs.fit(X, y)
 
@@ -183,7 +185,9 @@ def test_sparse_support():
 
     X, y = make_regression(n_features=10)
     X = scipy.sparse.csr_matrix(X)
-    sfs = SequentialFeatureSelector(LinearRegression(), cv=2)
+    sfs = SequentialFeatureSelector(
+        LinearRegression(), n_features_to_select="auto", cv=2
+    )
     sfs.fit(X, y)
     sfs.transform(X)
 
@@ -196,13 +200,17 @@ def test_nan_support():
     X, y = make_regression(n_samples, n_features, random_state=0)
     nan_mask = rng.randint(0, 2, size=(n_samples, n_features), dtype=bool)
     X[nan_mask] = np.nan
-    sfs = SequentialFeatureSelector(HistGradientBoostingRegressor(), cv=2)
+    sfs = SequentialFeatureSelector(
+        HistGradientBoostingRegressor(), n_features_to_select="auto", cv=2
+    )
     sfs.fit(X, y)
     sfs.transform(X)
 
     with pytest.raises(ValueError, match="Input contains NaN"):
         # LinearRegression does not support nans
-        SequentialFeatureSelector(LinearRegression(), cv=2).fit(X, y)
+        SequentialFeatureSelector(
+            LinearRegression(), n_features_to_select="auto", cv=2
+        ).fit(X, y)
 
 
 def test_pipeline_support():
@@ -214,12 +222,14 @@ def test_pipeline_support():
 
     # pipeline in SFS
     pipe = make_pipeline(StandardScaler(), LinearRegression())
-    sfs = SequentialFeatureSelector(pipe, cv=2)
+    sfs = SequentialFeatureSelector(pipe, n_features_to_select="auto", cv=2)
     sfs.fit(X, y)
     sfs.transform(X)
 
     # SFS in pipeline
-    sfs = SequentialFeatureSelector(LinearRegression(), cv=2)
+    sfs = SequentialFeatureSelector(
+        LinearRegression(), n_features_to_select="auto", cv=2
+    )
     pipe = make_pipeline(StandardScaler(), sfs)
     pipe.fit(X, y)
     pipe.transform(X)
