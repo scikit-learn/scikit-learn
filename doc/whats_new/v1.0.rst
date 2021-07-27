@@ -188,6 +188,11 @@ Changelog
   mini batches processed. :pr:`17622`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`cluster.AgglomerativeClustering` correctly connects components
+  when connectivity and affinity are both precomputed and the number
+  of connected components is greater than 1. :pr:`20597` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.compose`
 ......................
 
