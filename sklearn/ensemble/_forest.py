@@ -1931,9 +1931,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     See Also
     --------
-    sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
-    RandomForestClassifier : Ensemble Classifier based on trees with optimal
-        splits.
+    ExtraTreesRegressor : An extra-trees regressor with random splits.
+    RandomForestClassifier : A random forest classifier with optimal splits.
+    RandomForestRegressor : Ensemble regressor using trees with optimal splits.
 
     Notes
     -----
@@ -2229,9 +2229,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
     See Also
     --------
-    ExtraTreesClassifier : An extra-trees classifier.
-    ExtraTreesRegressor : An extra-trees regressor.
-    RandomForestClassifier : A random forest classifier.
+    ExtraTreesClassifier : An extra-trees classifier with random splits.
+    RandomForestClassifier : A random forest classifier with optimal splits.
     RandomForestRegressor : Ensemble regressor using trees with optimal splits.
 
     Notes
