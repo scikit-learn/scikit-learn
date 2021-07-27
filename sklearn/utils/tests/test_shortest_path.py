@@ -6,6 +6,7 @@ from numpy.testing import assert_array_almost_equal
 from sklearn.utils.graph import graph_shortest_path, single_source_shortest_path_length
 
 
+# FIXME: to be removed in 1.2
 def test_graph_shortest_path_deprecation():
     dist_matrix = generate_graph(20)
 
