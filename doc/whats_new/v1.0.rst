@@ -349,6 +349,11 @@ Changelog
   when the variance threshold is negative.
   :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
 
+- |Enhancement| :func:`feature_selection.RFE.fit` accepts additional estimator
+  parameters that are passed directly to the estimator's `fit` method.
+  :pr:`20380` by :user:`Iván Pulido <ijpulidos>`, :user:`Felipe Bidu <fbidu>`,
+  :user:`Gil Rutter <g-rutter>`, and :user:`Adrin Jalali <adrinjalali>`.
+
 - |FIX| Fix a bug in :func:`isotonic.isotonic_regression` where the
   `sample_weight` passed by a user were overwritten during the fit.
   :pr:`20515` by :user:`Carsten Allefeld <allefeld>`.
