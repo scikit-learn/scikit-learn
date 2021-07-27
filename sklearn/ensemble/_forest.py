@@ -2233,7 +2233,8 @@ class ExtraTreesRegressor(ForestRegressor):
     ExtraTreesClassifier : An extra-trees classifier.
     ExtraTreesRegressor : An extra-trees regressor.
     RandomForestClassifier : A random forest classifier.
-    RandomForestRegressor : Ensemble regressor using trees with optimal splits.
+    RandomForestRegressor : Ensemble regressor using trees
+        with optimal splits.
 
     Notes
     -----
