@@ -165,16 +165,33 @@ def test_function_transformer_frame():
     assert hasattr(X_df_trans, 'loc')
 
 
-def test_function_transformer_with_object_input():
-    data = np.array(['uni', 'dos', 'quattro']).reshape(-1, 1)
-    for dtype in ('S', 'U', 'O'):
-        data = data.astype(dtype)
-        trans = FunctionTransformer(
-            func=lambda X: None,
-            inverse_func=lambda X: data,
-            validate=False,
-            check_inverse=True)
+@pytest.mark.parametrize("X_type", ["list", "array", "series"])
+def test_function_transformer_with_object_dtype(X_type):
+    """Check that `FunctionTransformer.check_inverse` accept object dtype."""
+    mapping = {"one": 1, "two": 2, "three": 3, "nan": np.nan}
+    inverse_mapping = {value: key for key, value in mapping.items()}
+    dtype = "object"
 
-        with pytest.warns(None) as record:
-            trans.fit(data)
-        assert len(record) == 0
+    data = ["one", "two", "three", "one", "one"]
+    data = _convert_container(data, X_type, columns_name=["value"], dtype=dtype)
+
+    def func(X):
+        return np.array(
+            [mapping[_safe_indexing(X, i)] for i in range(X.size)]
+        )
+
+    def inverse_func(X):
+        return _convert_container(
+            [inverse_mapping[x] for x in X],
+            X_type,
+            columns_name=["value"],
+            dtype=dtype,
+        )
+
+    transformer = FunctionTransformer(
+        func=func, inverse_func=inverse_func, validate=False, check_inverse=True
+    )
+
+    with pytest.warns(None) as record:
+        transformer.fit(data)
+    assert len(record) == 0
