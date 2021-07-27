@@ -287,22 +287,9 @@ def cross_validate(
     if callable(scoring):
         _insert_error_scores(results, error_score)
 
+    _warn_about_fit_failures(results, error_score)
+
     results = _aggregate_score_dicts(results)
-
-    # If all the fits failed raise an informative warning in the main process
-    num_failed_fits = results["fit_failed"].sum()
-    num_fits = len(results["fit_failed"])
-
-    if num_failed_fits > 0:
-        some_fits_failed_message = (
-            f"\n{num_failed_fits}/{num_fits} fits on the training sets failed."
-            " Something seems wrong in the configuration of your"
-            f" model:\n{estimator}.\nYou can try to debug this further by setting"
-            " 'error_score='raise'.\n\nHere are more details about the failures:\n"
-            "\n----------\n"
-            + "----------\n".join(results["fit_error"])
-        )
-        warnings.warn(some_fits_failed_message, FitFailedWarning)
 
     ret = {}
     ret["fit_time"] = results["fit_time"]
@@ -356,6 +343,26 @@ def _normalize_score_results(scores, scaler_score_key="score"):
         return _aggregate_score_dicts(scores)
     # scaler
     return {scaler_score_key: scores}
+
+
+def _warn_about_fit_failures(results, error_score):
+    num_failed_fits = sum(result["fit_failed"] for result in results)
+    num_fits = len(results)
+
+    if num_failed_fits > 0:
+        fit_errors = [
+            result["fit_error"] for result in results if result["fit_error"] is not None
+        ]
+
+        some_fits_failed_message = (
+            f"\n{num_failed_fits}/{num_fits} fits on the training sets failed. The"
+            f" score on this train-test partition has been set to {error_score}.\nIn"
+            " case these failures are not expected, you can try to debug these failures"
+            " by setting error_score='raise'.\n\nHere are more details about the"
+            " failures:\n----------\n"
+            + "----------\n".join(fit_errors)
+        )
+        warnings.warn(some_fits_failed_message, FitFailedWarning)
 
 
 def cross_val_score(
@@ -681,12 +688,6 @@ def _fit_and_score(
                 test_scores = error_score
                 if return_train_score:
                     train_scores = error_score
-            # warnings.warn(
-            #     "Estimator fit failed. The score on this train-test"
-            #     " partition for these parameters will be set to %f. "
-            #     "Details: \n%s" % (error_score, format_exc()),
-            #     FitFailedWarning,
-            # )
         result["fit_failed"] = True
         result["fit_error"] = format_exc()
     else:
