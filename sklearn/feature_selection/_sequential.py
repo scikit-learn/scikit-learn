@@ -46,7 +46,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         .. deprecation:: 1.0
            The default changed from `None` to `"warn"` in 1.0 and will become
-           `"auto"` in 1.2. `None` has been disabled. `'warn'` is deprecated
+           `"auto"` in 1.2. `None` has been disabled. `"warn"` is deprecated
            in 1.0 and will be disabled in 1.2. To keep the same behaviour
            as with `None`, you should manually set `n_features_to_select="auto"`
            and set `tol=None`.
