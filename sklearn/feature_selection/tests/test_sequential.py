@@ -241,6 +241,6 @@ def test_raise_deprecation_warning():
     n_samples, n_features = 50, 3
     X, y = make_regression(n_samples, n_features, random_state=0)
 
-    warn_msg = "Leaving ...."
+    warn_msg = "Leaving n_features_to_select to None is deprecated"
     with pytest.warns(FutureWarning, match=warn_msg):
         SequentialFeatureSelector(LinearRegression()).fit(X, y)
