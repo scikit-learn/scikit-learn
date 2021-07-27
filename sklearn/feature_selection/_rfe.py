@@ -204,7 +204,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **fit_params : dict
-            Additional parameters passed to the `fit` method of the underlying estimator.
+            Additional parameters passed to the `fit` method of the underlying
+            estimator.
 
         Returns
         -------
@@ -340,7 +341,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **fit_params : dict
-            Parameters to pass to the `score` method of the underlying estimator.
+            Parameters to pass to the `score` method of the underlying
+            estimator.
 
             .. versionadded:: 1.0
 
