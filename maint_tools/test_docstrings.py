@@ -128,7 +128,6 @@ DOCSTRING_IGNORE_LIST = [
     "SplineTransformer",
     "StackingClassifier",
     "StackingRegressor",
-    "TSNE",
     "TheilSenRegressor",
     "TransformedTargetRegressor",
     "TruncatedSVD",
