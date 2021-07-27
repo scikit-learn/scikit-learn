@@ -876,7 +876,8 @@ def test_invalid_shape_precomputed_dist_matrix():
 def test_precomputed_connectivity_affinity_with_2_connected_components():
     """Check that connecting components works when connectivity and
     affinity are both precomputed and the number of connected components is
-    greater than 1. Non-regression test for #16151."""
+    greater than 1. Non-regression test for #16151.
+    """
 
     connectivity_matrix = np.array(
         [
