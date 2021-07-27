@@ -22,7 +22,6 @@ DOCSTRING_IGNORE_LIST = [
     "ElasticNetCV",
     "ExtraTreeRegressor",
     "ExtraTreesClassifier",
-    "ExtraTreesRegressor",
     "FactorAnalysis",
     "FeatureAgglomeration",
     "FeatureHasher",
