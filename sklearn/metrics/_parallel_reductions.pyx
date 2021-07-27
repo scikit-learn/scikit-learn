@@ -190,7 +190,7 @@ cdef class DistanceComputer:
     def n_Y(self):
         raise RuntimeError()
 
-    cdef DTYPE_t approx_dist(self,
+    cdef DTYPE_t proxy_dist(self,
         ITYPE_t i,
         ITYPE_t j,
     ) nogil except -1:
@@ -241,7 +241,7 @@ cdef class DenseDenseDistanceComputer(DistanceComputer):
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t approx_dist(self,
+    cdef DTYPE_t proxy_dist(self,
         ITYPE_t i,
         ITYPE_t j,
     ) nogil except -1:
@@ -303,7 +303,7 @@ cdef class SparseSparseDistanceComputer(DistanceComputer):
         self.Y_indptr = Y.indptr
 
     @final
-    cdef DTYPE_t approx_dist(self,
+    cdef DTYPE_t proxy_dist(self,
         ITYPE_t i,
         ITYPE_t j,
     ) nogil except -1:
@@ -376,7 +376,7 @@ cdef class SparseDenseDistanceComputer(DistanceComputer):
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t approx_dist(self,
+    cdef DTYPE_t proxy_dist(self,
         ITYPE_t i,
         ITYPE_t j,
     ) nogil except -1:
@@ -440,12 +440,12 @@ cdef class DenseSparseDistanceComputer(DistanceComputer):
         return self.distance_computer.n_X
 
     @final
-    cdef DTYPE_t approx_dist(self,
+    cdef DTYPE_t proxy_dist(self,
         ITYPE_t i,
         ITYPE_t j,
     ) nogil except -1:
         # Swapping arguments on the same interface
-        return self.distance_computer.approx_dist(j, i)
+        return self.distance_computer.proxy_dist(j, i)
 
     @final
     cdef DTYPE_t dist(self,
@@ -727,7 +727,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         DTYPE_t[:, ::1] argkmin_distances
 
         # Used as array of pointers to private datastructures used in threads.
-        DTYPE_t ** heaps_approx_distances_chunks
+        DTYPE_t ** heaps_proxy_distances_chunks
         ITYPE_t ** heaps_indices_chunks
 
     @classmethod
@@ -767,7 +767,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         # Allocating pointers to datastructures but not the datastructures themselves.
         # There's potentially more pointers than actual thread used for the
         # reduction but as many datastructures as threads.
-        self.heaps_approx_distances_chunks = <DTYPE_t **> malloc(
+        self.heaps_proxy_distances_chunks = <DTYPE_t **> malloc(
             sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_indices_chunks = <ITYPE_t **> malloc(
             sizeof(ITYPE_t *) * self.effective_omp_n_thread)
@@ -776,8 +776,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         if self.heaps_indices_chunks is not NULL:
             free(self.heaps_indices_chunks)
 
-        if self.heaps_approx_distances_chunks is not NULL:
-            free(self.heaps_approx_distances_chunks)
+        if self.heaps_proxy_distances_chunks is not NULL:
+            free(self.heaps_proxy_distances_chunks)
 
     cdef int _reduce_on_chunks(self,
         ITYPE_t X_start,
@@ -791,17 +791,17 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
             ITYPE_t k = self.k
-            DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
+            DTYPE_t *heaps_proxy_distances = self.heaps_proxy_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
         # Pushing the distance and their associated indices on heaps
         # which keep tracks of the argkmin.
         for i in range(n_X):
             for j in range(n_Y):
-                _push(heaps_approx_distances + i * self.k,
+                _push(heaps_proxy_distances + i * self.k,
                       heaps_indices + i * self.k,
                       k,
-                      self.distance_computer.approx_dist(X_start + i, Y_start + j),
+                      self.distance_computer.proxy_dist(X_start + i, Y_start + j),
                       Y_start + j)
 
         return 0
@@ -815,7 +815,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
         # As this strategy is embarrassingly parallel, we can set the
         # thread heaps pointers to the proper position on the main heaps
-        self.heaps_approx_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
+        self.heaps_proxy_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
         self.heaps_indices_chunks[thread_num] = &self.argkmin_indices[X_start, 0]
 
     @final
@@ -830,7 +830,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         # Sorting indices of the argkmin for each query vector of X
         for idx in range(X_end - X_start):
             _simultaneous_sort(
-                self.heaps_approx_distances_chunks[thread_num] + idx * self.k,
+                self.heaps_proxy_distances_chunks[thread_num] + idx * self.k,
                 self.heaps_indices_chunks[thread_num] + idx * self.k,
                 self.k
             )
@@ -848,7 +848,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             # As chunks of X are shared across threads, so must their
             # heaps. To solve this, each thread has its own heaps
             # which are then synchronised back in the main ones.
-            self.heaps_approx_distances_chunks[thread_num] = <DTYPE_t *> malloc(
+            self.heaps_proxy_distances_chunks[thread_num] = <DTYPE_t *> malloc(
                 heaps_size * sizeof(DTYPE_t))
             self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(
                 heaps_size * sizeof(ITYPE_t))
@@ -859,7 +859,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     ) nogil:
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
-            self.heaps_approx_distances_chunks[thread_num][idx] = FLOAT_INF
+            self.heaps_proxy_distances_chunks[thread_num][idx] = FLOAT_INF
             self.heaps_indices_chunks[thread_num][idx] = -1
 
     @final
@@ -882,7 +882,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                             &self.argkmin_distances[X_start + idx, 0],
                             &self.argkmin_indices[X_start + idx, 0],
                             self.k,
-                            self.heaps_approx_distances_chunks[thread_num][idx * self.k + jdx],
+                            self.heaps_proxy_distances_chunks[thread_num][idx * self.k + jdx],
                             self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
                         )
 
@@ -895,7 +895,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         with nogil, parallel(num_threads=self.effective_omp_n_thread):
             # Deallocating temporary datastructures
             for thread_num in prange(num_threads, schedule='static'):
-                free(self.heaps_approx_distances_chunks[thread_num])
+                free(self.heaps_proxy_distances_chunks[thread_num])
                 free(self.heaps_indices_chunks[thread_num])
 
             # Sort the main heaps into arrays in parallel
@@ -913,7 +913,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         ITYPE_t[:, ::1] Y_indices,  # IN
         DTYPE_t[:, ::1] distances,  # IN/OUT
     ) nogil:
-        """Convert approximate distances to pairwise distances in parallel."""
+        """Convert proxy distances to pairwise distances in parallel."""
         cdef:
             ITYPE_t i, j
 
@@ -970,7 +970,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
         if return_distance:
             # We need to recompute distances because we relied on
-            # approximate distances.
+            # proxy distances.
             self._exact_distances(self.argkmin_indices, self.argkmin_distances)
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
@@ -1082,7 +1082,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             ITYPE_t k = self.k
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
-            DTYPE_t *heaps_approx_distances = self.heaps_approx_distances_chunks[thread_num]
+            DTYPE_t *heaps_proxy_distances = self.heaps_proxy_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
             # Instead of computing the full pairwise squared distances matrix,
@@ -1127,10 +1127,10 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         # which keep tracks of the argkmin.
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
-                _push(heaps_approx_distances + i * k,
+                _push(heaps_proxy_distances + i * k,
                       heaps_indices + i * k,
                       k,
-                      # approximate distance: - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                      # proxy distance: - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                       dist_middle_terms[i * Y_c.shape[0] + j] + self.Y_sq_norms[j + Y_start],
                       j + Y_start)
         return 0
@@ -1145,12 +1145,12 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     cdef:
         DTYPE_t radius
 
-        # Distances metrics compute approximated distance
+        # Distances metrics compute rank preserving distance
         # ("reduced distance" in the original wording),
         # which are proxies necessitating less computations.
         # We get the proxy for the radius to be able to compare
 
-        # NOTE: not used for now.
+        # TODO: use it?
         DTYPE_t radius_proxy
 
         # We want resizable buffers which we will to wrapped within numpy
