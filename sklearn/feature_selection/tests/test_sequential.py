@@ -237,10 +237,10 @@ def test_pipeline_support():
 
 # FIXME : to be removed in 1.2
 def test_raise_deprecation_warning():
-    """Check that we raise a deprecation warning with `n_features_to_select`."""
+    """Check that we raise a FutureWarning with `n_features_to_select`."""
     n_samples, n_features = 50, 3
     X, y = make_regression(n_samples, n_features, random_state=0)
 
-    warn_msg = "Leaving n_features_to_select to None is deprecated"
+    warn_msg = "Leaving `n_features_to_select` to None is deprecated"
     with pytest.warns(FutureWarning, match=warn_msg):
         SequentialFeatureSelector(LinearRegression()).fit(X, y)
