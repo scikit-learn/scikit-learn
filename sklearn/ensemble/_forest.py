@@ -2230,6 +2230,9 @@ class ExtraTreesRegressor(ForestRegressor):
     See Also
     --------
     sklearn.tree.ExtraTreeRegressor : Base estimator for this ensemble.
+    ExtraTreesClassifier : An extra-trees classifier.
+    ExtraTreesRegressor : An extra-trees regressor.
+    RandomForestClassifier : A random forest classifier.
     RandomForestRegressor : Ensemble regressor using trees with optimal splits.
 
     Notes
