@@ -1206,7 +1206,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self.neigh_indices_chunks = <vector[vector[ITYPE_t]] **> malloc(
             sizeof(self.neigh_indices) * self.effective_omp_n_thread)
 
-    def __dealloc(self):
+    def __dealloc__(self):
         if self.neigh_distances_chunks is not NULL:
             free(self.neigh_distances_chunks)
 
