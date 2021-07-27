@@ -22,9 +22,14 @@ print(__doc__)
 
 import matplotlib
 matplotlib.use('TkAgg')
-
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
+try:
+    from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
+except ImportError:
+    # NavigationToolbar2TkAgg was deprecated in matplotlib 2.2
+    from matplotlib.backends.backend_tkagg import (
+        NavigationToolbar2TkAgg as NavigationToolbar2Tk
+    )
 from matplotlib.figure import Figure
 from matplotlib.contour import ContourSet
 
@@ -136,6 +141,7 @@ class Controller:
 
 class View:
     """Test docstring. """
+
     def __init__(self, root, controller):
         f = Figure()
         ax = f.add_subplot(111)
@@ -144,11 +150,15 @@ class View:
         ax.set_xlim((x_min, x_max))
         ax.set_ylim((y_min, y_max))
         canvas = FigureCanvasTkAgg(f, master=root)
-        canvas.show()
+        try:
+            canvas.draw()
+        except AttributeError:
+            # support for matplotlib (1.*)
+            canvas.show()
         canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas.mpl_connect('button_press_event', self.onclick)
-        toolbar = NavigationToolbar2TkAgg(canvas, root)
+        toolbar = NavigationToolbar2Tk(canvas, root)
         toolbar.update()
         self.controllbar = ControllBar(root, controller)
         self.f = f
@@ -323,6 +333,7 @@ def main(argv):
 
     if opts.output:
         model.dump_svmlight_file(opts.output)
+
 
 if __name__ == "__main__":
     main(sys.argv)

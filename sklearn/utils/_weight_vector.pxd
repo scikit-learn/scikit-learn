@@ -1,12 +1,5 @@
 """Efficient (dense) parameter vector implementation for linear models. """
 
-cimport numpy as np
-
-
-cdef extern from "math.h":
-    cdef extern double sqrt(double x)
-
-
 cdef class WeightVector(object):
     cdef double *w_data_ptr
     cdef double *aw_data_ptr

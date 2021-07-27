@@ -18,8 +18,7 @@ def _check_rows_and_columns(a, b):
 
 def _jaccard(a_rows, a_cols, b_rows, b_cols):
     """Jaccard coefficient on the elements of the two biclusters."""
-    intersection = ((a_rows * b_rows).sum() *
-                    (a_cols * b_cols).sum())
+    intersection = (a_rows * b_rows).sum() * (a_cols * b_cols).sum()
 
     a_size = a_rows.sum() * a_cols.sum()
     b_size = b_rows.sum() * b_cols.sum()
@@ -37,14 +36,19 @@ def _pairwise_similarity(a, b, similarity):
     a_rows, a_cols, b_rows, b_cols = _check_rows_and_columns(a, b)
     n_a = a_rows.shape[0]
     n_b = b_rows.shape[0]
-    result = np.array(list(list(similarity(a_rows[i], a_cols[i],
-                                           b_rows[j], b_cols[j])
-                                for j in range(n_b))
-                           for i in range(n_a)))
+    result = np.array(
+        list(
+            list(
+                similarity(a_rows[i], a_cols[i], b_rows[j], b_cols[j])
+                for j in range(n_b)
+            )
+            for i in range(n_a)
+        )
+    )
     return result
 
 
-def consensus_score(a, b, similarity="jaccard"):
+def consensus_score(a, b, *, similarity="jaccard"):
     """The similarity of two sets of biclusters.
 
     Similarity between individual biclusters is computed. Then the
@@ -62,7 +66,7 @@ def consensus_score(a, b, similarity="jaccard"):
     b : (rows, columns)
         Another set of biclusters like ``a``.
 
-    similarity : string or function, optional, default: "jaccard"
+    similarity : 'jaccard' or callable, default='jaccard'
         May be the string "jaccard" to use the Jaccard coefficient, or
         any function that takes four arguments, each of which is a 1d
         indicator vector: (a_rows, a_columns, b_rows, b_columns).
@@ -78,7 +82,7 @@ def consensus_score(a, b, similarity="jaccard"):
     if similarity == "jaccard":
         similarity = _jaccard
     matrix = _pairwise_similarity(a, b, similarity)
-    row_indices, col_indices = linear_sum_assignment(1. - matrix)
+    row_indices, col_indices = linear_sum_assignment(1.0 - matrix)
     n_a = len(a[0])
     n_b = len(b[0])
     return matrix[row_indices, col_indices].sum() / max(n_a, n_b)

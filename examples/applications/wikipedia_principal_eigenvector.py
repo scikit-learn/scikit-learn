@@ -42,8 +42,6 @@ import numpy as np
 
 from scipy import sparse
 
-from joblib import Memory
-
 from sklearn.decomposition import randomized_svd
 from urllib.request import urlopen
 
@@ -73,8 +71,6 @@ for url, filename in resources:
 
 # #############################################################################
 # Loading the redirect files
-
-memory = Memory(cachedir=".")
 
 
 def index(redirects, index_map, k):
@@ -124,8 +120,6 @@ def get_redirects(redirects_filename):
     return redirects
 
 
-# disabling joblib as the pickling of large dicts seems much too slow
-#@memory.cache
 def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
     """Extract the adjacency graph as a scipy sparse matrix
 
@@ -221,6 +215,7 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
             return scores
 
     return scores
+
 
 print("Computing principal eigenvector score using a power iteration method")
 t0 = time()

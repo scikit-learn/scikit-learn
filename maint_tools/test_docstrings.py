@@ -3,49 +3,160 @@ from inspect import signature
 from typing import Optional
 
 import pytest
-from sklearn.utils._testing import all_estimators
+from sklearn.utils import all_estimators
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
-# List of whitelisted modules and methods; regexp are supported.
-DOCSTRING_WHITELIST = [
-    "LogisticRegression$",
-    "LogisticRegression.fit",
-    "LogisticRegression.decision_function",
-    "Birch.predict",
-    "Birch.transform",
-    "LinearDiscriminantAnalysis.decision_function",
-    "LinearSVC.decision_function",
-    "LogisticRegressionCV.decision_function",
-    "PassiveAggressiveClassifier.decision_function",
-    "Perceptron.decision_function",
-    "RidgeClassifier.decision_function",
-    "RidgeClassifier.fit",
-    "RidgeClassifierCV.decision_function",
-    "SGDClassifier.decision_function",
-    "KernelDensity",
-    "KernelDensity.fit",
-    "KernelDensity.score",
-    "DecisionTreeClassifier",
+# List of modules ignored when checking for numpydoc validation.
+DOCSTRING_IGNORE_LIST = [
+    "AgglomerativeClustering",
+    "BernoulliRBM",
+    "Birch",
+    "CalibratedClassifierCV",
+    "ClassifierChain",
+    "ColumnTransformer",
     "DecisionTreeRegressor",
-    "LinearRegression$"
+    "DictVectorizer",
+    "DictionaryLearning",
+    "DummyClassifier",
+    "ElasticNetCV",
+    "ExtraTreeRegressor",
+    "ExtraTreesClassifier",
+    "ExtraTreesRegressor",
+    "FactorAnalysis",
+    "FeatureAgglomeration",
+    "FeatureHasher",
+    "FeatureUnion",
+    "FunctionTransformer",
+    "GammaRegressor",
+    "GaussianMixture",
+    "GaussianProcessRegressor",
+    "GaussianRandomProjection",
+    "GradientBoostingClassifier",
+    "GradientBoostingRegressor",
+    "GridSearchCV",
+    "HalvingGridSearchCV",
+    "HalvingRandomSearchCV",
+    "HashingVectorizer",
+    "HistGradientBoostingClassifier",
+    "HistGradientBoostingRegressor",
+    "HuberRegressor",
+    "IncrementalPCA",
+    "Isomap",
+    "IterativeImputer",
+    "KBinsDiscretizer",
+    "KNNImputer",
+    "KNeighborsTransformer",
+    "KernelCenterer",
+    "KernelDensity",
+    "KernelPCA",
+    "KernelRidge",
+    "LabelBinarizer",
+    "LabelPropagation",
+    "LabelSpreading",
+    "LinearSVR",
+    "LocalOutlierFactor",
+    "LocallyLinearEmbedding",
+    "MDS",
+    "MeanShift",
+    "MiniBatchDictionaryLearning",
+    "MiniBatchKMeans",
+    "MiniBatchSparsePCA",
+    "MissingIndicator",
+    "MultiLabelBinarizer",
+    "MultiOutputClassifier",
+    "MultiOutputRegressor",
+    "MultiTaskElasticNet",
+    "MultiTaskElasticNetCV",
+    "MultiTaskLasso",
+    "MultiTaskLassoCV",
+    "NMF",
+    "NearestCentroid",
+    "NeighborhoodComponentsAnalysis",
+    "Normalizer",
+    "NuSVR",
+    "Nystroem",
+    "OPTICS",
+    "OneVsOneClassifier",
+    "OneVsRestClassifier",
+    "OrdinalEncoder",
+    "OrthogonalMatchingPursuit",
+    "OrthogonalMatchingPursuitCV",
+    "OutputCodeClassifier",
+    "PLSCanonical",
+    "PLSRegression",
+    "PLSSVD",
+    "PassiveAggressiveClassifier",
+    "PassiveAggressiveRegressor",
+    "PatchExtractor",
+    "Pipeline",
+    "PolynomialCountSketch",
+    "PolynomialFeatures",
+    "PowerTransformer",
+    "QuadraticDiscriminantAnalysis",
+    "QuantileRegressor",
+    "QuantileTransformer",
+    "RANSACRegressor",
+    "RBFSampler",
+    "RFE",
+    "RadiusNeighborsClassifier",
+    "RadiusNeighborsTransformer",
+    "RandomizedSearchCV",
+    "RegressorChain",
+    "RidgeClassifier",
+    "RidgeClassifierCV",
+    "RobustScaler",
+    "SGDOneClassSVM",
+    "SGDRegressor",
+    "SVR",
+    "SelectFdr",
+    "SelectFpr",
+    "SelectFromModel",
+    "SelectFwe",
+    "SelectKBest",
+    "SelectPercentile",
+    "SelfTrainingClassifier",
+    "SequentialFeatureSelector",
+    "SimpleImputer",
+    "SkewedChi2Sampler",
+    "SparseCoder",
+    "SparseRandomProjection",
+    "SpectralBiclustering",
+    "SpectralClustering",
+    "SpectralCoclustering",
+    "SpectralEmbedding",
+    "SplineTransformer",
+    "StackingClassifier",
+    "StackingRegressor",
+    "TheilSenRegressor",
+    "TransformedTargetRegressor",
+    "TruncatedSVD",
+    "TweedieRegressor",
+    "VarianceThreshold",
+    "VotingClassifier",
 ]
 
 
 def get_all_methods():
     estimators = all_estimators()
-    for name, estimator in estimators:
+    for name, Estimator in estimators:
         if name.startswith("_"):
             # skip private classes
             continue
-        methods = [el for el in dir(estimator) if not el.startswith("_")]
+        methods = []
+        for name in dir(Estimator):
+            if name.startswith("_"):
+                continue
+            method_obj = getattr(Estimator, name)
+            if hasattr(method_obj, "__call__") or isinstance(method_obj, property):
+                methods.append(name)
         methods.append(None)
 
         for method in sorted(methods, key=lambda x: str(x)):
-            yield estimator, method
+            yield Estimator, method
 
 
-def filter_errors(errors, method):
+def filter_errors(errors, method, Estimator=None):
     """
     Ignore some errors based on the method type.
 
@@ -57,11 +168,21 @@ def filter_errors(errors, method):
         #   (as we may need refer to the name of the returned
         #    object)
         #  - GL01: Docstring text (summary) should start in the line
-        #  immediately after the opening quotes (not in the same line,
-        #  or leaving a blank line in between)
+        #    immediately after the opening quotes (not in the same line,
+        #    or leaving a blank line in between)
+        #  - GL02: If there's a blank line, it should be before the
+        #    first line of the Returns section, not after (it allows to have
+        #    short docstrings for properties).
 
-        if code in ["RT02", "GL01"]:
+        if code in ["RT02", "GL01", "GL02"]:
             continue
+
+        # Ignore PR02: Unknown parameters for properties. We sometimes use
+        # properties for ducktyping, i.e. SGDClassifier.predict_proba
+        if code == "PR02" and Estimator is not None and method is not None:
+            method_obj = getattr(Estimator, method)
+            if isinstance(method_obj, property):
+                continue
 
         # Following codes are only taken into account for the
         # top level class docstrings:
@@ -95,14 +216,21 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
         if hasattr(estimator, "__init__"):
             method = "__init__"
         elif estimator is None:
-            raise ValueError(
-                "At least one of estimator, method should be provided"
-            )
+            raise ValueError("At least one of estimator, method should be provided")
         else:
             raise NotImplementedError
 
     if estimator is not None:
-        obj_signature = signature(getattr(estimator, method))
+        obj = getattr(estimator, method)
+        try:
+            obj_signature = signature(obj)
+        except TypeError:
+            # In particular we can't parse the signature of properties
+            obj_signature = (
+                "\nParsing of the method signature failed, "
+                "possibly because this is a property."
+            )
+
         obj_name = estimator.__name__ + "." + method
     else:
         obj_signature = ""
@@ -110,41 +238,38 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
 
     msg = "\n\n" + "\n\n".join(
         [
-            res["file"],
+            str(res["file"]),
             obj_name + str(obj_signature),
             res["docstring"],
             "# Errors",
             "\n".join(
-                " - {}: {}".format(code, message)
-                for code, message in res["errors"]
+                " - {}: {}".format(code, message) for code, message in res["errors"]
             ),
         ]
     )
     return msg
 
 
-@pytest.mark.parametrize("estimator, method", get_all_methods())
-def test_docstring(estimator, method, request):
-    base_import_path = estimator.__module__
-    import_path = [base_import_path, estimator.__name__]
+@pytest.mark.parametrize("Estimator, method", get_all_methods())
+def test_docstring(Estimator, method, request):
+    base_import_path = Estimator.__module__
+    import_path = [base_import_path, Estimator.__name__]
     if method is not None:
         import_path.append(method)
 
     import_path = ".".join(import_path)
 
-    if not any(re.search(regex, import_path) for regex in DOCSTRING_WHITELIST):
+    if Estimator.__name__ in DOCSTRING_IGNORE_LIST:
         request.applymarker(
-            pytest.mark.xfail(
-                run=False, reason="TODO pass numpydoc validation"
-            )
+            pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
         )
 
     res = numpydoc_validation.validate(import_path)
 
-    res["errors"] = list(filter_errors(res["errors"], method))
+    res["errors"] = list(filter_errors(res["errors"], method, Estimator=Estimator))
 
     if res["errors"]:
-        msg = repr_errors(res, estimator, method)
+        msg = repr_errors(res, Estimator, method)
 
         raise ValueError(msg)
 
@@ -153,9 +278,7 @@ if __name__ == "__main__":
     import sys
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Validate docstring with numpydoc."
-    )
+    parser = argparse.ArgumentParser(description="Validate docstring with numpydoc.")
     parser.add_argument("import_path", help="Import path to validate")
 
     args = parser.parse_args()

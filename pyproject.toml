@@ -1,0 +1,39 @@
+[build-system]
+# Minimum requirements for the build system to execute.
+requires = [
+    "setuptools",
+    "wheel",
+    "Cython>=0.28.5",
+
+    # use oldest-supported-numpy which provides the oldest numpy version with
+    # wheels on PyPI
+    #
+    # see: https://github.com/scipy/oldest-supported-numpy/blob/master/setup.cfg
+    "oldest-supported-numpy; python_version!='3.7' or platform_machine=='aarch64' or platform_system=='AIX' or platform_python_implementation == 'PyPy'",
+
+    # Override oldest-supported-numpy setting because pandas 0.25.0 requires 1.14.6
+    "numpy==1.14.6; python_version=='3.7' and platform_machine!='aarch64' and platform_system!='AIX' and platform_python_implementation != 'PyPy'",
+
+    "scipy>=1.1.0",
+]
+
+[tool.black]
+line-length = 88
+target_version = ['py37', 'py38', 'py39']
+experimental_string_processing = true
+exclude = '''
+/(
+    \.eggs         # exclude a few common directories in the
+  | \.git          # root of the project
+  | \.mypy_cache
+  | \.vscode
+  | examples
+  | build
+  | dist
+  | doc/tutorial
+  | doc/_build
+  | doc/auto_examples
+  | sklearn/externals
+  | asv_benchmarks/env
+)/
+'''

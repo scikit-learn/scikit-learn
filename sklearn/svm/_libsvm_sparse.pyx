@@ -3,7 +3,8 @@ import  numpy as np
 cimport numpy as np
 from scipy import sparse
 from ..exceptions import ConvergenceWarning
-
+from ..utils._cython_blas cimport _dot
+np.import_array()
 
 cdef extern from *:
     ctypedef char* const_char_p "const char*"
@@ -11,13 +12,18 @@ cdef extern from *:
 ################################################################################
 # Includes
 
+cdef extern from "_svm_cython_blas_helpers.h":
+    ctypedef double (*dot_func)(int, double*, int, double*, int)
+    cdef struct BlasFunctions:
+        dot_func dot
+
 cdef extern from "svm.h":
     cdef struct svm_csr_node
     cdef struct svm_csr_model
     cdef struct svm_parameter
     cdef struct svm_csr_problem
     char *svm_csr_check_parameter(svm_csr_problem *, svm_parameter *)
-    svm_csr_model *svm_csr_train(svm_csr_problem *, svm_parameter *, int *) nogil
+    svm_csr_model *svm_csr_train(svm_csr_problem *, svm_parameter *, int *, BlasFunctions *) nogil
     void svm_csr_free_and_destroy_model(svm_csr_model** model_ptr_ptr)
 
 cdef extern from "libsvm_sparse_helper.c":
@@ -37,18 +43,18 @@ cdef extern from "libsvm_sparse_helper.c":
     void copy_sv_coef   (char *, svm_csr_model *)
     void copy_support   (char *, svm_csr_model *)
     void copy_intercept (char *, svm_csr_model *, np.npy_intp *)
-    int copy_predict (char *, svm_csr_model *, np.npy_intp *, char *)
+    int copy_predict (char *, svm_csr_model *, np.npy_intp *, char *, BlasFunctions *)
     int csr_copy_predict_values (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
         	char *index, np.npy_intp *intptr_size, char *size,
-                svm_csr_model *model, char *dec_values, int nr_class)
+                svm_csr_model *model, char *dec_values, int nr_class, BlasFunctions *)
     int csr_copy_predict (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
         	char *index, np.npy_intp *intptr_size, char *size,
-                svm_csr_model *model, char *dec_values) nogil
+                svm_csr_model *model, char *dec_values, BlasFunctions *) nogil
     int csr_copy_predict_proba (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
         	char *index, np.npy_intp *intptr_size, char *size,
-                svm_csr_model *model, char *dec_values) nogil
+                svm_csr_model *model, char *dec_values, BlasFunctions *) nogil
 
-    int  copy_predict_values(char *, svm_csr_model *, np.npy_intp *, char *, int)
+    int  copy_predict_values(char *, svm_csr_model *, np.npy_intp *, char *, int, BlasFunctions *)
     int  csr_copy_SV (char *values, np.npy_intp *n_indices,
         	char *indices, np.npy_intp *n_indptr, char *indptr,
                 svm_csr_model *model, int n_features)
@@ -143,11 +149,12 @@ def libsvm_sparse_train ( int n_features,
         free_problem(problem)
         free_param(param)
         raise ValueError(error_msg)
-
+    cdef BlasFunctions blas_functions
+    blas_functions.dot = _dot[double]
     # call svm_train, this does the real work
     cdef int fit_status = 0
     with nogil:
-        model = svm_csr_train(problem, param, &fit_status)
+        model = svm_csr_train(problem, param, &fit_status, &blas_functions)
 
     cdef np.npy_intp SV_len = get_l(model)
     cdef np.npy_intp n_class = get_nr(model)
@@ -186,7 +193,7 @@ def libsvm_sparse_train ( int n_features,
 
     # copy model.nSV
     # TODO: do only in classification
-    cdef np.ndarray n_class_SV 
+    cdef np.ndarray n_class_SV
     n_class_SV = np.empty(n_class, dtype=np.int32)
     copy_nSV(n_class_SV.data, model)
 
@@ -273,11 +280,14 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
                           nSV.data, probA.data, probB.data)
     #TODO: use check_model
     dec_values = np.empty(T_indptr.shape[0]-1)
+    cdef BlasFunctions blas_functions
+    blas_functions.dot = _dot[double]
     with nogil:
         rv = csr_copy_predict(T_data.shape, T_data.data,
                               T_indices.shape, T_indices.data,
                               T_indptr.shape, T_indptr.data,
-                              model, dec_values.data)
+                              model, dec_values.data,
+                              &blas_functions)
     if rv < 0:
         raise MemoryError("We've run out of memory")
     # free model and param
@@ -329,11 +339,14 @@ def libsvm_sparse_predict_proba(
     cdef np.npy_intp n_class = get_nr(model)
     cdef int rv
     dec_values = np.empty((T_indptr.shape[0]-1, n_class), dtype=np.float64)
+    cdef BlasFunctions blas_functions
+    blas_functions.dot = _dot[double]
     with nogil:
         rv = csr_copy_predict_proba(T_data.shape, T_data.data,
                                     T_indices.shape, T_indices.data,
                                     T_indptr.shape, T_indptr.data,
-                                    model, dec_values.data)
+                                    model, dec_values.data,
+                                    &blas_functions)
     if rv < 0:
         raise MemoryError("We've run out of memory")
     # free model and param
@@ -395,10 +408,13 @@ def libsvm_sparse_decision_function(
         n_class = n_class * (n_class - 1) // 2
 
     dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
+    cdef BlasFunctions blas_functions
+    blas_functions.dot = _dot[double]
     if csr_copy_predict_values(T_data.shape, T_data.data,
                         T_indices.shape, T_indices.data,
                         T_indptr.shape, T_indptr.data,
-                        model, dec_values.data, n_class) < 0:
+                        model, dec_values.data, n_class,
+                        &blas_functions) < 0:
         raise MemoryError("We've run out of memory")
     # free model and param
     free_model_SV(model)
