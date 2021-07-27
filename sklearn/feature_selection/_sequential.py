@@ -170,6 +170,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         -------
         self : object
         """
+        # FIXME: to be removed in 1.2
         if self.n_features_to_select == "warn":
             # for backwards compability
             warnings.warn(
