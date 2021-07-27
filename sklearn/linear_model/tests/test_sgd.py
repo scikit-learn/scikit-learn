@@ -447,35 +447,40 @@ def test_adaptive_longer_than_constant(klass):
     [
         (
             SGDClassifier,
-            *datasets.make_classification(n_samples=1_000, class_sep=0.5),
+            *datasets.make_classification(
+                n_samples=1_000, class_sep=0.5, random_state=0
+            ),
         ),
         (
             SparseSGDClassifier,
-            *datasets.make_classification(n_samples=1_000, class_sep=0.5),
+            *datasets.make_classification(
+                n_samples=1_000, class_sep=0.5, random_state=0
+            ),
         ),
-        (SGDRegressor, *datasets.make_regression(n_samples=1_000, noise=50)),
+        (
+            SGDRegressor,
+            *datasets.make_regression(n_samples=1_000, noise=50, random_state=0),
+        ),
         (
             SparseSGDRegressor,
-            *datasets.make_regression(n_samples=1_000, noise=50),
+            *datasets.make_regression(n_samples=1_000, noise=50, random_state=0),
         ),
     ],
 )
 def test_validation_set_not_used_for_training(SGDEstimator, X, y):
     sgd_early_stopped = SGDEstimator(
         early_stopping=True,
-        tol=1e-4,
+        tol=1e-8,
         max_iter=1000,
-    )
-    sgd_early_stopped.fit(X, y)
+    ).fit(X, y)
     sgd_not_early_stopped = SGDEstimator(
         early_stopping=False,
-        tol=1e-6,
+        tol=1e-8,
         max_iter=1000,
-    )
-    sgd_not_early_stopped.fit(X, y)
+    ).fit(X, y)
 
-    assert sgd_early_stopped.n_iter_ < sgd_not_early_stopped.n_iter_
-    assert sgd_early_stopped.score(X, y) < sgd_not_early_stopped.score(X, y)
+    assert sgd_early_stopped.n_iter_ <= sgd_not_early_stopped.n_iter_
+    assert sgd_early_stopped.score(X, y) <= sgd_not_early_stopped.score(X, y)
 
 
 @pytest.mark.parametrize(
