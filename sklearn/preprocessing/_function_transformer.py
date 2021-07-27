@@ -109,24 +109,15 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     def _check_inverse_transform(self, X):
         """Check that func and inverse_func are the inverse."""
+        X = np.asarray(X) if not hasattr(X, "dtype") else X
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
         X_round_trip = self.inverse_transform(self.transform(X[idx_selected]))
 
-        if not hasattr(X, 'dtype'):
-            X = np.asarray(X)
-        is_object_type = X.dtype.kind in ('U', 'S', 'O')
-        if is_object_type:
-            # need to coerce to Object type before elementwise comparison
-            # because when dtype.kind = 'S', np.nan == np.nan returns True
-            valid = np.alltrue(X.astype('O') == X_round_trip.astype('O'))
-        else:
+        if np.issubdtype(X.dtype, np.number):
             valid = _allclose_dense_sparse(X[idx_selected], X_round_trip)
+        else:
+            valid = np.all(X == X_round_trip)
         if not valid:
-            warnings.warn("The provided functions are not strictly"
-                          " inverse of each other. If you are sure you"
-                          " want to proceed regardless, set"
-                          " 'check_inverse=False'.", UserWarning)
-        if not _allclose_dense_sparse(X[idx_selected], X_round_trip):
             warnings.warn(
                 "The provided functions are not strictly"
                 " inverse of each other. If you are sure you"

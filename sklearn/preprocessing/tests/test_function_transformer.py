@@ -1,9 +1,14 @@
 import pytest
 import numpy as np
 from scipy import sparse
+from sklearn.utils import _safe_indexing
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils._testing import assert_array_equal, assert_allclose_dense_sparse
+from sklearn.utils._testing import (
+    assert_array_equal,
+    assert_allclose_dense_sparse,
+    _convert_container,
+)
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -173,7 +178,7 @@ def test_function_transformer_frame():
     X_df = pd.DataFrame(np.random.randn(100, 10))
     transformer = FunctionTransformer()
     X_df_trans = transformer.fit_transform(X_df)
-    assert hasattr(X_df_trans, 'loc')
+    assert hasattr(X_df_trans, "loc")
 
 
 @pytest.mark.parametrize("X_type", ["list", "array", "series"])
@@ -187,9 +192,7 @@ def test_function_transformer_with_object_dtype(X_type):
     data = _convert_container(data, X_type, columns_name=["value"], dtype=dtype)
 
     def func(X):
-        return np.array(
-            [mapping[_safe_indexing(X, i)] for i in range(X.size)]
-        )
+        return np.array([mapping[_safe_indexing(X, i)] for i in range(X.size)])
 
     def inverse_func(X):
         return _convert_container(
