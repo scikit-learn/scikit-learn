@@ -1454,7 +1454,6 @@ def learning_curve(
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        # TODO is someone relying on this behaviour (that the warning is raised at the point where the fit failed)
         If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
