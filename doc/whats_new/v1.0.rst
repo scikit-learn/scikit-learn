@@ -577,6 +577,10 @@ Changelog
   `n_features_in_` and will be removed in 1.2. :pr:`20240` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :meth:`preprocessing.FunctionTransformer._check_inverse_transform`
+  now correctly handles object dtype. :pr:`19916` by
+  :user:`Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.tree`
 ...................
 
