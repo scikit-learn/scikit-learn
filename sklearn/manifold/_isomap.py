@@ -215,7 +215,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         """
         G = -0.5 * self.dist_matrix_ ** 2
         G_center = KernelCenterer().fit_transform(G)
-        evals = self.kernel_pca_.lambdas_
+        evals = self.kernel_pca_.eigenvalues_
         return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
 
     def fit(self, X, y=None):
