@@ -236,6 +236,13 @@ Changelog
   installing on Windows and its default 260 character limit on file names.
   :pr:`20209` by `Thomas Fan`_.
 
+- |Enhancement| Replace usages of ``__file__`` related to resource file I/O
+  with ``importlib.resources`` to avoid the assumption that these resource
+  files (e.g. ``iris.csv``) already exist on a filesystem, and by extension
+  to enable compatibility with tools such as ``PyOxidizer``.
+  :pr:`20297` by :user:`Jack Liu <jackzyliu>`
+
+
 :mod:`sklearn.decomposition`
 ............................
 
