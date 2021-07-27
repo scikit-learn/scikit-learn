@@ -174,7 +174,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         if self.n_features_to_select == "warn":
             # for backwards compability
             warnings.warn(
-                "Leaving n_features_to_select to "
+                "Leaving `n_features_to_select` to "
                 "None is deprecated in 1.0 and will become 'auto' "
                 "in 1.2. To keep the same behaviour as with None "
                 "(i.e. select half of the features) and avoid "
