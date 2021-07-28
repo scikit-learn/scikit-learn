@@ -1306,15 +1306,18 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                     deref(self.neigh_indices)[idx].size()
                 )
 
-    @final
-    cdef void _on_Y_parallel_init(self,
-        ITYPE_t thread_num,
+    cdef void _on_Y_init(self,
+        ITYPE_t num_threads,
     ) nogil:
-        # As chunks of X are shared across threads, so must their
-        # vectors. To solve this, each thread has its own vectors
-        # which are then synchronised merged back in the main ones.
-        self.neigh_distances_chunks[thread_num] = new vector[vector[DTYPE_t]](self.n_X)
-        self.neigh_indices_chunks[thread_num] = new vector[vector[ITYPE_t]](self.n_X)
+        cdef:
+            ITYPE_t thread_num
+        # As chunks of X are shared across threads, so must datastructures
+        # to avoid race conditions.
+        # Each thread has its own vectors of n_X vectors which are then merged
+        # back in the main n_X vectors.
+        for thread_num in range(num_threads):
+            self.neigh_distances_chunks[thread_num] = new vector[vector[DTYPE_t]](self.n_X)
+            self.neigh_indices_chunks[thread_num] = new vector[vector[ITYPE_t]](self.n_X)
 
     @final
     cdef void _merge_vectors(self,
@@ -1348,28 +1351,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             )
             last_element_idx += deref(self.neigh_distances_chunks[thread_num])[idx].size()
 
-    @final
-    cdef void _on_Y_after_parallel(self,
-        ITYPE_t num_threads,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-    ) nogil:
-        cdef:
-            ITYPE_t idx, thread_num
-        # Merge associated vectors into one
-        # This is done in parallel samples-wise (no need for locks)
-        with nogil, parallel(num_threads=self.effective_omp_n_thread):
-            for idx in prange(self.n_X, schedule='static'):
-                self._merge_vectors(idx, num_threads)
-
-            # The content of the vector have been std::moved,
-            # Hence they can't be used anymore and can only
-            # be deleted.
-            for thread_num in prange(num_threads, schedule='static'):
-                del self.neigh_distances_chunks[thread_num]
-                del self.neigh_indices_chunks[thread_num]
-
-        return
 
     cdef void _on_Y_finalize(self,
         ITYPE_t num_threads,
@@ -1377,15 +1358,29 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         cdef:
             ITYPE_t idx, jdx, thread_num, idx_n_element, idx_current
 
-        # Sort in parallel in ascending order w.r.t the distances if needed
-        if self.sort_results:
-            for idx in prange(self.n_X, schedule='static', nogil=True,
-                              num_threads=self.effective_omp_n_thread):
-                _simultaneous_sort(
-                    deref(self.neigh_distances)[idx].data(),
-                    deref(self.neigh_indices)[idx].data(),
-                    deref(self.neigh_indices)[idx].size()
-                )
+        with nogil, parallel(num_threads=self.effective_omp_n_thread):
+            # Merge vectors used in threads into the main ones.
+            # This is done in parallel sample-wise (no need for locks)
+            # using dynamic scheduling because we generally do not have
+            # the same number of neighbors for each query vectors.
+            # TODO: compare 'dynamic' vs 'static' vs 'guided'
+            for idx in prange(self.n_X, schedule='dynamic'):
+                self._merge_vectors(idx, num_threads)
+
+            # The content of the vector have been std::moved,
+            # Hence they can't be used anymore and can only be deleted.
+            for thread_num in prange(num_threads, schedule='static'):
+                del self.neigh_distances_chunks[thread_num]
+                del self.neigh_indices_chunks[thread_num]
+
+            # Sort in parallel in ascending order w.r.t the distances if needed
+            if self.sort_results:
+                for idx in prange(self.n_X, schedule='static'):
+                    _simultaneous_sort(
+                        deref(self.neigh_distances)[idx].data(),
+                        deref(self.neigh_indices)[idx].data(),
+                        deref(self.neigh_indices)[idx].size()
+                    )
 
         return
 
