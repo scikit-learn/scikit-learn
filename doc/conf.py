@@ -230,15 +230,15 @@ highlight_version = ".".join(latest_highlights.split("_")[-3:-1])
 html_context["release_highlights_version"] = highlight_version
 
 
-# Redirection dictionary maps from old links to new links
-redirections = {
+# redirects dictionary maps from old links to new links
+redirects = {
     "documentation": "index",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
 }
-html_context["redirects"] = redirections
-for old_link in redirections:
+html_context["redirects"] = redirects
+for old_link in redirects:
     html_additional_pages[old_link] = "redirects.html"
 
 
