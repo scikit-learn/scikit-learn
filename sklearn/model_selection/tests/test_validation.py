@@ -2157,7 +2157,8 @@ def test_cross_validate_failing_fits_warnings(error_score):
     # check traceback is included
     warning_message = re.compile(
         "The score on these train-test partitions for these parameters will be set"
-        f" to {cross_validate_kwargs['error_score']}.+{error_message}", re.DOTALL
+        f" to {cross_validate_kwargs['error_score']}.+{error_message}",
+        re.DOTALL,
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
         cross_validate(*cross_validate_args, **cross_validate_kwargs)
