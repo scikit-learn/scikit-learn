@@ -568,6 +568,22 @@ def test_randomized_svd_sign_flip_with_transpose():
     assert not v_based
 
 
+def test_randomized_svd_parametrization():
+    # Check that function is correctly parametrized
+    f = randomized_svd
+
+    argnames = f.__code__.co_varnames
+
+    expected = (
+            'M', 'n_components', 'n_oversamples', 'n_iter',
+            'power_iteration_normalizer', 'transpose', 'flip_sign',
+            'random_state', 'lapack_svd_driver', 'n_random', 'n_samples',
+            'n_features', 'Q', 'B', 'Uhat', 's', 'Vt', 'U'
+        )
+
+    assert argnames == expected
+
+
 def test_cartesian():
     # Check if cartesian product delivers the right results
 
