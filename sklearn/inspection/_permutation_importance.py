@@ -190,6 +190,8 @@ def permutation_importance(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights used in scoring.
 
+    .. versionadded:: 0.24
+
     max_samples : int or float, default=1.0
         The number of samples to draw from X to compute feature importance
         in each repeat (without replacement).
