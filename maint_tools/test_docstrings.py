@@ -10,7 +10,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 # List of modules ignored when checking for numpydoc validation.
 DOCSTRING_IGNORE_LIST = [
     "AdditiveChi2Sampler",
-    #"AgglomerativeClustering",
     "BernoulliRBM",
     "Birch",
     "CalibratedClassifierCV",
@@ -24,7 +23,6 @@ DOCSTRING_IGNORE_LIST = [
     "ExtraTreeRegressor",
     "FactorAnalysis",
     "FastICA",
-    #"FeatureAgglomeration",
     "FeatureHasher",
     "FeatureUnion",
     "FunctionTransformer",
