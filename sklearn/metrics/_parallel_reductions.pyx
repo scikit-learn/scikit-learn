@@ -922,8 +922,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 )
         return
 
-    # TODO: annotating with 'final' here makes the compilation fails but it should not
-    # @final
     cdef void compute_exact_distances(self) nogil:
         cdef:
             ITYPE_t i, j
@@ -933,7 +931,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         for i in prange(self.n_X, schedule='static', nogil=True,
                         num_threads=self.effective_omp_n_thread):
             for j in range(self.k):
-                distances[i, j] = self.datasets_pair.dist(i, Y_indices[i, j])
+                distances[i, j] = self.datasets_pair.distance_metric._rdist_to_dist(distances[i, j])
 
     @final
     def compute(self,
@@ -1083,6 +1081,22 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             free(self.dist_middle_terms_chunks[thread_num])
 
     @final
+    cdef void compute_exact_distances(self) nogil:
+        cdef:
+            ITYPE_t i, j
+            ITYPE_t[:, ::1] Y_indices = self.argkmin_indices
+            DTYPE_t[:, ::1] distances = self.argkmin_distances
+
+        for i in prange(self.n_X, schedule='static', nogil=True,
+                        num_threads=self.effective_omp_n_thread):
+            for j in range(self.k):
+                # This time we have no other choice but to recompute distances
+                # because we don't take ||X_c||² in the reduction
+                # TODO: introduce ||X_c||² for FastSquaredEuclideanArgKmin
+                # and factorise code shared with FastSquaredEuclideanRadiusNeighborhood?
+                distances[i, j] = self.datasets_pair.dist(i, Y_indices[i, j])
+
+    @final
     cdef int _reduce_on_chunks(self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -1181,9 +1195,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         # ("reduced distance" in the original wording),
         # which are proxies necessitating less computations.
         # We get the proxy for the radius to be able to compare
-
-        # TODO: use it?
-        DTYPE_t radius_proxy
+        DTYPE_t proxy_radius
 
         # We want resizable buffers which we will to wrapped within numpy
         # arrays at the end.
@@ -1239,6 +1251,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         check_scalar(radius, "radius", numbers.Real, min_val=0)
         self.radius = radius
+        self.proxy_radius = self.datasets_pair.distance_metric._dist_to_rdist(self.radius)
         self.sort_results = False
 
         # Allocating pointers to datastructures but not the datastructures themselves.
@@ -1265,13 +1278,13 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     ) nogil except -1:
         cdef:
             ITYPE_t i, j
-            DTYPE_t dist_i_j
+            DTYPE_t proxy_dist_i_j
 
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
-                dist_i_j = self.datasets_pair.dist(i, j)
-                if dist_i_j <= self.radius:
-                    deref(self.neigh_distances_chunks[thread_num])[i].push_back(dist_i_j)
+                proxy_dist_i_j = self.datasets_pair.proxy_dist(i, j)
+                if proxy_dist_i_j <= self.proxy_radius:
+                    deref(self.neigh_distances_chunks[thread_num])[i].push_back(proxy_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
 
         return 0
@@ -1384,6 +1397,22 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         return
 
+    # TODO: annotating with 'final' here makes the compilation fails but it should not
+    # @final
+    cdef void compute_exact_distances(self) nogil:
+        """Convert proxy distances to pairwise distances in parallel."""
+        cdef:
+            ITYPE_t i, j
+
+        for i in prange(self.n_X, nogil=True, schedule='static',
+                        num_threads=self.effective_omp_n_thread):
+            for j in range(deref(self.neigh_indices)[i].size()):
+                deref(self.neigh_distances)[i][j] = (
+                        self.datasets_pair.distance_metric._rdist_to_dist(
+                            deref(self.neigh_distances)[i][j]
+                        )
+                )
+
     @final
     def compute(self,
         str strategy = "auto",
@@ -1451,8 +1480,6 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
         DTYPE_t[::1] X_sq_norms
         DTYPE_t[::1] Y_sq_norms
 
-        DTYPE_t squared_radius
-
         # Buffers for GEMM
         DTYPE_t ** dist_middle_terms_chunks
 
@@ -1471,7 +1498,6 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
         self.Y = check_array(Y, dtype=DTYPE)
         self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
-        self.squared_radius = self.radius ** 2
 
         # Temporary datastructures used in threads
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
@@ -1519,20 +1545,6 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
 
         for thread_num in range(num_threads):
             free(self.dist_middle_terms_chunks[thread_num])
-
-
-    @final
-    cdef void compute_exact_distances(self) nogil:
-        """Convert proxy distances to pairwise distances in parallel."""
-        cdef:
-            ITYPE_t i, j
-
-        for i in prange(self.n_X, nogil=True, num_threads=self.effective_omp_n_thread):
-            for j in range(deref(self.neigh_indices)[i].size()):
-                deref(self.neigh_distances)[i][j] = (
-                        self.datasets_pair.dist(i, deref(self.neigh_indices)[i][j])
-                )
-
 
     @final
     cdef int _reduce_on_chunks(self,
@@ -1597,7 +1609,7 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
                 squared_dist_i_j = (self.X_sq_norms[i + X_start]
                             + dist_middle_terms[i * Y_c.shape[0] + j]
                             + self.Y_sq_norms[j + Y_start])
-                if squared_dist_i_j <= self.squared_radius:
+                if squared_dist_i_j <= self.proxy_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i + X_start].push_back(squared_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i + X_start].push_back(j + Y_start)
 
