@@ -309,8 +309,8 @@ def test_kernel_pca_precomputed_non_symmetric(solver):
     kpca_c.fit(Kc)
 
     # comparison between the non-centered and centered versions
-    assert_array_equal(kpca.alphas_, kpca_c.alphas_)
-    assert_array_equal(kpca.lambdas_, kpca_c.lambdas_)
+    assert_array_equal(kpca.eigenvectors_, kpca_c.eigenvectors_)
+    assert_array_equal(kpca.eigenvalues_, kpca_c.eigenvalues_)
 
 
 def test_kernel_pca_invalid_kernel():
@@ -396,8 +396,8 @@ def test_kernel_conditioning():
     kpca.fit(X)
 
     # check that the small non-zero eigenvalue was correctly set to zero
-    assert kpca.lambdas_.min() == 0
-    assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
+    assert kpca.eigenvalues_.min() == 0
+    assert np.all(kpca.eigenvalues_ == _check_psd_eigenvalues(kpca.eigenvalues_))
 
 
 @pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
@@ -506,6 +506,14 @@ def test_kernel_pca_inverse_transform_reconstruction():
     assert np.linalg.norm(X - X_reconst) / np.linalg.norm(X) < 1e-1
 
 
+def test_kernel_pca_raise_not_fitted_error():
+    X = np.random.randn(15).reshape(5, 3)
+    kpca = KernelPCA()
+    kpca.fit(X)
+    with pytest.raises(NotFittedError):
+        kpca.inverse_transform(X)
+
+
 def test_32_64_decomposition_shape():
     """Test that the decomposition is similar for 32 and 64 bits data
 
@@ -533,3 +541,21 @@ def test_kernel_pcc_pairwise_is_deprecated():
     msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         kp._pairwise
+
+
+# TODO: Remove in 1.2
+def test_kernel_pca_lambdas_deprecated():
+    kp = KernelPCA()
+    kp.eigenvalues_ = None
+    msg = r"Attribute `lambdas_` was deprecated in version 1\.0"
+    with pytest.warns(FutureWarning, match=msg):
+        kp.lambdas_
+
+
+# TODO: Remove in 1.2
+def test_kernel_pca_alphas_deprecated():
+    kp = KernelPCA(kernel="precomputed")
+    kp.eigenvectors_ = None
+    msg = r"Attribute `alphas_` was deprecated in version 1\.0"
+    with pytest.warns(FutureWarning, match=msg):
+        kp.alphas_

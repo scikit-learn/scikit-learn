@@ -107,7 +107,7 @@ def test_assert_raise_message():
 
 
 def test_ignore_warning():
-    # This check that ignore_warning decorateur and context manager are working
+    # This check that ignore_warning decorator and context manager are working
     # as expected
     def _warning_function():
         warnings.warn("deprecation warning", DeprecationWarning)
@@ -119,16 +119,12 @@ def test_ignore_warning():
     # Check the function directly
     assert_no_warnings(ignore_warnings(_warning_function))
     assert_no_warnings(ignore_warnings(_warning_function, category=DeprecationWarning))
-    assert_warns(
-        DeprecationWarning, ignore_warnings(_warning_function, category=UserWarning)
-    )
-    assert_warns(
-        UserWarning, ignore_warnings(_multiple_warning_function, category=FutureWarning)
-    )
-    assert_warns(
-        DeprecationWarning,
-        ignore_warnings(_multiple_warning_function, category=UserWarning),
-    )
+    with pytest.warns(DeprecationWarning):
+        ignore_warnings(_warning_function, category=UserWarning)()
+    with pytest.warns(UserWarning):
+        ignore_warnings(_multiple_warning_function, category=FutureWarning)()
+    with pytest.warns(DeprecationWarning):
+        ignore_warnings(_multiple_warning_function, category=UserWarning)()
     assert_no_warnings(
         ignore_warnings(_warning_function, category=(DeprecationWarning, UserWarning))
     )
@@ -162,9 +158,12 @@ def test_ignore_warning():
     assert_no_warnings(decorator_no_warning)
     assert_no_warnings(decorator_no_warning_multiple)
     assert_no_warnings(decorator_no_deprecation_warning)
-    assert_warns(DeprecationWarning, decorator_no_user_warning)
-    assert_warns(UserWarning, decorator_no_deprecation_multiple_warning)
-    assert_warns(DeprecationWarning, decorator_no_user_multiple_warning)
+    with pytest.warns(DeprecationWarning):
+        decorator_no_user_warning()
+    with pytest.warns(UserWarning):
+        decorator_no_deprecation_multiple_warning()
+    with pytest.warns(DeprecationWarning):
+        decorator_no_user_multiple_warning()
 
     # Check the context manager
     def context_manager_no_warning():
@@ -194,9 +193,12 @@ def test_ignore_warning():
     assert_no_warnings(context_manager_no_warning)
     assert_no_warnings(context_manager_no_warning_multiple)
     assert_no_warnings(context_manager_no_deprecation_warning)
-    assert_warns(DeprecationWarning, context_manager_no_user_warning)
-    assert_warns(UserWarning, context_manager_no_deprecation_multiple_warning)
-    assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
+    with pytest.warns(DeprecationWarning):
+        context_manager_no_user_warning()
+    with pytest.warns(UserWarning):
+        context_manager_no_deprecation_multiple_warning()
+    with pytest.warns(DeprecationWarning):
+        context_manager_no_user_multiple_warning()
 
     # Check that passing warning class as first positional argument
     warning_class = UserWarning
@@ -222,7 +224,11 @@ class TestWarns(unittest.TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             filters_orig = warnings.filters[:]
-            assert assert_warns(UserWarning, f) == 3
+
+            # TODO: remove in 1.2
+            with pytest.warns(FutureWarning):
+                assert assert_warns(UserWarning, f) == 3
+
             # test that assert_warns doesn't have side effects on warnings
             # filters
             assert warnings.filters == filters_orig
@@ -230,6 +236,8 @@ class TestWarns(unittest.TestCase):
             assert_no_warnings(f)
         assert assert_no_warnings(lambda x: x, 1) == 1
 
+    # TODO: remove in 1.2
+    @ignore_warnings(category=FutureWarning)
     def test_warn_wrong_warning(self):
         def f():
             warnings.warn("yo", FutureWarning)
