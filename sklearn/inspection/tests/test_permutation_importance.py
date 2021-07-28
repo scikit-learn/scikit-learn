@@ -528,7 +528,10 @@ def test_permutation_importance_multi_metric(list_single_scorer, multi_scorer):
         assert_allclose(multi_result.importances, single_result.importances)
 
 
-def test_error_max_samples():
+def test_permutation_importance_max_samples_error():
+    """Check that a proper error message is raised when `max_samples` is not 
+    correct.
+    """
     pd = pytest.importorskip("pandas")
     rng = np.random.RandomState(42)
     n_repeats = 5
