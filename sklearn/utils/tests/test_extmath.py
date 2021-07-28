@@ -3,6 +3,7 @@
 #          Denis Engemann <denis-alexander.engemann@inria.fr>
 #
 # License: BSD 3 clause
+import inspect
 
 import numpy as np
 from scipy import sparse
@@ -572,16 +573,16 @@ def test_randomized_svd_parametrization():
     # Check that function is correctly parametrized
     f = randomized_svd
 
-    argnames = f.__code__.co_varnames
+    argnames = inspect.signature(f).parameters.values()
 
-    expected = (
+    expected = [
             'M', 'n_components', 'n_oversamples', 'n_iter',
             'power_iteration_normalizer', 'transpose', 'flip_sign',
-            'random_state', 'lapack_svd_driver', 'n_random', 'n_samples',
-            'n_features', 'Q', 'B', 'Uhat', 's', 'Vt', 'U'
-        )
+            'random_state', 'lapack_svd_driver'
+        ]
 
-    assert argnames == expected
+    for i, arg in enumerate(argnames):
+        assert arg.name == expected[i]
 
 
 def test_cartesian():
