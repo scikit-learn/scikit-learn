@@ -2,8 +2,6 @@
 
 set -e
 
-pip install git+https://github.com/ogrisel/threadpoolctl.git@openblas_get_corename
-
 python --version
 python -c "import numpy; print(f'numpy {numpy.__version__}')"
 python -c "import scipy; print(f'scipy {scipy.__version__}')"
