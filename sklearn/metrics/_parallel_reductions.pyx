@@ -156,6 +156,8 @@ cdef class DatasetsPair:
     This makes use of cython.final to remove the overhead of method calls'
     dispatch.
     """
+    cdef:
+        readonly DistanceMetric distance_metric
 
     @classmethod
     def get_for(cls,
@@ -186,6 +188,9 @@ cdef class DatasetsPair:
         if not issparse(X) and issparse(Y):
             return DenseSparseDatasetsPair(X, Y, distance_metric)
         return SparseSparseDatasetsPair(X, Y, distance_metric)
+
+    def __init__(self, DistanceMetric distance_metric):
+        self.distance_metric = distance_metric
 
     @classmethod
     def unpack_csr_matrix(cls, X: spmatrix):
@@ -224,8 +229,6 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         Rows represent vectors
     """
     cdef:
-        DistanceMetric distance_metric
-
         const DTYPE_t[:, ::1] X  # shape: (n_X, d)
         const DTYPE_t[:, ::1] Y  # shape: (n_Y, d)
         ITYPE_t d
@@ -237,7 +240,7 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         self.Y = np.empty((1, 1), dtype=DTYPE, order='c')
 
     def __init__(self, X, Y, DistanceMetric distance_metric):
-        self.distance_metric = distance_metric
+        DatasetsPair.__init__(self, distance_metric)
         self.X = check_array(X, dtype=DTYPE, order='C')
         self.Y = check_array(Y, dtype=DTYPE, order='C')
         self.d = X.shape[1]
@@ -280,8 +283,6 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
         Rows represent vectors
     """
     cdef:
-        DistanceMetric distance_metric
-
         const DTYPE_t[:] X_data
         const ITYPE_t[:] X_indices,
         const ITYPE_t[:] X_indptr,
@@ -301,7 +302,7 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
         return self.Y_indptr.shape[0] -1
 
     def __init__(self, X, Y, DistanceMetric distance_metric):
-        self.distance_metric = distance_metric
+        DatasetsPair.__init__(self, distance_metric)
 
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
         Y = check_array(Y, dtype=DTYPE, accept_sparse='csr')
@@ -351,8 +352,6 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         Rows represent vectors
     """
     cdef:
-        DistanceMetric distance_metric
-
         const DTYPE_t[:] X_data
         const ITYPE_t[:] X_indices,
         const ITYPE_t[:] X_indptr,
@@ -362,7 +361,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
 
 
     def __init__(self, X, Y, DistanceMetric distance_metric):
-        self.distance_metric = distance_metric
+        DatasetsPair.__init__(self, distance_metric)
 
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
         self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
@@ -428,6 +427,7 @@ cdef class DenseSparseDatasetsPair(DatasetsPair):
         DatasetsPair datasets_pair
 
     def __init__(self, X, Y, distance_metric):
+        DatasetsPair.__init__(self, distance_metric)
         # Swapping arguments on the constructor
         self.datasets_pair = SparseDenseDatasetsPair(Y, X, distance_metric)
 
