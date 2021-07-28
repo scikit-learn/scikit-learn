@@ -1,3 +1,5 @@
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.metaestimators import available_if
 
@@ -104,3 +106,8 @@ def test_available_if_docstring():
 def test_available_if():
     assert hasattr(AvailableParameterEstimator(), "available_func")
     assert not hasattr(AvailableParameterEstimator(available=False), "available_func")
+
+    X = [[0, 0], [0, 0], [1, 1], [1, 1]]
+    pipe = Pipeline([("scaler", StandardScaler())])
+    pipe.fit(X)
+    Pipeline.transform(pipe, X)
