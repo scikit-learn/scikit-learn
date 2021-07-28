@@ -7,6 +7,7 @@
 # cython: initializedcheck=False
 # cython: binding=False
 # distutils: define_macros=CYTHON_TRACE_NOGIL=0
+import numbers
 
 import numpy as np
 cimport numpy as np
@@ -37,10 +38,10 @@ from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 
 
-from scipy.sparse import issparse
+from scipy.sparse import issparse, spmatrix
 from threadpoolctl import threadpool_limits
 from ._dist_metrics import METRIC_MAPPING
-from ..utils import check_array
+from ..utils import check_array, check_scalar
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs import ITYPE, DTYPE
 
@@ -166,6 +167,8 @@ cdef class DatasetsPair:
         cdef:
             DistanceMetric distance_metric = DistanceMetric.get_metric(metric,
                                                                        **metric_kwargs)
+        X = check_array(X, accept_sparse='csr')
+        Y = check_array(Y, accept_sparse='csr')
 
         if X.shape[1] != Y.shape[1]:
             raise RuntimeError("Vectors of X and Y must have the "
@@ -183,6 +186,13 @@ cdef class DatasetsPair:
         if not issparse(X) and issparse(Y):
             return DenseSparseDatasetsPair(X, Y, distance_metric)
         return SparseSparseDatasetsPair(X, Y, distance_metric)
+
+    @classmethod
+    def unpack_csr_matrix(cls, X: spmatrix):
+        X_data = check_array(X.data, dtype=DTYPE, ensure_2d=False)
+        X_indices = check_array(X.indices, dtype=ITYPE, ensure_2d=False)
+        X_indptr = check_array(X.indptr, dtype=ITYPE, ensure_2d=False)
+        return X_data, X_indptr, X_indptr
 
     @property
     def n_X(self):
@@ -296,13 +306,8 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
         Y = check_array(Y, dtype=DTYPE, accept_sparse='csr')
 
-        self.X_data = X.data
-        self.X_indices = X.indices
-        self.X_indptr = X.indptr
-
-        self.Y_data = Y.data
-        self.Y_indices = Y.indices
-        self.Y_indptr = Y.indptr
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
+        self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr_matrix(Y)
 
     @final
     cdef DTYPE_t proxy_dist(self,
@@ -360,9 +365,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         self.distance_metric = distance_metric
 
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
-        self.X_data = X.data
-        self.X_indices = X.indices
-        self.X_indptr = X.indptr
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
 
         self.Y = check_array(Y, dtype=DTYPE)
         self.Y_indices = np.arange(self.Y.shape[1])
@@ -466,14 +469,14 @@ cdef class PairwiseDistancesReduction:
     on chunks whose size can be set using ``chunk_size``.
     Parameters
     ----------
-    distance_metric: DistanceMetric
-        The distance to use
+    datasets_pair: DatasetsPair
+        The pair of dataset to use
     chunk_size: int
         The number of vectors per chunk
     """
 
     cdef:
-        DatasetsPair datasets_pair
+        readonly DatasetsPair datasets_pair
 
         ITYPE_t effective_omp_n_thread
         ITYPE_t n_samples_chunk, chunk_size
@@ -504,6 +507,7 @@ cdef class PairwiseDistancesReduction:
 
         self.effective_omp_n_thread = _openmp_effective_n_threads()
 
+        check_scalar(chunk_size, "chunk_size", numbers.Integral, min_val=1)
         self.chunk_size = chunk_size
         self.n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
@@ -756,7 +760,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 dict metric_kwargs=dict(),
         ):
         # This factory comes to handle specialisations.
-        if metric == "fast_sqeuclidean" and not issparse(X) and not issparse(Y):
+        if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
         return ArgKmin(datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                        k=k,
@@ -769,11 +773,14 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     ):
         PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size)
 
+        check_scalar(k, "k", numbers.Integral, min_val=1)
         self.k = k
 
         # Allocating pointers to datastructures but not the datastructures themselves.
-        # There's potentially more pointers than actual thread used for the
-        # reduction but as many datastructures as threads.
+        # There as many pointers as available threads.
+        # When reducing on small datasets, there can be more pointers than actual
+        # threads used for the reduction but there won't be allocated but unused
+        # datastructures.
         self.heaps_proxy_distances_chunks = <DTYPE_t **> malloc(
             sizeof(DTYPE_t *) * self.effective_omp_n_thread)
         self.heaps_indices_chunks = <ITYPE_t **> malloc(
@@ -1015,8 +1022,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         DTYPE_t ** dist_middle_terms_chunks
 
     def __init__(self,
-        const DTYPE_t[:, ::1] X,
-        const DTYPE_t[:, ::1] Y,
+        X,
+        Y,
         ITYPE_t k,
         ITYPE_t chunk_size = CHUNK_SIZE,
     ):
@@ -1025,8 +1032,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             k=k,
             chunk_size=chunk_size)
-        self.X = X
-        self.Y = Y
+        self.X = check_array(X, dtype=DTYPE)
+        self.Y = check_array(Y, dtype=DTYPE)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
         # Temporary datastructures used in threads
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
@@ -1214,7 +1221,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                 dict metric_kwargs=dict(),
         ):
         # This factory comes to handle specialisations.
-        if metric == "fast_sqeuclidean" and not issparse(X) and not issparse(Y):
+        if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanRadiusNeighborhood(X=X, Y=Y,
                                                           radius=radius,
                                                           chunk_size=chunk_size)
@@ -1230,6 +1237,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     ):
         PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size)
 
+        check_scalar(radius, "radius", numbers.Real, min_val=0)
         self.radius = radius
         self.sort_results = False
 
@@ -1454,8 +1462,8 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
         DTYPE_t ** dist_middle_terms_chunks
 
     def __init__(self,
-        const DTYPE_t[:, ::1] X,
-        const DTYPE_t[:, ::1] Y,
+        X,
+        Y,
         DTYPE_t radius,
         ITYPE_t chunk_size = CHUNK_SIZE,
     ):
@@ -1464,8 +1472,8 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
                         datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
                         radius=radius,
                         chunk_size=chunk_size)
-        self.X = X
-        self.Y = Y
+        self.X = check_array(X, dtype=DTYPE)
+        self.Y = check_array(Y, dtype=DTYPE)
         self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
         self.squared_radius = self.radius ** 2
