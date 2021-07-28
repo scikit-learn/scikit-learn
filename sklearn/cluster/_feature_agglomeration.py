@@ -55,9 +55,7 @@ class AgglomerationTransform(TransformerMixin):
 
     def inverse_transform(self, Xred):
         """
-        Inverse the transformation.
-        Return a vector of size nb_features with the values of Xred assigned
-        to each group of features.
+        Inverse the transformation and return a vector of size nb_features.
 
         Parameters
         ----------

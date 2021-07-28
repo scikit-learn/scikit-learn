@@ -39,6 +39,27 @@ def _fix_connectivity(X, connectivity, affinity):
         - makes it symmetric
         - converts it to LIL if necessary
         - completes it if necessary.
+    
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Feature matrix representing `n_samples` samples to be clustered.
+
+    connectivity : sparse matrix, default=None
+        Connectivity matrix. Defines for each sample the neighboring samples
+        following a given structure of the data. The matrix is assumed to
+        be symmetric and only the upper triangular half is used.
+        Default is `None`, i.e, the Ward algorithm is unstructured.
+
+    affinity : {"euclidean", "precomputed"}, default="euclidean"
+        Which affinity to use. At the moment `precomputed` and
+        ``euclidean`` are supported. `euclidean` uses the
+        negative squared Euclidean distance between points.
+
+    Returns
+    -------
+    n_connected_components : int
+        The number of connected components in the graph.
     """
     n_samples = X.shape[0]
     if connectivity.shape[0] != n_samples or connectivity.shape[1] != n_samples:
@@ -166,7 +187,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
         Feature matrix representing `n_samples` samples to be clustered.
 
     connectivity : sparse matrix, default=None
-        connectivity matrix. Defines for each sample the neighboring samples
+        Connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
@@ -385,7 +406,7 @@ def linkage_tree(
         Feature matrix representing `n_samples` samples to be clustered.
 
     connectivity : sparse matrix, default=None
-        connectivity matrix. Defines for each sample the neighboring samples
+        Connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is `None`, i.e, the Ward algorithm is unstructured.
@@ -1119,6 +1140,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         Only computed if `distance_threshold` is used or `compute_distances`
         is set to `True`.
 
+    See Also
+    --------
+    ward_tree : Hierarchical clustering with ward linkage.
+
     Examples
     --------
     >>> import numpy as np
@@ -1169,6 +1194,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
         y : Ignored
             Not used, present here for API consistency by convention.
+
+        **params : dictionary of keyword arguments
+            Additional fit parameters.
 
         Returns
         -------
