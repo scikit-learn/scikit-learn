@@ -111,7 +111,10 @@ class _AvailableIfDescriptor:
                 )
 
         # lambda, but not partial, allows help() to work with update_wrapper
-        out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
+        if obj is None:
+            out = lambda *args, **kwargs: self.fn(*args, **kwargs)  # noqa
+        else:
+            out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
         # update the docstring of the returned function
         update_wrapper(out, self.fn)
         return out
