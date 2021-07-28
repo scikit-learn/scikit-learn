@@ -195,7 +195,8 @@ def permutation_importance(
         in each repeat (without replacement).
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples.
-        No effect if max_samples is equal to 1.0 or X.shape[0].
+        - If `max_samples` is equal to `1.0` or `X.shape[0]`, all samples
+          will be used.
 
         .. versionadded:: 1.0
 
