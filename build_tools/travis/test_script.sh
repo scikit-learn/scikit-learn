@@ -18,8 +18,8 @@ python -c "import joblib; print(f'{joblib.cpu_count()} CPUs')"
 python -c "import platform; print(f'{platform.machine()}')"
 
 
-# Force the use of the armv8 core type:
-export OPENBLAS_CORETYPE=armv8
+## Force the use of the armv8 core type:
+#export OPENBLAS_CORETYPE=armv8
 python -m threadpoolctl -i sklearn  # also triggers imports of numpy and scipy
 cat /proc/cpuinfo
 
