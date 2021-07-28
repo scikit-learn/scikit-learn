@@ -39,7 +39,7 @@ def _fix_connectivity(X, connectivity, affinity):
         - makes it symmetric
         - converts it to LIL if necessary
         - completes it if necessary.
-    
+
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
