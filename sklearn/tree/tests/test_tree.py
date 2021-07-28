@@ -2524,3 +2524,17 @@ def test_n_features_deprecated(Tree):
 
     with pytest.warns(FutureWarning, match=depr_msg):
         Tree().fit(X, y).n_features_
+
+
+def test_tree_split_with_identical_feature():
+    """Test that in the presence of same-ordered features, tree will always
+    split on the one with lowest index
+    """
+    tree = DecisionTreeRegressor(random_state=42)
+    n_samples = 100
+
+    X = np.arange(n_samples * 2).reshape(n_samples, 2)
+    y = np.arange(n_samples) / 2
+
+    tree.fit(X, y)
+    assert tree.feature_importances_[1] == 0
