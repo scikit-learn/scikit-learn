@@ -2153,17 +2153,11 @@ def test_cross_validate_failing_fits_warnings(error_score):
 
     # since we're using FailingClassfier, our error will be the following
     error_message = "ValueError: Failing classifier failed as required"
-    # the warning message we're expecting to see
-    warning_message = (
-        "7 fits failed on the training sets over a total of 7 fits. The score on these"
-        " train-test partitions for these parameters will be set to %f. .+Details%s"
-        f" {cross_validate_kwargs['error_score']} {error_message}"
-    )
 
     # check traceback is included
-    warning_message = (
+    warning_message = re.compile(
         "The score on these train-test partitions for these parameters will be set"
-        f" to {cross_validate_kwargs['error_score']}"
+        f" to {cross_validate_kwargs['error_score']}.+{error_message}", re.DOTALL
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
         cross_validate(*cross_validate_args, **cross_validate_kwargs)

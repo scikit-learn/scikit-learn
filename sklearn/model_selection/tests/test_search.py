@@ -1566,8 +1566,8 @@ def test_grid_search_failing_classifier():
         error_score=0.0,
     )
     warning_message = (
-        "Estimator fit failed. The score on this train-test partition "
-        "for these parameters will be set to 0.0.*."
+        "5 fits failed on the training sets over a total of 15 fits. The score on these"
+        r" train-test partitions for these parameters will be set to 0\.0"
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
         gs.fit(X, y)
@@ -1599,8 +1599,8 @@ def test_grid_search_failing_classifier():
         error_score=float("nan"),
     )
     warning_message = (
-        "Estimator fit failed. The score on this train-test partition "
-        "for these parameters will be set to nan."
+        "5 fits failed on the training sets over a total of 15 fits. The score on these"
+        r" train-test partitions for these parameters will be set to nan"
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
         gs.fit(X, y)
@@ -2112,7 +2112,11 @@ def test_callable_multimetric_error_failing_clf():
         error_score=0.1,
     )
 
-    with pytest.warns(FitFailedWarning, match="Estimator fit failed"):
+    warning_message = (
+        "5 fits failed on the training sets over a total of 15 fits. The score on these"
+        r" train-test partitions for these parameters will be set to 0\.1"
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
         gs.fit(X, y)
 
     assert_allclose(gs.cv_results_["mean_test_acc"], [1, 1, 0.1])
