@@ -6,4 +6,4 @@ This example was moved to
 .. meta::
    :http-equiv=refresh: 5; ../feature_selection/plot_permutation_tests_for_classification.html
 
-"""
+""" # noqa
