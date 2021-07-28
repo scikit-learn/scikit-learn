@@ -1855,12 +1855,15 @@ def test_pairwise_deprecated(NearestNeighbors):
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("ratio_train_test", [10, 2, 1, 0.5])
-@pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
-def test_fast_sqeuclidean_correctness(
+@pytest.mark.parametrize(
+    "n_neighbors, radius", [(1, 0), (10, 1), (100, 10), (1000, 100)]
+)
+def test_kneighbors_fast_sqeuclidean_correctness(
     n_samples,
     n_features,
     ratio_train_test,
     n_neighbors,
+    radius,
     dtype=np.float64,
 ):
     # The fast squared euclidean strategy must return results
@@ -1885,22 +1888,37 @@ def test_fast_sqeuclidean_correctness(
         * spread
     )
 
-    neigh = NearestNeighbors(
-        n_neighbors=n_neighbors, algorithm="brute", metric="euclidean"
-    ).fit(X_train)
+    neigh = NearestNeighbors(algorithm="brute", metric="euclidean").fit(X_train)
+
+    fse_neigh = NearestNeighbors(algorithm="brute", metric="fast_sqeuclidean").fit(
+        X_train
+    )
+
+    # Results for KNN should be consistent
     eucl_dist, eucl_nn = neigh.kneighbors(
         X=X_test, n_neighbors=n_neighbors, return_distance=True
     )
 
-    fse_neigh = NearestNeighbors(
-        n_neighbors=n_neighbors, algorithm="brute", metric="fast_sqeuclidean"
-    ).fit(X_train)
     fse_dist, fse_nn = fse_neigh.kneighbors(
         X=X_test, n_neighbors=n_neighbors, return_distance=True
     )
 
     assert_allclose(eucl_dist, fse_dist)
     assert_array_equal(eucl_nn, fse_nn)
+
+    # Results for KNN should be consistent
+    eucl_dist, eucl_nn = neigh.radius_neighbors(
+        X=X_test, radius=radius, return_distance=True, sort_results=True
+    )
+
+    fse_dist, fse_nn = fse_neigh.radius_neighbors(
+        X=X_test, radius=radius, return_distance=True, sort_results=True
+    )
+
+    # We get arrays of arrays and we need to check for individual pairs
+    for i in range(eucl_dist.shape[0]):
+        assert_allclose(eucl_dist[i], fse_dist[i])
+        assert_array_equal(eucl_nn[i], fse_nn[i])
 
 
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])

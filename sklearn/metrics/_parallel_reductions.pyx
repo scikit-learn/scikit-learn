@@ -657,6 +657,10 @@ cdef class PairwiseDistancesReduction:
 
     # Placeholder methods which can be implemented
 
+    cdef void compute_exact_distances(self) nogil:
+        """Convert proxy distances to exact distances or recompute them."""
+        return
+
     cdef void _on_X_parallel_init(self,
         ITYPE_t thread_num,
     ) nogil:
@@ -911,14 +915,13 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 )
         return
 
-    @final
-    cdef void _exact_distances(self,
-        ITYPE_t[:, ::1] Y_indices,  # IN
-        DTYPE_t[:, ::1] distances,  # IN/OUT
-    ) nogil:
-        """Convert proxy distances to pairwise distances in parallel."""
+    # TODO: annotating with 'final' here makes the compilation fails but it should not
+    # @final
+    cdef void compute_exact_distances(self) nogil:
         cdef:
             ITYPE_t i, j
+            ITYPE_t[:, ::1] Y_indices = self.argkmin_indices
+            DTYPE_t[:, ::1] distances = self.argkmin_distances
 
         for i in prange(self.n_X, schedule='static', nogil=True,
                         num_threads=self.effective_omp_n_thread):
@@ -980,9 +983,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 raise RuntimeError(f"strategy '{strategy}' not supported.")
 
         if return_distance:
-            # We need to recompute distances because we relied on
-            # proxy distances.
-            self._exact_distances(self.argkmin_indices, self.argkmin_distances)
+            # We eventually need to recompute distances because we relied on proxy distances.
+            self.compute_exact_distances()
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
         return np.asarray(self.argkmin_indices)
@@ -1198,16 +1200,24 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         bint sort_results
 
+    @classmethod
+    def valid_metrics(cls):
+        return {"fast_sqeuclidean", *PairwiseDistancesReduction.valid_metrics()}
 
     @classmethod
     def get_for(cls,
                 X,
                 Y,
                 DTYPE_t radius,
-                str metric="euclidean",
+                str metric="fast_sqeuclidean",
                 ITYPE_t chunk_size=CHUNK_SIZE,
                 dict metric_kwargs=dict(),
         ):
+        # This factory comes to handle specialisations.
+        if metric == "fast_sqeuclidean" and not issparse(X) and not issparse(Y):
+            return FastSquaredEuclideanRadiusNeighborhood(X=X, Y=Y,
+                                                          radius=radius,
+                                                          chunk_size=chunk_size)
         return RadiusNeighborhood(
                        datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                        radius=radius,
@@ -1238,7 +1248,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         if self.neigh_indices_chunks is not NULL:
             free(self.neigh_indices_chunks)
 
-    @final
     cdef int _reduce_on_chunks(self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -1354,7 +1363,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         return
 
-    @final
     cdef void _on_Y_finalize(self,
         ITYPE_t num_threads,
     ) nogil:
@@ -1409,6 +1417,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                 raise RuntimeError(f"strategy '{strategy}' not supported.")
 
         if return_distance:
+            self.compute_exact_distances()
             res = (
                 _coerce_vectors_to_np_nd_arrays(self.neigh_distances),
                 _coerce_vectors_to_np_nd_arrays(self.neigh_indices),
@@ -1420,3 +1429,173 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         del self.neigh_indices
 
         return res
+
+
+cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
+    """Fast specialized alternative for RadiusNeighborhood on EuclideanDistance.
+
+    Notes
+    -----
+    This implementation has an superior arithmetic intensity
+    and hence running time, but it can suffer from numerical
+    instability. RadiusNeighborhood with EuclideanDistance
+    must be used when exact precision is needed.
+    """
+
+    cdef:
+        const DTYPE_t[:, ::1] X
+        const DTYPE_t[:, ::1] Y
+        DTYPE_t[::1] X_sq_norms
+        DTYPE_t[::1] Y_sq_norms
+
+        DTYPE_t squared_radius
+
+        # Buffers for GEMM
+        DTYPE_t ** dist_middle_terms_chunks
+
+    def __init__(self,
+        const DTYPE_t[:, ::1] X,
+        const DTYPE_t[:, ::1] Y,
+        DTYPE_t radius,
+        ITYPE_t chunk_size = CHUNK_SIZE,
+    ):
+        RadiusNeighborhood.__init__(self,
+                        # The distance computer here is used for exact distances computations
+                        datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
+                        radius=radius,
+                        chunk_size=chunk_size)
+        self.X = X
+        self.Y = Y
+        self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
+        self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
+        self.squared_radius = self.radius ** 2
+
+        # Temporary datastructures used in threads
+        self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
+            sizeof(DTYPE_t *) * self.effective_omp_n_thread)
+
+    def __dealloc__(self):
+        if self.dist_middle_terms_chunks is not NULL:
+            free(self.dist_middle_terms_chunks)
+
+    @final
+    cdef void _on_X_parallel_init(self,
+        ITYPE_t thread_num,
+    ) nogil:
+        RadiusNeighborhood._on_X_parallel_init(self, thread_num)
+
+        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
+            self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t))
+
+    @final
+    cdef void _on_X_parallel_finalize(self,
+        ITYPE_t thread_num
+    ) nogil:
+        RadiusNeighborhood._on_X_parallel_finalize(self, thread_num)
+        free(self.dist_middle_terms_chunks[thread_num])
+
+    @final
+    cdef void _on_Y_init(self,
+        ITYPE_t num_threads,
+    ) nogil:
+        cdef ITYPE_t thread_num
+        RadiusNeighborhood._on_Y_init(self, num_threads)
+
+        for thread_num in range(num_threads):
+            # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+            self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
+                self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t))
+
+    @final
+    cdef void _on_Y_finalize(self,
+        ITYPE_t num_threads,
+    ) nogil:
+        cdef ITYPE_t thread_num
+        RadiusNeighborhood._on_Y_finalize(self, num_threads)
+
+        for thread_num in range(num_threads):
+            free(self.dist_middle_terms_chunks[thread_num])
+
+
+    @final
+    cdef void compute_exact_distances(self) nogil:
+        """Convert proxy distances to pairwise distances in parallel."""
+        cdef:
+            ITYPE_t i, j
+
+        for i in prange(self.n_X, nogil=True, num_threads=self.effective_omp_n_thread):
+            for j in range(deref(self.neigh_indices)[i].size()):
+                deref(self.neigh_distances)[i][j] = (
+                        self.datasets_pair.dist(i, deref(self.neigh_indices)[i][j])
+                )
+
+
+    @final
+    cdef int _reduce_on_chunks(self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil except -1:
+        """
+        Critical part of the computation of pairwise distances.
+
+        "Fast Squared Euclidean" distances strategy relying
+        on the gemm-trick.
+        """
+        cdef:
+            ITYPE_t i, j
+            const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
+            const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
+            DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
+
+            # We compute the full pairwise squared distances matrix as follows
+            #
+            #      ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²,
+            #
+            # The middle term gets computed efficiently bellow using GEMM from BLAS Level 3.
+            #
+            # Careful: LDA, LDB and LDC are given for F-ordered arrays in BLAS documentations,
+            # for instance:
+            # https://www.netlib.org/lapack/explore-html/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
+            #
+            # Here, we use their counterpart values to work with C-ordered arrays.
+            BLAS_Order order = RowMajor
+            BLAS_Trans ta = NoTrans
+            BLAS_Trans tb = Trans
+            ITYPE_t m = X_c.shape[0]
+            ITYPE_t n = Y_c.shape[0]
+            ITYPE_t K = X_c.shape[1]
+            DTYPE_t alpha = - 2.
+            # TODO: necessarily casting because APIs exposed
+            # via scipy.linalg.cython_blas aren't reflecting
+            # the const-identifier for arguments
+            DTYPE_t * A = <DTYPE_t*> & X_c[0, 0]
+            ITYPE_t lda = X_c.shape[1]
+            DTYPE_t * B = <DTYPE_t*> & Y_c[0, 0]
+            ITYPE_t ldb = X_c.shape[1]
+            DTYPE_t beta = 0.
+            DTYPE_t * C = dist_middle_terms
+            ITYPE_t ldc = Y_c.shape[0]
+
+            DTYPE_t squared_dist_i_j
+
+
+        # dist_middle_terms = -2 * X_c.dot(Y_c.T)
+        _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, C, ldc)
+
+        # Pushing the distance and their associated indices on heaps
+        # which keep tracks of the argkmin.
+        for i in range(X_c.shape[0]):
+            for j in range(Y_c.shape[0]):
+                # ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                squared_dist_i_j = (self.X_sq_norms[i + X_start]
+                            + dist_middle_terms[i * Y_c.shape[0] + j]
+                            + self.Y_sq_norms[j + Y_start])
+                if squared_dist_i_j <= self.squared_radius:
+                    deref(self.neigh_distances_chunks[thread_num])[i + X_start].push_back(squared_dist_i_j)
+                    deref(self.neigh_indices_chunks[thread_num])[i + X_start].push_back(j + Y_start)
+
+        return 0
