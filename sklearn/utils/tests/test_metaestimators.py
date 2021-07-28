@@ -104,3 +104,10 @@ def test_available_if_docstring():
 def test_available_if():
     assert hasattr(AvailableParameterEstimator(), "available_func")
     assert not hasattr(AvailableParameterEstimator(available=False), "available_func")
+
+    # This is a non regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/20614
+    # to make sure that decorated functions can be used as an unbound method,
+    # for instance when monkeypatching.
+    est = AvailableParameterEstimator()
+    AvailableParameterEstimator.available_func(est)

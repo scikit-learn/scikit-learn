@@ -22,8 +22,6 @@ DOCSTRING_IGNORE_LIST = [
     "DummyClassifier",
     "ElasticNetCV",
     "ExtraTreeRegressor",
-    "ExtraTreesClassifier",
-    "ExtraTreesRegressor",
     "FactorAnalysis",
     "FastICA",
     #"FeatureAgglomeration",
