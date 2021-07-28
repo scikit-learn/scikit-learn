@@ -134,6 +134,7 @@ Changelog
 ...................
 
 - |Fix| :func:`config_context` is now threadsafe. :pr:`18736` by `Thomas Fan`_.
+- |Fix| :func:`_get_response` make error message clear. :pr:`20618` by `shinehide`_.
 
 :mod:`sklearn.calibration`
 ..........................
