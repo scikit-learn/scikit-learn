@@ -2139,9 +2139,10 @@ def test_callable_multimetric_clf_all_fails():
         error_score=0.1,
     )
 
-    with pytest.warns(FitFailedWarning, match="Estimator fit failed"), pytest.raises(
-        NotFittedError, match="All estimators failed to fit"
-    ):
+    with pytest.warns(
+        FitFailedWarning,
+        match="15 fits failed on the training sets over a total of 15 fits",
+    ), pytest.raises(NotFittedError, match="All estimators failed to fit"):
         gs.fit(X, y)
 
 

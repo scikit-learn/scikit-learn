@@ -281,13 +281,13 @@ def cross_validate(
         for train, test in cv.split(X, y, groups)
     )
 
+    _warn_about_fit_failures(results, error_score)
+
     # For callabe scoring, the return type is only know after calling. If the
     # return type is a dictionary, the error scores can now be inserted with
     # the correct key.
     if callable(scoring):
         _insert_error_scores(results, error_score)
-
-    _warn_about_fit_failures(results, error_score)
 
     results = _aggregate_score_dicts(results)
 
