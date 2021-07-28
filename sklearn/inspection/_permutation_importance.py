@@ -195,6 +195,7 @@ def permutation_importance(
     max_samples : int or float, default=1.0
         The number of samples to draw from X to compute feature importance
         in each repeat (without replacement).
+
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples.
         - If `max_samples` is equal to `1.0` or `X.shape[0]`, all samples
