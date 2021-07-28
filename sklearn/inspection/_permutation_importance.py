@@ -249,7 +249,6 @@ def permutation_importance(
     random_state = check_random_state(random_state)
     random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
-    # Validate max_samples
     if not isinstance(max_samples, numbers.Integral):
         max_samples = int(max_samples * X.shape[0])
     elif not (0 < max_samples <= X.shape[0]):
