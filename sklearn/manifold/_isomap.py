@@ -14,7 +14,7 @@ from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
-from ..metrics.pairwise import pairwise_distances
+from ..utils.graph import _fix_connected_components
 from ..externals._packaging.version import parse as parse_version
 
 
@@ -213,25 +213,16 @@ class Isomap(TransformerMixin, BaseEstimator):
                 "avoid this issue.",
                 stacklevel=2,
             )
-            # use array validated by NearestNeighbors
-            X = self.nbrs_._fit_X
 
-            for i in range(n_connected_components):
-                idx_i = np.where(labels == i)[0]
-                Xi = X[idx_i]
-                for j in range(i):
-                    idx_j = np.where(labels == j)[0]
-                    Xj = X[idx_j]
-                    D = pairwise_distances(
-                        Xi,
-                        Xj,
-                        metric=self.nbrs_.effective_metric_,
-                        **self.nbrs_.effective_metric_params_,
-                    )
-                    ii, jj = np.where(D == np.min(D))
-                    ii, jj = ii[0], jj[0]
-                    kng[idx_i[ii], idx_j[jj]] = 0
-                    kng[idx_j[jj], idx_i[ii]] = 0
+            # use array validated by NearestNeighbors
+            kng = _fix_connected_components(
+                X=self.nbrs_._fit_X,
+                graph=kng,
+                n_connected_components=n_connected_components,
+                component_labels=labels,
+                metric=self.nbrs_.effective_metric_,
+                **self.nbrs_.effective_metric_params_,
+            )
 
         if parse_version(scipy.__version__) < parse_version("1.3.2"):
             # make identical samples have a nonzero distance, to account for

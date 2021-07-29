@@ -10,9 +10,11 @@ sparse matrices.
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
 # License: BSD 3 clause
 
+import numpy as np
 from scipy import sparse
 
 from .deprecation import deprecated
+from ..metrics.pairwise import pairwise_distances
 
 
 ###############################################################################
@@ -114,3 +116,63 @@ def graph_shortest_path(dist_matrix, directed=True, method="auto"):
     be handled by specialized algorithms.
     """
     return sparse.csgraph.shortest_path(dist_matrix, method=method, directed=directed)
+
+
+def _fix_connected_components(
+    X, graph, n_connected_components, component_labels, metric, **kwargs
+):
+    """Add connections to sparse graph to connect unconnected components.
+
+    For each pair of unconnected components, compute all pairwise distances
+    from one component to the other, and add a connection on the closest pair
+    of samples. This is a hacky way to get a graph with a single connected
+    component, which is necessary for example to compute a shortest path
+    between all pairs of samples in the graph.
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features) or (n_samples, n_samples)
+        Features to compute the pairwise distances. If `metric =
+        "precomputed"`, X is the matrix of pairwise distances.
+
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Graph of connection between samples.
+
+    n_connected_components : int
+        Number of connected components, as computed by
+        `scipy.sparse.csgraph.connected_components`.
+
+    component_labels : array of shape (n_samples)
+        Labels of connected components, as computed by
+        `scipy.sparse.csgraph.connected_components`.
+
+    metric : str
+        Metric used in `sklearn.metrics.pairwise.pairwise_distances`.
+
+    kwargs : kwargs
+        Keyword arguments passed to
+        `sklearn.metrics.pairwise.pairwise_distances`.
+
+    Returns
+    -------
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Graph of connection between samples, with a single connected component.
+    """
+
+    for i in range(n_connected_components):
+        idx_i = np.flatnonzero(component_labels == i)
+        Xi = X[idx_i]
+        for j in range(i):
+            idx_j = np.flatnonzero(component_labels == j)
+            Xj = X[idx_j]
+
+            if metric == "precomputed":
+                D = X[np.ix_(idx_i, idx_j)]
+            else:
+                D = pairwise_distances(Xi, Xj, metric=metric, **kwargs)
+
+            ii, jj = np.unravel_index(D.argmin(axis=None), D.shape)
+            graph[idx_i[ii], idx_j[jj]] = 0
+            graph[idx_j[jj], idx_i[ii]] = 0
+
+    return graph
