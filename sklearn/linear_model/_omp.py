@@ -1039,7 +1039,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self.n_nonzero_coefs_ = best_n_nonzero_coefs
 		
 		# Estimator refits the model on the full training 
-		# set after finding the best hyperparameters
+        # set after finding the best hyperparameters
         omp = OrthogonalMatchingPursuit(
             n_nonzero_coefs=best_n_nonzero_coefs,
             fit_intercept=self.fit_intercept,

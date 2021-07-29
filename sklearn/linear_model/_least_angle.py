@@ -1714,11 +1714,10 @@ class LarsCV(Lars):
         self.cv_alphas_ = all_alphas
         self.mse_path_ = mse_path
 
-        # Now compute the full model
-        # it will call a lasso internally when self if LassoLarsCV
-        # as self.method == 'lasso'.		
-		# Estimator refits the model on the full training 
-		# set after finding the best hyperparameters
+        # Now compute the full model, it will call a lasso internally 
+        # when self if LassoLarsCV as self.method == 'lasso'. 
+        # Estimator refits the model on the full training 
+        # set after finding the best hyperparameters
         self._fit(
             X,
             y,

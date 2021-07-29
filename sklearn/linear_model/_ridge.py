@@ -1967,7 +1967,7 @@ class _BaseRidgeCV(LinearModel):
             model = RidgeClassifier if is_classifier(self) else Ridge
 			
 			# Estimator refits the model on the full training 
-			# set after finding the best hyperparameters
+            # set after finding the best hyperparameters
             gs = GridSearchCV(
                 model(
                     fit_intercept=self.fit_intercept,

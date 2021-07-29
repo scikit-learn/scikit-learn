@@ -1000,7 +1000,7 @@ such as:
 
     cross-validation estimator
         An estimator that has built-in cross-validation capabilities to
-        automatically select the best hyper-parameters and refits on the 
+        automatically select the best hyper-parameters and refits on the
         whole training dataset (see the :ref:`User
         Guide <grid_search>`). Some example of cross-validation estimators
         are :class:`ElasticNetCV <linear_model.ElasticNetCV>` and
