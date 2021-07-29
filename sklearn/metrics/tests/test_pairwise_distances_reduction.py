@@ -13,16 +13,19 @@ from scipy.sparse import (
     lil_matrix,
 )
 
+from sklearn.metrics._dist_metrics import (
+    DenseDenseDatasetsPair,
+    DenseSparseDatasetsPair,
+    SparseDenseDatasetsPair,
+    SparseSparseDatasetsPair,
+)
+
 from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     ArgKmin,
     RadiusNeighborhood,
     FastSquaredEuclideanArgKmin,
     FastSquaredEuclideanRadiusNeighborhood,
-    DenseDenseDatasetsPair,
-    DenseSparseDatasetsPair,
-    SparseDenseDatasetsPair,
-    SparseSparseDatasetsPair,
 )
 
 
