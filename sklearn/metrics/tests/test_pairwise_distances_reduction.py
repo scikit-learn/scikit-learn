@@ -28,6 +28,8 @@ from sklearn.metrics._pairwise_distances_reduction import (
     FastSquaredEuclideanRadiusNeighborhood,
 )
 
+from sklearn.utils._testing import skip_if_32bit
+
 
 def assert_radius_neighborhood_equality(ref_dist, dist, ref_indices, indices):
     # We get arrays of arrays and we need to check for individual pairs
@@ -209,6 +211,7 @@ def test_pairwise_distances_reduction_factory_method(
 @pytest.mark.parametrize("k", [1, 10, 100])
 @pytest.mark.parametrize("chunk_size", [512, 1024, 1337, 19301])
 @pytest.mark.parametrize("metric", ["euclidean", "fast_sqeuclidean"])
+@skip_if_32bit
 def test_argkmin_chunk_size_agnosticism(
     n_samples, k, chunk_size, metric, n_features=100, dtype=np.float64
 ):
@@ -234,6 +237,7 @@ def test_argkmin_chunk_size_agnosticism(
 @pytest.mark.parametrize("radius", [1, 10, 100])
 @pytest.mark.parametrize("chunk_size", [512, 1024, 1337, 19301])
 @pytest.mark.parametrize("metric", ["euclidean", "fast_sqeuclidean"])
+@skip_if_32bit
 def test_radius_neighborhood_chunk_size_agnosticism(
     n_samples, radius, chunk_size, metric, n_features=100, dtype=np.float64
 ):
@@ -261,6 +265,7 @@ def test_radius_neighborhood_chunk_size_agnosticism(
 @pytest.mark.parametrize("n_features", [5, 100, 500])
 @pytest.mark.parametrize("k", [1, 10, 100])
 @pytest.mark.parametrize("metric", ["euclidean", "fast_sqeuclidean"])
+@skip_if_32bit
 def test_argkmin_strategies_consistency(
     n_samples,
     n_features,
@@ -294,6 +299,7 @@ def test_argkmin_strategies_consistency(
 @pytest.mark.parametrize("n_features", [5, 100, 500])
 @pytest.mark.parametrize("radius", [1, 10, 100])
 @pytest.mark.parametrize("metric", ["euclidean", "fast_sqeuclidean"])
+@skip_if_32bit
 def test_radius_neighborhood_strategies_consistency(
     n_samples,
     n_features,
@@ -334,6 +340,7 @@ def test_radius_neighborhood_strategies_consistency(
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("sample_imbalance", [10, 2, 1, 0.5])
 @pytest.mark.parametrize("k, radius", [(1, 0), (10, 1), (100, 10), (1000, 100)])
+@skip_if_32bit
 def test_fast_sqeuclidean_correctness(
     n_samples,
     n_features,
