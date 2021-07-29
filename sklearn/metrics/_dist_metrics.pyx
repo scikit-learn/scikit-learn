@@ -1323,13 +1323,13 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults
         # in rare cases where __init__ is not called
-        self.X_data = np.empty((1, 1), dtype=DTYPE, order='C')
-        self.X_indices = np.empty((1, 1), dtype=ITYPE, order='C')
-        self.X_indptr = np.empty((1, 1), dtype=ITYPE, order='C')
+        self.X_data = np.empty((1), dtype=DTYPE, order='C')
+        self.X_indices = np.empty((1), dtype=ITYPE, order='C')
+        self.X_indptr = np.empty((1), dtype=ITYPE, order='C')
 
-        self.Y_data = np.empty((1, 1), dtype=DTYPE, order='C')
-        self.Y_indices = np.empty((1, 1), dtype=ITYPE, order='C')
-        self.Y_indptr = np.empty((1, 1), dtype=ITYPE, order='C')
+        self.Y_data = np.empty((1), dtype=DTYPE, order='C')
+        self.Y_indices = np.empty((1), dtype=ITYPE, order='C')
+        self.Y_indptr = np.empty((1), dtype=ITYPE, order='C')
 
     @property
     @final
@@ -1396,12 +1396,12 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults
         # in rare cases where __init__ is not called
-        self.X_data = np.empty((1, 1), dtype=DTYPE, order='C')
-        self.X_indices = np.empty((1, 1), dtype=ITYPE, order='C')
-        self.X_indptr = np.empty((1, 1), dtype=ITYPE, order='C')
+        self.X_data = np.empty((1), dtype=DTYPE, order='C')
+        self.X_indices = np.empty((1), dtype=ITYPE, order='C')
+        self.X_indptr = np.empty((1), dtype=ITYPE, order='C')
 
         self.Y = np.empty((1, 1), dtype=DTYPE, order='C')
-        self.Y_indices = np.empty((1, 1), dtype=ITYPE, order='C')
+        self.Y_indices = np.empty((1), dtype=ITYPE, order='C')
 
 
     def __init__(self, X, Y, DistanceMetric distance_metric):
