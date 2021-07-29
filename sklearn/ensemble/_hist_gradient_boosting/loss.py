@@ -20,19 +20,22 @@ from ._loss import _update_gradients_hessians_least_absolute_deviation
 from ._loss import _update_gradients_hessians_binary_crossentropy
 from ._loss import _update_gradients_hessians_categorical_crossentropy
 from ._loss import _update_gradients_hessians_poisson
+from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.stats import _weighted_percentile
 
 
 class BaseLoss(ABC):
     """Base class for a loss."""
 
-    def __init__(self, hessians_are_constant):
+    def __init__(self, hessians_are_constant, n_threads=None):
         self.hessians_are_constant = hessians_are_constant
+        self.n_threads = _openmp_effective_n_threads(n_threads)
 
     def __call__(self, y_true, raw_predictions, sample_weight):
         """Return the weighted average loss"""
-        return np.average(self.pointwise_loss(y_true, raw_predictions),
-                          weights=sample_weight)
+        return np.average(
+            self.pointwise_loss(y_true, raw_predictions), weights=sample_weight
+        )
 
     @abstractmethod
     def pointwise_loss(self, y_true, raw_predictions):
@@ -48,8 +51,7 @@ class BaseLoss(ABC):
     # (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) for the theory.
     need_update_leaves_values = False
 
-    def init_gradients_and_hessians(self, n_samples, prediction_dim,
-                                    sample_weight):
+    def init_gradients_and_hessians(self, n_samples, prediction_dim, sample_weight):
         """Return initial gradients and hessians.
 
         Unless hessians are constant, arrays are initialized with undefined
@@ -115,8 +117,9 @@ class BaseLoss(ABC):
         """
 
     @abstractmethod
-    def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions, sample_weight):
+    def update_gradients_and_hessians(
+        self, gradients, hessians, y_true, raw_predictions, sample_weight
+    ):
         """Update gradients and hessians arrays, inplace.
 
         The gradients (resp. hessians) are the first (resp. second) order
@@ -156,11 +159,13 @@ class LeastSquares(BaseLoss):
     with what is done in LightGBM).
     """
 
-    def __init__(self, sample_weight):
+    def __init__(self, sample_weight, n_threads=None):
         # If sample weights are provided, the hessians and gradients
         # are multiplied by sample_weight, which means the hessians are
         # equal to sample weights.
-        super().__init__(hessians_are_constant=sample_weight is None)
+        super().__init__(
+            hessians_are_constant=sample_weight is None, n_threads=n_threads
+        )
 
     def pointwise_loss(self, y_true, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
@@ -176,19 +181,27 @@ class LeastSquares(BaseLoss):
     def inverse_link_function(raw_predictions):
         return raw_predictions
 
-    def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions, sample_weight):
+    def update_gradients_and_hessians(
+        self, gradients, hessians, y_true, raw_predictions, sample_weight
+    ):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
         if sample_weight is None:
-            _update_gradients_least_squares(gradients, y_true, raw_predictions)
+            _update_gradients_least_squares(
+                gradients, y_true, raw_predictions, self.n_threads
+            )
         else:
             hessians = hessians.reshape(-1)
-            _update_gradients_hessians_least_squares(gradients, hessians,
-                                                     y_true, raw_predictions,
-                                                     sample_weight)
+            _update_gradients_hessians_least_squares(
+                gradients,
+                hessians,
+                y_true,
+                raw_predictions,
+                sample_weight,
+                self.n_threads,
+            )
 
 
 class LeastAbsoluteDeviation(BaseLoss):
@@ -199,11 +212,13 @@ class LeastAbsoluteDeviation(BaseLoss):
         loss(x_i) = |y_true_i - raw_pred_i|
     """
 
-    def __init__(self, sample_weight):
+    def __init__(self, sample_weight, n_threads=None):
         # If sample weights are provided, the hessians and gradients
         # are multiplied by sample_weight, which means the hessians are
         # equal to sample weights.
-        super().__init__(hessians_are_constant=sample_weight is None)
+        super().__init__(
+            hessians_are_constant=sample_weight is None, n_threads=n_threads
+        )
 
     # This variable indicates whether the loss requires the leaves values to
     # be updated once the tree has been trained. The trees are trained to
@@ -232,22 +247,32 @@ class LeastAbsoluteDeviation(BaseLoss):
     def inverse_link_function(raw_predictions):
         return raw_predictions
 
-    def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions, sample_weight):
+    def update_gradients_and_hessians(
+        self, gradients, hessians, y_true, raw_predictions, sample_weight
+    ):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
         if sample_weight is None:
-            _update_gradients_least_absolute_deviation(gradients, y_true,
-                                                       raw_predictions)
+            _update_gradients_least_absolute_deviation(
+                gradients,
+                y_true,
+                raw_predictions,
+                self.n_threads,
+            )
         else:
             hessians = hessians.reshape(-1)
             _update_gradients_hessians_least_absolute_deviation(
-                gradients, hessians, y_true, raw_predictions, sample_weight)
+                gradients,
+                hessians,
+                y_true,
+                raw_predictions,
+                sample_weight,
+                self.n_threads,
+            )
 
-    def update_leaves_values(self, grower, y_true, raw_predictions,
-                             sample_weight):
+    def update_leaves_values(self, grower, y_true, raw_predictions, sample_weight):
         # Update the values predicted by the tree with
         # median(y_true - raw_predictions).
         # See note about need_update_leaves_values in BaseLoss.
@@ -258,13 +283,12 @@ class LeastAbsoluteDeviation(BaseLoss):
         for leaf in grower.finalized_leaves:
             indices = leaf.sample_indices
             if sample_weight is None:
-                median_res = np.median(y_true[indices]
-                                       - raw_predictions[indices])
+                median_res = np.median(y_true[indices] - raw_predictions[indices])
             else:
                 median_res = _weighted_percentile(
                     y_true[indices] - raw_predictions[indices],
                     sample_weight=sample_weight[indices],
-                    percentile=50
+                    percentile=50,
                 )
             leaf.value = grower.shrinkage * median_res
             # Note that the regularization is ignored here
@@ -282,8 +306,8 @@ class Poisson(BaseLoss):
     the computation of the gradients.
     """
 
-    def __init__(self, sample_weight):
-        super().__init__(hessians_are_constant=False)
+    def __init__(self, sample_weight, n_threads=None):
+        super().__init__(hessians_are_constant=False, n_threads=n_threads)
 
     inverse_link_function = staticmethod(np.exp)
 
@@ -293,8 +317,11 @@ class Poisson(BaseLoss):
         raw_predictions = raw_predictions.reshape(-1)
         # TODO: For speed, we could remove the constant xlogy(y_true, y_true)
         # Advantage of this form: minimum of zero at raw_predictions = y_true.
-        loss = (xlogy(y_true, y_true) - y_true * (raw_predictions + 1)
-                + np.exp(raw_predictions))
+        loss = (
+            xlogy(y_true, y_true)
+            - y_true * (raw_predictions + 1)
+            + np.exp(raw_predictions)
+        )
         return loss
 
     def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
@@ -303,16 +330,22 @@ class Poisson(BaseLoss):
         y_pred = np.clip(y_pred, eps, None)
         return np.log(y_pred)
 
-    def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions, sample_weight):
+    def update_gradients_and_hessians(
+        self, gradients, hessians, y_true, raw_predictions, sample_weight
+    ):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
         hessians = hessians.reshape(-1)
-        _update_gradients_hessians_poisson(gradients, hessians,
-                                           y_true, raw_predictions,
-                                           sample_weight)
+        _update_gradients_hessians_poisson(
+            gradients,
+            hessians,
+            y_true,
+            raw_predictions,
+            sample_weight,
+            self.n_threads,
+        )
 
 
 class BinaryCrossEntropy(BaseLoss):
@@ -327,8 +360,8 @@ class BinaryCrossEntropy(BaseLoss):
     section 4.4.1 (about logistic regression).
     """
 
-    def __init__(self, sample_weight):
-        super().__init__(hessians_are_constant=False)
+    def __init__(self, sample_weight, n_threads=None):
+        super().__init__(hessians_are_constant=False, n_threads=n_threads)
 
     inverse_link_function = staticmethod(expit)
 
@@ -345,7 +378,8 @@ class BinaryCrossEntropy(BaseLoss):
             raise ValueError(
                 "loss='binary_crossentropy' is not defined for multiclass"
                 " classification with n_classes=%d, use"
-                " loss='categorical_crossentropy' instead" % prediction_dim)
+                " loss='categorical_crossentropy' instead" % prediction_dim
+            )
         proba_positive_class = np.average(y_train, weights=sample_weight)
         eps = np.finfo(y_train.dtype).eps
         proba_positive_class = np.clip(proba_positive_class, eps, 1 - eps)
@@ -353,15 +387,17 @@ class BinaryCrossEntropy(BaseLoss):
         # of the Binomial model.
         return np.log(proba_positive_class / (1 - proba_positive_class))
 
-    def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions, sample_weight):
+    def update_gradients_and_hessians(
+        self, gradients, hessians, y_true, raw_predictions, sample_weight
+    ):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
         hessians = hessians.reshape(-1)
         _update_gradients_hessians_binary_crossentropy(
-            gradients, hessians, y_true, raw_predictions, sample_weight)
+            gradients, hessians, y_true, raw_predictions, sample_weight, self.n_threads
+        )
 
     def predict_proba(self, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
@@ -381,47 +417,50 @@ class CategoricalCrossEntropy(BaseLoss):
     cross-entropy to more than 2 classes.
     """
 
-    def __init__(self, sample_weight):
-        super().__init__(hessians_are_constant=False)
+    def __init__(self, sample_weight, n_threads=None):
+        super().__init__(hessians_are_constant=False, n_threads=n_threads)
 
     def pointwise_loss(self, y_true, raw_predictions):
         one_hot_true = np.zeros_like(raw_predictions)
         prediction_dim = raw_predictions.shape[0]
         for k in range(prediction_dim):
-            one_hot_true[k, :] = (y_true == k)
+            one_hot_true[k, :] = y_true == k
 
-        loss = (logsumexp(raw_predictions, axis=0) -
-                (one_hot_true * raw_predictions).sum(axis=0))
+        loss = logsumexp(raw_predictions, axis=0) - (
+            one_hot_true * raw_predictions
+        ).sum(axis=0)
         return loss
 
     def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
         init_value = np.zeros(shape=(prediction_dim, 1), dtype=Y_DTYPE)
         eps = np.finfo(y_train.dtype).eps
         for k in range(prediction_dim):
-            proba_kth_class = np.average(y_train == k,
-                                         weights=sample_weight)
+            proba_kth_class = np.average(y_train == k, weights=sample_weight)
             proba_kth_class = np.clip(proba_kth_class, eps, 1 - eps)
             init_value[k, :] += np.log(proba_kth_class)
 
         return init_value
 
-    def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions, sample_weight):
+    def update_gradients_and_hessians(
+        self, gradients, hessians, y_true, raw_predictions, sample_weight
+    ):
         _update_gradients_hessians_categorical_crossentropy(
-            gradients, hessians, y_true, raw_predictions, sample_weight)
+            gradients, hessians, y_true, raw_predictions, sample_weight, self.n_threads
+        )
 
     def predict_proba(self, raw_predictions):
         # TODO: This could be done in parallel
         # compute softmax (using exp(log(softmax)))
-        proba = np.exp(raw_predictions -
-                       logsumexp(raw_predictions, axis=0)[np.newaxis, :])
+        proba = np.exp(
+            raw_predictions - logsumexp(raw_predictions, axis=0)[np.newaxis, :]
+        )
         return proba.T
 
 
 _LOSSES = {
-    'least_squares': LeastSquares,
-    'least_absolute_deviation': LeastAbsoluteDeviation,
-    'binary_crossentropy': BinaryCrossEntropy,
-    'categorical_crossentropy': CategoricalCrossEntropy,
-    'poisson': Poisson,
+    "squared_error": LeastSquares,
+    "absolute_error": LeastAbsoluteDeviation,
+    "binary_crossentropy": BinaryCrossEntropy,
+    "categorical_crossentropy": CategoricalCrossEntropy,
+    "poisson": Poisson,
 }

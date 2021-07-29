@@ -46,7 +46,7 @@ enhance the functionality of scikit-learn's estimators.
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
   
-- `Featuretools <https://github.com/FeatureLabs/featuretools>`_
+- `Featuretools <https://github.com/alteryx/featuretools>`_
   A framework to perform automated feature engineering. It can be used for 
   transforming temporal and relational datasets into feature matrices for 
   machine learning.
@@ -58,7 +58,16 @@ enhance the functionality of scikit-learn's estimators.
   it can stream minibatches, use data checkpoints, build funky pipelines, and
   serialize models with custom per-step savers.
 
+- `EvalML <https://github.com/alteryx/evalml>`_
+  EvalML is an AutoML library which builds, optimizes, and evaluates
+  machine learning pipelines using domain-specific objective functions.
+  It incorporates multiple modeling libraries under one API, and
+  the objects that EvalML creates use an sklearn-compatible API.
+
 **Experimentation frameworks**
+
+- `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
+  organize, log and reproduce experiments
 
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
   research in a consistent and reproducible way
@@ -93,7 +102,7 @@ enhance the functionality of scikit-learn's estimators.
   cross-validated parameter search using any of these strategies.
 
 - `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
-   algorithms instead of gridsearch in scikit-learn.
+  algorithms instead of gridsearch in scikit-learn.
 
 **Model export for production**
 
@@ -264,11 +273,12 @@ Other packages useful for data analysis and machine learning.
 - `PyMC <https://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
   fitting algorithms.
 
-- `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
-  organize, log and reproduce experiments
-
 - `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
+
+- `scikit-survival <https://scikit-survival.readthedocs.io/>`_ A library implementing
+  models to learn from censored time-to-event data (also called survival analysis).
+  Models are fully compatible with scikit-learn.
 
 Recommendation Engine packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

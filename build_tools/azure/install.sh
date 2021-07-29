@@ -51,6 +51,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # sklearn/svm/_libsvm.cpython-38-darwin.so,
             # 2): Symbol not found: _svm_check_parameter error
             TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
+        else
+            # Without openmp, we use the system clang. Here we use /usr/bin/ar
+            # instead because llvm-ar errors
+            export AR=/usr/bin/ar
         fi
     fi
 	make_conda $TO_INSTALL
@@ -66,9 +70,9 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
                           $(get_dep joblib $JOBLIB_VERSION)
 
-elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
+elif [[ "$DISTRIB" == "debian-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
+    apt-get install -y python3-dev python3-numpy python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
 
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
