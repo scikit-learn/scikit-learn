@@ -75,6 +75,7 @@ def _fix_connectivity(X, connectivity, affinity):
             n_connected_components=n_connected_components,
             component_labels=labels,
             metric=affinity,
+            mode="connectivity",
         )
 
     return connectivity, n_connected_components

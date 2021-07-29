@@ -119,7 +119,13 @@ def graph_shortest_path(dist_matrix, directed=True, method="auto"):
 
 
 def _fix_connected_components(
-    X, graph, n_connected_components, component_labels, metric, **kwargs
+    X,
+    graph,
+    n_connected_components,
+    component_labels,
+    mode="distance",
+    metric="euclidean",
+    **kwargs,
 ):
     """Add connections to sparse graph to connect unconnected components.
 
@@ -145,6 +151,11 @@ def _fix_connected_components(
     component_labels : array of shape (n_samples)
         Labels of connected components, as computed by
         `scipy.sparse.csgraph.connected_components`.
+
+    mode : {'connectivity', 'distance'}, default='distance'
+        Type of graph matrix: 'connectivity' corresponds to the connectivity
+        matrix with ones and zeros, and 'distance' corresponds to the distances
+        between neighbors according to the given metric.
 
     metric : str
         Metric used in `sklearn.metrics.pairwise.pairwise_distances`.
@@ -172,7 +183,16 @@ def _fix_connected_components(
                 D = pairwise_distances(Xi, Xj, metric=metric, **kwargs)
 
             ii, jj = np.unravel_index(D.argmin(axis=None), D.shape)
-            graph[idx_i[ii], idx_j[jj]] = 0
-            graph[idx_j[jj], idx_i[ii]] = 0
+            if mode == "connectivity":
+                graph[idx_i[ii], idx_j[jj]] = 1
+                graph[idx_j[jj], idx_i[ii]] = 1
+            elif mode == "distance":
+                graph[idx_i[ii], idx_j[jj]] = D[ii, jj]
+                graph[idx_j[jj], idx_i[ii]] = D[ii, jj]
+            else:
+                raise ValueError(
+                    "Unknown mode=%r, should be one of ['connectivity', 'distance']."
+                    % mode
+                )
 
     return graph
