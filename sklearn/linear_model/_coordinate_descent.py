@@ -1672,8 +1672,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         else:
             self.alphas_ = np.asarray(alphas[0])
 
-        # Refit the model with the parameters selected. 
-        # Estimator refits the model on the full training 
+        # Refit the model with the parameters selected.
+        # Estimator refits the model on the full training
         # set after finding the best hyperparameters
         common_params = {
             name: value
