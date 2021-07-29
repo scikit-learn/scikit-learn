@@ -685,7 +685,9 @@ def test_check_classifiers_multilabel_output_format():
                                           random_state=0)
     y_test = y[-test_size:]
 
-    class BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
+    class BaseMultiLabelClassifierMock(
+        ClassifierMixin, MultiLabelMixin, BaseEstimator
+    ):
         def __init__(self, response_output):
             self.response_output = response_output
 
@@ -722,7 +724,7 @@ def test_check_classifiers_multilabel_output_format():
     clf = MultiLabelClassifierPredict(response_output=y_test[:, :-1])
     err_msg = (
         r"MultiLabelClassifierPredict.predict output a NumPy array of "
-        r"shape \(25, 4\) instead of \(25, 5\)."
+        f"shape {y_test[:, :-1].shape} instead of {y_test.shape}."
     )
     assert_raises_regex(
         AssertionError,
@@ -765,12 +767,12 @@ def test_check_classifiers_multilabel_output_format():
         clf,
     )
     # 2.2 for list output
-    # 2.2.1 iconsistent length
+    # 2.2.1 inconsistent length
     clf = MultiLabelClassifierPredictProba(response_output=y_test.tolist())
     err_msg = (
         "When MultiLabelClassifierPredictProba.predict_proba returns a list, "
-        "the list should  be of length n_outputs and contain NumPy array. Got "
-        "length of 25 instead of 5."
+        "the list should be of length n_outputs and contain NumPy array. Got "
+        f"length of {test_size} instead of {n_outputs}."
     )
     assert_raises_regex(
         AssertionError,
@@ -784,8 +786,8 @@ def test_check_classifiers_multilabel_output_format():
     clf = MultiLabelClassifierPredictProba(response_output=response_output)
     err_msg = (
         r"When MultiLabelClassifierPredictProba.predict_proba returns a list, "
-        r"this list should contain NumPy array of shape \(n_samples, 2\). Got "
-        r"a NumPy array of shape \(25, 5\) instead of \(25, 2\)."
+        r"this list should contain NumPy arrays of shape \(n_samples, 2\). Got "
+        r"a NumPy arrays of shape \(25, 5\) instead of \(25, 2\)."
     )
     assert_raises_regex(
         AssertionError,
