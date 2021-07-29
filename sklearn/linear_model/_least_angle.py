@@ -1717,8 +1717,8 @@ class LarsCV(Lars):
         # Now compute the full model
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'.		
-		# Estimator refits the model on the full training set after
-		# finding the best hyperparameters
+		# Estimator refits the model on the full training 
+		# set after finding the best hyperparameters
         self._fit(
             X,
             y,

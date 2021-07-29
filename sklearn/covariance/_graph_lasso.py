@@ -921,8 +921,8 @@ class GraphicalLassoCV(GraphicalLasso):
         self.alpha_ = best_alpha
 
         # Finally fit the model with the selected alpha
-		# Estimator refits the model on the full training set after 
-		# finding the best hyperparameters
+		# Estimator refits the model on the full training 
+		# set after finding the best hyperparameters
         self.covariance_, self.precision_, self.n_iter_ = graphical_lasso(
             emp_cov,
             alpha=best_alpha,
