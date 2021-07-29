@@ -1825,7 +1825,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     refit : bool, default=True
         If set to True, the scores are averaged across all folds, and the
         coefs and the C that corresponds to the best score is taken, and a
-        final refit is done using these parameters.
+        final refit is done using these parameters. Estimator refits the model on the full training set after finding the best hyperparameters
         Otherwise the coefs, intercepts and C that correspond to the
         best scores across folds are averaged.
 
