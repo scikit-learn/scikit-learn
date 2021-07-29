@@ -1964,9 +1964,8 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and alpha_per_target=True are incompatible")
             parameters = {"alpha": self.alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
-            model = RidgeClassifier if is_classifier(self) else Ridge
-			
-			# Estimator refits the model on the full training 
+            model = RidgeClassifier if is_classifier(self) else Ridge 
+            # Estimator refits the model on the full training 
             # set after finding the best hyperparameters
             gs = GridSearchCV(
                 model(
