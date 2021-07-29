@@ -38,9 +38,9 @@ from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 
 
-from scipy.sparse import issparse, spmatrix
+from scipy.sparse import issparse
 from threadpoolctl import threadpool_limits
-from ._dist_metrics import METRIC_MAPPING
+from ._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 from ..utils import check_array, check_scalar
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs import ITYPE, DTYPE
@@ -167,8 +167,10 @@ cdef class PairwiseDistancesReduction:
 
     @classmethod
     def valid_metrics(cls):
-        # TODO: support those distances
-        excluded = {"pyfunc", "sokalmichener", "matching", "jaccard"}
+        # TODO: support those boolean metrics.
+        # In order for them to be supported, we need to have a
+        # simultaneous sort which breaks ties on distances
+        excluded = {"pyfunc", *BOOL_METRICS}
         return sorted({*METRIC_MAPPING.keys()}.difference(excluded))
 
     @classmethod

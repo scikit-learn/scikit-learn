@@ -77,6 +77,16 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'haversine': HaversineDistance,
                   'pyfunc': PyFuncDistance}
 
+BOOL_METRICS = [
+    "matching",
+    "jaccard",
+    "dice",
+    "kulsinski",
+    "rogerstanimoto",
+    "russellrao",
+    "sokalmichener",
+    "sokalsneath",
+]
 
 def get_valid_metric_ids(L):
     """Given an iterable of metric class names or class identifiers,

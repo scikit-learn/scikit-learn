@@ -28,10 +28,8 @@ from sklearn.metrics._pairwise_distances_reduction import (
     FastSquaredEuclideanRadiusNeighborhood,
 )
 
-from sklearn.utils._testing import skip_if_32bit
 
-
-def assert_radius_neighborhood_equality(ref_dist, dist, ref_indices, indices):
+def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices):
     # We get arrays of arrays and we need to check for individual pairs
     for i in range(ref_dist.shape[0]):
         assert_array_equal(
@@ -43,7 +41,22 @@ def assert_radius_neighborhood_equality(ref_dist, dist, ref_indices, indices):
             ref_dist[i],
             dist[i],
             err_msg=f"Query vector #{i} has different neighbors' distances",
+            rtol=1e-7,
         )
+
+
+def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices):
+    assert_array_equal(
+        ref_indices,
+        indices,
+        err_msg="Query vectors have different neighbors' indices",
+    )
+    assert_allclose(
+        ref_dist,
+        dist,
+        err_msg="Query vectors havehas different neighbors' distances",
+        rtol=1e-7,
+    )
 
 
 def test_pairwise_distances_reduction_is_usable_for():
@@ -96,10 +109,10 @@ def test_argkmin_factory_method_wrong_usages():
         ArgKmin.get_for(X=X, Y=Y, k=k, metric="wrong metric")
 
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
-        ArgKmin.get_for(X=[1, 2], Y=Y, k=k, metric=metric)
+        ArgKmin.get_for(X=np.array([1.0, 2.0]), Y=Y, k=k, metric=metric)
 
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
-        ArgKmin.get_for(X=X, Y=[1, 2], k=k, metric=metric)
+        ArgKmin.get_for(X=X, Y=np.array([1.0, 2.0]), k=k, metric=metric)
 
     with pytest.raises(
         ValueError, match="Vectors of X and Y must have the same number of dimensions"
@@ -135,10 +148,14 @@ def test_radius_neighborhood_factory_method_wrong_usages():
         RadiusNeighborhood.get_for(X=X, Y=Y, radius=radius, metric="wrong metric")
 
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
-        RadiusNeighborhood.get_for(X=[1, 2], Y=Y, radius=radius, metric=metric)
+        RadiusNeighborhood.get_for(
+            X=np.array([1.0, 2.0]), Y=Y, radius=radius, metric=metric
+        )
 
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
-        RadiusNeighborhood.get_for(X=X, Y=[1, 2], radius=radius, metric=metric)
+        RadiusNeighborhood.get_for(
+            X=X, Y=np.array([1.0, 2.0]), radius=radius, metric=metric
+        )
 
     with pytest.raises(
         ValueError, match="Vectors of X and Y must have the same number of dimensions"
@@ -210,13 +227,18 @@ def test_pairwise_distances_reduction_factory_method(
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
 @pytest.mark.parametrize("k", [1, 10, 100])
 @pytest.mark.parametrize("chunk_size", [512, 1024, 1337, 19301])
-@pytest.mark.parametrize("metric", ["euclidean", "fast_sqeuclidean"])
-@skip_if_32bit
+@pytest.mark.parametrize("seed", range(10))
 def test_argkmin_chunk_size_agnosticism(
-    n_samples, k, chunk_size, metric, n_features=100, dtype=np.float64
+    n_samples,
+    k,
+    chunk_size,
+    seed,
+    metric="fast_sqeuclidean",
+    n_features=100,
+    dtype=np.float64,
 ):
     # ArgKmin results should not depend on the chunk size
-    rng = np.random.RandomState(1)
+    rng = np.random.RandomState(seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -229,20 +251,24 @@ def test_argkmin_chunk_size_agnosticism(
         X, Y, k=k, metric=metric, chunk_size=chunk_size
     ).compute(return_distance=True)
 
-    assert_array_equal(ref_dist, dist)
-    assert_array_equal(ref_indices, indices)
+    assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices)
 
 
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("radius", [1, 10, 100])
 @pytest.mark.parametrize("chunk_size", [512, 1024, 1337, 19301])
-@pytest.mark.parametrize("metric", ["euclidean", "fast_sqeuclidean"])
-@skip_if_32bit
+@pytest.mark.parametrize("seed", range(10))
 def test_radius_neighborhood_chunk_size_agnosticism(
-    n_samples, radius, chunk_size, metric, n_features=100, dtype=np.float64
+    n_samples,
+    radius,
+    chunk_size,
+    seed,
+    metric="fast_sqeuclidean",
+    n_features=100,
+    dtype=np.float64,
 ):
     # RadiusNeighborhood results should not depend on the chunk size
-    rng = np.random.RandomState(1)
+    rng = np.random.RandomState(seed)
     spread = 100
 
     # Scaling the radius with the dimensions
@@ -258,28 +284,34 @@ def test_radius_neighborhood_chunk_size_agnosticism(
         X, Y, radius=scaled_radius, metric=metric, chunk_size=chunk_size
     ).compute(return_distance=True)
 
-    assert_radius_neighborhood_equality(ref_dist, dist, ref_indices, indices)
+    assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices)
 
 
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("n_features", [5, 100, 500])
 @pytest.mark.parametrize("k", [1, 10, 100])
-@pytest.mark.parametrize("metric", ["euclidean", "fast_sqeuclidean"])
-@skip_if_32bit
+@pytest.mark.parametrize("metric", ArgKmin.valid_metrics())
+@pytest.mark.parametrize("seed", range(10))
 def test_argkmin_strategies_consistency(
     n_samples,
     n_features,
     k,
     metric,
+    seed,
     dtype=np.float64,
 ):
     # ArgKmin results obtained using both parallelization strategies
     # must be identical
 
-    rng = np.random.RandomState(1)
+    rng = np.random.RandomState(seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    # Haversine distance only accepts 2D data
+    if metric == "haversine":
+        X = X[:, :2]
+        Y = Y[:, :2]
 
     argkmin_reduction = ArgKmin.get_for(X, Y, k=k, metric=metric)
 
@@ -291,29 +323,36 @@ def test_argkmin_strategies_consistency(
         strategy="parallel_on_Y", return_distance=True
     )
 
-    assert_array_equal(dist_par_X, dist_par_Y)
-    assert_array_equal(indices_par_X, indices_par_Y)
+    assert_argkmin_results_equality(
+        dist_par_X, dist_par_Y, indices_par_X, indices_par_Y
+    )
 
 
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("n_features", [5, 100, 500])
 @pytest.mark.parametrize("radius", [1, 10, 100])
-@pytest.mark.parametrize("metric", ["euclidean", "fast_sqeuclidean"])
-@skip_if_32bit
+@pytest.mark.parametrize("metric", RadiusNeighborhood.valid_metrics())
+@pytest.mark.parametrize("seed", range(10))
 def test_radius_neighborhood_strategies_consistency(
     n_samples,
     n_features,
     radius,
     metric,
+    seed,
     dtype=np.float64,
 ):
     # RadiusNeighborhood results obtained using both parallelization strategies
     # must be identical
 
-    rng = np.random.RandomState(1)
+    rng = np.random.RandomState(seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    # Haversine distance only accepts 2D data
+    if metric == "haversine":
+        X = X[:, :2]
+        Y = Y[:, :2]
 
     radius_neigh_reduction = RadiusNeighborhood.get_for(
         X,
@@ -331,22 +370,21 @@ def test_radius_neighborhood_strategies_consistency(
         strategy="parallel_on_Y", return_distance=True
     )
 
-    assert_radius_neighborhood_equality(
+    assert_radius_neighborhood_results_equality(
         dist_par_X, dist_par_Y, indices_par_X, indices_par_Y
     )
 
 
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
-@pytest.mark.parametrize("sample_imbalance", [10, 2, 1, 0.5])
-@pytest.mark.parametrize("k, radius", [(1, 0), (10, 1), (100, 10), (1000, 100)])
-@skip_if_32bit
+@pytest.mark.parametrize("k, radius", [(50, 100)])
+@pytest.mark.parametrize("seed", range(10))
 def test_fast_sqeuclidean_correctness(
     n_samples,
     n_features,
-    sample_imbalance,
     k,
     radius,
+    seed,
     dtype=np.float64,
 ):
     # The fast squared euclidean strategy must return results
@@ -357,19 +395,11 @@ def test_fast_sqeuclidean_correctness(
             allow_module_level=True,
         )
 
-    rng = np.random.RandomState(1)
+    rng = np.random.RandomState(seed)
 
     spread = 100
-    X = (
-        rng.rand(int(n_samples * n_features / sample_imbalance))
-        .astype(dtype)
-        .reshape((-1, n_features))
-        * spread
-    )
-    Y = (
-        rng.rand(int(n_samples * n_features)).astype(dtype).reshape((-1, n_features))
-        * spread
-    )
+    X = rng.rand(n_samples, n_features).astype(dtype).reshape((-1, n_features)) * spread
+    Y = rng.rand(n_samples, n_features).astype(dtype).reshape((-1, n_features)) * spread
 
     eucl_dist, eucl_indices = ArgKmin.get_for(X, Y, k, metric="euclidean").compute(
         return_distance=True
@@ -388,23 +418,22 @@ def test_fast_sqeuclidean_correctness(
         X, Y, radius, metric="fast_sqeuclidean"
     ).compute(return_distance=True)
 
-    assert_radius_neighborhood_equality(eucl_dist, fse_dist, eucl_indices, fse_indices)
-
-
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("n_features", [5, 10, 100, 500])
-@pytest.mark.parametrize("k", [1, 10, 100, 1000])
-@pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
-@pytest.mark.skip(
-    reason=(
-        "Long test, translation invariance should have its own study: skipping for now"
+    assert_radius_neighborhood_results_equality(
+        eucl_dist, fse_dist, eucl_indices, fse_indices
     )
-)
+
+
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_features", [5, 10, 100, 500])
+@pytest.mark.parametrize("k", [1, 10, 100])
+@pytest.mark.parametrize("translation", [10 ** i for i in [4]])
+@pytest.mark.parametrize("seed", range(10))
 def test_fast_sqeuclidean_translation_invariance(
     n_samples,
     n_features,
     k,
     translation,
+    seed,
     dtype=np.float64,
 ):
     # The fast squared euclidean strategy should be translation invariant.
@@ -414,7 +443,7 @@ def test_fast_sqeuclidean_translation_invariance(
             allow_module_level=True,
         )
 
-    rng = np.random.RandomState(1)
+    rng = np.random.RandomState(seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -424,8 +453,7 @@ def test_fast_sqeuclidean_translation_invariance(
     ).compute(return_distance=True)
 
     dist, indices = ArgKmin.get_for(
-        X + translation, X + translation, k, metric="fast_sqeuclidean"
+        X + translation, Y + translation, k, metric="fast_sqeuclidean"
     ).compute(return_distance=True)
 
-    assert_array_equal(reference_indices, indices)
-    assert_allclose(reference_dist, dist)
+    assert_argkmin_results_equality(reference_dist, dist, reference_indices, indices)
