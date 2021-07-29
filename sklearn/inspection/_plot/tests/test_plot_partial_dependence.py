@@ -772,3 +772,38 @@ def test_get_feature_index():
     err_msg = "Feature x not in feature_names"
     with pytest.raises(ValueError, match=err_msg):
         _get_feature_index(feature, feature_names)
+
+
+@pytest.mark.parametrize(
+    "categorical_features, array_type",
+    [
+        (["col_A", "col_C"], "dataframe"),
+        ([0, 2], "array"),
+        ([True, False, True], "array"),
+    ],
+)
+def test_grid_resolution_with_categorical(categorical_features, array_type):
+    """Check that we raise a ValueError when the grid_resolution is too small
+    respect to the number of categories in the categorical features targeted.
+    """
+    X = [["A", 1, "A"], ["B", 0, "C"], ["C", 2, "B"]]
+    column_name = ["col_A", "col_B", "col_C"]
+    X = _convert_container(X, array_type, columns_name=column_name)
+    y = np.array([1.2, 0.5, 0.45]).T
+
+    preprocessor = make_column_transformer((OneHotEncoder(), categorical_features))
+    model = make_pipeline(preprocessor, LinearRegression())
+    model.fit(X, y)
+
+    err_msg = (
+        "resolution of the computed grid is less than the minimum number of categories"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        plot_partial_dependence(
+            model,
+            X,
+            features=["col_C"],
+            feature_names=column_name,
+            categorical_features=categorical_features,
+            grid_resolution=2,
+        )
