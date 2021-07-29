@@ -168,13 +168,21 @@ cdef class DatasetsPair:
         ) -> DatasetsPair:
         cdef:
             DistanceMetric distance_metric = DistanceMetric.get_metric(metric,
-                                                                       **metric_kwargs)
-        X = check_array(X, accept_sparse='csr')
-        Y = check_array(Y, accept_sparse='csr')
+                                                                 **metric_kwargs)
+
+        # TODO: what's the best coercion for lists?
+        X = np.asarray(X) if isinstance(X, (tuple, list)) else X
+        Y = np.asarray(Y) if isinstance(Y, (tuple, list)) else Y
+
+        if X.dtype.itemsize != 8 or Y.dtype.itemsize != 8:
+            raise ValueError("32bits datasets aren't supported for X and Y yet.")
+
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+        Y = check_array(Y, dtype=DTYPE, accept_sparse='csr')
 
         if X.shape[1] != Y.shape[1]:
-            raise RuntimeError("Vectors of X and Y must have the "
-                               "same dimension but currently are "
+            raise ValueError("Vectors of X and Y must have the same "
+                               "number of dimensions but currently are "
                                f"respectively {X.shape[1]}-dimensional "
                                f"and {Y.shape[1]}-dimensional.")
 
@@ -492,11 +500,13 @@ cdef class PairwiseDistancesReduction:
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        # TODO: support sparse arrays
-        return (not issparse(X) and
-                not issparse(Y) and
+        # TODO: what's the best coercion for lists?
+        X = np.asarray(X) if isinstance(X, (tuple, list)) else X
+        Y = np.asarray(Y) if isinstance(Y, (tuple, list)) else Y
+        # TODO: support sparse arrays and 32 bits
+        return (not issparse(X) and X.dtype.itemsize == 8 and X.ndim == 2 and
+                not issparse(Y) and Y.dtype.itemsize == 8 and Y.ndim == 2 and
                 metric in cls.valid_metrics())
-
 
     def __init__(self,
                  DatasetsPair datasets_pair,
@@ -1030,8 +1040,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             k=k,
             chunk_size=chunk_size)
-        self.X = check_array(X, dtype=DTYPE)
-        self.Y = check_array(Y, dtype=DTYPE)
+        self.X = check_array(X, dtype=DTYPE, order='C')
+        self.Y = check_array(Y, dtype=DTYPE, order='C')
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
         # Temporary datastructures used in threads
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
@@ -1494,8 +1504,8 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
                         datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
                         radius=radius,
                         chunk_size=chunk_size)
-        self.X = check_array(X, dtype=DTYPE)
-        self.Y = check_array(Y, dtype=DTYPE)
+        self.X = check_array(X, dtype=DTYPE, order='C')
+        self.Y = check_array(Y, dtype=DTYPE, order='C')
         self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
 

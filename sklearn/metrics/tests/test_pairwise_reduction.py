@@ -4,23 +4,25 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal, assert_allclose
 from scipy.sparse import (
-    lil_matrix,
-    csc_matrix,
-    dok_matrix,
-    dia_matrix,
-    coo_matrix,
     bsr_matrix,
+    coo_matrix,
+    csc_matrix,
+    csr_matrix,
+    dia_matrix,
+    dok_matrix,
+    lil_matrix,
 )
 
 from sklearn.metrics._parallel_reductions import (
+    PairwiseDistancesReduction,
     ArgKmin,
     RadiusNeighborhood,
     FastSquaredEuclideanArgKmin,
-    SparseSparseDatasetsPair,
+    FastSquaredEuclideanRadiusNeighborhood,
     DenseDenseDatasetsPair,
     DenseSparseDatasetsPair,
     SparseDenseDatasetsPair,
-    FastSquaredEuclideanRadiusNeighborhood,
+    SparseSparseDatasetsPair,
 )
 
 
@@ -28,15 +30,38 @@ def assert_radius_neighborhood_equality(ref_dist, dist, ref_indices, indices):
     # We get arrays of arrays and we need to check for individual pairs
     for i in range(ref_dist.shape[0]):
         assert_array_equal(
-            ref_dist[i],
-            dist[i],
-            err_msg=f"Query vector #{i} has different neighbors' distances",
-        )
-        assert_array_equal(
             ref_indices[i],
             indices[i],
             err_msg=f"Query vector #{i} has different neighbors' indices",
         )
+        assert_allclose(
+            ref_dist[i],
+            dist[i],
+            err_msg=f"Query vector #{i} has different neighbors' distances",
+        )
+
+
+def test_pairwise_distances_reduction_is_usable_for():
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    metric = "euclidean"
+    assert PairwiseDistancesReduction.is_usable_for(X, Y, metric)
+    assert PairwiseDistancesReduction.is_usable_for(
+        X.astype(np.int64), Y.astype(np.int64), metric
+    )
+
+    assert not PairwiseDistancesReduction.is_usable_for(X[0], Y, metric)
+    assert not PairwiseDistancesReduction.is_usable_for(X, Y[0], metric)
+
+    assert not PairwiseDistancesReduction.is_usable_for(X, Y, metric="pyfunc")
+    # TODO: remove once 32 bits datasets are supported
+    assert not PairwiseDistancesReduction.is_usable_for(X.astype(np.float32), Y, metric)
+    assert not PairwiseDistancesReduction.is_usable_for(X, Y.astype(np.int32), metric)
+
+    # TODO: remove once sparse matrices are supported
+    assert not PairwiseDistancesReduction.is_usable_for(csr_matrix(X), Y, metric)
+    assert not PairwiseDistancesReduction.is_usable_for(X, csc_matrix(Y), metric)
 
 
 def test_argkmin_factory_method_wrong_usages():
@@ -45,6 +70,16 @@ def test_argkmin_factory_method_wrong_usages():
     Y = rng.rand(100, 10)
     k = 5
     metric = "euclidean"
+
+    with pytest.raises(
+        ValueError, match="32bits datasets aren't supported for X and Y yet."
+    ):
+        ArgKmin.get_for(X=X.astype(np.float32), Y=Y, k=k, metric=metric)
+
+    with pytest.raises(
+        ValueError, match="32bits datasets aren't supported for X and Y yet."
+    ):
+        ArgKmin.get_for(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
 
     with pytest.raises(ValueError, match="`k`= -1, must be >= 1."):
         ArgKmin.get_for(X=X, Y=Y, k=-1, metric=metric)
@@ -61,6 +96,11 @@ def test_argkmin_factory_method_wrong_usages():
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
         ArgKmin.get_for(X=X, Y=[1, 2], k=k, metric=metric)
 
+    with pytest.raises(
+        ValueError, match="Vectors of X and Y must have the same number of dimensions"
+    ):
+        ArgKmin.get_for(X=X[:, ::2], Y=Y, k=k, metric=metric)
+
 
 def test_radius_neighborhood_factory_method_wrong_usages():
     rng = np.random.RandomState(1)
@@ -68,6 +108,20 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     Y = rng.rand(100, 10)
     radius = 5
     metric = "euclidean"
+
+    with pytest.raises(
+        ValueError, match="32bits datasets aren't supported for X and Y yet."
+    ):
+        RadiusNeighborhood.get_for(
+            X=X.astype(np.float32), Y=Y, radius=radius, metric=metric
+        )
+
+    with pytest.raises(
+        ValueError, match="32bits datasets aren't supported for X and Y yet."
+    ):
+        RadiusNeighborhood.get_for(
+            X=X, Y=Y.astype(np.int32), radius=radius, metric=metric
+        )
 
     with pytest.raises(ValueError, match="`radius`= -1.0, must be >= 0."):
         RadiusNeighborhood.get_for(X=X, Y=Y, radius=-1, metric=metric)
@@ -81,6 +135,11 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
         RadiusNeighborhood.get_for(X=X, Y=[1, 2], radius=radius, metric=metric)
 
+    with pytest.raises(
+        ValueError, match="Vectors of X and Y must have the same number of dimensions"
+    ):
+        RadiusNeighborhood.get_for(X=X[:, ::2], Y=Y, radius=radius, metric=metric)
+
 
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction, FastSquaredPairwiseDistancesReduction",
@@ -89,7 +148,7 @@ def test_radius_neighborhood_factory_method_wrong_usages():
         (RadiusNeighborhood, FastSquaredEuclideanRadiusNeighborhood),
     ],
 )
-def test_paiwise_disances_reduction_factory_method(
+def test_pairwise_distances_reduction_factory_method(
     PairwiseDistancesReduction, FastSquaredPairwiseDistancesReduction
 ):
     # Test all the combinations of DatasetsPair for creation
@@ -107,6 +166,7 @@ def test_paiwise_disances_reduction_factory_method(
     sparse_matrix_constructors = [
         lil_matrix,
         csc_matrix,
+        csr_matrix,
         bsr_matrix,
         coo_matrix,
         dia_matrix,
