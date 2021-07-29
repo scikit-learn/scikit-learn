@@ -110,8 +110,12 @@ class _AvailableIfDescriptor:
                     f" {repr(self.attribute_name)}"
                 )
 
-        # lambda, but not partial, allows help() to work with update_wrapper
-        out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
+            # lambda, but not partial, allows help() to work with update_wrapper
+            out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
+        else:
+            # This makes it possible to use the decorated method as an unbound method,
+            # for instance when monkeypatching.
+            out = lambda *args, **kwargs: self.fn(*args, **kwargs)  # noqa
         # update the docstring of the returned function
         update_wrapper(out, self.fn)
         return out
