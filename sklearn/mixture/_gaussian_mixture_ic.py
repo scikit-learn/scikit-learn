@@ -161,7 +161,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     n_jobs : int or None, optional (default = None)
         The number of jobs to use for the computation. This works by computing
         each of the initialization runs in parallel.
-        
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -326,7 +326,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             ["euclidean", "manhattan", "cosine", "none", "all"],
         )
 
-        if ("ward" in self.linkage) and not ("euclidean" in self.affinity):
+        if ("ward" in self.linkage) and ("euclidean" not in self.affinity):
             raise ValueError(
                 'If "ward" is a linkage option, '
                 '"euclidean" must be an affinity option.'
@@ -559,7 +559,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             for (ag_params, gm_params), seed in zip(param_grid, seeds)
         )
         best_criter = [result.criterion for result in results]
-        
+
         if sum(best_criter == np.min(best_criter)) == 1:
             best_idx = np.argmin(best_criter)
         else:
