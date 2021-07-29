@@ -266,19 +266,14 @@ def plot_partial_dependence(
 
         .. versionadded:: 0.24
 
-    is_categorical : list of {boolean, pair of boolean}, default=None
-        Whether each target feature in `features` is categorical or not.
-        The list should be same size as `features`. If `None`, all features
-        are assumed to be continuous.
-
-        .. versionadded:: 1.0
-
     categorical_features : array-like of shape (n_features,) or shape \
             (n_categorical_features,), dtype={bool, int, str}, default=None
         Indicates the categorical features.
 
         - `None`: no feature will be considered categorical;
-        - boolean array-like: boolean mask indicating categorical features;
+        - boolean array-like: boolean mask of shape `(n_features,)` indicating
+          which features are categorical. Thus, this array has the same shape
+          has `X.shape[1]`;
         - integer or string array-like: integer indices or strings indicating
           categorical features.
 
