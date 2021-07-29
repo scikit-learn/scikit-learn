@@ -445,9 +445,12 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         # This factory comes to handle specialisations.
         if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
-        return ArgKmin(datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
-                       k=k,
-                       chunk_size=chunk_size)
+
+        return ArgKmin(
+            datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
+            k=k,
+            chunk_size=chunk_size,
+        )
 
     def __init__(self,
         DatasetsPair datasets_pair,
@@ -921,9 +924,10 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                                                           radius=radius,
                                                           chunk_size=chunk_size)
         return RadiusNeighborhood(
-                       datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
-                       radius=radius,
-                       chunk_size=chunk_size)
+            datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
+            radius=radius,
+            chunk_size=chunk_size,
+        )
 
     def __init__(self,
         DatasetsPair datasets_pair,
