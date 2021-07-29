@@ -782,7 +782,7 @@ def test_get_feature_index():
         ([True, False, True], "array"),
     ],
 )
-def test_grid_resolution_with_categorical(categorical_features, array_type):
+def test_grid_resolution_with_categorical(pyplot, categorical_features, array_type):
     """Check that we raise a ValueError when the grid_resolution is too small
     respect to the number of categories in the categorical features targeted.
     """
