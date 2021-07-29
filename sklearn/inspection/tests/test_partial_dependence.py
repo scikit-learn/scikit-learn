@@ -189,11 +189,7 @@ def test_grid_from_X():
 def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
     X = np.asarray([[1, 2], [3, 4]])
     with pytest.raises(ValueError, match=err_msg):
-        _grid_from_X(
-            X,
-            grid_resolution=grid_resolution,
-            percentiles=percentiles,
-        )
+        _grid_from_X(X, grid_resolution=grid_resolution, percentiles=percentiles)
 
 
 @pytest.mark.parametrize("target_feature", range(5))

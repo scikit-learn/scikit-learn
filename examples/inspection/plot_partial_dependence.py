@@ -375,7 +375,7 @@ _ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
 # %%
 # We see that the ICE for the temperature feature gives us some additional information:
 # Some of the ICE lines are flat while some others shows a decrease of the dependence
-# for temperature above 35 degrees Celcius. We observe a similar pattern for the
+# for temperature above 35 degrees Celsius. We observe a similar pattern for the
 # humidity feature: some of the ICEs lines show a sharp decrease when the humidity is
 # above 80%.
 #
@@ -413,9 +413,9 @@ _ = display.figure_.suptitle(
 # on joint values of temperature and humidity.
 # We clearly see an interaction between the two features. For a temperature higher than
 # 20 degrees Celcius, the humidity will have a greater impact of the number of bike
-# rentals. For a temperature lower than 20 degrees Celcius, both the temperature and
-# humidity will have an impact on the number of bike rentals.
-# 2-way interaction is also supported for categorical data.
+# rentals. For a temperature lower than 20 degrees Celsius, both the temperature and
+# humidity will have an impact on the number of bike rentals. 2-way interaction is also
+# supported for categorical data.
 print("Computing partial dependence plots...")
 features = ["season", "weather", ("season", "weather")]
 _, ax = plt.subplots(ncols=3, figsize=(14, 4))
