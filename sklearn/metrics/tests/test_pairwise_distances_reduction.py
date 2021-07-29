@@ -13,7 +13,7 @@ from scipy.sparse import (
     lil_matrix,
 )
 
-from sklearn.metrics._parallel_reductions import (
+from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     ArgKmin,
     RadiusNeighborhood,

@@ -23,7 +23,7 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..metrics._parallel_reductions import ArgKmin, RadiusNeighborhood
+from ..metrics._pairwise_distances_reduction import ArgKmin, RadiusNeighborhood
 from ..utils import (
     check_array,
     gen_even_slices,
