@@ -697,7 +697,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
     cdef:
         const DTYPE_t[:, ::1] X
         const DTYPE_t[:, ::1] Y
-        DTYPE_t[::1] Y_sq_norms
+        const DTYPE_t[::1] Y_sq_norms
 
         # Buffers for GEMM
         DTYPE_t ** dist_middle_terms_chunks
@@ -1160,8 +1160,8 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
     cdef:
         const DTYPE_t[:, ::1] X
         const DTYPE_t[:, ::1] Y
-        DTYPE_t[::1] X_sq_norms
-        DTYPE_t[::1] Y_sq_norms
+        const DTYPE_t[::1] X_sq_norms
+        const DTYPE_t[::1] Y_sq_norms
 
         # Buffers for GEMM
         DTYPE_t ** dist_middle_terms_chunks
