@@ -358,6 +358,11 @@ Changelog
   `sample_weight` passed by a user were overwritten during the fit.
   :pr:`20515` by :user:`Carsten Allefeld <allefeld>`.
 
+- |Fix| Change :func:`feature_selection.SequentialFeatureSelection` to
+  allow for unsupervised modelling so that the `fit` signature need not
+  do any `y` validation and allow for `y=None`.
+  :pr:`19568` by :user:`Shyam Desai <ShyamDesai>`.
+
 :mod:`sklearn.inspection`
 .........................
 
