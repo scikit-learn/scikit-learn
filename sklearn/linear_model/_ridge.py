@@ -1966,7 +1966,8 @@ class _BaseRidgeCV(LinearModel):
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge
 
-            """ Estimator refits the model on the full training set after finding the best hyperparameters 
+            """Estimator refits the model on the full training set
+            after finding the best hyperparameters.
             """
             gs = GridSearchCV(
                 model(
