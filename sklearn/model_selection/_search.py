@@ -1070,7 +1070,7 @@ class GridSearchCV(BaseSearchCV):
         - >3 : the fold and candidate parameter indexes are also displayed
           together with the starting time of the computation.
 
-    pre_dispatch : int, or str, default=n_jobs
+    pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -1433,7 +1433,7 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : int
         Controls the verbosity: the higher, the more messages.
 
-    pre_dispatch : int, or str, default=None
+    pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched

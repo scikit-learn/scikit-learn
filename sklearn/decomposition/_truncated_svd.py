@@ -71,6 +71,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
+        The right singular vectors of the input data.
 
     explained_variance_ : ndarray of shape (n_components,)
         The variance of the training samples transformed by a projection to
@@ -124,7 +125,6 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     sign of the ``components_`` and the output from transform depend on the
     algorithm and random state. To work around this, fit instances of this
     class to data once, then keep the instance around to do transformations.
-
     """
 
     def __init__(
