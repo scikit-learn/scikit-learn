@@ -682,19 +682,16 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
 
 cdef class FastSquaredEuclideanArgKmin(ArgKmin):
-    """Fast specialized alternative for ArgKmin on
-    EuclideanDistance.
-
-    Computes the argkmin of vectors (rows) of a set of
-    vectors (rows) of X on another set of vectors (rows) of Y
-    using the GEMM-trick.
+    """Fast specialized alternative for ArgKmin on EuclideanDistance.
 
     Notes
     -----
-    This implementation has an superior arithmetic intensity
-    and hence running time, but it can suffer from numerical
-    instability. ArgKmin with EuclideanDistance must be
-    used when exact precision is needed.
+    This implementation has a superior arithmetic intensity and hence
+    better running time when the alternative is IO bound, but it can suffer
+    from numerical instability.
+
+    ArgKmin with EuclideanDistance must be used when higher numerical precision
+    is needed.
     """
 
     cdef:
@@ -1155,10 +1152,12 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
 
     Notes
     -----
-    This implementation has an superior arithmetic intensity
-    and hence running time, but it can suffer from numerical
-    instability. RadiusNeighborhood with EuclideanDistance
-    must be used when exact precision is needed.
+    This implementation has a superior arithmetic intensity and hence
+    better running time when the alternative is IO bound, but it can suffer
+    from numerical instability.
+
+    RadiusNeighborhood with EuclideanDistance must be used when higher
+    numerical precision is needed.
     """
 
     cdef:
