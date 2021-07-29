@@ -220,6 +220,7 @@ class Isomap(TransformerMixin, BaseEstimator):
                 graph=kng,
                 n_connected_components=n_connected_components,
                 component_labels=labels,
+                mode="distance",
                 metric=self.nbrs_.effective_metric_,
                 **self.nbrs_.effective_metric_params_,
             )
