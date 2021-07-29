@@ -160,9 +160,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
     n_jobs : int or None, optional (default = None)
         The number of jobs to use for the computation. This works by computing
-        each of the initialization runs in parallel. None means 1 unless in a
-        ``joblib.parallel_backend`` context. -1 means using all processors.
-        See https://scikit-learn.org/stable/glossary.html#term-n-jobs
+        each of the initialization runs in parallel.
+        
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
@@ -558,8 +559,15 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             for (ag_params, gm_params), seed in zip(param_grid, seeds)
         )
         best_criter = [result.criterion for result in results]
-        # select the best model randomly in case there is a tie
-        best_idx = random_state.choice(np.where(best_criter == np.min(best_criter))[0])
+        
+        if sum(best_criter == np.min(best_criter)) == 1:
+            best_idx = np.argmin(best_criter)
+        else:
+            # in case there is a tie,
+            # select the model with the least number of parameters
+            ties = np.where(best_criter == np.min(best_criter))[0]
+            n_params = [results[tie].model._n_parameters() for tie in ties]
+            best_idx = ties[np.argmin(n_params)]
 
         self.best_criterion_ = results[best_idx].criterion
         self.n_components_ = results[best_idx].n_components

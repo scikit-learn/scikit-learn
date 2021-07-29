@@ -53,7 +53,7 @@ for cv_type in cv_types:
             result.criterion
             for result in results
             if (result.covariance_type == cv_type)
-            & (result.n_components == n_components)
+            and (result.n_components == n_components)
         ]))
 
 bic = np.array(bic)
