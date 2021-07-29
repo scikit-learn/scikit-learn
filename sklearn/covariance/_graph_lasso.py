@@ -94,8 +94,7 @@ class _DictWithDeprecatedKeys(dict):
 
     def _set_deprecated(self, value, *, new_key, deprecated_key):
         self._deprecated_key_to_new_key[deprecated_key] = new_key
-        self[new_key] = value
-        self[deprecated_key] = value
+        self[new_key] = self[deprecated_key] = value
 
 
 # The g-lasso algorithm
@@ -1007,10 +1006,15 @@ class GraphicalLassoCV(GraphicalLasso):
     )
     @property
     def grid_scores_(self):
-        # remove 3 for mean_score, std_score, and alphas
-        n_alphas = len(self.cv_results_) - 3
+        n_splits = len(
+            [
+                key
+                for key in self.cv_results_
+                if key.startswith("split") and key.endswith("_test_score")
+            ]
+        )
         return np.asarray(
-            [self.cv_results_["split{}_score".format(i)] for i in range(n_alphas)]
+            [self.cv_results_["split{}_test_score".format(i)] for i in range(n_splits)]
         ).T
 
     # TODO: Remove in 1.1 when cv_alphas_ is deprecated
