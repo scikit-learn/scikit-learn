@@ -240,10 +240,65 @@ Centering kernel matrices
 -------------------------
 
 If you have a kernel matrix of a kernel :math:`K` that computes a dot product
-in a feature space defined by function :math:`\phi`,
-a :class:`KernelCenterer` can transform the kernel matrix
-so that it contains inner products in the feature space
-defined by :math:`\phi` followed by removal of the mean in that space.
+in a feature space (possibly implicitly) defined by a function
+:math:`\phi(\cdot)`, a :class:`KernelCenterer` can transform the kernel matrix
+so that it contains inner products in the feature space defined by :math:`\phi`
+followed by the removal of the mean in that space. In other words,
+:class:`KernelCenterer` computes the centered Gram matrix associated to a
+positive semidefinite kernel :math:`K`.
+
+**Mathematical formulation**
+
+We can have a look at the mathematical formulation now that we have the
+intuition. Let :math:`K` be a kernel matrix of shape `(n_samples, n_samples)`
+computed from :math:`X`, a data matrix of shape `(n_samples, n_features)`,
+during the `fit` step. :math:`K` is defined by
+
+.. math::
+  K(X, X) = \phi(X) . \phi(X)^{T}
+
+:math:`\phi(X)` is a function mapping of :math:`X` to a Hilbert space. A
+centered kernel :math:`\tilde{K}` is defined as:
+
+.. math::
+  \tilde{K}(X, X) = \tilde{\phi}(X) . \tilde{\phi}(X)^{T}
+
+where :math:`\tilde{\phi}(X)` results from centering :math:`\phi(X)` in the
+Hilbert space.
+
+Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
+function :math:`\phi(\cdot)` and center the data in this new space. However,
+kernels are often used because they allows some algebra calculations that
+avoid computing explicitly this mapping using :math:`\phi(\cdot)`. Indeed, one
+can implicitly center as shown in Appendix B in [Scholkopf1998]_:
+
+.. math::
+  \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
+
+:math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)` where
+all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`. In the
+`transform` step, the kernel becomes :math:`K_{test}(X, Y)` defined as:
+
+.. math::
+  K_{test}(X, Y) = \phi(Y) . \phi(X)^{T}
+
+:math:`Y` is the test dataset of shape `(n_samples_test, n_features)` and thus
+:math:`K_{test}` is of shape `(n_samples_test, n_samples)`. In this case,
+centering :math:`K_{test}` is done as:
+
+.. math::
+  \tilde{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
+
+:math:`1'_{\text{n}_{samples}}` is a matrix of shape
+`(n_samples_test, n_samples)` where all entries are equal to
+:math:`\frac{1}{\text{n}_{samples}}`.
+
+.. topic:: References
+
+  .. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
+    `"Nonlinear component analysis as a kernel eigenvalue problem."
+    <https://www.mlpack.org/papers/kpca.pdf>`_
+    Neural computation 10.5 (1998): 1299-1319.
 
 .. _preprocessing_transformer:
 
@@ -560,9 +615,7 @@ parameter allows the user to specify a category for each feature to be dropped.
 This is useful to avoid co-linearity in the input matrix in some classifiers.
 Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
-since co-linearity would cause the covariance matrix to be non-invertible.
-When this parameter is not None, ``handle_unknown`` must be set to
-``error``::
+since co-linearity would cause the covariance matrix to be non-invertible::
 
     >>> X = [['male', 'from US', 'uses Safari'],
     ...      ['female', 'from Europe', 'uses Firefox']]
@@ -590,6 +643,30 @@ categories. In this case, you can set the parameter `drop='if_binary'`.
 In the transformed `X`, the first column is the encoding of the feature with
 categories "male"/"female", while the remaining 6 columns is the encoding of
 the 2 features with respectively 3 categories each.
+
+When `handle_unknown='ignore'` and `drop` is not None, unknown categories will
+be encoded as all zeros::
+
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='first',
+    ...                                        handle_unknown='ignore').fit(X)
+    >>> X_test = [['unknown', 'America', 'IE']]
+    >>> drop_enc.transform(X_test).toarray()
+    array([[0., 0., 0., 0., 0.]])
+
+All the categories in `X_test` are unknown during transform and will be mapped
+to all zeros. This means that unknown categories will have the same mapping as
+the dropped category. :meth`OneHotEncoder.inverse_transform` will map all zeros
+to the dropped category if a category is dropped and `None` if a category is
+not dropped::
+
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary', sparse=False,
+    ...                                        handle_unknown='ignore').fit(X)
+    >>> X_test = [['unknown', 'America', 'IE']]
+    >>> X_trans = drop_enc.transform(X_test)
+    >>> X_trans
+    array([[0., 0., 0., 0., 0., 0., 0.]])
+    >>> drop_enc.inverse_transform(X_trans)
+    array([['female', None, None]], dtype=object)
 
 :class:`OneHotEncoder` supports categorical features with missing values by
 considering the missing values as an additional category::
@@ -896,6 +973,7 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
 .. topic:: References:
 
@@ -937,4 +1015,5 @@ error with a ``filterwarnings``::
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to extract features from text data see
-:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py` and
+:ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.
