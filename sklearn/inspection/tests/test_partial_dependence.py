@@ -141,9 +141,7 @@ def test_grid_from_X():
     percentiles = (0.05, 0.95)
     grid_resolution = 100
     X = np.asarray([[1, 2], [3, 4]])
-    grid, axes = _grid_from_X(
-        X, percentiles, grid_resolution, is_categorical=[False, False]
-    )
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution)
     assert_array_equal(grid, [[1, 2], [1, 4], [3, 2], [3, 4]])
     assert_array_equal(axes, X.T)
 
@@ -154,9 +152,7 @@ def test_grid_from_X():
 
     # n_unique_values > grid_resolution
     X = rng.normal(size=(20, 2))
-    grid, axes = _grid_from_X(
-        X, percentiles, grid_resolution=grid_resolution, is_categorical=[False, False]
-    )
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
     assert grid.shape == (grid_resolution * grid_resolution, X.shape[1])
     assert np.asarray(axes).shape == (2, grid_resolution)
 
@@ -164,9 +160,7 @@ def test_grid_from_X():
     n_unique_values = 12
     X[n_unique_values - 1 :, 0] = 12345
     rng.shuffle(X)  # just to make sure the order is irrelevant
-    grid, axes = _grid_from_X(
-        X, percentiles, grid_resolution=grid_resolution, is_categorical=[False, False]
-    )
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
     assert grid.shape == (n_unique_values * grid_resolution, X.shape[1])
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (n_unique_values,)
@@ -175,9 +169,7 @@ def test_grid_from_X():
     # categorical features
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame(["A", "B", "C", "A", "B"])
-    grid, axes = _grid_from_X(
-        X, percentiles, grid_resolution=grid_resolution, is_categorical=[True]
-    )
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
     assert grid.shape == (3, X.shape[1])
     assert axes[0].shape == (3,)
 
@@ -201,7 +193,6 @@ def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
             X,
             grid_resolution=grid_resolution,
             percentiles=percentiles,
-            is_categorical=[False, False],
         )
 
 
@@ -816,19 +807,3 @@ def test_warning_for_kind_legacy():
 
     with pytest.warns(FutureWarning, match=err_msg):
         partial_dependence(est, X=X, features=[1, 2], kind="legacy")
-
-
-@pytest.mark.parametrize(
-    "features, is_categorical",
-    [
-        ([1, 2], [False]),
-        (1, [False, False]),
-    ],
-)
-def test_error_on_is_categorical_shape(features, is_categorical):
-    est = LogisticRegression()
-    (X, y), n_targets = binary_classification_data
-    est.fit(X, y)
-
-    with pytest.raises(ValueError, match="Parameter is_categorical should"):
-        partial_dependence(est, X=X, features=features, is_categorical=is_categorical)

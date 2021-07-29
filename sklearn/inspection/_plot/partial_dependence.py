@@ -15,7 +15,37 @@ from ...utils import check_random_state
 from ...utils import _safe_indexing
 from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import delayed
+from ...utils._encode import _unique
 from ...utils._plot import plot_heatmap
+
+
+def _get_feature_index(fx, feature_names=None):
+    """Get feature index.
+
+    Parameters
+    ----------
+    fx : int or str
+        Feature index or feature name.
+
+    feature_names : list of str, default=None
+        All feature names from which to search the indices.
+
+    Returns
+    -------
+    idx : int
+        Feature index.
+    """
+    if isinstance(fx, str):
+        if feature_names is None:
+            raise ValueError(
+                "When the feature is a string, `feature_names` should be a "
+                "list of feature names."
+            )
+        try:
+            fx = feature_names.index(fx)
+        except ValueError as e:
+            raise ValueError(f"Feature {fx} not in feature_names") from e
+    return int(fx)
 
 
 def plot_partial_dependence(
@@ -309,21 +339,15 @@ def plot_partial_dependence(
     if len(set(feature_names)) != len(feature_names):
         raise ValueError("feature_names should not contain duplicates.")
 
-    def convert_feature(fx):
-        if isinstance(fx, str):
-            try:
-                fx = feature_names.index(fx)
-            except ValueError as e:
-                raise ValueError("Feature %s not in feature_names" % fx) from e
-        return int(fx)
-
     # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
         if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
         try:
-            fxs = tuple(convert_feature(fx) for fx in fxs)
+            fxs = tuple(
+                _get_feature_index(fx, feature_names=feature_names) for fx in fxs
+            )
         except TypeError as e:
             raise ValueError(
                 "Each entry in features must be either an int, "
@@ -342,6 +366,76 @@ def plot_partial_dependence(
         tmp_features.append(fxs)
 
     features = tmp_features
+
+    if categorical_features is None:
+        is_categorical = [
+            (False,) if len(fxs) == 1 else (False, False) for fxs in features
+        ]
+    else:
+        categorical_features = np.asarray(categorical_features)
+        if categorical_features.dtype.kind == "b":
+            if categorical_features.size != n_features:
+                raise ValueError(
+                    "When `categorical_features` is a boolearn array-like, "
+                    "the array should be of shape (n_features,). Got "
+                    f"{categorical_features.size} elements while `X` contains "
+                    f"{n_features} features."
+                )
+            is_categorical = [
+                tuple(categorical_features[fx] for fx in fxs) for fxs in features
+            ]
+        elif categorical_features.dtype.kind in ("i", "O", "U"):
+            categorical_features_idx = [
+                _get_feature_index(cat, feature_names=feature_names)
+                for cat in categorical_features
+            ]
+            is_categorical = [
+                tuple([idx in categorical_features_idx for idx in fxs])
+                for fxs in features
+            ]
+        else:
+            raise ValueError(
+                "Expected `categorical_features` to be an array-like of boolean,"
+                f" interger, or string. Got {categorical_features.dtype} instead."
+            )
+
+        for cats in is_categorical:
+            if np.size(cats) == 2 and (cats[0] != cats[1]):
+                raise ValueError(
+                    "Two-way partial dependence plots are not supported for pairs of "
+                    "continuous and categorical features."
+                )
+
+        # collect the indices of the categorical features targeted by the partial
+        # dependence computation
+        categorical_features_targeted = set(
+            [
+                fx
+                for fxs, cats in zip(features, is_categorical)
+                for fx in fxs
+                if any(cats)
+            ]
+        )
+        if categorical_features_targeted:
+            min_n_cats = min(
+                [
+                    len(_unique(_safe_indexing(X, idx, axis=1)))
+                    for idx in categorical_features_targeted
+                ]
+            )
+            if grid_resolution < min_n_cats:
+                raise ValueError(
+                    "The resolution of the computed grid is less than the "
+                    "minimum number of categories in the targeted categorical "
+                    "features. Expect the `grid_resolution` to be greater than "
+                    f"{min_n_cats}. Got {grid_resolution} instead."
+                )
+
+        if kind != "average" and any(any(cat) for cat in is_categorical):
+            raise ValueError(
+                "It is not possible to display individual effects for categorical"
+                " features."
+            )
 
     # Early exit if the axes does not have the correct number of axes
     if ax is not None and not isinstance(ax, plt.Axes):
@@ -370,48 +464,6 @@ def plot_partial_dependence(
                 "the (0, 1) range."
             )
 
-    if categorical_features is None:
-        is_categorical = [
-            (False,) if len(fxs) == 1 else (False, False) for fxs in features
-        ]
-    else:
-        categorical_features = np.asarray(categorical_features)
-        if categorical_features.dtype.kind == "b":
-            if categorical_features.size != n_features:
-                raise ValueError(
-                    "When `categorical_features` is a boolearn array-like, "
-                    "the array should be of shape (n_features,). Got "
-                    f"{categorical_features.size} elements while `X` contains "
-                    f"{n_features} features."
-                )
-            is_categorical = [tuple([categorical_features[idx] for idx in fxs])]
-        elif categorical_features.dtype.kind in ("i", "O", "U"):
-            categorical_features_idx = [
-                convert_feature(cat) for cat in categorical_features
-            ]
-            is_categorical = [
-                tuple([idx in categorical_features_idx for idx in fxs])
-                for fxs in features
-            ]
-        else:
-            raise ValueError(
-                "Expected `categorical_features` to be an array-like of boolean,"
-                f" interger, or string. Got {categorical_features.dtype} instead."
-            )
-
-        for cats in is_categorical:
-            if np.size(cats) == 2 and (cats[0] != cats[1]):
-                raise ValueError(
-                    "Two-way partial dependence plots are not supported for pairs of "
-                    "continuous and categorical features."
-                )
-
-        if kind != "average" and any(any(cat) for cat in is_categorical):
-            raise ValueError(
-                "It is not possible to display individual effects for categorical"
-                " features."
-            )
-
     # compute predictions and/or averaged predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(partial_dependence)(
@@ -423,9 +475,8 @@ def plot_partial_dependence(
             grid_resolution=grid_resolution,
             percentiles=percentiles,
             kind=kind,
-            is_categorical=cats,
         )
-        for fxs, cats in zip(features, is_categorical)
+        for fxs in features
     )
 
     # For multioutput regression, we can only check the validity of target

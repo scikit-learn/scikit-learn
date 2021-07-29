@@ -36,7 +36,7 @@ __all__ = [
 ]
 
 
-def _grid_from_X(X, percentiles, grid_resolution, is_categorical):
+def _grid_from_X(X, percentiles, grid_resolution):
     """Generate a grid of points based on the percentiles of X.
 
     The grid is a cartesian product between the columns of ``values``. The
@@ -57,9 +57,6 @@ def _grid_from_X(X, percentiles, grid_resolution, is_categorical):
     grid_resolution : int
         The number of equally spaced points to be placed on the grid for each
         feature.
-
-    is_categorical : array-like of boolean
-        Whether each column in `X` is categorical or not.
 
     Returns
     -------
@@ -85,8 +82,8 @@ def _grid_from_X(X, percentiles, grid_resolution, is_categorical):
     values = []
     for feature in range(X.shape[1]):
         uniques = np.unique(_safe_indexing(X, feature, axis=1))
-        if is_categorical[feature] or uniques.shape[0] < grid_resolution:
-            # feature is categorical or has low resolution use unique vals
+        if uniques.shape[0] < grid_resolution:
+            # feature has low resolution use unique values
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution
@@ -219,7 +216,6 @@ def partial_dependence(
     grid_resolution=100,
     method="auto",
     kind="legacy",
-    is_categorical=None,
 ):
     """Partial dependence of ``features``.
 
@@ -324,14 +320,6 @@ def partial_dependence(
             `kind='legacy'` is deprecated and will be removed in version 1.1.
             `kind='average'` will be the new default. It is intended to migrate
             from the ndarray output to :class:`~sklearn.utils.Bunch` output.
-
-    is_categorical : array-like of boolean
-        Whether each target feature in `features` is categorical or not.
-        The list should be same size as `features`. If `None`, all features
-        are assumed to be continuous.
-
-        .. versionadded:: 1.0
-
 
     Returns
     -------
@@ -500,19 +488,10 @@ def partial_dependence(
         _get_column_indices(X, features), dtype=np.int32, order="C"
     ).ravel()
 
-    if is_categorical is None:
-        is_categorical = [False] * len(features_indices)
-    else:
-        if len(features_indices) != len(is_categorical):
-            raise ValueError(
-                "Parameter is_categorical should be the same size as features."
-            )
-
     grid, values = _grid_from_X(
         _safe_indexing(X, features_indices, axis=1),
         percentiles,
         grid_resolution,
-        is_categorical,
     )
 
     if method == "brute":
