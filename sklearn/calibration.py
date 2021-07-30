@@ -368,7 +368,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                         pred_method, method_name, X, n_classes
                     )
                     this_estimator.fit(X, y)
-
                 calibrated_classifier = _fit_calibrator(
                     this_estimator,
                     predictions,
@@ -377,7 +376,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     self.method,
                     sample_weight,
                 )
-
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
         first_clf = self.calibrated_classifiers_[0].base_estimator
