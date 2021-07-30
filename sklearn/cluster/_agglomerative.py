@@ -1017,8 +1017,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         return self
 
     def fit_predict(self, X, y=None):
-        """Fit and return the result of the clustering assignment for each
-        sample in the training set.
+        """Fit and return the result of each sample's clustering assignment.
 
         Parameters
         ----------
