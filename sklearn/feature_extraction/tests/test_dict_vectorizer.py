@@ -214,6 +214,7 @@ def test_dictvectorizer_dense_sparse_equivalence():
 def test_dict_vectorizer_unsupported_value_type():
     """Check that we raise an error when the value associated to a feature
     is not supported.
+
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/19489
     """
