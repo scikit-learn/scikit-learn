@@ -16,6 +16,7 @@ from ..utils.metaestimators import _safe_split
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
+from ..utils.deprecation import deprecated
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -523,6 +524,24 @@ class RFECV(RFE):
         ``grid_scores_[i]`` corresponds to
         the CV score of the i-th subset of features.
 
+        .. deprecated:: 1.0
+            The `grid_scores_` attribute is deprecated in version 1.0 in favor
+            of `cv_results_` and will be removed in version 1.2.
+
+    cv_results_ : dict of ndarrays
+        A dict with keys:
+
+        split(k)_test_score : ndarray of shape (n_features,)
+            The cross-validation scores across (k)th fold.
+
+        mean_test_score : ndarray of shape (n_features,)
+            Mean of scores over the folds.
+
+        std_test_score : ndarray of shape (n_features,)
+            Standard deviation of scores over the folds.
+
+        .. versionadded:: 1.0
+
     n_features_ : int
         The number of selected features with cross-validation.
 
@@ -681,9 +700,10 @@ class RFECV(RFE):
             for train, test in cv.split(X, y, groups)
         )
 
-        scores = np.sum(scores, axis=0)
-        scores_rev = scores[::-1]
-        argmax_idx = len(scores) - np.argmax(scores_rev) - 1
+        scores = np.array(scores)
+        scores_sum = np.sum(scores, axis=0)
+        scores_sum_rev = scores_sum[::-1]
+        argmax_idx = len(scores_sum) - np.argmax(scores_sum_rev) - 1
         n_features_to_select = max(
             n_features - (argmax_idx * step), self.min_features_to_select
         )
@@ -706,7 +726,27 @@ class RFECV(RFE):
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(self.transform(X), y)
 
-        # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
-        # here, the scores are normalized by get_n_splits(X, y)
-        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y, groups)
+        # reverse to stay consistent with before
+        scores_rev = scores[:, ::-1]
+        self.cv_results_ = {}
+        self.cv_results_["mean_test_score"] = np.mean(scores_rev, axis=0)
+        self.cv_results_["std_test_score"] = np.std(scores_rev, axis=0)
+
+        for i in range(scores.shape[0]):
+            self.cv_results_[f"split{i}_test_score"] = scores_rev[i]
+
         return self
+
+    # TODO: Remove in v1.2 when grid_scores_ is removed
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "The `grid_scores_` attribute is deprecated in version 1.0 in favor "
+        "of `cv_results_` and will be removed in version 1.2."
+    )
+    @property
+    def grid_scores_(self):
+        # remove 2 for mean_test_score, std_test_score
+        grid_size = len(self.cv_results_) - 2
+        return np.asarray(
+            [self.cv_results_[f"split{i}_test_score"] for i in range(grid_size)]
+        ).T
