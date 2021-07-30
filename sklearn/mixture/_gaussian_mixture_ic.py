@@ -328,8 +328,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         if ("ward" in self.linkage) and ("euclidean" not in self.affinity):
             raise ValueError(
-                'If "ward" is a linkage option, '
-                '"euclidean" must be an affinity option.'
+                'If "ward" is a linkage option, "euclidean" must be an affinity option.'
             )
 
         linkage = self._check_multi_comp_inputs(
