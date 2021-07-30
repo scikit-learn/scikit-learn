@@ -425,14 +425,16 @@ def multilabel_confusion_matrix(
 
     See Also
     --------
-    confusion_matrix
+    confusion_matrix : Compute confusion matrix to evaluate the accuracy of a
+        classifier.
 
     Notes
     -----
-    The multilabel_confusion_matrix calculates class-wise or sample-wise
+    The `multilabel_confusion_matrix` calculates class-wise or sample-wise
     multilabel confusion matrices, and in multiclass tasks, labels are
-    binarized under a one-vs-rest way; while confusion_matrix calculates
-    one confusion matrix for confusion between every two classes.
+    binarized under a one-vs-rest way; while
+    :func:`~sklearn.metrics.confusion_matrix` calculates one confusion matrix
+    for confusion between every two classes.
 
     Examples
     --------
