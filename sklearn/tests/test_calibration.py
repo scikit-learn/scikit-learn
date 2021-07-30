@@ -156,27 +156,31 @@ def test_calibration_cv_splitter(data, ensemble):
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_sample_weight(data, method, ensemble):
-    n_samples = 100
-    X, y = data
+    X, y = make_blobs((100, 1000), center_box=(-1, 1), random_state=42)
 
-    sample_weight = np.random.RandomState(seed=42).uniform(size=len(y))
-    X_train, y_train, sw_train = X[:n_samples], y[:n_samples], sample_weight[:n_samples]
-    X_test = X[n_samples:]
+    # Compute weigths to compensate the unbalance of the dataset
+    sample_weight = 9 * (y == 0) + 1
+
+    X_train, X_test, y_train, y_test, sw_train, sw_test = train_test_split(
+        X, y, sample_weight, random_state=42
+    )
 
     base_estimator = LinearSVC(random_state=42)
     calibrated_clf = CalibratedClassifierCV(
         base_estimator, method=method, ensemble=ensemble
     )
     calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
-    probs_with_sw = calibrated_clf.predict_proba(X_test)
+    pred = calibrated_clf.predict_proba(X_test)[:, 1]
 
-    # As the weights are used for the calibration, they should still yield
-    # different predictions
-    calibrated_clf.fit(X_train, y_train)
-    probs_without_sw = calibrated_clf.predict_proba(X_test)
+    # Compute the calibration error
+    hist_0 = np.histogram(pred[y_test == 0], bins=np.linspace(0, 1, 6), density=True)
+    hist_1 = np.histogram(pred[y_test == 1], bins=np.linspace(0, 1, 6), density=True)
 
-    diff = np.linalg.norm(probs_with_sw - probs_without_sw)
-    assert diff > 0.1
+    diff = np.linalg.norm(
+        (hist_0[1][:-1] + hist_0[1][1:]) / 2
+        - hist_1[0] / (hist_0[0] + hist_1[0] + 1e-10)
+    )
+    assert diff < 0.3
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])

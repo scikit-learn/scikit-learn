@@ -338,23 +338,37 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             else:
                 this_estimator = clone(base_estimator)
                 _, method_name = _get_prediction_method(this_estimator)
-                pred_method = partial(
-                    cross_val_predict,
-                    estimator=this_estimator,
-                    X=X,
-                    y=y,
-                    cv=cv,
-                    method=method_name,
-                    n_jobs=self.n_jobs,
-                )
-                predictions = _compute_predictions(
-                    pred_method, method_name, X, n_classes
-                )
 
                 if sample_weight is not None and supports_sw:
+                    pred_method = partial(
+                        cross_val_predict,
+                        estimator=this_estimator,
+                        X=X,
+                        y=y,
+                        cv=cv,
+                        method=method_name,
+                        n_jobs=self.n_jobs,
+                        fit_params={"sample_weight": sample_weight},
+                    )
+                    predictions = _compute_predictions(
+                        pred_method, method_name, X, n_classes
+                    )
                     this_estimator.fit(X, y, sample_weight)
                 else:
+                    pred_method = partial(
+                        cross_val_predict,
+                        estimator=this_estimator,
+                        X=X,
+                        y=y,
+                        cv=cv,
+                        method=method_name,
+                        n_jobs=self.n_jobs,
+                    )
+                    predictions = _compute_predictions(
+                        pred_method, method_name, X, n_classes
+                    )
                     this_estimator.fit(X, y)
+
                 calibrated_classifier = _fit_calibrator(
                     this_estimator,
                     predictions,
@@ -363,6 +377,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     self.method,
                     sample_weight,
                 )
+
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
         first_clf = self.calibrated_classifiers_[0].base_estimator
