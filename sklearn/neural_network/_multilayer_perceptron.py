@@ -557,9 +557,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         incremental,
     ):
 
+        params = self.coefs_ + self.intercepts_
         if not incremental or not hasattr(self, "_optimizer"):
-            params = self.coefs_ + self.intercepts_
-
             if self.solver == "sgd":
                 self._optimizer = SGDOptimizer(
                     params,
@@ -642,7 +641,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
                     # update weights
                     grads = coef_grads + intercept_grads
-                    self._optimizer.update_params(grads)
+                    self._optimizer.update_params(params, grads)
 
                 self.n_iter_ += 1
                 self.loss_ = accumulated_loss / X.shape[0]
