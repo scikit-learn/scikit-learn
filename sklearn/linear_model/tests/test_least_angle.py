@@ -267,7 +267,7 @@ def test_rank_deficient_design():
         obj_lars = 1.0 / (2.0 * 3.0) * linalg.norm(
             y - np.dot(X, coef_lars_)
         ) ** 2 + 0.1 * linalg.norm(coef_lars_, 1)
-        coord_descent = linear_model.Lasso(0.1, tol=1e-6, normalize=False)
+        coord_descent = linear_model.Lasso(0.1, tol=1e-6)
         coef_cd_ = coord_descent.fit(X, y).coef_
         obj_cd = (1.0 / (2.0 * 3.0)) * linalg.norm(
             y - np.dot(X, coef_cd_)
@@ -294,14 +294,16 @@ def test_lasso_lars_vs_lasso_cd():
     # similar test, with the classifiers
     for alpha in np.linspace(1e-2, 1 - 1e-2, 20):
         clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
-        clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8, normalize=False).fit(X, y)
+        clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8).fit(X, y)
         err = linalg.norm(clf1.coef_ - clf2.coef_)
         assert err < 1e-3
 
     # same test, with normalized data
     X = diabetes.data
+    X = X - X.sum(axis=0)
+    X /= np.linalg.norm(X, axis=0)
     alphas, _, lasso_path = linear_model.lars_path(X, y, method="lasso")
-    lasso_cd = linear_model.Lasso(fit_intercept=False, normalize=True, tol=1e-8)
+    lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
     for c, a in zip(lasso_path.T, alphas):
         if a == 0:
             continue
@@ -318,6 +320,8 @@ def test_lasso_lars_vs_lasso_cd_early_stopping():
     # (test : before, in the middle, and in the last part of the path)
     alphas_min = [10, 0.9, 1e-4]
 
+    X = diabetes.data
+
     for alpha_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(
             X, y, method="lasso", alpha_min=alpha_min
@@ -329,11 +333,14 @@ def test_lasso_lars_vs_lasso_cd_early_stopping():
         assert error < 0.01
 
     # same test, with normalization
+    X = diabetes.data - diabetes.data.sum(axis=0)
+    X /= np.linalg.norm(X, axis=0)
+
     for alpha_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(
             X, y, method="lasso", alpha_min=alpha_min
         )
-        lasso_cd = linear_model.Lasso(normalize=True, tol=1e-8)
+        lasso_cd = linear_model.Lasso(tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
         error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
@@ -407,7 +414,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     lars_coef_ = lars.coef_
     lars_obj = objective_function(lars_coef_)
 
-    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-4, normalize=False)
+    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-4)
     cd_coef_ = coord_descent.fit(X, y).coef_
     cd_obj = objective_function(cd_coef_)
 
@@ -642,17 +649,16 @@ def test_lasso_lars_vs_lasso_cd_positive():
             fit_intercept=False, alpha=alpha, normalize=False, positive=True
         ).fit(X, y)
         clf2 = linear_model.Lasso(
-            fit_intercept=False, alpha=alpha, tol=1e-8, normalize=False, positive=True
+            fit_intercept=False, alpha=alpha, tol=1e-8, positive=True
         ).fit(X, y)
         err = linalg.norm(clf1.coef_ - clf2.coef_)
         assert err < 1e-3
 
     # normalized data
-    X = diabetes.data
+    X = diabetes.data - diabetes.data.sum(axis=0)
+    X /= np.linalg.norm(X, axis=0)
     alphas, _, lasso_path = linear_model.lars_path(X, y, method="lasso", positive=True)
-    lasso_cd = linear_model.Lasso(
-        fit_intercept=False, normalize=True, tol=1e-8, positive=True
-    )
+    lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8, positive=True)
     for c, a in zip(lasso_path.T[:-1], alphas[:-1]):  # don't include alpha=0
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)

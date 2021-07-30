@@ -208,7 +208,7 @@ def _newton_cg(
 
     if warn and k >= maxiter:
         warnings.warn(
-            "newton-cg failed to converge. Increase the " "number of iterations.",
+            "newton-cg failed to converge. Increase the number of iterations.",
             ConvergenceWarning,
         )
     return xk, k
