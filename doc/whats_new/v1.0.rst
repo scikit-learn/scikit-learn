@@ -456,6 +456,11 @@ Changelog
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
   :user:`Maria Telenczuk <maikia>`.
 
+- |Fix| Points with residuals equal to  ``residual_threshold`` are now considered
+  as inliers for :class:`linear_model.RANSACRegressor`. This allows fitting
+  a model perfectly on some datasets when `residual_threshold=0`.
+  :pr:`19499` by :user:`Gregory Strubel <gregorystrubel>`.
+
 - |Efficiency| The implementation of `fit` for `PolynomialFeatures` transformer
   is now faster. This is especially noticeable on large sparse input.
   :pr:`19734` by :user:`Fred Robinson <frrad>`.

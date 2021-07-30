@@ -1265,8 +1265,8 @@ Each iteration performs the following steps:
    whether the estimated model is valid (see ``is_model_valid``).
 3. Classify all data as inliers or outliers by calculating the residuals
    to the estimated model (``base_estimator.predict(X) - y``) - all data
-   samples with absolute residuals smaller than the ``residual_threshold``
-   are considered as inliers.
+   samples with absolute residuals smaller than or equal to the
+   ``residual_threshold`` are considered as inliers.
 4. Save fitted model as best model if number of inlier samples is
    maximal. In case the current estimated model has the same number of
    inliers, it is only considered as the best model if it has better score.
