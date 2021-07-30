@@ -769,3 +769,21 @@ def test_plot_partial_dependence_lines_kw_warnings(
 
     assert ice_lines_kw_msg in warnings_messages
     assert pd_line_kw_msg in warnings_messages
+
+    # Make sure that we don't raise any warnings otherwise
+    for kwargs in [
+        {"ice_lines_kw": {"color": "red"}},
+        {"pd_line_kw": {"color": "red"}},
+    ]:
+        with pytest.warns(None) as records:
+            plot_partial_dependence(
+                clf_diabetes,
+                diabetes.data,
+                [0, 2],
+                grid_resolution=20,
+                feature_names=diabetes.feature_names,
+                n_cols=2,
+                kind="both",
+                **kwargs,
+            )
+        assert len(records) == 0

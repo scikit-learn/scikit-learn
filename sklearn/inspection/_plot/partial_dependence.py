@@ -925,11 +925,6 @@ class PartialDependenceDisplay:
         import matplotlib.pyplot as plt  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
 
-        if line_kw is None:
-            line_kw = {}
-        if contour_kw is None:
-            contour_kw = {}
-
         if line_kw is not None and ice_lines_kw is not None:
             warnings.warn(
                 "Both `line_kw` and `ice_lines_kw` are specified. `ice_lines_kw` "
@@ -941,6 +936,11 @@ class PartialDependenceDisplay:
                 "Both `line_kw` and `pd_line_kw` are specified. `pd_line_kw` will "
                 "take priority. Do not pass `line_kw` to silence this warning."
             )
+
+        if line_kw is None:
+            line_kw = {}
+        if contour_kw is None:
+            contour_kw = {}
 
         if ax is None:
             _, ax = plt.subplots()
