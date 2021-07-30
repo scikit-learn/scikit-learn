@@ -308,3 +308,13 @@ def test_pairwise_is_deprecated(affinity):
     msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         sp._pairwise
+
+
+def test_spectral_clustering_np_matrix_raises():
+    """Check that spectral_clustering raises an informative error when passed
+    a np.matrix. See #10993"""
+    X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
+
+    msg = r"spectral_clustering does not support passing in affinity as an np\.matrix"
+    with pytest.raises(TypeError, match=msg):
+        spectral_clustering(X)
