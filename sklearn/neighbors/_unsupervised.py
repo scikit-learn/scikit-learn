@@ -4,9 +4,7 @@ from ._base import KNeighborsMixin
 from ._base import RadiusNeighborsMixin
 
 
-class NearestNeighbors(KNeighborsMixin,
-                       RadiusNeighborsMixin,
-                       NeighborsBase):
+class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
@@ -41,7 +39,7 @@ class NearestNeighbors(KNeighborsMixin,
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
@@ -80,6 +78,25 @@ class NearestNeighbors(KNeighborsMixin,
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
+    See Also
+    --------
+    KNeighborsClassifier : Classifier implementing the k-nearest neighbors
+        vote.
+    RadiusNeighborsClassifier : Classifier implementing a vote among neighbors
+        within a given radius.
+    KNeighborsRegressor : Regression based on k-nearest neighbors.
+    RadiusNeighborsRegressor : Regression based on neighbors within a fixed
+        radius.
+    BallTree : Space partitioning data structure for organizing points in a
+        multi-dimensional space, used for nearest neighbor search.
+
+    Notes
+    -----
+    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
+    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+
+    https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
+
     Examples
     --------
     >>> import numpy as np
@@ -98,32 +115,30 @@ class NearestNeighbors(KNeighborsMixin,
     ... )
     >>> np.asarray(nbrs[0][0])
     array(2)
-
-    See Also
-    --------
-    KNeighborsClassifier
-    RadiusNeighborsClassifier
-    KNeighborsRegressor
-    RadiusNeighborsRegressor
-    BallTree
-
-    Notes
-    -----
-    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
-    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
-
-    https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
     """
 
-    def __init__(self, *, n_neighbors=5, radius=1.0,
-                 algorithm='auto', leaf_size=30, metric='minkowski',
-                 p=2, metric_params=None, n_jobs=None):
+    def __init__(
+        self,
+        *,
+        n_neighbors=5,
+        radius=1.0,
+        algorithm="auto",
+        leaf_size=30,
+        metric="minkowski",
+        p=2,
+        metric_params=None,
+        n_jobs=None,
+    ):
         super().__init__(
-              n_neighbors=n_neighbors,
-              radius=radius,
-              algorithm=algorithm,
-              leaf_size=leaf_size, metric=metric, p=p,
-              metric_params=metric_params, n_jobs=n_jobs)
+            n_neighbors=n_neighbors,
+            radius=radius,
+            algorithm=algorithm,
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        )
 
     def fit(self, X, y=None):
         """Fit the nearest neighbors estimator from the training dataset.
