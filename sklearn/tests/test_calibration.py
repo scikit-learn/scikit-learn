@@ -170,17 +170,9 @@ def test_sample_weight(data, method, ensemble):
         base_estimator, method=method, ensemble=ensemble
     )
     calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
-    pred = calibrated_clf.predict_proba(X_test)[:, 1]
+    predictions = calibrated_clf.predict_proba(X_test)[:, 1]
 
-    # Compute the calibration error
-    hist_0 = np.histogram(pred[y_test == 0], bins=np.linspace(0, 1, 6), density=True)
-    hist_1 = np.histogram(pred[y_test == 1], bins=np.linspace(0, 1, 6), density=True)
-
-    diff = np.linalg.norm(
-        (hist_0[1][:-1] + hist_0[1][1:]) / 2
-        - hist_1[0] / (hist_0[0] + hist_1[0] + 1e-10)
-    )
-    assert diff < 0.3
+    assert brier_score_loss(y_test, predictions, sample_weight=sw_test) < 0.2
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
