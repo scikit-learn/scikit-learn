@@ -21,10 +21,10 @@ source build_tools/shared.sh
 
 sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
 sudo apt-get update
-sudo apt-get install python3-scipy python3-matplotlib libopenblas-base \
-                     python3-virtualenv ccache
+sudo apt-get install python3-virtualenv ccache
 python3 -m virtualenv --system-site-packages --python=python3 testenv
 source testenv/bin/activate
+pip install --upgrade pip
 setup_ccache
 python -m pip install $(get_dep cython $CYTHON_VERSION) \
                       $(get_dep joblib $JOBLIB_VERSION)
@@ -55,13 +55,6 @@ export SKLEARN_BUILD_PARALLEL=3
 python -m pip list
 pip install --verbose --editable .
 ccache -s
-python -c "import numpy; print('numpy %s' % numpy.__version__)"
-python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python -c "\
-try:
-    import pandas
-    print('pandas %s' % pandas.__version__)
-except ImportError:
-    print('pandas not installed')
-"
+python -c "import sklearn; sklearn.show_versions()"
+python -m threadpoolctl --import sklearn
 python -m pytest sklearn

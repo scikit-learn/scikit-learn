@@ -130,7 +130,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
 
-  arm64:
+  linux-arm64:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
