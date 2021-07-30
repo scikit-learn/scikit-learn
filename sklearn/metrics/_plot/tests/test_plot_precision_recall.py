@@ -48,7 +48,7 @@ def test_errors(pyplot):
 
     reg = DecisionTreeRegressor().fit(X, y_multiclass)
     msg = (
-        "Expected 'estimator' to be a binary classifier, but got DecisionTreeClassifier"
+        "Expected 'estimator' to be a binary classifier, but got DecisionTreeRegressor"
     )
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(reg, X, y_binary)
