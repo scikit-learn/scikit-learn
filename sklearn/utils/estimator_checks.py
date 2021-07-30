@@ -142,7 +142,9 @@ def _yield_classifier_checks(classifier):
     yield check_classifiers_regression_target
     if tags["multilabel"]:
         yield check_classifiers_multilabel_representation_invariance
-        yield check_classifiers_multilabel_format_output
+        yield check_classifiers_multilabel_output_format_predict
+        yield check_classifiers_multilabel_output_format_predict_proba
+        yield check_classifiers_multilabel_output_format_decision_function
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
         if not tags["multioutput_only"]:
@@ -2302,8 +2304,8 @@ def check_classifiers_multilabel_representation_invariance(name, classifier_orig
 
 
 @ignore_warnings(category=FutureWarning)
-def check_classifiers_multilabel_format_output(name, classifier_orig):
-    """Check the output of the response methods for classifiers supporting
+def check_classifiers_multilabel_output_format_predict(name, classifier_orig):
+    """Check the output of the `predict` method for classifiers supporting
     multilabel-indicator targets."""
     classifier = clone(classifier_orig)
     set_random_state(classifier)
@@ -2324,98 +2326,155 @@ def check_classifiers_multilabel_format_output(name, classifier_orig):
     y_train, y_test = y[:-test_size], y[-test_size:]
     classifier.fit(X_train, y_train)
 
-    predict_method = getattr(classifier, "predict", None)
-    if predict_method is not None:
-        y_pred = predict_method(X_test)
+    response_method_name = "predict"
+    predict_method = getattr(classifier, response_method_name, None)
+    if predict_method is None:
+        raise SkipTest(f"{name} does not have a {response_method_name} method.")
 
-        # y_pred.shape -> y_test.shape with the same dtype
-        assert isinstance(y_pred, np.ndarray), (
-            f"{name}.predict is expected to output a NumPy array. Got "
-            f"{type(y_pred)} instead."
-        )
-        assert y_pred.shape == y_test.shape, (
-            f"{name}.predict output a NumPy array of shape {y_pred.shape} "
-            f"instead of {y_test.shape}."
-        )
-        assert y_pred.dtype == y_test.dtype, (
-            f"{name}.predict does not output the same dtype than the targets. "
-            f"Got {y_pred.dtype} instead of {y_test.dtype}."
-        )
+    y_pred = predict_method(X_test)
 
-    predict_proba_method = getattr(classifier, "predict_proba", None)
-    if predict_proba_method is not None:
-        y_pred = predict_proba_method(X_test)
+    # y_pred.shape -> y_test.shape with the same dtype
+    assert isinstance(y_pred, np.ndarray), (
+        f"{name}.predict is expected to output a NumPy array. Got "
+        f"{type(y_pred)} instead."
+    )
+    assert y_pred.shape == y_test.shape, (
+        f"{name}.predict output a NumPy array of shape {y_pred.shape} "
+        f"instead of {y_test.shape}."
+    )
+    assert y_pred.dtype == y_test.dtype, (
+        f"{name}.predict does not output the same dtype than the targets. "
+        f"Got {y_pred.dtype} instead of {y_test.dtype}."
+    )
 
-        # y_pred.shape -> 2 possibilities:
-        # - list of length n_outputs of shape (n_samples, 2);
-        # - ndarray of shape (n_samples, n_outputs).
-        # dtype should be floating
-        if isinstance(y_pred, list):
-            assert len(y_pred) == n_outputs, (
-                f"When {name}.predict_proba returns a list, the list should "
-                "be of length n_outputs and contain NumPy arrays. Got length "
-                f"of {len(y_pred)} instead of {n_outputs}."
+
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_multilabel_output_format_predict_proba(name, classifier_orig):
+    """Check the output of the `predict_proba` method for classifiers supporting
+    multilabel-indicator targets."""
+    classifier = clone(classifier_orig)
+    set_random_state(classifier)
+
+    n_samples, test_size, n_outputs = 100, 25, 5
+    X, y = make_multilabel_classification(
+        n_samples=n_samples,
+        n_features=2,
+        n_classes=n_outputs,
+        n_labels=3,
+        length=50,
+        allow_unlabeled=True,
+        random_state=0,
+    )
+    X = scale(X)
+
+    X_train, X_test = X[:-test_size], X[-test_size:]
+    y_train = y[:-test_size]
+    classifier.fit(X_train, y_train)
+
+    response_method_name = "predict_proba"
+    predict_proba_method = getattr(classifier, response_method_name, None)
+    if predict_proba_method is None:
+        raise SkipTest(f"{name} does not have a {response_method_name} method.")
+
+    y_pred = predict_proba_method(X_test)
+
+    # y_pred.shape -> 2 possibilities:
+    # - list of length n_outputs of shape (n_samples, 2);
+    # - ndarray of shape (n_samples, n_outputs).
+    # dtype should be floating
+    if isinstance(y_pred, list):
+        assert len(y_pred) == n_outputs, (
+            f"When {name}.predict_proba returns a list, the list should "
+            "be of length n_outputs and contain NumPy arrays. Got length "
+            f"of {len(y_pred)} instead of {n_outputs}."
+        )
+        for pred in y_pred:
+            assert pred.shape == (test_size, 2), (
+                f"When {name}.predict_proba returns a list, this list "
+                "should contain NumPy arrays of shape (n_samples, 2). Got "
+                f"NumPy arrays of shape {pred.shape} instead of "
+                f"{(test_size, 2)}."
             )
-            for pred in y_pred:
-                assert pred.shape == (test_size, 2), (
-                    f"When {name}.predict_proba returns a list, this list "
-                    "should contain NumPy arrays of shape (n_samples, 2). Got "
-                    f"NumPy arrays of shape {pred.shape} instead of "
-                    f"{(test_size, 2)}."
-                )
-                assert pred.dtype.kind == "f", (
-                    f"When {name}.predict_proba returns a list, it should "
-                    "contain NumPy arrays with floating dtype. Got "
-                    f"{pred.dtype} instead."
-                )
-                # check that we have the correct probabilities
-                err_msg = (
-                    f"When {name}.predict_proba returns a list, each NumPy "
-                    "array should contain probabilities for each class and "
-                    "thus each row should sum to 1 (or close to 1 due to "
-                    "numerical errors)."
-                )
-                assert_allclose(pred.sum(axis=1), 1, err_msg=err_msg)
-        elif isinstance(y_pred, np.ndarray):
-            assert y_pred.shape == (test_size, n_outputs), (
-                f"When {name}.predict_proba returns a NumPy array, the "
-                f"expected shape is (n_samples, n_outputs). Got {y_pred.shape}"
-                f" instead of {(test_size, n_outputs)}."
+            assert pred.dtype.kind == "f", (
+                f"When {name}.predict_proba returns a list, it should "
+                "contain NumPy arrays with floating dtype. Got "
+                f"{pred.dtype} instead."
             )
-            assert y_pred.dtype.kind == "f", (
-                f"When {name}.predict_proba returns a NumPy array, the "
-                f"expected data type is floating. Got {y_pred.dtype} instead."
-            )
+            # check that we have the correct probabilities
             err_msg = (
-                f"When {name}.predict_proba returns a NumPy array, this array "
-                "is expected to provide probabilities of the positive class "
-                "and should therefore contain values below 1."
+                f"When {name}.predict_proba returns a list, each NumPy "
+                "array should contain probabilities for each class and "
+                "thus each row should sum to 1 (or close to 1 due to "
+                "numerical errors)."
             )
-            assert_array_less(y_pred, 1, err_msg=err_msg)
-        else:
-            raise ValueError(
-                f"Unknown returned type {type(y_pred)} by {name}."
-                "predict_proba. A list or a Numpy array are expected."
-            )
-
-    decision_function_method = getattr(classifier, "decision_function", None)
-    if decision_function_method is not None:
-        y_pred = decision_function_method(X_test)
-
-        # y_pred.shape -> y_test.shape with floating dtype
-        assert isinstance(y_pred, np.ndarray), (
-            f"{name}.decision_function is expected to output a NumPy array."
-            f" Got {type(y_pred)} instead."
-        )
+            assert_allclose(pred.sum(axis=1), 1, err_msg=err_msg)
+    elif isinstance(y_pred, np.ndarray):
         assert y_pred.shape == (test_size, n_outputs), (
-            f"{name}.decision_function is expected to provide a NumPy array "
-            f"of shape (n_samples, n_outputs). Got {y_pred.shape} instead of "
-            f"{(test_size, n_outputs)}."
+            f"When {name}.predict_proba returns a NumPy array, the "
+            f"expected shape is (n_samples, n_outputs). Got {y_pred.shape}"
+            f" instead of {(test_size, n_outputs)}."
         )
         assert y_pred.dtype.kind == "f", (
-            f"{name}.decision_function is expected to output a floating dtype."
-            f" Got {y_pred.dtype} instead."
+            f"When {name}.predict_proba returns a NumPy array, the "
+            f"expected data type is floating. Got {y_pred.dtype} instead."
         )
+        err_msg = (
+            f"When {name}.predict_proba returns a NumPy array, this array "
+            "is expected to provide probabilities of the positive class "
+            "and should therefore contain values below 1."
+        )
+        assert_array_less(y_pred, 1, err_msg=err_msg)
+    else:
+        raise ValueError(
+            f"Unknown returned type {type(y_pred)} by {name}."
+            "predict_proba. A list or a Numpy array are expected."
+        )
+
+
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_multilabel_output_format_decision_function(name, classifier_orig):
+    """Check the output of the `decision_function` method for classifiers supporting
+    multilabel-indicator targets."""
+    classifier = clone(classifier_orig)
+    set_random_state(classifier)
+
+    n_samples, test_size, n_outputs = 100, 25, 5
+    X, y = make_multilabel_classification(
+        n_samples=n_samples,
+        n_features=2,
+        n_classes=n_outputs,
+        n_labels=3,
+        length=50,
+        allow_unlabeled=True,
+        random_state=0,
+    )
+    X = scale(X)
+
+    X_train, X_test = X[:-test_size], X[-test_size:]
+    y_train = y[:-test_size]
+    classifier.fit(X_train, y_train)
+
+    response_method_name = "decision_function"
+    decision_function_method = getattr(classifier, response_method_name, None)
+    if decision_function_method is None:
+        raise SkipTest(f"{name} does not have a {response_method_name} method.")
+
+    y_pred = decision_function_method(X_test)
+
+    # y_pred.shape -> y_test.shape with floating dtype
+    assert isinstance(y_pred, np.ndarray), (
+        f"{name}.decision_function is expected to output a NumPy array."
+        f" Got {type(y_pred)} instead."
+    )
+    assert y_pred.shape == (test_size, n_outputs), (
+        f"{name}.decision_function is expected to provide a NumPy array "
+        f"of shape (n_samples, n_outputs). Got {y_pred.shape} instead of "
+        f"{(test_size, n_outputs)}."
+    )
+    assert y_pred.dtype.kind == "f", (
+        f"{name}.decision_function is expected to output a floating dtype."
+        f" Got {y_pred.dtype} instead."
+    )
 
 
 @ignore_warnings(category=FutureWarning)
