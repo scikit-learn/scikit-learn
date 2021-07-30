@@ -168,7 +168,7 @@ def test_ransac_predict():
     assert_array_equal(ransac_estimator.predict(X), np.zeros(100))
 
 
-def test_ransac_resid_thresh_no_inliers():
+def test_ransac_residuals_threshold_no_inliers():
     # When residual_threshold=nan there are no inliers and a
     # ValueError with a message should be raised
     base_estimator = LinearRegression()
@@ -598,7 +598,10 @@ def test_ransac_final_model_fit_sample_weight():
 
 
 def test_perfect_horizontal_line():
-    # non-regression test for issue #19497
+    """Check that we can fit a line where all samples are inliers.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19497
+    """
     X = np.arange(100)[:, None]
     y = np.zeros((100,))
 
