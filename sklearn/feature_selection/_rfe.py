@@ -531,13 +531,13 @@ class RFECV(RFE):
     cv_results_ : dict of ndarrays
         A dict with keys:
 
-        split(k)_score : ndarray of shape (n_features,)
+        split(k)_test_score : ndarray of shape (n_features,)
             The cross-validation scores across (k)th fold.
 
-        mean_score : ndarray of shape (n_features,)
+        mean_test_score : ndarray of shape (n_features,)
             Mean of scores over the folds.
 
-        std_score : ndarray of shape (n_features,)
+        std_test_score : ndarray of shape (n_features,)
             Standard deviation of scores over the folds.
 
         .. versionadded:: 1.0
@@ -729,11 +729,11 @@ class RFECV(RFE):
         # reverse to stay consistent with before
         scores_rev = scores[:, ::-1]
         self.cv_results_ = {}
-        self.cv_results_["mean_score"] = np.mean(scores_rev, axis=0)
-        self.cv_results_["std_score"] = np.std(scores_rev, axis=0)
+        self.cv_results_["mean_test_score"] = np.mean(scores_rev, axis=0)
+        self.cv_results_["std_test_score"] = np.std(scores_rev, axis=0)
 
         for i in range(scores.shape[0]):
-            self.cv_results_[f"split{i}_score"] = scores_rev[i]
+            self.cv_results_[f"split{i}_test_score"] = scores_rev[i]
 
         return self
 
@@ -745,8 +745,8 @@ class RFECV(RFE):
     )
     @property
     def grid_scores_(self):
-        # remove 2 for mean_score, std_score
+        # remove 2 for mean_test_score, std_test_score
         grid_size = len(self.cv_results_) - 2
         return np.asarray(
-            [self.cv_results_["split{}_score".format(i)] for i in range(grid_size)]
+            [self.cv_results_["split{}_test_score".format(i)] for i in range(grid_size)]
         ).T

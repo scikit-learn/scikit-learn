@@ -595,14 +595,14 @@ def test_rfecv_std_and_mean():
     rfecv = RFECV(estimator=SVC(kernel="linear"))
     rfecv.fit(X, y)
     n_split_keys = len(rfecv.cv_results_) - 2
-    split_keys = ["split{}_score".format(i) for i in range(n_split_keys)]
+    split_keys = ["split{}_test_score".format(i) for i in range(n_split_keys)]
 
     cv_scores = np.asarray([rfecv.cv_results_[key] for key in split_keys])
     expected_mean = np.mean(cv_scores, axis=0)
     expected_std = np.std(cv_scores, axis=0)
 
-    assert_allclose(rfecv.cv_results_["mean_score"], expected_mean)
-    assert_allclose(rfecv.cv_results_["std_score"], expected_std)
+    assert_allclose(rfecv.cv_results_["mean_test_score"], expected_mean)
+    assert_allclose(rfecv.cv_results_["std_test_score"], expected_std)
 
 
 @pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
