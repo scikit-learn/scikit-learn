@@ -2146,7 +2146,7 @@ def test_cross_validate_failing_fits_warnings(error_score):
         "7 fits failed on the training sets over a total of 7 fits.+The score on these"
         " train-test partitions for these parameters will be set to"
         f" {cross_validate_kwargs['error_score']}.",
-        flags=re.DOTALL
+        flags=re.DOTALL,
     )
 
     with pytest.warns(FitFailedWarning, match=warning_message):
