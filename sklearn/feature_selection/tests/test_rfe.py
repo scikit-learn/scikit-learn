@@ -595,7 +595,7 @@ def test_rfecv_std_and_mean():
     rfecv = RFECV(estimator=SVC(kernel="linear"))
     rfecv.fit(X, y)
     n_split_keys = len(rfecv.cv_results_) - 2
-    split_keys = ["split{}_test_score".format(i) for i in range(n_split_keys)]
+    split_keys = [f"split{i}_test_score" for i in range(n_split_keys)]
 
     cv_scores = np.asarray([rfecv.cv_results_[key] for key in split_keys])
     expected_mean = np.mean(cv_scores, axis=0)

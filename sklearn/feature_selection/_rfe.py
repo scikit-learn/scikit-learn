@@ -748,5 +748,5 @@ class RFECV(RFE):
         # remove 2 for mean_test_score, std_test_score
         grid_size = len(self.cv_results_) - 2
         return np.asarray(
-            [self.cv_results_["split{}_test_score".format(i)] for i in range(grid_size)]
+            [self.cv_results_[f"split{i}_test_score"] for i in range(grid_size)]
         ).T
