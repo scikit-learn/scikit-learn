@@ -340,9 +340,13 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
+- |Fix| Fixed a bug in :class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+- |Fix| Fixed a bug in :class:`feature_extraction.DictVectorizer` by raising an
+  error with unsupported value type.
+  :pr:`19520` by :user:`Jeff Zhao <kamiyaa>`.
 
 :mod:`sklearn.feature_selection`
 ................................
