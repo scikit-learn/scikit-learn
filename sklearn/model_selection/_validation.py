@@ -15,6 +15,7 @@ import numbers
 import time
 from traceback import format_exc
 from contextlib import suppress
+from collections import Counter
 
 import numpy as np
 import scipy.sparse as sp
@@ -320,7 +321,7 @@ def _insert_error_scores(results, error_score):
     successful_score = None
     failed_indices = []
     for i, result in enumerate(results):
-        if result["fit_failed"]:
+        if result["fit_error"] is not None:
             failed_indices.append(i)
         elif successful_score is None:
             successful_score = result["test_scores"]
@@ -346,22 +347,27 @@ def _normalize_score_results(scores, scaler_score_key="score"):
 
 
 def _warn_about_fit_failures(results, error_score):
-    num_failed_fits = sum(result["fit_failed"] for result in results)
+    fit_errors = [
+        result["fit_error"] for result in results if result["fit_error"] is not None
+    ]
     num_fits = len(results)
 
-    if num_failed_fits > 0:
-        fit_errors = [
-            result["fit_error"] for result in results if result["fit_error"] is not None
-        ]
+    if len(fit_errors) > 0:
+        num_failed_fits = len(fit_errors)
+        fit_errors_counter = Counter(fit_errors)
+        delimiter = "-" * 80 + "\n"
+        fit_errors_summary = "\n".join(
+            f"{delimiter}{n} fits failed with the following error:\n{error}"
+            for error, n in fit_errors_counter.items()
+        )
 
         some_fits_failed_message = (
             f"\n{num_failed_fits} fits failed on the training sets over a total of"
-            f" {num_fits} fits. The score on these train-test partitions for these"
-            f" parameters will be set to {error_score}.\nIn case these failures are"
-            " not expected, you can try to debug these failures by setting"
-            " error_score='raise'.\n\nHere are more details about the"
-            " failures:\n----------\n"
-            + "----------\n".join(fit_errors)
+            f" {num_fits} fits.\nThe score on these train-test partitions for these"
+            f" parameters will be set to {error_score}.\nIf these failures are"
+            " not expected, you can try to debug them by setting"
+            " error_score='raise'.\n\nBelow are more details about the"
+            f" failures:\n{fit_errors_summary}"
         )
         warnings.warn(some_fits_failed_message, FitFailedWarning)
 
@@ -621,8 +627,8 @@ def _fit_and_score(
             The parameters that have been evaluated.
         estimator : estimator object
             The fitted estimator.
-        fit_failed : bool
-            The estimator failed to fit.
+        fit_error : str or None
+            Traceback str if the fit failed, None if the fit succeeded.
     """
     if not isinstance(error_score, numbers.Number) and error_score != "raise":
         raise ValueError(
@@ -689,10 +695,8 @@ def _fit_and_score(
                 test_scores = error_score
                 if return_train_score:
                     train_scores = error_score
-        result["fit_failed"] = True
         result["fit_error"] = format_exc()
     else:
-        result["fit_failed"] = False
         result["fit_error"] = None
 
         fit_time = time.time() - start_time

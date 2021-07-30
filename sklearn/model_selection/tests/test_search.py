@@ -1565,9 +1565,13 @@ def test_grid_search_failing_classifier():
         refit=False,
         error_score=0.0,
     )
-    warning_message = (
-        "5 fits failed on the training sets over a total of 15 fits. The score on these"
-        r" train-test partitions for these parameters will be set to 0\.0"
+
+    warning_message = re.compile(
+        "5 fits failed on the training sets over a total of 15 fits.+The score on these"
+        r" train-test partitions for these parameters will be set to 0\.0.+"
+        "5 fits failed with the following error.+ValueError.+Failing classifier failed"
+        " as required",
+        flags=re.DOTALL,
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
         gs.fit(X, y)
@@ -1598,9 +1602,12 @@ def test_grid_search_failing_classifier():
         refit=False,
         error_score=float("nan"),
     )
-    warning_message = (
-        "5 fits failed on the training sets over a total of 15 fits. The score on these"
-        r" train-test partitions for these parameters will be set to nan"
+    warning_message = re.compile(
+        "5 fits failed on the training sets over a total of 15 fits.+The score on these"
+        r" train-test partitions for these parameters will be set to nan.+"
+        "5 fits failed with the following error.+ValueError.+Failing classifier failed"
+        " as required",
+        flags=re.DOTALL,
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
         gs.fit(X, y)
@@ -2112,9 +2119,10 @@ def test_callable_multimetric_error_failing_clf():
         error_score=0.1,
     )
 
-    warning_message = (
-        "5 fits failed on the training sets over a total of 15 fits. The score on these"
-        r" train-test partitions for these parameters will be set to 0\.1"
+    warning_message = re.compile(
+        "5 fits failed on the training sets over a total of 15 fits.+The score on these"
+        r" train-test partitions for these parameters will be set to 0\.1",
+        flags=re.DOTALL,
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
         gs.fit(X, y)

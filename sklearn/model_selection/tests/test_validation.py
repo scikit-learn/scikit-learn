@@ -2142,10 +2142,11 @@ def test_cross_validate_failing_fits_warnings(error_score):
     cross_validate_args = [failing_clf, X, y]
     cross_validate_kwargs = {"cv": 7, "error_score": error_score}
     # check if the warning message type is as expected
-    warning_message = (
-        "7 fits failed on the training sets over a total of 7 fits. The score on these"
+    warning_message = re.compile(
+        "7 fits failed on the training sets over a total of 7 fits.+The score on these"
         " train-test partitions for these parameters will be set to"
-        f" {cross_validate_kwargs['error_score']}."
+        f" {cross_validate_kwargs['error_score']}.",
+        flags=re.DOTALL
     )
 
     with pytest.warns(FitFailedWarning, match=warning_message):
