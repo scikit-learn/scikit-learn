@@ -346,8 +346,7 @@ Changelog
 
 - |Fix| Fixed a bug in :class:`feature_extraction.DictVectorizer` by raising an
   error with unsupported value type.
-  :pr:`19489` by :user:`Jeff Zhao <kamiyaa>`.
-
+  :pr:`19520` by :user:`Jeff Zhao <kamiyaa>`.
 
 :mod:`sklearn.feature_selection`
 ................................
