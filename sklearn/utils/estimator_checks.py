@@ -2353,14 +2353,14 @@ def check_classifiers_multilabel_format_output(name, classifier_orig):
         if isinstance(y_pred, list):
             assert len(y_pred) == n_outputs, (
                 f"When {name}.predict_proba returns a list, the list should "
-                " be of length n_outputs and contain NumPy arrays. Got length "
+                "be of length n_outputs and contain NumPy arrays. Got length "
                 f"of {len(y_pred)} instead of {n_outputs}."
             )
             for pred in y_pred:
                 assert pred.shape == (test_size, 2), (
                     f"When {name}.predict_proba returns a list, this list "
                     "should contain NumPy arrays of shape (n_samples, 2). Got "
-                    f"a NumPy array of shape {pred.shape} instead of "
+                    f"NumPy arrays of shape {pred.shape} instead of "
                     f"{(test_size, 2)}."
                 )
                 assert pred.dtype.kind == "f", (

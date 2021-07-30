@@ -740,7 +740,7 @@ def test_check_classifiers_multilabel_output_format():
     clf = MultiLabelClassifierPredict(response_output=y_test[:, :-1])
     err_msg = (
         r"MultiLabelClassifierPredict.predict output a NumPy array of "
-        f"shape {y_test[:, :-1].shape} instead of {y_test.shape}."
+        r"shape \(25, 4\) instead of \(25, 5\)."
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_format_output(clf.__class__.__name__, clf)
@@ -771,7 +771,7 @@ def test_check_classifiers_multilabel_output_format():
     clf = MultiLabelClassifierPredictProba(response_output=y_test.tolist())
     err_msg = (
         "When MultiLabelClassifierPredictProba.predict_proba returns a list, "
-        "the list should be of length n_outputs and contain NumPy array. Got "
+        "the list should be of length n_outputs and contain NumPy arrays. Got "
         f"length of {test_size} instead of {n_outputs}."
     )
     with raises(AssertionError, match=err_msg):
@@ -785,7 +785,7 @@ def test_check_classifiers_multilabel_output_format():
     err_msg = (
         r"When MultiLabelClassifierPredictProba.predict_proba returns a list, "
         r"this list should contain NumPy arrays of shape \(n_samples, 2\). Got "
-        r"a NumPy arrays of shape \(25, 5\) instead of \(25, 2\)."
+        r"NumPy arrays of shape \(25, 5\) instead of \(25, 2\)."
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_format_output(
