@@ -196,10 +196,10 @@ def test_graphical_lasso_cv_grid_scores_and_cv_alphas_deprecated():
         assert len(cov.cv_alphas_) == total_alphas
 
 
-# TODO: Remove `score` suffix in 1.2
-@pytest.mark.parametrize("cv_prefix", ["score", "test_score"])
+# TODO: Remove `score` and `test_score` suffix in 1.2
+@pytest.mark.parametrize("suffix", ["score", "test_score"])
 @pytest.mark.filterwarnings("ignore:Key*:FutureWarning:sklearn")
-def test_graphical_lasso_cv_scores(cv_prefix):
+def test_graphical_lasso_cv_scores(suffix):
     splits = 4
     n_alphas = 5
     n_refinements = 3
@@ -222,7 +222,7 @@ def test_graphical_lasso_cv_scores(cv_prefix):
 
     total_alphas = n_refinements * n_alphas + 1
     keys = ["alphas"]
-    split_keys = [f"split{i}_{cv_prefix}" for i in range(splits)]
+    split_keys = [f"split{i}_{suffix}" for i in range(splits)]
     for key in keys + split_keys:
         assert key in cv_results
         assert len(cv_results[key]) == total_alphas
@@ -231,8 +231,8 @@ def test_graphical_lasso_cv_scores(cv_prefix):
     expected_mean = cv_scores.mean(axis=0)
     expected_std = cv_scores.std(axis=0)
 
-    assert_allclose(cov.cv_results_[f"mean_{cv_prefix}"], expected_mean)
-    assert_allclose(cov.cv_results_[f"std_{cv_prefix}"], expected_std)
+    assert_allclose(cov.cv_results_[f"mean_{suffix}"], expected_mean)
+    assert_allclose(cov.cv_results_[f"std_{suffix}"], expected_std)
 
 
 # TODO: Remove in 1.2 when mean_score, std_score, and split(k)_score is removed.
