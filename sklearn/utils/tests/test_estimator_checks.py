@@ -733,7 +733,7 @@ def test_check_classifiers_multilabel_output_format_predict():
     # 2. inconsistent shape
     clf = MultiLabelClassifierPredict(response_output=y_test[:, :-1])
     err_msg = (
-        r"MultiLabelClassifierPredict.predict output a NumPy array of "
+        r"MultiLabelClassifierPredict.predict outputs a NumPy array of "
         r"shape \(25, 4\) instead of \(25, 5\)."
     )
     with raises(AssertionError, match=err_msg):
@@ -770,7 +770,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     err_msg = (
         r"Unknown returned type <class 'scipy.sparse.csr.csr_matrix'> by "
         r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
-        r"array are expected."
+        r"array is expected."
     )
     with raises(ValueError, match=err_msg):
         check_classifiers_multilabel_output_format_predict_proba(
@@ -862,7 +862,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     err_msg = (
         r"When MultiLabelClassifierPredictProba.predict_proba returns a NumPy "
         r"array, this array is expected to provide probabilities of the "
-        r"positive class and should therefore contain values below 1."
+        r"positive class and should therefore contain values between 0 and 1."
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_predict_proba(

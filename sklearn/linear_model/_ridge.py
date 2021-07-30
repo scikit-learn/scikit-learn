@@ -2332,7 +2332,7 @@ class RidgeClassifierCV(LinearClassifierMixin, MultiLabelMixin, _BaseRidgeCV):
                 # https://github.com/scikit-learn/scikit-learn/issues/19858
                 # to track progress to resolve this issue
                 "check_classifiers_multilabel_output_format_predict": (
-                    "RidgeClassifierCV.predict output an array of shape (25,) "
+                    "RidgeClassifierCV.predict outputs an array of shape (25,) "
                     "instead of (25, 5)"
                 ),
             },

@@ -2339,7 +2339,7 @@ def check_classifiers_multilabel_output_format_predict(name, classifier_orig):
         f"{type(y_pred)} instead."
     )
     assert y_pred.shape == y_test.shape, (
-        f"{name}.predict output a NumPy array of shape {y_pred.shape} "
+        f"{name}.predict outputs a NumPy array of shape {y_pred.shape} "
         f"instead of {y_test.shape}."
     )
     assert y_pred.dtype == y_test.dtype, (
@@ -2421,13 +2421,14 @@ def check_classifiers_multilabel_output_format_predict_proba(name, classifier_or
         err_msg = (
             f"When {name}.predict_proba returns a NumPy array, this array "
             "is expected to provide probabilities of the positive class "
-            "and should therefore contain values below 1."
+            "and should therefore contain values between 0 and 1."
         )
+        assert_array_less(0, y_pred, err_msg=err_msg)
         assert_array_less(y_pred, 1, err_msg=err_msg)
     else:
         raise ValueError(
             f"Unknown returned type {type(y_pred)} by {name}."
-            "predict_proba. A list or a Numpy array are expected."
+            "predict_proba. A list or a Numpy array is expected."
         )
 
 
