@@ -220,6 +220,10 @@ Changelog
 :mod:`sklearn.covariance`
 .........................
 
+- |API| Deprecates the following keys in `cv_results_`: `'mean_score'`,
+  `'std_score'`, and `'split(k)_score` in favor of `'mean_test_score'`
+  `'std_test_score'`, and `'split(k)_test_score``. :pr:`20583` by `Thomas Fan`_.
+
 - |Fix| Adds arrays check to :func:`covariance.ledoit_wolf` and
   :func:`covariance.ledoit_wolf_shrinkage`
   :pr:`20416` by `Hugo Defois <defoishugo>`.
