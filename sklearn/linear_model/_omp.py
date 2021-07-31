@@ -938,6 +938,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+    
+    Notes
+    --------
+    In `fit`, once the optimal number of non-zero coefficients is found through
+    cross-validation, the model is fit again using the entire training set.
 
     Examples
     --------
