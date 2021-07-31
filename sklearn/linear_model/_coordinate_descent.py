@@ -1862,14 +1862,14 @@ class LassoCV(RegressorMixin, LinearModelCV):
     -----
     In `fit`, once the best parameter `alpha` is found through
     cross-validation, the model is fit again using the entire training set.
-    
+
     To avoid unnecessary memory duplication the `X` argument of the `fit`
     method should be directly passed as a Fortran-contiguous numpy array.
 
     For an example, see
     :ref:`examples/linear_model/plot_lasso_model_selection.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
-    
+
     Examples
     --------
     >>> from sklearn.linear_model import LassoCV
@@ -2088,16 +2088,16 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     0.398...
     >>> print(regr.predict([[0, 0]]))
     [0.398...]
-    
+
     Notes
     -----
     In `fit`, once the best parameters `l1_ratio` and `alpha` are found
     through cross-validation, the model is fit again using the entire
     training set.
-    
+
     To avoid unnecessary memory duplication the `X` argument of the `fit`
     method should be directly passed as a Fortran-contiguous numpy array.
-    
+
     The parameter `l1_ratio` corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
     More specifically, the optimization objective is::
