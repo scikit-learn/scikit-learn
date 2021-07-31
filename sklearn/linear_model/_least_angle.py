@@ -1577,7 +1577,7 @@ class LarsCV(Lars):
     LassoLarsIC : Lasso model fit with Lars using BIC
         or AIC for model selection.
     sklearn.decomposition.sparse_encode : Sparse coding.
-    
+
     Notes
     -----
     In `fit`, once the best parameter `alpha` is found through
@@ -1877,7 +1877,7 @@ class LassoLarsCV(LarsCV):
 
     Notes
     -----
-    The object solves the same problem as the 
+    The object solves the same problem as the
     :class:`~sklearn.linear_model.LassoCV` object. However, unlike the
     :class:`~sklearn.linear_model.LassoCV`, it find the relevant alphas values
     by itself. In general, because of this property, it will be more stable.
@@ -1887,7 +1887,7 @@ class LassoLarsCV(LarsCV):
     only a small number of features are selected compared to the total number,
     for instance if there are very few samples compared to the number of
     features.
-    
+
     In `fit`, once the best parameter `alpha` is found through
     cross-validation, the model is fit again using the entire training set.
 

@@ -1014,9 +1014,9 @@ such as:
         generally leads to speed improvements. An exception is the
         :class:`RidgeCV <linear_model.RidgeCV>` class, which can instead
         perform efficient Leave-One-Out (LOO) CV. By default, all these
-        estimators, apart from :class:`RidgeCV <linear_model.RidgeCV>` with an
-        LOO-CV, will be refitted on the full training dataset after finding the
-        best combination of hyper-parameters. 
+        estimators, apart from :class:`RidgeCV <linear_model.RidgeCV>` with
+        an LOO-CV, will be refitted on the full training dataset after
+        finding the best combination of hyper-parameters. 
 
     scorer
         A non-estimator callable object which evaluates an estimator on given

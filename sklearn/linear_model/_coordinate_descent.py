@@ -2088,16 +2088,16 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     0.398...
     >>> print(regr.predict([[0, 0]]))
     [0.398...]
-
-
+    
     Notes
     -----
-    In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
-    cross-validation, the model is fit again using the entire training set.
-
-    To avoid unnecessary memory duplication the `X` argument of the `fit` method
-    should be directly passed as a Fortran-contiguous numpy array.
-
+    In `fit`, once the best parameters `l1_ratio` and `alpha` are found
+    through cross-validation, the model is fit again using the entire
+    training set.
+    
+    To avoid unnecessary memory duplication the `X` argument of the `fit`
+    method should be directly passed as a Fortran-contiguous numpy array.
+    
     The parameter `l1_ratio` corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
     More specifically, the optimization objective is::
@@ -2743,16 +2743,16 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     MultiTaskElasticNet
     ElasticNetCV
     MultiTaskLassoCV
-
+    
     Notes
-    -----
+    -----    
     The algorithm used to fit the model is coordinate descent.
     
     In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
     cross-validation, the model is fit again using the entire training set.
-
+    
     To avoid unnecessary memory duplication the `X` and `y` arguments of the
-    `fit` method should be directly passed as Fortran-contiguous numpy arrays.    
+    `fit` method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     path = staticmethod(enet_path)
@@ -2974,8 +2974,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
+
+    To avoid unnecessary memory duplication the `X` and `y` arguments of the
+    `fit` method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     path = staticmethod(lasso_path)
