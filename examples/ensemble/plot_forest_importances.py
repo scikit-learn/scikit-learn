@@ -9,6 +9,7 @@ features on an artificial classification task.
 We show two strategies to estimate the feature importances: (i) the
 impurity-based feature importances and (ii) the permutation feature
 importances on out-of-bag (OOB) samples.
+
 .. warning::
     Impurity-based feature importances can be misleading for high cardinality
     features (many unique values). Check the documentation of the
