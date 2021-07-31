@@ -156,6 +156,32 @@ def test_calibration_cv_splitter(data, ensemble):
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_sample_weight(data, method, ensemble):
+    n_samples = 100
+    X, y = data
+
+    sample_weight = np.random.RandomState(seed=42).uniform(size=len(y))
+    X_train, y_train, sw_train = X[:n_samples], y[:n_samples], sample_weight[:n_samples]
+    X_test = X[n_samples:]
+
+    base_estimator = LinearSVC(random_state=42)
+    calibrated_clf = CalibratedClassifierCV(
+        base_estimator, method=method, ensemble=ensemble
+    )
+    calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
+    probs_with_sw = calibrated_clf.predict_proba(X_test)
+
+    # As the weights are used for the calibration, they should still yield
+    # different predictions
+    calibrated_clf.fit(X_train, y_train)
+    probs_without_sw = calibrated_clf.predict_proba(X_test)
+
+    diff = np.linalg.norm(probs_with_sw - probs_without_sw)
+    assert diff > 0.1
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("ensemble", [True, False])
+def test_sample_weight_class_imbalanced(data, method, ensemble):
     X, y = make_blobs((100, 1000), center_box=(-1, 1), random_state=42)
 
     # Compute weigths to compensate the unbalance of the dataset
