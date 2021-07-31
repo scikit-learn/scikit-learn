@@ -2745,7 +2745,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     MultiTaskLassoCV
     
     Notes
-    -----    
+    -----
     The algorithm used to fit the model is coordinate descent.
     
     In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
