@@ -91,10 +91,11 @@ class _AvailableIfDescriptor:
     descriptors.
     """
 
-    def __init__(self, fn, check, attribute_name):
+    def __init__(self, fn, check, attribute_name, err_msg_template):
         self.fn = fn
         self.check = check
         self.attribute_name = attribute_name
+        self.err_msg_template = err_msg_template
 
         # update the docstring of the descriptor
         update_wrapper(self, fn)
@@ -105,9 +106,10 @@ class _AvailableIfDescriptor:
             # this is to allow access to the docstrings.
             if not self.check(obj):
                 raise AttributeError(
-                    f"This {repr(owner.__name__)}"
-                    " has no attribute"
-                    f" {repr(self.attribute_name)}"
+                    self.err_msg_template.format(
+                        owner=repr(owner.__name__),
+                        attribute_name=repr(self.attribute_name),
+                    )
                 )
 
             # lambda, but not partial, allows help() to work with update_wrapper
@@ -121,7 +123,7 @@ class _AvailableIfDescriptor:
         return out
 
 
-def available_if(check):
+def available_if(check, err_msg_template=None):
     """An attribute that is available only if check returns a truthy value
 
     Parameters
@@ -130,6 +132,15 @@ def available_if(check):
         When passed the object with the decorated method, this should return
         a truthy value if the attribute is available, and either return False
         or raise an AttributeError if not available.
+    err_msg_template : str
+        An error message template for an AttributeError raised if `check` returns
+        a falsy value. `err_msg_template` can have the following placeholders for
+        formatting:
+
+        - owner: The name of the class that owns the decorated method.
+        - attribute_name: The name of the decorated method.
+
+        If not passed, defaults to `"This {owner} has no attribute {attribute_name}"`.
 
     Examples
     --------
@@ -141,20 +152,33 @@ def available_if(check):
     ...    def _x_is_even(self):
     ...        return self.x % 2 == 0
     ...
-    ...    @available_if(_x_is_even)
+    ...    @available_if(
+    ...        _x_is_even,
+    ...        "{attribute_name} is only available when self.x is an even number",
+    ...    )
     ...    def say_hello(self):
     ...        print("Hello")
     ...
     >>> obj = HelloIfEven(1)
     >>> hasattr(obj, "say_hello")
     False
+    >>> obj.say_hello()
+    ...
+    AttributeError: say_hello is only available when self.x is an even number
     >>> obj.x = 2
     >>> hasattr(obj, "say_hello")
     True
     >>> obj.say_hello()
     Hello
     """
-    return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
+    if err_msg_template is None:
+        err_msg_template = "This {owner} has no attribute {attribute_name}"
+    return lambda fn: _AvailableIfDescriptor(
+        fn,
+        check,
+        attribute_name=fn.__name__,
+        err_msg_template=err_msg_template,
+    )
 
 
 class _IffHasAttrDescriptor(_AvailableIfDescriptor):
