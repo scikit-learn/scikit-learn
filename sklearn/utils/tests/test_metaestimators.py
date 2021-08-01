@@ -1,3 +1,5 @@
+import pytest
+
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.metaestimators import available_if
 
@@ -88,6 +90,17 @@ class AvailableParameterEstimator:
         """This is a mock available_if function"""
         pass
 
+    @available_if(
+        lambda est: est.available,
+        err_msg_template=(
+            "{attribute_name} is not available for this {owner} because self.available"
+            " is False"
+        ),
+    )
+    def available_func_helpful(self):
+        """This is a mock available_if function with a helpful error message"""
+        pass
+
 
 def test_available_if_docstring():
     assert "This is a mock available_if function" in str(
@@ -104,6 +117,22 @@ def test_available_if_docstring():
 def test_available_if():
     assert hasattr(AvailableParameterEstimator(), "available_func")
     assert not hasattr(AvailableParameterEstimator(available=False), "available_func")
+
+    est = AvailableParameterEstimator(available=False)
+    with pytest.raises(
+        AttributeError,
+        match="This 'AvailableParameterEstimator' has no attribute 'available_func'",
+    ):
+        est.available_func
+
+    with pytest.raises(
+        AttributeError,
+        match=(
+            "'available_func_helpful' is not available for this"
+            " 'AvailableParameterEstimator' because self.available is False"
+        ),
+    ):
+        est.available_func_helpful
 
     # This is a non regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/20614
