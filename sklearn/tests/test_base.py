@@ -656,13 +656,10 @@ def test_feature_names_in():
     with pytest.warns(UserWarning, match=msg):
         trans.transform(df)
 
-    # fit on dataframe with invalid feature names warns on fit
+    # fit on dataframe with invalid feature names works
     df_int_names = pd.DataFrame(X_np)
     trans = NoOpTransformer()
-
-    msg = "Feature name support requires all feature names to be strings"
-    with pytest.warns(FutureWarning, match=msg):
-        trans.fit(df_int_names)
+    trans.fit(df_int_names)
 
     # fit on dataframe with invalid feature names -> do not warn on transform
     Xs = [X_np, df_int_names]

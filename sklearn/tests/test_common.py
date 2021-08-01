@@ -342,4 +342,7 @@ column_name_estimators = [
 )
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
-    check_dataframe_column_names_consistency(estimator.__class__.__name__, estimator)
+    with ignore_warnings(category=(FutureWarning)):
+        check_dataframe_column_names_consistency(
+            estimator.__class__.__name__, estimator
+        )
