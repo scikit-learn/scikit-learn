@@ -670,7 +670,7 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Efficiency| `preprocessing.StandardScaler` is faster and more memory
-  efficient. :pr:`_____` by `Thomas Fan`_.
+  efficient. :pr:`20652` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
