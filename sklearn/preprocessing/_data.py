@@ -3002,27 +3002,29 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         if not self.copy and not force_transform:  # if call from fit()
             X = X.copy()  # force copy so that fit does not change X inplace
 
+        optim_function = {
+            "box-cox": self._box_cox_optimize,
+            "yeo-johnson": self._yeo_johnson_optimize,
+        }[self.method]
+        pathological_columns = [] if self.method == "yeo-johnson" else None
+        lambdas = []
         with np.errstate(invalid="ignore"):  # hide NaN warnings
-            if self.method == "box-cox":
-                self.lambdas_ = np.array([self._box_cox_optimize(col) for col in X.T])
-            elif self.method == "yeo-johnson":
-                pathological_columns = []
-                self.lambdas_ = []
-                for i, col in enumerate(X.T):
-                    lmbda, min_ll = self._yeo_johnson_optimize(col)
-                    self.lambdas_.append(lmbda)
-                    if np.isinf(min_ll):
-                        pathological_columns.append(i)
+            for i, col in enumerate(X.T):
+                lmbda, min_ll = optim_function(col)
+                lambdas.append(lmbda)
+                if pathological_columns is not None and np.isinf(min_ll):
+                    pathological_columns.append(i)
 
-                if pathological_columns:
-                    warnings.warn(
-                        f"Columns {pathological_columns} have low variance in the "
-                        "transformed data causing the search for an optimal lambda to "
-                        "fail. You can try using StandardScalar(with_std=True) to "
-                        "center your data first. For more info see: "
-                        "https://github.com/scikit-learn/scikit-learn/issues/14959#issuecomment-602090088",  # noqa
-                        UserWarning,
-                    )
+        self.lambdas_ = np.array(lambdas)
+        if pathological_columns:
+            warnings.warn(
+                f"Columns {pathological_columns} have low variance in the "
+                "transformed data causing the search for an optimal lambda to "
+                "fail. You can try using StandardScalar(with_std=True) to "
+                "center your data first. For more info see: "
+                "https://github.com/scikit-learn/scikit-learn/issues/14959#issuecomment-602090088",  # noqa
+                UserWarning,
+            )
 
         if self.standardize or force_transform:
             transform_function = {
@@ -3182,7 +3184,9 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         # get rid of them
         _, lmbda = stats.boxcox(x[~np.isnan(x)], lmbda=None)
 
-        return lmbda
+        # Second argument is unused and is to be consistent with
+        # _yeo_johnson_optimize
+        return lmbda, 0
 
     def _yeo_johnson_optimize(self, x):
         """Find and return optimal lambda parameter of the Yeo-Johnson
