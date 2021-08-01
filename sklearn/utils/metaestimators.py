@@ -91,11 +91,15 @@ class _AvailableIfDescriptor:
     descriptors.
     """
 
-    def __init__(self, fn, check, attribute_name, err_msg_template):
+    def __init__(self, fn, check, attribute_name, err_msg_template=None):
         self.fn = fn
         self.check = check
         self.attribute_name = attribute_name
-        self.err_msg_template = err_msg_template
+        self.err_msg_template = (
+            "This {owner} has no attribute {attribute_name}"
+            if err_msg_template is None
+            else err_msg_template
+        )
 
         # update the docstring of the descriptor
         update_wrapper(self, fn)
@@ -171,8 +175,6 @@ def available_if(check, err_msg_template=None):
     >>> obj.say_hello()
     Hello
     """
-    if err_msg_template is None:
-        err_msg_template = "This {owner} has no attribute {attribute_name}"
     return lambda fn: _AvailableIfDescriptor(
         fn,
         check,
