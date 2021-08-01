@@ -669,6 +669,10 @@ Changelog
   `n_features_in_` and will be removed in 1.2. :pr:`20240` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
+  raises a warning when it is unable to find a lamda due to low variance
+  in the transformed data. :pr:`20653` by `Thomas Fan`_.
+
 :mod:`sklearn.tree`
 ...................
 
