@@ -205,6 +205,6 @@ workflows:
                 - main
     jobs:
       - pypy3
-  arm64:
+  linux-arm64:
     jobs:
-      - arm64
+      - linux-arm64
