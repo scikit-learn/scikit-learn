@@ -158,7 +158,10 @@ def available_if(check, err_msg_template=None):
     ...
     ...    @available_if(
     ...        _x_is_even,
-    ...        "{attribute_name} is only available when self.x is an even number",
+    ...        err_msg_template=(
+    ...            "{attribute_name} is not available for this {owner} because"
+    ...            " self.x is not an even number"
+    ...        ),
     ...    )
     ...    def say_hello(self):
     ...        print("Hello")
@@ -167,8 +170,9 @@ def available_if(check, err_msg_template=None):
     >>> hasattr(obj, "say_hello")
     False
     >>> obj.say_hello()
-    ...
-    AttributeError: say_hello is only available when self.x is an even number
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'say_hello' is not available for this 'HelloIfEven' because self.x is not an even number
     >>> obj.x = 2
     >>> hasattr(obj, "say_hello")
     True
