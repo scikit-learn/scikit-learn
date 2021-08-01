@@ -2642,3 +2642,20 @@ def test_standard_scaler_raise_error_for_1d_input():
     err_msg = "Expected 2D array, got 1D array instead"
     with pytest.raises(ValueError, match=err_msg):
         scaler.inverse_transform(X_2d[:, 0])
+
+
+def test_power_transformer_warns_for_pathological_data():
+    """Check that PowerTransformer warns for pathological data. Non-regression
+    test for #14959."""
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X0 = np.zeros(n_samples)  # constant
+    X1 = rng.randn(n_samples)  # normal data
+    X2 = rng.randn(n_samples) / 100 + 10  # low variance large offset
+
+    X = np.stack([X0, X1, X2], axis=1)
+
+    pt = PowerTransformer(method="yeo-johnson")
+    msg = r"Columns \[0, 2\] have low variance in the transformed data"
+    with pytest.warns(UserWarning, match=msg):
+        pt.fit(X)

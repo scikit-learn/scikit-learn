@@ -3002,12 +3002,27 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         if not self.copy and not force_transform:  # if call from fit()
             X = X.copy()  # force copy so that fit does not change X inplace
 
-        optim_function = {
-            "box-cox": self._box_cox_optimize,
-            "yeo-johnson": self._yeo_johnson_optimize,
-        }[self.method]
         with np.errstate(invalid="ignore"):  # hide NaN warnings
-            self.lambdas_ = np.array([optim_function(col) for col in X.T])
+            if self.method == "box-cox":
+                self.lambdas_ = np.array([self._box_cox_optimize(col) for col in X.T])
+            elif self.method == "yeo-johnson":
+                pathological_columns = []
+                self.lambdas_ = []
+                for i, col in enumerate(X.T):
+                    lmbda, min_ll = self._yeo_johnson_optimize(col)
+                    self.lambdas_.append(lmbda)
+                    if np.isinf(min_ll):
+                        pathological_columns.append(i)
+
+                if pathological_columns:
+                    warnings.warn(
+                        f"Columns {pathological_columns} have low variance in the "
+                        "transformed data causing the search for an optimal lambda to "
+                        "fail. You can try using StandardScalar(with_std=True) to "
+                        "center your data first. For more info see: "
+                        "https://github.com/scikit-learn/scikit-learn/issues/14959#issuecomment-602090088",  # noqa
+                        UserWarning,
+                    )
 
         if self.standardize or force_transform:
             transform_function = {
@@ -3181,6 +3196,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             function of lambda."""
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
+            if np.ptp(x_trans) == 0:
+                return -np.inf
 
             loglike = -n_samples / 2 * np.log(x_trans.var())
             loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
@@ -3191,7 +3208,10 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         # get rid of them
         x = x[~np.isnan(x)]
         # choosing bracket -2, 2 like for boxcox
-        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+        min_lmbda, min_ll, _, _ = optimize.brent(
+            _neg_log_likelihood, brack=(-2, 2), full_output=True
+        )
+        return min_lmbda, min_ll
 
     def _check_input(
         self, X, in_fit, check_positive=False, check_shape=False, check_method=False
