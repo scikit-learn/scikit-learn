@@ -1305,14 +1305,8 @@ def test_init_param():
         gmm.fit(X)
         default_means_init[init] = gmm.means_
 
-    for i_mean in default_means_init:
-        for j_mean in default_means_init:
-            if i_mean == j_mean:
-                pass
-            else:
-                assert np.any(
-                    np.not_equal(default_means_init[i_mean], default_means_init[j_mean])
-                )
+    for i_mean, j_mean in itertools.combinations(default_means_init.values(), r=2):
+        assert np.any(np.not_equal(i_mean, j_mean))
 
     # Check that max_iter=0 returns initialisation as expected
     # Pick arbitrary initial means and check equal to max_iter=0
