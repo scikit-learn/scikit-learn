@@ -1,3 +1,5 @@
+import pytest
+
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.metaestimators import available_if
 
@@ -105,9 +107,18 @@ def test_available_if():
     assert hasattr(AvailableParameterEstimator(), "available_func")
     assert not hasattr(AvailableParameterEstimator(available=False), "available_func")
 
+
+def test_available_if_unbound_method():
     # This is a non regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/20614
     # to make sure that decorated functions can be used as an unbound method,
     # for instance when monkeypatching.
     est = AvailableParameterEstimator()
     AvailableParameterEstimator.available_func(est)
+
+    est = AvailableParameterEstimator(available=False)
+    with pytest.raises(
+        AttributeError,
+        match="This 'AvailableParameterEstimator' has no attribute 'available_func'",
+    ):
+        AvailableParameterEstimator.available_func(est)
