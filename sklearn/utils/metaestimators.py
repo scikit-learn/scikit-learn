@@ -136,9 +136,10 @@ def available_if(check, *, err_msg=None):
 
     err_msg : str, default=None
         An error message for an `AttributeError` raised if `check` returns `False`.
-        If `None` (default), it defaults to `"This {owner} has no attribute {attribute_name}"`
-        where `owner` represents the name of the class that owns the decorated method
-        and `attribute_name` represents the name of the decorated method.
+        If `None` (default), it defaults to
+        `"This {owner} has no attribute {attribute_name}"` where `owner` represents
+        the name of the class that owns the decorated method and `attribute_name`
+        represents the name of the decorated method.
 
     Examples
     --------
