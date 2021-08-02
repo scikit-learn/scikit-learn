@@ -92,13 +92,10 @@ class AvailableParameterEstimator:
 
     @available_if(
         lambda est: est.available,
-        err_msg_template=(
-            "{attribute_name} is not available for this {owner} because self.available"
-            " is False"
-        ),
+        err_msg="self.available must be True",
     )
-    def available_func_helpful(self):
-        """This is a mock available_if function with a helpful error message"""
+    def available_func_err_msg(self):
+        """This is a mock available_if function to test err_msg"""
         pass
 
 
@@ -125,14 +122,8 @@ def test_available_if():
     ):
         est.available_func
 
-    with pytest.raises(
-        AttributeError,
-        match=(
-            "'available_func_helpful' is not available for this"
-            " 'AvailableParameterEstimator' because self.available is False"
-        ),
-    ):
-        est.available_func_helpful
+    with pytest.raises(AttributeError, match="self.available must be True"):
+        est.available_func_err_msg
 
     # This is a non regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/20614

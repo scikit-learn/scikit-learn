@@ -91,15 +91,11 @@ class _AvailableIfDescriptor:
     descriptors.
     """
 
-    def __init__(self, fn, check, attribute_name, err_msg_template=None):
+    def __init__(self, fn, check, attribute_name, err_msg=None):
         self.fn = fn
         self.check = check
         self.attribute_name = attribute_name
-        self.err_msg_template = (
-            "This {owner} has no attribute {attribute_name}"
-            if err_msg_template is None
-            else err_msg_template
-        )
+        self.err_msg = err_msg
 
         # update the docstring of the descriptor
         update_wrapper(self, fn)
@@ -109,12 +105,13 @@ class _AvailableIfDescriptor:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
             if not self.check(obj):
-                raise AttributeError(
-                    self.err_msg_template.format(
-                        owner=repr(owner.__name__),
-                        attribute_name=repr(self.attribute_name),
-                    )
+                msg = (
+                    f"This {repr(owner.__name__)} has no attribute"
+                    f" {repr(self.attribute_name)}"
+                    if self.err_msg is None
+                    else self.err_msg
                 )
+                raise AttributeError(msg)
 
             # lambda, but not partial, allows help() to work with update_wrapper
             out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
@@ -127,7 +124,7 @@ class _AvailableIfDescriptor:
         return out
 
 
-def available_if(check, err_msg_template=None):
+def available_if(check, *, err_msg=None):
     """An attribute that is available only if check returns a truthy value
 
     Parameters
@@ -136,15 +133,12 @@ def available_if(check, err_msg_template=None):
         When passed the object with the decorated method, this should return
         a truthy value if the attribute is available, and either return False
         or raise an AttributeError if not available.
-    err_msg_template : str
-        An error message template for an AttributeError raised if `check` returns
-        a falsy value. `err_msg_template` can have the following placeholders for
-        formatting:
 
-        - owner: The name of the class that owns the decorated method.
-        - attribute_name: The name of the decorated method.
-
-        If not passed, defaults to `"This {owner} has no attribute {attribute_name}"`.
+    err_msg : str, default=None
+        An error message for an AttributeError raised if `check` returns a falsy value.
+        If not passed, defaults to `"This {owner} has no attribute {attribute_name}"`
+        where `owner` represents the name of the class that owns the decorated method
+        and `attribute_name` represents the name of the decorated method.
 
     Examples
     --------
@@ -158,7 +152,7 @@ def available_if(check, err_msg_template=None):
     ...
     ...    @available_if(
     ...        _x_is_even,
-    ...        err_msg_template="{attribute_name} is not available for this {owner}",
+    ...        err_msg="self.x must be an even number",
     ...    )
     ...    def say_hello(self):
     ...        print("Hello")
@@ -169,7 +163,7 @@ def available_if(check, err_msg_template=None):
     >>> obj.say_hello()
     Traceback (most recent call last):
         ...
-    AttributeError: 'say_hello' is not available for this 'HelloIfEven'
+    AttributeError: self.x must be an even number
     >>> obj.x = 2
     >>> hasattr(obj, "say_hello")
     True
@@ -180,7 +174,7 @@ def available_if(check, err_msg_template=None):
         fn,
         check,
         attribute_name=fn.__name__,
-        err_msg_template=err_msg_template,
+        err_msg=err_msg,
     )
 
 
