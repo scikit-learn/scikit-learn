@@ -51,7 +51,7 @@ from sklearn.utils.validation import (
     FLOAT_DTYPES,
 )
 from sklearn.utils.validation import _check_fit_params
-
+from sklearn.base import BaseEstimator
 import sklearn
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
@@ -748,6 +748,20 @@ def test_check_symmetric():
             assert_array_equal(output.toarray(), arr_sym)
         else:
             assert_array_equal(output, arr_sym)
+
+
+def test_check_is_fitted_with_is_fitted():
+    class Estimator(BaseEstimator):
+        def fit(self, **kwargs):
+            self._is_fitted = True
+            return self
+
+        def __is_fitted__(self):
+            return hasattr(self, "_is_fitted") and self._is_fitted
+
+    with pytest.raises(NotFittedError):
+        check_is_fitted(Estimator())
+    check_is_fitted(Estimator().fit())
 
 
 def test_check_is_fitted():
