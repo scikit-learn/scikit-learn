@@ -460,6 +460,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         if self.criterion in ("absolute_error", "mae"):
             # TODO: This should raise an error from 1.1
@@ -1319,8 +1320,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
-        -------
+        Yields
+        ------
         score : generator of ndarray of shape (n_samples, k)
             The decision function of the input samples, which corresponds to
             the raw values predicted from the trees of the ensemble . The
@@ -1362,7 +1363,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
+        Yields
         -------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
@@ -1381,16 +1382,16 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Raises
-        ------
-        AttributeError
-            If the ``loss`` does not support probabilities.
-
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+        Raises
+        ------
+        AttributeError
+            If the ``loss`` does not support probabilities.
         """
         raw_predictions = self.decision_function(X)
         try:
@@ -1412,16 +1413,16 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Raises
-        ------
-        AttributeError
-            If the ``loss`` does not support probabilities.
-
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+        Raises
+        ------
+        AttributeError
+            If the ``loss`` does not support probabilities.
         """
         proba = self.predict_proba(X)
         return np.log(proba)
@@ -1439,8 +1440,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
-        -------
+        Yields
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
         """
