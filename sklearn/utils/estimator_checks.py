@@ -3317,8 +3317,8 @@ def check_fit_idempotent(name, estimator_orig):
 
 
 def check_fit_check_is_fitted(name, estimator_orig):
-    # Make sure that n_features_in_ attribute doesn't exist until fit is
-    # called, and that its value is correct.
+    # Make sure that estimator doesn't pass check_is_fitted before calling fit
+    # and that passes check_is_fitted once it's fit.
 
     rng = np.random.RandomState(42)
 
