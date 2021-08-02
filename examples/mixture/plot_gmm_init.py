@@ -76,7 +76,7 @@ plt.subplots_adjust(bottom=.1, top=0.9, hspace=.15, wspace=.05,
                     left=.05, right=.95)
 
 for n, method in enumerate(methods):
-    r = np.random.RandomState(seed)
+    r = np.random.RandomState(seed=1234)
     plt.subplot(2, len(methods) // 2, n+1)
 
     start = timer()
