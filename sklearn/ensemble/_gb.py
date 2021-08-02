@@ -1741,6 +1741,16 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
 
+    References
+    ----------
+    J. Friedman, Greedy Function Approximation: A Gradient Boosting
+    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
+
+    J. Friedman, Stochastic Gradient Boosting, 1999
+
+    T. Hastie, R. Tibshirani and J. Friedman.
+    Elements of Statistical Learning Ed. 2, Springer, 2009.
+
     Examples
     --------
     >>> from sklearn.datasets import make_regression
@@ -1756,16 +1766,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     array([-61...])
     >>> reg.score(X_test, y_test)
     0.4...
-
-    References
-    ----------
-    J. Friedman, Greedy Function Approximation: A Gradient Boosting
-    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
-
-    J. Friedman, Stochastic Gradient Boosting, 1999
-
-    T. Hastie, R. Tibshirani and J. Friedman.
-    Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
     # TODO: remove "ls" in verion 1.2
@@ -1877,8 +1877,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
-        -------
+        Yields
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
         """
