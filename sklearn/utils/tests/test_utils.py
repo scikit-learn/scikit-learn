@@ -5,7 +5,6 @@ import string
 import timeit
 
 import pytest
-import os
 import sklearn
 import pathlib
 import numpy as np
