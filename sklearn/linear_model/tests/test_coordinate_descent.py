@@ -1111,8 +1111,8 @@ def test_sparse_dense_descent_paths():
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
     csr = sparse.csr_matrix(X)
     for path in [enet_path, lasso_path]:
-        _, coefs, _ = path(X, y, fit_intercept=False)
-        _, sparse_coefs, _ = path(csr, y, fit_intercept=False)
+        _, coefs, _ = path(X, y)
+        _, sparse_coefs, _ = path(csr, y)
         assert_array_almost_equal(coefs, sparse_coefs)
 
 
@@ -1520,8 +1520,7 @@ def test_enet_cv_sample_weight_correctness(fit_intercept):
     assert alphas[0] < reg.alpha_ < alphas[-1]
     assert reg_sw.alpha_ == reg.alpha_
     assert_allclose(reg_sw.coef_, reg.coef_)
-    if fit_intercept is not None:
-        assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
+    assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
 
 
 @pytest.mark.parametrize("sample_weight", [False, True])

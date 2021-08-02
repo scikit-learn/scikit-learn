@@ -503,8 +503,6 @@ def enet_path(
     random_state = params.pop("random_state", None)
     selection = params.pop("selection", "cyclic")
 
-    params.pop("fit_intercept", None)
-    params.pop("normalize", None)
     if len(params) > 0:
         raise ValueError("Unexpected parameters in params", params.keys())
 
@@ -1025,7 +1023,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
-        # FIXME: 'normalize' to be removed in 1.2
         for k in range(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
@@ -1040,8 +1037,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 alphas=[alpha],
                 precompute=precompute,
                 Xy=this_Xy,
-                fit_intercept=False,
-                normalize=False,
                 copy_X=True,
                 verbose=False,
                 tol=self.tol,
@@ -1276,6 +1271,8 @@ def _path_residuals(
     sample_weight,
     train,
     test,
+    normalize,
+    fit_intercept,
     path,
     path_params,
     alphas=None,
@@ -1356,9 +1353,6 @@ def _path_residuals(
                 # fancy indexing should create a writable copy but it doesn't
                 # for read-only memmaps (cf. numpy#14132).
                 array.setflags(write=True)
-
-    fit_intercept = path_params["fit_intercept"]
-    normalize = path_params["normalize"]
 
     if y.ndim == 1:
         precompute = path_params["precompute"]
@@ -1586,7 +1580,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         path_params = self.get_params()
 
         # FIXME: 'normalize' to be removed in 1.2
-        path_params["normalize"] = _normalize
+        # path_params["normalize"] = _normalize
+        # Pop `intercept` and `normalize` that are not parameter of the path
+        # function
+        path_params.pop("normalize", None)
+        path_params.pop("fit_intercept", None)
 
         if "l1_ratio" in path_params:
             l1_ratios = np.atleast_1d(path_params["l1_ratio"])
@@ -1644,6 +1642,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 sample_weight,
                 train,
                 test,
+                _normalize,
+                self.fit_intercept,
                 self.path,
                 path_params,
                 alphas=this_alphas,
