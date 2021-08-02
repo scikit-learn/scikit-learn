@@ -1321,7 +1321,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             to a sparse ``csr_matrix``.
 
         Yields
-        -------
+        ------
         score : generator of ndarray of shape (n_samples, k)
             The decision function of the input samples, which corresponds to
             the raw values predicted from the trees of the ensemble . The
@@ -1441,7 +1441,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             to a sparse ``csr_matrix``.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
         """
