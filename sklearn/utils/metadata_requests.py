@@ -107,15 +107,15 @@ class MethodMetadataRequest:
         allow_aliasing : bool, default=True
             If False, alias should be the same as prop if it's a string.
 
-        overwrite : bool or str, default=False
+        overwrite : bool, list, or str, default=False
 
             - True: ``alias`` replaces the existing routing.
 
             - False: a ``ValueError`` is raised if the given value conflicts
               with an existing one.
 
-            - "on-default": only overwrite the alias is it is
-              RequestType.ERROR_IF_PASSED
+            - "not-requested": only overwrite the alias if it is
+              ``RequestType.ERROR_IF_PASSED`` or ``RequestType.UNREQUESTED``
 
             - "ignore": ignore the requested metadata if it already exists.
 
@@ -123,9 +123,9 @@ class MethodMetadataRequest:
             If provided, all props should be the same as this value. It used to
             handle default values.
         """
-        if overwrite not in {True, False, "on-default", "ignore"}:
+        if overwrite not in {True, False, "not-requested", "ignore"}:
             raise ValueError(
-                "overwrite can only be one of {True, False, 'on-default', 'ignore'}."
+                "overwrite can only be one of {True, False, 'not-requested', 'ignore'}."
             )
         if expected_metadata is not None and expected_metadata != prop:
             raise ValueError(
@@ -157,9 +157,10 @@ class MethodMetadataRequest:
         elif prop in self.requests and overwrite == "ignore":
             pass
         elif (
-            overwrite == "on-default"
+            overwrite == "not-requested"
             and not isinstance(self.requests[prop], str)
-            and RequestType(self.requests[prop]) == RequestType.ERROR_IF_PASSED
+            and RequestType(self.requests[prop])
+            in {RequestType.ERROR_IF_PASSED, RequestType.UNREQUESTED}
         ):
             self.requests[prop] = alias
         elif self.requests[prop] != alias:
@@ -181,11 +182,15 @@ class MethodMetadataRequest:
             The other object to be merged with this instance.
 
         overwrite : bool or str, default=False
+
             - True: ``alias`` replaces the existing routing.
+
             - False: a ``ValueError`` is raised if the given value conflicts
               with an existing one.
-            - "on-default": only overwrite the alias is it is
-              RequestType.ERROR_IF_PASSED
+
+            - "not-requested": only overwrite the alias if it is
+              ``RequestType.ERROR_IF_PASSED`` or ``RequestType.UNREQUESTED``
+
             - "ignore": ignore the requested metadata if it already exists.
 
         expected_metadata : str, default=None
@@ -445,11 +450,15 @@ class MetadataRequest:
             the form ``{"destination_method": "source_method"}``.
 
         overwrite : bool or str, default=False
+
             - True: ``alias`` replaces the existing routing.
+
             - False: a ``ValueError`` is raised if the given value conflicts
               with an existing one.
-            - "on-default": only overwrite the alias is it is
-              RequestType.ERROR_IF_PASSED
+
+            - "not-requested": only overwrite the alias if it is
+              ``RequestType.ERROR_IF_PASSED`` or ``RequestType.UNREQUESTED``
+
             - "ignore": ignore the requested metadata if it already exists.
 
         expected_metadata : str, default=None
@@ -558,11 +567,15 @@ class MetadataRouter:
             the form ``{"destination_method": "source_method"}``.
 
         overwrite : bool or str, default=False
+
             - True: ``alias`` replaces the existing routing.
+
             - False: a ``ValueError`` is raised if the given value conflicts
               with an existing one.
-            - "on-default": only overwrite the alias if it is
-              RequestType.ERROR_IF_PASSED
+
+            - "not-requested": only overwrite the alias if it is
+              ``RequestType.ERROR_IF_PASSED`` or ``RequestType.UNREQUESTED``
+
             - "ignore": ignore the requested metadata if it already exists.
 
         mask : bool, default=False

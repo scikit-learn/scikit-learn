@@ -174,6 +174,9 @@ def test_pipeline():
     assert_request_is_empty(trs_request, exclude={"fit"})
 
     clf = make_pipeline(trs, MyEst())
+    clf.get_metadata_request()
+
+    clf = make_pipeline(MyTrs().fit_requests(new_param="my_sw"), MyEst())
     pipe_request = metadata_request_factory(clf)
     assert pipe_request.fit.requests == {
         "my_sw": RequestType.REQUESTED,
@@ -191,7 +194,7 @@ def test_pipeline():
     ):
         clf.fit(X, y, sample_weight=sw, brand=brand, my_sw=my_data)
 
-    clf.named_steps["mytrs"].fit_requests(brand=True)
+    clf.named_steps["mytrs"].fit_requests(brand=True, sample_weight=False)
     clf.fit(X, y, sample_weight=sw, brand=brand, my_sw=my_data)
 
     # TODO: assert that trs did *not* receive sample_weight, but did receive
@@ -680,7 +683,7 @@ def test_method_metadata_request():
         mmr.add_request(prop="foo", alias=True)
     with pytest.raises(ValueError, match="foo is already requested"):
         mmr.add_request(prop="foo", alias=True)
-    mmr.add_request(prop="foo", alias=True, overwrite="on-default")
+    mmr.add_request(prop="foo", alias=True, overwrite="not-requested")
     assert mmr.requests == {"foo": RequestType.REQUESTED}
 
     with pytest.raises(ValueError, match="Can only add another MethodMetadataRequest"):

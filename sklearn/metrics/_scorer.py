@@ -164,7 +164,7 @@ class _MultimetricScorer:
             *self._scorers.values(),
             mapping={"score": "score"},
             mask=True,
-            overwrite="on-default",
+            overwrite="not-requested",
         )
         return router.get_metadata_request()
 

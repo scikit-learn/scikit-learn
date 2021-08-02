@@ -86,13 +86,13 @@ class CVMetadataRequester:
                 self.estimator,
                 mapping={m: m for m in METHODS if m != "score"},
                 mask=True,
-                overwrite="on-default",
+                overwrite="not-requested",
             )
             .add(
                 check_cv(self.cv),
                 mapping={"fit": "split"},
                 mask=True,
-                overwrite="on-default",
+                overwrite="not-requested",
             )
         )
         return router.get_metadata_request()
