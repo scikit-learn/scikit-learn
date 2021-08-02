@@ -9,7 +9,7 @@ import numpy as np
 from sklearn import linear_model
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
 
@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     for i in range(n_iter):
 
-        print('Iteration %s of %s' % (i, n_iter))
+        print("Iteration %s of %s" % (i, n_iter))
 
         n_samples, n_features = 10 * i + 3, 10 * i + 3
 
@@ -31,7 +31,7 @@ if __name__ == '__main__':
         Y = np.random.randn(n_samples)
 
         start = datetime.now()
-        ridge = linear_model.Ridge(alpha=1.)
+        ridge = linear_model.Ridge(alpha=1.0)
         ridge.fit(X, Y)
         time_ridge[i] = (datetime.now() - start).total_seconds()
 
@@ -45,13 +45,13 @@ if __name__ == '__main__':
         lasso.fit(X, Y)
         time_lasso[i] = (datetime.now() - start).total_seconds()
 
-    plt.figure('scikit-learn GLM benchmark results')
-    plt.xlabel('Dimensions')
-    plt.ylabel('Time (s)')
-    plt.plot(dimensions, time_ridge, color='r')
-    plt.plot(dimensions, time_ols, color='g')
-    plt.plot(dimensions, time_lasso, color='b')
+    plt.figure("scikit-learn GLM benchmark results")
+    plt.xlabel("Dimensions")
+    plt.ylabel("Time (s)")
+    plt.plot(dimensions, time_ridge, color="r")
+    plt.plot(dimensions, time_ols, color="g")
+    plt.plot(dimensions, time_lasso, color="b")
 
-    plt.legend(['Ridge', 'OLS', 'LassoLars'], loc='upper left')
-    plt.axis('tight')
+    plt.legend(["Ridge", "OLS", "LassoLars"], loc="upper left")
+    plt.axis("tight")
     plt.show()
