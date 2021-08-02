@@ -135,20 +135,21 @@ parameters to maximize the likelihood of the data given those
 assignments. Repeating this process is guaranteed to always converge
 to a local optimum.
 
-Choice of Initialization Method
--------------------------------
+Choice of the Initialization Method
+-----------------------------------
 
 There is a choice of four initialization methods (as well as inputting user defined
-initial means) to generate the initial centers for the model components. The default
-is to apply a traditional kmeans clustering algorithm. This can be computationally
-expensive so other initialization options provided are
+initial means) to generate the initial centers for the model components: 
+
+k-means (default)
+  This applies a traditional k-means clustering algorithm. This can be computationally expensive compared to other initialization methods.
 
 k-means++
-  This uses the initialization method of kmeans clustering. k-means++
-  will pick the first center at random from the data. Subsequent centers will be
+  This uses the initialization method of k-means clustering: k-means++.
+  This will pick the first center at random from the data. Subsequent centers will be
   chosen from a weighted distribution of the data favouring points further away from
-  existing centers. k-means++ is the default initialization for kmeans so will be
-  quicker than running a full kmeans but can still take a significant amount of
+  existing centers. k-means++ is the default initialization for k-means so will be
+  quicker than running a full k-means but can still take a significant amount of
   time for large data sets with many components.
 
 rand_data
