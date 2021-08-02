@@ -79,9 +79,11 @@ def test_fastica_simple(add_noise, seed):
     whitening = ["arbitrary-variance", "unitary-variance", False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
-            k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo, random_state=rng)
+            k_, mixing_, s_ = fastica(
+                m.T, fun=nl, whiten=whiten, algorithm=algo, random_state=rng
+            )
             with pytest.raises(ValueError):
-                fastica(m.T, fun=np.tanh, algorithm=algo)
+                fastica(m.T, fun=np.tanh, whiten=whiten, algorithm=algo)
         else:
             pca = PCA(n_components=2, whiten=True, random_state=rng)
             X = pca.fit_transform(m.T)
@@ -287,7 +289,9 @@ def test_fastica_errors():
     with pytest.raises(ValueError, match="max_iter should be greater than 1"):
         FastICA(max_iter=0)
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
-        fastica(X, fun_args={"alpha": 0})
+        # TODO: don't specify whiten value after 1.0
+        # Specifying it currently avoids a FutureWarning
+        fastica(X, fun_args={"alpha": 0}, whiten="unit-variance")
     with pytest.raises(
         ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
     ):
