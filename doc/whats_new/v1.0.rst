@@ -188,6 +188,9 @@ Changelog
   mini batches processed. :pr:`17622`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |API| :func:`cluster.spectral_clustering` raises an improved error when passed
+  a `np.matrix`. :pr:`20560` by `Thomas Fan`_.
+
 - |Fix| :class:`cluster.AgglomerativeClustering` correctly connects components
   when connectivity and affinity are both precomputed and the number
   of connected components is greater than 1. :pr:`20597` by
@@ -216,6 +219,10 @@ Changelog
 
 :mod:`sklearn.covariance`
 .........................
+
+- |API| Deprecates the following keys in `cv_results_`: `'mean_score'`,
+  `'std_score'`, and `'split(k)_score` in favor of `'mean_test_score'`
+  `'std_test_score'`, and `'split(k)_test_score``. :pr:`20583` by `Thomas Fan`_.
 
 - |Fix| Adds arrays check to :func:`covariance.ledoit_wolf` and
   :func:`covariance.ledoit_wolf_shrinkage`
@@ -333,9 +340,13 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
+- |Fix| Fixed a bug in :class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+- |Fix| Fixed a bug in :class:`feature_extraction.DictVectorizer` by raising an
+  error with unsupported value type.
+  :pr:`19520` by :user:`Jeff Zhao <kamiyaa>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -348,6 +359,11 @@ Changelog
 - |API| Raises an error in :class:`feature_selection.VarianceThreshold`
   when the variance threshold is negative.
   :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
+
+- |API| Deprecates `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`feature_selection.RFECV`. `grid_scores_` will be removed in
+  version 1.2.
+  :pr:`20161` by :user:`Shuhei Kayawari <wowry>` and :user:`arka204`.
 
 - |Enhancement| :func:`feature_selection.RFE.fit` accepts additional estimator
   parameters that are passed directly to the estimator's `fit` method.
@@ -448,6 +464,11 @@ Changelog
   scaling.
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
   :user:`Maria Telenczuk <maikia>`.
+
+- |Fix| Points with residuals equal to  ``residual_threshold`` are now considered
+  as inliers for :class:`linear_model.RANSACRegressor`. This allows fitting
+  a model perfectly on some datasets when `residual_threshold=0`.
+  :pr:`19499` by :user:`Gregory Strubel <gregorystrubel>`.
 
 - |Efficiency| The implementation of `fit` for `PolynomialFeatures` transformer
   is now faster. This is especially noticeable on large sparse input.
