@@ -1118,7 +1118,7 @@ def test_sparse_dense_descent_paths():
 
 @pytest.mark.parametrize("path_func", [enet_path, lasso_path])
 def test_path_unknown_parameter(path_func):
-    """CHeck that passing parameter not used by the coordinate descent solver
+    """Check that passing parameter not used by the coordinate descent solver
     will raise an error."""
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
     err_msg = "Unexpected parameters in params"
