@@ -13,6 +13,6 @@ def test_files_generated_by_templates_are_git_ignored():
     ignored_files = list(map(lambda line: line.strip("\n"), ignored_files))
 
     for filename in base_dir.glob("**/*.tp"):
-        filename = str(filename).split("scikit-learn/")[-1]
-        filename_wo_tempita_suffix = filename.strip(".tp")
-        assert filename_wo_tempita_suffix in ignored_files
+        filename = filename.relative_to(base_dir.parent)
+        filename_wo_tempita_suffix = filename.with_suffix("")
+        assert str(filename_wo_tempita_suffix) in ignored_files
