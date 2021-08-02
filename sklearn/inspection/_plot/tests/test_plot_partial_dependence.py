@@ -698,6 +698,7 @@ def test_partial_dependence_overwrite_labels(
         ({"color": "r"}, None, {"color": "b"}, ("r", "b")),
         ({"color": "r"}, {"color": "g"}, None, ("g", "r")),
         ({"color": "r"}, None, None, ("r", "r")),
+        ({"color": "r"}, {"linestyle": "--"}, {"linestyle": "-."}, ("r", "r")),
     ],
 )
 def test_plot_partial_dependence_lines_kw(
@@ -709,8 +710,7 @@ def test_plot_partial_dependence_lines_kw(
     ice_lines_kw,
     expected_colors,
 ):
-    """
-    Check that passing `pd_line_kw` and `ice_lines_kw` will act on the
+    """Check that passing `pd_line_kw` and `ice_lines_kw` will act on the
     specific lines in the plot.
     """
 
@@ -729,61 +729,14 @@ def test_plot_partial_dependence_lines_kw(
 
     line = disp.lines_[0, 0, -1]
     assert line.get_color() == expected_colors[0]
+    if pd_line_kw is not None and "linestyle" in pd_line_kw:
+        assert line.get_linestyle() == pd_line_kw["linestyle"]
+    else:
+        assert line.get_linestyle() == "-"
 
     line = disp.lines_[0, 0, 0]
     assert line.get_color() == expected_colors[1]
-
-
-def test_plot_partial_dependence_lines_kw_warnings(
-    pyplot,
-    clf_diabetes,
-    diabetes,
-):
-    """
-    Check that passing `line_kw` along with `pd_line_kw` and `ice_lines_kw`
-    raises warnings.
-    """
-    with pytest.warns(UserWarning, match=r"^Both `line_kw` and") as record:
-        plot_partial_dependence(
-            clf_diabetes,
-            diabetes.data,
-            [0, 2],
-            grid_resolution=20,
-            feature_names=diabetes.feature_names,
-            n_cols=2,
-            kind="both",
-            line_kw={"color": "r"},
-            pd_line_kw={"color": "g"},
-            ice_lines_kw={"color": "b"},
-        )
-
-    warnings_messages = {rcd.message.args[0] for rcd in record}
-    ice_lines_kw_msg = (
-        "Both `line_kw` and `ice_lines_kw` are specified. `ice_lines_kw` "
-        "will take priority. Do not pass `line_kw` to silence this warning."
-    )
-    pd_line_kw_msg = (
-        "Both `line_kw` and `pd_line_kw` are specified. `pd_line_kw` "
-        "will take priority. Do not pass `line_kw` to silence this warning."
-    )
-
-    assert ice_lines_kw_msg in warnings_messages
-    assert pd_line_kw_msg in warnings_messages
-
-    # Make sure that we don't raise any warnings otherwise
-    for kwargs in [
-        {"ice_lines_kw": {"color": "red"}},
-        {"pd_line_kw": {"color": "red"}},
-    ]:
-        with pytest.warns(None) as records:
-            plot_partial_dependence(
-                clf_diabetes,
-                diabetes.data,
-                [0, 2],
-                grid_resolution=20,
-                feature_names=diabetes.feature_names,
-                n_cols=2,
-                kind="both",
-                **kwargs,
-            )
-        assert len(records) == 0
+    if ice_lines_kw is not None and "linestyle" in ice_lines_kw:
+        assert line.get_linestyle() == ice_lines_kw["linestyle"]
+    else:
+        assert line.get_linestyle() == "-"

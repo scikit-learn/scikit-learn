@@ -1,7 +1,6 @@
 import numbers
 from itertools import chain
 from math import ceil
-import warnings
 
 import numpy as np
 from scipy import sparse
@@ -925,20 +924,12 @@ class PartialDependenceDisplay:
         import matplotlib.pyplot as plt  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
 
-        if line_kw is not None and ice_lines_kw is not None:
-            warnings.warn(
-                "Both `line_kw` and `ice_lines_kw` are specified. `ice_lines_kw` "
-                "will take priority. Do not pass `line_kw` to silence this "
-                "warning."
-            )
-        if line_kw is not None and pd_line_kw is not None:
-            warnings.warn(
-                "Both `line_kw` and `pd_line_kw` are specified. `pd_line_kw` will "
-                "take priority. Do not pass `line_kw` to silence this warning."
-            )
-
         if line_kw is None:
             line_kw = {}
+        if ice_lines_kw is None:
+            ice_lines_kw = {}
+        if pd_line_kw is None:
+            pd_line_kw = {}
         if contour_kw is None:
             contour_kw = {}
 
@@ -952,22 +943,20 @@ class PartialDependenceDisplay:
             "color": "C0",
             "label": "average" if self.kind == "both" else None,
         }
-
-        if ice_lines_kw is None:
-            ice_lines_kw = {**default_line_kws, **line_kw}
-
-            if self.kind == "individual" or self.kind == "both":
-                ice_lines_kw["alpha"] = 0.3
-                ice_lines_kw["linewidth"] = 0.5
+        if self.kind in ("individual", "both"):
+            default_ice_lines_kws = {"alpha": 0.3, "linewidth": 0.5}
         else:
-            ice_lines_kw = {**default_line_kws, **ice_lines_kw}
+            default_ice_lines_kws = {}
 
+        ice_lines_kw = {
+            **default_line_kws,
+            **line_kw,
+            **default_ice_lines_kws,
+            **ice_lines_kw,
+        }
         del ice_lines_kw["label"]
 
-        if pd_line_kw is None:
-            pd_line_kw = {**default_line_kws, **line_kw}
-        else:
-            pd_line_kw = {**default_line_kws, **pd_line_kw}
+        pd_line_kw = {**default_line_kws, **line_kw, **pd_line_kw}
 
         n_features = len(self.features)
         if self.kind in ("individual", "both"):
