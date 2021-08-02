@@ -102,5 +102,5 @@ for n, method in enumerate(methods):
     plt.title("Iter %i | Init Time %.2fx"
               % (gmm.n_iter_, relative_times[method]),
               loc='right', fontsize=10)
-plt.suptitle('Gmm iterations and relative time taken to initialize')
+plt.suptitle('GMM iterations and relative time taken to initialize')
 plt.show()
