@@ -154,10 +154,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             resp /= resp.sum(axis=1)[:, np.newaxis]
         elif self.init_params == "rand_data":
             resp = np.zeros((n_samples, self.n_components))
-            points = random_state.choice(
+            indices = random_state.choice(
                 range(n_samples), self.n_components, replace=False
             )
-            for n, i in enumerate(points):
+            for n, i in enumerate(indices):
                 resp[i, n] = 1
         elif self.init_params == "k-means++":
             resp = np.zeros((n_samples, self.n_components))
