@@ -121,7 +121,7 @@ class BayesianGaussianMixture(BaseMixture):
     init_params : str, default='kmeans'
         The method used to initialize the weights, the means and the
         covariances.
-        String must be one of::
+        String must be one of:
 
             'kmeans' : responsibilities are initialized using kmeans.
             'random' : responsibilities are initialized randomly.
