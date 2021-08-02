@@ -1,7 +1,3 @@
-# Author: Mathis Batoul <batoulmathis@gmail.com>
-#
-# License: BSD 3 clause
-
 import numpy as np
 import pytest
 from sklearn.utils._weight_vector import (
