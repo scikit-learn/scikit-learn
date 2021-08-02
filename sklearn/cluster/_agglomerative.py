@@ -1228,4 +1228,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     @property
     def fit_predict(self):
+        """Fit and return the result of each sample's clustering assignment.
+        """
         raise AttributeError
