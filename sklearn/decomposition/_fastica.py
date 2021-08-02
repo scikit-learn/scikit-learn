@@ -182,7 +182,7 @@ def fastica(
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Apply a parallel or deflational FASTICA algorithm.
 
-    whiten : string or boolean, default=None
+    whiten : str or bool, default=None
         Specify the whitening strategy to use.
         If 'arbitrary-variance', a whitening with variance arbitrary is used.
         If 'unit-variance', the whitening variance is adjusted to be unitary.
