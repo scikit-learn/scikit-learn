@@ -3340,7 +3340,10 @@ def check_fit_check_is_fitted(name, estimator_orig):
         # stateless estimators (such as FunctionTransformer) are always "fit"!
         try:
             check_is_fitted(estimator)
-            raise (f"{estimator.__name__} passes check_is_fitted before being fit!")
+            raise Exception(
+                f"{estimator.__class__.__name__} passes check_is_fitted before being"
+                " fit!"
+            )
         except NotFittedError:
             pass
     estimator.fit(X, y)
