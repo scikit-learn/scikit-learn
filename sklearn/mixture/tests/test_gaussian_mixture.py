@@ -2,6 +2,7 @@
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
+import itertools
 import re
 import sys
 import copy
