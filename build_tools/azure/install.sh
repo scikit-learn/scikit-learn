@@ -56,6 +56,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # instead because llvm-ar errors
             export AR=/usr/bin/ar
         fi
+    else
+        # FIXME: temporary fix to link against system libraries on linux
+        export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 	make_conda $TO_INSTALL
     setup_ccache
