@@ -187,19 +187,22 @@ def plot_partial_dependence(
 
     line_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
-        For one-way partial dependence plots.
+        For one-way partial dependence plots. It can be used to define common
+        properties for both `ice_lines_kw` and `pdp_line_kw`.
 
     ice_lines_kw : dict, default=None
         Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
         For ICE lines in the one-way partial dependence plots.
-        Takes priority over `line_kw` when not `None`.
+        The couple keyword/value defined in `ice_lines_kw` takes priority over
+        `line_kw` the one defined in `line_kw`.
 
         .. versionadded:: 1.0
 
     pd_line_kw : dict, default=None
         Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
         For partial dependence in one-way partial dependence plots.
-        Takes priority over `line_kw` when not `None`.
+        The couple keyword/value defined in `pd_line_kw` takes priority over
+        `line_kw` the one defined in `line_kw`.
 
         .. versionadded:: 1.0
 
