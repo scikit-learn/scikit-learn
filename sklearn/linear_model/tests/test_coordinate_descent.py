@@ -1116,6 +1116,16 @@ def test_sparse_dense_descent_paths():
         assert_array_almost_equal(coefs, sparse_coefs)
 
 
+@pytest.mark.parametrize("path_func", [enet_path, lasso_path])
+def test_path_unknown_parameter(path_func):
+    """CHeck that passing parameter not used by the coordinate descent solver
+    will raise an error."""
+    X, y, _, _ = build_dataset(n_samples=50, n_features=20)
+    err_msg = "Unexpected parameters in params"
+    with pytest.raises(ValueError, match=err_msg):
+        path_func(X, y, normalize=True, fit_intercept=True)
+
+
 def test_check_input_false():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     X = check_array(X, order="F", dtype="float64")
