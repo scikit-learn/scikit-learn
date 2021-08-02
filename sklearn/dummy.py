@@ -86,7 +86,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     See Also
     --------
-    DummyClassifier : Regressor that makes predictions using simple rules.
+    DummyRegressor : Regressor that makes predictions using simple rules.
 
     Examples
     --------
@@ -367,7 +367,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples.
+            Training data.
 
         Returns
         -------
