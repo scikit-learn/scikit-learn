@@ -392,6 +392,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc"], multi_output=True
@@ -860,18 +861,6 @@ class GenericUnivariateSelect(_BaseFilter):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import GenericUnivariateSelect, chi2
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> X.shape
-    (569, 30)
-    >>> transformer = GenericUnivariateSelect(chi2, mode='k_best', param=20)
-    >>> X_new = transformer.fit_transform(X, y)
-    >>> X_new.shape
-    (569, 20)
-
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
@@ -885,6 +874,18 @@ class GenericUnivariateSelect(_BaseFilter):
     SelectFpr : Select features based on a false positive rate test.
     SelectFdr : Select features based on an estimated false discovery rate.
     SelectFwe : Select features based on family-wise error rate.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import GenericUnivariateSelect, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> transformer = GenericUnivariateSelect(chi2, mode='k_best', param=20)
+    >>> X_new = transformer.fit_transform(X, y)
+    >>> X_new.shape
+    (569, 20)
     """
 
     _selection_modes: dict = {
