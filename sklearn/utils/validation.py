@@ -1199,10 +1199,9 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     elif hasattr(estimator, "__is_fitted__"):
         fitted = estimator.__is_fitted__()
     else:
-        attrs = [
+        fitted = [
             v for v in vars(estimator) if v.endswith("_") and not v.startswith("__")
         ]
-        fitted = len(attrs) > 0
 
     if not fitted:
         raise NotFittedError(msg % {"name": type(estimator).__name__})
