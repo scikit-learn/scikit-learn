@@ -1262,7 +1262,7 @@ def test_gaussian_mixture_setting_best_params():
 
 def test_init_param():
     # Check that the init_param options produces valid output.
-    # Compare all to default - kmeans.
+    # Compare all to default (kmeans).
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
 
