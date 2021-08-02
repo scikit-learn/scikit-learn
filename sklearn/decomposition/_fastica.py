@@ -297,31 +297,22 @@ def fastica(
         w_init=w_init,
         random_state=random_state,
     )
-    sources = est._fit(X, compute_sources=compute_sources)
+    S = est._fit(X, compute_sources=compute_sources)
 
     if est.whiten_ in ["unitary-variance", "arbitrary-variance"]:
-        if return_X_mean:
-            if return_n_iter:
-                return (est.whitening_, est._unmixing, sources, est.mean_, est.n_iter_)
-            else:
-                return est.whitening_, est._unmixing, sources, est.mean_
-        else:
-            if return_n_iter:
-                return est.whitening_, est._unmixing, sources, est.n_iter_
-            else:
-                return est.whitening_, est._unmixing, sources
-
+        K = est.whitening_
+        X_mean = est.mean_
     else:
-        if return_X_mean:
-            if return_n_iter:
-                return None, est._unmixing, sources, None, est.n_iter_
-            else:
-                return None, est._unmixing, sources, None
-        else:
-            if return_n_iter:
-                return None, est._unmixing, sources, est.n_iter_
-            else:
-                return None, est._unmixing, sources
+        K = None
+        X_mean = None
+
+    returned_values = [K, est._unmixing, S]
+    if return_X_mean:
+        returned_values.append(X_mean)
+    if return_n_iter:
+        returned_values.append(est.n_iter_)
+
+    return returned_values
 
 
 class FastICA(TransformerMixin, BaseEstimator):
