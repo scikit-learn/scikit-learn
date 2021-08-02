@@ -460,6 +460,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         if self.criterion in ("absolute_error", "mae"):
             # TODO: This should raise an error from 1.1
@@ -1877,7 +1878,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             to a sparse ``csr_matrix``.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
         """
