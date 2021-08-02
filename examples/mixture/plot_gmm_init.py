@@ -98,7 +98,7 @@ for n, method in enumerate(methods):
 
     plt.xticks(())
     plt.yticks(())
-    plt.title(method, loc='left')
+    plt.title(method, loc='left', fontsize=12)
     plt.title("Iter %i | Init Time %.2fx"
               % (gmm.n_iter_, relative_times[method]),
               loc='right', fontsize=10)
