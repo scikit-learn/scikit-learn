@@ -158,6 +158,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
@@ -617,6 +618,12 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def coef_(self):
+        """Weights assigned to the features when `kernel="linear"`.
+
+        Returns
+        -------
+        ndarray of shape (n_features, n_classes)
+        """
         if self.kernel != "linear":
             raise AttributeError("coef_ is only available when using a linear kernel")
 
@@ -637,6 +644,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def n_support_(self):
+        """Number of support vectors for each class."""
         try:
             check_is_fitted(self)
         except NotFittedError:
@@ -710,11 +718,12 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         return np.asarray(y, dtype=np.float64, order="C")
 
     def decision_function(self, X):
-        """Evaluates the decision function for the samples in X.
+        """Evaluate the decision function for the samples in X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -940,10 +949,22 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
     @property
     def probA_(self):
+        """Parameter learned in Platt scaling when `probability=True`.
+
+        Returns
+        -------
+        ndarray of shape  (n_classes * (n_classes - 1) / 2)
+        """
         return self._probA
 
     @property
     def probB_(self):
+        """Parameter learned in Platt scaling when `probability=True`.
+
+        Returns
+        -------
+        ndarray of shape  (n_classes * (n_classes - 1) / 2)
+        """
         return self._probB
 
 

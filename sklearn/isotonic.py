@@ -118,7 +118,7 @@ def isotonic_regression(
     order = np.s_[:] if increasing else np.s_[::-1]
     y = check_array(y, ensure_2d=False, dtype=[np.float64, np.float32])
     y = np.array(y[order], dtype=y.dtype)
-    sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype)
+    sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype, copy=True)
     sample_weight = np.ascontiguousarray(sample_weight[order])
 
     _inplace_contiguous_isotonic_regression(y, sample_weight)
@@ -188,6 +188,14 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     increasing_ : bool
         Inferred value for ``increasing``.
+
+    See Also
+    --------
+    sklearn.linear_model.LinearRegression : Ordinary least squares Linear
+        Regression.
+    sklearn.ensemble.HistGradientBoostingRegressor : Gradient boosting that
+        is a non-parametric model accepting monotonicity constraints.
+    isotonic_regression : Function to solve the isotonic regression model.
 
     Notes
     -----
@@ -348,7 +356,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, T):
-        """Transform new data by linear interpolation
+        """Transform new data by linear interpolation.
 
         Parameters
         ----------
@@ -361,7 +369,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         Returns
         -------
         y_pred : ndarray of shape (n_samples,)
-            The transformed data
+            The transformed data.
         """
 
         if hasattr(self, "X_thresholds_"):

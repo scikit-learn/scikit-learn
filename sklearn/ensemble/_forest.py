@@ -1931,9 +1931,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     See Also
     --------
-    sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
-    RandomForestClassifier : Ensemble Classifier based on trees with optimal
-        splits.
+    ExtraTreesRegressor : An extra-trees regressor with random splits.
+    RandomForestClassifier : A random forest classifier with optimal splits.
+    RandomForestRegressor : Ensemble regressor using trees with optimal splits.
 
     Notes
     -----
@@ -2229,7 +2229,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
     See Also
     --------
-    sklearn.tree.ExtraTreeRegressor : Base estimator for this ensemble.
+    ExtraTreesClassifier : An extra-trees classifier with random splits.
+    RandomForestClassifier : A random forest classifier with optimal splits.
     RandomForestRegressor : Ensemble regressor using trees with optimal splits.
 
     Notes
@@ -2453,6 +2454,17 @@ class RandomTreesEmbedding(BaseForest):
     one_hot_encoder_ : OneHotEncoder instance
         One-hot encoder used to create the sparse embedding.
 
+    See Also
+    --------
+    ExtraTreesClassifier : An extra-trees classifier.
+    ExtraTreesRegressor : An extra-trees regressor.
+    RandomForestClassifier : A random forest classifier.
+    RandomForestRegressor : A random forest regressor.
+    sklearn.tree.ExtraTreeClassifier: An extremely randomized
+        tree classifier.
+    sklearn.tree.ExtraTreeRegressor : An extremely randomized
+        tree regressor.
+
     References
     ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
@@ -2553,7 +2565,7 @@ class RandomTreesEmbedding(BaseForest):
         Returns
         -------
         self : object
-
+            Returns the instance itself.
         """
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self

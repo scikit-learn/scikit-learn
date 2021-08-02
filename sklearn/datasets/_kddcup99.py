@@ -12,7 +12,7 @@ import errno
 from gzip import GzipFile
 import logging
 import os
-from os.path import dirname, exists, join
+from os.path import exists, join
 
 import numpy as np
 import joblib
@@ -21,6 +21,7 @@ from ._base import _fetch_remote
 from ._base import _convert_data_dataframe
 from . import get_data_home
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
@@ -202,9 +203,7 @@ def fetch_kddcup99(
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "kddcup99.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("kddcup99.rst")
 
     frame = None
     if as_frame:
