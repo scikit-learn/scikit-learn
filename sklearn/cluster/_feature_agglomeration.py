@@ -26,7 +26,8 @@ class AgglomerationTransform(TransformerMixin):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features) or (n_samples,)
+        X : array-like of shape (n_samples, n_features) or \
+                (n_samples, n_samples)
             A M by N array of M observations in N dimensions or a length
             M array of M one-dimensional observations.
 
