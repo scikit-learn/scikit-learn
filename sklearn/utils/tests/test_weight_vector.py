@@ -17,5 +17,5 @@ def test_type_invariance(dtype, weight_vector_class):
     weights = np.random.rand(100).astype(dtype)
     average_weights = np.random.rand(100).astype(dtype)
     weight_vector = weight_vector_class(weights, average_weights)
-    assert weight_vector.w.dtype is np.dtype(dtype)
-    assert weight_vector.aw.dtype is np.dtype(dtype)
+    assert np.asarray(weight_vector.w).dtype is np.dtype(dtype)
+    assert np.asarray(weight_vector.aw).dtype is np.dtype(dtype)
