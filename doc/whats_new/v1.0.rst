@@ -340,9 +340,13 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
+- |Fix| Fixed a bug in :class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+- |Fix| Fixed a bug in :class:`feature_extraction.DictVectorizer` by raising an
+  error with unsupported value type.
+  :pr:`19520` by :user:`Jeff Zhao <kamiyaa>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -355,6 +359,11 @@ Changelog
 - |API| Raises an error in :class:`feature_selection.VarianceThreshold`
   when the variance threshold is negative.
   :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
+
+- |API| Deprecates `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`feature_selection.RFECV`. `grid_scores_` will be removed in
+  version 1.2.
+  :pr:`20161` by :user:`Shuhei Kayawari <wowry>` and :user:`arka204`.
 
 - |Enhancement| :func:`feature_selection.RFE.fit` accepts additional estimator
   parameters that are passed directly to the estimator's `fit` method.
