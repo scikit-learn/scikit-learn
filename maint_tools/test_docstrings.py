@@ -18,7 +18,6 @@ DOCSTRING_IGNORE_LIST = [
     "DecisionTreeRegressor",
     "DictVectorizer",
     "DictionaryLearning",
-    "DummyClassifier",
     "ElasticNetCV",
     "ExtraTreeRegressor",
     "FactorAnalysis",
