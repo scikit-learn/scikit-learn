@@ -95,7 +95,7 @@ class AvailableParameterEstimator:
         err_msg="self.available must be True",
     )
     def available_func_err_msg(self):
-        """This is a mock available_if function to test err_msg"""
+        """This is a mock `available_if` function to test `err_msg`."""
         pass
 
 
