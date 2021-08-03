@@ -304,7 +304,8 @@ def test_permutation_importance_equivalence_sequential_parallel(max_samples):
     )
 
 
-@pytest.mark.parametrize("n_jobs, max_samples", product([None, 1, 2], [0.5, 1.0]))
+@pytest.mark.parametrize("n_jobs", [None, 1, 2])
+@pytest.mark.parametrize("max_samples", [0.5, 1.0])
 def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples):
     # This test checks that the column shuffling logic has the same behavior
     # both a dataframe and a simple numpy array.
