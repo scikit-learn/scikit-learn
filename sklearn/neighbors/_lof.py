@@ -9,6 +9,7 @@ from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ..base import OutlierMixin
 
+from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils import check_array
 
@@ -323,8 +324,19 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         return self
 
-    @property
-    def predict(self):
+    def _check_novelty(self):
+        if not self.novelty:
+            msg = (
+                "predict is not available when novelty=False, use "
+                "fit_predict if you want to predict on training data. Use "
+                "novelty=True if you want to use LOF for novelty detection "
+                "and predict on new unseen data."
+            )
+            raise AttributeError(msg)
+        return True
+
+    @available_if(_check_novelty)
+    def predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
 
         **Only available for novelty detection (when novelty is set to True).**
@@ -342,16 +354,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         is_inlier : ndarray of shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
-        if not self.novelty:
-            msg = (
-                "predict is not available when novelty=False, use "
-                "fit_predict if you want to predict on training data. Use "
-                "novelty=True if you want to use LOF for novelty detection "
-                "and predict on new unseen data."
-            )
-            raise AttributeError(msg)
-
-        return self._predict
+        return self._predict(X)
 
     def _predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
