@@ -29,6 +29,7 @@ from sklearn.preprocessing import scale
 from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
 
+
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("max_samples", [0.5, 1.0])
 def test_permutation_importance_correlated_feature_regression(n_jobs, max_samples):
@@ -541,7 +542,7 @@ def test_permutation_importance_max_samples_error(max_samples):
     clf = LogisticRegression()
     clf.fit(X, y)
 
-    err_msg = ("max\\_samples must be in \\(0, n\\_samples\\]")
+    err_msg = "max\\_samples must be in \\(0, n\\_samples\\]"
 
     with pytest.raises(ValueError, match=err_msg):
         permutation_importance(clf, X, y, max_samples=max_samples)
