@@ -32,11 +32,12 @@ def test_bad_direction():
 
 
 @pytest.mark.parametrize("direction", ("forward", "backward"))
-@pytest.mark.parametrize("n_features_to_select", (1, 5, 9))
+@pytest.mark.parametrize("n_features_to_select", (1, 5, 9, "auto"))
 def test_n_features_to_select(direction, n_features_to_select):
     # Make sure n_features_to_select is respected
 
-    X, y = make_regression(n_features=10)
+    n_features = 10
+    X, y = make_regression(n_features=n_features)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
         n_features_to_select=n_features_to_select,
@@ -45,19 +46,22 @@ def test_n_features_to_select(direction, n_features_to_select):
     )
     sfs.fit(X, y)
 
+    if n_features_to_select == "auto":
+        n_features_to_select = n_features // 2
+
     assert sfs.get_support(indices=True).shape[0] == n_features_to_select
     assert sfs.n_features_to_select_ == n_features_to_select
     assert sfs.transform(X).shape[1] == n_features_to_select
 
 
 @pytest.mark.parametrize("direction", ("forward", "backward"))
-@pytest.mark.parametrize("tol", (1e-3, None))
-def test_n_features_to_select_auto(direction, tol):
+def test_n_features_to_select_auto(direction):
     """Check the behaviour of `n_features_to_select="auto"` with different
     values for the parameter `tol`.
     """
 
     n_features = 10
+    tol = 1e-3
     X, y = make_regression(n_features=n_features, random_state=0)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
@@ -68,19 +72,12 @@ def test_n_features_to_select_auto(direction, tol):
     )
     sfs.fit(X, y)
 
-    if tol is not None:
-        max_features_to_select = 9  # n_features - 1
+    max_features_to_select = n_features - 1
 
-        assert sfs.get_support(indices=True).shape[0] <= max_features_to_select
-        assert sfs.n_features_to_select_ <= max_features_to_select
-        assert sfs.transform(X).shape[1] <= max_features_to_select
-        assert sfs.get_support(indices=True).shape[0] == sfs.n_features_to_select_
-
-    else:
-        n_features_to_select = 5  # n_features // 2
-        assert sfs.get_support(indices=True).shape[0] == n_features_to_select
-        assert sfs.n_features_to_select_ == n_features_to_select
-        assert sfs.transform(X).shape[1] == n_features_to_select
+    assert sfs.get_support(indices=True).shape[0] <= max_features_to_select
+    assert sfs.n_features_to_select_ <= max_features_to_select
+    assert sfs.transform(X).shape[1] <= max_features_to_select
+    assert sfs.get_support(indices=True).shape[0] == sfs.n_features_to_select_
 
 
 @pytest.mark.parametrize("direction", ("forward", "backward"))
