@@ -69,7 +69,7 @@ def check_openmp_support():
         extra_preargs = [
             flag
             for flag in extra_preargs
-            if flag.startswith(("-L", "-Wl,-rpath", "-l", "-Wl,--sysroot=/"))
+            if flag.startswith(("-L", "-Wl,-rpath", "-l", "-v -Wl,-v"))
         ]
 
     extra_postargs = get_openmp_flag
