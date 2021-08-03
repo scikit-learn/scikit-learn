@@ -539,5 +539,10 @@ def test_permutation_importance_max_samples_error(max_samples):
     clf = LogisticRegression()
     clf.fit(X, y)
 
-    with pytest.raises(ValueError):
+    if max_samples=="5":
+        err_msg = ('n_population should be greater or equal than n_samples, got n_samples \\> n_population \\(5555 > 4\\)')
+    elif max_samples=="string":
+        err_msg = ("invalid literal for int\\(\\) with base 10\\: \\'stringstringstringstring\\'")
+
+    with pytest.raises(ValueError, match=err_msg):
         permutation_importance(clf, X, y, max_samples=max_samples)
