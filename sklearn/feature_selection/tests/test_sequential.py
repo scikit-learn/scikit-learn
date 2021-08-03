@@ -123,7 +123,6 @@ def test_n_features_to_select_stopping_criterion(direction):
     if direction == "forward":
         assert (sfs_cv_score - added_cv_score) <= tol
         assert (sfs_cv_score - removed_cv_score) >= tol
-
     else:
         assert (added_cv_score - sfs_cv_score) <= tol
         assert (removed_cv_score - sfs_cv_score) <= tol
