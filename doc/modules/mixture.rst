@@ -142,7 +142,8 @@ There is a choice of four initialization methods (as well as inputting user defi
 initial means) to generate the initial centers for the model components: 
 
 k-means (default)
-  This applies a traditional k-means clustering algorithm. This can be computationally expensive compared to other initialization methods.
+  This applies a traditional k-means clustering algorithm.
+  This can be computationally expensive compared to other initialization methods.
 
 k-means++
   This uses the initialization method of k-means clustering: k-means++.
