@@ -1364,8 +1364,8 @@ def test_search_cv_using_minimal_compatible_estimator(Predictor):
         assert model.score(X, y) == pytest.approx(r2_score(y, y_pred))
 
 
-def test_test_pipeline_check_if_fitted():
-    pipeline = Pipeline([("clf", SVC())])
+def test_pipeline_check_if_fitted():
+    pipeline = Pipeline([("clf", LogisticRegression())])
     with pytest.raises(NotFittedError):
         check_is_fitted(pipeline)
     pipeline.fit(iris.data, iris.target)
