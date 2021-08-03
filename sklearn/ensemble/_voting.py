@@ -354,6 +354,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             raise AttributeError(
                 "predict_proba is not available when voting=%r" % self.voting
             )
+        return True
 
     @available_if(_check_voting)
     def predict_proba(self, X):
