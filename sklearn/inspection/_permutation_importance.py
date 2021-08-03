@@ -2,8 +2,8 @@
 import numbers
 import numpy as np
 from joblib import Parallel
-from sklearn.ensemble._bagging import _generate_indices
 
+from ..ensemble._bagging import _generate_indices
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..model_selection._validation import _aggregate_score_dicts
