@@ -57,7 +57,8 @@ def test_n_features_to_select_auto(direction, tol):
     values for the parameter `tol`.
     """
 
-    X, y = make_regression(n_features=10)
+    n_features = 10
+    X, y = make_regression(n_features=n_features, random_state=0)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
         n_features_to_select="auto",
