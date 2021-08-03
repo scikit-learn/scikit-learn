@@ -206,8 +206,17 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         self.contamination = contamination
         self.novelty = novelty
 
-    @property
-    def fit_predict(self):
+    def _check_novelty_fit_predict(self):
+        if self.novelty:
+            msg = (
+                "fit_predict is not available when novelty=True. Use "
+                "novelty=False if you want to predict on the training set."
+            )
+            raise AttributeError(msg)
+        return True
+
+    @available_if(_check_novelty_fit_predict)
+    def fit_predict(self, X, y=None):
         """Fits the model to the training set X and returns the labels.
 
         **Not available for novelty detection (when novelty is set to True).**
@@ -222,36 +231,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         y : Ignored
             Not used, present for API consistency by convention.
-
-        Returns
-        -------
-        is_inlier : ndarray of shape (n_samples,)
-            Returns -1 for anomalies/outliers and 1 for inliers.
-        """
-
-        # As fit_predict would be different from fit.predict, fit_predict is
-        # only available for outlier detection (novelty=False)
-
-        if self.novelty:
-            msg = (
-                "fit_predict is not available when novelty=True. Use "
-                "novelty=False if you want to predict on the training set."
-            )
-            raise AttributeError(msg)
-
-        return self._fit_predict
-
-    def _fit_predict(self, X, y=None):
-        """Fits the model to the training set X and returns the labels.
-
-        Label is 1 for an inlier and -1 for an outlier according to the LOF
-        score and the contamination parameter.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features), default=None
-            The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples.
 
         Returns
         -------
@@ -324,7 +303,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         return self
 
-    def _check_novelty(self):
+    def _check_novelty_predict(self):
         if not self.novelty:
             msg = (
                 "predict is not available when novelty=False, use "
@@ -335,7 +314,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
             raise AttributeError(msg)
         return True
 
-    @available_if(_check_novelty)
+    @available_if(_check_novelty_predict)
     def predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
 
