@@ -530,7 +530,7 @@ def test_permutation_importance_multi_metric(list_single_scorer, multi_scorer):
 
 @pytest.mark.parametrize("max_samples", ["5", "string"])
 def test_permutation_importance_max_samples_error(max_samples):
-    """Check that a proper error message is raised when `max_samples` is not 
+    """Check that a proper error message is raised when `max_samples` is not
     set to a valid input value.
     """
     X = np.array([(1.0, 2.0, 3.0, 4.0)]).T
