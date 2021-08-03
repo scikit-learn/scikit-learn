@@ -11,7 +11,8 @@ significance of a cross-validated score using permutations.
 # Authors:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #           Lucy Liu
 # License: BSD 3 clause
-#
+
+# %%
 # Dataset
 # -------
 #
@@ -60,14 +61,16 @@ from sklearn.svm import SVC
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import permutation_test_score
 
-clf = SVC(kernel='linear', random_state=7)
+clf = SVC(kernel="linear", random_state=7)
 cv = StratifiedKFold(2, shuffle=True, random_state=0)
 
 score_iris, perm_scores_iris, pvalue_iris = permutation_test_score(
-    clf, X, y, scoring="accuracy", cv=cv, n_permutations=1000)
+    clf, X, y, scoring="accuracy", cv=cv, n_permutations=1000
+)
 
 score_rand, perm_scores_rand, pvalue_rand = permutation_test_score(
-    clf, X_rand, y, scoring="accuracy", cv=cv, n_permutations=1000)
+    clf, X_rand, y, scoring="accuracy", cv=cv, n_permutations=1000
+)
 
 # %%
 # Original data
@@ -87,10 +90,9 @@ import matplotlib.pyplot as plt
 fig, ax = plt.subplots()
 
 ax.hist(perm_scores_iris, bins=20, density=True)
-ax.axvline(score_iris, ls='--', color='r')
-score_label = (f"Score on original\ndata: {score_iris:.2f}\n"
-               f"(p-value: {pvalue_iris:.3f})")
-ax.text(0.7, 260, score_label, fontsize=12)
+ax.axvline(score_iris, ls="--", color="r")
+score_label = f"Score on original\ndata: {score_iris:.2f}\n(p-value: {pvalue_iris:.3f})"
+ax.text(0.7, 10, score_label, fontsize=12)
 ax.set_xlabel("Accuracy score")
 _ = ax.set_ylabel("Probability")
 
@@ -109,10 +111,9 @@ fig, ax = plt.subplots()
 
 ax.hist(perm_scores_rand, bins=20, density=True)
 ax.set_xlim(0.13)
-ax.axvline(score_rand, ls='--', color='r')
-score_label = (f"Score on original\ndata: {score_rand:.2f}\n"
-               f"(p-value: {pvalue_rand:.3f})")
-ax.text(0.14, 125, score_label, fontsize=12)
+ax.axvline(score_rand, ls="--", color="r")
+score_label = f"Score on original\ndata: {score_rand:.2f}\n(p-value: {pvalue_rand:.3f})"
+ax.text(0.14, 7.5, score_label, fontsize=12)
 ax.set_xlabel("Accuracy score")
 ax.set_ylabel("Probability")
 plt.show()
