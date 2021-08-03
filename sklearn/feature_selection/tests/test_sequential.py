@@ -110,7 +110,7 @@ def test_n_features_to_select_stopping_criterion(direction):
         ]
     )
 
-    removed_candidate = np.random.choice(list(range(sfs.n_features_to_select_)))
+    removed_candidate = rng.choice(list(range(sfs.n_features_to_select_)))
     removed_X = np.delete(selected_X, removed_candidate, axis=1)
 
     plain_cv_score = cross_val_score(LinearRegression(), X, y, cv=2).mean()
