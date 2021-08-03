@@ -102,6 +102,8 @@ def test_n_features_to_select_stopping_criterion(direction):
     sfs.fit(X, y)
     selected_X = sfs.transform(X)
 
+    rng = np.random.RandomState(0)
+
     added_candidates = list(set(range(X.shape[1])) - set(sfs.get_support(indices=True)))
     added_X = np.hstack(
         [
