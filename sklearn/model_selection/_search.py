@@ -800,7 +800,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 # calling. If the return type is a dictionary, the error scores
                 # can now be inserted with the correct key. The type checking
                 # of out will be done in `_insert_error_scores`.
-
                 if callable(self.scoring):
                     _insert_error_scores(out, self.error_score)
 
