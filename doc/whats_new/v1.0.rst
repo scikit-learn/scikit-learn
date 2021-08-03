@@ -386,10 +386,10 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Enhancement| Implemented a max_samples option for
-   :func:`inspection._permutation_importance`.
-   If used, `max_samples` rows are drawn from `X` in each repeat of
-   the permutation. :pr:`20431` by :user:`Oliver Pfaffel <o1iv3r>`.
+- |Enhancement| Add `max_samples` parameter in
+  :func:`inspection._permutation_importance`. It enables to draw a subset of
+  the samples to compute the permutation importance.
+  :pr:`20431` by :user:`Oliver Pfaffel <o1iv3r>`.
 
 - |Fix| Allow multiple scorers input to
   :func:`~sklearn.inspection.permutation_importance`.
