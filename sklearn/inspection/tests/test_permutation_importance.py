@@ -525,7 +525,7 @@ def test_permutation_importance_multi_metric(list_single_scorer, multi_scorer):
         assert_allclose(multi_result.importances, single_result.importances)
 
 
-@pytest.mark.parametrize("max_samples", [5])
+@pytest.mark.parametrize("max_samples", [-1, 5])
 def test_permutation_importance_max_samples_error(max_samples):
     """Check that a proper error message is raised when `max_samples` is not
     set to a valid input value.
@@ -536,7 +536,7 @@ def test_permutation_importance_max_samples_error(max_samples):
     clf = LogisticRegression()
     clf.fit(X, y)
 
-    err_msg = "max\\_samples must be in \\(0, n\\_samples\\]"
+    err_msg = r"max_samples must be in \(0, n_samples\]"
 
     with pytest.raises(ValueError, match=err_msg):
         permutation_importance(clf, X, y, max_samples=max_samples)
