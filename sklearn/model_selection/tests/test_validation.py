@@ -318,7 +318,7 @@ def test_cross_validate_many_jobs():
     # instead of cv == 'warn'.
     X, y = load_iris(return_X_y=True)
     clf = SVC(gamma="auto")
-    grid = GridSearchCV(clf, param_grid={"C": [1, 10]})
+    grid = GridSearchCV(clf, search_space={"C": [1, 10]})
     cross_validate(grid, X, y, n_jobs=2)
 
 

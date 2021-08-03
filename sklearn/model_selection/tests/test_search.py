@@ -818,7 +818,7 @@ def test_unsupervised_grid_search():
     scoring = ["adjusted_rand_score", "fowlkes_mallows_score"]
     for refit in ["adjusted_rand_score", "fowlkes_mallows_score"]:
         grid_search = GridSearchCV(
-            km, param_grid=dict(n_clusters=[2, 3, 4]), scoring=scoring, refit=refit
+            km, search_space=dict(n_clusters=[2, 3, 4]), scoring=scoring, refit=refit
         )
         grid_search.fit(X, y)
         # Both ARI and FMS can find the right number :)
@@ -826,13 +826,13 @@ def test_unsupervised_grid_search():
 
     # Single metric evaluation unsupervised
     grid_search = GridSearchCV(
-        km, param_grid=dict(n_clusters=[2, 3, 4]), scoring="fowlkes_mallows_score"
+        km, search_space=dict(n_clusters=[2, 3, 4]), scoring="fowlkes_mallows_score"
     )
     grid_search.fit(X, y)
     assert grid_search.best_params_["n_clusters"] == 3
 
     # Now without a score, and without y
-    grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]))
+    grid_search = GridSearchCV(km, search_space=dict(n_clusters=[2, 3, 4]))
     grid_search.fit(X)
     assert grid_search.best_params_["n_clusters"] == 4
 
@@ -846,7 +846,7 @@ def test_gridsearch_no_predict():
     X, _ = make_blobs(cluster_std=0.1, random_state=1, centers=[[0, 1], [1, 0], [0, 0]])
     search = GridSearchCV(
         KernelDensity(),
-        param_grid=dict(bandwidth=[0.01, 0.1, 1]),
+        search_space=dict(bandwidth=[0.01, 0.1, 1]),
         scoring=custom_scoring,
     )
     search.fit(X)
@@ -948,7 +948,7 @@ def test_grid_search_cv_results():
     n_candidates = n_grid_points
 
     search = GridSearchCV(
-        SVC(), cv=n_splits, param_grid=params, return_train_score=True
+        SVC(), cv=n_splits, search_space=params, return_train_score=True
     )
     search.fit(X, y)
     cv_results = search.cv_results_
@@ -1020,7 +1020,7 @@ def test_random_search_cv_results():
         SVC(),
         n_iter=n_search_iter,
         cv=n_splits,
-        param_distributions=params,
+        search_space=params,
         return_train_score=True,
     )
     search.fit(X, y)
@@ -1052,8 +1052,8 @@ def test_random_search_cv_results():
 @pytest.mark.parametrize(
     "SearchCV, specialized_params",
     [
-        (GridSearchCV, {"param_grid": {"C": [1, 10]}}),
-        (RandomizedSearchCV, {"param_distributions": {"C": [1, 10]}, "n_iter": 2}),
+        (GridSearchCV, {"search_space": {"C": [1, 10]}}),
+        (RandomizedSearchCV, {"search_space": {"C": [1, 10]}, "n_iter": 2}),
     ],
 )
 def test_search_default_iid(SearchCV, specialized_params):
@@ -1139,7 +1139,7 @@ def test_grid_search_cv_results_multimetric():
         "recall",
     ):
         grid_search = GridSearchCV(
-            SVC(), cv=n_splits, param_grid=params, scoring=scoring, refit=False
+            SVC(), cv=n_splits, search_space=params, scoring=scoring, refit=False
         )
         grid_search.fit(X, y)
         grid_searches.append(grid_search)
@@ -1169,7 +1169,7 @@ def test_random_search_cv_results_multimetric():
                 clf,
                 n_iter=n_search_iter,
                 cv=n_splits,
-                param_distributions=params,
+                search_space=params,
                 scoring=scoring,
                 refit=refit,
                 random_state=0,
@@ -1245,10 +1245,10 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
     [
         RandomizedSearchCV(
             estimator=DecisionTreeClassifier(),
-            param_distributions={"max_depth": [5, 10]},
+            search_space={"max_depth": [5, 10]},
         ),
         GridSearchCV(
-            estimator=DecisionTreeClassifier(), param_grid={"max_depth": [5, 10]}
+            estimator=DecisionTreeClassifier(), search_space={"max_depth": [5, 10]}
         ),
     ],
 )
@@ -1269,12 +1269,12 @@ def test_search_cv_score_samples_error(search_cv):
     [
         RandomizedSearchCV(
             estimator=LocalOutlierFactor(novelty=True),
-            param_distributions={"n_neighbors": [5, 10]},
+            search_space={"n_neighbors": [5, 10]},
             scoring="precision",
         ),
         GridSearchCV(
             estimator=LocalOutlierFactor(novelty=True),
-            param_grid={"n_neighbors": [5, 10]},
+            search_space={"n_neighbors": [5, 10]},
             scoring="precision",
         ),
     ],
@@ -1319,9 +1319,9 @@ def test_search_cv_results_rank_tie_breaking():
     # which would result in a tie of their mean cv-scores
     param_grid = {"C": [1, 1.001, 0.001]}
 
-    grid_search = GridSearchCV(SVC(), param_grid=param_grid, return_train_score=True)
+    grid_search = GridSearchCV(SVC(), search_space=param_grid, return_train_score=True)
     random_search = RandomizedSearchCV(
-        SVC(), n_iter=3, param_distributions=param_grid, return_train_score=True
+        SVC(), n_iter=3, search_space=param_grid, return_train_score=True
     )
 
     for search in (grid_search, random_search):
@@ -1691,7 +1691,7 @@ def test_stochastic_gradient_loss_param():
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
     clf = GridSearchCV(
-        estimator=SGDClassifier(loss="hinge"), param_grid=param_grid, cv=3
+        estimator=SGDClassifier(loss="hinge"), search_space=param_grid, cv=3
     )
 
     # When the estimator is not fitted, `predict_proba` is not available as the
@@ -1707,7 +1707,7 @@ def test_stochastic_gradient_loss_param():
         "loss": ["hinge"],
     }
     clf = GridSearchCV(
-        estimator=SGDClassifier(loss="hinge"), param_grid=param_grid, cv=3
+        estimator=SGDClassifier(loss="hinge"), search_space=param_grid, cv=3
     )
     assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)
@@ -1719,7 +1719,7 @@ def test_search_train_scores_set_to_false():
     y = [0, 0, 0, 1, 1, 1]
     clf = LinearSVC(random_state=0)
 
-    gs = GridSearchCV(clf, param_grid={"C": [0.1, 0.2]}, cv=3)
+    gs = GridSearchCV(clf, search_space={"C": [0.1, 0.2]}, cv=3)
     gs.fit(X, y)
 
 
@@ -1731,7 +1731,7 @@ def test_grid_search_cv_splits_consistency():
 
     gs = GridSearchCV(
         LinearSVC(random_state=0),
-        param_grid={"C": [0.1, 0.2, 0.3]},
+        search_space={"C": [0.1, 0.2, 0.3]},
         cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
         return_train_score=True,
     )
@@ -1739,7 +1739,7 @@ def test_grid_search_cv_splits_consistency():
 
     gs2 = GridSearchCV(
         LinearSVC(random_state=0),
-        param_grid={"C": [0.1, 0.2, 0.3]},
+        search_space={"C": [0.1, 0.2, 0.3]},
         cv=KFold(n_splits=n_splits),
         return_train_score=True,
     )
@@ -1752,7 +1752,7 @@ def test_grid_search_cv_splits_consistency():
     )
     gs3 = GridSearchCV(
         LinearSVC(random_state=0),
-        param_grid={"C": [0.1, 0.2, 0.3]},
+        search_space={"C": [0.1, 0.2, 0.3]},
         cv=KFold(n_splits=n_splits, shuffle=True, random_state=0).split(X, y),
         return_train_score=True,
     )
@@ -1760,7 +1760,7 @@ def test_grid_search_cv_splits_consistency():
 
     gs4 = GridSearchCV(
         LinearSVC(random_state=0),
-        param_grid={"C": [0.1, 0.2, 0.3]},
+        search_space={"C": [0.1, 0.2, 0.3]},
         cv=KFold(n_splits=n_splits, shuffle=True, random_state=0),
         return_train_score=True,
     )
@@ -1796,7 +1796,7 @@ def test_grid_search_cv_splits_consistency():
     # Check consistency of folds across the parameters
     gs = GridSearchCV(
         LinearSVC(random_state=0),
-        param_grid={"C": [0.1, 0.1, 0.2, 0.2]},
+        search_space={"C": [0.1, 0.1, 0.2, 0.2]},
         cv=KFold(n_splits=n_splits, shuffle=True),
         return_train_score=True,
     )
@@ -1952,10 +1952,10 @@ def test_random_search_bad_cv():
 @pytest.mark.parametrize(
     "SearchCV, specialized_params",
     [
-        (GridSearchCV, {"param_grid": {"max_depth": [2, 3]}}),
+        (GridSearchCV, {"search_space": {"max_depth": [2, 3]}}),
         (
             RandomizedSearchCV,
-            {"param_distributions": {"max_depth": [2, 3]}, "n_iter": 2},
+            {"search_space": {"max_depth": [2, 3]}, "n_iter": 2},
         ),
     ],
 )
