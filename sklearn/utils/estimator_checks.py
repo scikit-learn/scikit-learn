@@ -2425,6 +2425,12 @@ def check_classifiers_multilabel_output_format_predict_proba(name, classifier_or
         )
         assert_array_less(0, y_pred, err_msg=err_msg)
         assert_array_less(y_pred, 1, err_msg=err_msg)
+        err_msg = (
+            f"When {name}.predict_proba returns a NumPy array, the "
+            "sum of each row is expected to sum to 1 (or close to 1 due to "
+            "numerical errors)."
+        )
+        assert_allclose(y_pred.sum(axis=1), 1, err_msg=err_msg)
     else:
         raise ValueError(
             f"Unknown returned type {type(y_pred)} by {name}."
