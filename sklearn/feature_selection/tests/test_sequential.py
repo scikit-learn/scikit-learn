@@ -86,6 +86,20 @@ def test_n_features_to_select_auto(direction, tol):
 def test_n_features_to_select_stopping_criterion(direction):
     """Check the behaviour stopping criterion for feature selection
     depending on the values of `n_features_to_select` and `tol`.
+
+    When `direction` is `'forward'`, select a new features at random
+    among those not currently selected in selector.support_,
+    build a new version of the data that includes all the features
+    in selector.support_ + this newly selected feature.
+    And check that the cross-validation score of the model trained on
+    this new dataset variant is lower than the model with
+    the selected forward selected features or at least does not improve
+    by more than the tol margin.
+
+    When `direction` is `'backward'`, instead of adding a new feature
+    to selector.support_, try to remove one of those selected features at random
+    And check that the cross-validation score is either decreasing or
+    not improving by more than the tol margin.
     """
 
     X, y = make_regression(n_features=50, n_informative=10, random_state=0)
