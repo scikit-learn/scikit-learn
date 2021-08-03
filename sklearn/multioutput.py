@@ -405,7 +405,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         return self
 
     def _check_predict_proba(self):
-        check_is_fitted(self)
         if not all(
             [hasattr(estimator, "predict_proba") for estimator in self.estimators_]
         ):
@@ -439,6 +438,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
                 the list is ``n_outputs``, and each array is (``n_samples``,
                 ``n_classes``) for that particular output.
         """
+        check_is_fitted(self)
         results = [estimator.predict_proba(X) for estimator in self.estimators_]
         return results
 

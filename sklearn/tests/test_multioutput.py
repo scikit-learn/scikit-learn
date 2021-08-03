@@ -405,7 +405,7 @@ def test_multi_output_exceptions():
     with pytest.raises(NotFittedError):
         moc.predict(y)
 
-    with pytest.raises(NotFittedError):
+    with pytest.raises(AttributeError):
         moc.predict_proba
 
     with pytest.raises(NotFittedError):
