@@ -106,7 +106,7 @@ def test_n_features_to_select_stopping_criterion(direction):
     added_X = np.hstack(
         [
             selected_X,
-            (X[:, np.random.choice(added_candidates)])[:, np.newaxis],
+            (X[:, rng.choice(added_candidates)])[:, np.newaxis],
         ]
     )
 
