@@ -352,7 +352,7 @@ def _warn_about_fit_failures(results, error_score):
     ]
     num_fits = len(results)
 
-    if len(fit_errors) > 0:
+    if fit_errors:
         num_failed_fits = len(fit_errors)
         fit_errors_counter = Counter(fit_errors)
         delimiter = "-" * 80 + "\n"
