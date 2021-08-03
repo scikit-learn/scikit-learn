@@ -43,6 +43,10 @@ random sampling procedures.
 - |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
   affinity matrix computation.
 
+- |Fix| :class:`manifold.Isomap` now connects disconnected components of the
+  neighbors graph along some minimum distance pairs, instead of changing
+  every infinite distances to zero.
+
 - |Fix| The splitting criterion of :class:`tree.DecisionTreeClassifier` and
   :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
   of rounding errors. Previously some extra spurious splits could occur.
@@ -505,6 +509,12 @@ Changelog
   be scaled to have standard deviation 1e-4 in 1.2.
   :pr:`19491` by :user:`Dmitry Kobak <dkobak>`.
 
+- |Fix| :class:`manifold.Isomap` now uses `scipy.sparse.csgraph.shortest_path`
+  to compute the graph shortest path. It also connects disconnected components
+  of the neighbors graph along some minimum distance pairs, instead of changing
+  every infinite distances to zero. :pr:`20531` by `Roman Yurchak`_ and `Tom
+  Dupre la Tour`_.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -720,6 +730,10 @@ Changelog
   be removed in 1.2. Used `pytest.warns` context manager instead. Note that
   these functions were not documented and part from the public API.
   :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
+
+- |API| Fixed several bugs in :func:`utils.graph.graph_shortest_path`, which is
+  now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
+  by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.validation`
 .........................
