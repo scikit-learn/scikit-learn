@@ -11,6 +11,7 @@ from ..utils import Bunch, _safe_indexing
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.fixes import delayed
+from ..utils._testing import ignore_warnings
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
@@ -33,6 +34,12 @@ def _calculate_permutation_scores(
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
 
+    # Work on a copy of X to to ensure thread-safety in case of threading based
+    # parallelism. Furthermore, making a copy is also useful when the joblib
+    # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
+    # if X is large it will be automatically be backed by a readonly memory map
+    # (memmap). X.copy() on the other hand is always guaranteed to return a
+    # writable data-structure whose columns can be shuffled inplace.
     if max_samples < X.shape[0]:
         row_indices = _generate_indices(
             random_state=random_state,
@@ -43,12 +50,6 @@ def _calculate_permutation_scores(
         X_permuted = _safe_indexing(X, row_indices, axis=0)
         y = _safe_indexing(y, row_indices, axis=0)
     else:
-        # Work on a copy of X to to ensure thread-safety in case of threading based
-        # parallelism. Furthermore, making a copy is also useful when the joblib
-        # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
-        # if X is large it will be automatically be backed by a readonly memory map
-        # (memmap). X.copy() on the other hand is always guaranteed to return a
-        # writable data-structure whose columns can be shuffled inplace.
         X_permuted = X.copy()
 
     scores = []
@@ -58,7 +59,9 @@ def _calculate_permutation_scores(
         if hasattr(X_permuted, "iloc"):
             col = X_permuted.iloc[shuffling_idx, col_idx]
             col.index = X_permuted.index
-            X_permuted.iloc[:, col_idx] = col
+            with ignore_warnings():
+                # avoid SettingWithCopyWarning without importing pandas
+                X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
