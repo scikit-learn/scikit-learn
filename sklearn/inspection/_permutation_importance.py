@@ -7,7 +7,7 @@ from ..ensemble._bagging import _generate_indices
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..model_selection._validation import _aggregate_score_dicts
-from ..utils import Bunch
+from ..utils import Bunch, _safe_indexing
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.fixes import delayed
@@ -42,26 +42,15 @@ def _calculate_permutation_scores(
     X_permuted = X.copy()
     y_mod = y.copy()
 
-    # Draw from rows if not full data is used and subset X and y
-    if max_samples is not X.shape[0]:
+    if max_samples < X.shape[0]:
         row_indices = _generate_indices(
             random_state=random_state,
             bootstrap=False,
             n_population=X.shape[0],
             n_samples=max_samples,
         )
-        if hasattr(X_permuted, "iloc"):
-            X_permuted = X_permuted.iloc[row_indices]
-            if hasattr(y_mod, "iloc"):
-                y_mod = y_mod.iloc[row_indices]
-            else:
-                y_mod = y_mod[row_indices]
-        else:
-            X_permuted = X_permuted[row_indices]
-            if hasattr(y_mod, "iloc"):
-                y_mod = y_mod.iloc[row_indices]
-            else:
-                y_mod = y_mod[row_indices]
+        X_permuted = _safe_indexing(X_permuted, row_indices, axis=0)
+        y_mod = _safe_indexing(y_mod, row_indices, axis=0)
 
     scores = []
     shuffling_idx = np.arange(X_permuted.shape[0])
@@ -73,7 +62,7 @@ def _calculate_permutation_scores(
             X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
-        scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
+        scores.append(_weights_scorer(scorer, estimator, X_permuted, y_mod, sample_weight))
 
     if isinstance(scores[0], dict):
         scores = _aggregate_score_dicts(scores)
