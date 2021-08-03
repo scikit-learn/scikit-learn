@@ -33,15 +33,6 @@ def _calculate_permutation_scores(
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
 
-    # Work on a copy of X to to ensure thread-safety in case of threading based
-    # parallelism. Furthermore, making a copy is also useful when the joblib
-    # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
-    # if X is large it will be automatically be backed by a readonly memory map
-    # (memmap). X.copy() on the other hand is always guaranteed to return a
-    # writable data-structure whose columns can be shuffled inplace.
-    X_permuted = X.copy()
-    y_mod = y.copy()
-
     if max_samples < X.shape[0]:
         row_indices = _generate_indices(
             random_state=random_state,
@@ -49,8 +40,16 @@ def _calculate_permutation_scores(
             n_population=X.shape[0],
             n_samples=max_samples,
         )
-        X_permuted = _safe_indexing(X_permuted, row_indices, axis=0)
-        y_mod = _safe_indexing(y_mod, row_indices, axis=0)
+        X_permuted = _safe_indexing(X, row_indices, axis=0)
+        y = _safe_indexing(y, row_indices, axis=0)
+    else:
+        # Work on a copy of X to to ensure thread-safety in case of threading based
+        # parallelism. Furthermore, making a copy is also useful when the joblib
+        # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
+        # if X is large it will be automatically be backed by a readonly memory map
+        # (memmap). X.copy() on the other hand is always guaranteed to return a
+        # writable data-structure whose columns can be shuffled inplace.
+        X_permuted = X.copy()
 
     scores = []
     shuffling_idx = np.arange(X_permuted.shape[0])
@@ -62,7 +61,7 @@ def _calculate_permutation_scores(
             X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
-        scores.append(_weights_scorer(scorer, estimator, X_permuted, y_mod, sample_weight))
+        scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
 
     if isinstance(scores[0], dict):
         scores = _aggregate_score_dicts(scores)

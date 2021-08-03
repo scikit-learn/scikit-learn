@@ -1,5 +1,4 @@
 import pytest
-from itertools import product
 import numpy as np
 
 from numpy.testing import assert_allclose
@@ -29,7 +28,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
-
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("max_samples", [0.5, 1.0])
@@ -532,7 +530,7 @@ def test_permutation_importance_multi_metric(list_single_scorer, multi_scorer):
         assert_allclose(multi_result.importances, single_result.importances)
 
 
-@pytest.mark.parametrize("max_samples", ["5", "string"])
+@pytest.mark.parametrize("max_samples", [5])
 def test_permutation_importance_max_samples_error(max_samples):
     """Check that a proper error message is raised when `max_samples` is not
     set to a valid input value.
@@ -543,10 +541,7 @@ def test_permutation_importance_max_samples_error(max_samples):
     clf = LogisticRegression()
     clf.fit(X, y)
 
-    if max_samples=="5":
-        err_msg = ('n_population should be greater or equal than n_samples, got n_samples \\> n_population \\(5555 > 4\\)')
-    elif max_samples=="string":
-        err_msg = ("invalid literal for int\\(\\) with base 10\\: \\'stringstringstringstring\\'")
+    err_msg = ("max\\_samples must be in \\(0, n\\_samples\\]")
 
     with pytest.raises(ValueError, match=err_msg):
         permutation_importance(clf, X, y, max_samples=max_samples)
