@@ -295,11 +295,15 @@ def test_fastica_errors():
     with pytest.raises(
         ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
     ):
-        fastica(X, w_init=w_init)
+        # TODO: don't specify whiten value after 1.0
+        # Specifying it currently avoids a FutureWarning
+        fastica(X, w_init=w_init, whiten="unit-variance")
     with pytest.raises(
         ValueError, match="Invalid algorithm.+must be.+parallel.+or.+deflation"
     ):
-        fastica(X, algorithm="pizza")
+        # TODO: don't specify whiten value after 1.0
+        # Specifying it currently avoids a FutureWarning
+        fastica(X, algorithm="pizza", whiten="unit-variance")
 
 
 def test_fastica_whiten_unit_variance():
