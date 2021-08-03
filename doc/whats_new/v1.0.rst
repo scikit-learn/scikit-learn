@@ -702,7 +702,7 @@ Changelog
   :pr:`19948` by `Joel Nothman`_.
 
 _ |Enhancement| :func:`utils.validation.check_is_fitted` now uses
-  ``__is_fitted__`` if available, instead of checking for attributes ending with
+  ``__sk_is_fitted__`` if available, instead of checking for attributes ending with
   an underscore. This also makes :class:`Pipeline` and
   :class:`preprocessing.FunctionTransformer` pass
   ``check_is_fitted(estimator)``. :pr:`20657` by `Adrin Jalali`_.
