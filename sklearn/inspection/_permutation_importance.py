@@ -73,9 +73,7 @@ def _calculate_permutation_scores(
             X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
-        scores.append(
-            _weights_scorer(scorer, estimator, X_permuted, y_mod, sample_weight)
-        )
+        scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
 
     if isinstance(scores[0], dict):
         scores = _aggregate_score_dicts(scores)
