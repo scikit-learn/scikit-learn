@@ -794,16 +794,18 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         "splits, got {}".format(n_splits, len(out) // n_candidates)
                     )
 
-                all_candidate_params.extend(candidate_params)
-                all_out.extend(out)
-                _warn_about_fit_failures(all_out, self.error_score)
+                _warn_about_fit_failures(out, self.error_score)
 
                 # For callable self.scoring, the return type is only know after
                 # calling. If the return type is a dictionary, the error scores
                 # can now be inserted with the correct key. The type checking
                 # of out will be done in `_insert_error_scores`.
+
                 if callable(self.scoring):
-                    _insert_error_scores(all_out, self.error_score)
+                    _insert_error_scores(out, self.error_score)
+
+                all_candidate_params.extend(candidate_params)
+                all_out.extend(out)
 
                 if more_results is not None:
                     for key, value in more_results.items():
