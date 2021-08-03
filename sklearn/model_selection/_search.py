@@ -977,7 +977,7 @@ class GridSearchCV(BaseSearchCV):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    param_grid : dict or list of dictionaries
+    search_space : dict or list of dictionaries
         Dictionary with parameters names (`str`) as keys and lists of
         parameter settings to try as values, or a list of such
         dictionaries, in which case the grids spanned by each dictionary
@@ -1118,7 +1118,7 @@ class GridSearchCV(BaseSearchCV):
     >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
     GridSearchCV(estimator=SVC(),
-                 param_grid={'C': [1, 10], 'kernel': ('linear', 'rbf')})
+                 search_space={'C': [1, 10], 'kernel': ('linear', 'rbf')})
     >>> sorted(clf.cv_results_.keys())
     ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
      'param_C', 'param_kernel', 'params',...
@@ -1270,12 +1270,12 @@ class GridSearchCV(BaseSearchCV):
 
     """
 
-    _required_parameters = ["estimator", "param_grid"]
+    _required_parameters = ["estimator", "search_space"]
 
     def __init__(
         self,
         estimator,
-        param_grid,
+        search_space,
         *,
         scoring=None,
         n_jobs=None,
@@ -1297,8 +1297,8 @@ class GridSearchCV(BaseSearchCV):
             error_score=error_score,
             return_train_score=return_train_score,
         )
-        self.param_grid = param_grid
-        _check_param_grid(param_grid)
+        self.param_grid = search_space
+        _check_param_grid(search_space)
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
@@ -1339,7 +1339,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    param_distributions : dict or list of dicts
+    search_space : dict or list of dicts
         Dictionary with parameters names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
@@ -1612,7 +1612,7 @@ class RandomizedSearchCV(BaseSearchCV):
     --------
     GridSearchCV : Does exhaustive search over a grid of parameters.
     ParameterSampler : A generator over parameter settings, constructed from
-        param_distributions.
+        search_space.
 
     Examples
     --------
@@ -1631,12 +1631,12 @@ class RandomizedSearchCV(BaseSearchCV):
     {'C': 2..., 'penalty': 'l1'}
     """
 
-    _required_parameters = ["estimator", "param_distributions"]
+    _required_parameters = ["estimator", "search_space"]
 
     def __init__(
         self,
         estimator,
-        param_distributions,
+        search_space,
         *,
         n_iter=10,
         scoring=None,
@@ -1649,7 +1649,7 @@ class RandomizedSearchCV(BaseSearchCV):
         error_score=np.nan,
         return_train_score=False,
     ):
-        self.param_distributions = param_distributions
+        self.param_distributions = search_space
         self.n_iter = n_iter
         self.random_state = random_state
         super().__init__(
