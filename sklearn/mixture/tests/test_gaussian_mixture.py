@@ -1321,4 +1321,4 @@ def test_init_param():
     )
     gmm.fit(X)
 
-    assert_array_equal(gmm.means_, means_init)
+    assert_allclose(gmm.means_, means_init)
