@@ -194,9 +194,7 @@ def test_permutation_importance_mixed_types():
 
     clf = make_pipeline(SimpleImputer(), LogisticRegression(solver="lbfgs"))
     clf.fit(X, y)
-    result = permutation_importance(
-        clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples=len(y)
-    )
+    result = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
 
     assert result.importances.shape == (X.shape[1], n_repeats)
 
@@ -206,9 +204,7 @@ def test_permutation_importance_mixed_types():
 
     # use another random state
     rng = np.random.RandomState(0)
-    result2 = permutation_importance(
-        clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples=len(y)
-    )
+    result2 = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
     assert result2.importances.shape == (X.shape[1], n_repeats)
 
     assert not np.allclose(result.importances, result2.importances)
@@ -234,9 +230,7 @@ def test_permutation_importance_mixed_types_pandas():
     clf = make_pipeline(preprocess, LogisticRegression(solver="lbfgs"))
     clf.fit(X, y)
 
-    result = permutation_importance(
-        clf, X, y, n_repeats=n_repeats, random_state=rng, max_samples=len(y)
-    )
+    result = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
 
     assert result.importances.shape == (X.shape[1], n_repeats)
     # the correlated feature with y is the last column and should
