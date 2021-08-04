@@ -165,7 +165,7 @@ Graph Routines
   If this is ever needed again, it would be far faster to use a single
   iteration of Dijkstra's algorithm from ``graph_shortest_path``.
 
-- :func:`graph_shortest_path.graph_shortest_path`:
+- :func:`graph.graph_shortest_path`:
   (used in :class:`~sklearn.manifold.Isomap`)
   Return the shortest path between all pairs of connected points on a directed
   or undirected graph.  Both the Floyd-Warshall algorithm and Dijkstra's
