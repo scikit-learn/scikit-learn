@@ -137,6 +137,10 @@ Changelog
 :mod:`sklearn.base`
 ...................
 
+- |Enhancement| :func:`clone` now copies extra parameters which are listed in
+  ``tags["extra_params"]``, and ``check_no_attributes_set_in_init`` tolerates
+  them being copied. :pr:`20681` by `Adrin Jalali`_.
+
 - |Fix| :func:`config_context` is now threadsafe. :pr:`18736` by `Thomas Fan`_.
 
 :mod:`sklearn.calibration`
