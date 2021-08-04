@@ -11,7 +11,7 @@ cdef int simultaneous_sort(
     ITYPE_t size
 ) nogil except -1
 
-cdef inline int heap_push(
+cdef int heap_push(
     floating* values,
     ITYPE_t* indices,
     ITYPE_t size,
