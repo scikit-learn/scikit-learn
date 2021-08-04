@@ -43,6 +43,10 @@ random sampling procedures.
 - |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
   affinity matrix computation.
 
+- |Fix| :class:`manifold.Isomap` now connects disconnected components of the
+  neighbors graph along some minimum distance pairs, instead of changing
+  every infinite distances to zero.
+
 - |Fix| The splitting criterion of :class:`tree.DecisionTreeClassifier` and
   :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
   of rounding errors. Previously some extra spurious splits could occur.
@@ -188,6 +192,9 @@ Changelog
   mini batches processed. :pr:`17622`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |API| :func:`cluster.spectral_clustering` raises an improved error when passed
+  a `np.matrix`. :pr:`20560` by `Thomas Fan`_.
+
 - |Fix| :class:`cluster.AgglomerativeClustering` correctly connects components
   when connectivity and affinity are both precomputed and the number
   of connected components is greater than 1. :pr:`20597` by
@@ -216,6 +223,10 @@ Changelog
 
 :mod:`sklearn.covariance`
 .........................
+
+- |API| Deprecates the following keys in `cv_results_`: `'mean_score'`,
+  `'std_score'`, and `'split(k)_score` in favor of `'mean_test_score'`
+  `'std_test_score'`, and `'split(k)_test_score``. :pr:`20583` by `Thomas Fan`_.
 
 - |Fix| Adds arrays check to :func:`covariance.ledoit_wolf` and
   :func:`covariance.ledoit_wolf_shrinkage`
@@ -333,9 +344,13 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
+- |Fix| Fixed a bug in :class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+- |Fix| Fixed a bug in :class:`feature_extraction.DictVectorizer` by raising an
+  error with unsupported value type.
+  :pr:`19520` by :user:`Jeff Zhao <kamiyaa>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -349,6 +364,11 @@ Changelog
   when the variance threshold is negative.
   :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
 
+- |API| Deprecates `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`feature_selection.RFECV`. `grid_scores_` will be removed in
+  version 1.2.
+  :pr:`20161` by :user:`Shuhei Kayawari <wowry>` and :user:`arka204`.
+
 - |Enhancement| :func:`feature_selection.RFE.fit` accepts additional estimator
   parameters that are passed directly to the estimator's `fit` method.
   :pr:`20380` by :user:`Iván Pulido <ijpulidos>`, :user:`Felipe Bidu <fbidu>`,
@@ -357,6 +377,11 @@ Changelog
 - |FIX| Fix a bug in :func:`isotonic.isotonic_regression` where the
   `sample_weight` passed by a user were overwritten during the fit.
   :pr:`20515` by :user:`Carsten Allefeld <allefeld>`.
+
+- |Fix| Change :func:`feature_selection.SequentialFeatureSelection` to
+  allow for unsupervised modelling so that the `fit` signature need not
+  do any `y` validation and allow for `y=None`.
+  :pr:`19568` by :user:`Shyam Desai <ShyamDesai>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -444,6 +469,11 @@ Changelog
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
   :user:`Maria Telenczuk <maikia>`.
 
+- |Fix| Points with residuals equal to  ``residual_threshold`` are now considered
+  as inliers for :class:`linear_model.RANSACRegressor`. This allows fitting
+  a model perfectly on some datasets when `residual_threshold=0`.
+  :pr:`19499` by :user:`Gregory Strubel <gregorystrubel>`.
+
 - |Efficiency| The implementation of `fit` for `PolynomialFeatures` transformer
   is now faster. This is especially noticeable on large sparse input.
   :pr:`19734` by :user:`Fred Robinson <frrad>`.
@@ -478,6 +508,12 @@ Changelog
   initialization will change to `pca` in 1.2. PCA initialization will
   be scaled to have standard deviation 1e-4 in 1.2.
   :pr:`19491` by :user:`Dmitry Kobak <dkobak>`.
+
+- |Fix| :class:`manifold.Isomap` now uses `scipy.sparse.csgraph.shortest_path`
+  to compute the graph shortest path. It also connects disconnected components
+  of the neighbors graph along some minimum distance pairs, instead of changing
+  every infinite distances to zero. :pr:`20531` by `Roman Yurchak`_ and `Tom
+  Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................
@@ -555,7 +591,6 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
-
 :mod:`sklearn.neighbors`
 ........................
 
@@ -573,6 +608,13 @@ Changelog
   and :class:`neighbors.RadiusNeighborsRegressor` does not validate `weights` in
   `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
   :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor` now correct supports continued training
+  when loading from a pickled file. :pr:`19631` by `Thomas Fan`_.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -688,6 +730,10 @@ Changelog
   be removed in 1.2. Used `pytest.warns` context manager instead. Note that
   these functions were not documented and part from the public API.
   :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
+
+- |API| Fixed several bugs in :func:`utils.graph.graph_shortest_path`, which is
+  now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
+  by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.validation`
 .........................
