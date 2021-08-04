@@ -29,6 +29,27 @@ from sklearn.metrics._pairwise_distances_reduction import (
 )
 
 
+def get_dummy_metric_kwargs(metric: str, n_features: int):
+    """Return dummy DistanceMetric kwargs for tests."""
+    rng = np.random.RandomState(1)
+    weights = rng.random_sample(n_features)
+    weights /= weights.sum()
+
+    V = rng.random_sample((n_features, n_features))
+
+    # VI is positive-semidefinite, preferred for precision matrix
+    VI = np.dot(V, V.T) + 3 * np.eye(n_features)
+
+    kwargs = {
+        "minkowski": dict(p=1.5),
+        "seuclidean": dict(V=weights),
+        "wminkowski": dict(p=1.5, w=weights),
+        "mahalanobis": dict(VI=VI),
+    }
+
+    return kwargs.get(metric, {})
+
+
 def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices):
     # We get arrays of arrays and we need to check for individual pairs
     for i in range(ref_dist.shape[0]):
@@ -313,7 +334,13 @@ def test_argkmin_strategies_consistency(
         X = X[:, :2]
         Y = Y[:, :2]
 
-    argkmin_reduction = ArgKmin.get_for(X, Y, k=k, metric=metric)
+    argkmin_reduction = ArgKmin.get_for(
+        X,
+        Y,
+        k=k,
+        metric=metric,
+        metric_kwargs=get_dummy_metric_kwargs(metric, n_features),
+    )
 
     dist_par_X, indices_par_X = argkmin_reduction.compute(
         strategy="parallel_on_X", return_distance=True
@@ -360,6 +387,7 @@ def test_radius_neighborhood_strategies_consistency(
         # Scaling the radius with the dimensions
         radius=radius ** np.log(n_features),
         metric=metric,
+        metric_kwargs=get_dummy_metric_kwargs(metric, n_features),
     )
 
     dist_par_X, indices_par_X = radius_neigh_reduction.compute(

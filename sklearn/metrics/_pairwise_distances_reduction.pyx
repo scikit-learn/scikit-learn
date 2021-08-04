@@ -8,7 +8,6 @@
 # cython: binding=False
 # distutils: define_macros=CYTHON_TRACE_NOGIL=0
 import numbers
-
 import numpy as np
 cimport numpy as np
 
@@ -37,7 +36,7 @@ from ..utils._openmp_helpers cimport _openmp_thread_num
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 
-
+from typing import List
 from scipy.sparse import issparse
 from threadpoolctl import threadpool_limits
 from ._dist_metrics import BOOL_METRICS, METRIC_MAPPING
@@ -166,12 +165,18 @@ cdef class PairwiseDistancesReduction:
         ITYPE_t n_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_remainder
 
     @classmethod
-    def valid_metrics(cls):
-        # TODO: support those boolean metrics.
-        # In order for them to be supported, we need to have a
-        # simultaneous sort which breaks ties on distances
-        excluded = {"pyfunc", *BOOL_METRICS}
-        return sorted({*METRIC_MAPPING.keys()}.difference(excluded))
+    def valid_metrics(cls) -> List[str]:
+        excluded = {
+            "pyfunc",  # is relatively slow because we need to coerce data as numpy arrays
+            "mahalanobis", # is numerically unstable
+            # TODO: support those last distances.
+            # In order for them to be supported, we need to have a
+            # simultaneous sort which breaks ties on distances.
+            # The best might be using std::sort and a Comparator.
+            "hamming",
+            *BOOL_METRICS,
+        }
+        return sorted({"fast_sqeuclidean", *METRIC_MAPPING.keys()}.difference(excluded))
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -289,7 +294,6 @@ cdef class PairwiseDistancesReduction:
             ITYPE_t num_threads = min(self.Y_n_chunks, self.effective_omp_n_thread)
             ITYPE_t thread_num
 
-        # TODO: put the "with nogil, parallel"-context here
         # Allocating datastructures
         self._on_Y_init(num_threads)
 
@@ -323,12 +327,10 @@ cdef class PairwiseDistancesReduction:
             # end: with nogil, parallel
 
             # Synchronizing the thread datastructures with the main ones
-            # This can potentially block
             self._on_Y_after_parallel(num_threads, X_start, X_end)
 
         # end: for X_chunk_idx
-        # Deallocating temporary datastructures
-        # Adjusting main datastructures before returning
+        # Deallocating temporary datastructures and adjusting main datastructures before returning
         self._on_Y_finalize(num_threads)
         return
 
@@ -432,10 +434,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         ITYPE_t ** heaps_indices_chunks
 
     @classmethod
-    def valid_metrics(cls):
-        return {"fast_sqeuclidean", *PairwiseDistancesReduction.valid_metrics()}
-
-    @classmethod
     def get_for(cls,
                 X,
                 Y,
@@ -443,7 +441,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 str metric="fast_sqeuclidean",
                 ITYPE_t chunk_size=CHUNK_SIZE,
                 dict metric_kwargs=dict(),
-        ):
+        ) -> ArgKmin:
         # This factory comes to handle specialisations.
         if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
@@ -905,10 +903,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         bint sort_results
 
     @classmethod
-    def valid_metrics(cls):
-        return {"fast_sqeuclidean", *PairwiseDistancesReduction.valid_metrics()}
-
-    @classmethod
     def get_for(cls,
                 X,
                 Y,
@@ -916,7 +910,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                 str metric="fast_sqeuclidean",
                 ITYPE_t chunk_size=CHUNK_SIZE,
                 dict metric_kwargs=dict(),
-        ):
+        ) -> RadiusNeighborhood:
         # This factory comes to handle specialisations.
         if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanRadiusNeighborhood(X=X, Y=Y,
