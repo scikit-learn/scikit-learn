@@ -468,7 +468,7 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     # Using safe_indexing with an array-like indexer gives a copy of the
     # DataFrame -> ensure it doesn't raise a warning if modified
     pd = pytest.importorskip("pandas")
-    X = pd.DataFrame({'a': [1, 2, 3], 'b': [3, 4, 5]})
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
     with pytest.warns(None) as record:
         subset.iloc[0, 0] = 10
