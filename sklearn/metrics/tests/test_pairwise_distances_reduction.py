@@ -28,26 +28,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     FastSquaredEuclideanRadiusNeighborhood,
 )
 
-
-def get_dummy_metric_kwargs(metric: str, n_features: int):
-    """Return dummy DistanceMetric kwargs for tests."""
-    rng = np.random.RandomState(1)
-    weights = rng.random_sample(n_features)
-    weights /= weights.sum()
-
-    V = rng.random_sample((n_features, n_features))
-
-    # VI is positive-semidefinite, preferred for precision matrix
-    VI = np.dot(V, V.T) + 3 * np.eye(n_features)
-
-    kwargs = {
-        "minkowski": dict(p=1.5),
-        "seuclidean": dict(V=weights),
-        "wminkowski": dict(p=1.5, w=weights),
-        "mahalanobis": dict(VI=VI),
-    }
-
-    return kwargs.get(metric, {})
+from sklearn.utils._testing import get_dummy_metric_kwargs
 
 
 def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices):

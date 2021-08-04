@@ -24,7 +24,6 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import (
     VALID_METRICS_SPARSE,
-    VALID_METRICS,
 )
 from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
@@ -32,6 +31,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
+    get_dummy_metric_kwargs,
 )
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
@@ -1302,71 +1302,50 @@ def test_neighbors_badargs():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
-def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5):
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
+def test_neighbors_metrics(
+    metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
+):
     # Test computing the neighbors for various metrics
+    if metric == "wminkowski" and sp_version >= parse_version("1.8.0"):
+        pytest.skip("wminkowski will be removed in SciPy 1.8.0")
 
     rng = np.random.RandomState(0)
     X = rng.rand(n_samples, n_features)
     test = rng.rand(n_query_pts, n_features)
-    V = np.cov(X.T)
 
-    metrics = [
-        ("euclidean", {}),
-        ("manhattan", {}),
-        ("minkowski", dict(p=1)),
-        ("minkowski", dict(p=2)),
-        ("minkowski", dict(p=3)),
-        ("minkowski", dict(p=np.inf)),
-        ("chebyshev", {}),
-        ("seuclidean", dict(V=rng.rand(n_features))),
-        ("wminkowski", dict(p=3, w=rng.rand(n_features))),
-        ("mahalanobis", dict(V=V)),
-        ("haversine", {}),
-    ]
     algorithms = ["brute", "ball_tree", "kd_tree"]
+    metric_params = get_dummy_metric_kwargs(metric, n_features)
 
-    for metric, metric_params in metrics:
-        if metric == "wminkowski" and sp_version >= parse_version("1.8.0"):
-            # wminkowski will be removed in SciPy 1.8.0
-            continue
+    # Haversine distance only accepts 2D data
+    if metric == "haversine":
+        feature_sl = slice(None, 2)
+        X_train = np.ascontiguousarray(X[:, feature_sl])
+        X_test = np.ascontiguousarray(test[:, feature_sl])
+    else:
+        X_train = X
+        X_test = test
 
-        # Haversine distance only accepts 2D data
-        if metric == "haversine":
-            feature_sl = slice(None, 2)
-            X_train = np.ascontiguousarray(X[:, feature_sl])
-            X_test = np.ascontiguousarray(test[:, feature_sl])
-        else:
-            X_train = X
-            X_test = test
+    results = {}
+    p = metric_params.pop("p", 2)
+    for algorithm in algorithms:
+        # KD tree doesn't support all metrics
+        neigh = neighbors.NearestNeighbors(
+            n_neighbors=n_neighbors,
+            algorithm=algorithm,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+        )
 
-        results = {}
-        p = metric_params.pop("p", 2)
-        for algorithm in algorithms:
-            # KD tree doesn't support all metrics
-            if algorithm == "kd_tree" and metric not in neighbors.KDTree.valid_metrics:
-                est = neighbors.NearestNeighbors(
-                    algorithm=algorithm, metric=metric, metric_params=metric_params
-                )
-                with pytest.raises(ValueError):
-                    est.fit(X)
-                continue
-            neigh = neighbors.NearestNeighbors(
-                n_neighbors=n_neighbors,
-                algorithm=algorithm,
-                metric=metric,
-                p=p,
-                metric_params=metric_params,
-            )
+        neigh.fit(X_train)
+        results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
-            neigh.fit(X_train)
-
-            results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
-
-        assert_allclose(results["brute"][0], results["ball_tree"][0])
-        assert_allclose(results["brute"][1], results["ball_tree"][1])
-        if "kd_tree" in results:
-            assert_allclose(results["brute"][0], results["kd_tree"][0])
-            assert_allclose(results["brute"][1], results["kd_tree"][1])
+    assert_allclose(results["brute"][0], results["ball_tree"][0])
+    assert_allclose(results["brute"][1], results["ball_tree"][1])
+    if "kd_tree" in results:
+        assert_allclose(results["brute"][0], results["kd_tree"][0])
+        assert_allclose(results["brute"][1], results["kd_tree"][1])
 
 
 def test_callable_metric():
@@ -1390,58 +1369,43 @@ def test_callable_metric():
     assert_array_almost_equal(dist1, dist2)
 
 
-def test_valid_brute_metric_for_auto_algorithm():
-    X = rng.rand(12, 12)
+@pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
+def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=12):
+    X = rng.rand(n_samples, n_features)
     Xcsr = csr_matrix(X)
 
-    # check that there is a metric that is valid for brute
-    # but not ball_tree (so we actually test something)
-    assert "cosine" in VALID_METRICS["brute"]
-    assert "cosine" not in VALID_METRICS["ball_tree"]
+    metric_params = get_dummy_metric_kwargs(metric, n_features)
 
-    # Metric which don't required any additional parameter
-    require_params = ["mahalanobis", "wminkowski", "seuclidean"]
-    for metric in VALID_METRICS["brute"]:
-        if metric != "precomputed" and metric not in require_params:
-            nn = neighbors.NearestNeighbors(
-                n_neighbors=3, algorithm="auto", metric=metric
-            )
-            if metric != "haversine":
-                nn.fit(X)
-                nn.kneighbors(X)
-            else:
-                nn.fit(X[:, :2])
-                nn.kneighbors(X[:, :2])
-        elif metric == "precomputed":
-            X_precomputed = rng.random_sample((10, 4))
-            Y_precomputed = rng.random_sample((3, 4))
-            DXX = metrics.pairwise_distances(X_precomputed, metric="euclidean")
-            DYX = metrics.pairwise_distances(
-                Y_precomputed, X_precomputed, metric="euclidean"
-            )
-            nb_p = neighbors.NearestNeighbors(n_neighbors=3)
-            nb_p.fit(DXX)
-            nb_p.kneighbors(DYX)
+    if metric == "precomputed":
+        X_precomputed = rng.random_sample((10, 4))
+        Y_precomputed = rng.random_sample((3, 4))
+        DXX = metrics.pairwise_distances(X_precomputed, metric="euclidean")
+        DYX = metrics.pairwise_distances(
+            Y_precomputed, X_precomputed, metric="euclidean"
+        )
+        nb_p = neighbors.NearestNeighbors(n_neighbors=3, metric="precomputed")
+        nb_p.fit(DXX)
+        nb_p.kneighbors(DYX)
 
-    for metric in VALID_METRICS_SPARSE["brute"]:
-        if metric != "precomputed" and metric not in require_params:
+    else:
+        nn = neighbors.NearestNeighbors(
+            n_neighbors=3, algorithm="auto", metric=metric, metric_params=metric_params
+        )
+        # Haversine distance only accepts 2D data
+        if metric == "haversine":
+            feature_sl = slice(None, 2)
+            X = np.ascontiguousarray(X[:, feature_sl])
+        else:
+            X = X
+
+        nn.fit(X)
+        nn.kneighbors(X)
+
+        if metric in VALID_METRICS_SPARSE["brute"]:
             nn = neighbors.NearestNeighbors(
                 n_neighbors=3, algorithm="auto", metric=metric
             ).fit(Xcsr)
             nn.kneighbors(Xcsr)
-
-    # Metric with parameter
-    VI = np.dot(X, X.T)
-    list_metrics = [
-        ("seuclidean", dict(V=rng.rand(12))),
-        ("wminkowski", dict(w=rng.rand(12))),
-        ("mahalanobis", dict(VI=VI)),
-    ]
-    for metric, params in list_metrics:
-        nn = neighbors.NearestNeighbors(
-            n_neighbors=3, algorithm="auto", metric=metric, metric_params=params
-        ).fit(X)
-        nn.kneighbors(X)
 
 
 def test_metric_params_interface():
@@ -1534,37 +1498,36 @@ def test_k_and_radius_neighbors_train_is_not_query():
         assert_array_equal(rng.A, [[0, 1], [1, 1]])
 
 
-def test_k_and_radius_neighbors_X_None():
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
+def test_k_and_radius_neighbors_X_None(algorithm):
     # Test kneighbors et.al when query is None
-    for algorithm in ALGORITHMS:
+    nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
 
-        nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
+    X = [[0], [1]]
+    nn.fit(X)
 
-        X = [[0], [1]]
-        nn.fit(X)
+    dist, ind = nn.kneighbors()
+    assert_array_equal(dist, [[1], [1]])
+    assert_array_equal(ind, [[1], [0]])
+    dist, ind = nn.radius_neighbors(None, radius=1.5)
+    check_object_arrays(dist, [[1], [1]])
+    check_object_arrays(ind, [[1], [0]])
 
-        dist, ind = nn.kneighbors()
-        assert_array_equal(dist, [[1], [1]])
-        assert_array_equal(ind, [[1], [0]])
-        dist, ind = nn.radius_neighbors(None, radius=1.5)
-        check_object_arrays(dist, [[1], [1]])
-        check_object_arrays(ind, [[1], [0]])
+    # Test the graph variants.
+    rng = nn.radius_neighbors_graph(None, radius=1.5)
+    kng = nn.kneighbors_graph(None)
+    for graph in [rng, kng]:
+        assert_array_equal(graph.A, [[0, 1], [1, 0]])
+        assert_array_equal(graph.data, [1, 1])
+        assert_array_equal(graph.indices, [1, 0])
 
-        # Test the graph variants.
-        rng = nn.radius_neighbors_graph(None, radius=1.5)
-        kng = nn.kneighbors_graph(None)
-        for graph in [rng, kng]:
-            assert_array_equal(graph.A, [[0, 1], [1, 0]])
-            assert_array_equal(graph.data, [1, 1])
-            assert_array_equal(graph.indices, [1, 0])
-
-        X = [[0, 1], [0, 1], [1, 1]]
-        nn = neighbors.NearestNeighbors(n_neighbors=2, algorithm=algorithm)
-        nn.fit(X)
-        assert_array_equal(
-            nn.kneighbors_graph().A,
-            np.array([[0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 0]]),
-        )
+    X = [[0, 1], [0, 1], [1, 1]]
+    nn = neighbors.NearestNeighbors(n_neighbors=2, algorithm=algorithm)
+    nn.fit(X)
+    assert_array_equal(
+        nn.kneighbors_graph().A,
+        np.array([[0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 0]]),
+    )
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
