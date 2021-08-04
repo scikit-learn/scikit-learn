@@ -14,5 +14,6 @@ def test_files_generated_by_templates_are_git_ignored():
 
     for filename in base_dir.glob("**/*.tp"):
         filename = filename.relative_to(base_dir.parent)
+        # From "path/to/template.p??.tp" to "path/to/template.p??" 
         filename_wo_tempita_suffix = filename.with_suffix("")
         assert str(filename_wo_tempita_suffix) in ignored_files
