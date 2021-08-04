@@ -582,9 +582,10 @@ def test_ransac_fit_sample_weight():
     # check that if base_estimator.fit doesn't support
     # sample_weight, raises error
     base_estimator = OrthogonalMatchingPursuit()
-    ransac_estimator = RANSACRegressor(base_estimator)
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=10)
 
-    with pytest.raises(ValueError):
+    err_msg = f"{base_estimator.__class__.__name__} does not support sample_weight."
+    with pytest.raises(ValueError, match=err_msg):
         ransac_estimator.fit(X, y, weights)
 
 
