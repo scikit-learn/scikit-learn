@@ -424,10 +424,9 @@ def test_fast_sqeuclidean_correctness(
         )
 
     rng = np.random.RandomState(seed)
-
     spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype).reshape((-1, n_features)) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype).reshape((-1, n_features)) * spread
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
     eucl_dist, eucl_indices = ArgKmin.get_for(X, Y, k, metric="euclidean").compute(
         return_distance=True
