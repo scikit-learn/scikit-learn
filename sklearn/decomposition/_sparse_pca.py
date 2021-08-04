@@ -40,6 +40,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         Tolerance for the stopping condition.
 
     method : {'lars', 'cd'}, default='lars'
+        Method to be used for optimization.
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
@@ -88,6 +89,18 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    See Also
+    --------
+    PCA : Principal Component Analysis implementation.
+    MiniBatchSparsePCA : Mini batch variant of `SparsePCA` that is faster but less
+        accurate.
+    DictionaryLearning : Generic dictionary learning problem using a sparse code.
+
     Examples
     --------
     >>> import numpy as np
@@ -103,16 +116,23 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
     0.9666...
-
-    See Also
-    --------
-    PCA
-    MiniBatchSparsePCA
-    DictionaryLearning
     """
-    def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
-                 max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
-                 U_init=None, V_init=None, verbose=False, random_state=None):
+
+    def __init__(
+        self,
+        n_components=None,
+        *,
+        alpha=1,
+        ridge_alpha=0.01,
+        max_iter=1000,
+        tol=1e-8,
+        method="lars",
+        n_jobs=None,
+        U_init=None,
+        V_init=None,
+        verbose=False,
+        random_state=None,
+    ):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
@@ -135,6 +155,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             and n_features is the number of features.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -153,20 +174,22 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             n_components = self.n_components
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
-        Vt, _, E, self.n_iter_ = dict_learning(X.T, n_components,
-                                               alpha=self.alpha,
-                                               tol=self.tol,
-                                               max_iter=self.max_iter,
-                                               method=self.method,
-                                               n_jobs=self.n_jobs,
-                                               verbose=self.verbose,
-                                               random_state=random_state,
-                                               code_init=code_init,
-                                               dict_init=dict_init,
-                                               return_n_iter=True)
+        Vt, _, E, self.n_iter_ = dict_learning(
+            X.T,
+            n_components,
+            alpha=self.alpha,
+            tol=self.tol,
+            max_iter=self.max_iter,
+            method=self.method,
+            n_jobs=self.n_jobs,
+            verbose=self.verbose,
+            random_state=random_state,
+            code_init=code_init,
+            dict_init=dict_init,
+            return_n_iter=True,
+        )
         self.components_ = Vt.T
-        components_norm = np.linalg.norm(
-            self.components_, axis=1)[:, np.newaxis]
+        components_norm = np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
         self.n_components_ = len(self.components_)
@@ -200,8 +223,9 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, reset=False)
         X = X - self.mean_
 
-        U = ridge_regression(self.components_.T, X.T, self.ridge_alpha,
-                             solver='cholesky')
+        U = ridge_regression(
+            self.components_.T, X.T, self.ridge_alpha, solver="cholesky"
+        )
 
         return U
 
@@ -279,6 +303,11 @@ class MiniBatchSparsePCA(SparsePCA):
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     Examples
     --------
     >>> import numpy as np
@@ -302,13 +331,31 @@ class MiniBatchSparsePCA(SparsePCA):
     SparsePCA
     DictionaryLearning
     """
-    def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
-                 n_iter=100, callback=None, batch_size=3, verbose=False,
-                 shuffle=True, n_jobs=None, method='lars', random_state=None):
+
+    def __init__(
+        self,
+        n_components=None,
+        *,
+        alpha=1,
+        ridge_alpha=0.01,
+        n_iter=100,
+        callback=None,
+        batch_size=3,
+        verbose=False,
+        shuffle=True,
+        n_jobs=None,
+        method="lars",
+        random_state=None,
+    ):
         super().__init__(
-            n_components=n_components, alpha=alpha, verbose=verbose,
-            ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
-            random_state=random_state)
+            n_components=n_components,
+            alpha=alpha,
+            verbose=verbose,
+            ridge_alpha=ridge_alpha,
+            n_jobs=n_jobs,
+            method=method,
+            random_state=random_state,
+        )
         self.n_iter = n_iter
         self.callback = callback
         self.batch_size = batch_size
@@ -341,19 +388,24 @@ class MiniBatchSparsePCA(SparsePCA):
         else:
             n_components = self.n_components
         Vt, _, self.n_iter_ = dict_learning_online(
-            X.T, n_components, alpha=self.alpha,
-            n_iter=self.n_iter, return_code=True,
-            dict_init=None, verbose=self.verbose,
+            X.T,
+            n_components,
+            alpha=self.alpha,
+            n_iter=self.n_iter,
+            return_code=True,
+            dict_init=None,
+            verbose=self.verbose,
             callback=self.callback,
             batch_size=self.batch_size,
             shuffle=self.shuffle,
-            n_jobs=self.n_jobs, method=self.method,
+            n_jobs=self.n_jobs,
+            method=self.method,
             random_state=random_state,
-            return_n_iter=True)
+            return_n_iter=True,
+        )
         self.components_ = Vt.T
 
-        components_norm = np.linalg.norm(
-            self.components_, axis=1)[:, np.newaxis]
+        components_norm = np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
         self.n_components_ = len(self.components_)

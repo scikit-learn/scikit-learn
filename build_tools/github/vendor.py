@@ -19,16 +19,18 @@ VCRUNTIME140_SRC_PATH = "C:\\Windows\\System32\\vcruntime140.dll"
 VCRUNTIME140_1_SRC_PATH = "C:\\Windows\\System32\\vcruntime140_1.dll"
 
 
-def make_distributor_init_32_bits(distributor_init,
-                                  vcomp140_dll_filename,
-                                  vcruntime140_dll_filename):
+def make_distributor_init_32_bits(
+    distributor_init, vcomp140_dll_filename, vcruntime140_dll_filename
+):
     """Create a _distributor_init.py file for 32-bit architectures.
 
     This file is imported first when importing the sklearn package
     so as to pre-load the vendored vcomp140.dll and vcruntime140.dll.
     """
     with open(distributor_init, "wt") as f:
-        f.write(textwrap.dedent("""
+        f.write(
+            textwrap.dedent(
+                """
             '''Helper to preload vcomp140.dll and vcruntime140.dll to
             prevent "not found" errors.
 
@@ -51,13 +53,19 @@ def make_distributor_init_32_bits(distributor_init,
                 vcruntime140_dll_filename = op.join(libs_path, "{1}")
                 WinDLL(op.abspath(vcomp140_dll_filename))
                 WinDLL(op.abspath(vcruntime140_dll_filename))
-            """.format(vcomp140_dll_filename, vcruntime140_dll_filename)))
+            """.format(
+                    vcomp140_dll_filename, vcruntime140_dll_filename
+                )
+            )
+        )
 
 
-def make_distributor_init_64_bits(distributor_init,
-                                  vcomp140_dll_filename,
-                                  vcruntime140_dll_filename,
-                                  vcruntime140_1_dll_filename):
+def make_distributor_init_64_bits(
+    distributor_init,
+    vcomp140_dll_filename,
+    vcruntime140_dll_filename,
+    vcruntime140_1_dll_filename,
+):
     """Create a _distributor_init.py file for 64-bit architectures.
 
     This file is imported first when importing the sklearn package
@@ -65,7 +73,9 @@ def make_distributor_init_64_bits(distributor_init,
     and vcruntime140_1.dll.
     """
     with open(distributor_init, "wt") as f:
-        f.write(textwrap.dedent("""
+        f.write(
+            textwrap.dedent(
+                """
             '''Helper to preload vcomp140.dll, vcruntime140.dll and
             vcruntime140_1.dll to prevent "not found" errors.
 
@@ -90,9 +100,13 @@ def make_distributor_init_64_bits(distributor_init,
                 WinDLL(op.abspath(vcomp140_dll_filename))
                 WinDLL(op.abspath(vcruntime140_dll_filename))
                 WinDLL(op.abspath(vcruntime140_1_dll_filename))
-            """.format(vcomp140_dll_filename,
-                       vcruntime140_dll_filename,
-                       vcruntime140_1_dll_filename)))
+            """.format(
+                    vcomp140_dll_filename,
+                    vcruntime140_dll_filename,
+                    vcruntime140_1_dll_filename,
+                )
+            )
+        )
 
 
 def main(wheel_dirname, bitness):
@@ -133,14 +147,16 @@ def main(wheel_dirname, bitness):
     # Generate the _distributor_init file in the source tree
     print("Generating the '_distributor_init.py' file.")
     if bitness == "32":
-        make_distributor_init_32_bits(distributor_init,
-                                      vcomp140_dll_filename,
-                                      vcruntime140_dll_filename)
+        make_distributor_init_32_bits(
+            distributor_init, vcomp140_dll_filename, vcruntime140_dll_filename
+        )
     else:
-        make_distributor_init_64_bits(distributor_init,
-                                      vcomp140_dll_filename,
-                                      vcruntime140_dll_filename,
-                                      vcruntime140_1_dll_filename)
+        make_distributor_init_64_bits(
+            distributor_init,
+            vcomp140_dll_filename,
+            vcruntime140_dll_filename,
+            vcruntime140_1_dll_filename,
+        )
 
 
 if __name__ == "__main__":
