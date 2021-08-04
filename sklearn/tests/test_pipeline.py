@@ -1365,7 +1365,12 @@ def test_search_cv_using_minimal_compatible_estimator(Predictor):
 
 
 def test_pipeline_check_if_fitted():
-    pipeline = Pipeline([("clf", LogisticRegression())])
+    class Estimator(BaseEstimator):
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+
+    pipeline = Pipeline([("clf", Estimator())])
     with pytest.raises(NotFittedError):
         check_is_fitted(pipeline)
     pipeline.fit(iris.data, iris.target)
