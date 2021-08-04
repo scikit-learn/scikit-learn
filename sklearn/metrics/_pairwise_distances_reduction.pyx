@@ -608,6 +608,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 )
         return
 
+    # TODO: annotating with 'final' here makes the compilation fails but it should not
+    # @final
     cdef void compute_exact_distances(self) nogil:
         cdef:
             ITYPE_t i, j
@@ -697,6 +699,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
     cdef:
         const DTYPE_t[:, ::1] X
         const DTYPE_t[:, ::1] Y
+        const DTYPE_t[::1] X_sq_norms
         const DTYPE_t[::1] Y_sq_norms
 
         # Buffers for GEMM
@@ -715,6 +718,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             chunk_size=chunk_size)
         self.X = check_array(X, dtype=DTYPE, order='C')
         self.Y = check_array(Y, dtype=DTYPE, order='C')
+        self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
         # Temporary datastructures used in threads
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
@@ -764,22 +768,6 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             free(self.dist_middle_terms_chunks[thread_num])
 
     @final
-    cdef void compute_exact_distances(self) nogil:
-        cdef:
-            ITYPE_t i, j
-            ITYPE_t[:, ::1] Y_indices = self.argkmin_indices
-            DTYPE_t[:, ::1] distances = self.argkmin_distances
-
-        for i in prange(self.n_X, schedule='static', nogil=True,
-                        num_threads=self.effective_omp_n_thread):
-            for j in range(self.k):
-                # This time we have no other choice but to recompute distances
-                # because we don't take ||X_c||² in the reduction
-                # TODO: introduce ||X_c||² for FastSquaredEuclideanArgKmin
-                # and factorise code shared with FastSquaredEuclideanRadiusNeighborhood?
-                distances[i, j] = self.datasets_pair.dist(i, Y_indices[i, j])
-
-    @final
     cdef int _reduce_on_chunks(self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -795,24 +783,19 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         """
         cdef:
             ITYPE_t i, j
+            ITYPE_t k = self.k
+
             const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
             const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
-            ITYPE_t k = self.k
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
             DTYPE_t *heaps_proxy_distances = self.heaps_proxy_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
-            # Instead of computing the full pairwise squared distances matrix,
+            # We compute the full pairwise squared distances matrix as follows
             #
             #      ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²,
             #
-            # we only need to store the
-            #                                - 2 X_c.Y_c^T + ||Y_c||²
-            #
-            # term since the argkmin for a given sample X_c^{i} does not depend on
-            # ||X_c^{i}||²
-            #
-            # This term gets computed efficiently bellow using GEMM from BLAS Level 3.
+            # The middle term gets computed efficiently bellow using GEMM from BLAS Level 3.
             #
             # Careful: LDA, LDB and LDC are given for F-ordered arrays in BLAS documentations,
             # for instance:
@@ -847,8 +830,12 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
                 _push(heaps_proxy_distances + i * k,
                       heaps_indices + i * k,
                       k,
-                      # proxy distance: - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
-                      dist_middle_terms[i * Y_c.shape[0] + j] + self.Y_sq_norms[j + Y_start],
+                      # proxy distance: |X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                      (
+                        self.X_sq_norms[i + X_start] +
+                        dist_middle_terms[i * Y_c.shape[0] + j] +
+                        self.Y_sq_norms[j + Y_start]
+                       ),
                       j + Y_start)
         return 0
 
@@ -1244,6 +1231,8 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
         """
         cdef:
             ITYPE_t i, j
+            DTYPE_t squared_dist_i_j
+
             const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
             const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
@@ -1276,9 +1265,6 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
             DTYPE_t beta = 0.
             DTYPE_t * C = dist_middle_terms
             ITYPE_t ldc = Y_c.shape[0]
-
-            DTYPE_t squared_dist_i_j
-
 
         # dist_middle_terms = -2 * X_c.dot(Y_c.T)
         _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, C, ldc)
