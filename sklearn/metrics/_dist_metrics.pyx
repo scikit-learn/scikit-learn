@@ -1425,7 +1425,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
 
         self.Y = check_array(Y, dtype=DTYPE)
-        self.Y_indices = np.arange(self.Y.shape[1])
+        self.Y_indices = np.arange(self.Y.shape[1], dtype=ITYPE)
 
     @property
     @final
