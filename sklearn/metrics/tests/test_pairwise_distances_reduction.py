@@ -245,15 +245,15 @@ def test_pairwise_distances_reduction_factory_method(
     assert isinstance(fast_sqeuclidean_instance, FastSquaredPairwiseDistancesReduction)
 
 
+@pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
 @pytest.mark.parametrize("k", [1, 10, 100])
 @pytest.mark.parametrize("chunk_size", [512, 1024, 1337, 19301])
-@pytest.mark.parametrize("seed", range(10))
 def test_argkmin_chunk_size_agnosticism(
+    seed,
     n_samples,
     k,
     chunk_size,
-    seed,
     metric="fast_sqeuclidean",
     n_features=100,
     dtype=np.float64,
@@ -275,15 +275,15 @@ def test_argkmin_chunk_size_agnosticism(
     assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices)
 
 
+@pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("radius", [1, 10, 100])
 @pytest.mark.parametrize("chunk_size", [512, 1024, 1337, 19301])
-@pytest.mark.parametrize("seed", range(10))
 def test_radius_neighborhood_chunk_size_agnosticism(
+    seed,
     n_samples,
     radius,
     chunk_size,
-    seed,
     metric="fast_sqeuclidean",
     n_features=100,
     dtype=np.float64,
@@ -308,17 +308,17 @@ def test_radius_neighborhood_chunk_size_agnosticism(
     assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices)
 
 
+@pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("n_features", [5, 100, 500])
 @pytest.mark.parametrize("k", [1, 10, 100])
 @pytest.mark.parametrize("metric", ArgKmin.valid_metrics())
-@pytest.mark.parametrize("seed", range(10))
 def test_argkmin_strategies_consistency(
+    seed,
     n_samples,
     n_features,
     k,
     metric,
-    seed,
     dtype=np.float64,
 ):
     # ArgKmin results obtained using both parallelization strategies
@@ -355,17 +355,17 @@ def test_argkmin_strategies_consistency(
     )
 
 
+@pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("n_features", [5, 100, 500])
 @pytest.mark.parametrize("radius", [1, 10, 100])
 @pytest.mark.parametrize("metric", RadiusNeighborhood.valid_metrics())
-@pytest.mark.parametrize("seed", range(10))
 def test_radius_neighborhood_strategies_consistency(
+    seed,
     n_samples,
     n_features,
     radius,
     metric,
-    seed,
     dtype=np.float64,
 ):
     # RadiusNeighborhood results obtained using both parallelization strategies
@@ -403,16 +403,16 @@ def test_radius_neighborhood_strategies_consistency(
     )
 
 
+@pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("k, radius", [(50, 100)])
-@pytest.mark.parametrize("seed", range(10))
 def test_fast_sqeuclidean_correctness(
+    seed,
     n_samples,
     n_features,
     k,
     radius,
-    seed,
     dtype=np.float64,
 ):
     # The fast squared euclidean strategy must return results
@@ -451,17 +451,17 @@ def test_fast_sqeuclidean_correctness(
     )
 
 
+@pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("n_features", [5, 10, 100, 500])
 @pytest.mark.parametrize("k", [1, 10, 100])
 @pytest.mark.parametrize("translation", [10 ** i for i in [4]])
-@pytest.mark.parametrize("seed", range(10))
 def test_fast_sqeuclidean_translation_invariance(
+    seed,
     n_samples,
     n_features,
     k,
     translation,
-    seed,
     dtype=np.float64,
 ):
     # The fast squared euclidean strategy should be translation invariant.
