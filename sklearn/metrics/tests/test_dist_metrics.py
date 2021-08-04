@@ -52,6 +52,16 @@ METRICS_DEFAULT_PARAMS = {
 }
 
 
+# TODO: remove this test in 1.2
+def test_neighbors_distance_metric_deprecation():
+    from sklearn.neighbors import DistanceMetric as DeprecatedDistanceMetric
+
+    with pytest.warns(
+        FutureWarning, match="sklearn.neighbors.DistanceMetric has been moved"
+    ):
+        DeprecatedDistanceMetric.get_metric("euclidean")
+
+
 @pytest.mark.parametrize("metric", METRICS_DEFAULT_PARAMS)
 @pytest.mark.parametrize("X1, X2", [(X1, X2), (X1_mmap, X2_mmap)])
 def test_cdist(metric, X1, X2):
