@@ -16,8 +16,8 @@ from sklearn.utils._weight_vector import (
 def test_type_invariance(dtype, WeightVector):
     weights = np.random.rand(100).astype(dtype)
     average_weights = np.random.rand(100).astype(dtype)
-    
+
     weight_vector = WeightVector(weights, average_weights)
-    
+
     assert np.asarray(weight_vector.w).dtype is np.dtype(dtype)
     assert np.asarray(weight_vector.aw).dtype is np.dtype(dtype)
