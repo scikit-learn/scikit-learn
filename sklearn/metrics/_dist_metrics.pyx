@@ -1207,8 +1207,12 @@ cdef class DatasetsPair:
     """
 
     @classmethod
-    def get_for(cls, X, Y, str metric="euclidean",
-                dict metric_kwargs=dict()) -> DatasetsPair:
+    def get_for(cls,
+        X,
+        Y,
+        str metric="euclidean",
+        dict metric_kwargs=dict(),
+    ) -> DatasetsPair:
         cdef:
             DistanceMetric distance_metric = DistanceMetric.get_metric(metric,
                                                                  **metric_kwargs)

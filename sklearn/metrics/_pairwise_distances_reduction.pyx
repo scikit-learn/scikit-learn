@@ -189,8 +189,8 @@ cdef class PairwiseDistancesReduction:
                 metric in cls.valid_metrics())
 
     def __init__(self,
-                 DatasetsPair datasets_pair,
-                 ITYPE_t chunk_size = CHUNK_SIZE,
+        DatasetsPair datasets_pair,
+        ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         cdef:
             ITYPE_t X_n_full_chunks, Y_n_full_chunks
@@ -435,13 +435,13 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     @classmethod
     def get_for(cls,
-                X,
-                Y,
-                ITYPE_t k,
-                str metric="fast_sqeuclidean",
-                ITYPE_t chunk_size=CHUNK_SIZE,
-                dict metric_kwargs=dict(),
-        ) -> ArgKmin:
+        X,
+        Y,
+        ITYPE_t k,
+        str metric="fast_sqeuclidean",
+        ITYPE_t chunk_size=CHUNK_SIZE,
+        dict metric_kwargs=dict(),
+    ) -> ArgKmin:
         # This factory comes to handle specialisations.
         if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
@@ -904,13 +904,13 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
     @classmethod
     def get_for(cls,
-                X,
-                Y,
-                DTYPE_t radius,
-                str metric="fast_sqeuclidean",
-                ITYPE_t chunk_size=CHUNK_SIZE,
-                dict metric_kwargs=dict(),
-        ) -> RadiusNeighborhood:
+        X,
+        Y,
+        DTYPE_t radius,
+        str metric="fast_sqeuclidean",
+        ITYPE_t chunk_size=CHUNK_SIZE,
+        dict metric_kwargs=dict(),
+    ) -> RadiusNeighborhood:
         # This factory comes to handle specialisations.
         if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanRadiusNeighborhood(X=X, Y=Y,
