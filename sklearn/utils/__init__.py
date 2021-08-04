@@ -210,8 +210,12 @@ def _pandas_indexing(X, key, key_dtype, axis):
     elif isinstance(key, tuple):
         key = list(key)
     # check whether we should index with loc or iloc
-    indexer = X.iloc if key_dtype == "int" else X.loc
-    return indexer[:, key] if axis else indexer[key]
+    if key_dtype == "int":
+        # using take() instead of iloc[] ensures the return value is a "proper"
+        # copy that will not raise SettingWithCopyWarning
+        return X.take(key, axis=axis)
+    else:
+        return X.loc[:, key] if axis else X.loc[key]
 
 
 def _list_indexing(X, key, key_dtype):
