@@ -39,6 +39,8 @@ def test_lle_simple_grid():
     #       for arm64 platforms 2 makes the test fail.
     # TODO: rewrite this test to make less sensitive to the random seed,
     # irrespective of the platform.
+    # TODO: rewrite this test to make less sensitive to the random seed,
+    # irrespective of the platform.
     rng = np.random.RandomState(42)
 
     # grid of equidistant points in 2D, n_components = n_dim

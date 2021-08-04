@@ -57,4 +57,5 @@ pip install --verbose --editable .
 ccache -s
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
+python -m threadpoolctl --import sklearn
 python -m pytest sklearn
