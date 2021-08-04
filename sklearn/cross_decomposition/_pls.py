@@ -455,7 +455,7 @@ class _PLS(
         X /= self._x_std
         Ypred = np.dot(X, self.coef_)
         Ypred += self._y_mean
-        return Ypred.squeeze(axis=1)
+        return Ypred.squeeze(axis=1) if Ypred.ndim > 1 else Ypred
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
