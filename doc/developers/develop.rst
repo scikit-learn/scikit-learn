@@ -618,6 +618,11 @@ X_types (default=['2darray'])
     ``'categorical'`` data. For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
+extra_params (default=[])
+    This includes the list of names of the parameters which need to be copied in
+    ``clone``, but are not included in the output of ``get_params`` and are not
+    an ``__init__`` parameter.
+
 It is unlikely that the default values for each tag will suit the needs of your
 specific estimator. Additional tags can be created or default tags can be
 overridden by defining a `_more_tags()` method which returns a dict with the

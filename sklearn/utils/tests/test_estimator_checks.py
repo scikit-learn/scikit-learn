@@ -628,6 +628,13 @@ def test_check_no_attributes_set_in_init():
         def __init__(self, you_should_set_this_=None):
             pass
 
+    class ConformantEstimatorWithExtraParams(BaseEstimator):
+        def _more_tags(self):
+            return {"extra_params": ["param1"]}
+
+        def __init__(self):
+            self.param1 = 42
+
     msg = (
         "Estimator estimator_name should not set any"
         " attribute apart from parameters during init."
@@ -646,6 +653,11 @@ def test_check_no_attributes_set_in_init():
         check_no_attributes_set_in_init(
             "estimator_name", NonConformantEstimatorNoParamSet()
         )
+
+    # this shouldn't raise any errors
+    check_no_attributes_set_in_init(
+        "conformant_estimator", ConformantEstimatorWithExtraParams()
+    )
 
 
 def test_check_estimator_pairwise():

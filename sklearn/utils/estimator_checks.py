@@ -2750,8 +2750,13 @@ def check_no_attributes_set_in_init(name, estimator_orig):
         for param in params_parent
     ]
 
-    # Test for no setting apart from parameters during init
-    invalid_attr = set(vars(estimator)) - set(init_params) - set(parents_init_params)
+    # Test for no setting apart from parameters and "extra_params" during init
+    invalid_attr = (
+        set(vars(estimator))
+        - set(init_params)
+        - set(parents_init_params)
+        - set(_safe_tags(estimator).get("extra_params", []))
+    )
     assert not invalid_attr, (
         "Estimator %s should not set any attribute apart"
         " from parameters during init. Found attributes %s."

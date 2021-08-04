@@ -141,6 +141,21 @@ def test_clone_2():
     assert not hasattr(new_selector, "own_attribute")
 
 
+def test_clone_extra_params():
+    # Test that clone copies the parameters provided in tags["extra_params"]
+    class Estimator(BaseEstimator):
+        def _more_tags(self):
+            return {"extra_params": ["param1"]}
+
+    est = Estimator()
+    # test that clone works when "param1" is not present
+    est_copy = clone(est)
+    assert not hasattr(est_copy, "param1")
+    est.param1 = 42
+    est_copy = clone(est)
+    assert est_copy.param1 == 42
+
+
 def test_clone_buggy():
     # Check that clone raises an error on buggy estimators.
     buggy = Buggy()
