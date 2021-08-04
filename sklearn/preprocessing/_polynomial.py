@@ -419,7 +419,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                         XP[:, start:end],
                         X[:, feature_idx : feature_idx + 1],
                         out=XP[:, current_col:next_col],
-                        casting="no",
+                        casting="safe",
                     )
                     current_col = next_col
 
