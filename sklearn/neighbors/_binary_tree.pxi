@@ -158,7 +158,7 @@ from ._partition_nodes cimport partition_node_indices
 from ..utils import check_array
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 from ..utils._typedefs import DTYPE, ITYPE
-from ..utils._heap cimport _simultaneous_sort, _push
+from ..utils._heap cimport simultaneous_sort as _simultaneous_sort, heap_push
 
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
@@ -546,7 +546,7 @@ cdef class NeighborsHeap:
             ITYPE_t size = self.distances.shape[1]
             DTYPE_t* dist_arr = &self.distances[row, 0]
             ITYPE_t* ind_arr = &self.indices[row, 0]
-        return _push(dist_arr, ind_arr, size, val, i_val)
+        return heap_push(dist_arr, ind_arr, size, val, i_val)
 
     cdef int _sort(self) except -1:
         """simultaneously sort the distances and indices"""

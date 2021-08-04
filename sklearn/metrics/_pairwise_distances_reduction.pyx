@@ -31,7 +31,7 @@ from ..utils._cython_blas cimport (
   Trans,
   _gemm,
 )
-from ..utils._heap cimport _simultaneous_sort, _push
+from ..utils._heap cimport simultaneous_sort, heap_push
 from ..utils._openmp_helpers cimport _openmp_thread_num
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
@@ -169,9 +169,8 @@ cdef class PairwiseDistancesReduction:
         excluded = {
             "pyfunc",  # is relatively slow because we need to coerce data as numpy arrays
             "mahalanobis", # is numerically unstable
-            # TODO: support those last distances.
-            # In order for them to be supported, we need to have a
-            # simultaneous sort which breaks ties on distances.
+            # TODO: In order to support discrete distance metrics, we need to have a
+            # simultaneous sort which breaks ties on indices when distances are identical.
             # The best might be using std::sort and a Comparator.
             "hamming",
             *BOOL_METRICS,
@@ -498,11 +497,13 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         # which keep tracks of the argkmin.
         for i in range(n_X):
             for j in range(n_Y):
-                _push(heaps_proxy_distances + i * self.k,
-                      heaps_indices + i * self.k,
-                      k,
-                      self.datasets_pair.proxy_dist(X_start + i, Y_start + j),
-                      Y_start + j)
+                heap_push(
+                    heaps_proxy_distances + i * self.k,
+                    heaps_indices + i * self.k,
+                    k,
+                    self.datasets_pair.proxy_dist(X_start + i, Y_start + j),
+                    Y_start + j,
+                )
 
         return 0
 
@@ -529,7 +530,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
         # Sorting indices of the argkmin for each query vector of X
         for idx in range(X_end - X_start):
-            _simultaneous_sort(
+            simultaneous_sort(
                 self.heaps_proxy_distances_chunks[thread_num] + idx * self.k,
                 self.heaps_indices_chunks[thread_num] + idx * self.k,
                 self.k
@@ -578,7 +579,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             for idx in prange(X_end - X_start, schedule="static"):
                 for thread_num in range(num_threads):
                     for jdx in range(self.k):
-                        _push(
+                        heap_push(
                             &self.argkmin_distances[X_start + idx, 0],
                             &self.argkmin_indices[X_start + idx, 0],
                             self.k,
@@ -601,7 +602,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             # Sort the main heaps into arrays in parallel
             # in ascending order w.r.t the distances
             for idx in prange(self.n_X, schedule='static'):
-                _simultaneous_sort(
+                simultaneous_sort(
                     &self.argkmin_distances[idx, 0],
                     &self.argkmin_indices[idx, 0],
                     self.k,
@@ -827,16 +828,18 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         # which keep tracks of the argkmin.
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
-                _push(heaps_proxy_distances + i * k,
-                      heaps_indices + i * k,
-                      k,
-                      # proxy distance: |X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
-                      (
+                heap_push(
+                    heaps_proxy_distances + i * k,
+                    heaps_indices + i * k,
+                    k,
+                    # proxy distance: |X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                    (
                         self.X_sq_norms[i + X_start] +
                         dist_middle_terms[i * Y_c.shape[0] + j] +
                         self.Y_sq_norms[j + Y_start]
-                       ),
-                      j + Y_start)
+                    ),
+                    j + Y_start,
+                )
         return 0
 
 
@@ -980,7 +983,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         # Sorting neighbors for each query vector of X
         if self.sort_results:
             for idx in range(X_start, X_end):
-                _simultaneous_sort(
+                simultaneous_sort(
                     deref(self.neigh_distances)[idx].data(),
                     deref(self.neigh_indices)[idx].data(),
                     deref(self.neigh_indices)[idx].size()
@@ -1056,7 +1059,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             # Sort in parallel in ascending order w.r.t the distances if needed
             if self.sort_results:
                 for idx in prange(self.n_X, schedule='static'):
-                    _simultaneous_sort(
+                    simultaneous_sort(
                         deref(self.neigh_distances)[idx].data(),
                         deref(self.neigh_indices)[idx].data(),
                         deref(self.neigh_indices)[idx].size()
