@@ -92,7 +92,13 @@ class RANSACRegressor(
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
         dependent upon the model, so if a `base_estimator` other than
-        `LinearRegression` is used, the user must provide a value.
+        `LinearRegression` is used, the user is encouraged to provide a value.
+
+        .. deprecated :: 1.0
+           Not setting `min_samples` explicitly will raise an error in version
+           1.2 for model other than
+           :class:`~sklearn.linear_model.LinearRegression`. To keep the old
+           default behavior, set `min_samples=X.shape[1] + 1` explicitly.
 
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
@@ -291,14 +297,16 @@ class RANSACRegressor(
             base_estimator = LinearRegression()
 
         if self.min_samples is None:
-            if isinstance(base_estimator, LinearRegression):
-                min_samples = X.shape[1] + 1
-            else:
-                raise ValueError(
-                    "A value for min_samples must be provided for models "
-                    "other than LinearRegression. The appropriate value will "
-                    "be dependent on the precise model."
+            if not isinstance(base_estimator, LinearRegression):
+                # FIXME: in 1.2, turn this warning into an error
+                warnings.warn(
+                    "From version 1.2, `max_samples` needs to be explicitely "
+                    "set otherwise an error will be raised. To keep the "
+                    "current behavior, you need to set `max_samples` to "
+                    f"`X.shape[1] + 1 that is {X.shape[1] + 1}",
+                    FutureWarning,
                 )
+            min_samples = X.shape[1] + 1
         elif 0 < self.min_samples < 1:
             min_samples = np.ceil(self.min_samples * X.shape[0])
         elif self.min_samples >= 1:
