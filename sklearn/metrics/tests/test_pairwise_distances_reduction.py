@@ -436,8 +436,7 @@ def test_fast_sqeuclidean_correctness(
         return_distance=True
     )
 
-    assert_array_equal(eucl_dist, fse_dist)
-    assert_array_equal(eucl_indices, fse_indices)
+    assert_argkmin_results_equality(eucl_dist, fse_dist, eucl_indices, fse_indices)
 
     eucl_dist, eucl_indices = RadiusNeighborhood.get_for(
         X, Y, radius, metric="euclidean"
