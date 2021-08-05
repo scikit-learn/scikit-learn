@@ -472,8 +472,7 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     pd = pytest.importorskip("pandas")
     if parse_version(pd.__version__) < parse_version("0.25.0"):
         raise SkipTest(
-            "Older pandas version will raise a different warning than "
-            "SettingWithCopyWarning"
+            "Older pandas version still raise a SettingWithCopyWarning warning"
         )
     X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
