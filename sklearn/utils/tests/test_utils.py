@@ -480,7 +480,7 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
         subset.iloc[0, 0] = 10
     assert len(record) == 0, f"{[str(rec.message) for rec in record]}"
     # The original dataframe is unaffected by the assignment on the subset:
-    assert X.iloc[0, 0] = 1
+    assert X.iloc[0, 0] == 1
 
 @pytest.mark.parametrize(
     "key, err_msg",
