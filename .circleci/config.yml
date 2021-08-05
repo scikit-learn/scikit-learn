@@ -137,6 +137,7 @@ jobs:
     environment:
       - OMP_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
+      - OPENBLAS_CORETYPE: 'armv8'
       - CYTHON_VERSION: 'latest'
       - JOBLIB_VERSION: 'latest'
       - THREADPOOLCTL_VERSION: 'latest'
