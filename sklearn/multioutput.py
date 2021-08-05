@@ -405,11 +405,16 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         return self
 
     def _check_predict_proba(self):
-        if not all(
+        if hasattr(self, "estimators_") and not all(
             [hasattr(estimator, "predict_proba") for estimator in self.estimators_]
         ):
             raise AttributeError(
                 "The base estimator should implement predict_proba method"
+            )
+        elif not hasattr(self, "estimator"):
+            raise AttributeError(
+                "predict_proba is not available because this"
+                f" {repr(self.__class__.__name__)} has no attribute 'estimator'"
             )
         return True
 
