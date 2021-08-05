@@ -21,6 +21,7 @@ from .utils._tags import (
 )
 from .utils.validation import check_X_y
 from .utils.validation import check_array
+from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
 
@@ -54,20 +55,23 @@ def clone(estimator, *, safe=True):
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
-    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
+    elif not hasattr(estimator, "get_params") or isinstance(estimator, type):
         if not safe:
             return copy.deepcopy(estimator)
         else:
             if isinstance(estimator, type):
-                raise TypeError("Cannot clone object. " +
-                                "You should provide an instance of " +
-                                "scikit-learn estimator instead of a class.")
+                raise TypeError(
+                    "Cannot clone object. "
+                    + "You should provide an instance of "
+                    + "scikit-learn estimator instead of a class."
+                )
             else:
-                raise TypeError("Cannot clone object '%s' (type %s): "
-                                "it does not seem to be a scikit-learn "
-                                "estimator as it does not implement a "
-                                "'get_params' method."
-                                % (repr(estimator), type(estimator)))
+                raise TypeError(
+                    "Cannot clone object '%s' (type %s): "
+                    "it does not seem to be a scikit-learn "
+                    "estimator as it does not implement a "
+                    "'get_params' method." % (repr(estimator), type(estimator))
+                )
 
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
@@ -81,9 +85,10 @@ def clone(estimator, *, safe=True):
         param1 = new_object_params[name]
         param2 = params_set[name]
         if param1 is not param2:
-            raise RuntimeError('Cannot clone object %s, as the constructor '
-                               'either does not set or modifies parameter %s' %
-                               (estimator, name))
+            raise RuntimeError(
+                "Cannot clone object %s, as the constructor "
+                "either does not set or modifies parameter %s" % (estimator, name)
+            )
     return new_object
 
 
@@ -108,32 +113,32 @@ def _pprint(params, offset=0, printer=repr):
     np.set_printoptions(precision=5, threshold=64, edgeitems=2)
     params_list = list()
     this_line_length = offset
-    line_sep = ',\n' + (1 + offset // 2) * ' '
+    line_sep = ",\n" + (1 + offset // 2) * " "
     for i, (k, v) in enumerate(sorted(params.items())):
         if type(v) is float:
             # use str for representing floating point numbers
             # this way we get consistent representation across
             # architectures and versions.
-            this_repr = '%s=%s' % (k, str(v))
+            this_repr = "%s=%s" % (k, str(v))
         else:
             # use repr of the rest
-            this_repr = '%s=%s' % (k, printer(v))
+            this_repr = "%s=%s" % (k, printer(v))
         if len(this_repr) > 500:
-            this_repr = this_repr[:300] + '...' + this_repr[-100:]
+            this_repr = this_repr[:300] + "..." + this_repr[-100:]
         if i > 0:
-            if (this_line_length + len(this_repr) >= 75 or '\n' in this_repr):
+            if this_line_length + len(this_repr) >= 75 or "\n" in this_repr:
                 params_list.append(line_sep)
                 this_line_length = len(line_sep)
             else:
-                params_list.append(', ')
+                params_list.append(", ")
                 this_line_length += 2
         params_list.append(this_repr)
         this_line_length += len(this_repr)
 
     np.set_printoptions(**options)
-    lines = ''.join(params_list)
+    lines = "".join(params_list)
     # Strip trailing space to avoid nightmare in doctests
-    lines = '\n'.join(l.rstrip(' ') for l in lines.split('\n'))
+    lines = "\n".join(l.rstrip(" ") for l in lines.split("\n"))
     return lines
 
 
@@ -152,7 +157,7 @@ class BaseEstimator:
         """Get parameter names for the estimator"""
         # fetch the constructor or the original constructor before
         # deprecation wrapping if any
-        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
         if init is object.__init__:
             # No explicit constructor to introspect
             return []
@@ -161,16 +166,20 @@ class BaseEstimator:
         # to represent
         init_signature = inspect.signature(init)
         # Consider the constructor parameters excluding 'self'
-        parameters = [p for p in init_signature.parameters.values()
-                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
+        parameters = [
+            p
+            for p in init_signature.parameters.values()
+            if p.name != "self" and p.kind != p.VAR_KEYWORD
+        ]
         for p in parameters:
             if p.kind == p.VAR_POSITIONAL:
-                raise RuntimeError("scikit-learn estimators should always "
-                                   "specify their parameters in the signature"
-                                   " of their __init__ (no varargs)."
-                                   " %s with constructor %s doesn't "
-                                   " follow this convention."
-                                   % (cls, init_signature))
+                raise RuntimeError(
+                    "scikit-learn estimators should always "
+                    "specify their parameters in the signature"
+                    " of their __init__ (no varargs)."
+                    " %s with constructor %s doesn't "
+                    " follow this convention." % (cls, init_signature)
+                )
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
 
@@ -192,9 +201,9 @@ class BaseEstimator:
         out = dict()
         for key in self._get_param_names():
             value = getattr(self, key)
-            if deep and hasattr(value, 'get_params'):
+            if deep and hasattr(value, "get_params"):
                 deep_items = value.get_params().items()
-                out.update((key + '__' + k, val) for k, val in deep_items)
+                out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
         return out
 
@@ -224,12 +233,13 @@ class BaseEstimator:
 
         nested_params = defaultdict(dict)  # grouped by prefix
         for key, value in params.items():
-            key, delim, sub_key = key.partition('__')
+            key, delim, sub_key = key.partition("__")
             if key not in valid_params:
-                raise ValueError('Invalid parameter %s for estimator %s. '
-                                 'Check the list of available parameters '
-                                 'with `estimator.get_params().keys()`.' %
-                                 (key, self))
+                raise ValueError(
+                    "Invalid parameter %s for estimator %s. "
+                    "Check the list of available parameters "
+                    "with `estimator.get_params().keys()`." % (key, self)
+                )
 
             if delim:
                 nested_params[key][sub_key] = value
@@ -253,16 +263,19 @@ class BaseEstimator:
 
         # use ellipsis for sequences with a lot of elements
         pp = _EstimatorPrettyPrinter(
-            compact=True, indent=1, indent_at_name=True,
-            n_max_elements_to_show=N_MAX_ELEMENTS_TO_SHOW)
+            compact=True,
+            indent=1,
+            indent_at_name=True,
+            n_max_elements_to_show=N_MAX_ELEMENTS_TO_SHOW,
+        )
 
         repr_ = pp.pformat(self)
 
         # Use bruteforce ellipsis when there are a lot of non-blank characters
-        n_nonblank = len(''.join(repr_.split()))
+        n_nonblank = len("".join(repr_.split()))
         if n_nonblank > N_CHAR_MAX:
             lim = N_CHAR_MAX // 2  # apprx number of chars to keep on both ends
-            regex = r'^(\s*\S){%d}' % lim
+            regex = r"^(\s*\S){%d}" % lim
             # The regex '^(\s*\S){%d}' % n
             # matches from the start of the string until the nth non-blank
             # character:
@@ -272,7 +285,7 @@ class BaseEstimator:
             left_lim = re.match(regex, repr_).end()
             right_lim = re.match(regex, repr_[::-1]).end()
 
-            if '\n' in repr_[left_lim:-right_lim]:
+            if "\n" in repr_[left_lim:-right_lim]:
                 # The left side and right side aren't on the same line.
                 # To avoid weird cuts, e.g.:
                 # categoric...ore',
@@ -281,13 +294,13 @@ class BaseEstimator:
                 # categoric...
                 # handle_unknown='ignore',
                 # so we add [^\n]*\n which matches until the next \n
-                regex += r'[^\n]*\n'
+                regex += r"[^\n]*\n"
                 right_lim = re.match(regex, repr_[::-1]).end()
 
-            ellipsis = '...'
+            ellipsis = "..."
             if left_lim + len(ellipsis) < len(repr_) - right_lim:
                 # Only add ellipsis if it results in a shorter repr
-                repr_ = repr_[:left_lim] + '...' + repr_[-right_lim:]
+                repr_ = repr_[:left_lim] + "..." + repr_[-right_lim:]
 
         return repr_
 
@@ -297,21 +310,26 @@ class BaseEstimator:
         except AttributeError:
             state = self.__dict__.copy()
 
-        if type(self).__module__.startswith('sklearn.'):
+        if type(self).__module__.startswith("sklearn."):
             return dict(state.items(), _sklearn_version=__version__)
         else:
             return state
 
     def __setstate__(self, state):
-        if type(self).__module__.startswith('sklearn.'):
+        if type(self).__module__.startswith("sklearn."):
             pickle_version = state.pop("_sklearn_version", "pre-0.18")
             if pickle_version != __version__:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "
                     "using version {2}. This might lead to breaking code or "
-                    "invalid results. Use at your own risk.".format(
-                        self.__class__.__name__, pickle_version, __version__),
-                    UserWarning)
+                    "invalid results. Use at your own risk. "
+                    "For more info please refer to:\n"
+                    "https://scikit-learn.org/stable/modules/model_persistence"
+                    ".html#security-maintainability-limitations".format(
+                        self.__class__.__name__, pickle_version, __version__
+                    ),
+                    UserWarning,
+                )
         try:
             super().__setstate__(state)
         except AttributeError:
@@ -323,7 +341,7 @@ class BaseEstimator:
     def _get_tags(self):
         collected_tags = {}
         for base_class in reversed(inspect.getmro(self.__class__)):
-            if hasattr(base_class, '_more_tags'):
+            if hasattr(base_class, "_more_tags"):
                 # need the if because mixins might not have _more_tags
                 # but might do redundant work in estimators
                 # (i.e. calling more tags on BaseEstimator multiple times)
@@ -374,17 +392,30 @@ class BaseEstimator:
         if n_features != self.n_features_in_:
             raise ValueError(
                 f"X has {n_features} features, but {self.__class__.__name__} "
-                f"is expecting {self.n_features_in_} features as input.")
+                f"is expecting {self.n_features_in_} features as input."
+            )
 
-    def _validate_data(self, X, y='no_validation', reset=True,
-                       validate_separately=False, **check_params):
+    def _validate_data(
+        self,
+        X="no_validation",
+        y="no_validation",
+        reset=True,
+        validate_separately=False,
+        **check_params,
+    ):
         """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
         ----------
         X : {array-like, sparse matrix, dataframe} of shape \
-                (n_samples, n_features)
+                (n_samples, n_features), default='no validation'
             The input samples.
+            If `'no_validation'`, no validation is performed on `X`. This is
+            useful for meta-estimator which can delegate input validation to
+            their underlying estimator(s). In that case `y` must be passed and
+            the only accepted `check_params` are `multi_output` and
+            `y_numeric`.
+
         y : array-like of shape (n_samples,), default='no_validation'
             The targets.
 
@@ -392,9 +423,11 @@ class BaseEstimator:
               requires_y tag is True, then an error will be raised.
             - If `'no_validation'`, `check_array` is called on `X` and the
               estimator's requires_y tag is ignored. This is a default
-              placeholder and is never meant to be explicitly set.
-            - Otherwise, both `X` and `y` are checked with either `check_array`
-              or `check_X_y` depending on `validate_separately`.
+              placeholder and is never meant to be explicitly set. In that case
+              `X` must be passed.
+            - Otherwise, only `y` with `_check_y` or both `X` and `y` are
+              checked with either `check_array` or `check_X_y` depending on
+              `validate_separately`.
 
         reset : bool, default=True
             Whether to reset the `n_features_in_` attribute.
@@ -416,20 +449,26 @@ class BaseEstimator:
         Returns
         -------
         out : {ndarray, sparse matrix} or tuple of these
-            The validated input. A tuple is returned if `y` is not None.
+            The validated input. A tuple is returned if both `X` and `y` are
+            validated.
         """
+        if y is None and self._get_tags()["requires_y"]:
+            raise ValueError(
+                f"This {self.__class__.__name__} estimator "
+                "requires y to be passed, but the target y is None."
+            )
 
-        if y is None:
-            if self._get_tags()['requires_y']:
-                raise ValueError(
-                    f"This {self.__class__.__name__} estimator "
-                    f"requires y to be passed, but the target y is None."
-                )
+        no_val_X = isinstance(X, str) and X == "no_validation"
+        no_val_y = y is None or isinstance(y, str) and y == "no_validation"
+
+        if no_val_X and no_val_y:
+            raise ValueError("Validation should be done on X, y or both.")
+        elif not no_val_X and no_val_y:
             X = check_array(X, **check_params)
             out = X
-        elif isinstance(y, str) and y == 'no_validation':
-            X = check_array(X, **check_params)
-            out = X
+        elif no_val_X and not no_val_y:
+            y = _check_y(y, **check_params)
+            out = y
         else:
             if validate_separately:
                 # We need this because some estimators validate X and y
@@ -443,7 +482,7 @@ class BaseEstimator:
                 X, y = check_X_y(X, y, **check_params)
             out = X, y
 
-        if check_params.get('ensure_2d', True):
+        if not no_val_X and check_params.get("ensure_2d", True):
             self._check_n_features(X, reset=reset)
 
         return out
@@ -456,10 +495,12 @@ class BaseEstimator:
         should be favorted in the long term, `_repr_html_` is only
         implemented for consumers who do not interpret `_repr_mimbundle_`.
         """
-        if get_config()["display"] != 'diagram':
-            raise AttributeError("_repr_html_ is only defined when the "
-                                 "'display' configuration option is set to "
-                                 "'diagram'")
+        if get_config()["display"] != "diagram":
+            raise AttributeError(
+                "_repr_html_ is only defined when the "
+                "'display' configuration option is set to "
+                "'diagram'"
+            )
         return self._repr_html_inner
 
     def _repr_html_inner(self):
@@ -472,7 +513,7 @@ class BaseEstimator:
     def _repr_mimebundle_(self, **kwargs):
         """Mime bundle used by jupyter kernels to display estimator"""
         output = {"text/plain": repr(self)}
-        if get_config()["display"] == 'diagram':
+        if get_config()["display"] == "diagram":
             output["text/html"] = estimator_html_repr(self)
         return output
 
@@ -507,28 +548,29 @@ class ClassifierMixin:
             Mean accuracy of ``self.predict(X)`` wrt. `y`.
         """
         from .metrics import accuracy_score
+
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
     def _more_tags(self):
-        return {'requires_y': True}
+        return {"requires_y": True}
 
 
 class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
+
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination :math:`R^2` of the
-        prediction.
+        """Return the coefficient of determination of the prediction.
 
-        The coefficient :math:`R^2` is defined as :math:`(1 - \\frac{u}{v})`,
-        where :math:`u` is the residual sum of squares ``((y_true - y_pred)
-        ** 2).sum()`` and :math:`v` is the total sum of squares ``((y_true -
-        y_true.mean()) ** 2).sum()``. The best possible score is 1.0 and it
-        can be negative (because the model can be arbitrarily worse). A
-        constant model that always predicts the expected value of `y`,
-        disregarding the input features, would get a :math:`R^2` score of
-        0.0.
+        The coefficient of determination :math:`R^2` is defined as
+        :math:`(1 - \\frac{u}{v})`, where :math:`u` is the residual
+        sum of squares ``((y_true - y_pred)** 2).sum()`` and :math:`v`
+        is the total sum of squares ``((y_true - y_true.mean()) ** 2).sum()``.
+        The best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always predicts
+        the expected value of `y`, disregarding the input features, would get
+        a :math:`R^2` score of 0.0.
 
         Parameters
         ----------
@@ -560,15 +602,17 @@ class RegressorMixin:
         """
 
         from .metrics import r2_score
+
         y_pred = self.predict(X)
         return r2_score(y, y_pred, sample_weight=sample_weight)
 
     def _more_tags(self):
-        return {'requires_y': True}
+        return {"requires_y": True}
 
 
 class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
+
     _estimator_type = "clusterer"
 
     def fit_predict(self, X, y=None):
@@ -670,7 +714,8 @@ class BiclusterMixin:
         ``columns_`` attributes exist.
         """
         from .utils.validation import check_array
-        data = check_array(data, accept_sparse='csr')
+
+        data = check_array(data, accept_sparse="csr")
         row_ind, col_ind = self.get_indices(i)
         return data[row_ind[:, np.newaxis], col_ind]
 
@@ -714,6 +759,7 @@ class TransformerMixin:
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
+
     _estimator_type = "DensityEstimator"
 
     def score(self, X, y=None):
@@ -736,6 +782,7 @@ class DensityMixin:
 
 class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
+
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
@@ -745,8 +792,8 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, dataframe} of shape \
-            (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -767,15 +814,20 @@ class MetaEstimatorMixin:
 
 class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
+
     def _more_tags(self):
-        return {'multioutput': True}
+        return {"multioutput": True}
 
 
 class _UnstableArchMixin:
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+
     def _more_tags(self):
-        return {'non_deterministic': (
-            _IS_32BIT or platform.machine().startswith(('ppc', 'powerpc')))}
+        return {
+            "non_deterministic": (
+                _IS_32BIT or platform.machine().startswith(("ppc", "powerpc"))
+            )
+        }
 
 
 def is_classifier(estimator):
@@ -848,9 +900,9 @@ def _is_pairwise(estimator):
         True if the estimator is pairwise and False otherwise.
     """
     with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=FutureWarning)
-        has_pairwise_attribute = hasattr(estimator, '_pairwise')
-        pairwise_attribute = getattr(estimator, '_pairwise', False)
+        warnings.filterwarnings("ignore", category=FutureWarning)
+        has_pairwise_attribute = hasattr(estimator, "_pairwise")
+        pairwise_attribute = getattr(estimator, "_pairwise", False)
     pairwise_tag = _safe_tags(estimator, key="pairwise")
 
     if has_pairwise_attribute:
@@ -859,7 +911,7 @@ def _is_pairwise(estimator):
                 "_pairwise was deprecated in 0.24 and will be removed in 1.1 "
                 "(renaming of 0.26). Set the estimator tags of your estimator "
                 "instead",
-                FutureWarning
+                FutureWarning,
             )
         return pairwise_attribute
 
