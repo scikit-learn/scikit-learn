@@ -419,6 +419,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # allows cross-validation to see 'precomputed' metrics
         return getattr(self.estimator, "_pairwise", False)
 
+    @available_if(_estimator_has("score"))
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit.
 
@@ -440,7 +441,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         score : float
         """
-        self._check_is_fitted("score")
+        check_is_fitted(self)
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
