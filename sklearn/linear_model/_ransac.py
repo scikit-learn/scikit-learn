@@ -92,7 +92,8 @@ class RANSACRegressor(
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
         dependent upon the model, so if a `base_estimator` other than
-        `LinearRegression` is used, the user is encouraged to provide a value.
+        :class:`linear_model.LinearRegression` is used, the user is
+        encouraged to provide a value.
 
         .. deprecated :: 1.0
            Not setting `min_samples` explicitly will raise an error in version
