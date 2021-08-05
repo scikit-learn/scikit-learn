@@ -216,30 +216,26 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
 
 
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+    "SGDEstimator",
+    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
 )
-def test_sgd_bad_alpha(klass):
-    # Check whether expected ValueError on bad alpha
-    with pytest.raises(ValueError):
-        klass(alpha=-0.1)
-
-
+@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+    "params, err_msg",
+    [
+        ({"alpha": -0.1}, "alpha must be >= 0"),
+        ({"penalty": "foobar", "l1_ratio": 0.85}, "Penalty foobar is not supported"),
+        ({"loss": "foobar"}, "The loss foobar is not supported"),
+    ],
 )
-def test_sgd_bad_penalty(klass):
-    # Check whether expected ValueError on bad penalty
-    with pytest.raises(ValueError):
-        klass(penalty="foobar", l1_ratio=0.85)
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
-)
-def test_sgd_bad_loss(klass):
-    # Check whether expected ValueError on bad loss
-    with pytest.raises(ValueError):
-        klass(loss="foobar")
+def test_sgd_estimator_params_validation(SGDEstimator, fit_method, params, err_msg):
+    sgd_estimator = SGDEstimator(**params)
+    with pytest.raises(ValueError, match=err_msg):
+        if is_classifier(sgd_estimator) and fit_method == "partial_fit":
+            fit_params = {"classes": np.unique(Y)}
+        else:
+            fit_params = {}
+        getattr(sgd_estimator, fit_method)(X, Y, **fit_params)
 
 
 def _test_warm_start(klass, X, Y, lr):
