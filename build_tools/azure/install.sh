@@ -56,6 +56,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # instead because llvm-ar errors
             export AR=/usr/bin/ar
         fi
+    else
+        # FIXME: temporary fix to link against system libraries on linux
+        export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 	make_conda $TO_INSTALL
     setup_ccache
@@ -81,6 +84,8 @@ elif [[ "$DISTRIB" == "debian-32" ]]; then
                           $(get_dep joblib $JOBLIB_VERSION)
 
 elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    # FIXME: temporary fix to link against system libraries on linux
+    export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     # Since conda main channel usually lacks behind on the latest releases,
     # we use pypi to test against the latest releases of the dependencies.
     # conda is still used as a convenient way to install Python and pip.
@@ -96,6 +101,8 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # and install a version less than 3.0.0 until the issue #18316 is solved.
     python -m pip install "lightgbm<3.0.0" --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+    # FIXME: temporary fix to link against system libraries on linux
+    export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     make_conda "ccache python=$PYTHON_VERSION"
     python -m pip install -U pip
     echo "Installing numpy and scipy master wheels"

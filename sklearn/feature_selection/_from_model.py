@@ -61,11 +61,10 @@ def _calculate_threshold(estimator, importances, threshold):
 
 
 def _estimator_has(attr):
-    """Check if the provided estimator has the attribute.
+    """Check if we can delegate a method to the underlying estimator.
 
-    We check if the attribute is available in the fitted estimator first
-    (i.e. `self.estimator_`). If not available, we check the estimator
-    passed at initialization (i.e. `self.estimator`).
+    First, we check the fitted estimator if available, otherwise we
+    check the unfitted estimator.
     """
     return lambda self: (
         hasattr(self.estimator_, attr)

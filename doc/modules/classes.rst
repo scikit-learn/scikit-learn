@@ -1602,7 +1602,6 @@ Plotting
    utils.gen_batches
    utils.gen_even_slices
    utils.graph.single_source_shortest_path_length
-   utils.graph_shortest_path.graph_shortest_path
    utils.indexable
    utils.metaestimators.if_delegate_has_method
    utils.metaestimators.available_if
