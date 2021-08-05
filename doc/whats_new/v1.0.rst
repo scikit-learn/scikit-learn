@@ -496,6 +496,11 @@ Changelog
   (only supported by `lbfgs`).
   :pr:`20231` by :user:`Toshihiro Nakae <tnakae>`.
 
+- |Fix| The dictionary `params` in :func:`linear_model.enet_path` and
+  :func:`linear_model.lasso_path` should only contain parameter of the
+  coordinate descent solver. Otherwise, an error will be raised.
+  :pr:`19391` by :user:`Shao Yang Hong <hongshaoyang>`.
+
 :mod:`sklearn.manifold`
 .......................
 
