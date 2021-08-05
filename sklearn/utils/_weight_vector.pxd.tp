@@ -12,7 +12,7 @@ Each class is duplicated for all dtypes (float and double). The keywords
 between double braces are substituted in setup.py.
 """
 
-# name, c_type
+# name_suffix, c_type
 dtypes = [('64', 'double'),
           ('32', 'float')]
 
@@ -20,13 +20,13 @@ dtypes = [('64', 'double'),
 
 cimport numpy as np
 
-{{for name, c_type in dtypes}}
+{{for name_suffix, c_type in dtypes}}
 
 cdef extern from "math.h":
     cdef extern {{c_type}} sqrt({{c_type}} x)
 
 
-cdef class WeightVector{{name}}(object):
+cdef class WeightVector{{name_suffix}}(object):
     cdef readonly {{c_type}}[::1] w
     cdef readonly {{c_type}}[::1] aw
     cdef {{c_type}} *w_data_ptr

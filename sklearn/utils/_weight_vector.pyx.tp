@@ -12,7 +12,7 @@ Each class is duplicated for all dtypes (float and double). The keywords
 between double braces are substituted in setup.py.
 """
 
-# name, c_type
+# name_suffix, c_type
 dtypes = [('64', 'double'),
           ('32', 'float')]
 
@@ -39,9 +39,9 @@ from ._cython_blas cimport _dot, _scal, _axpy
 
 np.import_array()
 
-{{for name, c_type in dtypes}}
+{{for name_suffix, c_type in dtypes}}
 
-cdef class WeightVector{{name}}(object):
+cdef class WeightVector{{name_suffix}}(object):
     """Dense vector represented by a scalar and a numpy array.
 
     The class provides methods to ``add`` a sparse vector
