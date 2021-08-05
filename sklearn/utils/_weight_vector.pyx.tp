@@ -12,9 +12,9 @@ Each class is duplicated for all dtypes (float and double). The keywords
 between double braces are substituted in setup.py.
 """
 
-# name_suffix, c_type
-dtypes = [('64', 'double'),
-          ('32', 'float')]
+# name_suffix, c_type, reset_wscale_threshold
+dtypes = [('64', 'double', 1e-9),
+          ('32', 'float', 1e-6)]
 
 }}
 
@@ -39,7 +39,7 @@ from ._cython_blas cimport _dot, _scal, _axpy
 
 np.import_array()
 
-{{for name_suffix, c_type in dtypes}}
+{{for name_suffix, c_type, reset_wscale_threshold in dtypes}}
 
 cdef class WeightVector{{name_suffix}}(object):
     """Dense vector represented by a scalar and a numpy array.
@@ -194,8 +194,10 @@ cdef class WeightVector{{name_suffix}}(object):
         small we call ``reset_swcale``."""
         self.wscale *= c
         self.sq_norm *= (c * c)
-        cdef {{c_type}} epsilon = 1e-9
-        if self.wscale < epsilon:
+
+        cdef {{c_type}} threshold = {{reset_wscale_threshold}}
+
+        if self.wscale < threshold:
             self.reset_wscale()
 
     cdef void reset_wscale(self) nogil:
