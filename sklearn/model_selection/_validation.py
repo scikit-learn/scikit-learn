@@ -362,12 +362,12 @@ def _warn_about_fit_failures(results, error_score):
         )
 
         some_fits_failed_message = (
-            f"\n{num_failed_fits} fits failed on the training sets over a total of"
-            f" {num_fits} fits.\nThe score on these train-test partitions for these"
-            f" parameters will be set to {error_score}.\nIf these failures are"
-            " not expected, you can try to debug them by setting"
-            " error_score='raise'.\n\nBelow are more details about the"
-            f" failures:\n{fit_errors_summary}"
+            f"\n{num_failed_fits} fits failed out of a total of {num_fits}.\n"
+            "The score on these train-test partitions for these parameters"
+            f" will be set to {error_score}.\n"
+            "If these failures are not expected, you can try to debug them "
+            "by setting error_score='raise'.\n\n"
+            f"Below are more details about the failures:\n{fit_errors_summary}"
         )
         warnings.warn(some_fits_failed_message, FitFailedWarning)
 

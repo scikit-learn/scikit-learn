@@ -1567,7 +1567,7 @@ def test_grid_search_failing_classifier():
     )
 
     warning_message = re.compile(
-        "5 fits failed on the training sets over a total of 15 fits.+The score on these"
+        "5 fits failed.+total of 15.+The score on these"
         r" train-test partitions for these parameters will be set to 0\.0.+"
         "5 fits failed with the following error.+ValueError.+Failing classifier failed"
         " as required",
@@ -1603,7 +1603,7 @@ def test_grid_search_failing_classifier():
         error_score=float("nan"),
     )
     warning_message = re.compile(
-        "5 fits failed on the training sets over a total of 15 fits.+The score on these"
+        "5 fits failed.+total of 15.+The score on these"
         r" train-test partitions for these parameters will be set to nan.+"
         "5 fits failed with the following error.+ValueError.+Failing classifier failed"
         " as required",
@@ -2120,7 +2120,7 @@ def test_callable_multimetric_error_failing_clf():
     )
 
     warning_message = re.compile(
-        "5 fits failed on the training sets over a total of 15 fits.+The score on these"
+        "5 fits failed.+total of 15.+The score on these"
         r" train-test partitions for these parameters will be set to 0\.1",
         flags=re.DOTALL,
     )
@@ -2149,7 +2149,7 @@ def test_callable_multimetric_clf_all_fails():
 
     with pytest.warns(
         FitFailedWarning,
-        match="15 fits failed on the training sets over a total of 15 fits",
+        match="15 fits failed.+total of 15",
     ), pytest.raises(NotFittedError, match="All estimators failed to fit"):
         gs.fit(X, y)
 

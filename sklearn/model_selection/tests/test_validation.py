@@ -2143,7 +2143,7 @@ def test_cross_validate_failing_fits_warnings(error_score):
     cross_validate_kwargs = {"cv": 7, "error_score": error_score}
     # check if the warning message type is as expected
     warning_message = re.compile(
-        "7 fits failed on the training sets over a total of 7 fits.+The score on these"
+        "7 fits failed.+total of 7.+The score on these"
         " train-test partitions for these parameters will be set to"
         f" {cross_validate_kwargs['error_score']}.",
         flags=re.DOTALL,
