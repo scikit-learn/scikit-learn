@@ -483,6 +483,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
@@ -1353,8 +1354,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
-        -------
+        Yields
+        ------
         score : generator of ndarray of shape (n_samples, k)
             The decision function of the input samples, which corresponds to
             the raw values predicted from the trees of the ensemble . The
@@ -1396,7 +1397,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
+        Yields
         -------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
@@ -1415,16 +1416,16 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Raises
-        ------
-        AttributeError
-            If the ``loss`` does not support probabilities.
-
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+        Raises
+        ------
+        AttributeError
+            If the ``loss`` does not support probabilities.
         """
         raw_predictions = self.decision_function(X)
         try:
@@ -1446,16 +1447,16 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Raises
-        ------
-        AttributeError
-            If the ``loss`` does not support probabilities.
-
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+        Raises
+        ------
+        AttributeError
+            If the ``loss`` does not support probabilities.
         """
         proba = self.predict_proba(X)
         return np.log(proba)
@@ -1473,8 +1474,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
-        -------
+        Yields
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
         """
@@ -1774,6 +1775,16 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
 
+    References
+    ----------
+    J. Friedman, Greedy Function Approximation: A Gradient Boosting
+    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
+
+    J. Friedman, Stochastic Gradient Boosting, 1999
+
+    T. Hastie, R. Tibshirani and J. Friedman.
+    Elements of Statistical Learning Ed. 2, Springer, 2009.
+
     Examples
     --------
     >>> from sklearn.datasets import make_regression
@@ -1789,16 +1800,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     array([-61...])
     >>> reg.score(X_test, y_test)
     0.4...
-
-    References
-    ----------
-    J. Friedman, Greedy Function Approximation: A Gradient Boosting
-    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
-
-    J. Friedman, Stochastic Gradient Boosting, 1999
-
-    T. Hastie, R. Tibshirani and J. Friedman.
-    Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
     # TODO: remove "ls" in verion 1.2
@@ -1910,8 +1911,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
-        -------
+        Yields
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
         """

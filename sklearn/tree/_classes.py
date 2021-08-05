@@ -1526,6 +1526,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     ExtraTreeRegressor : An extremely randomized tree regressor.
     sklearn.ensemble.ExtraTreesClassifier : An extra-trees classifier.
     sklearn.ensemble.ExtraTreesRegressor : An extra-trees regressor.
+    sklearn.ensemble.RandomForestClassifier : A random forest classifier.
+    sklearn.ensemble.RandomForestRegressor : A random forest regressor.
+    sklearn.ensemble.RandomTreesEmbedding : An ensemble of
+        totally random trees.
 
     Notes
     -----
