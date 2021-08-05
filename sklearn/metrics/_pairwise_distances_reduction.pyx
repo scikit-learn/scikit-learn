@@ -120,6 +120,7 @@ cdef np.ndarray vector_to_numpy_array(vector_DITYPE_t * vect_ptr):
     # Makes the numpy array responsible to the life-cycle of its buffer.
     # A reference to the sentinel will be stolen by the call bellow,
     # so we increase its reference count.
+    # See: https://docs.python.org/3/c-api/intro.html#reference-count-details
     Py_INCREF(sentinel)
     PyArray_SetBaseObject(arr, <PyObject*>sentinel)
     return arr
