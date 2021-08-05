@@ -6,6 +6,7 @@
 #          Jiyuan Qian
 # License: BSD 3 clause
 
+from tkinter.tix import Tree
 import numpy as np
 
 from abc import ABCMeta, abstractmethod
@@ -16,7 +17,6 @@ import scipy.optimize
 from ..base import (
     BaseEstimator,
     ClassifierMixin,
-    MultiLabelMixin,
     RegressorMixin,
 )
 from ..base import is_classifier
@@ -779,7 +779,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return self._fit(X, y, incremental=True)
 
 
-class MLPClassifier(ClassifierMixin, MultiLabelMixin, BaseMultilayerPerceptron):
+class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron classifier.
 
     This model optimizes the log-loss function using LBFGS or stochastic
@@ -1250,6 +1250,9 @@ class MLPClassifier(ClassifierMixin, MultiLabelMixin, BaseMultilayerPerceptron):
             return np.vstack([1 - y_pred, y_pred]).T
         else:
             return y_pred
+
+    def _more_tags(self):
+        return {"multilabel": Tree}
 
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):

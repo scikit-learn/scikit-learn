@@ -21,12 +21,7 @@ from scipy.sparse import linalg as sp_linalg
 from ._base import LinearClassifierMixin, LinearModel
 from ._base import _deprecate_normalize, _rescale_data
 from ._sag import sag_solver
-from ..base import (
-    MultiLabelMixin,
-    MultiOutputMixin,
-    RegressorMixin,
-    is_classifier,
-)
+from ..base import MultiOutputMixin, RegressorMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_array
@@ -2130,7 +2125,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     """
 
 
-class RidgeClassifierCV(LinearClassifierMixin, MultiLabelMixin, _BaseRidgeCV):
+class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2324,6 +2319,7 @@ class RidgeClassifierCV(LinearClassifierMixin, MultiLabelMixin, _BaseRidgeCV):
 
     def _more_tags(self):
         return {
+            "multilabel": True,
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
