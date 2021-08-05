@@ -684,6 +684,9 @@ Changelog
   `n_features_in_` and will be removed in 1.2. :pr:`20240` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Efficiency| `preprocessing.StandardScaler` is faster and more memory
+  efficient. :pr:`20652` by `Thomas Fan`_.
+
 :mod:`sklearn.tree`
 ...................
 
