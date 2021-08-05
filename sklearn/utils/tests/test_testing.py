@@ -11,7 +11,7 @@ from scipy import sparse
 import pytest
 
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.metaestimators import available_if
 from sklearn.utils._testing import (
     assert_raises,
     assert_warns,
@@ -428,7 +428,7 @@ class MockMetaEstimator:
         """
         self.delegate = delegate
 
-    @if_delegate_has_method(delegate="delegate")
+    @available_if(lambda self: hasattr(self.delegate, "predict"))
     def predict(self, X):
         """This is available only if delegate has predict.
 
@@ -439,7 +439,7 @@ class MockMetaEstimator:
         """
         return self.delegate.predict(X)
 
-    @if_delegate_has_method(delegate="delegate")
+    @available_if(lambda self: hasattr(self.delegate, "score"))
     @deprecated("Testing a deprecated delegated method")
     def score(self, X):
         """This is available only if delegate has score.
@@ -450,7 +450,7 @@ class MockMetaEstimator:
             Parameter y
         """
 
-    @if_delegate_has_method(delegate="delegate")
+    @available_if(lambda self: hasattr(self.delegate, "predict_proba"))
     def predict_proba(self, X):
         """This is available only if delegate has predict_proba.
 
