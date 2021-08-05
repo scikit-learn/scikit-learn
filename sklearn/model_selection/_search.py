@@ -37,7 +37,7 @@ from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import available_if
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
@@ -344,6 +344,29 @@ def _check_param_grid(param_grid):
                 )
 
 
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    Calling a prediction method will only be available if `refit=True`. In
+    such case, we check first the fitted best estimator. If it is not
+    fitted, we check if the unfitted estimator.
+    """
+
+    def check(self):
+        if not self.refit:
+            raise AttributeError(
+                f"This {type(self).__name__} instance was initialized with "
+                f"`refit=False`. {attr} is available only after refitting on the best "
+                "parameters. You can refit an estimator manually using the "
+                "`best_params_` attribute"
+            )
+        if hasattr(self, "best_estimator_"):
+            return hasattr(self.best_estimator_, attr)
+        return hasattr(self.estimator, attr)
+
+    return check
+
+
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation."""
 
@@ -437,7 +460,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             score = score[self.refit]
         return score
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("score_samples"))
     def score_samples(self, X):
         """Call score_samples on the estimator with the best found parameters.
 
@@ -456,23 +479,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         y_score : ndarray of shape (n_samples,)
         """
-        self._check_is_fitted("score_samples")
+        check_is_fitted(self)
         return self.best_estimator_.score_samples(X)
 
-    def _check_is_fitted(self, method_name):
-        if not self.refit:
-            raise NotFittedError(
-                "This %s instance was initialized "
-                "with refit=False. %s is "
-                "available only after refitting on the best "
-                "parameters. You can refit an estimator "
-                "manually using the ``best_params_`` "
-                "attribute" % (type(self).__name__, method_name)
-            )
-        else:
-            check_is_fitted(self)
-
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("predict"))
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
 
@@ -486,10 +496,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             underlying estimator.
 
         """
-        self._check_is_fitted("predict")
+        check_is_fitted(self)
         return self.best_estimator_.predict(X)
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Call predict_proba on the estimator with the best found parameters.
 
@@ -503,10 +513,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             underlying estimator.
 
         """
-        self._check_is_fitted("predict_proba")
+        check_is_fitted(self)
         return self.best_estimator_.predict_proba(X)
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
         """Call predict_log_proba on the estimator with the best found parameters.
 
@@ -520,10 +530,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             underlying estimator.
 
         """
-        self._check_is_fitted("predict_log_proba")
+        check_is_fitted(self)
         return self.best_estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Call decision_function on the estimator with the best found parameters.
 
@@ -537,10 +547,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             underlying estimator.
 
         """
-        self._check_is_fitted("decision_function")
+        check_is_fitted(self)
         return self.best_estimator_.decision_function(X)
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("transform"))
     def transform(self, X):
         """Call transform on the estimator with the best found parameters.
 
@@ -554,10 +564,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             underlying estimator.
 
         """
-        self._check_is_fitted("transform")
+        check_is_fitted(self)
         return self.best_estimator_.transform(X)
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("inverse_transform"))
     def inverse_transform(self, Xt):
         """Call inverse_transform on the estimator with the best found params.
 
@@ -571,7 +581,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             underlying estimator.
 
         """
-        self._check_is_fitted("inverse_transform")
+        check_is_fitted(self)
         return self.best_estimator_.inverse_transform(Xt)
 
     @property
@@ -589,9 +599,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self.best_estimator_.n_features_in_
 
-    @property
+    @available_if(_estimator_has("classes_"))
     def classes_(self):
-        self._check_is_fitted("classes_")
+        check_is_fitted(self)
         return self.best_estimator_.classes_
 
     def _run_search(self, evaluate_candidates):
