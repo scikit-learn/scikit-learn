@@ -200,12 +200,10 @@ def _parallel_predict_regression(estimators, estimators_features, X):
 
 
 def _estimator_has(attr):
-    """Check if estimator has attr
+    """Check if we can delegate a method to the underlying estimator.
 
-    First check self.estimators_[0] if fitted estimators are available. If
-    `self.estimators_[0]` has the attr, then it is safe to assume that other
-    fitted estimators should have it too. If fitted estimators are not
-    available, then check the unfitted `self.base_estimator`.
+    First, we check the first fitted estimator if available, otherwise we
+    check the base estimator.
     """
     return lambda self: (
         hasattr(self.estimators_[0], attr)

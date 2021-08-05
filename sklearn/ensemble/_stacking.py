@@ -36,7 +36,11 @@ from ..utils.fixes import delayed
 
 
 def _estimator_has(attr):
-    """Check if self.final_estimator_ or self.final_estimator has attr"""
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the first fitted final estimator if available, otherwise we
+    check the unfitted final estimator.
+    """
     return lambda self: (
         hasattr(self.final_estimator_, attr)
         if hasattr(self, "final_estimator_")
