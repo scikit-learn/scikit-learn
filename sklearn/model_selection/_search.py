@@ -344,6 +344,16 @@ def _check_param_grid(param_grid):
                 )
 
 
+def _check_refit(search_cv, attr):
+    if not search_cv.refit:
+        raise AttributeError(
+            f"This {type(search_cv).__name__} instance was initialized with "
+            f"`refit=False`. {attr} is available only after refitting on the best "
+            "parameters. You can refit an estimator manually using the "
+            "`best_params_` attribute"
+        )
+
+
 def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
@@ -353,16 +363,19 @@ def _estimator_has(attr):
     """
 
     def check(self):
-        if not self.refit:
-            raise AttributeError(
-                f"This {type(self).__name__} instance was initialized with "
-                f"`refit=False`. {attr} is available only after refitting on the best "
-                "parameters. You can refit an estimator manually using the "
-                "`best_params_` attribute"
-            )
+        _check_refit(self, attr)
         if hasattr(self, "best_estimator_"):
-            return hasattr(self.best_estimator_, attr)
-        return hasattr(self.estimator, attr)
+            if not hasattr(self.best_estimator_, attr):
+                raise AttributeError(
+                    f"'{type(self.best_estimator_).__name__}' object has no attribute "
+                    f"'{attr}'"
+                )
+            return True
+        if not hasattr(self.estimator, attr):
+            raise AttributeError(
+                f"'{type(self.estimator).__name__}' object has no attribute '{attr}'"
+            )
+        return True
 
     return check
 
@@ -419,7 +432,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # allows cross-validation to see 'precomputed' metrics
         return getattr(self.estimator, "_pairwise", False)
 
-    @available_if(_estimator_has("score"))
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit.
 
@@ -441,6 +453,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         score : float
         """
+        _check_refit(self, "score")
         check_is_fitted(self)
         if self.scorer_ is None:
             raise ValueError(
@@ -600,9 +613,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self.best_estimator_.n_features_in_
 
-    @available_if(_estimator_has("classes_"))
+    @property
     def classes_(self):
-        check_is_fitted(self)
+        available_if(_estimator_has("classes_"))
         return self.best_estimator_.classes_
 
     def _run_search(self, evaluate_candidates):
