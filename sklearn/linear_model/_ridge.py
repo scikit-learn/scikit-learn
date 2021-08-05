@@ -2079,12 +2079,12 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     Attributes
     ----------
     cv_values_ : ndarray of shape (n_samples, n_alphas) or \
-        shape (n_samples, n_targets, n_alphas), optional
+            shape (n_samples, n_targets, n_alphas), optional
         Cross-validation values for each alpha (only available if
         ``store_cv_values=True`` and ``cv=None``). After ``fit()`` has been
-        called, this attribute will contain the mean squared errors
-        (by default) or the values of the ``{loss,score}_func`` function
-        (if provided in the constructor).
+        called, this attribute will contain the mean squared errors if
+        `scoring is None` otherwise it will contain standardized per point
+        prediction values.
 
     coef_ : ndarray of shape (n_features) or (n_targets, n_features)
         Weight vector(s).
@@ -2197,11 +2197,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     Attributes
     ----------
     cv_values_ : ndarray of shape (n_samples, n_targets, n_alphas), optional
-        Cross-validation values for each alpha (if ``store_cv_values=True`` and
+        Cross-validation values for each alpha (only if ``store_cv_values=True`` and
         ``cv=None``). After ``fit()`` has been called, this attribute will
-        contain the mean squared errors (by default) or the values of the
-        ``{loss,score}_func`` function (if provided in the constructor). This
-        attribute exists only when ``store_cv_values`` is True.
+        contain the mean squared errors if `scoring is None` otherwise it
+        will contain standardized per point prediction values.
 
     coef_ : ndarray of shape (1, n_features) or (n_targets, n_features)
         Coefficient of the features in the decision function.

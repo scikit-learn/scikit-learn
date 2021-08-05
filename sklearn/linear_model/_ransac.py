@@ -95,7 +95,8 @@ class RANSACRegressor(
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
         By default the threshold is chosen as the MAD (median absolute
-        deviation) of the target values `y`.
+        deviation) of the target values `y`. Points whose residuals are
+        strictly equal to the threshold are considered as inliers.
 
     is_data_valid : callable, default=None
         This function is called with the randomly selected data before the
@@ -434,7 +435,7 @@ class RANSACRegressor(
             residuals_subset = loss_function(y, y_pred)
 
             # classify data into inliers and outliers
-            inlier_mask_subset = residuals_subset < residual_threshold
+            inlier_mask_subset = residuals_subset <= residual_threshold
             n_inliers_subset = np.sum(inlier_mask_subset)
 
             # less inliers -> skip current random sample
