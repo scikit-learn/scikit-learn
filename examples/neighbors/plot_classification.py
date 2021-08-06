@@ -40,7 +40,10 @@ for weights in ['uniform', 'distance']:
         cmap=cmap_light,
         ax=ax,
         response_method='predict',
-        plot_method='pcolormesh'
+        plot_method='pcolormesh',
+        xlabel=iris.feature_names[0],
+        ylabel=iris.feature_names[1],
+        shading="auto",
     )
 
     # Plot also the training points
@@ -48,7 +51,5 @@ for weights in ['uniform', 'distance']:
                     palette=cmap_bold, alpha=1.0, edgecolor="black")
     plt.title("3-Class classification (k = %i, weights = '%s')"
               % (n_neighbors, weights))
-    plt.xlabel(iris.feature_names[0])
-    plt.ylabel(iris.feature_names[1])
 
 plt.show()

@@ -57,7 +57,8 @@ plt.figure(figsize=(10, 5))
 # Plot the decision boundaries
 ax = plt.subplot(121)
 disp = DecisionBoundaryDisplay.from_estimator(
-    bdt, X, cmap=plt.cm.Paired, response_method='predict', ax=ax
+    bdt, X, cmap=plt.cm.Paired, response_method='predict', ax=ax, xlabel="x",
+    ylabel="y",
 )
 x_min, x_max = disp.xx0.min(), disp.xx0.max()
 y_min, y_max = disp.xx1.min(), disp.xx1.max()
@@ -73,8 +74,7 @@ for i, n, c in zip(range(2), class_names, plot_colors):
 plt.xlim(x_min, x_max)
 plt.ylim(y_min, y_max)
 plt.legend(loc='upper right')
-plt.xlabel('x')
-plt.ylabel('y')
+
 plt.title('Decision Boundary')
 
 # Plot the two-class decision scores

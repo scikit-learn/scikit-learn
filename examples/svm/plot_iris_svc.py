@@ -69,11 +69,10 @@ X0, X1 = X[:, 0], X[:, 1]
 
 for clf, title, ax in zip(models, titles, sub.flatten()):
     disp = DecisionBoundaryDisplay.from_estimator(
-        clf, X, response_method='predict', cmap=plt.cm.coolwarm, alpha=0.8, ax=ax
+        clf, X, response_method='predict', cmap=plt.cm.coolwarm, alpha=0.8, ax=ax,
+        xlabel=iris.feature_names[0], ylabel=iris.feature_names[1]
     )
     ax.scatter(X0, X1, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k')
-    ax.set_xlabel('Sepal length')
-    ax.set_ylabel('Sepal width')
     ax.set_xticks(())
     ax.set_yticks(())
     ax.set_title(title)

@@ -72,6 +72,7 @@ for name, clf in zip(names, classifiers):
         ax=ax,
         response_method='predict',
         plot_method='pcolormesh',
+        shading="auto",
     )
 
     # Plot also the training and testing points

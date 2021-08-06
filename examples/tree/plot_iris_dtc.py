@@ -44,11 +44,9 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
     ax = plt.subplot(2, 3, pairidx + 1)
     plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
     DecisionBoundaryDisplay.from_estimator(
-        clf, X, cmap=plt.cm.RdYlBu, response_method='predict', ax=ax
+        clf, X, cmap=plt.cm.RdYlBu, response_method='predict', ax=ax,
+        xlabel=iris.feature_names[pair[0]], ylabel=iris.feature_names[pair[1]],
     )
-
-    plt.xlabel(iris.feature_names[pair[0]])
-    plt.ylabel(iris.feature_names[pair[1]])
 
     # Plot the training points
     for i, color in zip(range(n_classes), plot_colors):

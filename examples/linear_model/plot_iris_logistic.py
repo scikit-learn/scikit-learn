@@ -41,12 +41,13 @@ DecisionBoundaryDisplay.from_estimator(
     response_method="predict",
     plot_method="pcolormesh",
     shading="auto",
+    xlabel="Sepal length",
+    ylabel="Sepal width",
 )
 
 # Plot also the training points
 plt.scatter(X[:, 0], X[:, 1], c=Y, edgecolors="k", cmap=plt.cm.Paired)
-plt.xlabel("Sepal length")
-plt.ylabel("Sepal width")
+
 
 plt.xticks(())
 plt.yticks(())

@@ -40,7 +40,8 @@ X = (X - mean) / std
 clf = SGDClassifier(alpha=0.001, max_iter=100).fit(X, y)
 ax = plt.gca()
 DecisionBoundaryDisplay.from_estimator(
-    clf, X, cmap=plt.cm.Paired, ax=ax, response_method='predict'
+    clf, X, cmap=plt.cm.Paired, ax=ax, response_method='predict',
+    xlabel=iris.feature_names[0], ylabel=iris.feature_names[1],
 )
 plt.axis('tight')
 
