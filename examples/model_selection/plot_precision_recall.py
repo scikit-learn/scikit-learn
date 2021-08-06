@@ -97,8 +97,7 @@ matrix as a binary prediction (micro-averaging).
 # Dataset and model
 # .................
 #
-# We will try to create a linear model to differentiate two types of irises.
-# We will use a Linear SVC classifier.
+# We will use a Linear SVC classifier to differentiate two types of irises.
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split

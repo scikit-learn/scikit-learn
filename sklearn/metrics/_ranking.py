@@ -15,6 +15,7 @@ the lower the better.
 #          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
+#          Michal Karbownik <michakarbownik@gmail.com>
 # License: BSD 3 clause
 
 
@@ -280,7 +281,10 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     See Also
     --------
-    plot_det_curve : Plot detection error tradeoff (DET) curve.
+    DetCurveDisplay.from_estimator : Plot DET curve given an estimator and
+        some data.
+    DetCurveDisplay.from_predictions : Plot DET curve given the true and
+        predicted labels.
     DetCurveDisplay : DET curve visualization.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
     precision_recall_curve : Compute precision-recall curve.
@@ -1247,7 +1251,7 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         "decision_function" on some classifiers).
 
     k : int, default=None
-        Only consider the highest k scores in the ranking. If None, use all
+        Only consider the highest k scores in the ranking. If `None`, use all
         outputs.
 
     log_base : float, default=2
@@ -1383,7 +1387,7 @@ def dcg_score(
         sharper discount (top results are more important).
 
     sample_weight : ndarray of shape (n_samples,), default=None
-        Sample weights. If None, all samples are given the same weight.
+        Sample weights. If `None`, all samples are given the same weight.
 
     ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
@@ -1530,11 +1534,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         "decision_function" on some classifiers).
 
     k : int, default=None
-        Only consider the highest k scores in the ranking. If None, use all
+        Only consider the highest k scores in the ranking. If `None`, use all
         outputs.
 
     sample_weight : ndarray of shape (n_samples,), default=None
-        Sample weights. If None, all samples are given the same weight.
+        Sample weights. If `None`, all samples are given the same weight.
 
     ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
