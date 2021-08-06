@@ -381,12 +381,7 @@ def test_late_onset_averaging_not_reached(klass):
             clf2.partial_fit(X, Y)
 
     assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=16)
-    if klass in [
-        SGDClassifier,
-        SparseSGDClassifier,
-        SGDRegressor,
-        SparseSGDRegressor,
-    ]:
+    if klass in [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]:
         assert_almost_equal(clf1.intercept_, clf2.intercept_, decimal=16)
     elif klass in [SGDOneClassSVM, SparseSGDOneClassSVM]:
         assert_allclose(clf1.offset_, clf2.offset_)
@@ -439,8 +434,7 @@ def test_late_onset_averaging_reached(klass):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 def test_early_stopping(klass):
     X = iris.data[iris.target > 0]
@@ -454,8 +448,7 @@ def test_early_stopping(klass):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 def test_adaptive_longer_than_constant(klass):
     clf1 = klass(learning_rate="adaptive", eta0=0.01, tol=1e-3, max_iter=100)
@@ -590,8 +583,7 @@ def test_set_intercept_offset(klass, fit_params):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 def test_sgd_early_stopping_with_partial_fit(klass):
     """Check that we raise an error for `early_stopping` used with
@@ -1037,8 +1029,7 @@ def test_sample_weights(klass):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
 )
 def test_wrong_sample_weights(klass):
     # Test if ValueError is raised if sample_weight has wrong shape
