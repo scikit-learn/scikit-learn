@@ -1,7 +1,6 @@
 import pytest
 
-from sklearn.base import ClassifierMixin
-from sklearn.base import clone
+from sklearn.base import ClassifierMixin, clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
 from sklearn.exceptions import NotFittedError
@@ -10,8 +9,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-from sklearn.metrics import plot_det_curve
-from sklearn.metrics import plot_roc_curve
+from sklearn.metrics import DetCurveDisplay
 
 
 @pytest.fixture(scope="module")
@@ -25,19 +23,18 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
-def test_plot_curve_error_non_binary(pyplot, data, plot_func):
+@pytest.mark.parametrize("Display", [DetCurveDisplay])
+def test_display_curve_error_non_binary(pyplot, data, Display):
+    """Check that a proper error is raised when only binary classification is
+    supported."""
     X, y = data
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
+    clf = DecisionTreeClassifier().fit(X, y)
 
     msg = "DecisionTreeClassifier should be a binary classifier"
     with pytest.raises(ValueError, match=msg):
-        plot_func(clf, X, y)
+        Display.from_estimator(clf, X, y)
 
 
-@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
     "response_method, msg",
     [
@@ -60,14 +57,16 @@ def test_plot_curve_error_non_binary(pyplot, data, plot_func):
         ),
     ],
 )
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
-def test_plot_curve_error_no_response(
+@pytest.mark.parametrize("Display", [DetCurveDisplay])
+def test_display_curve_error_no_response(
     pyplot,
     data_binary,
     response_method,
     msg,
-    plot_func,
+    Display,
 ):
+    """Check that a proper error is raised when the response method requested
+    is not defined for the given trained classifier."""
     X, y = data_binary
 
     class MyClassifier(ClassifierMixin):
@@ -78,18 +77,31 @@ def test_plot_curve_error_no_response(
     clf = MyClassifier().fit(X, y)
 
     with pytest.raises(ValueError, match=msg):
-        plot_func(clf, X, y, response_method=response_method)
+        Display.from_estimator(clf, X, y, response_method=response_method)
 
 
-@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
-def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func):
-    # non-regression test checking that the `name` used when calling
-    # `plot_func` is used as well when calling `disp.plot()`
+@pytest.mark.parametrize("Display", [DetCurveDisplay])
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_display_curve_estimator_name_multiple_calls(
+    pyplot,
+    data_binary,
+    Display,
+    constructor_name,
+):
+    """Check that passing `name` when calling `plot` will overwrite the original name
+    in the legend."""
     X, y = data_binary
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
-    disp = plot_func(clf, X, y, name=clf_name)
+    y_pred = clf.predict_proba(X)[:, 1]
+
+    # safe guard for the binary if/else construction
+    assert constructor_name in ("from_estimator", "from_predictions")
+
+    if constructor_name == "from_estimator":
+        disp = Display.from_estimator(clf, X, y, name=clf_name)
+    else:
+        disp = Display.from_predictions(y, y_pred, name=clf_name)
     assert disp.estimator_name == clf_name
     pyplot.close("all")
     disp.plot()
@@ -100,7 +112,6 @@ def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func
     assert clf_name in disp.line_.get_label()
 
 
-@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
     "clf",
     [
@@ -111,15 +122,17 @@ def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func
         ),
     ],
 )
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
-def test_plot_det_curve_not_fitted_errors(pyplot, data_binary, clf, plot_func):
+@pytest.mark.parametrize("Display", [DetCurveDisplay])
+def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
+    """Check that a proper error is raised when the classifier is not
+    fitted."""
     X, y = data_binary
     # clone since we parametrize the test and the classifier will be fitted
     # when testing the second and subsequent plotting function
     model = clone(clf)
     with pytest.raises(NotFittedError):
-        plot_func(model, X, y)
+        Display.from_estimator(model, X, y)
     model.fit(X, y)
-    disp = plot_func(model, X, y)
+    disp = Display.from_estimator(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
     assert disp.estimator_name == model.__class__.__name__
