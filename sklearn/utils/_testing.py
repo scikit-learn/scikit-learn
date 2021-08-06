@@ -52,7 +52,7 @@ from sklearn.utils import (
     IS_PYPY,
     _IS_32BIT,
     deprecated,
-    in_unstable_openblas_configuration,
+    _in_unstable_openblas_configuration,
 )
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
@@ -452,7 +452,7 @@ try:
     )
     fails_if_pypy = pytest.mark.xfail(IS_PYPY, reason="not compatible with PyPy")
     fails_if_unstable_openblas = pytest.mark.xfail(
-        in_unstable_openblas_configuration(),
+        _in_unstable_openblas_configuration(),
         reason="OpenBLAS is unstable for this configuration",
     )
     skip_if_no_parallel = pytest.mark.skipif(

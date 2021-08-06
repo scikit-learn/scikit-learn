@@ -28,7 +28,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     FastSquaredEuclideanRadiusNeighborhood,
 )
 
-from sklearn.utils import in_unstable_openblas_configuration
+from sklearn.utils import _in_unstable_openblas_configuration
 from sklearn.utils._testing import (
     fails_if_unstable_openblas,
     get_dummy_metric_kwargs,
@@ -307,7 +307,7 @@ def test_argkmin_strategies_consistency(
 ):
     # ArgKmin results obtained using both parallelization strategies
     # must be identical
-    if in_unstable_openblas_configuration() and metric == "fast_sqeuclidean":
+    if _in_unstable_openblas_configuration() and metric == "fast_sqeuclidean":
         pytest.xfail(
             "OpenBLAS (used for 'fast_sqeuclidean') is unstable in this configuration"
         )
@@ -358,7 +358,7 @@ def test_radius_neighborhood_strategies_consistency(
 ):
     # RadiusNeighborhood results obtained using both parallelization strategies
     # must be identical
-    if in_unstable_openblas_configuration() and metric == "fast_sqeuclidean":
+    if _in_unstable_openblas_configuration() and metric == "fast_sqeuclidean":
         pytest.xfail(
             "OpenBLAS (used for 'fast_sqeuclidean') is unstable in this configuration"
         )

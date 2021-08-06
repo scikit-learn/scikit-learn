@@ -81,7 +81,7 @@ IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
-def in_unstable_openblas_configuration():
+def _in_unstable_openblas_configuration():
     """Return True if in an unstable configuration for OpenBLAS"""
 
     # Import libraries which might load OpenBLAS.
