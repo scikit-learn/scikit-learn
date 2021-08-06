@@ -12,7 +12,8 @@ from ...utils import deprecated
 class DetCurveDisplay:
     """DET curve visualization.
 
-    It is recommend to use :func:`~sklearn.metrics.plot_det_curve` to create a
+    It is recommend to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
+    or :func:`~sklearn.metrics.DetCurveDisplay.from_predictions` to create a
     visualizer. All parameters are stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
