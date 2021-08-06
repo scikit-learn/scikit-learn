@@ -2138,6 +2138,14 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    Binarizer: Binarize data (set feature values to 0 or 1) according
+        to a threshold.
+    Normalizer : Normalize samples individually to unit norm.
+    StandardScaler : Standardize features by removing the mean and scaling
+        to unit variance.
+
     References
     ----------
     .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
@@ -2171,7 +2179,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         pass
 
     def fit(self, K, y=None):
-        """Fit KernelCenterer
+        """Fit KernelCenterer.
 
         Parameters
         ----------
@@ -2184,7 +2192,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted transformer.
+            Returns the instance itself.
         """
 
         K = self._validate_data(K, dtype=FLOAT_DTYPES)
@@ -2214,6 +2222,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         K_new : ndarray of shape (n_samples1, n_samples2)
+            Returns the instance itself.
         """
         check_is_fitted(self)
 
