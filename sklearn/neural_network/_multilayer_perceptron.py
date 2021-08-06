@@ -6,7 +6,6 @@
 #          Jiyuan Qian
 # License: BSD 3 clause
 
-from tkinter.tix import Tree
 import numpy as np
 
 from abc import ABCMeta, abstractmethod
@@ -1252,7 +1251,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             return y_pred
 
     def _more_tags(self):
-        return {"multilabel": Tree}
+        return {"multilabel": True}
 
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
