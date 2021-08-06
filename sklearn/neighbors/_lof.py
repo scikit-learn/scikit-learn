@@ -7,7 +7,6 @@ import warnings
 
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
-from ._base import UnsupervisedMixin
 from ..base import OutlierMixin
 
 from ..utils.validation import check_is_fitted
@@ -16,8 +15,7 @@ from ..utils import check_array
 __all__ = ["LocalOutlierFactor"]
 
 
-class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
-                         OutlierMixin):
+class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     """Unsupervised Outlier Detection using Local Outlier Factor (LOF)
 
     The anomaly score of each sample is called Local Outlier Factor.
@@ -103,7 +101,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         - if 'auto', the threshold is determined as in the
           original paper,
-        - if a float, the contamination should be in the range [0, 0.5].
+        - if a float, the contamination should be in the range (0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1
@@ -113,8 +111,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         By default, LocalOutlierFactor is only meant to be used for outlier
         detection (novelty=False). Set novelty to True if you want to use
         LocalOutlierFactor for novelty detection. In this case be aware that
-        that you should only use predict, decision_function and score_samples
+        you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
+
+        .. versionadded:: 0.20
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
@@ -147,6 +147,22 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         case, the offset is defined in such a way we obtain the expected
         number of outliers in training.
 
+        .. versionadded:: 0.20
+
+    effective_metric_ : str
+        The effective metric used for the distance computation.
+
+    effective_metric_params_ : dict
+        The effective additional keyword arguments for the metric function.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    n_samples_fit_ : int
+        It is the number of samples in the fitted data.
+
     Examples
     --------
     >>> import numpy as np
@@ -163,21 +179,37 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
            LOF: identifying density-based local outliers. In ACM sigmod record.
     """
-    def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
-                 metric='minkowski', p=2, metric_params=None,
-                 contamination="auto", novelty=False, n_jobs=None):
+
+    def __init__(
+        self,
+        n_neighbors=20,
+        *,
+        algorithm="auto",
+        leaf_size=30,
+        metric="minkowski",
+        p=2,
+        metric_params=None,
+        contamination="auto",
+        novelty=False,
+        n_jobs=None,
+    ):
         super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
-            leaf_size=leaf_size, metric=metric, p=p,
-            metric_params=metric_params, n_jobs=n_jobs)
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        )
         self.contamination = contamination
         self.novelty = novelty
 
     @property
     def fit_predict(self):
-        """"Fits the model to the training set X and returns the labels.
+        """Fits the model to the training set X and returns the labels.
 
+        **Not available for novelty detection (when novelty is set to True).**
         Label is 1 for an inlier and -1 for an outlier according to the LOF
         score and the contamination parameter.
 
@@ -200,14 +232,16 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         # only available for outlier detection (novelty=False)
 
         if self.novelty:
-            msg = ('fit_predict is not available when novelty=True. Use '
-                   'novelty=False if you want to predict on the training set.')
+            msg = (
+                "fit_predict is not available when novelty=True. Use "
+                "novelty=False if you want to predict on the training set."
+            )
             raise AttributeError(msg)
 
         return self._fit_predict
 
     def _fit_predict(self, X, y=None):
-        """"Fits the model to the training set X and returns the labels.
+        """Fits the model to the training set X and returns the labels.
 
         Label is 1 for an inlier and -1 for an outlier according to the LOF
         score and the contamination parameter.
@@ -230,46 +264,52 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         return self.fit(X)._predict()
 
     def fit(self, X, y=None):
-        """Fit the model using X as training data.
+        """Fit the local outlier factor detector from the training dataset.
 
         Parameters
         ----------
-        X : BallTree, KDTree or {array-like, sparse matrix} of shape \
-                (n_samples, n_features) or (n_samples, n_samples)
-            Training data. If array or matrix, the shape is (n_samples,
-            n_features), or (n_samples, n_samples) if metric='precomputed'.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
 
         y : Ignored
             Not used, present for API consistency by convention.
 
         Returns
         -------
-        self : object
+        self : LocalOutlierFactor
+            The fitted local outlier factor detector.
         """
-        if self.contamination != 'auto':
-            if not(0. < self.contamination <= .5):
-                raise ValueError("contamination must be in (0, 0.5], "
-                                 "got: %f" % self.contamination)
+        self._fit(X)
 
-        super().fit(X)
+        if self.contamination != "auto":
+            if not (0.0 < self.contamination <= 0.5):
+                raise ValueError(
+                    "contamination must be in (0, 0.5], got: %f" % self.contamination
+                )
 
         n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:
-            warnings.warn("n_neighbors (%s) is greater than the "
-                          "total number of samples (%s). n_neighbors "
-                          "will be set to (n_samples - 1) for estimation."
-                          % (self.n_neighbors, n_samples))
+            warnings.warn(
+                "n_neighbors (%s) is greater than the "
+                "total number of samples (%s). n_neighbors "
+                "will be set to (n_samples - 1) for estimation."
+                % (self.n_neighbors, n_samples)
+            )
         self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
 
         self._distances_fit_X_, _neighbors_indices_fit_X_ = self.kneighbors(
-            n_neighbors=self.n_neighbors_)
+            n_neighbors=self.n_neighbors_
+        )
 
         self._lrd = self._local_reachability_density(
-            self._distances_fit_X_, _neighbors_indices_fit_X_)
+            self._distances_fit_X_, _neighbors_indices_fit_X_
+        )
 
         # Compute lof score over training samples to define offset_:
-        lrd_ratios_array = (self._lrd[_neighbors_indices_fit_X_] /
-                            self._lrd[:, np.newaxis])
+        lrd_ratios_array = (
+            self._lrd[_neighbors_indices_fit_X_] / self._lrd[:, np.newaxis]
+        )
 
         self.negative_outlier_factor_ = -np.mean(lrd_ratios_array, axis=1)
 
@@ -277,8 +317,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             # inliers score around -1 (the higher, the less abnormal).
             self.offset_ = -1.5
         else:
-            self.offset_ = np.percentile(self.negative_outlier_factor_,
-                                         100. * self.contamination)
+            self.offset_ = np.percentile(
+                self.negative_outlier_factor_, 100.0 * self.contamination
+            )
 
         return self
 
@@ -286,9 +327,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def predict(self):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
 
+        **Only available for novelty detection (when novelty is set to True).**
         This method allows to generalize prediction to *new observations* (not
-        in the training set). Only available for novelty detection (when
-        novelty is set to True).
+        in the training set).
 
         Parameters
         ----------
@@ -302,10 +343,12 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
         if not self.novelty:
-            msg = ('predict is not available when novelty=False, use '
-                   'fit_predict if you want to predict on training data. Use '
-                   'novelty=True if you want to use LOF for novelty detection '
-                   'and predict on new unseen data.')
+            msg = (
+                "predict is not available when novelty=False, use "
+                "fit_predict if you want to predict on training data. Use "
+                "novelty=True if you want to use LOF for novelty detection "
+                "and predict on new unseen data."
+            )
             raise AttributeError(msg)
 
         return self._predict
@@ -330,7 +373,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         check_is_fitted(self)
 
         if X is not None:
-            X = check_array(X, accept_sparse='csr')
+            X = check_array(X, accept_sparse="csr")
             is_inlier = np.ones(X.shape[0], dtype=int)
             is_inlier[self.decision_function(X) < 0] = -1
         else:
@@ -345,8 +388,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Bigger is better, i.e. large values correspond to inliers.
 
+        **Only available for novelty detection (when novelty is set to True).**
         The shift offset allows a zero threshold for being an outlier.
-        Only available for novelty detection (when novelty is set to True).
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
@@ -366,12 +409,14 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             outliers, positive scores represent inliers.
         """
         if not self.novelty:
-            msg = ('decision_function is not available when novelty=False. '
-                   'Use novelty=True if you want to use LOF for novelty '
-                   'detection and compute decision_function for new unseen '
-                   'data. Note that the opposite LOF of the training samples '
-                   'is always available by considering the '
-                   'negative_outlier_factor_ attribute.')
+            msg = (
+                "decision_function is not available when novelty=False. "
+                "Use novelty=True if you want to use LOF for novelty "
+                "detection and compute decision_function for new unseen "
+                "data. Note that the opposite LOF of the training samples "
+                "is always available by considering the "
+                "negative_outlier_factor_ attribute."
+            )
             raise AttributeError(msg)
 
         return self._decision_function
@@ -381,8 +426,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Bigger is better, i.e. large values correspond to inliers.
 
+        **Only available for novelty detection (when novelty is set to True).**
         The shift offset allows a zero threshold for being an outlier.
-        Only available for novelty detection (when novelty is set to True).
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
@@ -411,7 +456,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
-        Only available for novelty detection (when novelty is set to True).
+        **Only available for novelty detection (when novelty is set to True).**
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
@@ -432,11 +477,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             The lower, the more abnormal.
         """
         if not self.novelty:
-            msg = ('score_samples is not available when novelty=False. The '
-                   'scores of the training samples are always available '
-                   'through the negative_outlier_factor_ attribute. Use '
-                   'novelty=True if you want to use LOF for novelty detection '
-                   'and compute score_samples for new unseen data.')
+            msg = (
+                "score_samples is not available when novelty=False. The "
+                "scores of the training samples are always available "
+                "through the negative_outlier_factor_ attribute. Use "
+                "novelty=True if you want to use LOF for novelty detection "
+                "and compute score_samples for new unseen data."
+            )
             raise AttributeError(msg)
 
         return self._score_samples
@@ -447,7 +494,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
-        Only available for novelty detection (when novelty is set to True).
+        **Only available for novelty detection (when novelty is set to True).**
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
@@ -468,15 +515,14 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             The lower, the more abnormal.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse="csr")
 
-        distances_X, neighbors_indices_X = (
-            self.kneighbors(X, n_neighbors=self.n_neighbors_))
-        X_lrd = self._local_reachability_density(distances_X,
-                                                 neighbors_indices_X)
+        distances_X, neighbors_indices_X = self.kneighbors(
+            X, n_neighbors=self.n_neighbors_
+        )
+        X_lrd = self._local_reachability_density(distances_X, neighbors_indices_X)
 
-        lrd_ratios_array = (self._lrd[neighbors_indices_X] /
-                            X_lrd[:, np.newaxis])
+        lrd_ratios_array = self._lrd[neighbors_indices_X] / X_lrd[:, np.newaxis]
 
         # as bigger is better:
         return -np.mean(lrd_ratios_array, axis=1)
@@ -502,9 +548,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         local_reachability_density : ndarray of shape (n_queries,)
             The local reachability density of each sample.
         """
-        dist_k = self._distances_fit_X_[neighbors_indices,
-                                        self.n_neighbors_ - 1]
+        dist_k = self._distances_fit_X_[neighbors_indices, self.n_neighbors_ - 1]
         reach_dist_array = np.maximum(distances_X, dist_k)
 
         # 1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
-        return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)
+        return 1.0 / (np.mean(reach_dist_array, axis=1) + 1e-10)

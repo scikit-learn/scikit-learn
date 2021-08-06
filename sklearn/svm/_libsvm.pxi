@@ -1,5 +1,10 @@
 ################################################################################
 # Includes
+cdef extern from "_svm_cython_blas_helpers.h":
+    ctypedef double (*dot_func)(int, double*, int, double*, int)
+    cdef struct BlasFunctions:
+        dot_func dot
+
 
 cdef extern from "svm.h":
     cdef struct svm_node
@@ -32,9 +37,9 @@ cdef extern from "svm.h":
         double *W # instance weights
 
     char *svm_check_parameter(svm_problem *, svm_parameter *)
-    svm_model *svm_train(svm_problem *, svm_parameter *, int *) nogil
+    svm_model *svm_train(svm_problem *, svm_parameter *, int *, BlasFunctions *) nogil
     void svm_free_and_destroy_model(svm_model** model_ptr_ptr)
-    void svm_cross_validation(svm_problem *, svm_parameter *, int nr_fold, double *target) nogil
+    void svm_cross_validation(svm_problem *, svm_parameter *, int nr_fold, double *target, BlasFunctions *) nogil
 
 
 cdef extern from "libsvm_helper.c":
@@ -54,9 +59,9 @@ cdef extern from "libsvm_helper.c":
     void copy_intercept (char *, svm_model *, np.npy_intp *)
     void copy_SV        (char *, svm_model *, np.npy_intp *)
     int copy_support (char *data, svm_model *model)
-    int copy_predict (char *, svm_model *, np.npy_intp *, char *) nogil
-    int copy_predict_proba (char *, svm_model *, np.npy_intp *, char *) nogil
-    int copy_predict_values(char *, svm_model *, np.npy_intp *, char *, int) nogil
+    int copy_predict (char *, svm_model *, np.npy_intp *, char *, BlasFunctions *) nogil
+    int copy_predict_proba (char *, svm_model *, np.npy_intp *, char *, BlasFunctions *) nogil
+    int copy_predict_values(char *, svm_model *, np.npy_intp *, char *, int, BlasFunctions *) nogil
     void copy_nSV     (char *, svm_model *)
     void copy_probA   (char *, svm_model *, np.npy_intp *)
     void copy_probB   (char *, svm_model *, np.npy_intp *)

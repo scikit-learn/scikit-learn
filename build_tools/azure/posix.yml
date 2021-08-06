@@ -3,20 +3,36 @@ parameters:
   vmImage: ''
   matrix: []
   dependsOn: []
+  condition: ''
 
 jobs:
 - job: ${{ parameters.name }}
   dependsOn: ${{ parameters.dependsOn }}
+  condition: ${{ parameters.condition }}
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     VIRTUALENV: 'testvenv'
     JUNITXML: 'test-data.xml'
-    PYTEST_VERSION: '5.2.1'
-    OMP_NUM_THREADS: '4'
-    OPENBLAS_NUM_THREADS: '4'
+    OMP_NUM_THREADS: '2'
+    OPENBLAS_NUM_THREADS: '2'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
+    CCACHE_DIR: $(Pipeline.Workspace)/ccache
+    CCACHE_COMPRESS: '1'
+    NUMPY_VERSION: 'latest'
+    SCIPY_VERSION: 'latest'
+    CYTHON_VERSION: 'latest'
+    JOBLIB_VERSION: 'latest'
+    PANDAS_VERSION: 'latest'
+    PYAMG_VERSION: 'latest'
+    PILLOW_VERSION: 'latest'
+    MATPLOTLIB_VERSION: 'latest'
+    PYTEST_VERSION: 'latest'
+    PYTEST_XDIST_VERSION: 'latest'
+    THREADPOOLCTL_VERSION: 'latest'
+    COVERAGE: 'true'
+    TEST_DOCSTRINGS: 'false'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
@@ -28,6 +44,11 @@ jobs:
     - bash: sudo chown -R $USER $CONDA
       displayName: Take ownership of conda installation
       condition: startsWith(variables['DISTRIB'], 'conda')
+    - task: Cache@2
+      inputs:
+        key: '"$(Agent.JobName)"'
+        path: $(CCACHE_DIR)
+      displayName: ccache
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'
@@ -37,6 +58,10 @@ jobs:
     - script: |
         build_tools/azure/test_docs.sh
       displayName: 'Test Docs'
+    - script: |
+        build_tools/azure/test_docstring.sh
+      displayName: "Numpydoc validation"
+      condition: eq(variables['TEST_DOCSTRINGS'], 'true')
     - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test Soft Dependency'

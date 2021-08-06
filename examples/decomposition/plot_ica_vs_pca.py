@@ -70,8 +70,8 @@ def plot_samples(S, axis_list=None):
             x_axis, y_axis = axis
             # Trick to get legend to work
             plt.plot(0.1 * x_axis, 0.1 * y_axis, linewidth=2, color=color)
-            plt.quiver(0, 0, x_axis, y_axis, zorder=11, width=0.01, scale=6,
-                       color=color)
+            plt.quiver((0, 0), (0, 0), x_axis, y_axis, zorder=11, width=0.01,
+                       scale=6, color=color)
 
     plt.hlines(0, -3, 3)
     plt.vlines(0, -3, 3)
@@ -79,6 +79,7 @@ def plot_samples(S, axis_list=None):
     plt.ylim(-3, 3)
     plt.xlabel('x')
     plt.ylabel('y')
+
 
 plt.figure()
 plt.subplot(2, 2, 1)

@@ -22,10 +22,14 @@ IF "%PYTHON_ARCH%"=="64" (
     ) else (
         pip install pytest==%PYTEST_VERSION%
     )
-    pip install pytest-xdist
 ) else (
     pip install numpy scipy cython pytest wheel pillow joblib threadpoolctl
 )
+
+IF "%PYTEST_XDIST%" == "true" (
+    pip install pytest-xdist
+)
+
 if "%COVERAGE%" == "true" (
     pip install coverage codecov pytest-cov
 )

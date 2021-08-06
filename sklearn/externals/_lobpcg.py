@@ -384,8 +384,8 @@ def lobpcg(A, X,
         try:
             # gramYBY is a Cholesky factor from now on...
             gramYBY = cho_factor(gramYBY)
-        except LinAlgError:
-            raise ValueError('cannot handle linearly dependent constraints')
+        except LinAlgError as e:
+            raise ValueError('cannot handle linearly dependent constraints') from e
 
         _applyConstraints(blockVectorX, gramYBY, blockVectorBY, blockVectorY)
 
@@ -610,8 +610,8 @@ def lobpcg(A, X,
             try:
                 _lambda, eigBlockVector = eigh(gramA, gramB,
                                                check_finite=False)
-            except LinAlgError:
-                raise ValueError('eigh has failed in lobpcg iterations')
+            except LinAlgError as e:
+                raise ValueError('eigh has failed in lobpcg iterations') from e
 
         ii = _get_indx(_lambda, sizeX, largest)
         if verbosityLevel > 10:
