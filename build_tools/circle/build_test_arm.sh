@@ -23,8 +23,7 @@ sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
 sudo apt-get update
 
 # Setup conda environment
-
-MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh"
+MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
 
 # Install Mambaforge
 wget $MINICONDA_URL -O mambaforge.sh
