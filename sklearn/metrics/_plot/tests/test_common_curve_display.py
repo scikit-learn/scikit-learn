@@ -9,7 +9,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-from sklearn.metrics import RocCurveDisplay
+from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
 
 
 @pytest.fixture(scope="module")
@@ -23,7 +23,7 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-@pytest.mark.parametrize("Display", [RocCurveDisplay])
+@pytest.mark.parametrize("Display", [DetCurveDisplay, RocCurveDisplay])
 def test_display_curve_error_non_binary(pyplot, data, Display):
     """Check that a proper error is raised when only binary classification is
     supported."""
@@ -57,7 +57,7 @@ def test_display_curve_error_non_binary(pyplot, data, Display):
         ),
     ],
 )
-@pytest.mark.parametrize("Display", [RocCurveDisplay])
+@pytest.mark.parametrize("Display", [DetCurveDisplay, RocCurveDisplay])
 def test_display_curve_error_no_response(
     pyplot,
     data_binary,
@@ -80,7 +80,7 @@ def test_display_curve_error_no_response(
         Display.from_estimator(clf, X, y, response_method=response_method)
 
 
-@pytest.mark.parametrize("Display", [RocCurveDisplay])
+@pytest.mark.parametrize("Display", [DetCurveDisplay, RocCurveDisplay])
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_display_curve_estimator_name_multiple_calls(
     pyplot,
@@ -122,7 +122,7 @@ def test_display_curve_estimator_name_multiple_calls(
         ),
     ],
 )
-@pytest.mark.parametrize("Display", [RocCurveDisplay])
+@pytest.mark.parametrize("Display", [DetCurveDisplay, RocCurveDisplay])
 def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     """Check that a proper error is raised when the classifier is not
     fitted."""
