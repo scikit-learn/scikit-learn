@@ -79,6 +79,7 @@ Functions
    inspection.plot_partial_dependence
    inspection.plot_decision_boundary
    metrics.plot_confusion_matrix
+   metrics.plot_det_curve
    metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
@@ -93,5 +94,6 @@ Display Objects
    inspection.PartialDependenceDisplay
    inspection.DecisionBoundaryDisplay
    metrics.ConfusionMatrixDisplay
+   metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay

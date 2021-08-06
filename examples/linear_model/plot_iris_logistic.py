@@ -28,19 +28,24 @@ iris = datasets.load_iris()
 X = iris.data[:, :2]  # we only take the first two features.
 Y = iris.target
 
-logreg = LogisticRegression(C=1e5)
-
 # Create an instance of Logistic Regression Classifier and fit the data.
+logreg = LogisticRegression(C=1e5)
 logreg.fit(X, Y)
 
 _, ax = plt.subplots(figsize=(4, 3))
-plot_decision_boundary(logreg, X, cmap=plt.cm.Paired, ax=ax,
-                       response_method='predict', plot_method='pcolormesh')
+plot_decision_boundary(
+    logreg,
+    X,
+    cmap=plt.cm.Paired,
+    ax=ax,
+    response_method="predict",
+    plot_method="pcolormesh",
+)
 
 # Plot also the training points
-plt.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k', cmap=plt.cm.Paired)
-plt.xlabel('Sepal length')
-plt.ylabel('Sepal width')
+plt.scatter(X[:, 0], X[:, 1], c=Y, edgecolors="k", cmap=plt.cm.Paired)
+plt.xlabel("Sepal length")
+plt.ylabel("Sepal width")
 
 plt.xticks(())
 plt.yticks(())

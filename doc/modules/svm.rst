@@ -453,7 +453,7 @@ Tips on Practical Use
     set to ``False`` the underlying implementation of :class:`LinearSVC` is
     not random and ``random_state`` has no effect on the results.
 
-  * Using L1 penalization as provided by ``LinearSVC(loss='l2', penalty='l1',
+  * Using L1 penalization as provided by ``LinearSVC(penalty='l1',
     dual=False)`` yields a sparse solution, i.e. only a subset of feature
     weights is different from zero and contribute to the decision function.
     Increasing ``C`` yields a more complex model (more features are selected).
@@ -677,7 +677,7 @@ The primal problem can be equivalently formulated as
 
 .. math::
 
-    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, y_i (w^T \phi(x_i) + b)),
+    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, 1 - y_i (w^T \phi(x_i) + b)),
 
 where we make use of the `hinge loss
 <https://en.wikipedia.org/wiki/Hinge_loss>`_. This is the form that is

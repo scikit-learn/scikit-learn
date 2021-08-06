@@ -11,10 +11,10 @@ from ._plot.partial_dependence import PartialDependenceDisplay
 
 
 __all__ = [
-    'partial_dependence',
-    'plot_partial_dependence',
-    'permutation_importance',
-    'PartialDependenceDisplay',
-    'plot_decision_boundary',
-    'DecisionBoundaryDisplay'
+    "partial_dependence",
+    "plot_partial_dependence",
+    "permutation_importance",
+    "PartialDependenceDisplay",
+    "plot_decision_boundary",
+    "DecisionBoundaryDisplay",
 ]
