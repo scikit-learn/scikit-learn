@@ -661,13 +661,7 @@ class Pipeline(_BaseComposition):
 
     @property
     def __sk_is_fitted__(self):
-        """Check if pipeline is fitted.
-
-        Returns
-        -------
-        bool
-            True if the last step is fitted, false otherwise.
-        """
+        """Indicate whether pipeline has been fit."""
         try:
             # check if the last step of the pipeline is fitted
             check_is_fitted(self.steps[-1][1])

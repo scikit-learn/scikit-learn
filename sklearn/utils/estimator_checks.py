@@ -3526,7 +3526,12 @@ def check_fit_check_is_fitted(name, estimator_orig):
         except NotFittedError:
             pass
     estimator.fit(X, y)
-    check_is_fitted(estimator)
+    try:
+        check_is_fitted(estimator)
+    except NotFittedError as e:
+        raise NotFittedError(
+            "Estimator fails to pass `check_is_fitted` even though it has been fit."
+        ) from e
 
 
 def check_n_features_in(name, estimator_orig):
