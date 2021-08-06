@@ -482,6 +482,7 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     # The original dataframe is unaffected by the assignment on the subset:
     assert X.iloc[0, 0] == 1
 
+
 @pytest.mark.parametrize(
     "key, err_msg",
     [
