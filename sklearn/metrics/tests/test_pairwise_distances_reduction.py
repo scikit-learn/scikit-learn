@@ -232,15 +232,14 @@ def test_pairwise_distances_reduction_factory_method(
 
 
 @fails_if_unstable_openblas
-@pytest.mark.parametrize("seed", range(10))
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("k", [1, 10, 100])
-@pytest.mark.parametrize("chunk_size", [512, 1024, 1337, 19301])
+@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 def test_argkmin_chunk_size_agnosticism(
     seed,
     n_samples,
-    k,
     chunk_size,
+    k=10,
     metric="fast_sqeuclidean",
     n_features=100,
     dtype=np.float64,
@@ -263,15 +262,14 @@ def test_argkmin_chunk_size_agnosticism(
 
 
 @fails_if_unstable_openblas
-@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
-@pytest.mark.parametrize("radius", [1, 10, 100])
-@pytest.mark.parametrize("chunk_size", [512, 1024, 1337, 19301])
+@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 def test_radius_neighborhood_chunk_size_agnosticism(
     seed,
     n_samples,
-    radius,
     chunk_size,
+    radius=10.0,
     metric="fast_sqeuclidean",
     n_features=100,
     dtype=np.float64,
@@ -296,22 +294,20 @@ def test_radius_neighborhood_chunk_size_agnosticism(
     assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices)
 
 
-@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
-@pytest.mark.parametrize("n_features", [5, 100])
-@pytest.mark.parametrize("k", [1, 10, 100])
-@pytest.mark.parametrize("metric", ArgKmin.valid_metrics())
+@pytest.mark.parametrize("metric", RadiusNeighborhood.valid_metrics())
 def test_argkmin_strategies_consistency(
-    seed,
-    n_samples,
-    n_features,
-    k,
     metric,
+    n_samples,
+    seed,
+    n_features=10,
+    k=10,
     dtype=np.float64,
 ):
     # ArgKmin results obtained using both parallelization strategies
     # must be identical
-    if in_unstable_openblas_configuration and metric == "fast_sqeuclidean":
+    if in_unstable_openblas_configuration() and metric == "fast_sqeuclidean":
         pytest.xfail(
             "OpenBLAS (used for 'fast_sqeuclidean') is unstable in this configuration"
         )
@@ -332,6 +328,8 @@ def test_argkmin_strategies_consistency(
         k=k,
         metric=metric,
         metric_kwargs=get_dummy_metric_kwargs(metric, n_features),
+        # To be sure to use parallelization
+        chunk_size=n_samples // 4,
     )
 
     dist_par_X, indices_par_X = argkmin_reduction.compute(
@@ -347,22 +345,20 @@ def test_argkmin_strategies_consistency(
     )
 
 
-@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
-@pytest.mark.parametrize("n_features", [5, 100])
-@pytest.mark.parametrize("radius", [1, 10, 100])
 @pytest.mark.parametrize("metric", RadiusNeighborhood.valid_metrics())
 def test_radius_neighborhood_strategies_consistency(
     seed,
     n_samples,
-    n_features,
-    radius,
     metric,
+    n_features=10,
+    radius=10.0,
     dtype=np.float64,
 ):
     # RadiusNeighborhood results obtained using both parallelization strategies
     # must be identical
-    if in_unstable_openblas_configuration and metric == "fast_sqeuclidean":
+    if in_unstable_openblas_configuration() and metric == "fast_sqeuclidean":
         pytest.xfail(
             "OpenBLAS (used for 'fast_sqeuclidean') is unstable in this configuration"
         )
@@ -384,6 +380,8 @@ def test_radius_neighborhood_strategies_consistency(
         radius=radius ** np.log(n_features),
         metric=metric,
         metric_kwargs=get_dummy_metric_kwargs(metric, n_features),
+        # To be sure to use parallelization
+        chunk_size=n_samples // 4,
     )
 
     dist_par_X, indices_par_X = radius_neigh_reduction.compute(
