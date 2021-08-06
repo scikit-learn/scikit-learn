@@ -167,7 +167,7 @@ def test_load_csv_data_with_descr():
 @pytest.mark.parametrize(
     "filename, kwargs, expected_shape",
     [
-        ("diabetes_data.csv.gz", {}, [442, 10]),
+        ("diabetes_data_raw.csv.gz", {}, [442, 10]),
         ("diabetes_target.csv.gz", {}, [442]),
         ("digits.csv.gz", {"delimiter": ","}, [1797, 65]),
     ],
