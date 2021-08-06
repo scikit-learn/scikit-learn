@@ -10,7 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from sklearn.base import BaseEstimator, ClassifierMixin, MultiLabelMixin
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (
@@ -697,12 +697,15 @@ def test_check_estimator_get_tags_default_keys():
     check_estimator_get_tags_default_keys(estimator.__class__.__name__, estimator)
 
 
-class _BaseMultiLabelClassifierMock(ClassifierMixin, MultiLabelMixin, BaseEstimator):
+class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
     def __init__(self, response_output):
         self.response_output = response_output
 
     def fit(self, X, y):
         return self
+
+    def _more_tags(self):
+        return {"multilabel": True}
 
 
 def test_check_classifiers_multilabel_output_format_predict():
