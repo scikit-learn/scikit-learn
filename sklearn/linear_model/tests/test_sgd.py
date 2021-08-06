@@ -1598,12 +1598,7 @@ def test_late_onset_averaging_reached_oneclass(klass):
     # Start from clf2 solution, compute averaging using asgd function and
     # compare with clf1 solution
     average_coef, average_offset = asgd_oneclass(
-        klass,
-        X,
-        eta0,
-        nu,
-        coef_init=clf2.coef_.ravel(),
-        offset_init=clf2.offset_,
+        klass, X, eta0, nu, coef_init=clf2.coef_.ravel(), offset_init=clf2.offset_
     )
 
     assert_allclose(clf1.coef_.ravel(), average_coef.ravel())
