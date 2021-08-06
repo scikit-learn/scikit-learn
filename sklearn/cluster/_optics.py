@@ -281,7 +281,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         X = self._validate_data(X, dtype=dtype)
         memory = check_memory(self.memory)
-        
+
         if self.cluster_method not in ["dbscan", "xi"]:
             raise ValueError(
                 "cluster_method should be one of 'dbscan' or 'xi' but is %s"
