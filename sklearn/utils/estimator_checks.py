@@ -2570,6 +2570,7 @@ def check_regressors_predict_single_target(name, regressor_orig):
     y = scale(y)  # X is already scaled
     regressor = clone(regressor_orig)
     y = _enforce_estimator_tags_y(regressor, y)
+    assert y.ndim == 1
 
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
@@ -2580,7 +2581,7 @@ def check_regressors_predict_single_target(name, regressor_orig):
     set_random_state(regressor)
     regressor.fit(X, y)
     y_pred = regressor.predict(X)
-    assert y_pred.shape == (y.shape[0],), (
+    assert y_pred.shape == y.shape, (
         f"The shape of the prediction of {name} is not consistent with "
         f"y.shape={y.shape}. We expect a shape of {y.shape} but predictions have a "
         f" shape of {y_pred.shape}."
