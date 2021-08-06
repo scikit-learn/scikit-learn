@@ -287,8 +287,7 @@ def test_regressor_undefined_methods():
 
 
 @pytest.mark.parametrize(
-    "PassiveAggressiveEstimator",
-    [PassiveAggressiveClassifier, PassiveAggressiveRegressor],
+    "klass", [PassiveAggressiveClassifier, PassiveAggressiveRegressor]
 )
 @pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
 @pytest.mark.parametrize(
@@ -306,10 +305,10 @@ def test_regressor_undefined_methods():
     ],
 )
 def test_passive_aggressive_estimator_params_validation(
-    PassiveAggressiveEstimator, fit_method, params, err_msg
+    klass, fit_method, params, err_msg
 ):
     """Validate parameters in the different PassiveAggressive estimators."""
-    sgd_estimator = PassiveAggressiveEstimator(**params)
+    sgd_estimator = klass(**params)
 
     with pytest.raises(ValueError, match=err_msg):
         if is_classifier(sgd_estimator) and fit_method == "partial_fit":
