@@ -503,8 +503,7 @@ def test_validation_set_not_used_for_training(klass):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 def test_n_iter_no_change(klass):
     X, Y = iris.data, iris.target
@@ -557,8 +556,7 @@ def test_sgd_clf(klass):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
 )
 def test_provide_coef(klass):
     """Check that the shape of `coef_init` is validated."""
