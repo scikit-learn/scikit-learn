@@ -192,7 +192,7 @@ def permutation_importance(
 
         While using this option may provide less accurate importance estimates,
         it keeps the method tractable when evaluating feature importance on
-        large datasets. In combination with n_repeats, this allows to control
+        large datasets. In combination with `n_repeats`, this allows to control
         the computational speed vs statistical accuracy trade-off of this method.
 
         .. versionadded:: 1.0
