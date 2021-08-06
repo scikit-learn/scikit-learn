@@ -126,7 +126,8 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
                             xi=params['xi'],
                             min_cluster_size=params['min_cluster_size'])
     affinity_propagation = cluster.AffinityPropagation(
-        damping=params['damping'], preference=params['preference'])
+        damping=params['damping'], preference=params['preference'],
+        random_state=0)
     average_linkage = cluster.AgglomerativeClustering(
         linkage="average", affinity="cityblock",
         n_clusters=params['n_clusters'], connectivity=connectivity)
