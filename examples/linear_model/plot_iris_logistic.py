@@ -21,7 +21,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -33,7 +33,7 @@ logreg = LogisticRegression(C=1e5)
 logreg.fit(X, Y)
 
 _, ax = plt.subplots(figsize=(4, 3))
-plot_decision_boundary(
+DecisionBoundaryDisplay.from_estimator(
     logreg,
     X,
     cmap=plt.cm.Paired,

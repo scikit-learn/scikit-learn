@@ -29,7 +29,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 from sklearn import svm
 from sklearn.datasets import make_blobs
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # we create two clusters of random points
 n_samples_1 = 1000
@@ -54,12 +54,16 @@ plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, edgecolors='k')
 
 # plot the decision functions for both classifiers
 ax = plt.gca()
-disp = plot_decision_boundary(clf, X, plot_method='contour', colors='k',
-                              levels=[0], alpha=0.5, linestyles=['-'], ax=ax)
+disp = DecisionBoundaryDisplay.from_estimator(
+    clf, X, plot_method='contour', colors='k', levels=[0], alpha=0.5,
+    linestyles=['-'], ax=ax
+)
 
 # plot decision boundary and margins for weighted classes
-wdisp = plot_decision_boundary(wclf, X, plot_method='contour', colors='r',
-                               levels=[0], alpha=0.5, linestyles=['-'], ax=ax)
+wdisp = DecisionBoundaryDisplay(
+    wclf, X, plot_method='contour', colors='r', levels=[0], alpha=0.5,
+    linestyles=['-'], ax=ax
+)
 
 plt.legend([disp.surface_.collections[0], wdisp.surface_.collections[0]],
            ["non weighted", "weighted"],

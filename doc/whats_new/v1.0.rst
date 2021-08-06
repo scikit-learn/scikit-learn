@@ -390,8 +390,8 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Feature| Adds :func:`inspection.plot_decision_boundary` for plotting
-  decision boundaries.
+- |Feature| Add a display to plot the boundary decision of a classifier by
+  using the method :func:`inspection.DecisionBoundaryDisplay.from_estimator`.
   :pr:`16061` by `Thomas Fan`_.
 
 - |Fix| Allow multiple scorers input to

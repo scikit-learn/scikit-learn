@@ -12,7 +12,7 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm, datasets
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -40,7 +40,7 @@ clf = svm.SVC(kernel=my_kernel)
 clf.fit(X, Y)
 
 ax = plt.gca()
-plot_decision_boundary(
+DecisionBoundaryDisplay.from_estimator(
     clf,
     X,
     cmap=plt.cm.Paired,

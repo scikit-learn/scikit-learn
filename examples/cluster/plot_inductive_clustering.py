@@ -28,7 +28,7 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 N_SAMPLES = 5000
 RANDOM_STATE = 42
@@ -105,8 +105,9 @@ plot_scatter(X, cluster_labels)
 plot_scatter(X_new, probable_clusters)
 
 # Plotting decision regions
-plot_decision_boundary(inductive_learner, X, response_method='predict',
-                       alpha=0.4, ax=ax)
+DecisionBoundaryDisplay.from_estimator(
+    inductive_learner, X, response_method='predict', alpha=0.4, ax=ax
+)
 plt.title("Classify unknown instances")
 
 plt.show()

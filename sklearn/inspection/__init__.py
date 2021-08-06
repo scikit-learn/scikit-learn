@@ -3,7 +3,6 @@
 
 from ._permutation_importance import permutation_importance
 from ._plot.decision_boundary import DecisionBoundaryDisplay
-from ._plot.decision_boundary import plot_decision_boundary
 
 from ._partial_dependence import partial_dependence
 from ._plot.partial_dependence import plot_partial_dependence
@@ -15,6 +14,5 @@ __all__ = [
     "plot_partial_dependence",
     "permutation_importance",
     "PartialDependenceDisplay",
-    "plot_decision_boundary",
     "DecisionBoundaryDisplay",
 ]

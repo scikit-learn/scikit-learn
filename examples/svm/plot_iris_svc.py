@@ -37,7 +37,7 @@ print(__doc__)
 
 import matplotlib.pyplot as plt
 from sklearn import svm, datasets
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 
 # import some data to play with
@@ -68,8 +68,9 @@ plt.subplots_adjust(wspace=0.4, hspace=0.4)
 X0, X1 = X[:, 0], X[:, 1]
 
 for clf, title, ax in zip(models, titles, sub.flatten()):
-    disp = plot_decision_boundary(clf, X, response_method='predict',
-                                  cmap=plt.cm.coolwarm, alpha=0.8, ax=ax)
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf, X, response_method='predict', cmap=plt.cm.coolwarm, alpha=0.8, ax=ax
+    )
     ax.scatter(X0, X1, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k')
     ax.set_xlabel('Sepal length')
     ax.set_ylabel('Sepal width')

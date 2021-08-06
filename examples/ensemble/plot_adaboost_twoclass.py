@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_gaussian_quantiles
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 
 # Construct dataset
@@ -56,8 +56,9 @@ plt.figure(figsize=(10, 5))
 
 # Plot the decision boundaries
 ax = plt.subplot(121)
-disp = plot_decision_boundary(bdt, X, cmap=plt.cm.Paired,
-                              response_method='predict', ax=ax)
+disp = DecisionBoundaryDisplay.from_estimator(
+    bdt, X, cmap=plt.cm.Paired, response_method='predict', ax=ax
+)
 x_min, x_max = disp.xx0.min(), disp.xx0.max()
 y_min, y_max = disp.xx1.min(), disp.xx1.max()
 plt.axis("tight")

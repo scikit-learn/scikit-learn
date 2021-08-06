@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier, plot_tree
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # Parameters
 n_classes = 3
@@ -43,8 +43,9 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
     # Plot the decision boundary
     ax = plt.subplot(2, 3, pairidx + 1)
     plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
-    plot_decision_boundary(clf, X, cmap=plt.cm.RdYlBu,
-                           response_method='predict', ax=ax)
+    DecisionBoundaryDisplay.from_estimator(
+        clf, X, cmap=plt.cm.RdYlBu, response_method='predict', ax=ax
+    )
 
     plt.xlabel(iris.feature_names[pair[0]])
     plt.ylabel(iris.feature_names[pair[1]])

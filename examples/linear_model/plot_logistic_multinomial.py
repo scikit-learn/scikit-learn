@@ -15,7 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import LogisticRegression
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # make 3-class dataset for classification
 centers = [[-5, 0], [0, 1.5], [5, -1]]
@@ -31,8 +31,9 @@ for multi_class in ('multinomial', 'ovr'):
     print("training score : %.3f (%s)" % (clf.score(X, y), multi_class))
 
     _, ax = plt.subplots()
-    plot_decision_boundary(clf, X, response_method='predict',
-                           cmap=plt.cm.Paired, ax=ax)
+    DecisionBoundaryDisplay.from_estimator(
+        clf, X, response_method='predict', cmap=plt.cm.Paired, ax=ax
+    )
     plt.title("Decision surface of LogisticRegression (%s)" % multi_class)
     plt.axis('tight')
 

@@ -1,15 +1,16 @@
 import numpy as np
+
 from ...utils import check_matplotlib_support
 from ...utils import _safe_indexing
 
 
 def _check_boundary_response_method(estimator, response_method):
-    """Return prediction method from the response_method for decision boundary
+    """Return prediction method from the response_method for decision boundary.
 
     Parameters
     ----------
     estimator: object
-        Estimator to check
+        Estimator to check.
 
     response_method: {'auto', 'predict_proba', 'decision_function', 'predict'}
         Specifies whether to use :term:`predict_proba`,
@@ -20,40 +21,52 @@ def _check_boundary_response_method(estimator, response_method):
     Returns
     -------
     prediction_method: callable
-        prediction method of estimator
+        Prediction method of estimator.
     """
 
-    if response_method not in ("predict_proba", "decision_function",
-                               "auto", "predict"):
-        raise ValueError("response_method must be 'predict_proba', "
-                         "'decision_function', 'predict', or 'auto'")
+    possible_response_methods = (
+        "predict_proba",
+        "decision_function",
+        "auto",
+        "predict",
+    )
+    if response_method not in possible_response_methods:
+        raise ValueError(
+            f"response_method must be one of {', '.join(possible_response_methods)}"
+        )
 
     error_msg = "response method {} is not defined in {}"
     if response_method != "auto":
         if not hasattr(estimator, response_method):
-            raise ValueError(error_msg.format(response_method,
-                                              estimator.__class__.__name__))
+            raise ValueError(
+                error_msg.format(response_method, estimator.__class__.__name__)
+            )
         return getattr(estimator, response_method)
-    elif hasattr(estimator, 'decision_function'):
-        return getattr(estimator, 'decision_function')
-    elif hasattr(estimator, 'predict_proba'):
-        return getattr(estimator, 'predict_proba')
-    elif hasattr(estimator, 'predict'):
-        return getattr(estimator, 'predict')
+    elif hasattr(estimator, "decision_function"):
+        return getattr(estimator, "decision_function")
+    elif hasattr(estimator, "predict_proba"):
+        return getattr(estimator, "predict_proba")
+    elif hasattr(estimator, "predict"):
+        return getattr(estimator, "predict")
 
-    raise ValueError(error_msg.format(
-        "decision_function, predict_proba, or predict",
-        estimator.__class__.__name__))
+    raise ValueError(
+        error_msg.format(
+            "decision_function, predict_proba, or predict", estimator.__class__.__name__
+        )
+    )
 
 
 class DecisionBoundaryDisplay:
-    """Decisions Boundary visualization.
+    """Decisions boundary visualization.
 
-    It is recommend to use :func:`~sklearn.inspection.plot_decision_boundary`
+    It is recommend to use
+    :func:`~sklearn.inspection.DecisionBoundaryDisplay.from_estimator`
     to create a :class:`DecisionBoundaryDisplay`. All parameters are stored as
     attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
+
+    .. versionadded:: 1.0
 
     Parameters
     ----------
@@ -86,6 +99,7 @@ class DecisionBoundaryDisplay:
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
     """
+
     def __init__(self, xx0, xx1, response, xlabel=None, ylabel=None):
         self.xx0 = xx0
         self.xx1 = xx1
@@ -93,7 +107,7 @@ class DecisionBoundaryDisplay:
         self.xlabel = xlabel
         self.ylabel = ylabel
 
-    def plot(self, plot_method='contourf', ax=None, **kwargs):
+    def plot(self, plot_method="contourf", ax=None, **kwargs):
         """Plot visualization.
 
         Parameters
@@ -116,12 +130,13 @@ class DecisionBoundaryDisplay:
         -------
         display: :class:`~sklearn.inspection.DecisionBoundaryDisplay`
         """
-        check_matplotlib_support('DecisionBoundaryDisplay.plot')
+        check_matplotlib_support("DecisionBoundaryDisplay.plot")
         import matplotlib.pyplot as plt  # noqa
 
-        if plot_method not in ('contourf', 'contour', 'pcolormesh'):
-            raise ValueError("plot_method must be 'contourf', 'contour', or "
-                             "'pcolormesh'")
+        if plot_method not in ("contourf", "contour", "pcolormesh"):
+            raise ValueError(
+                "plot_method must be 'contourf', 'contour', or 'pcolormesh'"
+            )
 
         if ax is None:
             _, ax = plt.subplots()
@@ -138,89 +153,121 @@ class DecisionBoundaryDisplay:
         self.figure_ = ax.figure
         return self
 
+    @classmethod
+    def from_estimator(
+        cls,
+        estimator,
+        X,
+        *,
+        grid_resolution=100,
+        eps=1.0,
+        plot_method="contourf",
+        response_method="auto",
+        ax=None,
+        **kwargs,
+    ):
+        """Plot decision boundary given an estimator.
 
-def plot_decision_boundary(estimator, X, grid_resolution=100, eps=1.0,
-                           plot_method='contourf', response_method='auto',
-                           ax=None, **kwargs):
-    """Plot Decision Boundary.
+        Read more in the :ref:`User Guide <visualizations>`.
 
-    Please see examples below for usage.
+        .. versionadded:: 1.0
 
-    Parameters
-    ----------
-    estimator : estimator instance
-        Trained estimator.
+        Parameters
+        ----------
+        estimator : object
+            Trained estimator used to plot the decision boundary.
 
-    X : ndarray or pandas dataframe of shape (n_samples, 2)
-        Input values.
+        X : {array-like, sparse matrix, dataframe} of shape (n_samples, 2)
+            Input data that should be only 2-dimensional.
 
-    grid_resolution : int, default=100
-        The number of equally spaced points to evaluate the response function.
+        grid_resolution : int, default=100
+            Number of grid points to use for plotting decision boundary.
+            Higher values will make the plot look nicer but be slower to
+            render.
 
-    eps : float, default=1.0
-        Extends the minimum and maximum values of X for evaluating the
-        response function.
+        eps : float, default=1.0
+            Extends the minimum and maximum values of X for evaluating the
+            response function.
 
-    plot_method : {'contourf', 'contour', 'pcolormesh'}, default='contourf'
-        Plotting method to call when plotting the response. Please refer
-        to the following matplotlib documentation for details:
-        :func:`contourf <matplotlib.pyplot.contourf>`,
-        :func:`contour <matplotlib.pyplot.contour>`,
-        :func:`pcolomesh <matplotlib.pyplot.pcolomesh>`.
+        plot_method : {'contourf', 'contour', 'pcolormesh'}, default='contourf'
+            Plotting method to call when plotting the response. Please refer
+            to the following matplotlib documentation for details:
+            :func:`contourf <matplotlib.pyplot.contourf>`,
+            :func:`contour <matplotlib.pyplot.contour>`,
+            :func:`pcolomesh <matplotlib.pyplot.pcolomesh>`.
 
-    response_method : {'auto', 'predict_proba', 'decision_function', \
-            'predict'}, defaul='auto'
-        Specifies whether to use :term:`predict_proba`,
-        :term:`decision_function`, :term:`predict` as the target response.
-        If set to 'auto', the response method is tried in the following order:
-        :term:`predict_proba`, :term:`decision_function`, :term:`predict`.
+        response_method : {'auto', 'predict_proba', 'decision_function', \
+                'predict'}, default='auto'
+            Specifies whether to use :term:`predict_proba`,
+            :term:`decision_function`, :term:`predict` as the target response.
+            If set to 'auto', the response method is tried in the following order:
+            :term:`predict_proba`, :term:`decision_function`, :term:`predict`.
 
-    ax : Matplotlib axes, default=None
-        Axes object to plot on. If `None`, a new figure and axes is
-        created.
+        ax : Matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
 
-    **kwargs : dict
-        Additional keyword arguments to be pased to the `plot_method`.
+        **kwargs : dict
+            Additional keyword arguments to be passed to the
+            `plot_method`.
 
-    Returns
-    -------
-    display: :class:`~sklearn.inspection.DecisionBoundaryDisplay`
-    """
-    check_matplotlib_support('plot_decision_boundary')
+        Returns
+        -------
+        display : :class:`~sklearn.inspection.DecisionBoundaryDisplay`
+            Object that stores the result.
 
-    if not grid_resolution > 1:
-        raise ValueError("grid_resolution must be greater than 1")
+        See Also
+        --------
 
-    if not eps >= 0:
-        raise ValueError("eps must be greater than or equal to 0")
+        Examples
+        --------
+        """
+        check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
-    if plot_method not in ('contourf', 'contour', 'pcolormesh'):
-        raise ValueError("plot_method must be 'contourf', 'contour', or "
-                         "'pcolormesh'")
+        if not grid_resolution > 1:
+            raise ValueError("grid_resolution must be greater than 1")
 
-    pred_func = _check_boundary_response_method(estimator, response_method)
+        if not eps >= 0:
+            raise ValueError("eps must be greater than or equal to 0")
 
-    x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
+        possible_plot_method = ("contourf", "contour", "pcolormesh")
+        if plot_method not in possible_plot_method:
+            raise ValueError(
+                f"plot_method must be one of {', '.join(possible_plot_method)}. "
+                f"Got {plot_method} instead."
+            )
 
-    x0_min, x0_max = x0.min() - eps, x0.max() + eps
-    x1_min, x1_max = x1.min() - eps, x1.max() + eps
+        x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
 
-    xx0, xx1 = np.meshgrid(np.linspace(x0_min, x0_max, grid_resolution),
-                           np.linspace(x1_min, x1_max, grid_resolution))
-    response = pred_func(np.c_[xx0.ravel(), xx1.ravel()])
+        x0_min, x0_max = x0.min() - eps, x0.max() + eps
+        x1_min, x1_max = x1.min() - eps, x1.max() + eps
 
-    if response.ndim != 1:
-        if response.shape[1] != 2:
-            raise ValueError("multiclass classifiers are only supported when "
-                             "response_method='predict'")
-        response = response[:, 1]
+        xx0, xx1 = np.meshgrid(
+            np.linspace(x0_min, x0_max, grid_resolution),
+            np.linspace(x1_min, x1_max, grid_resolution),
+        )
 
-    if hasattr(X, "columns"):
-        xlabel, ylabel = X.columns[0], X.columns[1]
-    else:
-        xlabel, ylabel = "", ""
+        pred_func = _check_boundary_response_method(estimator, response_method)
+        response = pred_func(np.c_[xx0.ravel(), xx1.ravel()])
 
-    display = DecisionBoundaryDisplay(xx0=xx0, xx1=xx1,
-                                      response=response.reshape(xx0.shape),
-                                      xlabel=xlabel, ylabel=ylabel)
-    return display.plot(ax=ax, plot_method=plot_method, **kwargs)
+        if response.ndim != 1:
+            if response.shape[1] != 2:
+                raise ValueError(
+                    "Multiclass classifiers are only supported when "
+                    "response_method='predict'"
+                )
+            response = response[:, 1]
+
+        if hasattr(X, "columns"):
+            xlabel, ylabel = X.columns[0], X.columns[1]
+        else:
+            xlabel, ylabel = "", ""
+
+        display = DecisionBoundaryDisplay(
+            xx0=xx0,
+            xx1=xx1,
+            response=response.reshape(xx0.shape),
+            xlabel=xlabel,
+            ylabel=ylabel,
+        )
+        return display.plot(ax=ax, plot_method=plot_method, **kwargs)

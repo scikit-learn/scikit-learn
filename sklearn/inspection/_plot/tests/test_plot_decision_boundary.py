@@ -2,24 +2,29 @@ import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
-from sklearn.inspection import plot_decision_boundary
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
-from sklearn.inspection._plot.decision_boundary import (
-    _check_boundary_response_method)
+
+from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.inspection._plot.decision_boundary import _check_boundary_response_method
 
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*")
+    "matplotlib.*"
+)
 
 
 @pytest.fixture(scope="module")
 def data():
-    X, y = make_classification(n_informative=1, n_redundant=1,
-                               n_clusters_per_class=1, n_features=2,
-                               random_state=42)
+    X, y = make_classification(
+        n_informative=1,
+        n_redundant=1,
+        n_clusters_per_class=1,
+        n_features=2,
+        random_state=42,
+    )
     return X, y
 
 
@@ -34,14 +39,15 @@ def test_check_boundary_response_method_auto():
             pass
 
     a_inst = A()
-    method = _check_boundary_response_method(a_inst, 'auto')
+    method = _check_boundary_response_method(a_inst, "auto")
     assert method == a_inst.decision_function
 
     class B:
         def predict_proba(self):
             pass
+
     b_inst = B()
-    method = _check_boundary_response_method(b_inst, 'auto')
+    method = _check_boundary_response_method(b_inst, "auto")
     assert method == b_inst.predict_proba
 
     class C:
@@ -50,68 +56,79 @@ def test_check_boundary_response_method_auto():
 
         def decision_function(self):
             pass
+
     c_inst = C()
-    method = _check_boundary_response_method(c_inst, 'auto')
+    method = _check_boundary_response_method(c_inst, "auto")
     assert method == c_inst.decision_function
 
     class D:
         def predict(self):
             pass
+
     d_inst = D()
-    method = _check_boundary_response_method(d_inst, 'auto')
+    method = _check_boundary_response_method(d_inst, "auto")
     assert method == d_inst.predict
 
 
-@pytest.mark.parametrize("response_method",
-                         ['auto', 'predict_proba', 'decision_function'])
+@pytest.mark.parametrize(
+    "response_method", ["auto", "predict_proba", "decision_function"]
+)
 def test_multiclass_error(pyplot, response_method):
     X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
     X = X[:, [0, 1]]
     lr = LogisticRegression().fit(X, y)
 
-    msg = ("multiclass classifiers are only supported when "
-           "response_method='predict'")
+    msg = "Multiclass classifiers are only supported when response_method='predict'"
     with pytest.raises(ValueError, match=msg):
-        plot_decision_boundary(lr, X, response_method=response_method)
+        DecisionBoundaryDisplay.from_estimator(lr, X, response_method=response_method)
 
 
-@pytest.mark.parametrize("kwargs, error_msg", [
-    ({"plot_method": "hello_world"},
-     r"plot_method must be 'contourf',"),
-    ({"grid_resolution": 1},
-     r"grid_resolution must be greater than 1"),
-    ({"grid_resolution": -1},
-     r"grid_resolution must be greater than 1"),
-    ({"eps": -1.1},
-     r"eps must be greater than or equal to 0")
-])
+@pytest.mark.parametrize(
+    "kwargs, error_msg",
+    [
+        (
+            {"plot_method": "hello_world"},
+            r"plot_method must be one of contourf, contour, pcolormesh. Got hello_world"
+            r" instead.",
+        ),
+        ({"grid_resolution": 1}, r"grid_resolution must be greater than 1"),
+        ({"grid_resolution": -1}, r"grid_resolution must be greater than 1"),
+        ({"eps": -1.1}, r"eps must be greater than or equal to 0"),
+    ],
+)
 def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf, data):
     X, _ = data
     with pytest.raises(ValueError, match=error_msg):
-        plot_decision_boundary(fitted_clf, X, **kwargs)
+        DecisionBoundaryDisplay.from_estimator(fitted_clf, X, **kwargs)
 
 
 def test_display_plot_input_error(pyplot, fitted_clf, data):
     X, y = data
-    disp = plot_decision_boundary(fitted_clf, X, grid_resolution=5)
+    disp = DecisionBoundaryDisplay.from_estimator(fitted_clf, X, grid_resolution=5)
 
     with pytest.raises(ValueError, match="plot_method must be 'contourf'"):
         disp.plot(plot_method="hello_world")
 
 
-@pytest.mark.parametrize("response_method", ['auto', 'predict',
-                                             'predict_proba',
-                                             'decision_function'])
-@pytest.mark.parametrize("plot_method", ['contourf', 'contour'])
-def test_plot_decision_boundary(pyplot, fitted_clf, data,
-                                response_method, plot_method):
+@pytest.mark.parametrize(
+    "response_method", ["auto", "predict", "predict_proba", "decision_function"]
+)
+@pytest.mark.parametrize("plot_method", ["contourf", "contour"])
+def test_decision_boundary_display(
+    pyplot, fitted_clf, data, response_method, plot_method
+):
     fig, ax = pyplot.subplots()
     eps = 2.0
     X, y = data
-    disp = plot_decision_boundary(fitted_clf, X, grid_resolution=5,
-                                  response_method=response_method,
-                                  plot_method=plot_method,
-                                  eps=eps, ax=ax)
+    disp = DecisionBoundaryDisplay.from_estimator(
+        fitted_clf,
+        X,
+        grid_resolution=5,
+        response_method=response_method,
+        plot_method=plot_method,
+        eps=eps,
+        ax=ax,
+    )
     assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
     assert disp.figure_ == fig
@@ -128,7 +145,7 @@ def test_plot_decision_boundary(pyplot, fitted_clf, data,
 
     fig2, ax2 = pyplot.subplots()
     # change plotting method for second plot
-    disp.plot(plot_method='pcolormesh', ax=ax2)
+    disp.plot(plot_method="pcolormesh", ax=ax2)
     assert isinstance(disp.surface_, pyplot.matplotlib.collections.QuadMesh)
     assert disp.ax_ == ax2
     assert disp.figure_ == fig2
@@ -136,14 +153,27 @@ def test_plot_decision_boundary(pyplot, fitted_clf, data,
 
 @pytest.mark.parametrize(
     "response_method, msg",
-    [("predict_proba", "response method predict_proba is not defined in "
-                       "MyClassifier"),
-     ("decision_function", "response method decision_function is not defined "
-                           "in MyClassifier"),
-     ("auto", "response method decision_function, predict_proba, or predict "
-              "is not defined in MyClassifier"),
-     ("bad_method", "response_method must be 'predict_proba', "
-                    "'decision_function', 'predict', or 'auto'")])
+    [
+        (
+            "predict_proba",
+            "response method predict_proba is not defined in MyClassifier",
+        ),
+        (
+            "decision_function",
+            "response method decision_function is not defined in MyClassifier",
+        ),
+        (
+            "auto",
+            "response method decision_function, predict_proba, or predict "
+            "is not defined in MyClassifier",
+        ),
+        (
+            "bad_method",
+            "response_method must be one of predict_proba, decision_function, auto,"
+            " predict",
+        ),
+    ],
+)
 def test_error_bad_response(pyplot, response_method, msg, data):
     X, y = data
 
@@ -156,16 +186,16 @@ def test_error_bad_response(pyplot, response_method, msg, data):
     clf = MyClassifier().fit(X, y)
 
     with pytest.raises(ValueError, match=msg):
-        plot_decision_boundary(clf, X, response_method=response_method)
+        DecisionBoundaryDisplay.from_estimator(clf, X, response_method=response_method)
 
 
 def test_dataframe_labels_used(pyplot, data, fitted_clf):
     pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(data[0], columns=['col_x', 'col_y'])
+    df = pd.DataFrame(data[0], columns=["col_x", "col_y"])
 
     # pandas column names are used by default
     _, ax = pyplot.subplots()
-    disp = plot_decision_boundary(fitted_clf, df, ax=ax)
+    disp = DecisionBoundaryDisplay.from_estimator(fitted_clf, df, ax=ax)
     assert ax.get_xlabel() == "col_x"
     assert ax.get_ylabel() == "col_y"
 

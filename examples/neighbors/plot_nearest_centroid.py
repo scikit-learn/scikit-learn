@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 n_neighbors = 15
 
@@ -36,8 +36,9 @@ for shrinkage in [None, .2]:
     print(shrinkage, np.mean(y == y_pred))
 
     _, ax = plt.subplots()
-    plot_decision_boundary(clf, X, cmap=cmap_light, ax=ax,
-                           response_method='predict')
+    DecisionBoundaryDisplay.from_estimator(
+        clf, X, cmap=cmap_light, ax=ax, response_method='predict'
+    )
 
     # Plot also the training points
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold,

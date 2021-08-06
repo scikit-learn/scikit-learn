@@ -24,7 +24,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import (KNeighborsClassifier,
                                NeighborhoodComponentsAnalysis)
 from sklearn.pipeline import Pipeline
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 
 print(__doc__)
@@ -64,8 +64,15 @@ for name, clf in zip(names, classifiers):
     score = clf.score(X_test, y_test)
 
     _, ax = plt.subplots()
-    plot_decision_boundary(clf, X, cmap=cmap_light, alpha=0.8, ax=ax,
-                           response_method='predict', plot_method='pcolormesh')
+    DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        cmap=cmap_light,
+        alpha=0.8,
+        ax=ax,
+        response_method='predict',
+        plot_method='pcolormesh',
+    )
 
     # Plot also the training and testing points
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold, edgecolor='k', s=20)

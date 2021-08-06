@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 n_neighbors = 15
 
@@ -34,8 +34,14 @@ for weights in ['uniform', 'distance']:
     clf.fit(X, y)
 
     _, ax = plt.subplots()
-    plot_decision_boundary(clf, X, cmap=cmap_light, ax=ax,
-                           response_method='predict', plot_method='pcolormesh')
+    DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        cmap=cmap_light,
+        ax=ax,
+        response_method='predict',
+        plot_method='pcolormesh'
+    )
 
     # Plot also the training points
     sns.scatterplot(x=X[:, 0], y=X[:, 1], hue=iris.target_names[y],

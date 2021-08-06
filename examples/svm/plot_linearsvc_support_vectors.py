@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs
 from sklearn.svm import LinearSVC
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 X, y = make_blobs(n_samples=40, centers=2, random_state=0)
 
@@ -34,10 +34,10 @@ for i, C in enumerate([1, 100]):
     plt.subplot(1, 2, i + 1)
     plt.scatter(X[:, 0], X[:, 1], c=y, s=30, cmap=plt.cm.Paired)
     ax = plt.gca()
-    plot_decision_boundary(clf, X, ax=ax, grid_resolution=50,
-                           plot_method='contour',
-                           colors='k', levels=[-1, 0, 1], alpha=0.5,
-                           linestyles=['--', '-', '--'])
+    DecisionBoundaryDisplay.from_estimator(
+        clf, X, ax=ax, grid_resolution=50, plot_method='contour', colors='k',
+        levels=[-1, 0, 1], alpha=0.5, linestyles=['--', '-', '--']
+    )
     plt.scatter(support_vectors[:, 0], support_vectors[:, 1], s=100,
                 linewidth=1, facecolors='none', edgecolors='k')
     plt.title("C=" + str(C))

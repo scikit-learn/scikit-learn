@@ -33,7 +33,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import VotingClassifier
-from sklearn.inspection import plot_decision_boundary
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # Loading some example data
 iris = datasets.load_iris()
@@ -59,8 +59,9 @@ for idx, clf, tt in zip(product([0, 1], [0, 1]),
                         [clf1, clf2, clf3, eclf],
                         ['Decision Tree (depth=4)', 'KNN (k=7)',
                          'Kernel SVM', 'Soft Voting']):
-    plot_decision_boundary(clf, X, alpha=0.4, ax=axarr[idx[0], idx[1]],
-                           response_method='predict')
+    DecisionBoundaryDisplay.from_estimator(
+        clf, X, alpha=0.4, ax=axarr[idx[0], idx[1]], response_method='predict'
+    )
     axarr[idx[0], idx[1]].scatter(X[:, 0], X[:, 1], c=y,
                                   s=20, edgecolor='k')
     axarr[idx[0], idx[1]].set_title(tt)

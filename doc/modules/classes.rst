@@ -664,7 +664,6 @@ Plotting
    :toctree: generated/
    :template: function.rst
 
-   inspection.plot_decision_boundary
    inspection.plot_partial_dependence
 
 .. _isotonic_ref:
