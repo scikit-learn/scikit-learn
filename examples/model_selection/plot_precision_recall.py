@@ -135,9 +135,9 @@ classifier.fit(X_train, y_train)
 # classifier or not.
 #
 # Let's first plot the precision-recall curve without the classifier
-# predictions. Thus, we should use
-# :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` that will
-# compute the predictions for us before to plot the curve.
+# predictions. We use
+# :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` that
+# computes the predictions for us before plotting the curve.
 from sklearn.metrics import PrecisionRecallDisplay
 
 display = PrecisionRecallDisplay.from_estimator(
@@ -146,7 +146,7 @@ display = PrecisionRecallDisplay.from_estimator(
 _ = display.ax_.set_title("2-class Precision-Recall curve")
 
 # %%
-# In the case, that we already got the estimated probabilities or scores for
+# If we already got the estimated probabilities or scores for
 # our model, then we can use
 # :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions`.
 y_score = classifier.decision_function(X_test)
