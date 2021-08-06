@@ -82,6 +82,10 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
            [1.0986..., 1.3862...]])
     """
 
+    # This is a stateless transfomer, and always passes
+    # ``check_is_fitted(transformer)``
+    __sk_is_fitted__ = True
+
     def __init__(
         self,
         func=None,
@@ -175,11 +179,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             func = _identity
 
         return func(X, **(kw_args if kw_args else {}))
-
-    @property
-    def __sk_is_fitted__(self):
-        """Return True since FunctionTransfomer is stateless."""
-        return True
 
     def _more_tags(self):
         return {"no_validation": not self.validate, "stateless": True}
