@@ -34,7 +34,7 @@ mamba update --yes conda
 
 # Create environment and install dependencies
 mamba create -n testenv --yes python=3.7
-conda activate testenv
+source activate testenv
 
 # Use the latest by default
 mamba install --verbose -y  ccache \
