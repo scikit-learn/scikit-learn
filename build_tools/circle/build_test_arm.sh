@@ -21,10 +21,27 @@ source build_tools/shared.sh
 
 sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
 sudo apt-get update
-sudo apt-get install python3-virtualenv ccache
-python3 -m virtualenv --system-site-packages --python=python3 testenv
-source testenv/bin/activate
-pip install --upgrade pip
+
+# Setup conda environment
+
+MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-arm64.sh"
+
+# Install Miniconda
+wget $MINICONDA_URL -O miniconda.sh
+MINICONDA_PATH=$HOME/miniconda
+chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+export PATH=$MINICONDA_PATH/bin:$PATH
+conda update --yes conda
+
+# Create environment and install dependencies
+conda create -n testenv --yes python=3.7
+source activate testenv
+
+# Use the latest by default
+conda install --verbose -c conda-forge -y ccache numpy scipy cython pip
+pip install joblib threadpoolctl
+pip install $(get_dep pytest $PYTEST_VERSION) pytest-xdist
+
 setup_ccache
 python -m pip install $(get_dep cython $CYTHON_VERSION) \
                       $(get_dep joblib $JOBLIB_VERSION)
@@ -47,13 +64,13 @@ if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
 fi
 
 python --version
+conda list
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
 
-python -m pip list
-pip install --verbose --editable .
+pip install --verbose --editable . --no-build-isolation
 ccache -s
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
