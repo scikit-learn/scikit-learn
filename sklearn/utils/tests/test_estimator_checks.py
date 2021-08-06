@@ -20,7 +20,6 @@ from sklearn.utils._testing import (
     MinimalTransformer,
     SkipTest,
 )
-from sklearn.utils.metaestimators import available_if
 from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks import check_class_weight_balanced_linear_classifier
 from sklearn.utils.estimator_checks import set_random_state
@@ -754,24 +753,28 @@ def test_minimal_class_implementation_checks():
 
 def test_check_fit_check_is_fitted():
     class Estimator(BaseEstimator):
-        def __init__(self, behavior="attribute"):
-            self.behavior = behavior
-
         def fit(self, X, y, **kwargs):
-            if self.behavior == "attribute":
-                self.is_fitted_ = True
-            elif self.behavior == "method":
-                self._is_fitted = True
+            self.is_fitted_ = True
             return self
 
-        @available_if(lambda self: self.behavior in {"method", "always-true"})
+    class EstimatorProperty(BaseEstimator):
+        def __init__(self, behavior="always-true"):
+            self.behavior = behavior
+
+        def fit(self, X, y):
+            self._is_fitted = True
+            return self
+
+        @property
         def __sk_is_fitted__(self):
             if self.behavior == "always-true":
                 return True
             return hasattr(self, "_is_fitted")
 
     with raises(Exception, match="passes check_is_fitted before being fit"):
-        check_fit_check_is_fitted("estimator", Estimator(behavior="always-true"))
+        check_fit_check_is_fitted(
+            "estimator", EstimatorProperty(behavior="always-true")
+        )
 
-    check_fit_check_is_fitted("estimator", Estimator(behavior="method"))
-    check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
+    check_fit_check_is_fitted("estimator", EstimatorProperty(behavior="method"))
+    check_fit_check_is_fitted("estimator", Estimator())

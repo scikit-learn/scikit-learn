@@ -756,6 +756,7 @@ def test_check_is_fitted_with_is_fitted():
             self._is_fitted = True
             return self
 
+        @property
         def __sk_is_fitted__(self):
             return hasattr(self, "_is_fitted") and self._is_fitted
 
