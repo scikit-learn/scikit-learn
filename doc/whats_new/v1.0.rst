@@ -487,6 +487,7 @@ Changelog
   group within a single split.
   :pr:`18649` by :user:`Leandro Hermida <hermidalc>` and
   :user:`Rodion Martynov <marrodion>`.
+
 - |Enhancement| warn only once in the main process for per-split fit failures
   in cross-validation. :pr:`20619` by :user:`Loïc Estève <lesteve>`
 
