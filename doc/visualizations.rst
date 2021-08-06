@@ -77,7 +77,6 @@ Functions
 .. autosummary::
 
    inspection.plot_partial_dependence
-   inspection.plot_decision_boundary
    metrics.plot_confusion_matrix
    metrics.plot_det_curve
    metrics.plot_precision_recall_curve
