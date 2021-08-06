@@ -28,7 +28,11 @@ from sklearn.metrics._pairwise_distances_reduction import (
     FastSquaredEuclideanRadiusNeighborhood,
 )
 
-from sklearn.utils._testing import get_dummy_metric_kwargs
+from sklearn.utils import in_unstable_openblas_configuration
+from sklearn.utils._testing import (
+    fails_if_unstable_openblas,
+    get_dummy_metric_kwargs,
+)
 
 
 def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices):
@@ -165,6 +169,7 @@ def test_radius_neighborhood_factory_method_wrong_usages():
         RadiusNeighborhood.get_for(X=X[:, ::2], Y=Y, radius=radius, metric=metric)
 
 
+@fails_if_unstable_openblas
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction, FastSquaredPairwiseDistancesReduction",
     [
@@ -226,6 +231,7 @@ def test_pairwise_distances_reduction_factory_method(
     assert isinstance(fast_sqeuclidean_instance, FastSquaredPairwiseDistancesReduction)
 
 
+@fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
 @pytest.mark.parametrize("k", [1, 10, 100])
@@ -256,6 +262,7 @@ def test_argkmin_chunk_size_agnosticism(
     assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices)
 
 
+@fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("radius", [1, 10, 100])
@@ -304,6 +311,10 @@ def test_argkmin_strategies_consistency(
 ):
     # ArgKmin results obtained using both parallelization strategies
     # must be identical
+    if in_unstable_openblas_configuration and metric == "fast_sqeuclidean":
+        pytest.xfail(
+            "OpenBLAS (used for 'fast_sqeuclidean') is unstable in this configuration"
+        )
 
     rng = np.random.RandomState(seed)
     spread = 100
@@ -351,6 +362,10 @@ def test_radius_neighborhood_strategies_consistency(
 ):
     # RadiusNeighborhood results obtained using both parallelization strategies
     # must be identical
+    if in_unstable_openblas_configuration and metric == "fast_sqeuclidean":
+        pytest.xfail(
+            "OpenBLAS (used for 'fast_sqeuclidean') is unstable in this configuration"
+        )
 
     rng = np.random.RandomState(seed)
     spread = 100
@@ -384,6 +399,7 @@ def test_radius_neighborhood_strategies_consistency(
     )
 
 
+@fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
@@ -430,6 +446,7 @@ def test_fast_sqeuclidean_correctness(
     )
 
 
+@fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("n_features", [5, 10, 100])

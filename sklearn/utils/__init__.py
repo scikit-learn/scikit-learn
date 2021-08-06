@@ -3,6 +3,7 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 import pkgutil
 import inspect
+from distutils.version import LooseVersion
 from importlib import import_module
 from operator import itemgetter
 from collections.abc import Sequence
@@ -18,6 +19,7 @@ from pathlib import Path
 import warnings
 import numpy as np
 from scipy.sparse import issparse
+from threadpoolctl import threadpool_info
 
 from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
@@ -77,6 +79,31 @@ __all__ = [
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
+
+
+def in_unstable_openblas_configuration():
+    """Return True if in an unstable configuration for OpenBLAS.
+
+    See discussions in https://github.com/numpy/numpy/issues/19411
+    """
+
+    # Make sure numpy and scipy are imported
+    import numpy  # noqa
+    import scipy  # noqa
+
+    modules_info = threadpool_info()
+
+    open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
+    if not open_blas_used:
+        return False
+
+    open_blas_version = next(
+        info["version"] for info in modules_info if info["internal_api"] == "openblas"
+    )
+
+    return platform.machine() == "neoversen1" and open_blas_version < LooseVersion(
+        "0.3.16"
+    )
 
 
 class Bunch(dict):
