@@ -24,7 +24,7 @@ sudo apt-get update
 
 # Setup conda environment
 
-MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-arm64.sh"
+MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
 
 # Install Miniconda
 wget $MINICONDA_URL -O miniconda.sh
@@ -38,7 +38,7 @@ conda create -n testenv --yes python=3.7
 source activate testenv
 
 # Use the latest by default
-conda install --verbose -c conda-forge -y ccache numpy scipy cython pip
+mamba install --verbose -y ccache numpy scipy cython pip
 pip install joblib threadpoolctl
 pip install $(get_dep pytest $PYTEST_VERSION) pytest-xdist
 
