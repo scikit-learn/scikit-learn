@@ -211,3 +211,16 @@ def test_dataframe_labels_used(pyplot, data, fitted_clf):
     disp.plot(ax=ax)
     assert ax.get_xlabel() == "hello"
     assert ax.get_ylabel() == "world"
+
+    # labels get overriden only if provided to the `plot` method
+    disp.plot(ax=ax, xlabel="overwritten_x", ylabel="overwritten_y")
+    assert ax.get_xlabel() == "overwritten_x"
+    assert ax.get_ylabel() == "overwritten_y"
+
+    # labels do not get inferred if provided to `from_estimator`
+    _, ax = pyplot.subplots()
+    disp = DecisionBoundaryDisplay.from_estimator(
+        fitted_clf, df, ax=ax, xlabel="overwritten_x", ylabel="overwritten_y"
+    )
+    assert ax.get_xlabel() == "overwritten_x"
+    assert ax.get_ylabel() == "overwritten_y"

@@ -150,11 +150,11 @@ class DecisionBoundaryDisplay:
         plot_func = getattr(ax, plot_method)
         self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
 
-        xlabel = self.xlabel if xlabel is None else xlabel
-        ylabel = self.ylabel if ylabel is None else ylabel
-        if not ax.get_xlabel():
+        if xlabel is not None or not ax.get_xlabel():
+            xlabel = self.xlabel if xlabel is None else xlabel
             ax.set_xlabel(xlabel)
-        if not ax.get_ylabel():
+        if ylabel is not None or not ax.get_ylabel():
+            ylabel = self.ylabel if ylabel is None else ylabel
             ax.set_ylabel(ylabel)
 
         self.ax_ = ax
@@ -171,6 +171,8 @@ class DecisionBoundaryDisplay:
         eps=1.0,
         plot_method="contourf",
         response_method="auto",
+        xlabel=None,
+        ylabel=None,
         ax=None,
         **kwargs,
     ):
@@ -210,6 +212,16 @@ class DecisionBoundaryDisplay:
             :term:`decision_function`, :term:`predict` as the target response.
             If set to 'auto', the response method is tried in the following order:
             :term:`predict_proba`, :term:`decision_function`, :term:`predict`.
+
+        xlabel : str, default=None
+            The label used for the x-axis. If `None`, an attempt is made to
+            extract a label from `X` if it is a dataframe, otherwise an empty
+            string is used.
+
+        ylabel : str, default=None
+            The label used for the y-axis. If `None`, an attempt is made to
+            extract a label from `X` if it is a dataframe, otherwise an empty
+            string is used.
 
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -266,10 +278,15 @@ class DecisionBoundaryDisplay:
                 )
             response = response[:, 1]
 
-        if hasattr(X, "columns"):
-            xlabel, ylabel = X.columns[0], X.columns[1]
+        if xlabel is not None:
+            xlabel = xlabel
         else:
-            xlabel, ylabel = "", ""
+            xlabel = X.columns[0] if hasattr(X, "columns") else ""
+
+        if ylabel is not None:
+            ylabel = ylabel
+        else:
+            ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
         display = DecisionBoundaryDisplay(
             xx0=xx0,
