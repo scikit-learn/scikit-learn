@@ -5,14 +5,14 @@ from ...utils import _safe_indexing
 
 
 def _check_boundary_response_method(estimator, response_method):
-    """Return prediction method from the response_method for decision boundary.
+    """Return prediction method from the `response_method` for decision boundary.
 
     Parameters
     ----------
-    estimator: object
+    estimator : object
         Estimator to check.
 
-    response_method: {'auto', 'predict_proba', 'decision_function', 'predict'}
+    response_method : {'auto', 'predict_proba', 'decision_function', 'predict'}
         Specifies whether to use :term:`predict_proba`,
         :term:`decision_function`, :term:`predict` as the target response.
         If set to 'auto', the response method is tried in the following order:
