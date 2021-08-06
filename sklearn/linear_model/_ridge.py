@@ -1006,7 +1006,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         return super().fit(X, y, sample_weight=sample_weight)
 
 
-class _BaseRidgeClassifier(LinearClassifierMixin, MultiLabelMixin):
+class _BaseRidgeClassifier(LinearClassifierMixin):
     def _prepare_data(self, X, y, sample_weight, solver):
         """Validate `X` and `y` and binarize `y`.
 
@@ -1086,6 +1086,9 @@ class _BaseRidgeClassifier(LinearClassifierMixin, MultiLabelMixin):
     @property
     def classes_(self):
         return self._label_binarizer.classes_
+
+    def _more_tags(self):
+        return {"multilabel": True}
 
 
 class RidgeClassifier(_BaseRidgeClassifier, _BaseRidge):

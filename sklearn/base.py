@@ -812,13 +812,6 @@ class MetaEstimatorMixin:
     """Mixin class for all meta estimators in scikit-learn."""
 
 
-class MultiLabelMixin:
-    """Mixin to mark estimators that support multilabel-indicator target."""
-
-    def _more_tags(self):
-        return {"multilabel": True}
-
-
 class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
 

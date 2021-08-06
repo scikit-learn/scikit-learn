@@ -633,12 +633,7 @@ def _accumulate_prediction(predict, X, out, lock):
                 out[i] += prediction[i]
 
 
-class ForestClassifier(
-    ClassifierMixin,
-    MultiLabelMixin,
-    BaseForest,
-    metaclass=ABCMeta,
-):
+class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     """
     Base class for forest of trees-based classifiers.
 
@@ -898,6 +893,9 @@ class ForestClassifier(
                 proba[k] = np.log(proba[k])
 
             return proba
+
+    def _more_tags(self):
+        return {"multilabel": True}
 
 
 class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
