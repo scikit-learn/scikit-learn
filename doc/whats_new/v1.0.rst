@@ -321,8 +321,9 @@ Changelog
   target. Additional private refactoring was performed.
   :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Improve numerical precision for weight boosting in
-  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`.
+- |Fix| Improve numerical precision for weights boosting in
+  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  to avoid underflows.
   :pr:`10096` by :user:`Fenil Suchak <fenilsuchak>`.
 
 - |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
