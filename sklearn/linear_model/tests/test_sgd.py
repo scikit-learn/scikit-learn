@@ -292,8 +292,7 @@ def _test_warm_start(klass, X, Y, lr):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 @pytest.mark.parametrize("lr", ["constant", "optimal", "invscaling", "adaptive"])
 def test_warm_start(klass, lr):
@@ -301,8 +300,7 @@ def test_warm_start(klass, lr):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 def test_input_format(klass):
     # Input format tests.
@@ -316,8 +314,7 @@ def test_input_format(klass):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 def test_clone(klass):
     # Test whether clone works ok.
@@ -396,8 +393,7 @@ def test_late_onset_averaging_not_reached(klass):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 def test_late_onset_averaging_reached(klass):
     eta0 = 0.001
@@ -470,8 +466,7 @@ def test_adaptive_longer_than_constant(klass):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 def test_validation_set_not_used_for_training(klass):
     X, Y = iris.data, iris.target
@@ -537,8 +532,7 @@ def test_n_iter_no_change(klass):
 
 
 @pytest.mark.parametrize(
-    "klass",
-    [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor],
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 def test_not_enough_sample_for_early_stopping(klass):
     # test an error is raised if the training or validation set is empty
