@@ -16,9 +16,6 @@ They can be loaded using the following functions:
 
 .. autosummary::
 
-   :toctree: ../modules/generated/
-   :template: function.rst
-
    load_boston
    load_iris
    load_diabetes
