@@ -1461,8 +1461,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
     See Also
     --------
-    GradientBoostingClassifier : Implementation of Gradient Boosting for
-        classification with poor performance in big datasets.
+    GradientBoostingClassifier : Exact gradient boosting method that does not
+        scale as good on datasets with a large number of samples.
     DecisionTreeClassifier : A decision tree classifier.
     RandomForestClassifier : A meta-estimator that fits a number of decision
         tree classifiers on various sub-samples of the dataset and uses
