@@ -60,7 +60,7 @@ disp = DecisionBoundaryDisplay.from_estimator(
 )
 
 # plot decision boundary and margins for weighted classes
-wdisp = DecisionBoundaryDisplay(
+wdisp = DecisionBoundaryDisplay.from_estimator(
     wclf, X, plot_method='contour', colors='r', levels=[0], alpha=0.5,
     linestyles=['-'], ax=ax
 )
