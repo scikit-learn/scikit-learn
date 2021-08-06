@@ -247,6 +247,10 @@ Changelog
 - |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
   when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
 
+- |Enhancement| :func:`datasets.load_diabetes` now accepts the parameters
+  ``scaled``, to allow loading unscaled data.
+  :pr:`16605` by :user:`Mandy Gu <happilyeverafter95>`.
+
 - |Fix| Shorten data file names in the openml tests to better support
   installing on Windows and its default 260 character limit on file names.
   :pr:`20209` by `Thomas Fan`_.
