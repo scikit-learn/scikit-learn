@@ -24,43 +24,41 @@ sudo apt-get update
 
 # Setup conda environment
 
-MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
+MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh"
 
-# Install Miniconda
-wget $MINICONDA_URL -O miniconda.sh
+# Install Mambaforge
+wget $MINICONDA_URL -O mambaforge.sh
 MINICONDA_PATH=$HOME/miniconda
-chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MINICONDA_PATH
 export PATH=$MINICONDA_PATH/bin:$PATH
-conda update --yes conda
+mamba update --yes conda
 
 # Create environment and install dependencies
-conda create -n testenv --yes python=3.7
-source activate testenv
+mamba create -n testenv --yes python=3.7
+conda activate testenv
 
 # Use the latest by default
-mamba install --verbose -y ccache numpy scipy cython pip
-pip install joblib threadpoolctl
-pip install $(get_dep pytest $PYTEST_VERSION) pytest-xdist
-
+mamba install --verbose -y  ccache \
+                            pip \
+                            numpy \
+                            scipy \
+                            cython \
+                            pip \
+                            $(get_dep cython $CYTHON_VERSION) \
+                            $(get_dep joblib $JOBLIB_VERSION) \
+                            $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
+                            $(get_dep pytest $PYTEST_VERSION) \
+                            $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 setup_ccache
-python -m pip install $(get_dep cython $CYTHON_VERSION) \
-                      $(get_dep joblib $JOBLIB_VERSION)
-python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
-                      $(get_dep pytest $PYTEST_VERSION) \
-                      $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install codecov pytest-cov
-fi
-
-if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    python -m pip install pytest-xdist
+    mamba install --verbose -y codecov pytest-cov
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     # numpydoc requires sphinx
-    python -m pip install sphinx
-    python -m pip install numpydoc
+    mamba install --verbose -y sphinx
+    mamba install --verbose -y numpydoc
 fi
 
 python --version
