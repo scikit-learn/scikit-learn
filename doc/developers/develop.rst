@@ -618,7 +618,7 @@ X_types (default=['2darray'])
     ``'categorical'`` data. For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
-extra_params (default=[])
+non_init_params (default=[])
     This includes the list of names of the parameters which need to be copied in
     ``clone``, but are not included in the output of ``get_params`` and are not
     an ``__init__`` parameter.
