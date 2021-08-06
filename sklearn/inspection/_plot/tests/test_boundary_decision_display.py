@@ -145,7 +145,7 @@ def test_decision_boundary_display(
 
     fig2, ax2 = pyplot.subplots()
     # change plotting method for second plot
-    disp.plot(plot_method="pcolormesh", ax=ax2)
+    disp.plot(plot_method="pcolormesh", ax=ax2, shading="auto")
     assert isinstance(disp.surface_, pyplot.matplotlib.collections.QuadMesh)
     assert disp.ax_ == ax2
     assert disp.figure_ == fig2

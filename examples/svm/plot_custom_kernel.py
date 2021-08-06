@@ -47,6 +47,7 @@ DecisionBoundaryDisplay.from_estimator(
     ax=ax,
     response_method="predict",
     plot_method="pcolormesh",
+    shading="auto",
 )
 
 # Plot also the training points

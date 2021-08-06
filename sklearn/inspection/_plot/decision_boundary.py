@@ -83,7 +83,7 @@ class DecisionBoundaryDisplay:
         Default label to place on x axis.
 
     ylabel : str, default=""
-        DEfault label to place on y axis.
+        Default label to place on y axis.
 
     Attributes
     ----------
@@ -100,14 +100,14 @@ class DecisionBoundaryDisplay:
         Figure containing the confusion matrix.
     """
 
-    def __init__(self, xx0, xx1, response, xlabel=None, ylabel=None):
+    def __init__(self, *, xx0, xx1, response, xlabel=None, ylabel=None):
         self.xx0 = xx0
         self.xx1 = xx1
         self.response = response
         self.xlabel = xlabel
         self.ylabel = ylabel
 
-    def plot(self, plot_method="contourf", ax=None, **kwargs):
+    def plot(self, plot_method="contourf", ax=None, xlabel=None, ylabel=None, **kwargs):
         """Plot visualization.
 
         Parameters
@@ -123,8 +123,14 @@ class DecisionBoundaryDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
+        xlabel : str, default=None
+            Overwrite the x-axis label.
+
+        ylabel : str, default=None
+            Overwrite the y-axis label.
+
         **kwargs : dict
-            Additional keyword arguments to be pased to the `plot_method`.
+            Additional keyword arguments to be passed to the `plot_method`.
 
         Returns
         -------
@@ -144,10 +150,12 @@ class DecisionBoundaryDisplay:
         plot_func = getattr(ax, plot_method)
         self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
 
+        xlabel = self.xlabel if xlabel is None else xlabel
+        ylabel = self.ylabel if ylabel is None else ylabel
         if not ax.get_xlabel():
-            ax.set_xlabel(self.xlabel)
+            ax.set_xlabel(xlabel)
         if not ax.get_ylabel():
-            ax.set_ylabel(self.ylabel)
+            ax.set_ylabel(ylabel)
 
         self.ax_ = ax
         self.figure_ = ax.figure
