@@ -159,10 +159,12 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             sample_weight_sum = np.sum(sample_weight)
 
             if not np.isfinite(sample_weight_sum):
-                warnings.warn("Sample weights have reached infinite values,"
-                              " causing overflow. Iterations stopped."
-                              " Try lowering the learning rate.",
-                              stacklevel=2)
+                warnings.warn(
+                    "Sample weights have reached infinite values,"
+                    f" at iteration {iboost}, causing overflow. "
+                    "Iterations stopped. Try lowering the learning rate.",
+                    stacklevel=2,
+                )
                 break
 
             # Stop if the sum of sample weights has become non-positive
@@ -561,7 +563,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         # Error fraction
         estimator_error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
-
 
         # Stop if classification is perfect
         if estimator_error <= 0:
