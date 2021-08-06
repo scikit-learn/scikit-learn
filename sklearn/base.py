@@ -35,7 +35,7 @@ def clone(estimator, *, safe=True):
 
     If there are parameters which need to be copied but are not returned as the
     output of ``get_params``, they can be included in
-    ``estimator_tags["extra_params"]`` as an iterable of their names.
+    ``estimator_tags["non_init_params"]`` as an iterable of their names.
 
     If the estimator's `random_state` parameter is an integer (or if the
     estimator doesn't have a `random_state` parameter), an *exact clone* is
@@ -85,8 +85,8 @@ def clone(estimator, *, safe=True):
     params_set = new_object.get_params(deep=False)
 
     # we then copy parameters which are requested to be copied in the
-    # "extra_params" tag.
-    extra_params = _safe_tags(estimator).get("extra_params", [])
+    # "non_init_params" tag.
+    extra_params = _safe_tags(estimator).get("non_init_params", [])
     for param in extra_params:
         try:
             setattr(new_object, param, clone(getattr(estimator, param), safe=False))

@@ -630,7 +630,7 @@ def test_check_no_attributes_set_in_init():
 
     class ConformantEstimatorWithExtraParams(BaseEstimator):
         def _more_tags(self):
-            return {"extra_params": ["param1"]}
+            return {"non_init_params": ["param1"]}
 
         def __init__(self):
             self.param1 = 42

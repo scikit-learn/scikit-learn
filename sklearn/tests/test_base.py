@@ -142,10 +142,10 @@ def test_clone_2():
 
 
 def test_clone_extra_params():
-    # Test that clone copies the parameters provided in tags["extra_params"]
+    # Test that clone copies the parameters provided in tags["non_init_params"]
     class Estimator(BaseEstimator):
         def _more_tags(self):
-            return {"extra_params": ["param1"]}
+            return {"non_init_params": ["param1"]}
 
     est = Estimator()
     # test that clone works when "param1" is not present
