@@ -165,6 +165,10 @@ Changelog
 - |Efficiency| :class:`cluster.MiniBatchKMeans` is now faster in multicore
   settings. :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Efficiency| :class:`cluster.OPTICS` can now cache the output of the
+  computation of the tree, using the `memory` parameter.  :pr:`19024` by
+  :user:`Frankie Robertson <frankier>`.
+
 - |Enhancement| The `predict` and `fit_predict` methods of
   :class:`cluster.AffinityPropagation` now accept sparse data type for input
   data.
