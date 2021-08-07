@@ -2140,11 +2140,8 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
     See Also
     --------
-    Binarizer: Binarize data (set feature values to 0 or 1) according
-        to a threshold.
-    Normalizer : Normalize samples individually to unit norm.
-    StandardScaler : Standardize features by removing the mean and scaling
-        to unit variance.
+    sklearn.kernel_approximation.Nystroem : Approximate a kernel map
+        using a subset of the training data.
 
     References
     ----------
