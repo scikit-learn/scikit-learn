@@ -30,7 +30,9 @@ def test_display_curve_error_non_binary(pyplot, data, Display):
     X, y = data
     clf = DecisionTreeClassifier().fit(X, y)
 
-    msg = "DecisionTreeClassifier should be a binary classifier"
+    msg = (
+        "Expected 'estimator' to be a binary classifier, but got DecisionTreeClassifier"
+    )
     with pytest.raises(ValueError, match=msg):
         Display.from_estimator(clf, X, y)
 
