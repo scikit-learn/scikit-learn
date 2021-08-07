@@ -405,9 +405,6 @@ def test_multi_output_exceptions():
     with pytest.raises(NotFittedError):
         moc.predict(y)
 
-    with pytest.raises(AttributeError):
-        moc.predict_proba
-
     with pytest.raises(NotFittedError):
         moc.score(X, y)
 
@@ -417,6 +414,9 @@ def test_multi_output_exceptions():
     moc.fit(X, y)
     with pytest.raises(ValueError):
         moc.score(X, y_new)
+    msg = "The base estimator should implement predict_proba method"
+    with pytest.raises(AttributeError, match=msg):
+        moc.predict_proba
 
     # ValueError when y is continuous
     msg = "Unknown label type"
