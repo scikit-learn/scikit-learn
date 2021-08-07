@@ -1,7 +1,7 @@
 """
-==================================================================
-Common pitfalls in interpretation of coefficients of linear models
-==================================================================
+======================================================================
+Common pitfalls in the interpretation of coefficients of linear models
+======================================================================
 
 In linear models, the target value is modeled as
 a linear combination of the features (see the :ref:`linear_model` User Guide
@@ -84,9 +84,7 @@ survey.target.head()
 # %%
 from sklearn.model_selection import train_test_split
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, random_state=42
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
 # %% [markdown]
 # First, let's get some insights by looking at the variable distributions and
@@ -98,7 +96,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # %%
 train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
-_ = sns.pairplot(train_dataset, kind='reg', diag_kind='kde')
+_ = sns.pairplot(train_dataset, kind="reg", diag_kind="kde")
 
 # %% [markdown]
 # Looking closely at the WAGE distribution reveals that it has a
@@ -141,13 +139,11 @@ survey.data.info()
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
 
-categorical_columns = ['RACE', 'OCCUPATION', 'SECTOR',
-                       'MARR', 'UNION', 'SEX', 'SOUTH']
-numerical_columns = ['EDUCATION', 'EXPERIENCE', 'AGE']
+categorical_columns = ["RACE", "OCCUPATION", "SECTOR", "MARR", "UNION", "SEX", "SOUTH"]
+numerical_columns = ["EDUCATION", "EXPERIENCE", "AGE"]
 
 preprocessor = make_column_transformer(
-    (OneHotEncoder(drop='if_binary'), categorical_columns),
-    remainder='passthrough'
+    (OneHotEncoder(drop="if_binary"), categorical_columns), remainder="passthrough"
 )
 
 # %% [markdown]
@@ -162,10 +158,8 @@ from sklearn.compose import TransformedTargetRegressor
 model = make_pipeline(
     preprocessor,
     TransformedTargetRegressor(
-        regressor=Ridge(alpha=1e-10),
-        func=np.log10,
-        inverse_func=sp.special.exp10
-    )
+        regressor=Ridge(alpha=1e-10), func=np.log10, inverse_func=sp.special.exp10
+    ),
 )
 
 # %% [markdown]
@@ -191,13 +185,13 @@ y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
 scores = {
     "MAE on training set": f"{mae_train:.2f} $/hour",
-    "MAE on testing set": f"{mae_test:.2f} $/hour"
+    "MAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
 display = PredictionErrorDisplay(y_true=y_test, y_pred=y_pred, scores=scores)
 fig, ax = plt.subplots(figsize=(5, 5))
 display.plot(ax=ax, scatter_kwargs={"alpha": 0.5})
-_ = ax.set_title('Ridge model, small regularization')
+_ = ax.set_title("Ridge model, small regularization")
 
 # %% [markdown]
 # The model learnt is far from being a good model making accurate predictions:
@@ -215,16 +209,17 @@ _ = ax.set_title('Ridge model, small regularization')
 # First of all, we can take a look to the values of the coefficients of the
 # regressor we have fitted.
 
-# %%
-feature_names = (model.named_steps['columntransformer']
-                      .named_transformers_['onehotencoder']
-                      .get_feature_names(input_features=categorical_columns))
-feature_names = np.concatenate(
-    [feature_names, numerical_columns])
+feature_names = (
+    model.named_steps["columntransformer"]
+    .named_transformers_["onehotencoder"]
+    .get_feature_names(input_features=categorical_columns)
+)
+feature_names = np.concatenate([feature_names, numerical_columns])
 
 coefs = pd.DataFrame(
-    model.named_steps['transformedtargetregressor'].regressor_.coef_,
-    columns=['Coefficients'], index=feature_names
+    model.named_steps["transformedtargetregressor"].regressor_.coef_,
+    columns=["Coefficients"],
+    index=feature_names,
 )
 
 coefs
@@ -243,11 +238,10 @@ coefs
 # hence value ranges, because of their different unit of measure. This is more
 # visible if we plot the coefficients.
 
-# %%
-coefs.plot(kind='barh', figsize=(9, 7))
-plt.title('Ridge model, small regularization')
-plt.axvline(x=0, color='.5')
-plt.subplots_adjust(left=.3)
+coefs.plot(kind="barh", figsize=(9, 7))
+plt.title("Ridge model, small regularization")
+plt.axvline(x=0, color=".5")
+plt.subplots_adjust(left=0.3)
 
 # %% [markdown]
 # Indeed, from the plot above the most important factor in determining WAGE
@@ -264,13 +258,12 @@ plt.subplots_adjust(left=.3)
 
 # %%
 X_train_preprocessed = pd.DataFrame(
-    model.named_steps['columntransformer'].transform(X_train),
-    columns=feature_names
+    model.named_steps["columntransformer"].transform(X_train), columns=feature_names
 )
 
-X_train_preprocessed.std(axis=0).plot(kind='barh', figsize=(9, 7))
-plt.title('Features std. dev.')
-plt.subplots_adjust(left=.3)
+X_train_preprocessed.std(axis=0).plot(kind="barh", figsize=(9, 7))
+plt.title("Features std. dev.")
+plt.subplots_adjust(left=0.3)
 
 # %% [markdown]
 # Multiplying the coefficients by the standard deviation of the related
@@ -286,14 +279,15 @@ plt.subplots_adjust(left=.3)
 
 # %%
 coefs = pd.DataFrame(
-    model.named_steps['transformedtargetregressor'].regressor_.coef_ *
-    X_train_preprocessed.std(axis=0),
-    columns=['Coefficient importance'], index=feature_names
+    model.named_steps["transformedtargetregressor"].regressor_.coef_
+    * X_train_preprocessed.std(axis=0),
+    columns=["Coefficient importance"],
+    index=feature_names,
 )
-coefs.plot(kind='barh', figsize=(9, 7))
-plt.title('Ridge model, small regularization')
-plt.axvline(x=0, color='.5')
-plt.subplots_adjust(left=.3)
+coefs.plot(kind="barh", figsize=(9, 7))
+plt.title("Ridge model, small regularization")
+plt.axvline(x=0, color=".5")
+plt.subplots_adjust(left=0.3)
 
 # %% [markdown]
 # Now that the coefficients have been scaled, we can safely compare them.
@@ -329,22 +323,28 @@ from sklearn.model_selection import cross_validate
 from sklearn.model_selection import RepeatedKFold
 
 cv_model = cross_validate(
-    model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
-    return_estimator=True, n_jobs=-1
+    model,
+    X,
+    y,
+    cv=RepeatedKFold(n_splits=5, n_repeats=5),
+    return_estimator=True,
+    n_jobs=-1,
 )
 coefs = pd.DataFrame(
-    [est.named_steps['transformedtargetregressor'].regressor_.coef_ *
-     X_train_preprocessed.std(axis=0)
-     for est in cv_model['estimator']],
-    columns=feature_names
+    [
+        est.named_steps["transformedtargetregressor"].regressor_.coef_
+        * X_train_preprocessed.std(axis=0)
+        for est in cv_model["estimator"]
+    ],
+    columns=feature_names,
 )
 plt.figure(figsize=(9, 7))
-sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
-plt.axvline(x=0, color='.5')
-plt.xlabel('Coefficient importance')
-plt.title('Coefficient importance and its variability')
-plt.subplots_adjust(left=.3)
+sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5)
+plt.axvline(x=0, color=".5")
+plt.xlabel("Coefficient importance")
+plt.title("Coefficient importance and its variability")
+plt.subplots_adjust(left=0.3)
 
 # %% [markdown]
 # The problem of correlated variables
@@ -360,15 +360,13 @@ plt.subplots_adjust(left=.3)
 #
 # .. _covariation:
 
-# %%
-plt.ylabel('Age coefficient')
-plt.xlabel('Experience coefficient')
+plt.ylabel("Age coefficient")
+plt.xlabel("Experience coefficient")
 plt.grid(True)
 plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
-_ = plt.title('Co-variations of coefficients for AGE and EXPERIENCE '
-              'across folds')
+_ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds")
 
 # %% [markdown]
 # Two regions are populated: when the EXPERIENCE coefficient is
@@ -377,27 +375,31 @@ _ = plt.title('Co-variations of coefficients for AGE and EXPERIENCE '
 # To go further we remove one of the 2 features and check what is the impact
 # on the model stability.
 
-# %%
-column_to_drop = ['AGE']
+column_to_drop = ["AGE"]
 
 cv_model = cross_validate(
-    model, X.drop(columns=column_to_drop), y,
+    model,
+    X.drop(columns=column_to_drop),
+    y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
-    return_estimator=True, n_jobs=-1
+    return_estimator=True,
+    n_jobs=-1,
 )
 coefs = pd.DataFrame(
-    [est.named_steps['transformedtargetregressor'].regressor_.coef_ *
-     X_train_preprocessed.drop(columns=column_to_drop).std(axis=0)
-     for est in cv_model['estimator']],
-    columns=feature_names[:-1]
+    [
+        est.named_steps["transformedtargetregressor"].regressor_.coef_
+        * X_train_preprocessed.drop(columns=column_to_drop).std(axis=0)
+        for est in cv_model["estimator"]
+    ],
+    columns=feature_names[:-1],
 )
 plt.figure(figsize=(9, 7))
-sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
-plt.axvline(x=0, color='.5')
-plt.title('Coefficient importance and its variability')
-plt.xlabel('Coefficient importance')
-plt.subplots_adjust(left=.3)
+sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5)
+plt.axvline(x=0, color=".5")
+plt.title("Coefficient importance and its variability")
+plt.xlabel("Coefficient importance")
+plt.subplots_adjust(left=0.3)
 
 # %% [markdown]
 # The estimation of the EXPERIENCE coefficient is now less variable and
@@ -419,9 +421,9 @@ plt.subplots_adjust(left=.3)
 from sklearn.preprocessing import StandardScaler
 
 preprocessor = make_column_transformer(
-    (OneHotEncoder(drop='if_binary'), categorical_columns),
+    (OneHotEncoder(drop="if_binary"), categorical_columns),
     (StandardScaler(), numerical_columns),
-    remainder='passthrough'
+    remainder="passthrough",
 )
 
 # %% [markdown]
@@ -431,10 +433,8 @@ preprocessor = make_column_transformer(
 model = make_pipeline(
     preprocessor,
     TransformedTargetRegressor(
-        regressor=Ridge(alpha=1e-10),
-        func=np.log10,
-        inverse_func=sp.special.exp10
-    )
+        regressor=Ridge(alpha=1e-10), func=np.log10, inverse_func=sp.special.exp10
+    ),
 )
 
 _ = model.fit(X_train, y_train)
@@ -450,46 +450,53 @@ y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
 scores = {
     "MAE on training set": f"{mae_train:.2f} $/hour",
-    "MAE on testing set": f"{mae_test:.2f} $/hour"
+    "MAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
 display = PredictionErrorDisplay(y_true=y_test, y_pred=y_pred, scores=scores)
 fig, ax = plt.subplots(figsize=(5, 5))
 display.plot(ax=ax, scatter_kwargs={"alpha": 0.5})
-_ = ax.set_title('Ridge model, small regularization, normalized variables')
+_ = ax.set_title("Ridge model, small regularization, normalized variables")
 
 # %% [markdown]
 # For the coefficient analysis, scaling is not needed this time.
 
 # %%
 coefs = pd.DataFrame(
-    model.named_steps['transformedtargetregressor'].regressor_.coef_,
-    columns=['Coefficients'], index=feature_names
+    model.named_steps["transformedtargetregressor"].regressor_.coef_,
+    columns=["Coefficients"],
+    index=feature_names,
 )
-coefs.plot(kind='barh', figsize=(9, 7))
-plt.title('Ridge model, small regularization, normalized variables')
-plt.axvline(x=0, color='.5')
-plt.subplots_adjust(left=.3)
+coefs.plot(kind="barh", figsize=(9, 7))
+plt.title("Ridge model, small regularization, normalized variables")
+plt.axvline(x=0, color=".5")
+plt.subplots_adjust(left=0.3)
 
 # %% [markdown]
 # We now inspect the coefficients across several cross-validation folds.
 
 # %%
 cv_model = cross_validate(
-    model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
-    return_estimator=True, n_jobs=-1
+    model,
+    X,
+    y,
+    cv=RepeatedKFold(n_splits=5, n_repeats=5),
+    return_estimator=True,
+    n_jobs=-1,
 )
 coefs = pd.DataFrame(
-    [est.named_steps['transformedtargetregressor'].regressor_.coef_
-     for est in cv_model['estimator']],
-    columns=feature_names
+    [
+        est.named_steps["transformedtargetregressor"].regressor_.coef_
+        for est in cv_model["estimator"]
+    ],
+    columns=feature_names,
 )
 plt.figure(figsize=(9, 7))
-sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
-plt.axvline(x=0, color='.5')
-plt.title('Coefficient variability')
-plt.subplots_adjust(left=.3)
+sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5)
+plt.axvline(x=0, color=".5")
+plt.title("Coefficient variability")
+plt.subplots_adjust(left=0.3)
 
 # %% [markdown]
 # The result is quite similar to the non-normalized case.
@@ -514,8 +521,8 @@ model = make_pipeline(
     TransformedTargetRegressor(
         regressor=RidgeCV(alphas=np.logspace(-10, 10, 21)),
         func=np.log10,
-        inverse_func=sp.special.exp10
-    )
+        inverse_func=sp.special.exp10,
+    ),
 )
 
 _ = model.fit(X_train, y_train)
@@ -538,13 +545,13 @@ y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
 scores = {
     "MAE on training set": f"{mae_train:.2f} $/hour",
-    "MAE on testing set": f"{mae_test:.2f} $/hour"
+    "MAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
 display = PredictionErrorDisplay(y_true=y_test, y_pred=y_pred, scores=scores)
 fig, ax = plt.subplots(figsize=(5, 5))
 display.plot(ax=ax, scatter_kwargs={"alpha": 0.5})
-_ = ax.set_title('Ridge model, regularization, normalized variables')
+_ = ax.set_title("Ridge model, regularization, normalized variables")
 
 
 # %% [markdown]
@@ -553,13 +560,14 @@ _ = ax.set_title('Ridge model, regularization, normalized variables')
 
 # %%
 coefs = pd.DataFrame(
-    model.named_steps['transformedtargetregressor'].regressor_.coef_,
-    columns=['Coefficients'], index=feature_names
+    model.named_steps["transformedtargetregressor"].regressor_.coef_,
+    columns=["Coefficients"],
+    index=feature_names,
 )
-coefs.plot(kind='barh', figsize=(9, 7))
-plt.title('Ridge model, regularization, normalized variables')
-plt.axvline(x=0, color='.5')
-plt.subplots_adjust(left=.3)
+coefs.plot(kind="barh", figsize=(9, 7))
+plt.title("Ridge model, regularization, normalized variables")
+plt.axvline(x=0, color=".5")
+plt.subplots_adjust(left=0.3)
 
 # %% [markdown]
 # The coefficients are significantly different.
@@ -578,24 +586,29 @@ plt.subplots_adjust(left=.3)
 
 # %%
 cv_model = cross_validate(
-    model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
-    return_estimator=True, n_jobs=-1
+    model,
+    X,
+    y,
+    cv=RepeatedKFold(n_splits=5, n_repeats=5),
+    return_estimator=True,
+    n_jobs=-1,
 )
 coefs = pd.DataFrame(
-    [est.named_steps['transformedtargetregressor'].regressor_.coef_ *
-     X_train_preprocessed.std(axis=0)
-     for est in cv_model['estimator']],
-    columns=feature_names
+    [
+        est.named_steps["transformedtargetregressor"].regressor_.coef_
+        * X_train_preprocessed.std(axis=0)
+        for est in cv_model["estimator"]
+    ],
+    columns=feature_names,
 )
 
-plt.ylabel('Age coefficient')
-plt.xlabel('Experience coefficient')
+plt.ylabel("Age coefficient")
+plt.xlabel("Experience coefficient")
 plt.grid(True)
 plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
-_ = plt.title('Co-variations of coefficients for AGE and EXPERIENCE '
-              'across folds')
+_ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds")
 
 # %% [markdown]
 # Linear models with sparse coefficients
@@ -618,8 +631,8 @@ model = make_pipeline(
     TransformedTargetRegressor(
         regressor=LassoCV(alphas=np.logspace(-10, 10, 21), max_iter=100000),
         func=np.log10,
-        inverse_func=sp.special.exp10
-    )
+        inverse_func=sp.special.exp10,
+    ),
 )
 
 _ = model.fit(X_train, y_train)
@@ -639,26 +652,27 @@ y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
 scores = {
     "MAE on training set": f"{mae_train:.2f} $/hour",
-    "MAE on testing set": f"{mae_test:.2f} $/hour"
+    "MAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
 display = PredictionErrorDisplay(y_true=y_test, y_pred=y_pred, scores=scores)
 fig, ax = plt.subplots(figsize=(6, 6))
 display.plot(ax=ax, scatter_kwargs={"alpha": 0.5})
-_ = ax.set_title('Lasso model, regularization, normalized variables')
+_ = ax.set_title("Lasso model, regularization, normalized variables")
 
 # %% [markdown]
 # For our dataset, again the model is not very predictive.
 
 # %%
 coefs = pd.DataFrame(
-    model.named_steps['transformedtargetregressor'].regressor_.coef_,
-    columns=['Coefficients'], index=feature_names
+    model.named_steps["transformedtargetregressor"].regressor_.coef_,
+    columns=["Coefficients"],
+    index=feature_names,
 )
-coefs.plot(kind='barh', figsize=(9, 7))
-plt.title('Lasso model, regularization, normalized variables')
-plt.axvline(x=0, color='.5')
-plt.subplots_adjust(left=.3)
+coefs.plot(kind="barh", figsize=(9, 7))
+plt.title("Lasso model, regularization, normalized variables")
+plt.axvline(x=0, color=".5")
+plt.subplots_adjust(left=0.3)
 
 # %% [markdown]
 # A Lasso model identifies the correlation between

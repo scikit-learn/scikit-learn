@@ -29,7 +29,6 @@ cimport numpy as np
 np.import_array()
 
 from scipy.sparse import issparse
-from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 
 from ._utils cimport Stack
@@ -123,15 +122,13 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  SIZE_t max_depth, double min_impurity_decrease,
-                  double min_impurity_split):
+                  SIZE_t max_depth, double min_impurity_decrease):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
@@ -161,7 +158,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef SIZE_t min_samples_split = self.min_samples_split
         cdef double min_impurity_decrease = self.min_impurity_decrease
-        cdef double min_impurity_split = self.min_impurity_split
 
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight_ptr)
@@ -218,8 +214,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     impurity = splitter.node_impurity()
                     first = 0
 
-                is_leaf = (is_leaf or
-                           (impurity <= min_impurity_split))
+                # impurity == 0 with tolerance due to rounding errors
+                is_leaf = is_leaf or impurity <= EPSILON
 
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
@@ -292,7 +288,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf,  min_weight_leaf,
                   SIZE_t max_depth, SIZE_t max_leaf_nodes,
-                  double min_impurity_decrease, double min_impurity_split):
+                  double min_impurity_decrease):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -300,7 +296,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
@@ -426,7 +421,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t n_constant_features = 0
         cdef double weighted_n_samples = splitter.weighted_n_samples
         cdef double min_impurity_decrease = self.min_impurity_decrease
-        cdef double min_impurity_split = self.min_impurity_split
         cdef double weighted_n_node_samples
         cdef bint is_leaf
         cdef SIZE_t n_left, n_right
@@ -442,7 +436,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    n_node_samples < self.min_samples_split or
                    n_node_samples < 2 * self.min_samples_leaf or
                    weighted_n_node_samples < 2 * self.min_weight_leaf or
-                   impurity <= min_impurity_split)
+                   impurity <= EPSILON  # impurity == 0 with tolerance
+                   )
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
@@ -652,8 +647,15 @@ cdef class Tree:
 
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
+
+        if (node_ndarray.dtype != NODE_DTYPE):
+            # possible mismatch of big/little endian due to serialization
+            # on a different architecture. Try swapping the byte order.  
+            node_ndarray = node_ndarray.byteswap().newbyteorder()
+            if (node_ndarray.dtype != NODE_DTYPE):
+                raise ValueError('Did not recognise loaded array dytpe')
+
         if (node_ndarray.ndim != 1 or
-                node_ndarray.dtype != NODE_DTYPE or
                 not node_ndarray.flags.c_contiguous or
                 value_ndarray.shape != value_shape or
                 not value_ndarray.flags.c_contiguous or
