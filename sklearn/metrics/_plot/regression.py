@@ -278,7 +278,6 @@ class PredictionErrorDisplay:
         >>> X, y = load_diabetes(return_X_y=True)
         >>> ridge = Ridge().fit(X, y)
         >>> disp = PredictionErrorDisplay.from_estimator(ridge, X, y)
-        <...>
         >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
@@ -383,8 +382,7 @@ class PredictionErrorDisplay:
         >>> X, y = load_diabetes(return_X_y=True)
         >>> ridge = Ridge().fit(X, y)
         >>> y_pred = ridge.predict(X)
-        >>> disp = PredictionErrorDisplay.from_predictions(y, y_pred)
-        <...>
+        >>> disp = PredictionErrorDisplay.from_predictions(y_true=y, y_pred=y_pred)
         >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
