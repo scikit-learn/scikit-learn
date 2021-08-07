@@ -13,7 +13,7 @@ web page of Sam Roweis:
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
+from os.path import exists
 from os import makedirs, remove
 
 import numpy as np
@@ -24,6 +24,7 @@ from . import get_data_home
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ._base import _pkl_filepath
+from ._base import load_descr
 from ..utils import check_random_state, Bunch
 
 # The original data can be found at:
@@ -137,9 +138,7 @@ def fetch_olivetti_faces(
         target = target[order]
     faces_vectorized = faces.reshape(len(faces), -1)
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "olivetti_faces.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("olivetti_faces.rst")
 
     if return_X_y:
         return faces_vectorized, target
