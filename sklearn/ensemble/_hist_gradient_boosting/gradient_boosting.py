@@ -1168,7 +1168,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     --------
     GradientBoostingRegressor : Exact gradient boosting method that does not
         scale as good on datasets with a large number of samples.
-    DecisionTreeRegressor : A decision tree regressor.
+    sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
     RandomForestRegressor : A random forest regressor.
     AdaBoostRegressor : A meta-estimator that begins by fitting a regressor
         on the original dataset and then fits additional copies of the
