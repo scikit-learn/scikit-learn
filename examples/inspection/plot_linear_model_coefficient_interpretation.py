@@ -37,7 +37,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# %% [markdown]
+# %%
 # The dataset: wages
 # ------------------
 #
@@ -45,28 +45,25 @@ import seaborn as sns
 # Note that setting the parameter `as_frame` to True will retrieve the data
 # as a pandas dataframe.
 
-# %%
 from sklearn.datasets import fetch_openml
 
 survey = fetch_openml(data_id=534, as_frame=True)
 
-# %% [markdown]
+# %%
 # Then, we identify features `X` and targets `y`: the column WAGE is our
 # target variable (i.e., the variable which we want to predict).
 
-# %%
 X = survey.data[survey.feature_names]
 X.describe(include="all")
 
-# %% [markdown]
+# %%
 # Note that the dataset contains categorical and numerical variables.
 # We will need to take this into account when preprocessing the dataset
 # thereafter.
 
-# %%
 X.head()
 
-# %% [markdown]
+# %%
 # Our target for prediction: the wage.
 # Wages are described as floating-point number in dollars per hour.
 
@@ -74,31 +71,29 @@ X.head()
 y = survey.target.values.ravel()
 survey.target.head()
 
-# %% [markdown]
+# %%
 # We split the sample into a train and a test dataset.
 # Only the train dataset will be used in the following exploratory analysis.
 # This is a way to emulate a real situation where predictions are performed on
 # an unknown target, and we don't want our analysis and decisions to be biased
 # by our knowledge of the test data.
 
-# %%
 from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-# %% [markdown]
+# %%
 # First, let's get some insights by looking at the variable distributions and
 # at the pairwise relationships between them. Only numerical
 # variables will be used. In the following plot, each dot represents a sample.
 #
 #   .. _marginal_dependencies:
 
-# %%
 train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
 _ = sns.pairplot(train_dataset, kind="reg", diag_kind="kde")
 
-# %% [markdown]
+# %%
 # Looking closely at the WAGE distribution reveals that it has a
 # long tail. For this reason, we should take its logarithm
 # to turn it approximately into a normal distribution (linear models such
@@ -119,10 +114,9 @@ _ = sns.pairplot(train_dataset, kind="reg", diag_kind="kde")
 # To design our machine-learning pipeline, we first manually
 # check the type of data that we are dealing with:
 
-# %%
 survey.data.info()
 
-# %% [markdown]
+# %%
 # As seen previously, the dataset contains columns with different data types
 # and we need to apply a specific preprocessing for each data types.
 # In particular categorical variables cannot be included in linear model if not
@@ -135,7 +129,6 @@ survey.data.info()
 # - as a first approach (we will see after how the normalisation of numerical
 #   values will affect our discussion), keep numerical values as they are.
 
-# %%
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
 
@@ -146,11 +139,10 @@ preprocessor = make_column_transformer(
     (OneHotEncoder(drop="if_binary"), categorical_columns), remainder="passthrough"
 )
 
-# %% [markdown]
+# %%
 # To describe the dataset as a linear model we use a ridge regressor
 # with a very small regularization and to model the logarithm of the WAGE.
 
-# %%
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import Ridge
 from sklearn.compose import TransformedTargetRegressor
@@ -162,21 +154,19 @@ model = make_pipeline(
     ),
 )
 
-# %% [markdown]
+# %%
 # Processing the dataset
 # ----------------------
 #
 # First, we fit the model.
 
-# %%
 _ = model.fit(X_train, y_train)
 
-# %% [markdown]
+# %%
 # Then we check the performance of the computed model plotting its predictions
 # on the test set and computing,
 # for example, the median absolute error of the model.
 
-# %%
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import PredictionErrorDisplay
 
@@ -188,12 +178,13 @@ scores = {
     "MAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
-display = PredictionErrorDisplay(y_true=y_test, y_pred=y_pred, scores=scores)
-fig, ax = plt.subplots(figsize=(5, 5))
-display.plot(ax=ax, scatter_kwargs={"alpha": 0.5})
+_, ax = plt.subplots(figsize=(5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
+)
 _ = ax.set_title("Ridge model, small regularization")
 
-# %% [markdown]
+# %%
 # The model learnt is far from being a good model making accurate predictions:
 # this is obvious when looking at the plot above, where good predictions
 # should lie on the red line.
@@ -224,7 +215,7 @@ coefs = pd.DataFrame(
 
 coefs
 
-# %% [markdown]
+# %%
 # The AGE coefficient is expressed in "dollars/hour per living years" while the
 # EDUCATION one is expressed in "dollars/hour per years of education". This
 # representation of the coefficients has the benefit of making clear the
@@ -243,7 +234,7 @@ plt.title("Ridge model, small regularization")
 plt.axvline(x=0, color=".5")
 plt.subplots_adjust(left=0.3)
 
-# %% [markdown]
+# %%
 # Indeed, from the plot above the most important factor in determining WAGE
 # appears to be the
 # variable UNION, even if our intuition might tell us that variables
@@ -256,7 +247,6 @@ plt.subplots_adjust(left=0.3)
 # This is visible if we compare the standard deviations of different
 # features.
 
-# %%
 X_train_preprocessed = pd.DataFrame(
     model.named_steps["columntransformer"].transform(X_train), columns=feature_names
 )
@@ -265,7 +255,7 @@ X_train_preprocessed.std(axis=0).plot(kind="barh", figsize=(9, 7))
 plt.title("Features std. dev.")
 plt.subplots_adjust(left=0.3)
 
-# %% [markdown]
+# %%
 # Multiplying the coefficients by the standard deviation of the related
 # feature would reduce all the coefficients to the same unit of measure.
 # As we will see :ref:`after<scaling_num>` this is equivalent to normalize
@@ -277,7 +267,6 @@ plt.subplots_adjust(left=0.3)
 # greater the variance of a feature, the larger the weight of the corresponding
 # coefficient on the output, all else being equal.
 
-# %%
 coefs = pd.DataFrame(
     model.named_steps["transformedtargetregressor"].regressor_.coef_
     * X_train_preprocessed.std(axis=0),
@@ -289,7 +278,7 @@ plt.title("Ridge model, small regularization")
 plt.axvline(x=0, color=".5")
 plt.subplots_adjust(left=0.3)
 
-# %% [markdown]
+# %%
 # Now that the coefficients have been scaled, we can safely compare them.
 #
 # .. warning::
@@ -318,7 +307,6 @@ plt.subplots_adjust(left=0.3)
 # their robustness is not guaranteed, and they should probably be interpreted
 # with caution.
 
-# %%
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import RepeatedKFold
 
@@ -346,7 +334,7 @@ plt.xlabel("Coefficient importance")
 plt.title("Coefficient importance and its variability")
 plt.subplots_adjust(left=0.3)
 
-# %% [markdown]
+# %%
 # The problem of correlated variables
 # -----------------------------------
 #
@@ -368,7 +356,7 @@ plt.ylim(-0.4, 0.5)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
 _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds")
 
-# %% [markdown]
+# %%
 # Two regions are populated: when the EXPERIENCE coefficient is
 # positive the AGE one is negative and viceversa.
 #
@@ -401,7 +389,7 @@ plt.title("Coefficient importance and its variability")
 plt.xlabel("Coefficient importance")
 plt.subplots_adjust(left=0.3)
 
-# %% [markdown]
+# %%
 # The estimation of the EXPERIENCE coefficient is now less variable and
 # remain important for all models trained during cross-validation.
 #
@@ -417,7 +405,6 @@ plt.subplots_adjust(left=0.3)
 # The preprocessor is redefined in order to subtract the mean and scale
 # variables to unit variance.
 
-# %%
 from sklearn.preprocessing import StandardScaler
 
 preprocessor = make_column_transformer(
@@ -426,10 +413,9 @@ preprocessor = make_column_transformer(
     remainder="passthrough",
 )
 
-# %% [markdown]
+# %%
 # The model will stay unchanged.
 
-# %%
 model = make_pipeline(
     preprocessor,
     TransformedTargetRegressor(
@@ -439,12 +425,11 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-# %% [markdown]
+# %%
 # Again, we check the performance of the computed
 # model using, for example, the median absolute error of the model and the R
 # squared coefficient.
 
-# %%
 mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
@@ -453,15 +438,15 @@ scores = {
     "MAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
-display = PredictionErrorDisplay(y_true=y_test, y_pred=y_pred, scores=scores)
-fig, ax = plt.subplots(figsize=(5, 5))
-display.plot(ax=ax, scatter_kwargs={"alpha": 0.5})
+_, ax = plt.subplots(figsize=(5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
+)
 _ = ax.set_title("Ridge model, small regularization, normalized variables")
 
-# %% [markdown]
+# %%
 # For the coefficient analysis, scaling is not needed this time.
 
-# %%
 coefs = pd.DataFrame(
     model.named_steps["transformedtargetregressor"].regressor_.coef_,
     columns=["Coefficients"],
@@ -472,10 +457,9 @@ plt.title("Ridge model, small regularization, normalized variables")
 plt.axvline(x=0, color=".5")
 plt.subplots_adjust(left=0.3)
 
-# %% [markdown]
+# %%
 # We now inspect the coefficients across several cross-validation folds.
 
-# %%
 cv_model = cross_validate(
     model,
     X,
@@ -498,7 +482,7 @@ plt.axvline(x=0, color=".5")
 plt.title("Coefficient variability")
 plt.subplots_adjust(left=0.3)
 
-# %% [markdown]
+# %%
 # The result is quite similar to the non-normalized case.
 #
 # Linear models with regularization
@@ -513,7 +497,6 @@ plt.subplots_adjust(left=0.3)
 # determine which value of the regularization parameter (`alpha`) is best
 # suited for prediction.
 
-# %%
 from sklearn.linear_model import RidgeCV
 
 model = make_pipeline(
@@ -527,19 +510,13 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-# %% [markdown]
+# %%
 # First we check which value of :math:`\alpha` has been selected.
 
-# %%
 model[-1].regressor_.alpha_
 
-# %% [markdown]
-# Then we check the quality of the predictions.
-
 # %%
-from sklearn.metrics import median_absolute_error
-from sklearn.metrics import PredictionErrorDisplay
-
+# Then we check the quality of the predictions.
 mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
@@ -548,17 +525,17 @@ scores = {
     "MAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
-display = PredictionErrorDisplay(y_true=y_test, y_pred=y_pred, scores=scores)
-fig, ax = plt.subplots(figsize=(5, 5))
-display.plot(ax=ax, scatter_kwargs={"alpha": 0.5})
+_, ax = plt.subplots(figsize=(5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
+)
 _ = ax.set_title("Ridge model, regularization, normalized variables")
 
 
-# %% [markdown]
+# %%
 # The ability to reproduce the data of the regularized model is similar to
 # the one of the non-regularized model.
 
-# %%
 coefs = pd.DataFrame(
     model.named_steps["transformedtargetregressor"].regressor_.coef_,
     columns=["Coefficients"],
@@ -569,7 +546,7 @@ plt.title("Ridge model, regularization, normalized variables")
 plt.axvline(x=0, color=".5")
 plt.subplots_adjust(left=0.3)
 
-# %% [markdown]
+# %%
 # The coefficients are significantly different.
 # AGE and EXPERIENCE coefficients are both positive but they now have less
 # influence on the prediction.
@@ -584,7 +561,6 @@ plt.subplots_adjust(left=0.3)
 # perturbations, in a cross validation. This plot can  be compared with
 # the :ref:`previous one<covariation>`.
 
-# %%
 cv_model = cross_validate(
     model,
     X,
@@ -610,7 +586,7 @@ plt.ylim(-0.4, 0.5)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
 _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds")
 
-# %% [markdown]
+# %%
 # Linear models with sparse coefficients
 # --------------------------------------
 #
@@ -623,7 +599,6 @@ _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds
 # determine which value of the regularization parameter (`alpha`) is best
 # suited for the model estimation.
 
-# %%
 from sklearn.linear_model import LassoCV
 
 model = make_pipeline(
@@ -637,16 +612,14 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-# %% [markdown]
+# %%
 # First we verify which value of :math:`\alpha` has been selected.
 
-# %%
 model[-1].regressor_.alpha_
 
-# %% [markdown]
+# %%
 # Then we check the quality of the predictions.
 
-# %%
 mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
@@ -655,15 +628,15 @@ scores = {
     "MAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
-display = PredictionErrorDisplay(y_true=y_test, y_pred=y_pred, scores=scores)
-fig, ax = plt.subplots(figsize=(6, 6))
-display.plot(ax=ax, scatter_kwargs={"alpha": 0.5})
+_, ax = plt.subplots(figsize=(6, 6))
+display = PredictionErrorDisplay.from_predictions(
+    y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
+)
 _ = ax.set_title("Lasso model, regularization, normalized variables")
 
-# %% [markdown]
+# %%
 # For our dataset, again the model is not very predictive.
 
-# %%
 coefs = pd.DataFrame(
     model.named_steps["transformedtargetregressor"].regressor_.coef_,
     columns=["Coefficients"],
@@ -674,7 +647,7 @@ plt.title("Lasso model, regularization, normalized variables")
 plt.axvline(x=0, color=".5")
 plt.subplots_adjust(left=0.3)
 
-# %% [markdown]
+# %%
 # A Lasso model identifies the correlation between
 # AGE and EXPERIENCE and suppresses one of them for the sake of the prediction.
 #
