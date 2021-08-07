@@ -19,7 +19,5 @@ lr = LinearRegression()
 # cross_val_predict returns an array of the same size as `y` where each entry
 # is a prediction obtained by cross validation:
 y_pred = cross_val_predict(lr, X, y, cv=10)
-
-display = PredictionErrorDisplay(y_true=y, y_pred=y_pred)
-display.plot()
+display = PredictionErrorDisplay.from_predictions(y_true=y, y_pred=y_pred)
 plt.show()
