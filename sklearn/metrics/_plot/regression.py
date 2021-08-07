@@ -323,8 +323,8 @@ class PredictionErrorDisplay:
         y_true : array-like of shape (n_samples,)
             True target values.
 
-        y : array-like of shape (n_samples,)
-            Target values.
+        y_pred : array-like of shape (n_samples,)
+            Predicted target values.
 
         scores : dict, default=None
             Dictionary containing scores that will be shown on the legend.
