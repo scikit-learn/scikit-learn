@@ -165,6 +165,10 @@ Changelog
 - |Efficiency| :class:`cluster.MiniBatchKMeans` is now faster in multicore
   settings. :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Efficiency| :class:`cluster.OPTICS` can now cache the output of the
+  computation of the tree, using the `memory` parameter.  :pr:`19024` by
+  :user:`Frankie Robertson <frankier>`.
+
 - |Enhancement| The `predict` and `fit_predict` methods of
   :class:`cluster.AffinityPropagation` now accept sparse data type for input
   data.
@@ -316,6 +320,11 @@ Changelog
   since scikit-learn does not provide any metric supporting this type of
   target. Additional private refactoring was performed.
   :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Improve numerical precision for weights boosting in
+  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  to avoid underflows.
+  :pr:`10096` by :user:`Fenil Suchak <fenilsuchak>`.
 
 - |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
   :class:`~sklearn.ensemble.HistGradientBoostingRegressor` are no longer
@@ -539,6 +548,14 @@ Changelog
   :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
+
+- |API| :class:`metrics.DetCurveDisplay` exposes two class methods
+  :func:`~metrics.DetCurveDisplay.from_estimator` and
+  :func:`~metrics.DetCurveDisplay.from_predictions` allowing to create
+  a confusion matrix plot using an estimator or the predictions.
+  :func:`metrics.plot_det_curve` is deprecated in favor of these two
+  class methods and will be removed in 1.2.
+  :pr:`19278` by `Guillaume Lemaitre`_.
 
 - |Enhancement| A fix to raise an error in :func:`metrics.hinge_loss` when
   ``pred_decision`` is 1d whereas it is a multiclass classification or when

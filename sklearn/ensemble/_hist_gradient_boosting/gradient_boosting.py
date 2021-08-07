@@ -222,6 +222,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         fit_start_time = time()
         acc_find_split_time = 0.0  # time spent finding the best splits
@@ -991,6 +992,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     @property
     def n_iter_(self):
+        """Number of iterations of the boosting process."""
         check_is_fitted(self)
         return len(self._predictors)
 
@@ -1360,7 +1362,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int} of shape (n_features) \
-            or shape (n_categorical_features,), default=None.
+            or shape (n_categorical_features,), default=None
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1456,6 +1458,20 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    See Also
+    --------
+    GradientBoostingClassifier : Exact gradient boosting method that does not
+        scale as good on datasets with a large number of samples.
+    DecisionTreeClassifier : A decision tree classifier.
+    RandomForestClassifier : A meta-estimator that fits a number of decision
+        tree classifiers on various sub-samples of the dataset and uses
+        averaging to improve the predictive accuracy and control over-fitting.
+    AdaBoostClassifier : A meta-estimator that begins by fitting a classifier
+        on the original dataset and then fits additional copies of the
+        classifier on the same dataset where the weights of incorrectly
+        classified instances are adjusted such that subsequent classifiers
+        focus more on difficult cases.
 
     Examples
     --------
