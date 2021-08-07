@@ -395,6 +395,10 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
+- |Feature| Add :class:`metrics.PredictionErrorDisplay` to plot the predicted
+  and actual values to assess the performance of a regressor.
+  :pr:`18020` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Fix| Allow multiple scorers input to
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.

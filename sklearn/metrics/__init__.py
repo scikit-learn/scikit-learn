@@ -87,10 +87,8 @@ from ._plot.roc_curve import plot_roc_curve
 from ._plot.roc_curve import RocCurveDisplay
 from ._plot.precision_recall_curve import plot_precision_recall_curve
 from ._plot.precision_recall_curve import PrecisionRecallDisplay
-
 from ._plot.confusion_matrix import plot_confusion_matrix
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
-
 from ._plot.regression import PredictionErrorDisplay
 
 

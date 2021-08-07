@@ -2,8 +2,6 @@ import numbers
 
 import numpy as np
 
-from .. import check_scoring
-from .._scorer import _check_multimetric_scoring
 from ...utils import check_matplotlib_support
 from ...utils import check_random_state
 from ...utils import _safe_indexing
@@ -12,10 +10,14 @@ from ...utils import _safe_indexing
 class PredictionErrorDisplay:
     """Prediction error visualization.
 
-    It is recommended to use :func:`~sklearn.metrics.plot_prediction_error` to
+    It is recommended to use
+    :func:`~sklearn.metrics.PredictionErrorDisplay.from_estimator` or
+    :func:`~sklearn.metrics.PredictionErrorDisplay.from_predictions` to
     create a visualizer. All parameters are stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
+
+    .. versionadded:: 1.0
 
     Parameters
     ----------
@@ -49,9 +51,16 @@ class PredictionErrorDisplay:
     figure_ : matplotlib Figure
         Figure containing the scatter and lines.
 
+    See Also
+    --------
+    PredictionDisplay.from_estimator : Prediction error visualization
+        given an estimator and some data.
+    PredictionDisplay.from_predictions : Prediction error visualization
+        given the true and predicted targets.
+
     Examples
     --------
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn.datasets import load_diabetes
     >>> from sklearn.linear_model import Ridge
     >>> from sklearn.metrics import PredictionErrorDisplay
@@ -59,8 +68,9 @@ class PredictionErrorDisplay:
     >>> ridge = Ridge().fit(X, y)
     >>> y_pred = ridge.predict(X)
     >>> display = PredictionErrorDisplay(y_true=y, y_pred=y_pred)
-    >>> display.plot()  # doctest: +SKIP
-    >>> plt.show()      # doctest: +SKIP
+    >>> display.plot()
+    <...>
+    >>> plt.show()
     """
 
     def __init__(
@@ -142,7 +152,9 @@ class PredictionErrorDisplay:
             self.residual_lines_ = []
             for actual, predicted in zip(self.y_true, self.y_pred):
                 residual_line = ax.plot(
-                    [actual, actual], [actual, predicted], **residuals_kwargs,
+                    [actual, actual],
+                    [actual, predicted],
+                    **residuals_kwargs,
                 )
                 self.residual_lines_ += residual_line
         else:
@@ -158,7 +170,7 @@ class PredictionErrorDisplay:
 
         xlabel, ylabel = "Actual values", "Predicted values"
         ax.set(xlabel=xlabel, ylabel=ylabel)
-        ax.set_aspect('equal', adjustable='datalim')
+        ax.set_aspect("equal", adjustable="datalim")
         ax.set_xticks(np.linspace(min_value, max_value, num=5))
         ax.set_yticks(np.linspace(min_value, max_value, num=5))
 
@@ -167,10 +179,7 @@ class PredictionErrorDisplay:
                 (0, 0), 0, 0, fc="w", fill=False, edgecolor="none", linewidth=0
             )
             scoring_legend = "\n".join(
-                [
-                    f"{name} = {value}"
-                    for name, value in self.scores.items()
-                ],
+                [f"{name} = {value}" for name, value in self.scores.items()],
             )
             ax.legend([extra], [scoring_legend])
 
@@ -179,158 +188,238 @@ class PredictionErrorDisplay:
 
         return self
 
+    @classmethod
+    def from_estimator(
+        cls,
+        estimator,
+        X,
+        y,
+        *,
+        scores=None,
+        subsample=1_000,
+        random_state=None,
+        with_residuals=False,
+        ax=None,
+        scatter_kwargs=None,
+        line_kwargs=None,
+        residuals_kwargs=None,
+    ):
+        """Plot the prediction error given a regressor and some data.
 
-def plot_prediction_error(
-    estimator,
-    X,
-    y,
-    *,
-    scoring=None,
-    subsample=None,
-    random_state=None,
-    with_residuals=False,
-    ax=None,
-    scatter_kwargs=None,
-    line_kwargs=None,
-    residuals_kwargs=None,
-):
-    """Plot the prediction error of a regressor.
+        Read more in the :ref:`User Guide <visualizations>`.
 
-    Extra keyword arguments will be passed to matplotlib's ``plot``.
+        .. versionadded:: 1.0
 
-    Read more in the :ref:`User Guide <visualizations>`.
+        Parameters
+        ----------
+        estimator : estimator instance
+            Fitted regressor or a fitted :class:`~sklearn.pipeline.Pipeline`
+            in which the last estimator is a regressor.
 
-    Parameters
-    ----------
-    estimator : estimator instance
-        Fitted regressor or a fitted :class:`~sklearn.pipeline.Pipeline`
-        in which the last estimator is a regressor.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input values.
 
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Input values.
+        y : array-like of shape (n_samples,)
+            Target values.
 
-    y : array-like of shape (n_samples,)
-        Target values.
+        scores : dict, default=None
+            Dictionary containing scores that will be shown on the legend.
+            Key are the score names, values are the score values.
 
-    scoring : str, callable, list/tuple, or dict, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        subsample : float, int or None, default=1_000
+            Sampling the samples to be shown on the scatter plot. If `float`,
+            it should be between 0 and 1 and represents the proportion of the
+            original dataset. If `int`, it represents the number of samples
+            display on the scatter plot. If `None`, no subsampling will be
+            applied. by default, a 1000 samples or less will be displayed.
 
-        For evaluating multiple metrics, either give a list of (unique) strings
-        or a dict with names as keys and callables as values.
+        random_state : int or RandomState, default=None
+            Controls the randomness when `subsample` is not `None`.
+            See :term:`Glossary <random_state>` for details.
 
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
+        with_residuals : bool, default=False
+            Whether or not to display the residuals on the plot for each
+            sample.
 
-        See :ref:`multimetric_grid_search` for an example.
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
 
-        If None, the estimator's score method is used.
+        scatter_kwargs : dict, default=None
+            Dictionary with keywords passed to the `matplotlib.pyplot.scatter`
+            call.
 
-    subsample : float, int or None, default=1000
-        Sampling the samples to be shown on the scatter plot. If `float`, it
-        should be between 0 and 1 and represents the proportion of the original
-        dataset. If `int`, it represents the number of samples display on the
-        scatter plot. If `None`, no subsampling will be applied. by default,
-        a 1000 samples or less will be displayed.
+        line_kwargs : dict, default=None
+            Dictionary with keyword passed to the `matplotlib.pyplot.plot`
+            call to draw the diagonal line.
 
-    random_state : int or RandomState, default=None
-        Controls the randomness when `subsample` is not `None`.
-        See :term:`Glossary <random_state>` for details.
+        residuals_kwargs : dict, default=None
+            Dictionary with keyword passed to the `matplotlib.pyplot.plot`
+            call to draw the residual lines. Only taken into account when
+            `with_residuals=True`.
 
-    with_residuals : bool, default=False
-        Whether or not to display the residuals on the plot for each sample.
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.PredictionErrorDisplay`
+            Object that stores the computed values.
 
-    ax : matplotlib axes, default=None
-        Axes object to plot on. If `None`, a new figure and axes is created.
+        See Also
+        --------
+        PredictionErrorDisplay : Prediction error visualization for regression.
+        PredictionDisplay.from_predictions : Prediction error visualization
+            given the true and predicted targets.
 
-    scatter_kwargs : dict, default=None
-        Dictionary with keywords passed to the `matplotlib.pyplot.scatter`
-        call.
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import load_diabetes
+        >>> from sklearn.linear_model import Ridge
+        >>> from sklearn.metrics import PredictionErrorDisplay
+        >>> X, y = load_diabetes(return_X_y=True)
+        >>> ridge = Ridge().fit(X, y)
+        >>> disp = PredictionErrorDisplay.from_estimator(ridge, X, y)
+        <...>
+        >>> plt.show()
+        """
+        check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
-    line_kwargs : dict, default=None
-        Dictionary with keyword passed to the `matplotlib.pyplot.plot`
-        call to draw the diagonal line.
+        y_pred = estimator.predict(X)
 
-    residuals_kwargs : dict, default=None
-        Dictionary with keyword passed to the `matplotlib.pyplot.plot`
-        call to draw the residual lines. Only taken into account when
-        `with_residuals=True`.
-
-    Returns
-    -------
-    display : :class:`~sklearn.metrics.PredictionErrorDisplay`
-        Object that stores the computed values.
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt           # doctest: +SKIP
-    >>> from sklearn.datasets import load_diabetes
-    >>> from sklearn.linear_model import Ridge
-    >>> from sklearn.metrics import plot_prediction_error
-    >>> X, y = load_diabetes(return_X_y=True)
-    >>> ridge = Ridge().fit(X, y)
-    >>> viz = plot_prediction_error(ridge, X, y)  # doctest: +SKIP
-    >>> plt.show()                                # doctest: +SKIP
-    """
-    check_matplotlib_support("plot_prediction_error")
-
-    if callable(scoring):
-        score_name = (
-            scoring.__name__
-            if hasattr(scoring, "__name__")
-            else scoring.__class__.__name__
+        return cls.from_predictions(
+            y_true=y,
+            y_pred=y_pred,
+            scores=scores,
+            subsample=subsample,
+            random_state=random_state,
+            with_residuals=with_residuals,
+            ax=ax,
+            scatter_kwargs=scatter_kwargs,
+            line_kwargs=line_kwargs,
+            residuals_kwargs=residuals_kwargs,
         )
-        scorers = {score_name: scoring}
-    elif scoring is None or isinstance(scoring, str):
-        score_name = "r2" if scoring is None else scoring
-        scorers = {score_name: check_scoring(estimator, score_name)}
-    else:
-        scorers = _check_multimetric_scoring(estimator, scoring)
 
-    y_pred = estimator.predict(X)
+    @classmethod
+    def from_predictions(
+        cls,
+        y_true,
+        y_pred,
+        *,
+        scores=None,
+        subsample=1_000,
+        random_state=None,
+        with_residuals=False,
+        ax=None,
+        scatter_kwargs=None,
+        line_kwargs=None,
+        residuals_kwargs=None,
+    ):
+        """Plot the prediction error given the true and predicted targets.
 
-    # To avoid circular import
-    from ...model_selection._validation import _score
+        Read more in the :ref:`User Guide <visualizations>`.
 
-    scores = _score(estimator, X, y, scorers)
-    scores = {
-        key.replace("_", " "): f"{value:.3f}" for key, value in scores.items()
-    }
+        .. versionadded:: 1.0
 
-    random_state = check_random_state(random_state)
+        Parameters
+        ----------
+        y_true : array-like of shape (n_samples,)
+            True target values.
 
-    if isinstance(subsample, numbers.Integral):
-        if subsample <= 0:
-            raise ValueError(
-                f"When an integer, subsample={subsample} should be "
-                f"positive."
-            )
-    elif isinstance(subsample, numbers.Real):
-        if subsample <= 0 or subsample >= 1:
-            raise ValueError(
-                f"When a floating-point, subsample={subsample} should"
-                f" be in the (0, 1) range."
-            )
-        subsample = int(len(y) * subsample)
+        y : array-like of shape (n_samples,)
+            Target values.
 
-    if subsample is not None and subsample < len(y):
-        indices = random_state.choice(np.arange(len(y)), size=subsample)
-        y_true = _safe_indexing(y, indices)
-        y_pred = _safe_indexing(y_pred, indices)
-    else:
-        y_true, y_pred = y, y_pred
+        scores : dict, default=None
+            Dictionary containing scores that will be shown on the legend.
+            Key are the score names, values are the score values.
 
-    viz = PredictionErrorDisplay(
-        y_true=y_true,
-        y_pred=y_pred,
-        scores=scores,
-        with_residuals=with_residuals,
-    )
+        subsample : float, int or None, default=1_000
+            Sampling the samples to be shown on the scatter plot. If `float`,
+            it should be between 0 and 1 and represents the proportion of the
+            original dataset. If `int`, it represents the number of samples
+            display on the scatter plot. If `None`, no subsampling will be
+            applied. by default, a 1000 samples or less will be displayed.
 
-    return viz.plot(
-        ax=ax,
-        scatter_kwargs=scatter_kwargs,
-        line_kwargs=line_kwargs,
-        residuals_kwargs=residuals_kwargs,
-    )
+        random_state : int or RandomState, default=None
+            Controls the randomness when `subsample` is not `None`.
+            See :term:`Glossary <random_state>` for details.
+
+        with_residuals : bool, default=False
+            Whether or not to display the residuals on the plot for each
+            sample.
+
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
+
+        scatter_kwargs : dict, default=None
+            Dictionary with keywords passed to the `matplotlib.pyplot.scatter`
+            call.
+
+        line_kwargs : dict, default=None
+            Dictionary with keyword passed to the `matplotlib.pyplot.plot`
+            call to draw the diagonal line.
+
+        residuals_kwargs : dict, default=None
+            Dictionary with keyword passed to the `matplotlib.pyplot.plot`
+            call to draw the residual lines. Only taken into account when
+            `with_residuals=True`.
+
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.PredictionErrorDisplay`
+            Object that stores the computed values.
+
+        See Also
+        --------
+        PredictionErrorDisplay : Prediction error visualization for regression.
+        PredictionDisplay.from_estimator : Prediction error visualization
+            given an estimator and some data.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import load_diabetes
+        >>> from sklearn.linear_model import Ridge
+        >>> from sklearn.metrics import PredictionErrorDisplay
+        >>> X, y = load_diabetes(return_X_y=True)
+        >>> ridge = Ridge().fit(X, y)
+        >>> y_pred = ridge.predict(X)
+        >>> disp = PredictionErrorDisplay.from_predictions(y, y_pred)
+        <...>
+        >>> plt.show()
+        """
+        check_matplotlib_support(f"{cls.__name__}.from_predictions")
+
+        random_state = check_random_state(random_state)
+
+        n_samples = len(y_true)
+        if isinstance(subsample, numbers.Integral):
+            if subsample <= 0:
+                raise ValueError(
+                    f"When an integer, subsample={subsample} should be positive."
+                )
+        elif isinstance(subsample, numbers.Real):
+            if subsample <= 0 or subsample >= 1:
+                raise ValueError(
+                    f"When a floating-point, subsample={subsample} should"
+                    " be in the (0, 1) range."
+                )
+            subsample = int(n_samples * subsample)
+
+        if subsample is not None and subsample < n_samples:
+            indices = random_state.choice(np.arange(n_samples), size=subsample)
+            y_true = _safe_indexing(y_true, indices, axis=0)
+            y_pred = _safe_indexing(y_pred, indices, axis=0)
+
+        viz = PredictionErrorDisplay(
+            y_true=y_true,
+            y_pred=y_pred,
+            scores=scores,
+            with_residuals=with_residuals,
+        )
+
+        return viz.plot(
+            ax=ax,
+            scatter_kwargs=scatter_kwargs,
+            line_kwargs=line_kwargs,
+            residuals_kwargs=residuals_kwargs,
+        )

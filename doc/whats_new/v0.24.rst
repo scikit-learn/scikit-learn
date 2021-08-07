@@ -730,11 +730,6 @@ Changelog
   :pr:`18405` by :user:`Thomas J. Fan <thomasjpfan>` and
   :user:`Yakov Pchelintsev <kyouma>`.
 
-- |Feature| :func:`metrics.plot_prediction_error` and
-  :class:`metrics.PredictionErrorDisplay` are added to plot the predicted and
-  actual values to assess the performance of a regressor.
-  :pr:`18020` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 :mod:`sklearn.model_selection`
 ..............................
 
