@@ -398,7 +398,7 @@ class LinearClassifierMixin(ClassifierMixin):
         Returns
         -------
         scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
-            Confidence scores per `(n_sample, n_classes)` combination. In the
+            Confidence scores per `(n_samples, n_classes)` combination. In the
             binary case, confidence score for `self.classes_[1]` where >0 means
             this class would be predicted.
         """
