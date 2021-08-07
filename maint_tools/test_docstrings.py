@@ -33,7 +33,6 @@ DOCSTRING_IGNORE_LIST = [
     "HalvingGridSearchCV",
     "HalvingRandomSearchCV",
     "HashingVectorizer",
-    "HistGradientBoostingClassifier",
     "HistGradientBoostingRegressor",
     "HuberRegressor",
     "IncrementalPCA",
