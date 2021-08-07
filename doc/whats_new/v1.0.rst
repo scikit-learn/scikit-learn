@@ -396,7 +396,10 @@ Changelog
 .........................
 
 - |Feature| Add :class:`metrics.PredictionErrorDisplay` to plot the predicted
-  and actual values to assess the performance of a regressor.
+  and actual values to assess the performance of a regressor. The display can
+  be created with the class methods
+  :func:`metrics.PredictionErrorDisplay.from_estimator` and
+  :func:`metrics.PredictionErrorDisplay.from_predictions`.
   :pr:`18020` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| Allow multiple scorers input to
