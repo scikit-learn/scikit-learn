@@ -486,7 +486,18 @@ class IsolationForest(OutlierMixin, BaseBagging):
         }
 
 
-# Lookup table used below in _average_path_length() for small samples
+# Lookup table used below in _average_path_length() for small samples.
+# Since the average path length equals 2*(H(n)-1), with H(n) the nth
+# harmonic number, it can be calculated as Sum(2/k, k=2...n) for n>=2
+# and is zero for n<=1.
+# To achieve correct results to full rounding precision, the list below
+# can be generated using SymPy (https://www.sympy.org) as follows (r is
+# the result)
+#
+# from sympy import Sum, Symbol
+# k = Symbol('k')
+# r = [Sum(2/k, (k, 2, max(1, i))).evalf(22).round(19) for i in range(52)]
+#
 _average_path_length_small = np.array(
     (
         0.0,
@@ -582,6 +593,10 @@ def _average_path_length(n_samples_leaf):
     n_samples_leaf = n_samples_leaf.reshape((1, -1))
     average_path_length = np.zeros(n_samples_leaf.shape)
 
+    # The path length is determined in different ways depending on
+    # n_samples_leaf. For small values, a lookup table is used, see above for a
+    # more detailed explanation. For large values, an asymptotic expansion is
+    # used as described below.
     mask_small = n_samples_leaf < len(_average_path_length_small)
     not_mask = ~mask_small
 
