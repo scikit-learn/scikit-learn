@@ -47,12 +47,23 @@ extensions = [
     "add_toctree_functions",
     "sphinx-prompt",
     "sphinxext.opengraph",
+    "matplotlib.sphinxext.plot_directive",
 ]
 
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
 
+# Produce `plot::` directives for examples that contain `import matplotlib` or
+# `from matplotlib import`.
+numpydoc_use_plots = True
+
+# Options for the `::plot` directive:
+# https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html
+plot_formats = [("png",)]
+plot_include_source = True
+plot_html_show_formats = False
+plot_html_show_source_link = False
 
 # For maths, use mathjax by default and svg if NO_MATHJAX env variable is set
 # (useful for viewing the doc offline)
