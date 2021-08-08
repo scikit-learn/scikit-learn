@@ -96,8 +96,14 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     See Also
     --------
+    sklearn.gaussian_process.GaussianProcessRegressor : Provides
+        an estimation of uncertainty regarding the prediction. In addition,
+        the kernel hyperparameter is automatically tuned without an external
+        grid-search.
     sklearn.linear_model.Ridge : Linear ridge regression.
-    sklearn.svm.SVR : Support Vector Regression implemented using libsvm.
+    sklearn.linear_model.RidgeCV : Ridge regression with built-in
+        cross-validation.
+    sklearn.svm.SVR : Support Vector Regression implemented using kernels.
 
     References
     ----------
