@@ -733,9 +733,9 @@ For each feature, the bin edges are computed during ``fit`` and together with
 the number of bins, they will define the intervals. Therefore, for the current
 example, these intervals are defined as:
 
- - feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
+ - feature 1: :math:`{[-\infty, 0), [0, 3), [3, \infty)}`
  - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
- - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
+ - feature 3: :math:`{[-\infty, 13), [13, \infty)}`
 
 Based on these bin intervals, ``X`` is transformed as follows::
 
