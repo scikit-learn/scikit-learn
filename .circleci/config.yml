@@ -158,6 +158,11 @@ jobs:
           key: v1-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
+      - store_artifacts:
+          path: wheelhouse
+          destination: wheelhouse
+
+
 
   deploy:
     docker:
