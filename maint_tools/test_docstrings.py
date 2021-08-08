@@ -13,7 +13,7 @@ DOCSTRING_IGNORE_LIST = [
     "BernoulliRBM",
     "Birch",
     "CalibratedClassifierCV",
-    "ClassifierChain",
+    #"ClassifierChain",
     "ColumnTransformer",
     "DecisionTreeRegressor",
     "DictVectorizer",
