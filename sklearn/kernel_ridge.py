@@ -103,7 +103,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     sklearn.linear_model.Ridge : Linear ridge regression.
     sklearn.linear_model.RidgeCV : Ridge regression with built-in
         cross-validation.
-    sklearn.svm.SVR : Support Vector Regression implemented using kernels.
+    sklearn.svm.SVR : Support Vector Regression accepting a large variety
+        of kernels.
 
     References
     ----------
