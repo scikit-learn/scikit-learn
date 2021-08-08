@@ -37,6 +37,9 @@ jobs:
     - script: |
         build_tools\\azure\\install.cmd
       displayName: 'Install'
+    - bash: |
+        echo "def test_foo(): pass" > test_foo.py
+        pytest test_foo.py --verbose
     - script: |
         build_tools\\azure\\test_script.cmd
       displayName: 'Test Library'
