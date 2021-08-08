@@ -405,6 +405,10 @@ def test_multi_output_exceptions():
     with pytest.raises(NotFittedError):
         moc.predict(y)
 
+    msg = "The base estimator should implement predict_proba method"
+    with pytest.raises(AttributeError, match=msg):
+        moc.predict_proba
+
     with pytest.raises(NotFittedError):
         moc.score(X, y)
 
@@ -414,7 +418,6 @@ def test_multi_output_exceptions():
     moc.fit(X, y)
     with pytest.raises(ValueError):
         moc.score(X, y_new)
-    msg = "The base estimator should implement predict_proba method"
     with pytest.raises(AttributeError, match=msg):
         moc.predict_proba
 
