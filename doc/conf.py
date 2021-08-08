@@ -60,7 +60,7 @@ numpydoc_use_plots = True
 
 # Options for the `::plot` directive:
 # https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html
-plot_formats = [("png",)]
+plot_formats = [("png", 80)]
 plot_include_source = True
 plot_html_show_formats = False
 plot_html_show_source_link = False
