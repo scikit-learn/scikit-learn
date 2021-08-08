@@ -406,7 +406,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
     def _check_predict_proba(self):
         if (
-            # Check `predict_proba` is available for all the fitted meta estimators
+            # Check `predict_proba` is available for all the fitted base estimators
             (
                 hasattr(self, "estimators_")
                 and not all(
@@ -414,7 +414,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
                     for estimator in self.estimators_
                 )
             )
-            # If not fitted yet, check `predict_proba` is available for the meta
+            # If not fitted yet, check `predict_proba` is available for the base
             # estimator
             or not hasattr(self.estimator, "predict_proba")
         ):
