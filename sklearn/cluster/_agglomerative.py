@@ -15,12 +15,13 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
-from ..metrics.pairwise import paired_distances, pairwise_distances
+from ..metrics.pairwise import paired_distances
 from ..neighbors import DistanceMetric
 from ..neighbors._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
+from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
@@ -68,21 +69,14 @@ def _fix_connectivity(X, connectivity, affinity):
             stacklevel=2,
         )
         # XXX: Can we do without completing the matrix?
-        for i in range(n_connected_components):
-            idx_i = np.where(labels == i)[0]
-            Xi = X[idx_i]
-            for j in range(i):
-                idx_j = np.where(labels == j)[0]
-                Xj = X[idx_j]
-                if affinity == "precomputed":
-                    D = X[np.ix_(idx_i, idx_j)]
-                else:
-                    D = pairwise_distances(Xi, Xj, metric=affinity)
-                ii, jj = np.where(D == np.min(D))
-                ii = ii[0]
-                jj = jj[0]
-                connectivity[idx_i[ii], idx_j[jj]] = True
-                connectivity[idx_j[jj], idx_i[ii]] = True
+        connectivity = _fix_connected_components(
+            X=X,
+            graph=connectivity,
+            n_connected_components=n_connected_components,
+            component_labels=labels,
+            metric=affinity,
+            mode="connectivity",
+        )
 
     return connectivity, n_connected_components
 
@@ -660,7 +654,6 @@ _TREE_BUILDERS = dict(
     average=_average_linkage,
     single=_single_linkage,
 )
-
 
 ###############################################################################
 # Functions for cutting hierarchical clustering tree

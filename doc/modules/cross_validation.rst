@@ -980,7 +980,7 @@ individual model is very fast.
 
 .. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
 
 .. topic:: References:
 
