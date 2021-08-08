@@ -751,6 +751,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Returns
         -------
         Y_prob : array-like of shape (n_samples, n_classes)
+            Returns fitted predictions, for each sample and class.
         """
         X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
