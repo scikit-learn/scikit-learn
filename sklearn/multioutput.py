@@ -97,7 +97,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         y : {array-like, sparse matrix} of shape (n_samples, n_outputs)
             Multi-output targets.
 
-        classes : list of ndarray of shape (n_outputs,)
+        classes : list of ndarray of shape (n_outputs,), default=None
             Each array is unique classes for one output in str/int.
             Can be obtained via
             ``[np.unique(y[:, i]) for i in range(y.shape[1])]``, where `y`
@@ -114,6 +114,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         Returns
         -------
         self : object
+            Returns fitted predictions, for each sample and class.
         """
         first_time = not hasattr(self, "estimators_")
         y = self._validate_data(X="no_validation", y=y, multi_output=True)
@@ -174,6 +175,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         Returns
         -------
         self : object
+            Returns fitted predictions, for each sample and class.
         """
 
         if not hasattr(self.estimator, "fit"):
@@ -315,6 +317,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         Returns
         -------
         self : object
+            Returns fitted predictions, for each sample and class.
         """
         super().partial_fit(X, y, sample_weight=sample_weight)
 
@@ -402,6 +405,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         Returns
         -------
         self : object
+            Returns fitted predictions, for each sample and class.
         """
         super().fit(X, Y, sample_weight, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
@@ -522,6 +526,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Returns fitted predictions, for each sample and class.
         """
         X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
 
@@ -726,6 +731,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Returns
         -------
         self : object
+            Returns fitted predictions, for each sample and class.
         """
         super().fit(X, Y)
         self.classes_ = [
@@ -882,7 +888,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     ClassifierChain : Equivalent for classification.
     MultioutputRegressor : Learns each output independently rather than
         chaining.
-
     """
 
     def fit(self, X, Y, **fit_params):
@@ -905,6 +910,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         Returns
         -------
         self : object
+            Returns fitted predictions, for each sample and class.
         """
         super().fit(X, Y, **fit_params)
         return self
