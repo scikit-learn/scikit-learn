@@ -7,7 +7,7 @@ Investigating the Iris dataset, we see that sepal length, petal
 length and petal width are highly correlated. Sepal width is
 less redundant. Matrix decomposition techniques can uncover
 these latent patterns. Applying rotations to the resulting
-components does not inherently improve the predictve value
+components does not inherently improve the predictive value
 of the derived latent space, but can help visualise their
 structure; here, for example, the varimax rotation, which
 is found by maximizing the squared variances of the weights,

@@ -33,6 +33,7 @@ def test_fetch_kddcup99_percent10(
     assert data.target.shape == (n_samples,)
     if as_frame:
         assert data.frame.shape == (n_samples, n_features + 1)
+    assert data.DESCR.startswith(".. _kddcup99_dataset:")
 
 
 def test_fetch_kddcup99_return_X_y(fetch_kddcup99_fxt):
