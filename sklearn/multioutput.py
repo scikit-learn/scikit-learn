@@ -683,6 +683,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     ----------
     Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
     Chains for Multi-label Classification", 2009.
+
     Examples
     --------
     >>> from sklearn.datasets import make_multilabel_classification
