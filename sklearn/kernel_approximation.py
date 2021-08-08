@@ -290,7 +290,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+                default=None
             Target values (None for unsupervised transformations).
 
         Returns
@@ -416,7 +416,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+                default=None
             Target values (None for unsupervised transformations).
 
         Returns
@@ -552,7 +552,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+                default=None
             Target values (None for unsupervised transformations).
 
         Returns

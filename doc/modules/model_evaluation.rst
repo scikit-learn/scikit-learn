@@ -437,7 +437,7 @@ In the multilabel case with binary label indicators::
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
 
