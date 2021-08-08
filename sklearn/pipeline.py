@@ -39,9 +39,8 @@ def _final_estimator_has(attr):
     Used together with `avaliable_if` in `Pipeline`."""
 
     def check(self):
-        if not hasattr(self._final_estimator, attr):
-            # raise original `AttributeError`
-            return getattr(self._final_estimator, attr)
+        # raise original `AttributeError` if `attr` does not exist
+        getattr(self._final_estimator, attr)
         return True
 
     return check
