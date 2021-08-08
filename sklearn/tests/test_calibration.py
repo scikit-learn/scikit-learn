@@ -188,7 +188,7 @@ def test_sample_weight_class_imbalanced(data, method, ensemble):
     sample_weight = 9 * (y == 0) + 1
 
     X_train, X_test, y_train, y_test, sw_train, sw_test = train_test_split(
-        X, y, sample_weight, random_state=42
+        X, y, sample_weight, stratify=y, random_state=42
     )
 
     base_estimator = LinearSVC(random_state=42)
