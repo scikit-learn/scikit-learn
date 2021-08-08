@@ -522,7 +522,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
 
 
 class TSNE(BaseEstimator):
-    """t-distributed Stochastic Neighbor Embedding.
+    """T-distributed Stochastic Neighbor Embedding.
 
     t-SNE [1] is a tool to visualize high-dimensional data. It converts
     similarities between data points to joint probabilities and tries
@@ -681,16 +681,16 @@ class TSNE(BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
-    Examples
+    See Also
     --------
-
-    >>> import numpy as np
-    >>> from sklearn.manifold import TSNE
-    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
-    ...                   init='random').fit_transform(X)
-    >>> X_embedded.shape
-    (4, 2)
+    sklearn.decomposition.PCA : Principal component analysis that is a linear
+        dimensionality reduction method.
+    sklearn.decomposition.KernelPCA : Non-linear dimensionality reduction using
+        kernels and PCA.
+    MDS : Manifold learning using multidimensional scaling.
+    Isomap : Manifold learning based on Isometric Mapping.
+    LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
+    SpectralEmbedding : Spectral embedding for non-linear dimensionality.
 
     References
     ----------
@@ -712,6 +712,16 @@ class TSNE(BaseEstimator):
 
     [5] Kobak, D., & Berens, P. (2019). The art of using t-SNE for single-cell
         transcriptomics. Nature Communications, 10(1), 1-14.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.manifold import TSNE
+    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
+    >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
+    ...                   init='random').fit_transform(X)
+    >>> X_embedded.shape
+    (4, 2)
     """
 
     # Control the number of exploration iterations with early_exaggeration on
@@ -1070,8 +1080,7 @@ class TSNE(BaseEstimator):
         return X_embedded
 
     def fit_transform(self, X, y=None):
-        """Fit X into an embedded space and return that transformed
-        output.
+        """Fit X into an embedded space and return that transformed output.
 
         Parameters
         ----------
@@ -1082,7 +1091,8 @@ class TSNE(BaseEstimator):
             or 'coo'. If the method is 'barnes_hut' and the metric is
             'precomputed', X may be a precomputed sparse graph.
 
-        y : Ignored
+        y : None
+            Ignored.
 
         Returns
         -------
@@ -1105,7 +1115,13 @@ class TSNE(BaseEstimator):
             or 'coo'. If the method is 'barnes_hut' and the metric is
             'precomputed', X may be a precomputed sparse graph.
 
-        y : Ignored
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        X_new : array of shape (n_samples, n_components)
+            Embedding of the training data in low-dimensional space.
         """
         self.fit_transform(X)
         return self

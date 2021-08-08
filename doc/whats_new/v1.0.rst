@@ -43,6 +43,10 @@ random sampling procedures.
 - |Fix| :class:`manifold.TSNE` now avoids numerical underflow issues during
   affinity matrix computation.
 
+- |Fix| :class:`manifold.Isomap` now connects disconnected components of the
+  neighbors graph along some minimum distance pairs, instead of changing
+  every infinite distances to zero.
+
 - |Fix| The splitting criterion of :class:`tree.DecisionTreeClassifier` and
   :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
   of rounding errors. Previously some extra spurious splits could occur.
@@ -161,6 +165,10 @@ Changelog
 - |Efficiency| :class:`cluster.MiniBatchKMeans` is now faster in multicore
   settings. :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Efficiency| :class:`cluster.OPTICS` can now cache the output of the
+  computation of the tree, using the `memory` parameter.  :pr:`19024` by
+  :user:`Frankie Robertson <frankier>`.
+
 - |Enhancement| The `predict` and `fit_predict` methods of
   :class:`cluster.AffinityPropagation` now accept sparse data type for input
   data.
@@ -188,6 +196,14 @@ Changelog
   mini batches processed. :pr:`17622`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |API| :func:`cluster.spectral_clustering` raises an improved error when passed
+  a `np.matrix`. :pr:`20560` by `Thomas Fan`_.
+
+- |Fix| :class:`cluster.AgglomerativeClustering` correctly connects components
+  when connectivity and affinity are both precomputed and the number
+  of connected components is greater than 1. :pr:`20597` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -212,6 +228,10 @@ Changelog
 :mod:`sklearn.covariance`
 .........................
 
+- |API| Deprecates the following keys in `cv_results_`: `'mean_score'`,
+  `'std_score'`, and `'split(k)_score` in favor of `'mean_test_score'`
+  `'std_test_score'`, and `'split(k)_test_score``. :pr:`20583` by `Thomas Fan`_.
+
 - |Fix| Adds arrays check to :func:`covariance.ledoit_wolf` and
   :func:`covariance.ledoit_wolf_shrinkage`
   :pr:`20416` by `Hugo Defois <defoishugo>`.
@@ -230,6 +250,13 @@ Changelog
 - |Fix| Shorten data file names in the openml tests to better support
   installing on Windows and its default 260 character limit on file names.
   :pr:`20209` by `Thomas Fan`_.
+
+- |Enhancement| Replace usages of ``__file__`` related to resource file I/O
+  with ``importlib.resources`` to avoid the assumption that these resource
+  files (e.g. ``iris.csv``) already exist on a filesystem, and by extension
+  to enable compatibility with tools such as ``PyOxidizer``.
+  :pr:`20297` by :user:`Jack Liu <jackzyliu>`
+
 
 :mod:`sklearn.decomposition`
 ............................
@@ -294,6 +321,11 @@ Changelog
   target. Additional private refactoring was performed.
   :pr:`19162` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Improve numerical precision for weights boosting in
+  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  to avoid underflows.
+  :pr:`10096` by :user:`Fenil Suchak <fenilsuchak>`.
+
 - |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
   :class:`~sklearn.ensemble.HistGradientBoostingRegressor` are no longer
   experimental. They are now considered stable and are subject to the same
@@ -321,9 +353,13 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| Fixed a bug in class:`feature_extraction.HashingVectorizer` where some
+- |Fix| Fixed a bug in :class:`feature_extraction.HashingVectorizer` where some
   input strings would result in negative indices in the transformed data.
   :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+
+- |Fix| Fixed a bug in :class:`feature_extraction.DictVectorizer` by raising an
+  error with unsupported value type.
+  :pr:`19520` by :user:`Jeff Zhao <kamiyaa>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -337,9 +373,24 @@ Changelog
   when the variance threshold is negative.
   :pr:`20207` by :user:`Tomohiro Endo <europeanplaice>`
 
+- |API| Deprecates `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`feature_selection.RFECV`. `grid_scores_` will be removed in
+  version 1.2.
+  :pr:`20161` by :user:`Shuhei Kayawari <wowry>` and :user:`arka204`.
+
+- |Enhancement| :func:`feature_selection.RFE.fit` accepts additional estimator
+  parameters that are passed directly to the estimator's `fit` method.
+  :pr:`20380` by :user:`Iván Pulido <ijpulidos>`, :user:`Felipe Bidu <fbidu>`,
+  :user:`Gil Rutter <g-rutter>`, and :user:`Adrin Jalali <adrinjalali>`.
+
 - |FIX| Fix a bug in :func:`isotonic.isotonic_regression` where the
   `sample_weight` passed by a user were overwritten during the fit.
   :pr:`20515` by :user:`Carsten Allefeld <allefeld>`.
+
+- |Fix| Change :func:`feature_selection.SequentialFeatureSelection` to
+  allow for unsupervised modelling so that the `fit` signature need not
+  do any `y` validation and allow for `y=None`.
+  :pr:`19568` by :user:`Shyam Desai <ShyamDesai>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -427,6 +478,11 @@ Changelog
   :pr:`19426` by :user:`Alexandre Gramfort <agramfort>` and
   :user:`Maria Telenczuk <maikia>`.
 
+- |Fix| Points with residuals equal to  ``residual_threshold`` are now considered
+  as inliers for :class:`linear_model.RANSACRegressor`. This allows fitting
+  a model perfectly on some datasets when `residual_threshold=0`.
+  :pr:`19499` by :user:`Gregory Strubel <gregorystrubel>`.
+
 - |Efficiency| The implementation of `fit` for `PolynomialFeatures` transformer
   is now faster. This is especially noticeable on large sparse input.
   :pr:`19734` by :user:`Fred Robinson <frrad>`.
@@ -439,11 +495,20 @@ Changelog
   :user:`Oliver Grisel <ogrisel>` and
   :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| The :func:`preprocessing.StandardScaler.inverse_transform` method
+  now raises error when the input data is 1D.
+  :pr:`19752` by :user:`Zhehao Liu <Max1993Liu>`.
+
 - |Feature| Added new solver `lbfgs` (available with `solver="lbfgs"`)
   and `positive` argument to class:`linear_model.Ridge`.
   When `positive` is set to True, forces the coefficients to be positive
   (only supported by `lbfgs`).
   :pr:`20231` by :user:`Toshihiro Nakae <tnakae>`.
+
+- |Fix| The dictionary `params` in :func:`linear_model.enet_path` and
+  :func:`linear_model.lasso_path` should only contain parameter of the
+  coordinate descent solver. Otherwise, an error will be raised.
+  :pr:`19391` by :user:`Shao Yang Hong <hongshaoyang>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -458,6 +523,12 @@ Changelog
   be scaled to have standard deviation 1e-4 in 1.2.
   :pr:`19491` by :user:`Dmitry Kobak <dkobak>`.
 
+- |Fix| :class:`manifold.Isomap` now uses `scipy.sparse.csgraph.shortest_path`
+  to compute the graph shortest path. It also connects disconnected components
+  of the neighbors graph along some minimum distance pairs, instead of changing
+  every infinite distances to zero. :pr:`20531` by `Roman Yurchak`_ and `Tom
+  Dupre la Tour`_.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -468,6 +539,14 @@ Changelog
   :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
+
+- |API| :class:`metrics.DetCurveDisplay` exposes two class methods
+  :func:`~metrics.DetCurveDisplay.from_estimator` and
+  :func:`~metrics.DetCurveDisplay.from_predictions` allowing to create
+  a confusion matrix plot using an estimator or the predictions.
+  :func:`metrics.plot_det_curve` is deprecated in favor of these two
+  class methods and will be removed in 1.2.
+  :pr:`19278` by `Guillaume Lemaitre`_.
 
 - |Enhancement| A fix to raise an error in :func:`metrics.hinge_loss` when
   ``pred_decision`` is 1d whereas it is a multiclass classification or when
@@ -534,7 +613,6 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
-
 :mod:`sklearn.neighbors`
 ........................
 
@@ -552,6 +630,13 @@ Changelog
   and :class:`neighbors.RadiusNeighborsRegressor` does not validate `weights` in
   `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
   :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor` now correct supports continued training
+  when loading from a pickled file. :pr:`19631` by `Thomas Fan`_.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -598,6 +683,11 @@ Changelog
   supporting sparse matrix and raise the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| The `fit` method of :class:`preprocessing.OrdinalEncoder` will not
+  raise error when `handle_unknown='ignore'` and unknown categories are given
+  to `fit`.
+  :pr:`19906` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 - |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
@@ -610,6 +700,9 @@ Changelog
   :class:`preprocessing.PolynomialFeatures` is deprecated in favor of
   `n_features_in_` and will be removed in 1.2. :pr:`20240` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Efficiency| `preprocessing.StandardScaler` is faster and more memory
+  efficient. :pr:`20652` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
@@ -662,6 +755,10 @@ Changelog
   be removed in 1.2. Used `pytest.warns` context manager instead. Note that
   these functions were not documented and part from the public API.
   :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
+
+- |API| Fixed several bugs in :func:`utils.graph.graph_shortest_path`, which is
+  now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
+  by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.validation`
 .........................
