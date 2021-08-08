@@ -151,8 +151,8 @@ Changelog
   :pr:`20087` by :user:`Clément Fauchereau <clement-f>`.
 
 - |Fix| Fixed ::class:`calibration.CalibratedClassifierCV` to handle correctly
-  `sample_weight` when `ensemble=False`. :pr:`20638` by
-  :user:`Julien Bohné <JulienB-78>`
+  `sample_weight` when `ensemble=False`.
+  :pr:`20638` by :user:`Julien Bohné <JulienB-78>`.
 
 :mod:`sklearn.cluster`
 ......................
