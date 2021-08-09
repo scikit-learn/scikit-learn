@@ -364,10 +364,12 @@ def _estimator_has(attr):
 
     def check(self):
         _check_refit(self, attr)
-        # returns True or raise an AttributeError if `attr` doe no exist
         if hasattr(self, "best_estimator_"):
-            return True or getattr(self.best_estimator_, attr)
-        return True or getattr(self.best_estimator, attr)
+            # raise an AttributeError if `attr` does not exist
+            getattr(self.best_estimator_, attr)
+            return True
+        getattr(self.best_estimator, attr)
+        return True
 
     return check
 
@@ -607,7 +609,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     @property
     def classes_(self):
-        available_if(_estimator_has("classes_"))
+        _estimator_has("classes_")(self)
         return self.best_estimator_.classes_
 
     def _run_search(self, evaluate_candidates):
