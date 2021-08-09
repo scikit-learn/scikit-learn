@@ -42,7 +42,6 @@ DOCSTRING_IGNORE_LIST = [
     "KNeighborsTransformer",
     "KernelDensity",
     "KernelPCA",
-    "KernelRidge",
     "LabelBinarizer",
     "LabelPropagation",
     "LabelSpreading",
