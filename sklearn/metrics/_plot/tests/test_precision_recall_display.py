@@ -21,7 +21,7 @@ pytestmark = pytest.mark.filterwarnings(
 )
 
 
-def test_confusion_matrix_display_validation(pyplot):
+def test_precision_recall_display_validation(pyplot):
     """Check that we raise the proper error when validating parameters."""
     X, y = make_classification(
         n_samples=100, n_informative=5, n_classes=5, random_state=0
@@ -39,7 +39,7 @@ def test_confusion_matrix_display_validation(pyplot):
     with pytest.raises(ValueError, match=err_msg):
         PrecisionRecallDisplay.from_estimator(regressor, X, y)
 
-    err_msg = "SVC should be a binary classifier"
+    err_msg = "Expected 'estimator' to be a binary classifier, but got SVC"
     with pytest.raises(ValueError, match=err_msg):
         PrecisionRecallDisplay.from_estimator(classifier, X, y)
 
