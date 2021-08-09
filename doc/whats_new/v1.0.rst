@@ -395,6 +395,13 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
+- |Enhancement| Add `max_samples` parameter in
+  :func:`inspection._permutation_importance`. It enables to draw a subset of
+  the samples to compute the permutation importance. This is useful to
+  keep the method tractable when evaluating feature importance on
+  large datasets.
+  :pr:`20431` by :user:`Oliver Pfaffel <o1iv3r>`.
+
 - |Fix| Allow multiple scorers input to
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
