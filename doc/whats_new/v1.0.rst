@@ -670,7 +670,7 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
-  raises a warning when it is unable to find a lamda due to low variance
+  raises a warning when it is unable to find a lambda due to low variance
   in the transformed data. :pr:`20653` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
