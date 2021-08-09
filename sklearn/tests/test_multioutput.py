@@ -220,7 +220,7 @@ def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
-    err_msg = "The base estimator should implement predict_proba method"
+    err_msg = "probability estimates are not available for loss='hinge'"
     with pytest.raises(AttributeError, match=err_msg):
         multi_target_linear.predict_proba(X)
 
@@ -438,7 +438,7 @@ def test_multi_output_delegate_predict_proba():
     # A base estimator without `predict_proba` should raise an AttributeError
     moc = MultiOutputClassifier(LinearSVC())
     assert not hasattr(moc, "predict_proba")
-    msg = "The base estimator should implement predict_proba method"
+    msg = "'LinearSVC' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
         moc.predict_proba(X)
     moc.fit(X, y)
