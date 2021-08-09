@@ -96,10 +96,9 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     See Also
     --------
-    sklearn.gaussian_process.GaussianProcessRegressor : Provides
-        an estimation of uncertainty regarding the prediction. In addition,
-        the kernel hyperparameter is automatically tuned without an external
-        grid-search.
+    sklearn.gaussian_process.GaussianProcessRegressor : Gaussian
+        Process regressor providing automatic kernel hyperparameters
+        tuning and predictions uncertainty.
     sklearn.linear_model.Ridge : Linear ridge regression.
     sklearn.linear_model.RidgeCV : Ridge regression with built-in
         cross-validation.
