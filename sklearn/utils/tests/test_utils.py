@@ -29,7 +29,9 @@ from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils import _to_object_array
+from sklearn.utils.fixes import parse_version
 from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils._testing import SkipTest
 from sklearn import config_context
 
 # toy array
@@ -462,6 +464,23 @@ def test_safe_indexing_container_axis_0_unsupported_type():
     err_msg = "String indexing is not supported with 'axis=0'"
     with pytest.raises(ValueError, match=err_msg):
         _safe_indexing(array, indices, axis=0)
+
+
+def test_safe_indexing_pandas_no_settingwithcopy_warning():
+    # Using safe_indexing with an array-like indexer gives a copy of the
+    # DataFrame -> ensure it doesn't raise a warning if modified
+    pd = pytest.importorskip("pandas")
+    if parse_version(pd.__version__) < parse_version("0.25.0"):
+        raise SkipTest(
+            "Older pandas version still raise a SettingWithCopyWarning warning"
+        )
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
+    subset = _safe_indexing(X, [0, 1], axis=0)
+    with pytest.warns(None) as record:
+        subset.iloc[0, 0] = 10
+    assert len(record) == 0, f"{[str(rec.message) for rec in record]}"
+    # The original dataframe is unaffected by the assignment on the subset:
+    assert X.iloc[0, 0] == 1
 
 
 @pytest.mark.parametrize(
