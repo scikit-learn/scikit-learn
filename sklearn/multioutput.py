@@ -267,7 +267,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         See :term:`Glossary <n_jobs>` for more details.
 
         .. versionchanged:: 0.20
-           `n_jobs` default changed from `1` to `None`
+            `n_jobs` default changed from `1` to `None`.
 
     Attributes
     ----------
@@ -348,7 +348,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         See :term:`Glossary <n_jobs>` for more details.
 
         .. versionchanged:: 0.20
-           `n_jobs` default changed from 1 to None
+            `n_jobs` default changed from `1` to `None`.
 
     Attributes
     ----------
