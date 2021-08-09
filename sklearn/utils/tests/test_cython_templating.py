@@ -4,6 +4,7 @@ import sklearn
 
 
 def test_files_generated_by_templates_are_git_ignored():
+    """Check the consistence of the files generated from template files."""
     gitignore_file = pathlib.Path(sklearn.__file__).parent.parent / ".gitignore"
     if not gitignore_file.exists():
         pytest.skip("Tests are not run from the source folder")

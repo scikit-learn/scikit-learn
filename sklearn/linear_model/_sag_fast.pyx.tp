@@ -19,7 +19,7 @@ Authors: Danny Sullivan <dbsullivan23@gmail.com>
 License: BSD 3 clause
 """
 
-# name_suffix, c_type
+# name_suffix, c_type, np_type
 dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
 

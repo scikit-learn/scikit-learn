@@ -1,7 +1,7 @@
 {{py:
 
 """
-Efficient (dense) parameter vector implementation for linear models. 
+Efficient (dense) parameter vector implementation for linear models.
 
 Template file for easily generate fused types consistent code using Tempita
 (https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
@@ -37,9 +37,9 @@ cdef class WeightVector{{name_suffix}}(object):
     cdef int n_features
     cdef {{c_type}} sq_norm
 
-    cdef void add(self,  {{c_type}} *x_data_ptr, int *x_ind_ptr,
+    cdef void add(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
                   int xnnz, {{c_type}} c) nogil
-    cdef void add_average(self,  {{c_type}} *x_data_ptr, int *x_ind_ptr,
+    cdef void add_average(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
                           int xnnz, {{c_type}} c, {{c_type}} num_iter) nogil
     cdef {{c_type}} dot(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
                     int xnnz) nogil
