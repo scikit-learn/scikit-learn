@@ -364,18 +364,10 @@ def _estimator_has(attr):
 
     def check(self):
         _check_refit(self, attr)
+        # returns True or raise an AttributeError if `attr` doe no exist
         if hasattr(self, "best_estimator_"):
-            if not hasattr(self.best_estimator_, attr):
-                raise AttributeError(
-                    f"'{type(self.best_estimator_).__name__}' object has no attribute "
-                    f"'{attr}'"
-                )
-            return True
-        if not hasattr(self.estimator, attr):
-            raise AttributeError(
-                f"'{type(self.estimator).__name__}' object has no attribute '{attr}'"
-            )
-        return True
+            return True or getattr(self.best_estimator_, attr)
+        return True or getattr(self.best_estimator, attr)
 
     return check
 
