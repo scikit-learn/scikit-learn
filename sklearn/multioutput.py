@@ -212,8 +212,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         return self
 
     def predict(self, X):
-        """Predict multi-output variable using a model
-         trained for each target variable.
+        """Predict multi-output variable using model for each target variable.
 
         Parameters
         ----------
