@@ -370,7 +370,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
     >>> from sklearn.neighbors import KNeighborsClassifier
-
     >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
     >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X, y)
     >>> clf.predict(X[-2:])
@@ -392,7 +391,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             The target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
+            Sample weights. If `None`, then samples are equally weighted.
             Only supported if the underlying classifier supports sample
             weights.
 
