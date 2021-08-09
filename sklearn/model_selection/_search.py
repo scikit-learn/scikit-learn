@@ -368,7 +368,8 @@ def _estimator_has(attr):
             # raise an AttributeError if `attr` does not exist
             getattr(self.best_estimator_, attr)
             return True
-        getattr(self.best_estimator, attr)
+        # raise an AttributeError if `attr` does not exist
+        getattr(self.estimator, attr)
         return True
 
     return check
