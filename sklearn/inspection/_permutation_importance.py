@@ -11,7 +11,6 @@ from ..utils import Bunch, _safe_indexing
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.fixes import delayed
-from ..utils._testing import ignore_warnings
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
