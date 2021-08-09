@@ -887,7 +887,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     See Also
     --------
     ClassifierChain : Equivalent for classification.
-    MultioutputRegressor : Learns each output independently rather than
+    MultiOutputRegressor : Learns each output independently rather than
         chaining.
     """
 
