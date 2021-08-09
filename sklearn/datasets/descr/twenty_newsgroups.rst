@@ -219,6 +219,13 @@ Some other classifiers cope better with this harder version of the task. Try
 running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
 the ``--filter`` option to compare the results.
 
+.. topic:: Data Considerations
+The Cleveland Indians is a major league baseball team based in Cleveland, Ohio, USA. In December 2020, it was reported that 
+"After several months of discussion sparked by the death of George Floyd and a national reckoning over race and colonialism, 
+the Cleveland Indians have decided to change their name." Team owner Paul Dolan "did make it clear that the team will not make its informal nickname 
+-- the Tribe -- its new team name." “It’s not going to be a half-step away from the Indians,” Dolan said. “We will not have a Native American-themed name.”
+.. _`Reference`:https://www.mlb.com/news/cleveland-indians-team-name-change
+
 .. topic:: Recommendation
 
   When evaluating text classifiers on the 20 Newsgroups data, you
