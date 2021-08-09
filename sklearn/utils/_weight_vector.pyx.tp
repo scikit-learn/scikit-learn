@@ -195,9 +195,7 @@ cdef class WeightVector{{name_suffix}}(object):
         self.wscale *= c
         self.sq_norm *= (c * c)
 
-        cdef {{c_type}} threshold = {{reset_wscale_threshold}}
-
-        if self.wscale < threshold:
+        if self.wscale < {{reset_wscale_threshold}}:
             self.reset_wscale()
 
     cdef void reset_wscale(self) nogil:
