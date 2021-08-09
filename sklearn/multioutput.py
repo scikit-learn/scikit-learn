@@ -343,7 +343,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         using ``n_jobs > 1`` can result in slower performance due
         to the parallelism overhead.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``None`` means `1` unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all available processes / threads.
         See :term:`Glossary <n_jobs>` for more details.
 
