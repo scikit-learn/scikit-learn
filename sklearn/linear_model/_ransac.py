@@ -97,7 +97,7 @@ class RANSACRegressor(
 
         .. deprecated :: 1.0
            Not setting `min_samples` explicitly will raise an error in version
-           1.2 for model other than
+           1.2 for models other than
            :class:`~sklearn.linear_model.LinearRegression`. To keep the old
            default behavior, set `min_samples=X.shape[1] + 1` explicitly.
 
@@ -301,9 +301,9 @@ class RANSACRegressor(
             if not isinstance(base_estimator, LinearRegression):
                 # FIXME: in 1.2, turn this warning into an error
                 warnings.warn(
-                    "From version 1.2, `max_samples` needs to be explicitely "
+                    "From version 1.2, `min_samples` needs to be explicitely "
                     "set otherwise an error will be raised. To keep the "
-                    "current behavior, you need to set `max_samples` to "
+                    "current behavior, you need to set `min_samples` to "
                     f"`X.shape[1] + 1 that is {X.shape[1] + 1}",
                     FutureWarning,
                 )
