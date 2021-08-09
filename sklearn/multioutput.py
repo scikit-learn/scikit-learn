@@ -628,7 +628,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         The base estimator from which the classifier chain is built.
 
     order : array-like of shape (n_outputs,) or 'random', default=None
-        If None, the order will be determined by the order of columns in
+        If `None`, the order will be determined by the order of columns in
         the label matrix Y.::
 
             order = [0, 1, 2, ..., Y.shape[1] - 1]
@@ -642,7 +642,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         column 1 in the Y matrix, the second model will make predictions
         for column 3, etc.
 
-        If order is 'random' a random ordering will be used.
+        If order is `random` a random ordering will be used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines whether to use cross validated predictions or true
@@ -684,7 +684,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     See Also
     --------
     RegressorChain : Equivalent for regression.
-    MultioutputClassifier : Classifies each output independently rather than
+    MultiOutputClassifier : Classifies each output independently rather than
         chaining.
 
     References
@@ -822,7 +822,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         The base estimator from which the classifier chain is built.
 
     order : array-like of shape (n_outputs,) or 'random', default=None
-        If None, the order will be determined by the order of columns in
+        If `None`, the order will be determined by the order of columns in
         the label matrix Y.::
 
             order = [0, 1, 2, ..., Y.shape[1] - 1]
