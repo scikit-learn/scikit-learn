@@ -680,7 +680,7 @@ Changelog
 - |Enhancement| multilabel-indicator target is supported by
   :class:`ensemble.StackingClassifier`.
   :pr:`20424` by :user:`Nicolas Peretti <nicoperetti>`,
-  :user: `Nestor Navarro <nestornav>`, :user `Nati Tomattis <natitomattis>`.
+  :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
