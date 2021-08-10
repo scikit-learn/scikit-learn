@@ -350,7 +350,6 @@ def _warn_about_fit_failures(results, error_score):
     fit_errors = [
         result["fit_error"] for result in results if result["fit_error"] is not None
     ]
-    
     if fit_errors:
         num_failed_fits = len(fit_errors)
         num_fits = len(results)
