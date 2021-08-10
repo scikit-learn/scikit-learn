@@ -1,5 +1,6 @@
 """Tests for input validation functions"""
 
+import numbers
 import warnings
 import os
 import re
@@ -1004,43 +1005,95 @@ def test_retrieve_samples_from_non_standard_shape():
         _num_samples(TestNoLenWeirdShape())
 
 
-@pytest.mark.parametrize(
-    "x, target_type, min_val, max_val", [(3, int, 2, 5), (2.5, float, 2, 5)]
-)
-def test_check_scalar_valid(x, target_type, min_val, max_val):
+@pytest.mark.parametrize("x", [2, 3, 2.5, 5])
+def test_check_scalar_valid(x):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
     with pytest.warns(None) as record:
         check_scalar(
-            x, "test_name", target_type=target_type, min_val=min_val, max_val=max_val
+            x,
+            "test_name",
+            target_type=numbers.Real,
+            min_val=2,
+            strictly_greater_min_val=False,
+            max_val=5,
+            strictly_less_max_val=False,
         )
     assert len(record) == 0
 
 
 @pytest.mark.parametrize(
-    "x, target_name, target_type, min_val, max_val, err_msg",
+    "x, target_name, target_type, min_val, strictly_gt, max_val, strictly_lt, err_msg",
     [
         (
             1,
             "test_name1",
             float,
             2,
+            False,
             4,
+            False,
             TypeError(
                 "`test_name1` must be an instance of "
                 "<class 'float'>, not <class 'int'>."
             ),
         ),
-        (1, "test_name2", int, 2, 4, ValueError("`test_name2`= 1, must be >= 2.")),
-        (5, "test_name3", int, 2, 4, ValueError("`test_name3`= 5, must be <= 4.")),
+        (
+            1,
+            "test_name2",
+            int,
+            2,
+            False,
+            4,
+            False,
+            ValueError("`test_name2`= 1, must be >= 2."),
+        ),
+        (
+            5,
+            "test_name3",
+            int,
+            2,
+            False,
+            4,
+            False,
+            ValueError("`test_name3`= 5, must be <= 4."),
+        ),
+        (
+            2,
+            "test_name4",
+            int,
+            2,
+            True,
+            4,
+            False,
+            ValueError("`test_name4`= 2, must be > 2."),
+        ),
+        (
+            4,
+            "test_name5",
+            int,
+            2,
+            False,
+            4,
+            True,
+            ValueError("`test_name5`= 4, must be < 4."),
+        ),
     ],
 )
-def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val, err_msg):
+def test_check_scalar_invalid(
+    x, target_name, target_type, min_val, strictly_gt, max_val, strictly_lt, err_msg
+):
     """Test that check_scalar returns the right error if a wrong input is
     given"""
     with pytest.raises(Exception) as raised_error:
         check_scalar(
-            x, target_name, target_type=target_type, min_val=min_val, max_val=max_val
+            x,
+            target_name,
+            target_type=target_type,
+            min_val=min_val,
+            strictly_greater_min_val=strictly_gt,
+            max_val=max_val,
+            strictly_less_max_val=strictly_lt,
         )
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)

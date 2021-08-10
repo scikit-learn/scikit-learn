@@ -5,12 +5,15 @@
 
 # License: BSD 3 clause
 
-import numpy as np
+import numbers
 import warnings
+
+import numpy as np
 
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_random_state
+from ..utils import check_scalar
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
@@ -132,8 +135,6 @@ def affinity_propagation(
 
     if preference is None:
         preference = np.median(S)
-    if damping < 0.5 or damping >= 1:
-        raise ValueError("damping must be >= 0.5 and < 1")
 
     preference = np.array(preference)
 
@@ -455,6 +456,19 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
                 "Affinity must be 'precomputed' or 'euclidean'. Got %s instead"
                 % str(self.affinity)
             )
+
+        check_scalar(
+            self.damping,
+            "damping",
+            numbers.Real,
+            min_val=0.5,
+            max_val=1,
+            strictly_less_max_val=True,
+        )
+        check_scalar(self.max_iter, "max_iter", numbers.Integral, min_val=1)
+        check_scalar(
+            self.convergence_iter, "convergence_iter", numbers.Integral, min_val=1
+        )
 
         (
             self.cluster_centers_indices_,
