@@ -674,6 +674,8 @@ def test_print_elapsed_time(message, expected, capsys, monkeypatch):
         ("", False),
         ("nan", False),
         ([np.nan], False),
+        (9867966753463435747313673, False),  # Python int that overflows with C type
+        (9867966753463435747313673.0, False),  # Python int that overflows with C type
     ],
 )
 def test_is_scalar_nan(value, result):

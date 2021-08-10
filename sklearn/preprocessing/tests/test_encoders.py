@@ -1351,3 +1351,24 @@ def test_ordinal_encoder_handle_unknown_string_dtypes(X_train, X_test):
 
     X_trans = enc.transform(X_test)
     assert_allclose(X_trans, [[-9, 0]])
+
+
+def test_ordinal_encoder_python_integer():
+    """Check that `OrdinalEncoder` accept Python integer that are potentially
+    larger than 64 bits.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20721
+    """
+    X = np.array(
+        [
+            44253463435747313673,
+            9867966753463435747313673,
+            44253462342215747313673,
+            442534634357764313673,
+        ]
+    ).reshape(-1, 1)
+    X.sort(axis=0)
+    encoder = OrdinalEncoder().fit(X)
+    assert_array_equal(encoder.categories_, X.T)
+    X_trans = encoder.transform(X)
+    assert_array_equal(X_trans, np.arange(X.shape[0])[:, np.newaxis])
