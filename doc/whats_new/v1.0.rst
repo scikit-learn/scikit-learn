@@ -719,7 +719,7 @@ Changelog
 - |Fix| Fix a regression in :class:`preprocessing.OrdinalEncoder` where large
   Python numeric would raise an error due to overflow when casted to C type
   (`np.float64` or `np.int64`).
-  :pr:`xxx` by `Guillaume Lemaitre`_.
+  :pr:`20727` by `Guillaume Lemaitre`_.
 
 :mod:`sklearn.tree`
 ...................
@@ -789,7 +789,7 @@ Changelog
 - |Fix| Fix a regression in :func:`utils.scalar_is_nan` where large Python
   numerical would raise an error due to overflow in C types (`np.float64` or
   `np.int64`). Instead, we rely on `math.isnan` in these cases.
-  :pr:`xxx` by `Guillaume Lemaitre`_.
+  :pr:`20727` by `Guillaume Lemaitre`_.
 
 :mod:`sklearn.validation`
 .........................
