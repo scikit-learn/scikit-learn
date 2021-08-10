@@ -86,8 +86,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
     @_available_if_estimator_has("partial_fit")
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        """Incrementally fit the model to data.
-        Fit a separate model for each output variable.
+        """Incrementally fit a separate model for each class output.
 
         Parameters
         ----------
@@ -150,8 +149,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         return self
 
     def fit(self, X, y, sample_weight=None, **fit_params):
-        """Fit the model to data.
-        Fit a separate model for each output variable.
+        """Fit the model to data, separately for each output variable.
 
         Parameters
         ----------
@@ -280,6 +278,12 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    RegressorChain : Equivalent for regression.
+    MultiOutputClassifier : Classifies each output independently rather than
+        chaining.
+
     Examples
     --------
     >>> import numpy as np
@@ -297,8 +301,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
 
     @_available_if_estimator_has("partial_fit")
     def partial_fit(self, X, y, sample_weight=None):
-        """Incrementally fit the model to data.
-        Fit a separate model for each output variable.
+        """Incrementally fit the model to data, for each output variable.
 
         Parameters
         ----------
@@ -364,6 +367,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    RegressorChain : Equivalent for regression.
+    MultiOutputRegressor : Fits one regressor per target variable.
+
     Examples
     --------
     >>> import numpy as np
@@ -411,8 +419,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
     @property
     def predict_proba(self):
-        """Probability estimates.
-        Returns prediction probabilities for each class of each output.
+        """Returns prediction probabilities for each class of each output.
 
         This method will raise a ``ValueError`` if any of the
         estimators do not have ``predict_proba``.
@@ -448,7 +455,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         return results
 
     def score(self, X, y):
-        """Returns the mean accuracy on the given test data and labels.
+        """Return the mean accuracy on the given test data and labels.
 
         Parameters
         ----------
@@ -461,7 +468,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         Returns
         -------
         scores : float
-            accuracy_score of self.predict(X) versus y.
+            Mean accuracy, `accuracy_score`, of self.predict(X) versus y.
         """
         check_is_fitted(self)
         n_outputs_ = len(self.estimators_)
@@ -870,6 +877,12 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    ClassifierChain : Equivalent for classification.
+    MultiOutputRegressor : Learns each output independently rather than
+        chaining.
+
     Examples
     --------
     >>> from sklearn.multioutput import RegressorChain
@@ -881,12 +894,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     array([[0., 2.],
            [1., 1.],
            [2., 0.]])
-
-    See Also
-    --------
-    ClassifierChain : Equivalent for classification.
-    MultiOutputRegressor : Learns each output independently rather than
-        chaining.
     """
 
     def fit(self, X, Y, **fit_params):
