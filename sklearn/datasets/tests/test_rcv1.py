@@ -1,6 +1,5 @@
 """Test the rcv1 loader, if the data is available,
-or if specifically requested via environment variable
-(e.g. for travis cron job)."""
+or if specifically requested via environment variable."""
 
 import scipy.sparse as sp
 import numpy as np

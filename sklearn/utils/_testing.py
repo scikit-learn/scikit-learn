@@ -442,9 +442,6 @@ try:
     import pytest
 
     skip_if_32bit = pytest.mark.skipif(_IS_32BIT, reason="skipped on 32bit platforms")
-    skip_travis = pytest.mark.skipif(
-        os.environ.get("TRAVIS") == "true", reason="skip on travis"
-    )
     fails_if_pypy = pytest.mark.xfail(IS_PYPY, reason="not compatible with PyPy")
     skip_if_no_parallel = pytest.mark.skipif(
         not joblib.parallel.mp, reason="joblib is in serial mode"

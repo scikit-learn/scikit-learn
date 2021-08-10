@@ -1,6 +1,5 @@
 """Test  kddcup99 loader, if the data is available,
-or if specifically requested via environment variable
-(e.g. for travis cron job).
+or if specifically requested via environment variable.
 
 Only 'percent10' mode is tested, as the full data
 is too big to use in unit-testing.

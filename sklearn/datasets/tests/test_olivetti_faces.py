@@ -1,6 +1,5 @@
 """Test Olivetti faces fetcher, if the data is available,
-or if specifically requested via environment variable
-(e.g. for travis cron job)."""
+or if specifically requested via environment variable."""
 
 import numpy as np
 
