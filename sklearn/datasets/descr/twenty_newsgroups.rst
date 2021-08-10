@@ -220,6 +220,7 @@ running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_ex
 the ``--filter`` option to compare the results.
 
 .. topic:: Data Considerations
+
 The Cleveland Indians is a major league baseball team based in Cleveland, Ohio, USA. In December 2020, it was reported that 
 "After several months of discussion sparked by the death of George Floyd and a national reckoning over race and colonialism, 
 the Cleveland Indians have decided to change their name." Team owner Paul Dolan "did make it clear that the team will not make its informal nickname 
