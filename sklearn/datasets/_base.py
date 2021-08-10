@@ -1121,6 +1121,19 @@ def load_boston(*, return_X_y=False):
 
     Read more in the :ref:`User Guide <boston_dataset>`.
 
+    .. warning::
+       The Boston housing prices dataset has an ethical problem: as
+       investigated in [1]_, the authors of this dataset engineered a
+       non-invertible variable "B" assuming that racial self-segregation had a
+       positive impact on house prices [2]_. Furthermore the goal of the
+       research that led to the creation of this dataset was to study the
+       impact of air quality but it did not give adequate demonstration of the
+       validity of this assumption.
+
+       The scikit-learn maintainers therefore strongly discourage the use of
+       this dataset unless the purpose of the code is to study and educate
+       about ethical issues in data science and machine learning.
+
     Parameters
     ----------
     return_X_y : bool, default=False
@@ -1156,6 +1169,15 @@ def load_boston(*, return_X_y=False):
     -----
         .. versionchanged:: 0.20
             Fixed a wrong data point at [445, 0].
+
+    References
+    ----------
+    .. [1] `Racist data destruction? M Carlisle,
+            <https://medium.com/@docintangible/racist-data-destruction-113e3eff54a8>`_
+    .. [2] `Harrison Jr, David, and Daniel L. Rubinfeld.
+           "Hedonic housing prices and the demand for clean air."
+           Journal of environmental economics and management 5.1 (1978): 81-102.
+           <https://www.researchgate.net/publication/4974606_Hedonic_housing_prices_and_the_demand_for_clean_air>`_
 
     Examples
     --------
