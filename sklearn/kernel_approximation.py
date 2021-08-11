@@ -254,6 +254,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     PolynomialCountSketch : Polynomial kernel approximation via Tensor Sketch.
     SkewedChi2Sampler : Approximate feature map for
         "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
 
     Notes
     -----
