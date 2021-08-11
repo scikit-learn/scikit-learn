@@ -170,6 +170,7 @@ def test_radius_neighborhood_factory_method_wrong_usages():
 
 
 @fails_if_unstable_openblas
+@pytest.mark.filterwarnings("ignore:Constructing a DIA matrix")
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction, FastSquaredPairwiseDistancesReduction",
     [
