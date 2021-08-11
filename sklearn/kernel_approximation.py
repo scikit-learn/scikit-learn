@@ -684,7 +684,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    kernel : string or callable, default='rbf'
+    kernel : str or callable, default='rbf'
         Kernel map to be approximated. A callable should accept two arguments
         and the keyword arguments passed to this object as `kernel_params`, and
         should return a floating point number.
@@ -745,6 +745,26 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    PolynomialCountSketch : Polynomial kernel approximation via Tensor Sketch.
+    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+        features.
+    SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
+
+    References
+    ----------
+    * Williams, C.K.I. and Seeger, M.
+      "Using the Nystroem method to speed up kernel machines",
+      Advances in neural information processing systems 2001
+
+    * T. Yang, Y. Li, M. Mahdavi, R. Jin and Z. Zhou
+      "Nystroem Method vs Random Fourier Features: A Theoretical and Empirical
+      Comparison",
+      Advances in Neural Information Processing Systems 2012
+
     Examples
     --------
     >>> from sklearn import datasets, svm
@@ -760,25 +780,6 @@ class Nystroem(TransformerMixin, BaseEstimator):
     LinearSVC()
     >>> clf.score(data_transformed, y)
     0.9987...
-
-    References
-    ----------
-    * Williams, C.K.I. and Seeger, M.
-      "Using the Nystroem method to speed up kernel machines",
-      Advances in neural information processing systems 2001
-
-    * T. Yang, Y. Li, M. Mahdavi, R. Jin and Z. Zhou
-      "Nystroem Method vs Random Fourier Features: A Theoretical and Empirical
-      Comparison",
-      Advances in Neural Information Processing Systems 2012
-
-
-    See Also
-    --------
-    RBFSampler : An approximation to the RBF kernel using random Fourier
-        features.
-
-    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
 
     def __init__(
@@ -818,6 +819,11 @@ class Nystroem(TransformerMixin, BaseEstimator):
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
                 default=None
             Target values (None for unsupervised transformations).
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)

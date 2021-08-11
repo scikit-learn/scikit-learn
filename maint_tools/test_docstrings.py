@@ -65,7 +65,6 @@ DOCSTRING_IGNORE_LIST = [
     "NearestCentroid",
     "NeighborhoodComponentsAnalysis",
     "Normalizer",
-    "Nystroem",
     "OPTICS",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
