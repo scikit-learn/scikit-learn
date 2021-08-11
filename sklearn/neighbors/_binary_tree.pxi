@@ -144,9 +144,9 @@
 
 cimport cython
 cimport numpy as np
-from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
+from libc.math cimport fabs, sqrt, exp, cos, pow, log, log2, lgamma
 from libc.math cimport fmin, fmax
-from libc.stdlib cimport calloc, malloc, free
+from libc.stdlib cimport calloc, malloc, free, abs
 from libc.string cimport memcpy
 
 import numpy as np
@@ -309,7 +309,7 @@ Compute a two-point auto-correlation function
 
 ######################################################################
 # Utility functions
-cdef DTYPE_t logaddexp(DTYPE_t x1, DTYPE_t x2):
+cdef DTYPE_t logaddexp(DTYPE_t x1, DTYPE_t x2) nogil:
     """logaddexp(x1, x2) -> log(exp(x1) + exp(x2))"""
     cdef DTYPE_t a = fmax(x1, x2)
     if a == NEG_INF:
@@ -317,7 +317,7 @@ cdef DTYPE_t logaddexp(DTYPE_t x1, DTYPE_t x2):
     else:
         return a + log(exp(x1 - a) + exp(x2 - a))
 
-cdef DTYPE_t logsubexp(DTYPE_t x1, DTYPE_t x2):
+cdef DTYPE_t logsubexp(DTYPE_t x1, DTYPE_t x2) nogil:
     """logsubexp(x1, x2) -> log(exp(x1) - exp(x2))"""
     if x1 <= x2:
         return NEG_INF
@@ -344,12 +344,12 @@ cdef enum KernelType:
     COSINE_KERNEL = 6
 
 
-cdef inline DTYPE_t log_gaussian_kernel(DTYPE_t dist, DTYPE_t h):
+cdef inline DTYPE_t log_gaussian_kernel(DTYPE_t dist, DTYPE_t h) nogil:
     """log of the gaussian kernel for bandwidth h (unnormalized)"""
     return -0.5 * (dist * dist) / (h * h)
 
 
-cdef inline DTYPE_t log_tophat_kernel(DTYPE_t dist, DTYPE_t h):
+cdef inline DTYPE_t log_tophat_kernel(DTYPE_t dist, DTYPE_t h) nogil:
     """log of the tophat kernel for bandwidth h (unnormalized)"""
     if dist < h:
         return 0.0
@@ -357,7 +357,7 @@ cdef inline DTYPE_t log_tophat_kernel(DTYPE_t dist, DTYPE_t h):
         return NEG_INF
 
 
-cdef inline DTYPE_t log_epanechnikov_kernel(DTYPE_t dist, DTYPE_t h):
+cdef inline DTYPE_t log_epanechnikov_kernel(DTYPE_t dist, DTYPE_t h) nogil:
     """log of the epanechnikov kernel for bandwidth h (unnormalized)"""
     if dist < h:
         return log(1.0 - (dist * dist) / (h * h))
@@ -365,12 +365,12 @@ cdef inline DTYPE_t log_epanechnikov_kernel(DTYPE_t dist, DTYPE_t h):
         return NEG_INF
 
 
-cdef inline DTYPE_t log_exponential_kernel(DTYPE_t dist, DTYPE_t h):
+cdef inline DTYPE_t log_exponential_kernel(DTYPE_t dist, DTYPE_t h) nogil:
     """log of the exponential kernel for bandwidth h (unnormalized)"""
     return -dist / h
 
 
-cdef inline DTYPE_t log_linear_kernel(DTYPE_t dist, DTYPE_t h):
+cdef inline DTYPE_t log_linear_kernel(DTYPE_t dist, DTYPE_t h) nogil:
     """log of the linear kernel for bandwidth h (unnormalized)"""
     if dist < h:
         return log(1 - dist / h)
@@ -378,7 +378,7 @@ cdef inline DTYPE_t log_linear_kernel(DTYPE_t dist, DTYPE_t h):
         return NEG_INF
 
 
-cdef inline DTYPE_t log_cosine_kernel(DTYPE_t dist, DTYPE_t h):
+cdef inline DTYPE_t log_cosine_kernel(DTYPE_t dist, DTYPE_t h) nogil:
     """log of the cosine kernel for bandwidth h (unnormalized)"""
     if dist < h:
         return log(cos(0.5 * PI * dist / h))
@@ -387,7 +387,7 @@ cdef inline DTYPE_t log_cosine_kernel(DTYPE_t dist, DTYPE_t h):
 
 
 cdef inline DTYPE_t compute_log_kernel(DTYPE_t dist, DTYPE_t h,
-                                       KernelType kernel):
+                                       KernelType kernel) nogil:
     """Given a KernelType enumeration, compute the appropriate log-kernel"""
     if kernel == GAUSSIAN_KERNEL:
         return log_gaussian_kernel(dist, h)
@@ -406,18 +406,18 @@ cdef inline DTYPE_t compute_log_kernel(DTYPE_t dist, DTYPE_t h,
 #------------------------------------------------------------
 # Kernel norms are defined via the volume element V_n
 # and surface element S_(n-1) of an n-sphere.
-cdef DTYPE_t logVn(ITYPE_t n):
+cdef DTYPE_t logVn(ITYPE_t n) nogil:
     """V_n = pi^(n/2) / gamma(n/2 - 1)"""
     return 0.5 * n * LOG_PI - lgamma(0.5 * n + 1)
 
 
-cdef DTYPE_t logSn(ITYPE_t n):
+cdef DTYPE_t logSn(ITYPE_t n) nogil:
     """V_(n+1) = int_0^1 S_n r^n dr"""
     return LOG_2PI + logVn(n - 1)
 
 
 cdef DTYPE_t _log_kernel_norm(DTYPE_t h, ITYPE_t d,
-                              KernelType kernel) except -1:
+                              KernelType kernel) nogil except -1:
     """Given a KernelType enumeration, compute the kernel normalization.
 
     h is the bandwidth, d is the dimension.
@@ -491,7 +491,7 @@ def kernel_norm(h, d, kernel, return_log=False):
 
 ######################################################################
 # Tree Utility Routines
-cdef inline void swap(DITYPE_t* arr, ITYPE_t i1, ITYPE_t i2):
+cdef inline void swap(DITYPE_t* arr, ITYPE_t i1, ITYPE_t i2) nogil:
     """swap the values at index i1 and i2 of arr"""
     cdef DITYPE_t tmp = arr[i1]
     arr[i1] = arr[i2]
@@ -691,7 +691,7 @@ cdef int _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx,
 cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
                                  ITYPE_t* node_indices,
                                  ITYPE_t n_features,
-                                 ITYPE_t n_points) except -1:
+                                 ITYPE_t n_points) nogil except -1:
     """Find the dimension with the largest spread.
 
     Parameters
@@ -741,7 +741,7 @@ cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
 ######################################################################
 # NodeHeap : min-heap used to keep track of nodes during
 #            breadth-first query
-cdef inline void swap_nodes(NodeHeapData_t* arr, ITYPE_t i1, ITYPE_t i2):
+cdef inline void swap_nodes(NodeHeapData_t* arr, ITYPE_t i1, ITYPE_t i2) nogil:
     cdef NodeHeapData_t tmp = arr[i1]
     arr[i1] = arr[i2]
     arr[i2] = tmp
@@ -821,11 +821,11 @@ cdef class NodeHeap:
                 i = i_parent
         return 0
 
-    cdef NodeHeapData_t peek(self):
+    cdef NodeHeapData_t peek(self) nogil:
         """Peek at the root of the heap, without removing it"""
         return self.data[0]
 
-    cdef NodeHeapData_t pop(self):
+    cdef NodeHeapData_t pop(self) nogil:
         """Remove the root of the heap, and update the remaining nodes"""
         if self.n == 0:
             raise ValueError('cannot pop on empty heap')
@@ -864,7 +864,7 @@ cdef class NodeHeap:
 
         return popped_element
 
-    cdef void clear(self):
+    cdef void clear(self) nogil:
         """Clear the heap"""
         self.n = 0
 
@@ -969,7 +969,7 @@ cdef class BinaryTree:
         # the number of nodes in the tree.  This results in leaf nodes
         # with numbers of points between leaf_size and 2 * leaf_size
         self.n_levels = int(
-            np.log2(fmax(1, (n_samples - 1) / self.leaf_size)) + 1)
+            log2(fmax(1, (n_samples - 1) / self.leaf_size)) + 1)
         self.n_nodes = (2 ** self.n_levels) - 1
 
         # allocate arrays for storage
@@ -1545,6 +1545,8 @@ cdef class BinaryTree:
         cdef ITYPE_t n_features = self.data.shape[1]
         cdef ITYPE_t i
         cdef KernelType kernel_c
+        cdef DTYPE_t[::1] node_log_min_bounds
+        cdef DTYPE_t[::1] node_bound_widths
 
         # validate kernel
         if kernel == 'gaussian':
@@ -1579,18 +1581,13 @@ cdef class BinaryTree:
         cdef DTYPE_t* pt = &Xarr[0, 0]
 
         cdef NodeHeap nodeheap
-        if breadth_first:
-            nodeheap = NodeHeap(self.data.shape[0] // self.leaf_size)
-        cdef DTYPE_t[::1] node_log_min_bounds
-        cdef DTYPE_t[::1] node_bound_widths
         # TODO: implement dual tree approach.
         #       this is difficult because of the need to cache values
         #       computed between node pairs.
         if breadth_first:
-            node_log_min_bounds_arr = np.full(self.n_nodes, -np.inf)
-            node_log_min_bounds = node_log_min_bounds_arr
-            node_bound_widths_arr = np.zeros(self.n_nodes)
-            node_bound_widths = node_bound_widths_arr
+            nodeheap = NodeHeap(self.data.shape[0] // self.leaf_size)
+            node_log_min_bounds = np.full(self.n_nodes, -np.inf)
+            node_bound_widths = np.zeros(self.n_nodes)
             for i in range(Xarr.shape[0]):
                 log_density[i] = self._kde_single_breadthfirst(
                                             pt, kernel_c, h_c,
@@ -1689,10 +1686,11 @@ cdef class BinaryTree:
             self._two_point_dual(0, other, 0, &rarr[0], &carr[0],
                                  0, rarr.shape[0])
         else:
-            for i in range(Xarr.shape[0]):
-                self._two_point_single(0, pt, &rarr[0], &carr[0],
-                                       0, rarr.shape[0])
-                pt += n_features
+            with nogil:
+                for i in range(Xarr.shape[0]):
+                    self._two_point_single(0, pt, &rarr[0], &carr[0],
+                                           0, rarr.shape[0])
+                    pt += n_features
 
         return count
 
@@ -1800,7 +1798,7 @@ cdef class BinaryTree:
                                     BinaryTree other, ITYPE_t i_node2,
                                     DTYPE_t[::1] bounds,
                                     NeighborsHeap heap,
-                                    DTYPE_t reduced_dist_LB) except -1:
+                                    DTYPE_t reduced_dist_LB) nogil except -1:
         """Recursive dual-tree k-neighbors query, depth-first"""
         # note that the array `bounds` is maintained such that
         # bounds[i] is the largest distance among any of the
@@ -2155,7 +2153,7 @@ cdef class BinaryTree:
                                         n_features)
                     log_density = compute_log_kernel(dist_pt, h, kernel)
                     if with_sample_weight:
-                        log_weight = np.log(sample_weight[idx_array[i]])
+                        log_weight = log(sample_weight[idx_array[i]])
                     else:
                         log_weight = 0.
                     global_log_min_bound = logaddexp(global_log_min_bound,
@@ -2229,7 +2227,7 @@ cdef class BinaryTree:
                    DTYPE_t local_log_min_bound,
                    DTYPE_t local_log_bound_spread,
                    DTYPE_t* global_log_min_bound,
-                   DTYPE_t* global_log_bound_spread) except -1:
+                   DTYPE_t* global_log_bound_spread) nogil except -1:
         """recursive single-tree kernel density estimate, depth-first"""
         # For the given point, local_min_bound and local_max_bound give the
         # minimum and maximum density for the current node, while
@@ -2290,7 +2288,7 @@ cdef class BinaryTree:
                                     n_features)
                 log_dens_contribution = compute_log_kernel(dist_pt, h, kernel)
                 if with_sample_weight:
-                    log_weight = np.log(sample_weight[idx_array[i]])
+                    log_weight = log(sample_weight[idx_array[i]])
                 else:
                     log_weight = 0.
                 global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
@@ -2358,7 +2356,7 @@ cdef class BinaryTree:
 
     cdef int _two_point_single(self, ITYPE_t i_node, DTYPE_t* pt, DTYPE_t* r,
                                ITYPE_t* count, ITYPE_t i_min,
-                               ITYPE_t i_max) except -1:
+                               ITYPE_t i_max) nogil except -1:
         """recursive single-tree two-point correlation function query"""
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
@@ -2408,7 +2406,7 @@ cdef class BinaryTree:
     cdef int _two_point_dual(self, ITYPE_t i_node1,
                              BinaryTree other, ITYPE_t i_node2,
                              DTYPE_t* r, ITYPE_t* count,
-                             ITYPE_t i_min, ITYPE_t i_max) except -1:
+                             ITYPE_t i_min, ITYPE_t i_max) nogil except -1:
         """recursive dual-tree two-point correlation function query"""
         cdef DTYPE_t* data1 = &self.data[0, 0]
         cdef DTYPE_t* data2 = &other.data[0, 0]
@@ -2533,7 +2531,7 @@ def nodeheap_sort(DTYPE_t[::1] vals):
 cdef inline DTYPE_t _total_node_weight(NodeData_t* node_data,
                                        DTYPE_t* sample_weight,
                                        ITYPE_t* idx_array,
-                                       ITYPE_t i_node):
+                                       ITYPE_t i_node) nogil:
     cdef ITYPE_t i
     cdef DTYPE_t N = 0.0
     for i in range(node_data[i_node].idx_start, node_data[i_node].idx_end):

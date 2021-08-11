@@ -1,7 +1,13 @@
 #!python
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: cdivision=True
+# cython: language_level=3
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: profile=False
+# cython: linetrace=False
+# cython: initializedcheck=False
+# cython: binding=False
+# distutils: define_macros=CYTHON_TRACE_NOGIL=0
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
@@ -43,7 +49,7 @@ cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
 
 
 cdef int init_node(BinaryTree tree, ITYPE_t i_node,
-                   ITYPE_t idx_start, ITYPE_t idx_end) except -1:
+                   ITYPE_t idx_start, ITYPE_t idx_end) nogil except -1:
     """Initialize the node for the dataset stored in tree.data"""
     cdef ITYPE_t n_features = tree.data.shape[1]
     cdef ITYPE_t i, j
@@ -74,7 +80,7 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
         if tree.dist_metric.p == INF:
             rad = fmax(rad, 0.5 * (upper_bounds[j] - lower_bounds[j]))
         else:
-            rad += pow(0.5 * abs(upper_bounds[j] - lower_bounds[j]),
+            rad += pow(0.5 * fabs(upper_bounds[j] - lower_bounds[j]),
                        tree.dist_metric.p)
 
     tree.node_data[i_node].idx_start = idx_start
@@ -111,7 +117,7 @@ cdef DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node,
     return rdist
 
 
-cdef DTYPE_t min_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
+cdef DTYPE_t min_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) nogil except -1:
     """Compute the minimum distance between a point and a node"""
     if tree.dist_metric.p == INF:
         return min_rdist(tree, i_node, pt)
@@ -120,7 +126,7 @@ cdef DTYPE_t min_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
 
 
 cdef DTYPE_t max_rdist(BinaryTree tree,
-                       ITYPE_t i_node, DTYPE_t* pt) except -1:
+                       ITYPE_t i_node, DTYPE_t* pt) nogil  except -1:
     """Compute the maximum reduced-distance between a point and a node"""
     cdef ITYPE_t n_features = tree.data.shape[1]
 
@@ -140,7 +146,7 @@ cdef DTYPE_t max_rdist(BinaryTree tree,
     return rdist
 
 
-cdef DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
+cdef DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) nogil except -1:
     """Compute the maximum distance between a point and a node"""
     if tree.dist_metric.p == INF:
         return max_rdist(tree, i_node, pt)
@@ -186,7 +192,7 @@ cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
 
 
 cdef inline DTYPE_t min_rdist_dual(BinaryTree tree1, ITYPE_t i_node1,
-                                   BinaryTree tree2, ITYPE_t i_node2) except -1:
+                                   BinaryTree tree2, ITYPE_t i_node2) nogil except -1:
     """Compute the minimum reduced distance between two nodes"""
     cdef ITYPE_t n_features = tree1.data.shape[1]
 
@@ -218,14 +224,14 @@ cdef inline DTYPE_t min_rdist_dual(BinaryTree tree1, ITYPE_t i_node1,
 
 
 cdef inline DTYPE_t min_dist_dual(BinaryTree tree1, ITYPE_t i_node1,
-                                  BinaryTree tree2, ITYPE_t i_node2) except -1:
+                                  BinaryTree tree2, ITYPE_t i_node2) nogil except -1:
     """Compute the minimum distance between two nodes"""
     return tree1.dist_metric._rdist_to_dist(min_rdist_dual(tree1, i_node1,
                                                            tree2, i_node2))
 
 
 cdef inline DTYPE_t max_rdist_dual(BinaryTree tree1, ITYPE_t i_node1,
-                                   BinaryTree tree2, ITYPE_t i_node2) except -1:
+                                   BinaryTree tree2, ITYPE_t i_node2) nogil except -1:
     """Compute the maximum reduced distance between two nodes"""
     cdef ITYPE_t n_features = tree1.data.shape[1]
 
@@ -251,7 +257,7 @@ cdef inline DTYPE_t max_rdist_dual(BinaryTree tree1, ITYPE_t i_node1,
 
 
 cdef inline DTYPE_t max_dist_dual(BinaryTree tree1, ITYPE_t i_node1,
-                                  BinaryTree tree2, ITYPE_t i_node2) except -1:
+                                  BinaryTree tree2, ITYPE_t i_node2) nogil except -1:
     """Compute the maximum distance between two nodes"""
     return tree1.dist_metric._rdist_to_dist(max_rdist_dual(tree1, i_node1,
                                                            tree2, i_node2))
