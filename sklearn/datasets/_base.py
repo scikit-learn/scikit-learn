@@ -1177,17 +1177,17 @@ def load_boston(*, return_X_y=False):
            >>> from sklearn.datasets import fetch_california_housing
            >>> housing = fetch_california_housing()
 
-        for the California housing dataset and::
+       for the California housing dataset and::
 
            >>> from sklearn.datasets import fetch_openml
            >>> housing = fetch_openml(name="house_prices", as_frame=False)
 
-        for the Ames housing dataset.
+       for the Ames housing dataset.
 
-        .. deprecated:: 1.0
-           This function is deprecated in 1.0 and will be removed in 1.2.
-           See the warning message above for futher details regarding the
-           alternative datasets.
+    .. deprecated:: 1.0
+       This function is deprecated in 1.0 and will be removed in 1.2. See the
+       warning message above for futher details regarding the alternative
+       datasets.
 
     Parameters
     ----------
