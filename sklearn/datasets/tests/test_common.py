@@ -51,6 +51,7 @@ def check_pandas_dependency_message(fetch_func):
             fetch_func(as_frame=True)
 
 
+@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 def check_return_X_y(bunch, dataset_func):
     X_y_tuple = dataset_func(return_X_y=True)
     assert isinstance(X_y_tuple, tuple)

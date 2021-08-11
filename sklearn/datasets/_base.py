@@ -1203,7 +1203,7 @@ def load_boston(*, return_X_y=False):
 
         data : ndarray of shape (506, 13)
             The data matrix.
-        target : ndarray of shape (506, )
+        target : ndarray of shape (506,)
             The regression target.
         filename : str
             The physical location of boston csv dataset.
@@ -1239,8 +1239,14 @@ def load_boston(*, return_X_y=False):
 
     Examples
     --------
+    >>> import warnings
     >>> from sklearn.datasets import load_boston
-    >>> X, y = load_boston(return_X_y=True)
+    >>> with warnings.catch_warnings(record=True) as record:
+    ...     X, y = load_boston(return_X_y=True)
+    >>> # You should probably not use this dataset.
+    >>> print(record[0].message)
+    Function load_boston is deprecated;
+    ...
     >>> print(X.shape)
     (506, 13)
     """
