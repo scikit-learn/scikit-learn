@@ -1259,9 +1259,9 @@ cdef class DatasetsPair:
 
         if X.shape[1] != Y.shape[1]:
             raise ValueError("Vectors of X and Y must have the same "
-                               "number of dimensions but currently are "
-                               f"respectively {X.shape[1]}-dimensional "
-                               f"and {Y.shape[1]}-dimensional.")
+                              "number of dimensions but currently are "
+                              f"respectively {X.shape[1]}-dimensional "
+                              f"and {Y.shape[1]}-dimensional.")
 
         distance_metric._validate_data(X)
         distance_metric._validate_data(Y)
