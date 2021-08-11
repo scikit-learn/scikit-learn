@@ -4,7 +4,7 @@
 #cython: cdivision=True
 
 cimport numpy as np
-from libc.math cimport  sqrt, exp
+from libc.math cimport sqrt, exp
 
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 

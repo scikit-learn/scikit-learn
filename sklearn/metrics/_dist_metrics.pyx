@@ -31,7 +31,6 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
 
-# some handy constants
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
@@ -1204,7 +1203,15 @@ cdef class DatasetsPair:
     to :class:`sklearn.metrics.DistanceMetric` based on the physical
     representation of the vectors (sparse vs. dense). It makes use of
     cython.final to remove the overhead of method calls' dispatch.
+
+    Parameters
+    ----------
+    distance_metric: DistanceMetric
+        The distance metric responsible for computing distances
+        between two vectors of (X, Y).
     """
+
+    # The `distance_metric` attribute is defined in _dist_metrics.pxd
 
     @classmethod
     def get_for(cls,
@@ -1213,11 +1220,34 @@ cdef class DatasetsPair:
         str metric="euclidean",
         dict metric_kwargs=dict(),
     ) -> DatasetsPair:
+        """Return the DatasetsPair implementation for the given arguments.
+
+        X : array-like of shape (n_X, d)
+            Input data.
+
+        Y : array-like of shape (n_Y, d)
+            Input data.
+
+        metric : str, default='fast_sqeuclidean'
+            The distance metric to use for argkmin. The default metric is
+            a fast implementation of the standard Euclidean metric.
+            For a list of available metrics, see the documentation of
+            :class:`~sklearn.metrics.DistanceMetric`.
+
+        metric_kwargs : dict, default=None
+            Keyword arguments to pass to specified metric function.
+
+        Returns
+        -------
+        datasets_pair: DatasetsPair
+            The suited DatasetsPair implementation.
+        """
         cdef:
             DistanceMetric distance_metric = DistanceMetric.get_metric(metric,
                                                                  **metric_kwargs)
 
-        # TODO: what's the best coercion for lists?
+        # check_array can be expensive, and we prefer to simply coerce from lists
+        # to ndarrays eventually to get their dtype itemsize
         X = np.asarray(X) if isinstance(X, (tuple, list)) else X
         Y = np.asarray(Y) if isinstance(Y, (tuple, list)) else Y
 
@@ -1272,10 +1302,15 @@ cdef class DatasetsPair:
 cdef class DenseDenseDatasetsPair(DatasetsPair):
     """Compute distances between vectors of two arrays.
 
+    Parameters
+    ----------
     X: ndarray of shape (n_X, d)
-        Rows represent vectors
+        Rows represent vectors.
     Y: ndarray of shape (n_Y, d)
-        Rows represent vectors
+        Rows represent vectors.
+    distance_metric: DistanceMetric
+        The distance metric responsible for computing distances
+        between two vectors of (X, Y).
     """
     cdef:
         const DTYPE_t[:, ::1] X  # shape: (n_X, d)
@@ -1320,10 +1355,15 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
 cdef class SparseSparseDatasetsPair(DatasetsPair):
     """Compute distances between vectors of two sparse matrices.
 
+    Parameters
+    ----------
     X: sparse matrix of shape (n_X, d)
-        Rows represent vectors
+        Rows represent vectors.
     Y: sparse matrix of shape (n_X, d)
-        Rows represent vectors
+        Rows represent vectors.
+    distance_metric: DistanceMetric
+        The distance metric responsible for computing distances
+        between two vectors of (X, Y).
     """
     cdef:
         const DTYPE_t[:] X_data
@@ -1394,10 +1434,15 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
 cdef class SparseDenseDatasetsPair(DatasetsPair):
     """Compute distances between vectors of a sparse matrix and a dense array.
 
+    Parameters
+    ----------
     X: sparse matrix of shape (n_X, d)
-        Rows represent vectors
+        Rows represent vectors.
     Y: ndarray of shape (n_Y, d)
-        Rows represent vectors
+        Rows represent vectors.
+    distance_metric: DistanceMetric
+        The distance metric responsible for computing distances
+        between two vectors of (X, Y).
     """
     cdef:
         const DTYPE_t[:] X_data
@@ -1468,17 +1513,22 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
 cdef class DenseSparseDatasetsPair(DatasetsPair):
     """Compute distances between vectors of a dense array and a sparse matrix.
 
+    Parameters
+    ----------
     X: ndarray of shape (n_X, d)
-        Rows represent vectors
+        Rows represent vectors.
     Y: sparse matrix of shape (n_Y, d)
-        Rows represent vectors
+        Rows represent vectors.
+    distance_metric: DistanceMetric
+        The distance metric responsible for computing distances
+        between two vectors of (X, Y).
     """
     cdef:
         # As distance metrics are symmetric functions, we can
         # simply rely on the other DatasetsPair and swap arguments.
         DatasetsPair datasets_pair
 
-    def __init__(self, X, Y, distance_metric):
+    def __init__(self, X, Y, DistanceMetric distance_metric):
         DatasetsPair.__init__(self, distance_metric)
         # Swapping arguments on the constructor
         self.datasets_pair = SparseDenseDatasetsPair(Y, X, distance_metric)
