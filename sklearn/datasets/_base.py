@@ -1168,7 +1168,7 @@ def load_boston(*, return_X_y=False):
 
         The scikit-learn maintainers therefore strongly discourage the use of
         this dataset unless the purpose of the code is to study and educate
-        about ethical issues in data science and machine learning::
+        about ethical issues in data science and machine learning.
 
         In this case special case, you can fetch the dataset from OpenML::
 
