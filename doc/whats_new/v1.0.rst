@@ -264,6 +264,7 @@ Changelog
 
 - |API| Deprecates :func:`datasets.load_boston` in 1.0 and it will be removed
   in 1.2. Alternative code snippets to load similar datasets are provided.
+  Please report to the docstring of the function for details.
   :pr:`20729` by `Guillaume Lemaitre`_.
 
 
