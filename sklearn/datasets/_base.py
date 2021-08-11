@@ -1183,6 +1183,7 @@ def load_boston(*, return_X_y=False):
             housing = fetch_california_housing()
 
         for the California housing dataset and::
+
             from sklearn.datasets import fetch_openml
             housing = fetch_openml(name="house_prices", as_frame=True)  # noqa
 
