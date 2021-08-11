@@ -303,7 +303,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Returns the transformer.
+            Returns the instance itself.
         """
 
         X = self._validate_data(X, accept_sparse="csr")
@@ -329,7 +329,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Projected array.
+            Returns the instance itself.
         """
         check_is_fitted(self)
 
