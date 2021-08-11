@@ -144,10 +144,12 @@
 
 cimport cython
 cimport numpy as np
+from cython.operator cimport dereference as deref
 from libc.math cimport fabs, sqrt, exp, cos, pow, log, log2, lgamma
 from libc.math cimport fmin, fmax
 from libc.stdlib cimport calloc, malloc, free, abs
 from libc.string cimport memcpy
+from libcpp.vector cimport vector
 
 import numpy as np
 import warnings
@@ -741,12 +743,8 @@ cdef ITYPE_t find_node_split_dim(const DTYPE_t* data,
 ######################################################################
 # NodeHeap : min-heap used to keep track of nodes during
 #            breadth-first query
-cdef inline void swap_nodes(NodeHeapData_t* arr, ITYPE_t i1, ITYPE_t i2) nogil:
-    cdef NodeHeapData_t tmp = arr[i1]
-    arr[i1] = arr[i2]
-    arr[i2] = tmp
 
-
+# TODO: see if we can directly use heap algorithm from std::algorithm
 cdef class NodeHeap:
     """NodeHeap
 
@@ -760,113 +758,86 @@ cdef class NodeHeap:
 
         heap[i].val < min(heap[2 * i + 1].val, heap[2 * i + 2].val)
     """
-    cdef np.ndarray data_arr
-    cdef NodeHeapData_t[::1] data
-    cdef ITYPE_t n
+    cdef vector[NodeHeapData_t] * heap
 
     def __cinit__(self):
-        self.data_arr = np.zeros(1, dtype=NodeHeapData, order='C')
-        self.data = self.data_arr
+        self.heap = new vector[NodeHeapData_t](1)
 
-    def __init__(self, size_guess=100):
-        size_guess = max(size_guess, 1)  # need space for at least one item
-        self.data_arr = np.zeros(size_guess, dtype=NodeHeapData, order='C')
-        self.data = self.data_arr
-        self.n = size_guess
+    def __init__(self, ITYPE_t size_guess=100):
+        # need space for at least one item
+        self.heap = new vector[NodeHeapData_t](max(size_guess, 1))
         self.clear()
 
-    cdef int resize(self, ITYPE_t new_size) except -1:
-        """Resize the heap to be either larger or smaller"""
-        cdef NodeHeapData_t *data_ptr
-        cdef NodeHeapData_t *new_data_ptr
-        cdef ITYPE_t i
-        cdef ITYPE_t size = self.data.shape[0]
-        cdef np.ndarray new_data_arr = np.zeros(new_size,
-                                                dtype=NodeHeapData)
-        cdef NodeHeapData_t[::1] new_data = new_data_arr
+    def __del__(self):
+        if self.heap is not NULL:
+            del self.heap
 
-        if size > 0 and new_size > 0:
-            data_ptr = &self.data[0]
-            new_data_ptr = &new_data[0]
-            for i in range(min(size, new_size)):
-                new_data_ptr[i] = data_ptr[i]
+    cdef int n(self) nogil:
+        return deref(self.heap).size()
 
-        if new_size < size:
-            self.n = new_size
-
-        self.data = new_data
-        self.data_arr = new_data_arr
-        return 0
-
-    cdef int push(self, NodeHeapData_t data) except -1:
+    cdef int push(self, NodeHeapData_t data) nogil except -1:
         """Push a new item onto the heap"""
         cdef ITYPE_t i, i_parent
-        cdef NodeHeapData_t* data_arr
-        self.n += 1
-        if self.n > self.data.shape[0]:
-            self.resize(2 * self.n)
+        # Put the new element at the end...
+        deref(self.heap).push_back(data)
+        i = self.n() - 1
 
-        # put the new element at the end,
-        # and then perform swaps until the heap is in order
-        data_arr = &self.data[0]
-        i = self.n - 1
-        data_arr[i] = data
-
+        # ...and then perform swaps until the heap is in order
         while i > 0:
             i_parent = (i - 1) // 2
-            if data_arr[i_parent].val <= data_arr[i].val:
+            if deref(self.heap)[i_parent].val <= deref(self.heap)[i].val:
                 break
             else:
-                swap_nodes(data_arr, i, i_parent)
+                deref(self.heap)[i], deref(self.heap)[i_parent] = (
+                    deref(self.heap)[i_parent], deref(self.heap)[i])
                 i = i_parent
         return 0
 
-    cdef NodeHeapData_t peek(self) nogil:
-        """Peek at the root of the heap, without removing it"""
-        return self.data[0]
 
     cdef NodeHeapData_t pop(self) nogil:
         """Remove the root of the heap, and update the remaining nodes"""
-        if self.n == 0:
+        if self.n() == 0:
             raise ValueError('cannot pop on empty heap')
 
         cdef ITYPE_t i, i_child1, i_child2, i_swap
-        cdef NodeHeapData_t* data_arr = &self.data[0]
-        cdef NodeHeapData_t popped_element = data_arr[0]
 
-        # pop off the first element, move the last element to the front,
-        # and then perform swaps until the heap is back in order
-        data_arr[0] = data_arr[self.n - 1]
-        self.n -= 1
+        # Pop off the first element, move the last element to the front...
+        cdef NodeHeapData_t popped_element = deref(self.heap)[0]
+        deref(self.heap)[0] = deref(self.heap)[self.n() - 1]
 
         i = 0
 
-        while (i < self.n):
+        # ...and then perform swaps until the heap is back in order
+        while i < self.n() - 1:
             i_child1 = 2 * i + 1
             i_child2 = 2 * i + 2
             i_swap = 0
 
-            if i_child2 < self.n:
-                if data_arr[i_child1].val <= data_arr[i_child2].val:
+            if i_child2 < self.n():
+                if deref(self.heap)[i_child1].val <= deref(self.heap)[i_child2].val:
                     i_swap = i_child1
                 else:
                     i_swap = i_child2
-            elif i_child1 < self.n:
+            elif i_child1 < self.n() - 1:
                 i_swap = i_child1
             else:
                 break
 
-            if (i_swap > 0) and (data_arr[i_swap].val <= data_arr[i].val):
-                swap_nodes(data_arr, i, i_swap)
+            if (i_swap > 0) and (deref(self.heap)[i_swap].val <= deref(self.heap)[i].val):
+                deref(self.heap)[i], deref(self.heap)[i_swap] = (
+                    deref(self.heap)[i_swap], deref(self.heap)[i])
                 i = i_swap
             else:
                 break
+
+        # Actually popping the element in the vector
+        deref(self.heap).pop_back()
 
         return popped_element
 
     cdef void clear(self) nogil:
         """Clear the heap"""
-        self.n = 0
+        self.heap.clear()
 
 
 ######################################################################
@@ -1749,7 +1720,7 @@ cdef class BinaryTree:
         nodeheap_item.i1 = 0
         nodeheap.push(nodeheap_item)
 
-        while nodeheap.n > 0:
+        while nodeheap.n() > 0:
             nodeheap_item = nodeheap.pop()
             reduced_dist_LB = nodeheap_item.val
             i_node = nodeheap_item.i1
@@ -1904,7 +1875,7 @@ cdef class BinaryTree:
         nodeheap_item.i2 = 0
         nodeheap.push(nodeheap_item)
 
-        while nodeheap.n > 0:
+        while nodeheap.n() > 0:
             nodeheap_item = nodeheap.pop()
             reduced_dist_LB = nodeheap_item.val
             i_node1 = nodeheap_item.i1
@@ -2103,7 +2074,7 @@ cdef class BinaryTree:
         node_log_min_bounds[0] = global_log_min_bound
         node_log_bound_spreads[0] = global_log_bound_spread
 
-        while nodeheap.n > 0:
+        while nodeheap.n() > 0:
             nodeheap_item = nodeheap.pop()
             i_node = nodeheap_item.i1
 

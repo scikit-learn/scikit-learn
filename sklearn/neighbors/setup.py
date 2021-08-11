@@ -14,6 +14,7 @@ def configuration(parent_package="", top_path=None):
         "_ball_tree",
         sources=["_ball_tree.pyx"],
         include_dirs=[numpy.get_include()],
+        language="c++",
         libraries=libraries,
     )
 
@@ -21,6 +22,7 @@ def configuration(parent_package="", top_path=None):
         "_kd_tree",
         sources=["_kd_tree.pyx"],
         include_dirs=[numpy.get_include()],
+        language="c++",
         libraries=libraries,
     )
 
