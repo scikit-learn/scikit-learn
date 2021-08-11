@@ -1255,7 +1255,7 @@ def load_boston(*, return_X_y=False):
     # `__getattr__` function in`sklearn.datasets` to raise an exception with
     # an informative error message at import time instead of just removing
     # load_boston. The goal is to avoid having beginners that copy-paste code
-    # from numerous books and tutorials that use this dataset loader get 
+    # from numerous books and tutorials that use this dataset loader get
     # a confusing ImportError when trying to learn scikit-learn.
     # See: https://www.python.org/dev/peps/pep-0562/
 

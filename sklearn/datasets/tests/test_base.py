@@ -338,9 +338,8 @@ def test_load_boston_alternative():
         raise SkipTest(
             "This test requires an internet connection to fetch the dataset."
         )
-    # TODO: we should be able to use `as_frame=False` but currently there
-    # is a bug in `fetch_openml` where nominal categories are not replaced
-    # with the original categories but instead of encoded categories.
+
+    # Check when `as_frame=True`
     boston_openml = fetch_openml(name="boston", version=1, as_frame=True)
     boston_sklearn = load_boston()
 
@@ -354,3 +353,16 @@ def test_load_boston_alternative():
     np.testing.assert_array_equal(
         boston_openml.target.to_numpy(), boston_sklearn.target
     )
+    # Check when `as_frame=False`
+    boston_openml = fetch_openml(name="boston", version=1, as_frame=False)
+    data_openml = boston_openml.data
+    for name, cats in boston_openml.categories.items():
+        cat_idx = boston_openml.feature_names.index(name)
+        cats = np.asarray(cats, dtype=np.float64)
+        data_openml[:, cat_idx] = cats[data_openml[:, cat_idx].astype(np.int64)]
+
+    np.testing.assert_array_equal(
+        boston_openml.feature_names, boston_sklearn.feature_names
+    )
+    np.testing.assert_allclose(data_openml, boston_sklearn.data)
+    np.testing.assert_array_equal(boston_openml.target, boston_sklearn.target)
