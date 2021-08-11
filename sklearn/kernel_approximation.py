@@ -210,8 +210,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
 
 
 class RBFSampler(TransformerMixin, BaseEstimator):
-    """Approximates feature map of an RBF kernel by Monte Carlo approximation
-    of its Fourier transform.
+    """Approximate a RBF kernel feature map using random Fourier features.
 
     It implements a variant of Random Kitchen Sinks.[1]
 
@@ -248,6 +247,24 @@ class RBFSampler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    Nystroem : Approximate a kernel map using a subset of the training data.
+    PolynomialCountSketch : Polynomial kernel approximation via Tensor Sketch.
+    SkewedChi2Sampler : Approximate feature map for
+        "skewed chi-squared" kernel.
+
+    Notes
+    -----
+    See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
+    Benjamin Recht.
+
+    [1] "Weighted Sums of Random Kitchen Sinks: Replacing
+    minimization with randomization in learning" by A. Rahimi and
+    Benjamin Recht.
+    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import RBFSampler
@@ -261,16 +278,6 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     SGDClassifier(max_iter=5)
     >>> clf.score(X_features, y)
     1.0
-
-    Notes
-    -----
-    See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
-    Benjamin Recht.
-
-    [1] "Weighted Sums of Random Kitchen Sinks: Replacing
-    minimization with randomization in learning" by A. Rahimi and
-    Benjamin Recht.
-    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
 
     def __init__(self, *, gamma=1.0, n_components=100, random_state=None):
