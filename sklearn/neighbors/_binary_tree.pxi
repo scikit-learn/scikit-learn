@@ -445,7 +445,8 @@ cdef DTYPE_t _log_kernel_norm(DTYPE_t h, ITYPE_t d,
             tmp *= -(d - k) * (d - k - 1) * (2. / PI) ** 2
         factor = log(factor) + logSn(d - 1)
     else:
-        raise ValueError("Kernel code not recognized")
+        with gil:
+            raise ValueError("Kernel code not recognized")
     return -factor - d * log(h)
 
 
@@ -797,7 +798,8 @@ cdef class NodeHeap:
     cdef NodeHeapData_t pop(self) nogil:
         """Remove the root of the heap, and update the remaining nodes"""
         if self.n() == 0:
-            raise ValueError('cannot pop on empty heap')
+            with gil:
+                raise ValueError('cannot pop on empty heap')
 
         cdef ITYPE_t i, i_child1, i_child2, i_swap
 
