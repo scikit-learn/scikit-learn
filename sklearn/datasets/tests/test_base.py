@@ -223,7 +223,7 @@ def test_load_missing_sample_image_error():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
-@pytest.mark.filterwarnings("ignore:The Boston housing prices dataset has an ethical")
+@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 @pytest.mark.parametrize(
     "loader_func, data_shape, target_shape, n_target, has_descr, filenames",
     [
@@ -324,5 +324,5 @@ def test_bunch_dir():
 def test_load_boston_warning():
     """Check that we raise the ethical warning when loading `load_boston`."""
     warn_msg = "The Boston housing prices dataset has an ethical problem"
-    with pytest.warns(UserWarning, match=warn_msg):
+    with pytest.warns(FutureWarning, match=warn_msg):
         load_boston()
