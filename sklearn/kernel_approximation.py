@@ -749,7 +749,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
     PolynomialCountSketch : Polynomial kernel approximation via Tensor Sketch.
-    RBFSampler : An approximation to the RBF kernel using random Fourier
+    RBFSampler : Approximate a RBF kernel feature map using random Fourier
         features.
     SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
