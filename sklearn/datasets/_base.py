@@ -1123,7 +1123,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     In this case special case, you can fetch the dataset from OpenML::
 
         >>> from sklearn.datasets import fetch_openml
-        >>> boston = fetch_openml('boston', version=2)
+        >>> boston = fetch_openml('boston', version=2, as_frame=False)
 
     Alternative datasets include the California housing dataset (i.e.
     func:`~sklearn.datasets.fetch_california_housing`) and Ames housing
@@ -1135,7 +1135,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     for the California housing dataset and::
 
         >>> from sklearn.datasets import fetch_openml
-        >>> housing = fetch_openml(name="house_prices", as_frame=True)
+        >>> housing = fetch_openml(name="house_prices", as_frame=False)
 
     for the Ames housing dataset.
     """
@@ -1163,7 +1163,12 @@ def load_boston(*, return_X_y=False):
 
        The scikit-learn maintainers therefore strongly discourage the use of
        this dataset unless the purpose of the code is to study and educate
-       about ethical issues in data science and machine learning.
+       about ethical issues in data science and machine learning::
+
+       In this case special case, you can fetch the dataset from OpenML::
+
+           >>> from sklearn.datasets import fetch_openml
+           >>> boston = fetch_openml('boston', version=2, as_frame=False)
 
        Alternative datasets include the California housing dataset [3]_
        (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
@@ -1175,7 +1180,7 @@ def load_boston(*, return_X_y=False):
         for the California housing dataset and::
 
            >>> from sklearn.datasets import fetch_openml
-           >>> housing = fetch_openml(name="house_prices", as_frame=True)
+           >>> housing = fetch_openml(name="house_prices", as_frame=False)
 
         for the Ames housing dataset.
 
