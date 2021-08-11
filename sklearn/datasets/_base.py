@@ -1126,7 +1126,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         boston = fetch_openml('boston', version=1, as_frame=True)
 
     Alternative datasets include the California housing dataset (i.e.
-    func:`~sklearn.datasets.fetch_california_housing`) and Ames housing
+    func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
     dataset. You can load the datasets as follows:
 
         from sklearn.datasets import fetch_california_housing
@@ -1251,10 +1251,13 @@ def load_boston(*, return_X_y=False):
     >>> print(X.shape)
     (506, 13)
     """
-    # TODO: Implement a module level `__getattr__` function
-    # in`sklearn.datasets` to serve a similar purpose but would raise the
-    # exception at import time instead of call time. See:
-    # https://www.python.org/dev/peps/pep-0562/
+    # TODO: once the deprecation period is over, implement a module level
+    # `__getattr__` function in`sklearn.datasets` to raise an exception with
+    # an informative error message at import time instead of just removing
+    # load_boston. The goal is to avoid having beginners that copy-paste code
+    # from numerous books and tutorials that use this dataset loader get 
+    # a confusing ImportError when trying to learn scikit-learn.
+    # See: https://www.python.org/dev/peps/pep-0562/
 
     descr_text = load_descr("boston_house_prices.rst")
 
