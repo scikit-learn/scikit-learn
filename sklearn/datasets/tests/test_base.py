@@ -338,6 +338,9 @@ def test_load_boston_alternative():
         raise SkipTest(
             "This test requires an internet connection to fetch the dataset."
         )
+    # TODO: we should be able to use `as_frame=False` but currently there
+    # is a bug in `fetch_openml` where nominal categories are not replaced
+    # with the original categories but instead of encoded categories.
     boston_openml = fetch_openml(name="boston", version=1, as_frame=True)
     boston_sklearn = load_boston()
 
