@@ -1889,8 +1889,9 @@ def make_erdos_reyni_graph(n, m, directed=False):
     m: int
         Number of edges, a value between 1 and :math:`n^2`.
     directed: boolean, optional (default=False)
-        If False, output adjacency matrix will be symmetric. Otherwise, output adjacency
-        matrix will be asymmetric.
+        If False, output adjacency matrix will represent undirected edges,
+        and hence will be symmetric.
+        Otherwise, output adjacency matrix will be asymmetric.
 
     Returns
     -------
@@ -1935,16 +1936,27 @@ def make_sbm_graph(n, p, directed=False):
         indicates the probability of a connection between edges in communities
         ``[i, j]``. ``0 < p[i, j] < 1`` for all ``i, j``.
     directed: boolean, optional (default=False)
-        If False, output adjacency matrix will be symmetric. Otherwise, output adjacency
-        matrix will be asymmetric.
+        If False, output adjacency matrix will represent undirected edges,
+        and hence will be symmetric.
+        Otherwise, output adjacency matrix will be asymmetric.
 
     Returns
     -------
     A: ndarray, shape (sum(n), sum(n))
         Sampled adjacency matrix
+
      Notes
     -----
     Code annotated from microsoft/graspologic, simulations.sbm
+
+    References
+    ----------
+
+    .. [1] Chung J., Pedigo BD, et al (2019).GraSPy: Graph Statistics in Python.
+        Journal of Machine Learning Research. 20: 1-7
+
+    .. [2] Pedigo BD., Chung J. (2019). graspologic.simulations.sbm [source code]
+        https://graspologic.readthedocs.io/en/latest/reference/simulations.html#graspologic.simulations.sbm
     """
     A = np.zeros((sum(n), sum(n)))
     K = len(n)
