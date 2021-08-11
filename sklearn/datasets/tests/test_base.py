@@ -321,6 +321,7 @@ def test_bunch_dir():
     assert "data" in dir(data)
 
 
+# FIXME: to be removed in 1.2
 def test_load_boston_warning():
     """Check that we raise the ethical warning when loading `load_boston`."""
     warn_msg = "The Boston housing prices dataset has an ethical problem"

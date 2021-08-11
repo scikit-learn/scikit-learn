@@ -1240,6 +1240,10 @@ def load_boston(*, return_X_y=False):
     >>> print(X.shape)
     (506, 13)
     """
+    # TODO: Implement a module level `__getattr__` function
+    # in`sklearn.datasets` to serve a similar purpose but would raise the
+    # exception at import time instead of call time. See:
+    # https://www.python.org/dev/peps/pep-0562/
 
     descr_text = load_descr("boston_house_prices.rst")
 
