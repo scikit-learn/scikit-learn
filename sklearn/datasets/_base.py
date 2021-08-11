@@ -1120,22 +1120,22 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     dataset unless the purpose of the code is to study and educate about
     ethical issues in data science and machine learning.
 
-    In this case special case, you can fetch the dataset from OpenML::
+    In this case special case, you can fetch the dataset from OpenML:
 
-        >>> from sklearn.datasets import fetch_openml
-        >>> boston = fetch_openml('boston', version=2, as_frame=False)
+        from sklearn.datasets import fetch_openml
+        boston = fetch_openml('boston', version=2, as_frame=False)
 
     Alternative datasets include the California housing dataset (i.e.
     func:`~sklearn.datasets.fetch_california_housing`) and Ames housing
-    dataset. You can load the datasets as follows::
+    dataset. You can load the datasets as follows:
 
-        >>> from sklearn.datasets import fetch_california_housing
-        >>> housing = fetch_california_housing()
+        from sklearn.datasets import fetch_california_housing
+        housing = fetch_california_housing()
 
-    for the California housing dataset and::
+    for the California housing dataset and:
 
-        >>> from sklearn.datasets import fetch_openml
-        >>> housing = fetch_openml(name="house_prices", as_frame=False)
+        from sklearn.datasets import fetch_openml
+        housing = fetch_openml(name="house_prices", as_frame=True)
 
     for the Ames housing dataset.
     """
@@ -1152,42 +1152,41 @@ def load_boston(*, return_X_y=False):
 
     Read more in the :ref:`User Guide <boston_dataset>`.
 
-    .. warning::
-       The Boston housing prices dataset has an ethical problem: as
-       investigated in [1]_, the authors of this dataset engineered a
-       non-invertible variable "B" assuming that racial self-segregation had a
-       positive impact on house prices [2]_. Furthermore the goal of the
-       research that led to the creation of this dataset was to study the
-       impact of air quality but it did not give adequate demonstration of the
-       validity of this assumption.
-
-       The scikit-learn maintainers therefore strongly discourage the use of
-       this dataset unless the purpose of the code is to study and educate
-       about ethical issues in data science and machine learning::
-
-       In this case special case, you can fetch the dataset from OpenML::
-
-           >>> from sklearn.datasets import fetch_openml
-           >>> boston = fetch_openml('boston', version=2, as_frame=False)
-
-       Alternative datasets include the California housing dataset [3]_
-       (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
-       housing dataset [4]_. You can load the datasets as follows::
-
-           >>> from sklearn.datasets import fetch_california_housing
-           >>> housing = fetch_california_housing()
-
-       for the California housing dataset and::
-
-           >>> from sklearn.datasets import fetch_openml
-           >>> housing = fetch_openml(name="house_prices", as_frame=False)
-
-       for the Ames housing dataset.
-
     .. deprecated:: 1.0
        This function is deprecated in 1.0 and will be removed in 1.2. See the
-       warning message above for futher details regarding the alternative
+       warning message below for futher details regarding the alternative
        datasets.
+
+    .. warning::
+        The Boston housing prices dataset has an ethical problem: as
+        investigated in [1]_, the authors of this dataset engineered a
+        non-invertible variable "B" assuming that racial self-segregation had a
+        positive impact on house prices [2]_. Furthermore the goal of the
+        research that led to the creation of this dataset was to study the
+        impact of air quality but it did not give adequate demonstration of the
+        validity of this assumption.
+
+        The scikit-learn maintainers therefore strongly discourage the use of
+        this dataset unless the purpose of the code is to study and educate
+        about ethical issues in data science and machine learning::
+
+        In this case special case, you can fetch the dataset from OpenML::
+
+            from sklearn.datasets import fetch_openml
+            boston = fetch_openml('boston', version=2, as_frame=False)
+
+        Alternative datasets include the California housing dataset [3]_
+        (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
+        housing dataset [4]_. You can load the datasets as follows::
+
+            from sklearn.datasets import fetch_california_housing
+            housing = fetch_california_housing()
+
+        for the California housing dataset and::
+            from sklearn.datasets import fetch_openml
+            housing = fetch_openml(name="house_prices", as_frame=True)  # noqa
+
+        for the Ames housing dataset.
 
     Parameters
     ----------
