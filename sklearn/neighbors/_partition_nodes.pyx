@@ -61,7 +61,7 @@ cdef extern from *:
                 I split_dim,
                 I split_index,
                 I n_features,
-                I n_points) except +
+                I n_points) nogil except +
 
 
 cdef int partition_node_indices(
@@ -70,7 +70,7 @@ cdef int partition_node_indices(
         ITYPE_t split_dim,
         ITYPE_t split_index,
         ITYPE_t n_features,
-        ITYPE_t n_points) except -1:
+        ITYPE_t n_points) nogil except -1:
     """Partition points in the node into two equal-sized groups.
 
     Upon return, the values in node_indices will be rearranged such that
