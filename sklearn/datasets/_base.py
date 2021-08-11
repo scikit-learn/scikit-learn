@@ -10,6 +10,7 @@ import csv
 import hashlib
 import gzip
 import shutil
+import warnings
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
@@ -1109,7 +1110,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     )
 
 
-def load_boston(*, return_X_y=False):
+def load_boston(*, return_X_y=False, acknowledge_ethical_problem=False):
     """Load and return the boston house-prices dataset (regression).
 
     ==============   ==============
@@ -1134,6 +1135,20 @@ def load_boston(*, return_X_y=False):
        this dataset unless the purpose of the code is to study and educate
        about ethical issues in data science and machine learning.
 
+       Alternative datasets include the California housing dataset [3]_
+       (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
+       housing dataset [4]_. You can load the datasets as follows::
+
+           >>> from sklearn.datasets import fetch_california_housing
+           >>> housing = fetch_california_housing()
+
+        for the California housing dataset and::
+
+           >>> from sklearn.datasets import fetch_openml
+           >>> housing = fetch_openml(name="house_prices", as_frame=True)
+
+        for the Ames housing dataset.
+
     Parameters
     ----------
     return_X_y : bool, default=False
@@ -1141,6 +1156,14 @@ def load_boston(*, return_X_y=False):
         See below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
+
+    acknowledge_ethical_problem : bool, default=False
+        By default, this loader raises a warning to make the user aware of the
+        ethical problem of this dataset. While we strongly discourage the use
+        of this dataset apart from educational purpose about ethical issue, one
+        can surpress the warning using by setting this parameter to `True`.
+
+        .. versionadded:: 1.0
 
     Returns
     -------
@@ -1178,6 +1201,10 @@ def load_boston(*, return_X_y=False):
            "Hedonic housing prices and the demand for clean air."
            Journal of environmental economics and management 5.1 (1978): 81-102.
            <https://www.researchgate.net/publication/4974606_Hedonic_housing_prices_and_the_demand_for_clean_air>`_
+    .. [3] `California housing dataset
+            <https://scikit-learn.org/stable/datasets/real_world.html#california-housing-dataset>`_
+    .. [4] `Ames housing dataset
+            <https://www.openml.org/d/42165>`_
 
     Examples
     --------
@@ -1186,6 +1213,32 @@ def load_boston(*, return_X_y=False):
     >>> print(X.shape)
     (506, 13)
     """
+
+    if not acknowledge_ethical_problem:
+        warnings.warn(
+            """The Boston housing prices dataset has an ethical problem. You
+            can refer to the documentation of this function for further
+            details.
+
+            The scikit-learn maintainers therefore strongly discourage the use
+            of this dataset unless the purpose of the code is to study and
+            educate about ethical issues in data science and machine learning.
+
+            Alternative datasets include the California housing dataset
+            (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
+            housing dataset. You can load the datasets as follows::
+
+                >>> from sklearn.datasets import fetch_california_housing
+                >>> housing = fetch_california_housing()
+
+                for the California housing dataset and::
+
+                >>> from sklearn.datasets import fetch_openml
+                >>> housing = fetch_openml(name="house_prices", as_frame=True)
+
+                for the Ames housing dataset.
+            """
+        )
 
     descr_text = load_descr("boston_house_prices.rst")
 

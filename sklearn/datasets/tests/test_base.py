@@ -223,6 +223,7 @@ def test_load_missing_sample_image_error():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
+@pytest.mark.filterwarnings("ignore:The Boston housing prices dataset has an ethical")
 @pytest.mark.parametrize(
     "loader_func, data_shape, target_shape, n_target, has_descr, filenames",
     [
@@ -318,3 +319,10 @@ def test_bunch_dir():
     # check that dir (important for autocomplete) shows attributes
     data = load_iris()
     assert "data" in dir(data)
+
+
+def test_load_boston_warning():
+    """Check that we raise the ethical warning when loading `load_boston`."""
+    warn_msg = "The Boston housing prices dataset has an ethical problem"
+    with pytest.warns(UserWarning, match=warn_msg):
+        load_boston()
