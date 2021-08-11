@@ -1010,15 +1010,7 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    # Try to use numpy `np.isnan` to check for nan. It can failed in case that
-    # `x` cannot be converted to a numpy number. Fall-back to the python
-    # `math.isnan`.
-    try:
-        # convert from numpy.bool_ to python bool to ensure that testing
-        # is_scalar_nan(x) is True does not fail.
-        return bool(isinstance(x, numbers.Real) and np.isnan(x))
-    except TypeError:
-        return math.isnan(x)
+    return isinstance(x, numbers.Real) and math.isnan(x)
 
 
 def _approximate_mode(class_counts, n_draws, rng):

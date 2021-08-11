@@ -680,6 +680,8 @@ def test_print_elapsed_time(message, expected, capsys, monkeypatch):
 )
 def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
+    # make sure that we are returning a Python bool
+    assert isinstance(is_scalar_nan(value), bool)
 
 
 def dummy_func():

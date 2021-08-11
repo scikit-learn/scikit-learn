@@ -1367,8 +1367,7 @@ def test_ordinal_encoder_python_integer():
             442534634357764313673,
         ]
     ).reshape(-1, 1)
-    X.sort(axis=0)
     encoder = OrdinalEncoder().fit(X)
-    assert_array_equal(encoder.categories_, X.T)
+    assert_array_equal(encoder.categories_, np.sort(X, axis=0).T)
     X_trans = encoder.transform(X)
-    assert_array_equal(X_trans, np.arange(X.shape[0])[:, np.newaxis])
+    assert_array_equal(X_trans, [[0], [3], [2], [1]])
