@@ -12,6 +12,7 @@ import pytest
 import numpy as np
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
+from sklearn.datasets import fetch_openml
 from sklearn.datasets import load_files
 from sklearn.datasets import load_sample_images
 from sklearn.datasets import load_sample_image
@@ -27,6 +28,7 @@ from sklearn.datasets._base import (
     load_gzip_compressed_csv_data,
 )
 from sklearn.utils import Bunch
+from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_as_frame
 
 from sklearn.externals._pilutil import pillow_installed
@@ -327,3 +329,25 @@ def test_load_boston_warning():
     warn_msg = "The Boston housing prices dataset has an ethical problem"
     with pytest.warns(FutureWarning, match=warn_msg):
         load_boston()
+
+
+@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
+def test_load_boston_alternative():
+    pytest.importorskip("pandas")
+    if not os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
+        raise SkipTest(
+            "This test requires an internet connection to fetch the dataset."
+        )
+    boston_openml = fetch_openml(name="boston", version=1, as_frame=True)
+    boston_sklearn = load_boston()
+
+    np.testing.assert_array_equal(
+        boston_openml.feature_names, boston_sklearn.feature_names
+    )
+    np.testing.assert_allclose(
+        boston_openml.data.to_numpy().astype(np.float64),
+        boston_sklearn.data,
+    )
+    np.testing.assert_array_equal(
+        boston_openml.target.to_numpy(), boston_sklearn.target
+    )

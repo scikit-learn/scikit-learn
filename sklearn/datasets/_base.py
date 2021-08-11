@@ -1123,7 +1123,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     In this case special case, you can fetch the dataset from OpenML:
 
         from sklearn.datasets import fetch_openml
-        boston = fetch_openml('boston', version=2, as_frame=False)
+        boston = fetch_openml('boston', version=1, as_frame=True)
 
     Alternative datasets include the California housing dataset (i.e.
     func:`~sklearn.datasets.fetch_california_housing`) and Ames housing
@@ -1173,7 +1173,7 @@ def load_boston(*, return_X_y=False):
         In this case special case, you can fetch the dataset from OpenML::
 
             from sklearn.datasets import fetch_openml
-            boston = fetch_openml('boston', version=2, as_frame=False)
+            boston = fetch_openml('boston', version=1, as_frame=True)
 
         Alternative datasets include the California housing dataset [3]_
         (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
