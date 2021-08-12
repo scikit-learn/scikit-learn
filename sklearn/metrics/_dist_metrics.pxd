@@ -1,7 +1,13 @@
 #!python
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: cdivision=True
+# cython: annotate=False
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: profile=False
+# cython: linetrace=False
+# cython: initializedcheck=False
+# cython: binding=False
+# distutils: define_macros=CYTHON_TRACE_NOGIL=0
 
 cimport numpy as np
 from libc.math cimport sqrt, exp
@@ -86,8 +92,12 @@ cdef class DistanceMetric:
 ######################################################################
 # DatasetsPair base class
 cdef class DatasetsPair:
-    cdef readonly DistanceMetric distance_metric
+    cdef DistanceMetric distance_metric
 
-    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil except -1
+    cdef ITYPE_t n_X(self) nogil
 
-    cdef DTYPE_t proxy_dist(self, ITYPE_t i, ITYPE_t j) nogil except -1
+    cdef ITYPE_t n_Y(self) nogil
+
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil
+
+    cdef DTYPE_t proxy_dist(self, ITYPE_t i, ITYPE_t j) nogil

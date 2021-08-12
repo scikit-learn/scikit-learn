@@ -1,4 +1,5 @@
 # cython: language_level=3
+# cython: annotate=False
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -6,6 +7,7 @@
 # cython: linetrace=False
 # cython: initializedcheck=False
 # cython: binding=False
+# distutils: language=c++
 # distutils: define_macros=CYTHON_TRACE_NOGIL=0
 
 # Pairwise Distances Reductions
@@ -18,7 +20,6 @@
 # the same structure of operations on distances between vectors
 # of a datasets pair (X, Y).
 
-import numbers
 import numpy as np
 cimport numpy as np
 
@@ -47,6 +48,7 @@ from ..utils._openmp_helpers cimport _openmp_thread_num
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 
+from numbers import Integral, Real
 from typing import List
 from scipy.sparse import issparse
 from threadpoolctl import threadpool_limits
@@ -101,7 +103,8 @@ cdef class StdVectorSentinelDTYPE(StdVectorSentinel):
 
     @staticmethod
     cdef StdVectorSentinel create_for(vector[DTYPE_t] * vec_ptr):
-        sentinel = StdVectorSentinelDTYPE()
+        # This initializes the object directly without calling __init__
+        cdef StdVectorSentinelDTYPE sentinel = StdVectorSentinelDTYPE.__new__(StdVectorSentinelDTYPE)
         sentinel.vec.swap(deref(vec_ptr))
         return sentinel
 
@@ -111,7 +114,8 @@ cdef class StdVectorSentinelITYPE(StdVectorSentinel):
 
     @staticmethod
     cdef StdVectorSentinel create_for(vector[ITYPE_t] * vec_ptr):
-        sentinel = StdVectorSentinelITYPE()
+        # This initializes the object directly without calling __init__
+        cdef StdVectorSentinelITYPE sentinel = StdVectorSentinelITYPE.__new__(StdVectorSentinelITYPE)
         sentinel.vec.swap(deref(vec_ptr))
         return sentinel
 
@@ -126,6 +130,8 @@ cdef np.ndarray vector_to_nd_array(vector_DITYPE_t * vect_ptr):
     typenum = DTYPECODE if vector_DITYPE_t is vector[DTYPE_t] else ITYPECODE
     cdef:
         np.npy_intp size = deref(vect_ptr).size()
+        # TODO: use PyArray_SimpleNewFromData from the Numpy C API directly
+        # I've tried, but Cython fails when parsing the C API
         np.ndarray arr = np.PyArray_SimpleNewFromData(1, &size, typenum,
                                                       deref(vect_ptr).data())
         StdVectorSentinel sentinel
@@ -177,7 +183,7 @@ cdef class PairwiseDistancesReduction:
     """
 
     cdef:
-        readonly DatasetsPair datasets_pair
+        DatasetsPair _datasets_pair
 
         ITYPE_t effective_omp_n_thread
         ITYPE_t n_samples_chunk, chunk_size
@@ -209,6 +215,10 @@ cdef class PairwiseDistancesReduction:
                 not issparse(Y) and Y.dtype.itemsize == 8 and Y.ndim == 2 and
                 metric in cls.valid_metrics())
 
+    @property
+    def datasets_pair(self) ->DatasetsPair:
+        return self._datasets_pair
+
     def __init__(self,
         DatasetsPair datasets_pair,
         ITYPE_t chunk_size = CHUNK_SIZE,
@@ -218,18 +228,18 @@ cdef class PairwiseDistancesReduction:
 
         self.effective_omp_n_thread = _openmp_effective_n_threads()
 
-        check_scalar(chunk_size, "chunk_size", numbers.Integral, min_val=1)
+        check_scalar(chunk_size, "chunk_size", Integral, min_val=1)
         self.chunk_size = chunk_size
         self.n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
-        self.datasets_pair = datasets_pair
+        self._datasets_pair = datasets_pair
 
-        self.n_Y = datasets_pair.n_Y
+        self.n_Y = datasets_pair.n_Y()
         self.Y_n_samples_chunk = min(self.n_Y, self.n_samples_chunk)
         Y_n_full_chunks = self.n_Y // self.Y_n_samples_chunk
         self.Y_n_samples_remainder = self.n_Y % self.Y_n_samples_chunk
 
-        self.n_X = datasets_pair.n_X
+        self.n_X = datasets_pair.n_X()
         self.X_n_samples_chunk = min(self.n_X, self.n_samples_chunk)
         X_n_full_chunks = self.n_X // self.X_n_samples_chunk
         self.X_n_samples_remainder = self.n_X % self.X_n_samples_chunk
@@ -445,7 +455,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     """
 
     cdef:
-        readonly ITYPE_t k
+        ITYPE_t k
 
         ITYPE_t[:, ::1] argkmin_indices
         DTYPE_t[:, ::1] argkmin_distances
@@ -508,7 +518,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     ):
         PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size)
 
-        check_scalar(k, "k", numbers.Integral, min_val=1)
+        check_scalar(k, "k", Integral, min_val=1)
         self.k = k
 
         # Allocating pointers to datastructures but not the datastructures themselves.
@@ -551,7 +561,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                     heaps_proxy_distances + i * self.k,
                     heaps_indices + i * self.k,
                     k,
-                    self.datasets_pair.proxy_dist(X_start + i, Y_start + j),
+                    self._datasets_pair.proxy_dist(X_start + i, Y_start + j),
                     Y_start + j,
                 )
 
@@ -665,7 +675,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         for i in prange(self.n_X, schedule='static', nogil=True,
                         num_threads=self.effective_omp_n_thread):
             for j in range(self.k):
-                distances[i, j] = self.datasets_pair.distance_metric._rdist_to_dist(distances[i, j])
+                distances[i, j] = self._datasets_pair.distance_metric._rdist_to_dist(distances[i, j])
 
     @final
     def compute(self,
@@ -767,8 +777,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             k=k,
             chunk_size=chunk_size)
-        self.X = check_array(X, dtype=DTYPE, order='C')
-        self.Y = check_array(Y, dtype=DTYPE, order='C')
+        # X and Y are checked by the DatasetsPair
+        self.X, self.Y = X, Y
         self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
 
@@ -905,7 +915,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     """
 
     cdef:
-        readonly DTYPE_t radius
+        DTYPE_t radius
 
         # DistanceMetric compute rank preserving distance via rdist
         # ("reduced distance" in the original wording),
@@ -990,9 +1000,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     ):
         PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size)
 
-        check_scalar(radius, "radius", numbers.Real, min_val=0)
+        check_scalar(radius, "radius", Real, min_val=0)
         self.radius = radius
-        self.proxy_radius = self.datasets_pair.distance_metric._dist_to_rdist(radius)
+        self.proxy_radius = self._datasets_pair.distance_metric._dist_to_rdist(radius)
         self.sort_results = False
 
         # Allocating pointers to datastructures but not the datastructures themselves.
@@ -1025,7 +1035,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
-                proxy_dist_i_j = self.datasets_pair.proxy_dist(i, j)
+                proxy_dist_i_j = self._datasets_pair.proxy_dist(i, j)
                 if proxy_dist_i_j <= self.proxy_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i].push_back(proxy_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
@@ -1149,7 +1159,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                         num_threads=self.effective_omp_n_thread):
             for j in range(deref(self.neigh_indices)[i].size()):
                 deref(self.neigh_distances)[i][j] = (
-                        self.datasets_pair.distance_metric._rdist_to_dist(
+                        self._datasets_pair.distance_metric._rdist_to_dist(
                             deref(self.neigh_distances)[i][j]
                         )
                 )
@@ -1241,8 +1251,8 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             radius=radius,
             chunk_size=chunk_size)
-        self.X = check_array(X, dtype=DTYPE, order='C')
-        self.Y = check_array(Y, dtype=DTYPE, order='C')
+        # X and Y are checked by the DatasetsPair
+        self.X, self.Y = X, Y
         self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
 

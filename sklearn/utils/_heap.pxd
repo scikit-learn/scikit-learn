@@ -9,7 +9,7 @@ cdef int simultaneous_sort(
     floating* dist,
     ITYPE_t* idx,
     ITYPE_t size
-) nogil except -1
+) nogil
 
 cdef int heap_push(
     floating* values,
@@ -17,4 +17,4 @@ cdef int heap_push(
     ITYPE_t size,
     floating val,
     ITYPE_t val_idx,
-) nogil except -1
+) nogil

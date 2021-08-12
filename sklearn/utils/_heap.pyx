@@ -23,7 +23,7 @@ cdef int simultaneous_sort(
     floating* values,
     ITYPE_t* indices,
     ITYPE_t size
-) nogil except -1:
+) nogil:
     """
     Perform a recursive quicksort on the values array, simultaneously
     performing the same swaps on the indices array.
@@ -90,7 +90,7 @@ cdef inline int heap_push(
     ITYPE_t size,
     floating val,
     ITYPE_t val_idx,
-) nogil except -1:
+) nogil:
     """Push a tuple (val, val_idx) into a fixed-size max-heap.
 
     The max-heap is represented as a struct of arrays where:
