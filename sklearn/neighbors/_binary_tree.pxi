@@ -746,6 +746,7 @@ cdef ITYPE_t find_node_split_dim(const DTYPE_t* data,
 #            breadth-first query
 
 # TODO: see if we can directly use heap algorithm from std::algorithm
+@final
 cdef class NodeHeap:
     """NodeHeap
 
