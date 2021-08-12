@@ -659,7 +659,7 @@ class Pipeline(_BaseComposition):
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
 
-    def __sk_is_fitted__(self):
+    def __sklearn_is_fitted__(self):
         """Indicate whether pipeline has been fit."""
         try:
             # check if the last step of the pipeline is fitted

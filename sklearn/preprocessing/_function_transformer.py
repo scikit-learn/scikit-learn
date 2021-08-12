@@ -176,7 +176,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         return func(X, **(kw_args if kw_args else {}))
 
-    def __sk_is_fitted__(self):
+    def __sklearn_is_fitted__(self):
         """Return True since FunctionTransfomer is stateless."""
         return True
 

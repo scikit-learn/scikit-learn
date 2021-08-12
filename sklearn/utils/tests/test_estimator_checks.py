@@ -1003,7 +1003,7 @@ def test_check_fit_check_is_fitted():
             return self
 
         @available_if(lambda self: self.behavior in {"method", "always-true"})
-        def __sk_is_fitted__(self):
+        def __sklearn_is_fitted__(self):
             if self.behavior == "always-true":
                 return True
             return hasattr(self, "_is_fitted")
