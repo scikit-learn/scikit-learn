@@ -24,7 +24,6 @@ from libc.math cimport sqrt
 
 {{for name_suffix, c_type in dtypes}}
 
-
 cdef class WeightVector{{name_suffix}}(object):
     cdef readonly {{c_type}}[::1] w
     cdef readonly {{c_type}}[::1] aw
