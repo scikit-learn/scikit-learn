@@ -34,7 +34,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
-from sklearn.metaestimators import available_if
+from sklearn.utils.metaestimators import available_if
 
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
