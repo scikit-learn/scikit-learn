@@ -1216,7 +1216,8 @@ cdef class BinaryTree:
                              "to the number of training points")
 
         # flatten X, and save original shape information
-        cdef const DTYPE_t[:, ::1] Xarr = X.reshape((-1, self.data.shape[1]))
+        np_Xarr = X.reshape((-1, self.data.shape[1]))
+        cdef const DTYPE_t[:, ::1] Xarr = np_Xarr
         cdef DTYPE_t reduced_dist_LB
         cdef ITYPE_t i
 
@@ -1240,7 +1241,7 @@ cdef class BinaryTree:
         self.n_splits = 0
 
         if dualtree:
-            other = self.__class__(np.asarray(Xarr), metric=self.dist_metric,
+            other = self.__class__(np_Xarr, metric=self.dist_metric,
                                    leaf_size=self.leaf_size)
             bounds = np.full(other.node_data.shape[0], np.inf)
             with nogil:
@@ -1369,9 +1370,14 @@ cdef class BinaryTree:
                     free(indices)
                     raise MemoryError()
 
-        idx_arr_i = np.zeros(self.data.shape[0], dtype=ITYPE)
-        dist_arr_i = np.zeros(self.data.shape[0], dtype=DTYPE)
-        counts = np.zeros(Xarr.shape[0], dtype=ITYPE)
+        np_idx_arr = np.zeros(self.data.shape[0], dtype=ITYPE)
+        idx_arr_i = np_idx_arr
+
+        np_dist_arr = np.zeros(self.data.shape[0], dtype=DTYPE)
+        dist_arr_i = np_dist_arr
+
+        counts_arr = np.zeros(Xarr.shape[0], dtype=ITYPE)
+        counts = counts_arr
 
         memory_error = False
         with nogil:
@@ -1411,7 +1417,7 @@ cdef class BinaryTree:
 
             if count_only:
                 # deflatten results
-                return np.asarray(counts).reshape(X.shape[:X.ndim - 1])
+                return counts_arr.reshape(X.shape[:X.ndim - 1])
             elif return_distance:
                 indices_npy = np.zeros(Xarr.shape[0], dtype='object')
                 distances_npy = np.zeros(Xarr.shape[0], dtype='object')
@@ -1543,8 +1549,12 @@ cdef class BinaryTree:
         if X.shape[X.ndim - 1] != n_features:
             raise ValueError("query data dimension must "
                              "match training data dimension")
-        cdef DTYPE_t[:, ::1] Xarr = X.reshape((-1, n_features))
-        cdef DTYPE_t[::1] log_density = np.zeros(Xarr.shape[0], dtype=DTYPE)
+        Xarr_np = X.reshape((-1, n_features))
+        cdef DTYPE_t[:, ::1] Xarr = Xarr_np
+
+        log_density_arr = np.zeros(Xarr.shape[0], dtype=DTYPE)
+        cdef DTYPE_t[::1] log_density = log_density_arr
+
         cdef DTYPE_t* pt = &Xarr[0, 0]
         cdef NodeHeap nodeheap
         # Explicit typing for boolean coercion
@@ -1554,8 +1564,10 @@ cdef class BinaryTree:
         #       computed between node pairs.
         if breadth_first_:
             nodeheap = NodeHeap(self.data.shape[0] // self.leaf_size)
-            node_log_min_bounds = np.full(self.n_nodes, -np.inf)
-            node_bound_widths = np.zeros(self.n_nodes)
+            node_log_min_bounds_arr = np.full(self.n_nodes, -np.inf)
+            node_log_min_bounds = node_log_min_bounds_arr
+            node_bound_widths_arr = np.zeros(self.n_nodes)
+            node_bound_widths = node_bound_widths_arr
 
         with nogil:
             if breadth_first_:
@@ -1594,7 +1606,7 @@ cdef class BinaryTree:
 
         # end: with nogil
 
-        log_density_arr = np.asarray(log_density).reshape(X.shape[:X.ndim - 1])
+        log_density_arr = log_density_arr.reshape(X.shape[:X.ndim - 1])
 
         if return_log:
             return log_density_arr
@@ -1654,7 +1666,7 @@ cdef class BinaryTree:
         cdef DTYPE_t* pt = &Xarr[0, 0]
 
         if dualtree:
-            other = self.__class__(Xarr, metric=self.dist_metric,
+            other = self.__class__(np_Xarr, metric=self.dist_metric,
                                    leaf_size=self.leaf_size)
             self._two_point_dual(0, other, 0, &rarr[0], &carr[0],
                                  0, rarr.shape[0])
