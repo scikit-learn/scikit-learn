@@ -663,6 +663,9 @@ class Pipeline(_BaseComposition):
         """Indicate whether pipeline has been fit."""
         try:
             # check if the last step of the pipeline is fitted
+            # we only check the last step since if the last step is fit, it
+            # means the previous steps should also be fit. This is faster than
+            # checking if every step of the pipeline is fit.
             check_is_fitted(self.steps[-1][1])
             return True
         except NotFittedError:
