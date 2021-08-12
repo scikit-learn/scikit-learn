@@ -1143,8 +1143,8 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     raises a NotFittedError with the given message.
 
     If an estimator does not set any attributes with a trailing underscore, it
-    can define a ``__sk_is_fitted__`` property returning a boolean to specify
-    if the estimator is fitted or not.
+    can define a ``__sk_is_fitted__`` method returning a boolean to specify if the
+    estimator is fitted or not.
 
     Parameters
     ----------
@@ -1197,7 +1197,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
             attributes = [attributes]
         fitted = all_or_any([hasattr(estimator, attr) for attr in attributes])
     elif hasattr(estimator, "__sk_is_fitted__"):
-        fitted = estimator.__sk_is_fitted__
+        fitted = estimator.__sk_is_fitted__()
     else:
         fitted = [
             v for v in vars(estimator) if v.endswith("_") and not v.startswith("__")

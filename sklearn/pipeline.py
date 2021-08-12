@@ -659,7 +659,6 @@ class Pipeline(_BaseComposition):
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
 
-    @property
     def __sk_is_fitted__(self):
         """Indicate whether pipeline has been fit."""
         try:
