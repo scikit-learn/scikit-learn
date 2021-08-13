@@ -60,7 +60,7 @@ cdef class DistanceMetric:
     cdef DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                       ITYPE_t size) nogil except -1
 
-    cdef DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
+    cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                        ITYPE_t size) nogil except -1
 
     cdef int pdist(self, const DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1
