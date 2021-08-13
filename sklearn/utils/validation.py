@@ -1630,5 +1630,5 @@ def _get_feature_names(X):
         )
 
     # Only feature names of all strings are supported
-    if all(t == "str" for t in types):
+    if types[0] == "str":
         return feature_names
