@@ -1609,9 +1609,24 @@ def _get_feature_names(X):
     names: ndarray or None
         Feature names of `X`. Unrecognized array containers will return `None`.
     """
+    feature_names = None
+
+    # extract feature names for support array containers
     if hasattr(X, "columns"):
         feature_names = np.asarray(X.columns)
-        # Only strings are supported
-        if not all(isinstance(item, str) for item in feature_names):
-            return
+
+    if feature_names is None:
+        return
+
+    types = sorted(t.__qualname__ for t in set(type(v) for v in feature_names))
+
+    # Warn when types are mixed
+    if len(types) > 1:
+        warnings.warn(
+            "Feature names only support names that are all strings. "
+            f"Got feature names with dtypes: {types}"
+        )
+
+    # Only feature names of all strings are supported
+    if all(t == "str" for t in types):
         return feature_names

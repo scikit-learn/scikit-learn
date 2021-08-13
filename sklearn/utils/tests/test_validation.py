@@ -1458,7 +1458,7 @@ def test_check_array_deprecated_matrix():
     ids=["list-int", "range", "multi-index"],
 )
 def test_get_feature_names_pandas_warns(names):
-    """Get feature names with pandas dataframes with warnings."""
+    """Get feature names with pandas dataframes without warning."""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
@@ -1480,4 +1480,18 @@ def test_get_feature_names_numpy():
     """Get feature names return None for numpy arrays."""
     X = np.array([[1, 2, 3], [4, 5, 6]])
     names = _get_feature_names(X)
+    assert names is None
+
+
+def test_get_feature_names_mixed_type_warns():
+    """Get feature names warns when the feature names have mixed dtypes"""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=["a", 1])
+
+    msg = re.escape(
+        "Feature names only support names that are all strings. "
+        "Got feature names with dtypes: ['int', 'str']"
+    )
+    with pytest.warns(UserWarning, match=msg):
+        names = _get_feature_names(X)
     assert names is None

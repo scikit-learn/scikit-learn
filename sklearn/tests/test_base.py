@@ -1,6 +1,7 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import re
 import numpy as np
 import scipy.sparse as sp
 import pytest
@@ -656,14 +657,31 @@ def test_feature_names_in():
     with pytest.warns(UserWarning, match=msg):
         trans.transform(df)
 
-    # fit on dataframe with invalid feature names works
+    # fit on dataframe with all integer feature names works without warning
     df_int_names = pd.DataFrame(X_np)
     trans = NoOpTransformer()
-    trans.fit(df_int_names)
+    with pytest.warns(None) as record:
+        trans.fit(df_int_names)
+    assert not record
 
-    # fit on dataframe with invalid feature names -> do not warn on transform
+    # fit on dataframe with no feature names or all integer feature names
+    # -> do not warn on trainsform
     Xs = [X_np, df_int_names]
     for X in Xs:
         with pytest.warns(None) as record:
             trans.transform(X)
         assert not record
+
+    # fit on dataframe with feature names that are mixed warns:
+    df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
+    trans = NoOpTransformer()
+    msg = re.escape(
+        "Feature names only support names that are all strings. "
+        "Got feature names with dtypes: ['int', 'str']"
+    )
+    with pytest.warns(UserWarning, match=msg) as record:
+        trans.fit(df_mixed)
+
+    # transform on feature names that are mixed also warns:
+    with pytest.warns(UserWarning, match=msg) as record:
+        trans.transform(df_mixed)
