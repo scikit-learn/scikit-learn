@@ -20,7 +20,6 @@ dtypes = [('64', 'double'),
 
 # WARNING: Do not edit this .pyx file directly, it is generated from its .pyx.tp
 cimport numpy as np
-from libc.math cimport sqrt
 
 {{for name_suffix, c_type in dtypes}}
 
