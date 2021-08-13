@@ -672,6 +672,7 @@ def test_feature_names_in():
             trans.transform(X)
         assert not record
 
+    # TODO: Convert to a error in 1.2
     # fit on dataframe with feature names that are mixed warns:
     df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
     trans = NoOpTransformer()

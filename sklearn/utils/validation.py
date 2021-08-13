@@ -1622,9 +1622,11 @@ def _get_feature_names(X):
 
     # Warn when types are mixed
     if len(types) > 1:
+        # TODO: Convert to a error in 1.2
         warnings.warn(
             "Feature names only support names that are all strings. "
-            f"Got feature names with dtypes: {types}"
+            f"Got feature names with dtypes: {types}. An error will be raised "
+            "in 1.2."
         )
 
     # Only feature names of all strings are supported

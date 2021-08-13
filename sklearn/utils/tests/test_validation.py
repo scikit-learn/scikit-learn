@@ -1483,6 +1483,7 @@ def test_get_feature_names_numpy():
     assert names is None
 
 
+# TODO: Convert to a error in 1.2
 def test_get_feature_names_mixed_type_warns():
     """Get feature names warns when the feature names have mixed dtypes"""
     pd = pytest.importorskip("pandas")
@@ -1490,7 +1491,7 @@ def test_get_feature_names_mixed_type_warns():
 
     msg = re.escape(
         "Feature names only support names that are all strings. "
-        "Got feature names with dtypes: ['int', 'str']"
+        "Got feature names with dtypes: ['int', 'str']. An error will be raised"
     )
     with pytest.warns(UserWarning, match=msg):
         names = _get_feature_names(X)
