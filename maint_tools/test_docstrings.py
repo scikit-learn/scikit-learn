@@ -45,7 +45,6 @@ DOCSTRING_IGNORE_LIST = [
     "LabelBinarizer",
     "LabelPropagation",
     "LabelSpreading",
-    "LinearSVR",
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
     "MDS",
