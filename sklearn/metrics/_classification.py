@@ -738,7 +738,7 @@ def jaccard_score(
 
     See Also
     --------
-    accuracy_score, f_score, multilabel_confusion_matrix
+    accuracy_score, f1_score, multilabel_confusion_matrix
 
     Notes
     -----
