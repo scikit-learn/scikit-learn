@@ -680,9 +680,9 @@ def test_feature_names_in():
         "Feature names only support names that are all strings. "
         "Got feature names with dtypes: ['int', 'str']"
     )
-    with pytest.warns(UserWarning, match=msg) as record:
+    with pytest.warns(FutureWarning, match=msg) as record:
         trans.fit(df_mixed)
 
     # transform on feature names that are mixed also warns:
-    with pytest.warns(UserWarning, match=msg) as record:
+    with pytest.warns(FutureWarning, match=msg) as record:
         trans.transform(df_mixed)

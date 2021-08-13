@@ -1615,19 +1615,22 @@ def _get_feature_names(X):
     if hasattr(X, "columns"):
         feature_names = np.asarray(X.columns)
 
-    if feature_names is None:
+    if feature_names is None or len(feature_names) == 0:
         return
 
     types = sorted(t.__qualname__ for t in set(type(v) for v in feature_names))
 
-    # Warn when types are mixed
-    if len(types) > 1:
-        # TODO: Convert to a error in 1.2
+    # Warn when types are mixed.
+    # ints and strings do not warn
+    if len(types) > 1 or not (types[0].startswith("int") or types[0] == "str"):
+        # TODO: Convert to an error in 1.2
         warnings.warn(
             "Feature names only support names that are all strings. "
             f"Got feature names with dtypes: {types}. An error will be raised "
-            "in 1.2."
+            "in 1.2.",
+            FutureWarning,
         )
+        return
 
     # Only feature names of all strings are supported
     if types[0] == "str":

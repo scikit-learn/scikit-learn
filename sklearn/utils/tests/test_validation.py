@@ -1450,19 +1450,17 @@ def test_check_array_deprecated_matrix():
 
 @pytest.mark.parametrize(
     "names",
-    [
-        list(range(2)),
-        range(2),
-        [["a", "b"], ["c", "d"]],
-    ],
-    ids=["list-int", "range", "multi-index"],
+    [list(range(2)), range(2), None],
+    ids=["list-int", "range", "default"],
 )
-def test_get_feature_names_pandas_warns(names):
-    """Get feature names with pandas dataframes without warning."""
+def test_get_feature_names_pandas_with_ints_no_warning(names):
+    """Get feature names with pandas dataframes with ints without warning"""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
-    names = _get_feature_names(X)
+    with pytest.warns(None) as record:
+        names = _get_feature_names(X)
+    assert not record
     assert names is None
 
 
@@ -1484,15 +1482,23 @@ def test_get_feature_names_numpy():
 
 
 # TODO: Convert to a error in 1.2
-def test_get_feature_names_mixed_type_warns():
+@pytest.mark.parametrize(
+    "names, dtypes",
+    [
+        ([["a", "b"], ["c", "d"]], "['tuple']"),
+        (["a", 1], "['int', 'str']"),
+    ],
+    ids=["multi-index", "mixed"],
+)
+def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
     """Get feature names warns when the feature names have mixed dtypes"""
     pd = pytest.importorskip("pandas")
-    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=["a", 1])
+    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
     msg = re.escape(
         "Feature names only support names that are all strings. "
-        "Got feature names with dtypes: ['int', 'str']. An error will be raised"
+        f"Got feature names with dtypes: {dtypes}. An error will be raised"
     )
-    with pytest.warns(UserWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         names = _get_feature_names(X)
     assert names is None
