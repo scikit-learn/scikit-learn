@@ -13,7 +13,11 @@ import warnings
 
 import scipy.optimize
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+)
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
@@ -1245,6 +1249,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             return np.vstack([1 - y_pred, y_pred]).T
         else:
             return y_pred
+
+    def _more_tags(self):
+        return {"multilabel": True}
 
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
