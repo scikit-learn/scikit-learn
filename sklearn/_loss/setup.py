@@ -8,7 +8,7 @@ def configuration(parent_package="", top_path=None):
 
     # generate _loss.pyx from template
     templates = ["sklearn/_loss/_loss.pyx.tp"]
-    gen_from_templates(templates, top_path)
+    gen_from_templates(templates)
 
     config.add_extension(
         "_loss",
