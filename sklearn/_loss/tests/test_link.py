@@ -13,6 +13,12 @@ from sklearn._loss.link import (
 LINK_FUNCTIONS = list(_LINKS.values())
 
 
+def test_interval_raises():
+    """Test that interval with low > high raises ValueError."""
+    with pytest.raises(ValueError, match="On must have low <= high"):
+        Interval(1, 0, False, False)
+
+
 @pytest.mark.parametrize(
     "interval",
     [
