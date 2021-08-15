@@ -20,12 +20,16 @@ class Interval:
     high_inclusive: bool
 
     def includes(self, x):
-        """Test whether values of x are in interval range.
+        """Test whether all values of x are in interval range.
 
         Parameters
         ----------
         x : ndarray
             Array whose elements are tested to be in interval range.
+
+        Returns
+        -------
+        result : bool
         """
         if self.low_inclusive:
             low = np.greater_equal(x, self.low)
@@ -51,6 +55,11 @@ def _inclusive_low_high(interval, dtype=float):
     """Generate values low and high to be within the interval range.
 
     This is used in tests only.
+
+    Returns
+    -------
+    low, high : tuple
+        The returned values low and high lie within the interval.
     """
     eps = 10 * np.finfo(dtype).eps
     if interval.low == -np.inf:
