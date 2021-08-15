@@ -18,15 +18,15 @@ classification.
 import numpy as np
 from scipy.special import xlogy
 from ._loss import (
-    cLossFunction,
-    cHalfSquaredError,
-    cAbsoluteError,
-    cPinballLoss,
-    cHalfPoissonLoss,
-    cHalfGammaLoss,
-    cHalfTweedieLoss,
-    cBinaryCrossEntropy,
-    cCategoricalCrossEntropy,
+    CyLossFunction,
+    CyHalfSquaredError,
+    CyAbsoluteError,
+    CyPinballLoss,
+    CyHalfPoissonLoss,
+    CyHalfGammaLoss,
+    CyHalfTweedieLoss,
+    CyBinaryCrossEntropy,
+    CyCategoricalCrossEntropy,
 )
 from .link import (
     Interval,
@@ -42,7 +42,7 @@ from ..utils.stats import _weighted_percentile
 # Note: The shape of raw_prediction for multiclass classifications are
 # - GradientBoostingClassifier: (n_samples, n_classes)
 # - HistGradientBoostingClassifier: (n_classes, n_samples)
-class BaseLoss(BaseLink, cLossFunction):
+class BaseLoss(BaseLink, CyLossFunction):
     """Base class for a loss function of 1-dimensional targets.
 
     Conventions:
@@ -94,7 +94,7 @@ class BaseLoss(BaseLink, cLossFunction):
     # - link
     # - inverse
     #
-    # Inherited methods from cLossFunction:
+    # Inherited methods from CyLossFunction:
     # - _loss, _loss_gradient, _gradient, _gradient_hessian
 
     # For decision trees:
@@ -434,7 +434,7 @@ class BaseLoss(BaseLink, cLossFunction):
         return np.zeros_like(y_true)
 
 
-class HalfSquaredError(IdentityLink, BaseLoss, cHalfSquaredError):
+class HalfSquaredError(IdentityLink, BaseLoss, CyHalfSquaredError):
     """Half squared error with identity link, for regression.
 
     Domain:
@@ -505,7 +505,7 @@ class HalfSquaredError(IdentityLink, BaseLoss, cHalfSquaredError):
         return gradient, hessian
 
 
-class AbsoluteError(IdentityLink, BaseLoss, cAbsoluteError):
+class AbsoluteError(IdentityLink, BaseLoss, CyAbsoluteError):
     """Absolute error with identity link, for regression.
 
     Domain:
@@ -542,7 +542,7 @@ class AbsoluteError(IdentityLink, BaseLoss, cAbsoluteError):
             return _weighted_percentile(y_true, sample_weight, 50)
 
 
-class PinballLoss(IdentityLink, BaseLoss, cPinballLoss):
+class PinballLoss(IdentityLink, BaseLoss, CyPinballLoss):
     """Quantile loss aka pinball loss, for regression.
 
     Domain:
@@ -573,7 +573,7 @@ class PinballLoss(IdentityLink, BaseLoss, cPinballLoss):
 
     def __init__(self, sample_weight=None, quantile=0.5):
         BaseLoss.__init__(self)
-        cPinballLoss.__init__(self, quantile=float(quantile))
+        CyPinballLoss.__init__(self, quantile=float(quantile))
         self.approx_hessian = True
         if sample_weight is None:
             self.constant_hessian = True
@@ -597,7 +597,7 @@ class PinballLoss(IdentityLink, BaseLoss, cPinballLoss):
             return _weighted_percentile(y_true, sample_weight, 100 * self.quantile)
 
 
-class HalfPoissonLoss(LogLink, BaseLoss, cHalfPoissonLoss):
+class HalfPoissonLoss(LogLink, BaseLoss, CyHalfPoissonLoss):
     """Poisson deviance loss with log-link, for regression.
 
     Domain:
@@ -630,7 +630,7 @@ class HalfPoissonLoss(LogLink, BaseLoss, cHalfPoissonLoss):
         return term
 
 
-class HalfGammaLoss(LogLink, BaseLoss, cHalfGammaLoss):
+class HalfGammaLoss(LogLink, BaseLoss, CyHalfGammaLoss):
     """Gamma deviance loss with log-link, for regression.
 
     Domain:
@@ -662,7 +662,7 @@ class HalfGammaLoss(LogLink, BaseLoss, cHalfGammaLoss):
         return term
 
 
-class HalfTweedieLoss(LogLink, BaseLoss, cHalfTweedieLoss):
+class HalfTweedieLoss(LogLink, BaseLoss, CyHalfTweedieLoss):
     """Tweedie deviance loss with log-link, for regression.
 
     Domain:
@@ -695,7 +695,7 @@ class HalfTweedieLoss(LogLink, BaseLoss, cHalfTweedieLoss):
 
     def __init__(self, sample_weight=None, power=1.5):
         BaseLoss.__init__(self)
-        cHalfTweedieLoss.__init__(self, power=power)
+        CyHalfTweedieLoss.__init__(self, power=power)
         self.interval_y_pred = Interval(0, np.inf, False, False)
         if self.power <= 0:
             self.interval_y_true = Interval(-np.inf, np.inf, False, False)
@@ -725,7 +725,7 @@ class HalfTweedieLoss(LogLink, BaseLoss, cHalfTweedieLoss):
             return term
 
 
-class BinaryCrossEntropy(LogitLink, BaseLoss, cBinaryCrossEntropy):
+class BinaryCrossEntropy(LogitLink, BaseLoss, CyBinaryCrossEntropy):
     """Binary cross entropy loss with logit link, for binary classification.
 
     Domain:
@@ -773,7 +773,7 @@ class BinaryCrossEntropy(LogitLink, BaseLoss, cBinaryCrossEntropy):
         return proba
 
 
-class CategoricalCrossEntropy(MultinomialLogit, BaseLoss, cCategoricalCrossEntropy):
+class CategoricalCrossEntropy(MultinomialLogit, BaseLoss, CyCategoricalCrossEntropy):
     """Categorical cross-entropy loss, for multiclass classification.
 
     Domain:
