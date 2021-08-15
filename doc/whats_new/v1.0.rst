@@ -366,6 +366,10 @@ Changelog
   error with unsupported value type.
   :pr:`19520` by :user:`Jeff Zhao <kamiyaa>`.
 
+- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` by raising an
+  error when min_idf or max_idf is a float and > 1.0.
+  :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
