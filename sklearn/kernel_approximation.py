@@ -135,7 +135,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : object
-            Returns the transformer.
+            Returns the instance itself.
         """
         if not self.degree >= 1:
             raise ValueError(f"degree={self.degree} should be >=1.")
@@ -166,7 +166,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Projected array.
+            Returns the instance itself.
         """
 
         check_is_fitted(self)
