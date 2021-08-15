@@ -403,7 +403,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
             samples. The lower, the more abnormal. Negative scores represent
             outliers, positive scores represent inliers.
         """
-        return self._score_samples(X) - self.offset_
+        return self.score_samples(X) - self.offset_
 
     def _check_novelty_score_samples(self):
         if not self.novelty:
