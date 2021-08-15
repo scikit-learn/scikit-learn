@@ -116,9 +116,9 @@ class PrecisionRecallDisplay:
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
-            line_kwargs["label"] = f"{name} (AP = " f"{self.average_precision:0.2f})"
+            line_kwargs["label"] = f"{name} (AP = {self.average_precision:0.2f})"
         elif self.average_precision is not None:
-            line_kwargs["label"] = f"AP = " f"{self.average_precision:0.2f}"
+            line_kwargs["label"] = f"AP = {self.average_precision:0.2f}"
         elif name is not None:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)

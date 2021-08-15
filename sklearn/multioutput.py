@@ -22,8 +22,8 @@ from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
+from .utils.metaestimators import available_if
 from .utils import check_random_state
-from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
@@ -64,13 +64,27 @@ def _partial_fit_estimator(
     return estimator
 
 
+def _available_if_estimator_has(attr):
+    """Returns a function to check if estimator or estimators_ has attr
+
+    Helper for Chain implementations
+    """
+
+    def _check(self):
+        return hasattr(self.estimator, attr) or all(
+            hasattr(est, attr) for est in self.estimators_
+        )
+
+    return available_if(_check)
+
+
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
-    @if_delegate_has_method("estimator")
+    @_available_if_estimator_has("partial_fit")
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incrementally fit the model to data.
         Fit a separate model for each output variable.
@@ -113,7 +127,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         if sample_weight is not None and not has_fit_parameter(
             self.estimator, "sample_weight"
         ):
-            raise ValueError("Underlying estimator does not support" " sample weights.")
+            raise ValueError("Underlying estimator does not support sample weights.")
 
         first_time = not hasattr(self, "estimators_")
 
@@ -163,7 +177,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         """
 
         if not hasattr(self.estimator, "fit"):
-            raise ValueError("The base estimator should implement" " a fit method")
+            raise ValueError("The base estimator should implement a fit method")
 
         y = self._validate_data(X="no_validation", y=y, multi_output=True)
 
@@ -179,7 +193,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         if sample_weight is not None and not has_fit_parameter(
             self.estimator, "sample_weight"
         ):
-            raise ValueError("Underlying estimator does not support" " sample weights.")
+            raise ValueError("Underlying estimator does not support sample weights.")
 
         fit_params_validated = _check_fit_params(X, fit_params)
 
@@ -212,7 +226,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         """
         check_is_fitted(self)
         if not hasattr(self.estimators_[0], "predict"):
-            raise ValueError("The base estimator should implement" " a predict method")
+            raise ValueError("The base estimator should implement a predict method")
 
         y = Parallel(n_jobs=self.n_jobs)(
             delayed(e.predict)(X) for e in self.estimators_
@@ -280,7 +294,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
-    @if_delegate_has_method("estimator")
+    @_available_if_estimator_has("partial_fit")
     def partial_fit(self, X, y, sample_weight=None):
         """Incrementally fit the model to data.
         Fit a separate model for each output variable.
@@ -390,8 +404,19 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
-    @property
-    def predict_proba(self):
+    def _check_predict_proba(self):
+        if hasattr(self, "estimators_"):
+            # raise an AttributeError if `predict_proba` does not exist for
+            # each estimator
+            [getattr(est, "predict_proba") for est in self.estimators_]
+            return True
+        # raise an AttributeError if `predict_proba` does not exist for the
+        # unfitted estimator
+        getattr(self.estimator, "predict_proba")
+        return True
+
+    @available_if(_check_predict_proba)
+    def predict_proba(self, X):
         """Probability estimates.
         Returns prediction probabilities for each class of each output.
 
@@ -416,15 +441,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
                 ``n_classes``) for that particular output.
         """
         check_is_fitted(self)
-        if not all(
-            [hasattr(estimator, "predict_proba") for estimator in self.estimators_]
-        ):
-            raise AttributeError(
-                "The base estimator should " "implement predict_proba method"
-            )
-        return self._predict_proba
-
-    def _predict_proba(self, X):
         results = [estimator.predict_proba(X) for estimator in self.estimators_]
         return results
 
@@ -462,6 +478,20 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     def _more_tags(self):
         # FIXME
         return {"_skip_test": True}
+
+
+def _available_if_base_estimator_has(attr):
+    """Returns a function to check if base_estimator or estimators_ has attr
+
+    Helper for Chain implementations
+    """
+
+    def _check(self):
+        return hasattr(self.base_estimator, attr) or all(
+            hasattr(est, attr) for est in self.estimators_
+        )
+
+    return available_if(_check)
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
@@ -700,7 +730,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         ]
         return self
 
-    @if_delegate_has_method("base_estimator")
+    @_available_if_base_estimator_has("predict_proba")
     def predict_proba(self, X):
         """Predict probability estimates.
 
@@ -729,7 +759,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         return Y_prob
 
-    @if_delegate_has_method("base_estimator")
+    @_available_if_base_estimator_has("decision_function")
     def decision_function(self, X):
         """Evaluate the decision_function of the models in the chain.
 

@@ -31,6 +31,7 @@ from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ._validation import _insert_error_scores
 from ._validation import _normalize_score_results
+from ._validation import _warn_about_fit_failures
 from ..exceptions import NotFittedError
 from joblib import Parallel
 from ..utils import check_random_state
@@ -93,7 +94,7 @@ class ParameterGrid:
     def __init__(self, param_grid):
         if not isinstance(param_grid, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter grid is not a dict or " "a list ({!r})".format(param_grid)
+                "Parameter grid is not a dict or a list ({!r})".format(param_grid)
             )
 
         if isinstance(param_grid, Mapping):
@@ -104,7 +105,7 @@ class ParameterGrid:
         # check if all entries are dictionaries of lists
         for grid in param_grid:
             if not isinstance(grid, dict):
-                raise TypeError("Parameter grid is not a " "dict ({!r})".format(grid))
+                raise TypeError("Parameter grid is not a dict ({!r})".format(grid))
             for key in grid:
                 if not isinstance(grid[key], Iterable):
                     raise TypeError(
@@ -243,8 +244,9 @@ class ParameterSampler:
     def __init__(self, param_distributions, n_iter, *, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter distribution is not a dict or "
-                "a list ({!r})".format(param_distributions)
+                "Parameter distribution is not a dict or a list ({!r})".format(
+                    param_distributions
+                )
             )
 
         if isinstance(param_distributions, Mapping):
@@ -255,7 +257,7 @@ class ParameterSampler:
         for dist in param_distributions:
             if not isinstance(dist, dict):
                 raise TypeError(
-                    "Parameter distribution is not a " "dict ({!r})".format(dist)
+                    "Parameter distribution is not a dict ({!r})".format(dist)
                 )
             for key in dist:
                 if not isinstance(dist[key], Iterable) and not hasattr(
@@ -387,7 +389,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -420,7 +422,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
-                "and the estimator doesn't provide one %s" % self.best_estimator_
+                "and the estimator doesn't provide one %s"
+                % self.best_estimator_
             )
         if isinstance(self.scorer_, dict):
             if self.multimetric_:
@@ -791,14 +794,18 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         "splits, got {}".format(n_splits, len(out) // n_candidates)
                     )
 
+                _warn_about_fit_failures(out, self.error_score)
+
                 # For callable self.scoring, the return type is only know after
                 # calling. If the return type is a dictionary, the error scores
                 # can now be inserted with the correct key. The type checking
                 # of out will be done in `_insert_error_scores`.
                 if callable(self.scoring):
                     _insert_error_scores(out, self.error_score)
+
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
+
                 if more_results is not None:
                     for key, value in more_results.items():
                         all_more_results[key].extend(value)
@@ -1068,7 +1075,7 @@ class GridSearchCV(BaseSearchCV):
         - >3 : the fold and candidate parameter indexes are also displayed
           together with the starting time of the computation.
 
-    pre_dispatch : int, or str, default=n_jobs
+    pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -1431,7 +1438,7 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : int
         Controls the verbosity: the higher, the more messages.
 
-    pre_dispatch : int, or str, default=None
+    pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched

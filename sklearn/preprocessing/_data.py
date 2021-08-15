@@ -208,7 +208,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
             )
         if axis != 0:
             raise ValueError(
-                "Can only scale sparse matrix on axis=0, " " got axis=%d" % axis
+                "Can only scale sparse matrix on axis=0,  got axis=%d" % axis
             )
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
@@ -337,6 +337,19 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         It will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
+    See Also
+    --------
+    minmax_scale : Equivalent function without the estimator API.
+
+    Notes
+    -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
@@ -353,19 +366,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
      [1.   1.  ]]
     >>> print(scaler.transform([[2, 2]]))
     [[1.5 0. ]]
-
-    See Also
-    --------
-    minmax_scale : Equivalent function without the estimator API.
-
-    Notes
-    -----
-    NaNs are treated as missing values: disregarded in fit, and maintained in
-    transform.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
@@ -433,8 +433,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError(
-                "Minimum of desired feature range must be smaller"
-                " than maximum. Got %s." % str(feature_range)
+                "Minimum of desired feature range must be smaller than maximum. Got %s."
+                % str(feature_range)
             )
 
         if sparse.issparse(X):
@@ -710,23 +710,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         Will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
-    Examples
-    --------
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
-    >>> scaler = StandardScaler()
-    >>> print(scaler.fit(data))
-    StandardScaler()
-    >>> print(scaler.mean_)
-    [0.5 0.5]
-    >>> print(scaler.transform(data))
-    [[-1. -1.]
-     [-1. -1.]
-     [ 1.  1.]
-     [ 1.  1.]]
-    >>> print(scaler.transform([[2, 2]]))
-    [[3. 3.]]
-
     See Also
     --------
     scale : Equivalent function without the estimator API.
@@ -746,6 +729,23 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
+    >>> scaler = StandardScaler()
+    >>> print(scaler.fit(data))
+    StandardScaler()
+    >>> print(scaler.mean_)
+    [0.5 0.5]
+    >>> print(scaler.transform(data))
+    [[-1. -1.]
+     [-1. -1.]
+     [ 1.  1.]
+     [ 1.  1.]]
+    >>> print(scaler.transform([[2, 2]]))
+    [[3. 3.]]
     """
 
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
@@ -1005,7 +1005,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             X,
             accept_sparse="csr",
             copy=copy,
-            ensure_2d=False,
+            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1067,6 +1067,19 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
 
+    See Also
+    --------
+    maxabs_scale : Equivalent function without the estimator API.
+
+    Notes
+    -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
     Examples
     --------
     >>> from sklearn.preprocessing import MaxAbsScaler
@@ -1080,19 +1093,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     array([[ 0.5, -1. ,  1. ],
            [ 1. ,  0. ,  0. ],
            [ 0. ,  1. , -0.5]])
-
-    See Also
-    --------
-    maxabs_scale : Equivalent function without the estimator API.
-
-    Notes
-    -----
-    NaNs are treated as missing values: disregarded in fit, and maintained in
-    transform.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     def __init__(self, *, copy=True):
@@ -1960,7 +1960,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     X = check_array(X, accept_sparse=["csr", "csc"], copy=copy)
     if sparse.issparse(X):
         if threshold < 0:
-            raise ValueError("Cannot binarize a sparse matrix with threshold " "< 0")
+            raise ValueError("Cannot binarize a sparse matrix with threshold < 0")
         cond = X.data > threshold
         not_cond = np.logical_not(cond)
         X.data[cond] = 1
@@ -1998,7 +1998,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : bool, default=True
-        set to False to perform inplace binarization and avoid a copy (if
+        Set to False to perform inplace binarization and avoid a copy (if
         the input is already a numpy array or a scipy.sparse CSR matrix).
 
     Attributes
@@ -2007,6 +2007,20 @@ class Binarizer(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    See Also
+    --------
+    binarize : Equivalent function without the estimator API.
+    KBinsDiscretizer : Bin continuous data into intervals.
+    OneHotEncoder : Encode categorical features as a one-hot numeric array.
+
+    Notes
+    -----
+    If the input is a sparse matrix, only the non-zero values are subject
+    to update by the Binarizer class.
+
+    This estimator is stateless (besides constructor parameters), the
+    fit method does nothing but is useful when used in a pipeline.
 
     Examples
     --------
@@ -2021,18 +2035,6 @@ class Binarizer(TransformerMixin, BaseEstimator):
     array([[1., 0., 1.],
            [1., 0., 0.],
            [0., 1., 0.]])
-
-    Notes
-    -----
-    If the input is a sparse matrix, only the non-zero values are subject
-    to update by the Binarizer class.
-
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
-
-    See Also
-    --------
-    binarize : Equivalent function without the estimator API.
     """
 
     def __init__(self, *, threshold=0.0, copy=True):
@@ -2128,6 +2130,11 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    sklearn.kernel_approximation.Nystroem : Approximate a kernel map
+        using a subset of the training data.
+
     References
     ----------
     .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
@@ -2174,7 +2181,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted transformer.
+            Returns the instance itself.
         """
         K = self._validate_data(K, dtype=FLOAT_DTYPES)
 
@@ -2203,6 +2210,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         K_new : ndarray of shape (n_samples1, n_samples2)
+            Returns the instance itself.
         """
         check_is_fitted(self)
 
@@ -2222,7 +2230,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1."
     )
     @property
@@ -2507,13 +2515,15 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         if self.n_quantiles <= 0:
             raise ValueError(
                 "Invalid value for 'n_quantiles': %d. "
-                "The number of quantiles must be at least one." % self.n_quantiles
+                "The number of quantiles must be at least one."
+                % self.n_quantiles
             )
 
         if self.subsample <= 0:
             raise ValueError(
                 "Invalid value for 'subsample': %d. "
-                "The number of subsamples must be at least one." % self.subsample
+                "The number of subsamples must be at least one."
+                % self.subsample
             )
 
         if self.n_quantiles > self.subsample:
@@ -2629,7 +2639,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                 and (sparse.issparse(X) and np.any(X.data < 0))
             ):
                 raise ValueError(
-                    "QuantileTransformer only accepts" " non-negative sparse matrices."
+                    "QuantileTransformer only accepts non-negative sparse matrices."
                 )
 
         # check the output distribution
@@ -2859,7 +2869,7 @@ def quantile_transform(
         return n.fit_transform(X.T).T
     else:
         raise ValueError(
-            "axis should be either equal to 0 or 1. Got" " axis={}".format(axis)
+            "axis should be either equal to 0 or 1. Got axis={}".format(axis)
         )
 
 
@@ -3230,8 +3240,9 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         valid_methods = ("box-cox", "yeo-johnson")
         if check_method and self.method not in valid_methods:
             raise ValueError(
-                "'method' must be one of {}, "
-                "got {} instead.".format(valid_methods, self.method)
+                "'method' must be one of {}, got {} instead.".format(
+                    valid_methods, self.method
+                )
             )
 
         return X

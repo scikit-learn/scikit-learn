@@ -522,7 +522,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
 
 
 class TSNE(BaseEstimator):
-    """t-distributed Stochastic Neighbor Embedding.
+    """T-distributed Stochastic Neighbor Embedding.
 
     t-SNE [1] is a tool to visualize high-dimensional data. It converts
     similarities between data points to joint probabilities and tries
@@ -681,16 +681,16 @@ class TSNE(BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
-    Examples
+    See Also
     --------
-
-    >>> import numpy as np
-    >>> from sklearn.manifold import TSNE
-    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
-    ...                   init='random').fit_transform(X)
-    >>> X_embedded.shape
-    (4, 2)
+    sklearn.decomposition.PCA : Principal component analysis that is a linear
+        dimensionality reduction method.
+    sklearn.decomposition.KernelPCA : Non-linear dimensionality reduction using
+        kernels and PCA.
+    MDS : Manifold learning using multidimensional scaling.
+    Isomap : Manifold learning based on Isometric Mapping.
+    LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
+    SpectralEmbedding : Spectral embedding for non-linear dimensionality.
 
     References
     ----------
@@ -712,6 +712,16 @@ class TSNE(BaseEstimator):
 
     [5] Kobak, D., & Berens, P. (2019). The art of using t-SNE for single-cell
         transcriptomics. Nature Communications, 10(1), 1-14.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.manifold import TSNE
+    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
+    >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
+    ...                   init='random').fit_transform(X)
+    >>> X_embedded.shape
+    (4, 2)
     """
 
     # Control the number of exploration iterations with early_exaggeration on
@@ -798,9 +808,7 @@ class TSNE(BaseEstimator):
             self._learning_rate = np.maximum(self._learning_rate, 50)
         else:
             if not (self._learning_rate > 0):
-                raise ValueError(
-                    "'learning_rate' must be a positive number " "or 'auto'."
-                )
+                raise ValueError("'learning_rate' must be a positive number or 'auto'.")
         if self.metric != "euclidean" and self.square_distances is not True:
             warnings.warn(
                 "'square_distances' has been introduced in 0.24 to help phase "
@@ -826,8 +834,7 @@ class TSNE(BaseEstimator):
         if self.metric == "precomputed":
             if isinstance(self._init, str) and self._init == "pca":
                 raise ValueError(
-                    'The parameter init="pca" cannot be '
-                    'used with metric="precomputed".'
+                    'The parameter init="pca" cannot be used with metric="precomputed".'
                 )
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
@@ -889,8 +896,7 @@ class TSNE(BaseEstimator):
 
             if np.any(distances < 0):
                 raise ValueError(
-                    "All distances should be positive, the "
-                    "metric given is not correct"
+                    "All distances should be positive, the metric given is not correct"
                 )
 
             if self.metric != "euclidean" and self.square_distances is True:
@@ -900,9 +906,9 @@ class TSNE(BaseEstimator):
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
             assert np.all(np.isfinite(P)), "All probabilities should be finite"
             assert np.all(P >= 0), "All probabilities should be non-negative"
-            assert np.all(P <= 1), (
-                "All probabilities should be less " "or then equal to one"
-            )
+            assert np.all(
+                P <= 1
+            ), "All probabilities should be less or then equal to one"
 
         else:
             # Compute the number of nearest neighbors to find.
@@ -936,8 +942,9 @@ class TSNE(BaseEstimator):
             duration = time() - t0
             if self.verbose:
                 print(
-                    "[t-SNE] Computed neighbors for {} samples "
-                    "in {:.3f}s...".format(n_samples, duration)
+                    "[t-SNE] Computed neighbors for {} samples in {:.3f}s...".format(
+                        n_samples, duration
+                    )
                 )
 
             # Free the memory used by the ball_tree
@@ -980,7 +987,7 @@ class TSNE(BaseEstimator):
                 np.float32
             )
         else:
-            raise ValueError("'init' must be 'pca', 'random', or " "a numpy array")
+            raise ValueError("'init' must be 'pca', 'random', or a numpy array")
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # degrees_of_freedom = n_components - 1 comes from
@@ -1043,8 +1050,8 @@ class TSNE(BaseEstimator):
         params, kl_divergence, it = _gradient_descent(obj_func, params, **opt_args)
         if self.verbose:
             print(
-                "[t-SNE] KL divergence after %d iterations with early "
-                "exaggeration: %f" % (it + 1, kl_divergence)
+                "[t-SNE] KL divergence after %d iterations with early exaggeration: %f"
+                % (it + 1, kl_divergence)
             )
 
         # Learning schedule (part 2): disable early exaggeration and finish
@@ -1073,8 +1080,7 @@ class TSNE(BaseEstimator):
         return X_embedded
 
     def fit_transform(self, X, y=None):
-        """Fit X into an embedded space and return that transformed
-        output.
+        """Fit X into an embedded space and return that transformed output.
 
         Parameters
         ----------
@@ -1085,7 +1091,8 @@ class TSNE(BaseEstimator):
             or 'coo'. If the method is 'barnes_hut' and the metric is
             'precomputed', X may be a precomputed sparse graph.
 
-        y : Ignored
+        y : None
+            Ignored.
 
         Returns
         -------
@@ -1108,7 +1115,13 @@ class TSNE(BaseEstimator):
             or 'coo'. If the method is 'barnes_hut' and the metric is
             'precomputed', X may be a precomputed sparse graph.
 
-        y : Ignored
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        X_new : array of shape (n_samples, n_components)
+            Embedding of the training data in low-dimensional space.
         """
         self.fit_transform(X)
         return self

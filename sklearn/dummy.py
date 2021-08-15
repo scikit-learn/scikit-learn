@@ -84,6 +84,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
 
+    See Also
+    --------
+    DummyRegressor : Regressor that makes predictions using simple rules.
+
     Examples
     --------
     >>> import numpy as np
@@ -121,6 +125,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         allowed_strategies = (
             "most_frequent",
@@ -176,8 +181,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                 constant = np.reshape(np.atleast_1d(self.constant), (-1, 1))
                 if constant.shape[0] != self.n_outputs_:
                     raise ValueError(
-                        "Constant target value should have "
-                        "shape (%d, 1)." % self.n_outputs_
+                        "Constant target value should have shape (%d, 1)."
+                        % self.n_outputs_
                     )
 
         (self.classes_, self.n_classes_, self.class_prior_) = class_distribution(
@@ -362,7 +367,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+            Training data.
 
         Returns
         -------
@@ -388,7 +393,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         }
 
     def score(self, X, y, sample_weight=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """Return the mean accuracy on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that
@@ -411,7 +416,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         -------
         score : float
             Mean accuracy of self.predict(X) wrt. y.
-
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
@@ -419,9 +423,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
-    """
-    DummyRegressor is a regressor that makes predictions using
-    simple rules.
+    """Regressor that makes predictions using simple rules.
 
     This regressor is useful as a simple baseline to compare with other
     (real) regressors. Do not use it for real problems.
@@ -465,6 +467,10 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     n_outputs_ : int
         Number of outputs.
 
+    See Also
+    --------
+    DummyClassifier: Classifier that makes predictions using simple rules.
+
     Examples
     --------
     >>> import numpy as np
@@ -502,6 +508,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         allowed_strategies = ("mean", "median", "quantile", "constant")
         if self.strategy not in allowed_strategies:
@@ -539,8 +546,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         elif self.strategy == "quantile":
             if self.quantile is None or not np.isscalar(self.quantile):
                 raise ValueError(
-                    "Quantile must be a scalar in the range "
-                    "[0.0, 1.0], but got %s." % self.quantile
+                    "Quantile must be a scalar in the range [0.0, 1.0], but got %s."
+                    % self.quantile
                 )
 
             percentile = self.quantile * 100.0
@@ -568,7 +575,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
             if self.n_outputs_ != 1 and self.constant.shape[0] != y.shape[1]:
                 raise ValueError(
-                    "Constant target value should have " "shape (%d, 1)." % y.shape[1]
+                    "Constant target value should have shape (%d, 1)." % y.shape[1]
                 )
 
             self.constant_ = self.constant
@@ -577,8 +584,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return self
 
     def predict(self, X, return_std=False):
-        """
-        Perform classification on test vectors X.
+        """Perform classification on test vectors X.
 
         Parameters
         ----------
@@ -619,21 +625,21 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return {"poor_score": True, "no_validation": True}
 
     def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
+        """Return the coefficient of determination R^2 of the prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the residual
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
-        sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        The best possible score is 1.0 and it can be negative (because the
-        model can be arbitrarily worse). A constant model that always
-        predicts the expected value of y, disregarding the input features,
-        would get a R^2 score of 0.0.
+        The coefficient R^2 is defined as `(1 - u/v)`, where `u` is the
+        residual sum of squares `((y_true - y_pred) ** 2).sum()` and `v` is the
+        total sum of squares `((y_true - y_true.mean()) ** 2).sum()`. The best
+        possible score is 1.0 and it can be negative (because the model can be
+        arbitrarily worse). A constant model that always predicts the expected
+        value of y, disregarding the input features, would get a R^2 score of
+        0.0.
 
         Parameters
         ----------
         X : None or array-like of shape (n_samples, n_features)
             Test samples. Passing None as test samples gives the same result
-            as passing real test samples, since DummyRegressor
+            as passing real test samples, since `DummyRegressor`
             operates independently of the sampled observations.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -645,7 +651,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            R^2 of self.predict(X) wrt. y.
+            R^2 of `self.predict(X)` wrt. y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))

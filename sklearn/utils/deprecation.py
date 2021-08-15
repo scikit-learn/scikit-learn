@@ -98,9 +98,12 @@ class deprecated:
         msg = self.extra
 
         @property
+        @functools.wraps(prop)
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             return prop.fget(*args, **kwargs)
+
+        wrapped.__doc__ = self._update_doc(wrapped.__doc__)
 
         return wrapped
 

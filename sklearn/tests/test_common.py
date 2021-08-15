@@ -55,7 +55,7 @@ def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.
     for name, Estimator in all_estimators():
         msg = (
-            "Base estimators such as {0} should not be included" " in all_estimators"
+            "Base estimators such as {0} should not be included in all_estimators"
         ).format(name)
         assert not name.lower().startswith("base"), msg
 
@@ -208,6 +208,11 @@ def test_all_tests_are_importable():
                                       \._
                                       """
     )
+    resource_modules = {
+        "sklearn.datasets.data",
+        "sklearn.datasets.descr",
+        "sklearn.datasets.images",
+    }
     lookup = {
         name: ispkg
         for _, name, ispkg in pkgutil.walk_packages(sklearn.__path__, prefix="sklearn.")
@@ -216,6 +221,7 @@ def test_all_tests_are_importable():
         name
         for name, ispkg in lookup.items()
         if ispkg
+        and name not in resource_modules
         and not HAS_TESTS_EXCEPTIONS.search(name)
         and name + ".tests" not in lookup
     ]

@@ -15,12 +15,13 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
-from ..metrics.pairwise import paired_distances, pairwise_distances
+from ..metrics.pairwise import paired_distances
 from ..neighbors import DistanceMetric
 from ..neighbors._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
+from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
@@ -43,8 +44,8 @@ def _fix_connectivity(X, connectivity, affinity):
     n_samples = X.shape[0]
     if connectivity.shape[0] != n_samples or connectivity.shape[1] != n_samples:
         raise ValueError(
-            "Wrong shape for connectivity matrix: %s "
-            "when X is %s" % (connectivity.shape, X.shape)
+            "Wrong shape for connectivity matrix: %s when X is %s"
+            % (connectivity.shape, X.shape)
         )
 
     # Make the connectivity matrix symmetric:
@@ -68,18 +69,14 @@ def _fix_connectivity(X, connectivity, affinity):
             stacklevel=2,
         )
         # XXX: Can we do without completing the matrix?
-        for i in range(n_connected_components):
-            idx_i = np.where(labels == i)[0]
-            Xi = X[idx_i]
-            for j in range(i):
-                idx_j = np.where(labels == j)[0]
-                Xj = X[idx_j]
-                D = pairwise_distances(Xi, Xj, metric=affinity)
-                ii, jj = np.where(D == np.min(D))
-                ii = ii[0]
-                jj = jj[0]
-                connectivity[idx_i[ii], idx_j[jj]] = True
-                connectivity[idx_j[jj], idx_i[ii]] = True
+        connectivity = _fix_connected_components(
+            X=X,
+            graph=connectivity,
+            n_connected_components=n_connected_components,
+            component_labels=labels,
+            metric=affinity,
+            mode="connectivity",
+        )
 
     return connectivity, n_connected_components
 
@@ -455,8 +452,8 @@ def linkage_tree(
         join_func = linkage_choices[linkage]
     except KeyError as e:
         raise ValueError(
-            "Unknown linkage option, linkage should be one "
-            "of %s, but %s was given" % (linkage_choices.keys(), linkage)
+            "Unknown linkage option, linkage should be one of %s, but %s was given"
+            % (linkage_choices.keys(), linkage)
         ) from e
 
     if affinity == "cosine" and np.any(~np.any(X, axis=1)):
@@ -482,7 +479,7 @@ def linkage_tree(
             # by sklearn.metrics.pairwise_distances.
             if X.shape[0] != X.shape[1]:
                 raise ValueError(
-                    "Distance matrix should be square, " "Got matrix of shape {X.shape}"
+                    "Distance matrix should be square, Got matrix of shape {X.shape}"
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
@@ -657,7 +654,6 @@ _TREE_BUILDERS = dict(
     average=_average_linkage,
     single=_single_linkage,
 )
-
 
 ###############################################################################
 # Functions for cutting hierarchical clustering tree
@@ -885,8 +881,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if self.n_clusters is not None and self.n_clusters <= 0:
             raise ValueError(
-                "n_clusters should be an integer greater than 0."
-                " %s was provided." % str(self.n_clusters)
+                "n_clusters should be an integer greater than 0. %s was provided."
+                % str(self.n_clusters)
             )
 
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
@@ -898,7 +894,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if self.distance_threshold is not None and not self.compute_full_tree:
             raise ValueError(
-                "compute_full_tree must be True if " "distance_threshold is set."
+                "compute_full_tree must be True if distance_threshold is set."
             )
 
         if self.linkage == "ward" and self.affinity != "euclidean":
@@ -909,8 +905,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if self.linkage not in _TREE_BUILDERS:
             raise ValueError(
-                "Unknown linkage type %s. "
-                "Valid options are %s" % (self.linkage, _TREE_BUILDERS.keys())
+                "Unknown linkage type %s. Valid options are %s"
+                % (self.linkage, _TREE_BUILDERS.keys())
             )
         tree_builder = _TREE_BUILDERS[self.linkage]
 

@@ -11,6 +11,12 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import Lasso, ElasticNet, LassoCV, ElasticNetCV
 
 
+# FIXME: 'normalize' to be removed in 1.2
+filterwarnings_normalize = pytest.mark.filterwarnings(
+    "ignore:'normalize' was deprecated in version 1.0"
+)
+
+
 def test_sparse_coef():
     # Check that the sparse_coef property works
     clf = ElasticNet()
@@ -20,6 +26,7 @@ def test_sparse_coef():
     assert clf.sparse_coef_.toarray().tolist()[0] == clf.coef_
 
 
+@filterwarnings_normalize
 def test_normalize_option():
     # Check that the normalize option in enet works
     X = sp.csc_matrix([[-1], [0], [1]])

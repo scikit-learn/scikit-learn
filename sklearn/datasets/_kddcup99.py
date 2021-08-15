@@ -12,7 +12,7 @@ import errno
 from gzip import GzipFile
 import logging
 import os
-from os.path import dirname, exists, join
+from os.path import exists, join
 
 import numpy as np
 import joblib
@@ -21,6 +21,7 @@ from ._base import _fetch_remote
 from ._base import _convert_data_dataframe
 from . import get_data_home
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
@@ -31,7 +32,7 @@ from ..utils import shuffle as shuffle_method
 ARCHIVE = RemoteFileMetadata(
     filename="kddcup99_data",
     url="https://ndownloader.figshare.com/files/5976045",
-    checksum=("3b6c942aa0356c0ca35b7b595a26c89d" "343652c9db428893e7494f837b274292"),
+    checksum="3b6c942aa0356c0ca35b7b595a26c89d343652c9db428893e7494f837b274292",
 )
 
 # The original data can be found at:
@@ -39,7 +40,7 @@ ARCHIVE = RemoteFileMetadata(
 ARCHIVE_10_PERCENT = RemoteFileMetadata(
     filename="kddcup99_10_data",
     url="https://ndownloader.figshare.com/files/5976042",
-    checksum=("8045aca0d84e70e622d1148d7df78249" "6f6333bf6eb979a1b0837c42a9fd9561"),
+    checksum="8045aca0d84e70e622d1148d7df782496f6333bf6eb979a1b0837c42a9fd9561",
 )
 
 logger = logging.getLogger(__name__)
@@ -202,9 +203,7 @@ def fetch_kddcup99(
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "kddcup99.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("kddcup99.rst")
 
     frame = None
     if as_frame:

@@ -57,7 +57,7 @@ from ._base import _pkl_filepath
 SAMPLES = RemoteFileMetadata(
     filename="samples.zip",
     url="https://ndownloader.figshare.com/files/5976075",
-    checksum=("abb07ad284ac50d9e6d20f1c4211e0fd" "3c098f7f85955e89d321ee8efe37ac28"),
+    checksum="abb07ad284ac50d9e6d20f1c4211e0fd3c098f7f85955e89d321ee8efe37ac28",
 )
 
 # The original data can be found at:
@@ -65,7 +65,7 @@ SAMPLES = RemoteFileMetadata(
 COVERAGES = RemoteFileMetadata(
     filename="coverages.zip",
     url="https://ndownloader.figshare.com/files/5976078",
-    checksum=("4d862674d72e79d6cee77e63b98651ec" "7926043ba7d39dcb31329cf3f6073807"),
+    checksum="4d862674d72e79d6cee77e63b98651ec7926043ba7d39dcb31329cf3f6073807",
 )
 
 DATA_ARCHIVE_NAME = "species_coverage.pkz"

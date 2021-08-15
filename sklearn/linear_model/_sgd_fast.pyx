@@ -21,7 +21,7 @@ from numpy.math cimport INFINITY
 cdef extern from "_sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
-from ..utils._weight_vector cimport WeightVector
+from ..utils._weight_vector cimport WeightVector64 as WeightVector
 from ..utils._seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 np.import_array()
@@ -55,9 +55,9 @@ cdef class LossFunction:
         Parameters
         ----------
         p : double
-            The prediction, p = w^T x + intercept
+            The prediction, `p = w^T x + intercept`.
         y : double
-            The true value (aka target)
+            The true value (aka target).
 
         Returns
         -------
@@ -70,13 +70,37 @@ cdef class LossFunction:
         """Python version of `dloss` for testing.
 
         Pytest needs a python function and can't use cdef functions.
+
+        Parameters
+        ----------
+        p : double
+            The prediction, `p = w^T x`.
+        y : double
+            The true value (aka target).
+
+        Returns
+        -------
+        double
+            The derivative of the loss function with regards to `p`.
         """
         return self.dloss(p, y)
 
     def py_loss(self, double p, double y):
         """Python version of `loss` for testing.
-        
+
         Pytest needs a python function and can't use cdef functions.
+
+        Parameters
+        ----------
+        p : double
+            The prediction, `p = w^T x + intercept`.
+        y : double
+            The true value (aka target).
+
+        Returns
+        -------
+        double
+            The loss evaluated at `p` and `y`.
         """
         return self.loss(p, y)
 
@@ -87,9 +111,10 @@ cdef class LossFunction:
         Parameters
         ----------
         p : double
-            The prediction, p = w^T x
+            The prediction, `p = w^T x`.
         y : double
-            The true value (aka target)
+            The true value (aka target).
+
         Returns
         -------
         double

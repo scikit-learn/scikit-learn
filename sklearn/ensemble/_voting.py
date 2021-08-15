@@ -27,6 +27,7 @@ from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
+from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
@@ -102,7 +103,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         ----------
         X : {array-like, sparse matrix, dataframe} of shape \
                 (n_samples, n_features)
-            Input samples
+            Input samples.
 
         y : ndarray of shape (n_samples,), default=None
             Target values (None for unsupervised transformations).
@@ -119,6 +120,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() fails if the estimator isn't fitted.
         try:
@@ -294,12 +296,13 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Returns
         -------
         self : object
+            Returns the instance itself.
 
         """
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError(
-                "Multilabel and multi-output" " classification is not supported."
+                "Multilabel and multi-output classification is not supported."
             )
 
         if self.voting not in ("soft", "hard"):
@@ -346,16 +349,15 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """Collect results from clf.predict calls."""
         return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
 
-    def _predict_proba(self, X):
-        """Predict class probabilities for X in 'soft' voting."""
-        check_is_fitted(self)
-        avg = np.average(
-            self._collect_probas(X), axis=0, weights=self._weights_not_none
-        )
-        return avg
+    def _check_voting(self):
+        if self.voting == "hard":
+            raise AttributeError(
+                f"predict_proba is not available when voting={repr(self.voting)}"
+            )
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_voting)
+    def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
 
         Parameters
@@ -368,11 +370,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         avg : array-like of shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
-        if self.voting == "hard":
-            raise AttributeError(
-                "predict_proba is not available when" " voting=%r" % self.voting
-            )
-        return self._predict_proba
+        check_is_fitted(self)
+        avg = np.average(
+            self._collect_probas(X), axis=0, weights=self._weights_not_none
+        )
+        return avg
 
     def transform(self, X):
         """Return class labels or probabilities for X for each estimator.
@@ -453,7 +455,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not 'drop'.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
@@ -543,7 +545,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        predictions: ndarray of shape (n_samples, n_classifiers)
+        predictions : ndarray of shape (n_samples, n_classifiers)
             Values predicted by each regressor.
         """
         check_is_fitted(self)

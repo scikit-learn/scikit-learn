@@ -95,7 +95,8 @@ class RANSACRegressor(
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
         By default the threshold is chosen as the MAD (median absolute
-        deviation) of the target values `y`.
+        deviation) of the target values `y`. Points whose residuals are
+        strictly equal to the threshold are considered as inliers.
 
     is_data_valid : callable, default=None
         This function is called with the randomly selected data before the
@@ -294,12 +295,10 @@ class RANSACRegressor(
             min_samples = np.ceil(self.min_samples * X.shape[0])
         elif self.min_samples >= 1:
             if self.min_samples % 1 != 0:
-                raise ValueError(
-                    "Absolute number of samples must be an " "integer value."
-                )
+                raise ValueError("Absolute number of samples must be an integer value.")
             min_samples = self.min_samples
         else:
-            raise ValueError("Value for `min_samples` must be scalar and " "positive.")
+            raise ValueError("Value for `min_samples` must be scalar and positive.")
         if min_samples > X.shape[0]:
             raise ValueError(
                 "`min_samples` may not be larger than number "
@@ -352,7 +351,8 @@ class RANSACRegressor(
         else:
             raise ValueError(
                 "loss should be 'absolute_error', 'squared_error' or a "
-                "callable. Got %s. " % self.loss
+                "callable. Got %s. "
+                % self.loss
             )
 
         random_state = check_random_state(self.random_state)
@@ -435,7 +435,7 @@ class RANSACRegressor(
             residuals_subset = loss_function(y, y_pred)
 
             # classify data into inliers and outliers
-            inlier_mask_subset = residuals_subset < residual_threshold
+            inlier_mask_subset = residuals_subset <= residual_threshold
             n_inliers_subset = np.sum(inlier_mask_subset)
 
             # less inliers -> skip current random sample
