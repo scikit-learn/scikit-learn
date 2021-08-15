@@ -764,6 +764,18 @@ class BinaryCrossEntropy(LogitLink, BaseLoss, CyBinaryCrossEntropy):
         return term
 
     def predict_proba(self, raw_prediction):
+        """Predict probabilities.
+
+        Parameters
+        ----------
+        raw_prediction : array of shape (n_samples,) or (n_samples, 1)
+            Raw prediction values (in link space).
+
+        Returns
+        -------
+        proba : array of shape (n_samples, 2)
+            Element-wise class probabilites.
+        """
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
@@ -838,6 +850,18 @@ class CategoricalCrossEntropy(MultinomialLogit, BaseLoss, CyCategoricalCrossEntr
         return self.link(out[None, :]).reshape(-1)
 
     def predict_proba(self, raw_prediction):
+        """Predict probabilities.
+
+        Parameters
+        ----------
+        raw_prediction : array of shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+
+        Returns
+        -------
+        proba : array of shape (n_samples, n_classes)
+            Element-wise class probabilites.
+        """
         return self.inverse(raw_prediction)
 
     def gradient_proba(
@@ -849,7 +873,7 @@ class CategoricalCrossEntropy(MultinomialLogit, BaseLoss, CyCategoricalCrossEntr
         proba=None,
         n_threads=1,
     ):
-        """Compute gradient and probabilities fow raw_prediction.
+        """Compute gradient and class probabilities fow raw_prediction.
 
         Parameters
         ----------
@@ -870,7 +894,7 @@ class CategoricalCrossEntropy(MultinomialLogit, BaseLoss, CyCategoricalCrossEntr
 
         Returns
         -------
-        gradient, proba : array of shape (n_samples, n_classes)
+        gradient : array of shape (n_samples, n_classes)
             Element-wise gradients.
 
         proba : array of shape (n_samples, n_classes)
