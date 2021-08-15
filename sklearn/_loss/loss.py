@@ -30,7 +30,6 @@ from ._loss import (
 )
 from .link import (
     Interval,
-    is_in_interval_range,
     BaseLink,
     IdentityLink,
     LogLink,
@@ -125,7 +124,7 @@ class BaseLoss(BaseLink, cLossFunction):
         ----------
         y : ndarray
         """
-        return is_in_interval_range(y, self.interval_y_true)
+        return self.interval_y_true.includes(y)
 
     def in_y_pred_range(self, y):
         """Return True if y is in the valid range of y_pred.
@@ -134,7 +133,7 @@ class BaseLoss(BaseLink, cLossFunction):
         ----------
         y : ndarray
         """
-        return is_in_interval_range(y, self.interval_y_pred)
+        return self.interval_y_pred.includes(y)
 
     def loss(
         self,
@@ -823,9 +822,7 @@ class CategoricalCrossEntropy(MultinomialLogit, BaseLoss, cCategoricalCrossEntro
         ----------
         y : ndarray
         """
-        return is_in_interval_range(y, self.interval_y_true) and np.all(
-            y.astype(int) == y
-        )
+        return self.interval_y_true.includes(y) and np.all(y.astype(int) == y)
 
     def fit_intercept_only(self, y_true, sample_weight=None):
         """Compute raw_prediction of an intercept-only model.

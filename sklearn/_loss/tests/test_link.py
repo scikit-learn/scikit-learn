@@ -7,7 +7,6 @@ from sklearn._loss.link import (
     _inclusive_low_high,
     MultinomialLogit,
     Interval,
-    is_in_interval_range,
 )
 
 
@@ -32,21 +31,16 @@ def test_is_in_range(interval):
     low, high = _inclusive_low_high(interval)
 
     x = np.linspace(low, high, num=10)
-    assert is_in_interval_range(x, interval)
+    assert interval.includes(x)
 
     # x contains lower bound
-    assert (
-        is_in_interval_range(np.r_[x, interval.low], interval) == interval.low_inclusive
-    )
+    assert interval.includes(np.r_[x, interval.low]) == interval.low_inclusive
 
     # x contains upper bound
-    assert (
-        is_in_interval_range(np.r_[x, interval.high], interval)
-        == interval.high_inclusive
-    )
+    assert interval.includes(np.r_[x, interval.high]) == interval.high_inclusive
 
     # x contains upper and lower bound
-    assert is_in_interval_range(np.r_[x, interval.low, interval.high], interval) == (
+    assert interval.includes(np.r_[x, interval.low, interval.high]) == (
         interval.low_inclusive and interval.high_inclusive
     )
 

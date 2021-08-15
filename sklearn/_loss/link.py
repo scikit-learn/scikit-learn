@@ -4,7 +4,7 @@ Module contains classes for invertible (and differentiable) link functions.
 # Author: Christian Lorentzen <lorentzen.ch@googlemail.com>
 
 from abc import ABC, abstractmethod
-from collections import namedtuple
+from dataclasses import dataclass
 
 import numpy as np
 from scipy.special import expit, logit
@@ -12,41 +12,46 @@ from scipy.stats import gmean
 from ..utils.extmath import softmax
 
 
-Interval = namedtuple("Interval", ("low", "high", "low_inclusive", "high_inclusive"))
+@dataclass
+class Interval:
+    low: float
+    high: float
+    low_inclusive: bool
+    high_inclusive: bool
 
+    def includes(self, x):
+        """Test whether values of x are in interval range.
 
-def is_in_interval_range(x, interval):
-    """Test whether values of x are in interval range from Interval.
+        Parameters
+        ----------
+        x : ndarray
+            Array whose elements are tested to be in interval range.
+        """
+        if self.low_inclusive:
+            low = np.greater_equal(x, self.low)
+        else:
+            low = np.greater(x, self.low)
 
-    Parameters
-    ----------
-    x : ndarray
-        Array whose elements are tested to be in interval range.
-    interval: Interval
-        An Interval range.
-    """
-    if interval.low_inclusive:
-        low = np.greater_equal(x, interval.low)
-    else:
-        low = np.greater(x, interval.low)
+        if not np.all(low):
+            return False
 
-    if not np.all(low):
-        return False
+        if self.high_inclusive:
+            high = np.less_equal(x, self.high)
+        else:
+            high = np.less(x, self.high)
 
-    if interval.high_inclusive:
-        high = np.less_equal(x, interval.high)
-    else:
-        high = np.less(x, interval.high)
-
-    # Note: np.all returns numpy.bool_
-    if np.all(high):
-        return True
-    else:
-        return False
+        # Note: np.all returns numpy.bool_
+        if np.all(high):
+            return True
+        else:
+            return False
 
 
 def _inclusive_low_high(interval, dtype=float):
-    """Generate values low and high to be within the interval range."""
+    """Generate values low and high to be within the interval range.
+
+    This is used in tests only.
+    """
     eps = 10 * np.finfo(dtype).eps
     if interval.low == -np.inf:
         low = -1e10
@@ -76,8 +81,8 @@ class BaseLink(ABC):
     called linear predictor, and `y_pred = h(raw_prediction)` is the predicted
     conditional (on X) expected value of the target `y_true`.
 
-    In case a link function needs parameters, the methods are not implemented
-    as staticmethods.
+    The methods are not implemented as staticmethods in case a link function needs
+    parameters.
     """
 
     multiclass = False
