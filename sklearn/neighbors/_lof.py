@@ -417,7 +417,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
             raise AttributeError(msg)
         return True
 
-    @property
+    @available_if(_check_novelty_score_samples)
     def score_samples(self, X):
         """Opposite of the Local Outlier Factor of X.
 
