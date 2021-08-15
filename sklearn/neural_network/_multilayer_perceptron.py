@@ -33,6 +33,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
+from ..utils.metaestimators import available_if
 
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
@@ -750,8 +751,17 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         """
         return self._fit(X, y, incremental=False)
 
-    @property
-    def partial_fit(self):
+    def _check_solver(self):
+        if self.solver not in _STOCHASTIC_SOLVERS:
+            raise AttributeError(
+                "partial_fit is only available for stochastic"
+                " optimizers. %s is not stochastic."
+                % self.solver
+            )
+        return True
+
+    @available_if(_check_solver)
+    def partial_fit(self, X, y):
         """Update the model with a single iteration over the given data.
 
         Parameters
@@ -766,15 +776,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         -------
         self : returns a trained MLP model.
         """
-        if self.solver not in _STOCHASTIC_SOLVERS:
-            raise AttributeError(
-                "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic."
-                % self.solver
-            )
-        return self._partial_fit
-
-    def _partial_fit(self, X, y):
         return self._fit(X, y, incremental=True)
 
 
@@ -1163,8 +1164,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         return self._label_binarizer.inverse_transform(y_pred)
 
-    @property
-    def partial_fit(self):
+    @available_if(lambda est: est._check_solver())
+    def partial_fit(self, X, y, classes=None):
         """Update the model with a single iteration over the given data.
 
         Parameters
@@ -1187,15 +1188,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         -------
         self : returns a trained MLP model.
         """
-        if self.solver not in _STOCHASTIC_SOLVERS:
-            raise AttributeError(
-                "partial_fit is only available for stochastic"
-                " optimizer. %s is not stochastic"
-                % self.solver
-            )
-        return self._partial_fit
-
-    def _partial_fit(self, X, y, classes=None):
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith("multilabel"):
