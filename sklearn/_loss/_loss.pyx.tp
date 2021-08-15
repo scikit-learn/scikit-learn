@@ -804,10 +804,10 @@ cdef class {{name}}(CyLossFunction):
 
     def _loss(
         self,
-        Y_DTYPE_C[::1] y_true,
-        Y_DTYPE_C[::1] raw_prediction,
-        Y_DTYPE_C[::1] sample_weight,
-        G_DTYPE_C[::1] loss,
+        Y_DTYPE_C[::1] y_true,          # IN
+        Y_DTYPE_C[::1] raw_prediction,  # IN
+        Y_DTYPE_C[::1] sample_weight,   # IN
+        G_DTYPE_C[::1] loss,            # OUT
         int n_threads=1
     ):
         cdef:
@@ -830,11 +830,11 @@ cdef class {{name}}(CyLossFunction):
     {{if closs_grad is not None}}
     def _loss_gradient(
         self,
-        Y_DTYPE_C[::1] y_true,
-        Y_DTYPE_C[::1] raw_prediction,
-        Y_DTYPE_C[::1] sample_weight,
-        G_DTYPE_C[::1] loss,
-        G_DTYPE_C[::1] gradient,
+        Y_DTYPE_C[::1] y_true,          # IN
+        Y_DTYPE_C[::1] raw_prediction,  # IN
+        Y_DTYPE_C[::1] sample_weight,   # IN
+        G_DTYPE_C[::1] loss,            # OUT
+        G_DTYPE_C[::1] gradient,        # OUT
         int n_threads=1
     ):
         cdef:
@@ -862,10 +862,10 @@ cdef class {{name}}(CyLossFunction):
 
     def _gradient(
         self,
-        Y_DTYPE_C[::1] y_true,
-        Y_DTYPE_C[::1] raw_prediction,
-        Y_DTYPE_C[::1] sample_weight,
-        G_DTYPE_C[::1] gradient,
+        Y_DTYPE_C[::1] y_true,          # IN
+        Y_DTYPE_C[::1] raw_prediction,  # IN
+        Y_DTYPE_C[::1] sample_weight,   # IN
+        G_DTYPE_C[::1] gradient,        # OUT
         int n_threads=1
     ):
         cdef:
@@ -887,11 +887,11 @@ cdef class {{name}}(CyLossFunction):
 
     def _gradient_hessian(
         self,
-        Y_DTYPE_C[::1] y_true,
-        Y_DTYPE_C[::1] raw_prediction,
-        Y_DTYPE_C[::1] sample_weight,
-        G_DTYPE_C[::1] gradient,
-        G_DTYPE_C[::1] hessian,
+        Y_DTYPE_C[::1] y_true,          # IN
+        Y_DTYPE_C[::1] raw_prediction,  # IN
+        Y_DTYPE_C[::1] sample_weight,   # IN
+        G_DTYPE_C[::1] gradient,        # OUT
+        G_DTYPE_C[::1] hessian,         # OUT
         int n_threads=1
     ):
         cdef:
@@ -938,10 +938,10 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
     # opposite are welcome.
     def _loss(
         self,
-        Y_DTYPE_C[::1] y_true,
-        Y_DTYPE_C[:, :] raw_prediction,
-        Y_DTYPE_C[::1] sample_weight,
-        G_DTYPE_C[::1] loss,
+        Y_DTYPE_C[::1] y_true,           # IN
+        Y_DTYPE_C[:, :] raw_prediction,  # IN
+        Y_DTYPE_C[::1] sample_weight,    # IN
+        G_DTYPE_C[::1] loss,             # OUT
         int n_threads=1
     ):
         cdef:
@@ -998,11 +998,11 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
 
     def _loss_gradient(
         self,
-        Y_DTYPE_C[::1] y_true,
-        Y_DTYPE_C[:, :] raw_prediction,
-        Y_DTYPE_C[::1] sample_weight,
-        G_DTYPE_C[::1] loss,
-        G_DTYPE_C[:, :] gradient,
+        Y_DTYPE_C[::1] y_true,           # IN
+        Y_DTYPE_C[:, :] raw_prediction,  # IN
+        Y_DTYPE_C[::1] sample_weight,    # IN
+        G_DTYPE_C[::1] loss,             # OUT
+        G_DTYPE_C[:, :] gradient,        # OUT
         int n_threads=1
     ):
         cdef:
@@ -1060,10 +1060,10 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
 
     def _gradient(
         self,
-        Y_DTYPE_C[::1] y_true,
-        Y_DTYPE_C[:, :] raw_prediction,
-        Y_DTYPE_C[::1] sample_weight,
-        G_DTYPE_C[:, :] gradient,
+        Y_DTYPE_C[::1] y_true,           # IN
+        Y_DTYPE_C[:, :] raw_prediction,  # IN
+        Y_DTYPE_C[::1] sample_weight,    # IN
+        G_DTYPE_C[:, :] gradient,        # OUT
         int n_threads=1
     ):
         cdef:
@@ -1109,11 +1109,11 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
 
     def _gradient_hessian(
         self,
-        Y_DTYPE_C[::1] y_true,
-        Y_DTYPE_C[:, :] raw_prediction,
-        Y_DTYPE_C[::1] sample_weight,
-        G_DTYPE_C[:, :] gradient,
-        G_DTYPE_C[:, :] hessian,
+        Y_DTYPE_C[::1] y_true,           # IN
+        Y_DTYPE_C[:, :] raw_prediction,  # IN
+        Y_DTYPE_C[::1] sample_weight,    # IN
+        G_DTYPE_C[:, :] gradient,        # OUT
+        G_DTYPE_C[:, :] hessian,         # OUT
         int n_threads=1
     ):
         cdef:
@@ -1167,11 +1167,11 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
     # diagonal (in the classes) approximation as implemented above.
     def _gradient_proba(
         self,
-        Y_DTYPE_C[::1] y_true,
-        Y_DTYPE_C[:, :] raw_prediction,
-        Y_DTYPE_C[::1] sample_weight,
-        G_DTYPE_C[:, :] gradient,
-        G_DTYPE_C[:, :] proba,
+        Y_DTYPE_C[::1] y_true,           # IN
+        Y_DTYPE_C[:, :] raw_prediction,  # IN
+        Y_DTYPE_C[::1] sample_weight,    # IN
+        G_DTYPE_C[:, :] gradient,        # OUT
+        G_DTYPE_C[:, :] proba,           # OUT
         int n_threads=1
     ):
         cdef:
