@@ -1103,6 +1103,16 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self.min_df = min_df
         if max_df < 0 or min_df < 0:
             raise ValueError("negative value for max_df or min_df")
+        if not isinstance(min_df, numbers.Integral) and min_df > 1.0:
+            raise ValueError(
+                "min_df is out of range for a float value. Use an int or a float"
+                " between 0.0 and 1.0."
+            )
+        if not isinstance(max_df, numbers.Integral) and max_df > 1.0:
+            raise ValueError(
+                "max_df is out of range for a float value. Use an int or a float"
+                " between 0.0 and 1.0."
+            )
         self.max_features = max_features
         if max_features is not None:
             if not isinstance(max_features, numbers.Integral) or max_features <= 0:

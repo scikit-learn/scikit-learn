@@ -805,6 +805,28 @@ def test_vectorizer_min_df():
     assert len(vect.stop_words_) == 5
 
 
+def test_vectorizer_max_df_unwanted_float():
+    message = (
+        "max_df is out of range for a float value. Use an int or a float between 0.0"
+        " and 1.0."
+    )
+    with pytest.raises(ValueError, match=message):
+        test_data = ["abc", "dea", "eat"]
+        vect = CountVectorizer(analyzer="char", max_df=2.0)
+        vect.fit(test_data)
+
+
+def test_vectorizer_min_df_unwanted_float():
+    message = (
+        "min_df is out of range for a float value. Use an int or a float between 0.0"
+        " and 1.0."
+    )
+    with pytest.raises(ValueError, match=message):
+        test_data = ["abc", "dea", "eat"]
+        vect = CountVectorizer(analyzer="char", min_df=1.5)
+        vect.fit(test_data)
+
+
 def test_count_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = ["aaabc", "abbde"]
