@@ -438,6 +438,11 @@ Changelog
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
 
+- |API| Raise a warning in :class:`linear_model.RANSACRegressor` that from
+  version 1.2, `min_samples` need to be set explicitly for model other than
+  :class:`linear_model.LinearRegression`.
+  :pr:`19390` by :user:`Shao Yang Hong <hongshaoyang>`.
+
 - |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
   :pr:`19055` by `Thomas Fan`_.
 
