@@ -51,7 +51,7 @@ class Interval:
             return False
 
 
-def _inclusive_low_high(interval, dtype=float):
+def _inclusive_low_high(interval, dtype=np.float64):
     """Generate values low and high to be within the interval range.
 
     This is used in tests only.
