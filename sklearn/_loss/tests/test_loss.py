@@ -819,3 +819,24 @@ def test_binary_and_categorical_crossentropy():
         bce.loss(y_true=y_train, raw_prediction=raw_prediction),
         cce.loss(y_true=y_train, raw_prediction=raw_cce),
     )
+
+
+@pytest.mark.parametrize(
+    "loss",
+    [loss for loss in LOSS_INSTANCES if hasattr(loss, "predict_proba")],
+    ids=loss_instance_name,
+)
+def test_predict_proba(loss):
+    """Test that predict_proba works as expected."""
+    n_samples = 20
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=loss,
+        n_samples=n_samples,
+        y_bound=(-100, 100),
+        raw_bound=(-5, 5),
+        seed=42,
+    )
+    proba = loss.predict_proba(raw_prediction)
+
+    assert proba.shape == (n_samples, loss.n_classes)
+    assert np.sum(proba, axis=1) == approx(1)
