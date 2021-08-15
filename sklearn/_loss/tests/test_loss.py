@@ -442,7 +442,7 @@ def test_sample_weight_multiplies_gradients(loss, sample_weight):
 
     baseline_prediction = loss.fit_intercept_only(y_true=y_true, sample_weight=None)
 
-    if loss.n_classes <= 2:
+    if not loss.is_multiclass:
         raw_prediction = np.zeros(shape=(n_samples,), dtype=baseline_prediction.dtype)
     else:
         raw_prediction = np.zeros(
@@ -460,7 +460,7 @@ def test_sample_weight_multiplies_gradients(loss, sample_weight):
         sample_weight=sample_weight,
     )
 
-    if loss.n_classes <= 2:
+    if not loss.is_multiclass:
         assert_allclose(gradient * sample_weight, gradient_sw)
         assert_allclose(hessian * sample_weight, hessian_sw)
     else:
@@ -476,7 +476,7 @@ def test_loss_of_perfect_prediction(loss, sample_weight):
     Loss of y_pred = y_true plus constant_to_optimal_zero should sums up to
     zero.
     """
-    if loss.n_classes <= 2:
+    if not loss.is_multiclass:
         # Use small values such that exp(value) is not nan.
         raw_prediction = np.array([-10, -0.1, 0, 0.1, 3, 10])
         y_true = loss.inverse(raw_prediction)
@@ -537,7 +537,7 @@ def test_gradients_hessians_numerically(loss, sample_weight):
     assert g.shape == raw_prediction.shape
     assert h.shape == raw_prediction.shape
 
-    if loss.n_classes <= 2:
+    if not loss.is_multiclass:
 
         def loss_func(x):
             return loss.loss(
@@ -673,7 +673,7 @@ def test_loss_intercept_only(loss, sample_weight):
     Also test that the gradient is zero at the minimum.
     """
     n_samples = 50
-    if loss.n_classes <= 2:
+    if not loss.is_multiclass:
         y_true = loss.inverse(np.linspace(-4, 4, num=n_samples))
     else:
         y_true = np.arange(n_samples).astype(float) % loss.n_classes
@@ -686,7 +686,7 @@ def test_loss_intercept_only(loss, sample_weight):
 
     # find minimum by optimization
     def fun(x):
-        if loss.n_classes <= 2:
+        if not loss.is_multiclass:
             raw_prediction = np.full(shape=(n_samples), fill_value=x)
         else:
             raw_prediction = np.ascontiguousarray(
@@ -698,7 +698,7 @@ def test_loss_intercept_only(loss, sample_weight):
             sample_weight=sample_weight,
         )
 
-    if loss.n_classes <= 2:
+    if not loss.is_multiclass:
         opt = minimize_scalar(fun, tol=1e-7, options={"maxiter": 100})
         grad = loss.gradient(
             y_true=y_true,
