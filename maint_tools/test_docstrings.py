@@ -107,7 +107,6 @@ DOCSTRING_IGNORE_LIST = [
     "SelfTrainingClassifier",
     "SequentialFeatureSelector",
     "SimpleImputer",
-    "SkewedChi2Sampler",
     "SparseCoder",
     "SparseRandomProjection",
     "SpectralBiclustering",
