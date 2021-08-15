@@ -24,6 +24,10 @@ LINK_FUNCTIONS = list(_LINKS.values())
         Interval(-np.inf, np.inf, False, True),
         Interval(-np.inf, np.inf, True, False),
         Interval(-np.inf, np.inf, True, True),
+        Interval(-10, -1, False, False),
+        Interval(-10, -1, False, True),
+        Interval(-10, -1, True, False),
+        Interval(-10, -1, True, True),
     ],
 )
 def test_is_in_range(interval):
