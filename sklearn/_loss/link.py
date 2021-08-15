@@ -19,6 +19,11 @@ class Interval:
     low_inclusive: bool
     high_inclusive: bool
 
+    def __post_init__(self):
+        """Check that low <= high"""
+        if self.low > self.high:
+            raise ValueError("On must have low <= high; got low={low}, high={high}.")
+
     def includes(self, x):
         """Test whether all values of x are in interval range.
 
