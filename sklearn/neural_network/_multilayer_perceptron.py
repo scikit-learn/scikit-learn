@@ -774,7 +774,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        self : returns a trained MLP model.
+        self : object
+            Trained MLP model.
         """
         return self._fit(X, y, incremental=True)
 
@@ -1186,7 +1187,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Returns
         -------
-        self : returns a trained MLP model.
+        self : object
+            Trained MLP model.
         """
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
