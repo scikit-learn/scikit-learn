@@ -83,6 +83,15 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    Nystroem : Approximate a kernel map using a subset of the training data.
+    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+        features.
+    SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import PolynomialCountSketch
