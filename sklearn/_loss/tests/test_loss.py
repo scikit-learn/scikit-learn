@@ -821,13 +821,9 @@ def test_binary_and_categorical_crossentropy():
     )
 
 
-@pytest.mark.parametrize(
-    "loss",
-    [loss for loss in LOSS_INSTANCES if hasattr(loss, "predict_proba")],
-    ids=loss_instance_name,
-)
+@pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 def test_predict_proba(loss):
-    """Test that predict_proba works as expected."""
+    """Test that predict_proba and gradient_proba work as expected."""
     n_samples = 20
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss,
@@ -836,7 +832,34 @@ def test_predict_proba(loss):
         raw_bound=(-5, 5),
         seed=42,
     )
-    proba = loss.predict_proba(raw_prediction)
 
-    assert proba.shape == (n_samples, loss.n_classes)
-    assert np.sum(proba, axis=1) == approx(1)
+    if hasattr(loss, "predict_proba"):
+        proba = loss.predict_proba(raw_prediction)
+        assert proba.shape == (n_samples, loss.n_classes)
+        assert np.sum(proba, axis=1) == approx(1)
+
+    if hasattr(loss, "gradient_proba"):
+        for grad, proba in (
+            (None, None),
+            (None, np.empty_like(raw_prediction)),
+            (np.empty_like(raw_prediction), None),
+            (np.empty_like(raw_prediction), np.empty_like(raw_prediction)),
+        ):
+            grad, proba = loss.gradient_proba(
+                y_true=y_true,
+                raw_prediction=raw_prediction,
+                sample_weight=None,
+                gradient=grad,
+                proba=proba,
+            )
+            assert proba.shape == (n_samples, loss.n_classes)
+            assert np.sum(proba, axis=1) == approx(1)
+            assert_allclose(
+                grad,
+                loss.gradient(
+                    y_true=y_true,
+                    raw_prediction=raw_prediction,
+                    sample_weight=None,
+                    gradient=None,
+                ),
+            )
