@@ -527,6 +527,18 @@ Changelog
   coordinate descent solver. Otherwise, an error will be raised.
   :pr:`19391` by :user:`Shao Yang Hong <hongshaoyang>`.
 
+- |API| Keyword validation has moved from `__init__` and `set_params` to `fit`
+  for the following estimators conforming to scikit-learn's conventions:
+  :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SparseSGDClassifier`,
+  :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.SparseSGDRegressor`,
+  :class:`linear_model.SGDOneClassSVM`,
+  :class:`linear_model.SparseSGDOneClassSVM`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor`.
+  :pr:`20683` by `Guillaume Lemaitre`_.
+
 :mod:`sklearn.manifold`
 .......................
 
