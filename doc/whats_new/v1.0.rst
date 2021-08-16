@@ -528,7 +528,7 @@ Changelog
   :pr:`19391` by :user:`Shao Yang Hong <hongshaoyang>`.
 
 - |API| Keyword validation has moved from `__init__` and `set_params` to `fit`
-   for the following estimators conforming to scikit-learn's conventions:
+  for the following estimators conforming to scikit-learn's conventions:
   :class:`linear_model.SGDClassifier`,
   :class:`linear_model.SparseSGDClassifier`,
   :class:`linear_model.SGDRegressor`,
