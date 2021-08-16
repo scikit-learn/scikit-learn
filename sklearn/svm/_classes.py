@@ -322,7 +322,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
 
-    intercept_scaling : float, default=1.
+    intercept_scaling : float, default=1.0
         When self.fit_intercept is True, instance vector x becomes
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equals to
@@ -371,6 +371,21 @@ class LinearSVR(RegressorMixin, LinearModel):
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
+    See Also
+    --------
+    LinearSVC : Implementation of Support Vector Machine classifier using the
+        same library as this class (liblinear).
+
+    SVR : Implementation of Support Vector Machine regression using libsvm:
+        the kernel can be non-linear but its SMO algorithm does not
+        scale to large number of samples as LinearSVC does.
+
+    sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
+        function as LinearSVR
+        by adjusting the penalty and loss parameters. In addition it requires
+        less memory, allows incremental (online) learning, and implements
+        various loss functions and regularization regimes.
+
     Examples
     --------
     >>> from sklearn.svm import LinearSVR
@@ -390,22 +405,6 @@ class LinearSVR(RegressorMixin, LinearModel):
     [-4...]
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-2.384...]
-
-
-    See Also
-    --------
-    LinearSVC : Implementation of Support Vector Machine classifier using the
-        same library as this class (liblinear).
-
-    SVR : Implementation of Support Vector Machine regression using libsvm:
-        the kernel can be non-linear but its SMO algorithm does not
-        scale to large number of samples as LinearSVC does.
-
-    sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
-        function as LinearSVR
-        by adjusting the penalty and loss parameters. In addition it requires
-        less memory, allows incremental (online) learning, and implements
-        various loss functions and regularization regimes.
     """
 
     def __init__(
@@ -443,7 +442,7 @@ class LinearSVR(RegressorMixin, LinearModel):
             n_features is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target vector relative to X
+            Target vector relative to X.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Array of weights that are assigned to individual
