@@ -1148,7 +1148,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     """
 )
 def load_boston(*, return_X_y=False):
-    """Load and return the boston house-prices dataset (regression).
+    r"""Load and return the boston house-prices dataset (regression).
 
     ==============   ==============
     Samples total               506
@@ -1185,7 +1185,7 @@ def load_boston(*, return_X_y=False):
 
 
             data_url = "http://lib.stat.cmu.edu/datasets/boston"
-            raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+            raw_df = pd.read_csv(data_url, sep="s+", skiprows=22, header=None)
             data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
             target = raw_df.values[1::2, 2]
 
