@@ -18,6 +18,7 @@ from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..utils import check_random_state
+from ..utils.metaestimators import available_if
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -1219,9 +1220,10 @@ class SGDClassifier(BaseSGDClassifier):
             raise AttributeError(
                 "probability estimates are not available for loss=%r" % self.loss
             )
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_proba)
+    def predict_proba(self, X):
         """Probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -1257,10 +1259,6 @@ class SGDClassifier(BaseSGDClassifier):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
-        self._check_proba()
-        return self._predict_proba
-
-    def _predict_proba(self, X):
         check_is_fitted(self)
 
         if self.loss == "log":
@@ -1306,8 +1304,8 @@ class SGDClassifier(BaseSGDClassifier):
                 % self.loss
             )
 
-    @property
-    def predict_log_proba(self):
+    @available_if(_check_proba)
+    def predict_log_proba(self, X):
         """Log of probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -1329,10 +1327,6 @@ class SGDClassifier(BaseSGDClassifier):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
-        self._check_proba()
-        return self._predict_log_proba
-
-    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
     def _more_tags(self):

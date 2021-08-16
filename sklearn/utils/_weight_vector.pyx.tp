@@ -18,15 +18,23 @@ dtypes = [('64', 'double', 1e-9),
 
 }}
 
+# cython: language_level=3
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: profile=False
+# cython: linetrace=False
+# cython: initializedcheck=False
+# cython: binding=False
+# distutils: define_macros=CYTHON_TRACE_NOGIL=0
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Lars Buitinck
 #         Danny Sullivan <dsullivan7@hotmail.com>
 #
 # License: BSD 3 clause
+
+# WARNING: Do not edit this .pyx file directly, it is generated from its .pyx.tp
 
 cimport cython
 from libc.limits cimport INT_MAX
