@@ -67,8 +67,9 @@ from sklearn.datasets import fetch_california_housing
 
 print(__doc__)
 
-dataset = fetch_california_housing(as_frame=True)
+dataset = fetch_california_housing()
 X_full, y_full = dataset.data, dataset.target
+feature_names = dataset.feature_names
 
 feature_mapping = {
     'MedInc': 'Median income in block',
@@ -85,7 +86,8 @@ feature_mapping = {
 # Feature MedInc has a long tail distribution.
 # Feature AveOccup has a few but very large outliers.
 features = ['MedInc', 'AveOccup']
-X = X_full[features].values
+features_idx = [feature_names.index(feature) for feature in features]
+X = X_full[:, features_idx]
 distributions = [
     ('Unscaled data', X),
     ('Data after standard scaling',
