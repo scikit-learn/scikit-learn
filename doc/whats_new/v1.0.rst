@@ -501,8 +501,8 @@ Changelog
   coordinate descent solver. Otherwise, an error will be raised.
   :pr:`19391` by :user:`Shao Yang Hong <hongshaoyang>`.
 
-- |API| Force the validation to be made at `fit` for the following estimators
-  to follow our scikit-learn convention:
+- |API| Keyword validation has moved from `__init__` and `set_params` to `fit`
+   for the following estimators conforming to scikit-learn's conventions:
   :class:`linear_model.SGDClassifier`,
   :class:`linear_model.SparseSGDClassifier`,
   :class:`linear_model.SGDRegressor`,
