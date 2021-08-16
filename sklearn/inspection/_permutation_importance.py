@@ -1,11 +1,13 @@
 """Permutation importance for estimators."""
+import numbers
 import numpy as np
 from joblib import Parallel
 
+from ..ensemble._bagging import _generate_indices
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..model_selection._validation import _aggregate_score_dicts
-from ..utils import Bunch
+from ..utils import Bunch, _safe_indexing
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.fixes import delayed
@@ -18,7 +20,15 @@ def _weights_scorer(scorer, estimator, X, y, sample_weight):
 
 
 def _calculate_permutation_scores(
-    estimator, X, y, sample_weight, col_idx, random_state, n_repeats, scorer
+    estimator,
+    X,
+    y,
+    sample_weight,
+    col_idx,
+    random_state,
+    n_repeats,
+    scorer,
+    max_samples,
 ):
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
@@ -29,10 +39,20 @@ def _calculate_permutation_scores(
     # if X is large it will be automatically be backed by a readonly memory map
     # (memmap). X.copy() on the other hand is always guaranteed to return a
     # writable data-structure whose columns can be shuffled inplace.
-    X_permuted = X.copy()
+    if max_samples < X.shape[0]:
+        row_indices = _generate_indices(
+            random_state=random_state,
+            bootstrap=False,
+            n_population=X.shape[0],
+            n_samples=max_samples,
+        )
+        X_permuted = _safe_indexing(X, row_indices, axis=0)
+        y = _safe_indexing(y, row_indices, axis=0)
+    else:
+        X_permuted = X.copy()
 
     scores = []
-    shuffling_idx = np.arange(X.shape[0])
+    shuffling_idx = np.arange(X_permuted.shape[0])
     for _ in range(n_repeats):
         random_state.shuffle(shuffling_idx)
         if hasattr(X_permuted, "iloc"):
@@ -90,6 +110,7 @@ def permutation_importance(
     n_jobs=None,
     random_state=None,
     sample_weight=None,
+    max_samples=1.0,
 ):
     """Permutation importance for feature evaluation [BRE]_.
 
@@ -157,6 +178,22 @@ def permutation_importance(
 
         .. versionadded:: 0.24
 
+    max_samples : int or float, default=1.0
+        The number of samples to draw from X to compute feature importance
+        in each repeat (without replacement).
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
+        - If `max_samples` is equal to `1.0` or `X.shape[0]`, all samples
+          will be used.
+
+        While using this option may provide less accurate importance estimates,
+        it keeps the method tractable when evaluating feature importance on
+        large datasets. In combination with `n_repeats`, this allows to control
+        the computational speed vs statistical accuracy trade-off of this method.
+
+        .. versionadded:: 1.0
+
     Returns
     -------
     result : :class:`~sklearn.utils.Bunch` or dict of such instances
@@ -204,6 +241,11 @@ def permutation_importance(
     random_state = check_random_state(random_state)
     random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
+    if not isinstance(max_samples, numbers.Integral):
+        max_samples = int(max_samples * X.shape[0])
+    elif not (0 < max_samples <= X.shape[0]):
+        raise ValueError("max_samples must be in (0, n_samples]")
+
     if callable(scoring):
         scorer = scoring
     elif scoring is None or isinstance(scoring, str):
@@ -216,7 +258,15 @@ def permutation_importance(
 
     scores = Parallel(n_jobs=n_jobs)(
         delayed(_calculate_permutation_scores)(
-            estimator, X, y, sample_weight, col_idx, random_seed, n_repeats, scorer
+            estimator,
+            X,
+            y,
+            sample_weight,
+            col_idx,
+            random_seed,
+            n_repeats,
+            scorer,
+            max_samples,
         )
         for col_idx in range(X.shape[1])
     )
