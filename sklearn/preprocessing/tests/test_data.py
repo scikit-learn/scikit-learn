@@ -2648,7 +2648,8 @@ def test_power_transformer_significantly_non_gaussian():
     """Check that significantly non-Gaussian data before transforms correctly.
 
     For some explored lambdas, the transformed data may be constant and will
-    be rejected.
+    be rejected. Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/14959
     """
 
     X_non_gaussian = 1e6 * np.array(
