@@ -270,7 +270,8 @@ pdp = partial_dependence(
 )
 XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
 Z = pdp.average[0].T
-ax = Axes3D(fig)
+ax = Axes3D(fig, auto_add_to_figure=False)
+fig.add_axes(ax)
 surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu, edgecolor="k")
 ax.set_xlabel(features[0])
 ax.set_ylabel(features[1])
