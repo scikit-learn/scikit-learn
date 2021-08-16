@@ -411,6 +411,11 @@ Changelog
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
+- |Enhancement| Add kwargs to format ICE and PD lines separately in partial
+  dependence plots :func:`~sklearn.inspection.plot_partial_dependence` and
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.plot`.
+  :pr:`19428` by :user:`Mehdi Hamoumi <mhham>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -526,6 +531,18 @@ Changelog
   :func:`linear_model.lasso_path` should only contain parameter of the
   coordinate descent solver. Otherwise, an error will be raised.
   :pr:`19391` by :user:`Shao Yang Hong <hongshaoyang>`.
+
+- |API| Keyword validation has moved from `__init__` and `set_params` to `fit`
+  for the following estimators conforming to scikit-learn's conventions:
+  :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SparseSGDClassifier`,
+  :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.SparseSGDRegressor`,
+  :class:`linear_model.SGDOneClassSVM`,
+  :class:`linear_model.SparseSGDOneClassSVM`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor`.
+  :pr:`20683` by `Guillaume Lemaitre`_.
 
 :mod:`sklearn.manifold`
 .......................
@@ -724,6 +741,11 @@ Changelog
 - |Efficiency| `preprocessing.StandardScaler` is faster and more memory
   efficient. :pr:`20652` by `Thomas Fan`_.
 
+- |Fix| Fix a regression in :class:`preprocessing.OrdinalEncoder` where large
+  Python numeric would raise an error due to overflow when casted to C type
+  (`np.float64` or `np.int64`).
+  :pr:`20727` by `Guillaume Lemaitre`_.
+
 - |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
   better supports significantly non-Gaussian data when searching for an optimal
   lambda. :pr:`20653` by `Thomas Fan`_.
@@ -792,6 +814,11 @@ Changelog
   :func:`model_seleection.cross_val_score`,
   :func:`model_selection.cross_val_predict`).
   :pr:`20673` by :user:`Joris Van den Bossche  <jorisvandenbossche>`.
+
+- |Fix| Fix a regression in :func:`utils.is_scalar_nan` where large Python
+  numbers would raise an error due to overflow in C types (`np.float64` or
+  `np.int64`).
+  :pr:`20727` by `Guillaume Lemaitre`_.
 
 :mod:`sklearn.validation`
 .........................
