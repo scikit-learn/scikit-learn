@@ -1111,7 +1111,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
 
 
 @deprecated(
-    """`load_boston` is deprecated in 1.0 and will be removed in 1.2.
+    r"""`load_boston` is deprecated in 1.0 and will be removed in 1.2.
 
     The Boston housing prices dataset has an ethical problem. You can refer to
     the documentation of this function for further details.
@@ -1120,10 +1120,17 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     dataset unless the purpose of the code is to study and educate about
     ethical issues in data science and machine learning.
 
-    In this case special case, you can fetch the dataset from OpenML:
+    In this case special case, you can fetch the dataset from the original
+    source::
 
-        from sklearn.datasets import fetch_openml
-        boston = fetch_openml('boston', version=1, as_frame=True)
+        import pandas as pd
+        import numpy as np
+
+
+        data_url = "http://lib.stat.cmu.edu/datasets/boston"
+        raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+        data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+        target = raw_df.values[1::2, 2]
 
     Alternative datasets include the California housing dataset (i.e.
     func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
@@ -1170,10 +1177,17 @@ def load_boston(*, return_X_y=False):
         this dataset unless the purpose of the code is to study and educate
         about ethical issues in data science and machine learning.
 
-        In this case special case, you can fetch the dataset from OpenML::
+        In this case special case, you can fetch the dataset from the original
+        source::
 
-            from sklearn.datasets import fetch_openml
-            boston = fetch_openml('boston', version=1, as_frame=True)
+            import pandas as pd
+            import numpy as np
+
+
+            data_url = "http://lib.stat.cmu.edu/datasets/boston"
+            raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+            data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+            target = raw_df.values[1::2, 2]
 
         Alternative datasets include the California housing dataset [3]_
         (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames

@@ -12,7 +12,6 @@ import pytest
 import numpy as np
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
-from sklearn.datasets import fetch_openml
 from sklearn.datasets import load_files
 from sklearn.datasets import load_sample_images
 from sklearn.datasets import load_sample_image
@@ -333,36 +332,18 @@ def test_load_boston_warning():
 
 @pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 def test_load_boston_alternative():
-    pytest.importorskip("pandas")
+    pd = pytest.importorskip("pandas")
     if not os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
         raise SkipTest(
             "This test requires an internet connection to fetch the dataset."
         )
 
-    # Check when `as_frame=True`
-    boston_openml = fetch_openml(name="boston", version=1, as_frame=True)
     boston_sklearn = load_boston()
 
-    np.testing.assert_array_equal(
-        boston_openml.feature_names, boston_sklearn.feature_names
-    )
-    np.testing.assert_allclose(
-        boston_openml.data.to_numpy().astype(np.float64),
-        boston_sklearn.data,
-    )
-    np.testing.assert_array_equal(
-        boston_openml.target.to_numpy(), boston_sklearn.target
-    )
-    # Check when `as_frame=False`
-    boston_openml = fetch_openml(name="boston", version=1, as_frame=False)
-    data_openml = boston_openml.data
-    for name, cats in boston_openml.categories.items():
-        cat_idx = boston_openml.feature_names.index(name)
-        cats = np.asarray(cats, dtype=np.float64)
-        data_openml[:, cat_idx] = cats[data_openml[:, cat_idx].astype(np.int64)]
+    data_url = "http://lib.stat.cmu.edu/datasets/boston"
+    raw_df = pd.read_csv(data_url, sep=r"\s+", skiprows=22, header=None)
+    data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+    target = raw_df.values[1::2, 2]
 
-    np.testing.assert_array_equal(
-        boston_openml.feature_names, boston_sklearn.feature_names
-    )
-    np.testing.assert_allclose(data_openml, boston_sklearn.data)
-    np.testing.assert_array_equal(boston_openml.target, boston_sklearn.target)
+    np.testing.assert_allclose(data, boston_sklearn.data)
+    np.testing.assert_allclose(target, boston_sklearn.target)
