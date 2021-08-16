@@ -2661,19 +2661,3 @@ def test_power_transformer_significantly_non_gaussian():
         X_trans = pt.fit_transform(X_non_gaussian)
     assert not record
     assert not np.any(np.isnan(X_trans))
-
-
-def test_power_transformer_warns_constant_low_variance():
-    """Check that constant and low variance"""
-    rng = np.random.RandomState(0)
-    n_samples = 100
-    X0 = np.zeros(n_samples)  # constant
-    X1 = rng.randn(n_samples)  # normal data
-    X2 = rng.randn(n_samples) / 100 + 10  # low variance large offset
-
-    X = np.stack([X0, X1, X2], axis=1)
-
-    pt = PowerTransformer(method="yeo-johnson")
-    msg = r"Columns \[0, 2\] have low variance in the transformed data"
-    with pytest.warns(UserWarning, match=msg):
-        pt.fit(X)
