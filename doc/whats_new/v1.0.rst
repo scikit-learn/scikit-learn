@@ -438,6 +438,11 @@ Changelog
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
 
+- |API| Raise a warning in :class:`linear_model.RANSACRegressor` that from
+  version 1.2, `min_samples` need to be set explicitly for model other than
+  :class:`linear_model.LinearRegression`.
+  :pr:`19390` by :user:`Shao Yang Hong <hongshaoyang>`.
+
 - |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
   :pr:`19055` by `Thomas Fan`_.
 
@@ -521,6 +526,18 @@ Changelog
   :func:`linear_model.lasso_path` should only contain parameter of the
   coordinate descent solver. Otherwise, an error will be raised.
   :pr:`19391` by :user:`Shao Yang Hong <hongshaoyang>`.
+
+- |API| Keyword validation has moved from `__init__` and `set_params` to `fit`
+  for the following estimators conforming to scikit-learn's conventions:
+  :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SparseSGDClassifier`,
+  :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.SparseSGDRegressor`,
+  :class:`linear_model.SGDOneClassSVM`,
+  :class:`linear_model.SparseSGDOneClassSVM`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor`.
+  :pr:`20683` by `Guillaume Lemaitre`_.
 
 :mod:`sklearn.manifold`
 .......................
@@ -609,6 +626,9 @@ Changelog
   group within a single split.
   :pr:`18649` by :user:`Leandro Hermida <hermidalc>` and
   :user:`Rodion Martynov <marrodion>`.
+
+- |Enhancement| warn only once in the main process for per-split fit failures
+  in cross-validation. :pr:`20619` by :user:`Loïc Estève <lesteve>`
 
 :mod:`sklearn.naive_bayes`
 ..........................

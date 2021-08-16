@@ -27,6 +27,7 @@ from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
+from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
@@ -348,16 +349,15 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """Collect results from clf.predict calls."""
         return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
 
-    def _predict_proba(self, X):
-        """Predict class probabilities for X in 'soft' voting."""
-        check_is_fitted(self)
-        avg = np.average(
-            self._collect_probas(X), axis=0, weights=self._weights_not_none
-        )
-        return avg
+    def _check_voting(self):
+        if self.voting == "hard":
+            raise AttributeError(
+                f"predict_proba is not available when voting={repr(self.voting)}"
+            )
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_voting)
+    def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
 
         Parameters
@@ -370,11 +370,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         avg : array-like of shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
-        if self.voting == "hard":
-            raise AttributeError(
-                "predict_proba is not available when voting=%r" % self.voting
-            )
-        return self._predict_proba
+        check_is_fitted(self)
+        avg = np.average(
+            self._collect_probas(X), axis=0, weights=self._weights_not_none
+        )
+        return avg
 
     def transform(self, X):
         """Return class labels or probabilities for X for each estimator.
