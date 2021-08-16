@@ -3012,20 +3012,20 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             "box-cox": self._box_cox_optimize,
             "yeo-johnson": self._yeo_johnson_optimize,
         }[self.method]
-        pathological_columns = [] if self.method == "yeo-johnson" else None
+        columns_with_invalid_nll = [] if self.method == "yeo-johnson" else None
         lambdas = []
         with np.errstate(invalid="ignore"):  # hide NaN warnings
             for i, col in enumerate(X.T):
                 lmbda, min_nll = optim_function(col)
                 lambdas.append(lmbda)
-                if pathological_columns is not None and np.isinf(min_nll):
-                    pathological_columns.append(i)
+                if columns_with_invalid_nll is not None and np.isinf(min_nll):
+                    columns_with_invalid_nll.append(i)
 
         self.lambdas_ = np.array(lambdas)
-        if pathological_columns:
+        if columns_with_invalid_nll:
             warnings.warn(
-                f"Columns {pathological_columns} have low variance in the "
-                "transformed data causing the search for an optimal lambda to "
+                f"Columns {columns_with_invalid_nll} have zero variance in the "
+                "transformed data for all searched lambdas"
                 "fail. You can try using StandardScalar(with_std=True) to "
                 "center your data first. For more info see: "
                 "https://github.com/scikit-learn/scikit-learn/issues/14959#issuecomment-602090088",  # noqa
@@ -3229,9 +3229,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         # get rid of them
         x = x[~np.isnan(x)]
         # choosing bracket -2, 2 like for boxcox
-        min_lmbda, min_nll, _, _ = optimize.brent(
-            _neg_log_likelihood, brack=(-2, 2), full_output=True
-        )
+        min_lmbda, min_nll, _, _ = optimize.brent()
         return min_lmbda, min_nll
 
     def _check_input(

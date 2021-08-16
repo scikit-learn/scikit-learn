@@ -2650,14 +2650,16 @@ def test_power_transformer_significantly_non_gaussian():
     For some explored lambdas, the transformed data may be constant and will
     be rejected.
     """
-
+    rng = np.random.RandomState(0)
     X_non_gaussian = 1e6 * np.array(
         [0.6, 2.0, 3.0, 4.0] * 4 + [11, 12, 12, 16, 17, 20, 85, 90], dtype=np.float64
-    ).reshape(-1, 1)
+    )
+    X_low_variance_large_offset = rng.randn(X_non_gaussian.shape[0]) / 100 + 10
+    X = np.stack([X_non_gaussian, X_low_variance_large_offset], axis=1)
 
     pt = PowerTransformer()
 
     with pytest.warns(None) as record:
-        X_trans = pt.fit_transform(X_non_gaussian)
+        X_trans = pt.fit_transform(X)
     assert not record
     assert not np.any(np.isnan(X_trans))
