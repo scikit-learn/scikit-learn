@@ -3012,25 +3012,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             "box-cox": self._box_cox_optimize,
             "yeo-johnson": self._yeo_johnson_optimize,
         }[self.method]
-        columns_with_invalid_nll = [] if self.method == "yeo-johnson" else None
-        lambdas = []
         with np.errstate(invalid="ignore"):  # hide NaN warnings
-            for i, col in enumerate(X.T):
-                lmbda, min_nll = optim_function(col)
-                lambdas.append(lmbda)
-                if columns_with_invalid_nll is not None and np.isinf(min_nll):
-                    columns_with_invalid_nll.append(i)
-
-        self.lambdas_ = np.array(lambdas)
-        if columns_with_invalid_nll:
-            warnings.warn(
-                f"Columns {columns_with_invalid_nll} have zero variance in the "
-                "transformed data for all searched lambdas"
-                "fail. You can try using StandardScalar(with_std=True) to "
-                "center your data first. For more info see: "
-                "https://github.com/scikit-learn/scikit-learn/issues/14959#issuecomment-602090088",  # noqa
-                UserWarning,
-            )
+            self.lambdas_ = np.array([optim_function(col) for col in X.T])
 
         if self.standardize or force_transform:
             transform_function = {
@@ -3190,9 +3173,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         # get rid of them
         _, lmbda = stats.boxcox(x[~np.isnan(x)], lmbda=None)
 
-        # Second argument is unused and is to be consistent with
-        # _yeo_johnson_optimize
-        return lmbda, 0
+        return lmbda
 
     def _yeo_johnson_optimize(self, x):
         """Find and return optimal lambda parameter of the Yeo-Johnson
@@ -3229,8 +3210,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         # get rid of them
         x = x[~np.isnan(x)]
         # choosing bracket -2, 2 like for boxcox
-        min_lmbda, min_nll, _, _ = optimize.brent()
-        return min_lmbda, min_nll
+        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
 
     def _check_input(
         self, X, in_fit, check_positive=False, check_shape=False, check_method=False

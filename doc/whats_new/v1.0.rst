@@ -725,8 +725,8 @@ Changelog
   efficient. :pr:`20652` by `Thomas Fan`_.
 
 - |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
-  raises a warning when it is unable to find a lambda due to low variance
-  in the transformed data. :pr:`20653` by `Thomas Fan`_.
+  better supports significantly non-Gaussian data when searching for an optimal
+  lambda. :pr:`20653` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
