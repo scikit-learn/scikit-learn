@@ -439,7 +439,7 @@ class BisectKMeans(KMeans):
             print("Running Bisecting K-Means with parameters:")
             print(f"-> number of clusters: {self.n_clusters}")
             print(f"-> number of centroid initializations: {self.n_init}")
-            print("-> relative tolerance: {:.4e}".format(self.tol))
+            print(f"-> relative tolerance: {self.tol:.4e}")
             print(f"-> bisect strategy: {self.bisect_strategy} \n")
 
         # Subtract of mean of X for more accurate distance computations
