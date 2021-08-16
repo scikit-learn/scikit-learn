@@ -411,6 +411,11 @@ Changelog
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
+- |Enhancement| Add kwargs to format ICE and PD lines separately in partial
+  dependence plots :func:`~sklearn.inspection.plot_partial_dependence` and
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.plot`.
+  :pr:`19428` by :user:`Mehdi Hamoumi <mhham>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
