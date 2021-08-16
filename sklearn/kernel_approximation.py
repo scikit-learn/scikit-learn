@@ -83,6 +83,15 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    Nystroem : Approximate a kernel map using a subset of the training data.
+    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+        features.
+    SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import PolynomialCountSketch
@@ -126,7 +135,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : object
-            Returns the transformer.
+            Returns the instance itself.
         """
         if not self.degree >= 1:
             raise ValueError(f"degree={self.degree} should be >=1.")
@@ -157,7 +166,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Projected array.
+            Returns the instance itself.
         """
 
         check_is_fitted(self)
