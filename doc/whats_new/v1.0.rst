@@ -741,6 +741,11 @@ Changelog
 - |Efficiency| `preprocessing.StandardScaler` is faster and more memory
   efficient. :pr:`20652` by `Thomas Fan`_.
 
+- |Fix| Fix a regression in :class:`preprocessing.OrdinalEncoder` where large
+  Python numeric would raise an error due to overflow when casted to C type
+  (`np.float64` or `np.int64`).
+  :pr:`20727` by `Guillaume Lemaitre`_.
+
 :mod:`sklearn.tree`
 ...................
 
@@ -805,6 +810,11 @@ Changelog
   :func:`model_seleection.cross_val_score`,
   :func:`model_selection.cross_val_predict`).
   :pr:`20673` by :user:`Joris Van den Bossche  <jorisvandenbossche>`.
+
+- |Fix| Fix a regression in :func:`utils.is_scalar_nan` where large Python
+  numbers would raise an error due to overflow in C types (`np.float64` or
+  `np.int64`).
+  :pr:`20727` by `Guillaume Lemaitre`_.
 
 :mod:`sklearn.validation`
 .........................
