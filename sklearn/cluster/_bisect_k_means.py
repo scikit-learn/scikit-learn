@@ -643,7 +643,7 @@ class BisectKMeans(KMeans):
 
         # sample_weight is needed for labeling in _check_labels_threadpool_limit()
         # as argument, but not used there since its not updating centers.
-        # In this case, it doesn't have to be shape of X - only ndarray wits same dtype
+        # In this case, it doesn't have to be shape of X - only ndarray with same dtype
         sample_weight = np.zeros(1, dtype=X.dtype)
 
         # With only one cluster all points have same label
