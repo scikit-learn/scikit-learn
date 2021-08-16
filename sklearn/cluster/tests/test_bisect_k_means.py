@@ -72,5 +72,4 @@ def test_n_clusters(n_clusters):
     bisect_means = BisectKMeans(n_clusters=n_clusters, random_state=0)
     bisect_means.fit(X)
 
-    assert (n_clusters - 1) == np.max(bisect_means.labels_)
-    assert 0 == np.min(bisect_means.labels_)
+    assert_array_equal(np.unique(bisect_means.labels_), np.arange(n_clusters))
