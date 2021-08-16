@@ -1180,7 +1180,7 @@ def load_boston(*, return_X_y=False):
         In this case special case, you can fetch the dataset from the original
         source::
 
-            import pandas as pd
+            import pandas as pd  # doctest: +SKIP
             import numpy as np
 
 
