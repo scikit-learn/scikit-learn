@@ -359,7 +359,10 @@ def _estimator_has(attr):
 
     Calling a prediction method will only be available if `refit=True`. In
     such case, we check first the fitted best estimator. If it is not
-    fitted, we check if the unfitted estimator.
+    fitted, we check the unfitted estimator.
+
+    Checking the unfitted estimator allows to use `hasattr` on the `SearchCV`
+    instance even before calling `fit`.
     """
 
     def check(self):
