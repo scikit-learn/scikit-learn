@@ -1256,12 +1256,10 @@ def load_boston(*, return_X_y=False):
     --------
     >>> import warnings
     >>> from sklearn.datasets import load_boston
-    >>> with warnings.catch_warnings(record=True) as record:
+    >>> with warnings.catch_warnings():
+    ...     # You should probably not use this dataset.
+    ...     warnings.filterwarnings("ignore")
     ...     X, y = load_boston(return_X_y=True)
-    >>> # You should probably not use this dataset.
-    >>> print(record[0].message)
-    Function load_boston is deprecated;
-    ...
     >>> print(X.shape)
     (506, 13)
     """
