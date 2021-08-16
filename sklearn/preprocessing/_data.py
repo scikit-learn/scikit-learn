@@ -3197,8 +3197,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
                 try:
                     log_var = np.log(x_trans.var())
                 except RuntimeWarning:
-                    # RuntimeWarning is raised when x_trans.var() == 0, here we
-                    # reject solutions where the transformed data is constant
+                    # RuntimeWarning is raised when x_trans.var() == 0 and
+                    # we reject those lambdas
                     return np.inf
 
             loglike = -n_samples / 2 * log_var
