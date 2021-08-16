@@ -1354,7 +1354,7 @@ def test_ordinal_encoder_handle_unknown_string_dtypes(X_train, X_test):
 
 
 def test_ordinal_encoder_python_integer():
-    """Check that `OrdinalEncoder` accept Python integer that are potentially
+    """Check that `OrdinalEncoder` accepts Python integers that are potentially
     larger than 64 bits.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/20721
