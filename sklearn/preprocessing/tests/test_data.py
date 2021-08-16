@@ -2644,9 +2644,27 @@ def test_standard_scaler_raise_error_for_1d_input():
         scaler.inverse_transform(X_2d[:, 0])
 
 
-def test_power_transformer_warns_for_pathological_data():
-    """Check that PowerTransformer warns for pathological data. Non-regression
-    test for #14959."""
+def test_power_transformer_significantly_non_gaussian():
+    """Check that significantly non-Gaussian data before transforms correctly.
+
+    For some explored lambdas, the transformed data may be constant and will
+    be rejected.
+    """
+
+    X_non_gaussian = 1e6 * np.array(
+        [0.6, 2.0, 3.0, 4.0] * 4 + [11, 12, 12, 16, 17, 20, 85, 90], dtype=np.float64
+    ).reshape(-1, 1)
+
+    pt = PowerTransformer()
+
+    with pytest.warns(None) as record:
+        X_trans = pt.fit_transform(X_non_gaussian)
+    assert not record
+    assert not np.any(np.isnan(X_trans))
+
+
+def test_power_transformer_warns_constant_low_variance():
+    """Check that constant and low variance"""
     rng = np.random.RandomState(0)
     n_samples = 100
     X0 = np.zeros(n_samples)  # constant

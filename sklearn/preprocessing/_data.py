@@ -3016,9 +3016,9 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         lambdas = []
         with np.errstate(invalid="ignore"):  # hide NaN warnings
             for i, col in enumerate(X.T):
-                lmbda, min_ll = optim_function(col)
+                lmbda, min_nll = optim_function(col)
                 lambdas.append(lmbda)
-                if pathological_columns is not None and np.isinf(min_ll):
+                if pathological_columns is not None and np.isinf(min_nll):
                     pathological_columns.append(i)
 
         self.lambdas_ = np.array(lambdas)
@@ -3206,10 +3206,21 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             function of lambda."""
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
-            if np.ptp(x_trans) == 0:
-                return -np.inf
 
-            loglike = -n_samples / 2 * np.log(x_trans.var())
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "error",
+                    category=RuntimeWarning,
+                    message="divide by zero",
+                )
+                try:
+                    log_var = np.log(x_trans.var())
+                except RuntimeWarning:
+                    # RuntimeWarning is raised when x_trans.var() == 0, here we
+                    # reject solutions where the transformed data is constant
+                    return np.inf
+
+            loglike = -n_samples / 2 * log_var
             loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
 
             return -loglike
@@ -3218,10 +3229,10 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         # get rid of them
         x = x[~np.isnan(x)]
         # choosing bracket -2, 2 like for boxcox
-        min_lmbda, min_ll, _, _ = optimize.brent(
+        min_lmbda, min_nll, _, _ = optimize.brent(
             _neg_log_likelihood, brack=(-2, 2), full_output=True
         )
-        return min_lmbda, min_ll
+        return min_lmbda, min_nll
 
     def _check_input(
         self, X, in_fit, check_positive=False, check_shape=False, check_method=False
