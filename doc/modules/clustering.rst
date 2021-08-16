@@ -761,14 +761,12 @@ Instead of creating all centroids at once - It obtains desired number of centroi
 by picking one cluster at each iteration and splitting it into two new clusters,
 until target number of clusters is reached.
 
-With that approach, it is possible to produce either an un-nested (flat)
-clustering or a hierarchical clustering.
-That approach is also preferable to agglomerative clustering
+That approach is preferable to agglomerative clustering
 if the number of clusters is small, compared to the number of data points.
 
 Cluster to split is picked depending on parameter ``bisect_strategy``:
-- Cluster with largest amount of data points (with ``largest_cluster``)
-- Cluster with biggest SSE (Sum of Squared Errors) (with ``biggest_sse``)
+ - Cluster with largest amount of data points (with ``largest_cluster``)
+ - Cluster with biggest SSE (Sum of Squared Errors) (with ``biggest_sse``)
 
 Picking by largest amount of data points in most cases produces result as
 accurate as picking by SSE and is faster (especially for larger amount of data
