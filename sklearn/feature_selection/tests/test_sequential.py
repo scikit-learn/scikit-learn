@@ -37,7 +37,7 @@ def test_n_features_to_select(direction, n_features_to_select):
     # Make sure n_features_to_select is respected
 
     n_features = 10
-    X, y = make_regression(n_features=n_features)
+    X, y = make_regression(n_features=n_features, random_state=0)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
         n_features_to_select=n_features_to_select,
