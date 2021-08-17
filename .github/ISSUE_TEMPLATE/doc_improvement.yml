@@ -15,5 +15,3 @@ body:
     label: Suggest a potential alternative/fix
     description: >
       Tell us how we could improve the documentation in this regard.
-  validations:
-    required: true

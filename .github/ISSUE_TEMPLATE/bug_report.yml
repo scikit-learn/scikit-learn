@@ -56,7 +56,7 @@ body:
   attributes:
     label: Actual Results
     description: >
-      Please paste or describe the expected results.
+      Please paste or describe the results you observe instead of the expected results. If you observe an error, please paste the error message including the **full** traceback of the exception.
     placeholder: >
       Please paste or specifically describe the actual output or traceback.
   validations:
