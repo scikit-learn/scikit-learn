@@ -43,6 +43,7 @@ from sklearn.utils.estimator_checks import (
     check_classifiers_multilabel_output_format_decision_function,
     check_classifiers_multilabel_output_format_predict,
     check_classifiers_multilabel_output_format_predict_proba,
+    check_dataframe_column_names_consistency,
     check_estimator,
     check_estimator_get_tags_default_keys,
     check_estimators_unfitted,
@@ -411,6 +412,18 @@ class PoorScoreLogisticRegression(LogisticRegression):
         return {"poor_score": True}
 
 
+class PartialFitChecksName(BaseEstimator):
+    def fit(self, X, y):
+        self._validate_data(X, y)
+        return self
+
+    def partial_fit(self, X, y):
+        reset = not hasattr(self, "_fitted")
+        self._validate_data(X, y, reset=reset)
+        self._fitted = True
+        return self
+
+
 def test_not_an_array_array_function():
     if np_version < parse_version("1.17"):
         raise SkipTest("array_function protocol not supported in numpy <1.17")
@@ -695,6 +708,13 @@ def test_check_estimator_get_tags_default_keys():
     # noop check when _get_tags is not available
     estimator = MinimalTransformer()
     check_estimator_get_tags_default_keys(estimator.__class__.__name__, estimator)
+
+
+def test_check_dataframe_column_names_consistency():
+    err_msg = "Estimator does not have a feature_names_in_"
+    with raises(ValueError, match=err_msg):
+        check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
+    check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
 
 
 class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
