@@ -337,6 +337,9 @@ and promote community efforts.
   (`source <https://github.com/apachecn/sklearn-doc-zh>`__)
 - `Persian translation <https://sklearn.ir/>`_
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
+- `Spanish translation <https://qu4nt.github.io/sklearn-doc-es/>`_
+  (`source <https://github.com/qu4nt/sklearn-doc-es>`__)
+  
 
 .. rubric:: Footnotes
 
