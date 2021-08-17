@@ -337,7 +337,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         y_mean : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Mean of predictive distribution a query points.
 
-        y_std : ndarray of shape (n_samples,), optional
+        y_std : ndarray of shape (n_samples,) or (n_samples, n_targets), optional
             Standard deviation of predictive distribution at query points.
             Only returned when `return_std` is True.
 
@@ -412,7 +412,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_var[y_var_negative] = 0.0
 
                 # undo normalisation
-                y_var = y_var * self._y_train_std ** 2
+                y_var = np.outer(y_var, self._y_train_std ** 2)
 
                 return y_mean, np.sqrt(y_var)
             else:
