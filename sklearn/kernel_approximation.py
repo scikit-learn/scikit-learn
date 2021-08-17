@@ -83,6 +83,15 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    Nystroem : Approximate a kernel map using a subset of the training data.
+    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+        features.
+    SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import PolynomialCountSketch
@@ -126,7 +135,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : object
-            Returns the transformer.
+            Returns the instance itself.
         """
         if not self.degree >= 1:
             raise ValueError(f"degree={self.degree} should be >=1.")
@@ -157,7 +166,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Projected array.
+            Returns the instance itself.
         """
 
         check_is_fitted(self)
@@ -210,8 +219,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
 
 
 class RBFSampler(TransformerMixin, BaseEstimator):
-    """Approximates feature map of an RBF kernel by Monte Carlo approximation
-    of its Fourier transform.
+    """Approximate a RBF kernel feature map using random Fourier features.
 
     It implements a variant of Random Kitchen Sinks.[1]
 
@@ -248,6 +256,25 @@ class RBFSampler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    Nystroem : Approximate a kernel map using a subset of the training data.
+    PolynomialCountSketch : Polynomial kernel approximation via Tensor Sketch.
+    SkewedChi2Sampler : Approximate feature map for
+        "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
+
+    Notes
+    -----
+    See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
+    Benjamin Recht.
+
+    [1] "Weighted Sums of Random Kitchen Sinks: Replacing
+    minimization with randomization in learning" by A. Rahimi and
+    Benjamin Recht.
+    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import RBFSampler
@@ -261,16 +288,6 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     SGDClassifier(max_iter=5)
     >>> clf.score(X_features, y)
     1.0
-
-    Notes
-    -----
-    See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
-    Benjamin Recht.
-
-    [1] "Weighted Sums of Random Kitchen Sinks: Replacing
-    minimization with randomization in learning" by A. Rahimi and
-    Benjamin Recht.
-    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
 
     def __init__(self, *, gamma=1.0, n_components=100, random_state=None):
@@ -296,7 +313,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Returns the transformer.
+            Returns the instance itself.
         """
 
         X = self._validate_data(X, accept_sparse="csr")
@@ -322,7 +339,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Projected array.
+            Returns the instance itself.
         """
         check_is_fitted(self)
 
@@ -335,8 +352,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
 
 
 class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
-    """Approximates feature map of the "skewed chi-squared" kernel by Monte
-    Carlo approximation of its Fourier transform.
+    """Approximate feature map for "skewed chi-squared" kernel.
 
     Read more in the :ref:`User Guide <skewed_chi_kernel_approx>`.
 
@@ -370,6 +386,21 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    Nystroem : Approximate a kernel map using a subset of the training data.
+    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+        features.
+    SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
+
+    References
+    ----------
+    See "Random Fourier Approximations for Skewed Multiplicative Histogram
+    Kernels" by Fuxin Li, Catalin Ionescu and Cristian Sminchisescu.
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import SkewedChi2Sampler
@@ -385,18 +416,6 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
     SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
-
-    References
-    ----------
-    See "Random Fourier Approximations for Skewed Multiplicative Histogram
-    Kernels" by Fuxin Li, Catalin Ionescu and Cristian Sminchisescu.
-
-    See Also
-    --------
-    AdditiveChi2Sampler : A different approach for approximating an additive
-        variant of the chi squared kernel.
-
-    sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
     """
 
     def __init__(self, *, skewedness=1.0, n_components=100, random_state=None):
@@ -422,7 +441,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Returns the transformer.
+            Returns the instance itself.
         """
 
         X = self._validate_data(X)
@@ -447,7 +466,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Projected array.
+            Returns the instance itself.
         """
         check_is_fitted(self)
 
