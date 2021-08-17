@@ -150,6 +150,7 @@ def test_n_features_to_select_stopping_criterion(direction):
         (0.1, 1),
         (1.0, 10),
         (0.5, 5),
+        (None, 5),
     ),
 )
 def test_n_features_to_select_float(direction, n_features_to_select, expected):
