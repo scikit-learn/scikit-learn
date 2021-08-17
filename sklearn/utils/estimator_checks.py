@@ -3656,3 +3656,119 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
         f"{name}._get_tags() is missing entries for the following default tags"
         f": {default_tags_keys - tags_keys.intersection(default_tags_keys)}"
     )
+
+
+def check_dataframe_column_names_consistency(name, estimator_orig):
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not checking column name consistency for pandas"
+        )
+
+    tags = _safe_tags(estimator_orig)
+
+    if (
+        "2darray" not in tags["X_types"]
+        and "sparse" not in tags["X_types"]
+        or tags["no_validation"]
+    ):
+        return
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    X_orig = rng.normal(size=(150, 8))
+    X_orig = _enforce_estimator_tags_x(estimator, X_orig)
+    X_orig = _pairwise_estimator_convert_X(X_orig, estimator)
+    n_samples, n_features = X_orig.shape
+
+    names = np.array([f"col_{i}" for i in range(n_features)])
+    X = pd.DataFrame(X_orig, columns=names)
+
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+    estimator.fit(X, y)
+
+    if not hasattr(estimator, "feature_names_in_"):
+        raise ValueError(
+            "Estimator does not have a feature_names_in_ "
+            "attribute after fitting with a dataframe"
+        )
+    assert_array_equal(estimator.feature_names_in_, names)
+
+    check_methods = []
+    for method in (
+        "predict",
+        "transform",
+        "decision_function",
+        "predict_proba",
+        "score",
+        "score_samples",
+        "predict_log_proba",
+    ):
+        if not hasattr(estimator, method):
+            continue
+
+        callable_method = getattr(estimator, method)
+        if method == "score":
+            callable_method = partial(callable_method, y=y)
+        check_methods.append((method, callable_method))
+
+    for _, method in check_methods:
+        method(X)  # works
+
+    invalid_names = [
+        (names[::-1], "Feature names must be in the same order as they were in fit."),
+        (
+            [f"another_prefix_{i}" for i in range(n_features)],
+            "Feature names unseen at fit time:\n- another_prefix_0\n-"
+            " another_prefix_1\n",
+        ),
+        (
+            names[:3],
+            f"Feature names seen at fit time, yet now missing:\n- {min(names[3:])}\n",
+        ),
+    ]
+
+    for invalid_name, additional_message in invalid_names:
+        X_bad = pd.DataFrame(X, columns=invalid_name)
+
+        expected_msg = re.escape(
+            "The feature names should match those that were passed "
+            "during fit. Starting version 1.2, an error will be raised.\n"
+            f"{additional_message}"
+        )
+        for name, method in check_methods:
+            # TODO In 1.2, this will be an error.
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "error",
+                    category=FutureWarning,
+                    module="sklearn",
+                )
+                with raises(
+                    FutureWarning, match=expected_msg, err_msg=f"{name} did not raise"
+                ):
+                    method(X_bad)
+
+        # partial_fit checks on second call
+        if not hasattr(estimator, "partial_fit"):
+            continue
+
+        estimator = clone(estimator_orig)
+        if is_classifier(estimator):
+            classes = np.unique(y)
+            estimator.partial_fit(X, y, classes=classes)
+        else:
+            estimator.partial_fit(X, y)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
+            with raises(FutureWarning, match=expected_msg):
+                estimator.partial_fit(X_bad, y)

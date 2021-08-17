@@ -134,6 +134,12 @@ Changelog
 - |API| `np.matrix` usage is deprecated in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
 
+- |API| All estimators store `feature_names_in_` when fitted on pandas Dataframes.
+  These feature names are compared to names seen in `non-fit` methods,
+  `i.e.` `transform` and will raise a `FutureWarning` if they are not consistent.
+  These `FutureWarning`s will become `ValueError`s in 1.2.
+  :pr:`18010` by `Thomas Fan`_.
+
 :mod:`sklearn.base`
 ...................
 

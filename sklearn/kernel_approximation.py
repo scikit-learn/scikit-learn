@@ -21,7 +21,7 @@ except ImportError:  # scipy < 1.4
 
 from .base import BaseEstimator
 from .base import TransformerMixin
-from .utils import check_random_state, as_float_array
+from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
@@ -469,9 +469,9 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
             Returns the instance itself.
         """
         check_is_fitted(self)
-
-        X = as_float_array(X, copy=True)
-        X = self._validate_data(X, copy=False, reset=False)
+        X = self._validate_data(
+            X, copy=True, dtype=[np.float64, np.float32], reset=False
+        )
         if (X <= -self.skewedness).any():
             raise ValueError("X may not contain entries smaller than -skewedness.")
 
