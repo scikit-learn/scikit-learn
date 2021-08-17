@@ -489,7 +489,7 @@ evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 # one-hot encoded features.
 #
 # Qualitative analysis of the impact of features on linear model predictions
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 #
 # Here, we want to visualize the impact of the feature engineering choices on
 # the time related shape of the predictions.
