@@ -18,7 +18,7 @@ def test_bad_n_features_to_select(n_features_to_select):
     sfs = SequentialFeatureSelector(
         LinearRegression(), n_features_to_select=n_features_to_select
     )
-    with pytest.raises(ValueError, match="must be either None"):
+    with pytest.raises(ValueError, match="must be either 'auto'"):
         sfs.fit(X, y)
 
 

@@ -171,7 +171,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self : object
         """
         # FIXME: to be removed in 1.2
-        if self.n_features_to_select == "warn":
+        if self.n_features_to_select in ("warn", None):
             # for backwards compability
             warnings.warn(
                 "Leaving `n_features_to_select` to "
@@ -195,15 +195,16 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         )
         n_features = X.shape[1]
 
+        # FIXME: to be fixed in 1.2
         error_msg = (
-            "n_features_to_select must be either None, an "
-            "integer in [1, n_features - 1] "
+            "n_features_to_select must be either 'auto', 'warn', "
+            "None, an integer in [1, n_features - 1] "
             "representing the absolute "
             "number of features, or a float in (0, 1] "
             "representing a percentage of features to "
             f"select. Got {self.n_features_to_select}"
         )
-        if self.n_features_to_select in ("auto", "warn"):
+        if self.n_features_to_select in ("auto", "warn", None):
             if self.tol is not None:
                 self.n_features_to_select_ = n_features - 1
             else:
