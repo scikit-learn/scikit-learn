@@ -419,10 +419,10 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", ["ones", "random"])
-def test_sample_weight_multiplies_gradients(loss, sample_weight):
-    """Test sample weights in gradients and hessians.
+def test_sample_weight_multiplies(loss, sample_weight):
+    """Test sample weights in loss, gradients and hessians.
 
-    Make sure that passing sample weights to the gradient and hessians
+    Make sure that passing sample weights to loss, gradient and hessian
     computation methods is equivalent to multiplying by the weights.
     """
     n_samples = 100
@@ -440,32 +440,83 @@ def test_sample_weight_multiplies_gradients(loss, sample_weight):
         rng = np.random.RandomState(42)
         sample_weight = rng.normal(size=n_samples).astype(np.float64)
 
-    baseline_prediction = loss.fit_intercept_only(y_true=y_true, sample_weight=None)
-
-    if not loss.is_multiclass:
-        raw_prediction = np.zeros(shape=(n_samples,), dtype=baseline_prediction.dtype)
-    else:
-        raw_prediction = np.zeros(
-            shape=(n_samples, loss.n_classes), dtype=baseline_prediction.dtype
-        )
-    raw_prediction += baseline_prediction
-
-    gradient, hessian = loss.gradient_hessian(
-        y_true=y_true, raw_prediction=raw_prediction, sample_weight=None
+    assert_allclose(
+        loss.loss(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+        ),
+        sample_weight
+        * loss.loss(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=None,
+        ),
     )
 
+    losses, gradient = loss.loss_gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=None,
+    )
+    losses_sw, gradient_sw = loss.loss_gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+    )
+    assert_allclose(losses * sample_weight, losses_sw)
+    if not loss.is_multiclass:
+        assert_allclose(gradient * sample_weight, gradient_sw)
+    else:
+        assert_allclose(gradient * sample_weight[:, None], gradient_sw)
+
+    gradient, hessian = loss.gradient_hessian(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=None,
+    )
     gradient_sw, hessian_sw = loss.gradient_hessian(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
     )
-
     if not loss.is_multiclass:
         assert_allclose(gradient * sample_weight, gradient_sw)
         assert_allclose(hessian * sample_weight, hessian_sw)
     else:
         assert_allclose(gradient * sample_weight[:, None], gradient_sw)
         assert_allclose(hessian * sample_weight[:, None], hessian_sw)
+
+
+@pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
+def test_graceful_squeezing(loss):
+    """Test that Python and Cython functions return same results."""
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=loss,
+        n_samples=20,
+        y_bound=(-100, 100),
+        raw_bound=(-10, 10),
+        seed=42,
+    )
+
+    if raw_prediction.ndim == 1:
+        raw_prediction_2d = raw_prediction[:, None]
+        assert_allclose(
+            loss.loss(y_true=y_true, raw_prediction=raw_prediction_2d),
+            loss.loss(y_true=y_true, raw_prediction=raw_prediction),
+        )
+        assert_allclose(
+            loss.loss_gradient(y_true=y_true, raw_prediction=raw_prediction_2d),
+            loss.loss_gradient(y_true=y_true, raw_prediction=raw_prediction),
+        )
+        assert_allclose(
+            loss.gradient(y_true=y_true, raw_prediction=raw_prediction_2d),
+            loss.gradient(y_true=y_true, raw_prediction=raw_prediction),
+        )
+        assert_allclose(
+            loss.gradient_hessian(y_true=y_true, raw_prediction=raw_prediction_2d),
+            loss.gradient_hessian(y_true=y_true, raw_prediction=raw_prediction),
+        )
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
