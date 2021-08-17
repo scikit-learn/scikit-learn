@@ -134,7 +134,7 @@ make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 
 # Installing required system packages to support the rendering of math
 # notation in the HTML documentation and to optimize the image files
-sudo -E apt-get -yq update
+sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng gsfonts ccache zip optipng
 
@@ -180,6 +180,7 @@ pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
 pip install "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
 pip install "$(get_dep numpydoc $NUMPYDOC_VERSION)"
 pip install "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)"
+pip install "$(get_dep sphinxext-opengraph $SPHINXEXT_OPENGRAPH_VERSION)"
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.

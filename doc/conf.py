@@ -46,6 +46,7 @@ extensions = [
     "sphinx_issues",
     "add_toctree_functions",
     "sphinx-prompt",
+    "sphinxext.opengraph",
 ]
 
 # this is needed for some reason...
@@ -181,10 +182,7 @@ html_static_path = ["images"]
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {
-    "index": "index.html",
-    "documentation": "documentation.html",
-}  # redirects to index
+html_additional_pages = {"index": "index.html"}
 
 # If false, no module index is generated.
 html_domain_indices = False
@@ -230,6 +228,19 @@ html_context[
 # plot_release_highlights_0_22_0
 highlight_version = ".".join(latest_highlights.split("_")[-3:-1])
 html_context["release_highlights_version"] = highlight_version
+
+
+# redirects dictionary maps from old links to new links
+redirects = {
+    "documentation": "index",
+    "auto_examples/feature_selection/plot_permutation_test_for_classification": (
+        "auto_examples/model_selection/plot_permutation_tests_for_classification"
+    ),
+}
+html_context["redirects"] = redirects
+for old_link in redirects:
+    html_additional_pages[old_link] = "redirects.html"
+
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -506,3 +517,11 @@ autosummary_filename_map = {
     "sklearn.covariance.oas": "oas-function",
     "sklearn.decomposition.fastica": "fastica-function",
 }
+
+
+# Config for sphinxext.opengraph
+
+ogp_site_url = "https://scikit-learn/stable/"
+ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
+ogp_use_first_image = True
+ogp_site_name = "scikit-learn"

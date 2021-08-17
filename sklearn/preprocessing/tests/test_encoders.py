@@ -1308,6 +1308,23 @@ def test_ordinal_encoder_sparse():
         encoder.inverse_transform(X_trans_sparse)
 
 
+def test_ordinal_encoder_fit_with_unseen_category():
+    """Check OrdinalEncoder.fit works with unseen category when
+    `handle_unknown="use_encoded_value"`.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19872
+    """
+    X = np.array([0, 0, 1, 0, 2, 5])[:, np.newaxis]
+    oe = OrdinalEncoder(
+        categories=[[-1, 0, 1]], handle_unknown="use_encoded_value", unknown_value=-999
+    )
+    oe.fit(X)
+
+    oe = OrdinalEncoder(categories=[[-1, 0, 1]], handle_unknown="error")
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        oe.fit(X)
+
+
 @pytest.mark.parametrize(
     "X_train",
     [
@@ -1325,10 +1342,32 @@ def test_ordinal_encoder_sparse():
     ],
 )
 def test_ordinal_encoder_handle_unknown_string_dtypes(X_train, X_test):
-    """Checks that ordinal encoder transforms string dtypes. Non-regression
-    test for #19872."""
+    """Checks that `OrdinalEncoder` transforms string dtypes.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19872
+    """
     enc = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-9)
     enc.fit(X_train)
 
     X_trans = enc.transform(X_test)
     assert_allclose(X_trans, [[-9, 0]])
+
+
+def test_ordinal_encoder_python_integer():
+    """Check that `OrdinalEncoder` accepts Python integers that are potentially
+    larger than 64 bits.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20721
+    """
+    X = np.array(
+        [
+            44253463435747313673,
+            9867966753463435747313673,
+            44253462342215747313673,
+            442534634357764313673,
+        ]
+    ).reshape(-1, 1)
+    encoder = OrdinalEncoder().fit(X)
+    assert_array_equal(encoder.categories_, np.sort(X, axis=0).T)
+    X_trans = encoder.transform(X)
+    assert_array_equal(X_trans, [[0], [3], [2], [1]])
