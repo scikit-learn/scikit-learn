@@ -459,51 +459,6 @@ class HalfSquaredError(IdentityLink, BaseLoss, CyHalfSquaredError):
         else:
             self.constant_hessian = False
 
-    def gradient(
-        self,
-        y_true,
-        raw_prediction,
-        sample_weight=None,
-        gradient=None,
-        n_threads=1,
-    ):
-        # Be graceful to shape (n_samples, 1) -> (n_samples,)
-        if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
-            raw_prediction = raw_prediction.squeeze(1)
-        if gradient is not None and gradient.ndim == 2 and gradient.shape[1] == 1:
-            gradient = gradient.squeeze(1)
-
-        # gradient = raw_prediction - y_true is easier in numpy
-        gradient = np.subtract(raw_prediction, y_true, out=gradient)
-        if sample_weight is None:
-            return gradient
-        else:
-            return np.multiply(sample_weight, gradient, out=gradient)
-
-    def gradient_hessian(
-        self,
-        y_true,
-        raw_prediction,
-        sample_weight=None,
-        gradient=None,
-        hessian=None,
-        n_threads=1,
-    ):
-        # easier in numpy
-        gradient = self.gradient(
-            y_true, raw_prediction, sample_weight, gradient, hessian
-        )
-        if hessian is None:
-            hessian = np.empty_like(gradient)
-        elif hessian.ndim == 2 and hessian.shape[1] == 1:
-            # Be graceful to shape (n_samples, 1) -> (n_samples,)
-            hessian = hessian.squeeze(1)
-        if sample_weight is None:
-            hessian.fill(1)
-        else:
-            np.copyto(hessian, sample_weight)
-        return gradient, hessian
-
 
 class AbsoluteError(IdentityLink, BaseLoss, CyAbsoluteError):
     """Absolute error with identity link, for regression.
