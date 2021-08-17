@@ -31,8 +31,9 @@ def test_bad_direction():
         sfs.fit(X, y)
 
 
+@pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 @pytest.mark.parametrize("direction", ("forward", "backward"))
-@pytest.mark.parametrize("n_features_to_select", (1, 5, 9, "auto"))
+@pytest.mark.parametrize("n_features_to_select", (1, 5, 9, "auto", None))
 def test_n_features_to_select(direction, n_features_to_select):
     # Make sure n_features_to_select is respected
 
@@ -46,7 +47,7 @@ def test_n_features_to_select(direction, n_features_to_select):
     )
     sfs.fit(X, y)
 
-    if n_features_to_select == "auto":
+    if n_features_to_select in ("auto", None):
         n_features_to_select = n_features // 2
 
     assert sfs.get_support(indices=True).shape[0] == n_features_to_select
@@ -193,13 +194,16 @@ def test_sanity(seed, direction, n_features_to_select, expected_selected_feature
     assert_array_equal(sfs.get_support(indices=True), expected_selected_features)
 
 
-def test_sparse_support():
+# TODO: Remove test for n_features_to_select=None in 1.2
+@pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
+@pytest.mark.parametrize("n_features_to_select", ["auto", None])
+def test_sparse_support(n_features_to_select):
     # Make sure sparse data is supported
 
     X, y = make_regression(n_features=10)
     X = scipy.sparse.csr_matrix(X)
     sfs = SequentialFeatureSelector(
-        LinearRegression(), n_features_to_select="auto", cv=2
+        LinearRegression(), n_features_to_select=n_features_to_select, cv=2
     )
     sfs.fit(X, y)
     sfs.transform(X)
