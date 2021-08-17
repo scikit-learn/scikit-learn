@@ -225,7 +225,8 @@ def test_minimum_number_of_sample_check():
                    metric='euclidean')
 
     # Run the fit
-    assert_raise_message(ValueError, msg, clust.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        clust.fit(X)
 
 
 def test_bad_extract():
@@ -246,7 +247,8 @@ def test_bad_extract():
                    cluster_method='dbscan',
                    eps=0.3, min_samples=10,
                    metric='euclidean')
-    assert_raise_message(ValueError, msg, clust.fit, sparse.lil_matrix(X))
+    with pytest.raises(ValueError, match=msg):
+        clust.fit(X)
 
 
 def test_bad_reachability():
