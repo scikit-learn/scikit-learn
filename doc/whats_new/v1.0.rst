@@ -235,11 +235,11 @@ Changelog
 
 - |API| Deprecates the following keys in `cv_results_`: `'mean_score'`,
   `'std_score'`, and `'split(k)_score` in favor of `'mean_test_score'`
-  `'std_test_score'`, and `'split(k)_test_score``. :pr:`20583` by `Thomas Fan`_.
+  `'std_test_score'`, and `'split(k)_test_score'`. :pr:`20583` by `Thomas Fan`_.
 
 - |Fix| Adds arrays check to :func:`covariance.ledoit_wolf` and
-  :func:`covariance.ledoit_wolf_shrinkage`
-  :pr:`20416` by `Hugo Defois <defoishugo>`.
+  :func:`covariance.ledoit_wolf_shrinkage`.
+  :pr:`20416` by :user:`Hugo Defois <defoishugo>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -260,7 +260,12 @@ Changelog
   with ``importlib.resources`` to avoid the assumption that these resource
   files (e.g. ``iris.csv``) already exist on a filesystem, and by extension
   to enable compatibility with tools such as ``PyOxidizer``.
-  :pr:`20297` by :user:`Jack Liu <jackzyliu>`
+  :pr:`20297` by :user:`Jack Liu <jackzyliu>`.
+
+- |API| Deprecates :func:`datasets.load_boston` in 1.0 and it will be removed
+  in 1.2. Alternative code snippets to load similar datasets are provided.
+  Please report to the docstring of the function for details.
+  :pr:`20729` by `Guillaume Lemaitre`_.
 
 
 :mod:`sklearn.decomposition`
