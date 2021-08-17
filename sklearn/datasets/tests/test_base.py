@@ -5,6 +5,7 @@ import warnings
 from pickle import loads
 from pickle import dumps
 from functools import partial
+from importlib import resources
 
 import pytest
 
@@ -21,7 +22,12 @@ from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
+from sklearn.datasets._base import (
+    load_csv_data,
+    load_gzip_compressed_csv_data,
+)
 from sklearn.utils import Bunch
+from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_as_frame
 
 from sklearn.externals._pilutil import pillow_installed
@@ -122,6 +128,69 @@ def test_load_files_wo_load_content(
     assert res.get("data") is None
 
 
+@pytest.mark.parametrize(
+    "filename, expected_n_samples, expected_n_features, expected_target_names",
+    [
+        ("wine_data.csv", 178, 13, ["class_0", "class_1", "class_2"]),
+        ("iris.csv", 150, 4, ["setosa", "versicolor", "virginica"]),
+        ("breast_cancer.csv", 569, 30, ["malignant", "benign"]),
+    ],
+)
+def test_load_csv_data(
+    filename, expected_n_samples, expected_n_features, expected_target_names
+):
+    actual_data, actual_target, actual_target_names = load_csv_data(filename)
+    assert actual_data.shape[0] == expected_n_samples
+    assert actual_data.shape[1] == expected_n_features
+    assert actual_target.shape[0] == expected_n_samples
+    np.testing.assert_array_equal(actual_target_names, expected_target_names)
+
+
+def test_load_csv_data_with_descr():
+    data_file_name = "iris.csv"
+    descr_file_name = "iris.rst"
+
+    res_without_descr = load_csv_data(data_file_name=data_file_name)
+    res_with_descr = load_csv_data(
+        data_file_name=data_file_name, descr_file_name=descr_file_name
+    )
+    assert len(res_with_descr) == 4
+    assert len(res_without_descr) == 3
+
+    np.testing.assert_array_equal(res_with_descr[0], res_without_descr[0])
+    np.testing.assert_array_equal(res_with_descr[1], res_without_descr[1])
+    np.testing.assert_array_equal(res_with_descr[2], res_without_descr[2])
+
+    assert res_with_descr[-1].startswith(".. _iris_dataset:")
+
+
+@pytest.mark.parametrize(
+    "filename, kwargs, expected_shape",
+    [
+        ("diabetes_data.csv.gz", {}, [442, 10]),
+        ("diabetes_target.csv.gz", {}, [442]),
+        ("digits.csv.gz", {"delimiter": ","}, [1797, 65]),
+    ],
+)
+def test_load_gzip_compressed_csv_data(filename, kwargs, expected_shape):
+    actual_data = load_gzip_compressed_csv_data(filename, **kwargs)
+    assert actual_data.shape == tuple(expected_shape)
+
+
+def test_load_gzip_compressed_csv_data_with_descr():
+    data_file_name = "diabetes_target.csv.gz"
+    descr_file_name = "diabetes.rst"
+
+    expected_data = load_gzip_compressed_csv_data(data_file_name=data_file_name)
+    actual_data, descr = load_gzip_compressed_csv_data(
+        data_file_name=data_file_name,
+        descr_file_name=descr_file_name,
+    )
+
+    np.testing.assert_array_equal(actual_data, expected_data)
+    assert descr.startswith(".. _diabetes_dataset:")
+
+
 def test_load_sample_images():
     try:
         res = load_sample_images()
@@ -155,6 +224,7 @@ def test_load_missing_sample_image_error():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
+@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 @pytest.mark.parametrize(
     "loader_func, data_shape, target_shape, n_target, has_descr, filenames",
     [
@@ -188,7 +258,13 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
     if has_descr:
         assert bunch.DESCR
     if filenames:
-        assert all([os.path.exists(bunch.get(f, False)) for f in filenames])
+        assert "data_module" in bunch
+        assert all(
+            [
+                f in bunch and resources.is_resource(bunch["data_module"], bunch[f])
+                for f in filenames
+            ]
+        )
 
 
 @pytest.mark.parametrize(
@@ -244,3 +320,30 @@ def test_bunch_dir():
     # check that dir (important for autocomplete) shows attributes
     data = load_iris()
     assert "data" in dir(data)
+
+
+# FIXME: to be removed in 1.2
+def test_load_boston_warning():
+    """Check that we raise the ethical warning when loading `load_boston`."""
+    warn_msg = "The Boston housing prices dataset has an ethical problem"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        load_boston()
+
+
+@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
+def test_load_boston_alternative():
+    pd = pytest.importorskip("pandas")
+    if not os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
+        raise SkipTest(
+            "This test requires an internet connection to fetch the dataset."
+        )
+
+    boston_sklearn = load_boston()
+
+    data_url = "http://lib.stat.cmu.edu/datasets/boston"
+    raw_df = pd.read_csv(data_url, sep=r"\s+", skiprows=22, header=None)
+    data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+    target = raw_df.values[1::2, 2]
+
+    np.testing.assert_allclose(data, boston_sklearn.data)
+    np.testing.assert_allclose(target, boston_sklearn.target)

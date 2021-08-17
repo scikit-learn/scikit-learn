@@ -13,7 +13,11 @@ import warnings
 
 import scipy.optimize
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+)
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
@@ -29,6 +33,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
+from ..utils.metaestimators import available_if
 
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
@@ -557,9 +562,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         incremental,
     ):
 
+        params = self.coefs_ + self.intercepts_
         if not incremental or not hasattr(self, "_optimizer"):
-            params = self.coefs_ + self.intercepts_
-
             if self.solver == "sgd":
                 self._optimizer = SGDOptimizer(
                     params,
@@ -642,7 +646,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
                     # update weights
                     grads = coef_grads + intercept_grads
-                    self._optimizer.update_params(grads)
+                    self._optimizer.update_params(params, grads)
 
                 self.n_iter_ += 1
                 self.loss_ = accumulated_loss / X.shape[0]
@@ -747,8 +751,17 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         """
         return self._fit(X, y, incremental=False)
 
-    @property
-    def partial_fit(self):
+    def _check_solver(self):
+        if self.solver not in _STOCHASTIC_SOLVERS:
+            raise AttributeError(
+                "partial_fit is only available for stochastic"
+                " optimizers. %s is not stochastic."
+                % self.solver
+            )
+        return True
+
+    @available_if(_check_solver)
+    def partial_fit(self, X, y):
         """Update the model with a single iteration over the given data.
 
         Parameters
@@ -761,17 +774,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        self : returns a trained MLP model.
+        self : object
+            Trained MLP model.
         """
-        if self.solver not in _STOCHASTIC_SOLVERS:
-            raise AttributeError(
-                "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic."
-                % self.solver
-            )
-        return self._partial_fit
-
-    def _partial_fit(self, X, y):
         return self._fit(X, y, incremental=True)
 
 
@@ -1160,8 +1165,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         return self._label_binarizer.inverse_transform(y_pred)
 
-    @property
-    def partial_fit(self):
+    @available_if(lambda est: est._check_solver())
+    def partial_fit(self, X, y, classes=None):
         """Update the model with a single iteration over the given data.
 
         Parameters
@@ -1182,17 +1187,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Returns
         -------
-        self : returns a trained MLP model.
+        self : object
+            Trained MLP model.
         """
-        if self.solver not in _STOCHASTIC_SOLVERS:
-            raise AttributeError(
-                "partial_fit is only available for stochastic"
-                " optimizer. %s is not stochastic"
-                % self.solver
-            )
-        return self._partial_fit
-
-    def _partial_fit(self, X, y, classes=None):
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith("multilabel"):
@@ -1200,7 +1197,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             else:
                 self._label_binarizer.fit(classes)
 
-        super()._partial_fit(X, y)
+        super().partial_fit(X, y)
 
         return self
 
@@ -1246,6 +1243,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             return np.vstack([1 - y_pred, y_pred]).T
         else:
             return y_pred
+
+    def _more_tags(self):
+        return {"multilabel": True}
 
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
@@ -1299,7 +1299,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
         If the solver is 'lbfgs', the classifier will not use minibatch.
-        When set to "auto", `batch_size=min(200, n_samples)`
+        When set to "auto", `batch_size=min(200, n_samples)`.
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default='constant'
         Learning rate schedule for weight updates.
@@ -1374,27 +1374,27 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         aside 10% of training data as validation and terminate training when
         validation score is not improving by at least ``tol`` for
         ``n_iter_no_change`` consecutive epochs.
-        Only effective when solver='sgd' or 'adam'
+        Only effective when solver='sgd' or 'adam'.
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
-        Only used if early_stopping is True
+        Only used if early_stopping is True.
 
     beta_1 : float, default=0.9
         Exponential decay rate for estimates of first moment vector in adam,
-        should be in [0, 1). Only used when solver='adam'
+        should be in [0, 1). Only used when solver='adam'.
 
     beta_2 : float, default=0.999
         Exponential decay rate for estimates of second moment vector in adam,
-        should be in [0, 1). Only used when solver='adam'
+        should be in [0, 1). Only used when solver='adam'.
 
     epsilon : float, default=1e-8
-        Value for numerical stability in adam. Only used when solver='adam'
+        Value for numerical stability in adam. Only used when solver='adam'.
 
     n_iter_no_change : int, default=10
         Maximum number of epochs to not meet ``tol`` improvement.
-        Only effective when solver='sgd' or 'adam'
+        Only effective when solver='sgd' or 'adam'.
 
         .. versionadded:: 0.20
 
@@ -1449,19 +1449,12 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     out_activation_ : str
         Name of the output activation function.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.neural_network import MLPRegressor
-    >>> from sklearn.datasets import make_regression
-    >>> from sklearn.model_selection import train_test_split
-    >>> X, y = make_regression(n_samples=200, random_state=1)
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
-    ...                                                     random_state=1)
-    >>> regr = MLPRegressor(random_state=1, max_iter=500).fit(X_train, y_train)
-    >>> regr.predict(X_test[:2])
-    array([-0.9..., -7.1...])
-    >>> regr.score(X_test, y_test)
-    0.4...
+    BernoulliRBM : Bernoulli Restricted Boltzmann Machine (RBM).
+    MLPClassifier : Multi-layer Perceptron classifier.
+    sklearn.linear_model.SGDRegressor : Linear model fitted by minimizing
+        a regularized empirical loss with SGD.
 
     Notes
     -----
@@ -1491,6 +1484,20 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
+
+    Examples
+    --------
+    >>> from sklearn.neural_network import MLPRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_regression(n_samples=200, random_state=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     random_state=1)
+    >>> regr = MLPRegressor(random_state=1, max_iter=500).fit(X_train, y_train)
+    >>> regr.predict(X_test[:2])
+    array([-0.9..., -7.1...])
+    >>> regr.score(X_test, y_test)
+    0.4...
     """
 
     def __init__(

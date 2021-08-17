@@ -30,15 +30,6 @@ env:
 
 jobs:
   include:
-    # Manual trigger of linux/arm64 tests in PR without triggering the full
-    # wheel building process for all the Python versions.
-    - python: 3.9
-      os: linux
-      arch: arm64
-      if: commit_message =~ /\[arm64\]/
-      env:
-        - CPU_COUNT=4
-
     # Linux environments to build the scikit-learn wheels for the ARM64
     # architecture and Python 3.7 and newer. This is used both at release time
     # with the manual trigger in the commit message in the release branch and as
