@@ -21,7 +21,6 @@ from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -281,7 +280,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             )
             warnings.warn(msg, DataConversionWarning)
 
-        X = self._validate_data(X, dtype=dtype, accept_sparse='csr') #@TODO original condition was metric != 'precomputed' and metric in PAIRWISE_DISTANCE_FUNCTIONS
+        X = self._validate_data(X, dtype=dtype, accept_sparse='csr')
         memory = check_memory(self.memory)
 
         if self.cluster_method not in ["dbscan", "xi"]:
@@ -607,7 +606,7 @@ def _set_reach_dist(
             _params['p'] = p
         dists = pairwise_distances(P, X[unproc],
                                    metric, n_jobs=None,
-                                   **_params).ravel() #@TODO Check if axis matters. Original X[unproc] was np.take(X,unproc,axis=0)
+                                   **_params).ravel()
 
     rdists = np.maximum(dists, core_distances_[point_index])
     np.around(rdists, decimals=np.finfo(rdists.dtype).precision, out=rdists)
