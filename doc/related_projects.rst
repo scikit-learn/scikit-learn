@@ -66,7 +66,7 @@ enhance the functionality of scikit-learn's estimators.
 
 **Experimentation frameworks**
 
-- `Neptune <https://neptune.ai/>`_ is a metadata store for MLOps, 
+- `Neptune <https://neptune.ai/>`_ Metadata store for MLOps, 
   built for teams that run a lot of experiments.‌ It gives you a single 
   place to log, store, display, organize, compare, and query all your 
   model building metadata.
