@@ -58,6 +58,10 @@ from .cluster import adjusted_mutual_info_score
 from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
+from .cluster import silhouette_score
+from .cluster import calinski_harabasz_score
+from .cluster import davies_bouldin_score
+
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
 
@@ -733,7 +737,7 @@ brier_score_loss_scorer = make_scorer(
 )
 
 
-# Clustering scores
+# Clustering supervised scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 rand_scorer = make_scorer(rand_score)
 homogeneity_scorer = make_scorer(homogeneity_score)
@@ -743,6 +747,10 @@ mutual_info_scorer = make_scorer(mutual_info_score)
 adjusted_mutual_info_scorer = make_scorer(adjusted_mutual_info_score)
 normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
 fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
+# Clustering unsupervised scores
+silhouette_score = make_scorer(silhouette_score)
+calinski_harabasz_score = make_scorer(calinski_harabasz_score)
+davies_bouldin_score = make_scorer(davies_bouldin_score)
 
 
 SCORERS = dict(
@@ -778,6 +786,10 @@ SCORERS = dict(
     adjusted_mutual_info_score=adjusted_mutual_info_scorer,
     normalized_mutual_info_score=normalized_mutual_info_scorer,
     fowlkes_mallows_score=fowlkes_mallows_scorer,
+    # Cluster metrics that use unsupervised evaluation
+    silhouette_score = silhouette_score,
+    calinski_harabasz_score = calinski_harabasz_score,
+    davies_bouldin_score = davies_bouldin_score,
 )
 
 
