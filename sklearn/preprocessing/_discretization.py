@@ -14,7 +14,8 @@ from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.stats import _weighted_percentile
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -135,7 +136,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.strategy = strategy
         self.dtype = dtype
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """
         Fit the estimator.
 
@@ -147,6 +148,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         y : None
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
+
+        sample_weights : array-like of shape (n_samples,), default = None
+            Individual weights for each sample. Used to calculate quantiles if
+            strategy = `"quantile"`.
 
         Returns
         -------
@@ -184,6 +189,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_bins = self._validate_n_bins(n_features)
 
         bin_edges = np.zeros(n_features, dtype=object)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         for jj in range(n_features):
             column = X[:, jj]
             col_min, col_max = column.min(), column.max()
@@ -201,7 +207,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+                if sample_weight == None:
+                    bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+
+                else:
+                    bin_edges[jj] = np.asarray(
+                        [
+                            _weighted_percentile(column, sample_weight, quantile)
+                            for quantile in quantiles
+                        ]
+                    )
 
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
