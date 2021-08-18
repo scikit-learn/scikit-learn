@@ -207,7 +207,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                if sample_weight == None:
+                if sample_weight is None:
                     bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
 
                 else:
