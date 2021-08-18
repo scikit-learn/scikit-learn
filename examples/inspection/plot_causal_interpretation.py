@@ -38,21 +38,21 @@ print(__doc__)
 
 import numpy as np
 
-np.random.seed(42)
 n_samples = 10000
+rng = np.random.RandomState(32)
 
-experiences = np.random.normal(20, 10, size=n_samples).astype(int)
+experiences = rng.normal(20, 10, size=n_samples).astype(int)
 experiences[experiences < 0] = 0
-abilities = np.random.normal(0, 0.15, size=n_samples)
-parent_hourly_wages = 50 * np.random.beta(2, 8, size=n_samples)
+abilities = rng.normal(0, 0.15, size=n_samples)
+parent_hourly_wages = 50 * rng.beta(2, 8, size=n_samples)
 parent_hourly_wages[parent_hourly_wages < 0] = 0
 
 college_degrees = (9 * abilities + 0.02 * parent_hourly_wages
-                   + np.random.randn(n_samples) > 0.7).astype(int)
+                   + rng.randn(n_samples) > 0.7).astype(int)
 
 hourly_wages = (
   0.2 * experiences + parent_hourly_wages + 2
-  * college_degrees + 5 * abilities + np.random.normal(0, 1, size=n_samples)
+  * college_degrees + 5 * abilities + rng.normal(0, 1, size=n_samples)
 )
 
 hourly_wages[hourly_wages < 0] = 0
