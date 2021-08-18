@@ -598,7 +598,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
             if (self.affinity == 'linear') and (np.any(self.affinity_matrix_ < 0)):
                 raise ValueError(
-                    f"The affinity matrix generated for your input ndarray contains negative values, which is not compatible with affinity = {self.affinity}")
+                    f"The affinity matrix generated for your input ndarray contains negative values,"
+                    f" which is not compatible with affinity = {self.affinity}")
 
         random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(
