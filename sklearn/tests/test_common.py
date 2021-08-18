@@ -381,4 +381,9 @@ GET_FEATURES_OUT_ESTIMATORS = [
 
 @pytest.mark.parametrize("transformer", GET_FEATURES_OUT_ESTIMATORS)
 def test_transformers_get_feature_names_out(transformer):
-    check_transformer_get_feature_names_out(type(transformer).__name__, transformer)
+    _set_checking_parameters(transformer)
+
+    with ignore_warnings(category=(FutureWarning)):
+        check_transformer_get_feature_names_out(
+            transformer.__class__.__name__, transformer
+        )

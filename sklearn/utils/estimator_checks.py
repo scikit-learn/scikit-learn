@@ -3774,7 +3774,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
                 estimator.partial_fit(X_bad, y)
 
 
-def check_transformer_get_feature_names_out(name, transformer_orig, strict_mode=True):
+def check_transformer_get_feature_names_out(name, transformer_orig):
     tags = transformer_orig._get_tags()
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
@@ -3788,11 +3788,12 @@ def check_transformer_get_feature_names_out(name, transformer_orig, strict_mode=
     )
     X = StandardScaler().fit_transform(X)
     X -= X.min()
-    X = _pairwise_estimator_convert_X(X, transformer_orig)
 
-    n_samples, n_features = np.asarray(X).shape
     transformer = clone(transformer_orig)
-    _set_checking_parameters(transformer)
+    X = _enforce_estimator_tags_x(transformer, X)
+    X = _pairwise_estimator_convert_X(X, transformer)
+
+    n_features = X.shape[1]
     set_random_state(transformer)
 
     y_ = y
@@ -3805,6 +3806,7 @@ def check_transformer_get_feature_names_out(name, transformer_orig, strict_mode=
     input_features = ["feature%d" % i for i in range(n_features)]
     feature_names = transformer.get_feature_names_out(input_features)
     assert feature_names is not None
+
     if isinstance(X_pred, tuple):
         assert (
             len(feature_names) == X_pred[0].shape[1]
