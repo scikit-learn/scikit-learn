@@ -1006,12 +1006,3 @@ def _is_pairwise(estimator):
 
     # use pairwise tag when the attribute is not present
     return pairwise_tag
-import sys
-from numbers import Number
-from collections import deque
-from collections.abc import Set, Mapping
-
-
-ZERO_DEPTH_BASES = (str, bytes, Number, range, bytearray)
-
-
