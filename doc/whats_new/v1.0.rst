@@ -366,6 +366,10 @@ Changelog
   got overwritten during `fit`.
   :pr:`20534` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| Set new defaults for :class:`ensemble.RandomForestRegressor`
+  and :class:`ensemble.RandomForestClassifier` to 1 and "sqrt" respectively.
+  :pr:`19836` by :user:`Brian Sun <bsun94>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
