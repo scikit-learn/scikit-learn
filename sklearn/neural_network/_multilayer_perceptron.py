@@ -5,7 +5,7 @@
 #          Andreas Mueller
 #          Jiyuan Qian
 # License: BSD 3 clause
-
+import os
 import numpy as np
 
 from abc import ABCMeta, abstractmethod
@@ -295,7 +295,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         # The calculation of delta[last] here works with following
         # combinations of output activation and loss function:
-        # sigmoid and binary cross entropy, softmax and categorical cross
+        # sigmoid and binary cross entropy, softmax and  categorical cross
         # entropy, and identity with squared loss
         deltas[last] = activations[-1] - y
 
