@@ -11,9 +11,10 @@ from scipy import sparse
 from scipy.stats import rankdata
 import joblib
 
-from . import IS_PYPY
+# from . import IS_PYPY
 from .. import config_context
-from ._testing import _get_args
+
+# from ._testing import _get_args
 from ._testing import assert_raise_message
 from ._testing import assert_array_equal
 from ._testing import assert_array_almost_equal
@@ -52,7 +53,8 @@ from ..exceptions import SkipTestWarning
 from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
-from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
+from ..metrics.pairwise import rbf_kernel
+
 
 from . import shuffle
 from ._tags import (
@@ -69,6 +71,14 @@ from ..datasets import (
     make_regression,
 )
 
+from .common_utils_checks import (
+    _enforce_estimator_tags_x,
+    _enforce_estimator_tags_y,
+    _is_pairwise_metric,
+    _pairwise_estimator_convert_X,
+)
+from .estimator_api_checks import _yield_api_estimator_checks
+
 REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
@@ -78,9 +88,7 @@ def _yield_checks(estimator):
     tags = _safe_tags(estimator)
     pairwise = _is_pairwise(estimator)
 
-    yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
-    yield check_fit_score_takes_y
     if has_fit_parameter(estimator, "sample_weight"):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_not_an_array
@@ -279,6 +287,9 @@ def _yield_all_checks(estimator):
             SkipTestWarning,
         )
         return
+
+    for check in _yield_api_estimator_checks(estimator):
+        yield check
 
     for check in _yield_checks(estimator):
         yield check
@@ -695,34 +706,6 @@ class _NotAnArray:
         if func.__name__ == "may_share_memory":
             return True
         raise TypeError("Don't want to call array_function {}!".format(func.__name__))
-
-
-def _is_pairwise_metric(estimator):
-    """Returns True if estimator accepts pairwise metric.
-
-    Parameters
-    ----------
-    estimator : object
-        Estimator object to test.
-
-    Returns
-    -------
-    out : bool
-        True if _pairwise is set to True and False otherwise.
-    """
-    metric = getattr(estimator, "metric", None)
-
-    return bool(metric == "precomputed")
-
-
-def _pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
-
-    if _is_pairwise_metric(estimator):
-        return pairwise_distances(X, metric="euclidean")
-    if _is_pairwise(estimator):
-        return kernel(X, X)
-
-    return X
 
 
 def _generate_sparse_matrix(X_csr):
@@ -1590,36 +1573,6 @@ def check_pipeline_consistency(name, estimator_orig):
             result = func(X, y)
             result_pipe = func_pipeline(X, y)
             assert_allclose_dense_sparse(result, result_pipe)
-
-
-@ignore_warnings
-def check_fit_score_takes_y(name, estimator_orig):
-    # check that all estimators accept an optional y
-    # in fit and score so they can be used in pipelines
-    rnd = np.random.RandomState(0)
-    n_samples = 30
-    X = rnd.uniform(size=(n_samples, 3))
-    X = _pairwise_estimator_convert_X(X, estimator_orig)
-    y = np.arange(n_samples) % 3
-    estimator = clone(estimator_orig)
-    y = _enforce_estimator_tags_y(estimator, y)
-    set_random_state(estimator)
-
-    funcs = ["fit", "score", "partial_fit", "fit_predict", "fit_transform"]
-    for func_name in funcs:
-        func = getattr(estimator, func_name, None)
-        if func is not None:
-            func(X, y)
-            args = [p.name for p in signature(func).parameters.values()]
-            if args[0] == "self":
-                # if_delegate_has_method makes methods into functions
-                # with an explicit "self", so need to shift arguments
-                args = args[1:]
-            assert args[1] in ["y", "Y"], (
-                "Expected y or Y as second argument for method "
-                "%s of %s. Got arguments: %r."
-                % (func_name, type(estimator).__name__, args)
-            )
 
 
 @ignore_warnings
@@ -2911,42 +2864,6 @@ def check_estimators_overwrite_params(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_no_attributes_set_in_init(name, estimator_orig):
-    """Check setting during init."""
-    try:
-        # Clone fails if the estimator does not store
-        # all parameters as an attribute during init
-        estimator = clone(estimator_orig)
-    except AttributeError:
-        raise AttributeError(
-            f"Estimator {name} should store all parameters as an attribute during init."
-        )
-
-    if hasattr(type(estimator).__init__, "deprecated_original"):
-        return
-
-    init_params = _get_args(type(estimator).__init__)
-    if IS_PYPY:
-        # __init__ signature has additional objects in PyPy
-        for key in ["obj"]:
-            if key in init_params:
-                init_params.remove(key)
-    parents_init_params = [
-        param
-        for params_parent in (_get_args(parent) for parent in type(estimator).__mro__)
-        for param in params_parent
-    ]
-
-    # Test for no setting apart from parameters during init
-    invalid_attr = set(vars(estimator)) - set(init_params) - set(parents_init_params)
-    assert not invalid_attr, (
-        "Estimator %s should not set any attribute apart"
-        " from parameters during init. Found attributes %s."
-        % (name, sorted(invalid_attr))
-    )
-
-
-@ignore_warnings(category=FutureWarning)
 def check_sparsify_coefficients(name, estimator_orig):
     X = np.array(
         [
@@ -3158,39 +3075,6 @@ def check_parameters_default_constructible(name, Estimator):
                     assert param_value is init_param.default, failure_text
                 else:
                     assert param_value == init_param.default, failure_text
-
-
-def _enforce_estimator_tags_y(estimator, y):
-    # Estimators with a `requires_positive_y` tag only accept strictly positive
-    # data
-    if _safe_tags(estimator, key="requires_positive_y"):
-        # Create strictly positive y. The minimal increment above 0 is 1, as
-        # y could be of integer dtype.
-        y += 1 + abs(y.min())
-    # Estimators with a `binary_only` tag only accept up to two unique y values
-    if _safe_tags(estimator, key="binary_only") and y.size > 0:
-        y = np.where(y == y.flat[0], y, y.flat[0] + 1)
-    # Estimators in mono_output_task_error raise ValueError if y is of 1-D
-    # Convert into a 2-D y for those estimators.
-    if _safe_tags(estimator, key="multioutput_only"):
-        return np.reshape(y, (-1, 1))
-    return y
-
-
-def _enforce_estimator_tags_x(estimator, X):
-    # Pairwise estimators only accept
-    # X of shape (`n_samples`, `n_samples`)
-    if _is_pairwise(estimator):
-        X = X.dot(X.T)
-    # Estimators with `1darray` in `X_types` tag only accept
-    # X of shape (`n_samples`,)
-    if "1darray" in _safe_tags(estimator, key="X_types"):
-        X = X[:, 0]
-    # Estimators with a `requires_positive_X` tag only accept
-    # strictly positive data
-    if _safe_tags(estimator, key="requires_positive_X"):
-        X -= X.min()
-    return X
 
 
 @ignore_warnings(category=FutureWarning)
