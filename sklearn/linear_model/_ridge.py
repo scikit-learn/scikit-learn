@@ -1983,6 +1983,8 @@ class _BaseRidgeCV(LinearModel):
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
         self.n_features_in_ = estimator.n_features_in_
+        if hasattr(estimator, "feature_names_in_"):
+            self.feature_names_in_ = estimator.feature_names_in_
 
         return self
 
