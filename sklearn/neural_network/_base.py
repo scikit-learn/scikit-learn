@@ -67,6 +67,30 @@ def inplace_softmax(X):
     np.exp(tmp, out=X)
     X /= X.sum(axis=1)[:, np.newaxis]
 
+def inplace_leaky_relu(X):
+    """
+    Computes leaky rectified  linear function inplace
+    with leaky parameter
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The input data.
+    """
+
+    return np.maximum(0.01*X, X)
+
+
+def inplace_elu(X):
+    """
+    Computes exponential linear function inplace
+    with leaky parameter
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The input data.
+    """
+
+    return np.where(X < np.array(0.0), np.exp(X) - 1, X)
 
 ACTIVATIONS = {
     "identity": inplace_identity,
@@ -74,6 +98,8 @@ ACTIVATIONS = {
     "logistic": inplace_logistic,
     "relu": inplace_relu,
     "softmax": inplace_softmax,
+    "leaky_relu": inplace_leaky_relu,
+    "elu": inplace_elu
 }
 
 
@@ -90,7 +116,6 @@ def inplace_identity_derivative(Z, delta):
          The backpropagated error signal to be modified inplace.
     """
     # Nothing to do
-
 
 def inplace_logistic_derivative(Z, delta):
     """Apply the derivative of the logistic sigmoid function.
@@ -146,12 +171,50 @@ def inplace_relu_derivative(Z, delta):
     """
     delta[Z == 0] = 0
 
+def inplace_leaky_relu_derivative(Z, delta):
+    """Apply the derivative of the leaky relu function.
+
+        It exploits the fact that the derivative is a simple function of the output
+        value from rectified linear units activation function.
+
+        Parameters
+        ----------
+        Z : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The data which was output from the rectified linear units activation
+            function during the forward pass.
+
+        delta : {array-like}, shape (n_samples, n_features)
+             The backpropagated error signal to be modified inplace.
+        """
+
+    delta[Z < 0 ] = 0.01
+
+def inplace_elu_derivative(Z, delta):
+    """Apply the derivative of the leaky relu function.
+
+            It exploits the fact that the derivative is a simple function of the output
+            value from rectified linear units activation function.
+
+            Parameters
+            ----------
+            Z : {array-like, sparse matrix}, shape (n_samples, n_features)
+                The data which was output from the rectified linear units activation
+                function during the forward pass.
+
+            delta : {array-like}, shape (n_samples, n_features)
+                 The backpropagated error signal to be modified inplace.
+            """
+
+    delta = np.where(Z < 0, Z + 1, Z)
+
 
 DERIVATIVES = {
     "identity": inplace_identity_derivative,
     "tanh": inplace_tanh_derivative,
     "logistic": inplace_logistic_derivative,
     "relu": inplace_relu_derivative,
+    "leaky_relu": inplace_leaky_relu_derivative,
+    "elu": inplace_elu_derivative
 }
 
 
