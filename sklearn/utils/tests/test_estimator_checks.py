@@ -34,6 +34,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
+from sklearn.utils.metaestimators import available_if
 
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
@@ -52,6 +53,7 @@ from sklearn.utils.estimator_checks import (
     check_regressor_data_not_an_array,
     check_outlier_corruption,
     set_random_state,
+    check_fit_check_is_fitted,
 )
 
 
@@ -1006,3 +1008,28 @@ def test_minimal_class_implementation_checks():
     minimal_estimators = [MinimalTransformer(), MinimalRegressor(), MinimalClassifier()]
     for estimator in minimal_estimators:
         check_estimator(estimator)
+
+
+def test_check_fit_check_is_fitted():
+    class Estimator(BaseEstimator):
+        def __init__(self, behavior="attribute"):
+            self.behavior = behavior
+
+        def fit(self, X, y, **kwargs):
+            if self.behavior == "attribute":
+                self.is_fitted_ = True
+            elif self.behavior == "method":
+                self._is_fitted = True
+            return self
+
+        @available_if(lambda self: self.behavior in {"method", "always-true"})
+        def __sklearn_is_fitted__(self):
+            if self.behavior == "always-true":
+                return True
+            return hasattr(self, "_is_fitted")
+
+    with raises(Exception, match="passes check_is_fitted before being fit"):
+        check_fit_check_is_fitted("estimator", Estimator(behavior="always-true"))
+
+    check_fit_check_is_fitted("estimator", Estimator(behavior="method"))
+    check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
