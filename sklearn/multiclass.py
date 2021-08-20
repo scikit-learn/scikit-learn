@@ -673,8 +673,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
-        Names of features seen during :term:`fit`. Only defined if the
-        underlying estimator exposes such an attribute when fit.
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
 
         .. versionadded:: 1.0
 
@@ -809,8 +809,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         if hasattr(self.estimators_[0], "n_features_in_"):
             self.n_features_in_ = self.estimators_[0].n_features_in_
-        if hasattr(self.estimators_[0], "feature_names_in_"):
-            self.feature_names_in_ = self.estimators_[0].feature_names_in_
 
         return self
 
