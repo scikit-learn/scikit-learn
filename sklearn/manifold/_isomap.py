@@ -172,6 +172,8 @@ class Isomap(TransformerMixin, BaseEstimator):
         )
         self.nbrs_.fit(X)
         self.n_features_in_ = self.nbrs_.n_features_in_
+        if hasattr(self.nbrs_, "feature_names_in_"):
+            self.feature_names_in_ = self.nbrs_.feature_names_in_
 
         self.kernel_pca_ = KernelPCA(
             n_components=self.n_components,

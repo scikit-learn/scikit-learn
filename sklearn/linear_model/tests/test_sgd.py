@@ -1,11 +1,11 @@
 import pickle
-import pytest
 
-import numpy as np
-from numpy.testing import assert_allclose
-import scipy.sparse as sp
 import joblib
+import pytest
+import numpy as np
+import scipy.sparse as sp
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -216,30 +216,55 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
 
 
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+    "klass",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
 )
-def test_sgd_bad_alpha(klass):
-    # Check whether expected ValueError on bad alpha
-    with pytest.raises(ValueError):
-        klass(alpha=-0.1)
-
-
+@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+    "params, err_msg",
+    [
+        ({"alpha": -0.1}, "alpha must be >= 0"),
+        ({"penalty": "foobar", "l1_ratio": 0.85}, "Penalty foobar is not supported"),
+        ({"loss": "foobar"}, "The loss foobar is not supported"),
+        ({"l1_ratio": 1.1}, r"l1_ratio must be in \[0, 1\]"),
+        ({"learning_rate": "<unknown>"}, "learning rate <unknown> is not supported"),
+        ({"nu": -0.5}, r"nu must be in \(0, 1]"),
+        ({"nu": 2}, r"nu must be in \(0, 1]"),
+        ({"alpha": 0, "learning_rate": "optimal"}, "alpha must be > 0"),
+        ({"eta0": 0, "learning_rate": "constant"}, "eta0 must be > 0"),
+        ({"max_iter": -1}, "max_iter must be > zero"),
+        ({"shuffle": "false"}, "shuffle must be either True or False"),
+        ({"early_stopping": "false"}, "early_stopping must be either True or False"),
+        (
+            {"validation_fraction": -0.1},
+            r"validation_fraction must be in range \(0, 1\)",
+        ),
+        ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
+    ],
 )
-def test_sgd_bad_penalty(klass):
-    # Check whether expected ValueError on bad penalty
-    with pytest.raises(ValueError):
-        klass(penalty="foobar", l1_ratio=0.85)
+def test_sgd_estimator_params_validation(klass, fit_method, params, err_msg):
+    """Validate parameters in the different SGD estimators."""
+    try:
+        sgd_estimator = klass(**params)
+    except TypeError as err:
+        if "__init__() got an unexpected keyword argument" in str(err):
+            # skip test if the parameter is not supported by the estimator
+            return
+        raise err
 
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
-)
-def test_sgd_bad_loss(klass):
-    # Check whether expected ValueError on bad loss
-    with pytest.raises(ValueError):
-        klass(loss="foobar")
+    with pytest.raises(ValueError, match=err_msg):
+        if is_classifier(sgd_estimator) and fit_method == "partial_fit":
+            fit_params = {"classes": np.unique(Y)}
+        else:
+            fit_params = {}
+        getattr(sgd_estimator, fit_method)(X, Y, **fit_params)
 
 
 def _test_warm_start(klass, X, Y, lr):
@@ -411,16 +436,6 @@ def test_late_onset_averaging_reached(klass):
 @pytest.mark.parametrize(
     "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
-def test_sgd_bad_alpha_for_optimal_learning_rate(klass):
-    # Check whether expected ValueError on bad alpha, i.e. 0
-    # since alpha is used to compute the optimal learning rate
-    with pytest.raises(ValueError):
-        klass(alpha=0, learning_rate="optimal")
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
-)
 def test_early_stopping(klass):
     X = iris.data[iris.target > 0]
     Y = iris.target[iris.target > 0]
@@ -540,115 +555,56 @@ def test_sgd_clf(klass):
         assert_array_equal(clf.predict(T), true_result)
 
 
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_sgd_bad_l1_ratio(klass):
-    # Check whether expected ValueError on bad l1_ratio
-    with pytest.raises(ValueError):
-        klass(l1_ratio=1.1)
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
-)
-def test_sgd_bad_learning_rate_schedule(klass):
-    # Check whether expected ValueError on bad learning_rate
-    with pytest.raises(ValueError):
-        klass(learning_rate="<unknown>")
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
-)
-def test_sgd_bad_eta0(klass):
-    # Check whether expected ValueError on bad eta0
-    with pytest.raises(ValueError):
-        klass(eta0=0, learning_rate="constant")
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
-)
-def test_sgd_max_iter_param(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
-        klass(max_iter=-10000)
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
-)
-def test_sgd_shuffle_param(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
-        klass(shuffle="false")
-
-
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_sgd_early_stopping_param(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
-        klass(early_stopping="false")
-
-
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_sgd_validation_fraction(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
-        klass(validation_fraction=-0.1)
-
-
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_sgd_n_iter_no_change(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
-        klass(n_iter_no_change=0)
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
-)
-def test_argument_coef(klass):
-    # Checks coef_init not allowed as model argument (only fit)
-    # Provided coef_ does not match dataset
-    with pytest.raises(TypeError):
-        klass(coef_init=np.zeros((3,)))
-
-
 @pytest.mark.parametrize(
     "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
 )
 def test_provide_coef(klass):
-    # Checks coef_init shape for the warm starts
-    # Provided coef_ does not match dataset.
-    with pytest.raises(ValueError):
+    """Check that the shape of `coef_init` is validated."""
+    with pytest.raises(ValueError, match="Provided coef_init does not match dataset"):
         klass().fit(X, Y, coef_init=np.zeros((3,)))
 
 
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
+    "klass, fit_params",
+    [
+        (SGDClassifier, {"intercept_init": np.zeros((3,))}),
+        (SparseSGDClassifier, {"intercept_init": np.zeros((3,))}),
+        (SGDOneClassSVM, {"offset_init": np.zeros((3,))}),
+        (SparseSGDOneClassSVM, {"offset_init": np.zeros((3,))}),
+    ],
 )
-def test_set_intercept(klass):
-    # Checks intercept_ shape for the warm starts
-    # Provided intercept_ does not match dataset.
-    if klass in [SGDClassifier, SparseSGDClassifier]:
-        with pytest.raises(ValueError):
-            klass().fit(X, Y, intercept_init=np.zeros((3,)))
-    elif klass in [SGDOneClassSVM, SparseSGDOneClassSVM]:
-        with pytest.raises(ValueError):
-            klass().fit(X, Y, offset_init=np.zeros((3,)))
+def test_set_intercept_offset(klass, fit_params):
+    """Check that `intercept_init` or `offset_init` is validated."""
+    sgd_estimator = klass()
+    with pytest.raises(ValueError, match="does not match dataset"):
+        sgd_estimator.fit(X, Y, **fit_params)
 
 
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize(
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+)
 def test_sgd_early_stopping_with_partial_fit(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
+    """Check that we raise an error for `early_stopping` used with
+    `partial_fit`.
+    """
+    err_msg = "early_stopping should be False with partial_fit"
+    with pytest.raises(ValueError, match=err_msg):
         klass(early_stopping=True).partial_fit(X, Y)
 
 
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_set_intercept_binary(klass):
-    # Checks intercept_ shape for the warm starts in binary case
-    klass().fit(X5, Y5, intercept_init=0)
+@pytest.mark.parametrize(
+    "klass, fit_params",
+    [
+        (SGDClassifier, {"intercept_init": 0}),
+        (SparseSGDClassifier, {"intercept_init": 0}),
+        (SGDOneClassSVM, {"offset_init": 0}),
+        (SparseSGDOneClassSVM, {"offset_init": 0}),
+    ],
+)
+def test_set_intercept_offset_binary(klass, fit_params):
+    """Check that we can pass a scaler with binary classification to
+    `intercept_init` or `offset_init`."""
+    klass().fit(X5, Y5, **fit_params)
 
 
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
@@ -1535,19 +1491,6 @@ def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
         average_intercept /= i + 1.0
 
     return average_coef, 1 - average_intercept
-
-
-@pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM])
-@pytest.mark.parametrize("nu", [-0.5, 2])
-def test_bad_nu_values(klass, nu):
-    msg = r"nu must be in \(0, 1]"
-    with pytest.raises(ValueError, match=msg):
-        klass(nu=nu)
-
-    clf = klass(nu=0.05)
-    clf2 = clone(clf)
-    with pytest.raises(ValueError, match=msg):
-        clf2.set_params(nu=nu)
 
 
 @pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM])
