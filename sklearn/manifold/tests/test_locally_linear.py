@@ -26,7 +26,7 @@ def test_barycenter_kneighbors_graph():
     # check that columns sum to one
     assert_array_almost_equal(np.sum(A.toarray(), 1), np.ones(3))
     pred = np.dot(A.toarray(), X)
-    assert linalg.norm(pred - X,check_finite=False) / X.shape[0] < 1
+    assert linalg.norm((pred - X),  check_finite=False) / X.shape[0] < 1
 
 
 # ----------------------------------------------------------------------
@@ -51,7 +51,7 @@ def test_lle_simple_grid():
     tol = 0.1
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
-    reconstruction_error = linalg.norm(np.dot(N, X) - X, "fro",check_finite=False)
+    reconstruction_error = linalg.norm(np.dot(N, X) - X, "fro",  check_finite=False)
     assert reconstruction_error < tol
 
     for solver in eigen_solvers:
@@ -59,7 +59,7 @@ def test_lle_simple_grid():
         clf.fit(X)
         assert clf.embedding_.shape[1] == n_components
         reconstruction_error = (
-            linalg.norm(np.dot(N, clf.embedding_) - clf.embedding_, "fro",check_finite=False) ** 2
+            linalg.norm(np.dot(N, clf.embedding_) - clf.embedding_, "fro",  check_finite=False) ** 2
         )
 
         assert reconstruction_error < tol
@@ -68,7 +68,7 @@ def test_lle_simple_grid():
     # re-embed a noisy version of X using the transform method
     noise = rng.randn(*X.shape) / 100
     X_reembedded = clf.transform(X + noise)
-    assert linalg.norm(X_reembedded - clf.embedding_,check_finite=False) < tol
+    assert linalg.norm((X_reembedded - clf.embedding_), check_finite=False) < tol
 
 
 def test_lle_manifold():
@@ -85,7 +85,7 @@ def test_lle_manifold():
         tol = 1.5 if method == "standard" else 3
 
         N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
-        reconstruction_error = linalg.norm(np.dot(N, X) - X,check_finite=False)
+        reconstruction_error = linalg.norm((np.dot(N, X) - X), check_finite=False)
         assert reconstruction_error < tol
 
         for solver in eigen_solvers:
@@ -93,7 +93,7 @@ def test_lle_manifold():
             clf.fit(X)
             assert clf.embedding_.shape[1] == n_components
             reconstruction_error = (
-                linalg.norm(np.dot(N, clf.embedding_) - clf.embedding_, "fro",check_finite=False) ** 2
+                linalg.norm((np.dot(N, clf.embedding_) - clf.embedding_), "fro", check_finite=False) ** 2
             )
             details = "solver: %s, method: %s" % (solver, method)
             assert reconstruction_error < tol, details
