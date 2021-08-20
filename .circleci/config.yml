@@ -2,7 +2,7 @@ version: 2.1
 parameters:
   commit-desc: 
     type: string
-    default: `git log --format=%B -n 1 $CIRCLE_SHA1`
+    default: $(git log --format=%B -n 1 $CIRCLE_SHA1)
 
 jobs:
   doc-min-dependencies:
