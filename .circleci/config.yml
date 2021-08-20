@@ -1,4 +1,8 @@
 version: 2.1
+parameters:
+  commit-desc: 
+    type: string
+    default: `git log --format=%B -n 1 $CIRCLE_SHA1`
 
 jobs:
   doc-min-dependencies:
@@ -149,6 +153,30 @@ jobs:
       - restore_cache:
           key: v1-datasets-{{ .Branch }}
       - run: ./build_tools/circle/build_test_arm.sh
+      - save_cache:
+          key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
+          paths:
+            - ~/.ccache
+            - ~/.cache/pip
+      - save_cache:
+          key: v1-datasets-{{ .Branch }}
+          paths:
+            - ~/scikit_learn_data
+
+
+
+  linux-arm64-wheels:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
+    when:
+      matches: { pattern: "\[cd\ build\]", value: << pipeline.parameters.commit-desc >> }
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - restore_cache:
+          key: v1-datasets-{{ .Branch }}
+      - run: ./build_tools/circle/build_wheel_arm.sh
       - save_cache:
           key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:
