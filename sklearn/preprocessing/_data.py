@@ -337,6 +337,12 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         It will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     minmax_scale : Equivalent function without the estimator API.
@@ -702,6 +708,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
+
+        .. versionadded:: 1.0
 
     n_samples_seen_ : int or ndarray of shape (n_features,)
         The number of samples processed by the estimator for each feature.
@@ -1402,6 +1414,12 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.preprocessing import RobustScaler
@@ -1855,6 +1873,12 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
+
+        .. versionadded:: 1.0
+
     Notes
     -----
     This estimator is stateless (besides constructor parameters), the
@@ -2016,6 +2040,12 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     binarize : Equivalent function without the estimator API.
@@ -2137,6 +2167,12 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -2377,6 +2413,12 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -2929,6 +2971,12 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------

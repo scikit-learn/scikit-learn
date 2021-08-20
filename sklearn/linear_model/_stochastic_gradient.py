@@ -1120,6 +1120,12 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     sklearn.svm.LinearSVC : Linear support vector classification.
@@ -1848,6 +1854,12 @@ class SGDRegressor(BaseSGDRegressor):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------

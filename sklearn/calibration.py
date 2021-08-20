@@ -148,6 +148,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying base_estimator exposes such an attribute when fit.
+
+        .. versionadded:: 1.0
+
     calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
             or `ensemble=False`)
         The list of classifier and calibrator pairs.
