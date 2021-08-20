@@ -94,7 +94,7 @@ class Pipeline(_BaseComposition):
 
         .. versionadded:: 0.24
 
-    feature_names_in_ : ndarray of shape (n_features_in_,)
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
 
