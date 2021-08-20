@@ -51,7 +51,7 @@ def test_lle_simple_grid():
     tol = 0.1
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
-    reconstruction_error = linalg.norm(np.dot(N, X) - X, "fro",  check_finite=False)
+    reconstruction_error = linalg.norm(np.dot(N, X) - X, ord= "fro",  check_finite=False)
     assert reconstruction_error < tol
 
     for solver in eigen_solvers:
@@ -59,7 +59,7 @@ def test_lle_simple_grid():
         clf.fit(X)
         assert clf.embedding_.shape[1] == n_components
         reconstruction_error = (
-            linalg.norm(np.dot(N, clf.embedding_) - clf.embedding_, "fro",  check_finite=False) ** 2
+            linalg.norm(np.dot(N, clf.embedding_) - clf.embedding_, ord= "fro",  check_finite=False) ** 2
         )
 
         assert reconstruction_error < tol
@@ -93,7 +93,7 @@ def test_lle_manifold():
             clf.fit(X)
             assert clf.embedding_.shape[1] == n_components
             reconstruction_error = (
-                linalg.norm((np.dot(N, clf.embedding_) - clf.embedding_), "fro", check_finite=False) ** 2
+                linalg.norm((np.dot(N, clf.embedding_) - clf.embedding_), ord= "fro", check_finite=False) ** 2
             )
             details = "solver: %s, method: %s" % (solver, method)
             assert reconstruction_error < tol, details
