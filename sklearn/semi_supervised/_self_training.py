@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 
+from .._config import config_context
 from ..base import MetaEstimatorMixin, clone, BaseEstimator
 from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
@@ -270,6 +271,17 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.classes_ = self.base_estimator_.classes_
         return self
 
+    def _base_estimator_call(self, function_name, *args):
+        check_is_fitted(self)
+        valid_args = self._validate_data(
+            *args, accept_sparse=["csr", "csc", "lil", "dok"], reset=False
+        )
+        if len(args) == 1:
+            valid_args = [valid_args]
+
+        with config_context(assume_finite=True):
+            return getattr(self.base_estimator_, function_name)(*valid_args)
+
     @if_delegate_has_method(delegate="base_estimator")
     def predict(self, X):
         """Predict the classes of X.
@@ -284,8 +296,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         y : ndarray of shape (n_samples,)
             Array with predicted labels.
         """
-        check_is_fitted(self)
-        return self.base_estimator_.predict(X)
+        return self._base_estimator_call("predict", X)
 
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -300,8 +311,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         y : ndarray of shape (n_samples, n_features)
             Array with prediction probabilities.
         """
-        check_is_fitted(self)
-        return self.base_estimator_.predict_proba(X)
+        return self._base_estimator_call("predict_proba", X)
 
     @if_delegate_has_method(delegate="base_estimator")
     def decision_function(self, X):
@@ -317,8 +327,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         y : ndarray of shape (n_samples, n_features)
             Result of the decision function of the `base_estimator`.
         """
-        check_is_fitted(self)
-        return self.base_estimator_.decision_function(X)
+        return self._base_estimator_call("decision_function", X)
 
     @if_delegate_has_method(delegate="base_estimator")
     def predict_log_proba(self, X):
@@ -334,8 +343,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         y : ndarray of shape (n_samples, n_features)
             Array with log prediction probabilities.
         """
-        check_is_fitted(self)
-        return self.base_estimator_.predict_log_proba(X)
+        return self._base_estimator_call("predict_log_proba", X)
 
     @if_delegate_has_method(delegate="base_estimator")
     def score(self, X, y):
@@ -354,5 +362,4 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         score : float
             Result of calling score on the `base_estimator`.
         """
-        check_is_fitted(self)
-        return self.base_estimator_.score(X, y)
+        return self._base_estimator_call("score", X, y)

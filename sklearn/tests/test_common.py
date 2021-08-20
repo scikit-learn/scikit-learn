@@ -332,7 +332,6 @@ COLUMN_NAME_MODULES_TO_IGNORE = {
     "multiclass",
     "multioutput",
     "pipeline",
-    "semi_supervised",
 }
 
 
