@@ -94,6 +94,12 @@ class Pipeline(_BaseComposition):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (n_features_in_,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     make_pipeline : Convenience function for simplified pipeline construction.
@@ -656,6 +662,11 @@ class Pipeline(_BaseComposition):
     def n_features_in_(self):
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
+
+    @property
+    def feature_names_in_(self):
+        # delegate to first step (which will call _check_is_fitted)
+        return self.steps[0][1].feature_names_in_
 
     def _sk_visual_block_(self):
         _, estimators = zip(*self.steps)

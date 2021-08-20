@@ -571,7 +571,7 @@ class BaseEstimator:
                 X, y = check_X_y(X, y, **check_params)
             out = X, y
 
-        if not no_val_X and check_params.get("ensure_2d", True):
+        if not no_val_X:
             self._check_n_features(X, reset=reset)
 
         return out

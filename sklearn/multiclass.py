@@ -269,6 +269,12 @@ class OneVsRestClassifier(
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (n_features_in_,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> import numpy as np
@@ -342,6 +348,8 @@ class OneVsRestClassifier(
 
         if hasattr(self.estimators_[0], "n_features_in_"):
             self.n_features_in_ = self.estimators_[0].n_features_in_
+        if hasattr(self.estimators_[0], "feature_names_in_"):
+            self.feature_names_in_ = self.estimators_[0].feature_names_in_
 
         return self
 
@@ -664,6 +672,12 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (n_features_in_,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -795,6 +809,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         if hasattr(self.estimators_[0], "n_features_in_"):
             self.n_features_in_ = self.estimators_[0].n_features_in_
+        if hasattr(self.estimators_[0], "feature_names_in_"):
+            self.feature_names_in_ = self.estimators_[0].feature_names_in_
 
         return self
 
@@ -842,6 +858,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
+        self._check_feature_names(X, reset=False)
 
         indices = self.pairwise_indices_
         if indices is None:
@@ -935,6 +952,12 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (n_features_in_,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -1032,6 +1055,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         if hasattr(self.estimators_[0], "n_features_in_"):
             self.n_features_in_ = self.estimators_[0].n_features_in_
+        if hasattr(self.estimators_[0], "feature_names_in_"):
+            self.feature_names_in_ = self.estimators_[0].feature_names_in_
 
         return self
 
