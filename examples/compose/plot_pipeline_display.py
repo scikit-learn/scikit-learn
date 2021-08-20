@@ -19,13 +19,13 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn import set_config
 
-steps = [('logistic_regression', LogisticRegression())]
+steps = [("logistic_regression", LogisticRegression())]
 pipe = Pipeline(steps)
 pipe
 
 # %%
 # To visualize the diagram, change display='diagram'
-set_config(display='diagram')
+set_config(display="diagram")
 
 pipe
 
@@ -52,14 +52,16 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn import set_config
 
-steps = [('standard_scaler', StandardScaler()), 
-    ('logistic_regression', LogisticRegression())]
+steps = [
+    ("standard_scaler", StandardScaler()),
+    ("logistic_regression", LogisticRegression()),
+]
 pipe = Pipeline(steps)
 pipe
 
 # %%
 # To visualize the diagram, change display='diagram'
-set_config(display='diagram')
+set_config(display="diagram")
 
 pipe
 
@@ -86,12 +88,12 @@ from sklearn.svm import SVC
 from sklearn.decomposition import PCA
 from sklearn import set_config
 
-steps = [('reduce_dim', PCA()), ('clf', SVC())]
+steps = [("reduce_dim", PCA()), ("clf", SVC())]
 pipe = Pipeline(steps)
 pipe
 
 # %%
 # To visualize the diagram, change display='diagram'
-set_config(display='diagram')
+set_config(display="diagram")
 
 pipe
