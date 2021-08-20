@@ -149,7 +149,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
 
-        sample_weights : array-like of shape (n_samples,), default = None
+        sample_weights : array-like of shape (n_samples,), default=None
             Individual weights for each sample. Used to calculate quantiles if
             strategy = `"quantile"`.
 
@@ -158,6 +158,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self
         """
         X = self._validate_data(X, dtype="numeric")
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         supported_dtype = (np.float64, np.float32)
         if self.dtype in supported_dtype:
@@ -189,7 +192,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_bins = self._validate_n_bins(n_features)
 
         bin_edges = np.zeros(n_features, dtype=object)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
         for jj in range(n_features):
             column = X[:, jj]
             col_min, col_max = column.min(), column.max()
