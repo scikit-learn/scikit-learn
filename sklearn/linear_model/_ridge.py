@@ -939,7 +939,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -1136,7 +1136,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -2124,7 +2124,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -2249,7 +2249,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 

@@ -170,7 +170,7 @@ class GaussianNB(_BaseNB):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -813,7 +813,7 @@ class MultinomialNB(_BaseDiscreteNB):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -960,7 +960,7 @@ class ComplementNB(_BaseDiscreteNB):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -1097,7 +1097,7 @@ class BernoulliNB(_BaseDiscreteNB):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 

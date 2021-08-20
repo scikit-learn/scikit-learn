@@ -118,7 +118,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -376,7 +376,7 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -665,7 +665,7 @@ class SVC(BaseSVC):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -920,7 +920,7 @@ class NuSVC(BaseSVC):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -1135,7 +1135,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -1323,7 +1323,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -1507,7 +1507,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 

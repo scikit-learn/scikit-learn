@@ -649,7 +649,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -947,7 +947,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 

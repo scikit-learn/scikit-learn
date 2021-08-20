@@ -796,7 +796,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -1208,7 +1208,7 @@ class Lasso(ElasticNet):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -1867,7 +1867,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -2096,7 +2096,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -2308,7 +2308,7 @@ class MultiTaskElasticNet(Lasso):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -2558,7 +2558,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -2763,7 +2763,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -2991,7 +2991,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are strings.
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
