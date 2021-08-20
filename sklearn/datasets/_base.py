@@ -18,6 +18,7 @@ from importlib import resources
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
+from ..utils.deprecation import deprecated
 
 import numpy as np
 
@@ -1109,8 +1110,45 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     )
 
 
+@deprecated(
+    r"""`load_boston` is deprecated in 1.0 and will be removed in 1.2.
+
+    The Boston housing prices dataset has an ethical problem. You can refer to
+    the documentation of this function for further details.
+
+    The scikit-learn maintainers therefore strongly discourage the use of this
+    dataset unless the purpose of the code is to study and educate about
+    ethical issues in data science and machine learning.
+
+    In this case special case, you can fetch the dataset from the original
+    source::
+
+        import pandas as pd
+        import numpy as np
+
+
+        data_url = "http://lib.stat.cmu.edu/datasets/boston"
+        raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+        data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+        target = raw_df.values[1::2, 2]
+
+    Alternative datasets include the California housing dataset (i.e.
+    func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
+    dataset. You can load the datasets as follows:
+
+        from sklearn.datasets import fetch_california_housing
+        housing = fetch_california_housing()
+
+    for the California housing dataset and:
+
+        from sklearn.datasets import fetch_openml
+        housing = fetch_openml(name="house_prices", as_frame=True)
+
+    for the Ames housing dataset.
+    """
+)
 def load_boston(*, return_X_y=False):
-    """Load and return the boston house-prices dataset (regression).
+    r"""Load and return the boston house-prices dataset (regression).
 
     ==============   ==============
     Samples total               506
@@ -1120,6 +1158,50 @@ def load_boston(*, return_X_y=False):
     ==============   ==============
 
     Read more in the :ref:`User Guide <boston_dataset>`.
+
+    .. deprecated:: 1.0
+       This function is deprecated in 1.0 and will be removed in 1.2. See the
+       warning message below for futher details regarding the alternative
+       datasets.
+
+    .. warning::
+        The Boston housing prices dataset has an ethical problem: as
+        investigated in [1]_, the authors of this dataset engineered a
+        non-invertible variable "B" assuming that racial self-segregation had a
+        positive impact on house prices [2]_. Furthermore the goal of the
+        research that led to the creation of this dataset was to study the
+        impact of air quality but it did not give adequate demonstration of the
+        validity of this assumption.
+
+        The scikit-learn maintainers therefore strongly discourage the use of
+        this dataset unless the purpose of the code is to study and educate
+        about ethical issues in data science and machine learning.
+
+        In this case special case, you can fetch the dataset from the original
+        source::
+
+            import pandas as pd  # doctest: +SKIP
+            import numpy as np
+
+
+            data_url = "http://lib.stat.cmu.edu/datasets/boston"
+            raw_df = pd.read_csv(data_url, sep="s+", skiprows=22, header=None)
+            data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+            target = raw_df.values[1::2, 2]
+
+        Alternative datasets include the California housing dataset [3]_
+        (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
+        housing dataset [4]_. You can load the datasets as follows::
+
+            from sklearn.datasets import fetch_california_housing
+            housing = fetch_california_housing()
+
+        for the California housing dataset and::
+
+            from sklearn.datasets import fetch_openml
+            housing = fetch_openml(name="house_prices", as_frame=True)  # noqa
+
+        for the Ames housing dataset.
 
     Parameters
     ----------
@@ -1136,7 +1218,7 @@ def load_boston(*, return_X_y=False):
 
         data : ndarray of shape (506, 13)
             The data matrix.
-        target : ndarray of shape (506, )
+        target : ndarray of shape (506,)
             The regression target.
         filename : str
             The physical location of boston csv dataset.
@@ -1157,13 +1239,37 @@ def load_boston(*, return_X_y=False):
         .. versionchanged:: 0.20
             Fixed a wrong data point at [445, 0].
 
+    References
+    ----------
+    .. [1] `Racist data destruction? M Carlisle,
+            <https://medium.com/@docintangible/racist-data-destruction-113e3eff54a8>`_
+    .. [2] `Harrison Jr, David, and Daniel L. Rubinfeld.
+           "Hedonic housing prices and the demand for clean air."
+           Journal of environmental economics and management 5.1 (1978): 81-102.
+           <https://www.researchgate.net/publication/4974606_Hedonic_housing_prices_and_the_demand_for_clean_air>`_
+    .. [3] `California housing dataset
+            <https://scikit-learn.org/stable/datasets/real_world.html#california-housing-dataset>`_
+    .. [4] `Ames housing dataset
+            <https://www.openml.org/d/42165>`_
+
     Examples
     --------
+    >>> import warnings
     >>> from sklearn.datasets import load_boston
-    >>> X, y = load_boston(return_X_y=True)
+    >>> with warnings.catch_warnings():
+    ...     # You should probably not use this dataset.
+    ...     warnings.filterwarnings("ignore")
+    ...     X, y = load_boston(return_X_y=True)
     >>> print(X.shape)
     (506, 13)
     """
+    # TODO: once the deprecation period is over, implement a module level
+    # `__getattr__` function in`sklearn.datasets` to raise an exception with
+    # an informative error message at import time instead of just removing
+    # load_boston. The goal is to avoid having beginners that copy-paste code
+    # from numerous books and tutorials that use this dataset loader get
+    # a confusing ImportError when trying to learn scikit-learn.
+    # See: https://www.python.org/dev/peps/pep-0562/
 
     descr_text = load_descr("boston_house_prices.rst")
 

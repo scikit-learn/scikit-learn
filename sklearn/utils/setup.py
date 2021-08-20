@@ -47,12 +47,15 @@ def configuration(parent_package="", top_path=None):
         "_openmp_helpers", sources=["_openmp_helpers.pyx"], libraries=libraries
     )
 
-    # generate _seq_dataset from template
+    # generate files from a template
     templates = [
         "sklearn/utils/_seq_dataset.pyx.tp",
         "sklearn/utils/_seq_dataset.pxd.tp",
+        "sklearn/utils/_weight_vector.pyx.tp",
+        "sklearn/utils/_weight_vector.pxd.tp",
     ]
-    gen_from_templates(templates, top_path)
+
+    gen_from_templates(templates)
 
     config.add_extension(
         "_seq_dataset", sources=["_seq_dataset.pyx"], include_dirs=[numpy.get_include()]
