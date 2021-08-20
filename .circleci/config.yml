@@ -170,7 +170,9 @@ jobs:
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
     when:
-      matches: { pattern: "[cd\ build]", value: << pipeline.parameters.commit-desc >> }
+      matches:
+        pattern: "[cd\ build]"
+        value: << pipeline.parameters.commit-desc >>
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
