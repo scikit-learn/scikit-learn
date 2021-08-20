@@ -396,7 +396,7 @@ def _gradient_descent(
         kwargs["compute_error"] = check_convergence or i == n_iter - 1
 
         error, grad = objective(p, *args, **kwargs)
-        grad_norm = linalg.norm(grad)
+        grad_norm = linalg.norm(grad,check_finite=False)
 
         inc = update * grad < 0.0
         dec = np.invert(inc)
