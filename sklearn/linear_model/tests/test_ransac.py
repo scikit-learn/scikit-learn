@@ -357,12 +357,14 @@ def test_ransac_multi_dimensional_targets():
 
 
 def test_ransac_residual_loss():
-    def loss_multi1(y_true, y_pred): return np.sum(np.abs
-                                                   (y_true - y_pred), axis=1)
-    def loss_multi2(y_true, y_pred): return np.sum(
-        (y_true - y_pred) ** 2, axis=1)
+    def loss_multi1(y_true, y_pred):
+        return np.sum(np.abs(y_true - y_pred), axis=1)
+    def loss_multi2(y_true, y_pred): 
+        return np.sum((y_true - y_pred) ** 2, axis=1)
 
-    def loss_mono(y_true, y_pred): return np.abs(y_true - y_pred)
+    def loss_mono(y_true, y_pred): 
+         return np.abs(y_true - y_pred)
+
     yyy = np.column_stack([y, y, y])
 
     base_estimator = LinearRegression()
@@ -480,11 +482,10 @@ def test_ransac_fit_sample_weight():
 
     X_flat = np.append(np.repeat(X_, sample_weight, axis=0),
                        np.repeat(outlier_X, outlier_weight, axis=0), axis=0)
-    y_flat = np.ndarray.flatten(np.append(np.repeat(y_, sample_weight, axis=0),
-                                          np.repeat(
-                                              outlier_y,
-                                              outlier_weight, axis=0),
-                                          axis=0))
+    y_flat = np.ndarray.flatten(
+        np.append(np.repeat(y_, sample_weight, axis=0),
+                  np.repeat(outlier_y, outlier_weight, axis=0),
+                  axis=0))
     ransac_estimator.fit(X_flat, y_flat)
     ref_coef_ = ransac_estimator.estimator_.coef_
 

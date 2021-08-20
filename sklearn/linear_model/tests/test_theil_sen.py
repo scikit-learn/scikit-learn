@@ -147,7 +147,7 @@ def test_spatial_median_2d():
     _, median = _spatial_median(X, max_iter=100, tol=1.e-6)
 
     def cost_func(y):
-        dists = np.array([norm(x - y, check_finite=False) for x in X])
+        dists = np.array([norm(x - y) for x in X])
         return np.sum(dists)
 
     # Check if median is solution of the Fermat-Weber location problem
