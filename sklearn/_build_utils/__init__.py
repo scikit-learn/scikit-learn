@@ -80,7 +80,7 @@ def cythonize_extensions(top_path, config):
     )
 
 
-def gen_from_templates(templates, top_path):
+def gen_from_templates(templates):
     """Generate cython files from a list of templates"""
     # Lazy import because cython is not a runtime dependency.
     from Cython import Tempita
