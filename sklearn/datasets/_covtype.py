@@ -16,7 +16,7 @@ Courtesy of Jock A. Blackard and Colorado State University.
 
 from gzip import GzipFile
 import logging
-from os.path import dirname, exists, join
+from os.path import exists, join
 from os import remove, makedirs
 
 import numpy as np
@@ -26,43 +26,50 @@ from . import get_data_home
 from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ..utils import Bunch
 from ._base import _pkl_filepath
 from ..utils import check_random_state
-from ..utils.validation import _deprecate_positional_args
 
 
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
 ARCHIVE = RemoteFileMetadata(
-    filename='covtype.data.gz',
-    url='https://ndownloader.figshare.com/files/5976039',
-    checksum=('614360d0257557dd1792834a85a1cdeb'
-              'fadc3c4f30b011d56afee7ffb5b15771'))
+    filename="covtype.data.gz",
+    url="https://ndownloader.figshare.com/files/5976039",
+    checksum="614360d0257557dd1792834a85a1cdebfadc3c4f30b011d56afee7ffb5b15771",
+)
 
 logger = logging.getLogger(__name__)
 
 # Column names reference:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
-FEATURE_NAMES = ["Elevation",
-                 "Aspect",
-                 "Slope",
-                 "Horizontal_Distance_To_Hydrology",
-                 "Vertical_Distance_To_Hydrology",
-                 "Horizontal_Distance_To_Roadways",
-                 "Hillshade_9am",
-                 "Hillshade_Noon",
-                 "Hillshade_3pm",
-                 "Horizontal_Distance_To_Fire_Points"]
+FEATURE_NAMES = [
+    "Elevation",
+    "Aspect",
+    "Slope",
+    "Horizontal_Distance_To_Hydrology",
+    "Vertical_Distance_To_Hydrology",
+    "Horizontal_Distance_To_Roadways",
+    "Hillshade_9am",
+    "Hillshade_Noon",
+    "Hillshade_3pm",
+    "Horizontal_Distance_To_Fire_Points",
+]
 FEATURE_NAMES += [f"Wilderness_Area_{i}" for i in range(4)]
 FEATURE_NAMES += [f"Soil_Type_{i}" for i in range(40)]
 TARGET_NAMES = ["Cover_Type"]
 
 
-@_deprecate_positional_args
-def fetch_covtype(*, data_home=None, download_if_missing=True,
-                  random_state=None, shuffle=False, return_X_y=False,
-                  as_frame=False):
+def fetch_covtype(
+    *,
+    data_home=None,
+    download_if_missing=True,
+    random_state=None,
+    shuffle=False,
+    return_X_y=False,
+    as_frame=False,
+):
     """Load the covertype dataset (classification).
 
     Download it if necessary.
@@ -147,7 +154,7 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         logger.info("Downloading %s" % ARCHIVE.url)
 
         archive_path = _fetch_remote(ARCHIVE, dirname=covtype_dir)
-        Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=',')
+        Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
         # delete archive
         remove(archive_path)
 
@@ -172,23 +179,25 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         X = X[ind]
         y = y[ind]
 
-    module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("covtype.rst")
 
     frame = None
     if as_frame:
-        frame, X, y = _convert_data_dataframe(caller_name="fetch_covtype",
-                                              data=X,
-                                              target=y,
-                                              feature_names=FEATURE_NAMES,
-                                              target_names=TARGET_NAMES)
+        frame, X, y = _convert_data_dataframe(
+            caller_name="fetch_covtype",
+            data=X,
+            target=y,
+            feature_names=FEATURE_NAMES,
+            target_names=TARGET_NAMES,
+        )
     if return_X_y:
         return X, y
 
-    return Bunch(data=X,
-                 target=y,
-                 frame=frame,
-                 target_names=TARGET_NAMES,
-                 feature_names=FEATURE_NAMES,
-                 DESCR=fdescr)
+    return Bunch(
+        data=X,
+        target=y,
+        frame=frame,
+        target_names=TARGET_NAMES,
+        feature_names=FEATURE_NAMES,
+        DESCR=fdescr,
+    )

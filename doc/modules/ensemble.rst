@@ -761,12 +761,12 @@ the parameter ``loss``:
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The negative binomial
-      log-likelihood loss function for binary classification (provides
+    * Binomial deviance (``'deviance'``): The binomial
+      negative log-likelihood loss function for binary classification (provides
       probability estimates).  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The negative multinomial
-      log-likelihood loss function for multi-class classification with
+    * Multinomial deviance (``'deviance'``): The multinomial
+      negative log-likelihood loss function for multi-class classification with
       ``n_classes`` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
       prior probability of each class. At each iteration ``n_classes``

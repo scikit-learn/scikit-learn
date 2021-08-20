@@ -50,36 +50,30 @@ image_array = np.reshape(china, (w * h, d))
 
 print("Fitting model on a small sub-sample of the data")
 t0 = time()
-image_array_sample = shuffle(image_array, random_state=0)[:1000]
+image_array_sample = shuffle(image_array, random_state=0, n_samples=1_000)
 kmeans = KMeans(n_clusters=n_colors, random_state=0).fit(image_array_sample)
-print("done in %0.3fs." % (time() - t0))
+print(f"done in {time() - t0:0.3f}s.")
 
 # Get labels for all points
 print("Predicting color indices on the full image (k-means)")
 t0 = time()
 labels = kmeans.predict(image_array)
-print("done in %0.3fs." % (time() - t0))
+print(f"done in {time() - t0:0.3f}s.")
 
 
-codebook_random = shuffle(image_array, random_state=0)[:n_colors]
+codebook_random = shuffle(image_array, random_state=0, n_samples=n_colors)
 print("Predicting color indices on the full image (random)")
 t0 = time()
 labels_random = pairwise_distances_argmin(codebook_random,
                                           image_array,
                                           axis=0)
-print("done in %0.3fs." % (time() - t0))
+print(f"done in {time() - t0:0.3f}s.")
 
 
 def recreate_image(codebook, labels, w, h):
     """Recreate the (compressed) image from the code book & labels"""
-    d = codebook.shape[1]
-    image = np.zeros((w, h, d))
-    label_idx = 0
-    for i in range(w):
-        for j in range(h):
-            image[i][j] = codebook[labels[label_idx]]
-            label_idx += 1
-    return image
+    return codebook[labels].reshape(w, h, -1)
+
 
 # Display all results, alongside original image
 plt.figure(1)
@@ -91,12 +85,12 @@ plt.imshow(china)
 plt.figure(2)
 plt.clf()
 plt.axis('off')
-plt.title('Quantized image (64 colors, K-Means)')
+plt.title(f'Quantized image ({n_colors} colors, K-Means)')
 plt.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
 
 plt.figure(3)
 plt.clf()
 plt.axis('off')
-plt.title('Quantized image (64 colors, Random)')
+plt.title(f'Quantized image ({n_colors} colors, Random)')
 plt.imshow(recreate_image(codebook_random, labels_random, w, h))
 plt.show()
