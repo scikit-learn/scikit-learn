@@ -18,7 +18,7 @@ from joblib import Parallel
 
 from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
-from .utils.metaestimators import if_delegate_has_method, available_if
+from .utils.metaestimators import available_if
 from .utils import (
     Bunch,
     _print_elapsed_time,
@@ -33,6 +33,19 @@ from .exceptions import NotFittedError
 from .utils.metaestimators import _BaseComposition
 
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
+
+
+def _final_estimator_has(attr):
+    """Check that final_estimator has `attr`.
+
+    Used together with `avaliable_if` in `Pipeline`."""
+
+    def check(self):
+        # raise original `AttributeError` if `attr` does not exist
+        getattr(self._final_estimator, attr)
+        return True
+
+    return check
 
 
 class Pipeline(_BaseComposition):
@@ -404,7 +417,7 @@ class Pipeline(_BaseComposition):
             else:
                 return last_step.fit(Xt, y, **fit_params_last_step).transform(Xt)
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("predict"))
     def predict(self, X, **predict_params):
         """Apply transforms to the data, and predict with the final estimator
 
@@ -433,7 +446,7 @@ class Pipeline(_BaseComposition):
             Xt = transform.transform(Xt)
         return self.steps[-1][1].predict(Xt, **predict_params)
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("fit_predict"))
     def fit_predict(self, X, y=None, **fit_params):
         """Applies fit_predict of last step in pipeline after transforms.
 
@@ -468,7 +481,7 @@ class Pipeline(_BaseComposition):
             y_pred = self.steps[-1][1].fit_predict(Xt, y, **fit_params_last_step)
         return y_pred
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("predict_proba"))
     def predict_proba(self, X, **predict_proba_params):
         """Apply transforms, and predict_proba of the final estimator
 
@@ -491,7 +504,7 @@ class Pipeline(_BaseComposition):
             Xt = transform.transform(Xt)
         return self.steps[-1][1].predict_proba(Xt, **predict_proba_params)
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("decision_function"))
     def decision_function(self, X):
         """Apply transforms, and decision_function of the final estimator
 
@@ -510,7 +523,7 @@ class Pipeline(_BaseComposition):
             Xt = transform.transform(Xt)
         return self.steps[-1][1].decision_function(Xt)
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("score_samples"))
     def score_samples(self, X):
         """Apply transforms, and score_samples of the final estimator.
 
@@ -529,7 +542,7 @@ class Pipeline(_BaseComposition):
             Xt = transformer.transform(Xt)
         return self.steps[-1][1].score_samples(Xt)
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X, **predict_log_proba_params):
         """Apply transforms, and predict_log_proba of the final estimator
 
@@ -605,7 +618,7 @@ class Pipeline(_BaseComposition):
             Xt = transform.inverse_transform(Xt)
         return Xt
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("score"))
     def score(self, X, y=None, sample_weight=None):
         """Apply transforms, and score with the final estimator
 
