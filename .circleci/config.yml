@@ -240,6 +240,7 @@ workflows:
                 - main
     jobs:
       - pypy3
-  linux-arm64:
+  linux-arm:
     jobs:
       - linux-arm64
+      - linux-arm64-wheels
