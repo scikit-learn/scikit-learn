@@ -19,7 +19,6 @@ DOCSTRING_IGNORE_LIST = [
     "DictVectorizer",
     "DictionaryLearning",
     "ElasticNetCV",
-    "ExtraTreeRegressor",
     "FactorAnalysis",
     "FeatureAgglomeration",
     "FeatureHasher",
