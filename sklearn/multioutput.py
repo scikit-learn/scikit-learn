@@ -417,9 +417,27 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
+<<<<<<< HEAD
     @property
     def predict_proba(self):
         """Returns prediction probabilities for each class of each output.
+=======
+    def _check_predict_proba(self):
+        if hasattr(self, "estimators_"):
+            # raise an AttributeError if `predict_proba` does not exist for
+            # each estimator
+            [getattr(est, "predict_proba") for est in self.estimators_]
+            return True
+        # raise an AttributeError if `predict_proba` does not exist for the
+        # unfitted estimator
+        getattr(self.estimator, "predict_proba")
+        return True
+
+    @available_if(_check_predict_proba)
+    def predict_proba(self, X):
+        """Probability estimates.
+        Returns prediction probabilities for each class of each output.
+>>>>>>> 3fd4bcbf43b960fd494dbeb26811defe73e9f8e7
 
         This method will raise a ``ValueError`` if any of the
         estimators do not have ``predict_proba``.
@@ -442,15 +460,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
                 ``n_classes``) for that particular output.
         """
         check_is_fitted(self)
-        if not all(
-            [hasattr(estimator, "predict_proba") for estimator in self.estimators_]
-        ):
-            raise AttributeError(
-                "The base estimator should implement predict_proba method"
-            )
-        return self._predict_proba
-
-    def _predict_proba(self, X):
         results = [estimator.predict_proba(X) for estimator in self.estimators_]
         return results
 
