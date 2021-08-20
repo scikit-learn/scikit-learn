@@ -371,7 +371,7 @@ def test_spectral_embedding_unnormalized():
 
     # Verify using manual computation with dense eigh
     laplacian, dd = csgraph.laplacian(sims, normed=False, return_diag=True)
-    _, diffusion_map = eigh(laplacian,check_finite=False)
+    _, diffusion_map = eigh(laplacian , check_finite=False)
     embedding_2 = diffusion_map.T[:n_components]
     embedding_2 = _deterministic_vector_sign_flip(embedding_2).T
 
