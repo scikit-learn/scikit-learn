@@ -28,6 +28,11 @@ set_config(display="text")
 pipe
 
 # %%
+# To visualize the diagram, change `display='diagram'`
+set_config(display="diagram")
+pipe
+
+# %%
 # Visual Illustration of a Basic `Pipeline` with `LogisticRegression`
 ###############################################################################
 # This section demonstrates how to construct a pipeline and displays its visual
