@@ -14,13 +14,14 @@ License: BSD 3 clause
 import warnings
 import numpy as np
 
-from ..exceptions import DataConversionWarning
+from ..exceptions import DataConversionWarning, EfficiencyWarning
 from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
+from scipy.sparse import issparse, SparseEfficiencyWarning
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -280,7 +281,12 @@ class OPTICS(ClusterMixin, BaseEstimator):
             )
             warnings.warn(msg, DataConversionWarning)
 
-        X = self._validate_data(X, dtype=dtype, accept_sparse='csr')
+        X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
+        if self.metric == "precomputed" and issparse(X):
+            # Set each diagonal to an explicit value so each point is its own neighbor
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=SparseEfficiencyWarning)
+                X.setdiag(X.diagonal())
         memory = check_memory(self.memory)
 
         if self.cluster_method not in ["dbscan", "xi"]:
@@ -518,13 +524,16 @@ def compute_optics_graph(
         n_jobs=n_jobs,
     )
 
-    nbrs.fit(X)
-    # Here we first do a kNN query for each point, this differs from
-    # the original OPTICS that only used epsilon range queries.
-    # TODO: handle working_memory somehow?
-    core_distances_ = _compute_core_distances_(
-        X=X, neighbors=nbrs, min_samples=min_samples, working_memory=None
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=EfficiencyWarning)
+        # Efficiency warning appears when using sparse precomputed matrices
+        nbrs.fit(X)
+        # Here we first do a kNN query for each point, this differs from
+        # the original OPTICS that only used epsilon range queries.
+        # TODO: handle working_memory somehow?
+        core_distances_ = _compute_core_distances_(
+            X=X, neighbors=nbrs, min_samples=min_samples, working_memory=None
+        )
     # OPTICS puts an upper limit on these, use inf for undefined.
     core_distances_[core_distances_ > max_eps] = np.inf
     np.around(
@@ -587,7 +596,10 @@ def _set_reach_dist(
     # Assume that radius_neighbors is faster without distances
     # and we don't need all distances, nevertheless, this means
     # we may be doing some work twice.
-    indices = nbrs.radius_neighbors(P, radius=max_eps, return_distance=False)[0]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=EfficiencyWarning)
+        # Efficiency warning appears when using sparse precomputed matrices
+        indices = nbrs.radius_neighbors(P, radius=max_eps, return_distance=False)[0]
 
     # Getting indices of neighbors that have not been processed
     unproc = np.compress(~np.take(processed, indices), indices)
@@ -603,13 +615,20 @@ def _set_reach_dist(
         if metric == "minkowski" and "p" not in _params:
             # the same logic as neighbors, p is ignored if explicitly set
             # in the dict params
-            _params['p'] = p
-        dists = pairwise_distances(P, X[unproc],
-                                   metric, n_jobs=None,
-                                   **_params).ravel()
+            _params["p"] = p
+        dists = pairwise_distances(P, X[unproc], metric, n_jobs=None, **_params).ravel()
 
-    rdists = np.maximum(dists, core_distances_[point_index])
-    np.around(rdists, decimals=np.finfo(rdists.dtype).precision, out=rdists)
+    if issparse(dists):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=SparseEfficiencyWarning)
+            rdists = dists.maximum(core_distances_[point_index])
+        np.around(
+            rdists.data, decimals=np.finfo(rdists.dtype).precision, out=rdists.data
+        )
+        rdists = np.array(rdists.todense())[0]
+    else:
+        rdists = np.maximum(dists, core_distances_[point_index])
+        np.around(rdists, decimals=np.finfo(rdists.dtype).precision, out=rdists)
     improved = np.where(rdists < np.take(reachability_, unproc))
     reachability_[unproc[improved]] = rdists[improved]
     predecessor_[unproc[improved]] = point_index
