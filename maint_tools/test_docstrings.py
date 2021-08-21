@@ -88,7 +88,6 @@ DOCSTRING_IGNORE_LIST = [
     "RadiusNeighborsTransformer",
     "RandomizedSearchCV",
     "RegressorChain",
-    "RidgeClassifier",
     "RobustScaler",
     "SGDOneClassSVM",
     "SGDRegressor",
