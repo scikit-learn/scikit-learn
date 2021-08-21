@@ -211,7 +211,7 @@ also the greater the increase in bias. Empirical good default values are
 subset) for regression problems, and ``max_features="sqrt"`` (using a random
 subset of size ``sqrt(n_features)``) for classification tasks (where
 ``n_features`` is the number of features in the data). The default value of
-``max_features=1`` is equivalent to bagged trees and more randomness can be
+``max_features=1.0`` is equivalent to bagged trees and more randomness can be
 achieved by setting smaller values (e.g. 0.3 is a typical default in the
 literature). Good results are often achieved when setting ``max_depth=None``
 in combination with ``min_samples_split=2`` (i.e., when fully developing
