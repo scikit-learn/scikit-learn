@@ -1142,8 +1142,9 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     fitted attributes (ending with a trailing underscore) and otherwise
     raises a NotFittedError with the given message.
 
-    This utility is meant to be used internally by estimators themselves,
-    typically in their own predict / transform methods.
+    If an estimator does not set any attributes with a trailing underscore, it
+    can define a ``__sklearn_is_fitted__`` method returning a boolean to specify if the
+    estimator is fitted or not.
 
     Parameters
     ----------
@@ -1194,13 +1195,15 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     if attributes is not None:
         if not isinstance(attributes, (list, tuple)):
             attributes = [attributes]
-        attrs = all_or_any([hasattr(estimator, attr) for attr in attributes])
+        fitted = all_or_any([hasattr(estimator, attr) for attr in attributes])
+    elif hasattr(estimator, "__sklearn_is_fitted__"):
+        fitted = estimator.__sklearn_is_fitted__()
     else:
-        attrs = [
+        fitted = [
             v for v in vars(estimator) if v.endswith("_") and not v.startswith("__")
         ]
 
-    if not attrs:
+    if not fitted:
         raise NotFittedError(msg % {"name": type(estimator).__name__})
 
 
