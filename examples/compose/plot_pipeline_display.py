@@ -11,9 +11,10 @@ use `set_config(display='diagram')` and then output the pipeline object.
 """
 
 # %%
-# Text Illustration of a Basic `Pipeline` with `LogisticRegression`
+# Illustration of a Basic `Pipeline` with `LogisticRegression`
 ###############################################################################
-# This section constructs a pipeline and displays its text representation.
+# This section constructs a pipeline and displays its text and visual
+# representation.
 
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -28,24 +29,7 @@ set_config(display="text")
 pipe
 
 # %%
-# To visualize the diagram, change `display='diagram'`
-set_config(display="diagram")
-pipe
-
-# %%
-# Visual Illustration of a Basic `Pipeline` with `LogisticRegression`
-###############################################################################
-# This section demonstrates how to construct a pipeline and displays its visual
-# representation.
-
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
-from sklearn import set_config
-
-steps = [("logistic_regression", LogisticRegression())]
-pipe = Pipeline(steps)
-# %%
-# To visualize the diagram, change `display='diagram'`
+# To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
 pipe
 
