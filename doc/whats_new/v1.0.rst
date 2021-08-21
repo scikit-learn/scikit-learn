@@ -840,7 +840,7 @@ Changelog
 - |Fix| Fix a bug in :class:`sklearn.kernel_approximation.Nystroem`
   where the attribute ``component_indices_`` has a incorrect dimension.
   It should have a dimension of ``n_components``.
-  :pr: `20798` by :user:`Ayan Bag <ayanbag>`.
+  :pr:`20798` by :user:`Ayan Bag <ayanbag>`.
 
 Code and Documentation Contributors
 -----------------------------------
