@@ -222,6 +222,3 @@ def test_mean_shift_zero_bandwidth():
     assert v_measure_score(ms_binning.labels_, expected_labels) == 1
     assert v_measure_score(ms_nobinning.labels_, expected_labels) == 1
     assert_allclose(ms_binning.cluster_centers_, ms_nobinning.cluster_centers_)
-
-
-test_meanshift_predict_sparse_matrix()
