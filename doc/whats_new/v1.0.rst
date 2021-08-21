@@ -834,6 +834,14 @@ Changelog
   :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Fix| Fix a bug in :class:`sklearn.kernel_approximation.Nystroem`
+  where the attribute ``component_indices_`` has a incorrect dimension.
+  It should have a dimension of ``n_components``.
+  :pr: by :user:`Ayan Bag <ayanbag>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
