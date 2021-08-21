@@ -1768,17 +1768,19 @@ class ExtraTreesClassifier(ForestClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
+    max_features : {"sqrt", "log2"}, int or float, default="sqrt"
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
           `round(max_features * n_features)` features are considered at each
           split.
-        - If "auto", then `max_features=sqrt(n_features)`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
+
+        .. deprecated:: 1.0
+            Previous default option "auto" has been deprecated.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1981,7 +1983,7 @@ class ExtraTreesClassifier(ForestClassifier):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features="sqrt",
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         bootstrap=False,
@@ -2104,17 +2106,21 @@ class ExtraTreesRegressor(ForestRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
+    max_features : {"sqrt", "log2"}, int or float, default=1
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
           `round(max_features * n_features)` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
+        - The default of 1 is equivalent to bagged trees and more randomness
+          can be achieved by setting smaller values e.g. 0.3.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
+
+        .. deprecated:: 1.0
+            Previous default option "auto" has been deprecated.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -2281,7 +2287,7 @@ class ExtraTreesRegressor(ForestRegressor):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features=1,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         bootstrap=False,
