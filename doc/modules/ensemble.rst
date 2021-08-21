@@ -467,7 +467,7 @@ trees.
 
 .. note::
 
-  Scikit-learn 0.21 introduces two new experimental implementations of
+  Scikit-learn 0.21 introduces two new implementations of
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
   `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
@@ -761,12 +761,12 @@ the parameter ``loss``:
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The negative binomial
-      log-likelihood loss function for binary classification (provides
+    * Binomial deviance (``'deviance'``): The binomial
+      negative log-likelihood loss function for binary classification (provides
       probability estimates).  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The negative multinomial
-      log-likelihood loss function for multi-class classification with
+    * Multinomial deviance (``'deviance'``): The multinomial
+      negative log-likelihood loss function for multi-class classification with
       ``n_classes`` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
       prior probability of each class. At each iteration ``n_classes``
@@ -898,7 +898,7 @@ based on permutation of the features.
 Histogram-Based Gradient Boosting
 =================================
 
-Scikit-learn 0.21 introduced two new experimental implementations of
+Scikit-learn 0.21 introduced two new implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
 `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
@@ -920,15 +920,6 @@ estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
 are not yet supported, for instance some loss functions.
 
-These estimators are still **experimental**: their predictions
-and their API might change without any deprecation cycle. To use them, you
-need to explicitly import ``enable_hist_gradient_boosting``::
-
-  >>> # explicitly require this experimental feature
-  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-  >>> # now you can import normally from ensemble
-  >>> from sklearn.ensemble import HistGradientBoostingClassifier
-
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
@@ -941,7 +932,6 @@ Most of the parameters are unchanged from
 One exception is the ``max_iter`` parameter that replaces ``n_estimators``, and
 controls the number of iterations of the boosting process::
 
-  >>> from sklearn.experimental import enable_hist_gradient_boosting
   >>> from sklearn.ensemble import HistGradientBoostingClassifier
   >>> from sklearn.datasets import make_hastie_10_2
 
@@ -954,7 +944,7 @@ controls the number of iterations of the boosting process::
   0.8965
 
 Available losses for regression are 'squared_error',
-'least_absolute_deviation', which is less sensitive to outliers, and
+'absolute_error', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
 classification, 'binary_crossentropy' is used for binary classification and
 'categorical_crossentropy' is used for multiclass classification. By default
@@ -992,7 +982,6 @@ with missing values should go to the left or right child, based on the
 potential gain. When predicting, samples with missing values are assigned to
 the left or right child consequently::
 
-  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
   >>> from sklearn.ensemble import HistGradientBoostingClassifier
   >>> import numpy as np
 
@@ -1146,7 +1135,6 @@ You can specify a monotonic constraint on each feature using the
 constraint, while -1 and 1 indicate a negative and positive constraint,
 respectively::
 
-  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
   >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
   ... # positive, negative, and no constraint on the 3 features
