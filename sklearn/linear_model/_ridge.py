@@ -1225,6 +1225,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     @property
     def classes_(self):
+        """Classes labels."""
         return self._label_binarizer.classes_
 
 
