@@ -210,6 +210,11 @@ Changelog
   of connected components is greater than 1. :pr:`20597` by
   `Thomas Fan`_.
 
+- |Enhancement| The `predict` and `fit_predict` methods of
+  :class:`cluster.OPTICS` now accept sparse data type for input
+  data.
+  :pr:`20802` by :user:`Brandon Pokorny <Clickedbigfoot>`
+
 :mod:`sklearn.compose`
 ......................
 
