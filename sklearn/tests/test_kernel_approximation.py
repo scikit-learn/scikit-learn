@@ -14,6 +14,7 @@ from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
 from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
+from sklearn.datasets import make_classification
 
 # generate data
 rng = np.random.RandomState(0)
@@ -330,3 +331,13 @@ def test_nystroem_precomputed_kernel():
         ny = Nystroem(kernel="precomputed", n_components=X.shape[0], **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
+
+def test_nystroem_component_indices():
+    """Check that `component_indices_` corresponds to the subset of data point.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20474
+    """
+    X, _ = make_classification(n_samples=100)
+    feature_map_nystroem = Nystroem(n_components=10,random_state=0,)
+    feature_map_nystroem.fit(X)
+    assert feature_map_nystroem.component_indices_.shape == (10,)
