@@ -108,9 +108,10 @@ def test_meanshift_predict_sparse_matrix():
     # Fixes issue #20733
     ms = MeanShift(bandwidth=1.2)
     ms.fit(X)
-    labels = ms.predict(sparse.csr_matrix([[0, 0], [5, 5]]))
-    labels2 = ms.predict([[0, 0], [5, 5]])
-    assert_array_equal(labels, labels2)
+    X_dense = np.array([[0.0, 0.0], [5.0, 5.0]])
+    labels_dense = ms.predict(X_dense)
+    labels_sparse = ms.predict(sparse.csr_matrix(X_dense))
+    assert_array_equal(labels_dense, labels_sparse)
 
 
 def test_meanshift_predict():
