@@ -966,7 +966,7 @@ def test_precision_recall_curve_toydata():
         assert_almost_equal(
             average_precision_score(y_true, y_score, average="micro"), 0.5
         )
-        
+
         y_true = np.array([[0, 0], [0, 0]])
         y_score = np.array([[0, 1], [0, 1]])
         assert_almost_equal(average_precision_score(y_true, y_score,
