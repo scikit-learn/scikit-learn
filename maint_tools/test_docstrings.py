@@ -89,7 +89,6 @@ DOCSTRING_IGNORE_LIST = [
     "RandomizedSearchCV",
     "RegressorChain",
     "RidgeClassifier",
-    "RidgeClassifierCV",
     "RobustScaler",
     "SGDOneClassSVM",
     "SGDRegressor",
