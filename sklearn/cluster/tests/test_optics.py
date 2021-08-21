@@ -861,9 +861,11 @@ def test_extract_dbscan():
     assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
 
 
-def test_precomputed_dists():
+@pytest.mark.parametrize("is_sparse", [False, True])
+def test_precomputed_dists(is_sparse):
     redX = X[::2]
     dists = pairwise_distances(redX, metric="euclidean")
+    dists = sparse.lil_matrix(dists).tocsr() if is_sparse else dists
     clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
     clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
 
