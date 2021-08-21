@@ -17,9 +17,14 @@ use `set_config(display='diagram')` and then output the pipeline object.
 
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
+from sklearn import set_config
 
 steps = [("logistic_regression", LogisticRegression())]
 pipe = Pipeline(steps)
+
+# %%
+# The default in Jupyter notebook is `display='text'`
+set_config(display="text")
 pipe
 
 # %%
@@ -30,15 +35,13 @@ pipe
 
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
+from sklearn import set_config
 
 steps = [("logistic_regression", LogisticRegression())]
 pipe = Pipeline(steps)
 # %%
 # To visualize the diagram, change `display='diagram'`
-from sklearn import set_config
-
 set_config(display="diagram")
-
 pipe
 
 """
