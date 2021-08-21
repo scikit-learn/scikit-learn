@@ -332,12 +332,13 @@ def test_nystroem_precomputed_kernel():
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
 
+
 def test_nystroem_component_indices():
     """Check that `component_indices_` corresponds to the subset of data point.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/20474
     """
     X, _ = make_classification(n_samples=100)
-    feature_map_nystroem = Nystroem(n_components=10,random_state=0,)
+    feature_map_nystroem = Nystroem(n_components=10, random_state=0,)
     feature_map_nystroem.fit(X)
     assert feature_map_nystroem.component_indices_.shape == (10,)
