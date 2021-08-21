@@ -242,7 +242,7 @@ workflows:
   linux-arm64-wheels:
     when:
       matches:
-        pattern: "[cd build]"
+        pattern: "\\[cd build\\]"
         value: << pipeline.parameters.commit-desc >>
     jobs:  
       - linux-arm64-wheels
