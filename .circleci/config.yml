@@ -208,7 +208,6 @@ jobs:
             fi
 
 workflows:
-  version: 2
   build-doc-and-deploy:
     jobs:
       - lint
