@@ -368,7 +368,9 @@ Changelog
 
 - |Enhancement| Set new defaults for :class:`ensemble.RandomForestRegressor`
   and :class:`ensemble.RandomForestClassifier` to 1 and "sqrt" respectively.
-  :pr:`19836` by :user:`Brian Sun <bsun94>`.
+  Correspondingly also updated the same for :class:`ensemble.ExtraTreesRegressor`
+  and :class:`ensemble.ExtraTreesClassifier`.
+  :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
