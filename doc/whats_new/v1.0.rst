@@ -210,6 +210,9 @@ Changelog
   of connected components is greater than 1. :pr:`20597` by
   `Thomas Fan`_.
 
+- |Fix| `predict` method in :class:`cluster.AffinityPropagation` now accept 
+  sparse input. :pr:`20796` by :user:`Ana Milanova <milana2>`.
+
 :mod:`sklearn.compose`
 ......................
 
