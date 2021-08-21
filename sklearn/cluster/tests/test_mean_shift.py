@@ -103,6 +103,16 @@ def test_parallel():
     assert_array_equal(ms1.labels_, ms2.labels_)
 
 
+def test_meanshift_predict_sparse_matrix():
+    # Tests to make sure MeanShift.predict works with sparse input
+    # Fixes issue #20733
+    ms = MeanShift(bandwidth=1.2)
+    ms.fit(X)
+    labels = ms.predict(sparse.csr_matrix([[0, 0], [5, 5]]))
+    labels2 = ms.predict([[0, 0], [5, 5]])
+    assert_array_equal(labels, labels2)
+
+
 def test_meanshift_predict():
     # Test MeanShift.predict
     ms = MeanShift(bandwidth=1.2)
@@ -211,3 +221,6 @@ def test_mean_shift_zero_bandwidth():
     assert v_measure_score(ms_binning.labels_, expected_labels) == 1
     assert v_measure_score(ms_nobinning.labels_, expected_labels) == 1
     assert_allclose(ms_binning.cluster_centers_, ms_nobinning.cluster_centers_)
+
+
+test_meanshift_predict_sparse_matrix()
