@@ -285,6 +285,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     topic_word_prior_ : float
         Prior of topic word distribution `beta`. If the value is None, it is
         `1 / n_components`.
+
     See Also
     --------
     sklearn.discriminant_analysis.LinearDiscriminantAnalysis:
