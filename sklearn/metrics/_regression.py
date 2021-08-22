@@ -24,7 +24,6 @@ the lower the better.
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 
 from .._loss.glm_distribution import TweedieDistribution
 from ..utils.validation import (check_array, check_consistent_length,
@@ -33,7 +32,6 @@ from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import _check_sample_weight
 from ..utils.stats import _weighted_percentile
-from ..exceptions import UndefinedMetricWarning
 
 
 __ALL__ = [
@@ -973,7 +971,7 @@ def d2_tweedie_score(y_true, y_pred, sample_weight=None, power=0):
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(
         y_true, y_pred, None, dtype=[np.float64, np.float32])
-    if y_type == 'continuous-multioutput':
+    if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
     check_consistent_length(y_true, y_pred, sample_weight)
 

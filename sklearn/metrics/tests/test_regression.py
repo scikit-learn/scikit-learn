@@ -22,8 +22,6 @@ from sklearn.metrics import d2_tweedie_score
 
 from sklearn.metrics._regression import _check_reg_targets
 
-from ...exceptions import UndefinedMetricWarning
-
 
 def test_regression_metrics(n_samples=50):
     y_true = np.arange(n_samples)
@@ -142,15 +140,20 @@ def test_regression_metrics_at_limits():
     power = -1.2
     assert_allclose(mean_tweedie_deviance([0], [1.], power=power),
                     2 / (2 - power), rtol=1e-3)
-    with pytest.raises(ValueError,
-                       match="can only be used on strictly positive y_pred."):
+    msg = "can only be used on strictly positive y_pred."
+    with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
+    with pytest.raises(ValueError, match=msg):
         d2_tweedie_score([0.], [0.], power=power)
+
     assert_almost_equal(mean_tweedie_deviance([0.], [0.], power=0), 0.00, 2)
 
+    power = 1.0
     msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance([0.], [0.], power=1.0)
+        mean_tweedie_deviance([0.], [0.], power=power)
+    with pytest.raises(ValueError, match=msg):
+        d2_tweedie_score([0.], [0.], power=power)
 
     power = 1.5
     assert_allclose(mean_tweedie_deviance([0.], [1.], power=power),
@@ -158,6 +161,7 @@ def test_regression_metrics_at_limits():
     msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
+    with pytest.raises(ValueError, match=msg):
         d2_tweedie_score([0.], [0.], power=power)
 
     power = 2.
@@ -166,21 +170,22 @@ def test_regression_metrics_at_limits():
     msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
+    with pytest.raises(ValueError, match=msg):
         d2_tweedie_score([0.], [0.], power=power)
 
     power = 3.
     assert_allclose(mean_tweedie_deviance([1.], [1.], power=power),
                     0.00, atol=1e-8)
-
     msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
+    with pytest.raises(ValueError, match=msg):
         d2_tweedie_score([0.], [0.], power=power)
 
     power = 0.5
-    with pytest.raises(ValueError,
-                       match="is only defined for power<=0 and power>=1"):
+    with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
         mean_tweedie_deviance([0.], [0.], power=power)
+    with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
         d2_tweedie_score([0.], [0.], power=power)
 
 
