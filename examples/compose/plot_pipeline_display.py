@@ -99,13 +99,10 @@ steps = [
     ("logistic_regression", LogisticRegression()),
 ]
 pipe = Pipeline(steps)
-
 pipe
 
-# %%
 # To visualize the diagram, change to display='diagram'
 set_config(display="diagram")
-
 pipe
 
 """
