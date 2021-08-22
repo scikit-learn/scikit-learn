@@ -12,14 +12,15 @@ from ..utils.validation import check_is_fitted
 from ..model_selection import cross_val_score
 
 
-class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
-                                BaseEstimator):
+class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     """Transformer that performs Sequential Feature Selection.
 
     This Sequential Feature Selector adds (forward selection) or
     removes (backward selection) features to form a feature subset in a
     greedy fashion. At each stage, this estimator chooses the best feature to
-    add or remove based on the cross-validation score of an estimator.
+    add or remove based on the cross-validation score of an estimator. In
+    the case of unsupervised learning, this Sequential Feature Selector
+    looks only at the features (X), not the desired outputs (y).
 
     Read more in the :ref:`User Guide <sequential_feature_selection>`.
 
@@ -60,7 +61,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used.
+        other cases, :class:`KFold` is used. These splitters are instantiated
+        with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -75,6 +77,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
     Attributes
     ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
     n_features_to_select_ : int
         The number of features that were selected.
 
@@ -105,8 +113,17 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     >>> sfs.transform(X).shape
     (150, 3)
     """
-    def __init__(self, estimator, *, n_features_to_select=None,
-                 direction='forward', scoring=None, cv=5, n_jobs=None):
+
+    def __init__(
+        self,
+        estimator,
+        *,
+        n_features_to_select=None,
+        direction="forward",
+        scoring=None,
+        cv=5,
+        n_jobs=None,
+    ):
 
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
@@ -115,35 +132,38 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         self.cv = cv
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y=None):
         """Learn the features to select.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             Training vectors.
-        y : array-like of shape (n_samples,)
-            Target values.
+        y : array-like of shape (n_samples,), default=None
+            Target values. This parameter may be ignored for
+            unsupervised learning.
 
         Returns
         -------
         self : object
         """
         tags = self._get_tags()
-        X, y = self._validate_data(
-            X, y, accept_sparse="csc",
+        X = self._validate_data(
+            X,
+            accept_sparse="csc",
             ensure_min_features=2,
             force_all_finite=not tags.get("allow_nan", True),
-            multi_output=True
         )
         n_features = X.shape[1]
 
-        error_msg = ("n_features_to_select must be either None, an "
-                     "integer in [1, n_features - 1] "
-                     "representing the absolute "
-                     "number of features, or a float in (0, 1] "
-                     "representing a percentage of features to "
-                     f"select. Got {self.n_features_to_select}")
+        error_msg = (
+            "n_features_to_select must be either None, an "
+            "integer in [1, n_features - 1] "
+            "representing the absolute "
+            "number of features, or a float in (0, 1] "
+            "representing a percentage of features to "
+            f"select. Got {self.n_features_to_select}"
+        )
         if self.n_features_to_select is None:
             self.n_features_to_select_ = n_features // 2
         elif isinstance(self.n_features_to_select, numbers.Integral):
@@ -153,12 +173,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         elif isinstance(self.n_features_to_select, numbers.Real):
             if not 0 < self.n_features_to_select <= 1:
                 raise ValueError(error_msg)
-            self.n_features_to_select_ = int(n_features *
-                                             self.n_features_to_select)
+            self.n_features_to_select_ = int(n_features * self.n_features_to_select)
         else:
             raise ValueError(error_msg)
 
-        if self.direction not in ('forward', 'backward'):
+        if self.direction not in ("forward", "backward"):
             raise ValueError(
                 "direction must be either 'forward' or 'backward'. "
                 f"Got {self.direction}."
@@ -171,15 +190,17 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         # - that we have already *excluded* if we do backward selection
         current_mask = np.zeros(shape=n_features, dtype=bool)
         n_iterations = (
-            self.n_features_to_select_ if self.direction == 'forward'
+            self.n_features_to_select_
+            if self.direction == "forward"
             else n_features - self.n_features_to_select_
         )
         for _ in range(n_iterations):
-            new_feature_idx = self._get_best_new_feature(cloned_estimator, X,
-                                                         y, current_mask)
+            new_feature_idx = self._get_best_new_feature(
+                cloned_estimator, X, y, current_mask
+            )
             current_mask[new_feature_idx] = True
 
-        if self.direction == 'backward':
+        if self.direction == "backward":
             current_mask = ~current_mask
         self.support_ = current_mask
 
@@ -194,12 +215,17 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         for feature_idx in candidate_feature_indices:
             candidate_mask = current_mask.copy()
             candidate_mask[feature_idx] = True
-            if self.direction == 'backward':
+            if self.direction == "backward":
                 candidate_mask = ~candidate_mask
             X_new = X[:, candidate_mask]
             scores[feature_idx] = cross_val_score(
-                estimator, X_new, y, cv=self.cv, scoring=self.scoring,
-                n_jobs=self.n_jobs).mean()
+                estimator,
+                X_new,
+                y,
+                cv=self.cv,
+                scoring=self.scoring,
+                n_jobs=self.n_jobs,
+            ).mean()
         return max(scores, key=lambda feature_idx: scores[feature_idx])
 
     def _get_support_mask(self):
@@ -208,6 +234,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
     def _more_tags(self):
         return {
-            'allow_nan': _safe_tags(self.estimator, key="allow_nan"),
-            'requires_y': True,
+            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
+            "requires_y": True,
         }

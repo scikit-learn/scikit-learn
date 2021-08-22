@@ -121,11 +121,7 @@ def get_scores_for_imputer(imputer, X_missing, y_missing):
     return impute_scores
 
 
-x_labels = ['Full data',
-            'Zero imputation',
-            'Mean Imputation',
-            'KNN Imputation',
-            'Iterative Imputation']
+x_labels = []
 
 mses_california = np.zeros(5)
 stds_california = np.zeros(5)
@@ -149,6 +145,7 @@ def get_full_score(X_full, y_full):
 mses_california[0], stds_california[0] = get_full_score(X_california,
                                                         y_california)
 mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
+x_labels.append('Full data')
 
 
 # %%
@@ -172,6 +169,7 @@ mses_california[1], stds_california[1] = get_impute_zero_score(
     X_miss_california, y_miss_california)
 mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
                                                            y_miss_diabetes)
+x_labels.append('Zero imputation')
 
 
 # %%
@@ -191,6 +189,7 @@ mses_california[2], stds_california[2] = get_impute_knn_score(
     X_miss_california, y_miss_california)
 mses_diabetes[2], stds_diabetes[2] = get_impute_knn_score(X_miss_diabetes,
                                                           y_miss_diabetes)
+x_labels.append('KNN Imputation')
 
 
 # %%
@@ -209,6 +208,7 @@ mses_california[3], stds_california[3] = get_impute_mean(X_miss_california,
                                                          y_miss_california)
 mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
                                                      y_miss_diabetes)
+x_labels.append('Mean Imputation')
 
 
 # %%
@@ -237,6 +237,7 @@ mses_california[4], stds_california[4] = get_impute_iterative(
     X_miss_california, y_miss_california)
 mses_diabetes[4], stds_diabetes[4] = get_impute_iterative(X_miss_diabetes,
                                                           y_miss_diabetes)
+x_labels.append('Iterative Imputation')
 
 mses_diabetes = mses_diabetes * -1
 mses_california = mses_california * -1

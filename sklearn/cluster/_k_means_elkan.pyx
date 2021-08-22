@@ -18,13 +18,13 @@ from libc.stdlib cimport calloc, free
 from libc.string cimport memset, memcpy
 
 from ..utils.extmath import row_norms
-from ._k_means_fast import CHUNK_SIZE
-from ._k_means_fast cimport _relocate_empty_clusters_dense
-from ._k_means_fast cimport _relocate_empty_clusters_sparse
-from ._k_means_fast cimport _euclidean_dense_dense
-from ._k_means_fast cimport _euclidean_sparse_dense
-from ._k_means_fast cimport _average_centers
-from ._k_means_fast cimport _center_shift
+from ._k_means_common import CHUNK_SIZE
+from ._k_means_common cimport _relocate_empty_clusters_dense
+from ._k_means_common cimport _relocate_empty_clusters_sparse
+from ._k_means_common cimport _euclidean_dense_dense
+from ._k_means_common cimport _euclidean_sparse_dense
+from ._k_means_common cimport _average_centers
+from ._k_means_common cimport _center_shift
 
 
 np.import_array()

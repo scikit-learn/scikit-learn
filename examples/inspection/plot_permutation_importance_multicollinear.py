@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import spearmanr
 from scipy.cluster import hierarchy
+from scipy.spatial.distance import squareform
 
 from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier
@@ -79,9 +80,17 @@ plt.show()
 # we plot a heatmap of the correlated features:
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 corr = spearmanr(X).correlation
-corr_linkage = hierarchy.ward(corr)
+
+# Ensure the correlation matrix is symmetric
+corr = (corr + corr.T)/2
+np.fill_diagonal(corr, 1)
+
+# We convert the correlation matrix to a distance matrix before performing
+# hierarchical clustering using Ward's linkage.
+distance_matrix = 1 - np.abs(corr)
+dist_linkage = hierarchy.ward(squareform(distance_matrix))
 dendro = hierarchy.dendrogram(
-    corr_linkage, labels=data.feature_names.tolist(), ax=ax1, leaf_rotation=90
+    dist_linkage, labels=data.feature_names.tolist(), ax=ax1, leaf_rotation=90
 )
 dendro_idx = np.arange(0, len(dendro['ivl']))
 
@@ -99,7 +108,7 @@ plt.show()
 # keep, select those features from our dataset, and train a new random forest.
 # The test accuracy of the new random forest did not change much compared to
 # the random forest trained on the complete dataset.
-cluster_ids = hierarchy.fcluster(corr_linkage, 1, criterion='distance')
+cluster_ids = hierarchy.fcluster(dist_linkage, 1, criterion='distance')
 cluster_id_to_feature_ids = defaultdict(list)
 for idx, cluster_id in enumerate(cluster_ids):
     cluster_id_to_feature_ids[cluster_id].append(idx)

@@ -25,11 +25,24 @@ from ._unsupervised import calinski_harabasz_score
 from ._unsupervised import davies_bouldin_score
 from ._bicluster import consensus_score
 
-__all__ = ["adjusted_mutual_info_score", "normalized_mutual_info_score",
-           "adjusted_rand_score", "rand_score", "completeness_score",
-           "pair_confusion_matrix", "contingency_matrix",
-           "expected_mutual_information", "homogeneity_completeness_v_measure",
-           "homogeneity_score", "mutual_info_score", "v_measure_score",
-           "fowlkes_mallows_score", "entropy", "silhouette_samples",
-           "silhouette_score", "calinski_harabasz_score",
-           "davies_bouldin_score", "consensus_score"]
+__all__ = [
+    "adjusted_mutual_info_score",
+    "normalized_mutual_info_score",
+    "adjusted_rand_score",
+    "rand_score",
+    "completeness_score",
+    "pair_confusion_matrix",
+    "contingency_matrix",
+    "expected_mutual_information",
+    "homogeneity_completeness_v_measure",
+    "homogeneity_score",
+    "mutual_info_score",
+    "v_measure_score",
+    "fowlkes_mallows_score",
+    "entropy",
+    "silhouette_samples",
+    "silhouette_score",
+    "calinski_harabasz_score",
+    "davies_bouldin_score",
+    "consensus_score",
+]

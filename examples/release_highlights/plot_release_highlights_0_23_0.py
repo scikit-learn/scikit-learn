@@ -36,7 +36,6 @@ or with conda::
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import PoissonRegressor
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 n_samples, n_features = 1000, 20
@@ -124,7 +123,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.inspection import plot_partial_dependence
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 n_samples = 500

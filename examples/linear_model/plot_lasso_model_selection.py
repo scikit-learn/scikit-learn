@@ -68,13 +68,13 @@ X /= np.sqrt(np.sum(X ** 2, axis=0))
 # #############################################################################
 # LassoLarsIC: least angle regression with BIC/AIC criterion
 
-model_bic = LassoLarsIC(criterion='bic')
+model_bic = LassoLarsIC(criterion='bic', normalize=False)
 t1 = time.time()
 model_bic.fit(X, y)
 t_bic = time.time() - t1
 alpha_bic_ = model_bic.alpha_
 
-model_aic = LassoLarsIC(criterion='aic')
+model_aic = LassoLarsIC(criterion='aic', normalize=False)
 model_aic.fit(X, y)
 alpha_aic_ = model_aic.alpha_
 
@@ -129,7 +129,7 @@ plt.ylim(ymin, ymax)
 # Compute paths
 print("Computing regularization path using the Lars lasso...")
 t1 = time.time()
-model = LassoLarsCV(cv=20).fit(X, y)
+model = LassoLarsCV(cv=20, normalize=False).fit(X, y)
 t_lasso_lars_cv = time.time() - t1
 
 # Display results
