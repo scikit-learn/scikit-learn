@@ -23,7 +23,6 @@ from sklearn import set_config
 steps = [("logistic_regression", LogisticRegression())]
 pipe = Pipeline(steps)
 
-# %%
 # The default in Jupyter notebook is `display='text'`
 set_config(display="text")
 pipe
