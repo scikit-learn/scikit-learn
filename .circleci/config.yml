@@ -169,18 +169,19 @@ jobs:
       commit-desc:
         type: string
         default: $(git log --format=%B -n 1 $CIRCLE_SHA1)
-    when:
-      condition:
-        matches:
-          pattern: "^[cd build]$"
-          value: << parameters.commit-desc >>
     steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - run: ./build_tools/circle/build_wheel_arm.sh
-      - store_artifacts:
-          path: wheelhouse
-          destination: wheelhouse
+      when:
+        condition:
+          matches:
+            pattern: "^[cd build]$"
+            value: << parameters.commit-desc >>
+        steps:
+          - checkout
+          - run: ./build_tools/circle/checkout_merge_commit.sh
+          - run: ./build_tools/circle/build_wheel_arm.sh
+          - store_artifacts:
+              path: wheelhouse
+              destination: wheelhouse
 
 
 
