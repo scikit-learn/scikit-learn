@@ -1,4 +1,8 @@
 version: 2.1
+parameters:
+  commit-desc:
+    type: string
+    default: $(git log --format=%B -n 1 $CIRCLE_SHA1)
 
 jobs:
   doc-min-dependencies:
@@ -165,23 +169,13 @@ jobs:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
-    parameters:
-      commit-desc:
-        type: string
-        default: $(git log --format=%B -n 1 $CIRCLE_SHA1)
     steps:
-      when:
-        condition:
-          matches:
-            pattern: "^[cd build]$"
-            value: << parameters.commit-desc >>
-        steps:
-          - checkout
-          - run: ./build_tools/circle/checkout_merge_commit.sh
-          - run: ./build_tools/circle/build_wheel_arm.sh
-          - store_artifacts:
-              path: wheelhouse
-              destination: wheelhouse
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - run: ./build_tools/circle/build_wheel_arm.sh
+      - store_artifacts:
+          path: wheelhouse
+          destination: wheelhouse
 
 
 
@@ -233,4 +227,10 @@ workflows:
   linux-arm64:
     jobs:
       - linux-arm64
+  linux-arm64-wheels:
+    when:
+      matches:
+        pattern: "^[cd build]$"
+        value: << parameters.commit-desc >>
+    jobs:
       - linux-arm64-wheels
