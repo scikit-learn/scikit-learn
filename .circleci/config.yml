@@ -2,7 +2,6 @@ version: 2.1
 parameters:
   commit-desc:
     type: string
-    default: $(git log --format=%B -n 1 $CIRCLE_SHA1)
 
 jobs:
   doc-min-dependencies:
@@ -228,6 +227,8 @@ workflows:
     jobs:
       - linux-arm64
   linux-arm64-wheels:
+    parameters: |
+      { "commit-desc" : "$(git log --format=%B -n 1 $CIRCLE_SHA1)" }
     when:
       matches:
         pattern: "^[cd build]$"
