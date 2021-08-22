@@ -276,3 +276,43 @@ pipe
 # To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
 pipe
+
+"""
+=================================================================
+test
+=================================================================
+
+This example constructs a pipeline that does column transformation followed
+by a random forest classifier over a grid search.
+
+The default configuration for displaying a pipeline is 'text' where
+`set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
+use `set_config(display='diagram')` and then output the pipeline object.
+"""
+
+# %%
+# Illustration of `GridSearchCV` over a `Pipeline` with `RandomForest`
+###############################################################################
+# This section constructs a pipeline and displays its text and visual
+# representation.
+
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn import set_config
+
+steps = [
+    ("standard_scaler", StandardScaler()),
+    ("logistic_regression", LogisticRegression()),
+]
+pipe = Pipeline(steps)
+
+# %%
+# To view the text pipeline, the default is `display='text'`
+set_config(display="text")
+pipe
+
+# %%
+# To visualize the diagram, change to `display='diagram'`
+set_config(display="diagram")
+pipe
