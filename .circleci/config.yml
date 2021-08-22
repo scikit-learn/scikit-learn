@@ -1,4 +1,8 @@
 version: 2.1
+parameters:
+  commit-desc:
+    type: string
+    default: ""
 
 jobs:
   doc-min-dependencies:
