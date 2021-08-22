@@ -2368,7 +2368,7 @@ calculated as
 
   D^2(y, \hat{y}) = 1 - \frac{\text{D}(y, \hat{y})}{\text{D}(y, \bar{y})} \,.
 
-The argument `power` defines the Tweedie power as for
+The argument ``power`` defines the Tweedie power as for
 :func:`mean_tweedie_deviance`. Note that for `power=0`,
 :func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
 
@@ -2376,6 +2376,11 @@ Like R², the best possible score is 1.0 and it can be negative (because the
 model can be arbitrarily worse). A model that always predicts a constant
 value for the expected value of y, disregarding the input features, would
 get a D^2 score of 0.0.
+
+A scorer object with a specific choice of ``power`` can be built by::
+
+  >>> from sklearn.metrics import make_scorer
+  >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, pwoer=1.5)
 
 .. _pinball_loss:
 
@@ -2409,7 +2414,7 @@ Here is a small example of usage of the :func:`mean_pinball_loss` function::
   >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
   0.0
 
-It is possible to build a scorer object with a specific choice of alpha::
+It is possible to build a scorer object with a specific choice of ``alpha``::
 
   >>> from sklearn.metrics import make_scorer
   >>> mean_pinball_loss_95p = make_scorer(mean_pinball_loss, alpha=0.95)
