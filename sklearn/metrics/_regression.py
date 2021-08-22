@@ -640,8 +640,8 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     Unlike most other scores, R^2 score may be negative (it need not actually
     be the square of a quantity R).
 
-    This metric is not well-defined for single samples and will return a NaN
-    value if n_samples is less than two.
+    This metric is not well-defined for single samples and will raise a ValueError if
+    n_samples is less than two.
 
     References
     ----------
@@ -678,9 +678,7 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if _num_samples(y_pred) < 2:
-        msg = "R^2 score is not well-defined with less than two samples."
-        warnings.warn(msg, UndefinedMetricWarning)
-        return float('nan')
+        raise ValueError("R^2 score is not well-defined with less than two samples.")
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -927,7 +925,7 @@ def d2_tweedie_score(y_true, y_pred, sample_weight=None, power=0):
 
         - power < 0: Extreme stable distribution. Requires: y_pred > 0.
         - power = 0 : Normal distribution, output corresponds to
-          mean_squared_error. y_true and y_pred can be any real numbers.
+          r2_score. y_true and y_pred can be any real numbers.
         - power = 1 : Poisson distribution. Requires: y_true >= 0 and
           y_pred > 0.
         - 1 < p < 2 : Compound Poisson distribution. Requires: y_true >= 0
@@ -950,8 +948,8 @@ def d2_tweedie_score(y_true, y_pred, sample_weight=None, power=0):
     Like R^2, D^2 score may be negative (it need not actually be the square of
     a quantity D).
 
-    This metric is not well-defined for single samples and will return a NaN
-    value if n_samples is less than two.
+    This metric is not well-defined for single samples and will raise a ValueError if
+    n_samples is less than two.
 
     References
     ----------
@@ -979,11 +977,8 @@ def d2_tweedie_score(y_true, y_pred, sample_weight=None, power=0):
         raise ValueError("Multioutput not supported in d2_tweedie_score")
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    # TODO: Do we need this?
     if _num_samples(y_pred) < 2:
-        msg = "D^2 score is not well-defined with less than two samples."
-        warnings.warn(msg, UndefinedMetricWarning)
-        return float('nan')
+        raise ValueError("D^2 score is not well-defined with less than two samples.")
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
