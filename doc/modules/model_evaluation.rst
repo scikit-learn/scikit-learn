@@ -2371,6 +2371,12 @@ calculated as
 The argument `power` defines the Tweedie power as for
 :func:`mean_tweedie_deviance`. Note that for `power=0`,
 :func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+
+Like R², the best possible score is 1.0 and it can be negative (because the
+model can be arbitrarily worse). A model that always predicts a constant
+value for the expected value of y, disregarding the input features, would
+get a D^2 score of 0.0.
+
 .. _pinball_loss:
 
 Pinball loss
