@@ -76,10 +76,10 @@ def test_affinity_propagation_affinity_shape():
 @pytest.mark.parametrize(
     "input, params, err_type, err_msg",
     [
-        (X, {"damping": 0}, ValueError, "`damping`= 0, must be >= 0.5"),
-        (X, {"damping": 2}, ValueError, "`damping`= 2, must be < 1"),
-        (X, {"max_iter": 0}, ValueError, "`max_iter`= 0, must be >= 1."),
-        (X, {"convergence_iter": 0}, ValueError, "`convergence_iter`= 0, must be >= 1"),
+        (X, {"damping": 0}, ValueError, "damping == 0, must be >= 0.5"),
+        (X, {"damping": 2}, ValueError, "damping == 2, must be < 1"),
+        (X, {"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
+        (X, {"convergence_iter": 0}, ValueError, "convergence_iter == 0, must be >= 1"),
         (X, {"affinity": "unknown"}, ValueError, "Affinity must be"),
         (
             csr_matrix((3, 3)),

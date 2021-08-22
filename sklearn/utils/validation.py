@@ -1286,14 +1286,14 @@ def check_scalar(
     comparison_operator = operator.le if strictly_greater_min_val else operator.lt
     if min_val is not None and comparison_operator(x, min_val):
         raise ValueError(
-            f"`{name}`= {x}, must be {'>' if strictly_greater_min_val else '>='} "
+            f" {name} == {x}, must be {'>' if strictly_greater_min_val else '>='} "
             f"{min_val}."
         )
 
     comparison_operator = operator.ge if strictly_less_max_val else operator.gt
     if max_val is not None and comparison_operator(x, max_val):
         raise ValueError(
-            f"`{name}`= {x}, must be {'<' if strictly_less_max_val else '<='} "
+            f"{name} == {x}, must be {'<' if strictly_less_max_val else '<='} "
             f"{max_val}."
         )
 

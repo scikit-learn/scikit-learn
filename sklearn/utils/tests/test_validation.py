@@ -1046,7 +1046,7 @@ def test_check_scalar_valid(x):
             False,
             4,
             False,
-            ValueError("`test_name2`= 1, must be >= 2."),
+            ValueError("test_name2 == 1, must be >= 2."),
         ),
         (
             5,
@@ -1056,7 +1056,7 @@ def test_check_scalar_valid(x):
             False,
             4,
             False,
-            ValueError("`test_name3`= 5, must be <= 4."),
+            ValueError("test_name3 == 5, must be <= 4."),
         ),
         (
             2,
@@ -1066,7 +1066,7 @@ def test_check_scalar_valid(x):
             True,
             4,
             False,
-            ValueError("`test_name4`= 2, must be > 2."),
+            ValueError("test_name4 == 2, must be > 2."),
         ),
         (
             4,
@@ -1076,7 +1076,7 @@ def test_check_scalar_valid(x):
             False,
             4,
             True,
-            ValueError("`test_name5`= 4, must be < 4."),
+            ValueError("test_name5 == 4, must be < 4."),
         ),
     ],
 )
