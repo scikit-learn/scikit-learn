@@ -218,7 +218,7 @@ def radius_neighbors_graph(
 
 
 class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
-    """Transform X into a (weighted) graph of k nearest neighbors
+    """Transform X into a (weighted) graph of k nearest neighbors.
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
 
@@ -258,7 +258,7 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        metric to use for distance computation. Any metric from scikit-learn
+        Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
         If metric is a callable function, it is called on each
@@ -317,6 +317,13 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
+    See Also
+    --------
+    kneighbors_graph : Compute the weighted graph of k-neighbors for
+        points in X.
+    RadiusNeighborsTransformer : Transform X into a weighted graph of
+        neighbors nearer than a radius.
+
     Examples
     --------
     >>> from sklearn.manifold import Isomap
@@ -359,6 +366,8 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
                 (n_samples, n_samples) if metric='precomputed'
             Training data.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -368,7 +377,7 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         return self._fit(X)
 
     def transform(self, X):
-        """Computes the (weighted) graph of Neighbors for points in X
+        """Compute the (weighted) graph of Neighbors for points in X.
 
         Parameters
         ----------
@@ -400,7 +409,8 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         X : array-like of shape (n_samples, n_features)
             Training set.
 
-        y : ignored
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
