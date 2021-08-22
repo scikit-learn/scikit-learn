@@ -265,10 +265,10 @@ param_grid = {
 
 grid_search = GridSearchCV(pipe, param_grid=param_grid, n_jobs=1)
 
+set_config(display="text")
 pipe
 
 # %%
 # To visualize the diagram, change display='diagram'
 set_config(display="diagram")
-
 pipe
