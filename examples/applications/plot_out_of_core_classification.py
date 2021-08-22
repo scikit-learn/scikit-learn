@@ -52,7 +52,6 @@ def _not_in_sphinx():
 # run.
 
 
-
 class ReutersParser(HTMLParser):
     """Utility class to parse a SGML file and yield documents one at a time."""
 

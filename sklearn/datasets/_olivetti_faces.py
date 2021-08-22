@@ -13,7 +13,7 @@ web page of Sam Roweis:
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
+from os.path import exists
 from os import makedirs, remove
 
 import numpy as np
@@ -24,21 +24,26 @@ from . import get_data_home
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ._base import _pkl_filepath
+from ._base import load_descr
 from ..utils import check_random_state, Bunch
-from ..utils.validation import _deprecate_positional_args
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
 FACES = RemoteFileMetadata(
-    filename='olivettifaces.mat',
-    url='https://ndownloader.figshare.com/files/5976027',
-    checksum=('b612fb967f2dc77c9c62d3e1266e0c73'
-              'd5fca46a4b8906c18e454d41af987794'))
+    filename="olivettifaces.mat",
+    url="https://ndownloader.figshare.com/files/5976027",
+    checksum="b612fb967f2dc77c9c62d3e1266e0c73d5fca46a4b8906c18e454d41af987794",
+)
 
 
-@_deprecate_positional_args
-def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
-                         download_if_missing=True, return_X_y=False):
+def fetch_olivetti_faces(
+    *,
+    data_home=None,
+    shuffle=False,
+    random_state=0,
+    download_if_missing=True,
+    return_X_y=False,
+):
     """Load the Olivetti faces data-set from AT&T (classification).
 
     Download it if necessary.
@@ -101,19 +106,18 @@ def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
         makedirs(data_home)
-    filepath = _pkl_filepath(data_home, 'olivetti.pkz')
+    filepath = _pkl_filepath(data_home, "olivetti.pkz")
     if not exists(filepath):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
 
-        print('downloading Olivetti faces from %s to %s'
-              % (FACES.url, data_home))
+        print("downloading Olivetti faces from %s to %s" % (FACES.url, data_home))
         mat_path = _fetch_remote(FACES, dirname=data_home)
         mfile = loadmat(file_name=mat_path)
         # delete raw .mat data
         remove(mat_path)
 
-        faces = mfile['faces'].T.copy()
+        faces = mfile["faces"].T.copy()
         joblib.dump(faces, filepath, compress=6)
         del mfile
     else:
@@ -134,14 +138,9 @@ def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
         target = target[order]
     faces_vectorized = faces.reshape(len(faces), -1)
 
-    module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'olivetti_faces.rst')) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("olivetti_faces.rst")
 
     if return_X_y:
         return faces_vectorized, target
 
-    return Bunch(data=faces_vectorized,
-                 images=faces,
-                 target=target,
-                 DESCR=fdescr)
+    return Bunch(data=faces_vectorized, images=faces, target=target, DESCR=fdescr)

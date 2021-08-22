@@ -22,7 +22,17 @@ assumptions on the distribution of the inlying data is very challenging, and a
 One-class SVM might give useful results in these situations depending on the
 value of its hyperparameters.
 
-:class:`~sklearn.covariance.EllipticEnvelope` assumes the data is Gaussian and
+The :class:`sklearn.linear_model.SGDOneClassSVM` is an implementation of the
+One-Class SVM based on stochastic gradient descent (SGD). Combined with kernel
+approximation, this estimator can be used to approximate the solution
+of a kernelized :class:`sklearn.svm.OneClassSVM`. We note that, although not
+identical, the decision boundaries of the
+:class:`sklearn.linear_model.SGDOneClassSVM` and the ones of
+:class:`sklearn.svm.OneClassSVM` are very similar. The main advantage of using
+:class:`sklearn.linear_model.SGDOneClassSVM` is that it scales linearly with
+the number of samples.
+
+:class:`sklearn.covariance.EllipticEnvelope` assumes the data is Gaussian and
 learns an ellipse. It thus degrades when the data is not unimodal. Notice
 however that this estimator is robust to outliers.
 
@@ -66,6 +76,9 @@ from sklearn.datasets import make_moons, make_blobs
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
+from sklearn.linear_model import SGDOneClassSVM
+from sklearn.kernel_approximation import Nystroem
+from sklearn.pipeline import make_pipeline
 
 print(__doc__)
 
@@ -77,11 +90,18 @@ outliers_fraction = 0.15
 n_outliers = int(outliers_fraction * n_samples)
 n_inliers = n_samples - n_outliers
 
-# define outlier/anomaly detection methods to be compared
+# define outlier/anomaly detection methods to be compared.
+# the SGDOneClassSVM must be used in a pipeline with a kernel approximation
+# to give similar results to the OneClassSVM
 anomaly_algorithms = [
     ("Robust covariance", EllipticEnvelope(contamination=outliers_fraction)),
     ("One-Class SVM", svm.OneClassSVM(nu=outliers_fraction, kernel="rbf",
                                       gamma=0.1)),
+    ("One-Class SVM (SGD)", make_pipeline(
+        Nystroem(gamma=0.1, random_state=42, n_components=150),
+        SGDOneClassSVM(nu=outliers_fraction, shuffle=True,
+                       fit_intercept=True, random_state=42, tol=1e-6)
+    )),
     ("Isolation Forest", IsolationForest(contamination=outliers_fraction,
                                          random_state=42)),
     ("Local Outlier Factor", LocalOutlierFactor(
@@ -104,7 +124,7 @@ datasets = [
 xx, yy = np.meshgrid(np.linspace(-7, 7, 150),
                      np.linspace(-7, 7, 150))
 
-plt.figure(figsize=(len(anomaly_algorithms) * 2 + 3, 12.5))
+plt.figure(figsize=(len(anomaly_algorithms) * 2 + 4, 12.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
                     hspace=.01)
 
@@ -113,8 +133,8 @@ rng = np.random.RandomState(42)
 
 for i_dataset, X in enumerate(datasets):
     # Add outliers
-    X = np.concatenate([X, rng.uniform(low=-6, high=6,
-                       size=(n_outliers, 2))], axis=0)
+    X = np.concatenate([X, rng.uniform(low=-6, high=6, size=(n_outliers, 2))],
+                       axis=0)
 
     for name, algorithm in anomaly_algorithms:
         t0 = time.time()

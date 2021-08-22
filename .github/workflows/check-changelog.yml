@@ -1,0 +1,54 @@
+name: Check Changelog
+# This check makes sure that the changelog is properly updated
+# when a PR introduces a change in a test file.
+# To bypass this check, label the PR with "No Changelog Needed".
+on:
+  pull_request:
+    types: [opened, edited, labeled, unlabeled, synchronize]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'No Changelog Needed') == 0 }}
+    steps:
+      - name: Get PR number and milestone
+        run: |
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          echo "TAGGED_MILESTONE=${{ github.event.pull_request.milestone.title }}" >> $GITHUB_ENV
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+      - name: Check the changelog
+        run: |
+          set -xe
+          changed_files=$(git diff --name-only origin/main)
+          # Changelog should be updated only if tests have been modified
+          if [[ ! "$changed_files" =~ tests ]]
+          then
+            exit 0
+          fi
+          all_changelogs=$(cat ./doc/whats_new/v*.rst)
+          if [[ "$all_changelogs" =~ :pr:\`$PR_NUMBER\` ]]
+          then
+            echo "Changelog has been updated."
+            # If the pull request is milestoned check the correspondent changelog
+            if exist -f ./doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst
+            then
+              expected_changelog=$(cat ./doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst)
+              if [[ "$expected_changelog" =~ :pr:\`$PR_NUMBER\` ]]
+              then
+                echo "Changelog and milestone correspond."
+              else
+                echo "Changelog and milestone do not correspond."
+                echo "If you see this error make sure that the tagged milestone for the PR"
+                echo "and the changelog name properly match."
+                exit 1
+              fi
+            fi
+          else
+            echo "Changelog entry is missing."
+            echo "If you see this error and there is already a changelog entry then make sure that"
+            echo "the PR number is correct. If no changelog entry is required for this PR,"
+            echo "label the PR with 'No Changelog Needed' to bypass this check."
+            exit 1
+          fi

@@ -35,6 +35,19 @@ def test_weighted_percentile_zero_weight():
     assert approx(score) == 1.0
 
 
+def test_weighted_percentile_zero_weight_zero_percentile():
+    y = np.array([0, 1, 2, 3, 4, 5])
+    sw = np.array([0, 0, 1, 1, 1, 0])
+    score = _weighted_percentile(y, sw, 0)
+    assert approx(score) == 2
+
+    score = _weighted_percentile(y, sw, 50)
+    assert approx(score) == 3
+
+    score = _weighted_percentile(y, sw, 100)
+    assert approx(score) == 4
+
+
 def test_weighted_median_equal_weights():
     # Checks weighted percentile=0.5 is same as median when weights equal
     rng = np.random.RandomState(0)
@@ -71,10 +84,7 @@ def test_weighted_percentile_2d():
     x_2d = np.vstack((x1, x2)).T
 
     w_median = _weighted_percentile(x_2d, w1)
-    p_axis_0 = [
-        _weighted_percentile(x_2d[:, i], w1)
-        for i in range(x_2d.shape[1])
-    ]
+    p_axis_0 = [_weighted_percentile(x_2d[:, i], w1) for i in range(x_2d.shape[1])]
     assert_allclose(w_median, p_axis_0)
 
     # Check when array and sample_weight boht 2D
@@ -83,7 +93,6 @@ def test_weighted_percentile_2d():
 
     w_median = _weighted_percentile(x_2d, w_2d)
     p_axis_0 = [
-        _weighted_percentile(x_2d[:, i], w_2d[:, i])
-        for i in range(x_2d.shape[1])
+        _weighted_percentile(x_2d[:, i], w_2d[:, i]) for i in range(x_2d.shape[1])
     ]
     assert_allclose(w_median, p_axis_0)

@@ -204,7 +204,7 @@ Please make sure to still check our guidelines below, since they describe our
 latest up-to-date workflow.
 
 - Crash Course in Contributing to Scikit-Learn & Open Source Projects:
-  `Video <https://youtu.be/5OL8XoMMOfA>`__, 
+  `Video <https://youtu.be/5OL8XoMMOfA>`__,
   `Transcript
   <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
 
@@ -212,6 +212,23 @@ latest up-to-date workflow.
   `Video <https://youtu.be/PU1WyDPGePI>`__,
   `Transcript
   <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
+
+- Sprint-specific instructions and practical tips:
+  `Video <https://youtu.be/p_2Uw2BxdhA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
+
+- 3 Components of Reviewing a Pull Request:
+  `Video <https://youtu.be/dyxS9KKCNzA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
+
+.. note::
+  In January 2021, the default branch name changed from ``master`` to ``main``
+  for the scikit-learn GitHub repository to use more inclusive terms.
+  These videos were created prior to the renaming of the branch.
+  For contributors who are viewing these videos to set up their
+  working environment and submitting a PR, ``master`` should be replaced to ``main``.
 
 How to contribute
 -----------------
@@ -233,18 +250,24 @@ how to set up your git repository:
    repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
 3. Clone your fork of the scikit-learn repo from your GitHub account to your
-   local disk::
+   local disk:
 
-       $ git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
-       $ cd scikit-learn
+   .. prompt:: bash $
 
-4. Install the development dependencies::
+       git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
+       cd scikit-learn
 
-       $ pip install cython pytest pytest-cov flake8 mypy
+4. Install the development dependencies:
 
-5. Install scikit-learn in editable mode::
+    .. prompt:: bash $
 
-       $ pip install --no-build-isolation --editable .
+       pip install cython pytest pytest-cov flake8 mypy black==21.6b0
+
+5. Install scikit-learn in editable mode:
+
+    .. prompt:: bash $
+
+       pip install --no-build-isolation --editable .
 
    If you receive errors in building scikit-learn, see the
    :ref:`install_bleeding_edge` section.
@@ -253,46 +276,60 @@ how to set up your git repository:
 
 6. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
-   synchronized with the latest changes::
+   synchronized with the latest changes:
 
-    $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+   .. prompt:: bash $
+
+    git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
 modifying code and submitting a PR:
 
-7. Synchronize your master branch with the upstream master branch::
+7. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+   more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
-        $ git checkout master
-        $ git pull upstream master
+   .. prompt:: bash $
 
-8. Create a feature branch to hold your development changes::
+        git checkout main
+        git fetch upstream
+        git merge upstream/main
 
-        $ git checkout -b my_feature
+8. Create a feature branch to hold your development changes:
+
+    .. prompt:: bash $
+
+        git checkout -b my_feature
 
    and start making changes. Always use a feature branch. It's good
-   practice to never work on the ``master`` branch!
+   practice to never work on the ``main`` branch!
 
 9. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
-   run code style checks before each commit::
+   run code style checks before each commit:
 
-        $ pip install pre-commit
-        $ pre-commit install
+   .. prompt:: bash $
+
+        pip install pre-commit
+        pre-commit install
 
    pre-commit checks can be disabled for a particular commit with
    `git commit -n`.
 
 10. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
-    ``git add`` and then ``git commit``::
+    ``git add`` and then ``git commit``:
 
-        $ git add modified_files
-        $ git commit
+    .. prompt:: bash $
+
+        git add modified_files
+        git commit
 
     to record your changes in Git, then push the changes to your GitHub
-    account with::
+    account with:
 
-       $ git push -u origin my_feature
+    .. prompt:: bash $
+
+       git push -u origin my_feature
 
 11. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
@@ -303,7 +340,9 @@ modifying code and submitting a PR:
 .. note::
 
     If you are modifying a Cython module, you have to re-compile after
-    modifications and before testing them::
+    modifications and before testing them:
+
+    .. prompt:: bash $
 
         pip install --no-build-isolation -e .
 
@@ -311,10 +350,12 @@ modifying code and submitting a PR:
     each time, only the files you have modified.
 
 It is often helpful to keep your local feature branch synchronized with the
-latest changes of the main scikit-learn repository::
+latest changes of the main scikit-learn repository:
 
-    $ git fetch upstream
-    $ git merge upstream/master
+.. prompt:: bash $
+
+    git fetch upstream
+    git merge upstream/main
 
 Subsequently, you might need to solve the conflicts. You can refer to the
 `Git documentation related to resolving merge conflict using the command
@@ -389,25 +430,37 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    verify the correct behavior of the fix or feature. In this manner, further
    modifications on the code base are granted to be consistent with the
    desired behavior. In the case of bug fixes, at the time of the PR, the
-   non-regression tests should fail for the code base in the master branch
+   non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
-5. **Make sure that your PR does not add PEP8 violations**. To check the
-   code that you changed, you can run the following command (see
-   :ref:`above <upstream>` to set up the upstream remote)::
+5. Run `black` to auto-format your code.
 
-        git diff upstream/master -u -- "*.py" | flake8 --diff
+   .. prompt:: bash $
+
+        black .
+
+   See black's
+   `editor integration documentation <https://black.readthedocs.io/en/stable/integrations/editors.html>`_
+   to configure your editor to run `black`.
+
+6. **Make sure that your PR does not add PEP8 violations**. To check the
+   code that you changed, you can run the following command (see
+   :ref:`above <upstream>` to set up the ``upstream`` remote):
+
+   .. prompt:: bash $
+
+        git diff upstream/main -u -- "*.py" | flake8 --diff
 
    or `make flake8-diff` which should work on unix-like system.
 
-6. Follow the :ref:`coding-guidelines`.
+7. Follow the :ref:`coding-guidelines`.
 
 
-7. When applicable, use the validation tools and scripts in the
+8. When applicable, use the validation tools and scripts in the
    ``sklearn.utils`` submodule.  A list of utility routines available
    for developers can be found in the :ref:`developers-utils` page.
 
-8. Often pull requests resolve one or more other issues (or pull requests).
+9. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
    be closed, you should `use keywords to create link to them
    <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
@@ -417,20 +470,23 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    related to some other issues/PRs, create a link to them without using
    the keywords (e.g., ``See also #1234``).
 
-9. PRs should often substantiate the change, through benchmarks of
-   performance and efficiency (see :ref:`monitoring_performances`) or through
-   examples of usage. Examples also illustrate the features and intricacies of
-   the library to users. Have a look at other examples in the `examples/
-   <https://github.com/scikit-learn/scikit-learn/tree/master/examples>`_
-   directory for reference. Examples should demonstrate why the new
-   functionality is useful in practice and, if possible, compare it to other
-   methods available in scikit-learn.
+10. PRs should often substantiate the change, through benchmarks of
+    performance and efficiency (see :ref:`monitoring_performances`) or through
+    examples of usage. Examples also illustrate the features and intricacies of
+    the library to users. Have a look at other examples in the `examples/
+    <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
+    directory for reference. Examples should demonstrate why the new
+    functionality is useful in practice and, if possible, compare it to other
+    methods available in scikit-learn.
 
-10. New features often need to be illustrated with narrative documentation in
-    the user guide, with small code snippets. If relevant, please also add
-    references in the literature, with PDF links when possible.
+11. New features have some maintenance overhead. We expect PR authors
+    to take part in the maintenance for the code they submit, at least
+    initially. New features need to be illustrated with narrative
+    documentation in the user guide, with small code snippets.
+    If relevant, please also add references in the literature, with PDF links
+    when possible.
 
-11. The user guide should also include expected time and space complexity
+12. The user guide should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
     large number of samples > 100000, but does not scale in dimensionality:
     n_features is expected to be lower than 100".
@@ -441,20 +497,20 @@ will expect.
 You can check for common programming errors with the following tools:
 
 * Code with a good unittest coverage (at least 80%, better 100%), check
-  with::
+  with:
 
-    $ pip install pytest pytest-cov
-    $ pytest --cov sklearn path/to/tests_for_package
+  .. prompt:: bash $
+
+    pip install pytest pytest-cov
+    pytest --cov sklearn path/to/tests_for_package
 
   see also :ref:`testing_coverage`
 
-* A moderate use of type annotations is encouraged but is not mandatory. See
-  `mypy quickstart <https://mypy.readthedocs.io/en/latest/getting_started.html>`_
-  for an introduction, as well as `pandas contributing documentation
-  <https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints>`_
-  for style guidelines. Whether you add type annotation or not::
+  Run static analysis with `mypy`:
 
-    mypy sklearn
+  .. prompt:: bash $
+
+      mypy sklearn
 
   must not produce new errors in your pull request. Using `# type: ignore`
   annotation can be a workaround for a few cases that are not supported by
@@ -491,7 +547,7 @@ Continuous Integration (CI)
 * Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
   with different dependencies and settings.
 * CircleCI is used to build the docs for viewing, for linting with flake8, and
-  for testing with PyPy on Linux
+  for testing with PyPy and ARM64 / aarch64 on Linux
 
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
@@ -500,14 +556,17 @@ message, the following actions are taken.
     Commit Message Marker  Action Taken by CI
     ---------------------- -------------------
     [ci skip]              CI is skipped completely
+    [cd build]             CD is run (wheels and source distribution are built)
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [icc-build]            Add a Travis build with the Intel C compiler (ICC)
-    [arm64]                Add a Travis build for the ARM64 / aarch64 little endian architecture
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
-    [doc build]            Docs built including example gallery plots
+    [doc build]            Docs built including example gallery plots (very long)
     ====================== ===================
+
+Note that, by default, the documentation is built but only the examples
+that are directly modified by the pull request are executed.
 
 .. _stalled_pull_request:
 
@@ -638,27 +697,38 @@ the development version.
 ..
     packaging is not needed once setuptools starts shipping packaging>=17.0
 
-Building the documentation requires installing some additional packages::
+Building the documentation requires installing some additional packages:
+
+.. prompt:: bash $
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
-                scikit-image packaging seaborn
+                scikit-image packaging seaborn sphinx-prompt \
+                sphinxext-opengraph
 
-To build the documentation, you need to be in the ``doc`` folder::
+To build the documentation, you need to be in the ``doc`` folder:
+
+.. prompt:: bash $
 
     cd doc
 
 In the vast majority of cases, you only need to generate the full web site,
-without the example gallery::
+without the example gallery:
+
+.. prompt:: bash $
 
     make
 
 The documentation will be generated in the ``_build/html/stable`` directory.
-To also generate the example gallery you can use::
+To also generate the example gallery you can use:
+
+.. prompt:: bash $
 
     make html
 
 This will run all the examples, which takes a while. If you only want to
-generate a few examples, you can use::
+generate a few examples, you can use:
+
+.. prompt:: bash $
 
     EXAMPLES_PATTERN=your_regex_goes_here make html
 
@@ -667,7 +737,9 @@ This is particularly useful if you are modifying a few examples.
 Set the environment variable `NO_MATHJAX=1` if you intend to view
 the documentation in an offline setting.
 
-To build the PDF manual, run::
+To build the PDF manual, run:
+
+.. prompt:: bash $
 
     make latexpdf
 
@@ -739,6 +811,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
     sample_weight : array-like of shape (n_samples,), default=None
 
+    multioutput_array : ndarray of shape (n_samples, n_classes) or list of such arrays
+
   In general have the following in mind:
 
       1. Use Python basic types. (``bool`` instead of ``boolean``)
@@ -752,10 +826,18 @@ Finally, follow the formatting rules below to make it consistently good:
       5. Specify ``dataframe`` when "frame-like" features are being used, such
          as the column names.
       6. When specifying the data type of a list, use ``of`` as a delimiter:
-         ``list of int``.
+         ``list of int``. When the parameter supports arrays giving details
+         about the shape and/or data type and a list of such arrays, you can
+         use one of ``array-like of shape (n_samples,) or list of such arrays``.
       7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
          after defining the shape:
-         ``ndarray of shape (n_samples,), dtype=np.int32``.
+         ``ndarray of shape (n_samples,), dtype=np.int32``. You can specify
+         multiple dtype as a set:
+         ``array-like of shape (n_samples,), dtype={np.float64, np.float32}``.
+         If one wants to mention arbitrary precision, use `integral` and
+         `floating` rather than the Python dtype `int` and `float`. When both
+         `int` and `floating` are supported, there is no need to specify the
+         dtype.
       8. When the default is ``None``, ``None`` only needs to be specified at the
          end with ``default=None``. Be sure to include in the docstring, what it
          means for the parameter or attribute to be ``None``.
@@ -855,68 +937,92 @@ To use all features of asv, you will need either `conda` or `virtualenv`. For
 more details please check the `asv installation webpage
 <https://asv.readthedocs.io/en/latest/installing.html>`_.
 
-First of all you need to install the development version of asv::
+First of all you need to install the development version of asv:
 
-  pip install git+https://github.com/airspeed-velocity/asv
+.. prompt:: bash $
 
-and change your directory to `asv_benchmarks/`::
+    pip install git+https://github.com/airspeed-velocity/asv
+
+and change your directory to `asv_benchmarks/`:
+
+.. prompt:: bash $
 
   cd asv_benchmarks/
 
 The benchmark suite is configured to run against your local clone of
-scikit-learn. Make sure it is up to date::
+scikit-learn. Make sure it is up to date:
+
+.. prompt:: bash $
 
   git fetch upstream
 
 In the benchmark suite, the benchmarks are organized following the same
 structure as scikit-learn. For example, you can compare the performance of a
-specific estimator between upstream/master and the branch you are working on::
+specific estimator between ``upstream/main`` and the branch you are working on:
 
-  asv continuous -b LogisticRegression upstream/master HEAD
+.. prompt:: bash $
+
+  asv continuous -b LogisticRegression upstream/main HEAD
 
 The command uses conda by default for creating the benchmark environments. If
-you want to use virtualenv instead, use the `-E` flag::
+you want to use virtualenv instead, use the `-E` flag:
 
-  asv continuous -E virtualenv -b LogisticRegression upstream/master HEAD
+.. prompt:: bash $
 
-You can also specify a whole module to benchmark::
+  asv continuous -E virtualenv -b LogisticRegression upstream/main HEAD
 
-  asv continuous -b linear_model upstream/master HEAD
+You can also specify a whole module to benchmark:
+
+.. prompt:: bash $
+
+  asv continuous -b linear_model upstream/main HEAD
 
 You can replace `HEAD` by any local branch. By default it will only report the
 benchmarks that have change by at least 10%. You can control this ratio with
 the `-f` flag.
 
-To run the full benchmark suite, simply remove the `-b` flag ::
+To run the full benchmark suite, simply remove the `-b` flag :
 
-  asv continuous upstream/master HEAD
+.. prompt:: bash $
+
+  asv continuous upstream/main HEAD
 
 However this can take up to two hours. The `-b` flag also accepts a regular
 expression for a more complex subset of benchmarks to run.
 
 To run the benchmarks without comparing to another branch, use the `run`
-command::
+command:
+
+.. prompt:: bash $
 
   asv run -b linear_model HEAD^!
 
 You can also run the benchmark suite using the version of scikit-learn already
-installed in your current Python environment::
+installed in your current Python environment:
+
+.. prompt:: bash $
 
   asv run --python=same
 
 It's particulary useful when you installed scikit-learn in editable mode to
 avoid creating a new environment each time you run the benchmarks. By default
 the results are not saved when using an existing installation. To save the
-results you must specify a commit hash::
+results you must specify a commit hash:
+
+.. prompt:: bash $
 
   asv run --python=same --set-commit-hash=<commit hash>
 
 Benchmarks are saved and organized by machine, environment and commit. To see
-the list of all saved benchmarks::
+the list of all saved benchmarks:
+
+.. prompt:: bash $
 
   asv show
 
-and to see the report of a specific run::
+and to see the report of a specific run:
+
+.. prompt:: bash $
 
   asv show <commit hash>
 
@@ -1009,8 +1115,8 @@ use the decorator ``deprecated`` on a property. Please note that the
 decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
-    @deprecated("Attribute labels_ was deprecated in version 0.13 and "
-                "will be removed in 0.15. Use 'classes_' instead")
+    @deprecated("Attribute `labels_` was deprecated in version 0.13 and "
+                "will be removed in 0.15. Use `classes_` instead")
     @property
     def labels_(self):
         return self.classes_
@@ -1122,6 +1228,15 @@ use, and so can respond critically about whether the PR meets your needs. While
 each pull request needs to be signed off by two core developers, you can speed
 up this process by providing your feedback.
 
+.. note::
+
+  The difference between an objective improvement and a subjective nit isn't
+  always clear. Reviewers should recall that code review is primarily about
+  reducing risk in the project. When reviewing code, one should aim at
+  preventing situations which may require a bug fix, a deprecation, or a
+  retraction. Regarding docs: typos, grammar issues and disambiguations are
+  better addressed immediately.
+
 Here are a few important aspects that need to be covered in any code review,
 from high-level questions to a more detailed check-list.
 
@@ -1171,11 +1286,43 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
+.. _communication:
+
+Communication Guidelines
+------------------------
+
+Reviewing open pull requests (PRs) helps move the project forward. It is a
+great way to get familiar with the codebase and should motivate the
+contributor to keep involved in the project. [1]_
+
+- Every PR, good or bad, is an act of generosity. Opening with a positive
+  comment will help the author feel rewarded, and your subsequent remarks may
+  be heard more clearly. You may feel good also.
+- Begin if possible with the large issues, so the author knows they’ve been
+  understood. Resist the temptation to immediately go line by line, or to open
+  with small pervasive issues.
+- Do not let perfect be the enemy of the good. If you find yourself making
+  many small suggestions that don't fall into the :ref:`code_review`, consider
+  the following approaches:
+
+  - refrain from submitting these;
+  - prefix them as "Nit" so that the contributor knows it's OK not to address;
+  - follow up in a subsequent PR, out of courtesy, you may want to let the
+    original contributor know.
+
+- Do not rush, take the time to make your comments clear and justify your
+  suggestions.
+- You are the face of the project. Bad days occur to everyone, in that
+  occasion you deserve a break: try to take your time and stay offline.
+
+.. [1] Adapted from the numpy `communication guidelines
+       <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
+
 Reading the existing code base
 ==============================
 
 Reading and digesting an existing code base is always a difficult exercise
-that takes time and experience to master. Even though we try to write simple
+that takes time and experience to main. Even though we try to write simple
 code in general, understanding the code can seem overwhelming at first,
 given the sheer size of the project. Here is a list of tips that may help
 make this task easier and faster (in no particular order).
@@ -1229,3 +1376,13 @@ make this task easier and faster (in no particular order).
     <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
     useful to see every occurrence of a pattern (e.g. a function call or a
     variable) in the code base.
+
+- Configure `git blame` to ignore the commit that migrated the code style to
+  `black`.
+
+  .. prompt:: bash $
+
+      git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+  Find out more information in black's
+  `documentation for avoiding ruining git blame <https://black.readthedocs.io/en/stable/guides/introducing_black_to_your_project.html#avoiding-ruining-git-blame>`_.

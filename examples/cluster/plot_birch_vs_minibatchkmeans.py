@@ -3,7 +3,7 @@
 Compare BIRCH and MiniBatchKMeans
 =================================
 
-This example compares the timing of Birch (with and without the global
+This example compares the timing of BIRCH (with and without the global
 clustering step) and MiniBatchKMeans on a synthetic dataset having
 100,000 samples and 2 features generated using make_blobs.
 
@@ -36,7 +36,7 @@ xx, yy = np.meshgrid(xx, yy)
 n_centres = np.hstack((np.ravel(xx)[:, np.newaxis],
                        np.ravel(yy)[:, np.newaxis]))
 
-# Generate blobs to do a comparison between MiniBatchKMeans and Birch.
+# Generate blobs to do a comparison between MiniBatchKMeans and BIRCH.
 X, y = make_blobs(n_samples=100000, centers=n_centres, random_state=0)
 
 # Use all colors that matplotlib provides by default.
@@ -45,7 +45,7 @@ colors_ = cycle(colors.cnames.keys())
 fig = plt.figure(figsize=(12, 4))
 fig.subplots_adjust(left=0.04, right=0.98, bottom=0.1, top=0.9)
 
-# Compute clustering with Birch with and without the final clustering step
+# Compute clustering with BIRCH with and without the final clustering step
 # and plot.
 birch_models = [Birch(threshold=1.7, n_clusters=None),
                 Birch(threshold=1.7, n_clusters=100)]
@@ -55,7 +55,7 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
     t = time()
     birch_model.fit(X)
     time_ = time() - t
-    print("Birch %s as the final step took %0.2f seconds" % (
+    print("BIRCH %s as the final step took %0.2f seconds" % (
           info, (time() - t)))
 
     # Plot result
@@ -75,7 +75,7 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
     ax.set_ylim([-25, 25])
     ax.set_xlim([-25, 25])
     ax.set_autoscaley_on(False)
-    ax.set_title('Birch %s' % info)
+    ax.set_title('BIRCH %s' % info)
 
 # Compute clustering with MiniBatchKMeans.
 mbk = MiniBatchKMeans(init='k-means++', n_clusters=100, batch_size=100,

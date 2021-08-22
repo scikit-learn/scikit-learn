@@ -80,6 +80,7 @@ def plot_samples(S, axis_list=None):
     plt.xlabel('x')
     plt.ylabel('y')
 
+
 plt.figure()
 plt.subplot(2, 2, 1)
 plot_samples(S / S.std())

@@ -24,8 +24,7 @@ class _LineSearchError(RuntimeError):
     pass
 
 
-def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval,
-                         **kwargs):
+def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs):
     """
     Same as line_search_wolfe1, but fall back to line_search_wolfe2 if
     suitable step length is not found, and raise an exception if a
@@ -37,14 +36,13 @@ def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval,
         If no suitable step size is found.
 
     """
-    ret = line_search_wolfe1(f, fprime, xk, pk, gfk,
-                             old_fval, old_old_fval,
-                             **kwargs)
+    ret = line_search_wolfe1(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs)
 
     if ret[0] is None:
         # line search failed: try different one.
-        ret = line_search_wolfe2(f, fprime, xk, pk, gfk,
-                                 old_fval, old_old_fval, **kwargs)
+        ret = line_search_wolfe2(
+            f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs
+        )
 
     if ret[0] is None:
         raise _LineSearchError()
@@ -106,13 +104,23 @@ def _cg(fhess_p, fgrad, maxiter, tol):
         betai = dri1 / dri0
         psupi = -ri + betai * psupi
         i = i + 1
-        dri0 = dri1          # update np.dot(ri,ri) for next time.
+        dri0 = dri1  # update np.dot(ri,ri) for next time.
 
     return xsupi
 
 
-def _newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
-               maxiter=100, maxinner=200, line_search=True, warn=True):
+def _newton_cg(
+    grad_hess,
+    func,
+    grad,
+    x0,
+    args=(),
+    tol=1e-4,
+    maxiter=100,
+    maxinner=200,
+    line_search=True,
+    warn=True,
+):
     """
     Minimization of scalar function of one or more variables using the
     Newton-CG algorithm.
@@ -188,24 +196,25 @@ def _newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
 
         if line_search:
             try:
-                alphak, fc, gc, old_fval, old_old_fval, gfkp1 = \
-                    _line_search_wolfe12(func, grad, xk, xsupi, fgrad,
-                                         old_fval, old_old_fval, args=args)
+                alphak, fc, gc, old_fval, old_old_fval, gfkp1 = _line_search_wolfe12(
+                    func, grad, xk, xsupi, fgrad, old_fval, old_old_fval, args=args
+                )
             except _LineSearchError:
-                warnings.warn('Line Search failed')
+                warnings.warn("Line Search failed")
                 break
 
-        xk = xk + alphak * xsupi        # upcast if necessary
+        xk = xk + alphak * xsupi  # upcast if necessary
         k += 1
 
     if warn and k >= maxiter:
-        warnings.warn("newton-cg failed to converge. Increase the "
-                      "number of iterations.", ConvergenceWarning)
+        warnings.warn(
+            "newton-cg failed to converge. Increase the number of iterations.",
+            ConvergenceWarning,
+        )
     return xk, k
 
 
-def _check_optimize_result(solver, result, max_iter=None,
-                           extra_warning_msg=None):
+def _check_optimize_result(solver, result, max_iter=None, extra_warning_msg=None):
     """Check the OptimizeResult for successful convergence
 
     Parameters
@@ -230,13 +239,18 @@ def _check_optimize_result(solver, result, max_iter=None,
     # handle both scipy and scikit-learn solver names
     if solver == "lbfgs":
         if result.status != 0:
+            try:
+                # The message is already decoded in scipy>=1.6.0
+                result_message = result.message.decode("latin1")
+            except AttributeError:
+                result_message = result.message
             warning_msg = (
                 "{} failed to converge (status={}):\n{}.\n\n"
                 "Increase the number of iterations (max_iter) "
                 "or scale the data as shown in:\n"
                 "    https://scikit-learn.org/stable/modules/"
                 "preprocessing.html"
-            ).format(solver, result.status, result.message.decode("latin1"))
+            ).format(solver, result.status, result_message)
             if extra_warning_msg is not None:
                 warning_msg += "\n" + extra_warning_msg
             warnings.warn(warning_msg, ConvergenceWarning, stacklevel=2)

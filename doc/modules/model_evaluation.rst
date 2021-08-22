@@ -416,7 +416,7 @@ defined as
 
 .. math::
 
-   \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
+  \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
 
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_.
@@ -437,7 +437,7 @@ In the multilabel case with binary label indicators::
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
 
@@ -613,7 +613,7 @@ predicted to be in group :math:`j`. Here is an example::
          [0, 0, 1],
          [1, 0, 2]])
 
-:func:`plot_confusion_matrix` can be used to visually represent a confusion
+:class:`ConfusionMatrixDisplay` can be used to visually represent a confusion
 matrix as shown in the
 :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
 example, which creates the following figure:
@@ -830,7 +830,7 @@ follows.
      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
      IJCV 2010.
   .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
-     <http://www.machinelearning.org/proceedings/icml2006/030_The_Relationship_Bet.pdf>`_,
+     <https://www.biostat.wisc.edu/~page/rocpr.pdf>`_,
      ICML 2006.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
      <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
@@ -1095,7 +1095,7 @@ with a svm classifier in a multiclass problem::
   LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
-  >>> hinge_loss(y_true, pred_decision, labels)
+  >>> hinge_loss(y_true, pred_decision, labels=labels)
   0.56...
 
 .. _log_loss:
@@ -1423,7 +1423,7 @@ uniformly:
 
 .. math::
 
-   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
    \text{AUC}(k | j))
 
 where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
@@ -1438,7 +1438,7 @@ prevalence:
 
 .. math::
 
-   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
    \text{AUC}(j | k) + \text{AUC}(k | j))
 
 where :math:`c` is the number of classes. This algorithm is used by setting
@@ -1960,8 +1960,8 @@ Regression metrics
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
-:func:`mean_absolute_error`, :func:`explained_variance_score` and
-:func:`r2_score`.
+:func:`mean_absolute_error`, :func:`explained_variance_score`,
+:func:`r2_score` and :func:`mean_pinball_loss`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
@@ -2371,6 +2371,70 @@ calculated as
 The argument `power` defines the Tweedie power as for
 :func:`mean_tweedie_deviance`. Note that for `power=0`,
 :func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+.. _pinball_loss:
+
+Pinball loss
+------------
+
+The :func:`mean_pinball_loss` function is used to evaluate the predictive
+performance of quantile regression models. The `pinball loss
+<https://en.wikipedia.org/wiki/Quantile_regression#Computation>`_ is equivalent
+to :func:`mean_absolute_error` when the quantile parameter ``alpha`` is set to
+0.5.
+
+.. math::
+
+  \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
+
+Here is a small example of usage of the :func:`mean_pinball_loss` function::
+
+  >>> from sklearn.metrics import mean_pinball_loss
+  >>> y_true = [1, 2, 3]
+  >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
+  0.03...
+  >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
+  0.3...
+  >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
+  0.3...
+  >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
+  0.03...
+  >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
+  0.0
+  >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
+  0.0
+
+It is possible to build a scorer object with a specific choice of alpha::
+
+  >>> from sklearn.metrics import make_scorer
+  >>> mean_pinball_loss_95p = make_scorer(mean_pinball_loss, alpha=0.95)
+
+Such a scorer can be used to evaluate the generalization performance of a
+quantile regressor via cross-validation:
+
+  >>> from sklearn.datasets import make_regression
+  >>> from sklearn.model_selection import cross_val_score
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+  >>>
+  >>> X, y = make_regression(n_samples=100, random_state=0)
+  >>> estimator = GradientBoostingRegressor(
+  ...     loss="quantile",
+  ...     alpha=0.95,
+  ...     random_state=0,
+  ... )
+  >>> cross_val_score(estimator, X, y, cv=5, scoring=mean_pinball_loss_95p)
+  array([13.6..., 9.7..., 23.3..., 9.5..., 10.4...])
+
+It is also possible to build scorer objects for hyper-parameter tuning. The
+sign of the loss must be switched to ensure that greater means better as
+explained in the example linked below.
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+    for an example of using a the pinball loss to evaluate and tune the
+    hyper-parameters of quantile regression models on data with non-symmetric
+    noise and outliers.
+
 
 .. _clustering_metrics:
 

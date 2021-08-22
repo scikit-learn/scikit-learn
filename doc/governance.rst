@@ -40,9 +40,10 @@ Similarly to what has been decided in the `python project
 any contributor may become a member of the scikit-learn triage team, after
 showing some continuity in participating to scikit-learn
 development (with pull requests and reviews).
-Any core developer is welcome to propose a scikit-learn contributor to join the
-triage team. Other core developers are then consulted: while it is expected
-that most acceptances will be unanimous, a two-thirds majority is enough.
+Any core developer or member of the triage team is welcome to propose a
+scikit-learn contributor to join the triage team. Other core developers
+are then consulted: while it is expected that most acceptances will be
+unanimous, a two-thirds majority is enough.
 Every new triager will be announced in the mailing list.
 Triagers are welcome to participate in `monthly core developer meetings
 <https://github.com/scikit-learn/administrative/tree/master/meeting_notes>`_.
@@ -110,7 +111,7 @@ Scikit-learn uses a "consensus seeking" process for making decisions. The group
 tries to find a resolution that has no open objections among core developers.
 At any point during the discussion, any core-developer can call for a vote, which will
 conclude one month from the call for the vote. Any vote must be backed by a
-`SLEP <slep>`. If no option can gather two thirds of the votes cast, the
+:ref:`SLEP <slep>`. If no option can gather two thirds of the votes cast, the
 decision is escalated to the TC, which in turn will use consensus seeking with
 the fallback option of a simple majority vote if no consensus can be found
 within a month. This is what we hereafter may refer to as “the decision making

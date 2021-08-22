@@ -51,7 +51,14 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # sklearn/svm/_libsvm.cpython-38-darwin.so,
             # 2): Symbol not found: _svm_check_parameter error
             TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
+        else
+            # Without openmp, we use the system clang. Here we use /usr/bin/ar
+            # instead because llvm-ar errors
+            export AR=/usr/bin/ar
         fi
+    else
+        # FIXME: temporary fix to link against system libraries on linux
+        export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 	make_conda $TO_INSTALL
     setup_ccache
@@ -66,9 +73,9 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
                           $(get_dep joblib $JOBLIB_VERSION)
 
-elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
+elif [[ "$DISTRIB" == "debian-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
+    apt-get install -y python3-dev python3-numpy python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
 
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
@@ -77,6 +84,8 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
                           $(get_dep joblib $JOBLIB_VERSION)
 
 elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    # FIXME: temporary fix to link against system libraries on linux
+    export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     # Since conda main channel usually lacks behind on the latest releases,
     # we use pypi to test against the latest releases of the dependencies.
     # conda is still used as a convenient way to install Python and pip.
@@ -84,16 +93,21 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     setup_ccache
     python -m pip install -U pip
 
-    python -m pip install pandas matplotlib pyamg scikit-image
+    # Do not build scikit-image from source because it is an optional dependency
+    python -m pip install --only-binary :all: scikit-image || true
+
+    python -m pip install pandas matplotlib pyamg
     # do not install dependencies for lightgbm since it requires scikit-learn
     # and install a version less than 3.0.0 until the issue #18316 is solved.
     python -m pip install "lightgbm<3.0.0" --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+    # FIXME: temporary fix to link against system libraries on linux
+    export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     make_conda "ccache python=$PYTHON_VERSION"
     python -m pip install -U pip
     echo "Installing numpy and scipy master wheels"
     dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
+    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
     pip install --pre cython
     setup_ccache
     echo "Installing joblib master"
@@ -130,19 +144,33 @@ try:
 except ImportError:
     print('pandas not installed')
 "
-python -m pip list
+# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with 2 cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=3
 
+python -m pip list
 if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
-    # Check that pip can automatically install the build dependencies from
-    # pyproject.toml using an isolated build environment:
+    # Check that pip can automatically build scikit-learn with the build
+    # dependencies specified in pyproject.toml using an isolated build
+    # environment:
     pip install --verbose --editable .
 else
+    if [[ "$BUILD_WITH_ICC" == "true" ]]; then
+        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+        sudo apt-get update
+        sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+        source /opt/intel/oneapi/setvars.sh
+
+        # The "build_clib" command is implicitly used to build "libsvm-skl".
+        # To compile with a different compiler, we also need to specify the
+        # compiler for this command
+        python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
+    fi
     # Use the pre-installed build dependencies and build directly in the
     # current environment.
-    # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
-    # to speed-up the building multicore CI machines.
-    python setup.py build_ext --inplace -j 3
     python setup.py develop
 fi
-
 ccache -s
