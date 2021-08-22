@@ -21,7 +21,8 @@ from sklearn.utils._testing import (
     MinimalRegressor,
     MinimalTransformer,
 )
-
+from sklearn.exceptions import NotFittedError
+from sklearn.utils.validation import check_is_fitted
 from sklearn.base import clone, is_classifier, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
@@ -1361,3 +1362,16 @@ def test_search_cv_using_minimal_compatible_estimator(Predictor):
     else:
         assert_allclose(y_pred, y.mean())
         assert model.score(X, y) == pytest.approx(r2_score(y, y_pred))
+
+
+def test_pipeline_check_if_fitted():
+    class Estimator(BaseEstimator):
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+
+    pipeline = Pipeline([("clf", Estimator())])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(pipeline)
+    pipeline.fit(iris.data, iris.target)
+    check_is_fitted(pipeline)
