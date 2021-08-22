@@ -22,7 +22,13 @@ from sklearn import set_config
 
 steps = [("logistic_regression", LogisticRegression())]
 pipe = Pipeline(steps)
+pipe
 
+# The default in Jupyter notebook is `display='text'`
+set_config(display="text")
+pipe
+
+# %%
 # The default in Jupyter notebook is `display='text'`
 set_config(display="text")
 pipe
@@ -132,7 +138,7 @@ pipe = Pipeline(steps)
 pipe
 
 # %%
-# To visualize the diagram, change display='diagram'
+# To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
 
 pipe
@@ -185,7 +191,7 @@ pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=500))
 pipe
 
 # %%
-# To visualize the diagram, change display='diagram'
+# To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
 
 pipe
