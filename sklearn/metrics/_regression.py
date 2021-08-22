@@ -994,6 +994,8 @@ def d2_tweedie_score(y_true, y_pred, sample_weight=None, power=0):
 
     Read more in the :ref:`User Guide <d2_tweedie_score>`.
 
+    .. versionadded:: 1.0
+
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)
