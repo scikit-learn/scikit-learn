@@ -206,7 +206,8 @@ use `set_config(display='diagram')` and then output the pipeline object.
 # %%
 # Illustration of `GridSearchCV` over a `Pipeline` with `RandomForest`
 ###############################################################################
-# This section constructs a pipeline and displays its text representation.
+# This section constructs a pipeline and displays its text and visual
+# representation.
 
 from sklearn.compose import make_column_selector as selector
 from sklearn.model_selection import GridSearchCV
@@ -265,10 +266,12 @@ param_grid = {
 
 grid_search = GridSearchCV(pipe, param_grid=param_grid, n_jobs=1)
 
+# %%
+# To view the text pipeline, the default is `display='text'`
 set_config(display="text")
 pipe
 
 # %%
-# To visualize the diagram, change display='diagram'
+# To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
 pipe
