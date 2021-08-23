@@ -3750,7 +3750,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         and not ("test_" in module_name or module_name.endswith("_testing"))
         and ("feature_names_in_" not in (estimator.__doc__))
     ):
-        raise ValueError(
+        raise ValueError(  # pragma: nocover
             f"Estimator {name} does not document its feature_names_in_ attribute"
         )
 
