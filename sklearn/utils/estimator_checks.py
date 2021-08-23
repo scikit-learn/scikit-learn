@@ -3744,10 +3744,15 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     assert_array_equal(estimator.feature_names_in_, names)
 
     # Only check sklearn estimators for feature_names_in_ in docstring
-    if estimator_orig.__module__.startswith("sklearn.") and (
-        "feature_names_in_" not in estimator.__doc__
+    module_name = estimator_orig.__module__
+    if (
+        module_name.startswith("sklearn.")
+        and not ("test_" in module_name or module_name.endswith("_testing"))
+        and ("feature_names_in_" not in (estimator.__doc__))
     ):
-        raise ValueError("Estimator does not document its feature_names_in_ attribute")
+        raise ValueError(
+            f"Estimator {name} does not document its feature_names_in_ attribute"
+        )
 
     check_methods = []
     for method in (
