@@ -458,22 +458,6 @@ class SelectPercentile(_BaseFilter):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.feature_selection import SelectPercentile, chi2
-    >>> X, y = load_digits(return_X_y=True)
-    >>> X.shape
-    (1797, 64)
-    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)
-    >>> X_new.shape
-    (1797, 7)
-
-    Notes
-    -----
-    Ties between features with equal scores will be broken in an unspecified
-    way.
-
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
@@ -487,6 +471,22 @@ class SelectPercentile(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Notes
+    -----
+    Ties between features with equal scores will be broken in an unspecified
+    way.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.feature_selection import SelectPercentile, chi2
+    >>> X, y = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)
+    >>> X_new.shape
+    (1797, 7)
     """
 
     def __init__(self, score_func=f_classif, *, percentile=10):
