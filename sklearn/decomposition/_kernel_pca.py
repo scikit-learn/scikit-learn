@@ -185,6 +185,12 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     See Also
     --------
+    FastICA : A fast algorithm for Independent Component Analysis.
+    IncrementalPCA : Incremental Principal Component Analysis.
+    NMF : Non-Negative Matrix Factorization.
+    PCA : Principal Component Analysis.
+    SparsePCA : Sparse Principal Component Analysis.
+    TruncatedSVD : Dimensionality reduction using truncated SVD.
 
     References
     ----------
