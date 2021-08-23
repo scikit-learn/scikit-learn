@@ -62,8 +62,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         inverse transform (when fit_inverse_transform=True).
 
     fit_inverse_transform : bool, default=False
-        Learn the inverse transform for non-precomputed kernels.
-        (i.e. learn to find the pre-image of a point)
+        Learn the inverse transform for non-precomputed kernels
+        (i.e. learn to find the pre-image of a point).
 
     eigen_solver : {'auto', 'dense', 'arpack', 'randomized'}, \
         default='auto'
@@ -183,15 +183,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.decomposition import KernelPCA
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = KernelPCA(n_components=7, kernel='linear')
-    >>> X_transformed = transformer.fit_transform(X)
-    >>> X_transformed.shape
-    (1797, 7)
 
     References
     ----------
@@ -209,6 +202,16 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         (arXiv:909)
         A randomized algorithm for the decomposition of matrices
         Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import KernelPCA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = KernelPCA(n_components=7, kernel='linear')
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
     """
 
     def __init__(
@@ -395,6 +398,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         Returns
         -------
         self : object
@@ -423,9 +429,16 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        **params : kwargs
+            Keyword arguments passed to the fit_transform instance.
+
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
+            Returns the instance itself.
         """
         self.fit(X, **params)
 
@@ -443,10 +456,13 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vector, where n_samples is the number of samples
+            and n_features is the number of features.
 
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
+            Returns the instance itself.
         """
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse="csr", reset=False)
@@ -490,10 +506,13 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_components)
+            Training vector, where n_samples is the number of samples
+            and n_features is the number of features.
 
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_features)
+            Returns the instance itself.
 
         References
         ----------
