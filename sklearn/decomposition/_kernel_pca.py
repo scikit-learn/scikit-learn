@@ -439,7 +439,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             Not used, present for API consistency by convention.
 
         **params : kwargs
-            Keyword arguments passed to the fit_transform instance.
+            Parameters (keyword arguments) and values passed to
+            the fit_transform instance.
 
         Returns
         -------
