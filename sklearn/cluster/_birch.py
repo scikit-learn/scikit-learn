@@ -14,6 +14,7 @@ from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils.extmath import row_norms
 from ..utils import deprecated
+from ..utils import check_scalar
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
@@ -506,6 +507,30 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
+
+        scalars_checks = {
+            "threshold": {
+                "target_type": numbers.Real,
+                "min_val": 0.0,
+                "min_is_inclusive": False
+            },
+            "branching_factor": {
+                "target_type": numbers.Integral,
+                "min_val": 1,
+                "min_is_inclusive": False
+            },
+            "n_clusters": {
+                "target_type": numbers.Integral,
+                "min_val": 1,
+                "min_is_inclusive": True
+            }
+        }
+
+        for scalar_name in scalars_checks:
+            check_scalar(
+                getattr(self, scalar_name), scalar_name, **scalars_checks[scalar_name]
+            )
+
         # TODO: Remove deprected flags in 1.2
         self._deprecated_fit, self._deprecated_partial_fit = True, False
         return self._fit(X, partial=False)
@@ -520,8 +545,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         threshold = self.threshold
         branching_factor = self.branching_factor
 
-        if branching_factor <= 1:
-            raise ValueError("Branching_factor should be greater than one.")
+        # if branching_factor <= 1:
+        #     raise ValueError("Branching_factor should be greater than one.")
         n_samples, n_features = X.shape
 
         # If partial_fit is called for the first time or fit is called, we
