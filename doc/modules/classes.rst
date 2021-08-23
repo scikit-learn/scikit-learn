@@ -1646,27 +1646,3 @@ Recently deprecated
 
 To be removed in 1.0 (renaming of 0.25)
 ---------------------------------------
-
-.. _loss_function_ref:
-
-:mod:`sklearn._loss`: Private Loss Function Classes
-===========================================================
-
-.. automodule:: sklearn._loss
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   _loss.HalfSquaredError
-   _loss.AbsoluteError
-   _loss.PinballLoss
-   _loss.HalfPoissonLoss
-   _loss.HalfGammaLoss
-   _loss.HalfTweedieLoss
-   _loss.BinaryCrossEntropy
-   _loss.CategoricalCrossEntropy
