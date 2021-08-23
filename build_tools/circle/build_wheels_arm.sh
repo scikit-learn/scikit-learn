@@ -14,3 +14,4 @@ for pyversion in 37 38 39; do
     export CIBW_BUILD=$pywheel
     python -m pip install cibuildwheel
         python -m cibuildwheel --output-dir wheelhouse
+
