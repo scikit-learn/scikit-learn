@@ -1,8 +1,4 @@
 version: 2.1
-parameters:
-  commit-desc:
-    type: string
-    default: ""
 
 jobs:
   doc-min-dependencies:
@@ -163,21 +159,21 @@ jobs:
           paths:
             - ~/scikit_learn_data
 
-
-
   linux-arm64-wheels:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
     steps:
       - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - run: ./build_tools/circle/build_wheel_arm.sh
+      - build-wheels:
+          command: |
+            if [[ "$(git log --format=%B -n 1 $CIRCLE_SHA1)" =~ "\[cd\ build\]" ]]; then
+              bash build_tools/circle/checkout_merge_commit.sh
+              bash build_tools/circle/build_wheel_arm.sh
+            fi
       - store_artifacts:
           path: wheelhouse
           destination: wheelhouse
-
-
 
   deploy:
     docker:
@@ -227,12 +223,4 @@ workflows:
   linux-arm64:
     jobs:
       - linux-arm64
-  linux-arm64-wheels:
-    parameters: |
-      { "commit-desc" : "$(git log --format=%B -n 1 $CIRCLE_SHA1)" }
-    when:
-      matches:
-        pattern: "^[cd build]$"
-        value: << parameters.commit-desc >>
-    jobs:
       - linux-arm64-wheels
