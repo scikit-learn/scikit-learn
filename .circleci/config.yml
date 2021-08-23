@@ -169,7 +169,7 @@ jobs:
           command: |
             if [[ "$(git log --format=%B -n 1 $CIRCLE_SHA1)" =~ \[cd\ build\] ]]; then
               bash build_tools/circle/checkout_merge_commit.sh
-              bash build_tools/circle/build_wheel_arm.sh
+              bash build_tools/circle/build_wheels_arm.sh
             fi
       - store_artifacts:
           path: wheelhouse
