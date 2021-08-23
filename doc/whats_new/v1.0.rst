@@ -789,6 +789,12 @@ Changelog
   unavailable on the basis of state, in a more readable way.
   :pr:`19948` by `Joel Nothman`_.
 
+_ |Enhancement| :func:`utils.validation.check_is_fitted` now uses
+  ``__sklearn_is_fitted__`` if available, instead of checking for attributes ending with
+  an underscore. This also makes :class:`Pipeline` and
+  :class:`preprocessing.FunctionTransformer` pass
+  ``check_is_fitted(estimator)``. :pr:`20657` by `Adrin Jalali`_.
+
 - |Fix| Fixed a bug in :func:`utils.sparsefuncs.mean_variance_axis` where the
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
