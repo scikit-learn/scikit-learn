@@ -540,7 +540,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         -------
         X_t : {array-like, sparse matrix} of \
                 shape (n_samples, sum_n_components)
-            Horizonatally stacked results of transformers. sum_n_components is the
+            Horizontally stacked results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
