@@ -25,6 +25,35 @@ n_clusters = 3
 X = generate_clustered_data(n_clusters=n_clusters)
 
 
+@pytest.mark.parametrize(
+    "input, params, err_type, err_msg",
+    [
+        (X, {"eps": -1.0}, ValueError, "eps == -1.0, must be a positive real number."),
+        (X, {"eps": 0.0}, ValueError, "eps == 0.0, must be a positive real number."),
+
+        (X, {"min_samples": 0}, ValueError,
+         "min_samples == 0, must be a positive integer."),
+        (X, {"min_samples": 1.5}, ValueError, "min_samples == 1.5, must be an integer."),
+        (X, {"min_samples": -2}, ValueError,
+         "min_samples == -2, must be a positive integer."),
+
+        (X, {"leaf_size": 0},   ValueError, "leaf_size == 0, must be a positive integer."),
+        (X, {"leaf_size": 2.5}, ValueError, "leaf_size == 1.5, must be an integer."),
+        (X, {"leaf_size": -3},  ValueError,
+         "leaf_size == -2, must be a positive integer."),
+
+        (X, {"p": 0},  ValueError, "p == 0, must be >= 1"),
+        (X, {"p": -2}, ValueError, "p == -2, must be a positive real number."),
+
+        (X, {"n_jobs": 2.5}, ValueError, "n_jobs == 2.5, must be an integer."),
+    ],
+)
+def test_dbscan_params_validation(input, params, err_type, err_msg):
+    """Check the parameters validation in `DBSCAN`."""
+    with pytest.raises(err_type, match=err_msg):
+        dbscan(**params).fit(input)
+
+
 def test_dbscan_similarity():
     # Tests the DBSCAN algorithm with a similarity array.
     # Parameters chosen specifically for this task.
@@ -272,11 +301,11 @@ def test_input_validation():
 @pytest.mark.parametrize(
     "args",
     [
-        {"eps": -1.0},
+        # {"eps": -1.0},
         {"algorithm": "blah"},
         {"metric": "blah"},
-        {"leaf_size": -1},
-        {"p": -1},
+        # {"leaf_size": -1},
+        # {"p": -1},
     ],
 )
 def test_dbscan_badargs(args):
