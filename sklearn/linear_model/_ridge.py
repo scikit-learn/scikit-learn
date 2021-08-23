@@ -21,7 +21,7 @@ from scipy.sparse import linalg as sp_linalg
 from ._base import LinearClassifierMixin, LinearModel
 from ._base import _deprecate_normalize, _rescale_data
 from ._sag import sag_solver
-from ..base import RegressorMixin, MultiOutputMixin, is_classifier
+from ..base import MultiOutputMixin, RegressorMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_array
@@ -2319,9 +2319,17 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     def _more_tags(self):
         return {
+            "multilabel": True,
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
-            }
+                # FIXME: see
+                # https://github.com/scikit-learn/scikit-learn/issues/19858
+                # to track progress to resolve this issue
+                "check_classifiers_multilabel_output_format_predict": (
+                    "RidgeClassifierCV.predict outputs an array of shape (25,) "
+                    "instead of (25, 5)"
+                ),
+            },
         }

@@ -2138,6 +2138,11 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    sklearn.kernel_approximation.Nystroem : Approximate a kernel map
+        using a subset of the training data.
+
     References
     ----------
     .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
@@ -2171,7 +2176,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         pass
 
     def fit(self, K, y=None):
-        """Fit KernelCenterer
+        """Fit KernelCenterer.
 
         Parameters
         ----------
@@ -2184,7 +2189,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted transformer.
+            Returns the instance itself.
         """
 
         K = self._validate_data(K, dtype=FLOAT_DTYPES)
@@ -2214,6 +2219,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         K_new : ndarray of shape (n_samples1, n_samples2)
+            Returns the instance itself.
         """
         check_is_fitted(self)
 
