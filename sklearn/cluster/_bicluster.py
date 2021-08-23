@@ -5,6 +5,7 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+import numbers
 
 from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
@@ -13,6 +14,7 @@ from scipy.sparse.linalg import eigsh, svds
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 from ..utils import check_random_state
+from ..utils import check_scalar
 
 from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
 
@@ -102,13 +104,21 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_init = n_init
         self.random_state = random_state
 
-    def _check_parameters(self):
+    def _check_parameters(self, n_samples):
         legal_svd_methods = ("randomized", "arpack")
         if self.svd_method not in legal_svd_methods:
             raise ValueError(
                 "Unknown SVD method: '{0}'. svd_method must be one of {1}.".format(
                     self.svd_method, legal_svd_methods
                 )
+            )
+        scalars_checks = {
+        "n_clusters": { "target_type": numbers.Integral,"min_val": 1, "max_val": n_samples},
+        "n_init": { "target_type": numbers.Integral,"min_val": 1 },
+        }
+        for scalar_name in scalars_checks:
+            check_scalar(
+                getattr(self, scalar_name), scalar_name, **scalars_checks[scalar_name]
             )
 
     def fit(self, X, y=None):
@@ -128,7 +138,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             SpectralBiclustering instance.
         """
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
-        self._check_parameters()
+        self._check_parameters(X.shape[0])
         self._fit(X)
         return self
 
@@ -492,7 +502,7 @@ class SpectralBiclustering(BaseSpectral):
         self.n_components = n_components
         self.n_best = n_best
 
-    def _check_parameters(self):
+    def _check_parameters(self, n_sample):
         super()._check_parameters()
         legal_methods = ("bistochastic", "scale", "log")
         if self.method not in legal_methods:
@@ -515,22 +525,14 @@ class SpectralBiclustering(BaseSpectral):
                     " or an iterable with two integers:"
                     " (n_row_clusters, n_column_clusters)"
                 ) from e
-        if self.n_components < 1:
-            raise ValueError(
-                "Parameter n_components must be greater than 0,"
-                " but its value is {}".format(self.n_components)
-            )
-        if self.n_best < 1:
-            raise ValueError(
-                "Parameter n_best must be greater than 0, but its value is {}".format(
-                    self.n_best
-                )
-            )
-        if self.n_best > self.n_components:
-            raise ValueError(
-                "n_best cannot be larger than n_components, but {} >  {}".format(
-                    self.n_best, self.n_components
-                )
+
+        scalars_checks = {
+        "n_components": { "target_type": numbers.Integral,"min_val": 1},
+        "n_best": { "target_type": numbers.Integral,"min_val": 1, "max_val": self.n_components },
+        }
+        for scalar_name in scalars_checks:
+            check_scalar(
+                getattr(self, scalar_name), scalar_name, **scalars_checks[scalar_name]
             )
 
     def _fit(self, X):
