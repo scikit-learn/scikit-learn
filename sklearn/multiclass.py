@@ -776,7 +776,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        if _check_partial_fit_first_call(self, classes):
+        first_call = _check_partial_fit_first_call(self, classes)
+        if first_call:
             self.estimators_ = [
                 clone(self.estimator)
                 for _ in range(self.n_classes_ * (self.n_classes_ - 1) // 2)
@@ -794,7 +795,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             y,
             accept_sparse=["csr", "csc"],
             force_all_finite=False,
-            reset=_check_partial_fit_first_call(self, classes),
+            reset=first_call,
         )
         check_classification_targets(y)
         combinations = itertools.combinations(range(self.n_classes_), 2)
