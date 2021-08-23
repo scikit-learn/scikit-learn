@@ -288,7 +288,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse graph, BallTree, KDTree}
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored
