@@ -165,7 +165,7 @@ jobs:
     resource_class: arm.medium
     steps:
       - checkout
-      - linux-arm64-wheels:
+      - run:
           command: |
             if [[ "$(git log --format=%B -n 1 $CIRCLE_SHA1)" =~ "\[cd\ build\]" ]]; then
               bash build_tools/circle/checkout_merge_commit.sh
