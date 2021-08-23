@@ -197,7 +197,7 @@ def test_hasattr_multi_output_predict_proba():
 
 # check predict_proba passes
 def test_multi_output_predict_proba():
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, loss="log")
     param = {"loss": ("hinge", "log", "modified_huber")}
 
     # inner function for custom scoring
@@ -220,7 +220,7 @@ def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
-    err_msg = "The base estimator should implement predict_proba method"
+    err_msg = "probability estimates are not available for loss='hinge'"
     with pytest.raises(AttributeError, match=err_msg):
         multi_target_linear.predict_proba(X)
 
@@ -401,13 +401,6 @@ def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and
     # and predict_proba are called
     moc = MultiOutputClassifier(LinearSVC(random_state=0))
-
-    with pytest.raises(NotFittedError):
-        moc.predict(y)
-
-    with pytest.raises(NotFittedError):
-        moc.predict_proba
-
     with pytest.raises(NotFittedError):
         moc.score(X, y)
 
@@ -422,6 +415,36 @@ def test_multi_output_exceptions():
     msg = "Unknown label type"
     with pytest.raises(ValueError, match=msg):
         moc.fit(X, X[:, 1])
+
+
+@pytest.mark.parametrize("response_method", ["predict_proba", "predict"])
+def test_multi_output_not_fitted_error(response_method):
+    """Check that we raise the proper error when the estimator is not fitted"""
+    moc = MultiOutputClassifier(LogisticRegression())
+    with pytest.raises(NotFittedError):
+        getattr(moc, response_method)(X)
+
+
+def test_multi_output_delegate_predict_proba():
+    """Check the behavior for the delegation of predict_proba to the underlying
+    estimator"""
+
+    # A base estimator with `predict_proba`should expose the method even before fit
+    moc = MultiOutputClassifier(LogisticRegression())
+    assert hasattr(moc, "predict_proba")
+    moc.fit(X, y)
+    assert hasattr(moc, "predict_proba")
+
+    # A base estimator without `predict_proba` should raise an AttributeError
+    moc = MultiOutputClassifier(LinearSVC())
+    assert not hasattr(moc, "predict_proba")
+    msg = "'LinearSVC' object has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=msg):
+        moc.predict_proba(X)
+    moc.fit(X, y)
+    assert not hasattr(moc, "predict_proba")
+    with pytest.raises(AttributeError, match=msg):
+        moc.predict_proba(X)
 
 
 def generate_multilabel_dataset_with_correlations():

@@ -11,6 +11,7 @@ import warnings
 import re
 
 import numpy as np
+import joblib
 
 from numpy.testing import (
     assert_almost_equal,
@@ -869,3 +870,30 @@ def test_mlp_param_dtypes(dtype, Estimator):
 
     if Estimator == MLPRegressor:
         assert pred.dtype == dtype
+
+
+def test_mlp_loading_from_joblib_partial_fit(tmp_path):
+    """Loading from MLP and partial fitting updates weights. Non-regression
+    test for #19626."""
+    pre_trained_estimator = MLPRegressor(
+        hidden_layer_sizes=(42,), random_state=42, learning_rate_init=0.01, max_iter=200
+    )
+    features, target = [[2]], [4]
+
+    # Fit on x=2, y=4
+    pre_trained_estimator.fit(features, target)
+
+    # dump and load model
+    pickled_file = tmp_path / "mlp.pkl"
+    joblib.dump(pre_trained_estimator, pickled_file)
+    load_estimator = joblib.load(pickled_file)
+
+    # Train for a more epochs on point x=2, y=1
+    fine_tune_features, fine_tune_target = [[2]], [1]
+
+    for _ in range(200):
+        load_estimator.partial_fit(fine_tune_features, fine_tune_target)
+
+    # finetuned model learned the new target
+    predicted_value = load_estimator.predict(fine_tune_features)
+    assert_allclose(predicted_value, fine_tune_target, rtol=1e-4)

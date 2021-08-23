@@ -15,7 +15,9 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.fixes import linspace
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
+from ..utils.stats import _weighted_percentile
+
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 
@@ -576,7 +578,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.order = order
 
     @staticmethod
-    def _get_base_knot_positions(X, n_knots=10, knots="uniform"):
+    def _get_base_knot_positions(X, n_knots=10, knots="uniform", sample_weight=None):
         """Calculate base knot positions.
 
         Base knots such that first knot <= feature <= last knot. For the
@@ -589,17 +591,29 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Knot positions (points) of base interval.
         """
         if knots == "quantile":
-            knots = np.percentile(
-                X,
-                100 * np.linspace(start=0, stop=1, num=n_knots, dtype=np.float64),
-                axis=0,
+            percentiles = 100 * np.linspace(
+                start=0, stop=1, num=n_knots, dtype=np.float64
             )
+
+            if sample_weight is None:
+                knots = np.percentile(X, percentiles, axis=0)
+            else:
+                knots = np.array(
+                    [
+                        _weighted_percentile(X, sample_weight, percentile)
+                        for percentile in percentiles
+                    ]
+                )
+
         else:
             # knots == 'uniform':
             # Note that the variable `knots` has already been validated and
             # `else` is therefore safe.
-            x_min = np.amin(X, axis=0)
-            x_max = np.amax(X, axis=0)
+            # Disregard observations with zero weight.
+            mask = slice(None, None, 1) if sample_weight is None else sample_weight > 0
+            x_min = np.amin(X[mask], axis=0)
+            x_max = np.amax(X[mask], axis=0)
+
             knots = linspace(
                 start=x_min,
                 stop=x_max,
@@ -632,7 +646,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 feature_names.append(f"{input_features[i]}_sp_{j}")
         return feature_names
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Compute knot positions of splines.
 
         Parameters
@@ -642,6 +656,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         y : None
             Ignored.
+
+        sample_weight : array-like of shape (n_samples,), default = None
+            Individual weights for each sample. Used to calculate quantiles if
+            `knots="quantile"`. For `knots="uniform"`, zero weighted
+            observations are ignored for finding the min and max of `X`.
 
         Returns
         -------
@@ -655,7 +674,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             ensure_min_samples=2,
             ensure_2d=True,
         )
-        n_samples, n_features = X.shape
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        _, n_features = X.shape
 
         if not (isinstance(self.degree, numbers.Integral) and self.degree >= 0):
             raise ValueError(
@@ -672,7 +694,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 )
 
             base_knots = self._get_base_knot_positions(
-                X, n_knots=self.n_knots, knots=self.knots
+                X, n_knots=self.n_knots, knots=self.knots, sample_weight=sample_weight
             )
         else:
             base_knots = check_array(self.knots, dtype=np.float64)
@@ -866,6 +888,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         mask,
                         ((i + 1) * n_splines - degree) : ((i + 1) * n_splines),
                     ] = f_max[-degree:]
+
             elif self.extrapolation == "linear":
                 # Continue the degree first and degree last spline bases
                 # linearly beyond the boundaries, with slope = derivative at

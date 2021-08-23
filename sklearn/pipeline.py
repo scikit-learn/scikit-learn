@@ -26,7 +26,9 @@ from .utils import (
 from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
+from .utils.validation import check_is_fitted
 from .utils.fixes import delayed
+from .exceptions import NotFittedError
 
 from .utils.metaestimators import _BaseComposition
 
@@ -656,6 +658,18 @@ class Pipeline(_BaseComposition):
     def n_features_in_(self):
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
+
+    def __sklearn_is_fitted__(self):
+        """Indicate whether pipeline has been fit."""
+        try:
+            # check if the last step of the pipeline is fitted
+            # we only check the last step since if the last step is fit, it
+            # means the previous steps should also be fit. This is faster than
+            # checking if every step of the pipeline is fit.
+            check_is_fitted(self.steps[-1][1])
+            return True
+        except NotFittedError:
+            return False
 
     def _sk_visual_block_(self):
         _, estimators = zip(*self.steps)

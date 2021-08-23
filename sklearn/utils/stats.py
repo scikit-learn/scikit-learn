@@ -22,7 +22,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         Weights for each value in `array`. Must be same shape as `array` or
         of shape `(array.shape[0],)`.
 
-    percentile: int, default=50
+    percentile: int or float, default=50
         Percentile to compute. Must be value between 0 and 100.
 
     Returns

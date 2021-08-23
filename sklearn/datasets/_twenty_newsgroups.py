@@ -25,7 +25,6 @@ uncompressed the train set is 52 MB and the test set is 34 MB.
 # License: BSD 3 clause
 
 import os
-from os.path import dirname, join
 import logging
 import tarfile
 import pickle
@@ -43,6 +42,7 @@ from ._base import _convert_data_dataframe
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
 from ..utils import check_random_state, Bunch
@@ -287,9 +287,7 @@ def fetch_20newsgroups(
             "subset can only be 'train', 'test' or 'all', got '%s'" % subset
         )
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "twenty_newsgroups.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("twenty_newsgroups.rst")
 
     data.DESCR = fdescr
 
@@ -510,9 +508,7 @@ def fetch_20newsgroups_vectorized(
             % subset
         )
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "twenty_newsgroups.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("twenty_newsgroups.rst")
 
     frame = None
     target_name = ["category_class"]

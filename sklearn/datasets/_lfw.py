@@ -9,7 +9,7 @@ over the internet, all details are available on the official website:
 # License: BSD 3 clause
 
 from os import listdir, makedirs, remove
-from os.path import dirname, join, exists, isdir
+from os.path import join, exists, isdir
 
 import logging
 
@@ -17,7 +17,12 @@ import numpy as np
 import joblib
 from joblib import Memory
 
-from ._base import get_data_home, _fetch_remote, RemoteFileMetadata
+from ._base import (
+    get_data_home,
+    _fetch_remote,
+    RemoteFileMetadata,
+    load_descr,
+)
 from ..utils import Bunch
 from ..utils.fixes import parse_version
 
@@ -329,9 +334,7 @@ def fetch_lfw_people(
 
     X = faces.reshape(len(faces), -1)
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "lfw.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("lfw.rst")
 
     if return_X_y:
         return X, target
@@ -519,9 +522,7 @@ def fetch_lfw_pairs(
         index_file_path, data_folder_path, resize=resize, color=color, slice_=slice_
     )
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "lfw.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("lfw.rst")
 
     # pack the results as a Bunch instance
     return Bunch(
