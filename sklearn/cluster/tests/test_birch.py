@@ -19,6 +19,35 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 
 
+@pytest.mark.parametrize(
+    "input, params, err_type, err_msg",
+    [
+        (X, {"threshold": -1.0}, ValueError,
+         "threshold == -1.0, must be a positive real number."),
+        (X, {"threshold": 0.0}, ValueError,
+         "threshold == 0.0, must be a positive real number."),
+
+        (X, {"branching_factor": 0}, ValueError,
+         "branching_factor == 0, must be a positive integer greater than 1."),
+        (X, {"branching_factor": 1}, ValueError,
+         "branching_factor == 1, must be a positive integer greater than 1."),
+        (X, {"branching_factor": 1.5}, ValueError,
+         "min_samples == 1.5, must be an integer."),
+        (X, {"branching_factor": -2}, ValueError,
+         "branching_factor == -2, must be a positive integer."),
+
+        (X, {"n_clusters": 0}, ValueError, "n_clusters == 0, must be a positive integer."),
+        (X, {"n_clusters": 2.5}, ValueError,  "n_clusters == 2.5, must be an integer."),
+        (X, {"n_clusters": -3}, ValueError,
+         "n_clusters == -2, must be a positive integer."),
+    ],
+)
+def test_birch_params_validation(input, params, err_type, err_msg):
+    """Check the parameters validation in `Birch`."""
+    with pytest.raises(err_type, match=err_msg):
+        Birch(**params).fit(input)
+
+
 def test_n_samples_leaves_roots():
     # Sanity check for the number of samples in leaves and roots
     X, y = make_blobs(n_samples=10)
@@ -141,10 +170,10 @@ def test_branching_factor():
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
 
-    # Raises error when branching_factor is set to one.
-    brc = Birch(n_clusters=None, branching_factor=1, threshold=0.01)
-    with pytest.raises(ValueError):
-        brc.fit(X)
+    # # Raises error when branching_factor is set to one.
+    # brc = Birch(n_clusters=None, branching_factor=1, threshold=0.01)
+    # with pytest.raises(ValueError):
+    #     brc.fit(X)
 
 
 def check_threshold(birch_instance, threshold):
