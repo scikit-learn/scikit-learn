@@ -129,7 +129,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 "a callable or None. Multimetric scoring is not "
                 "supported."
             )
-
         # We need to enforce that successive calls to cv.split() yield the same
         # splits: see https://github.com/scikit-learn/scikit-learn/issues/15149
         if not _yields_constant_splits(self._checked_cv_orig):
@@ -138,7 +137,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 "calls to split(). Set its random_state to an int, or set "
                 "shuffle=False."
             )
-
         if (
             self.resource != "n_samples"
             and self.resource not in self.estimator.get_params()
@@ -147,7 +145,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 f"Cannot use resource={self.resource} which is not supported "
                 f"by estimator {self.estimator.__class__.__name__}"
             )
-
         if isinstance(self.max_resources, str) and self.max_resources != "auto":
             raise ValueError(
                 "max_resources must be either 'auto' or a positive integer"
@@ -158,7 +155,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
             raise ValueError(
                 "max_resources must be either 'auto' or a positive integer"
             )
-
         if self.min_resources not in ("smallest", "exhaust") and (
             not isinstance(self.min_resources, Integral) or self.min_resources <= 0
         ):
@@ -167,7 +163,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 "or a positive integer "
                 "no greater than max_resources."
             )
-
         if isinstance(self, HalvingRandomSearchCV):
             if self.min_resources == self.n_candidates == "exhaust":
                 # for n_candidates=exhaust to work, we need to know what
@@ -182,7 +177,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 raise ValueError(
                     "n_candidates must be either 'exhaust' " "or a positive integer"
                 )
-
         self.min_resources_ = self.min_resources
         if self.min_resources_ in ("smallest", "exhaust"):
             if self.resource == "n_samples":
@@ -197,7 +191,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 self.min_resources_ = 1
             # if 'exhaust', min_resources_ might be set to a higher value later
             # in _run_search
-
         self.max_resources_ = self.max_resources
         if self.max_resources_ == "auto":
             if not self.resource == "n_samples":
@@ -205,7 +198,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                     "max_resources can only be 'auto' if resource='n_samples'"
                 )
             self.max_resources_ = _num_samples(X)
-
         if self.min_resources_ > self.max_resources_:
             raise ValueError(
                 f"min_resources_={self.min_resources_} is greater "
@@ -264,7 +256,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 f"Cannot use parameter {self.resource} as the resource since "
                 "it is part of the searched parameters."
             )
-
         # n_required_iterations is the number of iterations needed so that the
         # last iterations evaluates less than `factor` candidates.
         n_required_iterations = 1 + floor(log(len(candidate_params), self.factor))
@@ -278,7 +269,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 self.min_resources_,
                 self.max_resources_ // self.factor ** last_iteration,
             )
-
         # n_possible_iterations is the number of iterations that we can
         # actually do starting from min_resources and without exceeding
         # max_resources. Depending on max_resources and the number of
@@ -292,7 +282,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
             n_iterations = n_required_iterations
         else:
             n_iterations = min(n_possible_iterations, n_required_iterations)
-
         if self.verbose:
             print(f"n_iterations: {n_iterations}")
             print(f"n_required_iterations: {n_required_iterations}")
@@ -301,7 +290,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
             print(f"max_resources_: {self.max_resources_}")
             print(f"aggressive_elimination: {self.aggressive_elimination}")
             print(f"factor: {self.factor}")
-
         self.n_resources_ = []
         self.n_candidates_ = []
 
@@ -314,7 +302,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # iterations as needed (while candidates are being
                 # eliminated), and then go on as usual.
                 power = max(0, itr - n_required_iterations + n_possible_iterations)
-
             n_resources = int(self.factor ** power * self.min_resources_)
             # guard, probably not needed
             n_resources = min(n_resources, self.max_resources_)
@@ -328,7 +315,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 print(f"iter: {itr}")
                 print(f"n_candidates: {n_candidates}")
                 print(f"n_resources: {n_resources}")
-
             if self.resource == "n_samples":
                 # subsampling will be done in cv.split()
                 cv = _SubsampleMetaSplitter(
@@ -337,7 +323,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                     subsample_test=True,
                     random_state=self.random_state,
                 )
-
             else:
                 # Need copy so that the n_resources of next iteration does
                 # not overwrite
@@ -345,7 +330,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 for candidate in candidate_params:
                     candidate[self.resource] = n_resources
                 cv = self._checked_cv_orig
-
             more_results = {
                 "iter": [itr] * n_candidates,
                 "n_resources": [n_resources] * n_candidates,
@@ -357,7 +341,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
             n_candidates_to_keep = ceil(n_candidates / self.factor)
             candidate_params = _top_k(results, n_candidates_to_keep, itr)
-
         self.n_remaining_candidates_ = len(candidate_params)
         self.n_required_iterations_ = n_required_iterations
         self.n_possible_iterations_ = n_possible_iterations
