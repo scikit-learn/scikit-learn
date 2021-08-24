@@ -47,9 +47,7 @@ class _SubsampleMetaSplitter:
                             ),
                         )
                     yield train_idx, test_idx
-
-                y_train = y[train_idx]
-                if len(np.unique(y_train)) > 1:
+                if len(np.unique(y[train_idx])) > 1:
                     break
 
 
