@@ -179,7 +179,7 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         self : object
-            Returns instance of object.
+            Returns the instance itself.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = self._validate_data(X, order="C", dtype=DTYPE)

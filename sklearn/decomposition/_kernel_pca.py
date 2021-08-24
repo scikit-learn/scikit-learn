@@ -392,7 +392,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
         Returns
@@ -420,7 +420,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
         Returns
