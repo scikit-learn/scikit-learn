@@ -19,7 +19,7 @@ been leading the development.
 Governance
 ----------
 The decision making process and governance structure of scikit-learn is laid
-out in the :ref:`governance document <governance>`.
+out in the `governance document<https://github.com/scikit-learn/scikit-learn/blob/main/doc/about.rst#id1>`_.
 
 Authors
 -------
@@ -34,18 +34,16 @@ Instead, please see `What's the best way to ask questions about scikit-learn
 <http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
 in the FAQ.
 
-.. seealso::
-
-   :ref:`How you can contribute to the project <contributing>`
+seealso `How you can contribute to the project <https://scikit-learn.org/stable/developers/contributing.html#:~:text=The%20preferred%20way%20to%20contribute,do%20not%20already%20have%20one.>`_
 
 Triage Team
 -----------
 
 The following people are active contributors who also help with
-:ref:`triaging issues <bug_triaging>`, PRs, and general
+`triaging issues<https://github.com/scikit-learn/scikit-learn/blob/main/doc/about.rst#id3>`_, PRs, and general
 maintenance:
 
-.. include:: triage_team.rst
+`triage team <./triage_team.rst>`_
 
 Emeritus Core Developers
 ------------------------
