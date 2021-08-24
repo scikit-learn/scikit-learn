@@ -398,6 +398,25 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     FutureWarning,
                 )
 
+            if self.max_features == "auto":
+                warn(
+                    "The prior default of 'auto' for max_features is "
+                    "deprecated. Please use the new default for "
+                    "RandomForestRegressors and ExtraTreesRegressors, "
+                    "which is 1.0",
+                    FutureWarning,
+                )
+
+        if isinstance(self, (RandomForestClassifier, ExtraTreeClassifier)):
+            if self.max_features == "auto":
+                warn(
+                    "The prior default of 'auto' for max_features is "
+                    "deprecated. Please use the new default for "
+                    "RandomForestClassifiers and ExtraTreesClassifiers, "
+                    "which is 'sqrt'.",
+                    FutureWarning,
+                )
+
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available if bootstrap=True")
 
