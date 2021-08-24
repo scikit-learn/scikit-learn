@@ -561,7 +561,6 @@ Changelog
   :class:`linear_model.PassiveAggressiveRegressor`.
   :pr:`20683` by `Guillaume Lemaitre`_.
 
-
 :mod:`sklearn.manifold`
 .......................
 
