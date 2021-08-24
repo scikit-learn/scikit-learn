@@ -1304,21 +1304,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
-    Examples
-    --------
-    >>> from sklearn.svm import NuSVR
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> import numpy as np
-    >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
-    >>> regr = make_pipeline(StandardScaler(), NuSVR(C=1.0, nu=0.1))
-    >>> regr.fit(X, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('nusvr', NuSVR(nu=0.1))])
-
     See Also
     --------
     NuSVC : Support Vector Machine for classification implemented with libsvm
@@ -1335,6 +1320,21 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> from sklearn.svm import NuSVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> np.random.seed(0)
+    >>> y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> regr = make_pipeline(StandardScaler(), NuSVR(C=1.0, nu=0.1))
+    >>> regr.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('nusvr', NuSVR(nu=0.1))])
     """
 
     _impl = "nu_svr"

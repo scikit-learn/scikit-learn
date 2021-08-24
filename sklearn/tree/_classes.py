@@ -1021,6 +1021,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     def n_features_(self):
         return self.n_features_in_
 
+    def _more_tags(self):
+        return {"multilabel": True}
+
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     """A decision tree regressor.

@@ -168,14 +168,14 @@ def test_ransac_predict():
     assert_array_equal(ransac_estimator.predict(X), np.zeros(100))
 
 
-def test_ransac_resid_thresh_no_inliers():
-    # When residual_threshold=0.0 there are no inliers and a
+def test_ransac_residuals_threshold_no_inliers():
+    # When residual_threshold=nan there are no inliers and a
     # ValueError with a message should be raised
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
         base_estimator,
         min_samples=2,
-        residual_threshold=0.0,
+        residual_threshold=float("nan"),
         random_state=0,
         max_trials=5,
     )
@@ -595,6 +595,22 @@ def test_ransac_final_model_fit_sample_weight():
     )
 
     assert_allclose(ransac.estimator_.coef_, final_model.coef_, atol=1e-12)
+
+
+def test_perfect_horizontal_line():
+    """Check that we can fit a line where all samples are inliers.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19497
+    """
+    X = np.arange(100)[:, None]
+    y = np.zeros((100,))
+
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator, random_state=0)
+    ransac_estimator.fit(X, y)
+
+    assert_allclose(ransac_estimator.estimator_.coef_, 0.0)
+    assert_allclose(ransac_estimator.estimator_.intercept_, 0.0)
 
 
 # TODO: Remove in v1.2

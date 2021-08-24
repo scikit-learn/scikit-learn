@@ -311,6 +311,13 @@ def test_base_estimator():
         clf.fit(X_fail, y_fail)
 
 
+def test_sample_weights_infinite():
+    msg = "Sample weights have reached infinite values"
+    clf = AdaBoostClassifier(n_estimators=30, learning_rate=5.0, algorithm="SAMME")
+    with pytest.warns(UserWarning, match=msg):
+        clf.fit(iris.data, iris.target)
+
+
 def test_sparse_classification():
     # Check classification with sparse input.
 
