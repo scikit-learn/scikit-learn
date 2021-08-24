@@ -20,12 +20,16 @@ Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 License: BSD 3 clause
 """
 
-# name_suffix, c_type, np_type
+# name, c_type, np_type
 dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
 
+def get_dispatch(dtypes):
+    for name, c_type, np_type in dtypes:
+        yield name, c_type, np_type
+
 }}
-{{for name_suffix, c_type, np_type in dtypes}}
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 #------------------------------------------------------------------------------
 
@@ -43,7 +47,7 @@ np.import_array()
 
 from ._random cimport our_rand_r
 
-cdef class SequentialDataset{{name_suffix}}:
+cdef class SequentialDataset{{name}}:
     """Base class for datasets with sequential data access.
 
     SequentialDataset is used to iterate over the rows of a matrix X and
@@ -215,7 +219,7 @@ cdef class SequentialDataset{{name_suffix}}:
         return (x_data, x_indices, x_indptr), y, sample_weight, sample_idx
 
 
-cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
+cdef class ArrayDataset{{name}}(SequentialDataset{{name}}):
     """Dataset backed by a two-dimensional numpy array.
 
     The dtype of the numpy array is expected to be ``{{np_type}}`` ({{c_type}})
@@ -284,7 +288,7 @@ cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
         sample_weight[0] = self.sample_weight_data[sample_idx]
 
 
-cdef class CSRDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
+cdef class CSRDataset{{name}}(SequentialDataset{{name}}):
     """A ``SequentialDataset`` backed by a scipy sparse CSR matrix. """
 
     def __cinit__(self, np.ndarray[{{c_type}}, ndim=1, mode='c'] X_data,

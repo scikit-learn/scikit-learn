@@ -12,6 +12,10 @@ class BaseOptimizer:
 
     Parameters
     ----------
+    params : list, length = len(coefs_) + len(intercepts_)
+        The concatenated list containing coefs_ and intercepts_ in MLP model.
+        Used for initializing velocities and updating params
+
     learning_rate_init : float, default=0.1
         The initial learning rate used. It controls the step-size in updating
         the weights
@@ -22,25 +26,22 @@ class BaseOptimizer:
         the current learning rate
     """
 
-    def __init__(self, learning_rate_init=0.1):
+    def __init__(self, params, learning_rate_init=0.1):
+        self.params = [param for param in params]
         self.learning_rate_init = learning_rate_init
         self.learning_rate = float(learning_rate_init)
 
-    def update_params(self, params, grads):
+    def update_params(self, grads):
         """Update parameters with given gradients
 
         Parameters
         ----------
-        params : list of length = len(coefs_) + len(intercepts_)
-            The concatenated list containing coefs_ and intercepts_ in MLP
-            model. Used for initializing velocities and updating params
-
-        grads : list of length = len(params)
+        grads : list, length = len(params)
             Containing gradients with respect to coefs_ and intercepts_ in MLP
             model. So length should be aligned with params
         """
         updates = self._get_updates(grads)
-        for param, update in zip((p for p in params), updates):
+        for param, update in zip(self.params, updates):
             param += update
 
     def iteration_ends(self, time_step):
@@ -127,7 +128,7 @@ class SGDOptimizer(BaseOptimizer):
         nesterov=True,
         power_t=0.5,
     ):
-        super().__init__(learning_rate_init)
+        super().__init__(params, learning_rate_init)
 
         self.lr_schedule = lr_schedule
         self.momentum = momentum
@@ -245,7 +246,7 @@ class AdamOptimizer(BaseOptimizer):
     def __init__(
         self, params, learning_rate_init=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8
     ):
-        super().__init__(learning_rate_init)
+        super().__init__(params, learning_rate_init)
 
         self.beta_1 = beta_1
         self.beta_2 = beta_2

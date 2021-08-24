@@ -222,7 +222,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         Returns
         -------
         self : object
-            Fitted estimator.
         """
         fit_start_time = time()
         acc_find_split_time = 0.0  # time spent finding the best splits
@@ -992,7 +991,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     @property
     def n_iter_(self):
-        """Number of iterations of the boosting process."""
         check_is_fitted(self)
         return len(self._predictors)
 
@@ -1027,7 +1025,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         "least squares" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
         computation of the gradient. Furthermore, "poisson" loss internally
-        uses a log-link and requires ``y >= 0``.
+        uses a log-link and requires ``y >= 0``
 
         .. versionchanged:: 0.23
            Added option 'poisson'.
@@ -1070,7 +1068,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int} of shape (n_features) \
-            or shape (n_categorical_features,), default=None
+            or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1164,21 +1162,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.24
 
-    See Also
-    --------
-    GradientBoostingRegressor : Exact gradient boosting method that does not
-        scale as good on datasets with a large number of samples.
-    sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
-    RandomForestRegressor : A meta-estimator that fits a number of decision
-        tree regressors on various sub-samples of the dataset and uses
-        averaging to improve the statistical performance and control
-        over-fitting.
-    AdaBoostRegressor : A meta-estimator that begins by fitting a regressor
-        on the original dataset and then fits additional copies of the
-        regressor on the same dataset but where the weights of instances are
-        adjusted according to the error of the current prediction. As such,
-        subsequent regressors focus more on difficult cases.
-
     Examples
     --------
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
@@ -1259,7 +1242,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return self._loss.inverse_link_function(self._raw_predict(X).ravel())
 
     def staged_predict(self, X):
-        """Predict regression target for each iteration.
+        """Predict regression target for each iteration
 
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
@@ -1377,7 +1360,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int} of shape (n_features) \
-            or shape (n_categorical_features,), default=None
+            or shape (n_categorical_features,), default=None.
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1473,20 +1456,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
-
-    See Also
-    --------
-    GradientBoostingClassifier : Exact gradient boosting method that does not
-        scale as good on datasets with a large number of samples.
-    sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
-    RandomForestClassifier : A meta-estimator that fits a number of decision
-        tree classifiers on various sub-samples of the dataset and uses
-        averaging to improve the predictive accuracy and control over-fitting.
-    AdaBoostClassifier : A meta-estimator that begins by fitting a classifier
-        on the original dataset and then fits additional copies of the
-        classifier on the same dataset where the weights of incorrectly
-        classified instances are adjusted such that subsequent classifiers
-        focus more on difficult cases.
 
     Examples
     --------

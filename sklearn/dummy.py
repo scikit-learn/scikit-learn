@@ -84,10 +84,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
 
-    See Also
-    --------
-    DummyRegressor : Regressor that makes predictions using simple rules.
-
     Examples
     --------
     >>> import numpy as np
@@ -125,7 +121,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Returns the instance itself.
         """
         allowed_strategies = (
             "most_frequent",
@@ -367,7 +362,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, object with finite length or shape}
-            Training data.
+            Training data, requires length = n_samples
 
         Returns
         -------
@@ -416,6 +411,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         -------
         score : float
             Mean accuracy of self.predict(X) wrt. y.
+
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))

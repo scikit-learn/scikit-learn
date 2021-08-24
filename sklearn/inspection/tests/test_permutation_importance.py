@@ -31,8 +31,7 @@ from sklearn.utils._testing import _convert_container
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
-@pytest.mark.parametrize("max_samples", [0.5, 1.0])
-def test_permutation_importance_correlated_feature_regression(n_jobs, max_samples):
+def test_permutation_importance_correlated_feature_regression(n_jobs):
     # Make sure that feature highly correlated to the target have a higher
     # importance
     rng = np.random.RandomState(42)
@@ -47,13 +46,7 @@ def test_permutation_importance_correlated_feature_regression(n_jobs, max_sample
     clf.fit(X, y)
 
     result = permutation_importance(
-        clf,
-        X,
-        y,
-        n_repeats=n_repeats,
-        random_state=rng,
-        n_jobs=n_jobs,
-        max_samples=max_samples,
+        clf, X, y, n_repeats=n_repeats, random_state=rng, n_jobs=n_jobs
     )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
@@ -64,10 +57,7 @@ def test_permutation_importance_correlated_feature_regression(n_jobs, max_sample
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
-@pytest.mark.parametrize("max_samples", [0.5, 1.0])
-def test_permutation_importance_correlated_feature_regression_pandas(
-    n_jobs, max_samples
-):
+def test_permutation_importance_correlated_feature_regression_pandas(n_jobs):
     pd = pytest.importorskip("pandas")
 
     # Make sure that feature highly correlated to the target have a higher
@@ -87,13 +77,7 @@ def test_permutation_importance_correlated_feature_regression_pandas(
     clf.fit(X, y)
 
     result = permutation_importance(
-        clf,
-        X,
-        y,
-        n_repeats=n_repeats,
-        random_state=rng,
-        n_jobs=n_jobs,
-        max_samples=max_samples,
+        clf, X, y, n_repeats=n_repeats, random_state=rng, n_jobs=n_jobs
     )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
@@ -104,8 +88,7 @@ def test_permutation_importance_correlated_feature_regression_pandas(
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
-@pytest.mark.parametrize("max_samples", [0.5, 1.0])
-def test_robustness_to_high_cardinality_noisy_feature(n_jobs, max_samples, seed=42):
+def test_robustness_to_high_cardinality_noisy_feature(n_jobs, seed=42):
     # Permutation variable importance should not be affected by the high
     # cardinality bias of traditional feature importances, especially when
     # computed on a held-out test set:
@@ -154,13 +137,7 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, max_samples, seed=
     # Let's check that permutation-based feature importances do not have this
     # problem.
     r = permutation_importance(
-        clf,
-        X_test,
-        y_test,
-        n_repeats=n_repeats,
-        random_state=rng,
-        n_jobs=n_jobs,
-        max_samples=max_samples,
+        clf, X_test, y_test, n_repeats=n_repeats, random_state=rng, n_jobs=n_jobs
     )
 
     assert r.importances.shape == (X.shape[1], n_repeats)
@@ -256,16 +233,14 @@ def test_permutation_importance_linear_regresssion():
     )
 
 
-@pytest.mark.parametrize("max_samples", [500, 1.0])
-def test_permutation_importance_equivalence_sequential_parallel(max_samples):
+def test_permutation_importance_equivalence_sequential_parallel():
     # regression test to make sure that sequential and parallel calls will
     # output the same results.
-    # Also tests that max_samples equal to number of samples is equivalent to 1.0
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
     lr = LinearRegression().fit(X, y)
 
     importance_sequential = permutation_importance(
-        lr, X, y, n_repeats=5, random_state=0, n_jobs=1, max_samples=max_samples
+        lr, X, y, n_repeats=5, random_state=0, n_jobs=1
     )
 
     # First check that the problem is structured enough and that the model is
@@ -298,8 +273,7 @@ def test_permutation_importance_equivalence_sequential_parallel(max_samples):
 
 
 @pytest.mark.parametrize("n_jobs", [None, 1, 2])
-@pytest.mark.parametrize("max_samples", [0.5, 1.0])
-def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples):
+def test_permutation_importance_equivalence_array_dataframe(n_jobs):
     # This test checks that the column shuffling logic has the same behavior
     # both a dataframe and a simple numpy array.
     pd = pytest.importorskip("pandas")
@@ -336,13 +310,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
 
     n_repeats = 3
     importance_array = permutation_importance(
-        rf,
-        X,
-        y,
-        n_repeats=n_repeats,
-        random_state=0,
-        n_jobs=n_jobs,
-        max_samples=max_samples,
+        rf, X, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs
     )
 
     # First check that the problem is structured enough and that the model is
@@ -354,13 +322,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     # Now check that importances computed on dataframe matche the values
     # of those computed on the array with the same data.
     importance_dataframe = permutation_importance(
-        rf,
-        X_df,
-        y,
-        n_repeats=n_repeats,
-        random_state=0,
-        n_jobs=n_jobs,
-        max_samples=max_samples,
+        rf, X_df, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs
     )
     assert_allclose(
         importance_array["importances"], importance_dataframe["importances"]
@@ -523,20 +485,3 @@ def test_permutation_importance_multi_metric(list_single_scorer, multi_scorer):
         )
 
         assert_allclose(multi_result.importances, single_result.importances)
-
-
-@pytest.mark.parametrize("max_samples", [-1, 5])
-def test_permutation_importance_max_samples_error(max_samples):
-    """Check that a proper error message is raised when `max_samples` is not
-    set to a valid input value.
-    """
-    X = np.array([(1.0, 2.0, 3.0, 4.0)]).T
-    y = np.array([0, 1, 0, 1])
-
-    clf = LogisticRegression()
-    clf.fit(X, y)
-
-    err_msg = r"max_samples must be in \(0, n_samples\]"
-
-    with pytest.raises(ValueError, match=err_msg):
-        permutation_importance(clf, X, y, max_samples=max_samples)

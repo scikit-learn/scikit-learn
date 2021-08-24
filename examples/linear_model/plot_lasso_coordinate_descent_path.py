@@ -31,18 +31,18 @@ X /= X.std(axis=0)  # Standardize data (easier to set the l1_ratio parameter)
 eps = 5e-3  # the smaller it is the longer is the path
 
 print("Computing regularization path using the lasso...")
-alphas_lasso, coefs_lasso, _ = lasso_path(X, y, eps=eps)
+alphas_lasso, coefs_lasso, _ = lasso_path(X, y, eps=eps, fit_intercept=False)
 
 print("Computing regularization path using the positive lasso...")
 alphas_positive_lasso, coefs_positive_lasso, _ = lasso_path(
-    X, y, eps=eps, positive=True
+    X, y, eps=eps, positive=True, fit_intercept=False
 )
 print("Computing regularization path using the elastic net...")
-alphas_enet, coefs_enet, _ = enet_path(X, y, eps=eps, l1_ratio=0.8)
+alphas_enet, coefs_enet, _ = enet_path(X, y, eps=eps, l1_ratio=0.8, fit_intercept=False)
 
 print("Computing regularization path using the positive elastic net...")
 alphas_positive_enet, coefs_positive_enet, _ = enet_path(
-    X, y, eps=eps, l1_ratio=0.8, positive=True
+    X, y, eps=eps, l1_ratio=0.8, positive=True, fit_intercept=False
 )
 
 # Display results

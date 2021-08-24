@@ -13,11 +13,7 @@ import warnings
 
 import scipy.optimize
 
-from ..base import (
-    BaseEstimator,
-    ClassifierMixin,
-    RegressorMixin,
-)
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
@@ -561,8 +557,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         incremental,
     ):
 
-        params = self.coefs_ + self.intercepts_
         if not incremental or not hasattr(self, "_optimizer"):
+            params = self.coefs_ + self.intercepts_
+
             if self.solver == "sgd":
                 self._optimizer = SGDOptimizer(
                     params,
@@ -645,7 +642,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
                     # update weights
                     grads = coef_grads + intercept_grads
-                    self._optimizer.update_params(params, grads)
+                    self._optimizer.update_params(grads)
 
                 self.n_iter_ += 1
                 self.loss_ = accumulated_loss / X.shape[0]
@@ -1249,9 +1246,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             return np.vstack([1 - y_pred, y_pred]).T
         else:
             return y_pred
-
-    def _more_tags(self):
-        return {"multilabel": True}
 
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):

@@ -287,9 +287,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         return probabilities
 
-    def _more_tags(self):
-        return {"multilabel": True}
-
 
 class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, NeighborsBase):
     """Classifier implementing a vote among neighbors within a given radius
@@ -654,6 +651,3 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             probabilities = probabilities[0]
 
         return probabilities
-
-    def _more_tags(self):
-        return {"multilabel": True}

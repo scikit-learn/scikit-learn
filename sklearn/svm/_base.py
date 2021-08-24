@@ -408,7 +408,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         y_pred : ndarray of shape (n_samples,)
-            The predicted values.
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict

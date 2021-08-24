@@ -181,8 +181,8 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Notes
     -----
-    In binary classification, this function is equal to the `jaccard_score`
-    function.
+    In binary and multiclass classification, this function is equal
+    to the ``jaccard_score`` function.
 
     Examples
     --------
@@ -425,16 +425,14 @@ def multilabel_confusion_matrix(
 
     See Also
     --------
-    confusion_matrix : Compute confusion matrix to evaluate the accuracy of a
-        classifier.
+    confusion_matrix
 
     Notes
     -----
-    The `multilabel_confusion_matrix` calculates class-wise or sample-wise
+    The multilabel_confusion_matrix calculates class-wise or sample-wise
     multilabel confusion matrices, and in multiclass tasks, labels are
-    binarized under a one-vs-rest way; while
-    :func:`~sklearn.metrics.confusion_matrix` calculates one confusion matrix
-    for confusion between every two classes.
+    binarized under a one-vs-rest way; while confusion_matrix calculates
+    one confusion matrix for confusion between every two classes.
 
     Examples
     --------
@@ -738,7 +736,7 @@ def jaccard_score(
 
     See Also
     --------
-    accuracy_score, f1_score, multilabel_confusion_matrix
+    accuracy_score, f_score, multilabel_confusion_matrix
 
     Notes
     -----

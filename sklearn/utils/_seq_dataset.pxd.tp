@@ -12,12 +12,16 @@ Each class is duplicated for all dtypes (float and double). The keywords
 between double braces are substituted in setup.py.
 """
 
-# name_suffix, c_type
+# name, c_type
 dtypes = [('64', 'double'),
           ('32', 'float')]
 
+def get_dispatch(dtypes):
+    for name, c_type in dtypes:
+        yield name, c_type
+
 }}
-{{for name_suffix, c_type in dtypes}}
+{{for name, c_type in get_dispatch(dtypes)}}
 
 #------------------------------------------------------------------------------
 
@@ -32,7 +36,7 @@ cimport numpy as np
 # iterators over the rows of a matrix X and corresponding target values y.
 
 
-cdef class SequentialDataset{{name_suffix}}:
+cdef class SequentialDataset{{name}}:
     cdef int current_index
     cdef np.ndarray index
     cdef int *index_data_ptr
@@ -52,7 +56,7 @@ cdef class SequentialDataset{{name_suffix}}:
                     int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) nogil
 
 
-cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
+cdef class ArrayDataset{{name}}(SequentialDataset{{name}}):
     cdef np.ndarray X
     cdef np.ndarray Y
     cdef np.ndarray sample_weights
@@ -65,7 +69,7 @@ cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
     cdef {{c_type}} *sample_weight_data
 
 
-cdef class CSRDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
+cdef class CSRDataset{{name}}(SequentialDataset{{name}}):
     cdef np.ndarray X_data
     cdef np.ndarray X_indptr
     cdef np.ndarray X_indices

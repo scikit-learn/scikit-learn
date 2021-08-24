@@ -1,23 +1,3 @@
-{{py:
-
-"""
-Efficient (dense) parameter vector implementation for linear models.
-
-Template file for easily generate fused types consistent code using Tempita
-(https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
-
-Generated file: weight_vector.pxd
-
-Each class is duplicated for all dtypes (float and double). The keywords
-between double braces are substituted in setup.py.
-"""
-
-# name_suffix, c_type, reset_wscale_threshold
-dtypes = [('64', 'double', 1e-9),
-          ('32', 'float', 1e-6)]
-
-}}
-
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -39,9 +19,8 @@ from ._cython_blas cimport _dot, _scal, _axpy
 
 np.import_array()
 
-{{for name_suffix, c_type, reset_wscale_threshold in dtypes}}
 
-cdef class WeightVector{{name_suffix}}(object):
+cdef class WeightVector(object):
     """Dense vector represented by a scalar and a numpy array.
 
     The class provides methods to ``add`` a sparse vector
@@ -51,65 +30,57 @@ cdef class WeightVector{{name_suffix}}(object):
 
     Attributes
     ----------
-    w : ndarray, dtype={{c_type}}, order='C'
+    w : ndarray, dtype=double, order='C'
         The numpy array which backs the weight vector.
-    aw : ndarray, dtype={{c_type}}, order='C'
+    aw : ndarray, dtype=double, order='C'
         The numpy array which backs the average_weight vector.
-    w_data_ptr : {{c_type}}*
-        A pointer to the data of the numpy array.
-    wscale : {{c_type}}
+    wscale : double
         The scale of the vector.
     n_features : int
         The number of features (= dimensionality of ``w``).
-    sq_norm : {{c_type}}
+    sq_norm : double
         The squared norm of ``w``.
     """
-
-    def __cinit__(self,
-                  {{c_type}}[::1] w,
-                  {{c_type}}[::1] aw):
-
+    def __cinit__(self, double [::1] w, double [::1] aw):
         if w.shape[0] > INT_MAX:
             raise ValueError("More than %d features not supported; got %d."
                              % (INT_MAX, w.shape[0]))
-        self.w = w
-        self.w_data_ptr = &w[0]
         self.wscale = 1.0
         self.n_features = w.shape[0]
-        self.sq_norm = _dot(self.n_features, self.w_data_ptr, 1, self.w_data_ptr, 1)
+        self.sq_norm = _dot(<int>w.shape[0], &w[0], 1, &w[0], 1)
 
-        self.aw = aw
-        if self.aw is not None:
+        self.w_data_ptr = &w[0]
+        if aw is not None:
             self.aw_data_ptr = &aw[0]
             self.average_a = 0.0
             self.average_b = 1.0
 
-    cdef void add(self, {{c_type}} *x_data_ptr, int *x_ind_ptr, int xnnz,
-                  {{c_type}} c) nogil:
+    cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
+                  double c) nogil:
         """Scales sample x by constant c and adds it to the weight vector.
 
         This operation updates ``sq_norm``.
 
         Parameters
         ----------
-        x_data_ptr : {{c_type}}*
+        x_data_ptr : double*
             The array which holds the feature values of ``x``.
         x_ind_ptr : np.intc*
             The array which holds the feature indices of ``x``.
         xnnz : int
             The number of non-zero features of ``x``.
-        c : {{c_type}}
+        c : double
             The scaling constant for the example.
         """
         cdef int j
         cdef int idx
-        cdef {{c_type}} val
-        cdef {{c_type}} innerprod = 0.0
-        cdef {{c_type}} xsqnorm = 0.0
+        cdef double val
+        cdef double innerprod = 0.0
+        cdef double xsqnorm = 0.0
 
         # the next two lines save a factor of 2!
-        cdef {{c_type}} wscale = self.wscale
-        cdef {{c_type}}* w_data_ptr = self.w_data_ptr
+        cdef double wscale = self.wscale
+        cdef double* w_data_ptr = self.w_data_ptr
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
@@ -123,30 +94,30 @@ cdef class WeightVector{{name_suffix}}(object):
     # Update the average weights according to the sparse trick defined
     # here: https://research.microsoft.com/pubs/192769/tricks-2012.pdf
     # by Leon Bottou
-    cdef void add_average(self, {{c_type}} *x_data_ptr, int *x_ind_ptr, int xnnz,
-                          {{c_type}} c, {{c_type}} num_iter) nogil:
+    cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
+                          double c, double num_iter) nogil:
         """Updates the average weight vector.
 
         Parameters
         ----------
-        x_data_ptr : {{c_type}}*
+        x_data_ptr : double*
             The array which holds the feature values of ``x``.
         x_ind_ptr : np.intc*
             The array which holds the feature indices of ``x``.
         xnnz : int
             The number of non-zero features of ``x``.
-        c : {{c_type}}
+        c : double
             The scaling constant for the example.
-        num_iter : {{c_type}}
+        num_iter : double
             The total number of iterations.
         """
         cdef int j
         cdef int idx
-        cdef {{c_type}} val
-        cdef {{c_type}} mu = 1.0 / num_iter
-        cdef {{c_type}} average_a = self.average_a
-        cdef {{c_type}} wscale = self.wscale
-        cdef {{c_type}}* aw_data_ptr = self.aw_data_ptr
+        cdef double val
+        cdef double mu = 1.0 / num_iter
+        cdef double average_a = self.average_a
+        cdef double wscale = self.wscale
+        cdef double* aw_data_ptr = self.aw_data_ptr
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
@@ -159,13 +130,13 @@ cdef class WeightVector{{name_suffix}}(object):
             self.average_b /= (1.0 - mu)
         self.average_a += mu * self.average_b * wscale
 
-    cdef {{c_type}} dot(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
+    cdef double dot(self, double *x_data_ptr, int *x_ind_ptr,
                     int xnnz) nogil:
         """Computes the dot product of a sample x and the weight vector.
 
         Parameters
         ----------
-        x_data_ptr : {{c_type}}*
+        x_data_ptr : double*
             The array which holds the feature values of ``x``.
         x_ind_ptr : np.intc*
             The array which holds the feature indices of ``x``.
@@ -174,28 +145,27 @@ cdef class WeightVector{{name_suffix}}(object):
 
         Returns
         -------
-        innerprod : {{c_type}}
+        innerprod : double
             The inner product of ``x`` and ``w``.
         """
         cdef int j
         cdef int idx
-        cdef {{c_type}} innerprod = 0.0
-        cdef {{c_type}}* w_data_ptr = self.w_data_ptr
+        cdef double innerprod = 0.0
+        cdef double* w_data_ptr = self.w_data_ptr
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             innerprod += w_data_ptr[idx] * x_data_ptr[j]
         innerprod *= self.wscale
         return innerprod
 
-    cdef void scale(self, {{c_type}} c) nogil:
+    cdef void scale(self, double c) nogil:
         """Scales the weight vector by a constant ``c``.
 
         It updates ``wscale`` and ``sq_norm``. If ``wscale`` gets too
         small we call ``reset_swcale``."""
         self.wscale *= c
         self.sq_norm *= (c * c)
-
-        if self.wscale < {{reset_wscale_threshold}}:
+        if self.wscale < 1e-9:
             self.reset_wscale()
 
     cdef void reset_wscale(self) nogil:
@@ -210,8 +180,6 @@ cdef class WeightVector{{name_suffix}}(object):
         _scal(self.n_features, self.wscale, self.w_data_ptr, 1)
         self.wscale = 1.0
 
-    cdef {{c_type}} norm(self) nogil:
+    cdef double norm(self) nogil:
         """The L2 norm of the weight vector. """
         return sqrt(self.sq_norm)
-
-{{endfor}}

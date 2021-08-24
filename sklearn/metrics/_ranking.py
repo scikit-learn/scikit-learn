@@ -281,10 +281,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     See Also
     --------
-    DetCurveDisplay.from_estimator : Plot DET curve given an estimator and
-        some data.
-    DetCurveDisplay.from_predictions : Plot DET curve given the true and
-        predicted labels.
+    plot_det_curve : Plot detection error tradeoff (DET) curve.
     DetCurveDisplay : DET curve visualization.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
     precision_recall_curve : Compute precision-recall curve.
