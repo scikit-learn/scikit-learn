@@ -151,7 +151,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored
@@ -367,7 +367,7 @@ class MiniBatchSparsePCA(SparsePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored
