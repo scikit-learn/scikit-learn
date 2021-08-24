@@ -543,6 +543,12 @@ Changelog
   coordinate descent solver. Otherwise, an error will be raised.
   :pr:`19391` by :user:`Shao Yang Hong <hongshaoyang>`.
 
+- |Fix| Add a `random_state` to make internal shuffling deterministic in
+  :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.SparseSGDClassifier`, and
+  :class:`linear_model.SparseSGDRegressor`.
+  :pr:`19716` by :user:`Pierre Attard <PierreAttard>`.
+
 - |API| Keyword validation has moved from `__init__` and `set_params` to `fit`
   for the following estimators conforming to scikit-learn's conventions:
   :class:`linear_model.SGDClassifier`,
