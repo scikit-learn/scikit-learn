@@ -414,6 +414,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 # undo normalisation
                 y_var = np.outer(y_var, self._y_train_std ** 2)
 
+                # if y_var has shape (n_samples, 1), reshape to (n_samples,)
+                if y_var.shape[0] == y_var.size:
+                    y_var = y_var.reshape(-1)
+
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
