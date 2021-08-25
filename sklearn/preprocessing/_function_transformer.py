@@ -110,7 +110,11 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self.inv_kw_args = inv_kw_args
 
     def _check_input(self, X, *, reset):
-        self._check_feature_names(X, reset=reset)
+        if reset:
+            # Only set feature names when `reset=True`,
+            # When `reset=False`, validation will be done in `_validate_data`
+            # when `validate=True`.
+            self._check_feature_names(X, reset=reset)
         if self.validate:
             return self._validate_data(X, accept_sparse=self.accept_sparse, reset=reset)
         return X
