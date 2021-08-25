@@ -162,6 +162,23 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionchanged:: 0.24
             Single calibrated classifier case when `ensemble=False`.
+     
+    See Also
+    --------
+
+    References
+    ----------
+    .. [1] Obtaining calibrated probability estimates from decision trees
+           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+
+    .. [2] Transforming Classifier Scores into Accurate Multiclass
+           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+
+    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
+           Regularized Likelihood Methods, J. Platt, (1999)
+
+    .. [4] Predicting Good Probabilities with Supervised Learning,
+           A. Niculescu-Mizil & R. Caruana, ICML 2005
 
     Examples
     --------
@@ -202,20 +219,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     1
     >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
     array([[0.936..., 0.063...]])
-
-    References
-    ----------
-    .. [1] Obtaining calibrated probability estimates from decision trees
-           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
-
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
-
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
-           Regularized Likelihood Methods, J. Platt, (1999)
-
-    .. [4] Predicting Good Probabilities with Supervised Learning,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
 
     def __init__(
@@ -380,7 +383,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         Parameters
         ----------
-        X : The samples, as accepted by base_estimator.predict_proba
+        X : array-like of shape (n_samples, n_features)
+            The samples, as accepted by base_estimator.predict_proba.
 
         Returns
         -------
@@ -400,13 +404,15 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         return mean_proba
 
     def predict(self, X):
-        """Predict the target of new samples. The predicted class is the
-        class that has the highest probability, and can thus be different
-        from the prediction of the uncalibrated classifier.
+        """Predict the target of new samples.
+        
+        The predicted class is the class that has the highest probability,
+        and can thus be different from the prediction of the uncalibrated classifier.
 
         Parameters
         ----------
-        X : The samples, as accepted by base_estimator.predict
+        X : array-like of shape (n_samples, n_features)
+            The samples, as accepted by base_estimator.predict.
 
         Returns
         -------
