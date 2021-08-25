@@ -82,8 +82,9 @@ def _get_response(X, estimator, response_method, pos_label=None):
         The class considered as the positive class when computing
         the metrics.
     """
-    classification_error = "{} should be a binary classifier".format(
-        estimator.__class__.__name__
+    classification_error = (
+        "Expected 'estimator' to be a binary classifier, but got"
+        f" {estimator.__class__.__name__}"
     )
 
     if not is_classifier(estimator):

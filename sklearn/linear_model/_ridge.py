@@ -21,7 +21,7 @@ from scipy.sparse import linalg as sp_linalg
 from ._base import LinearClassifierMixin, LinearModel
 from ._base import _deprecate_normalize, _rescale_data
 from ._sag import sag_solver
-from ..base import RegressorMixin, MultiOutputMixin, is_classifier
+from ..base import MultiOutputMixin, RegressorMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_array
@@ -1225,6 +1225,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     @property
     def classes_(self):
+        """Classes labels."""
         return self._label_binarizer.classes_
 
 
@@ -1983,6 +1984,8 @@ class _BaseRidgeCV(LinearModel):
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
         self.n_features_in_ = estimator.n_features_in_
+        if hasattr(estimator, "feature_names_in_"):
+            self.feature_names_in_ = estimator.feature_names_in_
 
         return self
 
@@ -2163,7 +2166,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             ``normalize`` was deprecated in version 1.0 and
             will be removed in 1.2.
 
-    scoring : string, callable, default=None
+    scoring : str, callable, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
@@ -2186,7 +2189,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     store_cv_values : bool, default=False
         Flag indicating if the cross-validation values corresponding to
@@ -2227,15 +2230,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.linear_model import RidgeClassifierCV
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = RidgeClassifierCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
-    >>> clf.score(X, y)
-    0.9630...
-
     See Also
     --------
     Ridge : Ridge regression.
@@ -2247,6 +2241,15 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     For multi-class classification, n_class classifiers are trained in
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import RidgeClassifierCV
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = RidgeClassifierCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
+    >>> clf.score(X, y)
+    0.9630...
     """
 
     def __init__(
@@ -2290,6 +2293,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         X, y = self._validate_data(
             X,
@@ -2315,13 +2319,22 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     @property
     def classes_(self):
+        """Classes labels."""
         return self._label_binarizer.classes_
 
     def _more_tags(self):
         return {
+            "multilabel": True,
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
-            }
+                # FIXME: see
+                # https://github.com/scikit-learn/scikit-learn/issues/19858
+                # to track progress to resolve this issue
+                "check_classifiers_multilabel_output_format_predict": (
+                    "RidgeClassifierCV.predict outputs an array of shape (25,) "
+                    "instead of (25, 5)"
+                ),
+            },
         }

@@ -496,6 +496,16 @@ def enet_path(
     :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
     """
+    X_offset_param = params.pop("X_offset", None)
+    X_scale_param = params.pop("X_scale", None)
+    tol = params.pop("tol", 1e-4)
+    max_iter = params.pop("max_iter", 1000)
+    random_state = params.pop("random_state", None)
+    selection = params.pop("selection", "cyclic")
+
+    if len(params) > 0:
+        raise ValueError("Unexpected parameters in params", params.keys())
+
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
@@ -532,10 +542,10 @@ def enet_path(
 
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
-        if "X_offset" in params:
+        if X_offset_param is not None:
             # As sparse matrices are not actually centered we need this
             # to be passed to the CD solver.
-            X_sparse_scaling = params["X_offset"] / params["X_scale"]
+            X_sparse_scaling = X_offset_param / X_scale_param
             X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
@@ -571,13 +581,10 @@ def enet_path(
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
-    tol = params.get("tol", 1e-4)
-    max_iter = params.get("max_iter", 1000)
     dual_gaps = np.empty(n_alphas)
     n_iters = []
 
-    rng = check_random_state(params.get("random_state", None))
-    selection = params.get("selection", "cyclic")
+    rng = check_random_state(random_state)
     if selection not in ["random", "cyclic"]:
         raise ValueError("selection should be either random or cyclic.")
     random = selection == "random"
@@ -1016,7 +1023,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
-        # FIXME: 'normalize' to be removed in 1.2
         for k in range(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
@@ -1031,8 +1037,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 alphas=[alpha],
                 precompute=precompute,
                 Xy=this_Xy,
-                fit_intercept=False,
-                normalize=False,
                 copy_X=True,
                 verbose=False,
                 tol=self.tol,
@@ -1267,6 +1271,8 @@ def _path_residuals(
     sample_weight,
     train,
     test,
+    normalize,
+    fit_intercept,
     path,
     path_params,
     alphas=None,
@@ -1347,9 +1353,6 @@ def _path_residuals(
                 # fancy indexing should create a writable copy but it doesn't
                 # for read-only memmaps (cf. numpy#14132).
                 array.setflags(write=True)
-
-    fit_intercept = path_params["fit_intercept"]
-    normalize = path_params["normalize"]
 
     if y.ndim == 1:
         precompute = path_params["precompute"]
@@ -1577,7 +1580,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         path_params = self.get_params()
 
         # FIXME: 'normalize' to be removed in 1.2
-        path_params["normalize"] = _normalize
+        # path_params["normalize"] = _normalize
+        # Pop `intercept` and `normalize` that are not parameter of the path
+        # function
+        path_params.pop("normalize", None)
+        path_params.pop("fit_intercept", None)
 
         if "l1_ratio" in path_params:
             l1_ratios = np.atleast_1d(path_params["l1_ratio"])
@@ -1635,6 +1642,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 sample_weight,
                 train,
                 test,
+                _normalize,
+                self.fit_intercept,
                 self.path,
                 path_params,
                 alphas=this_alphas,

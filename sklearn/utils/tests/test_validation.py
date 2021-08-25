@@ -49,9 +49,10 @@ from sklearn.utils.validation import (
     _allclose_dense_sparse,
     _num_features,
     FLOAT_DTYPES,
+    _get_feature_names,
 )
 from sklearn.utils.validation import _check_fit_params
-
+from sklearn.base import BaseEstimator
 import sklearn
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
@@ -750,6 +751,20 @@ def test_check_symmetric():
             assert_array_equal(output, arr_sym)
 
 
+def test_check_is_fitted_with_is_fitted():
+    class Estimator(BaseEstimator):
+        def fit(self, **kwargs):
+            self._is_fitted = True
+            return self
+
+        def __sklearn_is_fitted__(self):
+            return hasattr(self, "_is_fitted") and self._is_fitted
+
+    with pytest.raises(NotFittedError):
+        check_is_fitted(Estimator())
+    check_is_fitted(Estimator().fit())
+
+
 def test_check_is_fitted():
     # Check is TypeError raised when non estimator instance passed
     with pytest.raises(TypeError):
@@ -1445,3 +1460,59 @@ def test_check_array_deprecated_matrix():
     )
     with pytest.warns(FutureWarning, match=msg):
         check_array(X)
+
+
+@pytest.mark.parametrize(
+    "names",
+    [list(range(2)), range(2), None],
+    ids=["list-int", "range", "default"],
+)
+def test_get_feature_names_pandas_with_ints_no_warning(names):
+    """Get feature names with pandas dataframes with ints without warning"""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
+
+    with pytest.warns(None) as record:
+        names = _get_feature_names(X)
+    assert not record
+    assert names is None
+
+
+def test_get_feature_names_pandas():
+    """Get feature names with pandas dataframes."""
+    pd = pytest.importorskip("pandas")
+    columns = [f"col_{i}" for i in range(3)]
+    X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
+    feature_names = _get_feature_names(X)
+
+    assert_array_equal(feature_names, columns)
+
+
+def test_get_feature_names_numpy():
+    """Get feature names return None for numpy arrays."""
+    X = np.array([[1, 2, 3], [4, 5, 6]])
+    names = _get_feature_names(X)
+    assert names is None
+
+
+# TODO: Convert to a error in 1.2
+@pytest.mark.parametrize(
+    "names, dtypes",
+    [
+        ([["a", "b"], ["c", "d"]], "['tuple']"),
+        (["a", 1], "['int', 'str']"),
+    ],
+    ids=["multi-index", "mixed"],
+)
+def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
+    """Get feature names warns when the feature names have mixed dtypes"""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
+
+    msg = re.escape(
+        "Feature names only support names that are all strings. "
+        f"Got feature names with dtypes: {dtypes}. An error will be raised"
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        names = _get_feature_names(X)
+    assert names is None
