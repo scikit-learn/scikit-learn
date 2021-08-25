@@ -147,6 +147,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    make_column_transformer : Convenience function for
+        combining the outputs of multiple transformer objects applied to
+        column subsets of the original feature space.
+    make_column_selector : Convenience function for selecting
+        columns based on datatype or the columns name with a regex pattern.
+
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
@@ -155,14 +163,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     dropped from the resulting transformed feature matrix, unless specified
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
-
-    See Also
-    --------
-    make_column_transformer : Convenience function for
-        combining the outputs of multiple transformer objects applied to
-        column subsets of the original feature space.
-    make_column_selector : Convenience function for selecting
-        columns based on datatype or the columns name with a regex pattern.
 
     Examples
     --------
@@ -180,7 +180,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     >>> ct.fit_transform(X)
     array([[0. , 1. , 0.5, 0.5],
            [0.5, 0.5, 0. , 1. ]])
-
     """
 
     _required_parameters = ["transformers"]
