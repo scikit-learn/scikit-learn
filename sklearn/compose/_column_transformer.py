@@ -590,13 +590,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        X_t : {array-like, sparse matrix} of \
-                shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
+        X_t : {array-like, sparse matrix} of shape (n_samples, sum_n_components)
+            The _"hstack" of results of transformers. The "sum_n_components" is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
-
         """
         check_is_fitted(self)
         X = _check_X(X)
