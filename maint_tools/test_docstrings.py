@@ -82,7 +82,6 @@ DOCSTRING_IGNORE_LIST = [
     "QuantileTransformer",
     "RANSACRegressor",
     "RFE",
-    "RadiusNeighborsClassifier",
     "RadiusNeighborsTransformer",
     "RandomizedSearchCV",
     "RegressorChain",
