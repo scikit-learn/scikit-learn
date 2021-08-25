@@ -1,7 +1,7 @@
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils.validation import _allclose_dense_sparse
+from ..utils.validation import _allclose_dense_sparse, check_array
 
 
 def _identity(X):
@@ -74,7 +74,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
-        Names of features seen during :term:`fit`.
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -108,10 +109,10 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
 
-    def _check_input(self, X):
-        self._check_feature_names(X, reset=True)
+    def _check_input(self, X, *, reset):
+        self._check_feature_names(X, reset=reset)
         if self.validate:
-            return self._validate_data(X, accept_sparse=self.accept_sparse)
+            return self._validate_data(X, accept_sparse=self.accept_sparse, reset=reset)
         return X
 
     def _check_inverse_transform(self, X):
@@ -141,7 +142,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        X = self._check_input(X)
+        X = self._check_input(X, reset=True)
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
             self._check_inverse_transform(X)
         return self
@@ -159,6 +160,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
+        X = self._check_input(X, reset=False)
         return self._transform(X, func=self.func, kw_args=self.kw_args)
 
     def inverse_transform(self, X):
@@ -174,11 +176,11 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
+        if self.validate:
+            X = check_array(X, accept_sparse=self.accept_sparse)
         return self._transform(X, func=self.inverse_func, kw_args=self.inv_kw_args)
 
     def _transform(self, X, func=None, kw_args=None):
-        X = self._check_input(X)
-
         if func is None:
             func = _identity
 
