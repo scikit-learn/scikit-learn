@@ -737,10 +737,12 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
 
         Returns
         -------
         Y_prob : array-like of shape (n_samples, n_classes)
+            The predicted probabilities.
         """
         X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
