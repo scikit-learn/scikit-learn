@@ -402,7 +402,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
+            DictVectorizer class instance.
 
         Examples
         --------
