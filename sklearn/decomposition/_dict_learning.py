@@ -1304,8 +1304,8 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Dictionary learning.
 
-    Finds a dictionary (a set of atoms) that can best be used to represent data
-    using a sparse code.
+    Finds a dictionary (a set of atoms) that performs well at sparsely
+    encoding the fitted data.
 
     Solves the optimization problem::
 
@@ -1437,7 +1437,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     See Also
     --------
-    MiniBatchDictionaryLearning: A faster, but less accurate, version of the
+    MiniBatchDictionaryLearning: A faster, less accurate, version of the
         dictionary learning algorithm.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     SparseCoder : Finds a sparse representation of data from a fixed,
