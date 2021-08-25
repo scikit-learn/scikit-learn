@@ -71,6 +71,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
 
+    Attributes
+    ----------
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> import numpy as np
@@ -102,6 +109,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self.inv_kw_args = inv_kw_args
 
     def _check_input(self, X):
+        self._check_feature_names(X, reset=True)
         if self.validate:
             return self._validate_data(X, accept_sparse=self.accept_sparse)
         return X
