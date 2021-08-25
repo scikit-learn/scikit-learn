@@ -74,6 +74,12 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         A list of length n_features containing the feature names (e.g., "f=ham"
         and "f=spam").
 
+    See Also
+    --------
+    FeatureHasher : Performs vectorization using only a hash function.
+    sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
+        features encoded as columns of arbitrary data types.
+        
     Examples
     --------
     >>> from sklearn.feature_extraction import DictVectorizer
@@ -88,12 +94,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
-
-    See Also
-    --------
-    FeatureHasher : Performs vectorization using only a hash function.
-    sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
-        features encoded as columns of arbitrary data types.
     """
 
     def __init__(self, *, dtype=np.float64, separator="=", sparse=True, sort=True):
