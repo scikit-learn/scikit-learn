@@ -440,7 +440,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         outlier_label=None,
         metric_params=None,
         n_jobs=None,
-        **kwargs,
     ):
         super().__init__(
             radius=radius,
