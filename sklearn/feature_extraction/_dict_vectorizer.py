@@ -374,10 +374,16 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         return self._transform(X, fitting=False)
 
     def get_feature_names(self):
-        """Returns a list of feature names, ordered by their indices.
+        """Return a list of feature names, ordered by their indices.
 
         If one-of-K coding is applied to categorical features, this will
         include the constructed feature names but not the original ones.
+        
+        Returns
+        -------
+        feature_names_ : list
+               A list of length n_features containing the feature names 
+               (e.g., "f=ham" and "f=spam").
         """
         return self.feature_names_
 
