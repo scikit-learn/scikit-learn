@@ -766,6 +766,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input data.
 
         Returns
         -------
