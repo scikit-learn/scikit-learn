@@ -148,10 +148,12 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                Accepts multiple string values for one categorical feature.
 
         y : (ignored)
+            Ignored parameter.
 
         Returns
         -------
-        self
+        self : object
+            DictVectorizer class instance.
         """
         feature_names = []
         vocab = {}
