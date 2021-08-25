@@ -88,12 +88,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    feature_names_in_ : ndarray of shape (`n_features_in_`,)
-        Names of features seen during :term:`fit`. Only defined if the
-        underlying regressor exposes such an attribute when fit.
-
-        .. versionadded:: 1.0
-
     Examples
     --------
     >>> import numpy as np
@@ -238,9 +232,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             self.regressor_ = clone(self.regressor)
 
         self.regressor_.fit(X, y_trans, **fit_params)
-
-        if hasattr(self.regressor_, "feature_names_in_"):
-            self.feature_names_in_ = self.regressor_.feature_names_in_
 
         return self
 

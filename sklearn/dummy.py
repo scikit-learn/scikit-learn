@@ -80,12 +80,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    feature_names_in_ : ndarray of shape (`n_features_in_`,)
-        Names of features seen during :term:`fit`. Only defined if the
-        underlying regressor exposes such an attribute when fit.
-
-        .. versionadded:: 1.0
-
     sparse_output_ : bool
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
@@ -171,7 +165,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self.n_outputs_ = y.shape[1]
 
         self.n_features_in_ = None  # No input validation is done for X
-        self._check_feature_names(X, reset=True)
 
         check_consistent_length(X, y)
 
@@ -526,7 +519,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         y = check_array(y, ensure_2d=False)
         self.n_features_in_ = None  # No input validation is done for X
-        self._check_feature_names(X, reset=True)
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 

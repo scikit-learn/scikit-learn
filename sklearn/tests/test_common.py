@@ -324,6 +324,7 @@ def test_check_n_features_in_after_fitting(estimator):
 # is checking for column name consistency.
 
 COLUMN_NAME_MODULES_TO_IGNORE = {
+    "compose",
     "ensemble",
     "feature_extraction",
     "kernel_approximation",

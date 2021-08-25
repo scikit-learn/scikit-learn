@@ -3709,7 +3709,11 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
 
     tags = _safe_tags(estimator_orig)
 
-    if "2darray" not in tags["X_types"] and "sparse" not in tags["X_types"]:
+    if (
+        "2darray" not in tags["X_types"]
+        and "sparse" not in tags["X_types"]
+        or tags["no_validation"]
+    ):
         return
 
     rng = np.random.RandomState(0)
@@ -3738,10 +3742,6 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
             "attribute after fitting with a dataframe"
         )
     assert_array_equal(estimator.feature_names_in_, names)
-
-    if tags["no_validation"]:
-        # estimator does not validate feature_names_in_ in non-fit methods
-        return
 
     check_methods = []
     for method in (
