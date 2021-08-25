@@ -220,6 +220,10 @@ def test_discretize(n_samples):
 @pytest.mark.filterwarnings(
     "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*"
 )
+# TODO: Remove when pyamg removes the use of pinv2
+@pytest.mark.filterwarnings(
+    "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
+)
 def test_spectral_clustering_with_arpack_amg_solvers():
     # Test that spectral_clustering is the same for arpack and amg solver
     # Based on toy example from plot_segmentation_toy.py
@@ -301,6 +305,16 @@ def test_verbose(assign_labels, capsys):
 @pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
 def test_pairwise_is_deprecated(affinity):
     sp = SpectralClustering(affinity=affinity)
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         sp._pairwise
+
+
+def test_spectral_clustering_np_matrix_raises():
+    """Check that spectral_clustering raises an informative error when passed
+    a np.matrix. See #10993"""
+    X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
+
+    msg = r"spectral_clustering does not support passing in affinity as an np\.matrix"
+    with pytest.raises(TypeError, match=msg):
+        spectral_clustering(X)

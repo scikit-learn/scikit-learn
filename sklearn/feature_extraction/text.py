@@ -223,7 +223,7 @@ class _VectorizerMixin:
 
         if doc is np.nan:
             raise ValueError(
-                "np.nan is an invalid document, expected byte or " "unicode string."
+                "np.nan is an invalid document, expected byte or unicode string."
             )
 
         return doc
@@ -396,7 +396,8 @@ class _VectorizerMixin:
                     "Your stop_words may be inconsistent with "
                     "your preprocessing. Tokenizing the stop "
                     "words generated tokens %r not in "
-                    "stop_words." % sorted(inconsistent)
+                    "stop_words."
+                    % sorted(inconsistent)
                 )
             return not inconsistent
         except Exception:
@@ -406,8 +407,10 @@ class _VectorizerMixin:
             return "error"
 
     def build_analyzer(self):
-        """Return a callable that handles preprocessing, tokenization
-        and n-grams generation.
+        """Return a callable to process input data.
+
+        The callable handles that handles preprocessing, tokenization, and
+        n-grams generation.
 
         Returns
         -------
@@ -474,7 +477,7 @@ class _VectorizerMixin:
                     raise ValueError("Vocabulary contains repeated indices.")
                 for i in range(len(vocabulary)):
                     if i not in indices:
-                        msg = "Vocabulary of size %d doesn't contain index " "%d." % (
+                        msg = "Vocabulary of size %d doesn't contain index %d." % (
                             len(vocabulary),
                             i,
                         )
@@ -502,7 +505,8 @@ class _VectorizerMixin:
         if min_n > max_m:
             raise ValueError(
                 "Invalid value for ngram_range=%s "
-                "lower boundary larger than the upper boundary." % str(self.ngram_range)
+                "lower boundary larger than the upper boundary."
+                % str(self.ngram_range)
             )
 
     def _warn_for_unused_params(self):
@@ -780,7 +784,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         # triggers a parameter validation
         if isinstance(X, str):
             raise ValueError(
-                "Iterable over raw text documents expected, " "string object received."
+                "Iterable over raw text documents expected, string object received."
             )
 
         self._warn_for_unused_params()
@@ -806,7 +810,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         """
         if isinstance(X, str):
             raise ValueError(
-                "Iterable over raw text documents expected, " "string object received."
+                "Iterable over raw text documents expected, string object received."
             )
 
         self._validate_params()
@@ -860,7 +864,7 @@ def _document_frequency(X):
 
 
 class CountVectorizer(_VectorizerMixin, BaseEstimator):
-    r"""Convert a collection of text documents to a matrix of token counts
+    r"""Convert a collection of text documents to a matrix of token counts.
 
     This implementation produces a sparse representation of the counts using
     scipy.sparse.csr_matrix.
@@ -884,7 +888,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         - If `'content'`, the input is expected to be a sequence of items that
           can be of type string or byte.
 
-    encoding : string, default='utf-8'
+    encoding : str, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
         decode.
 
@@ -1019,6 +1023,20 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         This is only available if no vocabulary was given.
 
+    See Also
+    --------
+    HashingVectorizer : Convert a collection of text documents to a
+        matrix of token counts.
+
+    TfidfVectorizer : Convert a collection of raw documents to a matrix
+        of TF-IDF features.
+
+    Notes
+    -----
+    The ``stop_words_`` attribute can get large and increase the model size
+    when pickling. This attribute is provided only for introspection and can
+    be safely removed using delattr or set to None before pickling.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import CountVectorizer
@@ -1048,16 +1066,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 1 0 1 0 1 0 1 0 0 1 0 0]
      [1 0 0 1 0 0 0 0 1 1 0 1 0]
      [0 0 1 0 1 0 1 0 0 0 0 0 1]]
-
-    See Also
-    --------
-    HashingVectorizer, TfidfVectorizer
-
-    Notes
-    -----
-    The ``stop_words_`` attribute can get large and increase the model size
-    when pickling. This attribute is provided only for introspection and can
-    be safely removed using delattr or set to None before pickling.
     """
 
     def __init__(
@@ -1158,8 +1166,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         kept_indices = np.where(mask)[0]
         if len(kept_indices) == 0:
             raise ValueError(
-                "After pruning, no terms remain. Try a lower"
-                " min_df or a higher max_df."
+                "After pruning, no terms remain. Try a lower min_df or a higher max_df."
             )
         return X[:, kept_indices], removed_terms
 
@@ -1211,7 +1218,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             vocabulary = dict(vocabulary)
             if not vocabulary:
                 raise ValueError(
-                    "empty vocabulary; perhaps the documents only" " contain stop words"
+                    "empty vocabulary; perhaps the documents only contain stop words"
                 )
 
         if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
@@ -1245,11 +1252,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
+
+        y : None
+            This parameter is ignored.
 
         Returns
         -------
-        self
+        self : object
+            Fitted vectorizer.
         """
         self._warn_for_unused_params()
         self.fit_transform(raw_documents)
@@ -1264,7 +1275,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
+
+        y : None
+            This parameter is ignored.
 
         Returns
         -------
@@ -1276,7 +1290,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # TfidfVectorizer.
         if isinstance(raw_documents, str):
             raise ValueError(
-                "Iterable over raw text documents expected, " "string object received."
+                "Iterable over raw text documents expected, string object received."
             )
 
         self._validate_params()
@@ -1320,7 +1334,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
 
         Returns
         -------
@@ -1329,7 +1343,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         """
         if isinstance(raw_documents, str):
             raise ValueError(
-                "Iterable over raw text documents expected, " "string object received."
+                "Iterable over raw text documents expected, string object received."
             )
         self._check_vocabulary()
 
@@ -1395,7 +1409,7 @@ def _make_int_array():
 
 
 class TfidfTransformer(TransformerMixin, BaseEstimator):
-    """Transform a count matrix to a normalized tf or tf-idf representation
+    """Transform a count matrix to a normalized tf or tf-idf representation.
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
     document-frequency. This is a common term weighting scheme in information
@@ -1441,11 +1455,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     ----------
     norm : {'l1', 'l2'}, default='l2'
         Each output row will have unit norm, either:
-        * 'l2': Sum of squares of vector elements is 1. The cosine
-        similarity between two vectors is their dot product when l2 norm has
-        been applied.
-        * 'l1': Sum of absolute values of vector elements is 1.
-        See :func:`preprocessing.normalize`
+
+        - 'l2': Sum of squares of vector elements is 1. The cosine
+          similarity between two vectors is their dot product when l2 norm has
+          been applied.
+        - 'l1': Sum of absolute values of vector elements is 1.
+          See :func:`preprocessing.normalize`.
 
     use_idf : bool, default=True
         Enable inverse-document-frequency reweighting.
@@ -1471,6 +1486,25 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
+
+    TfidfVectorizer : Convert a collection of raw documents to a matrix of
+        TF-IDF features.
+
+    HashingVectorizer : Convert a collection of text documents to a matrix
+        of token occurrences.
+
+    References
+    ----------
+    .. [Yates2011] R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
+                   Information Retrieval. Addison Wesley, pp. 68-74.
+
+    .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
+                   Introduction to Information Retrieval. Cambridge University
+                   Press, pp. 118-120.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
@@ -1495,16 +1529,6 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
            1.        , 1.91629073, 1.91629073])
     >>> pipe.transform(corpus).shape
     (4, 8)
-
-    References
-    ----------
-
-    .. [Yates2011] R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
-                   Information Retrieval. Addison Wesley, pp. 68-74.
-
-    .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
-                   Introduction to Information Retrieval. Cambridge University
-                   Press, pp. 118-120.
     """
 
     def __init__(self, *, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False):
@@ -1520,6 +1544,14 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         ----------
         X : sparse matrix of shape n_samples, n_features)
             A matrix of term/token counts.
+
+        y : None
+            This parameter is not needed to compute tf-idf.
+
+        Returns
+        -------
+        self : object
+            Fitted transformer.
         """
         X = self._validate_data(X, accept_sparse=("csr", "csc"))
         if not sp.issparse(X):
@@ -1549,12 +1581,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, copy=True):
-        """Transform a count matrix to a tf or tf-idf representation
+        """Transform a count matrix to a tf or tf-idf representation.
 
         Parameters
         ----------
         X : sparse matrix of (n_samples, n_features)
-            a matrix of term/token counts
+            A matrix of term/token counts.
 
         copy : bool, default=True
             Whether to copy X and operate on the copy or perform in-place
@@ -1563,6 +1595,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         Returns
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
+            Tf-idf-weighted document-term matrix.
         """
         X = self._validate_data(
             X, accept_sparse="csr", dtype=FLOAT_DTYPES, copy=copy, reset=False
@@ -1590,6 +1623,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
     @property
     def idf_(self):
+        """Inverse document frequency vector, only defined if `use_idf=True`.
+
+        Returns
+        -------
+        ndarray of shape (n_features,)
+        """
         # if _idf_diag is not set, this will raise an attribute error,
         # which means hasattr(self, "idf_") is False
         return np.ravel(self._idf_diag.sum(axis=0))
@@ -1744,11 +1783,12 @@ class TfidfVectorizer(CountVectorizer):
 
     norm : {'l1', 'l2'}, default='l2'
         Each output row will have unit norm, either:
-        * 'l2': Sum of squares of vector elements is 1. The cosine
-        similarity between two vectors is their dot product when l2 norm has
-        been applied.
-        * 'l1': Sum of absolute values of vector elements is 1.
-        See :func:`preprocessing.normalize`.
+
+        - 'l2': Sum of squares of vector elements is 1. The cosine
+          similarity between two vectors is their dot product when l2 norm has
+          been applied.
+        - 'l1': Sum of absolute values of vector elements is 1.
+          See :func:`preprocessing.normalize`.
 
     use_idf : bool, default=True
         Enable inverse-document-frequency reweighting.
@@ -1868,6 +1908,7 @@ class TfidfVectorizer(CountVectorizer):
 
     @property
     def norm(self):
+        """Norm of each row output, can be either "l1" or "l2"."""
         return self._tfidf.norm
 
     @norm.setter
@@ -1876,6 +1917,7 @@ class TfidfVectorizer(CountVectorizer):
 
     @property
     def use_idf(self):
+        """Whether or not IDF re-weighting is used."""
         return self._tfidf.use_idf
 
     @use_idf.setter
@@ -1884,6 +1926,7 @@ class TfidfVectorizer(CountVectorizer):
 
     @property
     def smooth_idf(self):
+        """Whether or not IDF weights are smoothed."""
         return self._tfidf.smooth_idf
 
     @smooth_idf.setter
@@ -1892,6 +1935,7 @@ class TfidfVectorizer(CountVectorizer):
 
     @property
     def sublinear_tf(self):
+        """Whether or not sublinear TF scaling is applied."""
         return self._tfidf.sublinear_tf
 
     @sublinear_tf.setter
@@ -1900,6 +1944,12 @@ class TfidfVectorizer(CountVectorizer):
 
     @property
     def idf_(self):
+        """Inverse document frequency vector, only defined if `use_idf=True`.
+
+        Returns
+        -------
+        ndarray of shape (n_features,)
+        """
         return self._tfidf.idf_
 
     @idf_.setter
@@ -1908,8 +1958,8 @@ class TfidfVectorizer(CountVectorizer):
         if hasattr(self, "vocabulary_"):
             if len(self.vocabulary_) != len(value):
                 raise ValueError(
-                    "idf length = %d must be equal "
-                    "to vocabulary size = %d" % (len(value), len(self.vocabulary))
+                    "idf length = %d must be equal to vocabulary size = %d"
+                    % (len(value), len(self.vocabulary))
                 )
         self._tfidf.idf_ = value
 
@@ -1927,7 +1977,8 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
+
         y : None
             This parameter is not needed to compute tfidf.
 
@@ -1951,7 +2002,8 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
+
         y : None
             This parameter is ignored.
 
@@ -1976,7 +2028,7 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which yields either str, unicode or file objects.
+            An iterable which generates either str, unicode or file objects.
 
         Returns
         -------

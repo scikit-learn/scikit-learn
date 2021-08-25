@@ -57,7 +57,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
         if not isinstance(self._lower_bound, DistributionBoundary):
             raise TypeError(
-                "_lower_bound attribute must be of type " "DistributionBoundary"
+                "_lower_bound attribute must be of type DistributionBoundary"
             )
 
         if self._lower_bound.inclusive:
@@ -221,7 +221,7 @@ class TweedieDistribution(ExponentialDispersionModel):
             self._lower_bound = DistributionBoundary(-np.Inf, inclusive=False)
         elif 0 < power < 1:
             raise ValueError(
-                "Tweedie distribution is only defined for " "power<=0 and power>=1."
+                "Tweedie distribution is only defined for power<=0 and power>=1."
             )
         elif 1 <= power < 2:
             # Poisson or Compound Poisson distribution
@@ -274,8 +274,9 @@ class TweedieDistribution(ExponentialDispersionModel):
 
         if check_input:
             message = (
-                "Mean Tweedie deviance error with power={} can only be "
-                "used on ".format(p)
+                "Mean Tweedie deviance error with power={} can only be used on ".format(
+                    p
+                )
             )
             if p < 0:
                 # 'Extreme stable', y any realy number, y_pred > 0
@@ -286,13 +287,13 @@ class TweedieDistribution(ExponentialDispersionModel):
                 pass
             elif 0 < p < 1:
                 raise ValueError(
-                    "Tweedie deviance is only defined for " "power<=0 and power>=1."
+                    "Tweedie deviance is only defined for power<=0 and power>=1."
                 )
             elif 1 <= p < 2:
                 # Poisson and Compount poisson distribution, y >= 0, y_pred > 0
                 if (y < 0).any() or (y_pred <= 0).any():
                     raise ValueError(
-                        message + "non-negative y and strictly " "positive y_pred."
+                        message + "non-negative y and strictly positive y_pred."
                     )
             elif p >= 2:
                 # Gamma and Extreme stable distribution, y and y_pred > 0
@@ -315,7 +316,7 @@ class TweedieDistribution(ExponentialDispersionModel):
             dev = (y - y_pred) ** 2
         elif p < 1:
             raise ValueError(
-                "Tweedie deviance is only defined for power<=0 " "and power>=1."
+                "Tweedie deviance is only defined for power<=0 and power>=1."
             )
         elif p == 1:
             # Poisson distribution

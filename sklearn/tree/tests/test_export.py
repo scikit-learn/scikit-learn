@@ -262,11 +262,11 @@ def test_graphviz_errors():
 
     # Check if it errors when length of feature_names
     # mismatches with number of features
-    message = "Length of feature_names, " "1 does not match number of features, 2"
+    message = "Length of feature_names, 1 does not match number of features, 2"
     with pytest.raises(ValueError, match=message):
         export_graphviz(clf, None, feature_names=["a"])
 
-    message = "Length of feature_names, " "3 does not match number of features, 2"
+    message = "Length of feature_names, 3 does not match number of features, 2"
     with pytest.raises(ValueError, match=message):
         export_graphviz(clf, None, feature_names=["a", "b", "c"])
 
@@ -476,8 +476,9 @@ def test_plot_tree_entropy(pyplot):
     feature_names = ["first feat", "sepal_width"]
     nodes = plot_tree(clf, feature_names=feature_names)
     assert len(nodes) == 3
-    assert nodes[0].get_text() == (
-        "first feat <= 0.0\nentropy = 1.0\n" "samples = 6\nvalue = [3, 3]"
+    assert (
+        nodes[0].get_text()
+        == "first feat <= 0.0\nentropy = 1.0\nsamples = 6\nvalue = [3, 3]"
     )
     assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
@@ -495,8 +496,9 @@ def test_plot_tree_gini(pyplot):
     feature_names = ["first feat", "sepal_width"]
     nodes = plot_tree(clf, feature_names=feature_names)
     assert len(nodes) == 3
-    assert nodes[0].get_text() == (
-        "first feat <= 0.0\ngini = 0.5\n" "samples = 6\nvalue = [3, 3]"
+    assert (
+        nodes[0].get_text()
+        == "first feat <= 0.0\ngini = 0.5\nsamples = 6\nvalue = [3, 3]"
     )
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"

@@ -117,7 +117,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
         is_X_sparse = sp.issparse(X)
         if is_X_sparse and self.shrink_threshold:
-            raise ValueError("threshold shrinking not supported" " for sparse input")
+            raise ValueError("threshold shrinking not supported for sparse input")
         check_classification_targets(y)
 
         n_samples, n_features = X.shape
@@ -127,8 +127,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than"
-                " one; got %d class" % (n_classes)
+                "The number of classes has to be greater than one; got %d class"
+                % (n_classes)
             )
 
         # Mask mapping each class to its members.
@@ -160,9 +160,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         if self.shrink_threshold:
             if np.all(np.ptp(X, axis=0) == 0):
-                raise ValueError(
-                    "All features have zero variance. " "Division by zero."
-                )
+                raise ValueError("All features have zero variance. Division by zero.")
             dataset_centroid_ = np.mean(X, axis=0)
 
             # m parameter for determining deviation

@@ -21,7 +21,8 @@ from sklearn.utils._testing import (
     MinimalRegressor,
     MinimalTransformer,
 )
-
+from sklearn.exceptions import NotFittedError
+from sklearn.utils.validation import check_is_fitted
 from sklearn.base import clone, is_classifier, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
@@ -368,7 +369,7 @@ def test_score_samples_on_pipeline_without_score_samples():
     pipe.fit(X, y)
     with pytest.raises(
         AttributeError,
-        match="'LogisticRegression' object has no attribute " "'score_samples'",
+        match="'LogisticRegression' object has no attribute 'score_samples'",
     ):
         pipe.score_samples(X)
 
@@ -638,7 +639,7 @@ def test_set_pipeline_steps():
     # With invalid data
     pipeline.set_params(steps=[("junk", ())])
     msg = re.escape(
-        "Last step of Pipeline should implement fit or be the " "string 'passthrough'."
+        "Last step of Pipeline should implement fit or be the string 'passthrough'."
     )
     with pytest.raises(TypeError, match=msg):
         pipeline.fit([[1]], [1])
@@ -1152,7 +1153,7 @@ def test_make_pipeline_memory():
 def test_pipeline_param_error():
     clf = make_pipeline(LogisticRegression())
     with pytest.raises(
-        ValueError, match="Pipeline.fit does not accept " "the sample_weight parameter"
+        ValueError, match="Pipeline.fit does not accept the sample_weight parameter"
     ):
         clf.fit([[0], [0]], [0, 1], sample_weight=[1, 1])
 
@@ -1361,3 +1362,16 @@ def test_search_cv_using_minimal_compatible_estimator(Predictor):
     else:
         assert_allclose(y_pred, y.mean())
         assert model.score(X, y) == pytest.approx(r2_score(y, y_pred))
+
+
+def test_pipeline_check_if_fitted():
+    class Estimator(BaseEstimator):
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+
+    pipeline = Pipeline([("clf", Estimator())])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(pipeline)
+    pipeline.fit(iris.data, iris.target)
+    check_is_fitted(pipeline)

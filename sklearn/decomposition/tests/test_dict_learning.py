@@ -626,7 +626,7 @@ def test_sparse_coder_deprecation():
     init_dict = rng.rand(n_components, n_features)
     sc = SparseCoder(init_dict)
 
-    with pytest.warns(FutureWarning, match="'components_' is deprecated"):
+    with pytest.warns(FutureWarning, match="`components_` is deprecated"):
         sc.components_
 
 

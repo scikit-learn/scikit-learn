@@ -61,7 +61,7 @@ if __name__ == "__main__":
         "--iterations",
         type=int,
         required=True,
-        help="Number of iterations to average timings over " "for each problem size",
+        help="Number of iterations to average timings over for each problem size",
     )
     parser.add_argument(
         "--log_min_problem_size",

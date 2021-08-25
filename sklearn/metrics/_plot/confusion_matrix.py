@@ -439,7 +439,7 @@ class ConfusionMatrixDisplay:
 
 
 @deprecated(
-    "Function plot_confusion_matrix is deprecated in 1.0 and will be "
+    "Function `plot_confusion_matrix` is deprecated in 1.0 and will be "
     "removed in 1.2. Use one of the class methods: "
     "ConfusionMatrixDisplay.from_predictions or "
     "ConfusionMatrixDisplay.from_estimator."

@@ -9,6 +9,7 @@ from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ..base import OutlierMixin
 
+from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils import check_array
 
@@ -205,8 +206,17 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         self.contamination = contamination
         self.novelty = novelty
 
-    @property
-    def fit_predict(self):
+    def _check_novelty_fit_predict(self):
+        if self.novelty:
+            msg = (
+                "fit_predict is not available when novelty=True. Use "
+                "novelty=False if you want to predict on the training set."
+            )
+            raise AttributeError(msg)
+        return True
+
+    @available_if(_check_novelty_fit_predict)
+    def fit_predict(self, X, y=None):
         """Fits the model to the training set X and returns the labels.
 
         **Not available for novelty detection (when novelty is set to True).**
@@ -221,36 +231,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         y : Ignored
             Not used, present for API consistency by convention.
-
-        Returns
-        -------
-        is_inlier : ndarray of shape (n_samples,)
-            Returns -1 for anomalies/outliers and 1 for inliers.
-        """
-
-        # As fit_predict would be different from fit.predict, fit_predict is
-        # only available for outlier detection (novelty=False)
-
-        if self.novelty:
-            msg = (
-                "fit_predict is not available when novelty=True. Use "
-                "novelty=False if you want to predict on the training set."
-            )
-            raise AttributeError(msg)
-
-        return self._fit_predict
-
-    def _fit_predict(self, X, y=None):
-        """Fits the model to the training set X and returns the labels.
-
-        Label is 1 for an inlier and -1 for an outlier according to the LOF
-        score and the contamination parameter.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features), default=None
-            The query sample or samples to compute the Local Outlier Factor
-            w.r.t. to the training samples.
 
         Returns
         -------
@@ -285,7 +265,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         if self.contamination != "auto":
             if not (0.0 < self.contamination <= 0.5):
                 raise ValueError(
-                    "contamination must be in (0, 0.5], " "got: %f" % self.contamination
+                    "contamination must be in (0, 0.5], got: %f" % self.contamination
                 )
 
         n_samples = self.n_samples_fit_
@@ -323,8 +303,19 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         return self
 
-    @property
-    def predict(self):
+    def _check_novelty_predict(self):
+        if not self.novelty:
+            msg = (
+                "predict is not available when novelty=False, use "
+                "fit_predict if you want to predict on training data. Use "
+                "novelty=True if you want to use LOF for novelty detection "
+                "and predict on new unseen data."
+            )
+            raise AttributeError(msg)
+        return True
+
+    @available_if(_check_novelty_predict)
+    def predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
 
         **Only available for novelty detection (when novelty is set to True).**
@@ -342,16 +333,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         is_inlier : ndarray of shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
-        if not self.novelty:
-            msg = (
-                "predict is not available when novelty=False, use "
-                "fit_predict if you want to predict on training data. Use "
-                "novelty=True if you want to use LOF for novelty detection "
-                "and predict on new unseen data."
-            )
-            raise AttributeError(msg)
-
-        return self._predict
+        return self._predict(X)
 
     def _predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
@@ -382,32 +364,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         return is_inlier
 
-    @property
-    def decision_function(self):
-        """Shifted opposite of the Local Outlier Factor of X.
-
-        Bigger is better, i.e. large values correspond to inliers.
-
-        **Only available for novelty detection (when novelty is set to True).**
-        The shift offset allows a zero threshold for being an outlier.
-        The argument X is supposed to contain *new data*: if X contains a
-        point from training, it considers the later in its own neighborhood.
-        Also, the samples in X are not considered in the neighborhood of any
-        point.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The query sample or samples to compute the Local Outlier Factor
-            w.r.t. the training samples.
-
-        Returns
-        -------
-        shifted_opposite_lof_scores : ndarray of shape (n_samples,)
-            The shifted opposite of the Local Outlier Factor of each input
-            samples. The lower, the more abnormal. Negative scores represent
-            outliers, positive scores represent inliers.
-        """
+    def _check_novelty_decision_function(self):
         if not self.novelty:
             msg = (
                 "decision_function is not available when novelty=False. "
@@ -418,10 +375,10 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
                 "negative_outlier_factor_ attribute."
             )
             raise AttributeError(msg)
+        return True
 
-        return self._decision_function
-
-    def _decision_function(self, X):
+    @available_if(_check_novelty_decision_function)
+    def decision_function(self, X):
         """Shifted opposite of the Local Outlier Factor of X.
 
         Bigger is better, i.e. large values correspond to inliers.
@@ -446,36 +403,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
             samples. The lower, the more abnormal. Negative scores represent
             outliers, positive scores represent inliers.
         """
+        return self.score_samples(X) - self.offset_
 
-        return self._score_samples(X) - self.offset_
-
-    @property
-    def score_samples(self):
-        """Opposite of the Local Outlier Factor of X.
-
-        It is the opposite as bigger is better, i.e. large values correspond
-        to inliers.
-
-        **Only available for novelty detection (when novelty is set to True).**
-        The argument X is supposed to contain *new data*: if X contains a
-        point from training, it considers the later in its own neighborhood.
-        Also, the samples in X are not considered in the neighborhood of any
-        point.
-        The score_samples on training data is available by considering the
-        the ``negative_outlier_factor_`` attribute.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The query sample or samples to compute the Local Outlier Factor
-            w.r.t. the training samples.
-
-        Returns
-        -------
-        opposite_lof_scores : ndarray of shape (n_samples,)
-            The opposite of the Local Outlier Factor of each input samples.
-            The lower, the more abnormal.
-        """
+    def _check_novelty_score_samples(self):
         if not self.novelty:
             msg = (
                 "score_samples is not available when novelty=False. The "
@@ -485,10 +415,10 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
                 "and compute score_samples for new unseen data."
             )
             raise AttributeError(msg)
+        return True
 
-        return self._score_samples
-
-    def _score_samples(self, X):
+    @available_if(_check_novelty_score_samples)
+    def score_samples(self, X):
         """Opposite of the Local Outlier Factor of X.
 
         It is the opposite as bigger is better, i.e. large values correspond

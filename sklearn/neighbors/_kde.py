@@ -152,8 +152,7 @@ class KernelDensity(BaseEstimator):
         elif algorithm in TREE_DICT:
             if metric not in TREE_DICT[algorithm].valid_metrics:
                 raise ValueError(
-                    "invalid metric for {0}: "
-                    "'{1}'".format(TREE_DICT[algorithm], metric)
+                    "invalid metric for {0}: '{1}'".format(TREE_DICT[algorithm], metric)
                 )
             return algorithm
         else:
@@ -180,7 +179,7 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         self : object
-            Returns instance of object.
+            Returns the instance itself.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = self._validate_data(X, order="C", dtype=DTYPE)

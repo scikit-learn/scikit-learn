@@ -101,8 +101,8 @@ def test_plot_roc_curve(
     assert viz.line_.get_label() == expected_label
 
     expected_pos_label = 1 if pos_label is None else pos_label
-    expected_ylabel = f"True Positive Rate (Positive label: " f"{expected_pos_label})"
-    expected_xlabel = f"False Positive Rate (Positive label: " f"{expected_pos_label})"
+    expected_ylabel = f"True Positive Rate (Positive label: {expected_pos_label})"
+    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
 
     assert viz.ax_.get_ylabel() == expected_ylabel
     assert viz.ax_.get_xlabel() == expected_xlabel

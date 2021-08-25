@@ -267,13 +267,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check validity of parameters and raise ValueError if not valid."""
         if self.n_estimators <= 0:
             raise ValueError(
-                "n_estimators must be greater than 0 but " "was %r" % self.n_estimators
+                "n_estimators must be greater than 0 but was %r" % self.n_estimators
             )
 
         if self.learning_rate <= 0.0:
             raise ValueError(
-                "learning_rate must be greater than 0 but "
-                "was %r" % self.learning_rate
+                "learning_rate must be greater than 0 but was %r" % self.learning_rate
             )
 
         if (
@@ -315,9 +314,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self.loss_ = loss_class()
 
         if not (0.0 < self.subsample <= 1.0):
-            raise ValueError(
-                "subsample must be in (0,1] but " "was %r" % self.subsample
-            )
+            raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
 
         if self.init is not None:
             # init must be an estimator or 'zero'
@@ -330,7 +327,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 )
 
         if not (0.0 < self.alpha < 1.0):
-            raise ValueError("alpha must be in (0.0, 1.0) but " "was %r" % self.alpha)
+            raise ValueError("alpha must be in (0.0, 1.0) but was %r" % self.alpha)
 
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
@@ -346,7 +343,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 raise ValueError(
                     "Invalid value for max_features: %r. "
                     "Allowed string values are 'auto', 'sqrt' "
-                    "or 'log2'." % self.max_features
+                    "or 'log2'."
+                    % self.max_features
                 )
         elif self.max_features is None:
             max_features = self.n_features_in_
@@ -362,8 +360,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if not isinstance(self.n_iter_no_change, (numbers.Integral, type(None))):
             raise ValueError(
-                "n_iter_no_change should either be None or an "
-                "integer. %r was passed" % self.n_iter_no_change
+                "n_iter_no_change should either be None or an integer. %r was passed"
+                % self.n_iter_no_change
             )
 
     def _init_state(self):
@@ -462,6 +460,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         if self.criterion in ("absolute_error", "mae"):
             # TODO: This should raise an error from 1.1
@@ -552,7 +551,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         if (
                             "pass parameters to specific steps of "
                             "your pipeline using the "
-                            "stepname__parameter" in str(e)
+                            "stepname__parameter"
+                            in str(e)
                         ):  # pipeline
                             raise ValueError(msg) from e
                         else:  # regular estimator whose input checking failed
@@ -828,7 +828,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             warnings.warn(
                 "Using recursion method with a non-constant init predictor "
                 "will lead to incorrect partial dependence values. "
-                "Got init=%s." % self.init,
+                "Got init=%s."
+                % self.init,
                 UserWarning,
             )
         grid = np.asarray(grid, dtype=DTYPE, order="C")
@@ -884,8 +885,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute n_features_ was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use 'n_features_in_' instead."
+        "Attribute `n_features_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `n_features_in_` instead."
     )
     @property
     def n_features_(self):
@@ -1319,8 +1320,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
-        -------
+        Yields
+        ------
         score : generator of ndarray of shape (n_samples, k)
             The decision function of the input samples, which corresponds to
             the raw values predicted from the trees of the ensemble . The
@@ -1362,7 +1363,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
+        Yields
         -------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
@@ -1381,16 +1382,16 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Raises
-        ------
-        AttributeError
-            If the ``loss`` does not support probabilities.
-
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+        Raises
+        ------
+        AttributeError
+            If the ``loss`` does not support probabilities.
         """
         raw_predictions = self.decision_function(X)
         try:
@@ -1412,16 +1413,16 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Raises
-        ------
-        AttributeError
-            If the ``loss`` does not support probabilities.
-
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+        Raises
+        ------
+        AttributeError
+            If the ``loss`` does not support probabilities.
         """
         proba = self.predict_proba(X)
         return np.log(proba)
@@ -1439,8 +1440,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
-        -------
+        Yields
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
         """
@@ -1740,6 +1741,16 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
 
+    References
+    ----------
+    J. Friedman, Greedy Function Approximation: A Gradient Boosting
+    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
+
+    J. Friedman, Stochastic Gradient Boosting, 1999
+
+    T. Hastie, R. Tibshirani and J. Friedman.
+    Elements of Statistical Learning Ed. 2, Springer, 2009.
+
     Examples
     --------
     >>> from sklearn.datasets import make_regression
@@ -1755,16 +1766,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     array([-61...])
     >>> reg.score(X_test, y_test)
     0.4...
-
-    References
-    ----------
-    J. Friedman, Greedy Function Approximation: A Gradient Boosting
-    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
-
-    J. Friedman, Stochastic Gradient Boosting, 1999
-
-    T. Hastie, R. Tibshirani and J. Friedman.
-    Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
     # TODO: remove "ls" in verion 1.2
@@ -1876,8 +1877,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        Returns
-        -------
+        Yields
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
         """
@@ -1910,7 +1911,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     # FIXME: to be removed in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute n_classes_ was deprecated "
+        "Attribute `n_classes_` was deprecated "
         "in version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property

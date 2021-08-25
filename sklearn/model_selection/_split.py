@@ -243,8 +243,9 @@ class LeavePOut(BaseCrossValidator):
         n_samples = _num_samples(X)
         if n_samples <= self.p:
             raise ValueError(
-                "p={} must be strictly less than the number of "
-                "samples={}".format(self.p, n_samples)
+                "p={} must be strictly less than the number of samples={}".format(
+                    self.p, n_samples
+                )
             )
         for combination in combinations(range(n_samples), self.p):
             yield np.array(combination)
@@ -289,7 +290,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             )
 
         if not isinstance(shuffle, bool):
-            raise TypeError("shuffle must be True or False;" " got {0}".format(shuffle))
+            raise TypeError("shuffle must be True or False; got {0}".format(shuffle))
 
         if not shuffle and random_state is not None:  # None is the default
             raise ValueError(
@@ -673,11 +674,9 @@ class StratifiedKFold(_BaseKFold):
             )
         if self.n_splits > min_groups:
             warnings.warn(
-                (
-                    "The least populated class in y has only %d"
-                    " members, which is less than n_splits=%d."
-                    % (min_groups, self.n_splits)
-                ),
+                "The least populated class in y has only %d"
+                " members, which is less than n_splits=%d."
+                % (min_groups, self.n_splits),
                 UserWarning,
             )
 
@@ -875,11 +874,9 @@ class StratifiedGroupKFold(_BaseKFold):
         n_smallest_class = np.min(y_cnt)
         if self.n_splits > n_smallest_class:
             warnings.warn(
-                (
-                    "The least populated class in y has only %d"
-                    " members, which is less than n_splits=%d."
-                    % (n_smallest_class, self.n_splits)
-                ),
+                "The least populated class in y has only %d"
+                " members, which is less than n_splits=%d."
+                % (n_smallest_class, self.n_splits),
                 UserWarning,
             )
         n_classes = len(y_cnt)
@@ -1075,17 +1072,13 @@ class TimeSeriesSplit(_BaseKFold):
         # Make sure we have enough samples for the given split parameters
         if n_folds > n_samples:
             raise ValueError(
-                (
-                    f"Cannot have number of folds={n_folds} greater"
-                    f" than the number of samples={n_samples}."
-                )
+                f"Cannot have number of folds={n_folds} greater"
+                f" than the number of samples={n_samples}."
             )
         if n_samples - gap - (test_size * n_splits) <= 0:
             raise ValueError(
-                (
-                    f"Too many splits={n_splits} for number of samples"
-                    f"={n_samples} with test_size={test_size} and gap={gap}."
-                )
+                f"Too many splits={n_splits} for number of samples"
+                f"={n_samples} with test_size={test_size} and gap={gap}."
             )
 
         indices = np.arange(n_samples)
@@ -2433,7 +2426,7 @@ def train_test_split(
     if shuffle is False:
         if stratify is not None:
             raise ValueError(
-                "Stratified train/test split is not implemented for " "shuffle=False"
+                "Stratified train/test split is not implemented for shuffle=False"
             )
 
         train = np.arange(n_train)

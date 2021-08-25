@@ -600,7 +600,7 @@ def test_column_transformer_invalid_columns(remainder):
     ct = ColumnTransformer([("trans", Trans(), col)], remainder=remainder)
     ct.fit(X_array)
     X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
-    msg = "X has 3 features, but ColumnTransformer is expecting 2 features " "as input."
+    msg = "X has 3 features, but ColumnTransformer is expecting 2 features as input."
     with pytest.raises(ValueError, match=msg):
         ct.transform(X_array_more)
     X_array_fewer = np.array(
@@ -609,7 +609,7 @@ def test_column_transformer_invalid_columns(remainder):
         ]
     ).T
     err_msg = (
-        "X has 1 features, but ColumnTransformer is expecting 2 " "features as input."
+        "X has 1 features, but ColumnTransformer is expecting 2 features as input."
     )
     with pytest.raises(ValueError, match=err_msg):
         ct.transform(X_array_fewer)
@@ -974,7 +974,7 @@ def test_column_transformer_remainder():
 
     # error on invalid arg
     ct = ColumnTransformer([("trans1", Trans(), [0])], remainder=1)
-    msg = "remainder keyword needs to be one of 'drop', 'passthrough', " "or estimator."
+    msg = "remainder keyword needs to be one of 'drop', 'passthrough', or estimator."
     with pytest.raises(ValueError, match=msg):
         ct.fit(X_array)
 
@@ -1243,7 +1243,7 @@ def test_column_transformer_no_estimators():
         ),
         (
             ColumnTransformer([("trans1", Trans(), [0])], remainder="drop"),
-            (r"\[ColumnTransformer\].*\(1 of 1\) Processing trans1.* total=.*\n$"),
+            r"\[ColumnTransformer\].*\(1 of 1\) Processing trans1.* total=.*\n$",
         ),
     ],
 )

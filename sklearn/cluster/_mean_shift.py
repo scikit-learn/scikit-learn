@@ -245,8 +245,8 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     )
     if len(bin_seeds) == len(X):
         warnings.warn(
-            "Binning data failed with provided bin_size=%f,"
-            " using data points as seeds." % bin_size
+            "Binning data failed with provided bin_size=%f, using data points as seeds."
+            % bin_size
         )
         return X
     bin_seeds = bin_seeds * bin_size
@@ -407,7 +407,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
         elif bandwidth <= 0:
             raise ValueError(
-                "bandwidth needs to be greater than zero or None," " got %f" % bandwidth
+                "bandwidth needs to be greater than zero or None, got %f" % bandwidth
             )
 
         seeds = self.seeds
@@ -439,9 +439,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
         if not center_intensity_dict:
             # nothing near seeds
             raise ValueError(
-                "No point was within bandwidth=%f of any seed."
-                " Try a different seeding strategy \
-                             or increase the bandwidth."
+                "No point was within bandwidth=%f of any seed. Try a different seeding"
+                " strategy                              or increase the bandwidth."
                 % bandwidth
             )
 

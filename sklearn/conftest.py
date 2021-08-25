@@ -50,7 +50,7 @@ def _fetch_fixture(f):
         except IOError as e:
             if str(e) != "Data not found and `download_if_missing` is False":
                 raise
-            pytest.skip("test is enabled when " "SKLEARN_SKIP_NETWORK_TESTS=0")
+            pytest.skip("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
 
     return pytest.fixture(lambda: wrapped)
 
@@ -133,11 +133,17 @@ def pytest_collection_modifyitems(config, items):
     # run doctests only for numpy >= 1.14.
     skip_doctests = False
     try:
+        import matplotlib  # noqa
+    except ImportError:
+        skip_doctests = True
+        reason = "matplotlib is required to run the doctests"
+
+    try:
         if np_version < parse_version("1.14"):
             reason = "doctests are only run for numpy >= 1.14"
             skip_doctests = True
         elif _IS_32BIT:
-            reason = "doctest are only run when the default numpy int is " "64 bits."
+            reason = "doctest are only run when the default numpy int is 64 bits."
             skip_doctests = True
         elif sys.platform.startswith("win32"):
             reason = (
@@ -153,7 +159,12 @@ def pytest_collection_modifyitems(config, items):
 
         for item in items:
             if isinstance(item, DoctestItem):
-                item.add_marker(skip_marker)
+                # work-around an internal error with pytest if adding a skip
+                # mark to a doctest in a contextmanager, see
+                # https://github.com/pytest-dev/pytest/issues/8796 for more
+                # details.
+                if item.name != "sklearn._config.config_context":
+                    item.add_marker(skip_marker)
     elif not _pilutil.pillow_installed:
         skip_marker = pytest.mark.skip(reason="pillow (or PIL) not installed!")
         for item in items:

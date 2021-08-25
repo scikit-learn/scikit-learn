@@ -48,7 +48,7 @@ def test_MDS():
 # TODO: Remove in 1.1
 def test_MDS_pairwise_deprecated():
     mds_clf = mds.MDS(metric="precomputed")
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         mds_clf._pairwise
 

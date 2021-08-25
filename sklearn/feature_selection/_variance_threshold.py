@@ -93,9 +93,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
             compare_arr = np.array([self.variances_, peak_to_peaks])
             self.variances_ = np.nanmin(compare_arr, axis=0)
         elif self.threshold < 0.0:
-            raise ValueError(
-                "Threshold must be non-negative." f" Got: {self.threshold}"
-            )
+            raise ValueError(f"Threshold must be non-negative. Got: {self.threshold}")
 
         if np.all(~np.isfinite(self.variances_) | (self.variances_ <= self.threshold)):
             msg = "No feature in X meets the variance threshold {0:.5f}"

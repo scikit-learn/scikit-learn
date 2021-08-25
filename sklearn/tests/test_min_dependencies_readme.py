@@ -49,4 +49,4 @@ def test_min_dependencies_readme():
                 version = parse_version(version)
                 min_version = parse_version(dependent_packages[package][0])
 
-                assert version == min_version, f"{package} has a mismatched " "version"
+                assert version == min_version, f"{package} has a mismatched version"

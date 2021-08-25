@@ -68,7 +68,10 @@ class IncrementalPCA(_BasePCA):
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
-        Components with maximum variance.
+        Principal axes in feature space, representing the directions of
+        maximum variance in the data. Equivalently, the right singular
+        vectors of the centered input data, parallel to its eigenvectors.
+        The components are sorted by ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         Variance explained by each of the selected components.

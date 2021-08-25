@@ -19,6 +19,7 @@ the lower the better.
 #          Saurabh Jha <saurabh.jhaa@gmail.com>
 #          Bernardo Stein <bernardovstein@gmail.com>
 #          Shangwu Yao <shangwuyao@gmail.com>
+#          Michal Karbownik <michakarbownik@gmail.com>
 # License: BSD 3 clause
 
 
@@ -49,7 +50,7 @@ def _check_zero_division(zero_division):
     elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
         return
     raise ValueError(
-        "Got zero_division={0}." ' Must be one of ["warn", 0, 1]'.format(zero_division)
+        'Got zero_division={0}. Must be one of ["warn", 0, 1]'.format(zero_division)
     )
 
 
@@ -90,8 +91,9 @@ def _check_targets(y_true, y_pred):
 
     if len(y_type) > 1:
         raise ValueError(
-            "Classification metrics can't handle a mix of {0} "
-            "and {1} targets".format(type_true, type_pred)
+            "Classification metrics can't handle a mix of {0} and {1} targets".format(
+                type_true, type_pred
+            )
         )
 
     # We can't have more than one value on y_type => The set is no more needed
@@ -113,11 +115,11 @@ def _check_targets(y_true, y_pred):
                 # `y_pred` given by the classifier will also be encoded with
                 # strings. So we raise a meaningful error
                 raise TypeError(
-                    f"Labels in y_true and y_pred should be of the same type. "
+                    "Labels in y_true and y_pred should be of the same type. "
                     f"Got y_true={np.unique(y_true)} and "
                     f"y_pred={np.unique(y_pred)}. Make sure that the "
-                    f"predictions provided by the classifier coincides with "
-                    f"the true labels."
+                    "predictions provided by the classifier coincides with "
+                    "the true labels."
                 ) from e
             if len(unique_values) > 2:
                 y_type = "multiclass"
@@ -179,8 +181,8 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Notes
     -----
-    In binary and multiclass classification, this function is equal
-    to the ``jaccard_score`` function.
+    In binary classification, this function is equal to the `jaccard_score`
+    function.
 
     Examples
     --------
@@ -321,7 +323,7 @@ def confusion_matrix(
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if normalize not in ["true", "pred", "all", None]:
-        raise ValueError("normalize must be one of {'true', 'pred', " "'all', None}")
+        raise ValueError("normalize must be one of {'true', 'pred', 'all', None}")
 
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
@@ -423,14 +425,16 @@ def multilabel_confusion_matrix(
 
     See Also
     --------
-    confusion_matrix
+    confusion_matrix : Compute confusion matrix to evaluate the accuracy of a
+        classifier.
 
     Notes
     -----
-    The multilabel_confusion_matrix calculates class-wise or sample-wise
+    The `multilabel_confusion_matrix` calculates class-wise or sample-wise
     multilabel confusion matrices, and in multiclass tasks, labels are
-    binarized under a one-vs-rest way; while confusion_matrix calculates
-    one confusion matrix for confusion between every two classes.
+    binarized under a one-vs-rest way; while
+    :func:`~sklearn.metrics.confusion_matrix` calculates one confusion matrix
+    for confusion between every two classes.
 
     Examples
     --------
@@ -540,7 +544,8 @@ def multilabel_confusion_matrix(
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0" % np.min(labels)
+                    "Got %d < 0"
+                    % np.min(labels)
                 )
 
         if n_labels is not None:
@@ -604,11 +609,11 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to select a
-        subset of labels. If None, all labels that appear at least once in
+        subset of labels. If `None`, all labels that appear at least once in
         ``y1`` or ``y2`` are used.
 
     weights : {'linear', 'quadratic'}, default=None
-        Weighting type to calculate the score. None means no weighted;
+        Weighting type to calculate the score. `None` means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -696,8 +701,8 @@ def jaccard_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {None, 'micro', 'macro', 'samples', 'weighted', \
-            'binary'}, default='binary'
+    average : {'micro', 'macro', 'samples', 'weighted', \
+            'binary'} or None, default='binary'
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
@@ -733,7 +738,7 @@ def jaccard_score(
 
     See Also
     --------
-    accuracy_score, f_score, multilabel_confusion_matrix
+    accuracy_score, f1_score, multilabel_confusion_matrix
 
     Notes
     -----
@@ -1091,6 +1096,11 @@ def f1_score(
     >>> y_pred = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true, y_pred, zero_division=1)
     1.0...
+    >>> # multilabel classification
+    >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
+    >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
+    >>> f1_score(y_true, y_pred, average=None)
+    array([0.66666667, 1.        , 0.66666667])
 
     Notes
     -----
@@ -1652,7 +1662,7 @@ def precision_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} \
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -1719,7 +1729,11 @@ def precision_score(
     array([0.33..., 0.        , 0.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=1)
     array([0.33..., 1.        , 1.        ])
-
+    >>> # multilabel classification
+    >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
+    >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
+    >>> precision_score(y_true, y_pred, average=None)
+    array([0.5, 1. , 1. ])
     """
     p, _, _, _ = precision_recall_fscore_support(
         y_true,
@@ -1780,7 +1794,7 @@ def recall_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} \
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -1799,7 +1813,8 @@ def recall_score(
             Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
-            F-score that is not between precision and recall.
+            F-score that is not between precision and recall. Weighted recall
+            is equal to accuracy.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
@@ -1848,6 +1863,11 @@ def recall_score(
     array([0.5, 0. , 0. ])
     >>> recall_score(y_true, y_pred, average=None, zero_division=1)
     array([0.5, 1. , 1. ])
+    >>> # multilabel classification
+    >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
+    >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
+    >>> recall_score(y_true, y_pred, average=None)
+    array([1. , 1. , 0.5])
     """
     _, r, _, _ = precision_recall_fscore_support(
         y_true,
@@ -2608,7 +2628,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError(
-            f"Only binary classification is supported. The type of the target "
+            "Only binary classification is supported. The type of the target "
             f"is {y_type}."
         )
 

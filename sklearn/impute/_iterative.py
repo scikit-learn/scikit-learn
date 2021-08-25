@@ -679,20 +679,19 @@ class IterativeImputer(_BaseImputer):
                 inf_norm = np.linalg.norm(Xt - Xt_previous, ord=np.inf, axis=None)
                 if self.verbose > 0:
                     print(
-                        "[IterativeImputer] "
-                        "Change: {}, scaled tolerance: {} ".format(
+                        "[IterativeImputer] Change: {}, scaled tolerance: {} ".format(
                             inf_norm, normalized_tol
                         )
                     )
                 if inf_norm < normalized_tol:
                     if self.verbose > 0:
-                        print("[IterativeImputer] Early stopping criterion " "reached.")
+                        print("[IterativeImputer] Early stopping criterion reached.")
                     break
                 Xt_previous = Xt.copy()
         else:
             if not self.sample_posterior:
                 warnings.warn(
-                    "[IterativeImputer] Early stopping criterion not" " reached.",
+                    "[IterativeImputer] Early stopping criterion not reached.",
                     ConvergenceWarning,
                 )
         Xt[~mask_missing_values] = X[~mask_missing_values]

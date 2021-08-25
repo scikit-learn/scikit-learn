@@ -18,7 +18,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     This Sequential Feature Selector adds (forward selection) or
     removes (backward selection) features to form a feature subset in a
     greedy fashion. At each stage, this estimator chooses the best feature to
-    add or remove based on the cross-validation score of an estimator.
+    add or remove based on the cross-validation score of an estimator. In
+    the case of unsupervised learning, this Sequential Feature Selector
+    looks only at the features (X), not the desired outputs (y).
 
     Read more in the :ref:`User Guide <sequential_feature_selection>`.
 
@@ -130,28 +132,27 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self.cv = cv
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y=None):
         """Learn the features to select.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             Training vectors.
-        y : array-like of shape (n_samples,)
-            Target values.
+        y : array-like of shape (n_samples,), default=None
+            Target values. This parameter may be ignored for
+            unsupervised learning.
 
         Returns
         -------
         self : object
         """
         tags = self._get_tags()
-        X, y = self._validate_data(
+        X = self._validate_data(
             X,
-            y,
             accept_sparse="csc",
             ensure_min_features=2,
             force_all_finite=not tags.get("allow_nan", True),
-            multi_output=True,
         )
         n_features = X.shape[1]
 

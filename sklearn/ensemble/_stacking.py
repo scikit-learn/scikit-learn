@@ -114,8 +114,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         else:
             if not hasattr(estimator, method):
                 raise ValueError(
-                    "Underlying estimator {} does not implement "
-                    "the method {}.".format(name, method)
+                    "Underlying estimator {} does not implement the method {}.".format(
+                        name, method
+                    )
                 )
             return method
 
@@ -223,7 +224,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                f"{self.__class__.__name__} object has no attribute " f"n_features_in_"
+                f"{self.__class__.__name__} object has no attribute n_features_in_"
             ) from nfe
         return self.estimators_[0].n_features_in_
 

@@ -65,21 +65,19 @@ def _write_label_html(
     checked=False,
 ):
     """Write labeled html with or without a dropdown with named details"""
-    out.write(
-        f'<div class="{outer_class}">' f'<div class="{inner_class} sk-toggleable">'
-    )
+    out.write(f'<div class="{outer_class}"><div class="{inner_class} sk-toggleable">')
     name = html.escape(name)
 
     if name_details is not None:
         checked_str = "checked" if checked else ""
         est_id = uuid.uuid4()
         out.write(
-            f'<input class="sk-toggleable__control sk-hidden--visually" '
+            '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id="{est_id}" type="checkbox" {checked_str}>'
             f'<label class="sk-toggleable__label" for="{est_id}">'
             f"{name}</label>"
             f'<div class="sk-toggleable__content"><pre>{name_details}'
-            f"</pre></div>"
+            "</pre></div>"
         )
     else:
         out.write(f"<label>{name}</label>")

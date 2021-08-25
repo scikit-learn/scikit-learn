@@ -40,6 +40,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         Tolerance for the stopping condition.
 
     method : {'lars', 'cd'}, default='lars'
+        Method to be used for optimization.
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
@@ -93,6 +94,13 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    PCA : Principal Component Analysis implementation.
+    MiniBatchSparsePCA : Mini batch variant of `SparsePCA` that is faster but less
+        accurate.
+    DictionaryLearning : Generic dictionary learning problem using a sparse code.
+
     Examples
     --------
     >>> import numpy as np
@@ -108,12 +116,6 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
     0.9666...
-
-    See Also
-    --------
-    PCA
-    MiniBatchSparsePCA
-    DictionaryLearning
     """
 
     def __init__(
@@ -149,10 +151,11 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -364,7 +367,7 @@ class MiniBatchSparsePCA(SparsePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored

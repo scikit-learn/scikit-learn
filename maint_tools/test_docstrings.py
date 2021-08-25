@@ -3,53 +3,116 @@ from inspect import signature
 from typing import Optional
 
 import pytest
-from sklearn.utils._testing import all_estimators
+from sklearn.utils import all_estimators
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
-# List of whitelisted modules and methods; regexp are supported.
-DOCSTRING_WHITELIST = [
-    "LogisticRegression$",
-    "LogisticRegression.fit",
-    "LogisticRegression.decision_function",
-    "Birch.predict",
-    "Birch.transform",
-    "GradientBoostingClassifier",
-    "GradientBoostingRegressor",
-    "LinearDiscriminantAnalysis.decision_function",
-    "LinearSVC.decision_function",
-    "LogisticRegressionCV.decision_function",
-    "OPTICS",
-    "OPTICS.fit",
-    "PassiveAggressiveClassifier.decision_function",
-    "Perceptron.decision_function",
-    "RidgeClassifier.decision_function",
-    "RidgeClassifier.fit",
-    "RidgeClassifierCV.decision_function",
-    "KernelDensity",
-    "KernelDensity.fit",
-    "KernelDensity.score",
-    "DecisionTreeClassifier",
+# List of modules ignored when checking for numpydoc validation.
+DOCSTRING_IGNORE_LIST = [
+    "AgglomerativeClustering",
+    "BernoulliRBM",
+    "Birch",
+    "CalibratedClassifierCV",
+    "ClassifierChain",
+    "ColumnTransformer",
     "DecisionTreeRegressor",
-    "LinearRegression$",
-    "SGDClassifier.decision_function",
-    "SGDClassifier.set_params",
-    "SGDClassifier.get_params",
-    "SGDClassifier.fit",
-    "SGDClassifier.partial_fit",
-    "SGDClassifier.predict$",  # $ to avoid match w/ predict_proba (regex)
-    "SGDClassifier.score",
-    "SGDClassifier.sparsify",
-    "SGDClassifier.densify",
-    "VotingClassifier.fit",
-    "VotingClassifier.transform",
-    "VotingClassifier.predict",
-    "VotingClassifier.score",
-    "VotingClassifier.predict_proba",
-    "VotingClassifier.set_params",
-    "VotingClassifier.get_params",
-    "VotingClassifier.named_estimators",
-    "VotingClassifier$",
+    "DictVectorizer",
+    "DictionaryLearning",
+    "ElasticNetCV",
+    "FactorAnalysis",
+    "FeatureAgglomeration",
+    "FeatureHasher",
+    "FeatureUnion",
+    "FunctionTransformer",
+    "GammaRegressor",
+    "GaussianMixture",
+    "GaussianProcessRegressor",
+    "GaussianRandomProjection",
+    "GridSearchCV",
+    "HalvingGridSearchCV",
+    "HalvingRandomSearchCV",
+    "HashingVectorizer",
+    "HuberRegressor",
+    "IncrementalPCA",
+    "Isomap",
+    "IterativeImputer",
+    "KBinsDiscretizer",
+    "KNNImputer",
+    "KernelPCA",
+    "LabelBinarizer",
+    "LabelPropagation",
+    "LabelSpreading",
+    "LocalOutlierFactor",
+    "LocallyLinearEmbedding",
+    "MDS",
+    "MeanShift",
+    "MiniBatchDictionaryLearning",
+    "MiniBatchKMeans",
+    "MiniBatchSparsePCA",
+    "MissingIndicator",
+    "MultiLabelBinarizer",
+    "MultiOutputClassifier",
+    "MultiOutputRegressor",
+    "MultiTaskElasticNet",
+    "MultiTaskElasticNetCV",
+    "MultiTaskLasso",
+    "MultiTaskLassoCV",
+    "NMF",
+    "NearestCentroid",
+    "NeighborhoodComponentsAnalysis",
+    "Normalizer",
+    "OPTICS",
+    "OneVsOneClassifier",
+    "OneVsRestClassifier",
+    "OrdinalEncoder",
+    "OrthogonalMatchingPursuit",
+    "OrthogonalMatchingPursuitCV",
+    "OutputCodeClassifier",
+    "PLSCanonical",
+    "PLSRegression",
+    "PLSSVD",
+    "PassiveAggressiveClassifier",
+    "PassiveAggressiveRegressor",
+    "PatchExtractor",
+    "Pipeline",
+    "PolynomialFeatures",
+    "PowerTransformer",
+    "QuadraticDiscriminantAnalysis",
+    "QuantileRegressor",
+    "QuantileTransformer",
+    "RANSACRegressor",
+    "RFE",
+    "RadiusNeighborsClassifier",
+    "RadiusNeighborsTransformer",
+    "RandomizedSearchCV",
+    "RegressorChain",
+    "RobustScaler",
+    "SGDOneClassSVM",
+    "SGDRegressor",
+    "SelectFdr",
+    "SelectFpr",
+    "SelectFromModel",
+    "SelectFwe",
+    "SelectKBest",
+    "SelectPercentile",
+    "SelfTrainingClassifier",
+    "SequentialFeatureSelector",
+    "SimpleImputer",
+    "SparseCoder",
+    "SparseRandomProjection",
+    "SpectralBiclustering",
+    "SpectralClustering",
+    "SpectralCoclustering",
+    "SpectralEmbedding",
+    "SplineTransformer",
+    "StackingClassifier",
+    "StackingRegressor",
+    "TheilSenRegressor",
+    "TransformedTargetRegressor",
+    "TruncatedSVD",
+    "TweedieRegressor",
+    "VarianceThreshold",
+    "VotingClassifier",
 ]
 
 
@@ -72,7 +135,7 @@ def get_all_methods():
             yield Estimator, method
 
 
-def filter_errors(errors, method):
+def filter_errors(errors, method, Estimator=None):
     """
     Ignore some errors based on the method type.
 
@@ -84,11 +147,21 @@ def filter_errors(errors, method):
         #   (as we may need refer to the name of the returned
         #    object)
         #  - GL01: Docstring text (summary) should start in the line
-        #  immediately after the opening quotes (not in the same line,
-        #  or leaving a blank line in between)
+        #    immediately after the opening quotes (not in the same line,
+        #    or leaving a blank line in between)
+        #  - GL02: If there's a blank line, it should be before the
+        #    first line of the Returns section, not after (it allows to have
+        #    short docstrings for properties).
 
-        if code in ["RT02", "GL01"]:
+        if code in ["RT02", "GL01", "GL02"]:
             continue
+
+        # Ignore PR02: Unknown parameters for properties. We sometimes use
+        # properties for ducktyping, i.e. SGDClassifier.predict_proba
+        if code == "PR02" and Estimator is not None and method is not None:
+            method_obj = getattr(Estimator, method)
+            if isinstance(method_obj, property):
+                continue
 
         # Following codes are only taken into account for the
         # top level class docstrings:
@@ -165,14 +238,14 @@ def test_docstring(Estimator, method, request):
 
     import_path = ".".join(import_path)
 
-    if not any(re.search(regex, import_path) for regex in DOCSTRING_WHITELIST):
+    if Estimator.__name__ in DOCSTRING_IGNORE_LIST:
         request.applymarker(
             pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
         )
 
     res = numpydoc_validation.validate(import_path)
 
-    res["errors"] = list(filter_errors(res["errors"], method))
+    res["errors"] = list(filter_errors(res["errors"], method, Estimator=Estimator))
 
     if res["errors"]:
         msg = repr_errors(res, Estimator, method)

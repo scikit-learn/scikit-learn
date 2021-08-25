@@ -5,7 +5,7 @@ from ._stochastic_gradient import BaseSGDClassifier
 
 
 class Perceptron(BaseSGDClassifier):
-    """Perceptron
+    """Linear perceptron classifier.
 
     Read more in the :ref:`User Guide <perceptron>`.
 
@@ -47,7 +47,7 @@ class Perceptron(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
 
     verbose : int, default=0
-        The verbosity level
+        The verbosity level.
 
     eta0 : double, default=1
         Constant by which the updates are multiplied.
@@ -94,7 +94,7 @@ class Perceptron(BaseSGDClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -130,13 +130,21 @@ class Perceptron(BaseSGDClassifier):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    See Also
+    --------
+    sklearn.linear_model.SGDClassifier : Linear classifiers
+        (SVM, logistic regression, etc.) with SGD training.
+
     Notes
     -----
-
     ``Perceptron`` is a classification algorithm which shares the same
     underlying implementation with ``SGDClassifier``. In fact,
     ``Perceptron()`` is equivalent to `SGDClassifier(loss="perceptron",
     eta0=1, learning_rate="constant", penalty=None)`.
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/Perceptron and references therein.
 
     Examples
     --------
@@ -148,15 +156,6 @@ class Perceptron(BaseSGDClassifier):
     Perceptron()
     >>> clf.score(X, y)
     0.939...
-
-    See Also
-    --------
-    SGDClassifier
-
-    References
-    ----------
-
-    https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
 
     def __init__(

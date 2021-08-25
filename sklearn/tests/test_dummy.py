@@ -7,7 +7,6 @@ from sklearn.base import clone
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.stats import _weighted_percentile
 
@@ -586,9 +585,8 @@ def test_uniform_strategy_sparse_target_warning():
     y = sp.csc_matrix(np.array([[2, 1], [2, 2], [1, 4], [4, 2], [1, 1]]))
 
     clf = DummyClassifier(strategy="uniform", random_state=0)
-    assert_warns_message(
-        UserWarning, "the uniform strategy would not save memory", clf.fit, X, y
-    )
+    with pytest.warns(UserWarning, match="the uniform strategy would not save memory"):
+        clf.fit(X, y)
 
     X = [[0]] * 500
     y_pred = clf.predict(X)

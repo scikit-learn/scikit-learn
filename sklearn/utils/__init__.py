@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
 from itertools import islice
+import math
 import numbers
 import platform
 import struct
@@ -209,9 +210,15 @@ def _pandas_indexing(X, key, key_dtype, axis):
         key = key if key.flags.writeable else key.copy()
     elif isinstance(key, tuple):
         key = list(key)
-    # check whether we should index with loc or iloc
-    indexer = X.iloc if key_dtype == "int" else X.loc
-    return indexer[:, key] if axis else indexer[key]
+
+    if key_dtype == "int" and not (isinstance(key, slice) or np.isscalar(key)):
+        # using take() instead of iloc[] ensures the return value is a "proper"
+        # copy that will not raise SettingWithCopyWarning
+        return X.take(key, axis=axis)
+    else:
+        # check whether we should index with loc or iloc
+        indexer = X.iloc if key_dtype == "int" else X.loc
+        return indexer[:, key] if axis else indexer[key]
 
 
 def _list_indexing(X, key, key_dtype):
@@ -268,7 +275,7 @@ def _determine_key_type(key, accept_slice=True):
     if isinstance(key, slice):
         if not accept_slice:
             raise TypeError(
-                "Only array-like or scalar are supported. " "A Python slice was given."
+                "Only array-like or scalar are supported. A Python slice was given."
             )
         if key.start is None and key.stop is None:
             return None
@@ -425,7 +432,7 @@ def _get_column_indices(X, key):
                 col_idx = all_columns.get_loc(col)
                 if not isinstance(col_idx, numbers.Integral):
                     raise ValueError(
-                        f"Selected columns, {columns}, are not " "unique in dataframe"
+                        f"Selected columns, {columns}, are not unique in dataframe"
                     )
                 column_indices.append(col_idx)
 
@@ -538,8 +545,8 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         max_n_samples = n_samples
     elif (max_n_samples > n_samples) and (not replace):
         raise ValueError(
-            "Cannot sample %d out of arrays with dim %d "
-            "when replace is False" % (max_n_samples, n_samples)
+            "Cannot sample %d out of arrays with dim %d when replace is False"
+            % (max_n_samples, n_samples)
         )
 
     check_consistent_length(*arrays)
@@ -737,12 +744,10 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     """
     if not isinstance(batch_size, numbers.Integral):
         raise TypeError(
-            "gen_batches got batch_size=%s, must be an" " integer" % batch_size
+            "gen_batches got batch_size=%s, must be an integer" % batch_size
         )
     if batch_size <= 0:
-        raise ValueError(
-            "gen_batches got batch_size=%s, must be" " positive" % batch_size
-        )
+        raise ValueError("gen_batches got batch_size=%s, must be positive" % batch_size)
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
@@ -1005,9 +1010,7 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    # convert from numpy.bool_ to python bool to ensure that testing
-    # is_scalar_nan(x) is True does not fail.
-    return bool(isinstance(x, numbers.Real) and np.isnan(x))
+    return isinstance(x, numbers.Real) and math.isnan(x)
 
 
 def _approximate_mode(class_counts, n_draws, rng):
@@ -1160,7 +1163,13 @@ def all_estimators(type_filter=None):
         return True
 
     all_classes = []
-    modules_to_ignore = {"tests", "externals", "setup", "conftest"}
+    modules_to_ignore = {
+        "tests",
+        "externals",
+        "setup",
+        "conftest",
+        "enable_hist_gradient_boosting",
+    }
     root = str(Path(__file__).parent.parent)  # sklearn package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
@@ -1222,7 +1231,8 @@ def all_estimators(type_filter=None):
                 "Parameter type_filter must be 'classifier', "
                 "'regressor', 'transformer', 'cluster' or "
                 "None, got"
-                " %s." % repr(type_filter)
+                " %s."
+                % repr(type_filter)
             )
 
     # drop duplicates, sort for reproducibility

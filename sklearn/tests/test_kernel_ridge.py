@@ -97,6 +97,6 @@ def test_kernel_ridge_multi_output():
 # TODO: Remove in 1.1
 def test_kernel_ridge_pairwise_is_deprecated():
     k_ridge = KernelRidge(kernel="precomputed")
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         k_ridge._pairwise

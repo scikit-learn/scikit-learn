@@ -227,7 +227,7 @@ def test_check_solver_option(LR):
     with pytest.raises(ValueError, match=msg):
         lr.fit(X, y)
 
-    msg = "multi_class should be 'multinomial', 'ovr' or 'auto'. " "Got wrong_name"
+    msg = "multi_class should be 'multinomial', 'ovr' or 'auto'. Got wrong_name"
     lr = LR(solver="newton-cg", multi_class="wrong_name")
     with pytest.raises(ValueError, match=msg):
         lr.fit(X, y)
@@ -254,9 +254,8 @@ def test_check_solver_option(LR):
     # error is raised before for the other solvers (solver %s supports only l2
     # penalties)
     for solver in ["liblinear"]:
-        msg = (
-            "Only 'saga' solver supports elasticnet penalty, got "
-            "solver={}.".format(solver)
+        msg = "Only 'saga' solver supports elasticnet penalty, got solver={}.".format(
+            solver
         )
         lr = LR(solver=solver, penalty="elasticnet")
         with pytest.raises(ValueError, match=msg):
@@ -1193,7 +1192,8 @@ def test_logreg_intercept_scaling():
         msg = (
             "Intercept scaling is %r but needs to be greater than 0."
             " To disable fitting an intercept,"
-            " set fit_intercept=False." % clf.intercept_scaling
+            " set fit_intercept=False."
+            % clf.intercept_scaling
         )
         with pytest.raises(ValueError, match=msg):
             clf.fit(X, Y1)
@@ -1353,14 +1353,14 @@ def test_logreg_predict_proba_multinomial():
     [
         (
             "newton-cg",
-            "newton-cg failed to converge. Increase the " "number of iterations.",
+            "newton-cg failed to converge. Increase the number of iterations.",
         ),
         (
             "liblinear",
-            "Liblinear failed to converge, increase the " "number of iterations.",
+            "Liblinear failed to converge, increase the number of iterations.",
         ),
-        ("sag", "The max_iter was reached which means the " "coef_ did not converge"),
-        ("saga", "The max_iter was reached which means the " "coef_ did not converge"),
+        ("sag", "The max_iter was reached which means the coef_ did not converge"),
+        ("saga", "The max_iter was reached which means the coef_ did not converge"),
         ("lbfgs", "lbfgs failed to converge"),
     ],
 )
@@ -1914,8 +1914,8 @@ def test_l1_ratio_param(l1_ratio):
 def test_l1_ratios_param(l1_ratios):
 
     msg = (
-        "l1_ratios must be a list of numbers between 0 and 1; got "
-        "(l1_ratios=%r)" % l1_ratios
+        "l1_ratios must be a list of numbers between 0 and 1; got (l1_ratios=%r)"
+        % l1_ratios
     )
 
     with pytest.raises(ValueError, match=re.escape(msg)):
@@ -2081,9 +2081,7 @@ def test_penalty_none(solver):
     assert_array_equal(pred_none, pred_l2_C_inf)
 
     lr = LogisticRegressionCV(penalty="none")
-    err_msg = (
-        "penalty='none' is not useful and not supported by " "LogisticRegressionCV"
-    )
+    err_msg = "penalty='none' is not useful and not supported by LogisticRegressionCV"
     with pytest.raises(ValueError, match=err_msg):
         lr.fit(X, y)
 

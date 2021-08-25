@@ -209,3 +209,21 @@ def test_dictvectorizer_dense_sparse_equivalence():
     expected_inverse = [{"category=thriller": 1.0}]
     assert dense_inverse_transform == expected_inverse
     assert sparse_inverse_transform == expected_inverse
+
+
+def test_dict_vectorizer_unsupported_value_type():
+    """Check that we raise an error when the value associated to a feature
+    is not supported.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19489
+    """
+
+    class A:
+        pass
+
+    vectorizer = DictVectorizer(sparse=True)
+    X = [{"foo": A()}]
+    err_msg = "Unsupported value Type"
+    with pytest.raises(TypeError, match=err_msg):
+        vectorizer.fit_transform(X)

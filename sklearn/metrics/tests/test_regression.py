@@ -215,8 +215,9 @@ def test__check_reg_targets():
 def test__check_reg_targets_exception():
     invalid_multioutput = "this_value_is_not_valid"
     expected_message = (
-        "Allowed 'multioutput' string values are.+"
-        "You provided multioutput={!r}".format(invalid_multioutput)
+        "Allowed 'multioutput' string values are.+You provided multioutput={!r}".format(
+            invalid_multioutput
+        )
     )
     with pytest.raises(ValueError, match=expected_message):
         _check_reg_targets([1, 2, 3], [[1], [2], [3]], invalid_multioutput)

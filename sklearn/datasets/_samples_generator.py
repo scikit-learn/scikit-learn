@@ -192,7 +192,7 @@ def make_classification(
     if weights is not None:
         if len(weights) not in [n_classes, n_classes - 1]:
             raise ValueError(
-                "Weights specified but incompatible with number " "of classes."
+                "Weights specified but incompatible with number of classes."
             )
         if len(weights) == n_classes - 1:
             if isinstance(weights, list):
@@ -449,9 +449,7 @@ def make_multilabel_classification(
         lb = MultiLabelBinarizer(sparse_output=(return_indicator == "sparse"))
         Y = lb.fit([range(n_classes)]).transform(Y)
     elif return_indicator is not False:
-        raise ValueError(
-            "return_indicator must be either 'sparse', 'dense' " "or False."
-        )
+        raise ValueError("return_indicator must be either 'sparse', 'dense' or False.")
     if return_distributions:
         return X, Y, p_c, p_w_c
     return X, Y
@@ -695,7 +693,7 @@ def make_circles(
             n_samples_out, n_samples_in = n_samples
         except ValueError as e:
             raise ValueError(
-                "`n_samples` can be either an int or " "a two-element tuple."
+                "`n_samples` can be either an int or a two-element tuple."
             ) from e
 
     generator = check_random_state(random_state)
@@ -765,7 +763,7 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
             n_samples_out, n_samples_in = n_samples
         except ValueError as e:
             raise ValueError(
-                "`n_samples` can be either an int or " "a two-element tuple."
+                "`n_samples` can be either an int or a two-element tuple."
             ) from e
 
     generator = check_random_state(random_state)
@@ -907,12 +905,13 @@ def make_blobs(
             assert len(centers) == n_centers
         except TypeError as e:
             raise ValueError(
-                "Parameter `centers` must be array-like. "
-                "Got {!r} instead".format(centers)
+                "Parameter `centers` must be array-like. Got {!r} instead".format(
+                    centers
+                )
             ) from e
         except AssertionError as e:
             raise ValueError(
-                f"Length of `n_samples` not consistent with number of "
+                "Length of `n_samples` not consistent with number of "
                 f"centers. Got n_samples = {n_samples} and centers = {centers}"
             ) from e
         else:

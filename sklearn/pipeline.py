@@ -18,7 +18,7 @@ from joblib import Parallel
 
 from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
-from .utils.metaestimators import if_delegate_has_method
+from .utils.metaestimators import available_if
 from .utils import (
     Bunch,
     _print_elapsed_time,
@@ -26,11 +26,26 @@ from .utils import (
 from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
+from .utils.validation import check_is_fitted
 from .utils.fixes import delayed
+from .exceptions import NotFittedError
 
 from .utils.metaestimators import _BaseComposition
 
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
+
+
+def _final_estimator_has(attr):
+    """Check that final_estimator has `attr`.
+
+    Used together with `avaliable_if` in `Pipeline`."""
+
+    def check(self):
+        # raise original `AttributeError` if `attr` does not exist
+        getattr(self._final_estimator, attr)
+        return True
+
+    return check
 
 
 class Pipeline(_BaseComposition):
@@ -218,7 +233,7 @@ class Pipeline(_BaseComposition):
         return len(self.steps)
 
     def __getitem__(self, ind):
-        """Returns a sub-pipeline or a single esimtator in the pipeline
+        """Returns a sub-pipeline or a single estimator in the pipeline
 
         Indexing with an integer will return an estimator; using a slice
         returns another Pipeline instance which copies a slice of this
@@ -402,7 +417,7 @@ class Pipeline(_BaseComposition):
             else:
                 return last_step.fit(Xt, y, **fit_params_last_step).transform(Xt)
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("predict"))
     def predict(self, X, **predict_params):
         """Apply transforms to the data, and predict with the final estimator
 
@@ -431,7 +446,7 @@ class Pipeline(_BaseComposition):
             Xt = transform.transform(Xt)
         return self.steps[-1][1].predict(Xt, **predict_params)
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("fit_predict"))
     def fit_predict(self, X, y=None, **fit_params):
         """Applies fit_predict of last step in pipeline after transforms.
 
@@ -466,7 +481,7 @@ class Pipeline(_BaseComposition):
             y_pred = self.steps[-1][1].fit_predict(Xt, y, **fit_params_last_step)
         return y_pred
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("predict_proba"))
     def predict_proba(self, X, **predict_proba_params):
         """Apply transforms, and predict_proba of the final estimator
 
@@ -489,7 +504,7 @@ class Pipeline(_BaseComposition):
             Xt = transform.transform(Xt)
         return self.steps[-1][1].predict_proba(Xt, **predict_proba_params)
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("decision_function"))
     def decision_function(self, X):
         """Apply transforms, and decision_function of the final estimator
 
@@ -508,7 +523,7 @@ class Pipeline(_BaseComposition):
             Xt = transform.transform(Xt)
         return self.steps[-1][1].decision_function(Xt)
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("score_samples"))
     def score_samples(self, X):
         """Apply transforms, and score_samples of the final estimator.
 
@@ -527,7 +542,7 @@ class Pipeline(_BaseComposition):
             Xt = transformer.transform(Xt)
         return self.steps[-1][1].score_samples(Xt)
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X, **predict_log_proba_params):
         """Apply transforms, and predict_log_proba of the final estimator
 
@@ -550,8 +565,13 @@ class Pipeline(_BaseComposition):
             Xt = transform.transform(Xt)
         return self.steps[-1][1].predict_log_proba(Xt, **predict_log_proba_params)
 
-    @property
-    def transform(self):
+    def _can_transform(self):
+        return self._final_estimator == "passthrough" or hasattr(
+            self._final_estimator, "transform"
+        )
+
+    @available_if(_can_transform)
+    def transform(self, X):
         """Apply transforms, and transform with the final estimator
 
         This also works where final estimator is ``None``: all prior
@@ -567,20 +587,16 @@ class Pipeline(_BaseComposition):
         -------
         Xt : array-like of shape  (n_samples, n_transformed_features)
         """
-        # _final_estimator is None or has transform, otherwise attribute error
-        # XXX: Handling the None case means we can't use if_delegate_has_method
-        if self._final_estimator != "passthrough":
-            self._final_estimator.transform
-        return self._transform
-
-    def _transform(self, X):
         Xt = X
         for _, _, transform in self._iter():
             Xt = transform.transform(Xt)
         return Xt
 
-    @property
-    def inverse_transform(self):
+    def _can_inverse_transform(self):
+        return all(hasattr(t, "inverse_transform") for _, _, t in self._iter())
+
+    @available_if(_can_inverse_transform)
+    def inverse_transform(self, Xt):
         """Apply inverse transformations in reverse order
 
         All estimators in the pipeline must support ``inverse_transform``.
@@ -597,20 +613,12 @@ class Pipeline(_BaseComposition):
         -------
         Xt : array-like of shape (n_samples, n_features)
         """
-        # raise AttributeError if necessary for hasattr behaviour
-        # XXX: Handling the None case means we can't use if_delegate_has_method
-        for _, _, transform in self._iter():
-            transform.inverse_transform
-        return self._inverse_transform
-
-    def _inverse_transform(self, X):
-        Xt = X
         reverse_iter = reversed(list(self._iter()))
         for _, _, transform in reverse_iter:
             Xt = transform.inverse_transform(Xt)
         return Xt
 
-    @if_delegate_has_method(delegate="_final_estimator")
+    @available_if(_final_estimator_has("score"))
     def score(self, X, y=None, sample_weight=None):
         """Apply transforms, and score with the final estimator
 
@@ -651,7 +659,7 @@ class Pipeline(_BaseComposition):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -663,6 +671,18 @@ class Pipeline(_BaseComposition):
     def n_features_in_(self):
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
+
+    def __sklearn_is_fitted__(self):
+        """Indicate whether pipeline has been fit."""
+        try:
+            # check if the last step of the pipeline is fitted
+            # we only check the last step since if the last step is fit, it
+            # means the previous steps should also be fit. This is faster than
+            # checking if every step of the pipeline is fit.
+            check_is_fitted(self.steps[-1][1])
+            return True
+        except NotFittedError:
+            return False
 
     def _sk_visual_block_(self):
         _, estimators = zip(*self.steps)
@@ -957,8 +977,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         for name, trans, weight in self._iter():
             if not hasattr(trans, "get_feature_names"):
                 raise AttributeError(
-                    "Transformer %s (type %s) does not "
-                    "provide get_feature_names." % (str(name), type(trans).__name__)
+                    "Transformer %s (type %s) does not provide get_feature_names."
+                    % (str(name), type(trans).__name__)
                 )
             feature_names.extend([name + "__" + f for f in trans.get_feature_names()])
         return feature_names

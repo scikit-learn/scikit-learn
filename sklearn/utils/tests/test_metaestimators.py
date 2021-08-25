@@ -1,4 +1,7 @@
+import pytest
+
 from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.metaestimators import available_if
 
 
 class Prefix:
@@ -74,3 +77,48 @@ def test_if_delegate_has_method():
     assert not hasattr(MetaEstTestTuple(HasNoPredict(), HasPredict()), "predict")
     assert not hasattr(MetaEstTestList(HasNoPredict(), HasPredict()), "predict")
     assert hasattr(MetaEstTestList(HasPredict(), HasPredict()), "predict")
+
+
+class AvailableParameterEstimator:
+    """This estimator's `available` parameter toggles the presence of a method"""
+
+    def __init__(self, available=True):
+        self.available = available
+
+    @available_if(lambda est: est.available)
+    def available_func(self):
+        """This is a mock available_if function"""
+        pass
+
+
+def test_available_if_docstring():
+    assert "This is a mock available_if function" in str(
+        AvailableParameterEstimator.__dict__["available_func"].__doc__
+    )
+    assert "This is a mock available_if function" in str(
+        AvailableParameterEstimator.available_func.__doc__
+    )
+    assert "This is a mock available_if function" in str(
+        AvailableParameterEstimator().available_func.__doc__
+    )
+
+
+def test_available_if():
+    assert hasattr(AvailableParameterEstimator(), "available_func")
+    assert not hasattr(AvailableParameterEstimator(available=False), "available_func")
+
+
+def test_available_if_unbound_method():
+    # This is a non regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/20614
+    # to make sure that decorated functions can be used as an unbound method,
+    # for instance when monkeypatching.
+    est = AvailableParameterEstimator()
+    AvailableParameterEstimator.available_func(est)
+
+    est = AvailableParameterEstimator(available=False)
+    with pytest.raises(
+        AttributeError,
+        match="This 'AvailableParameterEstimator' has no attribute 'available_func'",
+    ):
+        AvailableParameterEstimator.available_func(est)

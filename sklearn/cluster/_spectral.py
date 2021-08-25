@@ -275,6 +275,13 @@ def spectral_clustering(
             "The 'assign_labels' parameter should be "
             "'kmeans' or 'discretize', but '%s' was given" % assign_labels
         )
+    if isinstance(affinity, np.matrix):
+        raise TypeError(
+            "spectral_clustering does not support passing in affinity as an "
+            "np.matrix. Please convert to a numpy array with np.asarray. For "
+            "more information see: "
+            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
+        )
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
@@ -637,7 +644,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property

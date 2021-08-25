@@ -118,7 +118,7 @@ if __name__ == "__main__":
         "--n-components",
         dest="n_components",
         default="auto",
-        help="Size of the random subspace." " ('auto' or int > 0)",
+        help="Size of the random subspace. ('auto' or int > 0)",
     )
 
     op.add_option(
@@ -149,8 +149,9 @@ if __name__ == "__main__":
         "--density",
         dest="density",
         default=1 / 3,
-        help="Density used by the sparse random projection."
-        " ('auto' or float (0.0, 1.0]",
+        help=(
+            "Density used by the sparse random projection. ('auto' or float (0.0, 1.0]"
+        ),
     )
 
     op.add_option(
@@ -166,9 +167,11 @@ if __name__ == "__main__":
         dest="selected_transformers",
         default="GaussianRandomProjection,SparseRandomProjection",
         type=str,
-        help="Comma-separated list of transformer to benchmark. "
-        "Default: %default. Available: "
-        "GaussianRandomProjection,SparseRandomProjection",
+        help=(
+            "Comma-separated list of transformer to benchmark. "
+            "Default: %default. Available: "
+            "GaussianRandomProjection,SparseRandomProjection"
+        ),
     )
 
     op.add_option(

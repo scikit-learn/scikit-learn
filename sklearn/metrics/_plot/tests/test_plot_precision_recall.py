@@ -40,12 +40,16 @@ def test_errors(pyplot):
     multi_clf = DecisionTreeClassifier().fit(X, y_multiclass)
 
     # Fitted multiclass classifier with binary data
-    msg = "DecisionTreeClassifier should be a binary classifier"
+    msg = (
+        "Expected 'estimator' to be a binary classifier, but got DecisionTreeClassifier"
+    )
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(multi_clf, X, y_binary)
 
     reg = DecisionTreeRegressor().fit(X, y_multiclass)
-    msg = "DecisionTreeRegressor should be a binary classifier"
+    msg = (
+        "Expected 'estimator' to be a binary classifier, but got DecisionTreeRegressor"
+    )
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(reg, X, y_binary)
 
@@ -55,11 +59,11 @@ def test_errors(pyplot):
     [
         (
             "predict_proba",
-            "response method predict_proba is not defined in " "MyClassifier",
+            "response method predict_proba is not defined in MyClassifier",
         ),
         (
             "decision_function",
-            "response method decision_function is not defined " "in MyClassifier",
+            "response method decision_function is not defined in MyClassifier",
         ),
         (
             "auto",
@@ -68,7 +72,7 @@ def test_errors(pyplot):
         ),
         (
             "bad_method",
-            "response_method must be 'predict_proba', " "'decision_function' or 'auto'",
+            "response_method must be 'predict_proba', 'decision_function' or 'auto'",
         ),
     ],
 )

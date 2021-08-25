@@ -15,7 +15,6 @@ from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
-from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
@@ -333,7 +332,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        v = check_array(X, accept_sparse="csr")
+        v = self._validate_data(X, accept_sparse="csr", reset=False)
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.
@@ -388,8 +387,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
             if verbose:
                 end = time.time()
                 print(
-                    "[%s] Iteration %d, pseudo-likelihood = %.2f,"
-                    " time = %.2fs"
+                    "[%s] Iteration %d, pseudo-likelihood = %.2f, time = %.2fs"
                     % (
                         type(self).__name__,
                         iteration,

@@ -157,7 +157,7 @@ def test_spatial_median_2d():
     fermat_weber = fmin_bfgs(cost_func, median, disp=False)
     assert_array_almost_equal(median, fermat_weber)
     # Check when maximum iteration is exceeded a warning is emitted
-    warning_message = "Maximum number of iterations 30 reached" " in spatial median."
+    warning_message = "Maximum number of iterations 30 reached in spatial median."
     with pytest.warns(ConvergenceWarning, match=warning_message):
         _spatial_median(X, max_iter=30, tol=0.0)
 

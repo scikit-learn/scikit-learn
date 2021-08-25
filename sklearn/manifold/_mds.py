@@ -437,7 +437,7 @@ class MDS(BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -498,8 +498,8 @@ class MDS(BaseEstimator):
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError(
-                "Proximity must be 'precomputed' or 'euclidean'."
-                " Got %s instead" % str(self.dissimilarity)
+                "Proximity must be 'precomputed' or 'euclidean'. Got %s instead"
+                % str(self.dissimilarity)
             )
 
         self.embedding_, self.stress_, self.n_iter_ = smacof(

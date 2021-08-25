@@ -154,13 +154,13 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # min_resources is. Similarly min_resources=exhaust needs to
                 # know the actual number of candidates.
                 raise ValueError(
-                    "n_candidates and min_resources cannot be both set to " "'exhaust'."
+                    "n_candidates and min_resources cannot be both set to 'exhaust'."
                 )
             if self.n_candidates != "exhaust" and (
                 not isinstance(self.n_candidates, Integral) or self.n_candidates <= 0
             ):
                 raise ValueError(
-                    "n_candidates must be either 'exhaust' " "or a positive integer"
+                    "n_candidates must be either 'exhaust' or a positive integer"
                 )
 
         self.min_resources_ = self.min_resources
@@ -197,13 +197,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
         if self.min_resources_ == 0:
             raise ValueError(
                 f"min_resources_={self.min_resources_}: you might have passed "
-                f"an empty dataset X."
+                "an empty dataset X."
             )
 
         if not isinstance(self.refit, bool):
             raise ValueError(
-                f"refit is expected to be a boolean. Got {type(self.refit)} "
-                f"instead."
+                f"refit is expected to be a boolean. Got {type(self.refit)} instead."
             )
 
     @staticmethod

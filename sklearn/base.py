@@ -24,6 +24,7 @@ from .utils.validation import check_array
 from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
+from .utils.validation import _get_feature_names
 
 
 def clone(estimator, *, safe=True):
@@ -322,7 +323,10 @@ class BaseEstimator:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "
                     "using version {2}. This might lead to breaking code or "
-                    "invalid results. Use at your own risk.".format(
+                    "invalid results. Use at your own risk. "
+                    "For more info please refer to:\n"
+                    "https://scikit-learn.org/stable/modules/model_persistence"
+                    ".html#security-maintainability-limitations".format(
                         self.__class__.__name__, pickle_version, __version__
                     ),
                     UserWarning,
@@ -392,6 +396,92 @@ class BaseEstimator:
                 f"is expecting {self.n_features_in_} features as input."
             )
 
+    def _check_feature_names(self, X, *, reset):
+        """Set or check the `feature_names_in_` attribute.
+
+        .. versionadded:: 1.0
+
+        Parameters
+        ----------
+        X : {ndarray, dataframe} of shape (n_samples, n_features)
+            The input samples.
+
+        reset : bool
+            Whether to reset the `feature_names_in_` attribute.
+            If False, the input will be checked for consistency with
+            feature names of data provided when reset was last True.
+            .. note::
+               It is recommended to call `reset=True` in `fit` and in the first
+               call to `partial_fit`. All other methods that validate `X`
+               should set `reset=False`.
+        """
+
+        if reset:
+            feature_names_in = _get_feature_names(X)
+            if feature_names_in is not None:
+                self.feature_names_in_ = feature_names_in
+            return
+
+        fitted_feature_names = getattr(self, "feature_names_in_", None)
+        X_feature_names = _get_feature_names(X)
+
+        if fitted_feature_names is None and X_feature_names is None:
+            # no feature names seen in fit and in X
+            return
+
+        if X_feature_names is not None and fitted_feature_names is None:
+            warnings.warn(
+                f"X has feature names, but {self.__class__.__name__} was fitted without"
+                " feature names"
+            )
+            return
+
+        if X_feature_names is None and fitted_feature_names is not None:
+            warnings.warn(
+                "X does not have valid feature names, but"
+                f" {self.__class__.__name__} was fitted with feature names"
+            )
+            return
+
+        # validate the feature names against the `feature_names_in_` attribute
+        if len(fitted_feature_names) != len(X_feature_names) or np.any(
+            fitted_feature_names != X_feature_names
+        ):
+            message = (
+                "The feature names should match those that were "
+                "passed during fit. Starting version 1.2, an error will be raised.\n"
+            )
+            fitted_feature_names_set = set(fitted_feature_names)
+            X_feature_names_set = set(X_feature_names)
+
+            unexpected_names = sorted(X_feature_names_set - fitted_feature_names_set)
+            missing_names = sorted(fitted_feature_names_set - X_feature_names_set)
+
+            def add_names(names):
+                output = ""
+                max_n_names = 5
+                for i, name in enumerate(names):
+                    if i >= max_n_names:
+                        output += "- ...\n"
+                        break
+                    output += f"- {name}\n"
+                return output
+
+            if unexpected_names:
+                message += "Feature names unseen at fit time:\n"
+                message += add_names(unexpected_names)
+
+            if missing_names:
+                message += "Feature names seen at fit time, yet now missing:\n"
+                message += add_names(missing_names)
+
+            if not missing_names and not missing_names:
+                message += (
+                    "Feature names must be in the same order as they were in fit.\n"
+                )
+
+            warnings.warn(message, FutureWarning)
+
     def _validate_data(
         self,
         X="no_validation",
@@ -449,10 +539,12 @@ class BaseEstimator:
             The validated input. A tuple is returned if both `X` and `y` are
             validated.
         """
+        self._check_feature_names(X, reset=reset)
+
         if y is None and self._get_tags()["requires_y"]:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "
-                f"requires y to be passed, but the target y is None."
+                "requires y to be passed, but the target y is None."
             )
 
         no_val_X = isinstance(X, str) and X == "no_validation"
@@ -558,17 +650,16 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination :math:`R^2` of the
-        prediction.
+        """Return the coefficient of determination of the prediction.
 
-        The coefficient :math:`R^2` is defined as :math:`(1 - \\frac{u}{v})`,
-        where :math:`u` is the residual sum of squares ``((y_true - y_pred)
-        ** 2).sum()`` and :math:`v` is the total sum of squares ``((y_true -
-        y_true.mean()) ** 2).sum()``. The best possible score is 1.0 and it
-        can be negative (because the model can be arbitrarily worse). A
-        constant model that always predicts the expected value of `y`,
-        disregarding the input features, would get a :math:`R^2` score of
-        0.0.
+        The coefficient of determination :math:`R^2` is defined as
+        :math:`(1 - \\frac{u}{v})`, where :math:`u` is the residual
+        sum of squares ``((y_true - y_pred)** 2).sum()`` and :math:`v`
+        is the total sum of squares ``((y_true - y_true.mean()) ** 2).sum()``.
+        The best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always predicts
+        the expected value of `y`, disregarding the input features, would get
+        a :math:`R^2` score of 0.0.
 
         Parameters
         ----------
@@ -790,8 +881,8 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, dataframe} of shape \
-            (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
 
         y : Ignored
             Not used, present for API consistency by convention.

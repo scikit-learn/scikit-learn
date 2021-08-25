@@ -132,8 +132,10 @@ if __name__ == "__main__":
         nargs="?",
         default=1,
         type=int,
-        help="Number of concurrently running workers for "
-        "models that support parallelism.",
+        help=(
+            "Number of concurrently running workers for "
+            "models that support parallelism."
+        ),
     )
     parser.add_argument(
         "--order",
@@ -141,7 +143,7 @@ if __name__ == "__main__":
         default="C",
         type=str,
         choices=["F", "C"],
-        help="Allow to choose between fortran and C ordered " "data",
+        help="Allow to choose between fortran and C ordered data",
     )
     parser.add_argument(
         "--random-seed",
@@ -215,15 +217,17 @@ if __name__ == "__main__":
     print("Classification performance:")
     print("===========================")
     print(
-        "{0: <24} {1: >10} {2: >11} {3: >12}"
-        "".format("Classifier  ", "train-time", "test-time", "error-rate")
+        "{0: <24} {1: >10} {2: >11} {3: >12}".format(
+            "Classifier  ", "train-time", "test-time", "error-rate"
+        )
     )
     print("-" * 60)
     for name in sorted(args["classifiers"], key=error.get):
 
         print(
-            "{0: <23} {1: >10.2f}s {2: >10.2f}s {3: >12.4f}"
-            "".format(name, train_time[name], test_time[name], error[name])
+            "{0: <23} {1: >10.2f}s {2: >10.2f}s {3: >12.4f}".format(
+                name, train_time[name], test_time[name], error[name]
+            )
         )
 
     print()

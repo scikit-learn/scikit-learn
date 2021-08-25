@@ -735,8 +735,8 @@ def test_linearsvc_parameters():
 
             with pytest.raises(
                 ValueError,
-                match="Unsupported set of "
-                "arguments.*penalty='%s.*loss='%s.*dual=%s" % (penalty, loss, dual),
+                match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"
+                % (penalty, loss, dual),
             ):
                 clf.fit(X, y)
         else:
@@ -757,7 +757,7 @@ def test_linear_svx_uppercase_loss_penality_raises_error():
     with pytest.raises(ValueError, match=msg):
         svm.LinearSVC(loss="SQuared_hinge").fit(X, y)
 
-    msg = "The combination of penalty='L2'" " and loss='squared_hinge' is not supported"
+    msg = "The combination of penalty='L2' and loss='squared_hinge' is not supported"
     with pytest.raises(ValueError, match=msg):
         svm.LinearSVC(penalty="L2").fit(X, y)
 
@@ -1077,7 +1077,8 @@ def test_linear_svc_intercept_scaling():
         msg = (
             "Intercept scaling is %r but needs to be greater than 0."
             " To disable fitting an intercept,"
-            " set fit_intercept=False." % lsvc.intercept_scaling
+            " set fit_intercept=False."
+            % lsvc.intercept_scaling
         )
         with pytest.raises(ValueError, match=msg):
             lsvc.fit(X, Y)

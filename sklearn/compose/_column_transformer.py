@@ -347,7 +347,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         if self.remainder not in ("drop", "passthrough") and not is_transformer:
             raise ValueError(
                 "The remainder keyword needs to be one of 'drop', "
-                "'passthrough', or estimator. '%s' was passed instead" % self.remainder
+                "'passthrough', or estimator. '%s' was passed instead"
+                % self.remainder
             )
 
         self._n_features = X.shape[1]
@@ -395,8 +396,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 continue
             if not hasattr(trans, "get_feature_names"):
                 raise AttributeError(
-                    "Transformer %s (type %s) does not "
-                    "provide get_feature_names." % (str(name), type(trans).__name__)
+                    "Transformer %s (type %s) does not provide get_feature_names."
+                    % (str(name), type(trans).__name__)
                 )
             feature_names.extend([f"{name}__{f}" for f in trans.get_feature_names()])
         return feature_names
@@ -905,7 +906,7 @@ class make_column_selector:
         """
         if not hasattr(df, "iloc"):
             raise ValueError(
-                "make_column_selector can only be applied to " "pandas dataframes"
+                "make_column_selector can only be applied to pandas dataframes"
             )
         df_row = df.iloc[:1]
         if self.dtype_include is not None or self.dtype_exclude is not None:

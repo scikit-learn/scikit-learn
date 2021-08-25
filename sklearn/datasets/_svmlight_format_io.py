@@ -61,8 +61,8 @@ def load_svmlight_file(
     This format is used as the default format for both svmlight and the
     libsvm command line programs.
 
-    Parsing a text based source can be expensive. When working on
-    repeatedly on the same dataset, it is recommended to wrap this
+    Parsing a text based source can be expensive. When repeatedly
+    working on the same dataset, it is recommended to wrap this
     loader with joblib.Memory.cache to store a memmapped backup of the
     CSR results of the first call and benefit from the near instantaneous
     loading of memmapped structures for the subsequent calls.
@@ -346,8 +346,9 @@ def load_svmlight_files(
         n_features = n_f
     elif n_features < n_f:
         raise ValueError(
-            "n_features was set to {},"
-            " but input file contains {} features".format(n_features, n_f)
+            "n_features was set to {}, but input file contains {} features".format(
+                n_features, n_f
+            )
         )
 
     result = []
@@ -489,7 +490,7 @@ def dump_svmlight_file(
     if sp.issparse(yval):
         if yval.shape[1] != 1 and not multilabel:
             raise ValueError(
-                "expected y of shape (n_samples, 1)," " got %r" % (yval.shape,)
+                "expected y of shape (n_samples, 1), got %r" % (yval.shape,)
             )
     else:
         if yval.ndim != 1 and not multilabel:
@@ -498,8 +499,8 @@ def dump_svmlight_file(
     Xval = check_array(X, accept_sparse="csr")
     if Xval.shape[0] != yval.shape[0]:
         raise ValueError(
-            "X.shape[0] and y.shape[0] should be the same, got"
-            " %r and %r instead." % (Xval.shape[0], yval.shape[0])
+            "X.shape[0] and y.shape[0] should be the same, got %r and %r instead."
+            % (Xval.shape[0], yval.shape[0])
         )
 
     # We had some issues with CSR matrices with unsorted indices (e.g. #1501),

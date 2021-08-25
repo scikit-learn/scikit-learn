@@ -20,6 +20,10 @@ def test_fetch(fetch_covtype_fxt):
     assert (X1.shape[0],) == y1.shape
     assert (X1.shape[0],) == y2.shape
 
+    descr_prefix = ".. _covtype_dataset:"
+    assert data1.DESCR.startswith(descr_prefix)
+    assert data2.DESCR.startswith(descr_prefix)
+
     # test return_X_y option
     fetch_func = partial(fetch_covtype_fxt)
     check_return_X_y(data1, fetch_func)
@@ -43,6 +47,6 @@ def test_fetch_asframe(fetch_covtype_fxt):
 
 
 def test_pandas_dependency_message(fetch_covtype_fxt, hide_available_pandas):
-    expected_msg = "fetch_covtype with as_frame=True" " requires pandas"
+    expected_msg = "fetch_covtype with as_frame=True requires pandas"
     with pytest.raises(ImportError, match=expected_msg):
         fetch_covtype_fxt(as_frame=True)

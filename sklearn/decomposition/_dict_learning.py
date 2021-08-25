@@ -26,8 +26,7 @@ from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 def _check_positive_coding(method, positive):
     if positive and method in ["omp", "lars"]:
         raise ValueError(
-            "Positive constraint not supported for '{}' "
-            "coding method.".format(method)
+            "Positive constraint not supported for '{}' coding method.".format(method)
         )
 
 
@@ -167,7 +166,7 @@ def _sparse_encode(
         clf = Lasso(
             alpha=alpha,
             fit_intercept=False,
-            normalize=False,
+            normalize="deprecated",  # as it was False by default
             precompute=gram,
             max_iter=max_iter,
             warm_start=True,
@@ -666,8 +665,7 @@ def dict_learning(
             sys.stdout.flush()
         elif verbose:
             print(
-                "Iteration % 3i "
-                "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
+                "Iteration % 3i (elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
                 % (ii, dt, dt / 60, current_cost)
             )
 
@@ -1262,9 +1260,9 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         return self
 
     @deprecated(  # type: ignore
-        "The attribute 'components_' is deprecated "
+        "The attribute `components_` is deprecated "
         "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use the "
-        "'dictionary' instead."
+        "`dictionary` instead."
     )
     @property
     def components_(self):
@@ -1798,7 +1796,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored
@@ -1844,7 +1842,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored
