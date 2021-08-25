@@ -1567,8 +1567,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Mini-batch dictionary learning.
 
-    Finds a dictionary (a set of atoms) that can best be used to represent data
-    using a sparse code.
+    Finds a dictionary (a set of atoms) that performs well at sparsely
+    encoding the fitted data.
+
 
     Solves the optimization problem::
 
