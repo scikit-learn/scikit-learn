@@ -19,7 +19,7 @@ from ._gaussian_mixture import (
 )
 from ..cluster import AgglomerativeClustering
 from ..model_selection import ParameterGrid
-from ..utils import check_scalar, check_array
+from ..utils import check_scalar
 from ..utils.validation import check_is_fitted, check_random_state
 from ..preprocessing import OneHotEncoder
 from ..exceptions import ConvergenceWarning
@@ -471,7 +471,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         """
 
         affinity, linkage, covariance_type = self._check_parameters()
-        X = check_array(X, dtype=[np.float64, np.float32], ensure_min_samples=1)
+        X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=1)
 
         random_state = check_random_state(self.random_state)
 
@@ -597,6 +597,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             Component labels.
         """
         check_is_fitted(self, ["best_model_"], all_or_any=all)
+        X = self._validate_data(X, reset=False)
         labels = self.best_model_.predict(X)
 
         return labels

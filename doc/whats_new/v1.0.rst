@@ -626,6 +626,12 @@ Changelog
 :mod:`sklearn.mixture`
 ......................
 
+- |Feature| added :class:`mixture.GaussianMixtureIC`,
+  that automatically selects the best Gaussian mixture model via BIC or AIC.
+  :pr:`19562` by :user:`Thomas Athey <tathey1>`, :user:`Tingshan Liu <tliu68>`,
+  :user:`Benjamin Pedigo <bdpedigo>` and 
+  :user:`Giorgio Di Salvo <PerifanosPrometheus>`.
+
 - |Fix| Ensure that the best parameters are set appropriately
   in the case of divergency for :class:`mixture.GaussianMixture` and
   :class:`mixture.BayesianGaussianMixture`.
