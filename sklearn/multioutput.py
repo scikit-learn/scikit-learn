@@ -582,7 +582,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         -------
         Y_pred : array-like of shape (n_samples, n_classes)
             The predicted values.
-
         """
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse=True, reset=False)
