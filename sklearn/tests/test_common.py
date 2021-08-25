@@ -327,7 +327,6 @@ COLUMN_NAME_MODULES_TO_IGNORE = {
     "compose",
     "ensemble",
     "feature_extraction",
-    "kernel_approximation",
     "model_selection",
     "multiclass",
     "multioutput",
