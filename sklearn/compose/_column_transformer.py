@@ -511,9 +511,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        self : ColumnTransformer
-            This estimator
-
+        self : object
+            ColumnTransformer class instance.
         """
         # we use fit_transform to make sure to set sparse_output_ (for which we
         # need the transformed data) to have consistent output type in predict
