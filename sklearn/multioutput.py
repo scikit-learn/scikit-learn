@@ -675,6 +675,17 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    RegressorChain : Equivalent for regression.
+    MultioutputClassifier : Classifies each output independently rather than
+        chaining.
+
+    References
+    ----------
+    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
+    Chains for Multi-label Classification", 2009.
+
     Examples
     --------
     >>> from sklearn.datasets import make_multilabel_classification
@@ -697,17 +708,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     array([[0.8387..., 0.9431..., 0.4576...],
            [0.8878..., 0.3684..., 0.2640...],
            [0.0321..., 0.9935..., 0.0625...]])
-
-    See Also
-    --------
-    RegressorChain : Equivalent for regression.
-    MultioutputClassifier : Classifies each output independently rather than
-        chaining.
-
-    References
-    ----------
-    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
-    Chains for Multi-label Classification", 2009.
     """
 
     def fit(self, X, Y):
