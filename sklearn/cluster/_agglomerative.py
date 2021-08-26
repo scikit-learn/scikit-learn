@@ -983,8 +983,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         return self
 
     def fit_predict(self, X, y=None):
-        """Fit the hierarchical clustering from features or distance matrix,
-        and return cluster labels.
+        """Fit the hierarchical clustering from features or distance matrix.
 
         Parameters
         ----------
