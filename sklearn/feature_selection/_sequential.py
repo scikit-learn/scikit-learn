@@ -239,7 +239,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 scoring=self.scoring,
                 n_jobs=self.n_jobs,
             ).mean()
-        return np.argmax(self.scores_[i, :])
+        return np.nanargmax(self.scores_[i, :])
 
     def _get_support_mask(self):
         check_is_fitted(self)
