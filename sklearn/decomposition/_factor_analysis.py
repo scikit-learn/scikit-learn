@@ -369,17 +369,17 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         return precision
 
     def score_samples(self, X):
-        """Compute the log-likelihood of each sample
+        """Compute the log-likelihood of each sample.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            The data
+            The data.
 
         Returns
         -------
         ll : ndarray of shape (n_samples,)
-            Log-likelihood of each sample under the current model
+            Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
         X = self._validate_data(X, reset=False)
