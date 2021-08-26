@@ -1123,6 +1123,11 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         Only computed if `distance_threshold` is used or `compute_distances`
         is set to `True`.
 
+    See Also
+    --------
+    AgglomerativeClustering : It performs a hierarchical clustering using
+        a bottom up approach.
+
     Examples
     --------
     >>> import numpy as np
