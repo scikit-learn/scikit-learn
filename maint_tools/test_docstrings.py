@@ -38,8 +38,6 @@ DOCSTRING_IGNORE_LIST = [
     "IterativeImputer",
     "KBinsDiscretizer",
     "KNNImputer",
-    "KNeighborsTransformer",
-    "KernelDensity",
     "KernelPCA",
     "LabelBinarizer",
     "LabelPropagation",
