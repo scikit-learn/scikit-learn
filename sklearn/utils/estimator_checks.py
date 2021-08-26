@@ -3722,6 +3722,9 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     set_random_state(estimator)
 
     X_orig = rng.normal(size=(150, 8))
+
+    # Some picky estimators (e.g. SkewedChi2Sampler) only accept skewed positive data.
+    X_orig -= X_orig.min() + 0.5
     X_orig = _enforce_estimator_tags_x(estimator, X_orig)
     X_orig = _pairwise_estimator_convert_X(X_orig, estimator)
     n_samples, n_features = X_orig.shape
