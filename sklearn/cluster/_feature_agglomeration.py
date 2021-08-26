@@ -22,7 +22,7 @@ class AgglomerationTransform(TransformerMixin):
 
     def transform(self, X):
         """
-        Transform a new matrix using the built clustering
+        Transform a new matrix using the built clustering.
 
         Parameters
         ----------
