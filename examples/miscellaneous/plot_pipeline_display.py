@@ -3,25 +3,27 @@
 Displaying Pipelines
 =================================================================
 
-The default configuration for displaying a pipeline is 'text' where
+The default configuration for displaying a pipeline is `'text'` where
 `set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
 use `set_config(display='diagram')` and then output the pipeline object.
+
+To see more detailed steps in the visualization of the pipeline, click on the
+steps in the pipeline.
 """
 
 # %%
 # Illustration of a Basic `Pipeline` with `LogisticRegression`
 ###############################################################################
-# This section constructs a pipeline and displays its text and visual
-# representation.
+# This section constructs a basic pipeline with one classifer step and displays
+# its text and visual representation.
 
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn import set_config
 
-steps = [("logistic_regression", LogisticRegression())]
+steps = [("classifier", LogisticRegression())]
 pipe = Pipeline(steps)
-# the default is a text representation
-pipe
+
 # %%
 # To view the text pipeline, the default is `display='text'`
 set_config(display="text")
@@ -35,7 +37,8 @@ pipe
 # %%
 # Illustration of `Pipeline` and `StandardScaler` and `LogisticRegression`
 ###############################################################################
-# This section constructs a pipeline and displays its visual representation.
+# This section constructs a pipeline with a preprocessing step and classifier.
+# and displays its visual representation.
 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -43,8 +46,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn import set_config
 
 steps = [
-    ("standard_scaler", StandardScaler()),
-    ("logistic_regression", LogisticRegression()),
+    ("preprocessing", StandardScaler()),
+    ("classifier", LogisticRegression()),
 ]
 pipe = Pipeline(steps)
 
@@ -67,7 +70,7 @@ from sklearn import set_config
 steps = [
     ("polynomial", PolynomialFeatures()),
     ("standard_scaler", StandardScaler()),
-    ("logistic_regression", LogisticRegression()),
+    ("classifier", LogisticRegression()),
 ]
 pipe = Pipeline(steps)
 
@@ -86,7 +89,7 @@ from sklearn.svm import SVC
 from sklearn.decomposition import PCA
 from sklearn import set_config
 
-steps = [("reduce_dim", PCA()), ("clf", SVC())]
+steps = [("reduce_dim", PCA()), ("classifier", SVC())]
 pipe = Pipeline(steps)
 
 # %%
