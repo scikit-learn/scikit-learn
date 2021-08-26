@@ -147,7 +147,7 @@ or by name::
  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
- * :ref:`sphx_glr_auto_examples_compose_plot_pipeline_display.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_pipeline_display.py`
 
 .. topic:: See Also:
 
