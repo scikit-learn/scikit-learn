@@ -718,6 +718,15 @@ def test_check_dataframe_column_names_consistency():
         check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
     check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
 
+    lr = LogisticRegression()
+    check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+    lr.__doc__ = "Docstring that does not document the estimator's attributes"
+    err_msg = (
+        "Estimator LogisticRegression does not document its feature_names_in_ attribute"
+    )
+    with raises(ValueError, match=err_msg):
+        check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+
 
 class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
     def __init__(self, response_output):
