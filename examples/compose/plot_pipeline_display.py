@@ -1,9 +1,7 @@
 """
 =================================================================
-Displaying a Basic Pipeline
+Displaying Pipelines
 =================================================================
-
-This example constructs a basic pipeline that does logistic regression.
 
 The default configuration for displaying a pipeline is 'text' where
 `set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
@@ -22,7 +20,8 @@ from sklearn import set_config
 
 steps = [("logistic_regression", LogisticRegression())]
 pipe = Pipeline(steps)
-
+# the default is a text representation
+pipe
 # %%
 # To view the text pipeline, the default is `display='text'`
 set_config(display="text")
@@ -33,23 +32,10 @@ pipe
 set_config(display="diagram")
 pipe
 
-"""
-========================================================================
-Displaying a Pipeline Chaining a Preprocessing Step and Classifier
-========================================================================
-
-This example constructs a pipeline that does standard scaling followed by a
-logistic regression classifier.
-
-The default configuration for displaying a pipeline is 'text' where
-`set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
-use `set_config(display='diagram')` and then output the pipeline object.
-"""
-
 # %%
 # Illustration of `Pipeline` and `StandardScaler` and `LogisticRegression`
 ###############################################################################
-# This section constructs a pipeline and displays its text representation.
+# This section constructs a pipeline and displays its visual representation.
 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -61,32 +47,17 @@ steps = [
     ("logistic_regression", LogisticRegression()),
 ]
 pipe = Pipeline(steps)
-pipe
 
 # %%
 # To visualize the diagram, change `display='diagram'`
 set_config(display="diagram")
-
 pipe
 
-"""
-========================================================================
-Displaying a Pipeline Chaining Multiple Preprocessing Steps & Classifier
-========================================================================
-
-This example constructs a pipeline that does polynomial features and standard
-scaling followed by a logistic regression classifier.
-
-The default configuration for displaying a pipeline is 'text' where
-`set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
-use `set_config(display='diagram')` and then output the pipeline object.
-"""
-
 # %%
-# Illustration of `Pipeline` and `PolynomialFeatures`, `StandardScaler`
-# and `LogisticRegression`
+# Displaying a Pipeline Chaining Multiple Preprocessing Steps & Classifier
 ###############################################################################
-# This section constructs a pipeline and displays its text representation.
+# HTML Illustration of `Pipeline` and `PolynomialFeatures`, `StandardScaler`
+# and `LogisticRegression`
 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
@@ -99,29 +70,16 @@ steps = [
     ("logistic_regression", LogisticRegression()),
 ]
 pipe = Pipeline(steps)
-pipe
 
 # To visualize the diagram, change to display='diagram'
 set_config(display="diagram")
 pipe
 
-"""
-=================================================================
-Displaying a Pipeline Chaining a PCA and SVC
-=================================================================
-
-This example constructs a pipeline that does dimensionality reduction followed
-by a support vector classifier.
-
-The default configuration for displaying a pipeline is 'text' where
-`set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
-use `set_config(display='diagram')` and then output the pipeline object.
-"""
-
 # %%
-# Illustration of `Pipeline` and `PCA` and `SVC`
+# Displaying a `Pipeline` and Dimensionality Reduction and Classifier
 ###############################################################################
 # This section constructs a pipeline and displays its text representation.
+# HTML Illustration of and `PCA` and `SVC`
 
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
@@ -130,31 +88,16 @@ from sklearn import set_config
 
 steps = [("reduce_dim", PCA()), ("clf", SVC())]
 pipe = Pipeline(steps)
-pipe
 
 # %%
 # To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
-
 pipe
 
-"""
-=================================================================
-Displaying a Complex Pipeline Chaining a Column Transformer
-=================================================================
-
-This example constructs a pipeline that does column transformation followed
-by a logistic regression classifier.
-
-The default configuration for displaying a pipeline is 'text' where
-`set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
-use `set_config(display='diagram')` and then output the pipeline object.
-"""
-
 # %%
-# Illustration of `Pipeline` and `ColumnTransformer` and `LogisticRegression`
+# Displaying a Complex `Pipeline` Chaining a Column Transformer
 ###############################################################################
-# This section constructs a pipeline and displays its text representation.
+# HTML Illustration of `Pipeline` and `ColumnTransformer` and `LogisticRegression`
 
 from sklearn.compose import make_column_selector as selector
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -183,32 +126,16 @@ preprocessor = ColumnTransformer(
 )
 
 pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=500))
-pipe
 
 # %%
 # To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
-
 pipe
 
-"""
-=================================================================
-Displaying a Grid Search over a Pipeline
-=================================================================
-
-This example constructs a pipeline that does column transformation followed
-by a random forest classifier over a grid search.
-
-The default configuration for displaying a pipeline is 'text' where
-`set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
-use `set_config(display='diagram')` and then output the pipeline object.
-"""
-
 # %%
-# Illustration of `GridSearchCV` over a `Pipeline` with `RandomForest`
+# Displaying a Grid Search over a Pipeline
 ###############################################################################
-# This section constructs a pipeline and displays its text and visual
-# representation.
+# HTML Illustration of `GridSearchCV` over a `Pipeline` with `RandomForest`
 
 from sklearn.compose import make_column_selector as selector
 from sklearn.model_selection import GridSearchCV
@@ -266,51 +193,6 @@ param_grid = {
 }
 
 grid_search = GridSearchCV(pipe, param_grid=param_grid, n_jobs=1)
-
-# %%
-# To view the text pipeline, the default is `display='text'`
-set_config(display="text")
-pipe
-
-# %%
-# To visualize the diagram, change to `display='diagram'`
-set_config(display="diagram")
-pipe
-
-"""
-=================================================================
-test
-=================================================================
-
-This example constructs a pipeline that does column transformation followed
-by a random forest classifier over a grid search.
-
-The default configuration for displaying a pipeline is 'text' where
-`set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
-use `set_config(display='diagram')` and then output the pipeline object.
-"""
-
-# %%
-# Illustration of `GridSearchCV` over a `Pipeline` with `RandomForest`
-###############################################################################
-# This section constructs a pipeline and displays its text and visual
-# representation.
-
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn import set_config
-
-steps = [
-    ("standard_scaler", StandardScaler()),
-    ("logistic_regression", LogisticRegression()),
-]
-pipe = Pipeline(steps)
-
-# %%
-# To view the text pipeline, the default is `display='text'`
-set_config(display="text")
-pipe
 
 # %%
 # To visualize the diagram, change to `display='diagram'`
