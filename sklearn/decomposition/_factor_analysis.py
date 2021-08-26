@@ -125,15 +125,14 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.decomposition import FactorAnalysis
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = FactorAnalysis(n_components=7, random_state=0)
-    >>> X_transformed = transformer.fit_transform(X)
-    >>> X_transformed.shape
-    (1797, 7)
+    PCA: Principal component analysis is also a latent linear variable model
+        which however assumes equal noise variance for each feature.
+        This extra assumption makes probabilistic PCA faster as it can be
+        computed in closed form.
+    FastICA: Independent component analysis, a latent variable model with
+        non-Gaussian latent variables.
 
     References
     ----------
@@ -143,14 +142,15 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     - Christopher M. Bishop: Pattern Recognition and Machine Learning,
       Chapter 12.2.4.
 
-    See Also
+    Examples
     --------
-    PCA: Principal component analysis is also a latent linear variable model
-        which however assumes equal noise variance for each feature.
-        This extra assumption makes probabilistic PCA faster as it can be
-        computed in closed form.
-    FastICA: Independent component analysis, a latent variable model with
-        non-Gaussian latent variables.
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FactorAnalysis
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FactorAnalysis(n_components=7, random_state=0)
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
     """
 
     def __init__(
