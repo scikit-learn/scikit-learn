@@ -1251,16 +1251,16 @@ class GridSearchCV(BaseSearchCV):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if
         `best_estimator_` is defined (see the documentation for the `refit`
-        parameter for more details) and that `best_estimator_` exposes such an
-        attribute when fit.
+        parameter for more details) and that `best_estimator_` exposes
+        `n_features_in_` when fit.
 
         .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if
         `best_estimator_` is defined (see the documentation for the `refit`
-        parameter for more details) and that `best_estimator_` exposes such an
-        attribute when fit.
+        parameter for more details) and that `best_estimator_` exposes
+        `feature_names_in_` when fit.
 
         .. versionadded:: 1.0
 
@@ -1610,16 +1610,16 @@ class RandomizedSearchCV(BaseSearchCV):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if
         `best_estimator_` is defined (see the documentation for the `refit`
-        parameter for more details) and that `best_estimator_` exposes such an
-        attribute when fit.
+        parameter for more details) and that `best_estimator_` exposes
+        `n_features_in_` when fit.
 
         .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if
         `best_estimator_` is defined (see the documentation for the `refit`
-        parameter for more details) and that `best_estimator_` exposes such an
-        attribute when fit.
+        parameter for more details) and that `best_estimator_` exposes
+        `feature_names_in_` when fit.
 
         .. versionadded:: 1.0
 
