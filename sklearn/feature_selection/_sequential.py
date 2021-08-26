@@ -200,14 +200,21 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             if self.direction == "forward"
             else n_features - self.n_features_to_select_
         )
-        for _ in range(n_iterations):
+
+        self.support_history_ = np.zeros(shape=(n_iterations, n_features), dtype=bool)
+        self.scores_ = np.empty(shape=(n_iterations, n_features))
+        self.scores_[:] = np.nan
+
+        for i in range(n_iterations):
             new_feature_idx = self._get_best_new_feature(
                 cloned_estimator, X, y, current_mask
             )
             current_mask[new_feature_idx] = True
+            self.support_history_[i, :] = current_mask
 
         if self.direction == "backward":
             current_mask = ~current_mask
+            self.support_history_ = ~self.support_history_
         self.support_ = current_mask
 
         return self
@@ -217,14 +224,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         # the best new feature to add (resp. remove) when doing forward
         # selection (resp. backward selection)
         candidate_feature_indices = np.flatnonzero(~current_mask)
-        scores = {}
+        i = current_mask.sum()
         for feature_idx in candidate_feature_indices:
             candidate_mask = current_mask.copy()
             candidate_mask[feature_idx] = True
             if self.direction == "backward":
                 candidate_mask = ~candidate_mask
             X_new = X[:, candidate_mask]
-            scores[feature_idx] = cross_val_score(
+            self.scores_[i, feature_idx] = cross_val_score(
                 estimator,
                 X_new,
                 y,
@@ -232,11 +239,19 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 scoring=self.scoring,
                 n_jobs=self.n_jobs,
             ).mean()
-        return max(scores, key=lambda feature_idx: scores[feature_idx])
+        return np.argmax(self.scores_[i, :])
 
     def _get_support_mask(self):
         check_is_fitted(self)
         return self.support_
+
+    def _get_support_history(self):
+        check_is_fitted(self)
+        return self.support_history_
+
+    def _get_scores(self):
+        check_is_fitted(self)
+        return self.scores_
 
     def _more_tags(self):
         return {
