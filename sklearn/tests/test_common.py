@@ -327,7 +327,6 @@ COLUMN_NAME_MODULES_TO_IGNORE = {
     "compose",
     "feature_extraction",
     "kernel_approximation",
-    "multioutput",
 }
 
 _estimators_to_test = list(
