@@ -329,7 +329,6 @@ COLUMN_NAME_MODULES_TO_IGNORE = {
     "kernel_approximation",
     "model_selection",
     "multioutput",
-    "semi_supervised",
 }
 
 _estimators_to_test = list(
