@@ -1543,7 +1543,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             random_state=None,
         )
 
-    def fit(self, X, y=None, sample_weight=None, **params):
+    def fit(self, X, y=None, sample_weight=None):
         """Detect the soft boundary of the set of samples X.
 
         Parameters
@@ -1559,9 +1559,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
-        **params : dict
-            Additional fit parameters.
-
         Returns
         -------
         self : object
@@ -1571,7 +1568,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         -----
         If X is not a C-ordered contiguous array it is copied.
         """
-        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight, **params)
+        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight)
         self.offset_ = -self._intercept_
         return self
 
