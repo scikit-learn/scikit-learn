@@ -17,6 +17,7 @@ from scipy import sparse
 from joblib import Parallel
 
 from .base import clone, TransformerMixin
+from .preprocessing import FunctionTransformer
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import available_if
 from .utils import (
@@ -942,7 +943,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # validate estimators
         for t in transformers:
-            if t == "drop":
+            if t == "drop" or t == "passthrough":
                 continue
             if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not hasattr(
                 t, "transform"
@@ -971,7 +972,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         """
         get_weight = (self.transformer_weights or {}).get
         return (
-            (name, trans, get_weight(name))
+            (
+                name,
+                FunctionTransformer(accept_sparse=True, check_inverse=False),
+                get_weight(name),
+            )
+            if trans == "passthrough"
+            else (name, trans, get_weight(name))
             for name, trans in self.transformer_list
             if trans != "drop"
         )
