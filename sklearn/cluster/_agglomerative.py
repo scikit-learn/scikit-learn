@@ -1169,18 +1169,23 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
-        """Fit the hierarchical clustering on the data
+        """Fit the hierarchical clustering on the data.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            The data
+            The data.
 
         y : Ignored
+            Ignored parameter.
+
+        **params : dict
+            Additional fit parameters.
 
         Returns
         -------
-        self
+        self : object
+            FeatureAgglomeration class instance.
         """
         X = self._validate_data(
             X,
