@@ -3748,9 +3748,9 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     if (
         module_name.startswith("sklearn.")
         and not ("test_" in module_name or module_name.endswith("_testing"))
-        and ("feature_names_in_" not in (estimator.__doc__))
+        and ("feature_names_in_" not in (estimator_orig.__doc__))
     ):
-        raise ValueError(  # pragma: nocover
+        raise ValueError(
             f"Estimator {name} does not document its feature_names_in_ attribute"
         )
 
