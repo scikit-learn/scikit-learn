@@ -391,19 +391,20 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         return log_like
 
     def score(self, X, y=None):
-        """Compute the average log-likelihood of the samples
+        """Compute the average log-likelihood of the samples.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            The data
+            The data.
 
         y : Ignored
+            Ignored parameter.
 
         Returns
         -------
         ll : float
-            Average log-likelihood of the samples under the current model
+            Average log-likelihood of the samples under the current model.
         """
         return np.mean(self.score_samples(X))
 
