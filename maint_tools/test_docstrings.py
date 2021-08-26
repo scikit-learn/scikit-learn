@@ -20,7 +20,6 @@ DOCSTRING_IGNORE_LIST = [
     "DictionaryLearning",
     "ElasticNetCV",
     "FactorAnalysis",
-    "FeatureAgglomeration",
     "FeatureHasher",
     "FeatureUnion",
     "FunctionTransformer",
