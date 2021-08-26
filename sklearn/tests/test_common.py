@@ -316,28 +316,17 @@ def test_check_n_features_in_after_fitting(estimator):
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
 
 
-# TODO: When more modules get added, we can remove it from this list to make
-# sure it gets tested. After we finish each module we can move the checks
-# into check_estimator.
 # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
 # delegates validation to a base estimator, the check is testing that the base estimator
 # is checking for column name consistency.
 
-COLUMN_NAME_MODULES_TO_IGNORE = {
-    "model_selection",
-}
-
-_estimators_to_test = list(
-    chain(_tested_estimators(), [make_pipeline(LogisticRegression(C=1))])
+column_name_estimators = list(
+    chain(
+        _tested_estimators(),
+        [make_pipeline(LogisticRegression(C=1))],
+        list(_generate_search_cv_instances()),
+    )
 )
-
-
-column_name_estimators = [
-    est
-    for est in _estimators_to_test
-    if est.__module__.split(".")[1] not in COLUMN_NAME_MODULES_TO_IGNORE
-]
-
 
 @pytest.mark.parametrize(
     "estimator", column_name_estimators, ids=_get_check_estimator_ids
