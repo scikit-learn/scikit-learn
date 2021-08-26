@@ -324,7 +324,6 @@ def test_check_n_features_in_after_fitting(estimator):
 # is checking for column name consistency.
 
 COLUMN_NAME_MODULES_TO_IGNORE = {
-    "compose",
     "model_selection",
 }
 
@@ -346,6 +345,9 @@ column_name_estimators = [
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        check_dataframe_column_names_consistency(
-            estimator.__class__.__name__, estimator
-        )
+        with pytest.warns(None) as record:
+            check_dataframe_column_names_consistency(
+                estimator.__class__.__name__, estimator
+            )
+        for warning in record:
+            assert "was fitted without feature names" not in str(warning.message)
