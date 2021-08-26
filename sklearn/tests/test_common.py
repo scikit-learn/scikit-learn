@@ -325,9 +325,7 @@ def test_check_n_features_in_after_fitting(estimator):
 
 COLUMN_NAME_MODULES_TO_IGNORE = {
     "compose",
-    "kernel_approximation",
     "model_selection",
-    "multioutput",
 }
 
 _estimators_to_test = list(
