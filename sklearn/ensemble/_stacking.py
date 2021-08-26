@@ -165,8 +165,11 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         est_fitted_idx = 0
         for name_est, org_est in zip(names, all_estimators):
             if org_est != "drop":
-                self.named_estimators_[name_est] = self.estimators_[est_fitted_idx]
+                current_estimator = self.estimators_[est_fitted_idx]
+                self.named_estimators_[name_est] = current_estimator
                 est_fitted_idx += 1
+                if hasattr(current_estimator, "feature_names_in_"):
+                    self.feature_names_in_ = current_estimator.feature_names_in_
             else:
                 self.named_estimators_[name_est] = "drop"
 
@@ -372,6 +375,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         underlying classifier exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
 
     final_estimator_ : estimator
         The classifier which predicts given the output of `estimators_`.
@@ -648,6 +656,11 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         underlying regressor exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
 
     final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.
