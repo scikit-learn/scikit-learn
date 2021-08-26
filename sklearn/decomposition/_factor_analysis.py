@@ -183,7 +183,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self.rotation = rotation
 
     def fit(self, X, y=None):
-        """Fit the FactorAnalysis model to X using SVD based approach
+        """Fit the FactorAnalysis model to X using SVD based approach.
 
         Parameters
         ----------
@@ -191,10 +191,12 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             Training data.
 
         y : Ignored
+            Ignored parameter.
 
         Returns
         -------
-        self
+        self : object
+            FactorAnalysis class instance.
         """
         X = self._validate_data(X, copy=self.copy, dtype=np.float64)
 
