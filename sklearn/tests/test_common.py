@@ -12,7 +12,7 @@ import sys
 import re
 import pkgutil
 from inspect import isgenerator, signature
-from itertools import product
+from itertools import product, chain
 from functools import partial
 
 import pytest
@@ -325,20 +325,20 @@ def test_check_n_features_in_after_fitting(estimator):
 
 COLUMN_NAME_MODULES_TO_IGNORE = {
     "compose",
-    "ensemble",
     "feature_extraction",
     "kernel_approximation",
     "model_selection",
-    "multiclass",
     "multioutput",
-    "pipeline",
-    "semi_supervised",
 }
+
+_estimators_to_test = list(
+    chain(_tested_estimators(), [make_pipeline(LogisticRegression(C=1))])
+)
 
 
 column_name_estimators = [
     est
-    for est in _tested_estimators()
+    for est in _estimators_to_test
     if est.__module__.split(".")[1] not in COLUMN_NAME_MODULES_TO_IGNORE
 ]
 
