@@ -2682,14 +2682,13 @@ def fallout_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
     >>> fallout_rate(y_true, y_pred)
     1
     """
-    average=None,
-    warn_for=("Fall out")
-    zero_division="warn"
+    average = None,
+    warn_for = ("Fall out")
+    zero_division = "warn"
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
-    #check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError(
@@ -2702,7 +2701,7 @@ def fallout_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     fall_out=_prf_divide(
-        fp, fp+tn, "False Positive (Fall Out)", "predicted", average, warn_for, zero_division
+        fp, fp + tn, "False Positive (Fall Out)", "predicted", average, warn_for, zero_division
     )
     return fallout
 def miss_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
@@ -2739,14 +2738,13 @@ def miss_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
 
 
     """
-    average=None,
-    warn_for=("Miss rate")
-    zero_division="warn"
+    average = None,
+    warn_for = ("Miss rate")
+    zero_division = "warn"
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
-    #check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError(
@@ -2759,7 +2757,7 @@ def miss_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     miss_rate=_prf_divide(
-        fn, fn+tp, "False Negative (Miss Rate)", "predicted", average, warn_for, zero_division
+        fn, fn + tp, "False Negative (Miss Rate)", "predicted", average, warn_for, zero_division
     )
     return miss_rate
 def specificity(y_true, y_prob):
@@ -2796,14 +2794,13 @@ def specificity(y_true, y_prob):
 
 
     """
-    average=None,
-    warn_for=("specificity")
-    zero_division="warn"
+    average = None,
+    warn_for = ("specificity")
+    zero_division = "warn"
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
-    #check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError(
@@ -2816,7 +2813,7 @@ def specificity(y_true, y_prob):
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     specificity=_prf_divide(
-        tn, tn+fp, "Specificity", "predicted", average, warn_for, zero_division
+        tn, tn + fp, "Specificity", "predicted", average, warn_for, zero_division
     )
     return specificity
 def sensitivity(y_true, y_prob):
@@ -2853,14 +2850,13 @@ def sensitivity(y_true, y_prob):
 
 
     """
-    average=None,
-    warn_for=("senstivity")
-    zero_division="warn"
+    average = None,
+    warn_for = ("senstivity")
+    zero_division = "warn"
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
-    #check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError(
@@ -2873,6 +2869,6 @@ def sensitivity(y_true, y_prob):
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     sensitivity=_prf_divide(
-        tp, tp+fn, "Specificity", "predicted", average, warn_for, zero_division
+        tp, tp + fn, "Specificity", "predicted", average, warn_for, zero_division
     )
     return sensitivity
