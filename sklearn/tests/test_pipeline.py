@@ -983,6 +983,50 @@ def test_set_feature_union_step_drop():
     assert not record
 
 
+def test_set_feature_union_passthrough():
+    mult2 = Mult(2)
+    mult2.get_feature_names = lambda: ["x2"]
+    mult3 = Mult(3)
+    mult3.get_feature_names = lambda: ["x3"]
+    X = np.asarray([[1]])
+
+    ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
+    assert_array_equal([[2, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[2, 3]], ft.fit_transform(X))
+    assert ["m2__x2", "m3__x3"] == ft.get_feature_names()
+
+    with pytest.warns(None) as record:
+        ft.set_params(m2="passthrough")
+        assert_array_equal([[1, 3]], ft.fit(X).transform(X))
+        assert_array_equal([[1, 3]], ft.fit_transform(X))
+    assert ["m3__x3"] == ft.get_feature_names()
+    assert not record
+
+    with pytest.warns(None) as record:
+        ft.set_params(m3="passthrough")
+        assert_array_equal([[1, 1]], ft.fit(X).transform(X))
+        assert_array_equal([[1, 1]], ft.fit_transform(X))
+    assert [] == ft.get_feature_names()
+    assert not record
+
+    with pytest.warns(None) as record:
+        # check we can change back
+        ft.set_params(m3=mult3)
+        assert_array_equal([[1, 3]], ft.fit(X).transform(X))
+        assert_array_equal([[1, 3]], ft.fit_transform(X))
+    assert not record
+
+    with pytest.warns(None) as record:
+        # Check 'drop' step at construction time
+        ft = FeatureUnion([("m2", "passthrough"), ("m3", mult3)])
+        assert_array_equal([[1, 3]], ft.fit(X).transform(X))
+        assert_array_equal([[1, 3]], ft.fit_transform(X))
+    assert ["m3__x3"] == ft.get_feature_names()
+    assert not record
+
+    pass
+
+
 def test_step_name_validation():
     error_message_1 = r"Estimator names must not contain __: got \['a__q'\]"
     error_message_2 = r"Names provided are not unique: \['a', 'a'\]"
