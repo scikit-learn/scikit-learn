@@ -16,7 +16,7 @@ DOCSTRING_IGNORE_LIST = [
     "ClassifierChain",
     "ColumnTransformer",
     "DecisionTreeRegressor",
--    "DictVectorizer",
+-   "DictVectorizer",
     "DictionaryLearning",
     "ElasticNetCV",
     "FactorAnalysis",
