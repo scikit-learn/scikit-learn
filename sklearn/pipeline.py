@@ -829,8 +829,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Parameters of the transformers may be set using its name and the parameter
     name separated by a '__'. A transformer may be replaced entirely by
-    setting the parameter with its name to another transformer,
-    or removed by setting to 'drop'.
+    setting the parameter with its name to another transformer, removed by
+    setting to 'drop' or disabled by setting to 'passthrough' (features are passed
+    without transformation).
 
     Read more in the :ref:`User Guide <feature_union>`.
 
@@ -840,8 +841,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     ----------
     transformer_list : list of (string, transformer) tuples
         List of transformer objects to be applied to the data. The first
-        half of each tuple is the name of the transformer. The tranformer can
-        be 'drop' for it to be ignored.
+        half of each tuple is the name of the transformer. The transformer can
+        be 'drop' for it to be ignored or can be 'passthrough' for features to
+        be passed as it is.
 
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
