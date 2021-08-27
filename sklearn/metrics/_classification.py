@@ -2650,6 +2650,8 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+    
+    
 def fallout_rate(y_true, y_pred):
     """Compute miss rate of a classification.
 
@@ -2701,9 +2703,11 @@ def fallout_rate(y_true, y_pred):
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     fall_out = _prf_divide(
-        fp, fp + tn, "False Positive (Fall Out)", "predicted", average, warn_for, zero_division
+        fp, fp + tn, "Fall Out", "predicted", average, warn_for, zero_division
     )
-    return fallout
+    return fall_out
+    
+    
 def miss_rate(y_true, y_pred):
     """Compute miss rate of a classification.
 
@@ -2735,8 +2739,6 @@ def miss_rate(y_true, y_pred):
     >>> y_pred = [1, 1, 1, 0]
     >>> miss_rate(y_true, y_pred)
     0.5
-
-
     """
     average = None,
     warn_for = ("Miss rate")
@@ -2757,9 +2759,11 @@ def miss_rate(y_true, y_pred):
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     miss_rate = _prf_divide(
-        fn, fn + tp, "False Negative (Miss Rate)", "predicted", average, warn_for, zero_division
+        fn, fn + tp, "Miss Rate", "predicted", average, warn_for, zero_division
     )
     return miss_rate
+    
+    
 def specificity(y_true, y_pred):
     """Compute specificity of a classification.
 
@@ -2791,8 +2795,6 @@ def specificity(y_true, y_pred):
     >>> y_pred = [1, 1, 1, 0]
     >>> specificity(y_true, y_pred)
     0
-
-
     """
     average = None,
     warn_for = ("specificity")
@@ -2816,6 +2818,8 @@ def specificity(y_true, y_pred):
         tn, tn + fp, "Specificity", "predicted", average, warn_for, zero_division
     )
     return specificity
+    
+    
 def sensitivity(y_true, y_pred):
     """Compute sensitivity of a classification.
 
@@ -2847,8 +2851,6 @@ def sensitivity(y_true, y_pred):
     >>> y_pred = [1, 1, 1, 0]
     >>> sensitivity(y_true, y_pred)
     0.5
-
-
     """
     average = None,
     warn_for = ("senstivity")
