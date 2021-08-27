@@ -1513,7 +1513,8 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be decomposed
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -1648,7 +1649,8 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be decomposed
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -1671,7 +1673,8 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be transformed by the model.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
@@ -1699,7 +1702,7 @@ class NMF(TransformerMixin, BaseEstimator):
         Returns
         -------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Data matrix of original shape.
+            Returns a data matrix of the original shape.
 
             .. versionadded:: 0.18
         """
