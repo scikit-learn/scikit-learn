@@ -2525,19 +2525,19 @@ def test_fallout_rate(y_true, y_pred):
 def test_miss_rate(y_true, y_pred):
     y_true = [1, 1, 1, 1]
     y_pred = [1, 1, 1, 1]
-    macro_fallout_rate = miss_rate(y_true, y_pred)
-    assert macro_fallout_rate == 0
+    macro_miss_rate = miss_rate(y_true, y_pred)
+    assert macro_miss_rate == 0
 
 
 def test_sensitivity(y_true, y_pred):
     y_true = [1, 1, 1, 1]
     y_pred = [1, 1, 1, 1]
     macro_sensitivity = sensitivity(y_true, y_pred)
-    assert macro_fallout_rate == 1
+    assert macro_sensitivity == 1
 
 
 def test_specificity(y_true, y_pred):
     y_true = [1, 1, 1, 1]
     y_pred = [1, 1, 1, 1]
     macro_specificity = specificity(y_true, y_pred)
-    assert macro_fallout_rate == 0
+    assert macro_specificity == 0
