@@ -1573,16 +1573,14 @@ def test_k_and_radius_neighbors_duplicates():
 
 def test_include_self_neighbors_graph():
     # Test include_self parameter in neighbors_graph
-    X = [[2, 3], [4, 5]]
-    kng = neighbors.kneighbors_graph(X, 1, include_self=True).A
-    kng_not_self = neighbors.kneighbors_graph(X, 1, include_self=False).A
-    assert_array_equal(kng, [[1.0, 0.0], [0.0, 1.0]])
-    assert_array_equal(kng_not_self, [[0.0, 1.0], [1.0, 0.0]])
-
-    rng = neighbors.radius_neighbors_graph(X, 5.0, include_self=True).A
-    rng_not_self = neighbors.radius_neighbors_graph(X, 5.0, include_self=False).A
-    assert_array_equal(rng, [[1.0, 1.0], [1.0, 1.0]])
-    assert_array_equal(rng_not_self, [[0.0, 1.0], [1.0, 0.0]])
+    X = np.ones((3, 1))
+        VI = np.dot(X, X.T)
+        nn = neighbors.NearestNeighbors(
+            n_neighbors=1, algorithm="brute", metric=metric, metric_params=params
+        ).fit(X)
+        dist, ind = nn.kneighbors(X)
+        assert_array_equal(dist, np.zeros((3, 1)))
+        assert_array_equal(ind, [[1], [0], [1]])
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -1677,11 +1675,10 @@ def test_sparse_metric_callable():
 
     Y = csr_matrix([[1, 1, 0, 1, 1], [1, 0, 0, 0, 1]])  # Query matrix
 
-    nn = neighbors.NearestNeighbors(
-        algorithm="brute", n_neighbors=2, metric=sparse_metric
-    ).fit(X)
     N = nn.kneighbors(Y, return_distance=False)
-
+    nn = neighbors.NearestNeighbors(
+        algorithm="brute", n_neighbors=2, metric=mahalanobis, metric_params=params,
+    ).fit(X)
     # GS indices of nearest neighbours in `X` for `sparse_metric`
     gold_standard_nn = np.array([[2, 1], [2, 1]])
 
@@ -1782,11 +1779,18 @@ def test_pipeline_with_nearest_neighbors_transformer():
     ],
 )
 def test_auto_algorithm(X, metric, metric_params, expected_algo):
-    model = neighbors.NearestNeighbors(
-        n_neighbors=4, algorithm="auto", metric=metric, metric_params=metric_params
-    )
-    model.fit(X)
-    assert model._fit_method == expected_algo
+    if(expected_algo == "auto")
+    {
+        model = neighbors.NearestNeighbors(
+            n_neighbors=4, algorithm="auto", metric=metric, metric_params=metric_params
+        )
+    }
+    else
+    {
+        model = neighbors.NearestNeighbors(
+            n_neighbors=2, algorithm="brute", metric=metric, metric_params=metric_params
+        )
+    }
 
 
 # TODO: Remove in 1.1
