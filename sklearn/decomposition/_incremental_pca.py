@@ -190,8 +190,8 @@ class IncrementalPCA(_BasePCA):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : Ignored
 
@@ -238,8 +238,8 @@ class IncrementalPCA(_BasePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         check_input : bool, default=True
             Run check_array on X.
@@ -358,8 +358,8 @@ class IncrementalPCA(_BasePCA):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            New data, where n_samples is the number of samples
-            and n_features is the number of features.
+            New data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
