@@ -857,7 +857,12 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse=["csr", "csc"],
+            force_all_finite=False,
+            reset=False,
+        )
 
         indices = self.pairwise_indices_
         if indices is None:
