@@ -200,7 +200,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
            [0.928..., 0.071...],
            [0.928..., 0.071...],
            [0.071..., 0.928...]])
-
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
