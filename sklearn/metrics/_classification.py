@@ -2682,6 +2682,9 @@ def fallout_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
     >>> fallout_rate(y_true, y_pred)
     1
     """
+    average=None,
+    warn_for=("Fall out")
+    zero_division="warn"
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
@@ -2736,6 +2739,9 @@ def miss_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
 
 
     """
+    average=None,
+    warn_for=("Miss rate")
+    zero_division="warn"
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
@@ -2790,6 +2796,9 @@ def specificity(y_true, y_prob):
 
 
     """
+    average=None,
+    warn_for=("specificity")
+    zero_division="warn"
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
@@ -2844,6 +2853,9 @@ def sensitivity(y_true, y_prob):
 
 
     """
+    average=None,
+    warn_for=("senstivity")
+    zero_division="warn"
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
@@ -2864,5 +2876,3 @@ def sensitivity(y_true, y_prob):
         tp, tp+fn, "Specificity", "predicted", average, warn_for, zero_division
     )
     return sensitivity
-    
-    
