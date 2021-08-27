@@ -1570,7 +1570,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     Finds a dictionary (a set of atoms) that performs well at sparsely
     encoding the fitted data.
 
-
     Solves the optimization problem::
 
        (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
