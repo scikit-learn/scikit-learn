@@ -401,17 +401,19 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             if self.max_features == "auto":
                 warn(
                     "The prior default of 'auto' for max_features is "
-                    "deprecated. Please use the new default for "
+                    "deprecated. Results of the fit, however, do not "
+                    "change. Please use the new default for "
                     "RandomForestRegressors and ExtraTreesRegressors, "
                     "which is 1.0",
                     FutureWarning,
                 )
 
-        if isinstance(self, (RandomForestClassifier, ExtraTreeClassifier)):
+        elif isinstance(self, (RandomForestClassifier, ExtraTreeClassifier)):
             if self.max_features == "auto":
                 warn(
                     "The prior default of 'auto' for max_features is "
-                    "deprecated. Please use the new default for "
+                    "deprecated. Results of the fit, however, do not "
+                    "change. Please use the new default for "
                     "RandomForestClassifiers and ExtraTreesClassifiers, "
                     "which is 'sqrt'.",
                     FutureWarning,
@@ -1148,7 +1150,8 @@ class RandomForestClassifier(ForestClassifier):
         - If float, then `max_features` is a fraction and
           `round(max_features * n_features)` features are considered at each
           split.
-        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "auto", then `max_features=sqrt(n_features)`.
+        - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
@@ -1500,7 +1503,8 @@ class RandomForestRegressor(ForestRegressor):
           split.
         - The default of 1.0 is equivalent to bagged trees and more
           randomness can be achieved by setting smaller values e.g. 0.3.
-        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "auto", then `max_features=n_features`.
+        - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
         - If "log2", then `max_features=log2(n_features)`.
         - If None or 1.0, then `max_features=n_features`.
 
@@ -1794,6 +1798,7 @@ class ExtraTreesClassifier(ForestClassifier):
         - If float, then `max_features` is a fraction and
           `round(max_features * n_features)` features are considered at each
           split.
+        - If "auto", then `max_features=sqrt(n_features)`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
@@ -2134,6 +2139,7 @@ class ExtraTreesRegressor(ForestRegressor):
           split.
         - The default of 1.0 is equivalent to bagged trees and more
           randomness can be achieved by setting smaller values e.g. 0.3.
+        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None or 1.0, then `max_features=n_features`.

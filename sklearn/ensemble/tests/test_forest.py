@@ -1757,6 +1757,31 @@ def test_n_features_deprecation(Estimator):
         est.n_features_
 
 
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        ExtraTreesClassifier,
+        ExtraTreesRegressor,
+        RandomForestClassifier,
+        RandomForestRegressor,
+    ],
+)
+def test_max_features_deprecation(Estimator):
+    # Check warning raised for max_features="auto" deprecation
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator(max_features="auto")
+
+    err_msg = (
+        r"The prior default of 'auto' for max_features is "
+        r"deprecated\. Results of the fit, however, do not "
+        r"change\..*"
+    )
+
+    with pytest.warns(FutureWarning, match=err_msg):
+        est.fit(X, y)
+
+
 # TODO: Remove in v1.2
 @pytest.mark.parametrize(
     "old_criterion, new_criterion",
