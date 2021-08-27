@@ -2686,7 +2686,7 @@ def fallout_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
-    check_consistent_length(y_true, y_prob, sample_weight)
+    #check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError(
@@ -2740,7 +2740,7 @@ def miss_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
-    check_consistent_length(y_true, y_prob, sample_weight)
+    #check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError(
@@ -2794,7 +2794,7 @@ def specificity(y_true, y_prob):
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
-    check_consistent_length(y_true, y_prob, sample_weight)
+    #check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError(
@@ -2848,7 +2848,7 @@ def sensitivity(y_true, y_prob):
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
-    check_consistent_length(y_true, y_prob, sample_weight)
+    #check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError(
