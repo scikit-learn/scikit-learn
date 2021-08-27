@@ -824,6 +824,49 @@ def test_pairwise_indices():
         )
 
 
+def test_pairwise_indices_n_features_in():
+    X, y = iris.data, iris.target
+    assert X.shape == (150, 4)
+
+    K = X @ X.T  # precomputed kernel
+    assert K.shape == (150, 150)
+
+    clf_notprecomputed = svm.SVC(kernel="linear").fit(X, y)
+    assert clf_notprecomputed.n_features_in_ == 4
+
+    ovr_notprecomputed = OneVsRestClassifier(clf_notprecomputed).fit(X, y)
+    assert ovr_notprecomputed.n_features_in_ == 4
+    for est in ovr_notprecomputed.estimators_:
+        assert est.n_features_in_ == 4
+
+    ovo_notprecomputed = OneVsOneClassifier(clf_notprecomputed).fit(X, y)
+    assert ovo_notprecomputed.n_features_in_ == 4
+    for est in ovo_notprecomputed.estimators_:
+        assert est.n_features_in_ == 4
+
+    # We working with precomputed kernels we have one "feature" per training
+    # sample:
+    clf_precomputed = svm.SVC(kernel="precomputed").fit(K, y)
+    assert clf_precomputed.n_features_in_ == 150
+
+    ovr_precomputed = OneVsRestClassifier(clf_precomputed).fit(K, y)
+    assert ovr_precomputed.n_features_in_ == 150
+    for est in ovr_precomputed.estimators_:
+        assert est.n_features_in_ == 150
+
+    # This becomes really interesting with OvO and precomputed kernel together:
+    # internally, OvO will drop the samples of the classes not part of the pair
+    # of classes under consideration for a given binary classifier. Since we
+    # use a precomputed kernel, it will also drop the matching columns of the
+    # kernel matrix, and therefore we have fewer "features" as result. Since
+    # each class has 50 samples, a single OvO binary classifier works with a
+    # subkernel matrix of shape (100, 100).
+    ovo_precomputed = OneVsOneClassifier(clf_precomputed).fit(K, y)
+    assert ovo_precomputed.n_features_in_ == 150
+    for est in ovo_precomputed.estimators_:
+        assert est.n_features_in_ == 100
+
+
 @ignore_warnings(category=FutureWarning)
 def test_pairwise_attribute():
     clf_precomputed = svm.SVC(kernel="precomputed")
