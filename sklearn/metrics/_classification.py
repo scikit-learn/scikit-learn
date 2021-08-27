@@ -2683,8 +2683,8 @@ def fallout_rate(y_true, y_pred):
     >>> fallout_rate(y_true, y_pred)
     1
     """
-    average = None,
-    warn_for = ("Fall out")
+    average = (None,)
+    warn_for = "Fall out"
     zero_division = "warn"
     y_true = column_or_1d(y_true)
     y_pred = column_or_1d(y_pred)
@@ -2702,7 +2702,13 @@ def fallout_rate(y_true, y_pred):
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     fall_out = _prf_divide(
-        np.array([fp]), np.array([fp + tn]), "Fall Out", "predicted", average, warn_for, zero_division
+        np.array([fp]),
+        np.array([fp + tn]),
+        "Fall Out",
+        "predicted",
+        average,
+        warn_for,
+        zero_division,
     )
     return fall_out
 
@@ -2738,8 +2744,8 @@ def miss_rate(y_true, y_pred):
     >>> miss_rate(y_true, y_pred)
     0.5
     """
-    average = None,
-    warn_for = ("Miss rate")
+    average = (None,)
+    warn_for = "Miss rate"
     zero_division = "warn"
     y_true = column_or_1d(y_true)
     y_pred = column_or_1d(y_pred)
@@ -2757,7 +2763,13 @@ def miss_rate(y_true, y_pred):
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     miss_rate = _prf_divide(
-        np.array([fn]), np.array([fn + tp]), "Miss Rate", "predicted", average, warn_for, zero_division
+        np.array([fn]),
+        np.array([fn + tp]),
+        "Miss Rate",
+        "predicted",
+        average,
+        warn_for,
+        zero_division,
     )
     return miss_rate
 
@@ -2793,8 +2805,8 @@ def specificity(y_true, y_pred):
     >>> specificity(y_true, y_pred)
     0
     """
-    average = None,
-    warn_for = ("specificity")
+    average = (None,)
+    warn_for = "specificity"
     zero_division = "warn"
     y_true = column_or_1d(y_true)
     y_pred = column_or_1d(y_pred)
@@ -2812,7 +2824,13 @@ def specificity(y_true, y_pred):
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     specificity = _prf_divide(
-        np.array([tn]), np.array([tn + fp]), "Specificity", "predicted", average, warn_for, zero_division
+        np.array([tn]),
+        np.array([tn + fp]),
+        "Specificity",
+        "predicted",
+        average,
+        warn_for,
+        zero_division,
     )
     return specificity
 
@@ -2848,8 +2866,8 @@ def sensitivity(y_true, y_pred):
     >>> sensitivity(y_true, y_pred)
     0.5
     """
-    average = None,
-    warn_for = ("senstivity")
+    average = (None,)
+    warn_for = "senstivity"
     zero_division = "warn"
     y_true = column_or_1d(y_true)
     y_pred = column_or_1d(y_pred)
@@ -2867,6 +2885,12 @@ def sensitivity(y_true, y_pred):
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     sensitivity = _prf_divide(
-        np.array([tp]), np.array([tp + fn]), "Specificity", "predicted", average, warn_for, zero_division
+        np.array([tp]),
+        np.array([tp + fn]),
+        "Specificity",
+        "predicted",
+        average,
+        warn_for,
+        zero_division,
     )
     return sensitivity
