@@ -2651,7 +2651,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 def fallout_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
-"""Compute miss rate of a classification.
+    """Compute miss rate of a classification.
 
     By definition the miss rate of a classification is defined as ``fp / (fp + tn)``, where ``tn`` is the number of true negatives and ``fp`` the number of false positives. 
 
@@ -2682,13 +2682,13 @@ def fallout_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
     >>> fallout_rate(y_true, y_pred)
     1
     """
-	y_true = column_or_1d(y_true)
+    y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
-	if y_type != "binary":
+    if y_type != "binary":
         raise ValueError(
             "Only binary classification is supported. The type of the target "
             f"is {y_type}."
@@ -2703,7 +2703,7 @@ def fallout_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
     )
     return fallout
 def miss_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
-"""Compute miss rate of a classification.
+    """Compute miss rate of a classification.
 
     By definition the miss rate of a classification is defined as ``fn / (tp + fn)``, where ``tp`` is the number of true positives and ``fn`` the number of false negatives. 
 
@@ -2736,13 +2736,13 @@ def miss_rate(y_true, y_prob, *, sample_weight=None, pos_label=None):
 
 
     """
-	y_true = column_or_1d(y_true)
+    y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
-	if y_type != "binary":
+    if y_type != "binary":
         raise ValueError(
             "Only binary classification is supported. The type of the target "
             f"is {y_type}."
@@ -2790,13 +2790,13 @@ def specificity(y_true, y_prob):
 
 
     """
-	y_true = column_or_1d(y_true)
+    y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
-	if y_type != "binary":
+    if y_type != "binary":
         raise ValueError(
             "Only binary classification is supported. The type of the target "
             f"is {y_type}."
@@ -2844,13 +2844,13 @@ def sensitivity(y_true, y_prob):
 
 
     """
-	y_true = column_or_1d(y_true)
+    y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
     y_type = type_of_target(y_true)
-	if y_type != "binary":
+    if y_type != "binary":
         raise ValueError(
             "Only binary classification is supported. The type of the target "
             f"is {y_type}."
@@ -2863,6 +2863,6 @@ def sensitivity(y_true, y_prob):
     sensitivity=_prf_divide(
         tp, tp+fn, "Specificity", "predicted", average, warn_for, zero_division
     )
-	return sensitivity
+    return sensitivity
     
     
