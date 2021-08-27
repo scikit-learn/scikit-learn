@@ -2650,14 +2650,14 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
-    
-    
+
+
 def fallout_rate(y_true, y_pred):
     """Compute miss rate of a classification.
 
     By definition the miss rate of a classification is defined as ``fp / (fp + tn)``,
-     where ``tn`` is the number of true negatives and ``fp`` the number of false 
-     positives. 
+    where ``tn`` is the number of true negatives and ``fp`` the number of false
+    positives.
 
     Parameters
     ----------
@@ -2705,14 +2705,14 @@ def fallout_rate(y_true, y_pred):
         fp, fp + tn, "Fall Out", "predicted", average, warn_for, zero_division
     )
     return fall_out
-    
-    
+
+
 def miss_rate(y_true, y_pred):
     """Compute miss rate of a classification.
 
     By definition the miss rate of a classification is defined as ``fn / (tp + fn)``,
-     where ``tp`` is the number of true positives and ``fn`` the number of 
-     false negatives. 
+    where ``tp`` is the number of true positives and ``fn`` the number of
+    false negatives.
 
     Parameters
     ----------
@@ -2760,14 +2760,14 @@ def miss_rate(y_true, y_pred):
         fn, fn + tp, "Miss Rate", "predicted", average, warn_for, zero_division
     )
     return miss_rate
-    
-    
+
+
 def specificity(y_true, y_pred):
     """Compute specificity of a classification.
 
     By definition the specificity of a classification is defined as ``tn / (tn + fp)``,
-     where ``tn`` is the number of true negatives and ``fp`` the number of false 
-     positives. 
+    where ``tn`` is the number of true negatives and ``fp`` the number of false
+    positives.
 
     Parameters
     ----------
@@ -2815,14 +2815,14 @@ def specificity(y_true, y_pred):
         tn, tn + fp, "Specificity", "predicted", average, warn_for, zero_division
     )
     return specificity
-    
-    
+
+
 def sensitivity(y_true, y_pred):
     """Compute sensitivity of a classification.
 
     By definition the sensitivity of a classification is defined as ``tp / (tp + fn)``,
-    where ``tp`` is the number of true positives and ``fn`` the number of false 
-    negatives. 
+    where ``tp`` is the number of true positives and ``fn`` the number of false
+    negatives.
 
     Parameters
     ----------
