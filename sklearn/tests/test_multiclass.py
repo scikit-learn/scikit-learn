@@ -824,7 +824,7 @@ def test_pairwise_indices():
         )
 
 
-def test_pairwise_indices_n_features_in():
+def test_pairwise_n_features_in():
     X, y = iris.data, iris.target
     assert X.shape == (150, 4)
 
