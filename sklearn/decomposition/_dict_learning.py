@@ -1440,7 +1440,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     MiniBatchDictionaryLearning: A faster, less accurate, version of the
         dictionary learning algorithm.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
-    SparseCoder : Finds a sparse representation of data from a fixed,
+    SparseCoder : Find a sparse representation of data from a fixed,
         precomputed dictionary.
     SparsePCA : Sparse Principal Components Analysis.
 
