@@ -213,9 +213,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             self.support_history_[i, :] = current_mask
 
         if self.direction == "backward":
-            current_mask = ~current_mask
             self.support_history_ = ~self.support_history_
-        self.support_ = current_mask
 
         return self
 
@@ -243,7 +241,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
     def _get_support_mask(self):
         check_is_fitted(self)
-        return self.support_
+        return self.support_history_[-1, :]
 
     def _get_support_history(self):
         check_is_fitted(self)
