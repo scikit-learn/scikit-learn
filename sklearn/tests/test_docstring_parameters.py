@@ -8,7 +8,7 @@ import importlib
 
 from pkgutil import walk_packages
 from inspect import signature
-
+import numpydoc
 import numpy as np
 
 import sklearn

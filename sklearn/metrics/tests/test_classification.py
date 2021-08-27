@@ -42,6 +42,10 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import fallout_rate
+from sklearn.metrics import miss_rate
+from sklearn.metrics import sensitivity
+from sklearn.metrics import specificity
 
 from sklearn.metrics._classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -2509,3 +2513,19 @@ def test_balanced_accuracy_score(y_true, y_pred):
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
+
+
+def test_fallout_rate(y_true,y_pred):
+	macro_fallout_rate=fallout_rate(y_true, y_pred)
+
+
+def test_miss_rate(y_true,y_pred):
+	macro_fallout_rate=miss_rate(y_true, y_pred)
+
+
+def test_sensitivity(y_true,y_pred):
+	macro_sensitivity=sensitivity(y_true, y_pred)
+
+
+def test_specificity(y_true,y_pred):
+	macro_specificity=specificity(y_true, y_pred)
