@@ -92,7 +92,7 @@ def make_prediction(dataset=None, binary=False):
 
     if binary:
         # only interested in probabilities of the positive case
-        # XXX: do we really want a special API for the binary case?
+        # XX: do we really want a special API for the binary case?
         probas_pred = probas_pred[:, 1]
 
     y_pred = clf.predict(X[half:])
