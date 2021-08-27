@@ -872,13 +872,17 @@ def test_pairwise_cross_val_score(MultiClassClassifier):
 
     X, y = iris.data, iris.target
 
-    ovr_false = MultiClassClassifier(clf_notprecomputed)
-    ovr_true = MultiClassClassifier(clf_precomputed)
+    multiclass_clf_notprecomputed = MultiClassClassifier(clf_notprecomputed)
+    multiclass_clf_precomputed = MultiClassClassifier(clf_precomputed)
 
     linear_kernel = np.dot(X, X.T)
-    score_precomputed = cross_val_score(ovr_true, linear_kernel, y, error_score="raise")
-    score_linear = cross_val_score(ovr_false, X, y, error_score="raise")
-    assert_array_equal(score_precomputed, score_linear)
+    score_not_precomputed = cross_val_score(
+        multiclass_clf_notprecomputed, X, y, error_score="raise"
+    )
+    score_precomputed = cross_val_score(
+        multiclass_clf_precomputed, linear_kernel, y, error_score="raise"
+    )
+    assert_array_equal(score_precomputed, score_not_precomputed)
 
 
 @pytest.mark.parametrize(
