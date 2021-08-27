@@ -458,6 +458,12 @@ class SelectPercentile(_BaseFilter):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -551,6 +557,12 @@ class SelectKBest(_BaseFilter):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -643,6 +655,12 @@ class SelectFpr(_BaseFilter):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
@@ -723,6 +741,12 @@ class SelectFdr(_BaseFilter):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     References
     ----------
     https://en.wikipedia.org/wiki/False_discovery_rate
@@ -800,6 +824,12 @@ class SelectFwe(_BaseFilter):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
@@ -860,6 +890,12 @@ class GenericUnivariateSelect(_BaseFilter):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
