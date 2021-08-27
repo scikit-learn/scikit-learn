@@ -1256,6 +1256,65 @@ def cosine_similarity(X, Y=None, dense_output=True):
     return K
 
 
+def incremental_cosine_similarity(X, Y=None, dense_output=True, new_indices=None):
+    """Compute cosine similarity between samples in X and Y only for entries in
+    the rows with the given new_indices.
+
+    Cosine similarity, or the cosine kernel, computes similarity as the
+    normalized dot product of X and Y:
+
+        K(X, Y) = <X, Y> / (||X||*||Y||)
+
+    On L2-normalized data, this function is equivalent to linear_kernel.
+
+    Read more in the :ref:`User Guide <cosine_similarity>`.
+
+    Parameters
+    ----------
+    X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
+        Input data.
+
+    Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features), \
+            default=None
+        Input data. If ``None``, the output will be the pairwise
+        similarities between all samples in ``X``.
+
+    dense_output : bool, default=True
+        Whether to return dense output even when the input is sparse. If
+        ``False``, the output is sparse if both input arrays are sparse.
+
+        .. versionadded:: 0.17
+           parameter ``dense_output`` for dense output.
+
+    new_indices : list of indices to represent the newly updated or added
+        input data
+
+
+    Returns
+    -------
+    kernel matrix : ndarray of shape (length_of_new_indices, n_samples_Y)
+    """
+    # to avoid recursive import
+
+    X, Y = check_pairwise_arrays(X, Y)
+
+    X_normalized = normalize(X, copy=True)
+    if X is Y:
+        Y_normalized = X_normalized
+    else:
+        Y_normalized = normalize(Y, copy=True)
+
+    new_data_normalized = X_normalized
+    if new_indices is not None:
+        row_idx = np.array(new_indices)
+        new_data = X_normalized[row_idx]
+        new_data_normalized = normalize(new_data, copy=True)
+
+    K = safe_sparse_dot(new_data_normalized, Y_normalized.T, dense_output=dense_output)
+
+    return K
+
+
 def additive_chi2_kernel(X, Y=None):
     """Computes the additive chi-squared kernel between observations in X and
     Y.
