@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal
 import pytest
@@ -916,3 +918,21 @@ def test_predict_proba(loss):
                     gradient=None,
                 ),
             )
+
+
+@pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
+def test_loss_pickle(loss):
+    """Test that losses can be pickled."""
+    n_samples = 20
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=loss,
+        n_samples=n_samples,
+        y_bound=(-100, 100),
+        raw_bound=(-5, 5),
+        seed=42,
+    )
+    pickled_loss = pickle.dumps(loss)
+    unpickled_loss = pickle.loads(pickled_loss)
+    assert loss(y_true=y_true, raw_prediction=raw_prediction) == approx(
+        unpickled_loss(y_true=y_true, raw_prediction=raw_prediction)
+    )
