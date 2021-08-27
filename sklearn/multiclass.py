@@ -859,7 +859,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         check_is_fitted(self)
         X = self._validate_data(
             X,
-            accept_sparse=["csr", "csc"],
+            accept_sparse=True,
             force_all_finite=False,
             reset=False,
         )

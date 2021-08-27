@@ -863,20 +863,22 @@ def test_pairwise_deprecated(MultiClassClassifier):
         ov_clf._pairwise
 
 
-def test_pairwise_cross_val_score():
+@pytest.mark.parametrize(
+    "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
+)
+def test_pairwise_cross_val_score(MultiClassClassifier):
     clf_precomputed = svm.SVC(kernel="precomputed")
     clf_notprecomputed = svm.SVC(kernel="linear")
 
     X, y = iris.data, iris.target
 
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovr_false = MultiClassClassifier(clf_notprecomputed)
-        ovr_true = MultiClassClassifier(clf_precomputed)
+    ovr_false = MultiClassClassifier(clf_notprecomputed)
+    ovr_true = MultiClassClassifier(clf_precomputed)
 
-        linear_kernel = np.dot(X, X.T)
-        score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
-        score_linear = cross_val_score(ovr_false, X, y)
-        assert_array_equal(score_precomputed, score_linear)
+    linear_kernel = np.dot(X, X.T)
+    score_precomputed = cross_val_score(ovr_true, linear_kernel, y, error_score="raise")
+    score_linear = cross_val_score(ovr_false, X, y, error_score="raise")
+    assert_array_equal(score_precomputed, score_linear)
 
 
 @pytest.mark.parametrize(
