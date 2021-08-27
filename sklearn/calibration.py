@@ -162,7 +162,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionchanged:: 0.24
             Single calibrated classifier case when `ensemble=False`.
-     
+
     See Also
     --------
 
@@ -405,7 +405,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     def predict(self, X):
         """Predict the target of new samples.
-        
+
         The predicted class is the class that has the highest probability,
         and can thus be different from the prediction of the uncalibrated classifier.
 
