@@ -219,6 +219,16 @@ Some other classifiers cope better with this harder version of the task. Try
 running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
 the ``--filter`` option to compare the results.
 
+.. topic:: Data Considerations
+  The 20 Newsgroup dataset contains some text which maybe culturally insensitive to the public.
+  For instance,This text is in the newsgroups dataset:
+
+  "I'm going to be in Cleveland Thursday, April 15 to Sunday, April 18.
+   Does anybody know if the Tribe will be in town on those dates, and
+   if so, who're they playing and if tickets are available?"
+
+   The Cleveland Indians is a major league baseball team based in Cleveland, Ohio, USA. In December 2020, it was      reported that "After several months of discussion sparked by the death of George Floyd and a national reckoning    over race and colonialism, the Cleveland Indians have decided to change their name." Team owner Paul Dolan "did    make it clear that the team will not make its informal nickname -- the Tribe -- its new team name." “It’s not      going to be a half-step away from the Indians,” Dolan said. “We will not have a Native American-themed name.”
+
 .. topic:: Recommendation
 
   When evaluating text classifiers on the 20 Newsgroups data, you
