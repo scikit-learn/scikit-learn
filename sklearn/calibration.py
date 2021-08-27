@@ -165,6 +165,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     See Also
     --------
+    calibration_curve : Compute true and predicted probabilities for a calibration curve.
 
     References
     ----------
