@@ -2870,3 +2870,4 @@ def sensitivity(y_true, y_pred):
         tp, tp + fn, "Specificity", "predicted", average, warn_for, zero_division
     )
     return sensitivity
+
