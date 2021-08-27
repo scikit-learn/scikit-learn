@@ -2695,12 +2695,12 @@ def fallout_rate(y_true, y_pred):
             "Only binary classification is supported. The type of the target "
             f"is {y_type}."
         )
-    if y_prob.max() > 1:
+    if y_pred.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
-    if y_prob.min() < 0:
+    if y_pred.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    fall_out =_prf_divide(
+    fall_out = _prf_divide(
         fp, fp + tn, "False Positive (Fall Out)", "predicted", average, warn_for, zero_division
     )
     return fallout
@@ -2751,12 +2751,12 @@ def miss_rate(y_true, y_pred):
             "Only binary classification is supported. The type of the target "
             f"is {y_type}."
         )
-    if y_prob.max() > 1:
+    if y_pred.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
-    if y_prob.min() < 0:
+    if y_pred.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    miss_rate =_prf_divide(
+    miss_rate = _prf_divide(
         fn, fn + tp, "False Negative (Miss Rate)", "predicted", average, warn_for, zero_division
     )
     return miss_rate
@@ -2807,12 +2807,12 @@ def specificity(y_true, y_pred):
             "Only binary classification is supported. The type of the target "
             f"is {y_type}."
         )
-    if y_prob.max() > 1:
+    if y_pred.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
-    if y_prob.min() < 0:
+    if y_pred.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    specificity =_prf_divide(
+    specificity = _prf_divide(
         tn, tn + fp, "Specificity", "predicted", average, warn_for, zero_division
     )
     return specificity
@@ -2863,12 +2863,12 @@ def sensitivity(y_true, y_pred):
             "Only binary classification is supported. The type of the target "
             f"is {y_type}."
         )
-    if y_prob.max() > 1:
+    if y_pred.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
-    if y_prob.min() < 0:
+    if y_pred.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-    sensitivity =_prf_divide(
+    sensitivity = _prf_divide(
         tp, tp + fn, "Specificity", "predicted", average, warn_for, zero_division
     )
     return sensitivity
