@@ -116,6 +116,12 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
@@ -367,6 +373,12 @@ class LinearSVR(RegressorMixin, LinearModel):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_iter_ : int
         Maximum number of iterations run across all classes.
@@ -651,6 +663,12 @@ class SVC(BaseSVC):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
 
@@ -900,6 +918,12 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
@@ -1109,6 +1133,12 @@ class SVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1291,6 +1321,12 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1468,6 +1504,12 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
