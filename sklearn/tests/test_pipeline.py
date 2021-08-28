@@ -993,20 +993,17 @@ def test_set_feature_union_passthrough():
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
     assert_array_equal([[2, 3]], ft.fit(X).transform(X))
     assert_array_equal([[2, 3]], ft.fit_transform(X))
-    assert ["m2__x2", "m3__x3"] == ft.get_feature_names()
 
     with pytest.warns(None) as record:
         ft.set_params(m2="passthrough")
         assert_array_equal([[1, 3]], ft.fit(X).transform(X))
         assert_array_equal([[1, 3]], ft.fit_transform(X))
-    assert ["m3__x3"] == ft.get_feature_names()
     assert not record
 
     with pytest.warns(None) as record:
         ft.set_params(m3="passthrough")
         assert_array_equal([[1, 1]], ft.fit(X).transform(X))
         assert_array_equal([[1, 1]], ft.fit_transform(X))
-    assert [] == ft.get_feature_names()
     assert not record
 
     with pytest.warns(None) as record:
@@ -1021,7 +1018,6 @@ def test_set_feature_union_passthrough():
         ft = FeatureUnion([("m2", "passthrough"), ("m3", mult3)])
         assert_array_equal([[1, 3]], ft.fit(X).transform(X))
         assert_array_equal([[1, 3]], ft.fit_transform(X))
-    assert ["m3__x3"] == ft.get_feature_names()
     assert not record
 
     pass

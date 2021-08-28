@@ -967,11 +967,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                     "but it is not present in transformer_list."
                 )
 
-    def _passthrough_function(self):
-        ft = FunctionTransformer(accept_sparse=True, check_inverse=False)
-        ft.get_feature_names = lambda: []
-        return ft
-
     def _iter(self):
         """
         Generate (name, trans, weight) tuples excluding None and
@@ -982,7 +977,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return (
             (
                 name,
-                self._passthrough_function(),
+                FunctionTransformer(accept_sparse=True, check_inverse=False),
                 get_weight(name),
             )
             if trans == "passthrough"
