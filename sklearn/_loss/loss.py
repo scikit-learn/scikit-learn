@@ -434,7 +434,11 @@ class BaseLoss(BaseLink, CyLossFunction):
         return np.zeros_like(y_true)
 
 
-class HalfSquaredError(IdentityLink, BaseLoss, CyHalfSquaredError):
+# Note: Naturally, we would inherit in the following order
+#         class HalfSquaredError(IdentityLink, CyHalfSquaredError, BaseLoss)
+#       But because of https://github.com/cython/cython/issues/4350 we
+#       set BaseLoss as the last one. This, of course, changes the MRO.
+class HalfSquaredError(IdentityLink, CyHalfSquaredError, BaseLoss):
     """Half squared error with identity link, for regression.
 
     Domain:
@@ -460,7 +464,7 @@ class HalfSquaredError(IdentityLink, BaseLoss, CyHalfSquaredError):
             self.constant_hessian = False
 
 
-class AbsoluteError(IdentityLink, BaseLoss, CyAbsoluteError):
+class AbsoluteError(IdentityLink, CyAbsoluteError, BaseLoss):
     """Absolute error with identity link, for regression.
 
     Domain:
@@ -497,7 +501,7 @@ class AbsoluteError(IdentityLink, BaseLoss, CyAbsoluteError):
             return _weighted_percentile(y_true, sample_weight, 50)
 
 
-class PinballLoss(IdentityLink, BaseLoss, CyPinballLoss):
+class PinballLoss(IdentityLink, CyPinballLoss, BaseLoss):
     """Quantile loss aka pinball loss, for regression.
 
     Domain:
@@ -552,7 +556,7 @@ class PinballLoss(IdentityLink, BaseLoss, CyPinballLoss):
             return _weighted_percentile(y_true, sample_weight, 100 * self.quantile)
 
 
-class HalfPoissonLoss(LogLink, BaseLoss, CyHalfPoissonLoss):
+class HalfPoissonLoss(LogLink, CyHalfPoissonLoss, BaseLoss):
     """Poisson deviance loss with log-link, for regression.
 
     Domain:
@@ -585,7 +589,7 @@ class HalfPoissonLoss(LogLink, BaseLoss, CyHalfPoissonLoss):
         return term
 
 
-class HalfGammaLoss(LogLink, BaseLoss, CyHalfGammaLoss):
+class HalfGammaLoss(LogLink, CyHalfGammaLoss, BaseLoss):
     """Gamma deviance loss with log-link, for regression.
 
     Domain:
@@ -617,7 +621,7 @@ class HalfGammaLoss(LogLink, BaseLoss, CyHalfGammaLoss):
         return term
 
 
-class HalfTweedieLoss(LogLink, BaseLoss, CyHalfTweedieLoss):
+class HalfTweedieLoss(LogLink, CyHalfTweedieLoss, BaseLoss):
     """Tweedie deviance loss with log-link, for regression.
 
     Domain:
@@ -680,7 +684,7 @@ class HalfTweedieLoss(LogLink, BaseLoss, CyHalfTweedieLoss):
             return term
 
 
-class BinaryCrossEntropy(LogitLink, BaseLoss, CyBinaryCrossEntropy):
+class BinaryCrossEntropy(LogitLink, CyBinaryCrossEntropy, BaseLoss):
     """Binary cross entropy loss with logit link, for binary classification.
 
     Domain:
@@ -740,7 +744,7 @@ class BinaryCrossEntropy(LogitLink, BaseLoss, CyBinaryCrossEntropy):
         return proba
 
 
-class CategoricalCrossEntropy(MultinomialLogit, BaseLoss, CyCategoricalCrossEntropy):
+class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseLoss):
     """Categorical cross-entropy loss, for multiclass classification.
 
     Domain:
