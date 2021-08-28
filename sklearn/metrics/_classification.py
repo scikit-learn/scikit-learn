@@ -2692,15 +2692,6 @@ def fallout_rate(y_true, y_pred):
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
     y_type = type_of_target(y_true)
-    if y_type != "binary":
-        raise ValueError(
-            "Only binary classification is supported. The type of the target "
-            f"is {y_type}."
-        )
-    if y_pred.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_pred.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     fall_out = _prf_divide(
         np.array([fp]),
@@ -2753,15 +2744,6 @@ def miss_rate(y_true, y_pred):
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
     y_type = type_of_target(y_true)
-    if y_type != "binary":
-        raise ValueError(
-            "Only binary classification is supported. The type of the target "
-            f"is {y_type}."
-        )
-    if y_pred.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_pred.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     miss_rate = _prf_divide(
         np.array([fn]),
@@ -2814,15 +2796,6 @@ def specificity(y_true, y_pred):
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
     y_type = type_of_target(y_true)
-    if y_type != "binary":
-        raise ValueError(
-            "Only binary classification is supported. The type of the target "
-            f"is {y_type}."
-        )
-    if y_pred.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_pred.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     specificity = _prf_divide(
         np.array([tn]),
@@ -2875,15 +2848,6 @@ def sensitivity(y_true, y_pred):
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
     y_type = type_of_target(y_true)
-    if y_type != "binary":
-        raise ValueError(
-            "Only binary classification is supported. The type of the target "
-            f"is {y_type}."
-        )
-    if y_pred.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_pred.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     sensitivity = _prf_divide(
         np.array([tp]),
