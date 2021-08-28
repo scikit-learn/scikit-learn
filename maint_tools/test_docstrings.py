@@ -48,7 +48,6 @@ DOCSTRING_IGNORE_LIST = [
     "MeanShift",
     "MiniBatchDictionaryLearning",
     "MiniBatchKMeans",
-    "MiniBatchSparsePCA",
     "MissingIndicator",
     "MultiLabelBinarizer",
     "MultiOutputClassifier",
