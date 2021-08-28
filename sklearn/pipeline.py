@@ -945,7 +945,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # validate estimators
         for t in transformers:
-            if t == "drop" or t == "passthrough":
+            if t in ["drop", "passthrough"]:
                 continue
             if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not hasattr(
                 t, "transform"
