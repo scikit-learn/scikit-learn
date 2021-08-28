@@ -794,6 +794,12 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     ElasticNetCV : Elastic net model with best model selection by
@@ -1199,6 +1205,12 @@ class Lasso(ElasticNet):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1853,6 +1865,12 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     lars_path : Compute Least Angle Regression or Lasso path using LARS
@@ -2076,6 +2094,12 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.linear_model import ElasticNetCV
@@ -2281,6 +2305,12 @@ class MultiTaskElasticNet(Lasso):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -2526,6 +2556,12 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2724,6 +2760,12 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -2946,6 +2988,12 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
