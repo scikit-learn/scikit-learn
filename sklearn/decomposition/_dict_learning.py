@@ -1340,7 +1340,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
           Lasso solution (:class:`~sklearn.linear_model.Lasso`). Lars will be
           faster if the estimated components are sparse.
 
-        .. versionadded:: 0.17
+          .. versionadded:: 0.17
            *cd* coordinate descent method to improve speed.
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
@@ -1358,7 +1358,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         - `'threshold'`: squashes to zero all coefficients less than alpha from
           the projection ``dictionary * X'``.
 
-        .. versionadded:: 0.17
+          .. versionadded:: 0.17
            *lasso_cd* coordinate descent method to improve speed.
 
     transform_n_nonzero_coefs : int, default=None
@@ -1406,35 +1406,49 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
 
-        .. versionadded:: 0.20
+           .. versionadded:: 0.20
 
     positive_dict : bool, default=False
         Whether to enforce positivity when finding the dictionary
 
-        .. versionadded:: 0.20
+           .. versionadded:: 0.20
 
     transform_max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `'lasso_lars'`.
 
-        .. versionadded:: 0.22
+           .. versionadded:: 0.22
 
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
-        dictionary atoms extracted from the data
+        Dictionary atoms extracted from the data.
 
     error_ : array
-        vector of errors at each iteration
+        Vector of errors at each iteration.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
+           .. versionadded:: 0.24
 
     n_iter_ : int
         Number of iterations run.
+    
+    See Also
+    --------
+    SparseCoder
+    MiniBatchDictionaryLearning
+    SparsePCA
+    MiniBatchSparsePCA
 
+    Notes
+    -----
+    **References:**
+
+    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
+    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    
     Examples
     --------
     >>> import numpy as np
@@ -1461,20 +1475,82 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     0.08...
-
-    Notes
-    -----
-    **References:**
-
-    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
-
-    See Also
+    
+    Methods
     --------
-    SparseCoder
-    MiniBatchDictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
+    fit(X[, y])  Fit the model from data in X.
+    fit_transform(X[, y])  Fit to data, then transform it.
+    get_params([deep])  Get parameters for this estimator.
+    set_params(**params)  Set the parameters of this estimator.
+    transform(X)  Encode the data as a sparse combination of the dictionary atoms.
+    fit(X, y=None)[source]  
+    Fit the model from data in X.
+
+    Parameters
+    Xarray-like of shape (n_samples, n_features)
+    Training vector, where n_samples in the number of samples and n_features is the number of features.
+
+    yIgnored
+    Returns
+    selfobject
+    Returns the object itself.
+
+    fit_transform(X, y=None, **fit_params)[source]
+    Fit to data, then transform it.
+
+    Fits transformer to X and y with optional parameters fit_params and returns a transformed version of X.
+
+    Parameters
+    Xarray-like of shape (n_samples, n_features)
+    Input samples.
+
+    yarray-like of shape (n_samples,) or (n_samples, n_outputs), default=None
+    Target values (None for unsupervised transformations).
+
+    **fit_paramsdict
+    Additional fit parameters.
+
+    Returns
+    X_newndarray array of shape (n_samples, n_features_new)
+    Transformed array.
+
+    get_params(deep=True)[source]
+    Get parameters for this estimator.
+
+    Parameters
+    deepbool, default=True
+    If True, will return the parameters for this estimator and contained subobjects that are estimators.
+
+    Returns
+    paramsdict
+    Parameter names mapped to their values.
+
+    set_params(**params)[source]
+    Set the parameters of this estimator.
+
+    The method works on simple estimators as well as on nested objects (such as Pipeline). The latter have parameters of the form <component>__<parameter> so that it’s possible to update each component of a nested object.
+
+    Parameters
+    **paramsdict
+    Estimator parameters.
+
+    Returns
+    selfestimator instance
+    Estimator instance.
+
+    transform(X)[source]
+    Encode the data as a sparse combination of the dictionary atoms.
+
+    Coding method is determined by the object parameter transform_algorithm.
+
+    Parameters
+    Xndarray of shape (n_samples, n_features)
+    Test data to be transformed, must have the same number of features as the data used to train the model.
+
+    Returns
+    X_newndarray of shape (n_samples, n_components)
+    Transformed data.
+    
     """
 
     def __init__(
