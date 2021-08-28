@@ -21,6 +21,7 @@ the lower the better.
 #          Shangwu Yao <shangwuyao@gmail.com>
 #          Michal Karbownik <michakarbownik@gmail.com>
 #          Bhavya Bhardwaj <bhavya1705@yahoo.com>
+# 		   Rohit Mittal <rohitm132@gmail.com>
 # License: BSD 3 clause
 
 
@@ -2681,7 +2682,7 @@ def fallout_rate(y_true, y_pred):
     >>> y_true = [0, 1, 0, 1]
     >>> y_pred = [1, 1, 1, 0]
     >>> fallout_rate(y_true, y_pred)
-    1
+    1.0
     """
     average = (None,)
     warn_for = "Fall out"
@@ -2690,16 +2691,6 @@ def fallout_rate(y_true, y_pred):
     y_pred = column_or_1d(y_pred)
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
-    y_type = type_of_target(y_true)
-    if y_type != "binary":
-        raise ValueError(
-            "Only binary classification is supported. The type of the target "
-            f"is {y_type}."
-        )
-    if y_pred.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_pred.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     fall_out = _prf_divide(
         np.array([fp]),
@@ -2710,7 +2701,7 @@ def fallout_rate(y_true, y_pred):
         warn_for,
         zero_division,
     )
-    return fall_out
+    return fall_out[0]
 
 
 def miss_rate(y_true, y_pred):
@@ -2751,16 +2742,6 @@ def miss_rate(y_true, y_pred):
     y_pred = column_or_1d(y_pred)
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
-    y_type = type_of_target(y_true)
-    if y_type != "binary":
-        raise ValueError(
-            "Only binary classification is supported. The type of the target "
-            f"is {y_type}."
-        )
-    if y_pred.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_pred.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     miss_rate = _prf_divide(
         np.array([fn]),
@@ -2771,7 +2752,7 @@ def miss_rate(y_true, y_pred):
         warn_for,
         zero_division,
     )
-    return miss_rate
+    return miss_rate[0]
 
 
 def specificity(y_true, y_pred):
@@ -2803,7 +2784,7 @@ def specificity(y_true, y_pred):
     >>> y_true = [0, 1, 0, 1]
     >>> y_pred = [1, 1, 1, 0]
     >>> specificity(y_true, y_pred)
-    0
+    0.0
     """
     average = (None,)
     warn_for = "specificity"
@@ -2812,16 +2793,6 @@ def specificity(y_true, y_pred):
     y_pred = column_or_1d(y_pred)
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
-    y_type = type_of_target(y_true)
-    if y_type != "binary":
-        raise ValueError(
-            "Only binary classification is supported. The type of the target "
-            f"is {y_type}."
-        )
-    if y_pred.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_pred.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     specificity = _prf_divide(
         np.array([tn]),
@@ -2832,7 +2803,7 @@ def specificity(y_true, y_pred):
         warn_for,
         zero_division,
     )
-    return specificity
+    return specificity[0]
 
 
 def sensitivity(y_true, y_pred):
@@ -2873,16 +2844,6 @@ def sensitivity(y_true, y_pred):
     y_pred = column_or_1d(y_pred)
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
-    y_type = type_of_target(y_true)
-    if y_type != "binary":
-        raise ValueError(
-            "Only binary classification is supported. The type of the target "
-            f"is {y_type}."
-        )
-    if y_pred.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_pred.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     sensitivity = _prf_divide(
         np.array([tp]),
@@ -2893,4 +2854,4 @@ def sensitivity(y_true, y_pred):
         warn_for,
         zero_division,
     )
-    return sensitivity
+    return sensitivity[0]

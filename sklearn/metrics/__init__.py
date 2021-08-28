@@ -173,7 +173,7 @@ __all__ = [
     "SCORERS",
     "silhouette_samples",
     "silhouette_score",
-    "sensititvity",
+    "sensitivity",
     "specificity",
     "top_k_accuracy_score",
     "v_measure_score",
