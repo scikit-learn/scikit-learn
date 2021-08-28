@@ -42,6 +42,7 @@ from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
 from ._base import _check_pos_label_consistency
+from ._ranking import precision_recall_curve
 
 
 def _check_zero_division(zero_division):
@@ -2649,3 +2650,31 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+def recall_at_precision_k(y_true, y_prob, k, *, pos_label=None, sample_weight=None):
+
+    precisions, recalls, threshholds = precision_recall_curve(
+        y_true, y_prob, pos_label=pos_label, sample_weight=sample_weight
+    )
+
+    try:
+        value, _ = max((r, p) for p, r in zip(precisions, recalls) if p >= k)
+    except ValueError:
+        value = 0
+
+    return value
+
+
+def precision_at_recall_k(y_true, y_prob, k, *, pos_label=None, sample_weight=None):
+
+    precisions, recalls, threshholds = precision_recall_curve(
+        y_true, y_prob, pos_label=pos_label, sample_weight=sample_weight
+    )
+
+    try:
+        value, _ = max((p, r) for p, r in zip(precisions, recalls) if r >= k)
+    except ValueError:
+        value = 0
+
+    return value
