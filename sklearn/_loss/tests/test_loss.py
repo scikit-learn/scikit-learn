@@ -9,10 +9,12 @@ from scipy.optimize import (
     minimize_scalar,
     newton,
 )
+from scipy.special import logsumexp
 
 from sklearn._loss.link import _inclusive_low_high, IdentityLink
 from sklearn._loss.loss import (
     _LOSSES,
+    BaseLoss,
     AbsoluteError,
     BinaryCrossEntropy,
     CategoricalCrossEntropy,
@@ -41,13 +43,17 @@ LOSS_INSTANCES += [
 ]
 
 
-def loss_instance_name(loss):
-    name = loss.__class__.__name__
-    if hasattr(loss, "quantile"):
-        name += f"(quantile={loss.quantile})"
-    elif hasattr(loss, "power"):
-        name += f"(power={loss.power})"
-    return name
+def loss_instance_name(param):
+    if isinstance(param, BaseLoss):
+        loss = param
+        name = loss.__class__.__name__
+        if hasattr(loss, "quantile"):
+            name += f"(quantile={loss.quantile})"
+        elif hasattr(loss, "power"):
+            name += f"(power={loss.power})"
+        return name
+    else:
+        return str(param)
 
 
 def random_y_true_raw_prediction(
@@ -188,6 +194,46 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
         assert loss.in_y_pred_range(np.array([y]))
     for y in y_pred_fail:
         assert not loss.in_y_pred_range(np.array([y]))
+
+
+@pytest.mark.parametrize(
+    "loss, y_true, raw_prediction, loss_true",
+    [
+        (HalfSquaredError(), 1.0, 5.0, 8),
+        (AbsoluteError(), 1.0, 5.0, 4),
+        (PinballLoss(quantile=0.5), 1.0, 5.0, 2),
+        (PinballLoss(quantile=0.25), 1.0, 5.0, 4 * (1 - 0.25)),
+        (PinballLoss(quantile=0.25), 5.0, 1.0, 4 * 0.25),
+        (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4)),
+        (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4),
+        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4 ** 2),
+        (BinaryCrossEntropy(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4)),
+        (
+            CategoricalCrossEntropy(n_classes=3),
+            0.0,
+            [0.2, 0.5, 0.3],
+            logsumexp([0.2, 0.5, 0.3]) - 0.2,
+        ),
+        (
+            CategoricalCrossEntropy(n_classes=3),
+            1.0,
+            [0.2, 0.5, 0.3],
+            logsumexp([0.2, 0.5, 0.3]) - 0.5,
+        ),
+        (
+            CategoricalCrossEntropy(n_classes=3),
+            2.0,
+            [0.2, 0.5, 0.3],
+            logsumexp([0.2, 0.5, 0.3]) - 0.3,
+        ),
+    ],
+    ids=loss_instance_name,
+)
+def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
+    """Test losses at specific values."""
+    assert loss(
+        y_true=np.array([y_true]), raw_prediction=np.array([raw_prediction])
+    ) == approx(loss_true)
 
 
 @pytest.mark.parametrize("loss", ALL_LOSSES)

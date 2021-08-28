@@ -49,7 +49,7 @@ class BaseLoss(BaseLink, CyLossFunction):
 
         - y_true.shape = sample_weight.shape = (n_samples,)
         - y_pred.shape = raw_prediction.shape = (n_samples,)
-        - If n_classes >= 3 (multiclass classification), then
+        - If is_multiclass is true (multiclass classification), then
           y_pred.shape = raw_prediction.shape = (n_samples, n_classes)
           Note that this corresponds to the return value of decision_function.
 
