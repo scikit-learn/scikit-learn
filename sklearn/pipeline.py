@@ -687,8 +687,8 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        feature_names : array-like of string
-            Transformed feature names
+        feature_names_out : ndarray of str
+            Transformed feature names.
         """
         feature_names = input_features
         for _, name, transform in self._iter():
@@ -1038,7 +1038,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        output_feature_names : list of str
+        feature_names_out : ndarray of str
             Transformed feature names.
         """
         feature_names = []

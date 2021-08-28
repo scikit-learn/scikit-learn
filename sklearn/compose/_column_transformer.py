@@ -429,7 +429,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        output_feature_names : list of str
+        feature_names_out : ndarray of str
             Transformed feature names.
         """
         check_is_fitted(self)

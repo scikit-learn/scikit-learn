@@ -225,7 +225,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        feature_names : array-like of str
+        feature_names_out : ndarray of str
             Transformed feature names.
         """
         powers = self.powers_
@@ -689,7 +689,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        feature_names : array-like of str
+        feature_names_out : ndarray of str
             Transformed feature names.
         """
         n_splines = self.bsplines_[0].c.shape[0]

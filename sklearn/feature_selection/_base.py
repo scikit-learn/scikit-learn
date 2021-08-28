@@ -150,8 +150,8 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
         Returns
         -------
-        output_feature_names : list of str
-            Feature names for transformer output.
+        feature_names_out : ndarray of str
+            Transformed feature names.
         """
         mask = self.get_support()
         input_features = _make_feature_names(

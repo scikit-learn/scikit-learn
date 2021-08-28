@@ -918,7 +918,7 @@ class OneToOneFeatureMixin:
 
         Returns
         -------
-        feature_names : array-like of str
+        feature_names_out : ndarray of str
             Transformed feature names.
         """
         return _make_feature_names(self.n_features_in_, input_features=input_features)

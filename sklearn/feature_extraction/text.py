@@ -1411,8 +1411,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        output_feature_names : list of str
-            Feature names for transformer output.
+        feature_names_out : ndarray of str
+            Transformed feature names.
         """
         self._check_vocabulary()
 
