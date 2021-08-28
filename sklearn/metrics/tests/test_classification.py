@@ -42,6 +42,8 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import precision_at_recall_k
+from sklearn.metrics import recall_at_precision_k
 
 from sklearn.metrics._classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -2509,3 +2511,33 @@ def test_balanced_accuracy_score(y_true, y_pred):
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
+
+
+def test_precision_at_recall_k():
+    y_true = np.array([0, 0, 1, 1, 1, 1])
+    y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    y_multi = np.array([0, 2, 1, 1, 1, 1])
+
+    assert_almost_equal(precision_at_recall_k(y_true, y_prob, 0.8), 0.8)
+    assert_almost_equal(precision_at_recall_k(y_true, y_prob, 0.6), 1)
+    assert_almost_equal(precision_at_recall_k(y_true * 2 - 1, y_prob, 0.8), 0.8)
+
+    with pytest.raises(ValueError):
+        precision_at_recall_k(y_multi, y_prob, 0.8)
+
+    assert_almost_equal(precision_at_recall_k(y_true, y_prob, 0.8, pos_label=1), 0.8)
+
+
+def test_recall_at_precision_k():
+    y_true = np.array([0, 0, 1, 1, 1, 1])
+    y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    y_multi = np.array([0, 2, 1, 1, 1, 1])
+
+    assert_almost_equal(recall_at_precision_k(y_true, y_prob, 1), 0.75)
+    assert_almost_equal(recall_at_precision_k(y_true, y_prob, 0.8), 1)
+    assert_almost_equal(recall_at_precision_k(y_true * 2 - 1, y_prob, 1), 0.75)
+
+    with pytest.raises(ValueError):
+        recall_at_precision_k(y_multi, y_prob, 1)
+
+    assert_almost_equal(recall_at_precision_k(y_true, y_prob, 1, pos_label=1), 0.75)
