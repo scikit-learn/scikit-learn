@@ -2654,27 +2654,41 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
 
 def recall_at_precision_k(y_true, y_prob, k, *, pos_label=None, sample_weight=None):
 
-    precisions, recalls, threshholds = precision_recall_curve(
+    precisions, recalls, _ = precision_recall_curve(
         y_true, y_prob, pos_label=pos_label, sample_weight=sample_weight
     )
 
-    try:
-        value, _ = max((r, p) for p, r in zip(precisions, recalls) if p >= k)
-    except ValueError:
-        value = 0
-
+    valid_positions = precisions >= k
+    valid_recalls = recalls[valid_positions]
+    value = 0
+    if valid_recalls.shape[0] > 0:
+        value = np.max(valid_recalls)
     return value
+
+    # try:
+    #     value, _ = max((r, p) for p, r in zip(precisions, recalls) if p >= k)
+    # except ValueError:
+    #     value = 0
+
+    # return value
 
 
 def precision_at_recall_k(y_true, y_prob, k, *, pos_label=None, sample_weight=None):
 
-    precisions, recalls, threshholds = precision_recall_curve(
+    precisions, recalls, _ = precision_recall_curve(
         y_true, y_prob, pos_label=pos_label, sample_weight=sample_weight
     )
 
-    try:
-        value, _ = max((p, r) for p, r in zip(precisions, recalls) if r >= k)
-    except ValueError:
-        value = 0
-
+    valid_positions = recalls >= k
+    valid_precisions = precisions[valid_positions]
+    value = 0
+    if valid_precisions.shape[0] > 0:
+        value = np.max(valid_precisions)
     return value
+
+    # try:
+    #     value, _ = max((p, r) for p, r in zip(precisions, recalls) if r >= k)
+    # except ValueError:
+    #     value = 0
+
+    # return value
