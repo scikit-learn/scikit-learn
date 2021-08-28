@@ -692,7 +692,7 @@ class OneHotEncoder(_BaseEncoder):
         ----------
         input_features : array-like of str or None, default=None
             Input features. If None, they are generated as
-            x0, x1, ..., xn_features.
+            `[x0, x1, ..., xn_features]`.
 
         Returns
         -------
