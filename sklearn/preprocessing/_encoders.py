@@ -717,7 +717,7 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
-        return feature_names
+        return np.asarray(feature_names)
 
 
 class OrdinalEncoder(_BaseEncoder):

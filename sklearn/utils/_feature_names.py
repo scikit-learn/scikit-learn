@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def _make_feature_names(n_features, prefix="x", input_features=None):
     """Make feature name strings from n_features.
 
@@ -16,9 +19,9 @@ def _make_feature_names(n_features, prefix="x", input_features=None):
 
     Returns
     -------
-    feature_names : array-like of str
+    feature_names : ndarray of str
         Generated feature names of length n_features.
     """
     if input_features is not None:
-        return input_features
-    return [f"{prefix}{i}" for i in range(n_features)]
+        return np.asarray(input_features)
+    return np.array([f"{prefix}{i}" for i in range(n_features)])

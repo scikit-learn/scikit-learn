@@ -157,7 +157,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         input_features = _make_feature_names(
             mask.shape[0], input_features=input_features
         )
-        return [feat for feat, m in zip(input_features, mask) if m]
+        return input_features[mask]
 
 
 def _get_feature_importances(estimator, getter, transform_func=None, norm_order=1):
