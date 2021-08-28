@@ -373,10 +373,18 @@ GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "random_projection",
 ]
 
+
+def _include_in_get_feature_names_out_check(transformer):
+    if hasattr(transformer, "get_feature_names_out"):
+        return True
+    module = transformer.__module__.split(".")[1]
+    return module not in GET_FEATURES_OUT_MODULES_TO_IGNORE
+
+
 GET_FEATURES_OUT_ESTIMATORS = [
     est
     for est in _tested_estimators("transformer")
-    if est.__module__.split(".")[1] not in GET_FEATURES_OUT_MODULES_TO_IGNORE
+    if _include_in_get_feature_names_out_check(est)
 ]
 
 
