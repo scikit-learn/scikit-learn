@@ -1389,7 +1389,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     @deprecated(
         "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. You can use get_feature_names_out instead"
+        "in 1.2. You can use get_feature_names_out instead."
     )
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name.
