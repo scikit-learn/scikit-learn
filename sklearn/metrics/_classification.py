@@ -2711,7 +2711,7 @@ def fallout_rate(y_true, y_pred):
         warn_for,
         zero_division,
     )
-    return fall_out
+    return fall_out[0]
 
 
 def miss_rate(y_true, y_pred):
@@ -2772,7 +2772,7 @@ def miss_rate(y_true, y_pred):
         warn_for,
         zero_division,
     )
-    return miss_rate
+    return miss_rate[0]
 
 
 def specificity(y_true, y_pred):
@@ -2833,7 +2833,7 @@ def specificity(y_true, y_pred):
         warn_for,
         zero_division,
     )
-    return specificity
+    return specificity[0]
 
 
 def sensitivity(y_true, y_pred):
@@ -2894,4 +2894,4 @@ def sensitivity(y_true, y_pred):
         warn_for,
         zero_division,
     )
-    return sensitivity
+    return sensitivity[0]
