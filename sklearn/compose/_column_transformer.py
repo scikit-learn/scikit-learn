@@ -433,8 +433,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Transformed feature names.
         """
         check_is_fitted(self)
-        if hasattr(self, "_feature_names_in") and self._feature_names_in is not None:
-            input_names = self._feature_names_in
+        if hasattr(self, "feature_names_in_"):
+            input_names = self.feature_names_in_
         else:
             input_names = _make_feature_names(self.n_features_in_)
 
