@@ -3859,14 +3859,16 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     X_pred = transformer.fit_transform(X, y=y_)
 
     input_features = ["feature%d" % i for i in range(n_features)]
-    feature_names = transformer.get_feature_names_out(input_features)
-    assert feature_names is not None
+    feature_names_out = transformer.get_feature_names_out(input_features)
+    assert feature_names_out is not None
+    assert isinstance(feature_names_out, np.ndarray)
+    assert all(isinstance(name, str) for name in feature_names_out)
 
     if isinstance(X_pred, tuple):
         assert (
-            len(feature_names) == X_pred[0].shape[1]
-        ), f"Expected {X_pred[0].shape[1]} feature names, got {len(feature_names)}"
+            len(feature_names_out) == X_pred[0].shape[1]
+        ), f"Expected {X_pred[0].shape[1]} feature names, got {len(feature_names_out)}"
     else:
         assert (
-            len(feature_names) == X_pred.shape[1]
-        ), f"Expected {X_pred.shape[1]} feature names, got {len(feature_names)}"
+            len(feature_names_out) == X_pred.shape[1]
+        ), f"Expected {X_pred.shape[1]} feature names, got {len(feature_names_out)}"
