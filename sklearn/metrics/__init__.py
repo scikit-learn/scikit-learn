@@ -35,7 +35,6 @@ from ._classification import recall_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
-from ._classification import sensitivity
 from ._classification import specificity
 from ._classification import miss_rate
 from ._classification import fallout_rate
