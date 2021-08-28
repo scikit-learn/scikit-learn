@@ -2286,9 +2286,8 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        output_feature_names : list of str
-            Feature names for transformer output.
-
+        feature_names_out : ndarray of str
+            Transformed feature names.
         """
         return _make_feature_names(
             n_features=self.K_fit_rows_.shape[0], prefix=type(self).__name__.lower()
