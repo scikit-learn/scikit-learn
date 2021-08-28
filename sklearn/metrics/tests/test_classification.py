@@ -42,10 +42,10 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
-from sklearn.metrics import fallout_rate
-from sklearn.metrics import miss_rate
 from sklearn.metrics import sensitivity
 from sklearn.metrics import specificity
+from sklearn.metrics import miss_rate
+from sklearn.metrics import fallout_rate
 
 from sklearn.metrics._classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -92,7 +92,7 @@ def make_prediction(dataset=None, binary=False):
 
     if binary:
         # only interested in probabilities of the positive case
-        # XXX: do we really want a special API for the binary case?
+        # XX: do we really want a special API for the binary case?
         probas_pred = probas_pred[:, 1]
 
     y_pred = clf.predict(X[half:])
