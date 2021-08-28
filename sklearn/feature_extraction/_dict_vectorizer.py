@@ -1,6 +1,7 @@
 # Authors: Lars Buitinck
 #          Dan Blanchard <dblanchard@ets.org>
 # License: BSD 3 clause
+# Contributor: Shantanu Gupta <github.com/shantanugupta1118>
 
 from array import array
 from collections.abc import Mapping, Iterable
@@ -102,18 +103,16 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         self.sparse = sparse
         self.sort = sort
 
-    def _add_iterable_element(
-        self,
-        f,
-        v,
-        feature_names,
-        vocab,
-        *,
-        fitting=True,
-        transforming=False,
-        indices=None,
-        values=None,
-    ):
+    def _add_iterable_element(self,
+                            f,
+                            v,
+                            feature_names,
+                            vocab,
+                            *,
+                            fitting=True,
+                            transforming=False,
+                            indices=None,
+                            values=None,*awrgs):
         """Add feature names for iterable of strings"""
         for vv in v:
             if isinstance(vv, str):
@@ -372,7 +371,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     def get_feature_names(self):
         """Returns a list of feature names, ordered by their indices.
-
         If one-of-K coding is applied to categorical features, this will
         include the constructed feature names but not the original ones.
         """
@@ -380,9 +378,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     def restrict(self, support, indices=False):
         """Restrict the features to those in support using feature selection.
-
         This function modifies the estimator in-place.
-
         Parameters
         ----------
         support : array-like
