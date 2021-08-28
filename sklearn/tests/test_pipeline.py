@@ -1020,6 +1020,32 @@ def test_set_feature_union_passthrough():
         assert_array_equal([[1, 3]], ft.fit_transform(X))
     assert not record
 
+    X = iris.data
+    columns = X.shape[1]
+    pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
+
+    with pytest.warns(None) as record:
+        ft = FeatureUnion([("passthrough", "passthrough"), ("pca", pca)])
+        assert_array_equal(X, ft.fit(X).transform(X)[:, :columns])
+        assert_array_equal(X, ft.fit_transform(X)[:, :columns])
+    assert not record
+
+    with pytest.warns(None) as record:
+        ft.set_params(pca="passthrough")
+        X_ft = ft.fit(X).transform(X)
+        assert_array_equal(X, X_ft[:, :columns])
+        assert_array_equal(X, X_ft[:, columns:])
+        X_ft = ft.fit_transform(X)
+        assert_array_equal(X, X_ft[:, :columns])
+        assert_array_equal(X, X_ft[:, columns:])
+    assert not record
+
+    with pytest.warns(None) as record:
+        ft.set_params(passthrough=pca)
+        assert_array_equal(X, ft.fit(X).transform(X)[:, -columns:])
+        assert_array_equal(X, ft.fit_transform(X)[:, -columns:])
+    assert not record
+
     pass
 
 
