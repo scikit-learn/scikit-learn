@@ -825,11 +825,19 @@ def test_pairwise_indices():
 
 
 def test_pairwise_n_features_in():
-    X, y = iris.data, iris.target
-    assert X.shape == (150, 4)
+    """Check the n_features_in_ attributes of the meta and base estimators
 
-    K = X @ X.T  # precomputed kernel
-    assert K.shape == (150, 150)
+    When the training data is a regular design matrix, everything is intuitive.
+    However, when the training data is a precomputed kernel matrix, the
+    multiclass strategy can resample the kernel matrix of the underlying base
+    estimator both row-wise and column-wise and this has a non-trivial impact
+    on the expected value for the n_features_in_ of both the meta and the base
+    estimators.
+    """
+    X, y = iris.data, iris.target
+
+    # Fitting directly on the design matrix:
+    assert X.shape == (150, 4)
 
     clf_notprecomputed = svm.SVC(kernel="linear").fit(X, y)
     assert clf_notprecomputed.n_features_in_ == 4
@@ -839,12 +847,16 @@ def test_pairwise_n_features_in():
     for est in ovr_notprecomputed.estimators_:
         assert est.n_features_in_ == 4
 
+    # Fitting the same models with a precomputed kernel:
+    K = X @ X.T
+    assert K.shape == (150, 150)
+
     ovo_notprecomputed = OneVsOneClassifier(clf_notprecomputed).fit(X, y)
     assert ovo_notprecomputed.n_features_in_ == 4
     for est in ovo_notprecomputed.estimators_:
         assert est.n_features_in_ == 4
 
-    # We working with precomputed kernels we have one "feature" per training
+    # When working with precomputed kernels we have one "feature" per training
     # sample:
     clf_precomputed = svm.SVC(kernel="precomputed").fit(K, y)
     assert clf_precomputed.n_features_in_ == 150
