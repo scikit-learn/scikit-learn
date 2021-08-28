@@ -2691,7 +2691,6 @@ def fallout_rate(y_true, y_pred):
     y_pred = column_or_1d(y_pred)
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
-    y_type = type_of_target(y_true)
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     fall_out = _prf_divide(
         np.array([fp]),
@@ -2743,7 +2742,6 @@ def miss_rate(y_true, y_pred):
     y_pred = column_or_1d(y_pred)
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
-    y_type = type_of_target(y_true)
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     miss_rate = _prf_divide(
         np.array([fn]),
@@ -2795,7 +2793,6 @@ def specificity(y_true, y_pred):
     y_pred = column_or_1d(y_pred)
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
-    y_type = type_of_target(y_true)
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     specificity = _prf_divide(
         np.array([tn]),
@@ -2847,7 +2844,6 @@ def sensitivity(y_true, y_pred):
     y_pred = column_or_1d(y_pred)
     assert_all_finite(y_true)
     assert_all_finite(y_pred)
-    y_type = type_of_target(y_true)
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     sensitivity = _prf_divide(
         np.array([tp]),
