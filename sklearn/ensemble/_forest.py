@@ -408,7 +408,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     FutureWarning,
                 )
 
-        elif isinstance(self, (RandomForestClassifier, ExtraTreeClassifier)):
+        elif isinstance(self, (RandomForestClassifier, ExtraTreesClassifier)):
             if self.max_features == "auto":
                 warn(
                     "The prior default of 'auto' for max_features is "
