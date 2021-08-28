@@ -174,6 +174,7 @@ def test_tabs():
             continue
         assert True
 
+
 def _construct_searchcv_instance(SearchCV):
     return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
 
