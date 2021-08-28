@@ -2682,7 +2682,7 @@ def fallout_rate(y_true, y_pred):
     >>> y_true = [0, 1, 0, 1]
     >>> y_pred = [1, 1, 1, 0]
     >>> fallout_rate(y_true, y_pred)
-    1
+    1.0
     """
     average = (None,)
     warn_for = "Fall out"
@@ -2804,7 +2804,7 @@ def specificity(y_true, y_pred):
     >>> y_true = [0, 1, 0, 1]
     >>> y_pred = [1, 1, 1, 0]
     >>> specificity(y_true, y_pred)
-    0
+    0.0
     """
     average = (None,)
     warn_for = "specificity"
