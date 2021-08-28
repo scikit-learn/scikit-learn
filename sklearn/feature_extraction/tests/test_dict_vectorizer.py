@@ -54,7 +54,7 @@ def test_feature_selection(get_names):
         sel = SelectKBest(chi2, k=2).fit(X, [0, 1])
 
         v.restrict(sel.get_support(indices=indices), indices=indices)
-        assert getattr(v, get_names)() == ["useful1", "useful2"]
+        assert_array_equal(getattr(v, get_names)(), ["useful1", "useful2"])
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
@@ -103,7 +103,7 @@ def test_iterable_value(get_names):
 
     names = getattr(v, get_names)()
 
-    assert names == D_names
+    assert_array_equal(names, D_names)
 
 
 def test_iterable_not_string_error():
@@ -247,3 +247,15 @@ def test_dict_vectorizer_unsupported_value_type():
     err_msg = "Unsupported value Type"
     with pytest.raises(TypeError, match=err_msg):
         vectorizer.fit_transform(X)
+
+
+def test_dict_vectorizer_get_feature_names_out():
+    """Check that integer feature names are converted to strings in
+    feature_names_out."""
+
+    X = [{1: 2, 3: 4}, {2: 4}]
+    dv = DictVectorizer(sparse=False).fit(X)
+
+    feature_names = dv.get_feature_names_out()
+    assert isinstance(feature_names, np.ndarray)
+    assert_array_equal(feature_names, ["1", "2", "3"])

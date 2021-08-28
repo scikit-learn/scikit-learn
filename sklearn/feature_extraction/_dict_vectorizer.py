@@ -396,7 +396,11 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str
             Transformed feature names.
         """
-        return self.feature_names_
+        if any(not isinstance(name, str) for name in self.feature_names_):
+            feature_names = [str(name) for name in self.feature_names_]
+        else:
+            feature_names = self.feature_names_
+        return np.array(feature_names)
 
     def restrict(self, support, indices=False):
         """Restrict the features to those in support using feature selection.
