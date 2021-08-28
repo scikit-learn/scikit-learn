@@ -391,4 +391,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str
             Transformed feature names.
         """
+        if input_features is None and hasattr(self, "feature_names_in_"):
+            input_features = self.feature_names_in_
         return self._encoder.get_feature_names_out(input_features)

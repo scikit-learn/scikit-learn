@@ -921,6 +921,8 @@ class OneToOneFeatureMixin:
         feature_names_out : ndarray of str
             Transformed feature names.
         """
+        if input_features is None and hasattr(self, "feature_names_in_"):
+            input_features = self.feature_names_in_
         return _make_feature_names(self.n_features_in_, input_features=input_features)
 
 

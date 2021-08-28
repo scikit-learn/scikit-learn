@@ -24,4 +24,4 @@ def _make_feature_names(n_features, prefix="x", input_features=None):
     """
     if input_features is not None:
         return np.asarray(input_features)
-    return np.array([f"{prefix}{i}" for i in range(n_features)])
+    return np.asarray([f"{prefix}{i}" for i in range(n_features)])

@@ -1051,7 +1051,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             feature_names.extend(
                 [name + "__" + f for f in trans.get_feature_names_out(input_features)]
             )
-        return feature_names
+        return np.asarray(feature_names)
 
     def fit(self, X, y=None, **fit_params):
         """Fit all transformers using X.

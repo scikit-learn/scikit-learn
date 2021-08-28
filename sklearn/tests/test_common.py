@@ -50,6 +50,7 @@ from sklearn.utils.estimator_checks import (
     check_dataframe_column_names_consistency,
     check_n_features_in_after_fitting,
     check_transformer_get_feature_names_out,
+    check_transformer_get_feature_names_out_pandas,
 )
 
 
@@ -387,5 +388,8 @@ def test_transformers_get_feature_names_out(transformer):
 
     with ignore_warnings(category=(FutureWarning)):
         check_transformer_get_feature_names_out(
+            transformer.__class__.__name__, transformer
+        )
+        check_transformer_get_feature_names_out_pandas(
             transformer.__class__.__name__, transformer
         )

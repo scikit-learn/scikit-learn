@@ -702,7 +702,10 @@ class OneHotEncoder(_BaseEncoder):
         check_is_fitted(self)
         cats = self.categories_
         if input_features is None:
-            input_features = ["x%d" % i for i in range(len(cats))]
+            if hasattr(self, "feature_names_in_"):
+                input_features = self.feature_names_in_
+            else:
+                input_features = ["x%d" % i for i in range(len(cats))]
         elif len(input_features) != len(self.categories_):
             raise ValueError(
                 "input_features should have length equal to number of "
@@ -717,7 +720,7 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
-        return np.asarray(feature_names)
+        return np.asarray(feature_names, dtype=object)
 
 
 class OrdinalEncoder(_BaseEncoder):

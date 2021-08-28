@@ -153,6 +153,9 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         feature_names_out : ndarray of str
             Transformed feature names.
         """
+        if input_features is None and hasattr(self, "feature_names_in_"):
+            input_features = self.feature_names_in_
+
         mask = self.get_support()
         input_features = _make_feature_names(
             mask.shape[0], input_features=input_features

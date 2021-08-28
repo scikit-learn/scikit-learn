@@ -229,6 +229,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         powers = self.powers_
+
+        if input_features is None and hasattr(self, "feature_names_in_"):
+            input_features = self.feature_names_in_
         input_features = _make_feature_names(
             n_features=powers.shape[1], input_features=input_features
         )
@@ -245,7 +248,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             else:
                 name = "1"
             feature_names.append(name)
-        return np.asarray(feature_names)
+        return np.asarray(feature_names, dtype=object)
 
     def fit(self, X, y=None):
         """
@@ -694,12 +697,16 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         n_splines = self.bsplines_[0].c.shape[0]
         if input_features is None:
-            input_features = ["x%d" % i for i in range(self.n_features_in_)]
+            if hasattr(self, "feature_names_in_"):
+                input_features = self.feature_names_in_
+            else:
+                input_features = ["x%d" % i for i in range(self.n_features_in_)]
+
         feature_names = []
         for i in range(self.n_features_in_):
             for j in range(n_splines - 1 + self.include_bias):
                 feature_names.append(f"{input_features[i]}_sp_{j}")
-        return np.asarray(feature_names)
+        return np.asarray(feature_names, dtype=object)
 
     def fit(self, X, y=None, sample_weight=None):
         """Compute knot positions of splines.
