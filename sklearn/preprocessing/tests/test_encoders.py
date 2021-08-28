@@ -958,7 +958,7 @@ def test_encoders_has_categorical_tags(Encoder):
 
 # TODO: Remove in 1.2 when get_feature_names is removed
 def test_one_hot_encoder_get_feature_names_deprecated():
-    X = np.array([["cat", "dot"]], dtype=object).T
+    X = np.array([["cat", "dog"]], dtype=object).T
     enc = OneHotEncoder().fit(X)
 
     msg = "get_feature_names is deprecated in 1.0"
