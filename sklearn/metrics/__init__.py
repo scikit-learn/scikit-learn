@@ -35,6 +35,7 @@ from ._classification import recall_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
+from ._classification import sensitivity
 from ._classification import specificity
 from ._classification import miss_rate
 from ._classification import fallout_rate
@@ -172,7 +173,7 @@ __all__ = [
     "SCORERS",
     "silhouette_samples",
     "silhouette_score",
-    "sensititvity",
+    "sensitivity",
     "specificity",
     "top_k_accuracy_score",
     "v_measure_score",
