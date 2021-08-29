@@ -2527,6 +2527,11 @@ def test_precision_at_recall_k():
 
     assert_almost_equal(precision_at_recall_k(y_true, y_prob, 0.8, pos_label=1), 0.8)
 
+    y_true = np.array([0])
+    y_prob = np.array([0.4])
+    with ignore_warnings():
+        assert_almost_equal(precision_at_recall_k(y_true, y_prob, 0.1), 0)
+
 
 def test_recall_at_precision_k():
     y_true = np.array([0, 0, 1, 1, 1, 1])
@@ -2541,3 +2546,8 @@ def test_recall_at_precision_k():
         recall_at_precision_k(y_multi, y_prob, 1)
 
     assert_almost_equal(recall_at_precision_k(y_true, y_prob, 1, pos_label=1), 0.75)
+
+    y_true = np.array([0])
+    y_prob = np.array([0.4])
+    with ignore_warnings():
+        assert_almost_equal(recall_at_precision_k(y_true, y_prob, 0.1), 0)

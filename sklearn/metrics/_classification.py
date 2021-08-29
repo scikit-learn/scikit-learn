@@ -2653,6 +2653,66 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
 
 
 def recall_at_precision_k(y_true, y_prob, k, *, pos_label=None, sample_weight=None):
+    """Computes maximum recall for the thresholds when precision is greater
+    than or equal to ``k``
+
+    Note: this implementation is restricted to the binary classification task.
+
+    The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
+    true positives and ``fp`` the number of false positives. The precision is
+    intuitively the ability of the classifier not to label as positive a sample
+    that is negative.
+
+    The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
+    true positives and ``fn`` the number of false negatives. The recall is
+    intuitively the ability of the classifier to find all the positive samples.
+
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
+    Parameters
+    ----------
+    y_true : ndarray of shape (n_samples,)
+        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
+        pos_label should be explicitly given.
+
+    probas_pred : ndarray of shape (n_samples,)
+        Target scores, can either be probability estimates of the positive
+        class, or non-thresholded measure of decisions (as returned by
+        `decision_function` on some classifiers).
+
+    pos_label : int or str, default=None
+        The label of the positive class.
+        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
+        ``pos_label`` is set to 1, otherwise an error will be raised.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    Returns
+    -------
+    recall_at_precision_k : float
+        Maximum recall when for the thresholds when precision is greater
+        than or equal to ``k`` for thresholds applied to the ``pos_label`` or
+        to the label 1 if ``pos_label=None``
+
+    See Also
+    --------
+    precision_recall_curve : Compute precision-recall curve.
+    plot_precision_recall_curve : Plot Precision Recall Curve for binary
+        classifiers.
+    PrecisionRecallDisplay : Precision Recall visualization.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import recall_at_precision_k
+    >>> y_true = np.array([0, 0, 1, 1, 1, 1])
+    >>> y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    >>> k = 0.75
+    >>> recall_at_precision_k(y_true, y_prob, k)
+    1.0
+
+    """
 
     precisions, recalls, _ = precision_recall_curve(
         y_true, y_prob, pos_label=pos_label, sample_weight=sample_weight
@@ -2660,20 +2720,73 @@ def recall_at_precision_k(y_true, y_prob, k, *, pos_label=None, sample_weight=No
 
     valid_positions = precisions >= k
     valid_recalls = recalls[valid_positions]
-    value = 0
+    value = 0.0
     if valid_recalls.shape[0] > 0:
         value = np.max(valid_recalls)
     return value
 
-    # try:
-    #     value, _ = max((r, p) for p, r in zip(precisions, recalls) if p >= k)
-    # except ValueError:
-    #     value = 0
-
-    # return value
-
 
 def precision_at_recall_k(y_true, y_prob, k, *, pos_label=None, sample_weight=None):
+    """Computes maximum precision for the thresholds when recall is greater
+    than or equal to ``k``
+
+    Note: this implementation is restricted to the binary classification task.
+
+    The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
+    true positives and ``fp`` the number of false positives. The precision is
+    intuitively the ability of the classifier not to label as positive a sample
+    that is negative.
+
+    The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
+    true positives and ``fn`` the number of false negatives. The recall is
+    intuitively the ability of the classifier to find all the positive samples.
+
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
+    Parameters
+    ----------
+    y_true : ndarray of shape (n_samples,)
+        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
+        pos_label should be explicitly given.
+
+    probas_pred : ndarray of shape (n_samples,)
+        Target scores, can either be probability estimates of the positive
+        class, or non-thresholded measure of decisions (as returned by
+        `decision_function` on some classifiers).
+
+    pos_label : int or str, default=None
+        The label of the positive class.
+        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
+        ``pos_label`` is set to 1, otherwise an error will be raised.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    Returns
+    -------
+    precision_at_recall_k : float
+        Maximum precision when for the thresholds when recall is greater
+        than or equal to ``k`` for thresholds applied to the ``pos_label`` or
+        to the label 1 if ``pos_label=None``
+
+    See Also
+    --------
+    precision_recall_curve : Compute precision-recall curve.
+    plot_precision_recall_curve : Plot Precision Recall Curve for binary
+        classifiers.
+    PrecisionRecallDisplay : Precision Recall visualization.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_at_recall_k
+    >>> y_true = np.array([0, 0, 1, 1, 1, 1])
+    >>> y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    >>> k = 0.8
+    >>> precision_at_recall_k(y_true, y_prob, k)
+    0.8
+
+    """
 
     precisions, recalls, _ = precision_recall_curve(
         y_true, y_prob, pos_label=pos_label, sample_weight=sample_weight
@@ -2681,14 +2794,7 @@ def precision_at_recall_k(y_true, y_prob, k, *, pos_label=None, sample_weight=No
 
     valid_positions = recalls >= k
     valid_precisions = precisions[valid_positions]
-    value = 0
+    value = 0.0
     if valid_precisions.shape[0] > 0:
         value = np.max(valid_precisions)
     return value
-
-    # try:
-    #     value, _ = max((p, r) for p, r in zip(precisions, recalls) if r >= k)
-    # except ValueError:
-    #     value = 0
-
-    # return value
