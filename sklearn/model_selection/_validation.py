@@ -16,6 +16,7 @@ import numbers
 import time
 from traceback import format_exc
 from contextlib import suppress
+from collections import Counter
 
 import numpy as np
 import scipy.sparse as sp
@@ -282,6 +283,8 @@ def cross_validate(
         for train, test in cv.split(X, y, groups)
     )
 
+    _warn_about_fit_failures(results, error_score)
+
     # For callabe scoring, the return type is only know after calling. If the
     # return type is a dictionary, the error scores can now be inserted with
     # the correct key.
@@ -319,7 +322,7 @@ def _insert_error_scores(results, error_score):
     successful_score = None
     failed_indices = []
     for i, result in enumerate(results):
-        if result["fit_failed"]:
+        if result["fit_error"] is not None:
             failed_indices.append(i)
         elif successful_score is None:
             successful_score = result["test_scores"]
@@ -342,6 +345,31 @@ def _normalize_score_results(scores, scaler_score_key="score"):
         return _aggregate_score_dicts(scores)
     # scaler
     return {scaler_score_key: scores}
+
+
+def _warn_about_fit_failures(results, error_score):
+    fit_errors = [
+        result["fit_error"] for result in results if result["fit_error"] is not None
+    ]
+    if fit_errors:
+        num_failed_fits = len(fit_errors)
+        num_fits = len(results)
+        fit_errors_counter = Counter(fit_errors)
+        delimiter = "-" * 80 + "\n"
+        fit_errors_summary = "\n".join(
+            f"{delimiter}{n} fits failed with the following error:\n{error}"
+            for error, n in fit_errors_counter.items()
+        )
+
+        some_fits_failed_message = (
+            f"\n{num_failed_fits} fits failed out of a total of {num_fits}.\n"
+            "The score on these train-test partitions for these parameters"
+            f" will be set to {error_score}.\n"
+            "If these failures are not expected, you can try to debug them "
+            "by setting error_score='raise'.\n\n"
+            f"Below are more details about the failures:\n{fit_errors_summary}"
+        )
+        warnings.warn(some_fits_failed_message, FitFailedWarning)
 
 
 def cross_val_score(
@@ -599,8 +627,8 @@ def _fit_and_score(
             The parameters that have been evaluated.
         estimator : estimator object
             The fitted estimator.
-        fit_failed : bool
-            The estimator failed to fit.
+        fit_error : str or None
+            Traceback str if the fit failed, None if the fit succeeded.
     """
     if not isinstance(error_score, numbers.Number) and error_score != "raise":
         raise ValueError(
@@ -667,15 +695,9 @@ def _fit_and_score(
                 test_scores = error_score
                 if return_train_score:
                     train_scores = error_score
-            warnings.warn(
-                "Estimator fit failed. The score on this train-test"
-                " partition for these parameters will be set to %f. "
-                "Details: \n%s" % (error_score, format_exc()),
-                FitFailedWarning,
-            )
-        result["fit_failed"] = True
+        result["fit_error"] = format_exc()
     else:
-        result["fit_failed"] = False
+        result["fit_error"] = None
 
         fit_time = time.time() - start_time
         test_scores = _score(estimator, X_test, y_test, scorer, error_score)

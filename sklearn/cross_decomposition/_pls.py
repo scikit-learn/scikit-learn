@@ -620,6 +620,12 @@ class PLSRegression(_PLS):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import PLSRegression
@@ -735,6 +741,12 @@ class PLSCanonical(_PLS):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -858,6 +870,12 @@ class CCA(_PLS):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     PLSCanonical : Partial Least Squares transformer and regressor.
@@ -943,6 +961,12 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------

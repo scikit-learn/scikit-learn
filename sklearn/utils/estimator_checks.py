@@ -27,7 +27,9 @@ from ._testing import create_memmap_backed_data
 from ._testing import raises
 from . import is_scalar_nan
 
+from ..linear_model import LinearRegression
 from ..linear_model import LogisticRegression
+from ..linear_model import RANSACRegressor
 from ..linear_model import Ridge
 
 from ..base import (
@@ -51,6 +53,7 @@ from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
+from ..utils.validation import check_is_fitted
 
 from . import shuffle
 from ._tags import (
@@ -305,6 +308,7 @@ def _yield_all_checks(estimator):
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
     yield check_fit_idempotent
+    yield check_fit_check_is_fitted
     if not tags["no_validation"]:
         yield check_n_features_in
         yield check_fit1d
@@ -358,7 +362,13 @@ def _construct_instance(Estimator):
     required_parameters = getattr(Estimator, "_required_parameters", [])
     if len(required_parameters):
         if required_parameters in (["estimator"], ["base_estimator"]):
-            if issubclass(Estimator, RegressorMixin):
+            # `RANSACRegressor` will raise an error with any model other
+            # than `LinearRegression` if we don't fix `min_samples` parameter.
+            # For common test, we can enforce using `LinearRegression` that
+            # is the default estimator in `RANSACRegressor` instead of `Ridge`.
+            if issubclass(Estimator, RANSACRegressor):
+                estimator = Estimator(LinearRegression())
+            elif issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
             else:
                 estimator = Estimator(LogisticRegression(C=1))
@@ -3493,6 +3503,45 @@ def check_fit_idempotent(name, estimator_orig):
             )
 
 
+def check_fit_check_is_fitted(name, estimator_orig):
+    # Make sure that estimator doesn't pass check_is_fitted before calling fit
+    # and that passes check_is_fitted once it's fit.
+
+    rng = np.random.RandomState(42)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if "warm_start" in estimator.get_params():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _pairwise_estimator_convert_X(X, estimator)
+    if is_regressor(estimator_orig):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    if not _safe_tags(estimator).get("stateless", False):
+        # stateless estimators (such as FunctionTransformer) are always "fit"!
+        try:
+            check_is_fitted(estimator)
+            raise AssertionError(
+                f"{estimator.__class__.__name__} passes check_is_fitted before being"
+                " fit!"
+            )
+        except NotFittedError:
+            pass
+    estimator.fit(X, y)
+    try:
+        check_is_fitted(estimator)
+    except NotFittedError as e:
+        raise NotFittedError(
+            "Estimator fails to pass `check_is_fitted` even though it has been fit."
+        ) from e
+
+
 def check_n_features_in(name, estimator_orig):
     # Make sure that n_features_in_ attribute doesn't exist until fit is
     # called, and that its value is correct.
@@ -3648,3 +3697,133 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
         f"{name}._get_tags() is missing entries for the following default tags"
         f": {default_tags_keys - tags_keys.intersection(default_tags_keys)}"
     )
+
+
+def check_dataframe_column_names_consistency(name, estimator_orig):
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not checking column name consistency for pandas"
+        )
+
+    tags = _safe_tags(estimator_orig)
+
+    if (
+        "2darray" not in tags["X_types"]
+        and "sparse" not in tags["X_types"]
+        or tags["no_validation"]
+    ):
+        return
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    X_orig = rng.normal(size=(150, 8))
+
+    # Some picky estimators (e.g. SkewedChi2Sampler) only accept skewed positive data.
+    X_orig -= X_orig.min() + 0.5
+    X_orig = _enforce_estimator_tags_x(estimator, X_orig)
+    X_orig = _pairwise_estimator_convert_X(X_orig, estimator)
+    n_samples, n_features = X_orig.shape
+
+    names = np.array([f"col_{i}" for i in range(n_features)])
+    X = pd.DataFrame(X_orig, columns=names)
+
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+    estimator.fit(X, y)
+
+    if not hasattr(estimator, "feature_names_in_"):
+        raise ValueError(
+            "Estimator does not have a feature_names_in_ "
+            "attribute after fitting with a dataframe"
+        )
+    assert_array_equal(estimator.feature_names_in_, names)
+
+    # Only check sklearn estimators for feature_names_in_ in docstring
+    module_name = estimator_orig.__module__
+    if (
+        module_name.startswith("sklearn.")
+        and not ("test_" in module_name or module_name.endswith("_testing"))
+        and ("feature_names_in_" not in (estimator_orig.__doc__))
+    ):
+        raise ValueError(
+            f"Estimator {name} does not document its feature_names_in_ attribute"
+        )
+
+    check_methods = []
+    for method in (
+        "predict",
+        "transform",
+        "decision_function",
+        "predict_proba",
+        "score",
+        "score_samples",
+        "predict_log_proba",
+    ):
+        if not hasattr(estimator, method):
+            continue
+
+        callable_method = getattr(estimator, method)
+        if method == "score":
+            callable_method = partial(callable_method, y=y)
+        check_methods.append((method, callable_method))
+
+    for _, method in check_methods:
+        method(X)  # works
+
+    invalid_names = [
+        (names[::-1], "Feature names must be in the same order as they were in fit."),
+        (
+            [f"another_prefix_{i}" for i in range(n_features)],
+            "Feature names unseen at fit time:\n- another_prefix_0\n-"
+            " another_prefix_1\n",
+        ),
+        (
+            names[:3],
+            f"Feature names seen at fit time, yet now missing:\n- {min(names[3:])}\n",
+        ),
+    ]
+
+    for invalid_name, additional_message in invalid_names:
+        X_bad = pd.DataFrame(X, columns=invalid_name)
+
+        expected_msg = re.escape(
+            "The feature names should match those that were passed "
+            "during fit. Starting version 1.2, an error will be raised.\n"
+            f"{additional_message}"
+        )
+        for name, method in check_methods:
+            # TODO In 1.2, this will be an error.
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "error",
+                    category=FutureWarning,
+                    module="sklearn",
+                )
+                with raises(
+                    FutureWarning, match=expected_msg, err_msg=f"{name} did not raise"
+                ):
+                    method(X_bad)
+
+        # partial_fit checks on second call
+        if not hasattr(estimator, "partial_fit"):
+            continue
+
+        estimator = clone(estimator_orig)
+        if is_classifier(estimator):
+            classes = np.unique(y)
+            estimator.partial_fit(X, y, classes=classes)
+        else:
+            estimator.partial_fit(X, y)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
+            with raises(FutureWarning, match=expected_msg):
+                estimator.partial_fit(X_bad, y)

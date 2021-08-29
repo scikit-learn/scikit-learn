@@ -629,6 +629,12 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     nbrs_ : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
@@ -768,7 +774,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         ind = self.nbrs_.kneighbors(
             X, n_neighbors=self.n_neighbors, return_distance=False
         )

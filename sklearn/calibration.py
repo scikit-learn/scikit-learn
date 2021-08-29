@@ -148,6 +148,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying base_estimator exposes such an attribute when fit.
+
+        .. versionadded:: 1.0
+
     calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
             or `ensemble=False`)
         The list of classifier and calibrator pairs.
@@ -368,6 +374,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         first_clf = self.calibrated_classifiers_[0].base_estimator
         if hasattr(first_clf, "n_features_in_"):
             self.n_features_in_ = first_clf.n_features_in_
+        if hasattr(first_clf, "feature_names_in_"):
+            self.feature_names_in_ = first_clf.feature_names_in_
         return self
 
     def predict_proba(self, X):
