@@ -1681,6 +1681,17 @@ def test_feature_names_in_():
     assert_array_equal(ct.feature_names_in_, feature_names)
 
 
+def test_feature_names_out_prefix_invalid():
+    """Check error is raised for invalid prefix_feature_names_out"""
+    ct = ColumnTransformer(
+        [("bycol1", TransWithNames(), [0, 1]), ("bycol2", "passthrough", [1])],
+        prefix_feature_names_out="bad",
+    )
+    msg = "prefix_feature_names_out must be either 'when_colliding' or"
+    with pytest.raises(ValueError, match=msg):
+        ct.fit(np.array([[0, 1], [2, 3]]))
+
+
 class TransWithNames(Trans):
     def get_feature_names_out(self, input_features=None):
         return input_features

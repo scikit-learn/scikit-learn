@@ -678,6 +678,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
+        if self.prefix_feature_names_out not in ("when_colliding", "always"):
+            raise ValueError(
+                "prefix_feature_names_out must be either 'when_colliding' or 'always'"
+            )
 
         result = self._fit_transform(X, y, _fit_transform_one)
 
