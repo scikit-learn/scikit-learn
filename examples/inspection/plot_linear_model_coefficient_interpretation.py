@@ -206,6 +206,7 @@ feature_names = (
     .get_feature_names_out(input_features=categorical_columns)
 )
 feature_names = np.concatenate([feature_names, numerical_columns])
+
 coefs = pd.DataFrame(
     model.named_steps["transformedtargetregressor"].regressor_.coef_,
     columns=["Coefficients"],
