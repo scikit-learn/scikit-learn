@@ -50,6 +50,9 @@ class MockDataFrame:
     def __ne__(self, other):
         return not self == other
 
+    def take(self, indices, axis=0):
+        return MockDataFrame(self.array.take(indices, axis=axis))
+
 
 class CheckingClassifier(ClassifierMixin, BaseEstimator):
     """Dummy classifier to test pipelining and meta-estimators.

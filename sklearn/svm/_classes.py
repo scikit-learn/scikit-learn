@@ -116,6 +116,12 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
@@ -215,7 +221,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples and
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
         y : array-like of shape (n_samples,)
@@ -322,7 +328,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
 
-    intercept_scaling : float, default=1.
+    intercept_scaling : float, default=1.0
         When self.fit_intercept is True, instance vector x becomes
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equals to
@@ -368,8 +374,29 @@ class LinearSVR(RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Maximum number of iterations run across all classes.
+
+    See Also
+    --------
+    LinearSVC : Implementation of Support Vector Machine classifier using the
+        same library as this class (liblinear).
+
+    SVR : Implementation of Support Vector Machine regression using libsvm:
+        the kernel can be non-linear but its SMO algorithm does not
+        scale to large number of samples as LinearSVC does.
+
+    sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
+        function as LinearSVR
+        by adjusting the penalty and loss parameters. In addition it requires
+        less memory, allows incremental (online) learning, and implements
+        various loss functions and regularization regimes.
 
     Examples
     --------
@@ -390,22 +417,6 @@ class LinearSVR(RegressorMixin, LinearModel):
     [-4...]
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-2.384...]
-
-
-    See Also
-    --------
-    LinearSVC : Implementation of Support Vector Machine classifier using the
-        same library as this class (liblinear).
-
-    SVR : Implementation of Support Vector Machine regression using libsvm:
-        the kernel can be non-linear but its SMO algorithm does not
-        scale to large number of samples as LinearSVC does.
-
-    sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
-        function as LinearSVR
-        by adjusting the penalty and loss parameters. In addition it requires
-        less memory, allows incremental (online) learning, and implements
-        various loss functions and regularization regimes.
     """
 
     def __init__(
@@ -439,11 +450,11 @@ class LinearSVR(RegressorMixin, LinearModel):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples and
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target vector relative to X
+            Target vector relative to X.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Array of weights that are assigned to individual
@@ -651,6 +662,12 @@ class SVC(BaseSVC):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
@@ -901,6 +918,12 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
@@ -1110,6 +1133,12 @@ class SVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1121,21 +1150,6 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
-
-    Examples
-    --------
-    >>> from sklearn.svm import SVR
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> import numpy as np
-    >>> n_samples, n_features = 10, 5
-    >>> rng = np.random.RandomState(0)
-    >>> y = rng.randn(n_samples)
-    >>> X = rng.randn(n_samples, n_features)
-    >>> regr = make_pipeline(StandardScaler(), SVR(C=1.0, epsilon=0.2))
-    >>> regr.fit(X, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('svr', SVR(epsilon=0.2))])
 
     See Also
     --------
@@ -1153,6 +1167,21 @@ class SVR(RegressorMixin, BaseLibSVM):
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
+    >>> regr = make_pipeline(StandardScaler(), SVR(C=1.0, epsilon=0.2))
+    >>> regr.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svr', SVR(epsilon=0.2))])
     """
 
     _impl = "epsilon_svr"
@@ -1292,6 +1321,12 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1303,21 +1338,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
-
-    Examples
-    --------
-    >>> from sklearn.svm import NuSVR
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> import numpy as np
-    >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
-    >>> regr = make_pipeline(StandardScaler(), NuSVR(C=1.0, nu=0.1))
-    >>> regr.fit(X, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('nusvr', NuSVR(nu=0.1))])
 
     See Also
     --------
@@ -1335,6 +1355,21 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> from sklearn.svm import NuSVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> np.random.seed(0)
+    >>> y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> regr = make_pipeline(StandardScaler(), NuSVR(C=1.0, nu=0.1))
+    >>> regr.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('nusvr', NuSVR(nu=0.1))])
     """
 
     _impl = "nu_svr"
@@ -1469,6 +1504,12 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.

@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 jobs:
   doc-min-dependencies:
@@ -130,6 +130,35 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
 
+  linux-arm64:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
+    environment:
+      - OMP_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 2
+      - CYTHON_VERSION: 'latest'
+      - JOBLIB_VERSION: 'latest'
+      - THREADPOOLCTL_VERSION: 'latest'
+      - PYTEST_VERSION: 'latest'
+      - PYTEST_XDIST_VERSION: 'latest'
+      - TEST_DOCSTRINGS: 'true'
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - restore_cache:
+          key: v1-datasets-{{ .Branch }}
+      - run: ./build_tools/circle/build_test_arm.sh
+      - save_cache:
+          key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
+          paths:
+            - ~/.ccache
+            - ~/.cache/pip
+      - save_cache:
+          key: v1-datasets-{{ .Branch }}
+          paths:
+            - ~/scikit_learn_data
+
   deploy:
     docker:
       - image: circleci/python:3.7
@@ -176,3 +205,6 @@ workflows:
                 - main
     jobs:
       - pypy3
+  linux-arm64:
+    jobs:
+      - linux-arm64
