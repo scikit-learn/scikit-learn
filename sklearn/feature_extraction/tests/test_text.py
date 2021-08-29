@@ -412,7 +412,8 @@ def test_countvectorizer_custom_token_pattern(get_names):
     vectorizer = CountVectorizer(token_pattern=token_pattern)
     vectorizer.fit_transform(corpus)
     expected = ["document", "one", "sample"]
-    assert getattr(vectorizer, get_names)() == expected
+    feature_names_out = getattr(vectorizer, get_names)()
+    assert_array_equal(feature_names_out, expected)
 
 
 def test_countvectorizer_custom_token_pattern_with_several_group():
@@ -665,6 +666,9 @@ def test_feature_names(get_names):
     assert len(cv.vocabulary_) == n_features
 
     feature_names = getattr(cv, get_names)()
+    if get_names == "get_feature_names_out":
+        assert isinstance(feature_names, np.ndarray)
+
     assert len(feature_names) == n_features
     assert_array_equal(
         [
@@ -1096,7 +1100,7 @@ def test_countvectorizer_vocab_sets_when_pickling(get_names):
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
         unpickled_cv.fit(ALL_FOOD_DOCS)
-        assert getattr(cv, get_names)() == getattr(unpickled_cv, get_names)()
+        assert_array_equal(getattr(cv, get_names)(), getattr(unpickled_cv, get_names)())
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
@@ -1126,7 +1130,7 @@ def test_countvectorizer_vocab_dicts_when_pickling(get_names):
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
         unpickled_cv.fit(ALL_FOOD_DOCS)
-        assert getattr(cv, get_names)() == getattr(unpickled_cv, get_names)()
+        assert_array_equal(getattr(cv, get_names)(), getattr(unpickled_cv, get_names)())
 
 
 def test_stop_words_removal():

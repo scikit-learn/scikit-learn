@@ -1049,8 +1049,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     ... ]
     >>> vectorizer = CountVectorizer()
     >>> X = vectorizer.fit_transform(corpus)
-    >>> print(vectorizer.get_feature_names_out())
-    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+    >>> vectorizer.get_feature_names_out()
+    array(['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third',
+           'this'], ...)
     >>> print(X.toarray())
     [[0 1 1 1 0 0 1 0 1]
      [0 2 0 1 0 1 1 0 1]
@@ -1058,10 +1059,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 1 1 1 0 0 1 0 1]]
     >>> vectorizer2 = CountVectorizer(analyzer='word', ngram_range=(2, 2))
     >>> X2 = vectorizer2.fit_transform(corpus)
-    >>> print(vectorizer2.get_feature_names_out())
-    ['and this', 'document is', 'first document', 'is the', 'is this',
-    'second document', 'the first', 'the second', 'the third', 'third one',
-     'this document', 'this is', 'this the']
+    >>> vectorizer2.get_feature_names_out()
+    array(['and this', 'document is', 'first document', 'is the', 'is this',
+           'second document', 'the first', 'the second', 'the third', 'third one',
+           'this document', 'this is', 'this the'], ...)
      >>> print(X2.toarray())
      [[0 0 1 1 0 0 1 0 0 0 0 1 0]
      [0 1 0 1 0 1 0 1 0 0 1 0 0]
@@ -1416,7 +1417,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         """
         self._check_vocabulary()
 
-        return [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))]
+        return np.array(
+            [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))]
+        )
 
     def _more_tags(self):
         return {"X_types": ["string"]}
@@ -1872,8 +1875,9 @@ class TfidfVectorizer(CountVectorizer):
     ... ]
     >>> vectorizer = TfidfVectorizer()
     >>> X = vectorizer.fit_transform(corpus)
-    >>> print(vectorizer.get_feature_names_out())
-    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+    >>> vectorizer.get_feature_names_out()
+    array(['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third',
+           'this'], ...)
     >>> print(X.shape)
     (4, 9)
     """
