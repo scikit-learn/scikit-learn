@@ -2,7 +2,6 @@
 Test the fastica algorithm.
 """
 import itertools
-import warnings
 import pytest
 
 import numpy as np
@@ -254,6 +253,7 @@ def test_fit_transform():
         assert_array_almost_equal(Xt, Xt2)
 
 
+@pytest.mark.filterwarnings("ignore:Ignoring n_components with whiten=False.")
 def test_inverse_transform():
     # Test FastICA.inverse_transform
     n_features = 10
@@ -271,9 +271,7 @@ def test_inverse_transform():
         for n_components in [n1, n2]:
             n_components_ = n_components if n_components is not None else X.shape[1]
             ica = FastICA(n_components=n_components, random_state=rng, whiten=whiten)
-            with warnings.catch_warnings(record=True):
-                # catch "n_components ignored" warning
-                Xt = ica.fit_transform(X)
+            Xt = ica.fit_transform(X)
             expected_shape = expected[(whiten, n_components_)]
             assert ica.mixing_.shape == expected_shape
             X2 = ica.inverse_transform(Xt)
