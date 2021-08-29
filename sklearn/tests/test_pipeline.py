@@ -936,22 +936,22 @@ def test_set_feature_union_steps(get_names):
 
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
     assert_array_equal([[2, 3]], ft.transform(np.asarray([[1]])))
-    assert ["m2__x2", "m3__x3"] == getattr(ft, get_names)()
+    assert_array_equal(["m2__x2", "m3__x3"], getattr(ft, get_names)())
 
     # Directly setting attr
     ft.transformer_list = [("m5", mult5)]
     assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
-    assert ["m5__x5"] == getattr(ft, get_names)()
+    assert_array_equal(["m5__x5"], getattr(ft, get_names)())
 
     # Using set_params
     ft.set_params(transformer_list=[("mock", mult3)])
     assert_array_equal([[3]], ft.transform(np.asarray([[1]])))
-    assert ["mock__x3"] == getattr(ft, get_names)()
+    assert_array_equal(["mock__x3"], getattr(ft, get_names)())
 
     # Using set_params to replace single step
     ft.set_params(mock=mult5)
     assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
-    assert ["mock__x5"] == getattr(ft, get_names)()
+    assert_array_equal(["mock__x5"], getattr(ft, get_names)())
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
@@ -973,20 +973,20 @@ def test_set_feature_union_step_drop(get_names):
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
     assert_array_equal([[2, 3]], ft.fit(X).transform(X))
     assert_array_equal([[2, 3]], ft.fit_transform(X))
-    assert ["m2__x2", "m3__x3"] == getattr(ft, get_names)()
+    assert_array_equal(["m2__x2", "m3__x3"], getattr(ft, get_names)())
 
     with pytest.warns(None) as record:
         ft.set_params(m2="drop")
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
-    assert ["m3__x3"] == getattr(ft, get_names)()
+    assert_array_equal(["m3__x3"], getattr(ft, get_names)())
     assert not record
 
     with pytest.warns(None) as record:
         ft.set_params(m3="drop")
         assert_array_equal([[]], ft.fit(X).transform(X))
         assert_array_equal([[]], ft.fit_transform(X))
-    assert [] == getattr(ft, get_names)()
+    assert_array_equal([], getattr(ft, get_names)())
     assert not record
 
     with pytest.warns(None) as record:
@@ -1000,7 +1000,7 @@ def test_set_feature_union_step_drop(get_names):
         ft = FeatureUnion([("m2", "drop"), ("m3", mult3)])
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
-    assert ["m3__x3"] == getattr(ft, get_names)()
+    assert_array_equal(["m3__x3"], getattr(ft, get_names)())
     assert not record
 
 
