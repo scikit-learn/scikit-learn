@@ -1417,7 +1417,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         """
         self._check_vocabulary()
 
-        return np.array(
+        return np.asarray(
             [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))]
         )
 

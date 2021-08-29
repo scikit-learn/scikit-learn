@@ -511,7 +511,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     for name, feature_names_out in transformer_with_feature_names_out
                 )
             )
-            return np.asarray(names, dtype=object)
+            return np.asarray(names)
 
         # prefix_feature_names_out == "when_colliding"
         feature_names_count = Counter(
@@ -527,7 +527,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 else:
                     # not unique
                     output.append(f"{transformer_name}__{feat_name}")
-        return np.asarray(output, dtype=object)
+        return np.asarray(output)
 
     def _update_fitted_transformers(self, transformers):
         # transformers are fitted; excludes 'drop' cases
