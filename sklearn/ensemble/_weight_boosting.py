@@ -1159,16 +1159,28 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             if len(self.estimators_) > 1:
                 self.estimators_.pop(-1)
             return None, None, None
-
+        
         beta = estimator_error / (1.0 - estimator_error)
 
         # Boost weight using AdaBoost.R2 alg
         estimator_weight = self.learning_rate * np.log(1.0 / beta)
 
         if not iboost == self.n_estimators - 1:
-            sample_weight[sample_mask] *= np.power(
-                beta, (1.0 - masked_error_vector) * self.learning_rate
-            )
+            if hasattr(self, "previous_beta"):
+                if self.previous_beta > beta:
+                    # improved
+                    sample_weight[sample_mask] *= np.power(
+                            beta, (1.0 - masked_error_vector) * self.learning_rate
+                    )
+                else:
+                    # reset if not improved
+                    sample_weight[sample_mask] = 1 / len(sample_weight)
+            else:
+                sample_weight[sample_mask] *= np.power(
+                        beta, (1.0 - masked_error_vector) * self.learning_rate
+                )
+                
+        self.previous_beta = beta
 
         return sample_weight, estimator_weight, estimator_error
 
