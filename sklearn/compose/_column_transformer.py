@@ -444,6 +444,36 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             feature_names.extend(get_names(name, trans, column))
         return feature_names
 
+    def _get_feature_name_out_for_transformer(
+        self, name, trans, column, feature_names_in
+    ):
+        """Gets feature names of transformer.
+
+        Used conduction with self._iter(fitted=True) in get_feature_names_out."""
+
+        if trans == "drop" or _is_empty_column_selection(column):
+            return
+        elif trans == "passthrough":
+            if (not isinstance(column, slice)) and all(
+                isinstance(col, str) for col in column
+            ):
+                # selection was already strings
+                return column
+            else:
+                return feature_names_in[column]
+
+        # An actual transformer
+        if not hasattr(trans, "get_feature_names_out"):
+            raise AttributeError(
+                f"Transformer {name} (type {type(trans).__name__}) does "
+                "not provide get_feature_names_out."
+            )
+        if isinstance(column, Iterable) and not all(
+            isinstance(col, str) for col in column
+        ):
+            column = _safe_indexing(feature_names_in, column)
+        return trans.get_feature_names_out(input_features=column)
+
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
@@ -459,42 +489,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         check_is_fitted(self)
         if hasattr(self, "feature_names_in_"):
-            input_names = self.feature_names_in_
+            feature_names_in = self.feature_names_in_
         else:
-            input_names = _make_feature_names(self.n_features_in_)
-
-        def _get_feature_name_out_for_transformer(name, trans, column):
-            if trans == "drop" or _is_empty_column_selection(column):
-                return
-            elif trans == "passthrough":
-                if hasattr(self, "feature_names_in_"):
-                    if (not isinstance(column, slice)) and all(
-                        isinstance(col, str) for col in column
-                    ):
-                        return column
-                    else:
-                        return self.feature_names_in_[column]
-                else:
-                    indices = np.arange(self.n_features_in_)
-                    return ["x%d" % i for i in indices[column]]
-
-            # An actual transformer
-            if not hasattr(trans, "get_feature_names_out"):
-                raise AttributeError(
-                    f"Transformer {name} (type {type(trans).__name__}) does "
-                    "not provide get_feature_names_out."
-                )
-            if isinstance(column, Iterable) and not all(
-                isinstance(col, str) for col in column
-            ):
-                column = _safe_indexing(input_names, column)
-            return trans.get_feature_names_out(input_features=column)
+            feature_names_in = _make_feature_names(self.n_features_in_)
 
         # List of tuples (name, feature_names_out)
         transformer_with_feature_names_out = []
         for name, trans, column, _ in self._iter(fitted=True):
-            feature_names_out = _get_feature_name_out_for_transformer(
-                name, trans, column
+            feature_names_out = self._get_feature_name_out_for_transformer(
+                name, trans, column, feature_names_in
             )
             if feature_names_out is None:
                 continue
