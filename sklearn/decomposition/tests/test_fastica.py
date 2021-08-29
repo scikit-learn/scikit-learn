@@ -46,6 +46,10 @@ def test_gs():
     assert (tmp[:5] ** 2).sum() < 1.0e-10
 
 
+# FIXME remove filter in 1.1
+@pytest.mark.filterwarnings(
+    "ignore:From version 1.1 whiten='unit-variance' will be used by default."
+)
 @pytest.mark.parametrize("add_noise", [True, False])
 @pytest.mark.parametrize("seed", range(1))
 def test_fastica_simple(add_noise, seed):
@@ -116,9 +120,7 @@ def test_fastica_simple(add_noise, seed):
 
     # Test FastICA class
     _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo, random_state=seed)
-    ica = FastICA(
-        fun=nl, algorithm=algo, random_state=seed, whiten="arbitrary-variance"
-    )
+    ica = FastICA(fun=nl, algorithm=algo, random_state=seed)
     sources = ica.fit_transform(m.T)
     assert ica.components_.shape == (2, 2)
     assert sources.shape == (1000, 2)
@@ -178,6 +180,10 @@ def test_fastica_convergence_fail():
         ica.fit(m.T)
 
 
+# FIXME remove filter in 1.1
+@pytest.mark.filterwarnings(
+    "ignore:From version 1.1 whiten='unit-variance' will be used by default."
+)
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_non_square_fastica(add_noise):
     # Test the FastICA algorithm on very simple data.
@@ -201,9 +207,7 @@ def test_non_square_fastica(add_noise):
 
     center_and_norm(m)
 
-    k_, mixing_, s_ = fastica(
-        m.T, n_components=2, random_state=rng, whiten="arbitrary-variance"
-    )
+    k_, mixing_, s_ = fastica(m.T, n_components=2, random_state=rng)
     s_ = s_.T
 
     # Check that the mixing model described in the docstring holds:
@@ -280,6 +284,10 @@ def test_inverse_transform():
                 assert_array_almost_equal(X, X2)
 
 
+# FIXME remove filter in 1.1
+@pytest.mark.filterwarnings(
+    "ignore:From version 1.1 whiten='unit-variance' will be used by default."
+)
 def test_fastica_errors():
     n_features = 3
     n_samples = 10
@@ -289,21 +297,15 @@ def test_fastica_errors():
     with pytest.raises(ValueError, match="max_iter should be greater than 1"):
         FastICA(max_iter=0)
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
-        # TODO: don't specify whiten value after 1.0
-        # Specifying it currently avoids a FutureWarning
-        fastica(X, fun_args={"alpha": 0}, whiten="unit-variance")
+        fastica(X, fun_args={"alpha": 0})
     with pytest.raises(
         ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
     ):
-        # TODO: don't specify whiten value after 1.0
-        # Specifying it currently avoids a FutureWarning
-        fastica(X, w_init=w_init, whiten="unit-variance")
+        fastica(X, w_init=w_init)
     with pytest.raises(
         ValueError, match="Invalid algorithm.+must be.+parallel.+or.+deflation"
     ):
-        # TODO: don't specify whiten value after 1.0
-        # Specifying it currently avoids a FutureWarning
-        fastica(X, algorithm="pizza", whiten="unit-variance")
+        fastica(X, algorithm="pizza")
 
 
 def test_fastica_whiten_unit_variance():
