@@ -325,11 +325,14 @@ def test_check_n_features_in_after_fitting(estimator):
 
 COLUMN_NAME_MODULES_TO_IGNORE = {
     "compose",
-    "model_selection",
 }
 
 _estimators_to_test = list(
-    chain(_tested_estimators(), [make_pipeline(LogisticRegression(C=1))])
+    chain(
+        _tested_estimators(),
+        [make_pipeline(LogisticRegression(C=1))],
+        list(_generate_search_cv_instances()),
+    )
 )
 
 
