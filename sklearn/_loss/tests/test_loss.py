@@ -25,7 +25,7 @@ from sklearn._loss.loss import (
     PinballLoss,
 )
 from sklearn.utils import assert_all_finite
-from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
 from sklearn.utils.fixes import sp_version, parse_version
 
 
@@ -237,36 +237,47 @@ def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
 
 
 @pytest.mark.parametrize("loss", ALL_LOSSES)
+@pytest.mark.parametrize("readonly_memmap", [False, True])
 @pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
 @pytest.mark.parametrize("dtype_out", [np.float32, np.float64])
 @pytest.mark.parametrize("sample_weight", [None, 1])
 @pytest.mark.parametrize("out1", [None, 1])
 @pytest.mark.parametrize("out2", [None, 1])
 @pytest.mark.parametrize("n_threads", [1, 2])
-def test_loss_dtype(loss, dtype_in, dtype_out, sample_weight, out1, out2, n_threads):
-    """Test acceptance of dtypes in loss functions.
+def test_loss_dtype_readonly(
+    loss, readonly_memmap, dtype_in, dtype_out, sample_weight, out1, out2, n_threads
+):
+    """Test acceptance of dtypes and readonly arrays in loss functions.
 
     Check that loss accepts if all input arrays are either all float32 or all
     float64, and all output arrays are either all float32 or all float64.
+
+    Also check that input arrays can be readonly, e.g. memory mapped.
     """
     loss = loss()
     # generate a y_true and raw_prediction in valid range
-    if loss.is_multiclass:
-        y_true = np.array([0], dtype=dtype_in)
-        raw_prediction = np.full(
-            shape=(1, loss.n_classes), fill_value=0.0, dtype=dtype_in
-        )
-    else:
-        low, high = _inclusive_low_high(loss.interval_y_true, dtype=dtype_in)
-        y_true = np.array([0.5 * (high - low)], dtype=dtype_in)
-        raw_prediction = np.array([0.0], dtype=dtype_in)
+    n_samples = 5
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=loss,
+        n_samples=n_samples,
+        y_bound=(-100, 100),
+        raw_bound=(-10, 10),
+        seed=42,
+    )
+    y_true = y_true.astype(dtype_in)
+    raw_prediction = raw_prediction.astype(dtype_in)
 
     if sample_weight is not None:
-        sample_weight = np.array([2.0], dtype=dtype_in)
+        sample_weight = np.array([2.0] * n_samples, dtype=dtype_in)
     if out1 is not None:
         out1 = np.empty_like(y_true, dtype=dtype_out)
     if out2 is not None:
         out2 = np.empty_like(raw_prediction, dtype=dtype_out)
+
+    if readonly_memmap:
+        y_true, raw_prediction = create_memmap_backed_data([y_true, raw_prediction])
+        if sample_weight is not None:
+            sample_weight = create_memmap_backed_data(sample_weight)
 
     loss.loss(
         y_true=y_true,
@@ -300,6 +311,20 @@ def test_loss_dtype(loss, dtype_in, dtype_out, sample_weight, out1, out2, n_thre
         hessian=out2,
         n_threads=n_threads,
     )
+    loss(y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight)
+    loss.fit_intercept_only(y_true=y_true, sample_weight=sample_weight)
+    loss.constant_to_optimal_zero(y_true=y_true, sample_weight=sample_weight)
+    if hasattr(loss, "predict_proba"):
+        loss.predict_proba(raw_prediction=raw_prediction)
+    if hasattr(loss, "gradient_proba"):
+        loss.gradient_proba(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            gradient=out1,
+            proba=out2,
+            n_threads=n_threads,
+        )
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
