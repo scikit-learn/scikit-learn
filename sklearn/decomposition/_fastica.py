@@ -330,7 +330,7 @@ class FastICA(TransformerMixin, BaseEstimator):
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Apply parallel or deflational algorithm for FastICA.
 
-    whiten : string or boolean, default=None
+    whiten : str or bool, default=None
         Specify the whitening strategy to use.
         If 'arbitrary-variance', a whitening with variance arbitrary is used.
         If 'unit-variance', the whitening variance is adjusted to be unitary.
@@ -405,7 +405,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
 
-    whiten_ : string or boolean
+    whiten_ : str or bool
         The whitening strategy used during fit.
 
     whitening_ : ndarray of shape (n_components, n_features)
