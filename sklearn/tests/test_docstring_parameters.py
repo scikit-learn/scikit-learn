@@ -264,6 +264,10 @@ def test_fit_docstring_attributes(name, Estimator):
     # For PLS, TODO remove in 1.1
     skipped_attributes = {"x_scores_", "y_scores_"}
 
+    # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
+    if Estimator.__name__ == "FastICA":
+        est.set_params(whiten="arbitrary-variance")
+
     if Estimator.__name__.endswith("Vectorizer"):
         # Vectorizer require some specific input data
         if Estimator.__name__ in (
