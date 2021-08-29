@@ -223,7 +223,7 @@ def evaluate(model, X, y, cv):
         model,
         X,
         y,
-        cv=ts_cv,
+        cv=cv,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
     )
     mae = -cv_results["test_neg_mean_absolute_error"]
