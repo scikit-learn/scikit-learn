@@ -1034,8 +1034,7 @@ def test_check_scalar_valid(x):
             4,
             False,
             TypeError(
-                "`test_name1` must be an instance of "
-                "<class 'float'>, not <class 'int'>."
+                "test_name1 must be an instance of <class 'float'>, not <class 'int'>."
             ),
         ),
         (

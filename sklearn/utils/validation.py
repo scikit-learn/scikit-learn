@@ -1279,14 +1279,12 @@ def check_scalar(
     """
 
     if not isinstance(x, target_type):
-        raise TypeError(
-            f"`{name}` must be an instance of {target_type}, not {type(x)}."
-        )
+        raise TypeError(f"{name} must be an instance of {target_type}, not {type(x)}.")
 
     comparison_operator = operator.le if strictly_greater_min_val else operator.lt
     if min_val is not None and comparison_operator(x, min_val):
         raise ValueError(
-            f" {name} == {x}, must be {'>' if strictly_greater_min_val else '>='} "
+            f"{name} == {x}, must be {'>' if strictly_greater_min_val else '>='} "
             f"{min_val}."
         )
 
