@@ -29,7 +29,6 @@
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
-
 .. |PythonMinVersion| replace:: 3.7
 .. |NumPyMinVersion| replace:: 1.14.6
 .. |SciPyMinVersion| replace:: 1.1.0
@@ -96,7 +95,6 @@ or ``conda``::
     conda install -c conda-forge scikit-learn
 
 The documentation includes more detailed `installation instructions <https://scikit-learn.org/stable/install.html>`_.
-
 
 Changelog
 ---------
