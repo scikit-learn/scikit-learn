@@ -150,9 +150,10 @@ pipe  # click on the diagram below to see the details of each step
 # %%
 # Displaying a Grid Search over a Pipeline with a Classifier
 ################################################################################
-# This section constructions a :class:`~sklearn.model_selection.GridSearchCV`
+# This section constructs a :class:`~sklearn.model_selection.GridSearchCV`
 # over a :class:`~sklearn.pipeline.Pipeline` with
-# :class:`~sklearn.ensemble.RandomForestClassifier`
+# :class:`~sklearn.ensemble.RandomForestClassifier` and displays its visual
+# representation.
 
 from sklearn.compose import make_column_selector as selector
 from sklearn.model_selection import GridSearchCV
