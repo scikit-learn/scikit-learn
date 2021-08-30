@@ -1015,25 +1015,23 @@ def test_check_scalar_valid(x):
             "test_name",
             target_type=numbers.Real,
             min_val=2,
-            strictly_gt_min_val=False,
             max_val=5,
-            strictly_lt_max_val=False,
+            closed="neither",
         )
     assert len(record) == 0
     assert scalar == x
 
 
 @pytest.mark.parametrize(
-    "x, target_name, target_type, min_val, strictly_gt, max_val, strictly_lt, err_msg",
+    "x, target_name, target_type, min_val, max_val, closed, err_msg",
     [
         (
             1,
             "test_name1",
             float,
             2,
-            False,
             4,
-            False,
+            "neither",
             TypeError(
                 "test_name1 must be an instance of <class 'float'>, not <class 'int'>."
             ),
@@ -1043,9 +1041,8 @@ def test_check_scalar_valid(x):
             "test_name2",
             int,
             2,
-            False,
             4,
-            False,
+            "neither",
             ValueError("test_name2 == 1, must be >= 2."),
         ),
         (
@@ -1053,9 +1050,8 @@ def test_check_scalar_valid(x):
             "test_name3",
             int,
             2,
-            False,
             4,
-            False,
+            "neither",
             ValueError("test_name3 == 5, must be <= 4."),
         ),
         (
@@ -1063,9 +1059,8 @@ def test_check_scalar_valid(x):
             "test_name4",
             int,
             2,
-            True,
             4,
-            False,
+            "left",
             ValueError("test_name4 == 2, must be > 2."),
         ),
         (
@@ -1073,15 +1068,14 @@ def test_check_scalar_valid(x):
             "test_name5",
             int,
             2,
-            False,
             4,
-            True,
+            "right",
             ValueError("test_name5 == 4, must be < 4."),
         ),
     ],
 )
 def test_check_scalar_invalid(
-    x, target_name, target_type, min_val, strictly_gt, max_val, strictly_lt, err_msg
+    x, target_name, target_type, min_val, max_val, closed, err_msg
 ):
     """Test that check_scalar returns the right error if a wrong input is
     given"""
@@ -1091,9 +1085,8 @@ def test_check_scalar_invalid(
             target_name,
             target_type=target_type,
             min_val=min_val,
-            strictly_gt_min_val=strictly_gt,
             max_val=max_val,
-            strictly_lt_max_val=strictly_lt,
+            closed=closed,
         )
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)

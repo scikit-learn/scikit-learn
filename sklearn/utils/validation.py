@@ -1238,9 +1238,8 @@ def check_scalar(
     target_type,
     *,
     min_val=None,
-    strictly_gt_min_val=False,
     max_val=None,
-    strictly_lt_max_val=False,
+    closed="neither",
 ):
     """Validate scalar parameters type and value.
 
@@ -1259,15 +1258,13 @@ def check_scalar(
         The minimum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have a lower bound.
 
-    strictly_gt_min_val : bool, default=True
-        Whether the parameter should be strictly greater to `min_val`.
-
     max_val : float or int, default=False
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
-    strictly_lt_max_val : bool, default=False
-        Whether the parameter should be strictly less to `max_val`.
+    closed : {"left", "right", "both", "neither"}, default="neither"
+        Whether the interval is closed on the left-side, right-side, both or
+        neither.
 
     Returns
     -------
@@ -1286,16 +1283,22 @@ def check_scalar(
     if not isinstance(x, target_type):
         raise TypeError(f"{name} must be an instance of {target_type}, not {type(x)}.")
 
-    comparison_operator = operator.le if strictly_gt_min_val else operator.lt
+    expected_closed = {"left", "right", "both", "neither"}
+    if closed not in expected_closed:
+        raise ValueError(f"Unknown value for `closed`: {closed}")
+
+    comparison_operator = operator.le if closed in ("left", "both") else operator.lt
     if min_val is not None and comparison_operator(x, min_val):
         raise ValueError(
-            f"{name} == {x}, must be {'>' if strictly_gt_min_val else '>='} {min_val}."
+            f"{name} == {x}, must be"
+            f" {'>' if closed in ('left', 'both') else '>='} {min_val}."
         )
 
-    comparison_operator = operator.ge if strictly_lt_max_val else operator.gt
+    comparison_operator = operator.ge if closed in ("right", "both") else operator.gt
     if max_val is not None and comparison_operator(x, max_val):
         raise ValueError(
-            f"{name} == {x}, must be {'<' if strictly_lt_max_val else '<='} {max_val}."
+            f"{name} == {x}, must be"
+            f" {'<' if closed in ('right', 'both') else '<='} {max_val}."
         )
 
     return x
