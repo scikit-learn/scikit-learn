@@ -463,7 +463,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             target_type=numbers.Real,
             min_val=0.5,
             max_val=1,
-            strictly_less_max_val=True,
+            strictly_lt_max_val=True,
         )
         check_scalar(self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1)
         check_scalar(

@@ -1015,9 +1015,9 @@ def test_check_scalar_valid(x):
             "test_name",
             target_type=numbers.Real,
             min_val=2,
-            strictly_greater_min_val=False,
+            strictly_gt_min_val=False,
             max_val=5,
-            strictly_less_max_val=False,
+            strictly_lt_max_val=False,
         )
     assert len(record) == 0
     assert scalar == x
@@ -1091,9 +1091,9 @@ def test_check_scalar_invalid(
             target_name,
             target_type=target_type,
             min_val=min_val,
-            strictly_greater_min_val=strictly_gt,
+            strictly_gt_min_val=strictly_gt,
             max_val=max_val,
-            strictly_less_max_val=strictly_lt,
+            strictly_lt_max_val=strictly_lt,
         )
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
