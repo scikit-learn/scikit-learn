@@ -8,19 +8,25 @@ Base IO code for all datasets
 # License: BSD 3 clause
 import csv
 import hashlib
-import os
+import gzip
 import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
-from os.path import dirname, expanduser, isdir, join, splitext
+from os.path import expanduser, isdir, join, splitext
+from importlib import resources
 
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
+from ..utils.deprecation import deprecated
 
 import numpy as np
 
 from urllib.request import urlretrieve
+
+DATA_MODULE = "sklearn.datasets.data"
+DESCR_MODULE = "sklearn.datasets.descr"
+IMAGES_MODULE = "sklearn.datasets.images"
 
 RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "checksum"])
 
@@ -238,33 +244,53 @@ def load_files(
     )
 
 
-def load_data(module_path, data_file_name):
-    """Loads data from module_path/data/data_file_name.
+def load_csv_data(
+    data_file_name,
+    *,
+    data_module=DATA_MODULE,
+    descr_file_name=None,
+    descr_module=DESCR_MODULE,
+):
+    """Loads `data_file_name` from `data_module with `importlib.resources`.
 
     Parameters
     ----------
-    module_path : string
-        The module path.
+    data_file_name : str
+        Name of csv file to be loaded from `data_module/data_file_name`.
+        For example `'wine_data.csv'`.
 
-    data_file_name : string
-        Name of csv file to be loaded from
-        module_path/data/data_file_name. For example 'wine_data.csv'.
+    data_module : str or module, default='sklearn.datasets.data'
+        Module where data lives. The default is `'sklearn.datasets.data'`.
+
+    descr_file_name : str, default=None
+        Name of rst file to be loaded from `descr_module/descr_file_name`.
+        For example `'wine_data.rst'`. See also :func:`load_descr`.
+        If not None, also returns the corresponding description of
+        the dataset.
+
+    descr_module : str or module, default='sklearn.datasets.descr'
+        Module where `descr_file_name` lives. See also :func:`load_descr`.
+        The default is `'sklearn.datasets.descr'`.
 
     Returns
     -------
-    data : Numpy array
+    data : ndarray of shape (n_samples, n_features)
         A 2D array with each row representing one sample and each column
         representing the features of a given sample.
 
-    target : Numpy array
-        A 1D array holding target variables for all the samples in `data.
-        For example target[0] is the target varible for data[0].
+    target : ndarry of shape (n_samples,)
+        A 1D array holding target variables for all the samples in `data`.
+        For example target[0] is the target variable for data[0].
 
-    target_names : Numpy array
+    target_names : ndarry of shape (n_samples,)
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
+
+    descr : str, optional
+        Description of the dataset (the content of `descr_file_name`).
+        Only returned if `descr_file_name` is not None.
     """
-    with open(join(module_path, "data", data_file_name)) as csv_file:
+    with resources.open_text(data_module, data_file_name) as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -277,7 +303,101 @@ def load_data(module_path, data_file_name):
             data[i] = np.asarray(ir[:-1], dtype=np.float64)
             target[i] = np.asarray(ir[-1], dtype=int)
 
-    return data, target, target_names
+    if descr_file_name is None:
+        return data, target, target_names
+    else:
+        assert descr_module is not None
+        descr = load_descr(descr_module=descr_module, descr_file_name=descr_file_name)
+        return data, target, target_names, descr
+
+
+def load_gzip_compressed_csv_data(
+    data_file_name,
+    *,
+    data_module=DATA_MODULE,
+    descr_file_name=None,
+    descr_module=DESCR_MODULE,
+    encoding="utf-8",
+    **kwargs,
+):
+    """Loads gzip-compressed `data_file_name` from `data_module` with `importlib.resources`.
+
+    1) Open resource file with `importlib.resources.open_binary`
+    2) Decompress file obj with `gzip.open`
+    3) Load decompressed data with `np.loadtxt`
+
+    Parameters
+    ----------
+    data_file_name : str
+        Name of gzip-compressed csv file  (`'*.csv.gz'`) to be loaded from
+        `data_module/data_file_name`. For example `'diabetes_data.csv.gz'`.
+
+    data_module : str or module, default='sklearn.datasets.data'
+        Module where data lives. The default is `'sklearn.datasets.data'`.
+
+    descr_file_name : str, default=None
+        Name of rst file to be loaded from `descr_module/descr_file_name`.
+        For example `'wine_data.rst'`. See also :func:`load_descr`.
+        If not None, also returns the corresponding description of
+        the dataset.
+
+    descr_module : str or module, default='sklearn.datasets.descr'
+        Module where `descr_file_name` lives. See also :func:`load_descr`.
+        The default  is `'sklearn.datasets.descr'`.
+
+    encoding : str, default="utf-8"
+        Name of the encoding that the gzip-decompressed file will be
+        decoded with. The default is 'utf-8'.
+
+    **kwargs : dict, optional
+        Keyword arguments to be passed to `np.loadtxt`;
+        e.g. delimiter=','.
+
+    Returns
+    -------
+    data : ndarray of shape (n_samples, n_features)
+        A 2D array with each row representing one sample and each column
+        representing the features and/or target of a given sample.
+
+    descr : str, optional
+        Description of the dataset (the content of `descr_file_name`).
+        Only returned if `descr_file_name` is not None.
+    """
+    with resources.open_binary(data_module, data_file_name) as compressed_file:
+        compressed_file = gzip.open(compressed_file, mode="rt", encoding=encoding)
+        data = np.loadtxt(compressed_file, **kwargs)
+
+    if descr_file_name is None:
+        return data
+    else:
+        assert descr_module is not None
+        descr = load_descr(descr_module=descr_module, descr_file_name=descr_file_name)
+        return data, descr
+
+
+def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
+    """Load `descr_file_name` from `descr_module` with `importlib.resources`.
+
+    Parameters
+    ----------
+    descr_file_name : str, default=None
+        Name of rst file to be loaded from `descr_module/descr_file_name`.
+        For example `'wine_data.rst'`. See also :func:`load_descr`.
+        If not None, also returns the corresponding description of
+        the dataset.
+
+    descr_module : str or module, default='sklearn.datasets.descr'
+        Module where `descr_file_name` lives. See also :func:`load_descr`.
+        The default  is `'sklearn.datasets.descr'`.
+
+    Returns
+    -------
+    fdescr : str
+        Content of `descr_file_name`.
+    """
+    fdescr = resources.read_text(descr_module, descr_file_name)
+
+    return fdescr
 
 
 def load_wine(*, return_X_y=False, as_frame=False):
@@ -354,11 +474,10 @@ def load_wine(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['class_0', 'class_1', 'class_2']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, "wine_data.csv")
 
-    with open(join(module_path, "descr", "wine_data.rst")) as rst_file:
-        fdescr = rst_file.read()
+    data, target, target_names, fdescr = load_csv_data(
+        data_file_name="wine_data.csv", descr_file_name="wine_data.rst"
+    )
 
     feature_names = [
         "alcohol",
@@ -481,12 +600,10 @@ def load_iris(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, "iris.csv")
-    iris_csv_filename = join(module_path, "data", "iris.csv")
-
-    with open(join(module_path, "descr", "iris.rst")) as rst_file:
-        fdescr = rst_file.read()
+    data_file_name = "iris.csv"
+    data, target, target_names, fdescr = load_csv_data(
+        data_file_name=data_file_name, descr_file_name="iris.rst"
+    )
 
     feature_names = [
         "sepal length (cm)",
@@ -514,7 +631,8 @@ def load_iris(*, return_X_y=False, as_frame=False):
         target_names=target_names,
         DESCR=fdescr,
         feature_names=feature_names,
-        filename=iris_csv_filename,
+        filename=data_file_name,
+        data_module=DATA_MODULE,
     )
 
 
@@ -598,12 +716,10 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['malignant', 'benign']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, "breast_cancer.csv")
-    csv_filename = join(module_path, "data", "breast_cancer.csv")
-
-    with open(join(module_path, "descr", "breast_cancer.rst")) as rst_file:
-        fdescr = rst_file.read()
+    data_file_name = "breast_cancer.csv"
+    data, target, target_names, fdescr = load_csv_data(
+        data_file_name=data_file_name, descr_file_name="breast_cancer.rst"
+    )
 
     feature_names = np.array(
         [
@@ -659,7 +775,8 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         target_names=target_names,
         DESCR=fdescr,
         feature_names=feature_names,
-        filename=csv_filename,
+        filename=data_file_name,
+        data_module=DATA_MODULE,
     )
 
 
@@ -747,10 +864,11 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         <...>
         >>> plt.show()
     """
-    module_path = dirname(__file__)
-    data = np.loadtxt(join(module_path, "data", "digits.csv.gz"), delimiter=",")
-    with open(join(module_path, "descr", "digits.rst")) as f:
-        descr = f.read()
+
+    data, fdescr = load_gzip_compressed_csv_data(
+        data_file_name="digits.csv.gz", descr_file_name="digits.rst", delimiter=","
+    )
+
     target = data[:, -1].astype(int, copy=False)
     flat_data = data[:, :-1]
     images = flat_data.view()
@@ -786,7 +904,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         feature_names=feature_names,
         target_names=np.arange(10),
         images=images,
-        DESCR=descr,
+        DESCR=fdescr,
     )
 
 
@@ -854,15 +972,12 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
     """
-    module_path = dirname(__file__)
-    base_dir = join(module_path, "data")
-    data_filename = join(base_dir, "diabetes_data.csv.gz")
-    data = np.loadtxt(data_filename)
-    target_filename = join(base_dir, "diabetes_target.csv.gz")
-    target = np.loadtxt(target_filename)
+    data_filename = "diabetes_data.csv.gz"
+    target_filename = "diabetes_target.csv.gz"
+    data = load_gzip_compressed_csv_data(data_filename)
+    target = load_gzip_compressed_csv_data(target_filename)
 
-    with open(join(module_path, "descr", "diabetes.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("diabetes.rst")
 
     feature_names = ["age", "sex", "bmi", "bp", "s1", "s2", "s3", "s4", "s5", "s6"]
 
@@ -886,6 +1001,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
         feature_names=feature_names,
         data_filename=data_filename,
         target_filename=target_filename,
+        data_module=DATA_MODULE,
     )
 
 
@@ -953,22 +1069,21 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
     """
-    base_dir = join(dirname(__file__), "data/")
-    data_filename = join(base_dir, "linnerud_exercise.csv")
-    target_filename = join(base_dir, "linnerud_physiological.csv")
+    data_filename = "linnerud_exercise.csv"
+    target_filename = "linnerud_physiological.csv"
 
-    # Read data
-    data_exercise = np.loadtxt(data_filename, skiprows=1)
-    data_physiological = np.loadtxt(target_filename, skiprows=1)
-
-    # Read header
-    with open(data_filename) as f:
+    # Read header and data
+    with resources.open_text(DATA_MODULE, data_filename) as f:
         header_exercise = f.readline().split()
-    with open(target_filename) as f:
-        header_physiological = f.readline().split()
+        f.seek(0)  # reset file obj
+        data_exercise = np.loadtxt(f, skiprows=1)
 
-    with open(dirname(__file__) + "/descr/linnerud.rst") as f:
-        descr = f.read()
+    with resources.open_text(DATA_MODULE, target_filename) as f:
+        header_physiological = f.readline().split()
+        f.seek(0)  # reset file obj
+        data_physiological = np.loadtxt(f, skiprows=1)
+
+    fdescr = load_descr("linnerud.rst")
 
     frame = None
     if as_frame:
@@ -988,14 +1103,52 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         target=data_physiological,
         target_names=header_physiological,
         frame=frame,
-        DESCR=descr,
+        DESCR=fdescr,
         data_filename=data_filename,
         target_filename=target_filename,
+        data_module=DATA_MODULE,
     )
 
 
+@deprecated(
+    r"""`load_boston` is deprecated in 1.0 and will be removed in 1.2.
+
+    The Boston housing prices dataset has an ethical problem. You can refer to
+    the documentation of this function for further details.
+
+    The scikit-learn maintainers therefore strongly discourage the use of this
+    dataset unless the purpose of the code is to study and educate about
+    ethical issues in data science and machine learning.
+
+    In this case special case, you can fetch the dataset from the original
+    source::
+
+        import pandas as pd
+        import numpy as np
+
+
+        data_url = "http://lib.stat.cmu.edu/datasets/boston"
+        raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+        data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+        target = raw_df.values[1::2, 2]
+
+    Alternative datasets include the California housing dataset (i.e.
+    func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
+    dataset. You can load the datasets as follows:
+
+        from sklearn.datasets import fetch_california_housing
+        housing = fetch_california_housing()
+
+    for the California housing dataset and:
+
+        from sklearn.datasets import fetch_openml
+        housing = fetch_openml(name="house_prices", as_frame=True)
+
+    for the Ames housing dataset.
+    """
+)
 def load_boston(*, return_X_y=False):
-    """Load and return the boston house-prices dataset (regression).
+    r"""Load and return the boston house-prices dataset (regression).
 
     ==============   ==============
     Samples total               506
@@ -1005,6 +1158,50 @@ def load_boston(*, return_X_y=False):
     ==============   ==============
 
     Read more in the :ref:`User Guide <boston_dataset>`.
+
+    .. deprecated:: 1.0
+       This function is deprecated in 1.0 and will be removed in 1.2. See the
+       warning message below for futher details regarding the alternative
+       datasets.
+
+    .. warning::
+        The Boston housing prices dataset has an ethical problem: as
+        investigated in [1]_, the authors of this dataset engineered a
+        non-invertible variable "B" assuming that racial self-segregation had a
+        positive impact on house prices [2]_. Furthermore the goal of the
+        research that led to the creation of this dataset was to study the
+        impact of air quality but it did not give adequate demonstration of the
+        validity of this assumption.
+
+        The scikit-learn maintainers therefore strongly discourage the use of
+        this dataset unless the purpose of the code is to study and educate
+        about ethical issues in data science and machine learning.
+
+        In this case special case, you can fetch the dataset from the original
+        source::
+
+            import pandas as pd  # doctest: +SKIP
+            import numpy as np
+
+
+            data_url = "http://lib.stat.cmu.edu/datasets/boston"
+            raw_df = pd.read_csv(data_url, sep="s+", skiprows=22, header=None)
+            data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+            target = raw_df.values[1::2, 2]
+
+        Alternative datasets include the California housing dataset [3]_
+        (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
+        housing dataset [4]_. You can load the datasets as follows::
+
+            from sklearn.datasets import fetch_california_housing
+            housing = fetch_california_housing()
+
+        for the California housing dataset and::
+
+            from sklearn.datasets import fetch_openml
+            housing = fetch_openml(name="house_prices", as_frame=True)  # noqa
+
+        for the Ames housing dataset.
 
     Parameters
     ----------
@@ -1021,7 +1218,7 @@ def load_boston(*, return_X_y=False):
 
         data : ndarray of shape (506, 13)
             The data matrix.
-        target : ndarray of shape (506, )
+        target : ndarray of shape (506,)
             The regression target.
         filename : str
             The physical location of boston csv dataset.
@@ -1042,21 +1239,42 @@ def load_boston(*, return_X_y=False):
         .. versionchanged:: 0.20
             Fixed a wrong data point at [445, 0].
 
+    References
+    ----------
+    .. [1] `Racist data destruction? M Carlisle,
+            <https://medium.com/@docintangible/racist-data-destruction-113e3eff54a8>`_
+    .. [2] `Harrison Jr, David, and Daniel L. Rubinfeld.
+           "Hedonic housing prices and the demand for clean air."
+           Journal of environmental economics and management 5.1 (1978): 81-102.
+           <https://www.researchgate.net/publication/4974606_Hedonic_housing_prices_and_the_demand_for_clean_air>`_
+    .. [3] `California housing dataset
+            <https://scikit-learn.org/stable/datasets/real_world.html#california-housing-dataset>`_
+    .. [4] `Ames housing dataset
+            <https://www.openml.org/d/42165>`_
+
     Examples
     --------
+    >>> import warnings
     >>> from sklearn.datasets import load_boston
-    >>> X, y = load_boston(return_X_y=True)
+    >>> with warnings.catch_warnings():
+    ...     # You should probably not use this dataset.
+    ...     warnings.filterwarnings("ignore")
+    ...     X, y = load_boston(return_X_y=True)
     >>> print(X.shape)
     (506, 13)
     """
-    module_path = dirname(__file__)
+    # TODO: once the deprecation period is over, implement a module level
+    # `__getattr__` function in`sklearn.datasets` to raise an exception with
+    # an informative error message at import time instead of just removing
+    # load_boston. The goal is to avoid having beginners that copy-paste code
+    # from numerous books and tutorials that use this dataset loader get
+    # a confusing ImportError when trying to learn scikit-learn.
+    # See: https://www.python.org/dev/peps/pep-0562/
 
-    fdescr_name = join(module_path, "descr", "boston_house_prices.rst")
-    with open(fdescr_name) as f:
-        descr_text = f.read()
+    descr_text = load_descr("boston_house_prices.rst")
 
-    data_file_name = join(module_path, "data", "boston_house_prices.csv")
-    with open(data_file_name) as f:
+    data_file_name = "boston_house_prices.csv"
+    with resources.open_text(DATA_MODULE, data_file_name) as f:
         data_file = csv.reader(f)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -1080,6 +1298,7 @@ def load_boston(*, return_X_y=False):
         feature_names=feature_names[:-1],
         DESCR=descr_text,
         filename=data_file_name,
+        data_module=DATA_MODULE,
     )
 
 
@@ -1119,16 +1338,15 @@ def load_sample_images():
     # import PIL only when needed
     from ..externals._pilutil import imread
 
-    module_path = join(dirname(__file__), "images")
-    with open(join(module_path, "README.txt")) as f:
-        descr = f.read()
-    filenames = [
-        join(module_path, filename)
-        for filename in sorted(os.listdir(module_path))
-        if filename.endswith(".jpg")
-    ]
-    # Load image data for each image in the source folder.
-    images = [imread(filename) for filename in filenames]
+    descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
+
+    filenames, images = [], []
+    for filename in sorted(resources.contents(IMAGES_MODULE)):
+        if filename.endswith(".jpg"):
+            filenames.append(filename)
+            with resources.open_binary(IMAGES_MODULE, filename) as image_file:
+                image = imread(image_file)
+            images.append(image)
 
     return Bunch(images=images, filenames=filenames, DESCR=descr)
 
@@ -1217,12 +1435,12 @@ def _fetch_remote(remote, dirname=None):
         Named tuple containing remote dataset meta information: url, filename
         and checksum
 
-    dirname : string
+    dirname : str
         Directory to save the file to.
 
     Returns
     -------
-    file_path: string
+    file_path: str
         Full path of the created file.
     """
 

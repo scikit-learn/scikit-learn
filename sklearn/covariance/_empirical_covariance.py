@@ -99,7 +99,7 @@ def empirical_covariance(X, *, assume_centered=False):
 
 
 class EmpiricalCovariance(BaseEstimator):
-    """Maximum likelihood covariance estimator
+    """Maximum likelihood covariance estimator.
 
     Read more in the :ref:`User Guide <covariance>`.
 
@@ -131,6 +131,24 @@ class EmpiricalCovariance(BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    EllipticEnvelope : An object for detecting outliers in
+        a Gaussian distributed dataset.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    LedoitWolf : LedoitWolf Estimator.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    OAS : Oracle Approximating Shrinkage Estimator.
+    ShrunkCovariance : Covariance estimator with shrinkage.
+
     Examples
     --------
     >>> import numpy as np
@@ -148,7 +166,6 @@ class EmpiricalCovariance(BaseEstimator):
            [0.2818..., 0.3928...]])
     >>> cov.location_
     array([0.0622..., 0.0193...])
-
     """
 
     def __init__(self, *, store_precision=True, assume_centered=False):
@@ -191,8 +208,7 @@ class EmpiricalCovariance(BaseEstimator):
         return precision
 
     def fit(self, X, y=None):
-        """Fits the Maximum Likelihood Estimator covariance model
-        according to the given training data and parameters.
+        """Fit the maximum liklihood covariance estimator to X.
 
         Parameters
         ----------
@@ -206,6 +222,7 @@ class EmpiricalCovariance(BaseEstimator):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X)
         if self.assume_centered:

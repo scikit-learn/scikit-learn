@@ -19,6 +19,7 @@ from ._testing import assert_array_equal
 from ._testing import assert_array_almost_equal
 from ._testing import assert_allclose
 from ._testing import assert_allclose_dense_sparse
+from ._testing import assert_array_less
 from ._testing import set_random_state
 from ._testing import SkipTest
 from ._testing import ignore_warnings
@@ -26,7 +27,9 @@ from ._testing import create_memmap_backed_data
 from ._testing import raises
 from . import is_scalar_nan
 
+from ..linear_model import LinearRegression
 from ..linear_model import LogisticRegression
+from ..linear_model import RANSACRegressor
 from ..linear_model import Ridge
 
 from ..base import (
@@ -50,6 +53,7 @@ from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
+from ..utils.validation import check_is_fitted
 
 from . import shuffle
 from ._tags import (
@@ -78,14 +82,16 @@ def _yield_checks(estimator):
     yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
-    yield check_sample_weights_pandas_series
-    yield check_sample_weights_not_an_array
-    yield check_sample_weights_list
-    yield check_sample_weights_shape
-    if has_fit_parameter(estimator, "sample_weight") and not pairwise:
-        # We skip pairwise because the data is not pairwise
-        yield partial(check_sample_weights_invariance, kind="ones")
-        yield partial(check_sample_weights_invariance, kind="zeros")
+    if has_fit_parameter(estimator, "sample_weight"):
+        yield check_sample_weights_pandas_series
+        yield check_sample_weights_not_an_array
+        yield check_sample_weights_list
+        if not pairwise:
+            # We skip pairwise because the data is not pairwise
+            yield check_sample_weights_shape
+            yield check_sample_weights_not_overwritten
+            yield partial(check_sample_weights_invariance, kind="ones")
+            yield partial(check_sample_weights_invariance, kind="zeros")
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
@@ -139,6 +145,9 @@ def _yield_classifier_checks(classifier):
     yield check_classifiers_regression_target
     if tags["multilabel"]:
         yield check_classifiers_multilabel_representation_invariance
+        yield check_classifiers_multilabel_output_format_predict
+        yield check_classifiers_multilabel_output_format_predict_proba
+        yield check_classifiers_multilabel_output_format_decision_function
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
         if not tags["multioutput_only"]:
@@ -299,6 +308,7 @@ def _yield_all_checks(estimator):
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
     yield check_fit_idempotent
+    yield check_fit_check_is_fitted
     if not tags["no_validation"]:
         yield check_n_features_in
         yield check_fit1d
@@ -352,7 +362,13 @@ def _construct_instance(Estimator):
     required_parameters = getattr(Estimator, "_required_parameters", [])
     if len(required_parameters):
         if required_parameters in (["estimator"], ["base_estimator"]):
-            if issubclass(Estimator, RegressorMixin):
+            # `RANSACRegressor` will raise an error with any model other
+            # than `LinearRegression` if we don't fix `min_samples` parameter.
+            # For common test, we can enforce using `LinearRegression` that
+            # is the default estimator in `RANSACRegressor` instead of `Ridge`.
+            if issubclass(Estimator, RANSACRegressor):
+                estimator = Estimator(LinearRegression())
+            elif issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
             else:
                 estimator = Estimator(LogisticRegression(C=1))
@@ -649,7 +665,7 @@ def _set_checking_parameters(estimator):
         estimator.set_params(strategy="stratified")
 
     # Speed-up by reducing the number of CV or splits for CV estimators
-    loo_cv = ["RidgeCV"]
+    loo_cv = ["RidgeCV", "RidgeClassifierCV"]
     if name not in loo_cv and hasattr(estimator, "cv"):
         estimator.set_params(cv=3)
     if hasattr(estimator, "n_splits"):
@@ -803,52 +819,9 @@ def check_sample_weights_pandas_series(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
     estimator = clone(estimator_orig)
-    if has_fit_parameter(estimator, "sample_weight"):
-        try:
-            import pandas as pd
+    try:
+        import pandas as pd
 
-            X = np.array(
-                [
-                    [1, 1],
-                    [1, 2],
-                    [1, 3],
-                    [1, 4],
-                    [2, 1],
-                    [2, 2],
-                    [2, 3],
-                    [2, 4],
-                    [3, 1],
-                    [3, 2],
-                    [3, 3],
-                    [3, 4],
-                ]
-            )
-            X = pd.DataFrame(_pairwise_estimator_convert_X(X, estimator_orig))
-            y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
-            weights = pd.Series([1] * 12)
-            if _safe_tags(estimator, key="multioutput_only"):
-                y = pd.DataFrame(y)
-            try:
-                estimator.fit(X, y, sample_weight=weights)
-            except ValueError:
-                raise ValueError(
-                    "Estimator {0} raises error if "
-                    "'sample_weight' parameter is of "
-                    "type pandas.Series".format(name)
-                )
-        except ImportError:
-            raise SkipTest(
-                "pandas is not installed: not testing for "
-                "input of type pandas.Series to class weight."
-            )
-
-
-@ignore_warnings(category=(FutureWarning))
-def check_sample_weights_not_an_array(name, estimator_orig):
-    # check that estimators will accept a 'sample_weight' parameter of
-    # type _NotAnArray in the 'fit' function.
-    estimator = clone(estimator_orig)
-    if has_fit_parameter(estimator, "sample_weight"):
         X = np.array(
             [
                 [1, 1],
@@ -865,70 +838,105 @@ def check_sample_weights_not_an_array(name, estimator_orig):
                 [3, 4],
             ]
         )
-        X = _NotAnArray(_pairwise_estimator_convert_X(X, estimator_orig))
-        y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
-        weights = _NotAnArray([1] * 12)
+        X = pd.DataFrame(_pairwise_estimator_convert_X(X, estimator_orig))
+        y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+        weights = pd.Series([1] * 12)
         if _safe_tags(estimator, key="multioutput_only"):
-            y = _NotAnArray(y.data.reshape(-1, 1))
-        estimator.fit(X, y, sample_weight=weights)
+            y = pd.DataFrame(y)
+        try:
+            estimator.fit(X, y, sample_weight=weights)
+        except ValueError:
+            raise ValueError(
+                "Estimator {0} raises error if "
+                "'sample_weight' parameter is of "
+                "type pandas.Series".format(name)
+            )
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not testing for "
+            "input of type pandas.Series to class weight."
+        )
+
+
+@ignore_warnings(category=(FutureWarning))
+def check_sample_weights_not_an_array(name, estimator_orig):
+    # check that estimators will accept a 'sample_weight' parameter of
+    # type _NotAnArray in the 'fit' function.
+    estimator = clone(estimator_orig)
+    X = np.array(
+        [
+            [1, 1],
+            [1, 2],
+            [1, 3],
+            [1, 4],
+            [2, 1],
+            [2, 2],
+            [2, 3],
+            [2, 4],
+            [3, 1],
+            [3, 2],
+            [3, 3],
+            [3, 4],
+        ]
+    )
+    X = _NotAnArray(_pairwise_estimator_convert_X(X, estimator_orig))
+    y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+    weights = _NotAnArray([1] * 12)
+    if _safe_tags(estimator, key="multioutput_only"):
+        y = _NotAnArray(y.data.reshape(-1, 1))
+    estimator.fit(X, y, sample_weight=weights)
 
 
 @ignore_warnings(category=(FutureWarning))
 def check_sample_weights_list(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type list in the 'fit' function.
-    if has_fit_parameter(estimator_orig, "sample_weight"):
-        estimator = clone(estimator_orig)
-        rnd = np.random.RandomState(0)
-        n_samples = 30
-        X = _pairwise_estimator_convert_X(
-            rnd.uniform(size=(n_samples, 3)), estimator_orig
-        )
-        y = np.arange(n_samples) % 3
-        y = _enforce_estimator_tags_y(estimator, y)
-        sample_weight = [3] * n_samples
-        # Test that estimators don't raise any exception
-        estimator.fit(X, y, sample_weight=sample_weight)
+    estimator = clone(estimator_orig)
+    rnd = np.random.RandomState(0)
+    n_samples = 30
+    X = _pairwise_estimator_convert_X(rnd.uniform(size=(n_samples, 3)), estimator_orig)
+    y = np.arange(n_samples) % 3
+    y = _enforce_estimator_tags_y(estimator, y)
+    sample_weight = [3] * n_samples
+    # Test that estimators don't raise any exception
+    estimator.fit(X, y, sample_weight=sample_weight)
 
 
 @ignore_warnings(category=FutureWarning)
 def check_sample_weights_shape(name, estimator_orig):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
-    if has_fit_parameter(estimator_orig, "sample_weight") and not _is_pairwise(
-        estimator_orig
-    ):
-        estimator = clone(estimator_orig)
-        X = np.array(
-            [
-                [1, 3],
-                [1, 3],
-                [1, 3],
-                [1, 3],
-                [2, 1],
-                [2, 1],
-                [2, 1],
-                [2, 1],
-                [3, 3],
-                [3, 3],
-                [3, 3],
-                [3, 3],
-                [4, 1],
-                [4, 1],
-                [4, 1],
-                [4, 1],
-            ]
-        )
-        y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2])
-        y = _enforce_estimator_tags_y(estimator, y)
+    estimator = clone(estimator_orig)
+    X = np.array(
+        [
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+        ]
+    )
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2])
+    y = _enforce_estimator_tags_y(estimator, y)
 
-        estimator.fit(X, y, sample_weight=np.ones(len(y)))
+    estimator.fit(X, y, sample_weight=np.ones(len(y)))
 
-        with raises(ValueError):
-            estimator.fit(X, y, sample_weight=np.ones(2 * len(y)))
+    with raises(ValueError):
+        estimator.fit(X, y, sample_weight=np.ones(2 * len(y)))
 
-        with raises(ValueError):
-            estimator.fit(X, y, sample_weight=np.ones((len(y), 2)))
+    with raises(ValueError):
+        estimator.fit(X, y, sample_weight=np.ones((len(y), 2)))
 
 
 @ignore_warnings(category=FutureWarning)
@@ -998,6 +1006,46 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
             X_pred1 = getattr(estimator1, method)(X1)
             X_pred2 = getattr(estimator2, method)(X1)
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
+
+
+def check_sample_weights_not_overwritten(name, estimator_orig):
+    # check that estimators don't override the passed sample_weight parameter
+    estimator = clone(estimator_orig)
+    set_random_state(estimator, random_state=0)
+
+    X = np.array(
+        [
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+        ],
+        dtype=np.float64,
+    )
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2], dtype=int)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    sample_weight_original = np.ones(y.shape[0])
+    sample_weight_original[0] = 10.0
+
+    sample_weight_fit = sample_weight_original.copy()
+
+    estimator.fit(X, y, sample_weight=sample_weight_fit)
+
+    err_msg = "{name} overwrote the original `sample_weight` given during fit"
+    assert_allclose(sample_weight_fit, sample_weight_original, err_msg=err_msg)
 
 
 @ignore_warnings(category=(FutureWarning, UserWarning))
@@ -2224,18 +2272,18 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
                 estimator.fit(X)
 
 
-@ignore_warnings(category=(FutureWarning))
+@ignore_warnings(category=FutureWarning)
 def check_classifiers_multilabel_representation_invariance(name, classifier_orig):
-
     X, y = make_multilabel_classification(
         n_samples=100,
-        n_features=20,
+        n_features=2,
         n_classes=5,
         n_labels=3,
         length=50,
         allow_unlabeled=True,
         random_state=0,
     )
+    X = scale(X)
 
     X_train, y_train = X[:80], y[:80]
     X_test = X[80:]
@@ -2263,6 +2311,181 @@ def check_classifiers_multilabel_representation_invariance(name, classifier_orig
     assert y_pred.dtype == y_pred_list_of_lists.dtype
     assert type(y_pred) == type(y_pred_list_of_arrays)
     assert type(y_pred) == type(y_pred_list_of_lists)
+
+
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_multilabel_output_format_predict(name, classifier_orig):
+    """Check the output of the `predict` method for classifiers supporting
+    multilabel-indicator targets."""
+    classifier = clone(classifier_orig)
+    set_random_state(classifier)
+
+    n_samples, test_size, n_outputs = 100, 25, 5
+    X, y = make_multilabel_classification(
+        n_samples=n_samples,
+        n_features=2,
+        n_classes=n_outputs,
+        n_labels=3,
+        length=50,
+        allow_unlabeled=True,
+        random_state=0,
+    )
+    X = scale(X)
+
+    X_train, X_test = X[:-test_size], X[-test_size:]
+    y_train, y_test = y[:-test_size], y[-test_size:]
+    classifier.fit(X_train, y_train)
+
+    response_method_name = "predict"
+    predict_method = getattr(classifier, response_method_name, None)
+    if predict_method is None:
+        raise SkipTest(f"{name} does not have a {response_method_name} method.")
+
+    y_pred = predict_method(X_test)
+
+    # y_pred.shape -> y_test.shape with the same dtype
+    assert isinstance(y_pred, np.ndarray), (
+        f"{name}.predict is expected to output a NumPy array. Got "
+        f"{type(y_pred)} instead."
+    )
+    assert y_pred.shape == y_test.shape, (
+        f"{name}.predict outputs a NumPy array of shape {y_pred.shape} "
+        f"instead of {y_test.shape}."
+    )
+    assert y_pred.dtype == y_test.dtype, (
+        f"{name}.predict does not output the same dtype than the targets. "
+        f"Got {y_pred.dtype} instead of {y_test.dtype}."
+    )
+
+
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_multilabel_output_format_predict_proba(name, classifier_orig):
+    """Check the output of the `predict_proba` method for classifiers supporting
+    multilabel-indicator targets."""
+    classifier = clone(classifier_orig)
+    set_random_state(classifier)
+
+    n_samples, test_size, n_outputs = 100, 25, 5
+    X, y = make_multilabel_classification(
+        n_samples=n_samples,
+        n_features=2,
+        n_classes=n_outputs,
+        n_labels=3,
+        length=50,
+        allow_unlabeled=True,
+        random_state=0,
+    )
+    X = scale(X)
+
+    X_train, X_test = X[:-test_size], X[-test_size:]
+    y_train = y[:-test_size]
+    classifier.fit(X_train, y_train)
+
+    response_method_name = "predict_proba"
+    predict_proba_method = getattr(classifier, response_method_name, None)
+    if predict_proba_method is None:
+        raise SkipTest(f"{name} does not have a {response_method_name} method.")
+
+    y_pred = predict_proba_method(X_test)
+
+    # y_pred.shape -> 2 possibilities:
+    # - list of length n_outputs of shape (n_samples, 2);
+    # - ndarray of shape (n_samples, n_outputs).
+    # dtype should be floating
+    if isinstance(y_pred, list):
+        assert len(y_pred) == n_outputs, (
+            f"When {name}.predict_proba returns a list, the list should "
+            "be of length n_outputs and contain NumPy arrays. Got length "
+            f"of {len(y_pred)} instead of {n_outputs}."
+        )
+        for pred in y_pred:
+            assert pred.shape == (test_size, 2), (
+                f"When {name}.predict_proba returns a list, this list "
+                "should contain NumPy arrays of shape (n_samples, 2). Got "
+                f"NumPy arrays of shape {pred.shape} instead of "
+                f"{(test_size, 2)}."
+            )
+            assert pred.dtype.kind == "f", (
+                f"When {name}.predict_proba returns a list, it should "
+                "contain NumPy arrays with floating dtype. Got "
+                f"{pred.dtype} instead."
+            )
+            # check that we have the correct probabilities
+            err_msg = (
+                f"When {name}.predict_proba returns a list, each NumPy "
+                "array should contain probabilities for each class and "
+                "thus each row should sum to 1 (or close to 1 due to "
+                "numerical errors)."
+            )
+            assert_allclose(pred.sum(axis=1), 1, err_msg=err_msg)
+    elif isinstance(y_pred, np.ndarray):
+        assert y_pred.shape == (test_size, n_outputs), (
+            f"When {name}.predict_proba returns a NumPy array, the "
+            f"expected shape is (n_samples, n_outputs). Got {y_pred.shape}"
+            f" instead of {(test_size, n_outputs)}."
+        )
+        assert y_pred.dtype.kind == "f", (
+            f"When {name}.predict_proba returns a NumPy array, the "
+            f"expected data type is floating. Got {y_pred.dtype} instead."
+        )
+        err_msg = (
+            f"When {name}.predict_proba returns a NumPy array, this array "
+            "is expected to provide probabilities of the positive class "
+            "and should therefore contain values between 0 and 1."
+        )
+        assert_array_less(0, y_pred, err_msg=err_msg)
+        assert_array_less(y_pred, 1, err_msg=err_msg)
+    else:
+        raise ValueError(
+            f"Unknown returned type {type(y_pred)} by {name}."
+            "predict_proba. A list or a Numpy array is expected."
+        )
+
+
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_multilabel_output_format_decision_function(name, classifier_orig):
+    """Check the output of the `decision_function` method for classifiers supporting
+    multilabel-indicator targets."""
+    classifier = clone(classifier_orig)
+    set_random_state(classifier)
+
+    n_samples, test_size, n_outputs = 100, 25, 5
+    X, y = make_multilabel_classification(
+        n_samples=n_samples,
+        n_features=2,
+        n_classes=n_outputs,
+        n_labels=3,
+        length=50,
+        allow_unlabeled=True,
+        random_state=0,
+    )
+    X = scale(X)
+
+    X_train, X_test = X[:-test_size], X[-test_size:]
+    y_train = y[:-test_size]
+    classifier.fit(X_train, y_train)
+
+    response_method_name = "decision_function"
+    decision_function_method = getattr(classifier, response_method_name, None)
+    if decision_function_method is None:
+        raise SkipTest(f"{name} does not have a {response_method_name} method.")
+
+    y_pred = decision_function_method(X_test)
+
+    # y_pred.shape -> y_test.shape with floating dtype
+    assert isinstance(y_pred, np.ndarray), (
+        f"{name}.decision_function is expected to output a NumPy array."
+        f" Got {type(y_pred)} instead."
+    )
+    assert y_pred.shape == (test_size, n_outputs), (
+        f"{name}.decision_function is expected to provide a NumPy array "
+        f"of shape (n_samples, n_outputs). Got {y_pred.shape} instead of "
+        f"{(test_size, n_outputs)}."
+    )
+    assert y_pred.dtype.kind == "f", (
+        f"{name}.decision_function is expected to output a floating dtype."
+        f" Got {y_pred.dtype} instead."
+    )
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3280,6 +3503,45 @@ def check_fit_idempotent(name, estimator_orig):
             )
 
 
+def check_fit_check_is_fitted(name, estimator_orig):
+    # Make sure that estimator doesn't pass check_is_fitted before calling fit
+    # and that passes check_is_fitted once it's fit.
+
+    rng = np.random.RandomState(42)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if "warm_start" in estimator.get_params():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _pairwise_estimator_convert_X(X, estimator)
+    if is_regressor(estimator_orig):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    if not _safe_tags(estimator).get("stateless", False):
+        # stateless estimators (such as FunctionTransformer) are always "fit"!
+        try:
+            check_is_fitted(estimator)
+            raise AssertionError(
+                f"{estimator.__class__.__name__} passes check_is_fitted before being"
+                " fit!"
+            )
+        except NotFittedError:
+            pass
+    estimator.fit(X, y)
+    try:
+        check_is_fitted(estimator)
+    except NotFittedError as e:
+        raise NotFittedError(
+            "Estimator fails to pass `check_is_fitted` even though it has been fit."
+        ) from e
+
+
 def check_n_features_in(name, estimator_orig):
     # Make sure that n_features_in_ attribute doesn't exist until fit is
     # called, and that its value is correct.
@@ -3435,3 +3697,133 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
         f"{name}._get_tags() is missing entries for the following default tags"
         f": {default_tags_keys - tags_keys.intersection(default_tags_keys)}"
     )
+
+
+def check_dataframe_column_names_consistency(name, estimator_orig):
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not checking column name consistency for pandas"
+        )
+
+    tags = _safe_tags(estimator_orig)
+
+    if (
+        "2darray" not in tags["X_types"]
+        and "sparse" not in tags["X_types"]
+        or tags["no_validation"]
+    ):
+        return
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    X_orig = rng.normal(size=(150, 8))
+
+    # Some picky estimators (e.g. SkewedChi2Sampler) only accept skewed positive data.
+    X_orig -= X_orig.min() + 0.5
+    X_orig = _enforce_estimator_tags_x(estimator, X_orig)
+    X_orig = _pairwise_estimator_convert_X(X_orig, estimator)
+    n_samples, n_features = X_orig.shape
+
+    names = np.array([f"col_{i}" for i in range(n_features)])
+    X = pd.DataFrame(X_orig, columns=names)
+
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+    estimator.fit(X, y)
+
+    if not hasattr(estimator, "feature_names_in_"):
+        raise ValueError(
+            "Estimator does not have a feature_names_in_ "
+            "attribute after fitting with a dataframe"
+        )
+    assert_array_equal(estimator.feature_names_in_, names)
+
+    # Only check sklearn estimators for feature_names_in_ in docstring
+    module_name = estimator_orig.__module__
+    if (
+        module_name.startswith("sklearn.")
+        and not ("test_" in module_name or module_name.endswith("_testing"))
+        and ("feature_names_in_" not in (estimator_orig.__doc__))
+    ):
+        raise ValueError(
+            f"Estimator {name} does not document its feature_names_in_ attribute"
+        )
+
+    check_methods = []
+    for method in (
+        "predict",
+        "transform",
+        "decision_function",
+        "predict_proba",
+        "score",
+        "score_samples",
+        "predict_log_proba",
+    ):
+        if not hasattr(estimator, method):
+            continue
+
+        callable_method = getattr(estimator, method)
+        if method == "score":
+            callable_method = partial(callable_method, y=y)
+        check_methods.append((method, callable_method))
+
+    for _, method in check_methods:
+        method(X)  # works
+
+    invalid_names = [
+        (names[::-1], "Feature names must be in the same order as they were in fit."),
+        (
+            [f"another_prefix_{i}" for i in range(n_features)],
+            "Feature names unseen at fit time:\n- another_prefix_0\n-"
+            " another_prefix_1\n",
+        ),
+        (
+            names[:3],
+            f"Feature names seen at fit time, yet now missing:\n- {min(names[3:])}\n",
+        ),
+    ]
+
+    for invalid_name, additional_message in invalid_names:
+        X_bad = pd.DataFrame(X, columns=invalid_name)
+
+        expected_msg = re.escape(
+            "The feature names should match those that were passed "
+            "during fit. Starting version 1.2, an error will be raised.\n"
+            f"{additional_message}"
+        )
+        for name, method in check_methods:
+            # TODO In 1.2, this will be an error.
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "error",
+                    category=FutureWarning,
+                    module="sklearn",
+                )
+                with raises(
+                    FutureWarning, match=expected_msg, err_msg=f"{name} did not raise"
+                ):
+                    method(X_bad)
+
+        # partial_fit checks on second call
+        if not hasattr(estimator, "partial_fit"):
+            continue
+
+        estimator = clone(estimator_orig)
+        if is_classifier(estimator):
+            classes = np.unique(y)
+            estimator.partial_fit(X, y, classes=classes)
+        else:
+            estimator.partial_fit(X, y)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
+            with raises(FutureWarning, match=expected_msg):
+                estimator.partial_fit(X_bad, y)

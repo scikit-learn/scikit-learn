@@ -15,7 +15,6 @@ from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
-from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
@@ -89,6 +88,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -333,7 +338,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        v = check_array(X, accept_sparse="csr")
+        v = self._validate_data(X, accept_sparse="csr", reset=False)
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.
