@@ -1269,6 +1269,11 @@ def check_scalar(
     strictly_less_max_val : bool, default=False
         Whether the parameter should be strictly less to `max_val`.
 
+    Returns
+    -------
+    x : object
+        The validated object.
+
     Raises
     ------
     TypeError
@@ -1294,6 +1299,8 @@ def check_scalar(
             f"{name} == {x}, must be {'<' if strictly_less_max_val else '<='} "
             f"{max_val}."
         )
+
+    return x
 
 
 def _check_psd_eigenvalues(lambdas, enable_warnings=False):

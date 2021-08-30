@@ -1010,7 +1010,7 @@ def test_check_scalar_valid(x):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
     with pytest.warns(None) as record:
-        check_scalar(
+        scalar = check_scalar(
             x,
             "test_name",
             target_type=numbers.Real,
@@ -1020,6 +1020,7 @@ def test_check_scalar_valid(x):
             strictly_less_max_val=False,
         )
     assert len(record) == 0
+    assert scalar == x
 
 
 @pytest.mark.parametrize(

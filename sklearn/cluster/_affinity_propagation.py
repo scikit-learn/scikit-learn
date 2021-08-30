@@ -457,20 +457,21 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
                 % str(self.affinity)
             )
 
-        scalars_checks = {
-            "damping": {
-                "target_type": numbers.Real,
-                "min_val": 0.5,
-                "max_val": 1,
-                "strictly_less_max_val": True,
-            },
-            "max_iter": {"target_type": numbers.Integral, "min_val": 1},
-            "convergence_iter": {"target_type": numbers.Integral, "min_val": 1},
-        }
-        for scalar_name in scalars_checks:
-            check_scalar(
-                getattr(self, scalar_name), scalar_name, **scalars_checks[scalar_name]
-            )
+        check_scalar(
+            self.damping,
+            "damping",
+            target_type=numbers.Real,
+            min_val=0.5,
+            max_val=1,
+            strictly_less_max_val=True,
+        )
+        check_scalar(self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1)
+        check_scalar(
+            self.convergence_iter,
+            "convergence_iter",
+            target_type=numbers.Integral,
+            min_val=1,
+        )
 
         (
             self.cluster_centers_indices_,
