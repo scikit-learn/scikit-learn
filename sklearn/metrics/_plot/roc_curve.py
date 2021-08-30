@@ -152,7 +152,7 @@ class RocCurveDisplay:
         ax=None,
         **kwargs,
     ):
-        """Create a ROC Curve display from estimator.
+        """Create a ROC Curve display from an estimator.
 
         Parameters
         ----------

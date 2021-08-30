@@ -19,10 +19,10 @@ stored and the plotting is done in a `plot` method. The display object's
 The `plot` method takes in parameters that only have to do with visualization,
 such as a matplotlib axes. The `plot` method will store the matplotlib artists
 as attributes allowing for style adjustments through the display object. The
-`Display` class should also one or both class methods `from_estimator` and
+`Display` class should define one or both class methods: `from_estimator` and
 `from_predictions`. These methods allows to create the `Display` object from
 the estimator and some data or from the true and predicted values. After these
-class methods create the display object with the computed values, they call the
+class methods create the display object with the computed values, then call the
 display's plot method. Note that the `plot` method defines attributes related
 to matplotlib, such as the line artist. This allows for customizations after
 calling the `plot` method.
