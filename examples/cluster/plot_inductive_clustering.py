@@ -42,10 +42,10 @@ def _classifier_has(attr):
     First, we check the first fitted classifier if available, otherwise we
     check the unfitted classifier.
     """
-    return lambda self: (
-        hasattr(self.classifier_, attr)
-        if hasattr(self, "classifier_")
-        else hasattr(self.classifier, attr)
+    return lambda estimator: (
+        hasattr(estimator.classifier_, attr)
+        if hasattr(estimator, "classifier_")
+        else hasattr(estimator.classifier, attr)
     )
 
 
@@ -61,7 +61,7 @@ class InductiveClusterer(BaseEstimator):
         self.classifier_.fit(X, y)
         return self
 
-    @available_if(_classifier_has("predict_proba"))
+    @available_if(_classifier_has("predict"))
     def predict(self, X):
         check_is_fitted(self)
         return self.classifier_.predict(X)
