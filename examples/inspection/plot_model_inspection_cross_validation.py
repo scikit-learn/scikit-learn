@@ -47,7 +47,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_
 # current dataset.
 #
 # Here, we use the class :class:`~sklearn.linear_model.RidgeCV` that can tune
-# `alpha` by cross-validation when calling `fit`.
+# `alpha` by internal leav-one-out cross-validation when calling `fit`.
 #
 # We also add a preprocessing stage to :ref:`standardize
 # <preprocessing_scaler>` the data such that the regularization strength is
@@ -58,7 +58,10 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 alphas = np.logspace(-1, 2.5, num=50)
-model = make_pipeline(StandardScaler(), RidgeCV(alphas=alphas))
+model = Pipeline([
+    ("scaler", StandardScaler()),
+    ("ridge_regressor", RidgeCV(alphas=alphas)),
+])
 
 # %%
 # `model` is a machine learning pipeline made of the preprocessing stage
@@ -131,7 +134,7 @@ _ = plt.title(
 #
 # It allows us to get the different predictive models trained and tested within
 # cross-validation.
-cv_estimators = cv_results["estimator"]
+cv_pipelines = cv_results["estimator"]
 
 # %%
 # While the cross-validation allows us to know if our models are reliable, we
@@ -148,7 +151,7 @@ cv_estimators = cv_results["estimator"]
 # able to fix this hyperparameter.
 #
 # Let's check the `alpha` parameter variance.
-alpha = [est[-1].alpha_ for est in cv_estimators]
+alpha = [pipeline["ridge_regressor"].alpha_ for pipeline in cv_pipeline]
 plt.hist(alpha, bins=30, density=True)
 plt.xlabel("Alpha")
 plt.ylabel("Density")
@@ -168,7 +171,10 @@ _ = plt.title("Distribution of alpha parameter \nduring cross-validation")
 # For the sake of simplicity, we are going to solely look at the `coef_`.
 import pandas as pd
 
-coefficients = pd.DataFrame([est[-1].coef_ for est in cv_estimators], columns=X.columns)
+coefficients = pd.DataFrame(
+    [pipeline["ridge_regressor"].coef_ for pipeline in cv_pipelines],
+    columns=X.columns,
+)
 coefficients
 
 # %%
@@ -189,8 +195,9 @@ _ = plt.subplots_adjust(left=0.3)
 # Putting a predictive model in production
 # ----------------------------------------
 #
-# In the above analysis, we saw that the values of lambda did not vary much.
-# Indeed, we can retrain this model and optimized the value of `alpha` on the
+# In the above analysis, we saw that the internally tuned value of `alpha`
+# did not vary much across cross-validation splits.
+# Indeed, we can retrain this model and optimize the value of `alpha` on the
 # full training set.
 from sklearn.base import clone
 
