@@ -1271,8 +1271,8 @@ def check_scalar(
 
     Returns
     -------
-    x : object
-        The validated object.
+    x : numbers.Number
+        The validated number.
 
     Raises
     ------
