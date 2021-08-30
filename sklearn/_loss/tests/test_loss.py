@@ -233,7 +233,7 @@ def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
     """Test losses at specific values."""
     assert loss(
         y_true=np.array([y_true]), raw_prediction=np.array([raw_prediction])
-    ) == approx(loss_true)
+    ) == approx(loss_true, rel=1e-11, abs=1e-12)
 
 
 @pytest.mark.parametrize("loss", ALL_LOSSES)
@@ -487,7 +487,7 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
         assert_allclose(g1, out_g4)
         assert_allclose(g1, g4)
         assert_allclose(proba, out_proba)
-        assert_allclose(np.sum(proba, axis=1), 1)
+        assert_allclose(np.sum(proba, axis=1), 1, rtol=1e-11)
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
@@ -563,7 +563,7 @@ def test_sample_weight_multiplies(loss, sample_weight):
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 def test_graceful_squeezing(loss):
-    """Test that Python and Cython functions return same results."""
+    """Test that reshaped raw_prediction gives same results."""
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss,
         n_samples=20,
@@ -962,7 +962,7 @@ def test_predict_proba(loss):
     if hasattr(loss, "predict_proba"):
         proba = loss.predict_proba(raw_prediction)
         assert proba.shape == (n_samples, loss.n_classes)
-        assert np.sum(proba, axis=1) == approx(1)
+        assert np.sum(proba, axis=1) == approx(1, rel=1e-11)
 
     if hasattr(loss, "gradient_proba"):
         for grad, proba in (
@@ -979,7 +979,7 @@ def test_predict_proba(loss):
                 proba=proba,
             )
             assert proba.shape == (n_samples, loss.n_classes)
-            assert np.sum(proba, axis=1) == approx(1)
+            assert np.sum(proba, axis=1) == approx(1, rel=1e-11)
             assert_allclose(
                 grad,
                 loss.gradient(

@@ -22,7 +22,9 @@ class Interval:
     def __post_init__(self):
         """Check that low <= high"""
         if self.low > self.high:
-            raise ValueError("On must have low <= high; got low={low}, high={high}.")
+            raise ValueError(
+                f"On must have low <= high; got low={self.low}, high={self.high}."
+            )
 
     def includes(self, x):
         """Test whether all values of x are in interval range.
