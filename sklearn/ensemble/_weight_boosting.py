@@ -1159,7 +1159,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             if len(self.estimators_) > 1:
                 self.estimators_.pop(-1)
             return None, None, None
-        
         beta = estimator_error / (1.0 - estimator_error)
 
         # Boost weight using AdaBoost.R2 alg
