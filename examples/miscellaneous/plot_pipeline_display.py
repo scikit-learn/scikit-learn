@@ -200,4 +200,4 @@ grid_search = GridSearchCV(pipe, param_grid=param_grid, n_jobs=1)
 # %%
 # To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
-pipe
+grid_search
