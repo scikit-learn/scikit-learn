@@ -572,7 +572,7 @@ As an alternative, the HTML can be written to a file using
  * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
 
- Visualizing a Chain of Estimators
+Visualizing a Chain of Estimators
 ==================================
 
 Estimators can be displayed with a HTML representation when shown in a
