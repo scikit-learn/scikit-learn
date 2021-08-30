@@ -853,9 +853,10 @@ class OneHotEncoder(_BaseEncoder):
 
     def transform(self, X):
         """
-        Transform X using one-hot encoding. If there are infrequent categories
-        for a feature, the infrequent categories will be grouped into a single
-        category.
+        Transform X using one-hot encoding.
+
+        If there are infrequent categories for a feature, the infrequent
+        categories will be grouped into a single category.
 
         Parameters
         ----------
