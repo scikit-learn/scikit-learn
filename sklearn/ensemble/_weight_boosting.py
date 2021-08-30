@@ -1173,15 +1173,15 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
                     # improved
 
                     sample_weight[sample_mask] *= np.power(beta, (1.0
-                             - masked_error_vector) * self.learning_rate)
+                                 - masked_error_vector) * self.learning_rate)
                 else:
 
-                        # reset if not improved
+                    # reset if not improved
 
                     sample_weight[sample_mask] = 1 / len(sample_weight)
             else:
                 sample_weight[sample_mask] *= np.power(beta, (1.0
-                        - masked_error_vector) * self.learning_rate)
+                             - masked_error_vector) * self.learning_rate)
 
         self.previous_beta = beta
 
