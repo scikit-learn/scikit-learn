@@ -1167,7 +1167,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         estimator_weight = self.learning_rate * np.log(1.0 / beta)
 
         if not iboost == self.n_estimators - 1:
-            if hasattr(self, 'previous_beta'):
+            if hasattr(self, "previous_beta"):
                 if self.previous_beta > beta:
 
                     # improved
