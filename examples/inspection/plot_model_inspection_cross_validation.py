@@ -47,21 +47,23 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_
 # current dataset.
 #
 # Here, we use the class :class:`~sklearn.linear_model.RidgeCV` that can tune
-# `alpha` by internal leav-one-out cross-validation when calling `fit`.
+# `alpha` by internal leave-one-out cross-validation when calling `fit`.
 #
 # We also add a preprocessing stage to :ref:`standardize
 # <preprocessing_scaler>` the data such that the regularization strength is
 # applied homogeneously on each coefficient.
 import numpy as np
 from sklearn.linear_model import RidgeCV
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 alphas = np.logspace(-1, 2.5, num=50)
-model = Pipeline([
-    ("scaler", StandardScaler()),
-    ("ridge_regressor", RidgeCV(alphas=alphas)),
-])
+model = Pipeline(
+    [
+        ("scaler", StandardScaler()),
+        ("ridge_regressor", RidgeCV(alphas=alphas)),
+    ]
+)
 
 # %%
 # `model` is a machine learning pipeline made of the preprocessing stage
@@ -123,7 +125,8 @@ _ = plt.title(
 # more advanced machine learning pipelines.
 #
 # To conclude, cross-validation allows us to answer to two questions: are the
-# results reliable and, if it is, how good is the predictive model.
+# results reliable and, if it is, how good is the algorithm used to create
+# the different models used during the cross-validation?
 #
 # Model inspection
 # ................
@@ -151,9 +154,10 @@ cv_pipelines = cv_results["estimator"]
 # able to fix this hyperparameter.
 #
 # Let's check the `alpha` parameter variance.
-alpha = [pipeline["ridge_regressor"].alpha_ for pipeline in cv_pipeline]
+alpha = [pipeline["ridge_regressor"].alpha_ for pipeline in cv_pipelines]
 plt.hist(alpha, bins=30, density=True)
 plt.xlabel("Alpha")
+plt.xscale("log")
 plt.ylabel("Density")
 _ = plt.title("Distribution of alpha parameter \nduring cross-validation")
 
@@ -188,12 +192,16 @@ plt.title("Coefficient values our model")
 _ = plt.subplots_adjust(left=0.3)
 
 # %%
-# We observe that the coefficients vary minimally, meaning that all the
-# trained models are similar. Each individual model is expected to more or less
-# give the same predictions.
+# We observe that the coefficients do not vary much taking the size of the
+# dataset into account, meaning that all the trained models are similar. Each
+# individual model is expected to more or less give the same predictions.
 #
-# Putting a predictive model in production
-# ----------------------------------------
+# This would not necessarily have been the case if the number of training
+# samples had been smaller, if the model had not been properly regularized or
+# if we had strongly dependent features in the data.
+#
+# PFinalizing the predictive model
+# --------------------------------
 #
 # In the above analysis, we saw that the internally tuned value of `alpha`
 # did not vary much across cross-validation splits.
@@ -201,27 +209,25 @@ _ = plt.subplots_adjust(left=0.3)
 # full training set.
 from sklearn.base import clone
 
-production_model = clone(model)
-production_model.fit(X_train, y_train)
+final_model = clone(model)
+final_model.fit(X_train, y_train)
 
 # %%
 # At the beginning of the process, when we split our data, we had a set of left
 # out data. Now, we can use it to further check if the model performs as we
 # would expect from the analysis done within the cross-validation framework.
-print(
-    "The performance of our production model: "
-    f"R2={production_model.score(X_test, y_test):.2f}"
-)
+print(f"The performance of our final model: R2={final_model.score(X_test, y_test):.2f}")
 
 # %%
 # We see that the statistical performance is comparable to the cross-validation
 # statistical performances which is not surprising. Similarly, we could look at
-# the coefficients of the production model and compare them with the
-# coefficients obtained within the cross-validation study.
+# the coefficients of the final model and compare them with the coefficients
+# obtained within the cross-validation study.
 #
 # However, you should be aware that this latest step does not give any
-# information about the variance of the model. It should never be used to
-# evaluate the model itself.
+# information about the variance of our final model. Thus, if we want to
+# evaluate our final model, we should get a distribution of scores if we would
+# like to get this information.
 #
 # The example
 # :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
