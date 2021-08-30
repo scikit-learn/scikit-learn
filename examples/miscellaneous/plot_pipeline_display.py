@@ -12,10 +12,11 @@ steps in the pipeline.
 """
 
 # %%
-# Illustration of a Basic `Pipeline` with `LogisticRegression`
-###############################################################################
-# This section constructs a basic pipeline with one classifer step and displays
-# its text and visual representation.
+# Displaying a Basic Pipeline with a Classifier
+################################################################################
+# This section constructs a basic :class:`~sklearn.pipeline.Pipeline` with one
+# classifer step, :class:`~sklearn.linear_model.LogisticRegression`, and
+# displays its text and visual representation.
 
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -32,13 +33,15 @@ pipe
 # %%
 # To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
-pipe
+pipe  # click on the diagram below to see the details of each step
 
 # %%
-# Illustration of `Pipeline` and `StandardScaler` and `LogisticRegression`
-###############################################################################
-# This section constructs a pipeline with a preprocessing step and classifier.
-# and displays its visual representation.
+# Displaying a Pipeline with a Preprocessing Step and Classifier
+################################################################################
+# This section constructs a :class:`~sklearn.pipeline.Pipeline` with a preprocessing
+# step, :class:`~sklearn.preprocessing.StandardScaler`, and classifier,
+# :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
+# representation.
 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -54,13 +57,16 @@ pipe = Pipeline(steps)
 # %%
 # To visualize the diagram, change `display='diagram'`
 set_config(display="diagram")
-pipe
+pipe  # click on the diagram below to see the details of each step
 
 # %%
 # Displaying a Pipeline Chaining Multiple Preprocessing Steps & Classifier
-###############################################################################
-# HTML Illustration of `Pipeline` and `PolynomialFeatures`, `StandardScaler`
-# and `LogisticRegression`
+################################################################################
+# This section constructs a :class:`~sklearn.pipeline.Pipeline` with multiple
+# preprocessing steps, :class:`~sklearn.preprocessing.PolynomialFeatures` and
+# :class:`~sklearn.preprocessing.StandardScaler`, and a classifer step,
+# :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
+# representation.
 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
@@ -74,15 +80,18 @@ steps = [
 ]
 pipe = Pipeline(steps)
 
+# %%
 # To visualize the diagram, change to display='diagram'
 set_config(display="diagram")
-pipe
+pipe  # click on the diagram below to see the details of each step
 
 # %%
-# Displaying a `Pipeline` and Dimensionality Reduction and Classifier
-###############################################################################
-# This section constructs a pipeline and displays its text representation.
-# HTML Illustration of and `PCA` and `SVC`
+# Displaying a Pipeline and Dimensionality Reduction and Classifier
+################################################################################
+# This section constructs a :class:`~sklearn.pipeline.Pipeline` with a
+# dimensionality reduction step, :class:`~sklearn.decomposition.PCA`,
+# a classifier, :class:`~sklearn.svm.SVC`, and displays its visual
+# representation.
 
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
@@ -95,12 +104,15 @@ pipe = Pipeline(steps)
 # %%
 # To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
-pipe
+pipe  # click on the diagram below to see the details of each step
 
 # %%
-# Displaying a Complex `Pipeline` Chaining a Column Transformer
-###############################################################################
-# HTML Illustration of `Pipeline` and `ColumnTransformer` and `LogisticRegression`
+# Displaying a Complex Pipeline Chaining a Column Transformer
+################################################################################
+# This section constructs a complex :class:`~sklearn.pipeline.Pipeline` with a
+# :class:`~sklearn.compose.ColumnTransformer` and a classifier,
+# :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
+# representation.
 
 from sklearn.compose import make_column_selector as selector
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -133,12 +145,14 @@ pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=500))
 # %%
 # To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
-pipe
+pipe  # click on the diagram below to see the details of each step
 
 # %%
-# Displaying a Grid Search over a Pipeline
-###############################################################################
-# HTML Illustration of `GridSearchCV` over a `Pipeline` with `RandomForest`
+# Displaying a Grid Search over a Pipeline with a Classifier
+################################################################################
+# This section constructions a :class:`~sklearn.model_selection.GridSearchCV`
+# over a :class:`~sklearn.pipeline.Pipeline` with
+# :class:`~sklearn.ensemble.RandomForestClassifier`
 
 from sklearn.compose import make_column_selector as selector
 from sklearn.model_selection import GridSearchCV
@@ -200,4 +214,4 @@ grid_search = GridSearchCV(pipe, param_grid=param_grid, n_jobs=1)
 # %%
 # To visualize the diagram, change to `display='diagram'`
 set_config(display="diagram")
-pipe
+grid_search  # click on the diagram below to see the details of each step
