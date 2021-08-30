@@ -323,7 +323,7 @@ def sparse_encode(
     positive : bool, default=False
         Whether to enforce positivity when finding the encoding.
 
-        .. versionadded:: 0.20
+    .. versionadded:: 0.20
 
     Returns
     -------
@@ -578,17 +578,17 @@ def dict_learning(
     positive_dict : bool, default=False
         Whether to enforce positivity when finding the dictionary.
 
-        .. versionadded:: 0.20
+    .. versionadded:: 0.20
 
     positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
 
-        .. versionadded:: 0.20
+    .. versionadded:: 0.20
 
     method_max_iter : int, default=1000
         Maximum number of iterations to perform.
 
-        .. versionadded:: 0.22
+    .. versionadded:: 0.22
 
     Returns
     -------
