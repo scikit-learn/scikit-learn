@@ -319,7 +319,6 @@ def test_check_n_features_in_after_fitting(estimator):
 # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
 # delegates validation to a base estimator, the check is testing that the base estimator
 # is checking for column name consistency.
-
 column_name_estimators = list(
     chain(
         _tested_estimators(),
