@@ -41,7 +41,6 @@ DOCSTRING_IGNORE_LIST = [
     "LocallyLinearEmbedding",
     "MDS",
     "MeanShift",
-    "MiniBatchDictionaryLearning",
     "MiniBatchKMeans",
     "MissingIndicator",
     "MultiLabelBinarizer",

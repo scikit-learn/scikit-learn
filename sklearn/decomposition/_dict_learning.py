@@ -1577,10 +1577,10 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
-    """Mini-batch dictionary learning
+    """Mini-batch dictionary learning.
 
-    Finds a dictionary (a set of atoms) that can best be used to represent data
-    using a sparse code.
+    Finds a dictionary (a set of atoms) that performs well at sparsely
+    encoding the fitted data.
 
     Solves the optimization problem::
 
@@ -1627,7 +1627,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Whether to shuffle the samples before forming batches.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        initial value of the dictionary for warm restart scenarios
+        Initial value of the dictionary for warm restart scenarios.
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
             'threshold'}, default='omp'
@@ -1723,6 +1723,20 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
 
+    See Also
+    --------
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    SparseCoder : Find a sparse representation of data from a fixed,
+        precomputed dictionary.
+    SparsePCA : Sparse Principal Components Analysis.
+
+    References
+    ----------
+
+    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
+    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+
     Examples
     --------
     >>> import numpy as np
@@ -1748,21 +1762,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     0.07...
-
-    Notes
-    -----
-    **References:**
-
-    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
-
-    See Also
-    --------
-    SparseCoder
-    DictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
-
     """
 
     def __init__(
@@ -1814,10 +1813,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -1855,19 +1855,20 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         return self
 
     def partial_fit(self, X, y=None, iter_offset=None):
-        """Updates the model using the data in X as a mini-batch.
+        """Update the model using the data in X as a mini-batch.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         iter_offset : int, default=None
             The number of iteration on data batches that has been
-            performed before this call to partial_fit. This is optional:
+            performed before this call to `partial_fit`. This is optional:
             if no number is passed, the memory of the object is
             used.
 
