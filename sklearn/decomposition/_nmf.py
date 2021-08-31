@@ -1694,6 +1694,8 @@ class NMF(TransformerMixin, BaseEstimator):
     def inverse_transform(self, W):
         """Transform data back to its original space.
 
+        .. versionadded:: 0.18
+
         Parameters
         ----------
         W : {ndarray, sparse matrix} of shape (n_samples, n_components)
@@ -1703,8 +1705,6 @@ class NMF(TransformerMixin, BaseEstimator):
         -------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
-
-            .. versionadded:: 0.18
         """
         check_is_fitted(self)
         return np.dot(W, self.components_)
