@@ -13,7 +13,6 @@ DOCSTRING_IGNORE_LIST = [
     "BernoulliRBM",
     "Birch",
     "ClassifierChain",
-    "DictionaryLearning",
     "FeatureAgglomeration",
     "FeatureHasher",
     "FeatureUnion",

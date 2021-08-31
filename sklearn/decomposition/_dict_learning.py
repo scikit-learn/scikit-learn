@@ -1308,10 +1308,10 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
 
 class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
-    """Dictionary learning
+    """Dictionary learning.
 
-    Finds a dictionary (a set of atoms) that can best be used to represent data
-    using a sparse code.
+    Finds a dictionary (a set of atoms) that performs well at sparsely
+    encoding the fitted data.
 
     Solves the optimization problem::
 
@@ -1415,7 +1415,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         .. versionadded:: 0.20
 
     positive_dict : bool, default=False
-        Whether to enforce positivity when finding the dictionary
+        Whether to enforce positivity when finding the dictionary.
 
         .. versionadded:: 0.20
 
@@ -1447,6 +1447,21 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
+    See Also
+    --------
+    MiniBatchDictionaryLearning: A faster, less accurate, version of the
+        dictionary learning algorithm.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    SparseCoder : Find a sparse representation of data from a fixed,
+        precomputed dictionary.
+    SparsePCA : Sparse Principal Components Analysis.
+
+    References
+    ----------
+
+    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
+    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+
     Examples
     --------
     >>> import numpy as np
@@ -1473,20 +1488,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     0.08...
-
-    Notes
-    -----
-    **References:**
-
-    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
-
-    See Also
-    --------
-    SparseCoder
-    MiniBatchDictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
     """
 
     def __init__(
@@ -1541,11 +1542,12 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
             and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         self : object
-            Returns the object itself.
+            Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
