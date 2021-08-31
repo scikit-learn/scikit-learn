@@ -1098,7 +1098,7 @@ class _BaseSparseCoding(TransformerMixin):
 
 
 class SparseCoder(_BaseSparseCoding, BaseEstimator):
-    """Sparse coding
+    """Sparse coding.
 
     Finds a sparse representation of data against a fixed, precomputed
     dictionary.
@@ -1192,6 +1192,16 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchDictionaryLearning : A faster, less accurate, version of the
+        dictionary learning algorithm.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    SparsePCA : Mini-batch Sparse Principal Components Analysis.
+    sparse_encode : Sparse coding where each row of the result is the solution
+        to a sparse coding problem.
+
     Examples
     --------
     >>> import numpy as np
@@ -1212,14 +1222,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     >>> coder.transform(X)
     array([[ 0.,  0., -1.,  0.,  0.],
            [ 0.,  1.,  1.,  0.,  0.]])
-
-    See Also
-    --------
-    DictionaryLearning
-    MiniBatchDictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
-    sparse_encode
     """
 
     _required_parameters = ["dictionary"]
@@ -1256,12 +1258,15 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         Parameters
         ----------
         X : Ignored
+            Not used, present for API consistency by convention.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return self
 
@@ -1283,10 +1288,11 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Test data to be transformed, must have the same number of
-            features as the data used to train the model.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -1300,10 +1306,12 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     @property
     def n_components_(self):
+        """Number of atoms."""
         return self.dictionary.shape[0]
 
     @property
     def n_features_in_(self):
+        """Number of features seen during `fit`."""
         return self.dictionary.shape[1]
 
 
