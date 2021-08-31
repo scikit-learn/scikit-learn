@@ -65,6 +65,7 @@ values of the curves.
     * :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
     * :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
     * :ref:`sphx_glr_auto_examples_miscellaneous_plot_display_object_visualization.py`
+    * :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
 
 Available Plotting Utilities
 ============================
@@ -90,6 +91,7 @@ Display Objects
 
 .. autosummary::
 
+   calibration.CalibrationDisplay
    inspection.PartialDependenceDisplay
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay

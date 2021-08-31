@@ -132,6 +132,12 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
     random_state_ : numpy.RandomState
         Pseudo random number generator object used during initialization.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.neighbors import NeighborhoodComponentsAnalysis
