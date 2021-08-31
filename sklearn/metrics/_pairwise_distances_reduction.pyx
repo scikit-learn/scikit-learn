@@ -26,6 +26,7 @@ cimport numpy as np
 np.import_array()
 
 from libc.stdlib cimport free, malloc
+from libc.float cimport DBL_MAX
 from libcpp.vector cimport vector
 from cython cimport final
 from cpython.object cimport PyObject
@@ -61,7 +62,6 @@ from ..utils._typedefs import ITYPE, DTYPE
 DEF CHUNK_SIZE = 256  # number of vectors
 DEF MIN_CHUNK_SAMPLES = 20
 
-DEF FLOAT_INF = 1e36
 
 # TODO: change for `libcpp.algorithm.move` once Cython 3 is used
 # Introduction in Cython:
@@ -622,7 +622,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     ) nogil:
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
-            self.heaps_proxy_distances_chunks[thread_num][idx] = FLOAT_INF
+            self.heaps_proxy_distances_chunks[thread_num][idx] = DBL_MAX
             self.heaps_indices_chunks[thread_num][idx] = -1
 
     @final
@@ -718,7 +718,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
         # Results returned by ArgKmin.compute used as the main heaps
         self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
-        self.argkmin_distances = np.full((self.n_X, self.k), FLOAT_INF, dtype=DTYPE)
+        self.argkmin_distances = np.full((self.n_X, self.k), DBL_MAX, dtype=DTYPE)
 
         if strategy == 'auto':
             # This is a simple heuristic whose constant for the
