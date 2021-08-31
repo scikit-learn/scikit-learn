@@ -55,7 +55,7 @@ from .utils.multiclass import (
     check_classification_targets,
     _ovr_decision_function,
 )
-from .utils.metaestimators import _safe_split, if_delegate_has_method
+from .utils.metaestimators import _safe_split, available_if
 from .utils.fixes import delayed
 
 from joblib import Parallel
@@ -165,6 +165,18 @@ class _ConstantPredictor(BaseEstimator):
         return np.repeat([np.hstack([1 - self.y_, self.y_])], _num_samples(X), axis=0)
 
 
+def _estimators_has(attr):
+    """Check if self.estimator or self.estimators_[0] has attr.
+
+    If `self.estimators_[0]` has the attr, then its safe to assume that other
+    values has it too. This function is used together with `avaliable_if`.
+    """
+    return lambda self: (
+        hasattr(self.estimator, attr)
+        or (hasattr(self, "estimators_") and hasattr(self.estimators_[0], attr))
+    )
+
+
 class OneVsRestClassifier(
     MultiOutputMixin, ClassifierMixin, MetaEstimatorMixin, BaseEstimator
 ):
@@ -257,6 +269,12 @@ class OneVsRestClassifier(
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> import numpy as np
@@ -330,10 +348,12 @@ class OneVsRestClassifier(
 
         if hasattr(self.estimators_[0], "n_features_in_"):
             self.n_features_in_ = self.estimators_[0].n_features_in_
+        if hasattr(self.estimators_[0], "feature_names_in_"):
+            self.feature_names_in_ = self.estimators_[0].feature_names_in_
 
         return self
 
-    @if_delegate_has_method("estimator")
+    @available_if(_estimators_has("partial_fit"))
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators
 
@@ -440,7 +460,7 @@ class OneVsRestClassifier(
             )
             return self.label_binarizer_.inverse_transform(indicator)
 
-    @if_delegate_has_method(["_first_estimator", "estimator"])
+    @available_if(_estimators_has("predict_proba"))
     def predict_proba(self, X):
         """Probability estimates.
 
@@ -479,7 +499,7 @@ class OneVsRestClassifier(
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
 
-    @if_delegate_has_method(["_first_estimator", "estimator"])
+    @available_if(_estimators_has("decision_function"))
     def decision_function(self, X):
         """Returns the distance of each sample from the decision boundary for
         each class. This can only be used with estimators which implement the
@@ -563,10 +583,6 @@ class OneVsRestClassifier(
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return {"pairwise": _safe_tags(self.estimator, key="pairwise")}
-
-    @property
-    def _first_estimator(self):
-        return self.estimators_[0]
 
 
 def _fit_ovo_binary(estimator, X, y, i, j):
@@ -656,6 +672,12 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -726,7 +748,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         return self
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimators_has("partial_fit"))
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators
 
@@ -754,7 +776,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        if _check_partial_fit_first_call(self, classes):
+        first_call = _check_partial_fit_first_call(self, classes)
+        if first_call:
             self.estimators_ = [
                 clone(self.estimator)
                 for _ in range(self.n_classes_ * (self.n_classes_ - 1) // 2)
@@ -772,7 +795,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             y,
             accept_sparse=["csr", "csc"],
             force_all_finite=False,
-            reset=_check_partial_fit_first_call(self, classes),
+            reset=first_call,
         )
         check_classification_targets(y)
         combinations = itertools.combinations(range(self.n_classes_), 2)
@@ -834,6 +857,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
+        self._check_feature_names(X, reset=False)
 
         indices = self.pairwise_indices_
         if indices is None:
@@ -927,6 +951,12 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -1024,6 +1054,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         if hasattr(self.estimators_[0], "n_features_in_"):
             self.n_features_in_ = self.estimators_[0].n_features_in_
+        if hasattr(self.estimators_[0], "feature_names_in_"):
+            self.feature_names_in_ = self.estimators_[0].feature_names_in_
 
         return self
 

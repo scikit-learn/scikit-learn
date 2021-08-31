@@ -940,6 +940,12 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     lars_path: Compute Least Angle Regression or Lasso
@@ -1252,6 +1258,12 @@ class LassoLars(Lars):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     lars_path : Compute Least Angle Regression or Lasso
@@ -1464,7 +1476,7 @@ class LarsCV(Lars):
     Parameters
     ----------
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -1510,7 +1522,7 @@ class LarsCV(Lars):
 
     max_n_alphas : int, default=1000
         The maximum number of points on the path used to compute the
-        residuals in the cross-validation
+        residuals in the cross-validation.
 
     n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
@@ -1564,6 +1576,26 @@ class LarsCV(Lars):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    lars_path : Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    lasso_path : Compute Lasso path with coordinate descent.
+    Lasso : Linear Model trained with L1 prior as
+        regularizer (aka the Lasso).
+    LassoCV : Lasso linear model with iterative fitting
+        along a regularization path.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoLarsIC : Lasso model fit with Lars using BIC
+        or AIC for model selection.
+    sklearn.decomposition.sparse_encode : Sparse coding.
+
     Examples
     --------
     >>> from sklearn.linear_model import LarsCV
@@ -1576,10 +1608,6 @@ class LarsCV(Lars):
     0.2961...
     >>> reg.predict(X[:1,])
     array([154.3996...])
-
-    See Also
-    --------
-    lars_path, LassoLars, LassoLarsCV
     """
 
     method = "lar"
@@ -1844,6 +1872,12 @@ class LassoLarsCV(LarsCV):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     lars_path : Compute Least Angle Regression or Lasso
@@ -2017,6 +2051,12 @@ class LassoLarsIC(LassoLars):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------

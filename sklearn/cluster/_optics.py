@@ -17,6 +17,7 @@ import numpy as np
 from ..exceptions import DataConversionWarning
 from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from ..utils import gen_batches, get_chunk_n_rows
+from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
@@ -138,6 +139,11 @@ class OPTICS(ClusterMixin, BaseEstimator):
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
+    memory : str or object with the joblib.Memory interface, default=None
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
+
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -183,6 +189,12 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     DBSCAN : A similar clustering for a specified neighborhood radius (eps).
@@ -224,6 +236,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         min_cluster_size=None,
         algorithm="auto",
         leaf_size=30,
+        memory=None,
         n_jobs=None,
     ):
         self.max_eps = max_eps
@@ -238,6 +251,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self.eps = eps
         self.xi = xi
         self.predecessor_correction = predecessor_correction
+        self.memory = memory
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
@@ -262,7 +276,6 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : instance of OPTICS
             The instance.
         """
-
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
             msg = (
@@ -273,6 +286,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             warnings.warn(msg, DataConversionWarning)
 
         X = self._validate_data(X, dtype=dtype)
+        memory = check_memory(self.memory)
 
         if self.cluster_method not in ["dbscan", "xi"]:
             raise ValueError(
@@ -285,7 +299,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             self.core_distances_,
             self.reachability_,
             self.predecessor_,
-        ) = compute_optics_graph(
+        ) = memory.cache(compute_optics_graph)(
             X=X,
             min_samples=self.min_samples,
             algorithm=self.algorithm,

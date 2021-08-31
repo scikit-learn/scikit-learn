@@ -33,6 +33,8 @@ def plot_partial_dependence(
     n_jobs=None,
     verbose=0,
     line_kw=None,
+    ice_lines_kw=None,
+    pd_line_kw=None,
     contour_kw=None,
     ax=None,
     kind="average",
@@ -189,7 +191,24 @@ def plot_partial_dependence(
 
     line_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
-        For one-way partial dependence plots.
+        For one-way partial dependence plots. It can be used to define common
+        properties for both `ice_lines_kw` and `pdp_line_kw`.
+
+    ice_lines_kw : dict, default=None
+        Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+        For ICE lines in the one-way partial dependence plots.
+        The key value pairs defined in `ice_lines_kw` takes priority over
+        `line_kw`.
+
+        .. versionadded:: 1.0
+
+    pd_line_kw : dict, default=None
+        Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+        For partial dependence in one-way partial dependence plots.
+        The key value pairs defined in `pd_line_kw` takes priority over
+        `line_kw`.
+
+        .. versionadded:: 1.0
 
     contour_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
@@ -256,12 +275,15 @@ def plot_partial_dependence(
 
     Examples
     --------
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn.datasets import make_friedman1
     >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> from sklearn.inspection import plot_partial_dependence
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
     >>> plot_partial_dependence(clf, X, [0, (0, 1)])
     <...>
+    >>> plt.show()
     """
     check_matplotlib_support("plot_partial_dependence")  # noqa
     import matplotlib.pyplot as plt  # noqa
@@ -411,7 +433,13 @@ def plot_partial_dependence(
         random_state=random_state,
     )
     return display.plot(
-        ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw, centered=centered
+        ax=ax,
+        n_cols=n_cols,
+        line_kw=line_kw,
+        ice_lines_kw=ice_lines_kw,
+        pd_line_kw=pd_line_kw,
+        contour_kw=contour_kw,
+        centered=centered,
     )
 
 
@@ -689,8 +717,8 @@ class PartialDependenceDisplay:
         n_cols,
         pd_plot_idx,
         n_lines,
-        individual_line_kw,
-        line_kw,
+        ice_lines_kw,
+        pd_line_kw,
         pdp_lim,
         centered,
     ):
@@ -720,9 +748,9 @@ class PartialDependenceDisplay:
             matching 2D position in the grid layout.
         n_lines : int
             The total number of lines expected to be plot on the axis.
-        individual_line_kw : dict
+        ice_lines_kw : dict
             Dict with keywords passed when plotting the ICE lines.
-        line_kw : dict
+        pd_line_kw : dict
             Dict with keywords passed when plotting the PD plot.
         pdp_lim : dict
             Global min and max average predictions, such that all plots will have the
@@ -741,7 +769,7 @@ class PartialDependenceDisplay:
                 ax,
                 pd_plot_idx,
                 n_lines,
-                individual_line_kw,
+                ice_lines_kw,
                 centered,
             )
 
@@ -756,7 +784,7 @@ class PartialDependenceDisplay:
                 feature_values,
                 ax,
                 pd_line_idx,
-                line_kw,
+                pd_line_kw,
                 centered and self.kind == "both",
             )
 
@@ -783,7 +811,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if line_kw.get("label", None) and self.kind != "individual":
+        if pd_line_kw.get("label", None) and self.kind != "individual":
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -872,6 +900,8 @@ class PartialDependenceDisplay:
         ax=None,
         n_cols=3,
         line_kw=None,
+        ice_lines_kw=None,
+        pd_line_kw=None,
         contour_kw=None,
         pdp_lim=None,
         centered=False,
@@ -897,6 +927,22 @@ class PartialDependenceDisplay:
         line_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.plot` call.
             For one-way partial dependence plots.
+
+        ice_lines_kw : dict, default=None
+            Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+            For ICE lines in the one-way partial dependence plots.
+            The key value pairs defined in `ice_lines_kw` takes priority over
+            `line_kw`.
+
+            .. versionadded:: 1.0
+
+        pd_line_kw : dict, default=None
+            Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+            For partial dependence in one-way partial dependence plots.
+            The key value pairs defined in `pd_line_kw` takes priority over
+            `line_kw`.
+
+            .. versionadded:: 1.0
 
         contour_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
@@ -964,6 +1010,10 @@ class PartialDependenceDisplay:
 
         if line_kw is None:
             line_kw = {}
+        if ice_lines_kw is None:
+            ice_lines_kw = {}
+        if pd_line_kw is None:
+            pd_line_kw = {}
         if contour_kw is None:
             contour_kw = {}
 
@@ -977,14 +1027,20 @@ class PartialDependenceDisplay:
             "color": "C0",
             "label": "average" if self.kind == "both" else None,
         }
-        line_kw = {**default_line_kws, **line_kw}
+        if self.kind in ("individual", "both"):
+            default_ice_lines_kws = {"alpha": 0.3, "linewidth": 0.5}
+        else:
+            default_ice_lines_kws = {}
 
-        individual_line_kw = line_kw.copy()
-        del individual_line_kw["label"]
+        ice_lines_kw = {
+            **default_line_kws,
+            **line_kw,
+            **default_ice_lines_kws,
+            **ice_lines_kw,
+        }
+        del ice_lines_kw["label"]
 
-        if self.kind == "individual" or self.kind == "both":
-            individual_line_kw["alpha"] = 0.3
-            individual_line_kw["linewidth"] = 0.5
+        pd_line_kw = {**default_line_kws, **line_kw, **pd_line_kw}
 
         n_features = len(self.features)
         if self.kind in ("individual", "both"):
@@ -1082,8 +1138,8 @@ class PartialDependenceDisplay:
                     n_cols,
                     pd_plot_idx,
                     n_lines,
-                    individual_line_kw,
-                    line_kw,
+                    ice_lines_kw,
+                    pd_line_kw,
                     pdp_lim,
                     centered,
                 )

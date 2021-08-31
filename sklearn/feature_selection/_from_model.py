@@ -135,6 +135,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     threshold_ : float
         The threshold value used for feature selection.
 
@@ -257,6 +263,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             raise NotFittedError("Since 'prefit=True', call transform directly")
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
+        if hasattr(self.estimator_, "feature_names_in_"):
+            self.feature_names_in_ = self.estimator_.feature_names_in_
         return self
 
     @property

@@ -14,6 +14,7 @@ from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state
 from ..utils import column_or_1d
 from ..utils import compute_class_weight
+from ..utils.metaestimators import available_if
 from ..utils.deprecation import deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
@@ -158,6 +159,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
@@ -407,6 +409,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         y_pred : ndarray of shape (n_samples,)
+            The predicted values.
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
@@ -617,6 +620,12 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def coef_(self):
+        """Weights assigned to the features when `kernel="linear"`.
+
+        Returns
+        -------
+        ndarray of shape (n_features, n_classes)
+        """
         if self.kernel != "linear":
             raise AttributeError("coef_ is only available when using a linear kernel")
 
@@ -637,6 +646,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def n_support_(self):
+        """Number of support vectors for each class."""
         try:
             check_is_fitted(self)
         except NotFittedError:
@@ -710,11 +720,12 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         return np.asarray(y, dtype=np.float64, order="C")
 
     def decision_function(self, X):
-        """Evaluates the decision function for the samples in X.
+        """Evaluate the decision function for the samples in X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -784,9 +795,10 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             )
         if self._impl not in ("c_svc", "nu_svc"):
             raise AttributeError("predict_proba only implemented for SVC and NuSVC")
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_proba)
+    def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
 
         The model need to have probability information computed at training
@@ -812,10 +824,6 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         predict. Also, it will produce meaningless results on very small
         datasets.
         """
-        self._check_proba()
-        return self._predict_proba
-
-    def _predict_proba(self, X):
         X = self._validate_for_predict(X)
         if self.probA_.size == 0 or self.probB_.size == 0:
             raise NotFittedError(
@@ -826,8 +834,8 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         )
         return pred_proba(X)
 
-    @property
-    def predict_log_proba(self):
+    @available_if(_check_proba)
+    def predict_log_proba(self, X):
         """Compute log probabilities of possible outcomes for samples in X.
 
         The model need to have probability information computed at training
@@ -854,10 +862,6 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         predict. Also, it will produce meaningless results on very small
         datasets.
         """
-        self._check_proba()
-        return self._predict_log_proba
-
-    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
     def _dense_predict_proba(self, X):
@@ -940,10 +944,22 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
     @property
     def probA_(self):
+        """Parameter learned in Platt scaling when `probability=True`.
+
+        Returns
+        -------
+        ndarray of shape  (n_classes * (n_classes - 1) / 2)
+        """
         return self._probA
 
     @property
     def probB_(self):
+        """Parameter learned in Platt scaling when `probability=True`.
+
+        Returns
+        -------
+        ndarray of shape  (n_classes * (n_classes - 1) / 2)
+        """
         return self._probB
 
 
@@ -1029,7 +1045,7 @@ def _fit_liblinear(
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training vector, where n_samples in the number of samples and
+        Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
     y : array-like of shape (n_samples,)
