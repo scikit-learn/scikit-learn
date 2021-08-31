@@ -423,29 +423,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             feature_names.extend([f"{name}__{f}" for f in trans.get_feature_names()])
         return feature_names
 
-    def _get_feature_names_out(self, get_names):
-        """Private function to be used by get_feature_names*."""
-        # TODO(1.2): This should be removed and integrated into
-        # get_feature_names_out when get_feature_names is deprecated.
-        feature_names = []
-        for name, trans, column, _ in self._iter(fitted=True):
-            if trans == "drop" or _is_empty_column_selection(column):
-                continue
-            if trans == "passthrough":
-                if hasattr(self, "feature_names_in_"):
-                    if (not isinstance(column, slice)) and all(
-                        isinstance(col, str) for col in column
-                    ):
-                        feature_names.extend(column)
-                    else:
-                        feature_names.extend(self.feature_names_in_[column])
-                else:
-                    indices = np.arange(self._n_features)
-                    feature_names.extend(["x%d" % i for i in indices[column]])
-                continue
-            feature_names.extend(get_names(name, trans, column))
-        return feature_names
-
     def _get_feature_name_out_for_transformer(
         self, name, trans, column, feature_names_in
     ):
