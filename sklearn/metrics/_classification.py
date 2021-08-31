@@ -2278,7 +2278,7 @@ def log_loss(
     for its training data ``y_true``.
     The log loss is only defined for two or more labels.
     For a single sample with true label :math:`y \in \{0,1\}` and
-    and a probability estimate :math:`p = \operatorname{Pr}(y = 1)`, the log
+    a probability estimate :math:`p = \operatorname{Pr}(y = 1)`, the log
     loss is:
 
     .. math::
