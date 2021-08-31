@@ -204,7 +204,7 @@ if opts.select_chi2:
     X_test = ch2.transform(X_test)
     if feature_names is not None:
         # keep selected feature names
-        feature_names = [feature_names[i] for i in ch2.get_support(indices=True)]
+        feature_names = feature_names[ch2.get_support()]
     print("done in %fs" % (time() - t0))
     print()
 
