@@ -149,6 +149,8 @@ for i, (clf, name) in enumerate(clf_list):
     score_df = pd.DataFrame(scores).set_index("Classifier")
     score_df.round(decimals=3)
 
+score_df
+
 # %%
 # Notice that although calibration improves the :ref:`brier_score_loss` (a
 # metric composed
@@ -281,6 +283,8 @@ for i, (clf, name) in enumerate(clf_list):
 
     score_df = pd.DataFrame(scores).set_index("Classifier")
     score_df.round(decimals=3)
+
+score_df
 
 # %%
 # As with :class:`~sklearn.naive_bayes.GaussianNB` above, calibration improves

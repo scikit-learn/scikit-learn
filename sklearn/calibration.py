@@ -1062,9 +1062,10 @@ class CalibrationDisplay:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        existing_ref_line = "Perfectly calibrated" in ax.get_legend_handles_labels()[1]
+        ref_line_label = "Perfectly calibrated"
+        existing_ref_line = ref_line_label in ax.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
-            ax.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
+            ax.plot([0, 1], [0, 1], "k:", label=ref_line_label)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
 
         if "label" in line_kwargs:

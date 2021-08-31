@@ -152,7 +152,7 @@ Changelog
   :class:`calibration.CalibratedClassifierCV` can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
-- |Feature| :func:`calibration.plot_calibration_curve` added to plot
+- |Feature| :func:`calibration.CalibrationDisplay` added to plot
   calibration curves. :pr:`17443` by :user:`Lucy Liu <lucyleeow>`.
 
 - |Fix| Fixed an error when using a ::class:`ensemble.VotingClassifier`
