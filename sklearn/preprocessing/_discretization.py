@@ -15,6 +15,7 @@ from . import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
+from collections import Counter
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -179,7 +180,18 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 "Valid options for 'strategy' are {}. "
                 "Got strategy={!r} instead.".format(valid_strategy, self.strategy)
             )
-
+        trans = KBinsDiscretizer(strategy="quantile")
+        trans.fit(X, sample_weight=w)
+        def weight_array(ar, weights):
+            zipped = zip(ar, weights)
+            weighted = []
+            for a, w in zipped:
+                for j in range(w):
+                    weighted.append(a)
+            return weighted
+        
+        np.percentile(Counter(dict(trans.fit(X, sample_weight=w)).elements()))
+        
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
 
