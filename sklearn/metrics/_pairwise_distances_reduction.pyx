@@ -167,7 +167,7 @@ cdef np.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 #####################
 
 cdef class PairwiseDistancesReduction:
-    """Abstract class to computes a reduction on pairwise
+    """Abstract class computing a reduction on pairwise
     distances between a set of vectors (rows) X and another
     set of vectors (rows) of Y.
 
@@ -904,19 +904,17 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
 
 
 cdef class RadiusNeighborhood(PairwiseDistancesReduction):
-    """Returns indices in a vector-set Y of radius-based neighbors of vector-set X.
+    """Returns radius-based neighbors vectors' indices in a dataset Y of
+    of vectors in a dataset X.
 
-    The neighbors of a first set of vectors X present in
-    the second in present another.
-
-    present in another set of vectors
-    (rows of Y) for a given a radius and distance.
     Parameters
     ----------
     datasets_pair: DatasetsPair
         The dataset pairs (X, Y) for the reduction.
+
     radius: float
         The radius defining the neighborhood.
+
     chunk_size: int
         The number of vectors per chunk.
     """
@@ -930,19 +928,20 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         # We get the proxy for the radius to be able to compare
         DTYPE_t proxy_radius
 
-        # We want resizable buffers which we will to wrapped within numpy
-        # arrays at the end.
+        # Neighbors informations are returned as np.ndarray or np.ndarray.
         #
-        # std::vector comes as a handy interface for efficient resizable
-        # buffers.
+        # We want resizable buffers which we will to wrapped within numpy
+        # arrays at the end. std::vector comes as a handy interface for
+        # interacting efficiently with resizable buffers.
         #
         # Though it is possible to access their buffer address with
-        # std::vector::data, their buffer can't be stolen: their
-        # life-time is tight to the buffer's.
+        # std::vector::data, they can't be stolen: buffers lifetime
+        # is tight to their std::vector and are deallocated when
+        # std::vectors are.
         #
-        # To solve this, we dynamically allocate vectors and then
+        # To solve this, we dynamically allocate std::vectors and then
         # encapsulate them in a StdVectorSentinel responsible for
-        # freeing them when needed
+        # freeing them when the associated np.ndarray is freed.
         vector[vector[ITYPE_t]] * neigh_indices
         vector[vector[DTYPE_t]] * neigh_distances
 
@@ -1247,7 +1246,8 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        return RadiusNeighborhood.is_usable_for(X, Y, metric) and not _in_unstable_openblas_configuration()
+        return (RadiusNeighborhood.is_usable_for(X, Y, metric)
+                and not _in_unstable_openblas_configuration())
 
     def __init__(self,
         X,
