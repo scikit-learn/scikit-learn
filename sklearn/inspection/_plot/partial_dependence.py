@@ -929,21 +929,20 @@ class PartialDependenceDisplay:
 
         # FIXME: remove in 1.2
         if self.pdp_lim != "deprecated":
-            if pdp_lim is not None and self.pdp_lim != pdp_lim:
-                warnings.warn(
-                    "`pdp_lim` has been passed in both the constructor and the `plot` "
-                    "method. For backward compatibility, the parameter from the "
-                    "constructor will be used. To silence this warning, only use "
-                    "`pdp_lim` from the `plot` method.",
-                    UserWarning,
-                )
-            pdp_lim = self.pdp_lim
             warnings.warn(
                 "The `pdp_lim` parameter is deprecated in version 1.0 and will be "
                 "removed in version 1.2. Provide `pdp_lim` to the `plot` method."
                 "instead.",
                 FutureWarning,
             )
+            if pdp_lim is not None and self.pdp_lim != pdp_lim:
+                warnings.warn(
+                    "`pdp_lim` has been passed in both the constructor and the `plot` "
+                    "method. For backward compatibility, the parameter from the "
+                    "constructor will be used.",
+                    UserWarning,
+                )
+            pdp_lim = self.pdp_lim
 
         if pdp_lim is None:
             # get global min and max average predictions of PD grouped by plot type
