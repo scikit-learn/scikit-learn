@@ -868,7 +868,12 @@ def _get_transformer_list(estimators):
 
 
 def make_column_transformer(
-    *transformers, remainder="drop", sparse_threshold=0.3, n_jobs=None, verbose=False
+    *transformers,
+    remainder="drop",
+    sparse_threshold=0.3,
+    n_jobs=None,
+    verbose=False,
+    prefix_feature_names_out=True,
 ):
     """Construct a ColumnTransformer from the given transformers.
 
@@ -931,6 +936,14 @@ def make_column_transformer(
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
+    prefix_feature_names_out : bool, default=True
+        If True, :meth:`get_feature_names_out` will prefix all feature names
+        with the name of the transformer that generated that feature.
+        If False, :meth:`get_feature_names_out` will not prefix any feature
+        names and will error if feature names collide.
+
+        .. versionadded:: 1.0
+
     Returns
     -------
     ct : ColumnTransformer
@@ -963,6 +976,7 @@ def make_column_transformer(
         remainder=remainder,
         sparse_threshold=sparse_threshold,
         verbose=verbose,
+        prefix_feature_names_out=prefix_feature_names_out,
     )
 
 

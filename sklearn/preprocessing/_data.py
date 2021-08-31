@@ -16,7 +16,7 @@ from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
 
-from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.extmath import row_norms
@@ -262,7 +262,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class MinMaxScaler(TransformerMixin, BaseEstimator):
     """Transform features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -631,7 +631,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     return X
 
 
-class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class StandardScaler(TransformerMixin, BaseEstimator):
     """Standardize features by removing the mean and scaling to unit variance.
 
     The standard score of a sample `x` is calculated as:
@@ -1046,7 +1046,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True, "preserves_dtype": [np.float64, np.float32]}
 
 
-class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class MaxAbsScaler(TransformerMixin, BaseEstimator):
     """Scale each feature by its maximum absolute value.
 
     This estimator scales and translates each feature individually such
@@ -1348,7 +1348,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     return X
 
 
-class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class RobustScaler(TransformerMixin, BaseEstimator):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
@@ -1841,7 +1841,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         return X
 
 
-class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class Normalizer(TransformerMixin, BaseEstimator):
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -2012,7 +2012,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class Binarizer(TransformerMixin, BaseEstimator):
     """Binarize data (set feature values to 0 or 1) according to a threshold.
 
     Values greater than the threshold map to 1, while values less than
@@ -2346,7 +2346,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
-class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class QuantileTransformer(TransformerMixin, BaseEstimator):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2931,7 +2931,7 @@ def quantile_transform(
         )
 
 
-class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class PowerTransformer(TransformerMixin, BaseEstimator):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations
