@@ -1456,9 +1456,8 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         precomputed dictionary.
     SparsePCA : Sparse Principal Components Analysis.
 
-    Notes
-    -----
-    **References:**
+    References
+    ----------
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
     for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
