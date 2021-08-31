@@ -39,10 +39,8 @@ source activate testenv
 # Use the latest by default
 mamba install --verbose -y  ccache \
                             pip \
-                            numpy \
-                            scipy \
-                            cython \
-                            pip \
+                            $(get_dep numpy $NUMPY_VERSION) \
+                            $(get_dep scipy $SCIPY_VERSION) \
                             $(get_dep cython $CYTHON_VERSION) \
                             $(get_dep joblib $JOBLIB_VERSION) \
                             $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
