@@ -598,7 +598,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         -------
         Y_pred : array-like of shape (n_samples, n_classes)
             The predicted values.
-
         """
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse=True, reset=False)
@@ -697,6 +696,17 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    RegressorChain : Equivalent for regression.
+    MultioutputClassifier : Classifies each output independently rather than
+        chaining.
+
+    References
+    ----------
+    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
+    Chains for Multi-label Classification", 2009.
+
     Examples
     --------
     >>> from sklearn.datasets import make_multilabel_classification
@@ -719,17 +729,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     array([[0.8387..., 0.9431..., 0.4576...],
            [0.8878..., 0.3684..., 0.2640...],
            [0.0321..., 0.9935..., 0.0625...]])
-
-    See Also
-    --------
-    RegressorChain : Equivalent for regression.
-    MultioutputClassifier : Classifies each output independently rather than
-        chaining.
-
-    References
-    ----------
-    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
-    Chains for Multi-label Classification", 2009.
     """
 
     def fit(self, X, Y):
@@ -745,6 +744,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Returns
         -------
         self : object
+            Class instance.
         """
         super().fit(X, Y)
         self.classes_ = [
@@ -759,10 +759,12 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
 
         Returns
         -------
         Y_prob : array-like of shape (n_samples, n_classes)
+            The predicted probabilities.
         """
         X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
@@ -788,6 +790,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input data.
 
         Returns
         -------

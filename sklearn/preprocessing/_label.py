@@ -18,9 +18,7 @@ from ..base import BaseEstimator, TransformerMixin
 
 from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
-from ..utils.validation import check_array
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _num_samples
+from ..utils.validation import _num_samples, check_array, check_is_fitted
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils._encode import _encode, _unique
@@ -845,7 +843,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         return self._cached_dict
 
     def _transform(self, y, class_mapping):
-        """Transforms the label sets with a given mapping
+        """Transforms the label sets with a given mapping.
 
         Parameters
         ----------

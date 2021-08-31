@@ -19,8 +19,7 @@ from scipy.special import boxcox
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
-from ..utils.extmath import row_norms
-from ..utils.extmath import _incremental_mean_and_var
+from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
@@ -39,6 +38,7 @@ from ..utils.validation import (
 )
 
 from ._encoders import OneHotEncoder
+
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -384,7 +384,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-
         # Checking one attribute is enough, becase they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
@@ -412,7 +411,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y)
@@ -608,7 +606,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-    """  # noqa
+    """
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(
@@ -760,7 +758,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
      [ 1.  1.]]
     >>> print(scaler.transform([[2, 2]]))
     [[3. 3.]]
-    """  # noqa
+    """
 
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
@@ -772,7 +770,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-
         # Checking one attribute is enough, becase they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
@@ -804,14 +801,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y, sample_weight)
 
     def partial_fit(self, X, y=None, sample_weight=None):
-        """
-        Online computation of mean and std on X for later scaling.
+        """Online computation of mean and std on X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
@@ -1126,7 +1121,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-
         # Checking one attribute is enough, becase they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
@@ -1156,8 +1150,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
-        """
-        Online computation of max absolute value of X for later scaling.
+        """Online computation of max absolute value of X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
@@ -1295,8 +1288,8 @@ def maxabs_scale(X, *, axis=0, copy=True):
 
     .. warning:: Risk of data leak
 
-        Do not use :func:`~sklearn.preprocessing.maxabs_scale` unless you know what
-        you are doing. A common mistake is to apply it to the entire data
+        Do not use :func:`~sklearn.preprocessing.maxabs_scale` unless you know
+        what you are doing. A common mistake is to apply it to the entire data
         *before* splitting into training and test sets. This will bias the
         model evaluation because information would have leaked from the test
         set to the training set.
@@ -1319,7 +1312,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-    """  # noqa
+    """
     # Unlike the scaler object, this function allows 1d input.
 
     # If copy is required, it will be done inside the scaler object.
@@ -1575,7 +1568,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         return X
 
     def inverse_transform(self, X):
-        """Scale back the data to the original representation
+        """Scale back the data to the original representation.
 
         Parameters
         ----------
@@ -1621,7 +1614,7 @@ def robust_scale(
     copy=True,
     unit_variance=False,
 ):
-    """Standardize a dataset along any axis
+    """Standardize a dataset along any axis.
 
     Center to the median and component wise scale
     according to the interquartile range.
@@ -1783,7 +1776,6 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
     """
     if norm not in ("l1", "l2", "max"):
         raise ValueError("'%s' is not a supported norm" % norm)
@@ -1918,7 +1910,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged
+        """Do nothing and return the estimator unchanged.
 
         This method is just there to implement the usual API and hence
         work in pipelines.
@@ -1940,7 +1932,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, copy=None):
-        """Scale each non zero row of X to unit norm
+        """Scale each non zero row of X to unit norm.
 
         Parameters
         ----------
@@ -2233,7 +2225,6 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-
         K = self._validate_data(K, dtype=FLOAT_DTYPES)
 
         if K.shape[0] != K.shape[1]:
@@ -2725,7 +2716,6 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         X : ndarray of shape (n_samples, n_features)
             Projected data.
         """
-
         if sparse.issparse(X):
             for feature_idx in range(X.shape[1]):
                 column_slice = slice(X.indptr[feature_idx], X.indptr[feature_idx + 1])
