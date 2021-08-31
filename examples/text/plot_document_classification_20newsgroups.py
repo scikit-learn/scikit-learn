@@ -201,7 +201,7 @@ def trim(s):
 # We train and test the datasets with 15 different classification models
 # and get performance results for each model.
 def benchmark(clf):
-    print("_" * 80)
+    print('_' * 80)
     print("Training: ")
     print(clf)
     t0 = time()
