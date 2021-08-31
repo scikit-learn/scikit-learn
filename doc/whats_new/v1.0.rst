@@ -214,6 +214,10 @@ Changelog
   of connected components is greater than 1. :pr:`20597` by
   `Thomas Fan`_.
 
+- |Fix| :class:`cluster.FeatureAgglomeration` now does not take a ``**params``
+  kwarg in the ``fit`` function, resulting in a more concise error. :pr:`` by
+  :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.compose`
 ......................
 
