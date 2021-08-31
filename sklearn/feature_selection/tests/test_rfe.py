@@ -134,6 +134,31 @@ def test_RFE_fit_score_params():
     RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y, prop="foo")
 
 
+def test_RFECV_fit_score_params():
+    # Make sure RFECV passes the metadata down to fit and score methods of the
+    # underlying estimator
+    class TestEstimator(BaseEstimator, ClassifierMixin):
+        def fit(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("fit: prop cannot be None")
+            self.svc_ = SVC(kernel="linear").fit(X, y)
+            self.coef_ = self.svc_.coef_
+            return self
+
+        def score(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("score: prop cannot be None")
+            return self.svc_.score(X, y)
+
+    X, y = load_iris(return_X_y=True)
+    # with pytest.raises(ValueError, match="fit: prop cannot be None"):
+    #     RFECV(estimator=TestEstimator()).fit(X, y)
+    # with pytest.raises(ValueError, match="score: prop cannot be None"):
+    #     RFECV(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y)
+
+    RFECV(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y, prop="foo")
+
+
 @pytest.mark.parametrize("n_features_to_select", [-1, 2.1])
 def test_rfe_invalid_n_features_errors(n_features_to_select):
     clf = SVC(kernel="linear")

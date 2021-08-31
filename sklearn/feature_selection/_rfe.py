@@ -28,7 +28,7 @@ from ._base import SelectorMixin
 from ._base import _get_feature_importances
 
 
-def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
+def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, fit_params):
     """
     Return the score for a fit across one fold.
     """
@@ -40,6 +40,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
         lambda estimator, features: _score(
             estimator, X_test[:, features], y_test, scorer
         ),
+        **fit_params,
     ).scores_
 
 
@@ -632,7 +633,7 @@ class RFECV(RFE):
         self.n_jobs = n_jobs
         self.min_features_to_select = min_features_to_select
 
-    def fit(self, X, y, groups=None):
+    def fit(self, X, y, groups=None, **fit_params):
         """Fit the RFE model and automatically tune the number of selected features.
 
         Parameters
@@ -651,6 +652,10 @@ class RFECV(RFE):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
             .. versionadded:: 0.20
+
+        **fit_params : dict
+            Additional parameters passed to the `fit` method of the underlying
+            estimator.
 
         Returns
         -------
@@ -700,7 +705,7 @@ class RFECV(RFE):
         # make sure that user code that sets n_jobs to 1
         # and provides bound methods as scorers is not broken with the
         # addition of n_jobs parameter in version 0.18.
-
+        breakpoint()
         if effective_n_jobs(self.n_jobs) == 1:
             parallel, func = list, _rfe_single_fit
         else:
@@ -708,7 +713,7 @@ class RFECV(RFE):
             func = delayed(_rfe_single_fit)
 
         scores = parallel(
-            func(rfe, self.estimator, X, y, train, test, scorer)
+            func(rfe, self.estimator, X, y, train, test, scorer, fit_params)
             for train, test in cv.split(X, y, groups)
         )
 
@@ -729,14 +734,14 @@ class RFECV(RFE):
             verbose=self.verbose,
         )
 
-        rfe.fit(X, y)
+        rfe.fit(X, y, **fit_params)
 
         # Set final attributes
         self.support_ = rfe.support_
         self.n_features_ = rfe.n_features_
         self.ranking_ = rfe.ranking_
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(self.transform(X), y)
+        self.estimator_.fit(self.transform(X), y, **fit_params)
 
         # reverse to stay consistent with before
         scores_rev = scores[:, ::-1]

@@ -751,6 +751,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
+    breakpoint()
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
         scorer = _MultimetricScorer(**scorer)
