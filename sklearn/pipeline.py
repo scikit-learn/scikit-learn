@@ -687,7 +687,8 @@ class Pipeline(_BaseComposition):
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
               then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
-              If `n_features_in_` is not defined, then `None` is used.
+              If `n_features_in_` is not defined, then `None` is used as
+              input_features.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
