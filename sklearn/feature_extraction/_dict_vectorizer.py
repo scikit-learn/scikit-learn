@@ -381,9 +381,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        feature_names_ : list
-               A list of length n_features containing the feature names
-               (e.g., "f=ham" and "f=spam").
+        feature_names_ : list of length (n_features,)
+           List containing the feature names (e.g., "f=ham" and "f=spam").
         """
         return self.feature_names_
 
