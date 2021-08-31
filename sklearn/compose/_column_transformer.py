@@ -147,6 +147,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    make_column_transformer : Convenience function for
+        combining the outputs of multiple transformer objects applied to
+        column subsets of the original feature space.
+    make_column_selector : Convenience function for selecting
+        columns based on datatype or the columns name with a regex pattern.
+
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
@@ -155,14 +163,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     dropped from the resulting transformed feature matrix, unless specified
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
-
-    See Also
-    --------
-    make_column_transformer : Convenience function for
-        combining the outputs of multiple transformer objects applied to
-        column subsets of the original feature space.
-    make_column_selector : Convenience function for selecting
-        columns based on datatype or the columns name with a regex pattern.
 
     Examples
     --------
@@ -180,7 +180,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     >>> ct.fit_transform(X)
     array([[0. , 1. , 0.5, 0.5],
            [0.5, 0.5, 0. , 1. ]])
-
     """
 
     _required_parameters = ["transformers"]
@@ -246,9 +245,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         can directly set the parameters of the estimators contained in
         `transformers` of `ColumnTransformer`.
 
+        Parameters
+        ----------
+        **kwargs : dict
+            Estimator parameters.
+
         Returns
         -------
-        self
+        self : ColumnTransformer
+            This estimator.
         """
         self._set_params("_transformers", **kwargs)
         return self
@@ -286,12 +291,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 elif _is_empty_column_selection(columns):
                     continue
 
-            if column_as_strings and self._only_str_columns:
+            if column_as_strings:
                 # Convert all columns to using their string labels
                 columns_is_scalar = np.isscalar(columns)
 
                 indices = self._transformer_to_input_indices[name]
-                columns = self._feature_names_in[indices]
+                columns = self.feature_names_in_[indices]
 
                 if columns_is_scalar:
                     # selection is done with one dimension
@@ -364,7 +369,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
-
         """
         # Use Bunch object to improve autocomplete
         return Bunch(**{name: trans for name, trans, _ in self.transformers_})
@@ -383,13 +387,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if trans == "drop" or _is_empty_column_selection(column):
                 continue
             if trans == "passthrough":
-                if self._feature_names_in is not None:
+                if hasattr(self, "feature_names_in_"):
                     if (not isinstance(column, slice)) and all(
                         isinstance(col, str) for col in column
                     ):
                         feature_names.extend(column)
                     else:
-                        feature_names.extend(self._feature_names_in[column])
+                        feature_names.extend(self.feature_names_in_[column])
                 else:
                     indices = np.arange(self._n_features)
                     feature_names.extend(["x%d" % i for i in indices[column]])
@@ -513,8 +517,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Returns
         -------
         self : ColumnTransformer
-            This estimator
-
+            This estimator.
         """
         # we use fit_transform to make sure to set sparse_output_ (for which we
         # need the transformed data) to have consistent output type in predict
@@ -537,20 +540,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         -------
         X_t : {array-like, sparse matrix} of \
                 shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
+            Horizontally stacked results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
-
         """
-        # TODO: this should be `feature_names_in_` when we start having it
-        if hasattr(X, "columns"):
-            self._feature_names_in = np.asarray(X.columns)
-            self._only_str_columns = all(
-                isinstance(col, str) for col in self._feature_names_in
-            )
-        else:
-            self._feature_names_in = None
+        self._check_feature_names(X, reset=True)
+
         X = _check_X(X)
         # set n_features_in_ attribute
         self._check_n_features(X, reset=True)
@@ -596,18 +592,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         -------
         X_t : {array-like, sparse matrix} of \
                 shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
+            Horizontally stacked results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
-
         """
         check_is_fitted(self)
         X = _check_X(X)
 
-        fit_dataframe_and_transform_dataframe = (
-            self._feature_names_in is not None and hasattr(X, "columns")
-        )
+        fit_dataframe_and_transform_dataframe = hasattr(
+            self, "feature_names_in_"
+        ) and hasattr(X, "columns")
 
         if fit_dataframe_and_transform_dataframe:
             named_transformers = self.named_transformers_
@@ -622,7 +617,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             ]
 
             all_indices = set(chain(*non_dropped_indices))
-            all_names = set(self._feature_names_in[ind] for ind in all_indices)
+            all_names = set(self.feature_names_in_[ind] for ind in all_indices)
 
             diff = all_names - set(X.columns)
             if diff:
@@ -683,11 +678,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         elif hasattr(self, "_remainder"):
             remainder_columns = self._remainder[2]
             if (
-                self._feature_names_in is not None
+                hasattr(self, "feature_names_in_")
                 and remainder_columns
                 and not all(isinstance(col, str) for col in remainder_columns)
             ):
-                remainder_columns = self._feature_names_in[remainder_columns].tolist()
+                remainder_columns = self.feature_names_in_[remainder_columns].tolist()
             transformers = chain(
                 self.transformers, [("remainder", self.remainder, remainder_columns)]
             )
