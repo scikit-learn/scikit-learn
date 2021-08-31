@@ -174,7 +174,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     See Also
     --------
-    calibration_curve : Compute true and predicted probabilities for a calibration curve.
+    calibration_curve : Compute true and predicted probabilities
+        for a calibration curve.
 
     References
     ----------
@@ -393,7 +394,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            The samples, as accepted by base_estimator.predict_proba.
+            The samples, as accepted by `base_estimator.predict_proba`.
 
         Returns
         -------
@@ -421,7 +422,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            The samples, as accepted by base_estimator.predict.
+            The samples, as accepted by `base_estimator.predict`.
 
         Returns
         -------
