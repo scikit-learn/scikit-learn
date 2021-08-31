@@ -668,6 +668,10 @@ def test_feature_names(get_names):
     feature_names = getattr(cv, get_names)()
     if get_names == "get_feature_names_out":
         assert isinstance(feature_names, np.ndarray)
+        assert feature_names.dtype == object
+    else:
+        # get_feature_names
+        assert isinstance(feature_names, list)
 
     assert len(feature_names) == n_features
     assert_array_equal(

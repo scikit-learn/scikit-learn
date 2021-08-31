@@ -347,6 +347,7 @@ GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "impute",
     "isotonic",
     "kernel_approximation",
+    "preprocessing",
     "manifold",
     "neighbors",
     "neural_network",

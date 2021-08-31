@@ -11,6 +11,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _make_feature_names_in
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique
@@ -71,9 +72,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown="error", force_all_finite=True):
+        self._check_feature_names(X, reset=True)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
+        self.n_features_in_ = n_features
 
         if self.categories != "auto":
             if len(self.categories) != n_features:
@@ -115,6 +118,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _transform(
         self, X, handle_unknown="error", force_all_finite=True, warn_on_unknown=False
     ):
+        self._check_feature_names(X, reset=False)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
@@ -283,6 +287,11 @@ class OneHotEncoder(_BaseEncoder):
 
         .. versionchanged:: 0.23
            Added the possibility to contain `None` values.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 1.0
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -679,7 +688,25 @@ class OneHotEncoder(_BaseEncoder):
         output_feature_names : ndarray of shape (n_output_features,)
             Array of feature names.
         """
-        feature_names = self.get_feature_names_out(input_features)
+        check_is_fitted(self)
+        cats = self.categories_
+        if input_features is None:
+            input_features = ["x%d" % i for i in range(len(cats))]
+        elif len(input_features) != len(self.categories_):
+            raise ValueError(
+                "input_features should have length equal to number of "
+                "features ({}), got {}".format(
+                    len(self.categories_), len(input_features)
+                )
+            )
+
+        feature_names = []
+        for i in range(len(cats)):
+            names = [input_features[i] + "_" + str(t) for t in cats[i]]
+            if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
+                names.pop(self.drop_idx_[i])
+            feature_names.extend(names)
+
         return np.array(feature_names, dtype=object)
 
     def get_feature_names_out(self, input_features=None):
@@ -701,18 +728,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         cats = self.categories_
-        if input_features is None:
-            if hasattr(self, "feature_names_in_"):
-                input_features = self.feature_names_in_
-            else:
-                input_features = ["x%d" % i for i in range(len(cats))]
-        elif len(input_features) != len(self.categories_):
-            raise ValueError(
-                "input_features should have length equal to number of "
-                "features ({}), got {}".format(
-                    len(self.categories_), len(input_features)
-                )
-            )
+        input_features = _make_feature_names_in(self, input_features)
 
         feature_names = []
         for i in range(len(cats)):
@@ -775,6 +791,11 @@ class OrdinalEncoder(_BaseEncoder):
         The categories of each feature determined during ``fit`` (in order of
         the features in X and corresponding with the output of ``transform``).
         This does not include categories that weren't seen during ``fit``.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 1.0
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

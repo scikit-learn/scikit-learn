@@ -3857,8 +3857,12 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
         y_[::2, 1] *= 2
 
     X_transform = transformer.fit_transform(X, y=y_)
+    input_features = [f"feature{i}" for i in range(n_features)]
 
-    input_features = ["feature%d" % i for i in range(n_features)]
+    # input_features names is not the same length as n_features_in_
+    with raises(ValueError, match="input_features should have length equal"):
+        transformer.get_feature_names_out(input_features[::2])
+
     feature_names_out = transformer.get_feature_names_out(input_features)
     assert feature_names_out is not None
     assert isinstance(feature_names_out, np.ndarray)
@@ -3908,9 +3912,14 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
         y_ = np.c_[np.asarray(y), np.asarray(y)]
         y_[::2, 1] *= 2
 
-    feature_names_in = ["col%d" % i for i in range(n_features)]
+    feature_names_in = [f"col{i}" for i in range(n_features)]
     df = pd.DataFrame(X, columns=feature_names_in)
     X_transform = transformer.fit_transform(df, y=y_)
+
+    # error is raised when `input_features` do not match feature_names_in
+    invalid_feature_names = [f"bad{i}" for i in range(n_features)]
+    with raises(ValueError, match="input_features is not equal to feature_names_in_"):
+        transformer.get_feature_names_out(invalid_feature_names)
 
     feature_names_out_default = transformer.get_feature_names_out()
     feature_names_in_explicit_names = transformer.get_feature_names_out(

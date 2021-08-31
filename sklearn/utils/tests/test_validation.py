@@ -1562,3 +1562,8 @@ def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
     with pytest.warns(FutureWarning, match=msg):
         names = _get_feature_names(X)
     assert names is None
+
+
+def test_make_feature_names_in():
+    """Check make_features_names_in"""
+    pass

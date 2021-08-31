@@ -22,9 +22,8 @@ from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
 from ..utils.deprecation import deprecated
-from ..utils._feature_names import _make_feature_names
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import check_array, check_is_fitted, _make_feature_names_in
 from ..utils.fixes import delayed
 
 
@@ -491,16 +490,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Transformed feature names.
         """
         check_is_fitted(self)
-        if hasattr(self, "feature_names_in_"):
-            feature_names_in = self.feature_names_in_
-        else:
-            feature_names_in = _make_feature_names(self.n_features_in_)
+        input_features = _make_feature_names_in(self, input_features)
 
         # List of tuples (name, feature_names_out)
         transformer_with_feature_names_out = []
         for name, trans, column, _ in self._iter(fitted=True):
             feature_names_out = self._get_feature_name_out_for_transformer(
-                name, trans, column, feature_names_in
+                name, trans, column, input_features
             )
             if feature_names_out is None:
                 continue
@@ -542,7 +538,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
 
         return np.concatenate(
-            [name for _, name in transformer_with_feature_names_out], dtype=object
+            [name for _, name in transformer_with_feature_names_out],
         )
 
     def _update_fitted_transformers(self, transformers):

@@ -1400,7 +1400,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         feature_names : list
             A list of feature names.
         """
-        return self.get_feature_names_out()
+        self._check_vocabulary()
+
+        return [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))]
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -1416,9 +1418,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             Transformed feature names.
         """
         self._check_vocabulary()
-
         return np.asarray(
-            [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))]
+            [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))],
+            dtype=object,
         )
 
     def _more_tags(self):

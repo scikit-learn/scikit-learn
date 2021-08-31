@@ -27,6 +27,7 @@ from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
+from .utils.validation import _make_feature_names_in
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
 
@@ -677,20 +678,25 @@ class Pipeline(_BaseComposition):
         """Get output feature names for transformation.
 
         Transform input features using the pipeline.
-        If the last step is a transformer, it's included
-        in the transformation, otherwise it's not.
 
         Parameters
         ----------
         input_features : array-like of str or None, default=None
             Input features.
 
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              If `n_features_in_` is not defined, then `None` is used.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
         Returns
         -------
         feature_names_out : ndarray of str
             Transformed feature names.
         """
-        feature_names = input_features
+        feature_names = _make_feature_names_in(self, input_features)
         for _, name, transform in self._iter():
             if not hasattr(transform, "get_feature_names_out"):
                 raise AttributeError(
@@ -1036,11 +1042,19 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         input_features : array-like of str or None, default=None
             Input features.
 
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              If `n_features_in_` is not defined, then `None` is used.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
         Returns
         -------
         feature_names_out : ndarray of str
             Transformed feature names.
         """
+        input_features = _make_feature_names_in(self, input_features)
         feature_names = []
         for name, trans, _ in self._iter():
             if not hasattr(trans, "get_feature_names_out"):
@@ -1049,9 +1063,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                     % (str(name), type(trans).__name__)
                 )
             feature_names.extend(
-                [name + "__" + f for f in trans.get_feature_names_out(input_features)]
+                [f"{name}__{f}" for f in trans.get_feature_names_out(input_features)]
             )
-        return np.asarray(feature_names)
+        return np.asarray(feature_names, dtype=object)
 
     def fit(self, X, y=None, **fit_params):
         """Fit all transformers using X.

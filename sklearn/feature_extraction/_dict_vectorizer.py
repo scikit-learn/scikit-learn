@@ -400,7 +400,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             feature_names = [str(name) for name in self.feature_names_]
         else:
             feature_names = self.feature_names_
-        return np.array(feature_names)
+        return np.asarray(feature_names, dtype=object)
 
     def restrict(self, support, indices=False):
         """Restrict the features to those in support using feature selection.

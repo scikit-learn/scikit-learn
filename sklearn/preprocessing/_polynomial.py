@@ -15,8 +15,8 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.fixes import linspace
-from ..utils._feature_names import _make_feature_names
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
+from ..utils.validation import _make_feature_names_in
 from ..utils.stats import _weighted_percentile
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
@@ -212,7 +212,23 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         -------
         output_feature_names : list of str of shape (n_output_features,)
         """
-        return self.get_feature_names_out(input_features).tolist()
+        powers = self.powers_
+        if input_features is None:
+            input_features = ["x%d" % i for i in range(powers.shape[1])]
+        feature_names = []
+        for row in powers:
+            inds = np.where(row)[0]
+            if len(inds):
+                name = " ".join(
+                    "%s^%d" % (input_features[ind], exp)
+                    if exp != 1
+                    else input_features[ind]
+                    for ind, exp in zip(inds, row[inds])
+                )
+            else:
+                name = "1"
+            feature_names.append(name)
+        return feature_names
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -220,8 +236,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         input_features : array-like of str or None, default=None
-            Input features. If None, they are generated as
-            `[x0, x1, ..., xn_features]`.
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
 
         Returns
         -------
@@ -229,12 +250,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         powers = self.powers_
-
-        if input_features is None and hasattr(self, "feature_names_in_"):
-            input_features = self.feature_names_in_
-        input_features = _make_feature_names(
-            n_features=powers.shape[1], input_features=input_features
-        )
+        input_features = _make_feature_names_in(self, input_features)
         feature_names = []
         for row in powers:
             inds = np.where(row)[0]
@@ -679,7 +695,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         -------
         output_feature_names : list of str of shape (n_output_features,)
         """
-        return self.get_feature_names_out(input_features).tolist()
+        n_splines = self.bsplines_[0].c.shape[0]
+        input_features = _make_feature_names_in(self, input_features)
+        feature_names = []
+        for i in range(self.n_features_in_):
+            for j in range(n_splines - 1 + self.include_bias):
+                feature_names.append(f"{input_features[i]}_sp_{j}")
+        return feature_names
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -687,8 +709,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         input_features : array-like of str or None, default=None
-            Input features. If None, they are generated as
-            `[x0, x1, ..., xn_features]`.
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
 
         Returns
         -------
@@ -696,12 +723,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         n_splines = self.bsplines_[0].c.shape[0]
-        if input_features is None:
-            if hasattr(self, "feature_names_in_"):
-                input_features = self.feature_names_in_
-            else:
-                input_features = ["x%d" % i for i in range(self.n_features_in_)]
-
+        input_features = _make_feature_names_in(self, input_features)
         feature_names = []
         for i in range(self.n_features_in_):
             for j in range(n_splines - 1 + self.include_bias):

@@ -258,4 +258,5 @@ def test_dict_vectorizer_get_feature_names_out():
 
     feature_names = dv.get_feature_names_out()
     assert isinstance(feature_names, np.ndarray)
+    assert feature_names.dtype == object
     assert_array_equal(feature_names, ["1", "2", "3"])

@@ -21,8 +21,7 @@ from .utils._tags import (
 )
 from .utils.validation import check_X_y
 from .utils.validation import check_array
-from .utils._feature_names import _make_feature_names
-from .utils.validation import _check_y
+from .utils.validation import _check_y, _make_feature_names_in
 from .utils.validation import _num_features
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _get_feature_names
@@ -913,17 +912,20 @@ class OneToOneFeatureMixin:
         Parameters
         ----------
         input_features : array-like of str or None, default=None
-            Input features. If None, they are generated as
-            `[x0, x1, ..., xn_features]`.
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
 
         Returns
         -------
         feature_names_out : ndarray of str
             Transformed feature names.
         """
-        if input_features is None and hasattr(self, "feature_names_in_"):
-            input_features = self.feature_names_in_
-        return _make_feature_names(self.n_features_in_, input_features=input_features)
+        return _make_feature_names_in(self, input_features)
 
 
 class MetaEstimatorMixin:
