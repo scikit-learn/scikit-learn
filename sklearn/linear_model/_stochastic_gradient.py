@@ -18,6 +18,7 @@ from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..utils import check_random_state
+from ..utils.metaestimators import available_if
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -120,26 +121,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.average = average
         self.max_iter = max_iter
         self.tol = tol
-        # current tests expect init to do parameter validation
-        # but we are not allowed to set attributes
-        self._validate_params()
-
-    def set_params(self, **kwargs):
-        """Set and validate the parameters of estimator.
-
-        Parameters
-        ----------
-        **kwargs : dict
-            Estimator parameters.
-
-        Returns
-        -------
-        self : object
-            Estimator instance.
-        """
-        super().set_params(**kwargs)
-        self._validate_params()
-        return self
 
     @abstractmethod
     def fit(self, X, y):
@@ -823,8 +804,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         Internally, this method uses ``max_iter = 1``. Therefore, it is not
         guaranteed that a minimum of the cost function is reached after calling
-        it once. Matters such as objective convergence and early stopping
-        should be handled by the user.
+        it once. Matters such as objective convergence, early stopping, and
+        learning rate adjustments should be handled by the user.
 
         Parameters
         ----------
@@ -1139,6 +1120,12 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     sklearn.svm.LinearSVC : Linear support vector classification.
@@ -1219,9 +1206,10 @@ class SGDClassifier(BaseSGDClassifier):
             raise AttributeError(
                 "probability estimates are not available for loss=%r" % self.loss
             )
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_proba)
+    def predict_proba(self, X):
         """Probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -1257,10 +1245,6 @@ class SGDClassifier(BaseSGDClassifier):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
-        self._check_proba()
-        return self._predict_proba
-
-    def _predict_proba(self, X):
         check_is_fitted(self)
 
         if self.loss == "log":
@@ -1306,8 +1290,8 @@ class SGDClassifier(BaseSGDClassifier):
                 % self.loss
             )
 
-    @property
-    def predict_log_proba(self):
+    @available_if(_check_proba)
+    def predict_log_proba(self, X):
         """Log of probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -1329,10 +1313,6 @@ class SGDClassifier(BaseSGDClassifier):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
-        self._check_proba()
-        return self._predict_log_proba
-
-    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
     def _more_tags(self):
@@ -1875,6 +1855,12 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> import numpy as np
@@ -2000,7 +1986,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         instance used by `np.random`.
 
     learning_rate : string, optional
-        The learning rate schedule:
+        The learning rate schedule to use with `fit`. (If using `partial_fit`,
+        learning rate must be controlled directly).
 
         'constant':
             eta = eta0
@@ -2065,6 +2052,12 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------

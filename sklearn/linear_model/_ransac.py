@@ -86,16 +86,26 @@ class RANSACRegressor(
     min_samples : int (>= 1) or float ([0, 1]), default=None
         Minimum number of samples chosen randomly from original data. Treated
         as an absolute number of samples for `min_samples >= 1`, treated as a
-        relative number `ceil(min_samples * X.shape[0]`) for
+        relative number `ceil(min_samples * X.shape[0])` for
         `min_samples < 1`. This is typically chosen as the minimal number of
         samples necessary to estimate the given `base_estimator`. By default a
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
-        `min_samples` is chosen as ``X.shape[1] + 1``.
+        `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
+        dependent upon the model, so if a `base_estimator` other than
+        :class:`linear_model.LinearRegression` is used, the user is
+        encouraged to provide a value.
+
+        .. deprecated :: 1.0
+           Not setting `min_samples` explicitly will raise an error in version
+           1.2 for models other than
+           :class:`~sklearn.linear_model.LinearRegression`. To keep the old
+           default behavior, set `min_samples=X.shape[1] + 1` explicitly.
 
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
         By default the threshold is chosen as the MAD (median absolute
-        deviation) of the target values `y`.
+        deviation) of the target values `y`. Points whose residuals are
+        strictly equal to the threshold are considered as inliers.
 
     is_data_valid : callable, default=None
         This function is called with the randomly selected data before the
@@ -198,6 +208,12 @@ class RANSACRegressor(
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.linear_model import RANSACRegressor
@@ -288,7 +304,15 @@ class RANSACRegressor(
             base_estimator = LinearRegression()
 
         if self.min_samples is None:
-            # assume linear model by default
+            if not isinstance(base_estimator, LinearRegression):
+                # FIXME: in 1.2, turn this warning into an error
+                warnings.warn(
+                    "From version 1.2, `min_samples` needs to be explicitely "
+                    "set otherwise an error will be raised. To keep the "
+                    "current behavior, you need to set `min_samples` to "
+                    f"`X.shape[1] + 1 that is {X.shape[1] + 1}",
+                    FutureWarning,
+                )
             min_samples = X.shape[1] + 1
         elif 0 < self.min_samples < 1:
             min_samples = np.ceil(self.min_samples * X.shape[0])
@@ -434,7 +458,7 @@ class RANSACRegressor(
             residuals_subset = loss_function(y, y_pred)
 
             # classify data into inliers and outliers
-            inlier_mask_subset = residuals_subset < residual_threshold
+            inlier_mask_subset = residuals_subset <= residual_threshold
             n_inliers_subset = np.sum(inlier_mask_subset)
 
             # less inliers -> skip current random sample
@@ -538,6 +562,7 @@ class RANSACRegressor(
             Returns predicted values.
         """
         check_is_fitted(self)
+        self._check_feature_names(X, reset=False)
 
         return self.estimator_.predict(X)
 
@@ -560,6 +585,7 @@ class RANSACRegressor(
             Score of the prediction.
         """
         check_is_fitted(self)
+        self._check_feature_names(X, reset=False)
 
         return self.estimator_.score(X, y)
 

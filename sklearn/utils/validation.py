@@ -1142,8 +1142,9 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     fitted attributes (ending with a trailing underscore) and otherwise
     raises a NotFittedError with the given message.
 
-    This utility is meant to be used internally by estimators themselves,
-    typically in their own predict / transform methods.
+    If an estimator does not set any attributes with a trailing underscore, it
+    can define a ``__sklearn_is_fitted__`` method returning a boolean to specify if the
+    estimator is fitted or not.
 
     Parameters
     ----------
@@ -1194,13 +1195,15 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     if attributes is not None:
         if not isinstance(attributes, (list, tuple)):
             attributes = [attributes]
-        attrs = all_or_any([hasattr(estimator, attr) for attr in attributes])
+        fitted = all_or_any([hasattr(estimator, attr) for attr in attributes])
+    elif hasattr(estimator, "__sklearn_is_fitted__"):
+        fitted = estimator.__sklearn_is_fitted__()
     else:
-        attrs = [
+        fitted = [
             v for v in vars(estimator) if v.endswith("_") and not v.startswith("__")
         ]
 
-    if not attrs:
+    if not fitted:
         raise NotFittedError(msg % {"name": type(estimator).__name__})
 
 
@@ -1587,3 +1590,51 @@ def _check_fit_params(X, fit_params, indices=None):
             )
 
     return fit_params_validated
+
+
+def _get_feature_names(X):
+    """Get feature names from X.
+
+    Support for other array containers should place its implementation here.
+
+    Parameters
+    ----------
+    X : {ndarray, dataframe} of shape (n_samples, n_features)
+        Array container to extract feature names.
+
+        - pandas dataframe : The columns will be considered to be feature
+          names. If the dataframe contains non-string feature names, `None` is
+          returned.
+        - All other array containers will return `None`.
+
+    Returns
+    -------
+    names: ndarray or None
+        Feature names of `X`. Unrecognized array containers will return `None`.
+    """
+    feature_names = None
+
+    # extract feature names for support array containers
+    if hasattr(X, "columns"):
+        feature_names = np.asarray(X.columns)
+
+    if feature_names is None or len(feature_names) == 0:
+        return
+
+    types = sorted(t.__qualname__ for t in set(type(v) for v in feature_names))
+
+    # Warn when types are mixed.
+    # ints and strings do not warn
+    if len(types) > 1 or not (types[0].startswith("int") or types[0] == "str"):
+        # TODO: Convert to an error in 1.2
+        warnings.warn(
+            "Feature names only support names that are all strings. "
+            f"Got feature names with dtypes: {types}. An error will be raised "
+            "in 1.2.",
+            FutureWarning,
+        )
+        return
+
+    # Only feature names of all strings are supported
+    if types[0] == "str":
+        return feature_names

@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
+from .._config import config_context
 from ..utils import check_array
 
 
@@ -61,14 +62,14 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
 
 class ShrunkCovariance(EmpiricalCovariance):
-    """Covariance estimator with shrinkage
+    """Covariance estimator with shrinkage.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
     store_precision : bool, default=True
-        Specify if the estimated precision is stored
+        Specify if the estimated precision is stored.
 
     assume_centered : bool, default=False
         If True, data will not be centered before computation.
@@ -97,6 +98,34 @@ class ShrunkCovariance(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    EllipticEnvelope : An object for detecting outliers in
+        a Gaussian distributed dataset.
+    EmpiricalCovariance : Maximum likelihood covariance estimator.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with cross-validated
+        choice of the l1 penalty.
+    LedoitWolf : LedoitWolf Estimator.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    OAS : Oracle Approximating Shrinkage Estimator.
+
+    Notes
+    -----
+    The regularized covariance is given by:
+
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+
+    where mu = trace(cov) / n_features
+
     Examples
     --------
     >>> import numpy as np
@@ -114,14 +143,6 @@ class ShrunkCovariance(EmpiricalCovariance):
            [0.2536..., 0.4110...]])
     >>> cov.location_
     array([0.0622..., 0.0193...])
-
-    Notes
-    -----
-    The regularized covariance is given by:
-
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
-
-    where mu = trace(cov) / n_features
     """
 
     def __init__(self, *, store_precision=True, assume_centered=False, shrinkage=0.1):
@@ -131,8 +152,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         self.shrinkage = shrinkage
 
     def fit(self, X, y=None):
-        """Fit the shrunk covariance model according to the given training data
-        and parameters.
+        """Fit the shrunk covariance model to X.
 
         Parameters
         ----------
@@ -146,6 +166,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid a potential
@@ -197,7 +218,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
     """
-    X = np.asarray(X)
+    X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         return 0.0
@@ -296,7 +317,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
     """
-    X = np.asarray(X)
+    X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
@@ -324,7 +345,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
 
 
 class LedoitWolf(EmpiricalCovariance):
-    """LedoitWolf Estimator
+    """LedoitWolf Estimator.
 
     Ledoit-Wolf is a particular form of shrinkage, where the shrinkage
     coefficient is computed using O. Ledoit and M. Wolf's formula as
@@ -371,6 +392,41 @@ class LedoitWolf(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    EllipticEnvelope : An object for detecting outliers in
+        a Gaussian distributed dataset.
+    EmpiricalCovariance : Maximum likelihood covariance estimator.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with cross-validated
+        choice of the l1 penalty.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    OAS : Oracle Approximating Shrinkage Estimator.
+    ShrunkCovariance : Covariance estimator with shrinkage.
+
+    Notes
+    -----
+    The regularised covariance is:
+
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+
+    where mu = trace(cov) / n_features
+    and shrinkage is given by the Ledoit and Wolf formula (see References)
+
+    References
+    ----------
+    "A Well-Conditioned Estimator for Large-Dimensional Covariance Matrices",
+    Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
+    February 2004, pages 365-411.
+
     Examples
     --------
     >>> import numpy as np
@@ -387,21 +443,6 @@ class LedoitWolf(EmpiricalCovariance):
            [0.1616..., 0.8022...]])
     >>> cov.location_
     array([ 0.0595... , -0.0075...])
-
-    Notes
-    -----
-    The regularised covariance is:
-
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
-
-    where mu = trace(cov) / n_features
-    and shrinkage is given by the Ledoit and Wolf formula (see References)
-
-    References
-    ----------
-    "A Well-Conditioned Estimator for Large-Dimensional Covariance Matrices",
-    Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
-    February 2004, pages 365-411.
     """
 
     def __init__(self, *, store_precision=True, assume_centered=False, block_size=1000):
@@ -411,8 +452,7 @@ class LedoitWolf(EmpiricalCovariance):
         self.block_size = block_size
 
     def fit(self, X, y=None):
-        """Fit the Ledoit-Wolf shrunk covariance model according to the given
-        training data and parameters.
+        """Fit the Ledoit-Wolf shrunk covariance model to X.
 
         Parameters
         ----------
@@ -425,6 +465,7 @@ class LedoitWolf(EmpiricalCovariance):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
@@ -433,9 +474,10 @@ class LedoitWolf(EmpiricalCovariance):
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        covariance, shrinkage = ledoit_wolf(
-            X - self.location_, assume_centered=True, block_size=self.block_size
-        )
+        with config_context(assume_finite=True):
+            covariance, shrinkage = ledoit_wolf(
+                X - self.location_, assume_centered=True, block_size=self.block_size
+            )
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)
 
@@ -509,7 +551,7 @@ def oas(X, *, assume_centered=False):
 
 
 class OAS(EmpiricalCovariance):
-    """Oracle Approximating Shrinkage Estimator
+    """Oracle Approximating Shrinkage Estimator.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
@@ -555,6 +597,40 @@ class OAS(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    EllipticEnvelope : An object for detecting outliers in
+        a Gaussian distributed dataset.
+    EmpiricalCovariance : Maximum likelihood covariance estimator.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with cross-validated
+        choice of the l1 penalty.
+    LedoitWolf : LedoitWolf Estimator.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    ShrunkCovariance : Covariance estimator with shrinkage.
+
+    Notes
+    -----
+    The regularised covariance is:
+
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+
+    where mu = trace(cov) / n_features
+    and shrinkage is given by the OAS formula (see References)
+
+    References
+    ----------
+    "Shrinkage Algorithms for MMSE Covariance Estimation"
+    Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
+
     Examples
     --------
     >>> import numpy as np
@@ -575,25 +651,10 @@ class OAS(EmpiricalCovariance):
            [-1.2431...,  3.3889...]])
     >>> oas.shrinkage_
     0.0195...
-
-    Notes
-    -----
-    The regularised covariance is:
-
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
-
-    where mu = trace(cov) / n_features
-    and shrinkage is given by the OAS formula (see References)
-
-    References
-    ----------
-    "Shrinkage Algorithms for MMSE Covariance Estimation"
-    Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
     """
 
     def fit(self, X, y=None):
-        """Fit the Oracle Approximating Shrinkage covariance model
-        according to the given training data and parameters.
+        """Fit the Oracle Approximating Shrinkage covariance model to X.
 
         Parameters
         ----------
@@ -606,6 +667,7 @@ class OAS(EmpiricalCovariance):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid computing the

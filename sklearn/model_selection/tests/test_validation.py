@@ -2082,37 +2082,6 @@ def test_fit_and_score_failing():
     y = np.ones(9)
     fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0, None, None]
     # passing error score to trigger the warning message
-    fit_and_score_kwargs = {"error_score": 0}
-    # check if the warning message type is as expected
-    warning_message = (
-        "Estimator fit failed. The score on this train-test partition for "
-        "these parameters will be set to %f." % (fit_and_score_kwargs["error_score"])
-    )
-    with pytest.warns(FitFailedWarning, match=warning_message):
-        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
-    # since we're using FailingClassfier, our error will be the following
-    error_message = "ValueError: Failing classifier failed as required"
-    # the warning message we're expecting to see
-    warning_message = (
-        "Estimator fit failed. The score on this train-test "
-        "partition for these parameters will be set to %f. "
-        "Details: \n%s" % (fit_and_score_kwargs["error_score"], error_message)
-    )
-
-    def test_warn_trace(msg):
-        assert "Traceback (most recent call last):\n" in msg
-        split = msg.splitlines()  # note: handles more than '\n'
-        mtb = split[0] + "\n" + split[-1]
-        return warning_message in mtb
-
-    # check traceback is included
-    warning_message = (
-        "Estimator fit failed. The score on this train-test partition for "
-        "these parameters will be set to %f." % (fit_and_score_kwargs["error_score"])
-    )
-    with pytest.warns(FitFailedWarning, match=warning_message):
-        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
-
     fit_and_score_kwargs = {"error_score": "raise"}
     # check if exception was raised, with default error_score='raise'
     with pytest.raises(ValueError, match="Failing classifier failed as required"):
@@ -2159,6 +2128,41 @@ def test_fit_and_score_working():
     }
     result = _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
     assert result["parameters"] == fit_and_score_kwargs["parameters"]
+
+
+@pytest.mark.parametrize("error_score", [np.nan, 0])
+def test_cross_validate_failing_fits_warnings(error_score):
+    # Create a failing classifier to deliberately fail
+    failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
+    # dummy X data
+    X = np.arange(1, 10)
+    y = np.ones(9)
+    # fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0, None, None]
+    # passing error score to trigger the warning message
+    cross_validate_args = [failing_clf, X, y]
+    cross_validate_kwargs = {"cv": 7, "error_score": error_score}
+    # check if the warning message type is as expected
+    warning_message = re.compile(
+        "7 fits failed.+total of 7.+The score on these"
+        " train-test partitions for these parameters will be set to"
+        f" {cross_validate_kwargs['error_score']}.",
+        flags=re.DOTALL,
+    )
+
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        cross_validate(*cross_validate_args, **cross_validate_kwargs)
+
+    # since we're using FailingClassfier, our error will be the following
+    error_message = "ValueError: Failing classifier failed as required"
+
+    # check traceback is included
+    warning_message = re.compile(
+        "The score on these train-test partitions for these parameters will be set"
+        f" to {cross_validate_kwargs['error_score']}.+{error_message}",
+        re.DOTALL,
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        cross_validate(*cross_validate_args, **cross_validate_kwargs)
 
 
 def _failing_scorer(estimator, X, y, error_msg):

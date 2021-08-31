@@ -27,6 +27,8 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
+import warnings
+
 from scipy.special import xlogy
 
 from ._base import BaseEnsemble
@@ -121,7 +123,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             y_numeric=is_regressor(self),
         )
 
-        sample_weight = _check_sample_weight(sample_weight, X, np.float64)
+        sample_weight = _check_sample_weight(sample_weight, X, np.float64, copy=True)
         sample_weight /= sample_weight.sum()
         if np.any(sample_weight < 0):
             raise ValueError("sample_weight cannot contain negative weights")
@@ -147,7 +149,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             # Early termination
             if sample_weight is None:
                 break
-
             self.estimator_weights_[iboost] = estimator_weight
             self.estimator_errors_[iboost] = estimator_error
 
@@ -156,6 +157,15 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                 break
 
             sample_weight_sum = np.sum(sample_weight)
+
+            if not np.isfinite(sample_weight_sum):
+                warnings.warn(
+                    "Sample weights have reached infinite values,"
+                    f" at iteration {iboost}, causing overflow. "
+                    "Iterations stopped. Try lowering the learning rate.",
+                    stacklevel=2,
+                )
+                break
 
             # Stop if the sum of sample weights has become non-positive
             if sample_weight_sum <= 0:
@@ -380,6 +390,12 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -636,7 +652,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         # Only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight *= np.exp(estimator_weight * incorrect * (sample_weight > 0))
+            sample_weight = np.exp(
+                np.log(sample_weight)
+                + estimator_weight * incorrect * (sample_weight > 0)
+            )
 
         return sample_weight, estimator_weight, estimator_error
 
@@ -925,8 +944,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         In case of perfect fit, the learning procedure is stopped early.
 
     learning_rate : float, default=1.0
-        Weight applied to each classifier at each boosting iteration. A higher
-        learning rate increases the contribution of each classifier. There is
+        Weight applied to each regressor at each boosting iteration. A higher
+        learning rate increases the contribution of each regressor. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
 
     loss : {'linear', 'square', 'exponential'}, default='linear'
@@ -947,7 +966,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
 
-    estimators_ : list of classifiers
+    estimators_ : list of regressors
         The collection of fitted sub-estimators.
 
     estimator_weights_ : ndarray of floats
@@ -968,6 +987,12 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1168,7 +1193,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """Predict regression value for X.
 
         The predicted regression value of an input sample is computed
-        as the weighted median prediction of the classifiers in the ensemble.
+        as the weighted median prediction of the regressors in the ensemble.
 
         Parameters
         ----------
@@ -1190,7 +1215,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """Return staged predictions for X.
 
         The predicted regression value of an input sample is computed
-        as the weighted median prediction of the classifiers in the ensemble.
+        as the weighted median prediction of the regressors in the ensemble.
 
         This generator method yields the ensemble prediction after each
         iteration of boosting and therefore allows monitoring, such as to

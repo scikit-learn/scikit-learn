@@ -19,16 +19,13 @@ again the same transformers over and over.
 
 Note that the use of ``memory`` to enable caching becomes interesting when the
 fitting of a transformer is costly.
-
-# %%
-Illustration of ``Pipeline`` and ``GridSearchCV``
-###############################################################################
-
-This section illustrates the use of a ``Pipeline`` with ``GridSearchCV``
 """
 
-# Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
+# %%
+# Illustration of ``Pipeline`` and ``GridSearchCV``
+###############################################################################
 
+# Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
 
 import numpy as np
 import matplotlib.pyplot as plt

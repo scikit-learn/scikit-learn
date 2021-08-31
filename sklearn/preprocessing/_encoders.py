@@ -283,6 +283,12 @@ class OneHotEncoder(_BaseEncoder):
         .. versionchanged:: 0.23
            Added the possibility to contain `None` values.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     OrdinalEncoder : Performs an ordinal (integer)
@@ -745,6 +751,12 @@ class OrdinalEncoder(_BaseEncoder):
         the features in X and corresponding with the output of ``transform``).
         This does not include categories that weren't seen during ``fit``.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     OneHotEncoder : Performs a one-hot encoding of categorical features.
@@ -831,7 +843,8 @@ class OrdinalEncoder(_BaseEncoder):
                 f"got {self.unknown_value}."
             )
 
-        self._fit(X, force_all_finite="allow-nan")
+        # `_fit` will only raise an error when `self.handle_unknown="error"`
+        self._fit(X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan")
 
         if self.handle_unknown == "use_encoded_value":
             for feature_cats in self.categories_:

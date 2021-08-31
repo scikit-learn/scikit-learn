@@ -85,6 +85,12 @@ class KernelDensity(BaseEstimator):
     tree_ : ``BinaryTree`` instance
         The tree algorithm for fast generalized N-point problems.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     sklearn.neighbors.KDTree : K-dimensional tree for fast generalized N-point
@@ -179,7 +185,7 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         self : object
-            Returns instance of object.
+            Returns the instance itself.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = self._validate_data(X, order="C", dtype=DTYPE)
