@@ -43,7 +43,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultiTaskElasticNetCV",
     "MultiTaskLasso",
     "MultiTaskLassoCV",
-    "NMF",
     "NearestCentroid",
     "NeighborhoodComponentsAnalysis",
     "Normalizer",
