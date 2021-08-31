@@ -705,9 +705,7 @@ class Pipeline(_BaseComposition):
                     "Did you mean to call Pipeline[:-1].get_feature_names_out"
                     "()?".format(name)
                 )
-            feature_names = transform.get_feature_names_out(
-                input_features=feature_names
-            )
+            feature_names = transform.get_feature_names_out(input_features)
         return feature_names
 
     @property

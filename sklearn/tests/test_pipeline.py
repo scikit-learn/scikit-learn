@@ -1171,20 +1171,29 @@ def test_make_pipeline_memory():
     shutil.rmtree(cachedir)
 
 
+class FeatureNameSaver(BaseEstimator):
+    def fit(self, X, y=None):
+        self._check_feature_names(X, reset=True)
+        return self
+
+    def transform(self, X, y=None):
+        return X
+
+    def get_feature_names_out(self, input_features=None):
+        return input_features
+
+
 def test_features_names_passthrough():
     """Check pipeline.get_feature_names_out with passthrough"""
     pipe = Pipeline(
         steps=[
-            ("imputer", "passthrough"),
-            ("scaler", StandardScaler()),
-            ("select", "passthrough"),
+            ("names", FeatureNameSaver()),
+            ("pass", "passthrough"),
             ("clf", LogisticRegression()),
         ]
     )
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
-    xs = ["x0", "x1", "x2", "x3"]
-    assert_array_equal(pipe[:-1].get_feature_names_out(), xs)
     assert_array_equal(
         pipe[:-1].get_feature_names_out(iris.feature_names), iris.feature_names
     )

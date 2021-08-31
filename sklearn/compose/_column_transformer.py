@@ -451,7 +451,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             isinstance(col, str) for col in column
         ):
             column = _safe_indexing(feature_names_in, column)
-        return trans.get_feature_names_out(input_features=column)
+        return trans.get_feature_names_out(column)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
