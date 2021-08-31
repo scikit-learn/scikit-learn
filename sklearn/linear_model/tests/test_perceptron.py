@@ -19,7 +19,6 @@ X_csr.sort_indices()
 
 
 class MyPerceptron:
-
     def __init__(self, n_iter=1):
         self.n_iter = n_iter
 
@@ -72,20 +71,20 @@ def test_undefined_methods():
 
 def test_perceptron_l1_ratio():
     """Check that `l1_ratio` has an impact when `penalty='elasticnet'`"""
-    clf1 = Perceptron(l1_ratio=0, penalty='elasticnet')
+    clf1 = Perceptron(l1_ratio=0, penalty="elasticnet")
     clf1.fit(X, y)
 
-    clf2 = Perceptron(l1_ratio=0.15, penalty='elasticnet')
+    clf2 = Perceptron(l1_ratio=0.15, penalty="elasticnet")
     clf2.fit(X, y)
 
     assert clf1.score(X, y) != clf2.score(X, y)
 
     # check that the bounds of elastic net which should correspond to an l1 or
     # l2 penalty depending of `l1_ratio` value.
-    clf_l1 = Perceptron(penalty='l1').fit(X, y)
-    clf_elasticnet = Perceptron(l1_ratio=1, penalty='elasticnet').fit(X, y)
+    clf_l1 = Perceptron(penalty="l1").fit(X, y)
+    clf_elasticnet = Perceptron(l1_ratio=1, penalty="elasticnet").fit(X, y)
     assert_allclose(clf_l1.coef_, clf_elasticnet.coef_)
 
-    clf_l2 = Perceptron(penalty='l2').fit(X, y)
-    clf_elasticnet = Perceptron(l1_ratio=0, penalty='elasticnet').fit(X, y)
+    clf_l2 = Perceptron(penalty="l2").fit(X, y)
+    clf_elasticnet = Perceptron(l1_ratio=0, penalty="elasticnet").fit(X, y)
     assert_allclose(clf_l2.coef_, clf_elasticnet.coef_)

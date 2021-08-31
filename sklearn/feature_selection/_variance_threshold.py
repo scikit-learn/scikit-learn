@@ -28,6 +28,17 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
     variances_ : array, shape (n_features,)
         Variances of individual features.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Notes
     -----
     Allows NaN in the input.
@@ -46,7 +57,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
                [1, 1]])
     """
 
-    def __init__(self, threshold=0.):
+    def __init__(self, threshold=0.0):
         self.threshold = threshold
 
     def fit(self, X, y=None):
@@ -65,11 +76,14 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         -------
         self
         """
-        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
-                                dtype=np.float64,
-                                force_all_finite='allow-nan')
+        X = self._validate_data(
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=np.float64,
+            force_all_finite="allow-nan",
+        )
 
-        if hasattr(X, "toarray"):   # sparse matrix
+        if hasattr(X, "toarray"):  # sparse matrix
             _, self.variances_ = mean_variance_axis(X, axis=0)
             if self.threshold == 0:
                 mins, maxes = min_max_axis(X, axis=0)
@@ -84,9 +98,10 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
             # for constant features
             compare_arr = np.array([self.variances_, peak_to_peaks])
             self.variances_ = np.nanmin(compare_arr, axis=0)
+        elif self.threshold < 0.0:
+            raise ValueError(f"Threshold must be non-negative. Got: {self.threshold}")
 
-        if np.all(~np.isfinite(self.variances_) |
-                  (self.variances_ <= self.threshold)):
+        if np.all(~np.isfinite(self.variances_) | (self.variances_ <= self.threshold)):
             msg = "No feature in X meets the variance threshold {0:.5f}"
             if X.shape[0] == 1:
                 msg += " (X contains only one sample)"
@@ -100,4 +115,4 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         return self.variances_ > self.threshold
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {"allow_nan": True}

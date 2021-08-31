@@ -128,7 +128,7 @@ axes[0].set_title("PolynomialFeatures")
 
 splt = SplineTransformer(n_knots=4, degree=3).fit(X_train)
 axes[1].plot(x_plot, splt.transform(X_plot))
-axes[1].legend(axes[1].lines, [f"spline {n}" for n in range(4)])
+axes[1].legend(axes[1].lines, [f"spline {n}" for n in range(6)])
 axes[1].set_title("SplineTransformer")
 
 # plot knots of spline
@@ -138,7 +138,7 @@ plt.show()
 
 # %%
 # In the left plot, we recognize the lines corresponding to simple monomials
-# from ``x**0`` to ``x**3``. In the right figure, we see the four B-spline
+# from ``x**0`` to ``x**3``. In the right figure, we see the six B-spline
 # basis functions of ``degree=3`` and also the four knot positions that were
 # chosen during ``fit``. Note that there are ``degree`` number of additional
 # knots each to the left and to the right of the fitted interval. These are

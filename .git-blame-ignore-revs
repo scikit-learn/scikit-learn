@@ -1,0 +1,18 @@
+# Since git version 2.23, git-blame has a feature to ignore
+# certain commits.
+#
+# This file contains a list of commits that are not likely what
+# you are looking for in `git blame`. You can set this file as
+# a default ignore file for blame by running the following
+# command.
+#
+# $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# PR 18948: Migrate code style to Black
+82df48934eba1df9a1ed3be98aaace8eada59e6e
+
+# PR 20294: Use target_version >= 3.7 in Black
+351ace7935a4ea685171cc6d174890f08facd561
+
+# PR 20412: Use experimental_string_processing=true in Black
+3ae7c7615343bbd36acece57825d8b0d70fd9da4

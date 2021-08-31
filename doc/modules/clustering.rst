@@ -1653,7 +1653,7 @@ Drawbacks
 
   * E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
     hierarchical clusterings". Journal of the American Statistical Association.
-    http://wildfire.stat.ucla.edu/pdflibrary/fowlkes.pdf
+    https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008
 
   * `Wikipedia entry for the Fowlkes-Mallows Index
     <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_

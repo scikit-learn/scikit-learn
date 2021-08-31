@@ -68,7 +68,8 @@ and a two-way PDP between the two features::
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> features = [0, 1, (0, 1)]
-    >>> plot_partial_dependence(clf, X, features) #doctest: +SKIP
+    >>> plot_partial_dependence(clf, X, features)
+    <...>
 
 You can access the newly created figure and Axes objects using ``plt.gcf()``
 and ``plt.gca()``.
@@ -81,7 +82,8 @@ the PDPs should be created via the ``target`` argument::
     >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
     ...     max_depth=1).fit(iris.data, iris.target)
     >>> features = [3, 2, (3, 2)]
-    >>> plot_partial_dependence(mc_clf, X, features, target=0) #doctest: +SKIP
+    >>> plot_partial_dependence(mc_clf, X, features, target=0)
+    <...>
 
 The same parameter ``target`` is used to specify the target in multi-output
 regression settings.
@@ -150,7 +152,8 @@ ICE plots:
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> features = [0, 1]
     >>> plot_partial_dependence(clf, X, features,
-    ...     kind='individual')  # doctest: +SKIP
+    ...     kind='individual')
+    <...>
 
 In ICE plots it might not be easy to see the average effect of the input
 feature of interest. Hence, it is recommended to use ICE plots alongside
@@ -158,7 +161,8 @@ PDPs. They can be plotted together with
 ``kind='both'``.
 
     >>> plot_partial_dependence(clf, X, features,
-    ...     kind='both')  # doctest: +SKIP
+    ...     kind='both')
+    <...>
 
 Mathematical Definition
 =======================

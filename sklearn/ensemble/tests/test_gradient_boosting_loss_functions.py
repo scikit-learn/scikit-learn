@@ -26,11 +26,10 @@ def test_binomial_deviance():
     bd = BinomialDeviance(2)
 
     # pred has the same BD for y in {0, 1}
-    assert (bd(np.array([0.]), np.array([0.])) ==
-            bd(np.array([1.]), np.array([0.])))
+    assert bd(np.array([0.0]), np.array([0.0])) == bd(np.array([1.0]), np.array([0.0]))
 
-    assert bd(np.array([1., 1, 1]), np.array([100., 100, 100])) == approx(0)
-    assert bd(np.array([1., 0, 0]), np.array([100., -100, -100])) == approx(0)
+    assert bd(np.array([1.0, 1, 1]), np.array([100.0, 100, 100])) == approx(0)
+    assert bd(np.array([1.0, 0, 0]), np.array([100.0, -100, -100])) == approx(0)
 
     # check if same results as alternative definition of deviance, from ESLII
     # Eq. (10.18): -loglike = log(1 + exp(-2*z*f))
@@ -43,8 +42,9 @@ def test_binomial_deviance():
         return 2 * np.mean(np.log(1 + np.exp(-z * raw_pred)))
 
     test_data = product(
-        (np.array([0., 0, 0]), np.array([1., 1, 1])),
-        (np.array([-5., -5, -5]), np.array([3., 3, 3])))
+        (np.array([0.0, 0, 0]), np.array([1.0, 1, 1])),
+        (np.array([-5.0, -5, -5]), np.array([3.0, 3, 3])),
+    )
 
     for datum in test_data:
         assert bd(*datum) == approx(alt_dev(*datum))
@@ -153,9 +153,7 @@ def test_sample_weight_deviance():
         assert deviance_wo_w == deviance_w_w
 
 
-@pytest.mark.parametrize(
-    'n_classes, n_samples', [(3, 100), (5, 57), (7, 13)]
-)
+@pytest.mark.parametrize("n_classes, n_samples", [(3, 100), (5, 57), (7, 13)])
 def test_multinomial_deviance(n_classes, n_samples):
     # Check multinomial deviance with and without sample weights.
     rng = np.random.RandomState(13)
@@ -179,7 +177,7 @@ def test_multinomial_deviance(n_classes, n_samples):
 
 
 def test_mdl_computation_weighted():
-    raw_predictions = np.array([[1., -1., -.1], [-2., 1., 2.]])
+    raw_predictions = np.array([[1.0, -1.0, -0.1], [-2.0, 1.0, 2.0]])
     y_true = np.array([0, 1])
     weights = np.array([1, 3])
     expected_loss = 1.0909323
@@ -188,10 +186,10 @@ def test_mdl_computation_weighted():
     assert loss(y_true, raw_predictions, weights) == approx(expected_loss)
 
 
-@pytest.mark.parametrize('n', [0, 1, 2])
+@pytest.mark.parametrize("n", [0, 1, 2])
 def test_mdl_exception(n):
     # Check that MultinomialDeviance throws an exception when n_classes <= 2
-    err_msg = 'MultinomialDeviance requires more than 2 classes.'
+    err_msg = "MultinomialDeviance requires more than 2 classes."
     with pytest.raises(ValueError, match=err_msg):
         MultinomialDeviance(n)
 
@@ -205,18 +203,19 @@ def test_init_raw_predictions_shapes():
     n_samples = 100
     X = rng.normal(size=(n_samples, 5))
     y = rng.normal(size=n_samples)
-    for loss in (LeastSquaresError(),
-                 LeastAbsoluteError(),
-                 QuantileLossFunction(),
-                 HuberLossFunction()):
+    for loss in (
+        LeastSquaresError(),
+        LeastAbsoluteError(),
+        QuantileLossFunction(),
+        HuberLossFunction(),
+    ):
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         assert raw_predictions.shape == (n_samples, 1)
         assert raw_predictions.dtype == np.float64
 
     y = rng.randint(0, 2, size=n_samples)
-    for loss in (BinomialDeviance(n_classes=2),
-                 ExponentialLoss(n_classes=2)):
+    for loss in (BinomialDeviance(n_classes=2), ExponentialLoss(n_classes=2)):
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         assert raw_predictions.shape == (n_samples, 1)
@@ -256,7 +255,7 @@ def test_init_raw_predictions_values():
         assert_allclose(raw_predictions, np.median(y))
 
     # Quantile loss
-    for alpha in (.1, .5, .9):
+    for alpha in (0.1, 0.5, 0.9):
         loss = QuantileLossFunction(alpha=alpha)
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
@@ -282,7 +281,7 @@ def test_init_raw_predictions_values():
     init_estimator = loss.init_estimator().fit(X, y)
     raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
     p = y.mean()
-    assert_allclose(raw_predictions, .5 * np.log(p / (1 - p)))
+    assert_allclose(raw_predictions, 0.5 * np.log(p / (1 - p)))
 
     # Multinomial deviance loss
     for n_classes in range(3, 5):
@@ -295,8 +294,8 @@ def test_init_raw_predictions_values():
             assert_allclose(raw_predictions[:, k], np.log(p))
 
 
-@pytest.mark.parametrize('seed', range(5))
-@pytest.mark.parametrize('alpha', [0.4, 0.5, 0.6])
+@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("alpha", [0.4, 0.5, 0.6])
 def test_lad_equals_quantiles(seed, alpha):
     # Make sure quantile loss with alpha = .5 is equivalent to LAD
     lad = LeastAbsoluteError()
@@ -317,7 +316,7 @@ def test_lad_equals_quantiles(seed, alpha):
     ql_weighted_loss = ql(y_true, raw_predictions, sample_weight=weights)
     if alpha == 0.5:
         assert lad_weighted_loss == approx(2 * ql_weighted_loss)
-    pbl_weighted_loss = mean_pinball_loss(y_true, raw_predictions,
-                                          sample_weight=weights,
-                                          alpha=alpha)
+    pbl_weighted_loss = mean_pinball_loss(
+        y_true, raw_predictions, sample_weight=weights, alpha=alpha
+    )
     assert pbl_weighted_loss == approx(ql_weighted_loss)

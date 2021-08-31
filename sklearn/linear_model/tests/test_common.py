@@ -12,24 +12,31 @@ from sklearn.linear_model import Ridge
 from sklearn.linear_model import RidgeCV
 from sklearn.linear_model import RidgeClassifier
 from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model import BayesianRidge
+from sklearn.linear_model import ARDRegression
 
 from sklearn.utils import check_random_state
 
 
 @pytest.mark.parametrize(
-    'normalize, n_warnings, warning_category',
-    [(True, 1, FutureWarning),
-     (False, 1, FutureWarning),
-     ("deprecated", 0, None)]
+    "normalize, n_warnings, warning_category",
+    [(True, 1, FutureWarning), (False, 1, FutureWarning), ("deprecated", 0, None)],
 )
 @pytest.mark.parametrize(
     "estimator",
-    [LinearRegression, Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV]
+    [
+        LinearRegression,
+        Ridge,
+        RidgeCV,
+        RidgeClassifier,
+        RidgeClassifierCV,
+        BayesianRidge,
+        ARDRegression,
+    ],
 )
 # FIXME remove test in 1.2
 def test_linear_model_normalize_deprecation_message(
-     estimator,
-     normalize, n_warnings, warning_category
+    estimator, normalize, n_warnings, warning_category
 ):
     # check that we issue a FutureWarning when normalize was set in
     # linear model

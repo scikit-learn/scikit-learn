@@ -51,6 +51,7 @@ t = np.pi * np.linspace(0, 1, n_features)
 def sqr(x):
     return np.sign(np.cos(x))
 
+
 X = list()
 y = list()
 for i, (phi, a) in enumerate([(.5, .15), (.5, .6), (.3, .2)]):

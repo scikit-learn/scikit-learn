@@ -27,24 +27,27 @@ def test_fetch_rcv1(fetch_rcv1_fxt):
     assert (804414,) == s1.shape
     assert 103 == len(cat_list)
 
+    # test descr
+    assert data1.DESCR.startswith(".. _rcv1_dataset:")
+
     # test ordering of categories
-    first_categories = ['C11', 'C12', 'C13', 'C14', 'C15', 'C151']
+    first_categories = ["C11", "C12", "C13", "C14", "C15", "C151"]
     assert_array_equal(first_categories, cat_list[:6])
 
     # test number of sample for some categories
-    some_categories = ('GMIL', 'E143', 'CCAT')
+    some_categories = ("GMIL", "E143", "CCAT")
     number_non_zero_in_cat = (5, 1206, 381327)
     for num, cat in zip(number_non_zero_in_cat, some_categories):
         j = cat_list.index(cat)
         assert num == Y1[:, j].data.size
 
     # test shuffling and subset
-    data2 = fetch_rcv1_fxt(shuffle=True, subset='train', random_state=77)
+    data2 = fetch_rcv1_fxt(shuffle=True, subset="train", random_state=77)
     X2, Y2 = data2.data, data2.target
     s2 = data2.sample_id
 
     # test return_X_y option
-    fetch_func = partial(fetch_rcv1_fxt, shuffle=False, subset='train')
+    fetch_func = partial(fetch_rcv1_fxt, shuffle=False, subset="train")
     check_return_X_y(data2, fetch_func)
 
     # The first 23149 samples are the training samples

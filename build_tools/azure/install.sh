@@ -51,7 +51,14 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # sklearn/svm/_libsvm.cpython-38-darwin.so,
             # 2): Symbol not found: _svm_check_parameter error
             TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
+        else
+            # Without openmp, we use the system clang. Here we use /usr/bin/ar
+            # instead because llvm-ar errors
+            export AR=/usr/bin/ar
         fi
+    else
+        # FIXME: temporary fix to link against system libraries on linux
+        export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 	make_conda $TO_INSTALL
     setup_ccache
@@ -66,9 +73,9 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
                           $(get_dep joblib $JOBLIB_VERSION)
 
-elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
+elif [[ "$DISTRIB" == "debian-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
+    apt-get install -y python3-dev python3-numpy python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
 
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
@@ -77,6 +84,8 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
                           $(get_dep joblib $JOBLIB_VERSION)
 
 elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    # FIXME: temporary fix to link against system libraries on linux
+    export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     # Since conda main channel usually lacks behind on the latest releases,
     # we use pypi to test against the latest releases of the dependencies.
     # conda is still used as a convenient way to install Python and pip.
@@ -92,15 +101,13 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # and install a version less than 3.0.0 until the issue #18316 is solved.
     python -m pip install "lightgbm<3.0.0" --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+    # FIXME: temporary fix to link against system libraries on linux
+    export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     make_conda "ccache python=$PYTHON_VERSION"
     python -m pip install -U pip
     echo "Installing numpy and scipy master wheels"
     dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas
-
-    # issue with metadata in scipy dev builds https://github.com/scipy/scipy/issues/13196
-    # --use-deprecated=legacy-resolver needs to be included
-    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url scipy --use-deprecated=legacy-resolver
+    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
     pip install --pre cython
     setup_ccache
     echo "Installing joblib master"

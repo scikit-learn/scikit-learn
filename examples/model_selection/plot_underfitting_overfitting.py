@@ -33,6 +33,7 @@ from sklearn.model_selection import cross_val_score
 def true_fun(X):
     return np.cos(1.5 * np.pi * X)
 
+
 np.random.seed(0)
 
 n_samples = 30

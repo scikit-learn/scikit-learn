@@ -19,7 +19,6 @@ from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import fast_logdet
 from ..metrics.pairwise import pairwise_distances
-from ..utils.validation import _deprecate_positional_args
 
 
 def log_likelihood(emp_cov, precision):
@@ -43,13 +42,12 @@ def log_likelihood(emp_cov, precision):
         Sample mean of the log-likelihood.
     """
     p = precision.shape[0]
-    log_likelihood_ = - np.sum(emp_cov * precision) + fast_logdet(precision)
+    log_likelihood_ = -np.sum(emp_cov * precision) + fast_logdet(precision)
     log_likelihood_ -= p * np.log(2 * np.pi)
-    log_likelihood_ /= 2.
+    log_likelihood_ /= 2.0
     return log_likelihood_
 
 
-@_deprecate_positional_args
 def empirical_covariance(X, *, assume_centered=False):
     """Computes the Maximum likelihood covariance estimator
 
@@ -86,8 +84,9 @@ def empirical_covariance(X, *, assume_centered=False):
         X = np.reshape(X, (1, -1))
 
     if X.shape[0] == 1:
-        warnings.warn("Only one sample available. "
-                      "You may want to reshape your data array")
+        warnings.warn(
+            "Only one sample available. You may want to reshape your data array"
+        )
 
     if assume_centered:
         covariance = np.dot(X.T, X) / X.shape[0]
@@ -100,7 +99,7 @@ def empirical_covariance(X, *, assume_centered=False):
 
 
 class EmpiricalCovariance(BaseEstimator):
-    """Maximum likelihood covariance estimator
+    """Maximum likelihood covariance estimator.
 
     Read more in the :ref:`User Guide <covariance>`.
 
@@ -127,6 +126,29 @@ class EmpiricalCovariance(BaseEstimator):
         Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    EllipticEnvelope : An object for detecting outliers in
+        a Gaussian distributed dataset.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    LedoitWolf : LedoitWolf Estimator.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    OAS : Oracle Approximating Shrinkage Estimator.
+    ShrunkCovariance : Covariance estimator with shrinkage.
+
     Examples
     --------
     >>> import numpy as np
@@ -144,9 +166,8 @@ class EmpiricalCovariance(BaseEstimator):
            [0.2818..., 0.3928...]])
     >>> cov.location_
     array([0.0622..., 0.0193...])
-
     """
-    @_deprecate_positional_args
+
     def __init__(self, *, store_precision=True, assume_centered=False):
         self.store_precision = store_precision
         self.assume_centered = assume_centered
@@ -187,8 +208,7 @@ class EmpiricalCovariance(BaseEstimator):
         return precision
 
     def fit(self, X, y=None):
-        """Fits the Maximum Likelihood Estimator covariance model
-        according to the given training data and parameters.
+        """Fit the maximum liklihood covariance estimator to X.
 
         Parameters
         ----------
@@ -202,21 +222,20 @@ class EmpiricalCovariance(BaseEstimator):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        covariance = empirical_covariance(
-            X, assume_centered=self.assume_centered)
+        covariance = empirical_covariance(X, assume_centered=self.assume_centered)
         self._set_covariance(covariance)
 
         return self
 
     def score(self, X_test, y=None):
-        """Computes the log-likelihood of a Gaussian data set with
-        `self.covariance_` as an estimator of its covariance matrix.
+        """Compute the log-likelihood of a Gaussian data set with `self.covariance_`.
 
         Parameters
         ----------
@@ -237,17 +256,14 @@ class EmpiricalCovariance(BaseEstimator):
         """
         X_test = self._validate_data(X_test, reset=False)
         # compute empirical covariance of the test set
-        test_cov = empirical_covariance(
-            X_test - self.location_, assume_centered=True)
+        test_cov = empirical_covariance(X_test - self.location_, assume_centered=True)
         # compute log likelihood
         res = log_likelihood(test_cov, self.get_precision())
 
         return res
 
-    def error_norm(self, comp_cov, norm='frobenius', scaling=True,
-                   squared=True):
-        """Computes the Mean Squared Error between two covariance estimators.
-        (In the sense of the Frobenius norm).
+    def error_norm(self, comp_cov, norm="frobenius", scaling=True, squared=True):
+        """Compute the Mean Squared Error between two covariance estimators.
 
         Parameters
         ----------
@@ -284,7 +300,8 @@ class EmpiricalCovariance(BaseEstimator):
             squared_norm = np.amax(linalg.svdvals(np.dot(error.T, error)))
         else:
             raise NotImplementedError(
-                "Only spectral and frobenius norms are implemented")
+                "Only spectral and frobenius norms are implemented"
+            )
         # optionally scale the error norm
         if scaling:
             squared_norm = squared_norm / error.shape[0]
@@ -297,7 +314,7 @@ class EmpiricalCovariance(BaseEstimator):
         return result
 
     def mahalanobis(self, X):
-        """Computes the squared Mahalanobis distances of given observations.
+        """Compute the squared Mahalanobis distances of given observations.
 
         Parameters
         ----------
@@ -316,7 +333,8 @@ class EmpiricalCovariance(BaseEstimator):
         precision = self.get_precision()
         with config_context(assume_finite=True):
             # compute mahalanobis distances
-            dist = pairwise_distances(X, self.location_[np.newaxis, :],
-                                      metric='mahalanobis', VI=precision)
+            dist = pairwise_distances(
+                X, self.location_[np.newaxis, :], metric="mahalanobis", VI=precision
+            )
 
         return np.reshape(dist, (len(X),)) ** 2

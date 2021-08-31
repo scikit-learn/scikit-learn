@@ -130,7 +130,7 @@ Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 :math:`P(y|x)` per sample :math:`x`::
 
     >>> clf = SGDClassifier(loss="log", max_iter=5).fit(X, y)
-    >>> clf.predict_proba([[1., 1.]])
+    >>> clf.predict_proba([[1., 1.]]) # doctest: +SKIP
     array([[0.00..., 0.99...]])
 
 The concrete penalty can be set via the ``penalty`` parameter.

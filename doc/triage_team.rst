@@ -25,4 +25,16 @@
     <a href='https://github.com/albertcthomas'><img src='https://avatars3.githubusercontent.com/u/15966638?v=4' class='avatar' /></a> <br />
     <p>Albert Thomas</p>
     </div>
+    <div>
+    <a href='https://github.com/smarie'><img src='https://avatars.githubusercontent.com/u/3236794?v=4' class='avatar' /></a> <br />
+    <p>Sylvain Marié</p>
+    </div>
+    <div>
+    <a href='https://github.com/norbusan'><img src='https://avatars.githubusercontent.com/u/1735589?v=4' class='avatar' /></a> <br />
+    <p>Norbert Preining</p>
+    </div>
+    <div>
+    <a href='https://github.com/jjerphan'><img src='https://avatars.githubusercontent.com/u/13029839?v=4' class='avatar' /></a> <br />
+    <p>Julien Jerphanion</p>
+    </div>
     </div>

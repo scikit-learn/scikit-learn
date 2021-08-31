@@ -45,7 +45,7 @@ jobs:
         -w /io
         --detach
         --name skcontainer
-        -e DISTRIB=ubuntu-32
+        -e DISTRIB=debian-32
         -e TEST_DIR=/temp_dir
         -e JUNITXML=$JUNITXML
         -e VIRTUALENV=testvenv
@@ -63,7 +63,7 @@ jobs:
         -e OMP_NUM_THREADS=$OMP_NUM_THREADS
         -e OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
-        i386/ubuntu:18.04
+        i386/debian:10.9
         sleep 1000000
       displayName: 'Start container'
     - script: >
