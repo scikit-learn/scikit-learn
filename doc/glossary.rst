@@ -644,7 +644,7 @@ General Concepts
 
         Note that for most distance metrics, we rely on implementations from
         :mod:`scipy.spatial.distance`, but may reimplement for efficiency in
-        our context. The :class:`metrics.Distance` is used to implement
+        our context. The :class:`metrics.DistanceMetric` interface is used to implement
         distance metrics for integration with efficient neighbors search.
 
     pd
