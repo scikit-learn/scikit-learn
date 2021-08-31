@@ -101,8 +101,12 @@ def _get_response(X, estimator, response_method, pos_label=None):
         )
 
     if y_pred.ndim != 1:  # `predict_proba`
-        if y_pred.shape[1] != 2:
-            raise ValueError(classification_error)
+        y_pred_shape = y_pred.shape[1]
+        if y_pred_shape != 2:
+            raise ValueError(
+                f"{classification_error} fit on multiclass ({y_pred_shape} classes)"
+                " data"
+            )
         if pos_label is None:
             pos_label = estimator.classes_[1]
             y_pred = y_pred[:, 1]

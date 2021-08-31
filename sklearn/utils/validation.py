@@ -12,6 +12,7 @@
 from functools import wraps
 import warnings
 import numbers
+import operator
 
 import numpy as np
 import scipy.sparse as sp
@@ -1234,7 +1235,15 @@ def check_non_negative(X, whom):
         raise ValueError("Negative values in data passed to %s" % whom)
 
 
-def check_scalar(x, name, target_type, *, min_val=None, max_val=None):
+def check_scalar(
+    x,
+    name,
+    target_type,
+    *,
+    min_val=None,
+    max_val=None,
+    closed="neither",
+):
     """Validate scalar parameters type and value.
 
     Parameters
@@ -1252,12 +1261,21 @@ def check_scalar(x, name, target_type, *, min_val=None, max_val=None):
         The minimum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have a lower bound.
 
-    max_val : float or int, default=None
+    max_val : float or int, default=False
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
-    Raises
+    closed : {"left", "right", "both", "neither"}, default="neither"
+        Whether the interval is closed on the left-side, right-side, both or
+        neither.
+
+    Returns
     -------
+    x : numbers.Number
+        The validated number.
+
+    Raises
+    ------
     TypeError
         If the parameter's type does not match the desired type.
 
@@ -1266,15 +1284,27 @@ def check_scalar(x, name, target_type, *, min_val=None, max_val=None):
     """
 
     if not isinstance(x, target_type):
-        raise TypeError(
-            "`{}` must be an instance of {}, not {}.".format(name, target_type, type(x))
+        raise TypeError(f"{name} must be an instance of {target_type}, not {type(x)}.")
+
+    expected_closed = {"left", "right", "both", "neither"}
+    if closed not in expected_closed:
+        raise ValueError(f"Unknown value for `closed`: {closed}")
+
+    comparison_operator = operator.le if closed in ("left", "both") else operator.lt
+    if min_val is not None and comparison_operator(x, min_val):
+        raise ValueError(
+            f"{name} == {x}, must be"
+            f" {'>' if closed in ('left', 'both') else '>='} {min_val}."
         )
 
-    if min_val is not None and x < min_val:
-        raise ValueError("`{}`= {}, must be >= {}.".format(name, x, min_val))
+    comparison_operator = operator.ge if closed in ("right", "both") else operator.gt
+    if max_val is not None and comparison_operator(x, max_val):
+        raise ValueError(
+            f"{name} == {x}, must be"
+            f" {'<' if closed in ('right', 'both') else '<='} {max_val}."
+        )
 
-    if max_val is not None and x > max_val:
-        raise ValueError("`{}`= {}, must be <= {}.".format(name, x, max_val))
+    return x
 
 
 def _check_psd_eigenvalues(lambdas, enable_warnings=False):
