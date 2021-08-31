@@ -27,7 +27,6 @@ from ._loss import (
     CyHalfTweedieLoss,
     CyBinaryCrossEntropy,
     CyCategoricalCrossEntropy,
-    ReadonlyWrapper,  # TODO: Remove with Cython >= 3.0
 )
 from .link import (
     Interval,
@@ -37,6 +36,7 @@ from .link import (
     LogitLink,
     MultinomialLogit,
 )
+from ..utils._readonly_array_wrapper import ReadonlyWrapper
 from ..utils.stats import _weighted_percentile
 
 
