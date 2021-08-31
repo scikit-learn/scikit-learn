@@ -709,7 +709,7 @@ def test_column_transformer_get_set_params():
         "trans2__with_std": True,
         "transformers": ct.transformers,
         "transformer_weights": None,
-        "prefix_feature_names_out": "when_colliding",
+        "prefix_feature_names_out": True,
         "verbose": False,
     }
 
@@ -730,7 +730,7 @@ def test_column_transformer_get_set_params():
         "trans2__with_std": True,
         "transformers": ct.transformers,
         "transformer_weights": None,
-        "prefix_feature_names_out": "when_colliding",
+        "prefix_feature_names_out": True,
         "verbose": False,
     }
 
@@ -1149,7 +1149,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "trans1__with_std": True,
         "transformers": ct.transformers,
         "transformer_weights": None,
-        "prefix_feature_names_out": "when_colliding",
+        "prefix_feature_names_out": True,
         "verbose": False,
     }
 
@@ -1169,7 +1169,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "trans1": "passthrough",
         "transformers": ct.transformers,
         "transformer_weights": None,
-        "prefix_feature_names_out": "when_colliding",
+        "prefix_feature_names_out": True,
         "verbose": False,
     }
     assert ct.get_params() == exp
@@ -1454,7 +1454,7 @@ def test_make_column_selector_pickle():
     "get_names, expected_names",
     [
         ("get_feature_names", ["ohe__x0_a", "ohe__x0_b", "ohe__x1_z"]),
-        ("get_feature_names_out", ["col1_a", "col1_b", "col2_z"]),
+        ("get_feature_names_out", ["ohe__col1_a", "ohe__col1_b", "ohe__col2_z"]),
     ],
 )
 def test_feature_names_empty_columns(empty_col, get_names, expected_names):
@@ -1491,7 +1491,7 @@ def test_feature_names_out_pandas(selector):
     ct = ColumnTransformer([("ohe", OneHotEncoder(), selector)])
     ct.fit(df)
 
-    assert_array_equal(ct.get_feature_names_out(), ["col2_z"])
+    assert_array_equal(ct.get_feature_names_out(), ["ohe__col2_z"])
 
 
 @pytest.mark.parametrize(
@@ -1503,7 +1503,7 @@ def test_feature_names_out_non_pandas(selector):
     ct = ColumnTransformer([("ohe", OneHotEncoder(), selector)])
     ct.fit(X)
 
-    assert_array_equal(ct.get_feature_names_out(), ["x1_z"])
+    assert_array_equal(ct.get_feature_names_out(), ["ohe__x1_z"])
 
 
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
@@ -1681,52 +1681,263 @@ def test_feature_names_in_():
     assert_array_equal(ct.feature_names_in_, feature_names)
 
 
-def test_feature_names_out_prefix_invalid():
-    """Check error is raised for invalid prefix_feature_names_out"""
-    ct = ColumnTransformer(
-        [("bycol1", TransWithNames(), [0, 1]), ("bycol2", "passthrough", [1])],
-        prefix_feature_names_out="bad",
-    )
-    msg = "prefix_feature_names_out must be either 'when_colliding' or"
-    with pytest.raises(ValueError, match=msg):
-        ct.fit(np.array([[0, 1], [2, 3]]))
-
-
 class TransWithNames(Trans):
+    def __init__(self, feature_names_out=None):
+        self.feature_names_out = feature_names_out
+
     def get_feature_names_out(self, input_features=None):
+        if self.feature_names_out is not None:
+            return self.feature_names_out
         return input_features
 
 
-def test_feature_names_out_prefix_always():
-    """Check feature_names_out for prefix_feature_names_out='always'"""
+@pytest.mark.parametrize(
+    "transformers, remainder, expected_names",
+    [
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "passthrough",
+            ["bycol1__d", "bycol1__c", "bycol2__d", "remainder__a", "remainder__b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "drop",
+            ["bycol1__d", "bycol1__c", "bycol2__d"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "drop", ["d"]),
+            ],
+            "passthrough",
+            ["bycol1__b", "remainder__a", "remainder__c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["pca1", "pca2"]), ["a", "b", "d"]),
+            ],
+            "passthrough",
+            ["bycol1__pca1", "bycol1__pca2", "remainder__c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "b"]), ["d"]),
+                ("bycol2", "passthrough", ["b"]),
+            ],
+            "drop",
+            ["bycol1__a", "bycol1__b", "bycol2__b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames([f"pca{i}" for i in range(2)]), ["b"]),
+                ("bycol2", TransWithNames([f"pca{i}" for i in range(2)]), ["b"]),
+            ],
+            "passthrough",
+            [
+                "bycol1__pca0",
+                "bycol1__pca1",
+                "bycol2__pca0",
+                "bycol2__pca1",
+                "remainder__a",
+                "remainder__c",
+                "remainder__d",
+            ],
+        ),
+        (
+            [
+                ("bycol1", "drop", ["d"]),
+            ],
+            "drop",
+            [],
+        ),
+    ],
+)
+def test_feature_names_out_prefix_true(transformers, remainder, expected_names):
+    """Check feature_names_out for prefix_feature_names_out==True (default)"""
     pd = pytest.importorskip("pandas")
-    df = pd.DataFrame([[1, 2, 3]], columns=["a", "c", "d"])
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
     ct = ColumnTransformer(
-        [("bycol1", TransWithNames(), ["a", "c"]), ("bycol2", "passthrough", ["a"])],
-        remainder="passthrough",
-        prefix_feature_names_out="always",
+        transformers,
+        remainder=remainder,
     )
     ct.fit(df)
 
-    expected = ["bycol1__a", "bycol1__c", "bycol2__a", "remainder__d"]
     names = ct.get_feature_names_out()
     assert isinstance(names, np.ndarray)
-    assert_array_equal(names, expected)
+    assert names.dtype == object
+    assert_array_equal(names, expected_names)
 
 
-def test_feature_names_out_prefix_when_colliding():
-    """Check feature_names_out for prefix_feature_names_out='when_colliding'"""
-
+@pytest.mark.parametrize(
+    "transformers, remainder, expected_names",
+    [
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["a"]),
+            ],
+            "passthrough",
+            ["d", "c", "a", "b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a"]), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "drop",
+            ["a", "d"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "drop", ["d"]),
+            ],
+            "passthrough",
+            ["b", "a", "c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["pca1", "pca2"]), ["a", "b", "d"]),
+            ],
+            "passthrough",
+            ["pca1", "pca2", "c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "c"]), ["d"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "drop",
+            ["a", "c", "d"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames([f"pca{i}" for i in range(2)]), ["b"]),
+                ("bycol2", TransWithNames([f"kpca{i}" for i in range(2)]), ["b"]),
+            ],
+            "passthrough",
+            ["pca0", "pca1", "kpca0", "kpca1", "a", "c", "d"],
+        ),
+        (
+            [
+                ("bycol1", "drop", ["d"]),
+            ],
+            "drop",
+            [],
+        ),
+    ],
+)
+def test_feature_names_out_prefix_false(transformers, remainder, expected_names):
+    """Check feature_names_out for prefix_feature_names_out==True (default)"""
     pd = pytest.importorskip("pandas")
-    df = pd.DataFrame([[1, 2, 3]], columns=["a", "c", "d"])
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
     ct = ColumnTransformer(
-        [("bycol1", TransWithNames(), ["a", "c"]), ("bycol2", "passthrough", ["a"])],
-        remainder="passthrough",
-        prefix_feature_names_out="when_colliding",
+        transformers,
+        remainder=remainder,
+        prefix_feature_names_out=False,
     )
     ct.fit(df)
 
-    # "a" is colliding but "c" is not
-    expected = ["bycol1__a", "c", "bycol2__a", "d"]
     names = ct.get_feature_names_out()
-    assert_array_equal(names, expected)
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected_names)
+
+
+@pytest.mark.parametrize(
+    "transformers, remainder, colliding_columns",
+    [
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "passthrough", ["b"]),
+            ],
+            "drop",
+            "['b']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["c", "d"]), ["c"]),
+                ("bycol2", "passthrough", ["c"]),
+            ],
+            "drop",
+            "['c']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a"]), ["b"]),
+                ("bycol2", "passthrough", ["b"]),
+            ],
+            "passthrough",
+            "['a']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a"]), ["b"]),
+                ("bycol2", "drop", ["b"]),
+            ],
+            "passthrough",
+            "['a']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["c", "b"]), ["b"]),
+                ("bycol2", "passthrough", ["c", "b"]),
+            ],
+            "drop",
+            "['b', 'c']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a"]), ["b"]),
+                ("bycol2", "passthrough", ["a"]),
+                ("bycol3", TransWithNames(["a"]), ["b"]),
+            ],
+            "passthrough",
+            "['a']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "b"]), ["b"]),
+                ("bycol2", "passthrough", ["a"]),
+                ("bycol3", TransWithNames(["b"]), ["c"]),
+            ],
+            "passthrough",
+            "['a', 'b']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames([f"pca{i}" for i in range(6)]), ["b"]),
+                ("bycol2", TransWithNames([f"pca{i}" for i in range(6)]), ["b"]),
+            ],
+            "passthrough",
+            "['pca0', 'pca1', 'pca2', 'pca3', 'pca4', ...]",
+        ),
+    ],
+)
+def test_feature_names_out_prefix_false_errors(
+    transformers, remainder, colliding_columns
+):
+    """Check feature_names_out for prefix_feature_names_out==False"""
+
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
+    ct = ColumnTransformer(
+        transformers,
+        remainder=remainder,
+        prefix_feature_names_out=False,
+    )
+    ct.fit(df)
+
+    msg = re.escape(
+        f"Output feature names: {colliding_columns} are not unique. Please set "
+        "prefix_feature_names_out=True to add prefixes to feature names"
+    )
+    with pytest.raises(ValueError, match=msg):
+        ct.get_feature_names_out()

@@ -113,14 +113,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    prefix_feature_names_out : {"when_colliding", "always"}, default="when_colliding"
-        Configures how :meth:`get_feature_names_out` adds prefixes to
-        feature names out:
+    prefix_feature_names_out : bool, default=True
+        If True, :meth:`get_feature_names_out` will prefix all feature names
+        with the name of the transformer that generated that feature.
+        If False, :meth:`get_feature_names_out` will not prefix any feature
+        names and will error if feature names collide.
 
-        - `"when_colliding"` : Adds the transformer name as a prefix only when
-          the feature names out are collidating.
-        - `"always"` : Always add the transformer name as a prefix.
-
+        .. versionadded:: 1.0
 
     Attributes
     ----------
@@ -206,7 +205,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         n_jobs=None,
         transformer_weights=None,
         verbose=False,
-        prefix_feature_names_out="when_colliding",
+        prefix_feature_names_out=True,
     ):
         self.transformers = transformers
         self.remainder = remainder
@@ -507,31 +506,44 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 continue
             transformer_with_feature_names_out.append((name, feature_names_out))
 
+        if not transformer_with_feature_names_out:
+            # No feature names
+            return np.array([], dtype=object)
+
         # always prefix the feature names out with the transformers name
-        if self.prefix_feature_names_out == "always":
+        if self.prefix_feature_names_out:
             names = list(
                 chain.from_iterable(
                     (f"{name}__{i}" for i in feature_names_out)
                     for name, feature_names_out in transformer_with_feature_names_out
                 )
             )
-            return np.asarray(names)
+            return np.asarray(names, dtype=object)
 
-        # prefix_feature_names_out == "when_colliding"
+        # prefix_feature_names_out==False
+        # Check that names are all unique without a prefix
         feature_names_count = Counter(
             chain.from_iterable(s for _, s in transformer_with_feature_names_out)
         )
+        top_6_overlap = [
+            name for name, count in feature_names_count.most_common(6) if count > 1
+        ]
+        top_6_overlap.sort()
+        if top_6_overlap:
+            if len(top_6_overlap) == 6:
+                # There are more than 5 overlapping names, we only show the 5
+                # of the feature names
+                names_repr = str(top_6_overlap[:5])[:-1] + ", ...]"
+            else:
+                names_repr = str(top_6_overlap)
+            raise ValueError(
+                f"Output feature names: {names_repr} are not unique. Please set "
+                "prefix_feature_names_out=True to add prefixes to feature names"
+            )
 
-        output = []
-        for transformer_name, feature_names in transformer_with_feature_names_out:
-            for feat_name in feature_names:
-                if feature_names_count[feat_name] == 1:
-                    # unique
-                    output.append(f"{feat_name}")
-                else:
-                    # not unique
-                    output.append(f"{transformer_name}__{feat_name}")
-        return np.asarray(output)
+        return np.concatenate(
+            [name for _, name in transformer_with_feature_names_out], dtype=object
+        )
 
     def _update_fitted_transformers(self, transformers):
         # transformers are fitted; excludes 'drop' cases
@@ -680,10 +692,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
-        if self.prefix_feature_names_out not in ("when_colliding", "always"):
-            raise ValueError(
-                "prefix_feature_names_out must be either 'when_colliding' or 'always'"
-            )
 
         result = self._fit_transform(X, y, _fit_transform_one)
 
