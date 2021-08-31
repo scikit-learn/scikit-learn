@@ -661,7 +661,7 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
     y_prob = clf.predict_proba(X)
 
     if constructor_name == "from_estimator":
-        msg = "should be a binary classifier"
+        msg = "to be a binary classifier, but got"
         with pytest.raises(ValueError, match=msg):
             CalibrationDisplay.from_estimator(clf, X, y)
     else:
