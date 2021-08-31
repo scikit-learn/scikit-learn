@@ -4,7 +4,6 @@ from numpy.testing import assert_allclose
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import plot_precision_recall_curve
-from sklearn.metrics import PrecisionRecallDisplay
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.datasets import make_classification
@@ -18,10 +17,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.compose import make_column_transformer
 
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
+    # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
+    "matplotlib.*",
+    # TODO: Remove in 1.2 (as well as all the tests below)
+    "ignore:Function plot_precision_recall_curve is deprecated",
 )
 
 
@@ -197,24 +198,6 @@ def test_plot_precision_recall_curve_estimator_name_multiple_calls(pyplot):
     clf_name = "another_name"
     disp.plot(name=clf_name)
     assert clf_name in disp.line_.get_label()
-
-
-@pytest.mark.parametrize(
-    "average_precision, estimator_name, expected_label",
-    [
-        (0.9, None, "AP = 0.90"),
-        (None, "my_est", "my_est"),
-        (0.8, "my_est2", "my_est2 (AP = 0.80)"),
-    ],
-)
-def test_default_labels(pyplot, average_precision, estimator_name, expected_label):
-    prec = np.array([1, 0.5, 0])
-    recall = np.array([0, 0.5, 1])
-    disp = PrecisionRecallDisplay(
-        prec, recall, average_precision=average_precision, estimator_name=estimator_name
-    )
-    disp.plot()
-    assert disp.line_.get_label() == expected_label
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
