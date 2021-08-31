@@ -27,7 +27,7 @@ from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
-from .utils.validation import _make_feature_names_in
+from .utils.validation import _check_feature_names_in
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
 
@@ -696,7 +696,7 @@ class Pipeline(_BaseComposition):
         feature_names_out : ndarray of str
             Transformed feature names.
         """
-        feature_names = _make_feature_names_in(self, input_features)
+        feature_names = _check_feature_names_in(self, input_features)
         for _, name, transform in self._iter():
             if not hasattr(transform, "get_feature_names_out"):
                 raise AttributeError(
@@ -1054,7 +1054,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         feature_names_out : ndarray of str
             Transformed feature names.
         """
-        input_features = _make_feature_names_in(self, input_features)
+        input_features = _check_feature_names_in(self, input_features)
         feature_names = []
         for name, trans, _ in self._iter():
             if not hasattr(trans, "get_feature_names_out"):

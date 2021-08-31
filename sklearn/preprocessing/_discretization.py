@@ -15,7 +15,7 @@ from . import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _make_feature_names_in
+from ..utils.validation import _check_feature_names_in
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -397,5 +397,5 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str
             Transformed feature names.
         """
-        input_features = _make_feature_names_in(self, input_features)
+        input_features = _check_feature_names_in(self, input_features)
         return self._encoder.get_feature_names_out(input_features)

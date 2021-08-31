@@ -11,7 +11,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _make_feature_names_in
+from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique
@@ -728,7 +728,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         cats = self.categories_
-        input_features = _make_feature_names_in(self, input_features)
+        input_features = _check_feature_names_in(self, input_features)
 
         feature_names = []
         for i in range(len(cats)):

@@ -1670,7 +1670,7 @@ def _get_feature_names(X):
         return feature_names
 
 
-def _make_feature_names_in(estimator, input_features):
+def _check_feature_names_in(estimator, input_features):
     """Make feature_names_in_ from estimator.
 
     Used to validate input from `get_feature_names_out(input_features=None)`.

@@ -23,7 +23,7 @@ from ..utils import _safe_indexing
 from ..utils import _get_column_indices
 from ..utils.deprecation import deprecated
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_array, check_is_fitted, _make_feature_names_in
+from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
 from ..utils.fixes import delayed
 
 
@@ -490,7 +490,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Transformed feature names.
         """
         check_is_fitted(self)
-        input_features = _make_feature_names_in(self, input_features)
+        input_features = _check_feature_names_in(self, input_features)
 
         # List of tuples (name, feature_names_out)
         transformer_with_feature_names_out = []
