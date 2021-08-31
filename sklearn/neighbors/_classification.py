@@ -64,10 +64,11 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric : str or callable, default='minkowski'
-        The distance metric to use for the tree.  The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. For a list of available metrics, see the documentation of
+    metric : str or callable, default='fast_sqeuclidean'
+        The distance metric to use for the tree. The default distance is
+        'fast_sqeuclidean' as fast alternative for the Euclidean distance
+        metric. If exact results are needed, prefer 'euclidean'.
+        For a list of available metrics, see the documentation of
         :class:`~sklearn.metrics.DistanceMetric`.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit. X may be a :term:`sparse graph`,
@@ -154,7 +155,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         algorithm="auto",
         leaf_size=30,
         p=2,
-        metric="minkowski",
+        metric="fast_sqeuclidean",
         metric_params=None,
         n_jobs=None,
     ):
@@ -336,10 +337,11 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. For a list of available metrics, see the documentation of
+    metric : str or callable, default='fast_sqeuclidean'
+        the distance metric to use for the tree. The default distance is
+        'fast_sqeuclidean' as fast alternative for the Euclidean distance
+        metric. If exact results are needed, prefer 'euclidean'.
+        For a list of available metrics, see the documentation of
         :class:`~sklearn.metrics.DistanceMetric`.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit. X may be a :term:`sparse graph`,
@@ -430,7 +432,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         algorithm="auto",
         leaf_size=30,
         p=2,
-        metric="minkowski",
+        metric="fast_sqeuclidean",
         outlier_label=None,
         metric_params=None,
         n_jobs=None,

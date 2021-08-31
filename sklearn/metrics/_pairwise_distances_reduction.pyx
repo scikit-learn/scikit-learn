@@ -34,7 +34,7 @@ from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
 from cpython.ref cimport Py_INCREF
 
-from ._dist_metrics cimport DatasetsPair
+from ._dist_metrics cimport DatasetsPair, DenseDenseDatasetsPair
 from ..utils._cython_blas cimport (
   BLAS_Order,
   BLAS_Trans,
@@ -784,8 +784,10 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             k=k,
             chunk_size=chunk_size)
-        # X and Y are checked by the DatasetsPair
-        self.X, self.Y = X, Y
+        # X and Y are checked by the DatasetsPair implemented as a DenseDenseDatasetsPair
+        cdef:
+            DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
+        self.X, self.Y = datasets_pair.X, datasets_pair.Y
         self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
 
@@ -1260,8 +1262,10 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             radius=radius,
             chunk_size=chunk_size)
-        # X and Y are checked by the DatasetsPair
-        self.X, self.Y = X, Y
+        # X and Y are checked by the DatasetsPair implemented as a DenseDenseDatasetsPair
+        cdef:
+            DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
+        self.X, self.Y = datasets_pair.X, datasets_pair.Y
         self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
 

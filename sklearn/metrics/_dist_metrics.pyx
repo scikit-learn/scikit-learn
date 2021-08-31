@@ -1322,10 +1322,8 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         The distance metric responsible for computing distances
         between two vectors of (X, Y).
     """
-    cdef:
-        const DTYPE_t[:, ::1] X  # shape: (n_X, d)
-        const DTYPE_t[:, ::1] Y  # shape: (n_Y, d)
-        ITYPE_t d
+
+    # The `X`, `Y` and `d` attributes are defined in _dist_metrics.pxd
 
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults

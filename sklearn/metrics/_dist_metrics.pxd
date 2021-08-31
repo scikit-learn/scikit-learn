@@ -101,3 +101,10 @@ cdef class DatasetsPair:
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil
 
     cdef DTYPE_t proxy_dist(self, ITYPE_t i, ITYPE_t j) nogil
+
+
+cdef class DenseDenseDatasetsPair(DatasetsPair):
+    cdef:
+        const DTYPE_t[:, ::1] X
+        const DTYPE_t[:, ::1] Y
+        ITYPE_t d

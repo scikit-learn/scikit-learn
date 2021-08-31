@@ -334,7 +334,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         radius=None,
         algorithm="auto",
         leaf_size=30,
-        metric="minkowski",
+        metric="fast_sqeuclidean",
         p=2,
         metric_params=None,
         n_jobs=None,
@@ -362,6 +362,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 alg_check = "brute"
         else:
             alg_check = self.algorithm
+
+        if alg_check != "brute" and self.metric == "fast_sqeuclidean":
+            # The fast euclidean alternative is only available for 'brute'.
+            self.metric = "euclidean"
 
         if callable(self.metric):
             if self.algorithm == "kd_tree":
@@ -501,6 +505,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if issparse(X):
             if self.algorithm not in ("auto", "brute"):
                 warnings.warn("cannot use tree with sparse input: using brute force")
+            if self.metric == "fast_sqeuclidean":
+                # TODO: support sparse datasets
+                # The fast euclidean alternative is only available for dense datasets.
+                self.effective_metric_ = "euclidean"
             if self.effective_metric_ not in VALID_METRICS_SPARSE[
                 "brute"
             ] and not callable(self.effective_metric_):

@@ -40,7 +40,7 @@ def kneighbors_graph(
     n_neighbors,
     *,
     mode="connectivity",
-    metric="minkowski",
+    metric="fast_sqeuclidean",
     p=2,
     metric_params=None,
     include_self=False,
@@ -64,10 +64,11 @@ def kneighbors_graph(
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    metric : str, default='minkowski'
-        The distance metric used to calculate the neighbors within a
-        given radius for each sample point. The default distance is
-        'euclidean' ('minkowski' metric with the p param equal to 2.)
+    metric : str, default='fast_sqeuclidean'
+        The distance metric used to calculate the k nearest neighbors for
+        each sample point. The default distance is
+        'fast_sqeuclidean' as fast alternative for the Euclidean distance
+        metric. If exact results are needed, prefer 'euclidean'.
         For a list of available metrics, see the documentation of
         :class:`~sklearn.metrics.DistanceMetric`.
 
@@ -130,7 +131,7 @@ def radius_neighbors_graph(
     radius,
     *,
     mode="connectivity",
-    metric="minkowski",
+    metric="fast_sqeuclidean",
     p=2,
     metric_params=None,
     include_self=False,
@@ -157,10 +158,11 @@ def radius_neighbors_graph(
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    metric : str, default='minkowski'
+    metric : str, default='fast_sqeuclidean'
         The distance metric used to calculate the neighbors within a
         given radius for each sample point. The default distance is
-        'euclidean' ('minkowski' metric with the p param equal to 2.)
+        'fast_sqeuclidean' as fast alternative for the Euclidean distance
+        metric. If exact results are needed, prefer 'euclidean'.
         For a list of available metrics, see the documentation of
         :class:`~sklearn.metrics.DistanceMetric`.
 
