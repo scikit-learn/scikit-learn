@@ -1595,3 +1595,21 @@ def test_get_feature_names_empty_selection(selector):
     ct = ColumnTransformer([("ohe", OneHotEncoder(drop="first"), selector)])
     ct.fit([[1, 2], [3, 4]])
     assert ct.get_feature_names() == []
+
+
+def test_feature_names_in_():
+    """Feature names are stored in column transformer.
+
+    Column transfomer deliberately does not check for column name consistency.
+    It only checks that the non-dropped names seen in `fit` are seen
+    in `transform`. This behavior is already tested in
+    `test_feature_name_validation_missing_columns_drop_passthough`"""
+
+    pd = pytest.importorskip("pandas")
+
+    feature_names = ["a", "c", "d"]
+    df = pd.DataFrame([[1, 2, 3]], columns=feature_names)
+    ct = ColumnTransformer([("bycol", Trans(), ["a", "d"])], remainder="passthrough")
+
+    ct.fit(df)
+    assert_array_equal(ct.feature_names_in_, feature_names)

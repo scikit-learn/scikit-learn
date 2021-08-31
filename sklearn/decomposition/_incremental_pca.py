@@ -68,7 +68,10 @@ class IncrementalPCA(_BasePCA):
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
-        Components with maximum variance.
+        Principal axes in feature space, representing the directions of
+        maximum variance in the data. Equivalently, the right singular
+        vectors of the centered input data, parallel to its eigenvectors.
+        The components are sorted by ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         Variance explained by each of the selected components.
@@ -111,6 +114,12 @@ class IncrementalPCA(_BasePCA):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------

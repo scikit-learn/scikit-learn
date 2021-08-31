@@ -2,14 +2,20 @@
 
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD 3 clause (C) 2011
+import warnings
 
 import numpy as np
+import scipy
+from scipy.sparse.csgraph import shortest_path
+from scipy.sparse.csgraph import connected_components
+
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.validation import check_is_fitted
-from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
+from ..utils.graph import _fix_connected_components
+from ..externals._packaging.version import parse as parse_version
 
 
 class Isomap(TransformerMixin, BaseEstimator):
@@ -109,6 +115,12 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -166,6 +178,8 @@ class Isomap(TransformerMixin, BaseEstimator):
         )
         self.nbrs_.fit(X)
         self.n_features_in_ = self.nbrs_.n_features_in_
+        if hasattr(self.nbrs_, "feature_names_in_"):
+            self.feature_names_in_ = self.nbrs_.feature_names_in_
 
         self.kernel_pca_ = KernelPCA(
             n_components=self.n_components,
@@ -186,9 +200,46 @@ class Isomap(TransformerMixin, BaseEstimator):
             n_jobs=self.n_jobs,
         )
 
-        self.dist_matrix_ = graph_shortest_path(
-            kng, method=self.path_method, directed=False
-        )
+        # Compute the number of connected components, and connect the different
+        # components to be able to compute a shortest path between all pairs
+        # of samples in the graph.
+        # Similar fix to cluster._agglomerative._fix_connectivity.
+        n_connected_components, labels = connected_components(kng)
+        if n_connected_components > 1:
+            if self.metric == "precomputed":
+                raise RuntimeError(
+                    "The number of connected components of the neighbors graph"
+                    f" is {n_connected_components} > 1. The graph cannot be "
+                    "completed with metric='precomputed', and Isomap cannot be"
+                    "fitted. Increase the number of neighbors to avoid this "
+                    "issue."
+                )
+            warnings.warn(
+                "The number of connected components of the neighbors graph "
+                f"is {n_connected_components} > 1. Completing the graph to fit"
+                " Isomap might be slow. Increase the number of neighbors to "
+                "avoid this issue.",
+                stacklevel=2,
+            )
+
+            # use array validated by NearestNeighbors
+            kng = _fix_connected_components(
+                X=self.nbrs_._fit_X,
+                graph=kng,
+                n_connected_components=n_connected_components,
+                component_labels=labels,
+                mode="distance",
+                metric=self.nbrs_.effective_metric_,
+                **self.nbrs_.effective_metric_params_,
+            )
+
+        if parse_version(scipy.__version__) < parse_version("1.3.2"):
+            # make identical samples have a nonzero distance, to account for
+            # issues in old scipy Floyd-Warshall implementation.
+            kng.data += 1e-15
+
+        self.dist_matrix_ = shortest_path(kng, method=self.path_method, directed=False)
+
         G = self.dist_matrix_ ** 2
         G *= -0.5
 
@@ -215,7 +266,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         """
         G = -0.5 * self.dist_matrix_ ** 2
         G_center = KernelCenterer().fit_transform(G)
-        evals = self.kernel_pca_.lambdas_
+        evals = self.kernel_pca_.eigenvalues_
         return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
 
     def fit(self, X, y=None):
@@ -243,7 +294,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse graph, BallTree, KDTree}
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored
