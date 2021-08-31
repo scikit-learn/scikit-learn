@@ -244,10 +244,10 @@ def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
 @pytest.mark.parametrize("out1", [None, 1])
 @pytest.mark.parametrize("out2", [None, 1])
 @pytest.mark.parametrize("n_threads", [1, 2])
-def test_loss_dtype_readonly(
+def test_loss_dtype(
     loss, readonly_memmap, dtype_in, dtype_out, sample_weight, out1, out2, n_threads
 ):
-    """Test acceptance of dtypes and readonly arrays in loss functions.
+    """Test acceptance of dtypes, readonly and writeable arrays in loss functions.
 
     Check that loss accepts if all input arrays are either all float32 or all
     float64, and all output arrays are either all float32 or all float64.
