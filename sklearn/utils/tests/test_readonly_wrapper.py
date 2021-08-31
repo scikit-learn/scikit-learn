@@ -11,7 +11,7 @@ from sklearn.utils._testing import create_memmap_backed_data
     "dtype", [np.float32, np.float64, np.int32, np.int64, np.int, np.long]
 )
 def test_readonly_array_wrapper(readonly, dtype):
-    """Test that ReadonlyArrayWrapper works as expected."""
+    """Test that ReadonlyWrapper allows working with fused-typed."""
     x = np.arange(10).astype(dtype)
     sum_origin = _test_sum(x)
 
