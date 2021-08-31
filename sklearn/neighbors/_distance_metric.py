@@ -14,11 +14,6 @@ class DistanceMetric(_DistanceMetric):
             category=FutureWarning,
         )
 
-    def __init__(self):
-        DistanceMetric._warn()
-        if self.__class__ is DistanceMetric:
-            raise NotImplementedError("DistanceMetric is an abstract class")
-
     @classmethod
     def get_metric(cls, metric, **kwargs):
         DistanceMetric._warn()
