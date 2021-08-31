@@ -12,7 +12,6 @@ DOCSTRING_IGNORE_LIST = [
     "AgglomerativeClustering",
     "BernoulliRBM",
     "Birch",
-    "ClassifierChain",
     "FeatureAgglomeration",
     "FeatureHasher",
     "FeatureUnion",
