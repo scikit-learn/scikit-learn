@@ -14,7 +14,6 @@ DOCSTRING_IGNORE_LIST = [
     "Birch",
     "CalibratedClassifierCV",
     "ClassifierChain",
-    "DecisionTreeRegressor",
     "DictVectorizer",
     "DictionaryLearning",
     "ElasticNetCV",
