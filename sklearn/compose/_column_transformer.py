@@ -147,6 +147,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    make_column_transformer : Convenience function for
+        combining the outputs of multiple transformer objects applied to
+        column subsets of the original feature space.
+    make_column_selector : Convenience function for selecting
+        columns based on datatype or the columns name with a regex pattern.
+
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
@@ -155,14 +163,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     dropped from the resulting transformed feature matrix, unless specified
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
-
-    See Also
-    --------
-    make_column_transformer : Convenience function for
-        combining the outputs of multiple transformer objects applied to
-        column subsets of the original feature space.
-    make_column_selector : Convenience function for selecting
-        columns based on datatype or the columns name with a regex pattern.
 
     Examples
     --------
@@ -180,7 +180,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     >>> ct.fit_transform(X)
     array([[0. , 1. , 0.5, 0.5],
            [0.5, 0.5, 0. , 1. ]])
-
     """
 
     _required_parameters = ["transformers"]
@@ -246,9 +245,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         can directly set the parameters of the estimators contained in
         `transformers` of `ColumnTransformer`.
 
+        Parameters
+        ----------
+        **kwargs : dict
+            Estimator parameters.
+
         Returns
         -------
-        self
+        self : ColumnTransformer
+            This estimator.
         """
         self._set_params("_transformers", **kwargs)
         return self
@@ -364,7 +369,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
-
         """
         # Use Bunch object to improve autocomplete
         return Bunch(**{name: trans for name, trans, _ in self.transformers_})
@@ -513,8 +517,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Returns
         -------
         self : ColumnTransformer
-            This estimator
-
+            This estimator.
         """
         # we use fit_transform to make sure to set sparse_output_ (for which we
         # need the transformed data) to have consistent output type in predict
@@ -537,11 +540,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         -------
         X_t : {array-like, sparse matrix} of \
                 shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
+            Horizontally stacked results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
-
         """
         self._check_feature_names(X, reset=True)
 
@@ -590,11 +592,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         -------
         X_t : {array-like, sparse matrix} of \
                 shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
+            Horizontally stacked results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
-
         """
         check_is_fitted(self)
         X = _check_X(X)
