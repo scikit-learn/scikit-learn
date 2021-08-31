@@ -116,7 +116,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         If True, :meth:`get_feature_names_out` will prefix all feature names
         with the name of the transformer that generated that feature.
         If False, :meth:`get_feature_names_out` will not prefix any feature
-        names and will error if feature names collide.
+        names and will error if feature names are not unique.
 
         .. versionadded:: 1.0
 
@@ -940,7 +940,7 @@ def make_column_transformer(
         If True, :meth:`get_feature_names_out` will prefix all feature names
         with the name of the transformer that generated that feature.
         If False, :meth:`get_feature_names_out` will not prefix any feature
-        names and will error if feature names collide.
+        names and will error if feature names are not unique.
 
         .. versionadded:: 1.0
 
