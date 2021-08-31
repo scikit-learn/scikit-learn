@@ -51,8 +51,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import DetCurveDisplay
-from sklearn.metrics import RocCurveDisplay
+from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
