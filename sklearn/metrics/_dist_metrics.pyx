@@ -1228,6 +1228,8 @@ cdef class DatasetsPair:
     ) -> DatasetsPair:
         """Return the DatasetsPair implementation for the given arguments.
 
+        Parameters
+        ----------
         X : array-like of shape (n_X, d)
             Input data.
 
@@ -1312,8 +1314,10 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
     ----------
     X: ndarray of shape (n_X, d)
         Rows represent vectors.
+
     Y: ndarray of shape (n_Y, d)
         Rows represent vectors.
+
     distance_metric: DistanceMetric
         The distance metric responsible for computing distances
         between two vectors of (X, Y).
@@ -1363,8 +1367,10 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
     ----------
     X: sparse matrix of shape (n_X, d)
         Rows represent vectors.
+
     Y: sparse matrix of shape (n_X, d)
         Rows represent vectors.
+
     distance_metric: DistanceMetric
         The distance metric responsible for computing distances
         between two vectors of (X, Y).
@@ -1440,8 +1446,10 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
     ----------
     X: sparse matrix of shape (n_X, d)
         Rows represent vectors.
+
     Y: ndarray of shape (n_Y, d)
         Rows represent vectors.
+
     distance_metric: DistanceMetric
         The distance metric responsible for computing distances
         between two vectors of (X, Y).
@@ -1517,8 +1525,10 @@ cdef class DenseSparseDatasetsPair(DatasetsPair):
     ----------
     X: ndarray of shape (n_X, d)
         Rows represent vectors.
+
     Y: sparse matrix of shape (n_Y, d)
         Rows represent vectors.
+
     distance_metric: DistanceMetric
         The distance metric responsible for computing distances
         between two vectors of (X, Y).

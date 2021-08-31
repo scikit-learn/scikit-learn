@@ -178,6 +178,7 @@ cdef class PairwiseDistancesReduction:
     ----------
     datasets_pair: DatasetsPair
         The pair of dataset to use.
+
     chunk_size: int
         The number of vectors per chunk.
     """
@@ -448,8 +449,10 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     ----------
     datasets_pair: DatasetsPair
         The dataset pairs (X, Y) for the reduction.
+
     k: int
         The k for the argkmin reduction.
+
     chunk_size: int
         The number of vectors per chunk.
     """
@@ -475,6 +478,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     ) -> ArgKmin:
         """Return the ArgKmin implementation for the given arguments.
 
+        Parameters
+        ----------
         X : array-like of shape (n_X, d)
             Input data.
 
@@ -684,6 +689,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     ):
         """Computes the reduction of vectors (rows) of X on Y.
 
+        Parameters
+        ----------
         strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}
             The chunking strategy defining which dataset
             parallelization are made on.
@@ -956,6 +963,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     ) -> RadiusNeighborhood:
         """Return the RadiusNeighborhood implementation for the given arguments.
 
+        Parameters
+        ----------
         X : array-like of shape (n_X, d)
             Input data.
 
