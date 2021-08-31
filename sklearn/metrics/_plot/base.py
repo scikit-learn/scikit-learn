@@ -104,7 +104,8 @@ def _get_response(X, estimator, response_method, pos_label=None):
         y_pred_shape = y_pred.shape[1]
         if y_pred_shape != 2:
             raise ValueError(
-                f"{classification_error} fit on multiclass ({y_pred_shape} class) data"
+                f"{classification_error} fit on multiclass ({y_pred_shape} classes)"
+                " data"
             )
         if pos_label is None:
             pos_label = estimator.classes_[1]
