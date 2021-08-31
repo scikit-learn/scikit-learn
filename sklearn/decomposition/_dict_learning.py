@@ -1311,7 +1311,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     @property
     def n_features_in_(self):
-         """Number of features seen during `fit`."""
+        """Number of features seen during `fit`."""
         return self.dictionary.shape[1]
 
 
