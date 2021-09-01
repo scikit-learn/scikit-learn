@@ -133,8 +133,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 indices.append(vocab[feature_name])
                 values.append(self.dtype(vv))
 
-        return
-
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
 
