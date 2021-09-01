@@ -12,7 +12,7 @@ import sys
 import re
 import pkgutil
 from inspect import isgenerator, signature
-from itertools import product
+from itertools import product, chain
 from functools import partial
 
 import pytest
@@ -47,6 +47,7 @@ from sklearn.utils.estimator_checks import (
     _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks,
+    check_dataframe_column_names_consistency,
     check_n_features_in_after_fitting,
 )
 
@@ -313,3 +314,21 @@ def test_search_cv(estimator, check, request):
 def test_check_n_features_in_after_fitting(estimator):
     _set_checking_parameters(estimator)
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
+
+
+_estimators_to_test = list(
+    chain(
+        _tested_estimators(),
+        [make_pipeline(LogisticRegression(C=1))],
+        list(_generate_search_cv_instances()),
+    )
+)
+
+
+@pytest.mark.parametrize("estimator", _estimators_to_test, ids=_get_check_estimator_ids)
+def test_pandas_column_name_consistency(estimator):
+    _set_checking_parameters(estimator)
+    with ignore_warnings(category=(FutureWarning)):
+        check_dataframe_column_names_consistency(
+            estimator.__class__.__name__, estimator
+        )

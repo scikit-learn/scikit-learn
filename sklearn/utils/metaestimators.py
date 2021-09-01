@@ -100,22 +100,27 @@ class _AvailableIfDescriptor:
         update_wrapper(self, fn)
 
     def __get__(self, obj, owner=None):
+        attr_err = AttributeError(
+            f"This {repr(owner.__name__)} has no attribute {repr(self.attribute_name)}"
+        )
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
             if not self.check(obj):
-                raise AttributeError(
-                    f"This {repr(owner.__name__)}"
-                    " has no attribute"
-                    f" {repr(self.attribute_name)}"
-                )
+                raise attr_err
 
             # lambda, but not partial, allows help() to work with update_wrapper
             out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
         else:
+
+            def fn(*args, **kwargs):
+                if not self.check(args[0]):
+                    raise attr_err
+                return self.fn(*args, **kwargs)
+
             # This makes it possible to use the decorated method as an unbound method,
             # for instance when monkeypatching.
-            out = lambda *args, **kwargs: self.fn(*args, **kwargs)  # noqa
+            out = lambda *args, **kwargs: fn(*args, **kwargs)  # noqa
         # update the docstring of the returned function
         update_wrapper(out, self.fn)
         return out
