@@ -27,8 +27,6 @@ ctypedef fused NUM_TYPES:
     np.npy_float32
     np.npy_int64
     np.npy_int32
-    int
-    long
 
 
 cdef class ReadonlyArrayWrapper:

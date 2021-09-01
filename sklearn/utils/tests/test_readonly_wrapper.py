@@ -7,9 +7,7 @@ from sklearn.utils._testing import create_memmap_backed_data
 
 
 @pytest.mark.parametrize("readonly", ["flag", "memmap"])
-@pytest.mark.parametrize(
-    "dtype", [np.float32, np.float64, np.int32, np.int64, np.int, np.long]
-)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
 def test_readonly_array_wrapper(readonly, dtype):
     """Test that ReadonlyWrapper allows working with fused-typed."""
     x = np.arange(10).astype(dtype)
