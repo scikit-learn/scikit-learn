@@ -27,8 +27,8 @@ np.import_array()
 
 
 def lloyd_iter_chunked_dense(
-        floating[:, ::1] X,                # IN
-        floating[::1] sample_weight,       # IN
+        floating[:, ::1] X,                # IN READ-ONLY
+        floating[::1] sample_weight,       # IN READ-ONLY
         floating[::1] x_squared_norms,     # IN
         floating[:, ::1] centers_old,      # IN
         floating[:, ::1] centers_new,      # OUT
@@ -162,8 +162,8 @@ def lloyd_iter_chunked_dense(
 
 
 cdef void _update_chunk_dense(
-        floating[:, ::1] X,                   # IN
-        floating[::1] sample_weight,          # IN
+        floating[:, ::1] X,                   # IN READ-ONLY
+        floating[::1] sample_weight,          # IN READ-ONLY
         floating[::1] x_squared_norms,        # IN
         floating[:, ::1] centers_old,         # IN
         floating[::1] centers_squared_norms,  # IN

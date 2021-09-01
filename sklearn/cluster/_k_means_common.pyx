@@ -97,8 +97,8 @@ def _euclidean_sparse_dense_wrapper(
 
 
 cpdef floating _inertia_dense(
-        floating[:, ::1] X,           # IN
-        floating[::1] sample_weight,  # IN
+        floating[:, ::1] X,           # IN READ-ONLY
+        floating[::1] sample_weight,  # IN READ-ONLY
         floating[:, ::1] centers,     # IN
         int[::1] labels,              # IN
         int n_threads):
@@ -161,8 +161,8 @@ cpdef floating _inertia_sparse(
 
 
 cpdef void _relocate_empty_clusters_dense(
-        floating[:, ::1] X,                # IN
-        floating[::1] sample_weight,       # IN
+        floating[:, ::1] X,                # IN READ-ONLY
+        floating[::1] sample_weight,       # IN READ-ONLY
         floating[:, ::1] centers_old,      # IN
         floating[:, ::1] centers_new,      # INOUT
         floating[::1] weight_in_clusters,  # INOUT

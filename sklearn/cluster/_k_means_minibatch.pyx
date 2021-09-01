@@ -14,8 +14,8 @@ np.import_array()
 
 
 def _minibatch_update_dense(
-        floating[:, ::1] X,            # IN
-        floating[::1] sample_weight,   # IN
+        floating[:, ::1] X,            # IN READ-ONLY
+        floating[::1] sample_weight,   # IN READ-ONLY
         floating[:, ::1] centers_old,  # IN
         floating[:, ::1] centers_new,  # OUT
         floating[::1] weight_sums,     # INOUT
@@ -68,8 +68,8 @@ def _minibatch_update_dense(
 
 cdef void update_center_dense(
         int cluster_idx,
-        floating[:, ::1] X,            # IN
-        floating[::1] sample_weight,   # IN
+        floating[:, ::1] X,            # IN READ-ONLY
+        floating[::1] sample_weight,   # IN READ-ONLY
         floating[:, ::1] centers_old,  # IN
         floating[:, ::1] centers_new,  # OUT
         floating[::1] weight_sums,     # INOUT
