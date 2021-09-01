@@ -676,11 +676,13 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             ITYPE_t i, j
             ITYPE_t[:, ::1] Y_indices = self.argkmin_indices
             DTYPE_t[:, ::1] distances = self.argkmin_distances
-
         for i in prange(self.n_X, schedule='static', nogil=True,
                         num_threads=self.effective_omp_n_thread):
             for j in range(self.k):
-                distances[i, j] = self._datasets_pair.distance_metric._rdist_to_dist(distances[i, j])
+                distances[i, j] = self._datasets_pair.distance_metric._rdist_to_dist(
+                    # Guard against eventual -0., causing nan production.
+                    distances[i, j] if distances[i, j] > 0. else 0.
+                )
 
     @final
     def compute(self,
@@ -1170,7 +1172,10 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             for j in range(deref(self.neigh_indices)[i].size()):
                 deref(self.neigh_distances)[i][j] = (
                         self._datasets_pair.distance_metric._rdist_to_dist(
+                            # Guard against eventual -0., causing nan production.
                             deref(self.neigh_distances)[i][j]
+                            if deref(self.neigh_distances)[i][j] > 0.
+                            else 0
                         )
                 )
 
