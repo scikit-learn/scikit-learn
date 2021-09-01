@@ -64,7 +64,6 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
         'verbosity': 10 if sklearn_params['verbose'] else -10,
         'boost_from_average': True,
         'enable_bundle': False,  # also makes feature order consistent
-        'min_data_in_bin': 1,
         'subsample_for_bin': _BinMapper().subsample,
     }
 
