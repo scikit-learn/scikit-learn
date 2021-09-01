@@ -1679,6 +1679,8 @@ def test_feature_names_in_():
 
     ct.fit(df)
     assert_array_equal(ct.feature_names_in_, feature_names)
+    assert isinstance(ct.feature_names_in_, np.ndarray)
+    assert ct.feature_names_in_.dtype == object
 
 
 class TransWithNames(Trans):

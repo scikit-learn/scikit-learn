@@ -3744,6 +3744,8 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
             "Estimator does not have a feature_names_in_ "
             "attribute after fitting with a dataframe"
         )
+    assert isinstance(estimator.feature_names_in_, np.ndarray)
+    assert estimator.feature_names_in_.dtype == object
     assert_array_equal(estimator.feature_names_in_, names)
 
     # Only check sklearn estimators for feature_names_in_ in docstring

@@ -1646,7 +1646,7 @@ def _get_feature_names(X):
 
     # extract feature names for support array containers
     if hasattr(X, "columns"):
-        feature_names = np.asarray(X.columns)
+        feature_names = np.asarray(X.columns, dtype=object)
 
     if feature_names is None or len(feature_names) == 0:
         return
