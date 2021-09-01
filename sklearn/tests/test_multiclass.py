@@ -836,8 +836,13 @@ def test_pairwise_n_features_in():
     """
     X, y = iris.data, iris.target
 
+    # remove the last sample to make the class not exactly balanced
+    assert y[-1] == 0
+    X = X[:-1]
+    y = y[:-1]
+
     # Fitting directly on the design matrix:
-    assert X.shape == (150, 4)
+    assert X.shape == (149, 4)
 
     clf_notprecomputed = svm.SVC(kernel="linear").fit(X, y)
     assert clf_notprecomputed.n_features_in_ == 4
@@ -849,22 +854,26 @@ def test_pairwise_n_features_in():
 
     # Fitting the same models with a precomputed kernel:
     K = X @ X.T
-    assert K.shape == (150, 150)
+    assert K.shape == (149, 149)
 
     ovo_notprecomputed = OneVsOneClassifier(clf_notprecomputed).fit(X, y)
     assert ovo_notprecomputed.n_features_in_ == 4
+    assert ovo_notprecomputed.n_classes_ == 3
+    assert len(ovo_notprecomputed.estimators_) == 3
     for est in ovo_notprecomputed.estimators_:
         assert est.n_features_in_ == 4
 
     # When working with precomputed kernels we have one "feature" per training
     # sample:
     clf_precomputed = svm.SVC(kernel="precomputed").fit(K, y)
-    assert clf_precomputed.n_features_in_ == 150
+    assert clf_precomputed.n_features_in_ == 149
 
     ovr_precomputed = OneVsRestClassifier(clf_precomputed).fit(K, y)
-    assert ovr_precomputed.n_features_in_ == 150
+    assert ovr_precomputed.n_features_in_ == 149
+    assert ovr_precomputed.n_classes_ == 3
+    assert len(ovr_precomputed.estimators_) == 3
     for est in ovr_precomputed.estimators_:
-        assert est.n_features_in_ == 150
+        assert est.n_features_in_ == 149
 
     # This becomes really interesting with OvO and precomputed kernel together:
     # internally, OvO will drop the samples of the classes not part of the pair
@@ -874,9 +883,12 @@ def test_pairwise_n_features_in():
     # each class has 50 samples, a single OvO binary classifier works with a
     # subkernel matrix of shape (100, 100).
     ovo_precomputed = OneVsOneClassifier(clf_precomputed).fit(K, y)
-    assert ovo_precomputed.n_features_in_ == 150
-    for est in ovo_precomputed.estimators_:
-        assert est.n_features_in_ == 100
+    assert ovo_precomputed.n_features_in_ == 149
+    assert ovr_precomputed.n_classes_ == 3
+    assert len(ovr_precomputed.estimators_) == 3
+    assert ovo_precomputed.estimators_[0].n_features_in_ == 99  # class 0 vs class 1
+    assert ovo_precomputed.estimators_[1].n_features_in_ == 99  # class 0 vs class 2
+    assert ovo_precomputed.estimators_[2].n_features_in_ == 100  # class 1 vs class 2
 
 
 @ignore_warnings(category=FutureWarning)
