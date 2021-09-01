@@ -8,6 +8,7 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
+from ..utils._tags import _safe_tags
 from ..utils import check_array, _safe_indexing
 from ..preprocessing import FunctionTransformer
 from ..exceptions import NotFittedError
@@ -87,6 +88,12 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         underlying regressor exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -233,6 +240,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         self.regressor_.fit(X, y_trans, **fit_params)
 
+        if hasattr(self.regressor_, "feature_names_in_"):
+            self.feature_names_in_ = self.regressor_.feature_names_in_
+
         return self
 
     def predict(self, X, **predict_params):
@@ -272,7 +282,16 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         return pred_trans
 
     def _more_tags(self):
-        return {"poor_score": True, "no_validation": True}
+        regressor = self.regressor
+        if regressor is None:
+            from ..linear_model import LinearRegression
+
+            regressor = LinearRegression()
+
+        return {
+            "poor_score": True,
+            "multioutput": _safe_tags(regressor, key="multioutput"),
+        }
 
     @property
     def n_features_in_(self):

@@ -56,13 +56,18 @@ class DetCurveDisplay:
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
-    >>> from sklearn import metrics
-    >>> y = np.array([0, 0, 1, 1])
-    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, fnr, thresholds = metrics.det_curve(y, pred)
-    >>> display = metrics.DetCurveDisplay(
-    ...     fpr=fpr, fnr=fnr, estimator_name='example estimator'
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.metrics import det_curve, DetCurveDisplay
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.svm import SVC
+    >>> X, y = make_classification(n_samples=1000, random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, test_size=0.4, random_state=0)
+    >>> clf = SVC(random_state=0).fit(X_train, y_train)
+    >>> y_pred = clf.decision_function(X_test)
+    >>> fpr, fnr, _ = det_curve(y_test, y_pred)
+    >>> display = DetCurveDisplay(
+    ...     fpr=fpr, fnr=fnr, estimator_name="SVC"
     ... )
     >>> display.plot()
     <...>
@@ -152,9 +157,9 @@ class DetCurveDisplay:
         >>> from sklearn.metrics import DetCurveDisplay
         >>> from sklearn.model_selection import train_test_split
         >>> from sklearn.svm import SVC
-        >>> X, y = make_classification(random_state=0)
+        >>> X, y = make_classification(n_samples=1000, random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
-        ...     X, y, random_state=0)
+        ...     X, y, test_size=0.4, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
         >>> DetCurveDisplay.from_estimator(
         ...    clf, X_test, y_test)
@@ -249,9 +254,9 @@ class DetCurveDisplay:
         >>> from sklearn.metrics import DetCurveDisplay
         >>> from sklearn.model_selection import train_test_split
         >>> from sklearn.svm import SVC
-        >>> X, y = make_classification(random_state=0)
+        >>> X, y = make_classification(n_samples=1000, random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
-        ...     X, y, random_state=0)
+        ...     X, y, test_size=0.4, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
         >>> y_pred = clf.decision_function(X_test)
         >>> DetCurveDisplay.from_predictions(
@@ -431,14 +436,15 @@ def plot_det_curve(
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> from sklearn import datasets, metrics, model_selection, svm
-    >>> X, y = datasets.make_classification(random_state=0)
-    >>> X_train, X_test, y_train, y_test = model_selection.train_test_split(
-    ...     X, y, random_state=0)
-    >>> clf = svm.SVC(random_state=0)
-    >>> clf.fit(X_train, y_train)
-    SVC(random_state=0)
-    >>> metrics.plot_det_curve(clf, X_test, y_test) # doctest: +SKIP
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.metrics import plot_det_curve
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.svm import SVC
+    >>> X, y = make_classification(n_samples=1000, random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, test_size=0.4, random_state=0)
+    >>> clf = SVC(random_state=0).fit(X_train, y_train)
+    >>> plot_det_curve(clf, X_test, y_test)  # doctest: +SKIP
     <...>
     >>> plt.show()
     """

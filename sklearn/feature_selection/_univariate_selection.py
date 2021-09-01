@@ -458,21 +458,11 @@ class SelectPercentile(_BaseFilter):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.feature_selection import SelectPercentile, chi2
-    >>> X, y = load_digits(return_X_y=True)
-    >>> X.shape
-    (1797, 64)
-    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)
-    >>> X_new.shape
-    (1797, 7)
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
 
-    Notes
-    -----
-    Ties between features with equal scores will be broken in an unspecified
-    way.
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -487,6 +477,22 @@ class SelectPercentile(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Notes
+    -----
+    Ties between features with equal scores will be broken in an unspecified
+    way.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.feature_selection import SelectPercentile, chi2
+    >>> X, y = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)
+    >>> X_new.shape
+    (1797, 7)
     """
 
     def __init__(self, score_func=f_classif, *, percentile=10):
@@ -550,6 +556,12 @@ class SelectKBest(_BaseFilter):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -643,6 +655,12 @@ class SelectFpr(_BaseFilter):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
@@ -723,6 +741,12 @@ class SelectFdr(_BaseFilter):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     References
     ----------
     https://en.wikipedia.org/wiki/False_discovery_rate
@@ -800,6 +824,12 @@ class SelectFwe(_BaseFilter):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
@@ -860,6 +890,12 @@ class GenericUnivariateSelect(_BaseFilter):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------

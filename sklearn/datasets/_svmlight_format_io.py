@@ -61,8 +61,8 @@ def load_svmlight_file(
     This format is used as the default format for both svmlight and the
     libsvm command line programs.
 
-    Parsing a text based source can be expensive. When working on
-    repeatedly on the same dataset, it is recommended to wrap this
+    Parsing a text based source can be expensive. When repeatedly
+    working on the same dataset, it is recommended to wrap this
     loader with joblib.Memory.cache to store a memmapped backup of the
     CSR results of the first call and benefit from the near instantaneous
     loading of memmapped structures for the subsequent calls.
