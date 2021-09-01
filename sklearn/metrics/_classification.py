@@ -20,6 +20,8 @@ the lower the better.
 #          Bernardo Stein <bernardovstein@gmail.com>
 #          Shangwu Yao <shangwuyao@gmail.com>
 #          Michal Karbownik <michakarbownik@gmail.com>
+#          Bhavya Bhardwaj <bhavya1705@yahoo.com>
+# 		   Rohit Mittal <rohitm132@gmail.com>
 # License: BSD 3 clause
 
 
@@ -2649,3 +2651,207 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+def fallout_rate(y_true, y_pred):
+    """Compute miss rate of a classification.
+
+    By definition the miss rate of a classification is defined as ``fp / (fp + tn)``,
+    where ``tn`` is the number of true negatives and ``fp`` the number of false
+    positives.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated targets as returned by a classifier.
+
+    Returns
+    -------
+    miss rate: The true positive rate (float)
+
+    References
+    ----------
+    .. [1] https://www.split.io/glossary/false-positive-rate/
+
+    Examples
+    --------
+    >>> from sklearn.metrics import sensitivity
+    >>> y_true = [0, 1, 0, 1]
+    >>> y_pred = [1, 1, 1, 0]
+    >>> fallout_rate(y_true, y_pred)
+    1.0
+    """
+    average = (None,)
+    warn_for = "Fall out"
+    zero_division = "warn"
+    y_true = column_or_1d(y_true)
+    y_pred = column_or_1d(y_pred)
+    assert_all_finite(y_true)
+    assert_all_finite(y_pred)
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    fall_out = _prf_divide(
+        np.array([fp]),
+        np.array([fp + tn]),
+        "Fall Out",
+        "predicted",
+        average,
+        warn_for,
+        zero_division,
+    )
+    return fall_out[0]
+
+
+def miss_rate(y_true, y_pred):
+    """Compute miss rate of a classification.
+
+    By definition the miss rate of a classification is defined as ``fn / (tp + fn)``,
+    where ``tp`` is the number of true positives and ``fn`` the number of
+    false negatives.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated targets as returned by a classifier.
+
+    Returns
+    -------
+    miss rate: The true positive rate (float)
+
+    References
+    ----------
+    .. [1] https://www.split.io/glossary/false-positive-rate/
+
+    Examples
+    --------
+    >>> from sklearn.metrics import sensitivity
+    >>> y_true = [0, 1, 0, 1]
+    >>> y_pred = [1, 1, 1, 0]
+    >>> miss_rate(y_true, y_pred)
+    0.5
+    """
+    average = (None,)
+    warn_for = "Miss rate"
+    zero_division = "warn"
+    y_true = column_or_1d(y_true)
+    y_pred = column_or_1d(y_pred)
+    assert_all_finite(y_true)
+    assert_all_finite(y_pred)
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    miss_rate = _prf_divide(
+        np.array([fn]),
+        np.array([fn + tp]),
+        "Miss Rate",
+        "predicted",
+        average,
+        warn_for,
+        zero_division,
+    )
+    return miss_rate[0]
+
+
+def specificity(y_true, y_pred):
+    """Compute specificity of a classification.
+
+    By definition the specificity of a classification is defined as ``tn / (tn + fp)``,
+    where ``tn`` is the number of true negatives and ``fp`` the number of false
+    positives.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated targets as returned by a classifier.
+
+    Returns
+    -------
+    specificity : The true positive rate (float)
+
+    References
+    ----------
+    .. [1] https://www.split.io/glossary/false-positive-rate/
+
+    Examples
+    --------
+    >>> from sklearn.metrics import sensitivity
+    >>> y_true = [0, 1, 0, 1]
+    >>> y_pred = [1, 1, 1, 0]
+    >>> specificity(y_true, y_pred)
+    0.0
+    """
+    average = (None,)
+    warn_for = "specificity"
+    zero_division = "warn"
+    y_true = column_or_1d(y_true)
+    y_pred = column_or_1d(y_pred)
+    assert_all_finite(y_true)
+    assert_all_finite(y_pred)
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    specificity = _prf_divide(
+        np.array([tn]),
+        np.array([tn + fp]),
+        "Specificity",
+        "predicted",
+        average,
+        warn_for,
+        zero_division,
+    )
+    return specificity[0]
+
+
+def sensitivity(y_true, y_pred):
+    """Compute sensitivity of a classification.
+
+    By definition the sensitivity of a classification is defined as ``tp / (tp + fn)``,
+    where ``tp`` is the number of true positives and ``fn`` the number of false
+    negatives.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated targets as returned by a classifier.
+
+    Returns
+    -------
+    sensitivity : The true positive rate (float)
+
+    References
+    ----------
+    .. [1] https://www.split.io/glossary/false-positive-rate/
+
+    Examples
+    --------
+    >>> from sklearn.metrics import sensitivity
+    >>> y_true = [0, 1, 0, 1]
+    >>> y_pred = [1, 1, 1, 0]
+    >>> sensitivity(y_true, y_pred)
+    0.5
+    """
+    average = (None,)
+    warn_for = "senstivity"
+    zero_division = "warn"
+    y_true = column_or_1d(y_true)
+    y_pred = column_or_1d(y_pred)
+    assert_all_finite(y_true)
+    assert_all_finite(y_pred)
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    sensitivity = _prf_divide(
+        np.array([tp]),
+        np.array([tp + fn]),
+        "Specificity",
+        "predicted",
+        average,
+        warn_for,
+        zero_division,
+    )
+    return sensitivity[0]

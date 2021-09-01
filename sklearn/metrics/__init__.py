@@ -35,6 +35,10 @@ from ._classification import recall_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
+from ._classification import sensitivity
+from ._classification import specificity
+from ._classification import miss_rate
+from ._classification import fallout_rate
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -116,6 +120,7 @@ __all__ = [
     "euclidean_distances",
     "explained_variance_score",
     "f1_score",
+    "fallout_rate",
     "fbeta_score",
     "fowlkes_mallows_score",
     "get_scorer",
@@ -140,6 +145,7 @@ __all__ = [
     "mean_tweedie_deviance",
     "median_absolute_error",
     "mean_absolute_percentage_error",
+    "miss_rate",
     "multilabel_confusion_matrix",
     "mutual_info_score",
     "ndcg_score",
@@ -167,6 +173,8 @@ __all__ = [
     "SCORERS",
     "silhouette_samples",
     "silhouette_score",
+    "sensitivity",
+    "specificity",
     "top_k_accuracy_score",
     "v_measure_score",
     "zero_one_loss",
