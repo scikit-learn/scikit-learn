@@ -626,7 +626,7 @@ Changelog
   
 - |Feature| Added :func:`sensitivity` , :func:`specificity` , :func:'miss_rate and :func:'fallout_rate'
   to calculate the 'True Positives', 'True Negatives', 'False Negatives' and 'False Positives' repectively.
-  :pr:`20879` by :user:`Bhavya Bhardwaj <Bhavya1705>`.
+  :pr:`20889` by :user:`Bhavya Bhardwaj <Bhavya1705>`.
 
 :mod:`sklearn.mixture`
 ......................
