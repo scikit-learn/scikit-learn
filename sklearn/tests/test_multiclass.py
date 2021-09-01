@@ -855,7 +855,6 @@ def test_pairwise_n_features_in():
 
     # Fitting the same models with a precomputed kernel:
     K = X @ X.T
-    assert K.shape == (149, 149)
 
     ovo_notprecomputed = OneVsOneClassifier(clf_notprecomputed).fit(X, y)
     assert ovo_notprecomputed.n_features_in_ == 4
@@ -867,6 +866,7 @@ def test_pairwise_n_features_in():
     # When working with precomputed kernels we have one "feature" per training
     # sample:
     clf_precomputed = svm.SVC(kernel="precomputed").fit(K, y)
+    assert K.shape == (149, 149)
     assert clf_precomputed.n_features_in_ == 149
 
     ovr_precomputed = OneVsRestClassifier(clf_precomputed).fit(K, y)
