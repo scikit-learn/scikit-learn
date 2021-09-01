@@ -684,13 +684,16 @@ def test_is_scalar_nan(value, result):
     assert isinstance(is_scalar_nan(value), bool)
 
 
-def test_approximate_mode(value, result):
+def test_approximate_mode():
     # Per issue #20774 - make sure _approximate_mode() returns valid results for
     # cases where "class_counts * n_draws" is enough to overflow 32-bit signed integer
-    ret = _approximate_mode(class_counts=np.array([99000, 1000], dtype=np.int32), n_draws=25000, rng=0)
-    assert_array_equal(ret, [24750, 250])   # Draws 25% of the total population, so in this case fair draw means:
-                                            # 25% * 99.000 = 24.750
-                                            # 25% *  1.000 =    250
+    X = np.array([99000, 1000], dtype=np.int32)
+    ret = _approximate_mode(class_counts=X, n_draws=25000, rng=0)
+
+    # Draws 25% of the total population, so in this case a fair draw means:
+    # 25% * 99.000 = 24.750
+    # 25% *  1.000 =    250
+    assert_array_equal(ret, [24750, 250])
 
 
 def dummy_func():

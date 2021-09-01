@@ -1284,14 +1284,21 @@ def test_train_test_split():
         assert_array_equal(test, [8, 9])
         assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
 
+
 def test_train_test_split_32bit_overflow():
     # Based on issue #20774 - check for integer overflow on 32-bit platforms
-    big_number = 100000     # A number 'n' big enough for expression 'n * n * train_size'
-                            # to cause overflow for signed 32-bit integer
+
+    # A number 'n' big enough for expression 'n * n * train_size' to cause
+    # an overflow for signed 32-bit integer
+    big_number = 100000
+
+    # Definition of 'y' is a part of reproduction - population for at least
+    # one class should be in the same order of magnitude as size of X
     X = np.arange(big_number)
-    y = X > (0.99 * big_number) # Part of reproduction - population for at least one class 
-                                # should be in the same order of magnitude as size of X
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, train_size=0.25)
+    y = X > (0.99 * big_number)
+
+    split = train_test_split(X, y, stratify=y, train_size=0.25)
+    X_train, X_test, y_train, y_test = split
 
     assert X_train.size + X_test.size == big_number
     assert y_train.size + y_test.size == big_number
