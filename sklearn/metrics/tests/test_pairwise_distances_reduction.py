@@ -105,10 +105,10 @@ def test_argkmin_factory_method_wrong_usages():
     ):
         ArgKmin.get_for(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
 
-    with pytest.raises(ValueError, match="`k`= -1, must be >= 1."):
+    with pytest.raises(ValueError, match="k == -1, must be >= 1."):
         ArgKmin.get_for(X=X, Y=Y, k=-1, metric=metric)
 
-    with pytest.raises(ValueError, match="`k`= 0, must be >= 1."):
+    with pytest.raises(ValueError, match="k == 0, must be >= 1."):
         ArgKmin.get_for(X=X, Y=Y, k=0.1, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
@@ -147,7 +147,7 @@ def test_radius_neighborhood_factory_method_wrong_usages():
             X=X, Y=Y.astype(np.int32), radius=radius, metric=metric
         )
 
-    with pytest.raises(ValueError, match="`radius`= -1.0, must be >= 0."):
+    with pytest.raises(ValueError, match="radius == -1.0, must be >= 0."):
         RadiusNeighborhood.get_for(X=X, Y=Y, radius=-1, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
