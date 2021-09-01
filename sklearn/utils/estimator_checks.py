@@ -3722,6 +3722,9 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     set_random_state(estimator)
 
     X_orig = rng.normal(size=(150, 8))
+
+    # Some picky estimators (e.g. SkewedChi2Sampler) only accept skewed positive data.
+    X_orig -= X_orig.min() + 0.5
     X_orig = _enforce_estimator_tags_x(estimator, X_orig)
     X_orig = _pairwise_estimator_convert_X(X_orig, estimator)
     n_samples, n_features = X_orig.shape
@@ -3741,7 +3744,20 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
             "Estimator does not have a feature_names_in_ "
             "attribute after fitting with a dataframe"
         )
+    assert isinstance(estimator.feature_names_in_, np.ndarray)
+    assert estimator.feature_names_in_.dtype == object
     assert_array_equal(estimator.feature_names_in_, names)
+
+    # Only check sklearn estimators for feature_names_in_ in docstring
+    module_name = estimator_orig.__module__
+    if (
+        module_name.startswith("sklearn.")
+        and not ("test_" in module_name or module_name.endswith("_testing"))
+        and ("feature_names_in_" not in (estimator_orig.__doc__))
+    ):
+        raise ValueError(
+            f"Estimator {name} does not document its feature_names_in_ attribute"
+        )
 
     check_methods = []
     for method in (

@@ -145,6 +145,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         if first_time and hasattr(self.estimators_[0], "n_features_in_"):
             self.n_features_in_ = self.estimators_[0].n_features_in_
+        if first_time and hasattr(self.estimators_[0], "feature_names_in_"):
+            self.feature_names_in_ = self.estimators_[0].feature_names_in_
 
         return self
 
@@ -206,6 +208,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         if hasattr(self.estimators_[0], "n_features_in_"):
             self.n_features_in_ = self.estimators_[0].n_features_in_
+        if hasattr(self.estimators_[0], "feature_names_in_"):
+            self.feature_names_in_ = self.estimators_[0].feature_names_in_
 
         return self
 
@@ -277,6 +281,12 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         underlying `estimator` exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -367,6 +377,12 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     RegressorChain : Equivalent for regression.
@@ -417,9 +433,20 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
-    @property
-    def predict_proba(self):
-        """Returns prediction probabilities for each class of each output.
+    def _check_predict_proba(self):
+        if hasattr(self, "estimators_"):
+            # raise an AttributeError if `predict_proba` does not exist for
+            # each estimator
+            [getattr(est, "predict_proba") for est in self.estimators_]
+            return True
+        # raise an AttributeError if `predict_proba` does not exist for the
+        # unfitted estimator
+        getattr(self.estimator, "predict_proba")
+        return True
+
+    @available_if(_check_predict_proba)
+    def predict_proba(self, X):
+        """Return prediction probabilities for each class of each output.
 
         This method will raise a ``ValueError`` if any of the
         estimators do not have ``predict_proba``.
@@ -678,10 +705,16 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     RegressorChain : Equivalent for regression.
-    MultiOutputClassifier : Classifies each output independently rather than
+    MultioutputClassifier : Classifies each output independently rather than
         chaining.
 
     References
@@ -727,7 +760,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Returns
         -------
         self : object
-            Returns fitted predictions, for each sample and class.
+            Class instance.
         """
         super().fit(X, Y)
         self.classes_ = [
@@ -747,7 +780,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Returns
         -------
         Y_prob : array-like of shape (n_samples, n_classes)
-            Returns fitted predictions, for each sample and class.
+            The predicted probabilities.
         """
         X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
@@ -781,6 +814,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             Returns the decision function of the sample for each model
             in the chain.
         """
+        X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_decision_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
@@ -867,6 +901,12 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         underlying `base_estimator` exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
