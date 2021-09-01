@@ -131,6 +131,26 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
 
+    See Also
+    --------
+    RFECV : Recursive feature elimination with built-in cross-validated
+        selection of the best number of features.
+    SelectFromModel : Feature selection based on thresholds of importance
+        weights.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
+
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying estimator does as well.
+
+    References
+    ----------
+
+    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
+           for cancer classification using support vector machines",
+           Mach. Learn., 46(1-3), 389--422, 2002.
+
     Examples
     --------
     The following example shows how to retrieve the 5 most informative
@@ -148,26 +168,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
-
-    Notes
-    -----
-    Allows NaN/Inf in the input if the underlying estimator does as well.
-
-    See Also
-    --------
-    RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features.
-    SelectFromModel : Feature selection based on thresholds of importance
-        weights.
-    SequentialFeatureSelector : Sequential cross-validation based feature
-        selection. Does not rely on importance weights.
-
-    References
-    ----------
-
-    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
-           for cancer classification using support vector machines",
-           Mach. Learn., 46(1-3), 389--422, 2002.
     """
 
     def __init__(

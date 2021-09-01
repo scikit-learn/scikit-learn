@@ -565,8 +565,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
-        return self.estimators_[0]._validate_X_predict(X, check_input=True)
+        X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+        if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
+            raise ValueError("No support for np.int64 index based sparse matrices")
+        return X
 
     @property
     def feature_importances_(self):

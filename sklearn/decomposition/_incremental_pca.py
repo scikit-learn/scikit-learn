@@ -121,21 +121,12 @@ class IncrementalPCA(_BasePCA):
 
         .. versionadded:: 1.0
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.decomposition import IncrementalPCA
-    >>> from scipy import sparse
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
-    >>> # either partially fit on smaller batches of data
-    >>> transformer.partial_fit(X[:100, :])
-    IncrementalPCA(batch_size=200, n_components=7)
-    >>> # or let the fit function itself divide the data into batches
-    >>> X_sparse = sparse.csr_matrix(X)
-    >>> X_transformed = transformer.fit_transform(X_sparse)
-    >>> X_transformed.shape
-    (1797, 7)
+    PCA : Principal component analysis (PCA).
+    KernelPCA : Kernel Principal component analysis (KPCA).
+    SparsePCA : Sparse Principal Components Analysis (SparsePCA).
+    TruncatedSVD : Dimensionality reduction using truncated SVD.
 
     Notes
     -----
@@ -170,12 +161,21 @@ class IncrementalPCA(_BasePCA):
     G. Golub and C. Van Loan. Matrix Computations, Third Edition, Chapter 5,
     Section 5.4.4, pp. 252-253.
 
-    See Also
+    Examples
     --------
-    PCA
-    KernelPCA
-    SparsePCA
-    TruncatedSVD
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import IncrementalPCA
+    >>> from scipy import sparse
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
+    >>> # either partially fit on smaller batches of data
+    >>> transformer.partial_fit(X[:100, :])
+    IncrementalPCA(batch_size=200, n_components=7)
+    >>> # or let the fit function itself divide the data into batches
+    >>> X_sparse = sparse.csr_matrix(X)
+    >>> X_transformed = transformer.fit_transform(X_sparse)
+    >>> X_transformed.shape
+    (1797, 7)
     """
 
     def __init__(self, n_components=None, *, whiten=False, copy=True, batch_size=None):
@@ -194,6 +194,7 @@ class IncrementalPCA(_BasePCA):
             n_features is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -241,10 +242,11 @@ class IncrementalPCA(_BasePCA):
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         check_input : bool, default=True
             Run check_array on X.
-
-        y : Ignored
 
         Returns
         -------
@@ -364,6 +366,7 @@ class IncrementalPCA(_BasePCA):
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
+            Projection of X in the first principal components.
 
         Examples
         --------

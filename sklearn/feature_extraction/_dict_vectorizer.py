@@ -74,6 +74,12 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         A list of length n_features containing the feature names (e.g., "f=ham"
         and "f=spam").
 
+    See Also
+    --------
+    FeatureHasher : Performs vectorization using only a hash function.
+    sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
+        features encoded as columns of arbitrary data types.
+
     Examples
     --------
     >>> from sklearn.feature_extraction import DictVectorizer
@@ -88,12 +94,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
-
-    See Also
-    --------
-    FeatureHasher : Performs vectorization using only a hash function.
-    sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
-        features encoded as columns of arbitrary data types.
     """
 
     def __init__(self, *, dtype=np.float64, separator="=", sparse=True, sort=True):
@@ -148,10 +148,12 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                Accepts multiple string values for one categorical feature.
 
         y : (ignored)
+            Ignored parameter.
 
         Returns
         -------
-        self
+        self : object
+            DictVectorizer class instance.
         """
         feature_names = []
         vocab = {}
@@ -302,6 +304,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                Accepts multiple string values for one categorical feature.
 
         y : (ignored)
+            Ignored parameter.
 
         Returns
         -------
@@ -371,10 +374,15 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         return self._transform(X, fitting=False)
 
     def get_feature_names(self):
-        """Returns a list of feature names, ordered by their indices.
+        """Return a list of feature names, ordered by their indices.
 
         If one-of-K coding is applied to categorical features, this will
         include the constructed feature names but not the original ones.
+
+        Returns
+        -------
+        feature_names_ : list of length (n_features,)
+           List containing the feature names (e.g., "f=ham" and "f=spam").
         """
         return self.feature_names_
 
@@ -393,7 +401,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
+            DictVectorizer class instance.
 
         Examples
         --------
