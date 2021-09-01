@@ -3192,6 +3192,8 @@ def _enforce_estimator_tags_x(estimator, X):
     # strictly positive data
     if _safe_tags(estimator, key="requires_positive_X"):
         X -= X.min()
+    if "categorical" in _safe_tags(estimator, key="X_types"):
+        X = (X - X.min()).astype(np.int32)
     return X
 
 
@@ -3619,11 +3621,11 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     # Make sure that n_features_in are checked after fitting
     tags = _safe_tags(estimator_orig)
 
-    if (
-        "2darray" not in tags["X_types"]
-        and "sparse" not in tags["X_types"]
-        or tags["no_validation"]
-    ):
+    is_supported_X_types = (
+        "2darray" in tags["X_types"] or "categorical" in tags["X_types"]
+    )
+
+    if not is_supported_X_types or tags["no_validation"]:
         return
 
     rng = np.random.RandomState(0)
@@ -3708,12 +3710,11 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         )
 
     tags = _safe_tags(estimator_orig)
+    is_supported_X_types = (
+        "2darray" in tags["X_types"] or "categorical" in tags["X_types"]
+    )
 
-    if (
-        "2darray" not in tags["X_types"]
-        and "sparse" not in tags["X_types"]
-        or tags["no_validation"]
-    ):
+    if not is_supported_X_types or tags["no_validation"]:
         return
 
     rng = np.random.RandomState(0)

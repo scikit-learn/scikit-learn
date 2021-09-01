@@ -70,6 +70,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown="error", force_all_finite=True):
+        self._check_n_features(X, reset=True)
+        self._check_feature_names(X, reset=True)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
@@ -114,6 +116,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _transform(
         self, X, handle_unknown="error", force_all_finite=True, warn_on_unknown=False
     ):
+        self._check_feature_names(X, reset=False)
+        self._check_n_features(X, reset=False)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
@@ -282,6 +286,11 @@ class OneHotEncoder(_BaseEncoder):
 
         .. versionchanged:: 0.23
            Added the possibility to contain `None` values.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 1.0
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -750,6 +759,11 @@ class OrdinalEncoder(_BaseEncoder):
         The categories of each feature determined during ``fit`` (in order of
         the features in X and corresponding with the output of ``transform``).
         This does not include categories that weren't seen during ``fit``.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 1.0
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
