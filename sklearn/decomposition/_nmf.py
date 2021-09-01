@@ -1497,9 +1497,9 @@ class NMF(TransformerMixin, BaseEstimator):
             )
         return W, H
 
-    def _scale_regularization(self, X, force_scaling=False):
+    def _scale_regularization(self, X):
         n_samples, n_features = X.shape
-        if self.alpha_W != 0 or self.alpha_H != "same" or force_scaling:
+        if self.alpha_W != 0 or self.alpha_H != "same":
             # if alpha_W or alpha_H is not left to its default value we ignore alpha
             # and regularization, and we scale the regularization terms.
             l1_reg_W = n_features * self._l1_reg_W
@@ -1847,8 +1847,8 @@ class MiniBatchNMF(NMF):
         learning as more recent batches will weight more than past batches.
 
     fresh_restarts : bool, default=False
-        Whether to completely solve for W at each step. Doing fresh restarts can lead to
-        a better solution for a same number of epochs but is much slower.
+        Whether to completely solve for W at each step. Doing fresh restarts will likely
+        lead to a better solution for a same number of iterations but it is much slower.
 
     fresh_restarts_max_iter : int, default=30
         Maximum number of iterations when solving for W at each step. Only used when
@@ -1933,7 +1933,7 @@ class MiniBatchNMF(NMF):
         beta_loss="frobenius",
         tol=1e-4,
         max_no_improvement=10,
-        max_iter=200,
+        max_iter=100,
         alpha_W=0.0,
         alpha_H="same",
         l1_ratio=0.0,
@@ -1957,7 +1957,6 @@ class MiniBatchNMF(NMF):
             alpha_H=alpha_H,
             l1_ratio=l1_ratio,
             verbose=verbose,
-            shuffle=False,
         )
 
         self.max_no_improvement = max_no_improvement
@@ -2014,7 +2013,7 @@ class MiniBatchNMF(NMF):
         W_buffer = W.copy()
 
         # get scaled regularization terms
-        l1_reg_W, _, l2_reg_W, _ = self._scale_regularization(X, force_scaling=True)
+        l1_reg_W, _, l2_reg_W, _ = self._scale_regularization(X)
 
         for i in range(max_iter):
             delta_W, *_ = _multiplicative_update_w(
@@ -2035,9 +2034,7 @@ class MiniBatchNMF(NMF):
         batch_size = X.shape[0]
 
         # get scaled regularization terms
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(
-            X, force_scaling=True
-        )
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
 
         # update W
         if self.fresh_restarts or W is None:
@@ -2120,7 +2117,8 @@ class MiniBatchNMF(NMF):
         if self.tol > 0 and H_diff <= self.tol:
             if self.verbose:
                 print(f"Converged (small H change) at step {step}/{n_steps}")
-            return True
+            print("# CV on H")
+            # return True
 
         # Early stopping heuristic due to lack of improvement on smoothed
         # cost function
@@ -2139,7 +2137,8 @@ class MiniBatchNMF(NMF):
                     "Converged (lack of improvement in objective function) "
                     f"at step {step}/{n_steps}"
                 )
-            return True
+            print("# CV on obj")
+            # return True
 
         return False
 
@@ -2182,9 +2181,9 @@ class MiniBatchNMF(NMF):
                 ConvergenceWarning,
             )
 
-        self.reconstruction_err_ = _beta_divergence(
-            X, W, H, self._beta_loss, square_root=True
-        )
+        # self.reconstruction_err_ = _beta_divergence(
+        #     X, W, H, self._beta_loss, square_root=True
+        # )
 
         self.n_components_ = H.shape[0]
         self.components_ = H
@@ -2232,7 +2231,9 @@ class MiniBatchNMF(NMF):
             Number of mini-batches processed.
         """
         check_non_negative(X, "NMF (input X)")
+        X, val = X[:-1000], X[-1000:]
         self._check_params(X)
+        random_state = check_random_state(self.random_state)
 
         if X.min() == 0 and self._beta_loss <= 0:
             raise ValueError(
@@ -2242,6 +2243,7 @@ class MiniBatchNMF(NMF):
             )
 
         n_samples, n_features = X.shape
+
         # initialize or check W and H
         W, H = self._check_w_h(X, W, H, update_H)
         H_buffer = H.copy()
@@ -2260,8 +2262,83 @@ class MiniBatchNMF(NMF):
         n_steps_per_epoch = int(np.ceil(n_samples / self._batch_size))
         n_steps = self.max_iter * n_steps_per_epoch
 
+        t = 0
+        self.res_ = []
+
         for i, batch in zip(range(n_steps), batches):
+
+            # shuffle the training set before each epoch
+            if i % n_steps_per_epoch == 0:
+                permutation = random_state.permutation(n_samples)
+                X = X[permutation]
+                W = W[permutation]
+
+            start = time.time()
             batch_cost = self._minibatch_step(X[batch], W[batch], H, update_H)
+            end = time.time()
+            t += end - start
+
+            ### *** ###
+            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X[batch])
+            batch_cost2 = (
+                _beta_divergence(X[batch], W[batch], H, self._beta_loss)
+                + l1_reg_W * W[batch].sum()
+                + l1_reg_H * H.sum()
+                + l2_reg_W * (W[batch] ** 2).sum()
+                + l2_reg_H * (H ** 2).sum()
+            )
+            batch_cost2 /= X[batch].shape[0]
+
+            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X[batch])
+            W_batch = self._solve_W(X[batch], H, self._transform_max_iter)
+            batch_cost2_solved = (
+                _beta_divergence(X[batch], W_batch, H, self._beta_loss)
+                + l1_reg_W * W_batch.sum()
+                + l1_reg_H * H.sum()
+                + l2_reg_W * (W_batch ** 2).sum()
+                + l2_reg_H * (H ** 2).sum()
+            )
+            batch_cost2_solved /= X[batch].shape[0]
+
+            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
+            train_cost = (
+                _beta_divergence(X, W, H, self._beta_loss)
+                + l1_reg_W * W.sum()
+                + l1_reg_H * H.sum()
+                + l2_reg_W * (W ** 2).sum()
+                + l2_reg_H * (H ** 2).sum()
+            )
+            train_cost /= X.shape[0]
+
+            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
+            W_train = self._solve_W(X, H, self._transform_max_iter)
+            train_cost_solved = (
+                _beta_divergence(X, W_train, H, self._beta_loss)
+                + l1_reg_W * W_train.sum()
+                + l1_reg_H * H.sum()
+                + l2_reg_W * (W_train ** 2).sum()
+                + l2_reg_H * (H ** 2).sum()
+            )
+            train_cost_solved /= X.shape[0]
+
+            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(val)
+            W_val = self._solve_W(val, H, self._transform_max_iter)
+            val_cost = (
+                _beta_divergence(val, W_val, H, self._beta_loss)
+                + l1_reg_W * W_val.sum()
+                + l1_reg_H * H.sum()
+                + l2_reg_W * (W_val ** 2).sum()
+                + l2_reg_H * (H ** 2).sum()
+            )
+            val_cost /= val.shape[0]
+
+            # H_diff = linalg.norm(H - H_buffer) / linalg.norm(H)
+            H_diff = np.mean(linalg.norm(H - H_buffer, axis=1) / linalg.norm(H, axis=1))
+            # print(f"[{i},{t},{batch_cost2},{self._ewa_cost},{train_cost},{batch_cost2_solved},"
+            #       f"{train_cost_solved},{val_cost},{H_diff}],")
+            self.res_.append([i,t,batch_cost2,train_cost,batch_cost2_solved,
+                              train_cost_solved,val_cost,H_diff])
+            ### *** ###
 
             if update_H and self._minibatch_convergence(
                 X, batch_cost, H, H_buffer, n_samples, i, n_steps
@@ -2272,6 +2349,8 @@ class MiniBatchNMF(NMF):
 
         if self.fresh_restarts:
             W = self._solve_W(X, H, self._transform_max_iter)
+
+        self.res_ = np.array(self.res_)
 
         n_steps = i + 1
         n_iter = int(np.ceil((i + 1) / n_steps_per_epoch))
