@@ -204,7 +204,7 @@ cdef class PairwiseDistancesReduction:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted({"fast_sqeuclidean", *METRIC_MAPPING.keys()}.difference(excluded))
+        return sorted({"fast_euclidean", "fast_sqeuclidean", *METRIC_MAPPING.keys()}.difference(excluded))
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -472,7 +472,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         X,
         Y,
         ITYPE_t k,
-        str metric="fast_sqeuclidean",
+        str metric="fast_euclidean",
         ITYPE_t chunk_size=CHUNK_SIZE,
         dict metric_kwargs=dict(),
     ) -> ArgKmin:
@@ -489,7 +489,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         k : int
             The k for the argkmin reduction.
 
-        metric : str, default='fast_sqeuclidean'
+        metric : str, default='fast_euclidean'
             The distance metric to use for argkmin. The default metric is
             a fast implementation of the standard Euclidean metric.
             For a list of available metrics, see the documentation of
@@ -507,8 +507,11 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             The suited ArgKmin implementation.
         """
         # This factory comes to handle specialisations.
-        if metric == "fast_sqeuclidean" and not issparse(X) and not issparse(Y):
-            return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
+        if metric in {"fast_euclidean", "fast_sqeuclidean"} and not issparse(X) and not issparse(Y):
+            use_squared_distances = metric == "fast_sqeuclidean"
+            return FastEuclideanArgKmin(X=X, Y=Y, k=k,
+                                        use_squared_distances=use_squared_distances,
+                                        chunk_size=chunk_size)
 
         return ArgKmin(
             datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
@@ -669,8 +672,6 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                 )
         return
 
-    # TODO: annotating with 'final' here makes the compilation fails but it should not
-    # @final
     cdef void compute_exact_distances(self) nogil:
         cdef:
             ITYPE_t i, j
@@ -748,7 +749,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         return np.asarray(self.argkmin_indices)
 
 
-cdef class FastSquaredEuclideanArgKmin(ArgKmin):
+cdef class FastEuclideanArgKmin(ArgKmin):
     """Fast specialized alternative for ArgKmin on EuclideanDistance.
 
     Notes
@@ -769,6 +770,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
 
         # Buffers for GEMM
         DTYPE_t ** dist_middle_terms_chunks
+        bint use_squared_distances
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -779,7 +781,8 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         X,
         Y,
         ITYPE_t k,
-        ITYPE_t chunk_size = CHUNK_SIZE,
+        bint use_squared_distances=False,
+        ITYPE_t chunk_size=CHUNK_SIZE,
     ):
         ArgKmin.__init__(self,
             # The datasets pair here is used for exact distances computations
@@ -792,6 +795,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         self.X, self.Y = datasets_pair.X, datasets_pair.Y
         self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
+        self.use_squared_distances = use_squared_distances
 
         # Temporary datastructures used in threads
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
@@ -800,6 +804,11 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
     def __dealloc__(self):
         if self.dist_middle_terms_chunks is not NULL:
             free(self.dist_middle_terms_chunks)
+
+    @final
+    cdef void compute_exact_distances(self) nogil:
+        if not self.use_squared_distances:
+            ArgKmin.compute_exact_distances(self)
 
     @final
     cdef void _on_X_parallel_init(self,
@@ -960,7 +969,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         X,
         Y,
         DTYPE_t radius,
-        str metric="fast_sqeuclidean",
+        str metric="fast_euclidean",
         ITYPE_t chunk_size=CHUNK_SIZE,
         dict metric_kwargs=dict(),
     ) -> RadiusNeighborhood:
@@ -977,7 +986,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         radius : float
             The radius defining the neighborhood.
 
-        metric : str, default='fast_sqeuclidean'
+        metric : str, default='fast_euclidean'
             The distance metric to use for argkmin. The default metric is
             a fast implementation of the standard Euclidean metric.
             For a list of available metrics, see the documentation of
@@ -995,10 +1004,13 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             The suited RadiusNeighborhood implementation.
         """
         # This factory comes to handle specialisations.
-        if metric == "fast_sqeuclidean" and not issparse(X) and not issparse(Y):
-            return FastSquaredEuclideanRadiusNeighborhood(X=X, Y=Y,
-                                                          radius=radius,
-                                                          chunk_size=chunk_size)
+        if metric in {"fast_euclidean", "fast_sqeuclidean"} and not issparse(X) and not issparse(Y):
+            use_squared_distances = metric == "fast_sqeuclidean"
+            return FastEuclideanRadiusNeighborhood(X=X, Y=Y,
+                                                   radius=radius,
+                                                   use_squared_distances=use_squared_distances,
+                                                   chunk_size=chunk_size)
+
         return RadiusNeighborhood(
             datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
             radius=radius,
@@ -1160,8 +1172,6 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         return
 
-    # TODO: annotating with 'final' here makes the compilation fails but it should not
-    # @final
     cdef void compute_exact_distances(self) nogil:
         """Convert proxy distances to pairwise distances in parallel."""
         cdef:
@@ -1229,7 +1239,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         return res
 
 
-cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
+cdef class FastEuclideanRadiusNeighborhood(RadiusNeighborhood):
     """Fast specialized alternative for RadiusNeighborhood on EuclideanDistance.
 
     Notes
@@ -1250,6 +1260,7 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
 
         # Buffers for GEMM
         DTYPE_t ** dist_middle_terms_chunks
+        bint use_squared_distances
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -1260,7 +1271,8 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
         X,
         Y,
         DTYPE_t radius,
-        ITYPE_t chunk_size = CHUNK_SIZE,
+        bint use_squared_distances=False,
+        ITYPE_t chunk_size=CHUNK_SIZE,
     ):
         RadiusNeighborhood.__init__(self,
             # The datasets pair here is used for exact distances computations
@@ -1273,6 +1285,12 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
         self.X, self.Y = datasets_pair.X, datasets_pair.Y
         self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
+        self.use_squared_distances = use_squared_distances
+
+        if use_squared_distances:
+            # In this specialisation and this setup, the value passed to the radius is
+            # already considered to be the the proxy radius, so we overwrite it.
+            self.proxy_radius = radius
 
         # Temporary datastructures used in threads
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
@@ -1281,6 +1299,11 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
     def __dealloc__(self):
         if self.dist_middle_terms_chunks is not NULL:
             free(self.dist_middle_terms_chunks)
+
+    @final
+    cdef void compute_exact_distances(self) nogil:
+        if not self.use_squared_distances:
+            RadiusNeighborhood.compute_exact_distances(self)
 
     @final
     cdef void _on_X_parallel_init(self,

@@ -1236,7 +1236,7 @@ cdef class DatasetsPair:
         Y : array-like of shape (n_Y, d)
             Input data.
 
-        metric : str, default='fast_sqeuclidean'
+        metric : str, default='euclidean'
             The distance metric to use for argkmin. The default metric is
             a fast implementation of the standard Euclidean metric.
             For a list of available metrics, see the documentation of

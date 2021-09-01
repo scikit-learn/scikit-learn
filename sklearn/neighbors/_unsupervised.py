@@ -38,10 +38,10 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : str or callable, default='fast_sqeuclidean'
-        The distance metric to use for the tree. The default distance is
-        'fast_sqeuclidean' as fast alternative for the Euclidean distance
-        metric. If exact results are needed, prefer 'euclidean'.
+    metric : str or callable, default='minkowski'
+        the distance metric to use for the tree.  The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. For a list of available metrics, see the documentation of
         For a list of available metrics, see the documentation of
         :class:`~sklearn.metrics.DistanceMetric`.
         If metric is "precomputed", X is assumed to be a distance matrix and
@@ -131,7 +131,7 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         radius=1.0,
         algorithm="auto",
         leaf_size=30,
-        metric="fast_sqeuclidean",
+        metric="minkowski",
         p=2,
         metric_params=None,
         n_jobs=None,

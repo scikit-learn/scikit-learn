@@ -51,6 +51,7 @@ VALID_METRICS = dict(
             "correlation",
             "cosine",
             "dice",
+            "fast_euclidean",
             "fast_sqeuclidean",
             "hamming",
             "jaccard",
@@ -334,7 +335,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         radius=None,
         algorithm="auto",
         leaf_size=30,
-        metric="fast_sqeuclidean",
+        metric="minkowski",
         p=2,
         metric_params=None,
         n_jobs=None,
@@ -363,9 +364,15 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             alg_check = self.algorithm
 
-        if alg_check != "brute" and self.metric == "fast_sqeuclidean":
-            # The fast euclidean alternative is only available for 'brute'.
-            self.metric = "euclidean"
+        if alg_check != "brute" and self.metric in {"fast_sqeuclidean", "sqeuclidean"}:
+            alternative = self.metric.replace("fast_", "")
+            warnings.warn(
+                f"'{self.metric}' is only available for algorithm='brute', falling"
+                f"back on metric='{alternative}'.",
+                UserWarning,
+                stacklevel=3,
+            )
+            self.metric = alternative
 
         if callable(self.metric):
             if self.algorithm == "kd_tree":
@@ -505,10 +512,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if issparse(X):
             if self.algorithm not in ("auto", "brute"):
                 warnings.warn("cannot use tree with sparse input: using brute force")
-            if self.metric == "fast_sqeuclidean":
-                # TODO: support sparse datasets
-                # The fast euclidean alternative is only available for dense datasets.
-                self.effective_metric_ = "euclidean"
+
+            if self.metric in {"fast_sqeuclidean", "fast_euclidean"}:
+                # The fast alternatives are only available for dense datasets.
+                self.effective_metric_ = self.effective_metric_.replace("fast_", "")
+
             if self.effective_metric_ not in VALID_METRICS_SPARSE[
                 "brute"
             ] and not callable(self.effective_metric_):
@@ -552,6 +560,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 else:
                     self._fit_method = "brute"
 
+        specialised_metrics = {"euclidean", "sqeuclidean"}
+
         if self._fit_method == "ball_tree":
             self._tree = BallTree(
                 X,
@@ -567,6 +577,13 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 **self.effective_metric_params_,
             )
         elif self._fit_method == "brute":
+            if (
+                self.effective_metric_ in specialised_metrics
+                and self.metric not in specialised_metrics
+            ):
+                # In that case, the standard stabler metric has not been explicitly
+                # specified by the user, so we prefer its fast alternative.
+                self.effective_metric_ = f"fast_{self.effective_metric_}"
             self._tree = None
         else:
             raise ValueError("algorithm = '%s' not recognized" % self.algorithm)
@@ -756,11 +773,11 @@ class KNeighborsMixin:
 
         elif self._fit_method == "brute":
             # TODO: support sparse matrices
-            # When ArgKmin is not supported and when the
-            # user asked for "fast_sqeuclidean", we need to
-            # revert to "euclidean"
-            if self.effective_metric_ == "fast_sqeuclidean":
-                self.effective_metric_ = "euclidean"
+            # When ArgKmin is not supported and when the user ask for a
+            # fast alternative, we need to revert to the standard.
+            if self.effective_metric_ in {"fast_sqeuclidean", "fast_euclidean"}:
+                # The fast alternatives are only available for dense datasets.
+                self.effective_metric_ = self.effective_metric_.replace("fast_", "")
 
             reduce_func = partial(
                 self._kneighbors_reduce_func,
@@ -1083,6 +1100,11 @@ class RadiusNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
+            # When RadiusNeighborhood is not supported and when the user ask for a
+            # fast alternative, we need to revert to the standard.
+            if self.effective_metric_ in {"fast_sqeuclidean", "fast_euclidean"}:
+                # The fast alternatives are only available for dense datasets.
+                self.effective_metric_ = self.effective_metric_.replace("fast_", "")
 
             reduce_func = partial(
                 self._radius_neighbors_reduce_func,

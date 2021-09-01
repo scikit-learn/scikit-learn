@@ -24,8 +24,8 @@ from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     ArgKmin,
     RadiusNeighborhood,
-    FastSquaredEuclideanArgKmin,
-    FastSquaredEuclideanRadiusNeighborhood,
+    FastEuclideanArgKmin,
+    FastEuclideanRadiusNeighborhood,
 )
 
 from sklearn.utils import _in_unstable_openblas_configuration
@@ -60,7 +60,7 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices):
     assert_allclose(
         ref_dist,
         dist,
-        err_msg="Query vectors havehas different neighbors' distances",
+        err_msg="Query vectors have different neighbors' distances",
         rtol=1e-7,
     )
 
@@ -172,14 +172,14 @@ def test_radius_neighborhood_factory_method_wrong_usages():
 @fails_if_unstable_openblas
 @pytest.mark.filterwarnings("ignore:Constructing a DIA matrix")
 @pytest.mark.parametrize(
-    "PairwiseDistancesReduction, FastSquaredPairwiseDistancesReduction",
+    "PairwiseDistancesReduction, FastPairwiseDistancesReduction",
     [
-        (ArgKmin, FastSquaredEuclideanArgKmin),
-        (RadiusNeighborhood, FastSquaredEuclideanRadiusNeighborhood),
+        (ArgKmin, FastEuclideanArgKmin),
+        (RadiusNeighborhood, FastEuclideanRadiusNeighborhood),
     ],
 )
 def test_pairwise_distances_reduction_factory_method(
-    PairwiseDistancesReduction, FastSquaredPairwiseDistancesReduction
+    PairwiseDistancesReduction, FastPairwiseDistancesReduction
 ):
     # Test all the combinations of DatasetsPair for creation
     rng = np.random.RandomState(1)
@@ -225,11 +225,11 @@ def test_pairwise_distances_reduction_factory_method(
         assert isinstance(sparse_dense_instance.datasets_pair, SparseDenseDatasetsPair)
 
     # Test specialisations creation
-    fast_sqeuclidean_instance = PairwiseDistancesReduction.get_for(
-        X, Y, dummy_arg, metric="fast_sqeuclidean"
+    fast_euclidean_instance = PairwiseDistancesReduction.get_for(
+        X, Y, dummy_arg, metric="fast_euclidean"
     )
-    assert isinstance(fast_sqeuclidean_instance, PairwiseDistancesReduction)
-    assert isinstance(fast_sqeuclidean_instance, FastSquaredPairwiseDistancesReduction)
+    assert isinstance(fast_euclidean_instance, PairwiseDistancesReduction)
+    assert isinstance(fast_euclidean_instance, FastPairwiseDistancesReduction)
 
 
 @fails_if_unstable_openblas
@@ -241,7 +241,7 @@ def test_argkmin_chunk_size_agnosticism(
     n_samples,
     chunk_size,
     k=10,
-    metric="fast_sqeuclidean",
+    metric="fast_euclidean",
     n_features=100,
     dtype=np.float64,
 ):
@@ -271,7 +271,7 @@ def test_radius_neighborhood_chunk_size_agnosticism(
     n_samples,
     chunk_size,
     radius=10.0,
-    metric="fast_sqeuclidean",
+    metric="fast_euclidean",
     n_features=100,
     dtype=np.float64,
 ):
@@ -308,9 +308,12 @@ def test_argkmin_strategies_consistency(
 ):
     # ArgKmin results obtained using both parallelization strategies
     # must be identical
-    if _in_unstable_openblas_configuration() and metric == "fast_sqeuclidean":
+    if _in_unstable_openblas_configuration() and metric == {
+        "fast_sqeuclidean",
+        "fast_euclidean",
+    }:
         pytest.xfail(
-            "OpenBLAS (used for 'fast_sqeuclidean') is unstable in this configuration"
+            "OpenBLAS (used for 'fast_(sq)euclidean') is unstable in this configuration"
         )
 
     rng = np.random.RandomState(seed)
@@ -359,9 +362,12 @@ def test_radius_neighborhood_strategies_consistency(
 ):
     # RadiusNeighborhood results obtained using both parallelization strategies
     # must be identical
-    if _in_unstable_openblas_configuration() and metric == "fast_sqeuclidean":
+    if _in_unstable_openblas_configuration() and metric == {
+        "fast_sqeuclidean",
+        "fast_euclidean",
+    }:
         pytest.xfail(
-            "OpenBLAS (used for 'fast_sqeuclidean') is unstable in this configuration"
+            "OpenBLAS (used for 'fast_(sq)euclidean') is unstable in this configuration"
         )
 
     rng = np.random.RandomState(seed)
@@ -427,7 +433,7 @@ def test_fast_sqeuclidean_correctness(
     eucl_dist, eucl_indices = ArgKmin.get_for(X, Y, k, metric="euclidean").compute(
         return_distance=True
     )
-    fse_dist, fse_indices = ArgKmin.get_for(X, Y, k, metric="fast_sqeuclidean").compute(
+    fse_dist, fse_indices = ArgKmin.get_for(X, Y, k, metric="fast_euclidean").compute(
         return_distance=True
     )
 
@@ -437,7 +443,7 @@ def test_fast_sqeuclidean_correctness(
         X, Y, radius, metric="euclidean"
     ).compute(return_distance=True)
     fse_dist, fse_indices = RadiusNeighborhood.get_for(
-        X, Y, radius, metric="fast_sqeuclidean"
+        X, Y, radius, metric="fast_euclidean"
     ).compute(return_distance=True)
 
     assert_radius_neighborhood_results_equality(

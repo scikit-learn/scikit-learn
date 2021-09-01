@@ -160,7 +160,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         algorithm="auto",
         leaf_size=30,
         p=2,
-        metric="fast_sqeuclidean",
+        metric="minkowski",
         metric_params=None,
         n_jobs=None,
     ):

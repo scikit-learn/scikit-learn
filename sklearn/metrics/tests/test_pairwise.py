@@ -1470,7 +1470,7 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
 @pytest.mark.parametrize("X_translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 @pytest.mark.parametrize("Y_translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
 @pytest.mark.parametrize("sign", [1, -1])
-def test_fast_sqeuclidean_correctness(
+def test_fast_euclidean_correctness(
     X_translation, Y_translation, sign, n_samples=10000, n_features=10
 ):
     # This is the only failing test case, so we prefer xfailing.
@@ -1491,7 +1491,7 @@ def test_fast_sqeuclidean_correctness(
 
     argmins, distances = pairwise_distances_argmin_min(X, Y, metric="euclidean")
     fsq_argmins, fsq_distances = pairwise_distances_argmin_min(
-        X, Y, metric="fast_sqeuclidean"
+        X, Y, metric="fast_euclidean"
     )
 
     np.testing.assert_array_equal(argmins, fsq_argmins)
