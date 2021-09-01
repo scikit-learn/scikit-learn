@@ -139,7 +139,7 @@ def test_params_validation():
     )
     with pytest.raises(ValueError, match=re.escape(msg)):
         NCA(init=1).fit(X, y)
-    with pytest.raises(ValueError, match="`max_iter`= -1, must be >= 1."):
+    with pytest.raises(ValueError, match="max_iter == -1, must be >= 1."):
         NCA(max_iter=-1).fit(X, y)
     init = rng.rand(5, 3)
     msg = (
