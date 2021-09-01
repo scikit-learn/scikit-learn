@@ -327,6 +327,17 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Fix| Fixed Bug : AdaBoost's training error can increase with a larger number of trees
+  Problem: For 500 leaves we get the expected behavior: both the training and validation errors decrease when increasing the number of trees. 
+  At some point we reach a plateau of diminishing returns. However for lower number of leaves , the training set is growing with more trees!
+  Solution: If the prediction score is not improved compared to the previous score, then we must reset sample_weight.Sample weights are updated 
+  so that the weak learner study intensively the data the previous weak learner can't predict well.It means the weak learner is given challenging 
+  data more frequently than one step before. However, if the weak learner is too weak to restudy such data, prediction scores deteriorate because 
+  the percentage of the challenging data goes up. The weak learner can't get insights because the task is too difficult. Consequently, although we 
+  increase the number of trees, we can't get the expected result.
+  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  :pr:`20883` by :user:`Daksha Dinesh Shenoy <DAKSHA2001>`.
+  
 - |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
   :class:`~sklearn.ensemble.HistGradientBoostingRegressor` take cgroups quotas
   into account when deciding the number of threads used by OpenMP. This
