@@ -11,7 +11,7 @@
 import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
-from ..utils.validation import _is_arraylike, _num_samples
+from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
 
 import warnings
 from ._base import _check_weights, _get_weights
@@ -211,9 +211,20 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
+        # Duplicated because of the check on self.effective_metric_'s value
+        # TODO: remove check_is_fitted duplication
+        check_is_fitted(self)
+
         X = self._validate_data(X, accept_sparse="csr", reset=False)
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
+        if self.weights == "uniform" and self.effective_metric_ == "fast_euclidean":
+            # In that case, it is safe to use the fast alternative which
+            # does not use sqrt on distances as this can be costly.
+            self.effective_metric_ = "fast_sqeuclidean"
+            neigh_dist, neigh_ind = self.kneighbors(X)
+            self.effective_metric_ = "fast_euclidean"
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
 
         classes_ = self.classes_
         _y = self._y
@@ -256,9 +267,20 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
+        # Duplicated because of the check on self.effective_metric_'s value
+        # TODO: remove check_is_fitted duplication
+        check_is_fitted(self)
+
         X = self._validate_data(X, accept_sparse="csr", reset=False)
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
+        if self.weights == "uniform" and self.effective_metric_ == "fast_euclidean":
+            # In that case, it is safe to use the fast alternative which
+            # does not use sqrt on distances as this can be costly.
+            self.effective_metric_ = "fast_sqeuclidean"
+            neigh_dist, neigh_ind = self.kneighbors(X)
+            self.effective_metric_ = "fast_euclidean"
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
 
         classes_ = self.classes_
         _y = self._y
@@ -595,11 +617,24 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
+        # Duplicated because of the check on self.effective_metric_'s value
+        # TODO: remove check_is_fitted duplication
+        check_is_fitted(self)
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         n_queries = _num_samples(X)
 
-        neigh_dist, neigh_ind = self.radius_neighbors(X)
+        if self.weights == "uniform" and self.effective_metric_ == "fast_euclidean":
+            # In that case, it is safe to use the fast alternative which
+            # does not use sqrt on distances as this can be costly.
+            original_radius = self.radius
+            self.effective_metric_ = "fast_sqeuclidean"
+            self.radius = original_radius * original_radius
+            neigh_dist, neigh_ind = self.radius_neighbors(X)
+            self.radius = original_radius
+            self.effective_metric_ = "fast_euclidean"
+        else:
+            neigh_dist, neigh_ind = self.radius_neighbors(X)
 
         outlier_mask = np.zeros(n_queries, dtype=bool)
         outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
