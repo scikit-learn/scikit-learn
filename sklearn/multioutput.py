@@ -65,7 +65,7 @@ def _partial_fit_estimator(
 
 
 def _available_if_estimator_has(attr):
-    """Returns a function to check if estimator or estimators_ has attr.
+    """Return a function to check if `estimator` or `estimators_` has `attr`.
 
     Helper for Chain implementations.
     """
@@ -113,7 +113,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         Returns
         -------
         self : object
-            Returns fitted predictions, for each sample and class.
+            Returns a fitted instance.
         """
         first_time = not hasattr(self, "estimators_")
         y = self._validate_data(X="no_validation", y=y, multi_output=True)
@@ -175,7 +175,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         Returns
         -------
         self : object
-            Returns fitted predictions, for each sample and class.
+            Returns a fitted instance.
         """
 
         if not hasattr(self.estimator, "fit"):
@@ -290,7 +290,8 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
 
     See Also
     --------
-    RegressorChain : Equivalent for regression.
+    RegressorChain : A multi-label model that arranges regressions into a
+        chain.
     MultiOutputClassifier : Classifies each output independently rather than
         chaining.
 
@@ -329,7 +330,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         Returns
         -------
         self : object
-            Returns fitted predictions, for each sample and class.
+            Returns a fitted instance.
         """
         super().partial_fit(X, y, sample_weight=sample_weight)
 
@@ -385,7 +386,8 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
     See Also
     --------
-    RegressorChain : Equivalent for regression.
+    ClassifierChain : A multi-label model that arranges binary classifiers
+        into a chain.
     MultiOutputRegressor : Fits one regressor per target variable.
 
     Examples
@@ -427,7 +429,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         Returns
         -------
         self : object
-            Returns fitted predictions, for each sample and class.
+            Returns a fitted instance.
         """
         super().fit(X, Y, sample_weight, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
@@ -486,7 +488,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         Returns
         -------
         scores : float
-            Mean accuracy, `accuracy_score`, of self.predict(X) versus y.
+            Mean accuracy of predicted target versus true target.
         """
         check_is_fitted(self)
         n_outputs_ = len(self.estimators_)
@@ -509,7 +511,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
 
 def _available_if_base_estimator_has(attr):
-    """Returns a function to check if base_estimator or estimators_ has attr.
+    """Return a function to check if `base_estimator` or `estimators_` has `attr`.
 
     Helper for Chain implementations.
     """
@@ -549,7 +551,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         self : object
-            Returns fitted predictions, for each sample and class.
+            Returns a fitted instance.
         """
         X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
 
@@ -947,7 +949,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         Returns
         -------
         self : object
-            Returns fitted predictions, for each sample and class.
+            Returns a fitted instance.
         """
         super().fit(X, Y, **fit_params)
         return self
