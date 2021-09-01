@@ -1283,7 +1283,8 @@ def test_train_test_split():
         train, test = train_test_split(y, shuffle=False, test_size=test_size)
         assert_array_equal(test, [8, 9])
         assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
-    
+
+def test_train_test_split_32bit_overflow():
     # Based on issue #20774 - check for integer overflow on 32-bit platforms
     big_number = 100000     # A number 'n' big enough for expression 'n * n * train_size'
                             # to cause overflow for signed 32-bit integer
