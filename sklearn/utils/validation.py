@@ -1671,10 +1671,7 @@ def _get_feature_names(X):
 
 
 def _check_feature_names_in(estimator, input_features):
-    """Make feature names in from `estimator.get_feature_names_out`.
-
-    Used to validate input from `get_feature_names_out(input_features=None)`.
-    """
+    """Validate and make feature names in from `estimator.get_feature_names_out`."""
     feature_names_in_ = getattr(estimator, "feature_names_in_", None)
     n_features_in_ = getattr(estimator, "n_features_in_", None)
 
