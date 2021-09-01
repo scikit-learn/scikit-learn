@@ -1479,7 +1479,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     return lambdas
 
 
-def _check_sample_weight(sample_weight, X, only_positive=False, dtype=None, copy=False):
+def _check_sample_weight(sample_weight, X, only_non_negative=False, dtype=None, copy=False):
     """Validate sample weights.
 
     Note that passing sample_weight=None will output an array of ones.
@@ -1494,6 +1494,8 @@ def _check_sample_weight(sample_weight, X, only_positive=False, dtype=None, copy
 
     X : {ndarray, list, sparse matrix}
         Input data.
+        
+    only_non_negative : if True then a non negativity check for the sample_weight will be done
 
     dtype : dtype, default=None
        dtype of the validated `sample_weight`.
@@ -1540,7 +1542,7 @@ def _check_sample_weight(sample_weight, X, only_positive=False, dtype=None, copy
                 )
             )
 
-    if only_positive:
+    if only_non_negative:
         check_non_negative(sample_weight, "sample weight")
 
     return sample_weight
