@@ -1297,14 +1297,15 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    Examples
+    See Also
     --------
-    >>> import numpy as np
-    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
-    >>> from sklearn.decomposition import NMF
-    >>> model = NMF(n_components=2, init='random', random_state=0)
-    >>> W = model.fit_transform(X)
-    >>> H = model.components_
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    PCA : Principal component analysis.
+    SparseCoder : Find a sparse representation of data from a fixed,
+        precomputed dictionary.
+    SparsePCA : Sparse Principal Components Analysis.
+    TruncatedSVD : Dimensionality reduction using truncated SVD.
 
     References
     ----------
@@ -1315,6 +1316,15 @@ class NMF(TransformerMixin, BaseEstimator):
 
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import NMF
+    >>> model = NMF(n_components=2, init='random', random_state=0)
+    >>> W = model.fit_transform(X)
+    >>> H = model.components_
     """
 
     def __init__(
@@ -1503,9 +1513,11 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be decomposed
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         W : array-like of shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
@@ -1637,13 +1649,20 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be decomposed
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
+
+        **params : kwargs
+            Parameters (keyword arguments) and values passed to
+            the fit_transform instance.
 
         Returns
         -------
-        self
+        self : object
+            Returns the instance itself.
         """
         self.fit_transform(X, **params)
         return self
@@ -1654,7 +1673,8 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be transformed by the model.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
@@ -1674,6 +1694,8 @@ class NMF(TransformerMixin, BaseEstimator):
     def inverse_transform(self, W):
         """Transform data back to its original space.
 
+        .. versionadded:: 0.18
+
         Parameters
         ----------
         W : {ndarray, sparse matrix} of shape (n_samples, n_components)
@@ -1682,9 +1704,7 @@ class NMF(TransformerMixin, BaseEstimator):
         Returns
         -------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Data matrix of original shape.
-
-        .. versionadded:: 0.18
+            Returns a data matrix of the original shape.
         """
         check_is_fitted(self)
         return np.dot(W, self.components_)
