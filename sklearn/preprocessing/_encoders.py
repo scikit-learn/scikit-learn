@@ -672,7 +672,7 @@ class OneHotEncoder(_BaseEncoder):
 
     @deprecated(
         "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. You can use get_feature_names_out instead."
+        "in 1.2. Please use get_feature_names_out instead."
     )
     def get_feature_names(self, input_features=None):
         """Return feature names for output features.
@@ -728,7 +728,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Returns
         -------
-        feature_names_out : ndarray of str
+        feature_names_out : ndarray of str objects
             Transformed feature names.
         """
         check_is_fitted(self)

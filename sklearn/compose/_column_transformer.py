@@ -388,7 +388,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     @deprecated(
         "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. You can use get_feature_names_out instead."
+        "in 1.2. Please use get_feature_names_out instead."
     )
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -428,8 +428,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     ):
         """Gets feature names of transformer.
 
-        Used conduction with self._iter(fitted=True) in get_feature_names_out."""
-
+        Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
+        """
         if trans == "drop" or _is_empty_column_selection(column):
             return
         elif trans == "passthrough":
@@ -469,7 +469,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        feature_names_out : ndarray of str
+        feature_names_out : ndarray of str objects
             Transformed feature names.
         """
         check_is_fitted(self)
@@ -489,8 +489,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # No feature names
             return np.array([], dtype=object)
 
-        # always prefix the feature names out with the transformers name
         if self.prefix_feature_names_out:
+            # Prefix the feature names out with the transformers name
             names = list(
                 chain.from_iterable(
                     (f"{name}__{i}" for i in feature_names_out)
@@ -499,7 +499,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
             return np.asarray(names, dtype=object)
 
-        # prefix_feature_names_out==False
+        # prefix_feature_names_out is False
         # Check that names are all unique without a prefix
         feature_names_count = Counter(
             chain.from_iterable(s for _, s in transformer_with_feature_names_out)

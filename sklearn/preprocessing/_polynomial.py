@@ -196,7 +196,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     @deprecated(
         "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. You can use get_feature_names_out instead"
+        "in 1.2. Please use get_feature_names_out instead."
     )
     def get_feature_names(self, input_features=None):
         """
@@ -246,7 +246,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        feature_names_out : ndarray of str
+        feature_names_out : ndarray of str objects
             Transformed feature names.
         """
         powers = self.powers_
@@ -679,7 +679,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
     @deprecated(
         "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. You can use get_feature_names_out instead"
+        "in 1.2. Please use get_feature_names_out instead."
     )
     def get_feature_names(self, input_features=None):
         """Return feature names for output features.
@@ -719,7 +719,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        feature_names_out : ndarray of str
+        feature_names_out : ndarray of str objects
             Transformed feature names.
         """
         n_splines = self.bsplines_[0].c.shape[0]

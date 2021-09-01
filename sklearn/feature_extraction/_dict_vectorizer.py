@@ -376,7 +376,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     @deprecated(
         "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. You can use get_feature_names_out instead"
+        "in 1.2. Please use get_feature_names_out instead."
     )
     def get_feature_names(self):
         """Return a list of feature names, ordered by their indices.
@@ -401,7 +401,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        feature_names_out : ndarray of str
+        feature_names_out : ndarray of str objects
             Transformed feature names.
         """
         if any(not isinstance(name, str) for name in self.feature_names_):

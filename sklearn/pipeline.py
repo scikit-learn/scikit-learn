@@ -685,7 +685,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        feature_names_out : ndarray of str
+        feature_names_out : ndarray of str objects
             Transformed feature names.
         """
         for _, name, transform in self._iter():
@@ -1003,7 +1003,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     @deprecated(
         "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. You can use get_feature_names_out instead"
+        "in 1.2. Please use get_feature_names_out instead."
     )
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -1033,7 +1033,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        feature_names_out : ndarray of str
+        feature_names_out : ndarray of str objects
             Transformed feature names.
         """
         feature_names = []
