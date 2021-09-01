@@ -149,9 +149,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
 
-        sample_weights : array-like of shape (n_samples,), default=None
-            Individual weights for each sample. Used to calculate quantiles if
-            strategy = `"quantile"`.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Individual weights for each sample. Used when `strategy="quantile"`.
 
         Returns
         -------
