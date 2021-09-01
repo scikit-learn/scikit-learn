@@ -289,9 +289,10 @@ class RANSACRegressor(
             `max_trials` randomly chosen sub-samples.
 
         """
-        # Need to validate separately here.
-        # We can't pass multi_ouput=True because that would allow y to be csr.
-        check_X_params = dict(accept_sparse="csr")
+        # Need to validate separately here. We can't pass multi_ouput=True
+        # because that would allow y to be csr. Delay expensive finiteness
+        # check to the base estimator's own input validation.
+        check_X_params = dict(accept_sparse="csr", force_all_finite=False)
         check_y_params = dict(ensure_2d=False)
         X, y = self._validate_data(
             X, y, validate_separately=(check_X_params, check_y_params)
@@ -562,8 +563,12 @@ class RANSACRegressor(
             Returns predicted values.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
-
+        X = self._validate_data(
+            X,
+            force_all_finite=False,
+            accept_sparse=True,
+            reset=False,
+        )
         return self.estimator_.predict(X)
 
     def score(self, X, y):
@@ -585,8 +590,12 @@ class RANSACRegressor(
             Score of the prediction.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
-
+        X = self._validate_data(
+            X,
+            force_all_finite=False,
+            accept_sparse=True,
+            reset=False,
+        )
         return self.estimator_.score(X, y)
 
     def _more_tags(self):

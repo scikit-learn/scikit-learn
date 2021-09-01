@@ -316,7 +316,10 @@ def test_check_n_features_in_after_fitting(estimator):
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
 
 
-_estimators_to_test = list(
+# NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
+# delegates validation to a base estimator, the check is testing that the base estimator
+# is checking for column name consistency.
+column_name_estimators = list(
     chain(
         _tested_estimators(),
         [make_pipeline(LogisticRegression(C=1))],
@@ -325,10 +328,15 @@ _estimators_to_test = list(
 )
 
 
-@pytest.mark.parametrize("estimator", _estimators_to_test, ids=_get_check_estimator_ids)
+@pytest.mark.parametrize(
+    "estimator", column_name_estimators, ids=_get_check_estimator_ids
+)
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        check_dataframe_column_names_consistency(
-            estimator.__class__.__name__, estimator
-        )
+        with pytest.warns(None) as record:
+            check_dataframe_column_names_consistency(
+                estimator.__class__.__name__, estimator
+            )
+        for warning in record:
+            assert "was fitted without feature names" not in str(warning.message)

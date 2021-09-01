@@ -667,8 +667,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             pairwise estimator tag instead.
 
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if the
-        underlying estimator exposes such an attribute when fit.
+        Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
 
@@ -739,9 +738,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         )
 
         self.estimators_ = estimators_indices[0]
-
-        if hasattr(self.estimators_[0], "n_features_in_"):
-            self.n_features_in_ = self.estimators_[0].n_features_in_
 
         pairwise = _is_pairwise(self)
         self.pairwise_indices_ = estimators_indices[1] if pairwise else None
@@ -857,7 +853,12 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
 
         indices = self.pairwise_indices_
         if indices is None:
