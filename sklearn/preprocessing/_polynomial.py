@@ -682,8 +682,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         "in 1.2. You can use get_feature_names_out instead"
     )
     def get_feature_names(self, input_features=None):
-        """
-        Return feature names for output features
+        """Return feature names for output features.
 
         Parameters
         ----------
@@ -696,7 +695,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         output_feature_names : list of str of shape (n_output_features,)
         """
         n_splines = self.bsplines_[0].c.shape[0]
-        input_features = _check_feature_names_in(self, input_features)
+        if input_features is None:
+            input_features = ["x%d" % i for i in range(self.n_features_in_)]
         feature_names = []
         for i in range(self.n_features_in_):
             for j in range(n_splines - 1 + self.include_bias):

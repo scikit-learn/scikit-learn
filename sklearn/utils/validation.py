@@ -1671,11 +1671,13 @@ def _get_feature_names(X):
 
 
 def _check_feature_names_in(estimator, input_features):
-    """Make feature_names_in_ from estimator.
+    """Make feature names in from `estimator.get_feature_names_out`.
 
     Used to validate input from `get_feature_names_out(input_features=None)`.
     """
     feature_names_in_ = getattr(estimator, "feature_names_in_", None)
+    n_features_in_ = getattr(estimator, "n_features_in_", None)
+
     if input_features is not None:
         input_features = np.asarray(input_features, dtype=object)
         if feature_names_in_ is not None and not np.array_equal(
@@ -1683,21 +1685,18 @@ def _check_feature_names_in(estimator, input_features):
         ):
             raise ValueError("input_features is not equal to feature_names_in_")
 
-        if (
-            hasattr(estimator, "n_features_in_")
-            and len(input_features) != estimator.n_features_in_
-        ):
+        if n_features_in_ is not None and len(input_features) != n_features_in_:
             raise ValueError(
                 "input_features should have length equal to number of "
-                f"features ({estimator.n_features_in_}), got {len(input_features)}"
+                f"features ({n_features_in_}), got {len(input_features)}"
             )
         return input_features
 
     if feature_names_in_ is not None:
         return feature_names_in_
 
-    # Only generates features if `n_features_in_` is defined
-    if hasattr(estimator, "n_features_in_"):
-        return np.asarray(
-            [f"x{i}" for i in range(estimator.n_features_in_)], dtype=object
-        )
+    # Generates features if `n_features_in_` is defined
+    if n_features_in_ is None:
+        raise ValueError("Unable to generate feature names without n_features_in_")
+
+    return np.asarray([f"x{i}" for i in range(n_features_in_)], dtype=object)
