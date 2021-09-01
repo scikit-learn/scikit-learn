@@ -836,7 +836,8 @@ def test_pairwise_n_features_in():
     """
     X, y = iris.data, iris.target
 
-    # remove the last sample to make the class not exactly balanced
+    # Remove the last sample to make the classes not exactly balanced and make
+    # the test more interesting.
     assert y[-1] == 0
     X = X[:-1]
     y = y[:-1]
@@ -879,9 +880,11 @@ def test_pairwise_n_features_in():
     # internally, OvO will drop the samples of the classes not part of the pair
     # of classes under consideration for a given binary classifier. Since we
     # use a precomputed kernel, it will also drop the matching columns of the
-    # kernel matrix, and therefore we have fewer "features" as result. Since
-    # each class has 50 samples, a single OvO binary classifier works with a
-    # subkernel matrix of shape (100, 100).
+    # kernel matrix, and therefore we have fewer "features" as result.
+    #
+    # Since class 0 has 49 samples, and class 1 and 2 have 50 samples each, a
+    # single OvO binary classifier works with a sub-kernel matrix of shape
+    # either (99, 99) or (100, 100).
     ovo_precomputed = OneVsOneClassifier(clf_precomputed).fit(K, y)
     assert ovo_precomputed.n_features_in_ == 149
     assert ovr_precomputed.n_classes_ == 3
