@@ -459,7 +459,7 @@ def test_pairwise_distances_argmin_min():
     idx, vals = pairwise_distances_argmin_min(
         X,
         Y,
-        metric="fast_sqeuclidean",
+        metric="fast_euclidean",
     )
     assert_array_almost_equal(idx, expected_idx)
     assert_array_almost_equal(vals, expected_vals)
