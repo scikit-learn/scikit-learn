@@ -663,7 +663,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         )
 
         if sample_weight is not None:  # the weights should be non-negative
-            sample_weight = _check_sample_weight(sample_weight, X, only_non_negative=True, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, only_non_negative=True, dtype=X.dtype
+            )
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X,
