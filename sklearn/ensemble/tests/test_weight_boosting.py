@@ -576,6 +576,6 @@ def test_adaboost_negative_weight_error(model, X, y):
     sample_weight = np.ones_like(y)
     sample_weight[-1] = -10
 
-    err_msg = "sample_weight cannot contain negative weight"
+    err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y, sample_weight=sample_weight)
