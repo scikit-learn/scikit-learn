@@ -51,7 +51,7 @@ from sklearn.utils.validation import (
     _num_features,
     FLOAT_DTYPES,
     _get_feature_names,
-    _check_fit_params
+    _check_fit_params,
 )
 from sklearn.base import BaseEstimator
 import sklearn
