@@ -458,7 +458,7 @@ def test_adaptive_longer_than_constant(klass):
 
 
 @pytest.mark.parametrize(
-    "SGDEstimator, X, y",
+    "klass, X, y",
     [
         (
             SGDClassifier,
@@ -482,13 +482,13 @@ def test_adaptive_longer_than_constant(klass):
         ),
     ],
 )
-def test_validation_set_not_used_for_training(SGDEstimator, X, y):
-    sgd_early_stopped = SGDEstimator(
+def test_validation_set_not_used_for_training(klass, X, y):
+    sgd_early_stopped = klass(
         early_stopping=True,
         tol=1e-8,
         max_iter=1000,
     ).fit(X, y)
-    sgd_not_early_stopped = SGDEstimator(
+    sgd_not_early_stopped = klass(
         early_stopping=False,
         tol=1e-8,
         max_iter=1000,
