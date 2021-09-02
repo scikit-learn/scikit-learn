@@ -36,8 +36,8 @@ def _modified_weiszfeld_step(X, x_old):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     x_old : ndarray of shape = (n_features,)
         Current start vector.
@@ -88,8 +88,8 @@ def _spatial_median(X, max_iter=300, tol=1.0e-3):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     max_iter : int, default=300
         Maximum number of iterations.
@@ -170,11 +170,11 @@ def _lstsq(X, y, indices, fit_intercept):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Design matrix, where n_samples is the number of samples and
-        n_features is the number of features.
+        Design matrix, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : ndarray of shape (n_samples,)
-        Target vector, where n_samples is the number of samples.
+        Target vector, where `n_samples` is the number of samples.
 
     indices : ndarray of shape (n_subpopulation, n_subsamples)
         Indices of all subsamples with respect to the chosen subpopulation.

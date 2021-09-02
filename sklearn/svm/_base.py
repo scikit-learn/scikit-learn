@@ -143,8 +143,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features) \
                 or (n_samples, n_samples)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
             For kernel="precomputed", the expected shape of X is
             (n_samples, n_samples).
 
@@ -1045,8 +1045,8 @@ def _fit_liblinear(
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : array-like of shape (n_samples,)
         Target vector relative to X
