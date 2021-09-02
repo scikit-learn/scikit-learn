@@ -1687,7 +1687,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # The precise message can change depending on whether X or y is
     # validated first. Let us test the type of exception only:
     err_msg = (
-        f"The estimator {name} does not raise an error when an "
+        f"The estimator {name} does not raise a ValueError when an "
         "empty data is used to train. Perhaps use check_array in train."
     )
     with raises(ValueError, err_msg=err_msg):
