@@ -12,7 +12,7 @@ import sys
 import re
 import pkgutil
 from inspect import isgenerator, signature
-from itertools import product
+from itertools import product, chain
 from functools import partial
 
 import pytest
@@ -316,31 +316,16 @@ def test_check_n_features_in_after_fitting(estimator):
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
 
 
-# TODO: When more modules get added, we can remove it from this list to make
-# sure it gets tested. After we finish each module we can move the checks
-# into check_estimator.
 # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
 # delegates validation to a base estimator, the check is testing that the base estimator
 # is checking for column name consistency.
-
-COLUMN_NAME_MODULES_TO_IGNORE = {
-    "compose",
-    "ensemble",
-    "feature_extraction",
-    "kernel_approximation",
-    "model_selection",
-    "multiclass",
-    "multioutput",
-    "pipeline",
-    "semi_supervised",
-}
-
-
-column_name_estimators = [
-    est
-    for est in _tested_estimators()
-    if est.__module__.split(".")[1] not in COLUMN_NAME_MODULES_TO_IGNORE
-]
+column_name_estimators = list(
+    chain(
+        _tested_estimators(),
+        [make_pipeline(LogisticRegression(C=1))],
+        list(_generate_search_cv_instances()),
+    )
+)
 
 
 @pytest.mark.parametrize(
@@ -349,6 +334,9 @@ column_name_estimators = [
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        check_dataframe_column_names_consistency(
-            estimator.__class__.__name__, estimator
-        )
+        with pytest.warns(None) as record:
+            check_dataframe_column_names_consistency(
+                estimator.__class__.__name__, estimator
+            )
+        for warning in record:
+            assert "was fitted without feature names" not in str(warning.message)
