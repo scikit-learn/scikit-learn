@@ -191,7 +191,9 @@ class KernelDensity(BaseEstimator):
         X = self._validate_data(X, order="C", dtype=DTYPE)
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, DTYPE, only_non_negative=True)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, DTYPE, only_non_negative=True
+            )
 
         kwargs = self.metric_params
         if kwargs is None:

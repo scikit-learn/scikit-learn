@@ -1480,11 +1480,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
 
 
 def _check_sample_weight(
-    sample_weight,
-    X,
-    dtype=None,
-    copy=False,
-    only_non_negative=False
+    sample_weight, X, dtype=None, copy=False, only_non_negative=False
 ):
     """Validate sample weights.
 
