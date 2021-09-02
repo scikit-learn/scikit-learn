@@ -1267,10 +1267,8 @@ def test_neighbors_badargs():
         with pytest.raises(ValueError):
             est.fit(X, y)
 
-        # Raise an error if predicting on an unfitted estimator
         nbrs = cls(algorithm="ball_tree", metric="haversine")
-        msg = "has no attribute 'effective_metric_'"
-        with pytest.raises(AttributeError, match=msg):
+        with pytest.raises(ValueError):
             nbrs.predict(X)
         with pytest.raises(ValueError):
             ignore_warnings(nbrs.fit(Xsparse, y))

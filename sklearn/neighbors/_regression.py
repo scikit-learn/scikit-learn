@@ -18,6 +18,7 @@ from ._base import _get_weights, _check_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
 from ..utils.deprecation import deprecated
+from ..utils.validation import check_is_fitted
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
@@ -226,6 +227,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
         """
+        # Duplicated because of the check on self.effective_metric_'s value
+        # TODO: remove check_is_fitted duplication
+        check_is_fitted(self)
+
         X = self._validate_data(X, accept_sparse="csr", reset=False)
 
         if self.weights == "uniform" and self.effective_metric_ == "fast_euclidean":
@@ -443,6 +448,10 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
                 dtype=double
             Target values.
         """
+        # Duplicated because of the check on self.effective_metric_'s value
+        # TODO: remove check_is_fitted duplication
+        check_is_fitted(self)
+
         X = self._validate_data(X, accept_sparse="csr", reset=False)
 
         if self.weights == "uniform" and self.effective_metric_ == "fast_euclidean":
