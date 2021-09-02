@@ -438,8 +438,8 @@ def dump_svmlight_file(
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training vectors, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vectors, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : {array-like, sparse matrix}, shape = [n_samples (, n_labels)]
         Target values. Class labels must be an
