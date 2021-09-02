@@ -1286,7 +1286,11 @@ def test_train_test_split():
 
 
 def test_train_test_split_32bit_overflow():
-    # Based on issue #20774 - check for integer overflow on 32-bit platforms
+    """Check for integer overflow on 32-bit platforms.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20774
+    """
 
     # A number 'n' big enough for expression 'n * n * train_size' to cause
     # an overflow for signed 32-bit integer
