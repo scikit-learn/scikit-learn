@@ -504,4 +504,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
         check_is_fitted(self)
         X = self._validate_data(X, reset=False)
         with config_context(assume_finite=True):
-            return pairwise_distances_argmin(X, self.cluster_centers_)
+            return pairwise_distances_argmin(
+                X, self.cluster_centers_, metric="fast_sqeuclidean"
+            )

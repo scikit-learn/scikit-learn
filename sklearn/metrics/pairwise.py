@@ -662,10 +662,9 @@ def pairwise_distances_argmin_min(
     else:
         # TODO: once ArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
-        # When ArgKmin is not supported and when the
-        # user asked for "fast_sqeuclidean", we need to
-        # revert to "euclidean"
-        if metric == "fast_sqeuclidean":
+        # When ArgKmin is not supported and when the user asked for
+        # a fast alternative, we need to revert to the standard one.
+        if metric in {"fast_sqeuclidean", "fast_euclidean"}:
             metric = "euclidean"
 
         indices, values = zip(
