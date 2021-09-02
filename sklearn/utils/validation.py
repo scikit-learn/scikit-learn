@@ -1496,7 +1496,8 @@ def _check_sample_weight(sample_weight, X, only_non_negative=False, dtype=None,
     X : {ndarray, list, sparse matrix}
         Input data.
         
-    only_non_negative : if True then a non negativity check for the sample_weight will be done
+    only_non_negative : if True then a non negativity check for the sample_weight
+        will be done
 
     dtype : dtype, default=None
        dtype of the validated `sample_weight`.
