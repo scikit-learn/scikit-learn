@@ -225,7 +225,7 @@ leaf_size : positive int, default=40
     the case that ``n_samples < leaf_size``.
 
 metric : str or DistanceMetric object
-    the distance metric to use for the tree.  Default='minkowski'
+    The distance metric to use for the tree.  Default='minkowski'
     with p=2 (that is, a euclidean metric). See the documentation
     of the DistanceMetric class for a list of available metrics.
     {binary_tree}.valid_metrics gives a list of the metrics which

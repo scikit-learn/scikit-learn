@@ -39,10 +39,9 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. For a list of available metrics, see the documentation of
-        For a list of available metrics, see the documentation of
         :class:`~sklearn.metrics.DistanceMetric`.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit. X may be a :term:`sparse graph`,
