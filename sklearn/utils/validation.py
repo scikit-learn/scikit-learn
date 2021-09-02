@@ -1497,7 +1497,7 @@ def _check_sample_weight(sample_weight, X, only_non_negative=False, dtype=None,
         Input data.
 
     only_non_negative : if True then a non negativity check for the sample_weight
-        will be done
+        will be done.
 
     dtype : dtype, default=None
        dtype of the validated `sample_weight`.
