@@ -908,7 +908,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
-        self.component_indices_ = inds
+        self.component_indices_ = basis_inds
         return self
 
     def transform(self, X):
