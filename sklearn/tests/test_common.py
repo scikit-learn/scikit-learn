@@ -317,12 +317,11 @@ def test_valid_tag_types(estimator):
     tags = _safe_tags(estimator)
 
     for name, tag in tags.items():
-        default_tag_type = type(_DEFAULT_TAGS[name])
+        correct_tags = type(_DEFAULT_TAGS[name])
         if name == "_xfail_checks":
             # _xfail_checks can be a dictionary
-            assert isinstance(tag, (dict, default_tag_type))
-        else:
-            assert isinstance(tag, default_tag_type)
+            correct_tags = (correct_tags, dict)
+        assert isinstance(tag, correct_tags)
 
 
 @pytest.mark.parametrize(
