@@ -16,8 +16,8 @@ def inplace_identity(X):
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Data, where n_samples is the number of samples
-        and n_features is the number of features.
+        Data, where `n_samples` is the number of samples
+        and `n_features` is the number of features.
     """
     # Nothing to do
 
