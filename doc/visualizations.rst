@@ -41,7 +41,7 @@ vector machine:
 The returned `svc_disp` object allows us to continue using the already computed
 ROC curve for SVC in future plots. In this case, the `svc_disp` is a
 :class:`~sklearn.metrics.RocCurveDisplay` that stores the computed values as
-attributes called `roc_auc`, `fpr`, and `tpr`. Be aware that we could have get
+attributes called `roc_auc`, `fpr`, and `tpr`. Be aware that we could get
 the predictions from the support vector machine and then use `from_predictions`
 instead of `from_estimator` Next, we train a random forest classifier and plot
 the previously computed roc curve again by using the `plot` method of the
