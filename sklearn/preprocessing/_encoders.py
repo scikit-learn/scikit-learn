@@ -72,6 +72,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown="error", force_all_finite=True):
+        self._check_n_features(X, reset=True)
         self._check_feature_names(X, reset=True)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
@@ -119,24 +120,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self, X, handle_unknown="error", force_all_finite=True, warn_on_unknown=False
     ):
         self._check_feature_names(X, reset=False)
+        self._check_n_features(X, reset=False)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
 
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
-
-        if n_features != len(self.categories_):
-            raise ValueError(
-                "The number of features in X is different to the number of "
-                "features of the fitted data. The fitted data had {} features "
-                "and the X has {} features.".format(
-                    len(
-                        self.categories_,
-                    ),
-                    n_features,
-                )
-            )
 
         columns_with_unknown = []
         for i in range(n_features):

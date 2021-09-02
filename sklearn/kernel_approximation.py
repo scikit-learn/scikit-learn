@@ -131,7 +131,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
@@ -166,7 +166,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like}, shape (n_samples, n_features)
-            New data, where `n_samples` in the number of samples
+            New data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         Returns
@@ -315,7 +315,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
@@ -345,7 +345,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            New data, where `n_samples` in the number of samples
+            New data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         Returns
@@ -449,7 +449,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
@@ -629,7 +629,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         Returns
@@ -862,7 +862,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \

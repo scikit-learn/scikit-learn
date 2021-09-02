@@ -39,19 +39,6 @@ def test_one_hot_encoder_sparse_dense():
     assert_array_equal(X_trans_sparse.toarray(), X_trans_dense)
 
 
-def test_one_hot_encoder_diff_n_features():
-    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
-    X2 = np.array([[1, 0]])
-    enc = OneHotEncoder()
-    enc.fit(X)
-    err_msg = (
-        "The number of features in X is different to the number of "
-        "features of the fitted data."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        enc.transform(X2)
-
-
 def test_one_hot_encoder_handle_unknown():
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
     X2 = np.array([[4, 1, 1]])
