@@ -1031,7 +1031,7 @@ def test_check_scalar_valid(x):
             target_type=numbers.Real,
             min_val=2,
             max_val=5,
-            closed="neither",
+            closed="both",
         )
     assert len(record) == 0
     assert scalar == x
@@ -1058,7 +1058,7 @@ def test_check_scalar_valid(x):
             2,
             4,
             "neither",
-            ValueError("test_name2 == 1, must be >= 2."),
+            ValueError("test_name2 == 1, must be > 2."),
         ),
         (
             5,
@@ -1067,7 +1067,7 @@ def test_check_scalar_valid(x):
             2,
             4,
             "neither",
-            ValueError("test_name3 == 5, must be <= 4."),
+            ValueError("test_name3 == 5, must be < 4."),
         ),
         (
             2,
@@ -1075,7 +1075,7 @@ def test_check_scalar_valid(x):
             int,
             2,
             4,
-            "left",
+            "neither",
             ValueError("test_name4 == 2, must be > 2."),
         ),
         (
@@ -1084,7 +1084,7 @@ def test_check_scalar_valid(x):
             int,
             2,
             4,
-            "right",
+            "neither",
             ValueError("test_name5 == 4, must be < 4."),
         ),
     ],

@@ -1242,7 +1242,7 @@ def check_scalar(
     *,
     min_val=None,
     max_val=None,
-    closed="neither",
+    closed="both",
 ):
     """Validate scalar parameters type and value.
 
@@ -1265,9 +1265,10 @@ def check_scalar(
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
-    closed : {"left", "right", "both", "neither"}, default="neither"
+    closed : {"left", "right", "both", "neither"}, default="both"
         Whether the interval is closed on the left-side, right-side, both or
-        neither.
+        neither. By default, `"both"` is used and `min_val` and `max_val` are
+        included in the range of accepted values.
 
     Returns
     -------
@@ -1290,18 +1291,18 @@ def check_scalar(
     if closed not in expected_closed:
         raise ValueError(f"Unknown value for `closed`: {closed}")
 
-    comparison_operator = operator.le if closed in ("left", "both") else operator.lt
+    comparison_operator = operator.lt if closed in ("left", "both") else operator.le
     if min_val is not None and comparison_operator(x, min_val):
         raise ValueError(
             f"{name} == {x}, must be"
-            f" {'>' if closed in ('left', 'both') else '>='} {min_val}."
+            f" {'>=' if closed in ('left', 'both') else '>'} {min_val}."
         )
 
-    comparison_operator = operator.ge if closed in ("right", "both") else operator.gt
+    comparison_operator = operator.gt if closed in ("right", "both") else operator.ge
     if max_val is not None and comparison_operator(x, max_val):
         raise ValueError(
             f"{name} == {x}, must be"
-            f" {'<' if closed in ('right', 'both') else '<='} {max_val}."
+            f" {'<=' if closed in ('right', 'both') else '<'} {max_val}."
         )
 
     return x
