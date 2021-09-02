@@ -757,6 +757,10 @@ Changelog
   (`np.float64` or `np.int64`).
   :pr:`20727` by `Guillaume Lemaitre`_.
 
+- |Feature| :class:`preprocessing.KBinsDiscretizer` supports passing supports
+  sample weight for strategy ``"quantile"``. :pr:`20768`
+  by :user:`Kaushik Roy Chowdhury <kaushikroychowdhury>`.
+
 :mod:`sklearn.tree`
 ...................
 
