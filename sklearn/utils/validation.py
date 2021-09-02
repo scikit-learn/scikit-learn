@@ -1548,7 +1548,7 @@ def _check_sample_weight(
             )
 
     if only_non_negative:
-        check_non_negative(sample_weight, "sample weight")
+        check_non_negative(sample_weight, "`sample_weight`")
 
     return sample_weight
 
