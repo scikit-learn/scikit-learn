@@ -112,14 +112,8 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                     self.svd_method, legal_svd_methods
                 )
             )
-        scalars_checks = {
-        "n_clusters": { "target_type": numbers.Integral,"min_val": 1, "max_val": n_samples},
-        "n_init": { "target_type": numbers.Integral,"min_val": 1 },
-        }
-        for scalar_name in scalars_checks:
-            check_scalar(
-                getattr(self, scalar_name), scalar_name, **scalars_checks[scalar_name]
-            )
+        check_scalar(self.n_clusters, "n_clusters", target_type=numbers.Integral, min_val=1, max_val=n_samples)
+        check_scalar(self.n_init, "n_init", target_type=numbers.Integral, min_val=1)
 
     def fit(self, X, y=None):
         """Create a biclustering for X.
@@ -525,15 +519,8 @@ class SpectralBiclustering(BaseSpectral):
                     " or an iterable with two integers:"
                     " (n_row_clusters, n_column_clusters)"
                 ) from e
-
-        scalars_checks = {
-        "n_components": { "target_type": numbers.Integral,"min_val": 1},
-        "n_best": { "target_type": numbers.Integral,"min_val": 1, "max_val": self.n_components },
-        }
-        for scalar_name in scalars_checks:
-            check_scalar(
-                getattr(self, scalar_name), scalar_name, **scalars_checks[scalar_name]
-            )
+        check_scalar(self.n_components, "n_components", target_type=numbers.Integral, min_val=1)
+        check_scalar(self.n_best, "n_best", target_type=numbers.Integral, min_val=1, max_val=self.n_components)
 
     def _fit(self, X):
         n_sv = self.n_components
