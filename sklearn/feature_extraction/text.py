@@ -1648,7 +1648,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         )
 
     def _more_tags(self):
-        return {"X_types": "sparse"}
+        return {"X_types": ["2darray", "sparse"]}
 
 
 class TfidfVectorizer(CountVectorizer):
