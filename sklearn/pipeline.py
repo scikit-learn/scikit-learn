@@ -1118,6 +1118,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during :term:`fit`.
+
+        Returns
+        -------
+        self : object
+            FeatureUnion class object.
+        """
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
 
