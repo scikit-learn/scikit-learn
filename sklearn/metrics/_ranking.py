@@ -827,9 +827,10 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     See Also
     --------
-    plot_precision_recall_curve : Plot Precision Recall Curve for binary
-        classifiers.
-    PrecisionRecallDisplay : Precision Recall visualization.
+    PrecisionRecallDisplay.from_estimator : Plot Precision Recall Curve given
+        a binary classifier.
+    PrecisionRecallDisplay.from_predictions : Plot Precision Recall Curve
+        using predictions from a binary classifier.
     average_precision_score : Compute average precision from prediction scores.
     det_curve: Compute error rates for different probability thresholds.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
