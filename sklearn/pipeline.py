@@ -830,8 +830,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     Parameters of the transformers may be set using its name and the parameter
     name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer, removed by
-    setting to 'drop' or disabled by setting to 'passthrough' (features are passed
-    without transformation).
+    setting to 'drop' or disabled by setting to 'passthrough' (features are
+    passed without transformation).
 
     Read more in the :ref:`User Guide <feature_union>`.
 
@@ -844,6 +844,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         half of each tuple is the name of the transformer. The transformer can
         be 'drop' for it to be ignored or can be 'passthrough' for features to
         be passed as it is.
+        
+        .. versionadded:: 1.0
+           Added the option `"passthrough"`.
 
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
@@ -945,7 +948,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # validate estimators
         for t in transformers:
-            if t in ["drop", "passthrough"]:
+            if t in ("drop", "passthrough"):
                 continue
             if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not hasattr(
                 t, "transform"
