@@ -508,28 +508,27 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             Fitted estimator.
         """
 
-        scalars_checks = {
-            "threshold": {
-                "target_type": numbers.Real,
-                "min_val": 0.0,
-                "min_is_inclusive": False
-            },
-            "branching_factor": {
-                "target_type": numbers.Integral,
-                "min_val": 1,
-                "min_is_inclusive": False
-            },
-            "n_clusters": {
-                "target_type": numbers.Integral,
-                "min_val": 1,
-                "min_is_inclusive": True
-            }
-        }
-
-        for scalar_name in scalars_checks:
-            check_scalar(
-                getattr(self, scalar_name), scalar_name, **scalars_checks[scalar_name]
-            )
+        check_scalar(
+            self.threshold,
+            "threshold",
+            target_type=numbers.Real,
+            min_val=0.0,
+            closed="neither"
+        )
+        check_scalar(
+            self.branching_factor,
+            "branching_factor",
+            target_type=numbers.Integral,
+            min_val=1,
+            closed="neither"
+        )
+        check_scalar(
+            self.n_clusters,
+            "n_clusters",
+            target_type=numbers.Integral,
+            min_val=1,
+            closed="left"
+        )
 
         # TODO: Remove deprected flags in 1.2
         self._deprecated_fit, self._deprecated_partial_fit = True, False
@@ -545,8 +544,6 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         threshold = self.threshold
         branching_factor = self.branching_factor
 
-        # if branching_factor <= 1:
-        #     raise ValueError("Branching_factor should be greater than one.")
         n_samples, n_features = X.shape
 
         # If partial_fit is called for the first time or fit is called, we

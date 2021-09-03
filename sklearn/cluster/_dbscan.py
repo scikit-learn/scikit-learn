@@ -341,9 +341,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         """
         X = self._validate_data(X, accept_sparse="csr")
 
-        # if not self.eps > 0.0:
-        #     raise ValueError("eps must be positive.")
-
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -357,36 +354,39 @@ class DBSCAN(ClusterMixin, BaseEstimator):
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
 
-        scalars_checks = {
-            "eps": {
-                "target_type": numbers.Real,
-                "min_val": 0.0,
-                "min_is_inclusive": False
-            },
-            "min_samples": {
-                "target_type": numbers.Integral,
-                "min_val": 1,
-                "min_is_inclusive": True
-            },
-            "leaf_size": {
-                "target_type": numbers.Integral,
-                "min_val": 1,
-                "min_is_inclusive": True
-            },
-            "p": {
-                "target_type": numbers.Real,
-                "min_val": 1.0,
-                "min_is_inclusive": True
-            },
-            "n_jobs": {
-                "target_type": numbers.Integral
-            }
-        }
-
-        for scalar_name in scalars_checks:
-            check_scalar(
-                getattr(self, scalar_name), scalar_name, **scalars_checks[scalar_name]
-            )
+        check_scalar(
+            self.eps,
+            "eps",
+            target_type=numbers.Real,
+            min_val=0.0,
+            closed="neither"
+        )
+        check_scalar(
+            self.min_samples,
+            "min_samples",
+            target_type=numbers.Integral,
+            min_val=1,
+            closed="left"
+        )
+        check_scalar(
+            self.leaf_size,
+            "leaf_size",
+            target_type=numbers.Integral,
+            min_val=1,
+            closed="left"
+        )
+        check_scalar(
+            self.p,
+            "p",
+            target_type=numbers.Real,
+            min_val=1.0,
+            closed="left"
+        )
+        check_scalar(
+            self.n_jobs,
+            "n_jobs",
+            target_type=numbers.Integral
+        )
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,
