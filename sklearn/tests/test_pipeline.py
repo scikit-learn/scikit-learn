@@ -984,6 +984,7 @@ def test_set_feature_union_step_drop():
 
 
 def test_set_feature_union_passthrough():
+    """Check the behaviour of setting a transformer to `"passthrough"`."""
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ["x2"]
     mult3 = Mult(3)
@@ -1014,7 +1015,7 @@ def test_set_feature_union_passthrough():
     assert not record
 
     with pytest.warns(None) as record:
-        # Check 'drop' step at construction time
+        # Check 'passthrough' step at construction time
         ft = FeatureUnion([("m2", "passthrough"), ("m3", mult3)])
         assert_array_equal([[1, 3]], ft.fit(X).transform(X))
         assert_array_equal([[1, 3]], ft.fit_transform(X))
