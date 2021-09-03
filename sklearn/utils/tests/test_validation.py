@@ -1031,14 +1031,14 @@ def test_check_scalar_valid(x):
             target_type=numbers.Real,
             min_val=2,
             max_val=5,
-            closed="both",
+            include_boundaries="both",
         )
     assert len(record) == 0
     assert scalar == x
 
 
 @pytest.mark.parametrize(
-    "x, target_name, target_type, min_val, max_val, closed, err_msg",
+    "x, target_name, target_type, min_val, max_val, include_boundaries, err_msg",
     [
         (
             1,
@@ -1090,7 +1090,7 @@ def test_check_scalar_valid(x):
     ],
 )
 def test_check_scalar_invalid(
-    x, target_name, target_type, min_val, max_val, closed, err_msg
+    x, target_name, target_type, min_val, max_val, include_boundaries, err_msg
 ):
     """Test that check_scalar returns the right error if a wrong input is
     given"""
@@ -1101,7 +1101,7 @@ def test_check_scalar_invalid(
             target_type=target_type,
             min_val=min_val,
             max_val=max_val,
-            closed=closed,
+            include_boundaries=include_boundaries,
         )
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
