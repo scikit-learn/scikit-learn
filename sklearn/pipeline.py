@@ -1005,10 +1005,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
+        **fit_params : dict, default=None
+            Parameters to pass to the fit method of the estimator.
+
         Returns
         -------
-        self : FeatureUnion
-            This estimator
+        self : object
+            FeatureUnion class instance.
         """
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
