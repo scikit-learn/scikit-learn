@@ -927,9 +927,17 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         you can directly set the parameters of the estimators contained in
         `tranformer_list`.
 
+        Parameters
+        ----------
+        **kwargs : dict
+            Parameters of this estimator or parameters of estimators contained
+            in `transform_list`. Parameters of the transformers may be set
+            using its name and the parameter name separated by a '__'.
+
         Returns
         -------
-        self
+        self ; object
+            FeatureUnion class instance.
         """
         self._set_params("transformer_list", **kwargs)
         return self
