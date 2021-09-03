@@ -1097,7 +1097,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         -------
         X_t : array-like or sparse matrix of \
                 shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
+            The hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
