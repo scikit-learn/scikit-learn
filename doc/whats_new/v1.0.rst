@@ -155,8 +155,8 @@ Changelog
 - |Feature| :func:`calibration.CalibrationDisplay` added to plot
   calibration curves. :pr:`17443` by :user:`Lucy Liu <lucyleeow>`.
 
-- |Fix| Fixed an error when using a ::class:`ensemble.VotingClassifier`
-  as `base_estimator` in ::class:`calibration.CalibratedClassifierCV`.
+- |Fix| Fixed an error when using a :class:`ensemble.VotingClassifier`
+  as `base_estimator` in :class:`calibration.CalibratedClassifierCV`.
   :pr:`20087` by :user:`Clément Fauchereau <clement-f>`.
 
 
@@ -804,8 +804,8 @@ Changelog
 ..................................
 
 - |Fix| Fixed a bug in :func:`image._to_graph` where singleton
-    connected components were not handled properly, resulting in a wrong
-    vertex indexing.  :pr:`18964` by `Bertrand Thirion`_.
+  connected components were not handled properly, resulting in a wrong
+  vertex indexing.  :pr:`18964` by `Bertrand Thirion`_.
 
 - |Fix| Fixed a bug in :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor` where a node could be split whereas it
@@ -832,7 +832,7 @@ Changelog
   unavailable on the basis of state, in a more readable way.
   :pr:`19948` by `Joel Nothman`_.
 
-_ |Enhancement| :func:`utils.validation.check_is_fitted` now uses
+- |Enhancement| :func:`utils.validation.check_is_fitted` now uses
   ``__sklearn_is_fitted__`` if available, instead of checking for attributes ending with
   an underscore. This also makes :class:`Pipeline` and
   :class:`preprocessing.FunctionTransformer` pass
