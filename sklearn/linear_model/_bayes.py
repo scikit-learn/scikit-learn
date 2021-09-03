@@ -603,8 +603,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
         y : array-like of shape (n_samples,)
             Target values (integers). Will be cast to X's dtype if necessary.
 

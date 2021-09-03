@@ -214,6 +214,14 @@ Changelog
   of connected components is greater than 1. :pr:`20597` by
   `Thomas Fan`_.
 
+- |Fix| :class:`cluster.FeatureAgglomeration` does not accept a ``**params`` kwarg in
+  the ``fit`` function anymore, resulting in a more concise error message. :pr:`20899`
+  by :user:`Adam Li <adam2392>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans`, ensuring reproducibility and equivalence
+  between sparse and dense input. :pr:`20200`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -430,6 +438,14 @@ Changelog
   dependence plots :func:`~sklearn.inspection.plot_partial_dependence` and
   :meth:`~sklearn.inspection.PartialDependenceDisplay.plot`.
   :pr:`19428` by :user:`Mehdi Hamoumi <mhham>`.
+
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Fix| Fix a bug in :class:`sklearn.kernel_approximation.Nystroem`
+  where the attribute `component_indices_` did not correspond
+  to the subset of samples indices used to generate the approximated kernel.
+  :pr:`20554` by :user:`Xiangyin Kong <kxytim>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -690,6 +706,10 @@ Changelog
   and :class:`neighbors.RadiusNeighborsRegressor` does not validate `weights` in
   `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
   :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+- |API| The parameter `kwargs` of :class:`neighbors.RadiusNeighborsClassifier` is
+  deprecated and will be removed in 1.2.
+  :pr:`20842` by :user:`Juan Martín Loyola <jmloyola>`.
 
 :mod:`sklearn.neural_network`
 .............................
