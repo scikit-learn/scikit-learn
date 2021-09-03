@@ -703,6 +703,10 @@ Changelog
   `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
   :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+- |API| The parameter `kwargs` of :class:`neighbors.RadiusNeighborsClassifier` is
+  deprecated and will be removed in 1.2.
+  :pr:`20842` by :user:`Juan Martín Loyola <jmloyola>`.
+
 :mod:`sklearn.neural_network`
 .............................
 

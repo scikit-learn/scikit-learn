@@ -298,7 +298,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
 
 class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, NeighborsBase):
-    """Classifier implementing a vote among neighbors within a given radius
+    """Classifier implementing a vote among neighbors within a given radius.
 
     Read more in the :ref:`User Guide <classification>`.
 
@@ -309,7 +309,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         queries.
 
     weights : {'uniform', 'distance'} or callable, default='uniform'
-        weight function used in prediction.  Possible values:
+        Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
           are weighted equally.
@@ -346,7 +346,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        Distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
@@ -355,7 +355,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         in which case only "nonzero" elements may be considered neighbors.
 
     outlier_label : {manual label, 'most_frequent'}, default=None
-        label for outlier samples (samples with no neighbors in given radius).
+        Label for outlier samples (samples with no neighbors in given radius).
 
         - manual label: str or int label (should be the same type as y)
           or list of manual labels if multi-output is used.
@@ -370,6 +370,13 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    **kwargs : dict
+        Additional keyword arguments passed to the constructor.
+
+        .. deprecated:: 1.0
+            The RadiusNeighborsClassifier class will not longer accept extra
+            keyword parameters in 1.2 since they are unused.
 
     Attributes
     ----------
@@ -409,6 +416,23 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
         otherwise True.
 
+    See Also
+    --------
+    KNeighborsClassifier : Classifier implementing the k-nearest neighbors
+        vote.
+    RadiusNeighborsRegressor : Regression based on neighbors within a
+        fixed radius.
+    KNeighborsRegressor : Regression based on k-nearest neighbors.
+    NearestNeighbors : Unsupervised learner for implementing neighbor
+        searches.
+
+    Notes
+    -----
+    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
+    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -421,20 +445,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
     [0]
     >>> print(neigh.predict_proba([[1.0]]))
     [[0.66666667 0.33333333]]
-
-    See Also
-    --------
-    KNeighborsClassifier
-    RadiusNeighborsRegressor
-    KNeighborsRegressor
-    NearestNeighbors
-
-    Notes
-    -----
-    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
-    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
-
-    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(
@@ -451,6 +461,15 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         n_jobs=None,
         **kwargs,
     ):
+        # TODO: Remove in v1.2
+        if len(kwargs) > 0:
+            warnings.warn(
+                "Passing additional keyword parameters has no effect and is "
+                "deprecated in 1.0. An error will be raised from 1.2 and "
+                "beyond. The ignored keyword parameter(s) are: "
+                f"{kwargs.keys()}.",
+                FutureWarning,
+            )
         super().__init__(
             radius=radius,
             algorithm=algorithm,
@@ -589,8 +608,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         Returns
         -------
-        p : ndarray of shape (n_queries, n_classes), or a list of n_outputs
-            of such arrays if n_outputs > 1.
+        p : ndarray of shape (n_queries, n_classes), or a list of \
+                n_outputs of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
