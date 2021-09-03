@@ -1202,7 +1202,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         )
         self.pooling_func = pooling_func
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data.
 
         Parameters
@@ -1212,9 +1212,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
         y : Ignored
             Not used, present here for API consistency by convention.
-
-        **params : dictionary of keyword arguments
-            Additional fit parameters.
 
         Returns
         -------
@@ -1230,7 +1227,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         # save n_features_in_ attribute here to reset it after, because it will
         # be overridden in AgglomerativeClustering since we passed it X.T.
         n_features_in_ = self.n_features_in_
-        AgglomerativeClustering.fit(self, X.T, **params)
+        AgglomerativeClustering.fit(self, X.T)
         self.n_features_in_ = n_features_in_
         return self
 
