@@ -53,7 +53,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
-    input_type : {"dict", "pair", "string"}, default="dict"
+    input_type : {"dict", "pair", "str"}, default="dict"
         Either "dict" (the default) to accept dictionaries over
         (feature_name, value); "pair" to accept pairs of (feature_name, value);
         or "string" to accept single strings.
@@ -75,6 +75,11 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
             ``alternate_sign`` replaces the now deprecated ``non_negative``
             parameter.
 
+    See Also
+    --------
+    DictVectorizer : Vectorizes string-valued features using a hash table.
+    sklearn.preprocessing.OneHotEncoder : Handles nominal/categorical features.
+
     Examples
     --------
     >>> from sklearn.feature_extraction import FeatureHasher
@@ -84,11 +89,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     >>> f.toarray()
     array([[ 0.,  0., -4., -1.,  0.,  0.,  0.,  0.,  0.,  2.],
            [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
-
-    See Also
-    --------
-    DictVectorizer : Vectorizes string-valued features using a hash table.
-    sklearn.preprocessing.OneHotEncoder : Handles nominal/categorical features.
     """
 
     def __init__(
