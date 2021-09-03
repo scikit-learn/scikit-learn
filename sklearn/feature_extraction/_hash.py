@@ -131,12 +131,16 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray
+        X : array-like of shape (n_samples, n_features)
+            Input samples.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            Target values.
 
         Returns
         -------
-        self : FeatureHasher
-
+        self : object
+            FeatureHasher class instance.
         """
         # repeat input validation for grid search (which calls set_params)
         self._validate_params(self.n_features, self.input_type)
