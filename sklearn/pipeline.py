@@ -844,7 +844,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         half of each tuple is the name of the transformer. The transformer can
         be 'drop' for it to be ignored or can be 'passthrough' for features to
         be passed as it is.
-        
+
         .. versionadded:: 1.0
            Added the option `"passthrough"`.
 
