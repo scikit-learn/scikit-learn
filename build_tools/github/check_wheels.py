@@ -17,7 +17,7 @@ n_python_versions = len(build_matrix["python"])
 # 2 windows wheel (win32 + wind_amd64)
 n_wheels = 7 * n_python_versions
 
-# plus three more for arm64 on circleci
+# plus three more for linux/arm64 on circleci
 n_wheels += 3
 
 # plus one more for the sdist
