@@ -46,7 +46,8 @@ attributes::
 
        @classmethod
        def from_predictions(cls, y, y_pred, estimator_name):
-           # do ROC computation
+           # do ROC computation from y and y_pred
+           fpr, tpr, roc_auc = ...
            viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator_name)
            return viz.plot()
 
