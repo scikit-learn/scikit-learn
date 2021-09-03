@@ -301,11 +301,8 @@ def test_input_validation():
 @pytest.mark.parametrize(
     "args",
     [
-        # {"eps": -1.0},
         {"algorithm": "blah"},
         {"metric": "blah"},
-        # {"leaf_size": -1},
-        # {"p": -1},
     ],
 )
 def test_dbscan_badargs(args):

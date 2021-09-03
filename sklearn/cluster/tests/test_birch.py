@@ -170,11 +170,6 @@ def test_branching_factor():
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
 
-    # # Raises error when branching_factor is set to one.
-    # brc = Birch(n_clusters=None, branching_factor=1, threshold=0.01)
-    # with pytest.raises(ValueError):
-    #     brc.fit(X)
-
 
 def check_threshold(birch_instance, threshold):
     """Use the leaf linked list for traversal"""
