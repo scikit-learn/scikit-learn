@@ -213,8 +213,8 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-          Training data, where n_samples is the number of samples and
-          n_features is the number of features.
+          Training data, where `n_samples` is the number of samples and
+          `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -240,9 +240,9 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         X_test : array-like of shape (n_samples, n_features)
-            Test data of which we compute the likelihood, where n_samples is
-            the number of samples and n_features is the number of features.
-            X_test is assumed to be drawn from the same distribution than
+            Test data of which we compute the likelihood, where `n_samples` is
+            the number of samples and `n_features` is the number of features.
+            `X_test` is assumed to be drawn from the same distribution than
             the data used in fit (including centering).
 
         y : Ignored

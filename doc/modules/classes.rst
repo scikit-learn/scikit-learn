@@ -1124,7 +1124,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
-
+   calibration.CalibrationDisplay
 
 .. _mixture_ref:
 

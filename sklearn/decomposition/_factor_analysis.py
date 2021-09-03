@@ -131,15 +131,14 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.decomposition import FactorAnalysis
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = FactorAnalysis(n_components=7, random_state=0)
-    >>> X_transformed = transformer.fit_transform(X)
-    >>> X_transformed.shape
-    (1797, 7)
+    PCA: Principal component analysis is also a latent linear variable model
+        which however assumes equal noise variance for each feature.
+        This extra assumption makes probabilistic PCA faster as it can be
+        computed in closed form.
+    FastICA: Independent component analysis, a latent variable model with
+        non-Gaussian latent variables.
 
     References
     ----------
@@ -149,14 +148,15 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     - Christopher M. Bishop: Pattern Recognition and Machine Learning,
       Chapter 12.2.4.
 
-    See Also
+    Examples
     --------
-    PCA: Principal component analysis is also a latent linear variable model
-        which however assumes equal noise variance for each feature.
-        This extra assumption makes probabilistic PCA faster as it can be
-        computed in closed form.
-    FastICA: Independent component analysis, a latent variable model with
-        non-Gaussian latent variables.
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FactorAnalysis
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FactorAnalysis(n_components=7, random_state=0)
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
     """
 
     def __init__(
@@ -189,7 +189,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self.rotation = rotation
 
     def fit(self, X, y=None):
-        """Fit the FactorAnalysis model to X using SVD based approach
+        """Fit the FactorAnalysis model to X using SVD based approach.
 
         Parameters
         ----------
@@ -197,10 +197,12 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             Training data.
 
         y : Ignored
+            Ignored parameter.
 
         Returns
         -------
-        self
+        self : object
+            FactorAnalysis class instance.
         """
         X = self._validate_data(X, copy=self.copy, dtype=np.float64)
 
@@ -373,17 +375,17 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         return precision
 
     def score_samples(self, X):
-        """Compute the log-likelihood of each sample
+        """Compute the log-likelihood of each sample.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            The data
+            The data.
 
         Returns
         -------
         ll : ndarray of shape (n_samples,)
-            Log-likelihood of each sample under the current model
+            Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
         X = self._validate_data(X, reset=False)
@@ -395,19 +397,20 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         return log_like
 
     def score(self, X, y=None):
-        """Compute the average log-likelihood of the samples
+        """Compute the average log-likelihood of the samples.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            The data
+            The data.
 
         y : Ignored
+            Ignored parameter.
 
         Returns
         -------
         ll : float
-            Average log-likelihood of the samples under the current model
+            Average log-likelihood of the samples under the current model.
         """
         return np.mean(self.score_samples(X))
 

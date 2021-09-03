@@ -494,7 +494,10 @@ def roc_auc_score(
     --------
     average_precision_score : Area under the precision-recall curve.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
 
     Examples
     --------
@@ -827,9 +830,10 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     See Also
     --------
-    plot_precision_recall_curve : Plot Precision Recall Curve for binary
-        classifiers.
-    PrecisionRecallDisplay : Precision Recall visualization.
+    PrecisionRecallDisplay.from_estimator : Plot Precision Recall Curve given
+        a binary classifier.
+    PrecisionRecallDisplay.from_predictions : Plot Precision Recall Curve
+        using predictions from a binary classifier.
     average_precision_score : Compute average precision from prediction scores.
     det_curve: Compute error rates for different probability thresholds.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
@@ -918,8 +922,10 @@ def roc_curve(
 
     See Also
     --------
-    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
-    RocCurveDisplay : ROC Curve visualization.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
     det_curve: Compute error rates for different probability thresholds.
     roc_auc_score : Compute the area under the ROC curve.
 

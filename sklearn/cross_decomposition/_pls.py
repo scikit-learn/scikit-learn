@@ -462,12 +462,12 @@ class _PLS(
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of predictors.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
 
         y : array-like of shape (n_samples, n_targets), default=None
-            Target vectors, where n_samples is the number of samples and
-            n_targets is the number of response variables.
+            Target vectors, where `n_samples` is the number of samples and
+            `n_targets` is the number of response variables.
 
         Returns
         -------
