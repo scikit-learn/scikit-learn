@@ -674,6 +674,9 @@ Changelog
 - |Enhancement| warn only once in the main process for per-split fit failures
   in cross-validation. :pr:`20619` by :user:`Loïc Estève <lesteve>`
 
+- |Fix| Avoid premature overflow in :func:`model_selection.train_test_split`.
+  :pr:`20904` by :user:`Tomasz Jakubek <t-jakubek>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
