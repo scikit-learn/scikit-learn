@@ -366,13 +366,13 @@ Changelog
   got overwritten during `fit`.
   :pr:`20534` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |API| Renamed :func:`max_features` defaults for
-  :class:`ensemble.RandomForestRegressor` and
-  :class:`ensemble.RandomForestClassifier` to 1 and "sqrt" respectively.
-  Correspondingly updated the same for :class:`ensemble.ExtraTreesRegressor`
-  and :class:`ensemble.ExtraTreesClassifier`. Results of the fit do not
-  change. The current "auto" option has been deprecated and will be removed
-  in version 1.3.
+- |API| Changed the default of :func:`max_features` to 1.0 for
+  :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
+  :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
+  results as before, but are much easier to understand. The old default value
+  `"auto"` has been deprecated and will be removed in version 1.3. The same
+  changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
+  :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
 :mod:`sklearn.feature_extraction`

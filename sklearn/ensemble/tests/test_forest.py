@@ -1757,6 +1757,7 @@ def test_n_features_deprecation(Estimator):
         est.n_features_
 
 
+# TODO: Remove in v1.3
 @pytest.mark.parametrize(
     "Estimator",
     [
@@ -1767,7 +1768,7 @@ def test_n_features_deprecation(Estimator):
     ],
 )
 def test_max_features_deprecation(Estimator):
-    # Check warning raised for max_features="auto" deprecation
+    """Check warning raised for max_features="auto" deprecation."""
     X = np.array([[1, 2], [3, 4]])
     y = np.array([1, 0])
     est = Estimator(max_features="auto")
