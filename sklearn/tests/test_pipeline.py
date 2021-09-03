@@ -1046,8 +1046,6 @@ def test_set_feature_union_passthrough():
         assert_array_equal(X, ft.fit_transform(X)[:, -columns:])
     assert not record
 
-    pass
-
 
 def test_step_name_validation():
     error_message_1 = r"Estimator names must not contain __: got \['a__q'\]"
