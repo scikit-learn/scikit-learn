@@ -821,7 +821,7 @@ Changelog
   unavailable on the basis of state, in a more readable way.
   :pr:`19948` by `Joel Nothman`_.
 
-_ |Enhancement| :func:`utils.validation.check_is_fitted` now uses
+- |Enhancement| :func:`utils.validation.check_is_fitted` now uses
   ``__sklearn_is_fitted__`` if available, instead of checking for attributes ending with
   an underscore. This also makes :class:`Pipeline` and
   :class:`preprocessing.FunctionTransformer` pass
@@ -856,7 +856,7 @@ _ |Enhancement| :func:`utils.validation.check_is_fitted` now uses
   warning was previously raised in resampling utilities and functions using
   those utilities (e.g. :func:`model_selection.train_test_split`,
   :func:`model_selection.cross_validate`,
-  :func:`model_seleection.cross_val_score`,
+  :func:`model_selection.cross_val_score`,
   :func:`model_selection.cross_val_predict`).
   :pr:`20673` by :user:`Joris Van den Bossche  <jorisvandenbossche>`.
 
@@ -864,6 +864,18 @@ _ |Enhancement| :func:`utils.validation.check_is_fitted` now uses
   numbers would raise an error due to overflow in C types (`np.float64` or
   `np.int64`).
   :pr:`20727` by `Guillaume Lemaitre`_.
+
+- |Enhancement| :func:`utils.validation._check_sample_weight` can perform a
+  non-negativity check on the sample weights. It can be turned on
+  using the only_non_negative bool parameter.
+  Estimators that check for non-negative weights are updated:
+  :func:`linear_model.LinearRegression` (here the previous
+  error message was misleading),
+  :func:`ensemble.AdaBoostClassifier`,
+  :func:`ensemble.AdaBoostRegressor`,
+  :func:`neighbors.KernelDensity`.
+  :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
+  and :user:`András Simon <simonandras>`.
 
 :mod:`sklearn.validation`
 .........................
