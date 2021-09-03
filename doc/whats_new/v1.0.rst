@@ -218,6 +218,10 @@ Changelog
   the ``fit`` function anymore, resulting in a more concise error message. :pr:`20899`
   by :user:`Adam Li <adam2392>`.
 
+- |Fix| Fixed a bug in :class:`cluster.KMeans`, ensuring reproducibility and equivalence
+  between sparse and dense input. :pr:`20200`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.compose`
 ......................
 
