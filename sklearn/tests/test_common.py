@@ -37,6 +37,7 @@ from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.pipeline import make_pipeline
 
 from sklearn.utils import IS_PYPY
+from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
     set_random_state,
@@ -306,6 +307,21 @@ def test_search_cv(estimator, check, request):
         )
     ):
         check(estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
+def test_valid_tag_types(estimator):
+    """Check that estimator tags are valid."""
+    tags = _safe_tags(estimator)
+
+    for name, tag in tags.items():
+        correct_tags = type(_DEFAULT_TAGS[name])
+        if name == "_xfail_checks":
+            # _xfail_checks can be a dictionary
+            correct_tags = (correct_tags, dict)
+        assert isinstance(tag, correct_tags)
 
 
 @pytest.mark.parametrize(
