@@ -65,6 +65,12 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices):
     )
 
 
+ASSERT_RESULT = {
+    ArgKmin: assert_argkmin_results_equality,
+    RadiusNeighborhood: assert_radius_neighborhood_results_equality,
+}
+
+
 def test_pairwise_distances_reduction_is_usable_for():
     rng = np.random.RandomState(1)
     X = rng.rand(100, 10)
@@ -236,170 +242,135 @@ def test_pairwise_distances_reduction_factory_method(
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
-def test_argkmin_chunk_size_agnosticism(
+@pytest.mark.parametrize("PairwiseDistancesReduction", [ArgKmin, RadiusNeighborhood])
+def test_chunk_size_agnosticism(
+    PairwiseDistancesReduction,
     seed,
     n_samples,
     chunk_size,
-    k=10,
     metric="fast_euclidean",
     n_features=100,
     dtype=np.float64,
 ):
-    # ArgKmin results should not depend on the chunk size
+    # Results should not depend on the chunk size
     rng = np.random.RandomState(seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    ref_dist, ref_indices = ArgKmin.get_for(X, Y, k=k, metric="euclidean").compute(
-        return_distance=True
+    parameter = (
+        10
+        if PairwiseDistancesReduction is ArgKmin
+        # Scaling the radius with the dimensions
+        else 10 ** np.log(n_features)
     )
 
-    dist, indices = ArgKmin.get_for(
-        X, Y, k=k, metric=metric, chunk_size=chunk_size
+    ref_dist, ref_indices = PairwiseDistancesReduction.get_for(
+        X, Y, parameter, metric="euclidean"
     ).compute(return_distance=True)
 
-    assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices)
+    dist, indices = PairwiseDistancesReduction.get_for(
+        X, Y, parameter, metric=metric, chunk_size=chunk_size
+    ).compute(return_distance=True)
+
+    ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
 
 @fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
-def test_radius_neighborhood_chunk_size_agnosticism(
+@pytest.mark.parametrize("PairwiseDistancesReduction", [ArgKmin, RadiusNeighborhood])
+def test_n_threads_agnosticism(
+    PairwiseDistancesReduction,
     seed,
     n_samples,
     chunk_size,
-    radius=10.0,
     metric="fast_euclidean",
     n_features=100,
     dtype=np.float64,
 ):
-    # RadiusNeighborhood results should not depend on the chunk size
-    rng = np.random.RandomState(seed)
-    spread = 100
-
-    # Scaling the radius with the dimensions
-    scaled_radius = radius * np.log(n_features)
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
-
-    ref_dist, ref_indices = RadiusNeighborhood.get_for(
-        X, Y, radius=scaled_radius, metric="euclidean"
-    ).compute(return_distance=True)
-
-    dist, indices = RadiusNeighborhood.get_for(
-        X, Y, radius=scaled_radius, metric=metric, chunk_size=chunk_size
-    ).compute(return_distance=True)
-
-    assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices)
-
-
-@pytest.mark.parametrize("seed", range(5))
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
-@pytest.mark.parametrize("metric", RadiusNeighborhood.valid_metrics())
-def test_argkmin_strategies_consistency(
-    metric,
-    n_samples,
-    seed,
-    n_features=10,
-    k=10,
-    dtype=np.float64,
-):
-    # ArgKmin results obtained using both parallelization strategies
-    # must be identical
-    if _in_unstable_openblas_configuration() and metric == {
-        "fast_sqeuclidean",
-        "fast_euclidean",
-    }:
-        pytest.xfail(
-            "OpenBLAS (used for 'fast_(sq)euclidean') is unstable in this configuration"
-        )
-
+    # Results should not depend on the number of threads
     rng = np.random.RandomState(seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    # Haversine distance only accepts 2D data
-    if metric == "haversine":
-        X = X[:, :2]
-        Y = Y[:, :2]
-
-    argkmin_reduction = ArgKmin.get_for(
-        X,
-        Y,
-        k=k,
-        metric=metric,
-        metric_kwargs=get_dummy_metric_kwargs(metric, n_features),
-        # To be sure to use parallelization
-        chunk_size=n_samples // 4,
-    )
-
-    dist_par_X, indices_par_X = argkmin_reduction.compute(
-        strategy="parallel_on_X", return_distance=True
-    )
-
-    dist_par_Y, indices_par_Y = argkmin_reduction.compute(
-        strategy="parallel_on_Y", return_distance=True
-    )
-
-    assert_argkmin_results_equality(
-        dist_par_X, dist_par_Y, indices_par_X, indices_par_Y
-    )
-
-
-@pytest.mark.parametrize("seed", range(5))
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
-@pytest.mark.parametrize("metric", RadiusNeighborhood.valid_metrics())
-def test_radius_neighborhood_strategies_consistency(
-    seed,
-    n_samples,
-    metric,
-    n_features=10,
-    radius=10.0,
-    dtype=np.float64,
-):
-    # RadiusNeighborhood results obtained using both parallelization strategies
-    # must be identical
-    if _in_unstable_openblas_configuration() and metric == {
-        "fast_sqeuclidean",
-        "fast_euclidean",
-    }:
-        pytest.xfail(
-            "OpenBLAS (used for 'fast_(sq)euclidean') is unstable in this configuration"
-        )
-
-    rng = np.random.RandomState(seed)
-    spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
-
-    # Haversine distance only accepts 2D data
-    if metric == "haversine":
-        X = X[:, :2]
-        Y = Y[:, :2]
-
-    radius_neigh_reduction = RadiusNeighborhood.get_for(
-        X,
-        Y,
+    parameter = (
+        10
+        if PairwiseDistancesReduction is ArgKmin
         # Scaling the radius with the dimensions
-        radius=radius ** np.log(n_features),
+        else 10 ** np.log(n_features)
+    )
+
+    ref_dist, ref_indices = PairwiseDistancesReduction.get_for(
+        X, Y, parameter, metric="euclidean"
+    ).compute(return_distance=True)
+
+    dist, indices = PairwiseDistancesReduction.get_for(
+        X, Y, parameter, metric=metric, n_threads=1
+    ).compute(return_distance=True)
+
+    ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
+
+
+@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
+@pytest.mark.parametrize("PairwiseDistancesReduction", [ArgKmin, RadiusNeighborhood])
+def test_strategies_consistency(
+    PairwiseDistancesReduction,
+    metric,
+    n_samples,
+    seed,
+    n_features=10,
+    dtype=np.float64,
+):
+    # Results obtained using both parallelization strategies must be identical
+    if _in_unstable_openblas_configuration() and metric == {
+        "fast_sqeuclidean",
+        "fast_euclidean",
+    }:
+        pytest.xfail(
+            "OpenBLAS (used for 'fast_(sq)euclidean') is unstable in this configuration"
+        )
+
+    rng = np.random.RandomState(seed)
+    spread = 100
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    # Haversine distance only accepts 2D data
+    if metric == "haversine":
+        X = X[:, :2]
+        Y = Y[:, :2]
+
+    parameter = (
+        10
+        if PairwiseDistancesReduction is ArgKmin
+        # Scaling the radius with the dimensions
+        else 10 ** np.log(n_features)
+    )
+
+    pairwise_distances_reduction = PairwiseDistancesReduction.get_for(
+        X,
+        Y,
+        parameter,
         metric=metric,
         metric_kwargs=get_dummy_metric_kwargs(metric, n_features),
         # To be sure to use parallelization
         chunk_size=n_samples // 4,
     )
 
-    dist_par_X, indices_par_X = radius_neigh_reduction.compute(
+    dist_par_X, indices_par_X = pairwise_distances_reduction.compute(
         strategy="parallel_on_X", return_distance=True
     )
 
-    dist_par_Y, indices_par_Y = radius_neigh_reduction.compute(
+    dist_par_Y, indices_par_Y = pairwise_distances_reduction.compute(
         strategy="parallel_on_Y", return_distance=True
     )
 
-    assert_radius_neighborhood_results_equality(
+    ASSERT_RESULT[PairwiseDistancesReduction](
         dist_par_X, dist_par_Y, indices_par_X, indices_par_Y
     )
 
