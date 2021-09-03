@@ -167,7 +167,7 @@ cdef np.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 #####################
 
 cdef class PairwiseDistancesReduction:
-    """Abstract class computing a reduction on pairwise
+    f"""Abstract class computing a reduction on pairwise
     distances between a set of vectors (rows) X and another
     set of vectors (rows) of Y.
 
@@ -179,13 +179,21 @@ cdef class PairwiseDistancesReduction:
     datasets_pair: DatasetsPair
         The pair of dataset to use.
 
-    chunk_size: int
+    chunk_size: int, default={CHUNK_SIZE}
         The number of vectors per chunk.
+
+    n_threads: int, default=-1
+        The number of OpenMP threads to use for the reduction.
+        Parallelism is done on chunks and the sharding of chunks
+        depends on the `strategy` set on :method:`~PairwiseDistancesReduction.compute`.
+
+        -1 means using all processors.
     """
 
     cdef:
         DatasetsPair _datasets_pair
 
+        ITYPE_t n_threads
         ITYPE_t effective_omp_n_thread
         ITYPE_t n_samples_chunk, chunk_size
 
@@ -222,15 +230,28 @@ cdef class PairwiseDistancesReduction:
 
     def __init__(self,
         DatasetsPair datasets_pair,
-        ITYPE_t chunk_size = CHUNK_SIZE,
-    ):
+        ITYPE_t chunk_size=CHUNK_SIZE,
+        n_threads=-1,
+     ):
         cdef:
             ITYPE_t X_n_full_chunks, Y_n_full_chunks
 
-        self.effective_omp_n_thread = _openmp_effective_n_threads()
-
         check_scalar(chunk_size, "chunk_size", Integral, min_val=1)
         self.chunk_size = chunk_size
+
+        if n_threads is None:
+            # By convention.
+            n_threads = -1
+
+        self.n_threads = n_threads
+
+        if self.n_threads == -1:
+            # Using all possible cores
+            self.effective_omp_n_thread = _openmp_effective_n_threads()
+        else:
+            check_scalar(self.n_threads, "n_threads", Integral, min_val=1)
+            self.effective_omp_n_thread = self.n_threads
+
         self.n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
         self._datasets_pair = datasets_pair
@@ -455,6 +476,13 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     chunk_size: int
         The number of vectors per chunk.
+
+    n_threads: int, default=-1
+        The number of OpenMP threads to use for the reduction.
+        Parallelism is done on chunks and the sharding of chunks
+        depends on the `strategy` set on :method:`~ArgKmin.compute`.
+
+        -1 means using all processors.
     """
 
     cdef:
@@ -475,8 +503,9 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         str metric="fast_euclidean",
         ITYPE_t chunk_size=CHUNK_SIZE,
         dict metric_kwargs=dict(),
+        n_threads=-1,
     ) -> ArgKmin:
-        """Return the ArgKmin implementation for the given arguments.
+        f"""Return the ArgKmin implementation for the given arguments.
 
         Parameters
         ----------
@@ -495,11 +524,18 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
 
-        chunk_size: int, default=256,
+        chunk_size: int, default={CHUNK_SIZE},
             The number of vectors per chunk.
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
+
+        n_threads: int, default=-1
+            The number of OpenMP threads to use for the reduction.
+            Parallelism is done on chunks and the sharding of chunks
+            depends on the `strategy` set on :method:`~ArgKmin.compute`.
+
+            -1 means using all processors.
 
         Returns
         -------
@@ -522,9 +558,10 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     def __init__(self,
         DatasetsPair datasets_pair,
         ITYPE_t k,
-        ITYPE_t chunk_size = CHUNK_SIZE,
+        ITYPE_t chunk_size=CHUNK_SIZE,
+        n_threads=-1,
     ):
-        PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size)
+        PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size, n_threads)
 
         check_scalar(k, "k", Integral, min_val=1)
         self.k = k
@@ -930,6 +967,13 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
     chunk_size: int
         The number of vectors per chunk.
+
+    n_threads: int, default=-1
+        The number of OpenMP threads to use for the reduction.
+        Parallelism is done on chunks and the sharding of chunks
+        depends on the `strategy` set on :method:`~RadiusNeighborhood.compute`.
+
+        -1 means using all processors.
     """
 
     cdef:
@@ -972,8 +1016,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         str metric="fast_euclidean",
         ITYPE_t chunk_size=CHUNK_SIZE,
         dict metric_kwargs=dict(),
+        n_threads=-1,
     ) -> RadiusNeighborhood:
-        """Return the RadiusNeighborhood implementation for the given arguments.
+        f"""Return the RadiusNeighborhood implementation for the given arguments.
 
         Parameters
         ----------
@@ -992,11 +1037,18 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
 
-        chunk_size: int, default=256,
+        chunk_size: int, default={CHUNK_SIZE},
             The number of vectors per chunk.
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
+
+        n_threads: int, default=-1
+            The number of OpenMP threads to use for the reduction.
+            Parallelism is done on chunks and the sharding of chunks
+            depends on the `strategy` set on :method:`~RadiusNeighborhood.compute`.
+
+            -1 means using all processors.
 
         Returns
         -------
@@ -1020,9 +1072,10 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     def __init__(self,
         DatasetsPair datasets_pair,
         DTYPE_t radius,
-        ITYPE_t chunk_size = CHUNK_SIZE,
+        ITYPE_t chunk_size=CHUNK_SIZE,
+        n_threads=-1,
     ):
-        PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size)
+        PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size, n_threads)
 
         check_scalar(radius, "radius", Real, min_val=0)
         self.radius = radius
