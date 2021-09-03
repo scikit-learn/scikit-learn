@@ -212,7 +212,8 @@ cdef class PairwiseDistancesReduction:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted({"fast_euclidean", "fast_sqeuclidean", *METRIC_MAPPING.keys()}.difference(excluded))
+        return sorted({"fast_euclidean", "fast_sqeuclidean",
+                       *METRIC_MAPPING.keys()}.difference(excluded))
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -280,6 +281,11 @@ cdef class PairwiseDistancesReduction:
         """Computes the reduction of each vector (row) of X on Y
         by parallelizing computation on chunks of X.
 
+        This strategy dispatches chunks of X uniformly on threads.
+        Each thread then iterates on all the chunks of Y. This strategy is
+        embarrassingly parallel and comes with no datastructures synchronisation
+        but is less used in practice (because X is smaller than Y generally).
+
         Private datastructures are modified internally by threads.
 
         Private template methods can be implemented on subclasses to
@@ -336,6 +342,12 @@ cdef class PairwiseDistancesReduction:
     cdef void _parallel_on_Y(self) nogil:
         """Computes the reduction of each vector (row) of X on Y
         by parallelizing computation on chunks of Y.
+
+        This strategy dispatches chunks of Y uniformly on threads.
+        Each thread then iterates on all the chunks of X. This strategy is
+        embarrassingly parallel but uses intermediate datastructures
+        synchronisation. However it is more useful in practice (because Y is
+        larger than X generally).
 
         Private datastructures are modified internally by threads.
 
@@ -724,25 +736,30 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
     @final
     def compute(self,
-       str strategy = "auto",
-       bint return_distance = False
+       str strategy="auto",
+       bint return_distance=False,
     ):
         """Computes the reduction of vectors (rows) of X on Y.
 
         Parameters
         ----------
-        strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}
-            The chunking strategy defining which dataset
-            parallelization are made on.
+        strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default='auto'
+            The chunking strategy defining which dataset parallelization are made on.
 
-             - 'parallel_on_X' is embarassingly parallel but
-            is less used in practice.
-             - 'parallel_on_Y' comes with synchronisation but
-            is more useful in practice.
-             -'auto' relies on a simple heuristic to choose
-            between 'parallel_on_X' and 'parallel_on_Y'.
+            Strategies differs on the dispatching they use for chunks on threads:
+                 - 'parallel_on_X' dispatches chunks of X uniformly on threads.
+                 Each thread then iterates on all the chunks of Y. This strategy is
+                 embarrassingly parallel and comes with no datastructures synchronisation
+                 but is less used in practice (because X is smaller than Y generally).
+                 - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
+                 Each thread then iterates on all the chunks of X. This strategy is
+                 embarrassingly parallel but uses intermediate datastructures
+                 synchronisation. However it is more useful in practice (because Y is
+                 larger than X generally).
+                 -'auto' relies on a simple heuristic to choose between 'parallel_on_X'
+                 and 'parallel_on_Y'.
 
-        return_distance: boolean
+        return_distance: boolean, default=False
             Return distances between each X vector and its
             argkmin if set to True.
 
@@ -753,7 +770,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             in Y. Only returned if ``return_distance=True``.
 
         indices: ndarray of shape (n, k)
-            Indices of each X vector argkmin in Y.
+            Indices of argkmin of vectors of X in Y.
         """
 
         # Results returned by ArgKmin.compute used as the main heaps
@@ -1058,8 +1075,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         # This factory comes to handle specialisations.
         if metric in {"fast_euclidean", "fast_sqeuclidean"} and not issparse(X) and not issparse(Y):
             use_squared_distances = metric == "fast_sqeuclidean"
-            return FastEuclideanRadiusNeighborhood(X=X, Y=Y,
-                                                   radius=radius,
+            return FastEuclideanRadiusNeighborhood(X=X, Y=Y, radius=radius,
                                                    use_squared_distances=use_squared_distances,
                                                    chunk_size=chunk_size)
 
@@ -1248,6 +1264,45 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         bint return_distance = False,
         bint sort_results = False
     ):
+        """Computes the reduction of vectors (rows) of X on Y.
+
+        Parameters
+        ----------
+        strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default='auto'
+            The chunking strategy defining which dataset parallelization are made on.
+
+            Strategies differs on the dispatching they use for chunks on threads:
+                 - 'parallel_on_X' dispatches chunks of X uniformly on threads.
+                 Each thread then iterates on all the chunks of Y. This strategy is
+                 embarrassingly parallel and comes with no datastructures synchronisation
+                 but is less used in practice (because X is smaller than Y generally).
+                 - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
+                 Each thread then iterates on all the chunks of X. This strategy is
+                 embarrassingly parallel but uses intermediate datastructures
+                 synchronisation. However it is more useful in practice (because Y is
+                 larger than X generally).
+                 -'auto' relies on a simple heuristic to choose between 'parallel_on_X'
+                 and 'parallel_on_Y'.
+
+        return_distance: boolean, default=False
+            Return distances between each X vector and its
+            neighbors if set to True.
+
+        sort_results: boolean, default=False
+            Sort results with respect to distances between each X vector and its
+            neighbors if set to True.
+
+            return_distance must be True if sort_results is set to True.
+
+        Returns
+        -------
+        distances: ndarray of shape (n, k)
+            Distances between each X vector and its neighbors
+            in Y. Only returned if ``return_distance=True``.
+
+        indices: ndarray of shape (n, k)
+            Indices of each neighbor of vectors of X in Y.
+        """
         if sort_results and not return_distance:
             raise ValueError("return_distance must be True "
                              "if sort_results is True.")
