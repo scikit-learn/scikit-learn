@@ -53,7 +53,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
-    input_type : {"dict", "pair", "str"}, default="dict"
+    input_type : {"dict", "pair", "string"}, default="dict"
         Either "dict" (the default) to accept dictionaries over
         (feature_name, value); "pair" to accept pairs of (feature_name, value);
         or "string" to accept single strings.
@@ -131,11 +131,11 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Input samples.
+        X : Ignored
+            Not used, present here for API consistency by convention.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            Target values.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
