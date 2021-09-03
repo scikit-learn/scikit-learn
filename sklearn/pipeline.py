@@ -837,10 +837,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Parameters
     ----------
-    transformer_list : list of (string, transformer) tuples
-        List of transformer objects to be applied to the data. The first
-        half of each tuple is the name of the transformer. The tranformer can
-        be 'drop' for it to be ignored.
+    transformer_list : list
+        List of (string, transformer) tuples to be applied to the data.
+        The first half of each tuple is the name of the transformer.
+        The tranformer can be 'drop' for it to be ignored.
 
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
