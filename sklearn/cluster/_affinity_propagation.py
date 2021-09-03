@@ -272,7 +272,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     damping : float, default=0.5
-        Damping factor (between 0.5 and 1) is the extent to
+        Damping factor in the range `[0.5, 1.0)` is the extent to
         which the current value is maintained relative to
         incoming values (weighted 1 - damping). This in order
         to avoid numerical oscillations when updating these
