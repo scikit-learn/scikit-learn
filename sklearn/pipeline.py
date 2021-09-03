@@ -1032,11 +1032,14 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
+        **fit_params : dict, default=None
+            Parameters to pass to the fit method of the estimator.
+
         Returns
         -------
         X_t : array-like or sparse matrix of \
                 shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
+            The hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
         results = self._parallel_func(X, y, fit_params, _fit_transform_one)
