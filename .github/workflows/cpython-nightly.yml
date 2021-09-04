@@ -17,7 +17,7 @@ jobs:
       matrix:
         include:
           - python-version: '3.10.0-alpha - 3.10.x'
-            install-numpy: 'pip'
+            install-numpy: 'wheel'
             install-scipy: 'git'
     env:
       INSTALL_NUMPY: ${{ matrix.install-numpy }}
@@ -36,14 +36,14 @@ jobs:
           pip install pytest pytest-xdist cython pybind11
       - name: Install numpy
         run: |
-          if [[ $INSTALL_NUMPY == "pip" ]]; then
+          if [[ $INSTALL_NUMPY == "wheel" ]]; then
             pip install -i https://pypi.anaconda.org/scipy-wheels-nightly/simple numpy
           else
             pip install git+https://github.com/numpy/numpy.git
           fi
       - name: Install scipy
         run: |
-          if [[ $INSTALL_SCIPY == "pip" ]]; then
+          if [[ $INSTALL_SCIPY == "wheel" ]]; then
             pip install -i https://pypi.anaconda.org/scipy-wheels-nightly/simple scipy
           else
             pip install pybind11
