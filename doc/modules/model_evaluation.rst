@@ -2373,9 +2373,9 @@ The argument ``power`` defines the Tweedie power as for
 :func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
-model can be arbitrarily worse). A model that always predicts a constant
-value for the expected value of y, disregarding the input features, would
-get a D^2 score of 0.0.
+model can be arbitrarily worse). A constant model that always predicts the
+expected value of y, disregarding the input features, would get a D² score
+of 0.0.
 
 A scorer object with a specific choice of ``power`` can be built by::
 
