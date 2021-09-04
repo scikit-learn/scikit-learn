@@ -175,7 +175,7 @@ def test_regression_metrics_at_limits():
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.0], [0.0], power=power)
     with pytest.raises(ValueError, match=msg):
-        d2_tweedie_score([0.0], [0.0], power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
     assert_almost_equal(mean_tweedie_deviance([0.0], [0.0], power=0), 0.0, 2)
 
@@ -184,7 +184,7 @@ def test_regression_metrics_at_limits():
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.0], [0.0], power=power)
     with pytest.raises(ValueError, match=msg):
-        d2_tweedie_score([0.0], [0.0], power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
     power = 1.5
     assert_allclose(mean_tweedie_deviance([0.0], [1.0], power=power), 2 / (2 - power))
@@ -192,7 +192,7 @@ def test_regression_metrics_at_limits():
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.0], [0.0], power=power)
     with pytest.raises(ValueError, match=msg):
-        d2_tweedie_score([0.0], [0.0], power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
     power = 2.0
     assert_allclose(mean_tweedie_deviance([1.0], [1.0], power=power), 0.00, atol=1e-8)
@@ -200,7 +200,7 @@ def test_regression_metrics_at_limits():
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.0], [0.0], power=power)
     with pytest.raises(ValueError, match=msg):
-        d2_tweedie_score([0.0], [0.0], power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
     power = 3.0
     assert_allclose(mean_tweedie_deviance([1.0], [1.0], power=power), 0.00, atol=1e-8)
@@ -208,13 +208,13 @@ def test_regression_metrics_at_limits():
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.0], [0.0], power=power)
     with pytest.raises(ValueError, match=msg):
-        d2_tweedie_score([0.0], [0.0], power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
     power = 0.5
     with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
         mean_tweedie_deviance([0.0], [0.0], power=power)
     with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
-        d2_tweedie_score([0.0], [0.0], power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
 
 def test__check_reg_targets():
