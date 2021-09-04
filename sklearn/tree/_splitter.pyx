@@ -34,14 +34,6 @@ from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
 from ._utils cimport safe_realloc
 
-cdef double INFINITY = np.inf
-
-# Mitigate precision differences between 32 bit and 64 bit
-cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
-
-# Constant to switch between algorithm non zero value extract algorithm
-# in SparseSplitter
-cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
 
 cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
     self.impurity_left = INFINITY

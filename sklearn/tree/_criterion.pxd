@@ -18,6 +18,7 @@ from ._tree cimport SIZE_t           # Type for indices and counters
 from ._tree cimport INT32_t          # Signed 32 bit integer
 from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
+
 cdef class Criterion:
     # The criterion computes the impurity of a node and the reduction of
     # impurity of a split on that node. It also computes the output statistics
