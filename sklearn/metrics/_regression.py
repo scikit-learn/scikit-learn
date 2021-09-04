@@ -989,7 +989,7 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=2)
 
 
-def d2_tweedie_score(y_true, y_pred, sample_weight=None, power=0):
+def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     """D^2 regression score function, percentage of Tweedie deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
