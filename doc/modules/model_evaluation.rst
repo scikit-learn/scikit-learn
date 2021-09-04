@@ -2355,6 +2355,34 @@ the difference in errors decreases. Finally, by setting, ``power=2``::
 we would get identical errors. The deviance when ``power=2`` is thus only
 sensitive to relative errors.
 
+.. _d2_tweedie_score:
+
+D² score, the coefficient of determination
+-------------------------------------------
+
+The :func:`d2_tweedie_score` function computes the percentage of deviance
+explained. It is a generalization of R², where the squared error is replaced by
+the Tweedie deviance. D², also known as McFadden's likelihood ratio index, is
+calculated as
+
+.. math::
+
+  D^2(y, \hat{y}) = 1 - \frac{\text{D}(y, \hat{y})}{\text{D}(y, \bar{y})} \,.
+
+The argument ``power`` defines the Tweedie power as for
+:func:`mean_tweedie_deviance`. Note that for `power=0`,
+:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+
+Like R², the best possible score is 1.0 and it can be negative (because the
+model can be arbitrarily worse). A constant model that always predicts the
+expected value of y, disregarding the input features, would get a D² score
+of 0.0.
+
+A scorer object with a specific choice of ``power`` can be built by::
+
+  >>> from sklearn.metrics import d2_tweedie_score, make_scorer
+  >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, pwoer=1.5)
+
 .. _pinball_loss:
 
 Pinball loss
@@ -2387,7 +2415,7 @@ Here is a small example of usage of the :func:`mean_pinball_loss` function::
   >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
   0.0
 
-It is possible to build a scorer object with a specific choice of alpha::
+It is possible to build a scorer object with a specific choice of ``alpha``::
 
   >>> from sklearn.metrics import make_scorer
   >>> mean_pinball_loss_95p = make_scorer(mean_pinball_loss, alpha=0.95)
