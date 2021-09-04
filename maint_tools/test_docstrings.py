@@ -86,7 +86,6 @@ DOCSTRING_IGNORE_LIST = [
     "StackingRegressor",
     "TheilSenRegressor",
     "TransformedTargetRegressor",
-    "TruncatedSVD",
     "TweedieRegressor",
     "VarianceThreshold",
     "VotingClassifier",
