@@ -993,8 +993,8 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     """D^2 regression score function, percentage of Tweedie deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
-    arbitrarily worse). A model that always predicts a constant value for the expected
-    value of y, disregarding the input features, would get a D^2 score of 0.0.
+    arbitrarily worse). A model that always uses the empirical mean of `y_true` as
+    constant prediction, disregarding the input features, gets a D^2 score of 0.0.
 
     Read more in the :ref:`User Guide <d2_tweedie_score>`.
 
