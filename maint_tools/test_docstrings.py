@@ -12,7 +12,6 @@ DOCSTRING_IGNORE_LIST = [
     "Birch",
     "FeatureHasher",
     "FeatureUnion",
-    "FunctionTransformer",
     "GammaRegressor",
     "GaussianMixture",
     "GaussianProcessRegressor",
