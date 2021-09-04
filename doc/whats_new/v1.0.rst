@@ -601,6 +601,12 @@ Changelog
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.
 
+- |Feature| :func:`metrics.d2_tweedie_score` calculates the D^2 regression
+  score for Tweedie deviances with power parameter ``power``. This is a
+  generalization of the `r2_score` and can be interpreted as percentage of
+  Tweedie deviance explained.
+  :pr:`17036` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature|  :func:`metrics.mean_squared_log_error` now supports
   `squared=False`.
   :pr:`20326` by :user:`Uttam kumar <helper-uttam>`.
@@ -718,7 +724,7 @@ Changelog
 .............................
 
 - |Fix| :class:`neural_network.MLPClassifier` and
-  :class:`neural_network.MLPRegressor` now correct supports continued training
+  :class:`neural_network.MLPRegressor` now correctly support continued training
   when loading from a pickled file. :pr:`19631` by `Thomas Fan`_.
 
 :mod:`sklearn.pipeline`
