@@ -33,7 +33,7 @@ jobs:
           pip install --upgrade pip setuptools
       - name: Install python dependencies
         run: |
-          pip install pytest pytest-xdist cython pybind11
+          pip install pytest pytest-xdist cython
       - name: Install numpy
         run: |
           if [[ $INSTALL_NUMPY == "wheel" ]]; then
