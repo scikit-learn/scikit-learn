@@ -140,9 +140,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X : array-like, shape (n_samples, n_features)
             Input array.
 
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
         Returns
         -------
-        self
+        self : object
+            FunctionTransformer class instance.
         """
         X = self._check_input(X)
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
