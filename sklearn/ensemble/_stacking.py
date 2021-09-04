@@ -248,8 +248,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         **predict_params : dict of str -> obj
             Parameters to the `predict` called by the `final_estimator`. Note
@@ -490,8 +490,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         **predict_params : dict of str -> obj
             Parameters to the `predict` called by the `final_estimator`. Note
@@ -515,8 +515,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -535,8 +535,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -734,8 +734,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.

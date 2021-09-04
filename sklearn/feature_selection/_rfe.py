@@ -117,6 +117,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     ranking_ : ndarray of shape (n_features,)
         The feature ranking, such that ``ranking_[i]`` corresponds to the
         ranking position of the i-th feature. Selected (i.e., estimated
@@ -124,6 +130,26 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
+
+    See Also
+    --------
+    RFECV : Recursive feature elimination with built-in cross-validated
+        selection of the best number of features.
+    SelectFromModel : Feature selection based on thresholds of importance
+        weights.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
+
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying estimator does as well.
+
+    References
+    ----------
+
+    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
+           for cancer classification using support vector machines",
+           Mach. Learn., 46(1-3), 389--422, 2002.
 
     Examples
     --------
@@ -142,26 +168,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
-
-    Notes
-    -----
-    Allows NaN/Inf in the input if the underlying estimator does as well.
-
-    See Also
-    --------
-    RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features.
-    SelectFromModel : Feature selection based on thresholds of importance
-        weights.
-    SequentialFeatureSelector : Sequential cross-validation based feature
-        selection. Does not rely on importance weights.
-
-    References
-    ----------
-
-    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
-           for cancer classification using support vector machines",
-           Mach. Learn., 46(1-3), 389--422, 2002.
     """
 
     def __init__(
@@ -550,6 +556,12 @@ class RFECV(RFE):
         underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     ranking_ : narray of shape (n_features,)
         The feature ranking, such that `ranking_[i]`

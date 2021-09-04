@@ -174,7 +174,7 @@ _STYLE = """
   display: block;
   width: 100%;
   margin-bottom: 0;
-  padding: 0.2em 0.3em;
+  padding: 0.3em;
   box-sizing: border-box;
   text-align: center;
 }
@@ -216,10 +216,10 @@ _STYLE = """
 #$id div.sk-estimator {
   font-family: monospace;
   background-color: #f0f8ff;
-  margin: 0.25em 0.25em;
   border: 1px dotted black;
   border-radius: 0.25em;
   box-sizing: border-box;
+  margin-bottom: 0.5em;
 }
 #$id div.sk-estimator:hover {
   background-color: #d4ebff;
@@ -247,6 +247,8 @@ _STYLE = """
   flex-direction: column;
   align-items: center;
   background-color: white;
+  padding-right: 0.2em;
+  padding-left: 0.2em;
 }
 #$id div.sk-item {
   z-index: 1;
@@ -256,6 +258,15 @@ _STYLE = """
   align-items: stretch;
   justify-content: center;
   background-color: white;
+}
+#$id div.sk-parallel::before {
+  content: "";
+  position: absolute;
+  border-left: 1px solid gray;
+  box-sizing: border-box;
+  top: 2em;
+  bottom: 0;
+  left: 50%;
 }
 #$id div.sk-parallel-item {
   display: flex;
@@ -276,9 +287,9 @@ _STYLE = """
 }
 #$id div.sk-dashed-wrapped {
   border: 1px dashed gray;
-  margin: 0.2em;
+  margin: 0 0.4em 0.5em 0.4em;
   box-sizing: border-box;
-  padding-bottom: 0.1em;
+  padding-bottom: 0.4em;
   background-color: white;
   position: relative;
 }
