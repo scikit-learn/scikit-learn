@@ -46,13 +46,11 @@ jobs:
           if [[ $INSTALL_SCIPY == "wheel" ]]; then
             pip install -i https://pypi.anaconda.org/scipy-wheels-nightly/simple scipy
           else
-            pip install pybind11
-            pip install git+https://github.com/serge-sans-paille/pythran.git
             pip install git+https://github.com/scipy/scipy.git
           fi
       - name: Install scikit-learn
         run: |
-          python setup.py install
+          pip install --no-build-isolation .
       - name: Test scikit-learn
         run: |
           cd /tmp && python -m pytest -n 2 --pyargs sklearn
