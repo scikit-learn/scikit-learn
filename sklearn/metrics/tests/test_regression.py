@@ -26,6 +26,8 @@ from sklearn.metrics import make_scorer
 
 from sklearn.metrics._regression import _check_reg_targets
 
+from sklearn.exceptions import UndefinedMetricWarning
+
 
 def test_regression_metrics(n_samples=50):
     y_true = np.arange(n_samples)
@@ -145,23 +147,23 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(max_error([0.0], [0.0]), 0.0)
     assert_almost_equal(explained_variance_score([0.0], [0.0]), 1.0)
     assert_almost_equal(r2_score([0.0, 1], [0.0, 1]), 1.0)
-    err_msg = (
+    msg = (
         "Mean Squared Logarithmic Error cannot be used when targets "
         "contain negative values."
     )
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([-1.0], [-1.0])
-    err_msg = (
+    msg = (
         "Mean Squared Logarithmic Error cannot be used when targets "
         "contain negative values."
     )
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, 2.0, 3.0], [1.0, -2.0, 3.0])
-    err_msg = (
+    msg = (
         "Mean Squared Logarithmic Error cannot be used when targets "
         "contain negative values."
     )
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
 
     # Tweedie deviance error
@@ -350,12 +352,14 @@ def test_regression_custom_weights():
 
 @pytest.mark.parametrize("metric", [r2_score, d2_tweedie_score])
 def test_regression_single_sample(metric):
-    y_true = [1]
-    y_pred = [2]
-    msg = "not well-defined with less than two samples."
+    y_true = [0]
+    y_pred = [1]
+    warning_msg = "not well-defined with less than two samples."
 
-    with pytest.raises(ValueError, match=msg):
-        metric(y_true, y_pred)
+    # Trigger the warning
+    with pytest.warns(UndefinedMetricWarning, match=warning_msg):
+        score = metric(y_true, y_pred)
+        assert np.isnan(score)
 
 
 def test_tweedie_deviance_continuity():

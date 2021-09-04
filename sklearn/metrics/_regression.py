@@ -24,9 +24,12 @@ the lower the better.
 #          Uttam kumar <bajiraouttamsinha@gmail.com>
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
 from .._loss.glm_distribution import TweedieDistribution
+from ..exceptions import UndefinedMetricWarning
 from ..utils.validation import check_array, check_consistent_length, _num_samples
 from ..utils.validation import column_or_1d
 from ..utils.validation import _check_sample_weight
@@ -735,8 +738,8 @@ def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average
     Unlike most other scores, :math:`R^2` score may be negative (it need not
     actually be the square of a quantity R).
 
-    This metric is not well-defined for single samples and will raise a ValueError if
-    n_samples is less than two.
+    This metric is not well-defined for single samples and will return a NaN
+    value if n_samples is less than two.
 
     References
     ----------
@@ -774,7 +777,9 @@ def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if _num_samples(y_pred) < 2:
-        raise ValueError("R^2 score is not well-defined with less than two samples.")
+        msg = "R^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -1013,8 +1018,8 @@ def d2_tweedie_score(y_true, y_pred, sample_weight=None, power=0):
         deviations between true and predicted targets.
 
         - power < 0: Extreme stable distribution. Requires: y_pred > 0.
-        - power = 0 : Normal distribution, output corresponds to
-          r2_score. y_true and y_pred can be any real numbers.
+        - power = 0 : Normal distribution, output corresponds to r2_score.
+          y_true and y_pred can be any real numbers.
         - power = 1 : Poisson distribution. Requires: y_true >= 0 and
           y_pred > 0.
         - 1 < p < 2 : Compound Poisson distribution. Requires: y_true >= 0
@@ -1037,8 +1042,8 @@ def d2_tweedie_score(y_true, y_pred, sample_weight=None, power=0):
     Like R^2, D^2 score may be negative (it need not actually be the square of
     a quantity D).
 
-    This metric is not well-defined for single samples and will raise a ValueError if
-    n_samples is less than two.
+    This metric is not well-defined for single samples and will return a NaN
+    value if n_samples is less than two.
 
     References
     ----------
@@ -1068,7 +1073,9 @@ def d2_tweedie_score(y_true, y_pred, sample_weight=None, power=0):
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if _num_samples(y_pred) < 2:
-        raise ValueError("D^2 score is not well-defined with less than two samples.")
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
