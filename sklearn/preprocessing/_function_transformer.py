@@ -71,6 +71,17 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
 
+    See Also
+    --------
+    MaxAbsScaler : Scale each feature by its maximum absolute value.
+    MinMaxScaler : Transform features by scaling each feature to a given range.
+    QuantileTransformers : Transform features using quantiles information.
+    PowerTransformer : Apply a power transform featurewise to make data
+        more Gaussian-like.
+    LabelBinarizer : Binarize labels in a one-vs-all fashion.
+    MultilabelBinarizer : Transform between iterable of iterables
+        and a multilabel format.
+
     Examples
     --------
     >>> import numpy as np
