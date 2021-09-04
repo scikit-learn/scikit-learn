@@ -1627,7 +1627,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
                 f"{params.keys()}.",
                 FutureWarning,
             )
-        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight, **params)
+        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight)
         self.offset_ = -self._intercept_
         return self
 

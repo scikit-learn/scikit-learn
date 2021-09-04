@@ -6,6 +6,7 @@ TODO: remove hard coded numerical results when possible
 import numpy as np
 import itertools
 import pytest
+import re
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
@@ -311,7 +312,7 @@ def test_oneclass_fit_params_is_deprecated():
         "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
         f"keyword parameter(s) are: {params.keys()}."
     )
-    with pytest.warns(FutureWarning, match=msg):
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
         clf.fit(X, **params)
 
 
