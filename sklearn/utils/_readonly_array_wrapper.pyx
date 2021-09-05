@@ -41,7 +41,8 @@ cdef class ReadonlyArrayWrapper:
             request_for_writeable = True
         PyObject_GetBuffer(self.wraps, buffer, flags)
         if request_for_writeable:
-            buffer.readonly = False  # This is a lie!
+            # The following is a lie when self.wraps is readonly!
+            buffer.readonly = False
 
     def __releasebuffer__(self, Py_buffer *buffer):
         PyBuffer_Release(buffer)
