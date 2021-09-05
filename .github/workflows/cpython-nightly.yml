@@ -9,12 +9,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  check_build_trigger:
+  get_latest_commit:
     name: Check build trigger
     runs-on: ubuntu-latest
-    if: github.repository == 'scikit-learn/scikit-learn'
+    if: "github.repository == 'scikit-learn/scikit-learn'"
     outputs:
-      build: ${{ steps.check_build_trigger.outputs.build }}
+      message: ${{ steps.get_commit.outputs.commit_msg }}
 
     steps:
       - name: Checkout scikit-learn
@@ -22,20 +22,16 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - id: check_build_trigger
-        name: Check build trigger
+      - id: get_commit
+        name: Get commit
         run: |
           COMMIT_MSG=$(git log --no-merges -1 --oneline)
-          # The commit marker "[cd build]" will trigger the build when required
-          if [[ "$GITHUB_EVENT_NAME" == schedule ||
-                "$COMMIT_MSG" =~ \[python-dev\] ]]; then
-              echo "::set-output name=build::true"
-          fi
+          echo "::set-output name=commit_msg::$COMMIT_MSG"
 
   nightly:
     name: Nightly CPython-${{ matrix.python-version }}
-    needs: check_build_trigger
-    if: needs.check_build_trigger.outputs.build
+    needs: get_latest_commit
+    if: "contains(needs.get_latest_commit.outputs.commit_msg, '[python-dev]') || github.event_name == 'schedule' || github.event_name == 'workflow_run'"
     runs-on: ubuntu-20.04
     strategy:
       matrix:
