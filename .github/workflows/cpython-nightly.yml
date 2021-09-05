@@ -25,8 +25,7 @@ jobs:
       - id: get_commit
         name: Get commit
         run: |
-          COMMIT_MSG=$(git log --no-merges -1 --oneline)
-          echo "::set-output name=commit_msg::$COMMIT_MSG"
+          echo "::set-output name=commit_msg::$(git log --no-merges -1 --oneline)"
 
   nightly:
     name: Nightly CPython-${{ matrix.python-version }}
