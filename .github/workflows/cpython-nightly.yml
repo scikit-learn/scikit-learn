@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     if: "github.repository == 'scikit-learn/scikit-learn'"
     outputs:
-      message: ${{ steps.get_commit.outputs.commit_msg }}
+      commit_msg: ${{ steps.get_commit.outputs.commit_msg }}
 
     steps:
       - name: Checkout scikit-learn
