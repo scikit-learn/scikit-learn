@@ -280,6 +280,9 @@ Changelog
   installing on Windows and its default 260 character limit on file names.
   :pr:`20209` by `Thomas Fan`_.
 
+- |Fix| :func:`datasets.fetch_kddcup99` returns dataframes when
+  `return_X_y=True` and `as_frame=True`. :pr:`19011` by `Thomas Fan`_.
+
 - |API| Deprecates :func:`datasets.load_boston` in 1.0 and it will be removed
   in 1.2. Alternative code snippets to load similar datasets are provided.
   Please report to the docstring of the function for details.
@@ -377,6 +380,11 @@ Changelog
   :class:`ensemble.AdaBoostRegressor` where the `sample_weight` parameter
   got overwritten during `fit`.
   :pr:`20534` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| Removes `tol=None` option in
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`. Please use `tol=0` for
+  the same behavior. :pr:`19296` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -805,6 +813,8 @@ Changelog
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
 
+- |Fix| Improves compatibility of :func:`tree.plot_tree` with high DPI screens.
+  :pr:`20023` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 ..................................
