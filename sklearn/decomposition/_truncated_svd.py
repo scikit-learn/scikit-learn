@@ -98,6 +98,12 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     See Also
     --------
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    FactorAnalysis : A simple linear generative model with
+        Gaussian latent variables.
+    IncrementalPCA : Incremental principal components analysis.
+    KernelPCA : Kernel Principal component analysis.
+    NMF : Non-Negative Matrix Factorization.
     PCA : Principal component analysis.
 
     Notes
