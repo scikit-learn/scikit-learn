@@ -7,7 +7,7 @@ from sklearn.utils._testing import create_memmap_backed_data
 
 
 def _readonly_array_copy(x):
-    """Return a copy of x with flag writeable set to false."""
+    """Return a copy of x with flag writeable set to False."""
     y = x.copy()
     y.flags["WRITEABLE"] = False
     return y
@@ -20,6 +20,11 @@ def test_readonly_array_wrapper(readonly, dtype):
     x = np.arange(10).astype(dtype)
     sum_origin = _test_sum(x)
 
+    # ReadonlyArrayWrapper works with writable buffers
+    sum_writable = _test_sum(ReadonlyArrayWrapper(x))
+    assert sum_writable == pytest.approx(sum_origin, rel=1e-11)
+
+    # Now, check on readonly buffers
     x_readonly = readonly(x)
 
     with pytest.raises(ValueError, match="buffer source array is read-only"):
