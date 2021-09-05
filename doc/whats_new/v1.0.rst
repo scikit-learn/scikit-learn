@@ -383,8 +383,8 @@ Changelog
 
 - |API| Removes `tol=None` option in
   :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor`. Use `tol=0` for behavior.
-  :pr:`19296` by `Thomas Fan`_.
+  :class:`ensemble.HistGradientBoostingRegressor`. Please use `tol=0` for
+  the same behavior. :pr:`19296` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
