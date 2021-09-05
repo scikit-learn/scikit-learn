@@ -11,7 +11,7 @@ on:
 jobs:
   nightly:
     name: Nightly CPython-${{ matrix.python-version }}
-    if: "github.repository == 'scikit-learn/scikit-learn' && contains(github.event.head_commit.message, '[python-dev]')"
+    if: "github.repository == 'scikit-learn/scikit-learn'"
     runs-on: ubuntu-20.04
     strategy:
       matrix:
