@@ -9,9 +9,33 @@ on:
   workflow_dispatch:
 
 jobs:
+  check_build_trigger:
+    name: Check build trigger
+    runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
+    outputs:
+      build: ${{ steps.check_build_trigger.outputs.build }}
+
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - id: check_build_trigger
+        name: Check build trigger
+        run: |
+          COMMIT_MSG=$(git log --no-merges -1 --oneline)
+          # The commit marker "[cd build]" will trigger the build when required
+          if [[ "$GITHUB_EVENT_NAME" == schedule ||
+                "$COMMIT_MSG" =~ \[python-dev\] ]]; then
+              echo "::set-output name=build::true"
+          fi
+
   nightly:
     name: Nightly CPython-${{ matrix.python-version }}
-    if: "github.repository == 'scikit-learn/scikit-learn' && contains(github.event.commits[0].message, '[python-dev]')"
+    needs: check_build_trigger
+    if: needs.check_build_trigger.outputs.build
     runs-on: ubuntu-20.04
     strategy:
       matrix:
