@@ -6,6 +6,7 @@ TODO: remove hard coded numerical results when possible
 import numpy as np
 import itertools
 import pytest
+import re
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
@@ -297,6 +298,22 @@ def test_oneclass_score_samples():
         clf.score_samples([[2.0, 2.0]]),
         clf.decision_function([[2.0, 2.0]]) + clf.offset_,
     )
+
+
+# TODO: Remove in v1.2
+def test_oneclass_fit_params_is_deprecated():
+    clf = svm.OneClassSVM()
+    params = {
+        "unused_param": "",
+        "extra_param": None,
+    }
+    msg = (
+        "Passing additional keyword parameters has no effect and is deprecated "
+        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
+        f"keyword parameter(s) are: {params.keys()}."
+    )
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        clf.fit(X, **params)
 
 
 def test_tweak_params():

@@ -7,7 +7,7 @@
 Version 1.0.0
 =============
 
-**In Development**
+**September 2021**
 
 
 .. include:: changelog_legend.inc
@@ -806,6 +806,13 @@ Changelog
   :class:`preprocessing.PolynomialFeatures` is deprecated in favor of
   `n_features_in_` and will be removed in 1.2. :pr:`20240` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.svm`
+...................
+
+- |API| The parameter `**params` of :func:`svm.OneClassSVM.fit` is
+  deprecated and will be removed in 1.2.
+  :pr:`20843` by :user:`Juan Martín Loyola <jmloyola>`.
 
 :mod:`sklearn.tree`
 ...................
