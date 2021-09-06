@@ -52,7 +52,7 @@ jobs:
           pip install --upgrade pip setuptools
       - name: Install python dependencies
         run: |
-          pip install pytest pytest-xdist cython
+          pip install pytest pytest-xdist cython wheel
       - name: Install numpy
         run: |
           if [[ $INSTALL_NUMPY == "wheel" ]]; then
