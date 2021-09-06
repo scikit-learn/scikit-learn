@@ -265,15 +265,21 @@ class DecisionBoundaryDisplay:
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
         if not grid_resolution > 1:
-            raise ValueError("grid_resolution must be greater than 1")
+            raise ValueError(
+                "grid_resolution must be greater than 1. Got"
+                f" {grid_resolution} instead."
+            )
 
         if not eps >= 0:
-            raise ValueError("eps must be greater than or equal to 0")
-
-        possible_plot_method = ("contourf", "contour", "pcolormesh")
-        if plot_method not in possible_plot_method:
             raise ValueError(
-                f"plot_method must be one of {', '.join(possible_plot_method)}. "
+                f"eps must be greater than or equal to 0. Got {eps} instead."
+            )
+
+        possible_plot_methods = ("contourf", "contour", "pcolormesh")
+        if plot_method not in possible_plot_methods:
+            avaliable_methods = ", ".join(possible_plot_methods)
+            raise ValueError(
+                f"plot_method must be one of {avaliable_methods}. "
                 f"Got {plot_method} instead."
             )
 

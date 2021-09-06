@@ -91,9 +91,15 @@ def test_multiclass_error(pyplot, response_method):
             r"plot_method must be one of contourf, contour, pcolormesh. Got hello_world"
             r" instead.",
         ),
-        ({"grid_resolution": 1}, r"grid_resolution must be greater than 1"),
-        ({"grid_resolution": -1}, r"grid_resolution must be greater than 1"),
-        ({"eps": -1.1}, r"eps must be greater than or equal to 0"),
+        (
+            {"grid_resolution": 1},
+            r"grid_resolution must be greater than 1. Got 1 instead",
+        ),
+        (
+            {"grid_resolution": -1},
+            r"grid_resolution must be greater than 1. Got -1 instead",
+        ),
+        ({"eps": -1.1}, r"eps must be greater than or equal to 0. Got -1.1 instead"),
     ],
 )
 def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf, data):
