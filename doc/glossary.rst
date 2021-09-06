@@ -1267,7 +1267,7 @@ Methods
         Primarily for :term:`feature extractors`, but also used for other
         transformers to provide string names for each column in the output of
         the estimator's :term:`transform` method.  It outputs an array of
-        strings and may take a list of strings as input, corresponding
+        strings and may take an array-like of strings as input, corresponding
         to the names of input columns from which output column names can
         be generated.  If `input_features` is not passed in, then the
         `feature_names_in_` attribute will be used. If the
