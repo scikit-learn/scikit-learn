@@ -10,10 +10,8 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 # List of modules ignored when checking for numpydoc validation.
 DOCSTRING_IGNORE_LIST = [
     "Birch",
-    "FeatureHasher",
     "FunctionTransformer",
     "GammaRegressor",
-    "GaussianMixture",
     "GaussianProcessRegressor",
     "GaussianRandomProjection",
     "GridSearchCV",
@@ -85,10 +83,8 @@ DOCSTRING_IGNORE_LIST = [
     "StackingRegressor",
     "TheilSenRegressor",
     "TransformedTargetRegressor",
-    "TruncatedSVD",
     "TweedieRegressor",
     "VarianceThreshold",
-    "VotingClassifier",
 ]
 
 

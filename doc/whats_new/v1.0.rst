@@ -280,6 +280,9 @@ Changelog
   installing on Windows and its default 260 character limit on file names.
   :pr:`20209` by `Thomas Fan`_.
 
+- |Fix| :func:`datasets.fetch_kddcup99` returns dataframes when
+  `return_X_y=True` and `as_frame=True`. :pr:`19011` by `Thomas Fan`_.
+
 - |API| Deprecates :func:`datasets.load_boston` in 1.0 and it will be removed
   in 1.2. Alternative code snippets to load similar datasets are provided.
   Please report to the docstring of the function for details.
@@ -377,6 +380,11 @@ Changelog
   :class:`ensemble.AdaBoostRegressor` where the `sample_weight` parameter
   got overwritten during `fit`.
   :pr:`20534` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| Removes `tol=None` option in
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`. Please use `tol=0` for
+  the same behavior. :pr:`19296` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -535,14 +543,15 @@ Changelog
   LinearRegression, Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV) as
   follows:
   make_pipeline(StandardScaler(with_mean=False), LinearModel()).
-  LinearRegression was deprecated in:
-  :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
+  The ``normalize`` parameter in :class:`linear_model.LinearRegression` was
+  deprecated in :pr:`17743` by
+  :user:`Maria Telenczuk <maikia>` and :user:`Alexandre Gramfort <agramfort>`.
+  Same for :class:`linear_model.Ridge`,  :class:`linear_model.RidgeClassifier`,
+  :class:`linear_model.RidgeCV`, and :class:`linear_model.RidgeClassifierCV`,
+  in: :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
-  The ``normalize`` parameter in Ridge, RidgeClassifier, RidgeCV or
-  RidgeClassifierCV were deprecated and will be removed in 1.2.
-  :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
-  :user:`Alexandre Gramfort <agramfort>`.
-  Same for BayesianRidge, ARDRegression in:
+  Same for :class:`linear_model.BayesianRidge`,
+  :class:`linear_model.ARDRegression` in:
   :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
   Same for :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
   :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
@@ -551,16 +560,16 @@ Changelog
   :class:`linear_model.MultiTaskElasticNetCV`, in:
   :pr:`17785` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
-  The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
+
+- The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
   :class:`linear_model.OrthogonalMatchingPursuitCV` will default to
   False in 1.2 and will be removed in 1.4.
   :pr:`17750` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
-  The ``normalize`` parameter of :class:`linear_model.Lars`
+  Same for :class:`linear_model.Lars`
   :class:`linear_model.LarsCV` :class:`linear_model.LassoLars`
-  :class:`linear_model.LassoLarsCV` :class:`linear_model.LassoLarsIC`
-  will default to False in 1.2 and will be removed in 1.4.
-  :pr:`17769` by :user:`Maria Telenczuk <maikia>` and
+  :class:`linear_model.LassoLarsCV` :class:`linear_model.LassoLarsIC`,
+  in :pr:`17769` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
 - |API| Keyword validation has moved from `__init__` and `set_params` to `fit`
@@ -600,6 +609,12 @@ Changelog
 - |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.
+
+- |Feature| :func:`metrics.d2_tweedie_score` calculates the D^2 regression
+  score for Tweedie deviances with power parameter ``power``. This is a
+  generalization of the `r2_score` and can be interpreted as percentage of
+  Tweedie deviance explained.
+  :pr:`17036` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Feature|  :func:`metrics.mean_squared_log_error` now supports
   `squared=False`.
@@ -718,7 +733,7 @@ Changelog
 .............................
 
 - |Fix| :class:`neural_network.MLPClassifier` and
-  :class:`neural_network.MLPRegressor` now correct supports continued training
+  :class:`neural_network.MLPRegressor` now correctly support continued training
   when loading from a pickled file. :pr:`19631` by `Thomas Fan`_.
 
 :mod:`sklearn.pipeline`
@@ -799,6 +814,8 @@ Changelog
   for non-English characters. :pr:`18959` by :user:`Zero <Zeroto521>`
   and :user:`wstates <wstates>`.
 
+- |Fix| Improves compatibility of :func:`tree.plot_tree` with high DPI screens.
+  :pr:`20023` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 ..................................
