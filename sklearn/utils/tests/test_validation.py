@@ -1075,7 +1075,7 @@ def test_check_scalar_valid(x):
             int,
             2,
             4,
-            "neither",
+            "right",
             ValueError("test_name4 == 2, must be > 2."),
         ),
         (
@@ -1084,7 +1084,7 @@ def test_check_scalar_valid(x):
             int,
             2,
             4,
-            "neither",
+            "left",
             ValueError("test_name5 == 4, must be < 4."),
         ),
     ],
