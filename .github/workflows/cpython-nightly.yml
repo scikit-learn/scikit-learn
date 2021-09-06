@@ -50,26 +50,35 @@ jobs:
         run: |
           sudo apt-get install libatlas-base-dev liblapack-dev gfortran libgmp-dev libmpfr-dev libsuitesparse-dev libmpc-dev
           pip install --upgrade pip setuptools
+      - name: Setup cache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          max-size: 1000M
       - name: Install python dependencies
         run: |
           pip install pytest pytest-xdist cython wheel
       - name: Install numpy
         run: |
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           if [[ $INSTALL_NUMPY == "wheel" ]]; then
             pip install -i https://pypi.anaconda.org/scipy-wheels-nightly/simple numpy
           else
-            pip install git+https://github.com/numpy/numpy.git
+            git clone --recursive https://github.com/numpy/numpy.git ~/numpy
+            cd ~/numpy && pip install -e .
           fi
       - name: Install scipy
         run: |
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           if [[ $INSTALL_SCIPY == "wheel" ]]; then
             pip install -i https://pypi.anaconda.org/scipy-wheels-nightly/simple scipy
           else
-            pip install git+https://github.com/scipy/scipy.git
+            git clone --recursive https://github.com/scipy/scipy.git ~/scipy
+            cd ~/scipy && pip install -e .
           fi
       - name: Install scikit-learn
         run: |
-          pip install --no-build-isolation .
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+          pip install --no-build-isolation -e .
       - name: Test scikit-learn
         run: |
           cd /tmp && python -m pytest -n 2 --pyargs sklearn
