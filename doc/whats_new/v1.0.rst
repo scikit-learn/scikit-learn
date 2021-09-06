@@ -824,13 +824,6 @@ Changelog
 - |Fix| Improves compatibility of :func:`tree.plot_tree` with high DPI screens.
   :pr:`20023` by `Thomas Fan`_.
 
-:mod:`sklearn.feature_extraction`
-..................................
-
-- |Fix| Fixed a bug in :func:`image._to_graph` where singleton
-  connected components were not handled properly, resulting in a wrong
-  vertex indexing.  :pr:`18964` by `Bertrand Thirion`_.
-
 - |Fix| Fixed a bug in :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor` where a node could be split whereas it
   should not have been due to incorrect handling of rounding errors.
@@ -841,6 +834,18 @@ Changelog
   :class:`tree.ExtraTreeRegressor` is deprecated in favor of `n_features_in_`
   and will be removed in 1.2. :pr:`20272` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug in :func:`feature_extraction.image._to_graph` where
+  singleton connected components were not handled properly, resulting in a
+  wrong vertex indexing. :pr:`18964` by `Bertrand Thirion`_.
+
+- |Fix| Raise a warning in class:`feature_extraction.text.CountVectorizer`
+  with `lowercase=True` when there are vocabulary entries with uppercase
+  characters to avoid silent misses in the resulting feature vectors.
+  :pr:`19401` by :user:`Zito Relova <zitorelova>`
 
 :mod:`sklearn.utils`
 ....................
