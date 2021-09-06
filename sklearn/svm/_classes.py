@@ -1607,7 +1607,8 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
             .. deprecated:: 1.0
                 The `fit` method will not longer accept extra keyword
-                parameters in 1.2 since they are unused.
+                parameters in 1.2. These keyword parameters were
+                already discarded.
 
         Returns
         -------
