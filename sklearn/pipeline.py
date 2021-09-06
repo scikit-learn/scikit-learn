@@ -1050,7 +1050,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         X_t : array-like or sparse matrix of \
                 shape (n_samples, sum_n_components)
             The `hstack` of results of transformers. `sum_n_components` is the
-            sum of n_components (output dimension) over transformers.
+            sum of `n_components` (output dimension) over transformers.
         """
         results = self._parallel_func(X, y, fit_params, _fit_transform_one)
         if not results:
@@ -1100,7 +1100,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         X_t : array-like or sparse matrix of \
                 shape (n_samples, sum_n_components)
             The `hstack` of results of transformers. `sum_n_components` is the
-            sum of n_components (output dimension) over transformers.
+            sum of `n_components` (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, X, None, weight)
