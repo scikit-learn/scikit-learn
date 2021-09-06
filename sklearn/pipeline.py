@@ -837,10 +837,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Parameters
     ----------
-    transformer_list : list of (string, transformer) tuples
-        List of transformer objects to be applied to the data. The first
-        half of each tuple is the name of the transformer. The tranformer can
-        be 'drop' for it to be ignored.
+    transformer_list : list of tuple
+        List of tuple containing `(str, transformer)`. The first element
+        of the tuple is name affected to the transformer while the
+        second element is a scikit-learn transformer instance.
+        The transformer instance can also be `"drop"` for it to be
+        ignored.
 
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
@@ -927,9 +929,17 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         you can directly set the parameters of the estimators contained in
         `tranformer_list`.
 
+        Parameters
+        ----------
+        **kwargs : dict
+            Parameters of this estimator or parameters of estimators contained
+            in `transform_list`. Parameters of the transformers may be set
+            using its name and the parameter name separated by a '__'.
+
         Returns
         -------
-        self
+        self : object
+            FeatureUnion class instance.
         """
         self._set_params("transformer_list", **kwargs)
         return self
@@ -1005,10 +1015,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
+        **fit_params : dict, default=None
+            Parameters to pass to the fit method of the estimator.
+
         Returns
         -------
-        self : FeatureUnion
-            This estimator
+        self : object
+            FeatureUnion class instance.
         """
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
@@ -1029,12 +1042,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
+        **fit_params : dict, default=None
+            Parameters to pass to the fit method of the estimator.
+
         Returns
         -------
         X_t : array-like or sparse matrix of \
                 shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
-            sum of n_components (output dimension) over transformers.
+            The `hstack` of results of transformers. `sum_n_components` is the
+            sum of `n_components` (output dimension) over transformers.
         """
         results = self._parallel_func(X, y, fit_params, _fit_transform_one)
         if not results:
@@ -1083,8 +1099,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         -------
         X_t : array-like or sparse matrix of \
                 shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
-            sum of n_components (output dimension) over transformers.
+            The `hstack` of results of transformers. `sum_n_components` is the
+            sum of `n_components` (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, X, None, weight)
@@ -1112,6 +1128,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
+
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
 
