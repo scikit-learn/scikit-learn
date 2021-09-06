@@ -60,22 +60,21 @@ def plot_partial_dependence(
 
     .. note::
 
-        :func:`plot_partial_dependence` does not support using the same axes
-        with multiple calls. To plot the the partial dependence for multiple
-        estimators, please pass the axes created by the first call to the
-        second call::
+        :func:`PartialDependenceDisplay.from_estimator` does not support using
+        the same axes with multiple calls. To plot the the partial dependence
+        for multiple estimators, please pass the axes created by the first call
+        to the second call::
 
-          >>> from sklearn.inspection import plot_partial_dependence
+          >>> from sklearn.inspection import PartialDependenceDisplay
           >>> from sklearn.datasets import make_friedman1
           >>> from sklearn.linear_model import LinearRegression
           >>> from sklearn.ensemble import RandomForestRegressor
           >>> X, y = make_friedman1()
           >>> est1 = LinearRegression().fit(X, y)
           >>> est2 = RandomForestRegressor().fit(X, y)
-          >>> disp1 = plot_partial_dependence(est1, X,
-          ...                                 [1, 2])
-          >>> disp2 = plot_partial_dependence(est2, X, [1, 2],
-          ...                                 ax=disp1.axes_)
+          >>> disp1 = PartialDependenceDisplay.from_estimator(est1, X, [1, 2])
+          >>> disp2 = PartialDependenceDisplay.from_estimator(est2, X, [1, 2],
+          ...                                                 ax=disp1.axes_)
 
     .. warning::
 
