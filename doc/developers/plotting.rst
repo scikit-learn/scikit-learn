@@ -64,7 +64,7 @@ Plotting with Multiple Axes
 ---------------------------
 
 Some of the plotting tools like
-:func:`~sklearn.inspection.plot_partial_dependence` and
+:func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
 :class:`~sklearn.inspection.PartialDependenceDisplay` support plottong on
 multiple axes. Two different scenarios are supported:
 

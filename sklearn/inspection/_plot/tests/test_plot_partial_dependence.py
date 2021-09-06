@@ -13,6 +13,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.utils._testing import _convert_container
 
 from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import PartialDependenceDisplay
 
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
@@ -34,13 +35,19 @@ def clf_diabetes(diabetes):
     return clf
 
 
+def test_plot_partial_dependence_deprecation(pyplot, clf_diabetes, diabetes):
+    """Check that plot_partial_dependence is deprecated"""
+    with pytest.warns(FutureWarning):
+        plot_partial_dependence(clf_diabetes, diabetes.data, [0])
+
+
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("grid_resolution", [10, 20])
 def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes):
     # Test partial dependence plot function.
     # Use columns 0 & 2 as 1 is not quantitative (sex)
     feature_names = diabetes.feature_names
-    disp = plot_partial_dependence(
+    disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         [0, 2, (0, 2)],
@@ -125,7 +132,7 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes
 def test_plot_partial_dependence_kind(
     pyplot, kind, subsample, shape, clf_diabetes, diabetes
 ):
-    disp = plot_partial_dependence(
+    disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes, diabetes.data, [0, 1, 2], kind=kind, subsample=subsample
     )
 
@@ -175,7 +182,7 @@ def test_plot_partial_dependence_str_features(
 
     grid_resolution = 25
     # check with str features and array feature names and single column
-    disp = plot_partial_dependence(
+    disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         X,
         [("age", "bmi"), "bmi"],
@@ -229,7 +236,7 @@ def test_plot_partial_dependence_str_features(
 def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
     grid_resolution = 25
     fig, (ax1, ax2) = pyplot.subplots(1, 2)
-    disp = plot_partial_dependence(
+    disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         ["age", ("age", "bmi")],
@@ -273,7 +280,7 @@ def test_plot_partial_dependence_passing_numpy_axes(
 ):
     grid_resolution = 25
     feature_names = diabetes.feature_names
-    disp1 = plot_partial_dependence(
+    disp1 = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
@@ -290,7 +297,7 @@ def test_plot_partial_dependence_passing_numpy_axes(
     lr = LinearRegression()
     lr.fit(diabetes.data, diabetes.target)
 
-    disp2 = plot_partial_dependence(
+    disp2 = PartialDependenceDisplay.from_estimator(
         lr,
         diabetes.data,
         ["age", "bmi"],
@@ -316,7 +323,7 @@ def test_plot_partial_dependence_incorrent_num_axes(
 
     msg = "Expected ax to have 2 axes, got {}".format(nrows * ncols)
 
-    disp = plot_partial_dependence(
+    disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
@@ -326,7 +333,7 @@ def test_plot_partial_dependence_incorrent_num_axes(
 
     for ax_format in axes_formats:
         with pytest.raises(ValueError, match=msg):
-            plot_partial_dependence(
+            PartialDependenceDisplay.from_estimator(
                 clf_diabetes,
                 diabetes.data,
                 ["age", "bmi"],
@@ -350,12 +357,12 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes, diabetes):
     # create two new axes in the space resulting in five axes. To get the
     # expected behavior one needs to pass the generated axes into the second
     # call:
-    # disp1 = plot_partial_dependence(...)
-    # disp2 = plot_partial_dependence(..., ax=disp1.axes_)
+    # disp1 = PartialDependenceDisplay.from_estimator(...)
+    # disp2 = PartialDependenceDisplay.from_estimator(..., ax=disp1.axes_)
 
     grid_resolution = 25
     fig, ax = pyplot.subplots()
-    plot_partial_dependence(
+    PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
@@ -370,7 +377,7 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes, diabetes):
     )
 
     with pytest.raises(ValueError, match=msg):
-        plot_partial_dependence(
+        PartialDependenceDisplay.from_estimator(
             clf_diabetes,
             diabetes.data,
             ["age", "bmi"],
@@ -386,7 +393,7 @@ def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_diabetes, diabet
     # call
 
     feature_names = diabetes.feature_names
-    disp = plot_partial_dependence(
+    disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         [0, 1],
@@ -394,7 +401,7 @@ def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_diabetes, diabet
         feature_names=feature_names,
     )
 
-    plot_partial_dependence(
+    PartialDependenceDisplay.from_estimator(
         clf_diabetes, diabetes.data, [0, 1], grid_resolution=10, ax=disp.axes_
     )
 
@@ -410,7 +417,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
 
     # Test partial dependence plot function on multi-class input.
     clf_int.fit(iris.data, iris.target)
-    disp_target_0 = plot_partial_dependence(
+    disp_target_0 = PartialDependenceDisplay.from_estimator(
         clf_int, iris.data, [0, 1], target=0, grid_resolution=grid_resolution
     )
     assert disp_target_0.figure_ is pyplot.gcf()
@@ -426,7 +433,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
     target = iris.target_names[iris.target]
     clf_symbol = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf_symbol.fit(iris.data, target)
-    disp_symbol = plot_partial_dependence(
+    disp_symbol = PartialDependenceDisplay.from_estimator(
         clf_symbol, iris.data, [0, 1], target="setosa", grid_resolution=grid_resolution
     )
     assert disp_symbol.figure_ is pyplot.gcf()
@@ -445,7 +452,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
         assert_allclose(int_result["values"], symbol_result["values"])
 
     # check that the pd plots are different for another target
-    disp_target_1 = plot_partial_dependence(
+    disp_target_1 = PartialDependenceDisplay.from_estimator(
         clf_int, iris.data, [0, 1], target=1, grid_resolution=grid_resolution
     )
     target_0_data_y = disp_target_0.lines_[0, 0].get_data()[1]
@@ -464,7 +471,7 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
     clf = LinearRegression().fit(X, y)
 
     grid_resolution = 25
-    disp = plot_partial_dependence(
+    disp = PartialDependenceDisplay.from_estimator(
         clf, X, [0, 1], target=target, grid_resolution=grid_resolution
     )
     fig = pyplot.gcf()
@@ -489,7 +496,7 @@ def test_plot_partial_dependence_dataframe(pyplot, clf_diabetes, diabetes):
 
     grid_resolution = 25
 
-    plot_partial_dependence(
+    PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         df,
         ["bp", "s1"],
@@ -582,7 +589,7 @@ def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     estimator = LinearRegression().fit(X, y)
 
     with pytest.raises(ValueError, match=err_msg):
-        plot_partial_dependence(estimator, X, **params)
+        PartialDependenceDisplay.from_estimator(estimator, X, **params)
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
@@ -603,7 +610,7 @@ def test_plot_partial_dependence_multiclass_error(pyplot, params, err_msg):
     clf.fit(iris.data, iris.target)
 
     with pytest.raises(ValueError, match=err_msg):
-        plot_partial_dependence(clf, iris.data, **params)
+        PartialDependenceDisplay.from_estimator(clf, iris.data, **params)
 
 
 def test_plot_partial_dependence_does_not_override_ylabel(
@@ -613,7 +620,9 @@ def test_plot_partial_dependence_does_not_override_ylabel(
     # See https://github.com/scikit-learn/scikit-learn/issues/15772
     _, axes = pyplot.subplots(1, 2)
     axes[0].set_ylabel("Hello world")
-    plot_partial_dependence(clf_diabetes, diabetes.data, [0, 1], ax=axes)
+    PartialDependenceDisplay.from_estimator(
+        clf_diabetes, diabetes.data, [0, 1], ax=axes
+    )
 
     assert axes[0].get_ylabel() == "Hello world"
     assert axes[1].get_ylabel() == "Partial dependence"
@@ -633,7 +642,7 @@ def test_plot_partial_dependence_subsampling(
     grid_resolution = 25
     feature_names = diabetes.feature_names
 
-    disp1 = plot_partial_dependence(
+    disp1 = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
@@ -670,7 +679,7 @@ def test_partial_dependence_overwrite_labels(
     label,
 ):
     """Test that make sure that we can overwrite the label of the PDP plot"""
-    disp = plot_partial_dependence(
+    disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         [0, 2],
@@ -714,7 +723,7 @@ def test_plot_partial_dependence_lines_kw(
     specific lines in the plot.
     """
 
-    disp = plot_partial_dependence(
+    disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         [0, 2],
