@@ -795,7 +795,7 @@ Changelog
 :mod:`sklearn.svm`
 ...................
 
-- |API| The parameter `params` of :func:`svm.OneClassSVM.fit` is
+- |API| The parameter `**params` of :func:`svm.OneClassSVM.fit` is
   deprecated and will be removed in 1.2.
   :pr:`20843` by :user:`Juan Martín Loyola <jmloyola>`.
 
