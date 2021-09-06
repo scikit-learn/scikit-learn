@@ -7,7 +7,7 @@
 Version 1.0.0
 =============
 
-**In Development**
+**September 2021**
 
 
 .. include:: changelog_legend.inc
