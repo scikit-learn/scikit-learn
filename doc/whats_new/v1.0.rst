@@ -543,14 +543,15 @@ Changelog
   LinearRegression, Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV) as
   follows:
   make_pipeline(StandardScaler(with_mean=False), LinearModel()).
-  LinearRegression was deprecated in:
-  :pr:`17743` by :user:`Maria Telenczuk <maikia>` and
+  The ``normalize`` parameter in :class:`linear_model.LinearRegression` was
+  deprecated in :pr:`17743` by
+  :user:`Maria Telenczuk <maikia>` and :user:`Alexandre Gramfort <agramfort>`.
+  Same for :class:`linear_model.Ridge`,  :class:`linear_model.RidgeClassifier`,
+  :class:`linear_model.RidgeCV`, and :class:`linear_model.RidgeClassifierCV`,
+  in: :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
-  The ``normalize`` parameter in Ridge, RidgeClassifier, RidgeCV or
-  RidgeClassifierCV were deprecated and will be removed in 1.2.
-  :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
-  :user:`Alexandre Gramfort <agramfort>`.
-  Same for BayesianRidge, ARDRegression in:
+  Same for :class:`linear_model.BayesianRidge`,
+  :class:`linear_model.ARDRegression` in:
   :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
   Same for :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
   :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
@@ -559,16 +560,16 @@ Changelog
   :class:`linear_model.MultiTaskElasticNetCV`, in:
   :pr:`17785` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
-  The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
+
+- The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
   :class:`linear_model.OrthogonalMatchingPursuitCV` will default to
   False in 1.2 and will be removed in 1.4.
   :pr:`17750` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
-  The ``normalize`` parameter of :class:`linear_model.Lars`
+  Same for :class:`linear_model.Lars`
   :class:`linear_model.LarsCV` :class:`linear_model.LassoLars`
-  :class:`linear_model.LassoLarsCV` :class:`linear_model.LassoLarsIC`
-  will default to False in 1.2 and will be removed in 1.4.
-  :pr:`17769` by :user:`Maria Telenczuk <maikia>` and
+  :class:`linear_model.LassoLarsCV` :class:`linear_model.LassoLarsIC`,
+  in :pr:`17769` by :user:`Maria Telenczuk <maikia>` and
   :user:`Alexandre Gramfort <agramfort>`.
 
 - |API| Keyword validation has moved from `__init__` and `set_params` to `fit`
