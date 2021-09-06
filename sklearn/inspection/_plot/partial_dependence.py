@@ -504,17 +504,17 @@ class PartialDependenceDisplay:
             multiple estimators, please pass the axes created by the first call to the
             second call::
 
-            >>> from sklearn.inspection import PartialDependenceDisplay
-            >>> from sklearn.datasets import make_friedman1
-            >>> from sklearn.linear_model import LinearRegression
-            >>> from sklearn.ensemble import RandomForestRegressor
-            >>> X, y = make_friedman1()
-            >>> est1 = LinearRegression().fit(X, y)
-            >>> est2 = RandomForestRegressor().fit(X, y)
-            >>> disp1 = PartialDependenceDisplay.from_estimator(est1, X,
-            ...                                                 [1, 2])
-            >>> disp2 = PartialDependenceDisplay.from_estimator(est2, X, [1, 2],
-            ...                                                 ax=disp1.axes_)
+               >>> from sklearn.inspection import PartialDependenceDisplay
+               >>> from sklearn.datasets import make_friedman1
+               >>> from sklearn.linear_model import LinearRegression
+               >>> from sklearn.ensemble import RandomForestRegressor
+               >>> X, y = make_friedman1()
+               >>> est1 = LinearRegression().fit(X, y)
+               >>> est2 = RandomForestRegressor().fit(X, y)
+               >>> disp1 = PartialDependenceDisplay.from_estimator(est1, X,
+               ...                                                 [1, 2])
+               >>> disp2 = PartialDependenceDisplay.from_estimator(est2, X, [1, 2],
+               ...                                                 ax=disp1.axes_)
 
         .. warning::
 
@@ -589,25 +589,24 @@ class PartialDependenceDisplay:
             predictions:
 
             - `'recursion'` is only supported for some tree-based estimators
-            (namely
-            :class:`~sklearn.ensemble.GradientBoostingClassifier`,
-            :class:`~sklearn.ensemble.GradientBoostingRegressor`,
-            :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
-            :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
-            :class:`~sklearn.tree.DecisionTreeRegressor`,
-            :class:`~sklearn.ensemble.RandomForestRegressor`
-            but is more efficient in terms of speed.
-            With this method, the target response of a
-            classifier is always the decision function, not the predicted
-            probabilities. Since the `'recursion'` method implicitely computes
-            the average of the ICEs by design, it is not compatible with ICE and
-            thus `kind` must be `'average'`.
+              (namely :class:`~sklearn.ensemble.GradientBoostingClassifier`,
+              :class:`~sklearn.ensemble.GradientBoostingRegressor`,
+              :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
+              :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
+              :class:`~sklearn.tree.DecisionTreeRegressor`,
+              :class:`~sklearn.ensemble.RandomForestRegressor`
+              but is more efficient in terms of speed.
+              With this method, the target response of a
+              classifier is always the decision function, not the predicted
+              probabilities. Since the `'recursion'` method implicitely computes
+              the average of the ICEs by design, it is not compatible with ICE and
+              thus `kind` must be `'average'`.
 
             - `'brute'` is supported for any estimator, but is more
-            computationally intensive.
+              computationally intensive.
 
             - `'auto'`: the `'recursion'` is used for estimators that support it,
-            and `'brute'` is used otherwise.
+              and `'brute'` is used otherwise.
 
             Please see :ref:`this note <pdp_method_differences>` for
             differences between the `'brute'` and `'recursion'` method.
@@ -662,9 +661,9 @@ class PartialDependenceDisplay:
             - ``kind='average'`` results in the traditional PD plot;
             - ``kind='individual'`` results in the ICE plot.
 
-        Note that the fast ``method='recursion'`` option is only available for
-        ``kind='average'``. Plotting individual dependencies requires using the
-        slower ``method='brute'`` option.
+            Note that the fast ``method='recursion'`` option is only available for
+            ``kind='average'``. Plotting individual dependencies requires using the
+            slower ``method='brute'`` option.
 
             .. versionadded:: 0.24
 
