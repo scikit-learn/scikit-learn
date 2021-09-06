@@ -305,7 +305,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         -------
         self : object
             Returns the instance itself.
-
         """
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
