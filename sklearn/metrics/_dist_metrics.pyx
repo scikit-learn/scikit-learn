@@ -310,14 +310,14 @@ cdef class DistanceMetric:
 
     cdef DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                        ITYPE_t size) nogil except -1:
-        """Compute the reduced distance between vectors x1 and x2.
+        """Compute the rank-preserving surrogate distance between vectors x1 and x2.
 
         This can optionally be overridden in a base class.
 
-        The reduced distance is any measure that yields the same rank as the
-        distance, but is more efficient to compute.  For example, for the
-        Euclidean metric, the reduced distance is the squared-euclidean
-        distance.
+        The rank-preserving surrogate distance is any measure that yields the same
+        rank as the distance, but is more efficient to compute.  For example, for the
+        Euclidean metric, the rank-preserving surrogate distance is the
+        squared-euclidean distance.
         """
         return self.dist(x1, x2, size)
 
@@ -328,7 +328,7 @@ cdef class DistanceMetric:
         const DTYPE_t[:] x2_data,
         const ITYPE_t[:] x2_indices,
     ) nogil except -1:
-        """Compute the reduced distance between vectors x1 and x2
+        """Compute the rank-preserving surrogate distance between vectors x1 and x2
         given non null coordinates and their corresponding indices.
 
         This should be overridden in a base class.
@@ -342,15 +342,15 @@ cdef class DistanceMetric:
         const DTYPE_t[:] x2_data,
         const ITYPE_t[:] x2_indices,
     ) nogil except -1:
-        """Compute the reduced distance between vectors x1 and x2
+        """Compute the rank-preserving surrogate distance between vectors x1 and x2
         given non null coordinates and their corresponding indices.
 
         This can optionally be overridden in a base class.
 
-        The reduced distance is any measure that yields the same rank as the
-        distance, but is more efficient to compute.  For example, for the
-        Euclidean metric, the reduced distance is the squared-euclidean
-        distance.
+        The rank-preserving surrogate distance is any measure that yields the same
+        rank as the distance, but is more efficient to compute.  For example, for the
+        Euclidean metric, the rank-preserving surrogate distance is the
+        squared-euclidean distance.
         """
         return self.sparse_dist(x1_data, x1_indices, x2_data, x2_indices)
 
@@ -375,25 +375,25 @@ cdef class DistanceMetric:
         return 0
 
     cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
-        """Convert the reduced distance to the distance"""
+        """Convert the rank-preserving surrogate distance to the distance"""
         return rdist
 
     cdef DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
-        """Convert the distance to the reduced distance"""
+        """Convert the distance to the rank-preserving surrogate distance"""
         return dist
 
     def rdist_to_dist(self, rdist):
-        """Convert the Reduced distance to the true distance.
+        """Convert the rank-preserving surrogate distance to the true distance.
 
-        The reduced distance, defined for some metrics, is a computationally
-        more efficient measure which preserves the rank of the true distance.
-        For example, in the Euclidean distance metric, the reduced distance
-        is the squared-euclidean distance.
+        The rank-preserving surrogate distance is any measure that yields the same
+        rank as the distance, but is more efficient to compute.  For example, for the
+        Euclidean metric, the rank-preserving surrogate distance is the
+        squared-euclidean distance.
 
         Parameters
         ----------
         rdist : double
-            Reduced distance.
+            Rank-preserving surrogate distance.
 
         Returns
         -------
@@ -403,12 +403,12 @@ cdef class DistanceMetric:
         return rdist
 
     def dist_to_rdist(self, dist):
-        """Convert the true distance to the reduced distance.
+        """Convert the true distance to the rank-preserving surrogate distance.
 
-        The reduced distance, defined for some metrics, is a computationally
-        more efficient measure which preserves the rank of the true distance.
-        For example, in the Euclidean distance metric, the reduced distance
-        is the squared-euclidean distance.
+        The rank-preserving surrogate distance is any measure that yields the same
+        rank as the distance, but is more efficient to compute.  For example, for the
+        Euclidean metric, the rank-preserving surrogate distance is the
+        squared-euclidean distance.
 
         Parameters
         ----------
@@ -418,7 +418,7 @@ cdef class DistanceMetric:
         Returns
         -------
         double
-            Reduced distance.
+            Rank-preserving surrogate distance.
         """
         return dist
 

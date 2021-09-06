@@ -1031,10 +1031,10 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     cdef:
         DTYPE_t radius
 
-        # DistanceMetric compute rank preserving distance via rdist
-        # ("reduced distance" in the original wording),
+        # DistanceMetric compute rank-preserving surrogate distance via rdist
         # which are proxies necessitating less computations.
-        # We get the proxy for the radius to be able to compare
+        # We get the proxy for the radius to be able to compare it against
+        # vectors' rank-preserving surrogate distances.
         DTYPE_t proxy_radius
 
         # Neighbors informations are returned as np.ndarray or np.ndarray.
