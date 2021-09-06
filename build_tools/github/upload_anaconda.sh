@@ -19,7 +19,7 @@ else
     ANACONDA_TOKEN="$SCIKIT_LEARN_STAGING_UPLOAD_TOKEN"
 fi
 
-if [ "$ANACONDA_TOKEN" == "" ];
+if [ "$ANACONDA_TOKEN" == "" ]; then
     echo "No upload token defined to upload to anaconda.org/$ANACONDA_ORG: skipping."
 else
     # Force a replacement if the remote file already exists
