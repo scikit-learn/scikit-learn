@@ -141,7 +141,7 @@ cdef np.ndarray vector_to_nd_array(vector_DITYPE_t * vect_ptr):
     else:
         sentinel = StdVectorSentinelITYPE.create_for(vect_ptr)
 
-    # Makes the numpy array responsible to the life-cycle of its buffer.
+    # Makes the numpy array responsible of the life-cycle of its buffer.
     # A reference to the StdVectorSentinel will be stolen by the call bellow,
     # so we increase its reference counter.
     # See: https://docs.python.org/3/c-api/intro.html#reference-count-details
