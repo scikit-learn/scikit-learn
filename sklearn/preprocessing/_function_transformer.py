@@ -74,7 +74,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     See Also
     --------
     MaxAbsScaler : Scale each feature by its maximum absolute value.
-    StandardScaler : Standardize features by removing the mean and 
+    StandardScaler : Standardize features by removing the mean and
         scaling to unit variance.
     LabelBinarizer : Binarize labels in a one-vs-all fashion.
     MultilabelBinarizer : Transform between iterable of iterables
