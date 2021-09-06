@@ -715,6 +715,7 @@ model selection:
 .. autosummary::
 
    linear_model.LassoLarsIC
+   mixture.GaussianMixtureIC
 
 
 .. _out_of_bag:
