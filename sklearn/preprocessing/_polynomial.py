@@ -83,6 +83,12 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_output_features_ : int
         The total number of polynomial output features. The number of output
         features is computed by iterating over all suitably sized combinations
@@ -521,6 +527,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         The total number of input features.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_features_out_ : int
         The total number of output features, which is computed as

@@ -1381,8 +1381,8 @@ def learning_curve(
         An object of that type which is cloned for each validation.
 
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Target relative to X for classification or regression;
@@ -1738,8 +1738,8 @@ def validation_curve(
         An object of that type which is cloned for each validation.
 
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         Target relative to X for classification or regression;

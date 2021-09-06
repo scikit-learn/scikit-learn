@@ -1486,6 +1486,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
@@ -1553,7 +1559,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        X = self._validate_data(X, accept_sparse=("csr", "csc"))
+        # large sparse data is not supported for 32bit platforms because
+        # _document_frequency uses np.bincount which works on arrays of
+        # dtype NPY_INTP which is int32 for 32bit platforms. See #20923
+        X = self._validate_data(
+            X, accept_sparse=("csr", "csc"), accept_large_sparse=not _IS_32BIT
+        )
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
         dtype = X.dtype if X.dtype in FLOAT_DTYPES else np.float64
@@ -1642,7 +1653,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         )
 
     def _more_tags(self):
-        return {"X_types": "sparse"}
+        return {"X_types": ["2darray", "sparse"]}
 
 
 class TfidfVectorizer(CountVectorizer):
