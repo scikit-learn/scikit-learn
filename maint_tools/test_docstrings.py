@@ -89,7 +89,6 @@ DOCSTRING_IGNORE_LIST = [
     "TruncatedSVD",
     "TweedieRegressor",
     "VarianceThreshold",
-    "VotingClassifier",
 ]
 
 
