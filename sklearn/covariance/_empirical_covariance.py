@@ -131,6 +131,12 @@ class EmpiricalCovariance(BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     EllipticEnvelope : An object for detecting outliers in
@@ -207,8 +213,8 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-          Training data, where n_samples is the number of samples and
-          n_features is the number of features.
+          Training data, where `n_samples` is the number of samples and
+          `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -234,9 +240,9 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         X_test : array-like of shape (n_samples, n_features)
-            Test data of which we compute the likelihood, where n_samples is
-            the number of samples and n_features is the number of features.
-            X_test is assumed to be drawn from the same distribution than
+            Test data of which we compute the likelihood, where `n_samples` is
+            the number of samples and `n_features` is the number of features.
+            `X_test` is assumed to be drawn from the same distribution than
             the data used in fit (including centering).
 
         y : Ignored

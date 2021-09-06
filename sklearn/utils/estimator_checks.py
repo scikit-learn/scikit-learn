@@ -1687,7 +1687,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # The precise message can change depending on whether X or y is
     # validated first. Let us test the type of exception only:
     err_msg = (
-        f"The estimator {name} does not raise an error when an "
+        f"The estimator {name} does not raise a ValueError when an "
         "empty data is used to train. Perhaps use check_array in train."
     )
     with raises(ValueError, err_msg=err_msg):
@@ -3192,6 +3192,8 @@ def _enforce_estimator_tags_x(estimator, X):
     # strictly positive data
     if _safe_tags(estimator, key="requires_positive_X"):
         X -= X.min()
+    if "categorical" in _safe_tags(estimator, key="X_types"):
+        X = (X - X.min()).astype(np.int32)
     return X
 
 
@@ -3619,11 +3621,11 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     # Make sure that n_features_in are checked after fitting
     tags = _safe_tags(estimator_orig)
 
-    if (
-        "2darray" not in tags["X_types"]
-        and "sparse" not in tags["X_types"]
-        or tags["no_validation"]
-    ):
+    is_supported_X_types = (
+        "2darray" in tags["X_types"] or "categorical" in tags["X_types"]
+    )
+
+    if not is_supported_X_types or tags["no_validation"]:
         return
 
     rng = np.random.RandomState(0)
@@ -3708,12 +3710,11 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         )
 
     tags = _safe_tags(estimator_orig)
+    is_supported_X_types = (
+        "2darray" in tags["X_types"] or "categorical" in tags["X_types"]
+    )
 
-    if (
-        "2darray" not in tags["X_types"]
-        and "sparse" not in tags["X_types"]
-        or tags["no_validation"]
-    ):
+    if not is_supported_X_types or tags["no_validation"]:
         return
 
     rng = np.random.RandomState(0)
@@ -3722,6 +3723,9 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     set_random_state(estimator)
 
     X_orig = rng.normal(size=(150, 8))
+
+    # Some picky estimators (e.g. SkewedChi2Sampler) only accept skewed positive data.
+    X_orig -= X_orig.min() + 0.5
     X_orig = _enforce_estimator_tags_x(estimator, X_orig)
     X_orig = _pairwise_estimator_convert_X(X_orig, estimator)
     n_samples, n_features = X_orig.shape
@@ -3741,7 +3745,20 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
             "Estimator does not have a feature_names_in_ "
             "attribute after fitting with a dataframe"
         )
+    assert isinstance(estimator.feature_names_in_, np.ndarray)
+    assert estimator.feature_names_in_.dtype == object
     assert_array_equal(estimator.feature_names_in_, names)
+
+    # Only check sklearn estimators for feature_names_in_ in docstring
+    module_name = estimator_orig.__module__
+    if (
+        module_name.startswith("sklearn.")
+        and not ("test_" in module_name or module_name.endswith("_testing"))
+        and ("feature_names_in_" not in (estimator_orig.__doc__))
+    ):
+        raise ValueError(
+            f"Estimator {name} does not document its feature_names_in_ attribute"
+        )
 
     check_methods = []
     for method in (

@@ -136,6 +136,12 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     ARDRegression : Bayesian ARD regression.
@@ -522,6 +528,12 @@ class ARDRegression(RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     BayesianRidge : Bayesian ridge regression.
@@ -591,8 +603,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
         y : array-like of shape (n_samples,)
             Target values (integers). Will be cast to X's dtype if necessary.
 
