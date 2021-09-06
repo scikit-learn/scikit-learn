@@ -994,6 +994,7 @@ details.
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
    metrics.mean_tweedie_deviance
+   metrics.d2_tweedie_score
    metrics.mean_pinball_loss
 
 Multilabel ranking metrics
