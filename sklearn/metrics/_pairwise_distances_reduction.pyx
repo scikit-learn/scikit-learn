@@ -780,8 +780,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                  embarrassingly parallel but uses intermediate datastructures
                  synchronisation. However it is more useful in practice (because Y is
                  larger than X generally).
-                 -'auto' relies on a simple heuristic to choose between 'parallel_on_X'
-                 and 'parallel_on_Y'.
+                 - 'auto' relies on a simple heuristic to choose between
+                 'parallel_on_X' and 'parallel_on_Y'.
 
         return_distance: boolean, default=False
             Return distances between each X vector and its
@@ -1327,8 +1327,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                  embarrassingly parallel but uses intermediate datastructures
                  synchronisation. However it is more useful in practice (because Y is
                  larger than X generally).
-                 -'auto' relies on a simple heuristic to choose between 'parallel_on_X'
-                 and 'parallel_on_Y'.
+                 - 'auto' relies on a simple heuristic to choose between
+                 'parallel_on_X' and 'parallel_on_Y'.
 
         return_distance: boolean, default=False
             Return distances between each X vector and its
