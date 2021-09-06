@@ -389,13 +389,23 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| Fixed a bug in :class:`feature_extraction.HashingVectorizer` where some
-  input strings would result in negative indices in the transformed data.
-  :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+- |Fix| Fixed a bug in :class:`feature_extraction.text.HashingVectorizer`
+  where some input strings would result in negative indices in the transformed
+  data. :pr:`19035` by :user:`Liu Yu <ly648499246>`.
 
 - |Fix| Fixed a bug in :class:`feature_extraction.DictVectorizer` by raising an
   error with unsupported value type.
   :pr:`19520` by :user:`Jeff Zhao <kamiyaa>`.
+
+- |Fix| Fixed a bug in :func:`feature_extraction.image.img_to_graph`
+  and :func:`feature_extraction.image.grid_to_graph` where singleton connected
+  components were not handled properly, resulting in a wrong vertex indexing.
+  :pr:`18964` by `Bertrand Thirion`_.
+
+- |Fix| Raise a warning in :class:`feature_extraction.text.CountVectorizer`
+  with `lowercase=True` when there are vocabulary entries with uppercase
+  characters to avoid silent misses in the resulting feature vectors.
+  :pr:`19401` by :user:`Zito Relova <zitorelova>`
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -834,18 +844,6 @@ Changelog
   :class:`tree.ExtraTreeRegressor` is deprecated in favor of `n_features_in_`
   and will be removed in 1.2. :pr:`20272` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Fix| Fixed a bug in :func:`feature_extraction.image._to_graph` where
-  singleton connected components were not handled properly, resulting in a
-  wrong vertex indexing. :pr:`18964` by `Bertrand Thirion`_.
-
-- |Fix| Raise a warning in class:`feature_extraction.text.CountVectorizer`
-  with `lowercase=True` when there are vocabulary entries with uppercase
-  characters to avoid silent misses in the resulting feature vectors.
-  :pr:`19401` by :user:`Zito Relova <zitorelova>`
 
 :mod:`sklearn.utils`
 ....................
