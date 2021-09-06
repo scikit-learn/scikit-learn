@@ -36,7 +36,7 @@ from .link import (
     LogitLink,
     MultinomialLogit,
 )
-from ..utils._readonly_array_wrapper import ReadonlyWrapper
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils.stats import _weighted_percentile
 
 
@@ -172,12 +172,10 @@ class BaseLoss(BaseLink, CyLossFunction):
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
 
-        if not y_true.flags["WRITEABLE"]:
-            y_true = ReadonlyWrapper(y_true)
-        if not raw_prediction.flags["WRITEABLE"]:
-            raw_prediction = ReadonlyWrapper(raw_prediction)
-        if sample_weight is not None and not sample_weight.flags["WRITEABLE"]:
-            sample_weight = ReadonlyWrapper(sample_weight)
+        y_true = ReadonlyArrayWrapper(y_true)
+        raw_prediction = ReadonlyArrayWrapper(raw_prediction)
+        if sample_weight is not None:
+            sample_weight = ReadonlyArrayWrapper(sample_weight)
         return self._loss(
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -239,12 +237,10 @@ class BaseLoss(BaseLink, CyLossFunction):
         if gradient.ndim == 2 and gradient.shape[1] == 1:
             gradient = gradient.squeeze(1)
 
-        if not y_true.flags["WRITEABLE"]:
-            y_true = ReadonlyWrapper(y_true)
-        if not raw_prediction.flags["WRITEABLE"]:
-            raw_prediction = ReadonlyWrapper(raw_prediction)
-        if sample_weight is not None and not sample_weight.flags["WRITEABLE"]:
-            sample_weight = ReadonlyWrapper(sample_weight)
+        y_true = ReadonlyArrayWrapper(y_true)
+        raw_prediction = ReadonlyArrayWrapper(raw_prediction)
+        if sample_weight is not None:
+            sample_weight = ReadonlyArrayWrapper(sample_weight)
         return self._loss_gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -294,12 +290,10 @@ class BaseLoss(BaseLink, CyLossFunction):
         if gradient.ndim == 2 and gradient.shape[1] == 1:
             gradient = gradient.squeeze(1)
 
-        if not y_true.flags["WRITEABLE"]:
-            y_true = ReadonlyWrapper(y_true)
-        if not raw_prediction.flags["WRITEABLE"]:
-            raw_prediction = ReadonlyWrapper(raw_prediction)
-        if sample_weight is not None and not sample_weight.flags["WRITEABLE"]:
-            sample_weight = ReadonlyWrapper(sample_weight)
+        y_true = ReadonlyArrayWrapper(y_true)
+        raw_prediction = ReadonlyArrayWrapper(raw_prediction)
+        if sample_weight is not None:
+            sample_weight = ReadonlyArrayWrapper(sample_weight)
         return self._gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -364,12 +358,10 @@ class BaseLoss(BaseLink, CyLossFunction):
         if hessian.ndim == 2 and hessian.shape[1] == 1:
             hessian = hessian.squeeze(1)
 
-        if not y_true.flags["WRITEABLE"]:
-            y_true = ReadonlyWrapper(y_true)
-        if not raw_prediction.flags["WRITEABLE"]:
-            raw_prediction = ReadonlyWrapper(raw_prediction)
-        if sample_weight is not None and not sample_weight.flags["WRITEABLE"]:
-            sample_weight = ReadonlyWrapper(sample_weight)
+        y_true = ReadonlyArrayWrapper(y_true)
+        raw_prediction = ReadonlyArrayWrapper(raw_prediction)
+        if sample_weight is not None:
+            sample_weight = ReadonlyArrayWrapper(sample_weight)
         return self._gradient_hessian(
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -894,12 +886,10 @@ class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseL
         elif proba is None:
             proba = np.empty_like(gradient)
 
-        if not y_true.flags["WRITEABLE"]:
-            y_true = ReadonlyWrapper(y_true)
-        if not raw_prediction.flags["WRITEABLE"]:
-            raw_prediction = ReadonlyWrapper(raw_prediction)
-        if sample_weight is not None and not sample_weight.flags["WRITEABLE"]:
-            sample_weight = ReadonlyWrapper(sample_weight)
+        y_true = ReadonlyArrayWrapper(y_true)
+        raw_prediction = ReadonlyArrayWrapper(raw_prediction)
+        if sample_weight is not None:
+            sample_weight = ReadonlyArrayWrapper(sample_weight)
         return self._gradient_proba(
             y_true=y_true,
             raw_prediction=raw_prediction,
