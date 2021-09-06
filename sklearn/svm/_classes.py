@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
@@ -1604,6 +1605,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         **params : dict
             Additional fit parameters.
 
+            .. deprecated:: 1.0
+                The `fit` method will not longer accept extra keyword
+                parameters in 1.2. These keyword parameters were
+                already discarded.
+
         Returns
         -------
         self : object
@@ -1613,7 +1619,16 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         -----
         If X is not a C-ordered contiguous array it is copied.
         """
-        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight, **params)
+        # TODO: Remove in v1.2
+        if len(params) > 0:
+            warnings.warn(
+                "Passing additional keyword parameters has no effect and is "
+                "deprecated in 1.0. An error will be raised from 1.2 and "
+                "beyond. The ignored keyword parameter(s) are: "
+                f"{params.keys()}.",
+                FutureWarning,
+            )
+        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight)
         self.offset_ = -self._intercept_
         return self
 
