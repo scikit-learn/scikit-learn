@@ -47,6 +47,6 @@ Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of
-the project since version 0.24, including:
+the project since version 1.0, including:
 
 TODO: update at the time of the release.
