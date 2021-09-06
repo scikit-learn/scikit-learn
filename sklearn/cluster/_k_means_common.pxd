@@ -11,7 +11,7 @@ cdef floating _euclidean_sparse_dense(floating[::1], int[::1], floating[::1],
                                       floating, bint) nogil
 
 cpdef void _relocate_empty_clusters_dense(
-    np.ndarray[floating, ndim=2, mode='c'], floating[::1], floating[:, ::1],
+    floating[:, ::1], floating[::1], floating[:, ::1],
     floating[:, ::1], floating[::1], int[::1])
 
 cpdef void _relocate_empty_clusters_sparse(
