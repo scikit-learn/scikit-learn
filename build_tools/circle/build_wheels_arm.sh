@@ -10,8 +10,7 @@ sudo apt-get install -y wget
 # the simplest way to get a working anaconda-client for the wheel
 # upload step to the staging area on the anaconda.org service.
 wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh
-bash Mambaforge-$(uname)-$(uname -m).sh -b -f -p $HOME/mambaforge
-export CONDA=$HOME/mambaforge
+bash Mambaforge-$(uname)-$(uname -m).sh -b -f -p $CONDA
 export PATH=$CONDA/bin:$PATH
 mamba update --yes conda
 pip install --upgrade pip
