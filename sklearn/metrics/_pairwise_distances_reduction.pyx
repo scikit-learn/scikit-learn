@@ -124,7 +124,7 @@ cdef np.ndarray vector_to_nd_array(vector_DITYPE_t * vect_ptr):
     """Create a numpy ndarray given a C++ vector.
 
     The numpy array buffer is the one of the C++ vector.
-    A StdVectorSentinel is registers as the base object for the numpy array,
+    A StdVectorSentinel is registered as the base object for the numpy array,
     freeing the C++ vector it encapsulates when the numpy array is freed.
     """
     typenum = DTYPECODE if vector_DITYPE_t is vector[DTYPE_t] else ITYPECODE
