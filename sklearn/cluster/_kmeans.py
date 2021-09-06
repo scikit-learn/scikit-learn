@@ -29,6 +29,7 @@ from ..utils import check_random_state
 from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..exceptions import ConvergenceWarning
 from ._k_means_common import CHUNK_SIZE
 from ._k_means_common import _inertia_dense
@@ -729,6 +730,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
     else:
         _labels = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
+        X = ReadonlyArrayWrapper(X)
 
     _labels(
         X,
@@ -1449,7 +1451,13 @@ def _mini_batch_step(
         )
     else:
         _minibatch_update_dense(
-            X, sample_weight, centers, centers_new, weight_sums, labels, n_threads
+            ReadonlyArrayWrapper(X),
+            sample_weight,
+            centers,
+            centers_new,
+            weight_sums,
+            labels,
+            n_threads,
         )
 
     # Reassign clusters that have very low weight
