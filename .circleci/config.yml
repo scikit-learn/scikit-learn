@@ -178,7 +178,7 @@ jobs:
       - store_artifacts:
           path: wheelhouse
           destination: wheelhouse
-      - run: ./build_tools/github/upload_anaconda.sh
+      - run: bash build_tools/github/upload_anaconda.sh
 
 
   deploy:
