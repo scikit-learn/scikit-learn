@@ -692,7 +692,7 @@ class Pipeline(_BaseComposition):
             if not hasattr(transform, "get_feature_names_out"):
                 raise AttributeError(
                     "Estimator {} does not provide get_feature_names_out. "
-                    "Did you mean to call Pipeline[:-1].get_feature_names_out"
+                    "Did you mean to call pipeline[:-1].get_feature_names_out"
                     "()?".format(name)
                 )
             feature_names = transform.get_feature_names_out(input_features)
