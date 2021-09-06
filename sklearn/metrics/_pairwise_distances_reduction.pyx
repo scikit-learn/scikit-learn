@@ -23,6 +23,8 @@
 import numpy as np
 cimport numpy as np
 
+from .. import get_config
+
 np.import_array()
 
 from libc.stdlib cimport free, malloc
@@ -760,14 +762,14 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     @final
     def compute(
         self,
-        str strategy="auto",
+        str strategy=None,
         bint return_distance=False,
     ):
         """Computes the reduction of vectors (rows) of X on Y.
 
         Parameters
         ----------
-        strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default='auto'
+        strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
             The chunking strategy defining which dataset parallelization are made on.
 
             Strategies differs on the dispatching they use for chunks on threads:
@@ -782,6 +784,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
                  larger than X generally).
                  - 'auto' relies on a simple heuristic to choose between
                  'parallel_on_X' and 'parallel_on_Y'.
+                 - None (default) looks-up in scikit-learn configuration for
+                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
 
         return_distance: boolean, default=False
             Return distances between each X vector and its
@@ -800,6 +804,9 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         # Results returned by ArgKmin.compute used as the main heaps
         self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_X, self.k), DBL_MAX, dtype=DTYPE)
+
+        if strategy is None:
+            strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
 
         if strategy == 'auto':
             # This is a simple heuristic whose constant for the
@@ -1306,7 +1313,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     @final
     def compute(
         self,
-        str strategy = "auto",
+        str strategy=None,
         bint return_distance = False,
         bint sort_results = False
     ):
@@ -1314,7 +1321,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
 
         Parameters
         ----------
-        strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default='auto'
+        strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
             The chunking strategy defining which dataset parallelization are made on.
 
             Strategies differs on the dispatching they use for chunks on threads:
@@ -1329,6 +1336,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
                  larger than X generally).
                  - 'auto' relies on a simple heuristic to choose between
                  'parallel_on_X' and 'parallel_on_Y'.
+                 - None (default) looks-up in scikit-learn configuration for
+                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
 
         return_distance: boolean, default=False
             Return distances between each X vector and its
@@ -1359,6 +1368,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
 
         self.sort_results = sort_results
+
+        if strategy is None:
+            strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
 
         if strategy == 'auto':
             # This is a simple heuristic whose constant for the
