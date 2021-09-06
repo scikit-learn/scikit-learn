@@ -1461,7 +1461,11 @@ def make_sparse_spd_matrix(
     return prec
 
 
-def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None,hole=False):
+def make_swiss_roll(n_samples=100,
+                    *,
+                    noise=0.0,
+                    random_state=None,
+                    hole=False):
     """Generate a swiss roll dataset.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -1478,10 +1482,10 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None,hole=False):
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
-    
+
      hole : bool, default=False
-        If True the function generates the swiss roll with hole dataset
-   
+        The standard deviation of the gaussian noise.
+
     Returns
     -------
     X : ndarray of shape (n_samples, 3)
@@ -1502,17 +1506,18 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None,hole=False):
            http://seat.massey.ac.nz/personal/s.r.marsland/Code/10/lle.py
     """
     generator = check_random_state(random_state)
-    
+
     if not hole:
         t = 1.5 * np.pi * (1 + 2 * generator.rand(n_samples))
-        y = 21 * generator.rand( n_samples)
+        y = 21 * generator.rand(n_samples)
     else:
-        corners = np.array([[np.pi *(1.5+i),j*7] for i in range(3) for j in range(3)])
-        corners = np.delete(corners,4,axis=0)
-        corner_index = generator.choice(8,n_samples)
-        parameters = generator.rand(2,n_samples) * np.array([[np.pi],[7]])
-        t , y = corners[corner_index].T + parameters
-     
+        corners = np.array([[np.pi * (1.5+i), j * 7] for i in range(3)
+                            for j in range(3)])
+        corners = np.delete(corners, 4, axis=0)
+        corner_index = generator.choice(8, n_samples)
+        parameters = generator.rand(2, n_samples)*np.array([[np.pi], [7]])
+        t, y = corners[corner_index].T+parameters
+
     x = t * np.cos(t)
     z = t * np.sin(t)
 
