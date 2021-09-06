@@ -74,10 +74,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     See Also
     --------
     MaxAbsScaler : Scale each feature by its maximum absolute value.
-    MinMaxScaler : Transform features by scaling each feature to a given range.
-    QuantileTransformers : Transform features using quantiles information.
-    PowerTransformer : Apply a power transform featurewise to make data
-        more Gaussian-like.
+    StandardScaler : Standardize features by removing the mean and 
+        scaling to unit variance.
     LabelBinarizer : Binarize labels in a one-vs-all fashion.
     MultilabelBinarizer : Transform between iterable of iterables
         and a multilabel format.
