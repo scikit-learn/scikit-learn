@@ -13,7 +13,6 @@ DOCSTRING_IGNORE_LIST = [
     "FeatureUnion",
     "FunctionTransformer",
     "GammaRegressor",
-    "GaussianMixture",
     "GaussianProcessRegressor",
     "GaussianRandomProjection",
     "GridSearchCV",
