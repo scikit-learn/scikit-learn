@@ -837,10 +837,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Parameters
     ----------
-    transformer_list : list
-        List of (string, transformer) tuples to be applied to the data.
-        The first half of each tuple is the name of the transformer.
-        The tranformer can be 'drop' for it to be ignored.
+    transformer_list : list of tuple
+        List of tuple containing `(str, transformer)`. The first element
+        of the tuple is name affected to the transformer while the
+        second element is a scikit-learn transformer instance.
+        The transformer instance can also be `"drop"` for it to be
+        ignored.
 
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
@@ -936,7 +938,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        self ; object
+        self : object
             FeatureUnion class instance.
         """
         self._set_params("transformer_list", **kwargs)
@@ -1047,7 +1049,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         -------
         X_t : array-like or sparse matrix of \
                 shape (n_samples, sum_n_components)
-            The hstack of results of transformers. sum_n_components is the
+            The `hstack` of results of transformers. `sum_n_components` is the
             sum of n_components (output dimension) over transformers.
         """
         results = self._parallel_func(X, y, fit_params, _fit_transform_one)
@@ -1097,7 +1099,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         -------
         X_t : array-like or sparse matrix of \
                 shape (n_samples, sum_n_components)
-            The hstack of results of transformers. sum_n_components is the
+            The `hstack` of results of transformers. `sum_n_components` is the
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
@@ -1126,13 +1128,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     @property
     def n_features_in_(self):
-        """Number of features seen during :term:`fit`.
-
-        Returns
-        -------
-        self : object
-            FeatureUnion class object.
-        """
+        """Number of features seen during :term:`fit`."""
+        
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
 
