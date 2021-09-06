@@ -25,7 +25,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
@@ -1432,7 +1432,7 @@ def _make_int_array():
     return array.array(str("i"))
 
 
-class TfidfTransformer(TransformerMixin, BaseEstimator):
+class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform a count matrix to a normalized tf or tf-idf representation.
 
     Tf means term-frequency while tf-idf means term-frequency times inverse

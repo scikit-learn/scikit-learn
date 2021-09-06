@@ -2642,3 +2642,21 @@ def test_standard_scaler_raise_error_for_1d_input():
     err_msg = "Expected 2D array, got 1D array instead"
     with pytest.raises(ValueError, match=err_msg):
         scaler.inverse_transform(X_2d[:, 0])
+
+
+@pytest.mark.parametrize(
+    "Transformer",
+    [
+        MinMaxScaler,
+        MaxAbsScaler,
+        RobustScaler,
+        StandardScaler,
+        QuantileTransformer,
+        PowerTransformer,
+    ],
+)
+def test_one_to_one_features(Transformer):
+    """Check one-to-one transformers give correct feature names."""
+    tr = Transformer().fit(iris.data)
+    names_out = tr.get_feature_names_out(iris.feature_names)
+    assert_array_equal(names_out, iris.feature_names)

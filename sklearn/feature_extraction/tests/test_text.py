@@ -449,6 +449,16 @@ def test_countvectorizer_uppercase_in_vocab():
         vectorizer.fit_transform(vocabulary)
 
 
+def test_tf_transformer_feature_names_out():
+    """Check get_feature_names_out for TfidfTransformer"""
+    X = [[1, 1, 1], [1, 1, 0], [1, 0, 0]]
+    tr = TfidfTransformer(smooth_idf=True, norm="l2").fit(X)
+
+    feature_names_in = ["a", "c", "b"]
+    feature_names_out = tr.get_feature_names_out(feature_names_in)
+    assert_array_equal(feature_names_in, feature_names_out)
+
+
 def test_tf_idf_smoothing():
     X = [[1, 1, 1], [1, 1, 0], [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm="l2")
