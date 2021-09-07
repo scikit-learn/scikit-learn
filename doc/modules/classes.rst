@@ -994,6 +994,7 @@ details.
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
    metrics.mean_tweedie_deviance
+   metrics.d2_tweedie_score
    metrics.mean_pinball_loss
 
 Multilabel ranking metrics
@@ -1123,7 +1124,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
-
+   calibration.CalibrationDisplay
 
 .. _mixture_ref:
 

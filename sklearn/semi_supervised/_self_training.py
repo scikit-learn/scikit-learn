@@ -169,8 +169,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
-        # we need row slicing support for sparce matrices
-        X, y = self._validate_data(X, y, accept_sparse=["csr", "csc", "lil", "dok"])
+        # we need row slicing support for sparce matrices, but costly finiteness check
+        # can be delegated to the base estimator.
+        X, y = self._validate_data(
+            X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
+        )
 
         if self.base_estimator is None:
             raise ValueError("base_estimator cannot be None!")
@@ -291,7 +294,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with predicted labels.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
         return self.base_estimator_.predict(X)
 
     def predict_proba(self, X):
@@ -308,7 +316,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with prediction probabilities.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
         return self.base_estimator_.predict_proba(X)
 
     @if_delegate_has_method(delegate="base_estimator")
@@ -326,7 +339,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Result of the decision function of the `base_estimator`.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
         return self.base_estimator_.decision_function(X)
 
     @if_delegate_has_method(delegate="base_estimator")
@@ -344,7 +362,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with log prediction probabilities.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
         return self.base_estimator_.predict_log_proba(X)
 
     @if_delegate_has_method(delegate="base_estimator")
@@ -365,5 +388,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Result of calling score on the `base_estimator`.
         """
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
         return self.base_estimator_.score(X, y)

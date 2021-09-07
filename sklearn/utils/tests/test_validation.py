@@ -1,5 +1,6 @@
 """Tests for input validation functions"""
 
+import numbers
 import warnings
 import os
 import re
@@ -50,6 +51,7 @@ from sklearn.utils.validation import (
     _num_features,
     FLOAT_DTYPES,
     _get_feature_names,
+    _check_feature_names_in,
 )
 from sklearn.utils.validation import _check_fit_params
 from sklearn.base import BaseEstimator
@@ -1019,21 +1021,25 @@ def test_retrieve_samples_from_non_standard_shape():
         _num_samples(TestNoLenWeirdShape())
 
 
-@pytest.mark.parametrize(
-    "x, target_type, min_val, max_val", [(3, int, 2, 5), (2.5, float, 2, 5)]
-)
-def test_check_scalar_valid(x, target_type, min_val, max_val):
+@pytest.mark.parametrize("x", [2, 3, 2.5, 5])
+def test_check_scalar_valid(x):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
     with pytest.warns(None) as record:
-        check_scalar(
-            x, "test_name", target_type=target_type, min_val=min_val, max_val=max_val
+        scalar = check_scalar(
+            x,
+            "test_name",
+            target_type=numbers.Real,
+            min_val=2,
+            max_val=5,
+            include_boundaries="both",
         )
     assert len(record) == 0
+    assert scalar == x
 
 
 @pytest.mark.parametrize(
-    "x, target_name, target_type, min_val, max_val, err_msg",
+    "x, target_name, target_type, min_val, max_val, include_boundaries, err_msg",
     [
         (
             1,
@@ -1041,21 +1047,74 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
             float,
             2,
             4,
+            "neither",
             TypeError(
-                "`test_name1` must be an instance of "
-                "<class 'float'>, not <class 'int'>."
+                "test_name1 must be an instance of <class 'float'>, not <class 'int'>."
             ),
         ),
-        (1, "test_name2", int, 2, 4, ValueError("`test_name2`= 1, must be >= 2.")),
-        (5, "test_name3", int, 2, 4, ValueError("`test_name3`= 5, must be <= 4.")),
+        (
+            1,
+            "test_name2",
+            int,
+            2,
+            4,
+            "neither",
+            ValueError("test_name2 == 1, must be > 2."),
+        ),
+        (
+            5,
+            "test_name3",
+            int,
+            2,
+            4,
+            "neither",
+            ValueError("test_name3 == 5, must be < 4."),
+        ),
+        (
+            2,
+            "test_name4",
+            int,
+            2,
+            4,
+            "right",
+            ValueError("test_name4 == 2, must be > 2."),
+        ),
+        (
+            4,
+            "test_name5",
+            int,
+            2,
+            4,
+            "left",
+            ValueError("test_name5 == 4, must be < 4."),
+        ),
+        (
+            4,
+            "test_name6",
+            int,
+            2,
+            4,
+            "bad parameter value",
+            ValueError(
+                "Unknown value for `include_boundaries`: 'bad parameter value'. "
+                "Possible values are: ('left', 'right', 'both', 'neither')."
+            ),
+        ),
     ],
 )
-def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val, err_msg):
+def test_check_scalar_invalid(
+    x, target_name, target_type, min_val, max_val, include_boundaries, err_msg
+):
     """Test that check_scalar returns the right error if a wrong input is
     given"""
     with pytest.raises(Exception) as raised_error:
         check_scalar(
-            x, target_name, target_type=target_type, min_val=min_val, max_val=max_val
+            x,
+            target_name,
+            target_type=target_type,
+            min_val=min_val,
+            max_val=max_val,
+            include_boundaries=include_boundaries,
         )
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
@@ -1516,3 +1575,47 @@ def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
     with pytest.warns(FutureWarning, match=msg):
         names = _get_feature_names(X)
     assert names is None
+
+
+class PassthroughTransformer(BaseEstimator):
+    def fit(self, X, y=None):
+        self._validate_data(X, reset=True)
+        return self
+
+    def transform(self, X):
+        return X
+
+    def get_feature_names_out(self, input_features=None):
+        return _check_feature_names_in(self, input_features)
+
+
+def test_check_feature_names_in():
+    """Check behavior of check_feature_names_in for arrays."""
+    X = np.array([[0.0, 1.0, 2.0]])
+    est = PassthroughTransformer().fit(X)
+
+    names = est.get_feature_names_out()
+    assert_array_equal(names, ["x0", "x1", "x2"])
+
+    incorrect_len_names = ["x10", "x1"]
+    with pytest.raises(ValueError, match="input_features should have length equal to"):
+        est.get_feature_names_out(incorrect_len_names)
+
+    # remove n_feature_in_
+    del est.n_features_in_
+    with pytest.raises(ValueError, match="Unable to generate feature names"):
+        est.get_feature_names_out()
+
+
+def test_check_feature_names_in_pandas():
+    """Check behavior of check_feature_names_in for pandas dataframes."""
+    pd = pytest.importorskip("pandas")
+    names = ["a", "b", "c"]
+    df = pd.DataFrame([[0.0, 1.0, 2.0]], columns=names)
+    est = PassthroughTransformer().fit(df)
+
+    names = est.get_feature_names_out()
+    assert_array_equal(names, ["a", "b", "c"])
+
+    with pytest.raises(ValueError, match="input_features is not equal to"):
+        est.get_feature_names_out(["x1", "x2", "x3"])

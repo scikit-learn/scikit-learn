@@ -390,10 +390,10 @@ def test_no_refit():
             "inverse_transform",
         ):
             error_msg = (
-                f"refit=False. {fn_name} is available only after "
+                f"`refit=False`. {fn_name} is available only after "
                 "refitting on the best parameters"
             )
-            with pytest.raises(NotFittedError, match=error_msg):
+            with pytest.raises(AttributeError, match=error_msg):
                 getattr(grid_search, fn_name)(X)
 
     # Test that an invalid refit param raises appropriate error messages

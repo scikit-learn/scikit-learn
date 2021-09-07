@@ -18,12 +18,14 @@ stored and the plotting is done in a `plot` method. The display object's
 `__init__` method contains only the data needed to create the visualization.
 The `plot` method takes in parameters that only have to do with visualization,
 such as a matplotlib axes. The `plot` method will store the matplotlib artists
-as attributes allowing for style adjustments through the display object. A
-`plot_*` helper function accepts parameters to do the computation and the
-parameters used for plotting. After the helper function creates the display
-object with the computed values, it calls the display's plot method. Note that
-the `plot` method defines attributes related to matplotlib, such as the line
-artist. This allows for customizations after calling the `plot` method.
+as attributes allowing for style adjustments through the display object. The
+`Display` class should define one or both class methods: `from_estimator` and
+`from_predictions`. These methods allows to create the `Display` object from
+the estimator and some data or from the true and predicted values. After these
+class methods create the display object with the computed values, then call the
+display's plot method. Note that the `plot` method defines attributes related
+to matplotlib, such as the line artist. This allows for customizations after
+calling the `plot` method.
 
 For example, the `RocCurveDisplay` defines the following methods and
 attributes::
@@ -36,19 +38,24 @@ attributes::
            self.roc_auc = roc_auc
            self.estimator_name = estimator_name
 
+       @classmethod
+       def from_estimator(cls, estimator, X, y):
+           # get the predictions
+           y_pred = estimator.predict_proba(X)[:, 1]
+           return cls.from_predictions(y, y_pred, estimator.__class__.__name__)
+
+       @classmethod
+       def from_predictions(cls, y, y_pred, estimator_name):
+           # do ROC computation from y and y_pred
+           fpr, tpr, roc_auc = ...
+           viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator_name)
+           return viz.plot()
+
        def plot(self, ax=None, name=None, **kwargs):
            ...
            self.line_ = ...
            self.ax_ = ax
            self.figure_ = ax.figure_
-
-   def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
-                      drop_intermediate=True, response_method="auto",
-                      name=None, ax=None, **kwargs):
-       # do computation
-       viz = RocCurveDisplay(fpr, tpr, roc_auc, 
-                                estimator.__class__.__name__)
-       return viz.plot(ax=ax, name=name, **kwargs)
 
 Read more in :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
 and the :ref:`User Guide <visualizations>`.
