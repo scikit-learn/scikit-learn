@@ -1484,7 +1484,7 @@ def make_swiss_roll(n_samples=100,
         See :term:`Glossary <random_state>`.
 
      hole : bool, default=False
-        The standard deviation of the gaussian noise.
+        If True generates the swiss roll with hole dataset
 
     Returns
     -------
