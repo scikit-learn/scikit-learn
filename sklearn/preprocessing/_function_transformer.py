@@ -71,6 +71,15 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
 
+    See Also
+    --------
+    MaxAbsScaler : Scale each feature by its maximum absolute value.
+    StandardScaler : Standardize features by removing the mean and
+        scaling to unit variance.
+    LabelBinarizer : Binarize labels in a one-vs-all fashion.
+    MultilabelBinarizer : Transform between iterable of iterables
+        and a multilabel format.
+
     Examples
     --------
     >>> import numpy as np
@@ -129,9 +138,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X : array-like, shape (n_samples, n_features)
             Input array.
 
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
         Returns
         -------
-        self
+        self : object
+            FunctionTransformer class instance.
         """
         X = self._check_input(X)
         if self.check_inverse and not (self.func is None or self.inverse_func is None):

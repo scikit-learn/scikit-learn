@@ -31,12 +31,12 @@ np.import_array()
 
 
 def init_bounds_dense(
-        np.ndarray[floating, ndim=2, mode='c'] X,  # IN
-        floating[:, ::1] centers,                  # IN
-        floating[:, ::1] center_half_distances,    # IN
-        int[::1] labels,                           # OUT
-        floating[::1] upper_bounds,                # OUT
-        floating[:, ::1] lower_bounds):            # OUT
+        floating[:, ::1] X,                      # IN READ-ONLY
+        floating[:, ::1] centers,                # IN
+        floating[:, ::1] center_half_distances,  # IN
+        int[::1] labels,                         # OUT
+        floating[::1] upper_bounds,              # OUT
+        floating[:, ::1] lower_bounds):          # OUT
     """Initialize upper and lower bounds for each sample for dense input data.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
@@ -182,17 +182,17 @@ def init_bounds_sparse(
 
 
 def elkan_iter_chunked_dense(
-        np.ndarray[floating, ndim=2, mode='c'] X,  # IN
-        floating[::1] sample_weight,               # IN
-        floating[:, ::1] centers_old,              # IN
-        floating[:, ::1] centers_new,              # OUT
-        floating[::1] weight_in_clusters,          # OUT
-        floating[:, ::1] center_half_distances,    # IN
-        floating[::1] distance_next_center,        # IN
-        floating[::1] upper_bounds,                # INOUT
-        floating[:, ::1] lower_bounds,             # INOUT
-        int[::1] labels,                           # INOUT
-        floating[::1] center_shift,                # OUT
+        floating[:, ::1] X,                      # IN READ-ONLY
+        floating[::1] sample_weight,             # IN READ-ONLY
+        floating[:, ::1] centers_old,            # IN
+        floating[:, ::1] centers_new,            # OUT
+        floating[::1] weight_in_clusters,        # OUT
+        floating[:, ::1] center_half_distances,  # IN
+        floating[::1] distance_next_center,      # IN
+        floating[::1] upper_bounds,              # INOUT
+        floating[:, ::1] lower_bounds,           # INOUT
+        int[::1] labels,                         # INOUT
+        floating[::1] center_shift,              # OUT
         int n_threads,
         bint update_centers=True):
     """Single iteration of K-means Elkan algorithm with dense input.
@@ -292,7 +292,7 @@ def elkan_iter_chunked_dense(
                 end = start + n_samples_chunk
 
             _update_chunk_dense(
-                &X[start, 0],
+                X[start: end],
                 sample_weight[start: end],
                 centers_old,
                 center_half_distances,
@@ -334,11 +334,8 @@ def elkan_iter_chunked_dense(
 
 
 cdef void _update_chunk_dense(
-        floating *X,                             # IN
-        # expecting C alinged 2D array. XXX: Can be
-        # replaced by const memoryview when cython min
-        # version is >= 0.3
-        floating[::1] sample_weight,             # IN
+        floating[:, ::1] X,                      # IN READ-ONLY
+        floating[::1] sample_weight,             # IN READ-ONLY
         floating[:, ::1] centers_old,            # IN
         floating[:, ::1] center_half_distances,  # IN
         floating[::1] distance_next_center,      # IN
@@ -383,7 +380,7 @@ cdef void _update_chunk_dense(
                     # between the sample and its current assigned center.
                     if not bounds_tight:
                         upper_bound = _euclidean_dense_dense(
-                            X + i * n_features, &centers_old[label, 0], n_features, False)
+                            &X[i, 0], &centers_old[label, 0], n_features, False)
                         lower_bounds[i, label] = upper_bound
                         bounds_tight = 1
 
@@ -394,7 +391,7 @@ cdef void _update_chunk_dense(
                         or (upper_bound > center_half_distances[label, j])):
 
                         distance = _euclidean_dense_dense(
-                            X + i * n_features, &centers_old[j, 0], n_features, False)
+                            &X[i, 0], &centers_old[j, 0], n_features, False)
                         lower_bounds[i, j] = distance
                         if distance < upper_bound:
                             label = j
@@ -406,7 +403,7 @@ cdef void _update_chunk_dense(
         if update_centers:
             weight_in_clusters[label] += sample_weight[i]
             for k in range(n_features):
-                centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
+                centers_new[label * n_features + k] += X[i, k] * sample_weight[i]
 
 
 def elkan_iter_chunked_sparse(
