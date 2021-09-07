@@ -403,13 +403,23 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| Fixed a bug in :class:`feature_extraction.HashingVectorizer` where some
-  input strings would result in negative indices in the transformed data.
-  :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+- |Fix| Fixed a bug in :class:`feature_extraction.text.HashingVectorizer`
+  where some input strings would result in negative indices in the transformed
+  data. :pr:`19035` by :user:`Liu Yu <ly648499246>`.
 
 - |Fix| Fixed a bug in :class:`feature_extraction.DictVectorizer` by raising an
   error with unsupported value type.
   :pr:`19520` by :user:`Jeff Zhao <kamiyaa>`.
+
+- |Fix| Fixed a bug in :func:`feature_extraction.image.img_to_graph`
+  and :func:`feature_extraction.image.grid_to_graph` where singleton connected
+  components were not handled properly, resulting in a wrong vertex indexing.
+  :pr:`18964` by `Bertrand Thirion`_.
+
+- |Fix| Raise a warning in :class:`feature_extraction.text.CountVectorizer`
+  with `lowercase=True` when there are vocabulary entries with uppercase
+  characters to avoid silent misses in the resulting feature vectors.
+  :pr:`19401` by :user:`Zito Relova <zitorelova>`
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -837,13 +847,6 @@ Changelog
 
 - |Fix| Improves compatibility of :func:`tree.plot_tree` with high DPI screens.
   :pr:`20023` by `Thomas Fan`_.
-
-:mod:`sklearn.feature_extraction`
-..................................
-
-- |Fix| Fixed a bug in :func:`image._to_graph` where singleton
-  connected components were not handled properly, resulting in a wrong
-  vertex indexing.  :pr:`18964` by `Bertrand Thirion`_.
 
 - |Fix| Fixed a bug in :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor` where a node could be split whereas it
