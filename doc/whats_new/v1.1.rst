@@ -1,0 +1,52 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_1_1:
+
+Version 1.1.0
+=============
+
+**In Development**
+
+
+.. include:: changelog_legend.inc
+
+Minimal dependencies
+--------------------
+
+Version 1.1.0 of scikit-learn requires python 3.7+, numpy 1.14.6+ and
+scipy 1.1.0+. Optional minimal dependency is matplotlib 2.2.2+.
+
+Put the changes in their relevant module.
+
+Changed models
+--------------
+
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
+
+
+:mod:`sklearn.decomposition`
+............................
+
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.0, including:
+
+TODO: update at the time of the release.
