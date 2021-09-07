@@ -335,6 +335,13 @@ Changelog
   in 1.2. Use the new parameters `alpha_W` and `alpha_H` instead. :pr:`20512` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.dummy`
+....................
+
+- |API| Attribute `n_features_in_` in :class:`dummy.DummyRegressor` and
+  :class:`dummy.DummyRegressor` is deprecated and will be removed in 1.2.
+  :pr:`20960` by `Thomas Fan`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
