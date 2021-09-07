@@ -138,7 +138,7 @@ and the house price in the PD line. However, the ICE lines show that there
 are some exceptions, where the house price remains constant in some ranges of
 the median income.
 
-The :mod:`sklearn.inspection` module's :func:`plot_partial_dependence`
+The :mod:`sklearn.inspection` module's :meth:`PartialDependenceDisplay.from_estimator`
 convenience function can be used to create ICE plots by setting
 ``kind='individual'``. In the example below, we show how to create a grid of
 ICE plots:
