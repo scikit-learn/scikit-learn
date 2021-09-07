@@ -48,11 +48,6 @@ def plot_partial_dependence(
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
 
-    .. deprecated:: 1.0
-       `plot_partial_dependence` is deprecated in 1.0 and will be removed in
-       1.2. Please use the class method:
-       :func:`~sklearn.metrics.PartialDependenceDisplay.from_estimator`.
-
     Partial dependence plots, individual conditional expectation plots or an
     overlay of both of them can be plotted by setting the ``kind``
     parameter.
@@ -98,6 +93,11 @@ def plot_partial_dependence(
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
         :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
         :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
+
+    .. deprecated:: 1.0
+       `plot_partial_dependence` is deprecated in 1.0 and will be removed in
+       1.2. Please use the class method:
+       :func:`~sklearn.metrics.PartialDependenceDisplay.from_estimator`.
 
     Parameters
     ----------
@@ -686,6 +686,8 @@ class PartialDependenceDisplay:
             :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
             :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
             :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
+
+        .. versionadded:: 1.0
 
         Parameters
         ----------
