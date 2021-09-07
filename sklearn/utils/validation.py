@@ -1242,7 +1242,7 @@ def check_scalar(
     *,
     min_val=None,
     max_val=None,
-    closed="neither",
+    include_boundaries="both",
 ):
     """Validate scalar parameters type and value.
 
@@ -1265,9 +1265,15 @@ def check_scalar(
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
-    closed : {"left", "right", "both", "neither"}, default="neither"
-        Whether the interval is closed on the left-side, right-side, both or
-        neither.
+    include_boundaries : {"left", "right", "both", "neither"}, default="both"
+        Whether the interval defined by `min_val` and `max_val` should include
+        the boundaries. Possible choices are:
+
+        - `"left"`: only `min_val` is included in the valid interval;
+        - `"right"`: only `max_val` is included in the valid interval;
+        - `"both"`: `min_val` and `max_val` are included in the valid interval;
+        - `"neither"`: neither `min_val` nor `max_val` are included in the
+          valid interval.
 
     Returns
     -------
@@ -1286,22 +1292,29 @@ def check_scalar(
     if not isinstance(x, target_type):
         raise TypeError(f"{name} must be an instance of {target_type}, not {type(x)}.")
 
-    expected_closed = {"left", "right", "both", "neither"}
-    if closed not in expected_closed:
-        raise ValueError(f"Unknown value for `closed`: {closed}")
+    expected_include_boundaries = ("left", "right", "both", "neither")
+    if include_boundaries not in expected_include_boundaries:
+        raise ValueError(
+            f"Unknown value for `include_boundaries`: {repr(include_boundaries)}. "
+            f"Possible values are: {expected_include_boundaries}."
+        )
 
-    comparison_operator = operator.le if closed in ("left", "both") else operator.lt
+    comparison_operator = (
+        operator.lt if include_boundaries in ("left", "both") else operator.le
+    )
     if min_val is not None and comparison_operator(x, min_val):
         raise ValueError(
             f"{name} == {x}, must be"
-            f" {'>' if closed in ('left', 'both') else '>='} {min_val}."
+            f" {'>=' if include_boundaries in ('left', 'both') else '>'} {min_val}."
         )
 
-    comparison_operator = operator.ge if closed in ("right", "both") else operator.gt
+    comparison_operator = (
+        operator.gt if include_boundaries in ("right", "both") else operator.ge
+    )
     if max_val is not None and comparison_operator(x, max_val):
         raise ValueError(
             f"{name} == {x}, must be"
-            f" {'<' if closed in ('right', 'both') else '<='} {max_val}."
+            f" {'<=' if include_boundaries in ('right', 'both') else '<'} {max_val}."
         )
 
     return x
