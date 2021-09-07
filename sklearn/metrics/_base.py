@@ -246,6 +246,6 @@ def _check_pos_label_consistency(pos_label, y_true):
             "{-1, 1} or pass pos_label explicitly."
         )
     elif pos_label is None:
-        pos_label = 1.0
+        pos_label = 1
 
     return pos_label

@@ -82,7 +82,7 @@ def _mask_edges_weights(mask, edges, weights=None):
         maxval = edges.max()
     else:
         maxval = 0
-    order = np.searchsorted(np.unique(edges.ravel()), np.arange(maxval + 1))
+    order = np.searchsorted(np.flatnonzero(mask), np.arange(maxval + 1))
     edges = order[edges]
     if weights is None:
         return edges

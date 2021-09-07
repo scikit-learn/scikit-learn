@@ -13,7 +13,11 @@ import warnings
 
 import scipy.optimize
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+)
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
@@ -29,6 +33,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
+from ..utils.metaestimators import available_if
 
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
@@ -557,9 +562,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         incremental,
     ):
 
+        params = self.coefs_ + self.intercepts_
         if not incremental or not hasattr(self, "_optimizer"):
-            params = self.coefs_ + self.intercepts_
-
             if self.solver == "sgd":
                 self._optimizer = SGDOptimizer(
                     params,
@@ -642,7 +646,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
                     # update weights
                     grads = coef_grads + intercept_grads
-                    self._optimizer.update_params(grads)
+                    self._optimizer.update_params(params, grads)
 
                 self.n_iter_ += 1
                 self.loss_ = accumulated_loss / X.shape[0]
@@ -747,8 +751,17 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         """
         return self._fit(X, y, incremental=False)
 
-    @property
-    def partial_fit(self):
+    def _check_solver(self):
+        if self.solver not in _STOCHASTIC_SOLVERS:
+            raise AttributeError(
+                "partial_fit is only available for stochastic"
+                " optimizers. %s is not stochastic."
+                % self.solver
+            )
+        return True
+
+    @available_if(_check_solver)
+    def partial_fit(self, X, y):
         """Update the model with a single iteration over the given data.
 
         Parameters
@@ -761,17 +774,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        self : returns a trained MLP model.
+        self : object
+            Trained MLP model.
         """
-        if self.solver not in _STOCHASTIC_SOLVERS:
-            raise AttributeError(
-                "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic."
-                % self.solver
-            )
-        return self._partial_fit
-
-    def _partial_fit(self, X, y):
         return self._fit(X, y, incremental=True)
 
 
@@ -968,6 +973,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         The number of iterations the solver has run.
 
@@ -1160,8 +1171,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         return self._label_binarizer.inverse_transform(y_pred)
 
-    @property
-    def partial_fit(self):
+    @available_if(lambda est: est._check_solver())
+    def partial_fit(self, X, y, classes=None):
         """Update the model with a single iteration over the given data.
 
         Parameters
@@ -1182,17 +1193,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Returns
         -------
-        self : returns a trained MLP model.
+        self : object
+            Trained MLP model.
         """
-        if self.solver not in _STOCHASTIC_SOLVERS:
-            raise AttributeError(
-                "partial_fit is only available for stochastic"
-                " optimizer. %s is not stochastic"
-                % self.solver
-            )
-        return self._partial_fit
-
-    def _partial_fit(self, X, y, classes=None):
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith("multilabel"):
@@ -1200,7 +1203,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             else:
                 self._label_binarizer.fit(classes)
 
-        super()._partial_fit(X, y)
+        super().partial_fit(X, y)
 
         return self
 
@@ -1246,6 +1249,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             return np.vstack([1 - y_pred, y_pred]).T
         else:
             return y_pred
+
+    def _more_tags(self):
+        return {"multilabel": True}
 
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
@@ -1436,6 +1442,12 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_iter_ : int
         The number of iterations the solver has run.

@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
 from itertools import islice
+import math
 import numbers
 import platform
 import struct
@@ -209,9 +210,15 @@ def _pandas_indexing(X, key, key_dtype, axis):
         key = key if key.flags.writeable else key.copy()
     elif isinstance(key, tuple):
         key = list(key)
-    # check whether we should index with loc or iloc
-    indexer = X.iloc if key_dtype == "int" else X.loc
-    return indexer[:, key] if axis else indexer[key]
+
+    if key_dtype == "int" and not (isinstance(key, slice) or np.isscalar(key)):
+        # using take() instead of iloc[] ensures the return value is a "proper"
+        # copy that will not raise SettingWithCopyWarning
+        return X.take(key, axis=axis)
+    else:
+        # check whether we should index with loc or iloc
+        indexer = X.iloc if key_dtype == "int" else X.loc
+        return indexer[:, key] if axis else indexer[key]
 
 
 def _list_indexing(X, key, key_dtype):
@@ -1003,9 +1010,7 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    # convert from numpy.bool_ to python bool to ensure that testing
-    # is_scalar_nan(x) is True does not fail.
-    return bool(isinstance(x, numbers.Real) and np.isnan(x))
+    return isinstance(x, numbers.Real) and math.isnan(x)
 
 
 def _approximate_mode(class_counts, n_draws, rng):
@@ -1051,7 +1056,7 @@ def _approximate_mode(class_counts, n_draws, rng):
     rng = check_random_state(rng)
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
-    continuous = n_draws * class_counts / class_counts.sum()
+    continuous = class_counts / class_counts.sum() * n_draws
     # floored means we don't overshoot n_samples, but probably undershoot
     floored = np.floor(continuous)
     # we add samples according to how much "left over" probability
