@@ -3,13 +3,10 @@
 #          Denis Engemann <denis-alexander.engemann@inria.fr>
 #
 # License: BSD 3 clause
-import inspect
-
 import numpy as np
 from scipy import sparse
 from scipy import linalg
 from scipy import stats
-from scipy.sparse.construct import random
 from scipy.sparse.linalg import eigsh
 from scipy.special import expit
 
