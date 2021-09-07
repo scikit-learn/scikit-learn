@@ -1292,10 +1292,11 @@ def check_scalar(
     if not isinstance(x, target_type):
         raise TypeError(f"{name} must be an instance of {target_type}, not {type(x)}.")
 
-    expected_include_boundaries = {"left", "right", "both", "neither"}
+    expected_include_boundaries = ("left", "right", "both", "neither")
     if include_boundaries not in expected_include_boundaries:
         raise ValueError(
-            f"Unknown value for `include_boundaries`: {include_boundaries}"
+            f"Unknown value for `include_boundaries`: {include_boundaries}. "
+            f"Possible values are: {expected_include_boundaries}."
         )
 
     comparison_operator = (

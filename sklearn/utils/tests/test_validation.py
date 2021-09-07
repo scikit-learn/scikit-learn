@@ -1087,6 +1087,18 @@ def test_check_scalar_valid(x):
             "left",
             ValueError("test_name5 == 4, must be < 4."),
         ),
+        (
+            4,
+            "test_name6",
+            int,
+            2,
+            4,
+            "bad parameter value",
+            ValueError(
+                "Unknown value for `include_boundaries`: bad parameter value. "
+                "Possible values are: ('left', 'right', 'both', 'neither')."
+            ),
+        ),
     ],
 )
 def test_check_scalar_invalid(
