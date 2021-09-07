@@ -164,7 +164,6 @@ jobs:
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
     environment:
-      - CONDA: $HOME/mambaforge
       - CIBW_BUILD_VERBOSITY: 1
       - CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
       - CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
