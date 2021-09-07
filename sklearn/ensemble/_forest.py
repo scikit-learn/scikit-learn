@@ -400,22 +400,22 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
             if self.max_features == "auto":
                 warn(
-                    "The prior default of 'auto' for max_features is "
-                    "deprecated. Results of the fit, however, do not "
-                    "change. Please use the new default for "
-                    "RandomForestRegressors and ExtraTreesRegressors, "
-                    "which is 1.0",
+                    "`max_features='auto'` has been deprecated in 1.0 "
+                    "and will be removed in 1.2. To keep the past behaviour, "
+                    "explicitly set `max_features=1.0` or remove this "
+                    "parameter as it is also the default value for "
+                    "RandomForestRegressors and ExtraTreesRegressors.",
                     FutureWarning,
                 )
 
         elif isinstance(self, (RandomForestClassifier, ExtraTreesClassifier)):
             if self.max_features == "auto":
                 warn(
-                    "The prior default of 'auto' for max_features is "
-                    "deprecated. Results of the fit, however, do not "
-                    "change. Please use the new default for "
-                    "RandomForestClassifiers and ExtraTreesClassifiers, "
-                    "which is 'sqrt'.",
+                    "`max_features='auto'` has been deprecated in 1.0 "
+                    "and will be removed in 1.2. To keep the past behaviour, "
+                    "explicitly set `max_features='sqrt'` or remove this "
+                    "parameter as it is also the default value for "
+                    "RandomForestClassifiers and ExtraTreesClassifiers.",
                     FutureWarning,
                 )
 
@@ -1151,12 +1151,16 @@ class RandomForestClassifier(ForestClassifier):
           `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=sqrt(n_features)`.
-        - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
+        - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
+        .. versionchanged:: 1.0
+            The default of `max_features` changed from `"auto"` to `"sqrt"`.
+
         .. deprecated:: 1.0
-            Previous default "auto" has been deprecated.
+            The `"auto"` option was deprecated in 1.0 and will be removed
+            in 1.2.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1507,15 +1511,19 @@ class RandomForestRegressor(ForestRegressor):
           `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
-        - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
+        - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None or 1.0, then `max_features=n_features`.
 
         Note: The default of 1.0 is equivalent to bagged trees and more
         randomness can be achieved by setting smaller values, e.g. 0.3.
 
+        .. versionchanged:: 1.0
+            The default of `max_features` changed from `"auto"` to 1.0.
+
         .. deprecated:: 1.0
-            Previous default option "auto" has been deprecated.
+            The `"auto"` option was deprecated in 1.0 and will be removed
+            in 1.2.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1814,8 +1822,12 @@ class ExtraTreesClassifier(ForestClassifier):
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
+        .. versionchanged:: 1.0
+            The default of `max_features` changed from `"auto"` to `"sqrt"`.
+
         .. deprecated:: 1.0
-            Previous default option "auto" has been deprecated.
+            The `"auto"` option was deprecated in 1.0 and will be removed
+            in 1.2.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -2161,8 +2173,12 @@ class ExtraTreesRegressor(ForestRegressor):
         Note: The default of 1.0 is equivalent to bagged trees and more
         randomness can be achieved by setting smaller values, e.g. 0.3.
 
+        .. versionchanged:: 1.0
+            The default of `max_features` changed from `"auto"` to 1.0.
+
         .. deprecated:: 1.0
-            Previous default option "auto" has been deprecated.
+            The `"auto"` option was deprecated in 1.0 and will be removed
+            in 1.2.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
