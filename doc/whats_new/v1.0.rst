@@ -713,6 +713,9 @@ Changelog
 - |Enhancement| warn only once in the main process for per-split fit failures
   in cross-validation. :pr:`20619` by :user:`Loïc Estève <lesteve>`
 
+- |Enhancement| The :class:`model_selection.BaseShuffleSplit` base class is
+  now public. :pr:`20056` by :user:`pabloduque0`.
+
 - |Fix| Avoid premature overflow in :func:`model_selection.train_test_split`.
   :pr:`20904` by :user:`Tomasz Jakubek <t-jakubek>`.
 
