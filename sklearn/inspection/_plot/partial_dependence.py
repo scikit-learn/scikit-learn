@@ -73,9 +73,9 @@ def plot_partial_dependence(
           >>> est1 = LinearRegression().fit(X, y)
           >>> est2 = RandomForestRegressor().fit(X, y)
           >>> disp1 = plot_partial_dependence(est1, X,
-          ...                                 [1, 2])
+          ...                                 [1, 2])  # doctest: +SKIP
           >>> disp2 = plot_partial_dependence(est2, X, [1, 2],
-          ...                                 ax=disp1.axes_)
+          ...                                 ax=disp1.axes_)  # doctest: +SKIP
 
     .. warning::
 
@@ -281,9 +281,9 @@ def plot_partial_dependence(
     >>> from sklearn.inspection import plot_partial_dependence
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
-    >>> plot_partial_dependence(clf, X, [0, (0, 1)])
+    >>> plot_partial_dependence(clf, X, [0, (0, 1)])  # doctest: +SKIP
     <...>
-    >>> plt.show()
+    >>> plt.show()  # doctest: +SKIP
     """
     check_matplotlib_support("plot_partial_dependence")  # noqa
     import matplotlib.pyplot as plt  # noqa
