@@ -221,7 +221,16 @@ the ``--filter`` option to compare the results.
 
 .. topic:: Data Considerations
 
-  Cleveland Indians - https://www.mlb.com/news/cleveland-indians-team-name-change 
+  The Cleveland Indians is a major league baseball team based in Cleveland,
+  Ohio, USA. In December 2020, it was reported that 
+  "After several months of discussion sparked by the death of George Floyd
+  and a national reckoning over race and colonialism, 
+  the Cleveland Indians have decided to change their name." 
+  Team owner Paul Dolan "did make it clear that the team will not make its 
+  informal nickname -- the Tribe -- its new team name." “It’s not going to 
+  be a half-step away from the Indians,” Dolan said. 
+  “We will not have a Native American-themed name.”
+  https://www.mlb.com/news/cleveland-indians-team-name-change 
 
 .. topic:: Recommendation
 
