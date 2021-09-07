@@ -9,7 +9,9 @@ import numbers
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, is_scalar_nan
+from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique
@@ -75,6 +77,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
+        self.n_features_in_ = n_features
 
         if self.categories != "auto":
             if len(self.categories) != n_features:
@@ -321,9 +324,8 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
-    >>> enc.get_feature_names(['gender', 'group'])
-    array(['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3'],
-      dtype=object)
+    >>> enc.get_feature_names_out(['gender', 'group'])
+    array(['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3'], ...)
 
     One can always drop the first column for each feature:
 
@@ -658,9 +660,12 @@ class OneHotEncoder(_BaseEncoder):
 
         return X_tr
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self, input_features=None):
-        """
-        Return feature names for output features.
+        """Return feature names for output features.
 
         Parameters
         ----------
@@ -693,6 +698,40 @@ class OneHotEncoder(_BaseEncoder):
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Returns `input_features` as this transformation doesn't add or drop
+        features.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        check_is_fitted(self)
+        cats = self.categories_
+        input_features = _check_feature_names_in(self, input_features)
+
+        feature_names = []
+        for i in range(len(cats)):
+            names = [input_features[i] + "_" + str(t) for t in cats[i]]
+            if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
+                names.pop(self.drop_idx_[i])
+            feature_names.extend(names)
+        return np.asarray(feature_names, dtype=object)
 
 
 class OrdinalEncoder(_BaseEncoder):

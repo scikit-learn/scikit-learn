@@ -134,6 +134,9 @@ Changelog
 - |API| `np.matrix` usage is deprecated in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
 
+- |API| :term:`get_feature_names_out` has been added to the transformer API
+  to get the names of the output features. :pr:`18444` by `Thomas Fan`_.
+
 - |API| All estimators store `feature_names_in_` when fitted on pandas Dataframes.
   These feature names are compared to names seen in `non-fit` methods,
   `i.e.` `transform` and will raise a `FutureWarning` if they are not consistent.
@@ -224,6 +227,10 @@ Changelog
 
 :mod:`sklearn.compose`
 ......................
+
+- |API| Adds `prefix_feature_names_out` to :class:`compose.ColumnTransformer`.
+  This flag controls the prefixing of feature names out in
+  :term:`get_feature_names_out`. :pr:`18444` by `Thomas Fan`_.
 
 - |Enhancement| :class:`compose.ColumnTransformer` now records the output
   of each transformer in `output_indices_`. :pr:`18393` by
@@ -335,6 +342,13 @@ Changelog
   in 1.2. Use the new parameters `alpha_W` and `alpha_H` instead. :pr:`20512` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.dummy`
+....................
+
+- |API| Attribute `n_features_in_` in :class:`dummy.DummyRegressor` and
+  :class:`dummy.DummyRegressor` is deprecated and will be removed in 1.2.
+  :pr:`20960` by `Thomas Fan`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -389,13 +403,23 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| Fixed a bug in :class:`feature_extraction.HashingVectorizer` where some
-  input strings would result in negative indices in the transformed data.
-  :pr:`19035` by :user:`Liu Yu <ly648499246>`.
+- |Fix| Fixed a bug in :class:`feature_extraction.text.HashingVectorizer`
+  where some input strings would result in negative indices in the transformed
+  data. :pr:`19035` by :user:`Liu Yu <ly648499246>`.
 
 - |Fix| Fixed a bug in :class:`feature_extraction.DictVectorizer` by raising an
   error with unsupported value type.
   :pr:`19520` by :user:`Jeff Zhao <kamiyaa>`.
+
+- |Fix| Fixed a bug in :func:`feature_extraction.image.img_to_graph`
+  and :func:`feature_extraction.image.grid_to_graph` where singleton connected
+  components were not handled properly, resulting in a wrong vertex indexing.
+  :pr:`18964` by `Bertrand Thirion`_.
+
+- |Fix| Raise a warning in :class:`feature_extraction.text.CountVectorizer`
+  with `lowercase=True` when there are vocabulary entries with uppercase
+  characters to avoid silent misses in the resulting feature vectors.
+  :pr:`19401` by :user:`Zito Relova <zitorelova>`
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -694,6 +718,9 @@ Changelog
 - |Enhancement| warn only once in the main process for per-split fit failures
   in cross-validation. :pr:`20619` by :user:`Loïc Estève <lesteve>`
 
+- |Enhancement| The :class:`model_selection.BaseShuffleSplit` base class is
+  now public. :pr:`20056` by :user:`pabloduque0`.
+
 - |Fix| Avoid premature overflow in :func:`model_selection.train_test_split`.
   :pr:`20904` by :user:`Tomasz Jakubek <t-jakubek>`.
 
@@ -828,13 +855,6 @@ Changelog
 
 - |Fix| Improves compatibility of :func:`tree.plot_tree` with high DPI screens.
   :pr:`20023` by `Thomas Fan`_.
-
-:mod:`sklearn.feature_extraction`
-..................................
-
-- |Fix| Fixed a bug in :func:`image._to_graph` where singleton
-  connected components were not handled properly, resulting in a wrong
-  vertex indexing.  :pr:`18964` by `Bertrand Thirion`_.
 
 - |Fix| Fixed a bug in :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor` where a node could be split whereas it

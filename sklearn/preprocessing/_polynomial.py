@@ -16,6 +16,7 @@ from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.fixes import linspace
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
+from ..utils.validation import _check_feature_names_in
 from ..utils.stats import _weighted_percentile
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
@@ -193,6 +194,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             [np.bincount(c, minlength=self.n_features_in_) for c in combinations]
         )
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self, input_features=None):
         """
         Return feature names for output features
@@ -224,6 +229,42 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 name = "1"
             feature_names.append(name)
         return feature_names
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        powers = self.powers_
+        input_features = _check_feature_names_in(self, input_features)
+        feature_names = []
+        for row in powers:
+            inds = np.where(row)[0]
+            if len(inds):
+                name = " ".join(
+                    "%s^%d" % (input_features[ind], exp)
+                    if exp != 1
+                    else input_features[ind]
+                    for ind, exp in zip(inds, row[inds])
+                )
+            else:
+                name = "1"
+            feature_names.append(name)
+        return np.asarray(feature_names, dtype=object)
 
     def fit(self, X, y=None):
         """
@@ -636,6 +677,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         return knots
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self, input_features=None):
         """Return feature names for output features.
 
@@ -657,6 +702,33 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             for j in range(n_splines - 1 + self.include_bias):
                 feature_names.append(f"{input_features[i]}_sp_{j}")
         return feature_names
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        n_splines = self.bsplines_[0].c.shape[0]
+        input_features = _check_feature_names_in(self, input_features)
+        feature_names = []
+        for i in range(self.n_features_in_):
+            for j in range(n_splines - 1 + self.include_bias):
+                feature_names.append(f"{input_features[i]}_sp_{j}")
+        return np.asarray(feature_names, dtype=object)
 
     def fit(self, X, y=None, sample_weight=None):
         """Compute knot positions of splines.
