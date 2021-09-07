@@ -726,6 +726,8 @@ def test_dtype_of_classifier_probas(strategy):
     assert probas.dtype == np.float64
 
 
+# TODO: remove in 1.2
+@pytest.mark.filterwarnings("ignore:`n_features_in_` is deprecated")
 @pytest.mark.parametrize("Dummy", (DummyRegressor, DummyClassifier))
 def test_n_features_in_(Dummy):
     X = [[1, 2]]

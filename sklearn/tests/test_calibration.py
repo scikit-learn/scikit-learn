@@ -613,7 +613,7 @@ def test_calibration_votingclassifier():
     # defined via a property that only works when voting="soft".
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
     vote = VotingClassifier(
-        estimators=[("dummy" + str(i), DummyClassifier()) for i in range(3)],
+        estimators=[("lr" + str(i), LogisticRegression()) for i in range(3)],
         voting="soft",
     )
     vote.fit(X, y)
