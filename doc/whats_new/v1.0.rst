@@ -686,7 +686,7 @@ Changelog
 
 - |Enhancement| :func:`utils.extmath.randomized_svd` now accepts an argument
   to specify the lapack driver used in the internal deterministic SVD used by
-  the randomized svd algorithm. :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
+  the randomized SVD algorithm. :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
 :mod:`sklearn.validation`
 .........................

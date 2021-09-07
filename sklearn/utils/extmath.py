@@ -333,7 +333,7 @@ def randomized_svd(
             the value of `random_state` explicitly to suppress the deprecation
             warning.
 
-    lapack_svd_driver : {'gesdd', 'gesvd'}, default='gesdd'
+    lapack_svd_driver : {"gesdd", "gesvd"}, default="gesdd"
         Whether to use the more efficient divide-and-conquer approach
         (`"gesdd"`) or more general rectangular approach (`"gesvd"`) to compute
         the SVD of the matrix B, which is the projection of M into a low
@@ -411,9 +411,7 @@ def randomized_svd(
     B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, Vt = linalg.svd(
-        B, full_matrices=False, lapack_driver=lapack_svd_driver
-    )
+    Uhat, s, Vt = linalg.svd(B, full_matrices=False, lapack_driver=lapack_svd_driver)
 
     del B
     U = np.dot(Q, Uhat)

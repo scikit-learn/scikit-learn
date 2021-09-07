@@ -9,6 +9,7 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 from scipy import stats
+from scipy.sparse.construct import random
 from scipy.sparse.linalg import eigsh
 from scipy.special import expit
 
@@ -569,20 +570,27 @@ def test_randomized_svd_sign_flip_with_transpose():
     assert not v_based
 
 
-def test_randomized_svd_parametrization():
-    # Check that function is correctly parametrized
-    f = randomized_svd
+def test_randomized_svd_lapack_driver():
+    # Check that different SVD drivers provide consistent results
 
-    argnames = inspect.signature(f).parameters.values()
+    # Matrix being compressed
+    m, n = 123, 45
+    M = np.random.rand(m, n)
 
-    expected = [
-            'M', 'n_components', 'n_oversamples', 'n_iter',
-            'power_iteration_normalizer', 'transpose', 'flip_sign',
-            'random_state', 'lapack_svd_driver'
-        ]
+    # Number of components
+    k = 10
+    u1, s1, vt1 = randomized_svd(M, k, lapack_svd_driver="gesdd")
+    u2, s2, vt2 = randomized_svd(M, k, lapack_svd_driver="gesdd")
 
-    for i, arg in enumerate(argnames):
-        assert arg.name == expected[i]
+    # Check shape and contents
+    assert u1.shape == u2.shape
+    assert_allclose(u1, u2, atol=0, rtol=1e-3)
+
+    assert s1.shape == s2.shape
+    assert_allclose(s1, s2, atol=0, rtol=1e-3)
+
+    assert vt1.shape == vt2.shape
+    assert_allclose(vt1, vt2, atol=0, rtol=1e-3)
 
 
 def test_cartesian():
