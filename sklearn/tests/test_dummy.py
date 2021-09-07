@@ -733,4 +733,7 @@ def test_n_features_in_(Dummy):
     d = Dummy()
     assert not hasattr(d, "n_features_in_")
     d.fit(X, y)
-    assert d.n_features_in_ is None
+
+    with pytest.warns(FutureWarning, match="`n_features_in_` is deprecated"):
+        n_features_in = d.n_features_in_
+    assert n_features_in is None
