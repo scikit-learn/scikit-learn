@@ -50,6 +50,8 @@ from sklearn.utils.estimator_checks import (
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
     check_n_features_in_after_fitting,
+    check_transformer_get_feature_names_out,
+    check_transformer_get_feature_names_out_pandas,
 )
 
 
@@ -89,8 +91,8 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-def _tested_estimators():
-    for name, Estimator in all_estimators():
+def _tested_estimators(type_filter=None):
+    for name, Estimator in all_estimators(type_filter=type_filter):
         try:
             estimator = _construct_instance(Estimator)
         except SkipTest:
@@ -356,3 +358,51 @@ def test_pandas_column_name_consistency(estimator):
             )
         for warning in record:
             assert "was fitted without feature names" not in str(warning.message)
+
+
+# TODO: As more modules support get_feature_names_out they should be removed
+# from this list to be tested
+GET_FEATURES_OUT_MODULES_TO_IGNORE = [
+    "cluster",
+    "cross_decomposition",
+    "decomposition",
+    "discriminant_analysis",
+    "ensemble",
+    "impute",
+    "isotonic",
+    "kernel_approximation",
+    "preprocessing",
+    "manifold",
+    "neighbors",
+    "neural_network",
+    "random_projection",
+]
+
+
+def _include_in_get_feature_names_out_check(transformer):
+    if hasattr(transformer, "get_feature_names_out"):
+        return True
+    module = transformer.__module__.split(".")[1]
+    return module not in GET_FEATURES_OUT_MODULES_TO_IGNORE
+
+
+GET_FEATURES_OUT_ESTIMATORS = [
+    est
+    for est in _tested_estimators("transformer")
+    if _include_in_get_feature_names_out_check(est)
+]
+
+
+@pytest.mark.parametrize(
+    "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_transformers_get_feature_names_out(transformer):
+    _set_checking_parameters(transformer)
+
+    with ignore_warnings(category=(FutureWarning)):
+        check_transformer_get_feature_names_out(
+            transformer.__class__.__name__, transformer
+        )
+        check_transformer_get_feature_names_out_pandas(
+            transformer.__class__.__name__, transformer
+        )

@@ -133,7 +133,9 @@ categorical_columns = ["RACE", "OCCUPATION", "SECTOR", "MARR", "UNION", "SEX", "
 numerical_columns = ["EDUCATION", "EXPERIENCE", "AGE"]
 
 preprocessor = make_column_transformer(
-    (OneHotEncoder(drop="if_binary"), categorical_columns), remainder="passthrough"
+    (OneHotEncoder(drop="if_binary"), categorical_columns),
+    remainder="passthrough",
+    prefix_feature_names_out=False,
 )
 
 # %%
@@ -199,13 +201,7 @@ _ = plt.ylim([0, 27])
 #
 # First of all, we can take a look to the values of the coefficients of the
 # regressor we have fitted.
-
-feature_names = (
-    model.named_steps["columntransformer"]
-    .named_transformers_["onehotencoder"]
-    .get_feature_names(input_features=categorical_columns)
-)
-feature_names = np.concatenate([feature_names, numerical_columns])
+feature_names = model[:-1].get_feature_names_out()
 
 coefs = pd.DataFrame(
     model.named_steps["transformedtargetregressor"].regressor_.coef_,
