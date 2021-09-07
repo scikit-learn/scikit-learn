@@ -51,6 +51,7 @@ from sklearn.utils.validation import (
     _num_features,
     FLOAT_DTYPES,
     _get_feature_names,
+    _check_feature_names_in,
 )
 from sklearn.utils.validation import _check_fit_params
 from sklearn.base import BaseEstimator
@@ -1562,3 +1563,47 @@ def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
     with pytest.warns(FutureWarning, match=msg):
         names = _get_feature_names(X)
     assert names is None
+
+
+class PassthroughTransformer(BaseEstimator):
+    def fit(self, X, y=None):
+        self._validate_data(X, reset=True)
+        return self
+
+    def transform(self, X):
+        return X
+
+    def get_feature_names_out(self, input_features=None):
+        return _check_feature_names_in(self, input_features)
+
+
+def test_check_feature_names_in():
+    """Check behavior of check_feature_names_in for arrays."""
+    X = np.array([[0.0, 1.0, 2.0]])
+    est = PassthroughTransformer().fit(X)
+
+    names = est.get_feature_names_out()
+    assert_array_equal(names, ["x0", "x1", "x2"])
+
+    incorrect_len_names = ["x10", "x1"]
+    with pytest.raises(ValueError, match="input_features should have length equal to"):
+        est.get_feature_names_out(incorrect_len_names)
+
+    # remove n_feature_in_
+    del est.n_features_in_
+    with pytest.raises(ValueError, match="Unable to generate feature names"):
+        est.get_feature_names_out()
+
+
+def test_check_feature_names_in_pandas():
+    """Check behavior of check_feature_names_in for pandas dataframes."""
+    pd = pytest.importorskip("pandas")
+    names = ["a", "b", "c"]
+    df = pd.DataFrame([[0.0, 1.0, 2.0]], columns=names)
+    est = PassthroughTransformer().fit(df)
+
+    names = est.get_feature_names_out()
+    assert_array_equal(names, ["a", "b", "c"])
+
+    with pytest.raises(ValueError, match="input_features is not equal to"):
+        est.get_feature_names_out(["x1", "x2", "x3"])
