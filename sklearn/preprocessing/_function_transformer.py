@@ -71,6 +71,20 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
 
+    Attributes
+    ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Defined only when
+        `validate=True`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `validate=True`
+        and `X` has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     MaxAbsScaler : Scale each feature by its maximum absolute value.
