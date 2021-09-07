@@ -134,6 +134,9 @@ Changelog
 - |API| `np.matrix` usage is deprecated in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
 
+- |API| :term:`get_feature_names_out` has been added to the transformer API
+  to get the names of the output features. :pr:`18444` by `Thomas Fan`_.
+
 - |API| All estimators store `feature_names_in_` when fitted on pandas Dataframes.
   These feature names are compared to names seen in `non-fit` methods,
   `i.e.` `transform` and will raise a `FutureWarning` if they are not consistent.
@@ -224,6 +227,10 @@ Changelog
 
 :mod:`sklearn.compose`
 ......................
+
+- |API| Adds `prefix_feature_names_out` to :class:`compose.ColumnTransformer`.
+  This flag controls the prefixing of feature names out in
+  :term:`get_feature_names_out`. :pr:`18444` by `Thomas Fan`_.
 
 - |Enhancement| :class:`compose.ColumnTransformer` now records the output
   of each transformer in `output_indices_`. :pr:`18393` by

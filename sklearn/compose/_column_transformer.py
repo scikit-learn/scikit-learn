@@ -7,6 +7,8 @@ different columns.
 #         Joris Van den Bossche
 # License: BSD
 from itertools import chain
+from typing import Iterable
+from collections import Counter
 
 import numpy as np
 from scipy import sparse
@@ -19,8 +21,9 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
+from ..utils.deprecation import deprecated
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
 from ..utils.fixes import delayed
 
 
@@ -109,6 +112,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
+    prefix_feature_names_out : bool, default=True
+        If True, :meth:`get_feature_names_out` will prefix all feature names
+        with the name of the transformer that generated that feature.
+        If False, :meth:`get_feature_names_out` will not prefix any feature
+        names and will error if feature names are not unique.
+
+        .. versionadded:: 1.0
+
     Attributes
     ----------
     transformers_ : list
@@ -193,6 +204,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         n_jobs=None,
         transformer_weights=None,
         verbose=False,
+        prefix_feature_names_out=True,
     ):
         self.transformers = transformers
         self.remainder = remainder
@@ -200,6 +212,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.verbose = verbose
+        self.prefix_feature_names_out = prefix_feature_names_out
 
     @property
     def _transformers(self):
@@ -373,6 +386,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # Use Bunch object to improve autocomplete
         return Bunch(**{name: trans for name, trans, _ in self.transformers_})
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self):
         """Get feature names from all transformers.
 
@@ -405,6 +422,107 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 )
             feature_names.extend([f"{name}__{f}" for f in trans.get_feature_names()])
         return feature_names
+
+    def _get_feature_name_out_for_transformer(
+        self, name, trans, column, feature_names_in
+    ):
+        """Gets feature names of transformer.
+
+        Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
+        """
+        if trans == "drop" or _is_empty_column_selection(column):
+            return
+        elif trans == "passthrough":
+            if (not isinstance(column, slice)) and all(
+                isinstance(col, str) for col in column
+            ):
+                # selection was already strings
+                return column
+            else:
+                return feature_names_in[column]
+
+        # An actual transformer
+        if not hasattr(trans, "get_feature_names_out"):
+            raise AttributeError(
+                f"Transformer {name} (type {type(trans).__name__}) does "
+                "not provide get_feature_names_out."
+            )
+        if isinstance(column, Iterable) and not all(
+            isinstance(col, str) for col in column
+        ):
+            column = _safe_indexing(feature_names_in, column)
+        return trans.get_feature_names_out(column)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        check_is_fitted(self)
+        input_features = _check_feature_names_in(self, input_features)
+
+        # List of tuples (name, feature_names_out)
+        transformer_with_feature_names_out = []
+        for name, trans, column, _ in self._iter(fitted=True):
+            feature_names_out = self._get_feature_name_out_for_transformer(
+                name, trans, column, input_features
+            )
+            if feature_names_out is None:
+                continue
+            transformer_with_feature_names_out.append((name, feature_names_out))
+
+        if not transformer_with_feature_names_out:
+            # No feature names
+            return np.array([], dtype=object)
+
+        if self.prefix_feature_names_out:
+            # Prefix the feature names out with the transformers name
+            names = list(
+                chain.from_iterable(
+                    (f"{name}__{i}" for i in feature_names_out)
+                    for name, feature_names_out in transformer_with_feature_names_out
+                )
+            )
+            return np.asarray(names, dtype=object)
+
+        # prefix_feature_names_out is False
+        # Check that names are all unique without a prefix
+        feature_names_count = Counter(
+            chain.from_iterable(s for _, s in transformer_with_feature_names_out)
+        )
+        top_6_overlap = [
+            name for name, count in feature_names_count.most_common(6) if count > 1
+        ]
+        top_6_overlap.sort()
+        if top_6_overlap:
+            if len(top_6_overlap) == 6:
+                # There are more than 5 overlapping names, we only show the 5
+                # of the feature names
+                names_repr = str(top_6_overlap[:5])[:-1] + ", ...]"
+            else:
+                names_repr = str(top_6_overlap)
+            raise ValueError(
+                f"Output feature names: {names_repr} are not unique. Please set "
+                "prefix_feature_names_out=True to add prefixes to feature names"
+            )
+
+        return np.concatenate(
+            [name for _, name in transformer_with_feature_names_out],
+        )
 
     def _update_fitted_transformers(self, transformers):
         # transformers are fitted; excludes 'drop' cases
@@ -733,7 +851,12 @@ def _get_transformer_list(estimators):
 
 
 def make_column_transformer(
-    *transformers, remainder="drop", sparse_threshold=0.3, n_jobs=None, verbose=False
+    *transformers,
+    remainder="drop",
+    sparse_threshold=0.3,
+    n_jobs=None,
+    verbose=False,
+    prefix_feature_names_out=True,
 ):
     """Construct a ColumnTransformer from the given transformers.
 
@@ -796,6 +919,14 @@ def make_column_transformer(
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
+    prefix_feature_names_out : bool, default=True
+        If True, :meth:`get_feature_names_out` will prefix all feature names
+        with the name of the transformer that generated that feature.
+        If False, :meth:`get_feature_names_out` will not prefix any feature
+        names and will error if feature names are not unique.
+
+        .. versionadded:: 1.0
+
     Returns
     -------
     ct : ColumnTransformer
@@ -828,6 +959,7 @@ def make_column_transformer(
         remainder=remainder,
         sparse_threshold=sparse_threshold,
         verbose=verbose,
+        prefix_feature_names_out=prefix_feature_names_out,
     )
 
 
