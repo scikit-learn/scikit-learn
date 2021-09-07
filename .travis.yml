@@ -18,6 +18,7 @@ env:
     - OPENBLAS_NUM_THREADS=2
     - SKLEARN_BUILD_PARALLEL=3
     - SKLEARN_SKIP_NETWORK_TESTS=1
+    - PYTHONUNBUFFERED=1
     # Custom environment variables for the ARM wheel builder
     - CIBW_BUILD_VERBOSITY=1
     - CIBW_TEST_COMMAND="bash {project}/build_tools/travis/test_wheels.sh"
@@ -25,7 +26,8 @@ env:
                         OMP_NUM_THREADS=2
                         OPENBLAS_NUM_THREADS=2
                         SKLEARN_BUILD_PARALLEL=3
-                        SKLEARN_SKIP_NETWORK_TESTS=1"
+                        SKLEARN_SKIP_NETWORK_TESTS=1
+                        PYTHONUNBUFFERED=1"
 
 jobs:
   include:
