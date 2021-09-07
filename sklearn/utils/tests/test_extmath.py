@@ -577,7 +577,7 @@ def test_randomized_svd_lapack_driver():
     # Number of components
     k = 10
     u1, s1, vt1 = randomized_svd(M, k, lapack_svd_driver="gesdd")
-    u2, s2, vt2 = randomized_svd(M, k, lapack_svd_driver="gesdd")
+    u2, s2, vt2 = randomized_svd(M, k, lapack_svd_driver="gesvd")
 
     # Check shape and contents
     assert u1.shape == u2.shape
