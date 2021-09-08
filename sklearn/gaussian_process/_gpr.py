@@ -324,7 +324,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
-        """Predict using the Gaussian process regression model
+        """Predict using the Gaussian process regression model.
 
         We can also predict based on an unfitted model by using the GP prior.
         In addition to the mean of the predictive distribution, optionally also
