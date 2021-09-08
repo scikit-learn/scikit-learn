@@ -904,7 +904,7 @@ Changelog
   warning was previously raised in resampling utilities and functions using
   those utilities (e.g. :func:`model_selection.train_test_split`,
   :func:`model_selection.cross_validate`,
-  :func:`model_seleection.cross_val_score`,
+  :func:`model_selection.cross_val_score`,
   :func:`model_selection.cross_val_predict`).
   :pr:`20673` by :user:`Joris Van den Bossche  <jorisvandenbossche>`.
 
