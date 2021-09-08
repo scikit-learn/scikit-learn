@@ -622,6 +622,11 @@ class GammaRegressor(GeneralizedLinearRegressor):
     2.896...
     >>> clf.predict([[1, 0], [2, 8]])
     array([19.483..., 35.795...])
+
+    See Also
+    ----------
+    GeneralizedLinearRegressor : Generalized Linear Model with a Gamma
+        distribution.
     """
 
     def __init__(
