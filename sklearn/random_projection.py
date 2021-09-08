@@ -336,13 +336,13 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             matrix dimensions based on the theory referenced in the
             afore mentioned papers.
 
-        y
-            Ignored
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
-        self
-
+        self : object
+            BaseRandomProjection class instance.
         """
         X = self._validate_data(X, accept_sparse=["csr", "csc"])
 
