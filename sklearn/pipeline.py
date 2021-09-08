@@ -467,7 +467,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_final_estimator_has("fit_predict"))
     def fit_predict(self, X, y=None, **fit_params):
-        """Apply fit_predict of last step in pipeline after transforms.
+        """Apply `fit_predict` of last step in pipeline after transforms.
 
         Applies fit_transforms of a pipeline to the data, followed by the
         fit_predict method of the final estimator in the pipeline. Valid
