@@ -113,11 +113,14 @@ def test_spline_transformer_integer_knots(extrapolation):
     ).fit_transform(X)
 
 
-def test_spline_transformer_feature_names():
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_spline_transformer_feature_names(get_names):
     """Test that SplineTransformer generates correct features name."""
     X = np.arange(20).reshape(10, 2)
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=True).fit(X)
-    feature_names = splt.get_feature_names()
+    feature_names = getattr(splt, get_names)()
     assert_array_equal(
         feature_names,
         [
@@ -135,7 +138,7 @@ def test_spline_transformer_feature_names():
     )
 
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=False).fit(X)
-    feature_names = splt.get_feature_names(["a", "b"])
+    feature_names = getattr(splt, get_names)(["a", "b"])
     assert_array_equal(
         feature_names,
         [
@@ -605,7 +608,10 @@ def test_polynomial_features_two_features(
         assert tf.powers_.shape == (tf.n_output_features_, tf.n_features_in_)
 
 
-def test_polynomial_feature_names():
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_polynomial_feature_names(get_names):
     X = np.arange(30).reshape(10, 3)
     poly = PolynomialFeatures(degree=2, include_bias=True).fit(X)
     feature_names = poly.get_feature_names()
@@ -616,7 +622,7 @@ def test_polynomial_feature_names():
     assert len(feature_names) == poly.transform(X).shape[1]
 
     poly = PolynomialFeatures(degree=3, include_bias=False).fit(X)
-    feature_names = poly.get_feature_names(["a", "b", "c"])
+    feature_names = getattr(poly, get_names)(["a", "b", "c"])
     assert_array_equal(
         [
             "a",
@@ -644,7 +650,7 @@ def test_polynomial_feature_names():
     assert len(feature_names) == poly.transform(X).shape[1]
 
     poly = PolynomialFeatures(degree=(2, 3), include_bias=False).fit(X)
-    feature_names = poly.get_feature_names(["a", "b", "c"])
+    feature_names = getattr(poly, get_names)(["a", "b", "c"])
     assert_array_equal(
         [
             "a^2",
@@ -671,7 +677,7 @@ def test_polynomial_feature_names():
     poly = PolynomialFeatures(
         degree=(3, 3), include_bias=True, interaction_only=True
     ).fit(X)
-    feature_names = poly.get_feature_names(["a", "b", "c"])
+    feature_names = getattr(poly, get_names)(["a", "b", "c"])
     assert_array_equal(["1", "a b c"], feature_names)
     assert len(feature_names) == poly.transform(X).shape[1]
 
@@ -887,3 +893,13 @@ def test_polynomial_features_deprecated_n_input_features():
 
     with pytest.warns(FutureWarning, match=depr_msg):
         PolynomialFeatures().fit(X).n_input_features_
+
+
+# TODO: Remove in 1.2 when get_feature_names is removed
+@pytest.mark.parametrize("Transformer", [SplineTransformer, PolynomialFeatures])
+def test_get_feature_names_deprecated(Transformer):
+    X = np.arange(30).reshape(10, 3)
+    poly = Transformer().fit(X)
+    msg = "get_feature_names is deprecated in 1.0"
+    with pytest.warns(FutureWarning, match=msg):
+        poly.get_feature_names()

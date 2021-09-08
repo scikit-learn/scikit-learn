@@ -416,6 +416,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     MiniBatchKMeans : Alternative implementation that does incremental updates
@@ -474,7 +480,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "`fit_` is deprecated in 1.0 and will be removed in 1.2"
+        "`fit_` is deprecated in 1.0 and will be removed in 1.2."
     )
     @property
     def fit_(self):
@@ -483,7 +489,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2"
+        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2."
     )
     @property
     def partial_fit_(self):

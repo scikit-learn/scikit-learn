@@ -120,7 +120,7 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 #   capacity).
 ohe = (rf.named_steps['preprocess']
          .named_transformers_['cat'])
-feature_names = ohe.get_feature_names(input_features=categorical_columns)
+feature_names = ohe.get_feature_names_out(categorical_columns)
 feature_names = np.r_[feature_names, numerical_columns]
 
 tree_feature_importances = (
