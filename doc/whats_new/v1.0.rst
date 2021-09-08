@@ -834,6 +834,9 @@ Changelog
   `n_features_in_` and will be removed in 1.2. :pr:`20240` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`preprocessing.FunctionTransformer` does not set `n_features_in_`
+  based on the input to `inverse_transform`. :pr:`20961` by `Thomas Fan`_.
+
 :mod:`sklearn.svm`
 ...................
 
