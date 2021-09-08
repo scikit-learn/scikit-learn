@@ -173,9 +173,17 @@ class Pipeline(_BaseComposition):
         you can directly set the parameters of the estimators contained in
         `steps`.
 
+        Parameters
+        ----------
+        **kwargs : dict
+            Parameters of this estimator or parameters of estimators contained
+            in `steps`. Parameters of the steps may be set using its name and
+            the parameter name separated by a '__'.
+
         Returns
         -------
-        self
+        self : object
+            Pipeline class instance.
         """
         self._set_params("steps", **kwargs)
         return self
@@ -266,6 +274,10 @@ class Pipeline(_BaseComposition):
 
     @property
     def named_steps(self):
+        """Access the steps by name.
+
+        Read-only attribute to access any step by given name.
+        Keys are steps names and values are the steps objects."""
         # Use Bunch object to improve autocomplete
         return Bunch(**dict(self.steps))
 
@@ -349,7 +361,7 @@ class Pipeline(_BaseComposition):
         return X
 
     def fit(self, X, y=None, **fit_params):
-        """Fit the model
+        """Fit the model.
 
         Fit all the transforms one after the other and transform the
         data, then fit the transformed data using the final estimator.
@@ -372,7 +384,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         self : Pipeline
-            This estimator
+            Pipeline with fitted steps.
         """
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
@@ -384,7 +396,7 @@ class Pipeline(_BaseComposition):
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit the model and transform with the final estimator
+        """Fit the model and transform with the final estimator.
 
         Fits all the transforms one after the other and transforms the
         data, then uses fit_transform on transformed data with the final
@@ -408,7 +420,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         Xt : array-like of shape  (n_samples, n_transformed_features)
-            Transformed samples
+            Transformed samples.
         """
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
@@ -425,7 +437,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_final_estimator_has("predict"))
     def predict(self, X, **predict_params):
-        """Apply transforms to the data, and predict with the final estimator
+        """Apply transforms to the data, and predict with the final estimator.
 
         Parameters
         ----------
@@ -446,6 +458,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         y_pred : array-like
+            Result of calling ``predict`` on the final estimator.
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -454,7 +467,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_final_estimator_has("fit_predict"))
     def fit_predict(self, X, y=None, **fit_params):
-        """Applies fit_predict of last step in pipeline after transforms.
+        """Apply fit_predict of last step in pipeline after transforms.
 
         Applies fit_transforms of a pipeline to the data, followed by the
         fit_predict method of the final estimator in the pipeline. Valid
@@ -478,6 +491,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         y_pred : array-like
+            Result of calling ``fit_predict`` on the final estimator.
         """
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
@@ -489,7 +503,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_final_estimator_has("predict_proba"))
     def predict_proba(self, X, **predict_proba_params):
-        """Apply transforms, and predict_proba of the final estimator
+        """Apply transforms, and predict_proba of the final estimator.
 
         Parameters
         ----------
@@ -504,6 +518,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         y_proba : array-like of shape (n_samples, n_classes)
+            Result of calling ``predict_proba`` on the final estimator.
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -512,7 +527,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_final_estimator_has("decision_function"))
     def decision_function(self, X):
-        """Apply transforms, and decision_function of the final estimator
+        """Apply transforms, and decision_function of the final estimator.
 
         Parameters
         ----------
@@ -523,6 +538,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         y_score : array-like of shape (n_samples, n_classes)
+            Result of calling ``decision_function`` on the final estimator.
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -542,6 +558,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         y_score : ndarray of shape (n_samples,)
+            Result of calling ``score_samples`` on the final estimator.
         """
         Xt = X
         for _, _, transformer in self._iter(with_final=False):
@@ -550,7 +567,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_final_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X, **predict_log_proba_params):
-        """Apply transforms, and predict_log_proba of the final estimator
+        """Apply transforms, and predict_log_proba of the final estimator.
 
         Parameters
         ----------
@@ -565,6 +582,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         y_score : array-like of shape (n_samples, n_classes)
+            Result of calling ``predict_log_proba`` on the final estimator.
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -578,7 +596,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_can_transform)
     def transform(self, X):
-        """Apply transforms, and transform with the final estimator
+        """Apply transforms, and transform with the final estimator.
 
         This also works where final estimator is ``None``: all prior
         transformations are applied.
@@ -592,6 +610,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         Xt : array-like of shape  (n_samples, n_transformed_features)
+            Transformed data.
         """
         Xt = X
         for _, _, transform in self._iter():
@@ -603,7 +622,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_can_inverse_transform)
     def inverse_transform(self, Xt):
-        """Apply inverse transformations in reverse order
+        """Apply inverse transformations in reverse order.
 
         All estimators in the pipeline must support ``inverse_transform``.
 
@@ -618,6 +637,8 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         Xt : array-like of shape (n_samples, n_features)
+            Inverse transformed data, that is, data in the original feature
+            space.
         """
         reverse_iter = reversed(list(self._iter()))
         for _, _, transform in reverse_iter:
@@ -626,7 +647,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_final_estimator_has("score"))
     def score(self, X, y=None, sample_weight=None):
-        """Apply transforms, and score with the final estimator
+        """Apply transforms, and score with the final estimator.
 
         Parameters
         ----------
@@ -645,6 +666,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         score : float
+            Result of calling ``score`` on the final estimator.
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -656,6 +678,7 @@ class Pipeline(_BaseComposition):
 
     @property
     def classes_(self):
+        """The classes labels. Only exist if the last step is a classifier."""
         return self.steps[-1][1].classes_
 
     def _more_tags(self):
@@ -700,11 +723,13 @@ class Pipeline(_BaseComposition):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during first step `fit` method."""
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
 
     @property
     def feature_names_in_(self):
+        """Names of features seen during first step `fit` method."""
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].feature_names_in_
 
