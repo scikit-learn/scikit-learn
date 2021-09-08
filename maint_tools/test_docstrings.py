@@ -64,7 +64,6 @@ DOCSTRING_IGNORE_LIST = [
     "SGDRegressor",
     "SelectFdr",
     "SelectFpr",
-    "SelectFromModel",
     "SelectFwe",
     "SelectKBest",
     "SelfTrainingClassifier",
