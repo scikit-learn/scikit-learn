@@ -346,7 +346,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         log_prob : array, shape (n_samples,)
-            Log-likelihood of each sample in X under the current model.
+            Log-likelihood of each sample in `X` under the current model.
         """
         check_is_fitted(self)
         X = self._validate_data(X, reset=False)
@@ -368,7 +368,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         log_likelihood : float
-            Log-likelihood of X under the Gaussian mixture model.
+            Log-likelihood of `X` under the Gaussian mixture model.
         """
         return self.score_samples(X).mean()
 

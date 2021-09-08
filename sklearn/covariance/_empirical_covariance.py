@@ -235,8 +235,7 @@ class EmpiricalCovariance(BaseEstimator):
         return self
 
     def score(self, X_test, y=None):
-        """Compute the log-likelihood of X_test under the Gaussian model
-         using `self.covariance_`.
+        """Compute the log-likelihood of `X_test` under the Gaussian model using `self.covariance_`.
 
         Parameters
         ----------
@@ -252,7 +251,7 @@ class EmpiricalCovariance(BaseEstimator):
         Returns
         -------
         res : float
-            The log-likelihood of X_test with `self.covariance_` as an
+            The log-likelihood of `X_test` with `self.covariance_` as an
             estimator of the Gaussian model covariance matrix.
         """
         X_test = self._validate_data(X_test, reset=False)

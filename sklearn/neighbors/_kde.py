@@ -219,7 +219,7 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         density : ndarray of shape (n_samples,)
-            Log-likelihood of each sample in X. These are normalized to be
+            Log-likelihood of each sample in `X`. These are normalized to be
             probability densities, so values will be low for high-dimensional
             data.
         """
