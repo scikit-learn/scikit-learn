@@ -250,7 +250,7 @@ cdef class PairwiseDistancesReduction:
         self.n_threads = n_threads
 
         if self.n_threads == -1:
-            # Using all possible cores
+            # By default use all available threads.
             self.effective_omp_n_thread = _openmp_effective_n_threads()
         else:
             check_scalar(self.n_threads, "n_threads", Integral, min_val=1)
