@@ -38,9 +38,20 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.utils`
+....................
 
-:mod:`sklearn.decomposition`
-............................
+- |Enhancement| :func:`utils.validation._check_sample_weight` can perform a
+  non-negativity check on the sample weights. It can be turned on
+  using the only_non_negative bool parameter.
+  Estimators that check for non-negative weights are updated:
+  :func:`linear_model.LinearRegression` (here the previous
+  error message was misleading),
+  :func:`ensemble.AdaBoostClassifier`,
+  :func:`ensemble.AdaBoostRegressor`,
+  :func:`neighbors.KernelDensity`.
+  :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
+  and :user:`András Simon <simonandras>`.
 
 
 Code and Documentation Contributors

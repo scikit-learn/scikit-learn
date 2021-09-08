@@ -901,7 +901,7 @@ Changelog
   warning was previously raised in resampling utilities and functions using
   those utilities (e.g. :func:`model_selection.train_test_split`,
   :func:`model_selection.cross_validate`,
-  :func:`model_selection.cross_val_score`,
+  :func:`model_seleection.cross_val_score`,
   :func:`model_selection.cross_val_predict`).
   :pr:`20673` by :user:`Joris Van den Bossche  <jorisvandenbossche>`.
 
@@ -909,18 +909,6 @@ Changelog
   numbers would raise an error due to overflow in C types (`np.float64` or
   `np.int64`).
   :pr:`20727` by `Guillaume Lemaitre`_.
-
-- |Enhancement| :func:`utils.validation._check_sample_weight` can perform a
-  non-negativity check on the sample weights. It can be turned on
-  using the only_non_negative bool parameter.
-  Estimators that check for non-negative weights are updated:
-  :func:`linear_model.LinearRegression` (here the previous
-  error message was misleading),
-  :func:`ensemble.AdaBoostClassifier`,
-  :func:`ensemble.AdaBoostRegressor`,
-  :func:`neighbors.KernelDensity`.
-  :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
-  and :user:`András Simon <simonandras>`.
 
 - |API| :func:`utils._testing.assert_warns` and
   :func:`utils._testing.assert_warns_message` are deprecated in 1.0 and will
