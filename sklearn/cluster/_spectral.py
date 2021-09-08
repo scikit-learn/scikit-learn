@@ -258,9 +258,14 @@ def spectral_clustering(
       Ulrike von Luxburg
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
 
-    - Multiclass spectral clustering, 2003
-      Stella X. Yu, Jianbo Shi
-      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+    - Modern Preconditioned Eigensolvers for Spectral Image Segmentation
+      and Graph Bisection, 2003
+      Andrew Knyazev
+      https://bit.ly/3tmTR4k
+
+    - Multiscale Spectral Graph Partitioning and Image Segmentation, 2006
+      Andrew Knyazev
+      https://bit.ly/3toJU6i
 
     Notes
     -----
