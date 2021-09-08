@@ -395,7 +395,7 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def transform(self, X):
-        """Project the data by using matrix product with the random matrix
+        """Project the data by using matrix product with the random matrix.
 
         Parameters
         ----------
