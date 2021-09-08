@@ -205,7 +205,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            GaussianProcessRegressor class instance.
         """
         if self.kernel is None:  # Use an RBF kernel as default
             self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
