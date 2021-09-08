@@ -785,7 +785,7 @@ class SelectFdr(_BaseFilter):
 
 
 class SelectFwe(_BaseFilter):
-    """Filter: Select the p-values corresponding to Family-wise error rate
+    """Filter: Select the p-values corresponding to Family-wise error rate.
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
@@ -799,17 +799,6 @@ class SelectFwe(_BaseFilter):
 
     alpha : float, default=5e-2
         The highest uncorrected p-value for features to keep.
-
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFwe, chi2
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> X.shape
-    (569, 30)
-    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)
-    >>> X_new.shape
-    (569, 15)
 
     Attributes
     ----------
@@ -842,6 +831,17 @@ class SelectFwe(_BaseFilter):
     SelectFdr : Select features based on an estimated false discovery rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFwe, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 15)
     """
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
