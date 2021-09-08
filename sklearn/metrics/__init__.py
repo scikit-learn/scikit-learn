@@ -74,6 +74,7 @@ from ._regression import r2_score
 from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
 from ._regression import mean_gamma_deviance
+from ._regression import d2_tweedie_score
 
 
 from ._scorer import check_scoring
@@ -109,6 +110,7 @@ __all__ = [
     "confusion_matrix",
     "consensus_score",
     "coverage_error",
+    "d2_tweedie_score",
     "dcg_score",
     "davies_bouldin_score",
     "DetCurveDisplay",

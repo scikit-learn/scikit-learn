@@ -51,8 +51,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import DetCurveDisplay
-from sklearn.metrics import plot_roc_curve
+from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -84,7 +83,7 @@ fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
 for name, clf in classifiers.items():
     clf.fit(X_train, y_train)
 
-    plot_roc_curve(clf, X_test, y_test, ax=ax_roc, name=name)
+    RocCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_roc, name=name)
     DetCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_det, name=name)
 
 ax_roc.set_title("Receiver Operating Characteristic (ROC) curves")

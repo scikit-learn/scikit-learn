@@ -12,6 +12,7 @@
 from functools import wraps
 import warnings
 import numbers
+import operator
 
 import numpy as np
 import scipy.sparse as sp
@@ -1234,7 +1235,15 @@ def check_non_negative(X, whom):
         raise ValueError("Negative values in data passed to %s" % whom)
 
 
-def check_scalar(x, name, target_type, *, min_val=None, max_val=None):
+def check_scalar(
+    x,
+    name,
+    target_type,
+    *,
+    min_val=None,
+    max_val=None,
+    include_boundaries="both",
+):
     """Validate scalar parameters type and value.
 
     Parameters
@@ -1252,12 +1261,27 @@ def check_scalar(x, name, target_type, *, min_val=None, max_val=None):
         The minimum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have a lower bound.
 
-    max_val : float or int, default=None
+    max_val : float or int, default=False
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
-    Raises
+    include_boundaries : {"left", "right", "both", "neither"}, default="both"
+        Whether the interval defined by `min_val` and `max_val` should include
+        the boundaries. Possible choices are:
+
+        - `"left"`: only `min_val` is included in the valid interval;
+        - `"right"`: only `max_val` is included in the valid interval;
+        - `"both"`: `min_val` and `max_val` are included in the valid interval;
+        - `"neither"`: neither `min_val` nor `max_val` are included in the
+          valid interval.
+
+    Returns
     -------
+    x : numbers.Number
+        The validated number.
+
+    Raises
+    ------
     TypeError
         If the parameter's type does not match the desired type.
 
@@ -1266,15 +1290,34 @@ def check_scalar(x, name, target_type, *, min_val=None, max_val=None):
     """
 
     if not isinstance(x, target_type):
-        raise TypeError(
-            "`{}` must be an instance of {}, not {}.".format(name, target_type, type(x))
+        raise TypeError(f"{name} must be an instance of {target_type}, not {type(x)}.")
+
+    expected_include_boundaries = ("left", "right", "both", "neither")
+    if include_boundaries not in expected_include_boundaries:
+        raise ValueError(
+            f"Unknown value for `include_boundaries`: {repr(include_boundaries)}. "
+            f"Possible values are: {expected_include_boundaries}."
         )
 
-    if min_val is not None and x < min_val:
-        raise ValueError("`{}`= {}, must be >= {}.".format(name, x, min_val))
+    comparison_operator = (
+        operator.lt if include_boundaries in ("left", "both") else operator.le
+    )
+    if min_val is not None and comparison_operator(x, min_val):
+        raise ValueError(
+            f"{name} == {x}, must be"
+            f" {'>=' if include_boundaries in ('left', 'both') else '>'} {min_val}."
+        )
 
-    if max_val is not None and x > max_val:
-        raise ValueError("`{}`= {}, must be <= {}.".format(name, x, max_val))
+    comparison_operator = (
+        operator.gt if include_boundaries in ("right", "both") else operator.ge
+    )
+    if max_val is not None and comparison_operator(x, max_val):
+        raise ValueError(
+            f"{name} == {x}, must be"
+            f" {'<=' if include_boundaries in ('right', 'both') else '<'} {max_val}."
+        )
+
+    return x
 
 
 def _check_psd_eigenvalues(lambdas, enable_warnings=False):
@@ -1616,7 +1659,7 @@ def _get_feature_names(X):
 
     # extract feature names for support array containers
     if hasattr(X, "columns"):
-        feature_names = np.asarray(X.columns)
+        feature_names = np.asarray(X.columns, dtype=object)
 
     if feature_names is None or len(feature_names) == 0:
         return
@@ -1638,3 +1681,50 @@ def _get_feature_names(X):
     # Only feature names of all strings are supported
     if types[0] == "str":
         return feature_names
+
+
+def _check_feature_names_in(estimator, input_features=None):
+    """Get output feature names for transformation.
+
+    Parameters
+    ----------
+    input_features : array-like of str or None, default=None
+        Input features.
+
+        - If `input_features` is `None`, then `feature_names_in_` is
+            used as feature names in. If `feature_names_in_` is not defined,
+            then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+        - If `input_features` is an array-like, then `input_features` must
+            match `feature_names_in_` if `feature_names_in_` is defined.
+
+    Returns
+    -------
+    feature_names_in : ndarray of str
+        Feature names in.
+    """
+
+    feature_names_in_ = getattr(estimator, "feature_names_in_", None)
+    n_features_in_ = getattr(estimator, "n_features_in_", None)
+
+    if input_features is not None:
+        input_features = np.asarray(input_features, dtype=object)
+        if feature_names_in_ is not None and not np.array_equal(
+            feature_names_in_, input_features
+        ):
+            raise ValueError("input_features is not equal to feature_names_in_")
+
+        if n_features_in_ is not None and len(input_features) != n_features_in_:
+            raise ValueError(
+                "input_features should have length equal to number of "
+                f"features ({n_features_in_}), got {len(input_features)}"
+            )
+        return input_features
+
+    if feature_names_in_ is not None:
+        return feature_names_in_
+
+    # Generates feature names if `n_features_in_` is defined
+    if n_features_in_ is None:
+        raise ValueError("Unable to generate feature names without n_features_in_")
+
+    return np.asarray([f"x{i}" for i in range(n_features_in_)], dtype=object)

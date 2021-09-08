@@ -109,6 +109,12 @@ class Pipeline(_BaseComposition):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     make_pipeline : Convenience function for simplified pipeline construction.
@@ -667,10 +673,40 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], "_pairwise", False)
 
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Transform input features using the pipeline.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        for _, name, transform in self._iter():
+            if not hasattr(transform, "get_feature_names_out"):
+                raise AttributeError(
+                    "Estimator {} does not provide get_feature_names_out. "
+                    "Did you mean to call pipeline[:-1].get_feature_names_out"
+                    "()?".format(name)
+                )
+            feature_names = transform.get_feature_names_out(input_features)
+        return feature_names
+
     @property
     def n_features_in_(self):
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
+
+    @property
+    def feature_names_in_(self):
+        # delegate to first step (which will call _check_is_fitted)
+        return self.steps[0][1].feature_names_in_
 
     def __sklearn_is_fitted__(self):
         """Indicate whether pipeline has been fit."""
@@ -826,10 +862,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Parameters
     ----------
-    transformer_list : list of (string, transformer) tuples
-        List of transformer objects to be applied to the data. The first
-        half of each tuple is the name of the transformer. The tranformer can
-        be 'drop' for it to be ignored.
+    transformer_list : list of tuple
+        List of tuple containing `(str, transformer)`. The first element
+        of the tuple is name affected to the transformer while the
+        second element is a scikit-learn transformer instance.
+        The transformer instance can also be `"drop"` for it to be
+        ignored.
 
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
@@ -916,9 +954,17 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         you can directly set the parameters of the estimators contained in
         `tranformer_list`.
 
+        Parameters
+        ----------
+        **kwargs : dict
+            Parameters of this estimator or parameters of estimators contained
+            in `transform_list`. Parameters of the transformers may be set
+            using its name and the parameter name separated by a '__'.
+
         Returns
         -------
-        self
+        self : object
+            FeatureUnion class instance.
         """
         self._set_params("transformer_list", **kwargs)
         return self
@@ -965,6 +1011,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             if trans != "drop"
         )
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self):
         """Get feature names from all transformers.
 
@@ -983,6 +1033,31 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             feature_names.extend([name + "__" + f for f in trans.get_feature_names()])
         return feature_names
 
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        feature_names = []
+        for name, trans, _ in self._iter():
+            if not hasattr(trans, "get_feature_names_out"):
+                raise AttributeError(
+                    "Transformer %s (type %s) does not provide get_feature_names_out."
+                    % (str(name), type(trans).__name__)
+                )
+            feature_names.extend(
+                [f"{name}__{f}" for f in trans.get_feature_names_out(input_features)]
+            )
+        return np.asarray(feature_names, dtype=object)
+
     def fit(self, X, y=None, **fit_params):
         """Fit all transformers using X.
 
@@ -994,10 +1069,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
+        **fit_params : dict, default=None
+            Parameters to pass to the fit method of the estimator.
+
         Returns
         -------
-        self : FeatureUnion
-            This estimator
+        self : object
+            FeatureUnion class instance.
         """
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
@@ -1018,12 +1096,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
+        **fit_params : dict, default=None
+            Parameters to pass to the fit method of the estimator.
+
         Returns
         -------
         X_t : array-like or sparse matrix of \
                 shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
-            sum of n_components (output dimension) over transformers.
+            The `hstack` of results of transformers. `sum_n_components` is the
+            sum of `n_components` (output dimension) over transformers.
         """
         results = self._parallel_func(X, y, fit_params, _fit_transform_one)
         if not results:
@@ -1072,8 +1153,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         -------
         X_t : array-like or sparse matrix of \
                 shape (n_samples, sum_n_components)
-            hstack of results of transformers. sum_n_components is the
-            sum of n_components (output dimension) over transformers.
+            The `hstack` of results of transformers. `sum_n_components` is the
+            sum of `n_components` (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, X, None, weight)
@@ -1101,6 +1182,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
+
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
 
