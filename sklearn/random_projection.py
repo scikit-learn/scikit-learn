@@ -477,6 +477,11 @@ class GaussianRandomProjection(BaseRandomProjection):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    SparseRandomProjection : Reduce dimensionality through sparse
+        random projection.
+
     Examples
     --------
     >>> import numpy as np
@@ -487,11 +492,6 @@ class GaussianRandomProjection(BaseRandomProjection):
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
-
-    See Also
-    --------
-    SparseRandomProjection
-
     """
 
     def __init__(self, n_components="auto", *, eps=0.1, random_state=None):
