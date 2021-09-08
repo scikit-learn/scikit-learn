@@ -653,6 +653,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        """Return the family of the regressor."""
         # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
         return "gamma"
 
