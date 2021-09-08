@@ -63,7 +63,6 @@ DOCSTRING_IGNORE_LIST = [
     "SGDOneClassSVM",
     "SGDRegressor",
     "SelectFdr",
-    "SelectFpr",
     "SelectFromModel",
     "SelectFwe",
     "SelectKBest",
