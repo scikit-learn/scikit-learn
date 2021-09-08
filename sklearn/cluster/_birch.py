@@ -480,7 +480,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "`fit_` is deprecated in 1.0 and will be removed in 1.2"
+        "`fit_` is deprecated in 1.0 and will be removed in 1.2."
     )
     @property
     def fit_(self):
@@ -489,7 +489,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2"
+        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2."
     )
     @property
     def partial_fit_(self):
