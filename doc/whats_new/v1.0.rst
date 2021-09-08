@@ -771,10 +771,6 @@ Changelog
   the final estimator.
   :pr:`19790` by :user:`Christopher Flynn <crflynn>`.
 
-- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
-  Setting a transformer to "passthrough" will pass the features unchanged.
-  :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
-
 :mod:`sklearn.preprocessing`
 ............................
 
