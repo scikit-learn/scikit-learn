@@ -834,6 +834,9 @@ Changelog
   `n_features_in_` and will be removed in 1.2. :pr:`20240` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`preprocessing.FunctionTransformer` does not set `n_features_in_`
+  based on the input to `inverse_transform`. :pr:`20961` by `Thomas Fan`_.
+
 :mod:`sklearn.svm`
 ...................
 
@@ -901,7 +904,7 @@ Changelog
   warning was previously raised in resampling utilities and functions using
   those utilities (e.g. :func:`model_selection.train_test_split`,
   :func:`model_selection.cross_validate`,
-  :func:`model_seleection.cross_val_score`,
+  :func:`model_selection.cross_val_score`,
   :func:`model_selection.cross_val_predict`).
   :pr:`20673` by :user:`Joris Van den Bossche  <jorisvandenbossche>`.
 
