@@ -310,7 +310,7 @@ def plot_partial_dependence(
     )
 
 
-# TODO: Move into PartialDependenceDisplay.from_estimator
+# TODO: Move into PartialDependenceDisplay.from_estimator in 1.2
 def _plot_partial_dependence(
     estimator,
     X,
@@ -334,7 +334,7 @@ def _plot_partial_dependence(
     subsample=1000,
     random_state=None,
 ):
-    """See plot_partial_dependence for details"""
+    """See PartialDependenceDisplay.from_estimator for details"""
     import matplotlib.pyplot as plt  # noqa
 
     # set target_idx for multi-class estimators
