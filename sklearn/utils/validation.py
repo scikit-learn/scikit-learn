@@ -1492,7 +1492,9 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     return lambdas
 
 
-def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
+def _check_sample_weight(
+    sample_weight, X, dtype=None, copy=False, only_non_negative=False
+):
     """Validate sample weights.
 
     Note that passing sample_weight=None will output an array of ones.
@@ -1503,17 +1505,22 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
     Parameters
     ----------
     sample_weight : {ndarray, Number or None}, shape (n_samples,)
-       Input sample weights.
+        Input sample weights.
 
     X : {ndarray, list, sparse matrix}
         Input data.
 
+    only_non_negative : bool, default=False,
+        Whether or not the weights are expected to be non-negative.
+
+        .. versionadded:: 1.0
+
     dtype : dtype, default=None
-       dtype of the validated `sample_weight`.
-       If None, and the input `sample_weight` is an array, the dtype of the
-       input is preserved; otherwise an array with the default numpy dtype
-       is be allocated.  If `dtype` is not one of `float32`, `float64`,
-       `None`, the output will be of dtype `float64`.
+        dtype of the validated `sample_weight`.
+        If None, and the input `sample_weight` is an array, the dtype of the
+        input is preserved; otherwise an array with the default numpy dtype
+        is be allocated.  If `dtype` is not one of `float32`, `float64`,
+        `None`, the output will be of dtype `float64`.
 
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
@@ -1521,7 +1528,7 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
     Returns
     -------
     sample_weight : ndarray of shape (n_samples,)
-       Validated sample weight. It is guaranteed to be "C" contiguous.
+        Validated sample weight. It is guaranteed to be "C" contiguous.
     """
     n_samples = _num_samples(X)
 
@@ -1552,6 +1559,9 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
                     sample_weight.shape, (n_samples,)
                 )
             )
+
+    if only_non_negative:
+        check_non_negative(sample_weight, "`sample_weight`")
 
     return sample_weight
 
