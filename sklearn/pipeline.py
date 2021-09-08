@@ -396,7 +396,7 @@ class Pipeline(_BaseComposition):
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit the model and transform with the final estimator.
+        """Fit the model and `transform` with the final estimator.
 
         Fits all the transforms one after the other and transforms the
         data, then uses fit_transform on transformed data with the final
@@ -437,7 +437,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_final_estimator_has("predict"))
     def predict(self, X, **predict_params):
-        """Apply transforms to the data, and predict with the final estimator.
+        """Apply transforms to the data, and `predict` with the final estimator.
 
         Parameters
         ----------
@@ -567,7 +567,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_final_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X, **predict_log_proba_params):
-        """Apply transforms, and predict_log_proba of the final estimator.
+        """Apply transforms, and `predict_log_proba` of the final estimator.
 
         Parameters
         ----------
@@ -596,7 +596,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_can_transform)
     def transform(self, X):
-        """Apply transforms, and transform with the final estimator.
+        """Apply transforms, and `transform` with the final estimator.
 
         This also works where final estimator is ``None``: all prior
         transformations are applied.
@@ -647,7 +647,7 @@ class Pipeline(_BaseComposition):
 
     @available_if(_final_estimator_has("score"))
     def score(self, X, y=None, sample_weight=None):
-        """Apply transforms, and score with the final estimator.
+        """Apply transforms, and `score` with the final estimator.
 
         Parameters
         ----------
