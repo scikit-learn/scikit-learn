@@ -439,7 +439,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Query points where the GP is evaluated.
 
         n_samples : int, default=1
-            Number of samples drawn from the Gaussian process per query point
+            Number of samples drawn from the Gaussian process per query point.
 
         random_state : int, RandomState instance or None, default=0
             Determines random number generation to randomly draw samples.
