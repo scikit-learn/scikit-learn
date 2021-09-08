@@ -470,7 +470,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def log_marginal_likelihood(
         self, theta=None, eval_gradient=False, clone_kernel=True
     ):
-        """Returns log-marginal likelihood of theta for training data.
+        """Return log-marginal likelihood of theta for training data.
 
         Parameters
         ----------
