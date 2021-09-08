@@ -571,11 +571,11 @@ def test_randomized_svd_lapack_driver():
     # Check that different SVD drivers provide consistent results
 
     # Matrix being compressed
-    m = 100
-    m = 500
+    n = 123
+    m = 456
     k = 10
 
-    X = np.random.rand(m, m)
+    X = np.random.rand(n, m)
 
     # Number of components
     k = 10
