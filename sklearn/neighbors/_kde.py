@@ -208,7 +208,7 @@ class KernelDensity(BaseEstimator):
         return self
 
     def score_samples(self, X):
-        """Evaluate the log density model on the data.
+        """Compute the log-likelihood of each sample under the model.
 
         Parameters
         ----------
@@ -219,7 +219,7 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         density : ndarray of shape (n_samples,)
-            The array of log(density) evaluations. These are normalized to be
+            Log-likelihood of each sample in `X`. These are normalized to be
             probability densities, so values will be low for high-dimensional
             data.
         """
@@ -246,7 +246,7 @@ class KernelDensity(BaseEstimator):
         return log_density
 
     def score(self, X, y=None):
-        """Compute the total log probability density under the model.
+        """Compute the total log-likelihood under the model.
 
         Parameters
         ----------
