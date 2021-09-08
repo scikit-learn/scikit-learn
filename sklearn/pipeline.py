@@ -864,7 +864,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Parameters
     ----------
-    transformer_list : list of (string, transformer) tuples
+    transformer_list : list of (str, transformer) tuples
         List of transformer objects to be applied to the data. The first
         half of each tuple is the name of the transformer. The transformer can
         be 'drop' for it to be ignored or can be 'passthrough' for features to
