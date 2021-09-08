@@ -254,7 +254,6 @@ def test_sgd_estimator_params_validation(klass, fit_method, params, err_msg):
     try:
         sgd_estimator = klass(**params)
     except TypeError as err:
-        print(err)
         if "unexpected keyword argument" in str(err):
             # skip test if the parameter is not supported by the estimator
             return
