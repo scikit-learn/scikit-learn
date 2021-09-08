@@ -286,6 +286,55 @@ def plot_partial_dependence(
     >>> plt.show()  # doctest: +SKIP
     """
     check_matplotlib_support("plot_partial_dependence")  # noqa
+    return _plot_partial_dependence(
+        estimator,
+        X,
+        features,
+        feature_names=feature_names,
+        target=target,
+        response_method=response_method,
+        n_cols=n_cols,
+        grid_resolution=grid_resolution,
+        percentiles=percentiles,
+        method=method,
+        n_jobs=n_jobs,
+        verbose=verbose,
+        line_kw=line_kw,
+        ice_lines_kw=ice_lines_kw,
+        pd_line_kw=pd_line_kw,
+        contour_kw=contour_kw,
+        ax=ax,
+        kind=kind,
+        subsample=subsample,
+        random_state=random_state,
+    )
+
+
+# TODO: Move into PartialDependenceDisplay.from_estimator
+def _plot_partial_dependence(
+    estimator,
+    X,
+    features,
+    *,
+    feature_names=None,
+    target=None,
+    response_method="auto",
+    n_cols=3,
+    grid_resolution=100,
+    percentiles=(0.05, 0.95),
+    method="auto",
+    n_jobs=None,
+    verbose=0,
+    line_kw=None,
+    ice_lines_kw=None,
+    pd_line_kw=None,
+    contour_kw=None,
+    ax=None,
+    kind="average",
+    subsample=1000,
+    random_state=None,
+):
+    """See plot_partial_dependence for details"""
     import matplotlib.pyplot as plt  # noqa
 
     # set target_idx for multi-class estimators
@@ -861,173 +910,27 @@ class PartialDependenceDisplay:
         >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")  # noqa
-        import matplotlib.pyplot as plt  # noqa
-
-        # set target_idx for multi-class estimators
-        if hasattr(estimator, "classes_") and np.size(estimator.classes_) > 2:
-            if target is None:
-                raise ValueError("target must be specified for multi-class")
-            target_idx = np.searchsorted(estimator.classes_, target)
-            if (
-                not (0 <= target_idx < len(estimator.classes_))
-                or estimator.classes_[target_idx] != target
-            ):
-                raise ValueError(f"target not in est.classes_, got {target}")
-        else:
-            # regression and binary classification
-            target_idx = 0
-
-        # Use check_array only on lists and other non-array-likes / sparse. Do not
-        # convert DataFrame into a NumPy array.
-        if not (hasattr(X, "__array__") or sparse.issparse(X)):
-            X = check_array(X, force_all_finite="allow-nan", dtype=object)
-        n_features = X.shape[1]
-
-        # convert feature_names to list
-        if feature_names is None:
-            if hasattr(X, "loc"):
-                # get the column names for a pandas dataframe
-                feature_names = X.columns.tolist()
-            else:
-                # define a list of numbered indices for a numpy array
-                feature_names = [str(i) for i in range(n_features)]
-        elif hasattr(feature_names, "tolist"):
-            # convert numpy array or pandas index to a list
-            feature_names = feature_names.tolist()
-        if len(set(feature_names)) != len(feature_names):
-            raise ValueError("feature_names should not contain duplicates.")
-
-        def convert_feature(fx):
-            if isinstance(fx, str):
-                try:
-                    fx = feature_names.index(fx)
-                except ValueError as e:
-                    raise ValueError(f"Feature {fx} not in feature_names") from e
-            return int(fx)
-
-        # convert features into a seq of int tuples
-        tmp_features = []
-        for fxs in features:
-            if isinstance(fxs, (numbers.Integral, str)):
-                fxs = (fxs,)
-            try:
-                fxs = tuple(convert_feature(fx) for fx in fxs)
-            except TypeError as e:
-                raise ValueError(
-                    "Each entry in features must be either an int, "
-                    "a string, or an iterable of size at most 2."
-                ) from e
-            if not 1 <= np.size(fxs) <= 2:
-                raise ValueError(
-                    "Each entry in features must be either an int, "
-                    "a string, or an iterable of size at most 2."
-                )
-            if kind != "average" and np.size(fxs) > 1:
-                raise ValueError(
-                    "It is not possible to display individual effects for more "
-                    f"than one feature at a time. Got: features={features}."
-                )
-            tmp_features.append(fxs)
-
-        features = tmp_features
-
-        # Early exit if the axes does not have the correct number of axes
-        if ax is not None and not isinstance(ax, plt.Axes):
-            axes = np.asarray(ax, dtype=object)
-            if axes.size != len(features):
-                raise ValueError(
-                    f"Expected ax to have {len(features)} axes, got {axes.size}"
-                )
-
-        for i in chain.from_iterable(features):
-            if i >= len(feature_names):
-                raise ValueError(
-                    "All entries of features must be less than "
-                    f"len(feature_names) = {len(features)}, got {i}."
-                )
-
-        if isinstance(subsample, numbers.Integral):
-            if subsample <= 0:
-                raise ValueError(
-                    f"When an integer, subsample={subsample} should be positive."
-                )
-        elif isinstance(subsample, numbers.Real):
-            if subsample <= 0 or subsample >= 1:
-                raise ValueError(
-                    f"When a floating-point, subsample={subsample} should be in "
-                    "the (0, 1) range."
-                )
-
-        # compute predictions and/or averaged predictions
-        pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
-            delayed(partial_dependence)(
-                estimator,
-                X,
-                fxs,
-                response_method=response_method,
-                method=method,
-                grid_resolution=grid_resolution,
-                percentiles=percentiles,
-                kind=kind,
-            )
-            for fxs in features
-        )
-
-        # For multioutput regression, we can only check the validity of target
-        # now that we have the predictions.
-        # Also note: as multiclass-multioutput classifiers are not supported,
-        # multiclass and multioutput scenario are mutually exclusive. So there is
-        # no risk of overwriting target_idx here.
-        pd_result = pd_results[0]  # checking the first result is enough
-        n_tasks = (
-            pd_result.average.shape[0]
-            if kind == "average"
-            else pd_result.individual.shape[0]
-        )
-        if is_regressor(estimator) and n_tasks > 1:
-            if target is None:
-                raise ValueError("target must be specified for multi-output regressors")
-            if not 0 <= target <= n_tasks:
-                raise ValueError(f"target must be in [0, n_tasks], got {target}.")
-            target_idx = target
-
-        # get global min and max average predictions of PD grouped by plot type
-        pdp_lim = {}
-        for pdp in pd_results:
-            values = pdp["values"]
-            preds = pdp.average if kind == "average" else pdp.individual
-            min_pd = preds[target_idx].min()
-            max_pd = preds[target_idx].max()
-            n_fx = len(values)
-            old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
-            min_pd = min(min_pd, old_min_pd)
-            max_pd = max(max_pd, old_max_pd)
-            pdp_lim[n_fx] = (min_pd, max_pd)
-
-        deciles = {}
-        for fx in chain.from_iterable(features):
-            if fx not in deciles:
-                X_col = _safe_indexing(X, fx, axis=1)
-                deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
-
-        display = cls(
-            pd_results=pd_results,
-            features=features,
+        return _plot_partial_dependence(
+            estimator,
+            X,
+            features,
             feature_names=feature_names,
-            target_idx=target_idx,
-            pdp_lim=pdp_lim,
-            deciles=deciles,
-            kind=kind,
-            subsample=subsample,
-            random_state=random_state,
-        )
-        return display.plot(
-            ax=ax,
+            target=target,
+            response_method=response_method,
             n_cols=n_cols,
+            grid_resolution=grid_resolution,
+            percentiles=percentiles,
+            method=method,
+            n_jobs=n_jobs,
+            verbose=verbose,
             line_kw=line_kw,
             ice_lines_kw=ice_lines_kw,
             pd_line_kw=pd_line_kw,
             contour_kw=contour_kw,
+            ax=ax,
+            kind=kind,
+            subsample=subsample,
+            random_state=random_state,
         )
 
     def _get_sample_count(self, n_samples):
