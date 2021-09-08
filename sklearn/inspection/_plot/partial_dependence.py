@@ -638,8 +638,7 @@ class PartialDependenceDisplay:
         subsample=1000,
         random_state=None,
     ):
-        """Partial dependence (PD) and individual conditional expectation (ICE)
-        plots.
+        """Partial dependence (PD) and individual conditional expectation (ICE) plots.
 
         Partial dependence plots, individual conditional expectation plots or an
         overlay of both of them can be plotted by setting the ``kind``
@@ -696,7 +695,7 @@ class PartialDependenceDisplay:
             :term:`predict_proba`, or :term:`decision_function`.
             Multioutput-multiclass classifiers are not supported.
 
-        X : {array-like or dataframe} of shape (n_samples, n_features)
+        X : {array-like, dataframe} of shape (n_samples, n_features)
             ``X`` is used to generate a grid of values for the target
             ``features`` (where the partial dependence will be evaluated), and
             also to generate values for the complement features when the
@@ -796,15 +795,11 @@ class PartialDependenceDisplay:
             The key value pairs defined in `ice_lines_kw` takes priority over
             `line_kw`.
 
-            .. versionadded:: 1.0
-
         pd_line_kw : dict, default=None
             Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
             For partial dependence in one-way partial dependence plots.
             The key value pairs defined in `pd_line_kw` takes priority over
             `line_kw`.
-
-            .. versionadded:: 1.0
 
         contour_kw : dict, default=None
             Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
@@ -820,8 +815,6 @@ class PartialDependenceDisplay:
             - If `None`, a figure and a bounding axes is created and treated
               as the single axes case.
 
-            .. versionadded:: 0.22
-
         kind : {'average', 'individual', 'both'}, default='average'
             Whether to plot the partial dependence averaged across all the samples
             in the dataset or one line per sample or both.
@@ -833,8 +826,6 @@ class PartialDependenceDisplay:
            ``kind='average'``. Plotting individual dependencies requires using the
            slower ``method='brute'`` option.
 
-            .. versionadded:: 0.24
-
         subsample : float, int or None, default=1000
             Sampling for ICE curves when `kind` is 'individual' or 'both'.
             If `float`, should be between 0.0 and 1.0 and represent the proportion
@@ -844,14 +835,10 @@ class PartialDependenceDisplay:
             Note that the full dataset is still used to calculate averaged partial
             dependence when `kind='both'`.
 
-            .. versionadded:: 0.24
-
         random_state : int, RandomState instance or None, default=None
             Controls the randomness of the selected samples when subsamples is not
             `None` and `kind` is either `'both'` or `'individual'`.
             See :term:`Glossary <random_state>` for details.
-
-            .. versionadded:: 0.24
 
         Returns
         -------
