@@ -1050,6 +1050,13 @@ def test_set_feature_union_passthrough():
     assert_array_equal(X, ft.fit(X).transform(X)[:, -columns:])
     assert_array_equal(X, ft.fit_transform(X)[:, -columns:])
 
+    ft = FeatureUnion(
+        [("passthrough", "passthrough"), ("pca", pca)],
+        transformer_weights={"passthrough": 2},
+    )
+    assert_array_equal(X * 2, ft.fit(X).transform(X)[:, :columns])
+    assert_array_equal(X * 2, ft.fit_transform(X)[:, :columns])
+
 
 def test_step_name_validation():
     error_message_1 = r"Estimator names must not contain __: got \['a__q'\]"
