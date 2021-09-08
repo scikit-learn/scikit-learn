@@ -82,7 +82,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Per default, the L-BFGS-B algorithm from `scipy.optimize.minimize`
         is used. If None is passed, the kernel's parameters are kept fixed.
-        Available internal optimizers are: `{'fmin_l_bfgs_b'}`
+        Available internal optimizers are: `{'fmin_l_bfgs_b'}`.
 
     n_restarts_optimizer : int, default=0
         The number of restarts of the optimizer for finding the kernel's
@@ -145,6 +145,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    See Also
+    --------
+    GaussianProcessClassifier : Gaussian process classification (GPC)
+        based on Laplace approximation.
 
     References
     ----------
