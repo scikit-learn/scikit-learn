@@ -571,13 +571,16 @@ def test_randomized_svd_lapack_driver():
     # Check that different SVD drivers provide consistent results
 
     # Matrix being compressed
-    m, n = 123, 45
-    M = np.random.rand(m, n)
+    m = 100
+    m = 500
+    k = 10
+
+    X = np.random.rand(m, m)
 
     # Number of components
     k = 10
-    u1, s1, vt1 = randomized_svd(M, k, lapack_svd_driver="gesdd")
-    u2, s2, vt2 = randomized_svd(M, k, lapack_svd_driver="gesvd")
+    u1, s1, vt1 = randomized_svd(X, k, lapack_svd_driver="gesdd", random_state=0)
+    u2, s2, vt2 = randomized_svd(X, k, lapack_svd_driver="gesvd", random_state=0)
 
     # Check shape and contents
     assert u1.shape == u2.shape
