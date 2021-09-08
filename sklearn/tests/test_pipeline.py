@@ -1034,11 +1034,9 @@ def test_set_feature_union_passthrough():
     with pytest.warns(None) as record:
         ft.set_params(pca="passthrough")
         X_ft = ft.fit(X).transform(X)
-        assert_array_equal(X, X_ft[:, :columns])
-        assert_array_equal(X, X_ft[:, columns:])
+        assert_array_equal(X_ft, np.hstack([X, X]))
         X_ft = ft.fit_transform(X)
-        assert_array_equal(X, X_ft[:, :columns])
-        assert_array_equal(X, X_ft[:, columns:])
+        assert_array_equal(X_ft, np.hstack([X, X]))
     assert not record
 
     with pytest.warns(None) as record:
