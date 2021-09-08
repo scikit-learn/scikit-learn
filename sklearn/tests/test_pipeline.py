@@ -1007,9 +1007,7 @@ def test_set_feature_union_step_drop(get_names):
 def test_set_feature_union_passthrough():
     """Check the behaviour of setting a transformer to `"passthrough"`."""
     mult2 = Mult(2)
-    mult2.get_feature_names = lambda: ["x2"]
     mult3 = Mult(3)
-    mult3.get_feature_names = lambda: ["x3"]
     X = np.asarray([[1]])
 
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
