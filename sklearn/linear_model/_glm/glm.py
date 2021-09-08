@@ -606,6 +606,11 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    PoissonRegressor : Generalized Linear Model with a Poisson distribution.
+    TweedieRegressor : Generalized Linear Model with a Tweedie distribution.
+
     Examples
     --------
     >>> from sklearn import linear_model
