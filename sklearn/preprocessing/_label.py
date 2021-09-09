@@ -188,7 +188,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-
     neg_label : int, default=0
         Value with which negative labels must be encoded.
 
@@ -201,7 +200,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-
     classes_ : ndarray of shape (n_classes,)
         Holds the label for each class.
 
