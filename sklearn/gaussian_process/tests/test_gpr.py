@@ -223,9 +223,9 @@ def test_random_starts():
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features) * 2 - 1
     y = (
-        np.sin(X).sum(axis=1)
-        + np.sin(3 * X).sum(axis=1)
-        + rng.normal(scale=0.1, size=n_samples)
+            np.sin(X).sum(axis=1)
+            + np.sin(3 * X).sum(axis=1)
+            + rng.normal(scale=0.1, size=n_samples)
     )
 
     kernel = C(1.0, (1e-2, 1e2)) * RBF(
@@ -411,10 +411,10 @@ def test_gpr_correct_error_message():
     kernel = DotProduct()
     gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
     message = (
-        "The kernel, %s, is not returning a "
-        "positive definite matrix. Try gradually increasing "
-        "the 'alpha' parameter of your "
-        "GaussianProcessRegressor estimator." % kernel
+            "The kernel, %s, is not returning a "
+            "positive definite matrix. Try gradually increasing "
+            "the 'alpha' parameter of your "
+            "GaussianProcessRegressor estimator." % kernel
     )
     with pytest.raises(np.linalg.LinAlgError, match=re.escape(message)):
         gpr.fit(X, y)
@@ -483,23 +483,23 @@ def test_warning_bounds():
 
     assert len(record) == 2
     assert (
-        record[0].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "k1__noise_level is close to the "
-        "specified upper bound 0.001. "
-        "Increasing the bound and calling "
-        "fit again may find a better value."
+            record[0].message.args[0]
+            == "The optimal value found for "
+               "dimension 0 of parameter "
+               "k1__noise_level is close to the "
+               "specified upper bound 0.001. "
+               "Increasing the bound and calling "
+               "fit again may find a better value."
     )
 
     assert (
-        record[1].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "k2__length_scale is close to the "
-        "specified lower bound 1000.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
+            record[1].message.args[0]
+            == "The optimal value found for "
+               "dimension 0 of parameter "
+               "k2__length_scale is close to the "
+               "specified lower bound 1000.0. "
+               "Decreasing the bound and calling "
+               "fit again may find a better value."
     )
 
     X_tile = np.tile(X, 2)
@@ -514,23 +514,23 @@ def test_warning_bounds():
 
     assert len(record) == 2
     assert (
-        record[0].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "length_scale is close to the "
-        "specified lower bound 10.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
+            record[0].message.args[0]
+            == "The optimal value found for "
+               "dimension 0 of parameter "
+               "length_scale is close to the "
+               "specified lower bound 10.0. "
+               "Decreasing the bound and calling "
+               "fit again may find a better value."
     )
 
     assert (
-        record[1].message.args[0]
-        == "The optimal value found for "
-        "dimension 1 of parameter "
-        "length_scale is close to the "
-        "specified lower bound 10.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
+            record[1].message.args[0]
+            == "The optimal value found for "
+               "dimension 1 of parameter "
+               "length_scale is close to the "
+               "specified lower bound 10.0. "
+               "Decreasing the bound and calling "
+               "fit again may find a better value."
     )
 
 
@@ -620,12 +620,12 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
         ({"kernel": RBF(), "optimizer": "unknown"}, ValueError, "Unknown optimizer"),
         ({"alpha": np.zeros(100)}, ValueError, "alpha must be a scalar or an array"),
         (
-            {
-                "kernel": WhiteKernel(noise_level_bounds=(-np.inf, np.inf)),
-                "n_restarts_optimizer": 2,
-            },
-            ValueError,
-            "requires that all bounds are finite",
+                {
+                    "kernel": WhiteKernel(noise_level_bounds=(-np.inf, np.inf)),
+                    "n_restarts_optimizer": 2,
+                },
+                ValueError,
+                "requires that all bounds are finite",
         ),
     ],
 )
@@ -652,3 +652,26 @@ def test_gpr_predict_error():
     err_msg = "At most one of return_std or return_cov can be requested."
     with pytest.raises(RuntimeError, match=err_msg):
         gpr.predict(X, return_cov=True, return_std=True)
+
+
+def test_y_std_with_multitarget_normalized():
+    """
+    Regression test for issues #17394 and #18065.
+    Check if GPR can compute y_std in predict() method when normalize_y==True in
+    multi-target regression.
+    """
+    X_train = np.random.rand((11, 10))
+    y_train = np.random.rand((11, 6))  # 6 target features -> multi-target
+    X_test = np.random.rand((4, 10))
+
+    # Generic kernel
+    kernel = kernels.ConstantKernel(1.0, (1e-1, 1e3))
+    kernel *= kernels.RBF(10.0, (1e-3, 1e3))
+
+    # normalize_y == True
+    model = GaussianProcessRegressor(kernel=kernel,
+                                     n_restarts_optimizer=10,
+                                     alpha=0.1,
+                                     normalize_y=True)
+    model.fit(X_train, y_train)
+    y_pred, std = model.predict(X_test, return_std=True)
