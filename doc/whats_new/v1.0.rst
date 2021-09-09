@@ -471,6 +471,11 @@ Changelog
   :func:`~sklearn.inspection.permutation_importance`.
   :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
+- |API| :class:`inspection.PartialDependenceDisplay` exposes a class method:
+  :func:`~inspection.PartialDependenceDisplay.from_estimator`.
+  :func:`inspection.plot_partial_dependence` is deprecated in favor of the
+  class method and will be removed in 1.2. :pr:`20959` by `Thomas Fan`_.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
