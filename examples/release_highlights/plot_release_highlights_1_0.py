@@ -27,7 +27,7 @@ or with conda::
 """
 
 ##############################################################################
-# keyword and positional arguments
+# Keyword and positional arguments
 # ---------------------------------------------------------
 # The scikit-learn API exposes many functions and methods which have many input
 # parameters. For example, before this release, one could instantiate a
