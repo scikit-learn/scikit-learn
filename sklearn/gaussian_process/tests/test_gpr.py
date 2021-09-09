@@ -223,9 +223,9 @@ def test_random_starts():
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features) * 2 - 1
     y = (
-            np.sin(X).sum(axis=1)
-            + np.sin(3 * X).sum(axis=1)
-            + rng.normal(scale=0.1, size=n_samples)
+        np.sin(X).sum(axis=1)
+        + np.sin(3 * X).sum(axis=1)
+        + rng.normal(scale=0.1, size=n_samples)
     )
 
     kernel = C(1.0, (1e-2, 1e2)) * RBF(
@@ -234,9 +234,7 @@ def test_random_starts():
     last_lml = -np.inf
     for n_restarts_optimizer in range(5):
         gp = GaussianProcessRegressor(
-            kernel=kernel,
-            n_restarts_optimizer=n_restarts_optimizer,
-            random_state=0,
+            kernel=kernel, n_restarts_optimizer=n_restarts_optimizer, random_state=0
         ).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
         assert lml > last_lml - np.finfo(np.float32).eps
@@ -385,8 +383,9 @@ def test_custom_optimizer(kernel):
     # Define a dummy optimizer that simply tests 50 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
-        theta_opt, func_min = initial_theta, obj_func(
-            initial_theta, eval_gradient=False
+        theta_opt, func_min = (
+            initial_theta,
+            obj_func(initial_theta, eval_gradient=False),
         )
         for _ in range(50):
             theta = np.atleast_1d(
@@ -411,10 +410,10 @@ def test_gpr_correct_error_message():
     kernel = DotProduct()
     gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
     message = (
-            "The kernel, %s, is not returning a "
-            "positive definite matrix. Try gradually increasing "
-            "the 'alpha' parameter of your "
-            "GaussianProcessRegressor estimator." % kernel
+        "The kernel, %s, is not returning a "
+        "positive definite matrix. Try gradually increasing "
+        "the 'alpha' parameter of your "
+        "GaussianProcessRegressor estimator." % kernel
     )
     with pytest.raises(np.linalg.LinAlgError, match=re.escape(message)):
         gpr.fit(X, y)
@@ -483,23 +482,23 @@ def test_warning_bounds():
 
     assert len(record) == 2
     assert (
-            record[0].message.args[0]
-            == "The optimal value found for "
-               "dimension 0 of parameter "
-               "k1__noise_level is close to the "
-               "specified upper bound 0.001. "
-               "Increasing the bound and calling "
-               "fit again may find a better value."
+        record[0].message.args[0]
+        == "The optimal value found for "
+        "dimension 0 of parameter "
+        "k1__noise_level is close to the "
+        "specified upper bound 0.001. "
+        "Increasing the bound and calling "
+        "fit again may find a better value."
     )
 
     assert (
-            record[1].message.args[0]
-            == "The optimal value found for "
-               "dimension 0 of parameter "
-               "k2__length_scale is close to the "
-               "specified lower bound 1000.0. "
-               "Decreasing the bound and calling "
-               "fit again may find a better value."
+        record[1].message.args[0]
+        == "The optimal value found for "
+        "dimension 0 of parameter "
+        "k2__length_scale is close to the "
+        "specified lower bound 1000.0. "
+        "Decreasing the bound and calling "
+        "fit again may find a better value."
     )
 
     X_tile = np.tile(X, 2)
@@ -514,23 +513,23 @@ def test_warning_bounds():
 
     assert len(record) == 2
     assert (
-            record[0].message.args[0]
-            == "The optimal value found for "
-               "dimension 0 of parameter "
-               "length_scale is close to the "
-               "specified lower bound 10.0. "
-               "Decreasing the bound and calling "
-               "fit again may find a better value."
+        record[0].message.args[0]
+        == "The optimal value found for "
+        "dimension 0 of parameter "
+        "length_scale is close to the "
+        "specified lower bound 10.0. "
+        "Decreasing the bound and calling "
+        "fit again may find a better value."
     )
 
     assert (
-            record[1].message.args[0]
-            == "The optimal value found for "
-               "dimension 1 of parameter "
-               "length_scale is close to the "
-               "specified lower bound 10.0. "
-               "Decreasing the bound and calling "
-               "fit again may find a better value."
+        record[1].message.args[0]
+        == "The optimal value found for "
+        "dimension 1 of parameter "
+        "length_scale is close to the "
+        "specified lower bound 10.0. "
+        "Decreasing the bound and calling "
+        "fit again may find a better value."
     )
 
 
@@ -620,12 +619,12 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
         ({"kernel": RBF(), "optimizer": "unknown"}, ValueError, "Unknown optimizer"),
         ({"alpha": np.zeros(100)}, ValueError, "alpha must be a scalar or an array"),
         (
-                {
-                    "kernel": WhiteKernel(noise_level_bounds=(-np.inf, np.inf)),
-                    "n_restarts_optimizer": 2,
-                },
-                ValueError,
-                "requires that all bounds are finite",
+            {
+                "kernel": WhiteKernel(noise_level_bounds=(-np.inf, np.inf)),
+                "n_restarts_optimizer": 2,
+            },
+            ValueError,
+            "requires that all bounds are finite",
         ),
     ],
 )
@@ -655,24 +654,27 @@ def test_gpr_predict_error():
 
 
 def test_y_std_with_multitarget_normalized():
+    """Check that `y_std` is properly computed when `normalize_y=True`.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/17394
+    https://github.com/scikit-learn/scikit-learn/issues/18065
     """
-    Regression test for issues #17394 and #18065.
-    Check if GPR can compute y_std in predict() method when normalize_y==True
-    in multi-target regression.
-    """
-    X_train = np.random.rand((11, 10))
-    # 6 target features -> multi-target
-    y_train = np.random.rand((11, 6))
-    X_test = np.random.rand((4, 10))
+    rng = np.random.RandomState(42)
+
+    n_samples, n_features, n_targets = 12, 10, 6
+
+    X_train = rng.randn(n_samples, n_features)
+    y_train = rng.randn(n_samples, n_targets)
+    X_test = rng.randn(n_samples, n_features)
 
     # Generic kernel
-    kernel = kernels.ConstantKernel(1.0, (1e-1, 1e3))
-    kernel *= kernels.RBF(10.0, (1e-3, 1e3))
+    kernel = kernels.ConstantKernel(1.0, (1e-1, 1e3)) * kernels.RBF(10.0, (1e-3, 1e3))
 
-    # normalize_y == True
-    model = GaussianProcessRegressor(kernel=kernel,
-                                     n_restarts_optimizer=10,
-                                     alpha=0.1,
-                                     normalize_y=True)
+    model = GaussianProcessRegressor(
+        kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=True
+    )
     model.fit(X_train, y_train)
-    y_pred, std = model.predict(X_test, return_std=True)
+    y_pred, y_std = model.predict(X_test, return_std=True)
+
+    assert y_pred.shape == (n_samples, n_targets)
+    assert y_std.shape == (n_samples, n_targets)
