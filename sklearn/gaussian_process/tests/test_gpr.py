@@ -660,9 +660,9 @@ def test_y_std_with_multitarget_normalized():
     Check if GPR can compute y_std in predict() method when normalize_y==True in
     multi-target regression.
     """
-    X_train = np.random.rand((11, 10))
+    x_train = np.random.rand((11, 10))
     y_train = np.random.rand((11, 6))  # 6 target features -> multi-target
-    X_test = np.random.rand((4, 10))
+    x_test = np.random.rand((4, 10))
 
     # Generic kernel
     kernel = kernels.ConstantKernel(1.0, (1e-1, 1e3))
@@ -673,5 +673,5 @@ def test_y_std_with_multitarget_normalized():
                                      n_restarts_optimizer=10,
                                      alpha=0.1,
                                      normalize_y=True)
-    model.fit(X_train, y_train)
-    y_pred, std = model.predict(X_test, return_std=True)
+    model.fit(x_train, y_train)
+    y_pred, std = model.predict(x_test, return_std=True)
