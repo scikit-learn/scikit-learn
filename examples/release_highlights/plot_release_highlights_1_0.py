@@ -9,7 +9,7 @@ Release Highlights for scikit-learn 1.0
 We are pleased to announce the release of scikit-learn 1.0! The library has
 been stable for quite some time, releasing version 1.0 is recognizing that and
 signalling it to our users. The release does not include any breaking changes,
-and as usual, and we do our best to follow a two release deprecation cycles for
+and as usual, and we do our best to follow a two-release deprecation cycles for
 any breaking changes.
 
 This release includes many bug fixes and improvements, as well as some new key
@@ -65,7 +65,11 @@ or with conda::
 #         random_state=None,
 #     )
 #
-# which is much more readable.
+# which is much more readable. Positional arguments have been deprecated since
+# version 0.23 and will now raise a ``TypeError```. A limited number of
+# positional arguments are still allowed in some cases, for example in
+# :class:`decomposition.PCA`, where ``PCA(10)`` is still allowed, but ``PCA(10,
+# False)`` is not allowed.
 
 ##############################################################################
 # Spline Transformers
@@ -75,11 +79,11 @@ or with conda::
 # :class:`preprocessing.SplineTransformer`. Splines are piecewise polynomials,
 # parametrized by their polynomial degree and the positions of the knots. The
 # :class:`preprocessing.SplineTransformer` implements a B-spline basis
-
+#
 # .. figure:: ../linear_model/images/sphx_glr_plot_polynomial_interpolation_001.png
 #   :target: ../linear_model/plot_successive_halving_iterations.html
 #   :align: center
-
+#
 # The following code shows splines in action, for more information, please
 # refer to :ref:`User Guide <spline_transformer>`
 
@@ -103,14 +107,14 @@ spline.fit_transform(X)
 # :math:`\hat{y}(w, X) = Xw` for the :math:`q`-th quantile, :math:`q \in (0,
 # 1)`. The weights or coefficients :math:`w` are then found by the following
 # minimization problem:
-
+#
 # .. math::
 #     \min_{w} {\frac{1}{n_{\text{samples}}}
 #     \sum_i PB_q(y_i - X_i w) + \alpha ||w||_1}.
-
+#
 # This consists of the pinball loss (also known as linear loss),
 # see also :class:`~sklearn.metrics.mean_pinball_loss`,
-
+#
 # .. math::
 #     PB_q(t) = q \max(t, 0) + (1 - q) \max(-t, 0) =
 #     \begin{cases}
@@ -124,14 +128,14 @@ spline.fit_transform(X)
 #
 # Please check the following example to see how it works, and the :ref:`User
 # Guide <quantile_regression>` for more details.
-
+#
 # .. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_002.png
 #    :target: ../auto_examples/linear_model/plot_quantile_regression.html
 #    :align: center
 #    :scale: 50%
 
 ##############################################################################
-# `from_estimator` and `from_predictions` on `*Display` classes
+# A more flexible plotting API
 # --------------------------------------------------------------------------
 # :class:`metrics.ConfusionMatrixDisplay`,
 # :class:`metrics.PrecisionRecallDisplay`, and :class:`metrics.DetCurveDisplay`
