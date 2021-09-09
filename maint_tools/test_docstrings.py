@@ -61,7 +61,6 @@ DOCSTRING_IGNORE_LIST = [
     "SGDOneClassSVM",
     "SGDRegressor",
     "SelectFromModel",
-    "SelectFwe",
     "SelfTrainingClassifier",
     "SequentialFeatureSelector",
     "SimpleImputer",
