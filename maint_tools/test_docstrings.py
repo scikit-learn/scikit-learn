@@ -47,7 +47,6 @@ DOCSTRING_IGNORE_LIST = [
     "PassiveAggressiveClassifier",
     "PassiveAggressiveRegressor",
     "PatchExtractor",
-    "Pipeline",
     "PolynomialFeatures",
     "PowerTransformer",
     "QuadraticDiscriminantAnalysis",
