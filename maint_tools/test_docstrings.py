@@ -60,7 +60,6 @@ DOCSTRING_IGNORE_LIST = [
     "RobustScaler",
     "SGDOneClassSVM",
     "SGDRegressor",
-    "SelectFpr",
     "SelectFromModel",
     "SelectFwe",
     "SelfTrainingClassifier",
