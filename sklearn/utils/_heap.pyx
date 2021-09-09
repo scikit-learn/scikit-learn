@@ -1,7 +1,8 @@
 #!python
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: cdivision=True
+# cython: boundscheck=False
+# cython: cdivision=True
+# cython: initializedcheck=False
+# cython: wraparound=False
 
 
 from cython cimport floating, integral, numeric
@@ -30,7 +31,7 @@ cdef int simultaneous_sort(
     """
     # TODO: In order to support discrete distance metrics, we need to have a
     # simultaneous sort which breaks ties on indices when distances are identical.
-    # The best might be using a std::sort and a Comparator whic might need
+    # The best might be using a std::sort and a Comparator which might need
     # AoS instead of SoA (currently used).
     cdef:
         ITYPE_t pivot_idx, i, store_idx

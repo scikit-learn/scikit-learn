@@ -1,14 +1,8 @@
-# cython: language_level=3
-# cython: annotate=False
-# cython: cdivision=True
 # cython: boundscheck=False
-# cython: wraparound=False
-# cython: profile=False
-# cython: linetrace=False
+# cython: cdivision=True
 # cython: initializedcheck=False
-# cython: binding=False
+# cython: wraparound=False
 # distutils: language=c++
-# distutils: define_macros=CYTHON_TRACE_NOGIL=0
 
 # Pairwise Distances Reductions
 # =============================
@@ -169,27 +163,29 @@ cdef np.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 #####################
 
 cdef class PairwiseDistancesReduction:
-    f"""Abstract class computing a reduction on pairwise
-    distances between a set of vectors (rows) X and another
-    set of vectors (rows) of Y.
+    f"""Abstract class which compute pairwise distances between
+    a set of vectors (rows) X and another set of vectors (rows) of Y
+    and apply a reduction on top.
 
-    The implementation of the reduction is done parallelized
-    on chunks whose size can be set using ``chunk_size``.
+    The computations of the distances and the reduction is parallelized
+    on chunks of vectors of X and Y.
 
     Parameters
     ----------
     datasets_pair: DatasetsPair
         The pair of dataset to use.
 
-    chunk_size: int, default={CHUNK_SIZE}
-        The number of vectors per chunk.
+    chunk_size: int, default=None,
+        The number of vectors per chunk. If None (default) looks-up in
+        scikit-learn configuration for `pairwise_dist_chunk_size`,
+        and use {CHUNK_SIZE} if it is not set.
 
-    n_threads: int, default=-1
+    n_threads: int, default=None
         The number of OpenMP threads to use for the reduction.
         Parallelism is done on chunks and the sharding of chunks
         depends on the `strategy` set on :method:`~PairwiseDistancesReduction.compute`.
 
-        -1 means using all processors.
+        None and -1 means using all processors.
     """
 
     cdef:
@@ -209,7 +205,7 @@ cdef class PairwiseDistancesReduction:
             "mahalanobis", # is numerically unstable
             # TODO: In order to support discrete distance metrics, we need to have a
             # simultaneous sort which breaks ties on indices when distances are identical.
-            # The best might be using a std::sort and a Comparator whic might need
+            # The best might be using a std::sort and a Comparator which might need
             # AoS instead of SoA (currently used).
             "hamming",
             *BOOL_METRICS,
@@ -219,42 +215,38 @@ cdef class PairwiseDistancesReduction:
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        # TODO: what's the best coercion for lists?
+        # Coercing to np.array to get the dtype
+        # TODO: what is the best way to get lists' dtype?
         X = np.asarray(X) if isinstance(X, (tuple, list)) else X
         Y = np.asarray(Y) if isinstance(Y, (tuple, list)) else Y
         # TODO: support sparse arrays and 32 bits
-        return (not issparse(X) and X.dtype.itemsize == 8 and X.ndim == 2 and
-                not issparse(Y) and Y.dtype.itemsize == 8 and Y.ndim == 2 and
+        return (not issparse(X) and X.dtype == np.float64 and X.ndim == 2 and
+                not issparse(Y) and Y.dtype == np.float64 and Y.ndim == 2 and
                 metric in cls.valid_metrics())
 
     @property
-    def datasets_pair(self) ->DatasetsPair:
+    def datasets_pair(self) -> DatasetsPair:
         return self._datasets_pair
 
     def __init__(
         self,
         DatasetsPair datasets_pair,
-        ITYPE_t chunk_size=CHUNK_SIZE,
-        n_threads=-1,
+        chunk_size=None,
+        n_threads=None,
      ):
         cdef:
             ITYPE_t X_n_full_chunks, Y_n_full_chunks
 
+        if chunk_size is None:
+            chunk_size = get_config().get("pairwise_dist_chunk_size", CHUNK_SIZE)
+
         check_scalar(chunk_size, "chunk_size", Integral, min_val=1)
         self.chunk_size = chunk_size
 
-        if n_threads is None:
-            # By convention.
-            n_threads = -1
+        # By convention, -1 and None means using all cores.
+        n_threads = -1 if n_threads is None else n_threads
 
-        self.n_threads = n_threads
-
-        if self.n_threads == -1:
-            # By default use all available threads.
-            self.effective_omp_n_thread = _openmp_effective_n_threads()
-        else:
-            check_scalar(self.n_threads, "n_threads", Integral, min_val=1)
-            self.effective_omp_n_thread = self.n_threads
+        self.effective_omp_n_thread = _openmp_effective_n_threads(n_threads)
 
         self.n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
 
@@ -286,8 +278,7 @@ cdef class PairwiseDistancesReduction:
 
         This strategy dispatches chunks of X uniformly on threads.
         Each thread then iterates on all the chunks of Y. This strategy is
-        embarrassingly parallel and comes with no datastructures synchronisation
-        but is less used in practice (because X is smaller than Y generally).
+        embarrassingly parallel and comes with no datastructures synchronisation.
 
         Private datastructures are modified internally by threads.
 
@@ -349,8 +340,7 @@ cdef class PairwiseDistancesReduction:
         This strategy dispatches chunks of Y uniformly on threads.
         Each thread then iterates on all the chunks of X. This strategy is
         embarrassingly parallel but uses intermediate datastructures
-        synchronisation. However it is more useful in practice (because Y is
-        larger than X generally).
+        synchronisation.
 
         Private datastructures are modified internally by threads.
 
@@ -484,11 +474,8 @@ cdef class PairwiseDistancesReduction:
         return
 
 cdef class ArgKmin(PairwiseDistancesReduction):
-    """Computes the argkmin of vectors (rows) of a set of
+    f"""Computes the argkmin of vectors (rows) of a set of
     vectors (rows) of X on another set of vectors (rows) of Y.
-
-    The implementation is parallelized on chunks whose size can
-    be set using ``chunk_size``.
 
     Parameters
     ----------
@@ -498,15 +485,17 @@ cdef class ArgKmin(PairwiseDistancesReduction):
     k: int
         The k for the argkmin reduction.
 
-    chunk_size: int
-        The number of vectors per chunk.
+    chunk_size: int, default=None,
+        The number of vectors per chunk. If None (default) looks-up in
+        scikit-learn configuration for `pairwise_dist_chunk_size`,
+        and use {CHUNK_SIZE} if it is not set.
 
-    n_threads: int, default=-1
+    n_threads: int, default=None
         The number of OpenMP threads to use for the reduction.
         Parallelism is done on chunks and the sharding of chunks
         depends on the `strategy` set on :method:`~ArgKmin.compute`.
 
-        -1 means using all processors.
+        None and -1 means using all processors.
     """
 
     cdef:
@@ -526,9 +515,9 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         Y,
         ITYPE_t k,
         str metric="fast_euclidean",
-        ITYPE_t chunk_size=CHUNK_SIZE,
+        chunk_size=None,
         dict metric_kwargs=dict(),
-        n_threads=-1,
+        n_threads=None,
     ) -> ArgKmin:
         f"""Return the ArgKmin implementation for the given arguments.
 
@@ -549,18 +538,20 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
 
-        chunk_size: int, default={CHUNK_SIZE},
-            The number of vectors per chunk.
+        chunk_size: int, default=None,
+            The number of vectors per chunk. If None (default) looks-up in
+            scikit-learn configuration for `pairwise_dist_chunk_size`,
+            and use {CHUNK_SIZE} if it is not set.
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
 
-        n_threads: int, default=-1
+        n_threads: int, default=None
             The number of OpenMP threads to use for the reduction.
             Parallelism is done on chunks and the sharding of chunks
             depends on the `strategy` set on :method:`~ArgKmin.compute`.
 
-            -1 means using all processors.
+            None and -1 means using all processors.
 
         Returns
         -------
@@ -584,8 +575,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         self,
         DatasetsPair datasets_pair,
         ITYPE_t k,
-        ITYPE_t chunk_size=CHUNK_SIZE,
-        n_threads=-1,
+        chunk_size=None,
+        n_threads=None,
     ):
         PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size, n_threads)
 
@@ -868,7 +859,7 @@ cdef class FastEuclideanArgKmin(ArgKmin):
         Y,
         ITYPE_t k,
         bint use_squared_distances=False,
-        ITYPE_t chunk_size=CHUNK_SIZE,
+        chunk_size=None,
     ):
         ArgKmin.__init__(
             self,
@@ -1024,15 +1015,17 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     radius: float
         The radius defining the neighborhood.
 
-    chunk_size: int
-        The number of vectors per chunk.
+    chunk_size: int, default=None,
+        The number of vectors per chunk. If None (default) looks-up in
+        scikit-learn configuration for `pairwise_dist_chunk_size`,
+        and use {CHUNK_SIZE} if it is not set.
 
-    n_threads: int, default=-1
+    n_threads: int, default=None
         The number of OpenMP threads to use for the reduction.
         Parallelism is done on chunks and the sharding of chunks
         depends on the `strategy` set on :method:`~RadiusNeighborhood.compute`.
 
-        -1 means using all processors.
+        None and -1 means using all processors.
     """
 
     cdef:
@@ -1074,9 +1067,9 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         Y,
         DTYPE_t radius,
         str metric="fast_euclidean",
-        ITYPE_t chunk_size=CHUNK_SIZE,
+        chunk_size=None,
         dict metric_kwargs=dict(),
-        n_threads=-1,
+        n_threads=None,
     ) -> RadiusNeighborhood:
         f"""Return the RadiusNeighborhood implementation for the given arguments.
 
@@ -1097,18 +1090,20 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
 
-        chunk_size: int, default={CHUNK_SIZE},
-            The number of vectors per chunk.
+        chunk_size: int, default=None,
+            The number of vectors per chunk. If None (default) looks-up in
+            scikit-learn configuration for `pairwise_dist_chunk_size`,
+            and use {CHUNK_SIZE} if it is not set.
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
 
-        n_threads: int, default=-1
+        n_threads: int, default=None
             The number of OpenMP threads to use for the reduction.
             Parallelism is done on chunks and the sharding of chunks
             depends on the `strategy` set on :method:`~RadiusNeighborhood.compute`.
 
-            -1 means using all processors.
+            None and -1 means using all processors.
 
         Returns
         -------
@@ -1132,8 +1127,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         self,
         DatasetsPair datasets_pair,
         DTYPE_t radius,
-        ITYPE_t chunk_size=CHUNK_SIZE,
-        n_threads=-1,
+        chunk_size=None,
+        n_threads=None,
     ):
         PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size, n_threads)
 
@@ -1439,7 +1434,7 @@ cdef class FastEuclideanRadiusNeighborhood(RadiusNeighborhood):
         Y,
         DTYPE_t radius,
         bint use_squared_distances=False,
-        ITYPE_t chunk_size=CHUNK_SIZE,
+        chunk_size=None,
     ):
         RadiusNeighborhood.__init__(
             self,

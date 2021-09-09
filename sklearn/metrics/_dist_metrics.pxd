@@ -1,13 +1,8 @@
 #!python
-# cython: annotate=False
-# cython: cdivision=True
 # cython: boundscheck=False
-# cython: wraparound=False
-# cython: profile=False
-# cython: linetrace=False
+# cython: cdivision=True
 # cython: initializedcheck=False
-# cython: binding=False
-# distutils: define_macros=CYTHON_TRACE_NOGIL=0
+# cython: wraparound=False
 
 cimport numpy as np
 from libc.math cimport sqrt, exp

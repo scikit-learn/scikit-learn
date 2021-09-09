@@ -77,7 +77,7 @@ def test_pairwise_distances_reduction_is_usable_for():
     Y = rng.rand(100, 10)
     metric = "euclidean"
     assert PairwiseDistancesReduction.is_usable_for(X, Y, metric)
-    assert PairwiseDistancesReduction.is_usable_for(
+    assert not PairwiseDistancesReduction.is_usable_for(
         X.astype(np.int64), Y.astype(np.int64), metric
     )
 
@@ -102,12 +102,12 @@ def test_argkmin_factory_method_wrong_usages():
     metric = "euclidean"
 
     with pytest.raises(
-        ValueError, match="32bits datasets aren't supported for X and Y yet."
+        ValueError, match="Only 64bit float datasets are supported for X and Y."
     ):
         ArgKmin.get_for(X=X.astype(np.float32), Y=Y, k=k, metric=metric)
 
     with pytest.raises(
-        ValueError, match="32bits datasets aren't supported for X and Y yet."
+        ValueError, match="Only 64bit float datasets are supported for X and Y."
     ):
         ArgKmin.get_for(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
 
@@ -140,14 +140,14 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     metric = "euclidean"
 
     with pytest.raises(
-        ValueError, match="32bits datasets aren't supported for X and Y yet."
+        ValueError, match="Only 64bit float datasets are supported for X and Y."
     ):
         RadiusNeighborhood.get_for(
             X=X.astype(np.float32), Y=Y, radius=radius, metric=metric
         )
 
     with pytest.raises(
-        ValueError, match="32bits datasets aren't supported for X and Y yet."
+        ValueError, match="Only 64bit float datasets are supported for X and Y."
     ):
         RadiusNeighborhood.get_for(
             X=X, Y=Y.astype(np.int32), radius=radius, metric=metric

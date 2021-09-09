@@ -1,13 +1,7 @@
-# cython: language_level=3
-# cython: annotate=False
-# cython: cdivision=True
 # cython: boundscheck=False
-# cython: wraparound=False
-# cython: profile=False
-# cython: linetrace=False
+# cython: cdivision=True
 # cython: initializedcheck=False
-# cython: binding=False
-# distutils: define_macros=CYTHON_TRACE_NOGIL=0
+# cython: wraparound=False
 
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
@@ -1221,8 +1215,6 @@ cdef class DatasetsPair:
         between two vectors of (X, Y).
     """
 
-    # The `distance_metric` attribute is defined in _dist_metrics.pxd
-
     @classmethod
     def get_for(
         cls,
@@ -1235,10 +1227,10 @@ cdef class DatasetsPair:
 
         Parameters
         ----------
-        X : array-like of shape (n_X, d)
+        X : {ndarray, sparse matrix} of shape (n_X, d)
             Input data.
 
-        Y : array-like of shape (n_Y, d)
+        Y : {ndarray, sparse matrix} of shape (n_Y, d)
             Input data.
 
         metric : str, default='euclidean'
@@ -1261,13 +1253,8 @@ cdef class DatasetsPair:
                 **metric_kwargs
             )
 
-        # check_array can be expensive, and we prefer to simply coerce from lists
-        # to ndarrays eventually to get their dtype itemsize
-        X = np.asarray(X) if isinstance(X, (tuple, list)) else X
-        Y = np.asarray(Y) if isinstance(Y, (tuple, list)) else Y
-
-        if X.dtype.itemsize != 8 or Y.dtype.itemsize != 8:
-            raise ValueError("32bits datasets aren't supported for X and Y yet.")
+        if X.dtype != np.float64 or Y.dtype != np.float64:
+            raise ValueError("Only 64bit float datasets are supported for X and Y.")
 
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
         Y = check_array(Y, dtype=DTYPE, accept_sparse='csr')
@@ -1278,6 +1265,7 @@ cdef class DatasetsPair:
                               f"respectively {X.shape[1]}-dimensional "
                               f"and {Y.shape[1]}-dimensional.")
 
+        # Metric-specific checks that do not replace nor duplicate `check_array`.
         distance_metric._validate_data(X)
         distance_metric._validate_data(Y)
 
@@ -1329,8 +1317,6 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         The distance metric responsible for computing distances
         between two vectors of (X, Y).
     """
-
-    # The `X`, `Y` and `d` attributes are defined in _dist_metrics.pxd
 
     def __cinit__(self):
         # Initializing memory view to prevent memory errors and seg-faults

@@ -1,4 +1,3 @@
-# cython: language_level=3
 # Heap routines, used in various Cython implementation.
 
 from cython cimport floating
