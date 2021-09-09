@@ -668,7 +668,7 @@ def test_y_std_with_multitarget_normalized():
     X_test = rng.randn(n_samples, n_features)
 
     # Generic kernel
-    kernel = kernels.ConstantKernel(1.0, (1e-1, 1e3)) * kernels.RBF(10.0, (1e-3, 1e3))
+    kernel = WhiteKernel(1.0, (1e-1, 1e3)) * C(10.0, (1e-3, 1e3))
 
     model = GaussianProcessRegressor(
         kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=True
