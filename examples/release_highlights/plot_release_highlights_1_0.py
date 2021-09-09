@@ -138,11 +138,11 @@ spline.fit_transform(X)
 # A more flexible plotting API
 # --------------------------------------------------------------------------
 # :class:`metrics.ConfusionMatrixDisplay`,
-# :class:`metrics.PrecisionRecallDisplay`, and :class:`metrics.DetCurveDisplay`
-# now expose two class methods: `from_estimator` and `from_predictions` which
-# allow users to create a plot given the predictions or an estimator. This
-# means the corresponsing `plot_*` functions are deprecated. Please check
-# :ref:`example one
+# :class:`metrics.PrecisionRecallDisplay`, :class:`metrics.DetCurveDisplay`,
+# and :class:`metrics.PartialDependenceDisplay` now expose two class methods:
+# `from_estimator` and `from_predictions` which allow users to create a plot
+# given the predictions or an estimator. This means the corresponsing `plot_*`
+# functions are deprecated. Please check :ref:`example one
 # <sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py>` and
 # :ref:`example two
 # <sphx_glr_auto_examples_classification_plot_digits_classification.py>` for
@@ -181,4 +181,6 @@ spline.fit_transform(X)
 ##############################################################################
 # New documentation improvements
 # ------------------------------
-# TODO
+# This release includes many documentation improvements. Out of over 2.1k
+# merged pull requests, about 800 of them are improvements to our
+# documentation.
