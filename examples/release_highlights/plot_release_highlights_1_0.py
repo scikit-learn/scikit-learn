@@ -147,7 +147,7 @@ spline.fit_transform(X)
 ##############################################################################
 # Online One-Class SVM
 # --------------------------------------------------------------------------
-# The class :class:`sklearn.linear_model.SGDOneClassSVM` implements an online
+# The new class :class:`sklearn.linear_model.SGDOneClassSVM` implements an online
 # linear version of the One-Class SVM using a stochastic gradient descent.
 # Combined with kernel approximation techniques,
 # :class:`sklearn.linear_model.SGDOneClassSVM` can be used to approximate the
