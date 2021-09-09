@@ -1638,8 +1638,10 @@ def test_check_feature_names_in_pandas():
 
 def test_check_response_method_unknown_method():
     """Check the error message when passing an unknown response method."""
-    err_msg = "response_method unknown_method not defined"
-    with pytest.raises(ValueError, match=err_msg):
+    err_msg = (
+        "RandomForestRegressor has none of the following attributes: unknown_method."
+    )
+    with pytest.raises(AttributeError, match=err_msg):
         _check_response_method(RandomForestRegressor(), "unknown_method")
 
 
@@ -1649,12 +1651,12 @@ def test_check_response_method_unknown_method():
 def test_check_response_method_not_supported_response_method(response_method):
     """Check the error message when a response method is not supported by the
     estimator."""
-    err_msg = "response_method {} not defined"
+    err_msg = "EstimatorWithFit has none of the following attributes: {}."
     if response_method is None:
         err_msg = err_msg.format("predict_proba, decision_function, predict")
     else:
         err_msg = err_msg.format(response_method)
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(AttributeError, match=err_msg):
         _check_response_method(EstimatorWithFit(), response_method)
 
 
@@ -1687,8 +1689,11 @@ def test_check_response_method_list_str():
 
     # raise an error when no methods are defined
     response_method = ["decision_function", "predict"]
-    err_msg = "response_method decision_function, predict not defined"
-    with pytest.raises(ValueError, match=err_msg):
+    err_msg = (
+        "_MockEstimatorOnOffPrediction has none of the following attributes: "
+        f"{', '.join(response_method)}."
+    )
+    with pytest.raises(AttributeError, match=err_msg):
         _check_response_method(my_estimator, response_method)(X)
 
     # check that we don't get issue when one of the method is defined

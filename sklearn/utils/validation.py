@@ -1610,9 +1610,9 @@ def _check_response_method(estimator, response_method=None):
     prediction_method = [getattr(estimator, method, None) for method in list_methods]
     prediction_method = reduce(lambda x, y: x or y, prediction_method)
     if prediction_method is None:
-        raise ValueError(
-            f"response_method {', '.join(list_methods)} not defined in "
-            f"{estimator.__class__.__name__}"
+        raise AttributeError(
+            f"{estimator.__class__.__name__} has none of the following attributes: "
+            f"{', '.join(list_methods)}."
         )
 
     return prediction_method
