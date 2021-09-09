@@ -31,7 +31,7 @@ or with conda::
 # ---------------------------------------------------------
 # The scikit-learn API exposes many functions and methods which have many input
 # parameters. For example, before this release, one could instantiate a
-# :class:`ensemble.HistGradientBoostingRegressor` as::
+# :class:`~ensemble.HistGradientBoostingRegressor` as::
 #
 #         HistGradientBoostingRegressor("squared_error", 0.1, 100, 31, None,
 #             20, 0.0, 255, None, None, False, "auto", "loss", 0.1, 10, 1e-7,
@@ -66,9 +66,9 @@ or with conda::
 #     )
 #
 # which is much more readable. Positional arguments have been deprecated since
-# version 0.23 and will now raise a ``TypeError```. A limited number of
+# version 0.23 and will now raise a ``TypeError``. A limited number of
 # positional arguments are still allowed in some cases, for example in
-# :class:`decomposition.PCA`, where ``PCA(10)`` is still allowed, but ``PCA(10,
+# :class:`~decomposition.PCA`, where ``PCA(10)`` is still allowed, but ``PCA(10,
 # False)`` is not allowed.
 
 ##############################################################################
@@ -76,9 +76,9 @@ or with conda::
 # ---------------------------------------------------------
 # One way to add nonlinear terms to the dataset's feature set is to generate
 # spline basis functions for each feature with the new
-# :class:`preprocessing.SplineTransformer`. Splines are piecewise polynomials,
+# :class:`~preprocessing.SplineTransformer`. Splines are piecewise polynomials,
 # parametrized by their polynomial degree and the positions of the knots. The
-# :class:`preprocessing.SplineTransformer` implements a B-spline basis
+# :class:`~preprocessing.SplineTransformer` implements a B-spline basis
 #
 # .. figure:: ../linear_model/images/sphx_glr_plot_polynomial_interpolation_001.png
 #   :target: ../linear_model/plot_successive_halving_iterations.html
@@ -103,10 +103,10 @@ spline.fit_transform(X)
 # conditional on :math:`X`, while ordinary least squares (OLS) estimates the
 # conditional mean.
 #
-# As a linear model, the new :class:`QuantileRegressor` gives linear predictions
-# :math:`\hat{y}(w, X) = Xw` for the :math:`q`-th quantile, :math:`q \in (0,
-# 1)`. The weights or coefficients :math:`w` are then found by the following
-# minimization problem:
+# As a linear model, the new :class:`~linear_model.QuantileRegressor` gives
+# linear predictions :math:`\hat{y}(w, X) = Xw` for the :math:`q`-th quantile,
+# :math:`q \in (0, 1)`. The weights or coefficients :math:`w` are then found by
+# the following minimization problem:
 #
 # .. math::
 #     \min_{w} {\frac{1}{n_{\text{samples}}}
@@ -151,20 +151,19 @@ spline.fit_transform(X)
 ##############################################################################
 # Online One-Class SVM
 # --------------------------------------------------------------------------
-# The new class :class:`sklearn.linear_model.SGDOneClassSVM` implements an online
+# The new class :class:`~linear_model.SGDOneClassSVM` implements an online
 # linear version of the One-Class SVM using a stochastic gradient descent.
 # Combined with kernel approximation techniques,
-# :class:`sklearn.linear_model.SGDOneClassSVM` can be used to approximate the
-# solution of a kernelized One-Class SVM, implemented in
-# :class:`sklearn.svm.OneClassSVM`, with a linear complexity in the number of
-# samples. Note that the complexity of a kernelized One-Class SVM is at best
-# quadratic in the number of samples.
-# :class:`sklearn.linear_model.SGDOneClassSVM` is thus well suited for datasets
-# with a large number of training samples (> 10,000) for which the SGD variant
-# can be several orders of magnitude faster. Please check this :ref:`example
+# :class:`~linear_model.SGDOneClassSVM` can be used to approximate the solution
+# of a kernelized One-Class SVM, implemented in :class:`~svm.OneClassSVM`, with
+# a linear complexity in the number of samples. Note that the complexity of a
+# kernelized One-Class SVM is at best quadratic in the number of samples.
+# :class:`~linear_model.SGDOneClassSVM` is thus well suited for datasets with a
+# large number of training samples (> 10,000) for which the SGD variant can be
+# several orders of magnitude faster. Please check this :ref:`example
 # <sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py` to see how
 # it's used, and :ref:`User Guide <sgd_online_one_class_svm>` for more details.
-
+#
 # .. figure:: /auto_examples/miscellaneous/images/sphx_glr_plot_anomaly_comparison_001.png
 #    :target: ../auto_examples/miscellaneous/plot_anomaly_comparison.html
 #    :align: center
@@ -173,8 +172,8 @@ spline.fit_transform(X)
 # Histogram-based Gradient Boosting Models are now stable
 # --------------------------------------------------------------------------
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor` and
-# `ensemble.HistGradientBoostingClassifier` are no longer experimental and can
-# simply be imported and used as::
+# :class:`~ensemble.HistGradientBoostingClassifier` are no longer experimental
+# and can simply be imported and used as::
 #
 #     from sklearn.ensemble import HistGradientBoostingClassifier
 
