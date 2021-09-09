@@ -99,7 +99,7 @@ spline.fit_transform(X)
 # conditional on :math:`X`, while ordinary least squares (OLS) estimates the
 # conditional mean.
 #
-# As a linear model, the :class:`QuantileRegressor` gives linear predictions
+# As a linear model, the new :class:`QuantileRegressor` gives linear predictions
 # :math:`\hat{y}(w, X) = Xw` for the :math:`q`-th quantile, :math:`q \in (0,
 # 1)`. The weights or coefficients :math:`w` are then found by the following
 # minimization problem:
