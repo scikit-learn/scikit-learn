@@ -1292,6 +1292,14 @@ def _get_response(
     pos_label : str, int or None
         The class considered as the positive class when computing
         the metrics. Returns `None` if `estimator` is a regressor.
+
+    Raises
+    ------
+    ValueError
+        If `pos_label` is not a valid label.
+        If the shape of `y_pred` is not consistent for binary classifier.
+        If the response method can be applied to a classifier only and
+        `estimator` is a regressor.
     """
     from sklearn.base import is_classifier  # noqa
 
