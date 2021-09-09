@@ -243,8 +243,6 @@ cdef class PairwiseDistancesReduction:
         check_scalar(chunk_size, "chunk_size", Integral, min_val=1)
         self.chunk_size = chunk_size
 
-        # By convention, -1 and None means using all cores.
-        n_threads = -1 if n_threads is None else n_threads
 
         self.effective_omp_n_thread = _openmp_effective_n_threads(n_threads)
 
