@@ -166,7 +166,7 @@ spline.fit_transform(X)
 #    :align: center
 
 ##############################################################################
-# Histogram Based Gradient Boosting Models
+# Histogram-based Gradient Boosting Models are now stable
 # --------------------------------------------------------------------------
 # `ensemble.HistGradientBoostingRegressor` and
 # `ensemble.HistGradientBoostingClassifier` are no longer experimental and can
