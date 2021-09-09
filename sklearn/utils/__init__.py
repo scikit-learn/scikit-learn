@@ -27,7 +27,9 @@ from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version, parse_version
 from ._estimator_html_repr import estimator_html_repr
+from .multiclass import type_of_target
 from .validation import (
+    _check_response_method,
     as_float_array,
     assert_all_finite,
     check_random_state,
@@ -1239,3 +1241,92 @@ def all_estimators(type_filter=None):
     # itemgetter is used to ensure the sort does not extend to the 2nd item of
     # the tuple
     return sorted(set(estimators), key=itemgetter(0))
+
+
+def _get_response(
+    estimator,
+    X,
+    y_true,
+    response_method=None,
+    pos_label=None,
+):
+    """Return response and positive label.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a classifier.
+
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Input values.
+
+    y_true : array-like of shape (n_samples,)
+        The true label.
+
+    response_method : {"predict_proba", "decision_function", "predict"} or \
+            list of such str, default=None
+        Specifies the response method to use get prediction from an estimator
+        (i.e. :term:`predict_proba`, :term:`decision_function` or
+        :term:`predict`). Possible choices are:
+
+        - if `str`, it corresponds to the name to the method to return;
+        - if a list of `str`, it provides the method names in order of
+          preference. The method returned corresponds to the first method in
+          the list and which is implemented by `estimator`;
+        - if `None`, :term:`predict_proba` is tried first and if it does not
+          exist :term:`decision_function` is tried next and :term:`predict`
+          last.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing
+        the metrics. By default, `estimators.classes_[1]` is
+        considered as the positive class.
+
+    Returns
+    -------
+    y_pred : ndarray of shape (n_samples,)
+        Target scores calculated from the provided response_method
+        and `pos_label`.
+
+    pos_label : str, int or None
+        The class considered as the positive class when computing
+        the metrics. Returns `None` if `estimator` is a regressor.
+    """
+    from sklearn.base import is_classifier  # noqa
+
+    if is_classifier(estimator):
+        y_type = type_of_target(y_true)
+        prediction_method = _check_response_method(estimator, response_method)
+        y_pred = prediction_method(X)
+        classes = estimator.classes_
+
+        if pos_label is not None and pos_label not in classes.tolist():
+            raise ValueError(
+                f"pos_label={pos_label} is not a valid label: It should be "
+                f"one of {classes}"
+            )
+        elif pos_label is None and y_type == "binary":
+            pos_label = pos_label if pos_label is not None else classes[-1]
+
+        if prediction_method.__name__ == "predict_proba":
+            if y_type == "binary" and y_pred.shape[1] <= 2:
+                if y_pred.shape[1] == 2:
+                    col_idx = np.flatnonzero(classes == pos_label)[0]
+                    y_pred = y_pred[:, col_idx]
+                else:
+                    err_msg = (
+                        f"Got predict_proba of shape {y_pred.shape}, but need "
+                        "classifier with two classes."
+                    )
+                    raise ValueError(err_msg)
+        elif prediction_method.__name__ == "decision_function":
+            if y_type == "binary":
+                if pos_label == classes[0]:
+                    y_pred *= -1
+    else:
+        if response_method not in ("predict", None):
+            raise ValueError(f"{estimator.__class__.__name__} should be a classifier")
+        y_pred, pos_label = estimator.predict(X), None
+
+    return y_pred, pos_label
