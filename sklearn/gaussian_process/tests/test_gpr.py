@@ -659,7 +659,7 @@ def test_y_std_with_multitarget_normalized():
     https://github.com/scikit-learn/scikit-learn/issues/17394
     https://github.com/scikit-learn/scikit-learn/issues/18065
     """
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(1234)
 
     n_samples, n_features, n_targets = 12, 10, 6
 
