@@ -167,7 +167,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         )
 
     def predict(self, X):
-        """Performs inductive inference across the model.
+        """Perform inductive inference across the model.
 
         Parameters
         ----------
@@ -223,7 +223,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         return probabilities
 
     def fit(self, X, y):
-        """Fit a semi-supervised label propagation model based
+        """Fit a semi-supervised label propagation model to X.
 
         All the input data is provided matrix X (labeled and unlabeled)
         and corresponding label matrix y with a dedicated marker value for
@@ -241,6 +241,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X, y = self._validate_data(X, y)
         self.X_ = X
@@ -326,7 +327,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
 
 class LabelPropagation(BaseLabelPropagation):
-    """Label Propagation classifier
+    """Label Propagation classifier.
 
     Read more in the :ref:`User Guide <label_propagation>`.
 
@@ -384,6 +385,18 @@ class LabelPropagation(BaseLabelPropagation):
 
     n_iter_ : int
         Number of iterations run.
+    LabelPropagation(...)
+
+    See Also
+    --------
+    BaseLabelPropagation : Base class for label propagation module.
+    LabelSpreading : Alternate label propagation strategy more robust to noise.
+
+    References
+    ----------
+    Xiaojin Zhu and Zoubin Ghahramani. Learning from labeled and unlabeled data
+    with label propagation. Technical Report CMU-CALD-02-107, Carnegie Mellon
+    University, 2002 http://pages.cs.wisc.edu/~jerryzhu/pub/CMU-CALD-02-107.pdf
 
     Examples
     --------
@@ -397,17 +410,6 @@ class LabelPropagation(BaseLabelPropagation):
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
-    LabelPropagation(...)
-
-    References
-    ----------
-    Xiaojin Zhu and Zoubin Ghahramani. Learning from labeled and unlabeled data
-    with label propagation. Technical Report CMU-CALD-02-107, Carnegie Mellon
-    University, 2002 http://pages.cs.wisc.edu/~jerryzhu/pub/CMU-CALD-02-107.pdf
-
-    See Also
-    --------
-    LabelSpreading : Alternate label propagation strategy more robust to noise.
     """
 
     _variant = "propagation"
@@ -449,6 +451,23 @@ class LabelPropagation(BaseLabelPropagation):
         return affinity_matrix
 
     def fit(self, X, y):
+        """Fit a semi-supervised label propagation model to X.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            `n_labeled_samples` (unlabeled points are marked as -1)
+            All unlabeled samples will be transductively assigned a label.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         return super().fit(X, y)
 
 
