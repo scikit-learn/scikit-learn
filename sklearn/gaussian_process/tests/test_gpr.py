@@ -45,7 +45,7 @@ kernels = [
     + C(1e-5, (1e-5, 1e2)),
     C(0.1, (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
     + C(1e-5, (1e-5, 1e2)),
-]
+    ]
 non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
 
 
@@ -179,7 +179,7 @@ def test_sample_statistics(kernel):
         np.diag(y_cov) / np.diag(y_cov).max(),
         np.var(samples, 1) / np.diag(y_cov).max(),
         1,
-    )
+        )
 
 
 def test_no_optimizer():
@@ -652,24 +652,3 @@ def test_gpr_predict_error():
     err_msg = "At most one of return_std or return_cov can be requested."
     with pytest.raises(RuntimeError, match=err_msg):
         gpr.predict(X, return_cov=True, return_std=True)
-
-
-def test_y_std_with_multitarget_normalized():
-    """
-    Regression test for issues #17394 and #18065.
-    Check if GPR can compute y_std in predict() method when normalize_y==True
-    in multi-target regression.
-    """
-    X_train = np.random.rand((11, 10))
-    # 6 target features -> multi-target
-    y_train = np.random.rand((11, 6))
-    X_test = np.random.rand((4, 10))
-
-    # Generic kernel
-    kernel = kernels.ConstantKernel(1.0, (1e-1, 1e3))
-    kernel *= kernels.RBF(10.0, (1e-3, 1e3))
-
-    # normalize_y == True
-    model = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=True)
-    model.fit(X_train, y_train)
-    y_pred, std = model.predict(X_test, return_std=True)
