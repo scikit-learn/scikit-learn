@@ -657,21 +657,19 @@ def test_gpr_predict_error():
 def test_y_std_with_multitarget_normalized():
     """
     Regression test for issues #17394 and #18065.
-    Check if GPR can compute y_std in predict() method when normalize_y==True in
-    multi-target regression.
+    Check if GPR can compute y_std in predict() method when normalize_y==True
+    in multi-target regression.
     """
-    x_train = np.random.rand((11, 10))
-    y_train = np.random.rand((11, 6))  # 6 target features -> multi-target
-    x_test = np.random.rand((4, 10))
+    X_train = np.random.rand((11, 10))
+    # 6 target features -> multi-target
+    y_train = np.random.rand((11, 6))
+    X_test = np.random.rand((4, 10))
 
     # Generic kernel
     kernel = kernels.ConstantKernel(1.0, (1e-1, 1e3))
     kernel *= kernels.RBF(10.0, (1e-3, 1e3))
 
     # normalize_y == True
-    model = GaussianProcessRegressor(kernel=kernel,
-                                     n_restarts_optimizer=10,
-                                     alpha=0.1,
-                                     normalize_y=True)
-    model.fit(x_train, y_train)
-    y_pred, std = model.predict(x_test, return_std=True)
+    model = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=True)
+    model.fit(X_train, y_train)
+    y_pred, std = model.predict(X_test, return_std=True)
