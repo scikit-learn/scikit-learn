@@ -187,11 +187,6 @@ workflows:
       - doc-min-dependencies:
           requires:
             - lint
-      - pypy3:
-          filters:
-            branches:
-              only:
-                - 0.20.X
       - deploy:
           requires:
             - doc
