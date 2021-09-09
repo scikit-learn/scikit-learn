@@ -168,7 +168,7 @@ spline.fit_transform(X)
 ##############################################################################
 # Histogram-based Gradient Boosting Models are now stable
 # --------------------------------------------------------------------------
-# `ensemble.HistGradientBoostingRegressor` and
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor` and
 # `ensemble.HistGradientBoostingClassifier` are no longer experimental and can
 # simply be imported and used as::
 #
