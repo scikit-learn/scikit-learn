@@ -24,8 +24,10 @@ from sklearn.utils._testing import _convert_container
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
+
+# TODO: add this estimator into the _mocking module in a further refactoring
+from sklearn.metrics.tests.test_score_objects import EstimatorWithFit
 from sklearn.utils._mocking import (
-    _EstimatorWithFit,
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
 )
@@ -1653,7 +1655,7 @@ def test_check_response_method_not_supported_response_method(response_method):
     else:
         err_msg = err_msg.format(response_method)
     with pytest.raises(ValueError, match=err_msg):
-        _check_response_method(_EstimatorWithFit(), response_method)
+        _check_response_method(EstimatorWithFit(), response_method)
 
 
 @pytest.mark.parametrize(

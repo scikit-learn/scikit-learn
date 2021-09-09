@@ -2,7 +2,7 @@ import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
 from .metaestimators import available_if
-from .validation import _num_samples, check_array, check_is_fitted, check_random_state
+from .validation import _num_samples, check_array, check_is_fitted
 
 
 class ArraySlicingWrapper:
@@ -334,39 +334,6 @@ class NoSampleWeightWrapper(BaseEstimator):
         return {"_skip_test": True}
 
 
-class _EstimatorWithoutFit:
-    """Dummy estimator to test scoring validators."""
-
-    def __init__(self, *, random_state=None):
-        self.random_state = random_state
-
-
-class _EstimatorWithFit(BaseEstimator):
-    """Dummy estimator to test scoring validators."""
-
-    def __init__(self, *, random_state=None):
-        self.random_state = random_state
-
-    def fit(self, X, y):
-        self.classes_ = np.unique(y)
-        self.random_state_ = check_random_state(self.random_state)
-        return self
-
-
-class _EstimatorWithFitAndScore(_EstimatorWithFit):
-    """Dummy estimator to test scoring validators."""
-
-    def score(self, X, y):
-        return 1.0
-
-
-class _EstimatorWithFitAndPredict(_EstimatorWithFit):
-    """Dummy estimator to test scoring validators"""
-
-    def predict(self, X):
-        return self.random_state_.choice(self.classes_, size=(_num_samples(X),))
-
-
 def _check_response(method):
     def check(self):
         if self.response_methods is not None and method in self.response_methods:
@@ -408,10 +375,3 @@ class _MockEstimatorOnOffPrediction(BaseEstimator):
     @available_if(_check_response("decision_function"))
     def decision_function(self, X):
         return "decision_function"
-
-
-class _DummyScorer:
-    """Dummy scorer that always returns 1."""
-
-    def __call__(self, est, X, y):
-        return 1

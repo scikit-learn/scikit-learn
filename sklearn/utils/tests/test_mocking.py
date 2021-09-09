@@ -11,11 +11,6 @@ from sklearn.utils import _safe_indexing
 from sklearn.utils._testing import _convert_container
 
 from sklearn.utils._mocking import (
-    _DummyScorer,
-    _EstimatorWithFit,
-    _EstimatorWithFitAndPredict,
-    _EstimatorWithFitAndScore,
-    _EstimatorWithoutFit,
     _MockEstimatorOnOffPrediction,
     CheckingClassifier,
 )
@@ -188,53 +183,6 @@ def test_checking_classifier_methods_to_check(iris, methods_to_check, predict_me
         getattr(clf, predict_method)(X)
 
 
-def test_estimator_without_fit():
-    estimator = _EstimatorWithoutFit(random_state=42)
-    assert estimator.random_state == 42
-    assert not hasattr(estimator, "fit")
-    assert not hasattr(estimator, "predict")
-    assert not hasattr(estimator, "score")
-
-
-def test_estimator_with_fit(iris):
-    X, y = iris
-    estimator = _EstimatorWithFit(random_state=42)
-    assert estimator.random_state == 42
-    assert hasattr(estimator, "fit")
-    estimator.fit(X, y)
-    assert hasattr(estimator, "random_state_")
-    assert hasattr(estimator, "classes_")
-    assert_array_equal(estimator.classes_, np.unique(y))
-
-
-def test_estimator_with_fit_and_score(iris):
-    X, y = iris
-    estimator = _EstimatorWithFitAndScore(random_state=42)
-    assert estimator.random_state == 42
-    assert hasattr(estimator, "fit")
-    estimator.fit(X, y)
-    assert hasattr(estimator, "random_state_")
-    assert hasattr(estimator, "classes_")
-    assert_array_equal(estimator.classes_, np.unique(y))
-    assert hasattr(estimator, "score")
-    assert estimator.score(X, y) == pytest.approx(1)
-
-
-def test_estimator_with_fit_and_predict(iris):
-    X, y = iris
-    estimator = _EstimatorWithFitAndPredict(random_state=42)
-    assert estimator.random_state == 42
-    assert hasattr(estimator, "fit")
-    estimator.fit(X, y)
-    assert hasattr(estimator, "random_state_")
-    assert hasattr(estimator, "classes_")
-    assert_array_equal(estimator.classes_, np.unique(y))
-    assert hasattr(estimator, "predict")
-    y_pred = estimator.predict(X)
-    assert y_pred.shape == y.shape
-    assert_array_equal(np.unique(y_pred), np.unique(y))
-
-
 @pytest.mark.parametrize(
     "response_methods",
     [
@@ -258,11 +206,3 @@ def test_mock_estimator_on_off_prediction(iris, response_methods):
             assert hasattr(estimator, response)
         else:
             assert not hasattr(estimator, response)
-
-
-def test_dummy_scorer(iris):
-    X, y = iris
-    estimator = _EstimatorWithFit()
-    scorer = _DummyScorer()
-    score = scorer(estimator, X, y)
-    assert score == pytest.approx(1)
