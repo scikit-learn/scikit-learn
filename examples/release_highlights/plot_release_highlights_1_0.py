@@ -31,7 +31,7 @@ or with conda::
 # ---------------------------------------------------------
 # The scikit-learn API exposes many functions and methods which have many input
 # parameters. For example, before this release, one could instantiate a
-# `ensemble.HistGradientBoostingRegressor` as::
+# :class:`ensemble.HistGradientBoostingRegressor` as::
 #
 #         HistGradientBoostingRegressor("squared_error", 0.1, 100, 31, None,
 #             20, 0.0, 255, None, None, False, "auto", "loss", 0.1, 10, 1e-7,
