@@ -661,17 +661,6 @@ class SelectFpr(_BaseFilter):
 
         .. versionadded:: 1.0
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFpr, chi2
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> X.shape
-    (569, 30)
-    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)
-    >>> X_new.shape
-    (569, 16)
-
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
@@ -686,6 +675,17 @@ class SelectFpr(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFpr, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 16)
     """
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
