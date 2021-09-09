@@ -237,7 +237,7 @@ the ``--filter`` option to compare the results.
   This text dataset contains data which may be inappropriate for certain
   NLP applications. An example is listed in the "Data Considerations" section.
   The challenge with using current text datasets in NLP for tasks such as
-  sentence completion, clustering and other applications is that text that
+sentence completion, clustering and other applications is that text that is
   culturally biased and inflammatory will propagate biases.
   This should be taken into consideration when using the dataset, reviewing
   the output and documenting the bias.
