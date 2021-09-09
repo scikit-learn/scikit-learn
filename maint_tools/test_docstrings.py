@@ -64,7 +64,6 @@ DOCSTRING_IGNORE_LIST = [
     "SelectFpr",
     "SelectFromModel",
     "SelectFwe",
-    "SelectKBest",
     "SelfTrainingClassifier",
     "SequentialFeatureSelector",
     "SimpleImputer",
