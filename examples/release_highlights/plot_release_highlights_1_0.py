@@ -9,7 +9,7 @@ Release Highlights for scikit-learn 1.0
 We are pleased to announce the release of scikit-learn 1.0! The library has
 been stable for quite some time, releasing version 1.0 is recognizing that and
 signalling it to our users. The release does not include any breaking changes,
-and as usual, and we do our best to follow a two release deprecation cycle for
+and as usual, and we do our best to follow a two release deprecation cycles for
 any breaking changes.
 
 This release includes many bug fixes and improvements, as well as some new key
