@@ -24,7 +24,11 @@ from sklearn.utils._testing import _convert_container
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
-from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils._mocking import (
+    _EstimatorWithFit,
+    MockDataFrame,
+    _MockEstimatorOnOffPrediction,
+)
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import _sparse_random_matrix
@@ -53,6 +57,7 @@ from sklearn.utils.validation import (
     _get_feature_names,
     _check_feature_names_in,
     _check_fit_params,
+    _check_response_method,
 )
 from sklearn.base import BaseEstimator
 import sklearn
@@ -1627,3 +1632,71 @@ def test_check_feature_names_in_pandas():
 
     with pytest.raises(ValueError, match="input_features is not equal to"):
         est.get_feature_names_out(["x1", "x2", "x3"])
+
+
+def test_check_response_method_unknown_method():
+    """Check the error message when passing an unknown response method."""
+    err_msg = "response_method unknown_method not defined"
+    with pytest.raises(ValueError, match=err_msg):
+        _check_response_method(RandomForestRegressor(), "unknown_method")
+
+
+@pytest.mark.parametrize(
+    "response_method", ["decision_function", "predict_proba", "predict", None]
+)
+def test_check_response_method_not_supported_response_method(response_method):
+    """Check the error message when a response method is not supported by the
+    estimator."""
+    err_msg = "response_method {} not defined"
+    if response_method is None:
+        err_msg = err_msg.format("predict_proba, decision_function, predict")
+    else:
+        err_msg = err_msg.format(response_method)
+    with pytest.raises(ValueError, match=err_msg):
+        _check_response_method(_EstimatorWithFit(), response_method)
+
+
+@pytest.mark.parametrize(
+    "response_methods, expected_method_name",
+    [
+        (["predict_proba", "decision_function", "predict"], "predict_proba"),
+        (["decision_function", "predict"], "decision_function"),
+        (["predict_proba", "predict"], "predict_proba"),
+        (["predict_proba", "predict_proba"]),
+        (["decision_function", "decision_function"]),
+        (["predict"], "predict"),
+    ],
+)
+def test_check_response_method_order_None(response_methods, expected_method_name):
+    """Check the order of the response method when using None."""
+    my_estimator = _MockEstimatorOnOffPrediction(response_methods)
+
+    X = "mocking_data"
+    method_name_predicting = _check_response_method(my_estimator, None)(X)
+    assert method_name_predicting == expected_method_name
+
+
+def test_check_response_method_list_str():
+    """Check that we can pass a list of ordered method."""
+    method_implemented = ["predict_proba"]
+    my_estimator = _MockEstimatorOnOffPrediction(method_implemented)
+
+    X = "mocking_data"
+
+    # raise an error when no methods are defined
+    response_method = ["decision_function", "predict"]
+    err_msg = "response_method decision_function, predict not defined"
+    with pytest.raises(ValueError, match=err_msg):
+        _check_response_method(my_estimator, response_method)(X)
+
+    # check that we don't get issue when one of the method is defined
+    response_method = ["decision_function", "predict_proba"]
+    method_name_predicting = _check_response_method(my_estimator, response_method)(X)
+    assert method_name_predicting == "predict_proba"
+
+    # check the order of the methods returned
+    method_implemented = ["predict_proba", "predict"]
+    my_estimator = _MockEstimatorOnOffPrediction(method_implemented)
+    response_method = ["decision_function", "predict", "predict_proba"]
+    method_name_predicting = _check_response_method(my_estimator, response_method)(X)
+    assert method_name_predicting == "predict"

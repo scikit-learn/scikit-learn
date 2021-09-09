@@ -1,7 +1,8 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
-from .validation import _num_samples, check_array, check_is_fitted
+from .metaestimators import available_if
+from .validation import _num_samples, check_array, check_is_fitted, check_random_state
 
 
 class ArraySlicingWrapper:
@@ -331,3 +332,86 @@ class NoSampleWeightWrapper(BaseEstimator):
 
     def _more_tags(self):
         return {"_skip_test": True}
+
+
+class _EstimatorWithoutFit:
+    """Dummy estimator to test scoring validators."""
+
+    def __init__(self, *, random_state=None):
+        self.random_state = random_state
+
+
+class _EstimatorWithFit(BaseEstimator):
+    """Dummy estimator to test scoring validators."""
+
+    def __init__(self, *, random_state=None):
+        self.random_state = random_state
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        self.random_state_ = check_random_state(self.random_state)
+        return self
+
+
+class _EstimatorWithFitAndScore(_EstimatorWithFit):
+    """Dummy estimator to test scoring validators."""
+
+    def score(self, X, y):
+        return 1.0
+
+
+class _EstimatorWithFitAndPredict(_EstimatorWithFit):
+    """Dummy estimator to test scoring validators"""
+
+    def predict(self, X):
+        return self.random_state_.choice(self.classes_, size=(_num_samples(X),))
+
+
+def _check_response(method):
+    def check(self):
+        if self.response_methods is not None and method in self.response_methods:
+            return True
+        return False
+
+    return check
+
+
+class _MockEstimatorOnOffPrediction(BaseEstimator):
+    """Estimator for which we can turn on/off the prediction methods.
+
+    Parameters
+    ----------
+    response_methods: list of \
+            {"predict", "predict_proba", "decision_function"}, default=None
+        List containing the response implemented by the estimator. When, the
+        response is in the list, it will return the name of the response method
+        when called. Otherwise, an `AttributeError` is raised. It allows to
+        use `getattr` as any conventional estimator. By default, no response
+        methods are mocked.
+    """
+
+    def __init__(self, response_methods=None):
+        self.response_methods = response_methods
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        return self
+
+    @available_if(_check_response("predict"))
+    def predict(self, X):
+        return "predict"
+
+    @available_if(_check_response("predict_proba"))
+    def predict_proba(self, X):
+        return "predict_proba"
+
+    @available_if(_check_response("decision_function"))
+    def decision_function(self, X):
+        return "decision_function"
+
+
+class _DummyScorer:
+    """Dummy scorer that always returns 1."""
+
+    def __call__(self, est, X, y):
+        return 1
