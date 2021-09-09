@@ -71,7 +71,7 @@ or with conda::
 # Spline Transformers
 # ---------------------------------------------------------
 # One way to add nonlinear terms to the dataset's feature set is to generate
-# spline basis functions for each feature with the
+# spline basis functions for each feature with the new
 # :class:`preprocessing.SplineTransformer`. Splines are piecewise polynomials,
 # parametrized by their polynomial degree and the positions of the knots. The
 # :class:`preprocessingSplineTransformer` implements a B-spline basis
