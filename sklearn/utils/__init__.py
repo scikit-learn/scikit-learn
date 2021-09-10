@@ -1252,6 +1252,8 @@ def _get_response(
 ):
     """Return response and positive label.
 
+    .. versionadded:: 1.1
+
     Parameters
     ----------
     estimator : estimator instance
