@@ -611,6 +611,18 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during :term:`fit`.
+
+        Only available if `best_estimator_` is defined
+        (see the documentation for the `refit` parameter for more details)
+        and that `best_estimator_` exposes `feature_names_in_` when fit.
+
+        Returns
+        -------
+        n : int
+            Number of features seen during :term:`fit` based on the estimator
+            with the best found parameters.
+        """
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() fails if the search estimator isn't fitted.
         try:
