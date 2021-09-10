@@ -109,27 +109,6 @@ jobs:
           name: linting
           command: ./build_tools/circle/linting.sh
 
-  pypy3:
-    docker:
-      - image: condaforge/miniforge3
-    environment:
-      # Avoid the interactive dialog when installing tzdata
-      - DEBIAN_FRONTEND: noninteractive
-    steps:
-      - restore_cache:
-          keys:
-            - pypy3-ccache-{{ .Branch }}
-            - pypy3-ccache
-      - run: apt-get -yq update && apt-get -yq install git ssh
-      - checkout
-      - run: conda init bash && source ~/.bashrc
-      - run: ./build_tools/circle/build_test_pypy.sh
-      - save_cache:
-          key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
-          paths:
-            - ~/.ccache
-            - ~/.cache/pip
-
   linux-arm64:
     machine:
       image: ubuntu-2004:202101-01
@@ -190,16 +169,6 @@ workflows:
       - deploy:
           requires:
             - doc
-  pypy:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - main
-    jobs:
-      - pypy3
   linux-arm64:
     jobs:
       - linux-arm64
