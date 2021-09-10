@@ -451,6 +451,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         score : float
+                The score defined by ``scoring`` if provided, and the
+                ``best_estimator_.score`` method otherwise.
         """
         _check_refit(self, "score")
         check_is_fitted(self)
