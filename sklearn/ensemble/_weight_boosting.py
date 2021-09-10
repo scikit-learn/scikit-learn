@@ -1,8 +1,8 @@
 """Weight Boosting.
 
 This module contains weight boosting estimators for both classification and
-regression. 
- 
+regression.
+
 The module structure is the following:
 
 - The `BaseWeightBoosting` base class implements a common ``fit`` method
