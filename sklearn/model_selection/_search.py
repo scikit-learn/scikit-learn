@@ -432,7 +432,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return getattr(self.estimator, "_pairwise", False)
 
     def score(self, X, y=None):
-        """Returns the score on the given data, if the estimator has been refit.
+        """Return the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
         ``best_estimator_.score`` method otherwise.
