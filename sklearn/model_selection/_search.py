@@ -530,6 +530,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        Returns
+        -------
+        p : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Predicted class probabilities for X based on the estimator with
+            the best found parameters. The order of the classes corresponds
+            to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         return self.best_estimator_.predict_proba(X)
