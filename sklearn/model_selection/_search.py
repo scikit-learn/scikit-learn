@@ -599,6 +599,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        Returns
+        -------
+        X : {ndarray, sparse matrix, list} of shape (n_features,) \
+            or (n_samples, n_features)
+            Result of the inverse_transform function for Xt based on the estimator
+            with the best found parameters.
         """
         check_is_fitted(self)
         return self.best_estimator_.inverse_transform(Xt)
