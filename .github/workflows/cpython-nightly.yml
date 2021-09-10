@@ -27,7 +27,7 @@ jobs:
         run: |
           echo "::set-output name=commit_msg::$(git log --no-merges -1 --oneline)"
 
-  nightly:
+  nightly-cpython:
     name: Nightly CPython-${{ matrix.python-version }}
     needs: get_latest_commit
     if: "contains(needs.get_latest_commit.outputs.commit_msg, '[python-dev]') || github.event_name == 'schedule' || github.event_name == 'workflow_run'"
@@ -41,6 +41,8 @@ jobs:
     env:
       INSTALL_NUMPY: ${{ matrix.install-numpy }}
       INSTALL_SCIPY: ${{ matrix.install-scipy }}
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '2'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -78,7 +80,7 @@ jobs:
       - name: Install scikit-learn
         run: |
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
-          pip install --no-build-isolation -e .
+          pip install -v --no-build-isolation -e .
       - name: Test scikit-learn
         run: |
           cd /tmp && python -m pytest -n 2 --pyargs sklearn
