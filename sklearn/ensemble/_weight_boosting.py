@@ -1,8 +1,8 @@
 """Weight Boosting.
 
 This module contains weight boosting estimators for both classification and
-regression.
-
+regression. 
+ 
 The module structure is the following:
 
 - The `BaseWeightBoosting` base class implements a common ``fit`` method
@@ -1030,6 +1030,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         learning_rate=1.0,
         loss="linear",
         random_state=None,
+        no_improvement="warn",
     ):
 
         super().__init__(
@@ -1041,6 +1042,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         self.loss = loss
         self.random_state = random_state
+        self.no_improvement = no_improvement
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted regressor from the training set (X, y).
@@ -1166,9 +1168,28 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         estimator_weight = self.learning_rate * np.log(1.0 / beta)
 
         if not iboost == self.n_estimators - 1:
-            sample_weight[sample_mask] *= np.power(
-                beta, (1.0 - masked_error_vector) * self.learning_rate
-            )
+            if hasattr(self, "previous_beta"):
+                if self.previous_beta > beta:
+                    # improved
+                    sample_weight[sample_mask] *= np.power(
+                        beta, (1.0 - masked_error_vector) * self.learning_rate
+                    )
+                else:
+                    # reset if not improved
+                    if self.no_improvement == "reset_weights":
+                        sample_weight[sample_mask] = 1 / len(sample_weight)
+                    elif self.no_improvement == "stop":
+                        return None, None, None
+                    elif self.no_improvement == "warn":
+                        warnings.warn("The estimator error has increased.")
+                    else:
+                        pass
+            else:
+                sample_weight[sample_mask] *= np.power(
+                    beta, (1.0 - masked_error_vector) * self.learning_rate
+                )
+
+        self.previous_beta = beta
 
         return sample_weight, estimator_weight, estimator_error
 
