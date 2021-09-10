@@ -559,6 +559,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        Returns
+        -------
+        score : ndarray of shape (n_samples,) or (n_samples, n_classes) \
+                or (n_samples, n_classes * (n_classes-1) / 2)
+                Result of the decision function for X based on the estimator with
+                the best found parameters.
         """
         check_is_fitted(self)
         return self.best_estimator_.decision_function(X)
