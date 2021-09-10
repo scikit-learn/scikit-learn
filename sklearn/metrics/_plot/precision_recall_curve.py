@@ -1,14 +1,14 @@
+from .base import BaseBinaryClassifierCurveDisplay
+
 from .. import average_precision_score
 from .. import precision_recall_curve
-from .._base import _check_pos_label_consistency
-from .._classification import check_consistent_length
 
 from ...base import is_classifier
 from ...utils import _get_response, check_matplotlib_support, deprecated
 from ...utils.multiclass import type_of_target
 
 
-class PrecisionRecallDisplay:
+class PrecisionRecallDisplay(BaseBinaryClassifierCurveDisplay):
     """Precision Recall visualization.
 
     It is recommend to use
@@ -119,9 +119,7 @@ class PrecisionRecallDisplay:
         display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("PrecisionRecallDisplay.plot")
-
-        name = self.estimator_name if name is None else name
+        name = super().plot(name=name)
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
@@ -232,28 +230,14 @@ class PrecisionRecallDisplay:
         <...>
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_estimator"
-        check_matplotlib_support(method_name)
-
-        if not (is_classifier(estimator) and type_of_target(y) == "binary"):
-            raise ValueError(
-                "The estimator should be a fitted binary classifier. Got a"
-                f" {estimator.__class__.__name__} estimator with"
-                f" {type_of_target(y)} type of target."
-            )
-
-        if response_method == "auto":
-            response_method = ["predict_proba", "decision_function"]
-
-        y_pred, pos_label = _get_response(
+        y_pred, pos_label, name = super().from_estimator(
             estimator,
             X,
             y,
-            response_method,
+            response_method=response_method,
             pos_label=pos_label,
+            name=name,
         )
-
-        name = name if name is not None else estimator.__class__.__name__
 
         return cls.from_predictions(
             y,
@@ -332,10 +316,12 @@ class PrecisionRecallDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
-
-        check_consistent_length(y_true, y_pred, sample_weight)
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
+        pos_label, name = super().from_predictions(
+            y_true,
+            y_pred,
+            pos_label=pos_label,
+            name=name,
+        )
 
         precision, recall, _ = precision_recall_curve(
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight

@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from sklearn.base import ClassifierMixin, clone
@@ -7,7 +8,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from sklearn.metrics import (
     DetCurveDisplay,
@@ -42,6 +43,49 @@ def test_display_curve_error_non_binary(pyplot, data, Display):
     )
     with pytest.raises(ValueError, match=msg):
         Display.from_estimator(clf, X, y)
+
+
+@pytest.mark.parametrize(
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+)
+def test_display_curve_error_regression(pyplot, data, data_binary, Display):
+    """Check that we raise an error with regressor."""
+
+    # Case 1: regressor
+    X, y = data_binary
+    regressor = DecisionTreeRegressor().fit(X, y)
+
+    msg = (
+        "The estimator should be a fitted binary classifier. Got a "
+        "DecisionTreeRegressor estimator with binary type of target."
+    )
+    with pytest.raises(ValueError, match=msg):
+        Display.from_estimator(regressor, X, y)
+
+    # Case 2: classifier with non-binary target
+    X, y = data
+    classifier = DecisionTreeClassifier().fit(X, y)
+
+    msg = (
+        "The estimator should be a fitted binary classifier. Got a "
+        "DecisionTreeClassifier estimator with multiclass type of target."
+    )
+    with pytest.raises(ValueError, match=msg):
+        Display.from_estimator(classifier, X, y)
+
+    # Case 3: regression target
+    X, y = data
+    # Force `y_true` to be seen as a regression problem
+    y = y + 0.5
+    msg = (
+        "The estimator should be a fitted binary classifier. Got a "
+        "DecisionTreeClassifier estimator with continuous type of target."
+    )
+    with pytest.raises(ValueError, match=msg):
+        Display.from_estimator(classifier, X, y)
+    msg = "The target should be binary. Got a continuous type of target."
+    with pytest.raises(ValueError, match=msg):
+        Display.from_predictions(y, regressor.fit(X, y).predict(X))
 
 
 @pytest.mark.parametrize(
@@ -151,3 +195,36 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     disp = Display.from_estimator(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
     assert disp.estimator_name == model.__class__.__name__
+
+
+@pytest.mark.parametrize(
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+)
+def test_display_curve_n_samples_consistency(pyplot, data_binary, Display):
+    """Check the error raised when `y_pred` or `sample_weight` have inconsistent
+    length."""
+    X, y = data_binary
+    classifier = DecisionTreeClassifier().fit(X, y)
+
+    msg = "Found input variables with inconsistent numbers of samples"
+    with pytest.raises(ValueError, match=msg):
+        Display.from_estimator(classifier, X[:-2], y)
+    with pytest.raises(ValueError, match=msg):
+        Display.from_estimator(classifier, X, y[:-2])
+    with pytest.raises(ValueError, match=msg):
+        Display.from_estimator(classifier, X, y, sample_weight=np.ones(X.shape[0] - 2))
+
+
+@pytest.mark.parametrize(
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+)
+def test_display_curve_error_pos_label(pyplot, data_binary, Display):
+    """Check consistence of error message when `pos_label` should be specified."""
+    X, y = data_binary
+    y = y + 10
+
+    classifier = DecisionTreeClassifier().fit(X, y)
+    y_pred = classifier.predict_proba(X)[:, -1]
+    msg = r"y_true takes value in {10, 11} and pos_label is not specified"
+    with pytest.raises(ValueError, match=msg):
+        Display.from_predictions(y, y_pred)

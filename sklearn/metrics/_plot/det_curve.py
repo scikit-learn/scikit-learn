@@ -1,7 +1,8 @@
 import scipy as sp
 
+from .base import BaseBinaryClassifierCurveDisplay
+
 from .. import det_curve
-from .._base import _check_pos_label_consistency
 
 from ...base import is_classifier
 from ...utils import (
@@ -12,7 +13,7 @@ from ...utils import deprecated
 from ...utils.multiclass import type_of_target
 
 
-class DetCurveDisplay:
+class DetCurveDisplay(BaseBinaryClassifierCurveDisplay):
     """DET curve visualization.
 
     It is recommend to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
@@ -169,26 +170,13 @@ class DetCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")
-
-        if not (is_classifier(estimator) and type_of_target(y) == "binary"):
-            raise ValueError(
-                "The estimator should be a fitted binary classifier. Got a"
-                f" {estimator.__class__.__name__} estimator with"
-                f" {type_of_target(y)} type of target."
-            )
-
-        if response_method == "auto":
-            response_method = ["predict_proba", "decision_function"]
-
-        name = estimator.__class__.__name__ if name is None else name
-
-        y_pred, pos_label = _get_response(
+        y_pred, pos_label, name = super().from_estimator(
             estimator,
             X,
             y,
-            response_method,
+            response_method=response_method,
             pos_label=pos_label,
+            name=name,
         )
 
         return cls.from_predictions(
@@ -277,7 +265,10 @@ class DetCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
+        pos_label_validated, name = super().from_predictions(
+            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
+
         fpr, fnr, _ = det_curve(
             y_true,
             y_pred,
@@ -285,14 +276,11 @@ class DetCurveDisplay:
             sample_weight=sample_weight,
         )
 
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
-        name = "Classifier" if name is None else name
-
         viz = DetCurveDisplay(
             fpr=fpr,
             fnr=fnr,
             estimator_name=name,
-            pos_label=pos_label,
+            pos_label=pos_label_validated,
         )
 
         return viz.plot(ax=ax, name=name, **kwargs)
@@ -318,9 +306,8 @@ class DetCurveDisplay:
         display : :class:`~sklearn.metrics.plot.DetCurveDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("DetCurveDisplay.plot")
+        name = super().plot(name=name)
 
-        name = self.estimator_name if name is None else name
         line_kwargs = {} if name is None else {"label": name}
         line_kwargs.update(**kwargs)
 

@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
@@ -53,43 +52,6 @@ def test_errors(pyplot):
     )
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(reg, X, y_binary)
-
-
-@pytest.mark.parametrize(
-    "response_method, msg",
-    [
-        (
-            "predict_proba",
-            "response method predict_proba is not defined in MyClassifier",
-        ),
-        (
-            "decision_function",
-            "response method decision_function is not defined in MyClassifier",
-        ),
-        (
-            "auto",
-            "response method decision_function or predict_proba is not "
-            "defined in MyClassifier",
-        ),
-        (
-            "bad_method",
-            "response_method must be 'predict_proba', 'decision_function' or 'auto'",
-        ),
-    ],
-)
-def test_error_bad_response(pyplot, response_method, msg):
-    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
-
-    class MyClassifier(ClassifierMixin, BaseEstimator):
-        def fit(self, X, y):
-            self.fitted_ = True
-            self.classes_ = [0, 1]
-            return self
-
-    clf = MyClassifier().fit(X, y)
-
-    with pytest.raises(ValueError, match=msg):
-        plot_precision_recall_curve(clf, X, y, response_method=response_method)
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])

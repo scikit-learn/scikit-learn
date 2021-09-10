@@ -1310,7 +1310,6 @@ def _get_response(
         prediction_method = _check_response_method(estimator, response_method)
         y_pred = prediction_method(X)
         classes = estimator.classes_
-        print(y_type)
 
         if pos_label is not None and pos_label not in classes.tolist():
             raise ValueError(
