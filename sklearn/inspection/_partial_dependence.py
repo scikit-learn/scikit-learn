@@ -370,7 +370,7 @@ def partial_dependence(
 
     See Also
     --------
-    plot_partial_dependence : Plot Partial Dependence.
+    PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
     PartialDependenceDisplay : Partial Dependence visualization.
 
     Examples

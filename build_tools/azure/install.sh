@@ -5,9 +5,19 @@ set -x
 
 UNAMESTR=`uname`
 
+if [[ "$DISTRIB" == "conda-mamba-pypy3" ]]; then
+    # condaforge/mambaforge-pypy3 needs compilers
+    apt-get -yq update
+    apt-get -yq install build-essential
+fi
+
 make_conda() {
     TO_INSTALL="$@"
-    conda create -n $VIRTUALENV --yes $TO_INSTALL
+    if [[ "$DISTRIB" == *"mamba"* ]]; then
+        mamba create -n $VIRTUALENV --yes $TO_INSTALL
+    else
+        conda create -n $VIRTUALENV --yes $TO_INSTALL
+    fi
     source activate $VIRTUALENV
 }
 
@@ -25,7 +35,7 @@ setup_ccache() {
 # imports get_dep
 source build_tools/shared.sh
 
-if [[ "$DISTRIB" == "conda" ]]; then
+if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
     if [[ "$CONDA_CHANNEL" != "" ]]; then
         TO_INSTALL="-c $CONDA_CHANNEL"
@@ -33,7 +43,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL=""
     fi
 
-    TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION ccache pip blas[build=$BLAS]"
+    if [[ "$DISTRIB" == *"pypy"* ]]; then
+        TO_INSTALL="$TO_INSTALL pypy"
+    else
+        TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
+    fi
+
+    TO_INSTALL="$TO_INSTALL ccache pip blas[build=$BLAS]"
 
     TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"

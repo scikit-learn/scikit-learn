@@ -1085,7 +1085,7 @@ def _approximate_mode(class_counts, n_draws, rng):
 def check_matplotlib_support(caller_name):
     """Raise ImportError with detailed error message if mpl is not installed.
 
-    Plot utilities like :func:`plot_partial_dependence` should lazily import
+    Plot utilities like any of the Display's ploting functions should lazily import
     matplotlib and call this helper before any computation.
 
     Parameters
