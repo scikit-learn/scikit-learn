@@ -1,11 +1,12 @@
 import scipy as sp
 
-from .base import _get_response
-
 from .. import det_curve
 from .._base import _check_pos_label_consistency
 
-from ...utils import check_matplotlib_support
+from ...utils import (
+    _get_response,
+    check_matplotlib_support,
+)
 from ...utils import deprecated
 
 
@@ -169,10 +170,13 @@ class DetCurveDisplay:
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
         name = estimator.__class__.__name__ if name is None else name
+        if response_method == "auto":
+            response_method = ["predict_proba", "decision_function"]
 
         y_pred, pos_label = _get_response(
-            X,
             estimator,
+            X,
+            y,
             response_method,
             pos_label=pos_label,
         )
@@ -453,9 +457,11 @@ def plot_det_curve(
     >>> plt.show()
     """
     check_matplotlib_support("plot_det_curve")
+    if response_method == "auto":
+        response_method = ["predict_proba", "decision_function"]
 
     y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label
+        estimator, X, y, response_method, pos_label=pos_label
     )
 
     fpr, fnr, _ = det_curve(
