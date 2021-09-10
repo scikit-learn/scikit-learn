@@ -614,6 +614,17 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     @property
     def classes_(self):
+        """The class labels.
+
+        Only available if the underlying estimator implements
+        ``classes_`` and ``refit=True``.
+
+        Returns
+        ----------
+        classes_ : ndarray of shape (n_classes,)
+                   The class labels of the estimator with the best found
+                   paramaters.
+        """
         _estimator_has("classes_")(self)
         return self.best_estimator_.classes_
 
