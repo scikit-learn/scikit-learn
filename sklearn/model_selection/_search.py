@@ -744,7 +744,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of str -> object
-            Parameters passed to the ``fit`` method of the estimator
+            Parameters passed to the ``fit`` method of the estimator.
+
+        Returns
+        -------
+        self : object
+               Instance of fitted estimator.
         """
         estimator = self.estimator
         refit_metric = "score"
