@@ -102,7 +102,9 @@ runtime:
 - threadpoolctl (>= |ThreadpoolctlMinVersion|).
 
 Those dependencies are **automatically installed by pip** if they were missing
-when building scikit-learn from source.
+when building scikit-learn from source using `pip install -e .`. If
+`--no-build-isolation` flag is provided, then NumPy and SciPy needs to be
+installed first.
 
 .. note::
 
