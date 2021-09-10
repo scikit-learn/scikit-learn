@@ -493,6 +493,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         y_score : ndarray of shape (n_samples,)
+                  The ``best_estimator_.score_samples`` method.
         """
         check_is_fitted(self)
         return self.best_estimator_.score_samples(X)
