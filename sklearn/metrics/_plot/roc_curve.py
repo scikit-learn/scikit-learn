@@ -226,6 +226,16 @@ class RocCurveDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
+        if not (is_classifier(estimator) and type_of_target(y) == "binary"):
+            raise ValueError(
+                "The estimator should be a fitted binary classifier. Got a"
+                f" {estimator.__class__.__name__} estimator with"
+                f" {type_of_target(y)} type of target."
+            )
+
+        if response_method == "auto":
+            response_method = ["predict_proba", "decision_function"]
+
         name = estimator.__class__.__name__ if name is None else name
 
         y_pred, pos_label = _get_response(

@@ -171,17 +171,17 @@ class DetCurveDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
-        classification_error = (
-            "Expected 'estimator' to be a binary classifier, but got"
-            f" {estimator.__class__.__name__}"
-        )
+        if not (is_classifier(estimator) and type_of_target(y) == "binary"):
+            raise ValueError(
+                "The estimator should be a fitted binary classifier. Got a"
+                f" {estimator.__class__.__name__} estimator with"
+                f" {type_of_target(y)} type of target."
+            )
 
-        if not is_classifier(estimator):
-            raise ValueError(classification_error)
-
-        name = estimator.__class__.__name__ if name is None else name
         if response_method == "auto":
             response_method = ["predict_proba", "decision_function"]
+
+        name = estimator.__class__.__name__ if name is None else name
 
         y_pred, pos_label = _get_response(
             estimator,
@@ -213,8 +213,7 @@ class DetCurveDisplay:
         ax=None,
         **kwargs,
     ):
-        """Plot DET curve given the true and
-        predicted labels.
+        """Plot DET curve given the true and predicted labels.
 
         Read more in the :ref:`User Guide <visualizations>`.
 
