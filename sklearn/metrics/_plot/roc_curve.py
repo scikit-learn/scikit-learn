@@ -1,10 +1,10 @@
-from .base import _get_response
-
 from .. import auc
 from .. import roc_curve
 from .._base import _check_pos_label_consistency
 
-from ...utils import check_matplotlib_support, deprecated
+from ...base import is_classifier
+from ...utils import _get_response, check_matplotlib_support, deprecated
+from ...utils.multiclass import type_of_target
 
 
 class RocCurveDisplay:
@@ -229,8 +229,9 @@ class RocCurveDisplay:
         name = estimator.__class__.__name__ if name is None else name
 
         y_pred, pos_label = _get_response(
-            X,
             estimator,
+            X,
+            y,
             response_method=response_method,
             pos_label=pos_label,
         )
@@ -451,8 +452,18 @@ def plot_roc_curve(
     """
     check_matplotlib_support("plot_roc_curve")
 
+    if not (is_classifier(estimator) and type_of_target(y) == "binary"):
+        raise ValueError(
+            "The estimator should be a fitted binary classifier. "
+            f"Got a {estimator.__class__.__name__} estimator with {type_of_target(y)} "
+            "type of target."
+        )
+
+    if response_method == "auto":
+        response_method = ["predict_proba", "decision_function"]
+
     y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label
+        estimator, X, y, response_method, pos_label=pos_label
     )
 
     fpr, tpr, _ = roc_curve(

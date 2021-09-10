@@ -3,11 +3,13 @@ import scipy as sp
 from .. import det_curve
 from .._base import _check_pos_label_consistency
 
+from ...base import is_classifier
 from ...utils import (
     _get_response,
     check_matplotlib_support,
 )
 from ...utils import deprecated
+from ...utils.multiclass import type_of_target
 
 
 class DetCurveDisplay:
@@ -168,6 +170,14 @@ class DetCurveDisplay:
         >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
+
+        classification_error = (
+            "Expected 'estimator' to be a binary classifier, but got"
+            f" {estimator.__class__.__name__}"
+        )
+
+        if not is_classifier(estimator):
+            raise ValueError(classification_error)
 
         name = estimator.__class__.__name__ if name is None else name
         if response_method == "auto":
@@ -457,6 +467,14 @@ def plot_det_curve(
     >>> plt.show()
     """
     check_matplotlib_support("plot_det_curve")
+
+    if not (is_classifier(estimator) and type_of_target(y) == "binary"):
+        raise ValueError(
+            "The estimator should be a fitted binary classifier. "
+            f"Got a {estimator.__class__.__name__} estimator with {type_of_target(y)} "
+            "type of target."
+        )
+
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]
 

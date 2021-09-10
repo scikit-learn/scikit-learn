@@ -10,11 +10,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-from sklearn.metrics import plot_det_curve
-from sklearn.metrics import plot_roc_curve
+from sklearn.metrics import plot_det_curve, plot_roc_curve, plot_precision_recall_curve
 
 pytestmark = pytest.mark.filterwarnings(
     "ignore:Function plot_roc_curve is deprecated",
+    "ignore:Function plot_det_curve is deprecated",
+    "ignore:Function plot_precision_recall_curve is deprecated",
 )
 
 
@@ -29,44 +30,47 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
+@pytest.mark.parametrize(
+    "plot_func", [plot_det_curve, plot_roc_curve, plot_precision_recall_curve]
+)
 def test_plot_curve_error_non_binary(pyplot, data, plot_func):
     X, y = data
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
     msg = (
-        "Expected 'estimator' to be a binary classifier, but got DecisionTreeClassifier"
+        "The estimator should be a fitted binary classifier. Got a "
+        "DecisionTreeClassifier estimator with multiclass type of target."
     )
     with pytest.raises(ValueError, match=msg):
         plot_func(clf, X, y)
 
 
-@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
     "response_method, msg",
     [
         (
             "predict_proba",
-            "response method predict_proba is not defined in MyClassifier",
+            "MyClassifier has none of the following attributes: predict_proba.",
         ),
         (
             "decision_function",
-            "response method decision_function is not defined in MyClassifier",
+            "MyClassifier has none of the following attributes: decision_function.",
         ),
         (
             "auto",
-            "response method decision_function or predict_proba is not "
-            "defined in MyClassifier",
+            "MyClassifier has none of the following attributes: predict_proba, "
+            "decision_function.",
         ),
         (
             "bad_method",
-            "response_method must be 'predict_proba', 'decision_function' or 'auto'",
+            "MyClassifier has none of the following attributes: bad_method",
         ),
     ],
 )
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
+@pytest.mark.parametrize(
+    "plot_func", [plot_det_curve, plot_roc_curve, plot_precision_recall_curve]
+)
 def test_plot_curve_error_no_response(
     pyplot,
     data_binary,
@@ -83,12 +87,13 @@ def test_plot_curve_error_no_response(
 
     clf = MyClassifier().fit(X, y)
 
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(AttributeError, match=msg):
         plot_func(clf, X, y, response_method=response_method)
 
 
-@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
+@pytest.mark.parametrize(
+    "plot_func", [plot_det_curve, plot_roc_curve, plot_precision_recall_curve]
+)
 def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func):
     # non-regression test checking that the `name` used when calling
     # `plot_func` is used as well when calling `disp.plot()`
@@ -106,7 +111,6 @@ def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func
     assert clf_name in disp.line_.get_label()
 
 
-@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
     "clf",
     [
@@ -117,7 +121,9 @@ def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func
         ),
     ],
 )
-@pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
+@pytest.mark.parametrize(
+    "plot_func", [plot_det_curve, plot_roc_curve, plot_precision_recall_curve]
+)
 def test_plot_det_curve_not_fitted_errors(pyplot, data_binary, clf, plot_func):
     X, y = data_binary
     # clone since we parametrize the test and the classifier will be fitted

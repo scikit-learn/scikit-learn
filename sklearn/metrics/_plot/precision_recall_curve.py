@@ -1,12 +1,11 @@
-from sklearn.base import is_classifier
-from .base import _get_response
-
 from .. import average_precision_score
 from .. import precision_recall_curve
 from .._base import _check_pos_label_consistency
 from .._classification import check_consistent_length
 
-from ...utils import check_matplotlib_support, deprecated
+from ...base import is_classifier
+from ...utils import _get_response, check_matplotlib_support, deprecated
+from ...utils.multiclass import type_of_target
 
 
 class PrecisionRecallDisplay:
@@ -235,11 +234,21 @@ class PrecisionRecallDisplay:
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
-        if not is_classifier(estimator):
-            raise ValueError(f"{method_name} only supports classifiers")
+
+        if not (is_classifier(estimator) and type_of_target(y) == "binary"):
+            raise ValueError(
+                "The estimator should be a fitted binary classifier. Got a"
+                f" {estimator.__class__.__name__} estimator with"
+                f" {type_of_target(y)} type of target."
+            )
+
+        if response_method == "auto":
+            response_method = ["predict_proba", "decision_function"]
+
         y_pred, pos_label = _get_response(
-            X,
             estimator,
+            X,
+            y,
             response_method,
             pos_label=pos_label,
         )
@@ -430,8 +439,18 @@ def plot_precision_recall_curve(
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
+    if not (is_classifier(estimator) and type_of_target(y) == "binary"):
+        raise ValueError(
+            "The estimator should be a fitted binary classifier. "
+            f"Got a {estimator.__class__.__name__} estimator with {type_of_target(y)} "
+            "type of target."
+        )
+
+    if response_method == "auto":
+        response_method = ["predict_proba", "decision_function"]
+
     y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label
+        estimator, X, y, response_method, pos_label=pos_label
     )
 
     precision, recall, _ = precision_recall_curve(
