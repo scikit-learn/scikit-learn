@@ -337,7 +337,7 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
     >>> from sklearn.pipeline import make_pipeline
     >>> estimator = make_pipeline(
     ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
-    ...     Isomap(neighbors_algorithm='precomputed'))
+    ...     Isomap(metric='precomputed'))
     """
 
     def __init__(
