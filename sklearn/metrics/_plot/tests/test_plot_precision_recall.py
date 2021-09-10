@@ -7,7 +7,6 @@ from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.datasets import make_classification
 from sklearn.datasets import load_breast_cancer
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.exceptions import NotFittedError
@@ -23,35 +22,6 @@ pytestmark = pytest.mark.filterwarnings(
     # TODO: Remove in 1.2 (as well as all the tests below)
     "ignore:Function plot_precision_recall_curve is deprecated",
 )
-
-
-def test_errors(pyplot):
-    X, y_multiclass = make_classification(
-        n_classes=3, n_samples=50, n_informative=3, random_state=0
-    )
-    y_binary = y_multiclass == 0
-
-    # Unfitted classifer
-    binary_clf = DecisionTreeClassifier()
-    with pytest.raises(NotFittedError):
-        plot_precision_recall_curve(binary_clf, X, y_binary)
-    binary_clf.fit(X, y_binary)
-
-    multi_clf = DecisionTreeClassifier().fit(X, y_multiclass)
-
-    # Fitted multiclass classifier with binary data
-    msg = (
-        "Expected 'estimator' to be a binary classifier, but got DecisionTreeClassifier"
-    )
-    with pytest.raises(ValueError, match=msg):
-        plot_precision_recall_curve(multi_clf, X, y_binary)
-
-    reg = DecisionTreeRegressor().fit(X, y_multiclass)
-    msg = (
-        "Expected 'estimator' to be a binary classifier, but got DecisionTreeRegressor"
-    )
-    with pytest.raises(ValueError, match=msg):
-        plot_precision_recall_curve(reg, X, y_binary)
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
