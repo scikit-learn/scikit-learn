@@ -121,26 +121,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.average = average
         self.max_iter = max_iter
         self.tol = tol
-        # current tests expect init to do parameter validation
-        # but we are not allowed to set attributes
-        self._validate_params()
-
-    def set_params(self, **kwargs):
-        """Set and validate the parameters of estimator.
-
-        Parameters
-        ----------
-        **kwargs : dict
-            Estimator parameters.
-
-        Returns
-        -------
-        self : object
-            Estimator instance.
-        """
-        super().set_params(**kwargs)
-        self._validate_params()
-        return self
 
     @abstractmethod
     def fit(self, X, y):
@@ -1140,6 +1120,12 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     sklearn.svm.LinearSVC : Linear support vector classification.
@@ -1869,6 +1855,12 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> import numpy as np
@@ -2060,6 +2052,12 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------

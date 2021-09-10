@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose
 from sklearn.datasets import make_regression
-from sklearn.linear_model import LinearRegression, RANSACRegressor
+from sklearn.linear_model import LinearRegression, RANSACRegressor, Ridge
 from sklearn.linear_model import OrthogonalMatchingPursuit
 from sklearn.linear_model._ransac import _dynamic_max_trials
 from sklearn.exceptions import ConvergenceWarning
@@ -358,6 +358,10 @@ def test_ransac_min_n_samples():
     ransac_estimator7 = RANSACRegressor(
         base_estimator, min_samples=X.shape[0] + 1, residual_threshold=5, random_state=0
     )
+    # GH #19390
+    ransac_estimator8 = RANSACRegressor(
+        Ridge(), min_samples=None, residual_threshold=5, random_state=0
+    )
 
     ransac_estimator1.fit(X, y)
     ransac_estimator2.fit(X, y)
@@ -382,6 +386,10 @@ def test_ransac_min_n_samples():
 
     with pytest.raises(ValueError):
         ransac_estimator7.fit(X, y)
+
+    err_msg = "From version 1.2, `min_samples` needs to be explicitely set"
+    with pytest.warns(FutureWarning, match=err_msg):
+        ransac_estimator8.fit(X, y)
 
 
 def test_ransac_multi_dimensional_targets():
@@ -574,9 +582,10 @@ def test_ransac_fit_sample_weight():
     # check that if base_estimator.fit doesn't support
     # sample_weight, raises error
     base_estimator = OrthogonalMatchingPursuit()
-    ransac_estimator = RANSACRegressor(base_estimator)
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=10)
 
-    with pytest.raises(ValueError):
+    err_msg = f"{base_estimator.__class__.__name__} does not support sample_weight."
+    with pytest.raises(ValueError, match=err_msg):
         ransac_estimator.fit(X, y, weights)
 
 

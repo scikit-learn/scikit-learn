@@ -22,11 +22,8 @@ dtypes = [('64', 'double', 1e-9),
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-# cython: profile=False
-# cython: linetrace=False
 # cython: initializedcheck=False
 # cython: binding=False
-# distutils: define_macros=CYTHON_TRACE_NOGIL=0
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Lars Buitinck

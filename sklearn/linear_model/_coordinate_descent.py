@@ -794,6 +794,12 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     ElasticNetCV : Elastic net model with best model selection by
@@ -1199,6 +1205,12 @@ class Lasso(ElasticNet):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1853,6 +1865,12 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     lars_path : Compute Least Angle Regression or Lasso path using LARS
@@ -1944,7 +1962,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     Parameters
     ----------
     l1_ratio : float or list of float, default=0.5
-        float between 0 and 1 passed to ElasticNet (scaling between
+        Float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For ``l1_ratio = 0``
         the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
         For ``0 < l1_ratio < 1``, the penalty is a combination of L1 and L2
@@ -2076,22 +2094,16 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> from sklearn.linear_model import ElasticNetCV
-    >>> from sklearn.datasets import make_regression
-
-    >>> X, y = make_regression(n_features=2, random_state=0)
-    >>> regr = ElasticNetCV(cv=5, random_state=0)
-    >>> regr.fit(X, y)
-    ElasticNetCV(cv=5, random_state=0)
-    >>> print(regr.alpha_)
-    0.199...
-    >>> print(regr.intercept_)
-    0.398...
-    >>> print(regr.predict([[0, 0]]))
-    [0.398...]
-
+    enet_path : Compute elastic net path with coordinate descent.
+    ElasticNet : Linear regression with combined L1 and L2 priors as regularizer.
 
     Notes
     -----
@@ -2119,10 +2131,21 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
         alpha = a + b and l1_ratio = a / (a + b).
 
-    See Also
+    Examples
     --------
-    enet_path
-    ElasticNet
+    >>> from sklearn.linear_model import ElasticNetCV
+    >>> from sklearn.datasets import make_regression
+
+    >>> X, y = make_regression(n_features=2, random_state=0)
+    >>> regr = ElasticNetCV(cv=5, random_state=0)
+    >>> regr.fit(X, y)
+    ElasticNetCV(cv=5, random_state=0)
+    >>> print(regr.alpha_)
+    0.199...
+    >>> print(regr.intercept_)
+    0.398...
+    >>> print(regr.predict([[0, 0]]))
+    [0.398...]
     """
 
     path = staticmethod(enet_path)
@@ -2281,6 +2304,12 @@ class MultiTaskElasticNet(Lasso):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -2526,6 +2555,12 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2724,6 +2759,12 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -2946,6 +2987,12 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------

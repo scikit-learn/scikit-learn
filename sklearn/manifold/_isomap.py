@@ -115,6 +115,12 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -172,6 +178,8 @@ class Isomap(TransformerMixin, BaseEstimator):
         )
         self.nbrs_.fit(X)
         self.n_features_in_ = self.nbrs_.n_features_in_
+        if hasattr(self.nbrs_, "feature_names_in_"):
+            self.feature_names_in_ = self.nbrs_.feature_names_in_
 
         self.kernel_pca_ = KernelPCA(
             n_components=self.n_components,
@@ -286,8 +294,8 @@ class Isomap(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse graph, BallTree, KDTree}
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
 

@@ -34,6 +34,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
+from sklearn.utils.metaestimators import available_if
 
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
@@ -43,6 +44,7 @@ from sklearn.utils.estimator_checks import (
     check_classifiers_multilabel_output_format_decision_function,
     check_classifiers_multilabel_output_format_predict,
     check_classifiers_multilabel_output_format_predict_proba,
+    check_dataframe_column_names_consistency,
     check_estimator,
     check_estimator_get_tags_default_keys,
     check_estimators_unfitted,
@@ -51,6 +53,7 @@ from sklearn.utils.estimator_checks import (
     check_regressor_data_not_an_array,
     check_outlier_corruption,
     set_random_state,
+    check_fit_check_is_fitted,
 )
 
 
@@ -411,6 +414,18 @@ class PoorScoreLogisticRegression(LogisticRegression):
         return {"poor_score": True}
 
 
+class PartialFitChecksName(BaseEstimator):
+    def fit(self, X, y):
+        self._validate_data(X, y)
+        return self
+
+    def partial_fit(self, X, y):
+        reset = not hasattr(self, "_fitted")
+        self._validate_data(X, y, reset=reset)
+        self._fitted = True
+        return self
+
+
 def test_not_an_array_array_function():
     if np_version < parse_version("1.17"):
         raise SkipTest("array_function protocol not supported in numpy <1.17")
@@ -695,6 +710,22 @@ def test_check_estimator_get_tags_default_keys():
     # noop check when _get_tags is not available
     estimator = MinimalTransformer()
     check_estimator_get_tags_default_keys(estimator.__class__.__name__, estimator)
+
+
+def test_check_dataframe_column_names_consistency():
+    err_msg = "Estimator does not have a feature_names_in_"
+    with raises(ValueError, match=err_msg):
+        check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
+    check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
+
+    lr = LogisticRegression()
+    check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+    lr.__doc__ = "Docstring that does not document the estimator's attributes"
+    err_msg = (
+        "Estimator LogisticRegression does not document its feature_names_in_ attribute"
+    )
+    with raises(ValueError, match=err_msg):
+        check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
 
 
 class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
@@ -986,3 +1017,28 @@ def test_minimal_class_implementation_checks():
     minimal_estimators = [MinimalTransformer(), MinimalRegressor(), MinimalClassifier()]
     for estimator in minimal_estimators:
         check_estimator(estimator)
+
+
+def test_check_fit_check_is_fitted():
+    class Estimator(BaseEstimator):
+        def __init__(self, behavior="attribute"):
+            self.behavior = behavior
+
+        def fit(self, X, y, **kwargs):
+            if self.behavior == "attribute":
+                self.is_fitted_ = True
+            elif self.behavior == "method":
+                self._is_fitted = True
+            return self
+
+        @available_if(lambda self: self.behavior in {"method", "always-true"})
+        def __sklearn_is_fitted__(self):
+            if self.behavior == "always-true":
+                return True
+            return hasattr(self, "_is_fitted")
+
+    with raises(Exception, match="passes check_is_fitted before being fit"):
+        check_fit_check_is_fitted("estimator", Estimator(behavior="always-true"))
+
+    check_fit_check_is_fitted("estimator", Estimator(behavior="method"))
+    check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))

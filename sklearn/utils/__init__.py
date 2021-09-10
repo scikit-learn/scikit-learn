@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
 from itertools import islice
+import math
 import numbers
 import platform
 import struct
@@ -1009,9 +1010,7 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    # convert from numpy.bool_ to python bool to ensure that testing
-    # is_scalar_nan(x) is True does not fail.
-    return bool(isinstance(x, numbers.Real) and np.isnan(x))
+    return isinstance(x, numbers.Real) and math.isnan(x)
 
 
 def _approximate_mode(class_counts, n_draws, rng):
@@ -1057,7 +1056,7 @@ def _approximate_mode(class_counts, n_draws, rng):
     rng = check_random_state(rng)
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
-    continuous = n_draws * class_counts / class_counts.sum()
+    continuous = class_counts / class_counts.sum() * n_draws
     # floored means we don't overshoot n_samples, but probably undershoot
     floored = np.floor(continuous)
     # we add samples according to how much "left over" probability
@@ -1086,7 +1085,7 @@ def _approximate_mode(class_counts, n_draws, rng):
 def check_matplotlib_support(caller_name):
     """Raise ImportError with detailed error message if mpl is not installed.
 
-    Plot utilities like :func:`plot_partial_dependence` should lazily import
+    Plot utilities like any of the Display's ploting functions should lazily import
     matplotlib and call this helper before any computation.
 
     Parameters
