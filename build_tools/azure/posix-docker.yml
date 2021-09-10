@@ -31,6 +31,7 @@ jobs:
     COVERAGE: 'false'
     TEST_DOCSTRINGS: 'false'
     BLAS: 'openblas'
+    # Set in azure-pipelines.yml
     DISTRIB: ''
     DOCKER_CONTAINER: ''
   strategy:

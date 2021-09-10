@@ -200,7 +200,6 @@ jobs:
         PYTEST_XDIST_VERSION: 'none'
         PILLOW_VERSION: 'none'
         PANDAS_VERSION: 'none'
-        BLAS: 'openblas'
       debian_atlas_32bit:
         DISTRIB: 'debian-32'
         DOCKER_CONTAINER: 'i386/debian:10.9'
