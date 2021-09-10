@@ -936,4 +936,58 @@ Code and Documentation Contributors
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.24, including:
 
-TODO: update at the time of the release.
+Abdulelah S. Al Mesfer, Abhinav Gupta, Adam J. Stewart, Adam Li, Adam Midvidy,
+Adrian Garcia Badaracco, Adrian Sadłocha, Adrin Jalali, Agamemnon Krasoulis,
+Alberto Rubiales, Albert Thomas, Albert Villanova del Moral, Alek Lefebvre,
+Alessia Marcolini, Alexandr Fonari, Alihan Zihna, Aline Ribeiro de Almeida,
+Amanda, Amanda Dsouza, Amol Deshmukh, Ana Pessoa, Anavelyz, Andreas Mueller,
+Andrew Delong, Ashish, Ashvith Shetty, Atsushi Nukariya, Avi Gupta, Ayush
+Singh, baam, BaptBillard, Benjamin Pedigo, Bertrand Thirion, Bharat
+Raghunathan, bmalezieux, Brian Rice, Brian Sun, Bruno Charron, Bryan Chen,
+bumblebee, caherrera-meli, Carsten Allefeld, CeeThinwa, Chiara Marmo,
+chrissobel, Christian Lorentzen, Christopher Yeh, Chuliang Xiao, Clément
+Fauchereau, cliffordEmmanuel, Conner Shen, Connor Tann, David Dale, David Katz,
+David Poznik, Divyanshu Deoli, dmallia17, Dmitry Kobak, DS_anas, Eduardo
+Jardim, EdwinWenink, EL-ATEIF Sara, Eleni Markou, Eric Fiegel, Erich Schubert,
+Ezri-Mudde, Fatos Morina, Felipe Rodrigues, Felix Hafner, Fenil Suchak,
+flyingdutchman23, Flynn, Fortune Uwha, Francois Berenger, Frankie Robertson,
+Frans Larsson, Frederick Robinson, Gabriel S Vicente, Gael Varoquaux, genvalen,
+Geoffrey Thomas, geroldcsendes, Gleb Levitskiy, Glen, Glòria Macià Muñoz,
+gregorystrubel, groceryheist, Guillaume Lemaitre, guiweber, Haidar Almubarak,
+Hans Moritz Günther, Haoyin Xu, Harris Mirza, Harry Wei, Harutaka Kawamura,
+Hassan Alsawadi, Helder Geovane Gomes de Lima, Hugo DEFOIS, Igor Ilic, Ikko
+Ashimine, Isaack Mungui, Ishaan Bhat, Ishan Mishra, Iván Pulido, iwhalvic,
+Jack Liu, James Alan Preiss, James Budarz, James Lamb, Jannik, Jeff Zhao,
+Jennifer Maldonado, Jérémie du Boisberranger, Jesse Lima, Jianzhu Guo,
+jnboehm, Joel Nothman, JohanWork, John Paton, Jonathan Schneider, Jon Crall,
+Jon Haitz Legarreta Gorroño, Joris Van den Bossche, José Manuel Nápoles
+Duarte, Juan Carlos Alfaro Jiménez, Juan Martin Loyola, Julien Jerphanion,
+Julio Batista Silva, julyrashchenko, JVM, Kadatatlu Kishore, Karen Palacio, Kei
+Ishikawa, kmatt10, kobaski, Kot271828, Kunj, KurumeYuta, kxytim, lacrosse91,
+LalliAcqua, Laveen Bagai, Leonardo Rocco, Leonardo Uieda, Leopoldo Corona, Loic
+Esteve, LSturtew, Luca Bittarello, Luccas Quadros, Lucy Jiménez, Lucy Liu,
+ly648499246, Mabu Manaileng, makoeppel, Marco Gorelli, Maren Westermann,
+Mariangela, Maria Telenczuk, marielaraj, Martin Hirzel, Mateo Noreña, Mathieu
+Blondel, Mathis Batoul, mathurinm, Matthew Calcote, Maxime Prieur, Maxwell,
+Mehdi Hamoumi, Mehmet Ali Özer, Miao Cai, Michal Karbownik, michalkrawczyk,
+Mitzi, mlondschien, Mohamed Haseeb, Mohamed Khoualed, Muhammad Jarir Kanji,
+murata-yu, Nadim Kawwa, Nanshan Li, naozin555, Nate Parsons, Neal Fultz, Nic
+Annau, Nicolas Hug, Nicolas Miller, Nico Stefani, Nigel Bosch, Nodar
+Okroshiashvili, Norbert Preining, novaya, Ogbonna Chibuike Stephen, OGordon100,
+Oliver Pfaffel, Olivier Grisel, Oras Phongpanangam, Pablo Duque, Pablo
+Ibieta-Jimenez, Patric Lacouth, Paulo S. Costa, Paweł Olszewski, Peter Dye,
+PierreAttard, Pierre-Yves Le Borgne, PranayAnchuri, Prince Canuma, putschblos,
+qdeffense, RamyaNP, ranjanikrishnan, Ray Bell, Rene Jean Corneille, Reshama
+Shaikh, ricardojnf, RichardScottOZ, Rodion Martynov, Rohan Paul, Roman Lutz,
+Roman Yurchak, Samuel Brice, Sandy Khosasi, Sean Benhur J, Sebastian Flores,
+Sebastian Pölsterl, Shao Yang Hong, shinehide, shinnar, shivamgargsya,
+Shooter23, Shuhei Kayawari, Shyam Desai, simonamaggio, Sina Tootoonian,
+solosilence, Steven Kolawole, Steve Stagg, Surya Prakash, swpease, Sylvain
+Marié, Takeshi Oura, Terence Honles, TFiFiE, Thomas A Caswell, Thomas J. Fan,
+Tim Gates, TimotheeMathieu, Timothy Wolodzko, Tim Vink, t-jakubek, t-kusanagi,
+tliu68, Tobias Uhmann, tom1092, Tomás Moreyra, Tomás Ronald Hughes, Tom
+Dupré la Tour, Tommaso Di Noto, Tomohiro Endo, Toshihiro NAKAE, tsuga, Uttam
+kumar, vadim-ushtanit, Vangelis Gkiastas, Venkatachalam N, Vilém Zouhar,
+Vinicius Rios Fuck, Vlasovets, waijean, Whidou, xavier dupré, xiaoyuchai,
+Yasmeen Alsaedy, yoch, Yosuke KOBAYASHI, Yu Feng, YusukeNagasaka, yzhenman,
+Zero, ZeyuSun, ZhaoweiWang, Zito, Zito Relova
