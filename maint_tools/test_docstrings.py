@@ -35,7 +35,6 @@ DOCSTRING_IGNORE_LIST = [
     "NeighborhoodComponentsAnalysis",
     "Normalizer",
     "OPTICS",
-    "OneVsOneClassifier",
     "OneVsRestClassifier",
     "OrdinalEncoder",
     "OrthogonalMatchingPursuit",
