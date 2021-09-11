@@ -81,11 +81,11 @@ or with conda::
 # :class:`~preprocessing.SplineTransformer` implements a B-spline basis
 #
 # .. figure:: ../linear_model/images/sphx_glr_plot_polynomial_interpolation_001.png
-#   :target: ../linear_model/plot_successive_halving_iterations.html
+#   :target: ../linear_model/plot_polynomial_interpolation.html
 #   :align: center
 #
 # The following code shows splines in action, for more information, please
-# refer to the :ref:`User Guide <spline_transformer>`
+# refer to the :ref:`User Guide <spline_transformer>.`
 
 import numpy as np
 from sklearn.preprocessing import SplineTransformer
@@ -128,8 +128,8 @@ spline.fit_transform(X)
 # Please check the following example to see how it works, and the :ref:`User
 # Guide <quantile_regression>` for more details.
 #
-# .. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_002.png
-#    :target: ../auto_examples/linear_model/plot_quantile_regression.html
+# .. figure:: ../linear_model/images/sphx_glr_plot_quantile_regression_002.png
+#    :target: ../linear_model/plot_quantile_regression.html
 #    :align: center
 #    :scale: 50%
 
@@ -138,10 +138,10 @@ spline.fit_transform(X)
 # --------------------------------------------------------------------------
 # When an estimator is passed a pandas' dataframe during :term:`fit`, the
 # estimator will set a `feature_names_in_` attribute containing the feature
-# names. Note that feature names support is only enabled when the names in the
-# dataframe are all strings. `feature_names_in_` is used to check that the
-# dataframe passed in non-:term:`fit`, such as :term:`predict`, is consistent
-# with features in :term:`fit`:
+# names. Note that feature names support is only enabled when the column names
+# in the dataframe are all strings. `feature_names_in_` is used to check that
+# the column names of the dataframe passed in non-:term:`fit`, such as
+# :term:`predict`, are consistent with features in :term:`fit`:
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 
@@ -151,12 +151,12 @@ scalar.feature_names_in_
 
 # %%
 # :term:`get_feature_names_out` support is avaliable for transformers that
-# already have :term:`get_feature_names` and transformers with a one-to-one
-# correspondence between input and output such as :class:`preprocessing.StandScalar`.
-# :term:`get_feature_names_out` support will be added to all other transformer
-# in a future release. Additionally,
-# :meth:`compose.ColumnTransformer.get_feature_names_out` is avaliable to combine
-# features names of its transformers:
+# already had :term:`get_feature_names` and transformers with a one-to-one
+# correspondence between input and output such as
+# :class:`~preprocessing.StandardScalar`. :term:`get_feature_names_out` support
+# will be added to all other transformers in a future release. Additionally,
+# :meth:`compose.ColumnTransformer.get_feature_names_out` is avaliable to
+# combine features names of its transformers:
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 import pandas as pd
@@ -173,8 +173,9 @@ preprocessor = ColumnTransformer(
 preprocessor.get_feature_names_out()
 
 # %%
-# When the preprocessor is used with a pipeline, the feature names used by the
-# classifier are obtained by slicing and calling :term:`get_feature_names_out`:
+# When this ``preprocessor``` is used with a pipeline, the feature names used
+# by the classifier are obtained by slicing and calling
+# :term:`get_feature_names_out`:
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 
@@ -214,8 +215,8 @@ pipe[:-1].get_feature_names_out()
 # <sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py` to see how
 # it's used, and :ref:`User Guide <sgd_online_one_class_svm>` for more details.
 #
-# .. figure:: /auto_examples/miscellaneous/images/sphx_glr_plot_anomaly_comparison_001.png
-#    :target: ../auto_examples/miscellaneous/plot_anomaly_comparison.html
+# .. figure:: ../miscellaneous/images/sphx_glr_plot_anomaly_comparison_001.png
+#    :target: ../miscellaneous/plot_anomaly_comparison.html
 #    :align: center
 
 ##############################################################################
