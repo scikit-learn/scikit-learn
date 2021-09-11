@@ -1180,7 +1180,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         elif iboost == self.n_estimators - 1:
             update_weight_method = "do_nothing"
         else:
-            if self.previous_beta > beta:
+            if self.previous_beta_ > beta:
                 if self.no_improvement == "reset_weights":
                     update_weight_method = "reset"
                 elif self.no_improvement == "stop":
@@ -1209,7 +1209,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         elif update_weight_method == "do_nothing":
             pass
 
-        self.previous_beta = beta
+        self.previous_beta_ = beta
 
         return sample_weight, estimator_weight, estimator_error
 
