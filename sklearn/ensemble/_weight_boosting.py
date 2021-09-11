@@ -1175,27 +1175,39 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         # Boost weight using AdaBoost.R2 alg
         estimator_weight = self.learning_rate * np.log(1.0 / beta)
 
-        if not iboost == self.n_estimators - 1:
-            if hasattr(self, "previous_beta"):
-                if self.previous_beta > beta:
-                    # improved
-                    sample_weight[sample_mask] *= np.power(
-                        beta, (1.0 - masked_error_vector) * self.learning_rate
+        if iboost == 0:
+            update_weight_method = "update"
+        elif iboost == self.n_estimators - 1:
+            update_weight_method = "do_nothing"
+        else:
+            if self.previous_beta > beta:
+                if self.no_improvement == "reset_weights":
+                    update_weight_method = "reset"
+                elif self.no_improvement == "stop":
+                    warnings.warn(
+                        "Terminates training because the estimator error has increased."
+                    )
+                    return None, None, None
+                elif self.no_improvement == "warn":
+                    update_weight_method = "update"
+                    warnings.warn(
+                        "The estimator error has increased. "
+                        "Please consider hyper-parameter tuning for "
+                        "the base estimators."
                     )
                 else:
-                    # reset if not improved
-                    if self.no_improvement == "reset_weights":
-                        sample_weight[sample_mask] = 1 / len(sample_weight)
-                    elif self.no_improvement == "stop":
-                        return None, None, None
-                    elif self.no_improvement == "warn":
-                        warnings.warn("The estimator error has increased.")
-                    else:
-                        pass
+                    update_weight_method = "update"
             else:
-                sample_weight[sample_mask] *= np.power(
-                    beta, (1.0 - masked_error_vector) * self.learning_rate
-                )
+                update_weight_method = "update"
+
+        if update_weight_method == "update":
+            sample_weight[sample_mask] *= np.power(
+                beta, (1.0 - masked_error_vector) * self.learning_rate
+            )
+        elif update_weight_method == "reset":
+            sample_weight[sample_mask] = 1 / len(sample_weight)
+        elif update_weight_method == "do_nothing":
+            pass
 
         self.previous_beta = beta
 

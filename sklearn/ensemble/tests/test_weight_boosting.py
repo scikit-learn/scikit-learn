@@ -594,12 +594,14 @@ def test_adaboost_regressor_reset_weights():
         base_estimator=DecisionTreeRegressor(max_leaf_nodes=50),
         n_estimators=10,
         no_improvement="continue",
+        random_state=0,
     )
     adaboost_500 = AdaBoostRegressor(
         learning_rate=1.0,
         base_estimator=DecisionTreeRegressor(max_leaf_nodes=50),
         n_estimators=500,
         no_improvement="continue",
+        random_state=0,
     )
 
     # We usually assume large n_estimators should be better than the small ones.
