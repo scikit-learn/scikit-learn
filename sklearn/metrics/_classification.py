@@ -1567,11 +1567,11 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
     Parameters
     ----------
     y_true : {array-like, label indicator array, sparse matrix} \
-        of shape (n_samples,)
+            of shape (n_samples,)
         Ground truth (correct) target values.
 
     y_pred : {array-like, label indicator array, sparse matrix} \
-        of shape (n_samples,)
+            of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
     labels : list, default=None
@@ -1666,7 +1666,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
     (0.3333333333333333, 0.3333333333333333, 0.6666666666666666,
     0.6666666666666666)
 
-    It is possible to compute per-label fpr, fnr, tnr, tpr and
+    It is possible to compute per-label FPR, FNR, TNR, TPR and
     supports instead of averaging:
 
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average=None,
@@ -1678,7 +1678,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
     -----
     When ``true positive + false negative == 0``, TPR, FNR are undefined;
     When ``true negative + false positive == 0``, FPR, TNR are undefined.
-    In such cases, by default the metric will be set to 0, as will f-score,
+    In such cases, by default the metric will be set to 0, as will F-score,
     and ``UndefinedMetricWarning`` will be raised. This behavior can be
     modified with ``zero_division``.
     """
@@ -2494,7 +2494,7 @@ def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
         Ground truth (correct) labels for n_samples samples.
 
     y_pred : array-like of float, shape = (n_samples, n_classes) \
-    or (n_samples,)
+            or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
