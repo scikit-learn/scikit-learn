@@ -36,7 +36,6 @@ DOCSTRING_IGNORE_LIST = [
     "Normalizer",
     "OPTICS",
     "OneVsOneClassifier",
-    "OneVsRestClassifier",
     "OrdinalEncoder",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
