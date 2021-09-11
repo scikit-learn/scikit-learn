@@ -6,14 +6,14 @@ Release Highlights for scikit-learn 1.0
 
 .. currentmodule:: sklearn
 
-We are pleased to announce the release of scikit-learn 1.0! The library has
+We are very pleased to announce the release of scikit-learn 1.0! The library has
 been stable for quite some time, releasing version 1.0 is recognizing that and
-signalling it to our users. The release does not include any breaking changes,
-and as usual, and we do our best to follow a two-release deprecation cycles for
-any breaking changes.
+signalling it to our users. This release does not include any breaking changes
+apart from the usual two-release deprecation cycle. For the future, we do our
+best to keep this pattern.
 
-This release includes many bug fixes and improvements, as well as some new key
-features. We detail below a few of the major features of this release. **For an
+This release includes some new key features as well as many improvements and bug
+fixes. We detail below a few of the major features of this release. **For an
 exhaustive list of all the changes**, please refer to the :ref:`release notes
 <changes_1_0>`.
 
@@ -38,8 +38,8 @@ or with conda::
 #             0, None)
 #
 # Understanding the above code requires the reader to go to the API
-# documentation to check each parameter, and what they mean, with the position
-# they have. To improve the readability of code written based on scikit-learn,
+# documentation and to check each and every parameter for its position and
+# its meaning. To improve the readability of code written based on scikit-learn,
 # now users have to provide most parameters with their names, as keyword
 # arguments, instead of positional arguments. For example, the above code would
 # be::
@@ -74,8 +74,8 @@ or with conda::
 ##############################################################################
 # Spline Transformers
 # ---------------------------------------------------------
-# One way to add nonlinear terms to the dataset's feature set is to generate
-# spline basis functions for each feature with the new
+# One way to add nonlinear terms to a dataset's feature set is to generate
+# spline basis functions for continuous/numerical features with the new
 # :class:`~preprocessing.SplineTransformer`. Splines are piecewise polynomials,
 # parametrized by their polynomial degree and the positions of the knots. The
 # :class:`~preprocessing.SplineTransformer` implements a B-spline basis
@@ -85,7 +85,7 @@ or with conda::
 #   :align: center
 #
 # The following code shows splines in action, for more information, please
-# refer to :ref:`User Guide <spline_transformer>`
+# refer to the :ref:`User Guide <spline_transformer>`
 
 import numpy as np
 from sklearn.preprocessing import SplineTransformer
@@ -189,7 +189,7 @@ pipe[:-1].get_feature_names_out()
 # --------------------------------------------------------------------------
 # :class:`metrics.ConfusionMatrixDisplay`,
 # :class:`metrics.PrecisionRecallDisplay`, :class:`metrics.DetCurveDisplay`,
-# and :class:`metrics.PartialDependenceDisplay` now expose two class methods:
+# and :class:`inspection.PartialDependenceDisplay` now expose two class methods:
 # `from_estimator` and `from_predictions` which allow users to create a plot
 # given the predictions or an estimator. This means the corresponsing `plot_*`
 # functions are deprecated. Please check :ref:`example one
@@ -230,6 +230,6 @@ pipe[:-1].get_feature_names_out()
 ##############################################################################
 # New documentation improvements
 # ------------------------------
-# This release includes many documentation improvements. Out of over 2.1k
+# This release includes many documentation improvements. Out of over 2100
 # merged pull requests, about 800 of them are improvements to our
 # documentation.
