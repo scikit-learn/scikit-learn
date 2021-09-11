@@ -134,6 +134,57 @@ spline.fit_transform(X)
 #    :scale: 50%
 
 ##############################################################################
+# Feature Names Support
+# --------------------------------------------------------------------------
+# When an estimator is passed a pandas' dataframe during :term:`fit`, the
+# estimator will set a `feature_names_in_` attribute containing the feature
+# names. Note that feature names support is only enabled when the names in the
+# dataframe are all strings. `feature_names_in_` is used to check that the
+# dataframe passed in non-:term:`fit`, such as :term:`predict`, is consistent
+# with features in :term:`fit`:
+from sklearn.preprocessing import StandardScaler
+import pandas as pd
+
+X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
+scalar = StandardScaler().fit(X)
+scalar.feature_names_in_
+
+# %%
+# :term:`get_feature_names_out` support is avaliable for transformers that
+# already have :term:`get_feature_names` and transformers with a one-to-one
+# correspondence between input and output such as :class:`preprocessing.StandScalar`.
+# :term:`get_feature_names_out` support will be added to all other transformer
+# in a future release. Additionally,
+# :meth:`compose.ColumnTransformer.get_feature_names_out` is avaliable to combine
+# features names of its transformers:
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+import pandas as pd
+
+X = pd.DataFrame({"pet": ["dog", "cat", "fish"], "age": [3, 7, 1]})
+preprocessor = ColumnTransformer(
+    [
+        ("numerical", StandardScaler(), ["age"]),
+        ("categorical", OneHotEncoder(), ["pet"]),
+    ],
+    prefix_feature_names_out=False,
+).fit(X)
+
+preprocessor.get_feature_names_out()
+
+# %%
+# When the preprocessor is used with a pipeline, the feature names used by the
+# classifier are obtained by slicing and calling :term:`get_feature_names_out`:
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+
+y = [1, 0, 1]
+pipe = make_pipeline(preprocessor, LogisticRegression())
+pipe.fit(X, y)
+pipe[:-1].get_feature_names_out()
+
+
+##############################################################################
 # A more flexible plotting API
 # --------------------------------------------------------------------------
 # :class:`metrics.ConfusionMatrixDisplay`,
