@@ -338,9 +338,9 @@ Changelog
 - |Feature| Added auto mode to :class:`feature_selection.SequentialFeatureSelection`.
   If the argument `n_features_to_select` is `'auto'`, select features until
   the score improvement does not exceed the argument `tol`.
-  The default value of `n_features_to_select` changed from `None` to `‘warn’` in 1.0
-  and will become `'auto'` in 1.2. `None` has been disabled. `'warn'` is deprecated
-  in 1.0 and will be disabled in 1.2.
+  The default value of `n_features_to_select` changed from `None` to `‘warn’` in 1.1
+  and will become `'auto'` in 1.3. `None` has been disabled. `'warn'` is deprecated
+  in 1.0 and will be disabled in 1.3.
   :pr:`20145` by :user:`murata-yu`.
 
 :mod:`sklearn.inspection`
