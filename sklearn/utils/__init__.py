@@ -1056,7 +1056,7 @@ def _approximate_mode(class_counts, n_draws, rng):
     rng = check_random_state(rng)
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
-    continuous = n_draws * class_counts / class_counts.sum()
+    continuous = class_counts / class_counts.sum() * n_draws
     # floored means we don't overshoot n_samples, but probably undershoot
     floored = np.floor(continuous)
     # we add samples according to how much "left over" probability
@@ -1085,7 +1085,7 @@ def _approximate_mode(class_counts, n_draws, rng):
 def check_matplotlib_support(caller_name):
     """Raise ImportError with detailed error message if mpl is not installed.
 
-    Plot utilities like :func:`plot_partial_dependence` should lazily import
+    Plot utilities like any of the Display's ploting functions should lazily import
     matplotlib and call this helper before any computation.
 
     Parameters

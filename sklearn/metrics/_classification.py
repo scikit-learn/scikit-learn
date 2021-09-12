@@ -1174,7 +1174,7 @@ def fbeta_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None \
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -1475,7 +1475,7 @@ def precision_recall_fscore_support(
     precision : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    recall : float (if average is not None) or array of float, , shape =\
+    recall : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
     fbeta_score : float (if average is not None) or array of float, shape =\
@@ -1662,7 +1662,7 @@ def precision_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None \
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -1696,8 +1696,8 @@ def precision_score(
 
     Returns
     -------
-    precision : float (if average is not None) or array of float of shape
-        (n_unique_labels,)
+    precision : float (if average is not None) or array of float of shape \
+                (n_unique_labels,)
         Precision of the positive class in binary classification or weighted
         average of the precision of each class for the multiclass task.
 
@@ -1794,7 +1794,7 @@ def recall_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None \
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -1829,8 +1829,8 @@ def recall_score(
 
     Returns
     -------
-    recall : float (if average is not None) or array of float of shape
-        (n_unique_labels,)
+    recall : float (if average is not None) or array of float of shape \
+             (n_unique_labels,)
         Recall of the positive class in binary classification or weighted
         average of the recall of each class for the multiclass task.
 

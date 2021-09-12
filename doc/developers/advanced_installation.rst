@@ -60,11 +60,12 @@ feature, code or documentation improvement).
 #. Optional (but recommended): create and activate a dedicated virtualenv_
    or `conda environment`_.
 
-#. Install Cython_ and build the project with pip in :ref:`editable_mode`:
+#. Install NumPy_, SciPy_, and Cython_ and build the project with pip in
+   :ref:`editable_mode`:
 
    .. prompt:: bash $
 
-        pip install cython
+        pip install numpy scipy cython
         pip install --verbose --no-build-isolation --editable .
 
 #. Check that the installed scikit-learn has a version number ending with
@@ -436,6 +437,8 @@ the base system and these steps will not be necessary.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _Cython: https://cython.org
+.. _NumPy: https://numpy.org
+.. _SciPy: https://www.scipy.org
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html

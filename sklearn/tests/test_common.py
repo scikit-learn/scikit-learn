@@ -37,6 +37,7 @@ from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.pipeline import make_pipeline
 
 from sklearn.utils import IS_PYPY
+from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
     set_random_state,
@@ -49,6 +50,8 @@ from sklearn.utils.estimator_checks import (
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
     check_n_features_in_after_fitting,
+    check_transformer_get_feature_names_out,
+    check_transformer_get_feature_names_out_pandas,
 )
 
 
@@ -88,8 +91,8 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-def _tested_estimators():
-    for name, Estimator in all_estimators():
+def _tested_estimators(type_filter=None):
+    for name, Estimator in all_estimators(type_filter=type_filter):
         try:
             estimator = _construct_instance(Estimator)
         except SkipTest:
@@ -311,6 +314,21 @@ def test_search_cv(estimator, check, request):
 @pytest.mark.parametrize(
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
+def test_valid_tag_types(estimator):
+    """Check that estimator tags are valid."""
+    tags = _safe_tags(estimator)
+
+    for name, tag in tags.items():
+        correct_tags = type(_DEFAULT_TAGS[name])
+        if name == "_xfail_checks":
+            # _xfail_checks can be a dictionary
+            correct_tags = (correct_tags, dict)
+        assert isinstance(tag, correct_tags)
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
 def test_check_n_features_in_after_fitting(estimator):
     _set_checking_parameters(estimator)
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
@@ -340,3 +358,51 @@ def test_pandas_column_name_consistency(estimator):
             )
         for warning in record:
             assert "was fitted without feature names" not in str(warning.message)
+
+
+# TODO: As more modules support get_feature_names_out they should be removed
+# from this list to be tested
+GET_FEATURES_OUT_MODULES_TO_IGNORE = [
+    "cluster",
+    "cross_decomposition",
+    "decomposition",
+    "discriminant_analysis",
+    "ensemble",
+    "impute",
+    "isotonic",
+    "kernel_approximation",
+    "preprocessing",
+    "manifold",
+    "neighbors",
+    "neural_network",
+    "random_projection",
+]
+
+
+def _include_in_get_feature_names_out_check(transformer):
+    if hasattr(transformer, "get_feature_names_out"):
+        return True
+    module = transformer.__module__.split(".")[1]
+    return module not in GET_FEATURES_OUT_MODULES_TO_IGNORE
+
+
+GET_FEATURES_OUT_ESTIMATORS = [
+    est
+    for est in _tested_estimators("transformer")
+    if _include_in_get_feature_names_out_check(est)
+]
+
+
+@pytest.mark.parametrize(
+    "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_transformers_get_feature_names_out(transformer):
+    _set_checking_parameters(transformer)
+
+    with ignore_warnings(category=(FutureWarning)):
+        check_transformer_get_feature_names_out(
+            transformer.__class__.__name__, transformer
+        )
+        check_transformer_get_feature_names_out_pandas(
+            transformer.__class__.__name__, transformer
+        )

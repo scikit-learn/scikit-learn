@@ -6,35 +6,35 @@
       img.avatar {border-radius: 10px;}
     </style>
     <div>
-    <a href='https://github.com/alfaro96'><img src='https://avatars1.githubusercontent.com/u/32649176?v=4' class='avatar' /></a> <br />
+    <a href='https://github.com/jjerphan'><img src='https://avatars.githubusercontent.com/u/13029839?v=4' class='avatar' /></a> <br />
+    <p>Julien Jerphanion</p>
+    </div>
+    <div>
+    <a href='https://github.com/alfaro96'><img src='https://avatars.githubusercontent.com/u/32649176?v=4' class='avatar' /></a> <br />
     <p>Juan Carlos Alfaro Jiménez</p>
     </div>
     <div>
-    <a href='https://github.com/lucyleeow'><img src='https://avatars0.githubusercontent.com/u/23182829?v=4' class='avatar' /></a> <br />
+    <a href='https://github.com/lucyleeow'><img src='https://avatars.githubusercontent.com/u/23182829?v=4' class='avatar' /></a> <br />
     <p>Lucy Liu</p>
-    </div>
-    <div>
-    <a href='https://github.com/cmarmo'><img src='https://avatars3.githubusercontent.com/u/1662261?v=4' class='avatar' /></a> <br />
-    <p>Chiara Marmo</p>
-    </div>
-    <div>
-    <a href='https://github.com/reshamas'><img src='https://avatars0.githubusercontent.com/u/2507232?v=4' class='avatar' /></a> <br />
-    <p>Reshama Shaikh</p>
-    </div>
-    <div>
-    <a href='https://github.com/albertcthomas'><img src='https://avatars3.githubusercontent.com/u/15966638?v=4' class='avatar' /></a> <br />
-    <p>Albert Thomas</p>
     </div>
     <div>
     <a href='https://github.com/smarie'><img src='https://avatars.githubusercontent.com/u/3236794?v=4' class='avatar' /></a> <br />
     <p>Sylvain Marié</p>
     </div>
     <div>
+    <a href='https://github.com/cmarmo'><img src='https://avatars.githubusercontent.com/u/1662261?v=4' class='avatar' /></a> <br />
+    <p>Chiara Marmo</p>
+    </div>
+    <div>
     <a href='https://github.com/norbusan'><img src='https://avatars.githubusercontent.com/u/1735589?v=4' class='avatar' /></a> <br />
     <p>Norbert Preining</p>
     </div>
     <div>
-    <a href='https://github.com/jjerphan'><img src='https://avatars.githubusercontent.com/u/13029839?v=4' class='avatar' /></a> <br />
-    <p>Julien Jerphanion</p>
+    <a href='https://github.com/reshamas'><img src='https://avatars.githubusercontent.com/u/2507232?v=4' class='avatar' /></a> <br />
+    <p>Reshama Shaikh</p>
+    </div>
+    <div>
+    <a href='https://github.com/albertcthomas'><img src='https://avatars.githubusercontent.com/u/15966638?v=4' class='avatar' /></a> <br />
+    <p>Albert Thomas</p>
     </div>
     </div>
