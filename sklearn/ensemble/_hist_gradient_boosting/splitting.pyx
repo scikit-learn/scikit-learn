@@ -144,6 +144,10 @@ cdef class Splitter:
         feature.
     is_categorical : ndarray of bool of shape (n_features,)
         Indicates categorical features.
+    monotonic_cst : ndarray of shape (n_features,), dtype=int
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
     l2_regularization : float
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
@@ -839,7 +843,7 @@ cdef class Splitter:
         # other category. The low-support categories will always be mapped to
         # the right child. We scan the sorted categories array from left to
         # right and from right to left, and we stop at the middle.
-        
+
         # Considering ordered categories A B C D, with E being a low-support
         # category: A B C D
         #              ^
