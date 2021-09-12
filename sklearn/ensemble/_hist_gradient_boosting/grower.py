@@ -616,11 +616,11 @@ class TreeGrower:
 
     def _get_allowed_features(self, parent_feature_idx):
         """Return all feature indices allowed to be split by interaction_cst."""
-        allowed_features = []
+        allowed_features = set()
         for group in self.interaction_cst:
             if parent_feature_idx in group:
-                allowed_features.extend(group)
-        return np.array(sorted(allowed_features), dtype=int)
+                allowed_features.update(group)
+        return np.array(list(allowed_features), dtype=int)
 
     def _finalize_leaf(self, node):
         """Make node a leaf of the tree being grown."""
