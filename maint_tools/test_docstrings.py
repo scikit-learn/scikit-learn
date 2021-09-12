@@ -16,7 +16,6 @@ DOCSTRING_IGNORE_LIST = [
     "HuberRegressor",
     "Isomap",
     "IterativeImputer",
-    "KBinsDiscretizer",
     "KNNImputer",
     "LabelPropagation",
     "LabelSpreading",
