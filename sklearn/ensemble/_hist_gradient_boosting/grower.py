@@ -168,6 +168,7 @@ class TreeGrower:
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
+    interaction_cst : list of sets of integers
     l2_regularization : float, default=0.
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
@@ -220,6 +221,7 @@ class TreeGrower:
         has_missing_values=False,
         is_categorical=None,
         monotonic_cst=None,
+        interaction_cst=None,
         l2_regularization=0.0,
         min_hessian_to_split=1e-3,
         shrinkage=1.0,
@@ -310,6 +312,7 @@ class TreeGrower:
         self.max_leaf_nodes = max_leaf_nodes
         self.has_missing_values = has_missing_values
         self.monotonic_cst = monotonic_cst
+        self.interaction_cst = interaction_cst
         self.is_categorical = is_categorical
         self.l2_regularization = l2_regularization
         self.n_features = X_binned.shape[1]
@@ -428,7 +431,7 @@ class TreeGrower:
         )
         self._compute_best_split_and_push(self.root)
 
-    def _compute_best_split_and_push(self, node):
+    def _compute_best_split_and_push(self, node, parent_feature_idx=None):
         """Compute the best possible split (SplitInfo) of a given node.
 
         Also push it in the heap of splittable nodes if gain isn't zero.
@@ -436,6 +439,10 @@ class TreeGrower:
         (best gain = 0), or if no split would satisfy the constraints,
         (min_hessians_to_split, min_gain_to_split, min_samples_leaf)
         """
+        if (self.interaction_cst is None) or (parent_feature_idx is None):
+            allowed_features = None
+        else:
+            allowed_features = self._get_allowed_features(parent_feature_idx)
 
         node.split_info = self.splitter.find_node_split(
             node.n_samples,
@@ -445,6 +452,7 @@ class TreeGrower:
             node.value,
             node.children_lower_bound,
             node.children_upper_bound,
+            allowed_features,
         )
 
         if node.split_info.gain <= 0:  # no valid split
@@ -585,9 +593,13 @@ class TreeGrower:
 
             tic = time()
             if should_split_left:
-                self._compute_best_split_and_push(left_child_node)
+                self._compute_best_split_and_push(
+                    left_child_node, parent_feature_idx=node.split_info.feature_idx
+                )
             if should_split_right:
-                self._compute_best_split_and_push(right_child_node)
+                self._compute_best_split_and_push(
+                    right_child_node, parent_feature_idx=node.split_info.feature_idx
+                )
             self.total_find_split_time += time() - tic
 
             # Release memory used by histograms as they are no longer needed
@@ -601,6 +613,14 @@ class TreeGrower:
         del node.histograms
 
         return left_child_node, right_child_node
+
+    def _get_allowed_features(self, parent_feature_idx):
+        """Return all feature indices allowed to be split by interaction_cst."""
+        allowed_features = []
+        for group in self.interaction_cst:
+            if parent_feature_idx in group:
+                allowed_features.extend(group)
+        return np.array(sorted(allowed_features), dtype=int)
 
     def _finalize_leaf(self, node):
         """Make node a leaf of the tree being grown."""

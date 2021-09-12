@@ -411,6 +411,7 @@ cdef class Splitter:
             const Y_DTYPE_C value,
             const Y_DTYPE_C lower_bound=-INFINITY,
             const Y_DTYPE_C upper_bound=INFINITY,
+            const int [:] allowed_features=None,
             ):
         """For each feature, find the best bin to split on at a given node.
 
@@ -443,6 +444,9 @@ cdef class Splitter:
         upper_bound : float
             Upper bound for the children values for respecting the monotonic
             constraints.
+        allowed_features : ndarray, dtype=int
+            Indices of the features that are allowed by interaction constraints to be
+            split.
 
         Returns
         -------
@@ -459,14 +463,22 @@ cdef class Splitter:
             const unsigned char [::1] is_categorical = self.is_categorical
             const signed char [::1] monotonic_cst = self.monotonic_cst
             int n_threads = self.n_threads
+            bint has_interaction_cst = False
+            int n_allowed_features = self.n_features
+
+        if allowed_features is not None:
+            has_interaction_cst = True
+            n_allowed_features = allowed_features.shape[0]
 
         with nogil:
 
             split_infos = <split_info_struct *> malloc(
-                self.n_features * sizeof(split_info_struct))
+                n_features * sizeof(split_info_struct))
 
-            for feature_idx in prange(n_features, schedule='static',
+            for feature_idx in prange(n_allowed_features, schedule='static',
                                       num_threads=n_threads):
+                if has_interaction_cst:
+                    feature_idx = allowed_features[feature_idx]
                 split_infos[feature_idx].feature_idx = feature_idx
 
                 # For each feature, find best bin to split on
