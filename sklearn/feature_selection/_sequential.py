@@ -195,7 +195,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         )
         n_features = X.shape[1]
 
-        # FIXME: to be fixed in 1.2
+        # FIXME: to be fixed in 1.3
         error_msg = (
             "n_features_to_select must be either 'auto', 'warn', "
             "None, an integer in [1, n_features - 1] "
