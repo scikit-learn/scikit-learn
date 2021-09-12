@@ -3830,3 +3830,111 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
             warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
             with raises(FutureWarning, match=expected_msg):
                 estimator.partial_fit(X_bad, y)
+
+
+def check_transformer_get_feature_names_out(name, transformer_orig):
+    tags = transformer_orig._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
+    X, y = make_blobs(
+        n_samples=30,
+        centers=[[0, 0, 0], [1, 1, 1]],
+        random_state=0,
+        n_features=2,
+        cluster_std=0.1,
+    )
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+
+    transformer = clone(transformer_orig)
+    X = _enforce_estimator_tags_x(transformer, X)
+    X = _pairwise_estimator_convert_X(X, transformer)
+
+    n_features = X.shape[1]
+    set_random_state(transformer)
+
+    y_ = y
+    if name in CROSS_DECOMPOSITION:
+        y_ = np.c_[np.asarray(y), np.asarray(y)]
+        y_[::2, 1] *= 2
+
+    X_transform = transformer.fit_transform(X, y=y_)
+    input_features = [f"feature{i}" for i in range(n_features)]
+
+    # input_features names is not the same length as n_features_in_
+    with raises(ValueError, match="input_features should have length equal"):
+        transformer.get_feature_names_out(input_features[::2])
+
+    feature_names_out = transformer.get_feature_names_out(input_features)
+    assert feature_names_out is not None
+    assert isinstance(feature_names_out, np.ndarray)
+    assert all(isinstance(name, str) for name in feature_names_out)
+
+    if isinstance(X_transform, tuple):
+        n_features_out = X_transform[0].shape[1]
+    else:
+        n_features_out = X_transform.shape[1]
+
+    assert (
+        len(feature_names_out) == n_features_out
+    ), f"Expected {n_features_out} feature names, got {len(feature_names_out)}"
+
+
+def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not checking column name consistency for pandas"
+        )
+
+    tags = transformer_orig._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
+    X, y = make_blobs(
+        n_samples=30,
+        centers=[[0, 0, 0], [1, 1, 1]],
+        random_state=0,
+        n_features=2,
+        cluster_std=0.1,
+    )
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+
+    transformer = clone(transformer_orig)
+    X = _enforce_estimator_tags_x(transformer, X)
+    X = _pairwise_estimator_convert_X(X, transformer)
+
+    n_features = X.shape[1]
+    set_random_state(transformer)
+
+    y_ = y
+    if name in CROSS_DECOMPOSITION:
+        y_ = np.c_[np.asarray(y), np.asarray(y)]
+        y_[::2, 1] *= 2
+
+    feature_names_in = [f"col{i}" for i in range(n_features)]
+    df = pd.DataFrame(X, columns=feature_names_in)
+    X_transform = transformer.fit_transform(df, y=y_)
+
+    # error is raised when `input_features` do not match feature_names_in
+    invalid_feature_names = [f"bad{i}" for i in range(n_features)]
+    with raises(ValueError, match="input_features is not equal to feature_names_in_"):
+        transformer.get_feature_names_out(invalid_feature_names)
+
+    feature_names_out_default = transformer.get_feature_names_out()
+    feature_names_in_explicit_names = transformer.get_feature_names_out(
+        feature_names_in
+    )
+    assert_array_equal(feature_names_out_default, feature_names_in_explicit_names)
+
+    if isinstance(X_transform, tuple):
+        n_features_out = X_transform[0].shape[1]
+    else:
+        n_features_out = X_transform.shape[1]
+
+    assert (
+        len(feature_names_out_default) == n_features_out
+    ), f"Expected {n_features_out} feature names, got {len(feature_names_out_default)}"

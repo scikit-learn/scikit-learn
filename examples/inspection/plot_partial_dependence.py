@@ -111,12 +111,12 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
 import matplotlib.pyplot as plt
 from sklearn.inspection import partial_dependence
-from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import PartialDependenceDisplay
 
 print("Computing partial dependence plots...")
 tic = time()
 features = ["MedInc", "AveOccup", "HouseAge", "AveRooms"]
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
     features,
@@ -166,7 +166,7 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
 print("Computing partial dependence plots...")
 tic = time()
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
     features,
@@ -229,7 +229,7 @@ features = ["AveOccup", "HouseAge", ("AveOccup", "HouseAge")]
 print("Computing partial dependence plots...")
 tic = time()
 _, ax = plt.subplots(ncols=3, figsize=(9, 4))
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
     features,

@@ -25,11 +25,12 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
+from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
@@ -1048,8 +1049,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     ... ]
     >>> vectorizer = CountVectorizer()
     >>> X = vectorizer.fit_transform(corpus)
-    >>> print(vectorizer.get_feature_names())
-    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+    >>> vectorizer.get_feature_names_out()
+    array(['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third',
+           'this'], ...)
     >>> print(X.toarray())
     [[0 1 1 1 0 0 1 0 1]
      [0 2 0 1 0 1 1 0 1]
@@ -1057,10 +1059,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 1 1 1 0 0 1 0 1]]
     >>> vectorizer2 = CountVectorizer(analyzer='word', ngram_range=(2, 2))
     >>> X2 = vectorizer2.fit_transform(corpus)
-    >>> print(vectorizer2.get_feature_names())
-    ['and this', 'document is', 'first document', 'is the', 'is this',
-    'second document', 'the first', 'the second', 'the third', 'third one',
-     'this document', 'this is', 'this the']
+    >>> vectorizer2.get_feature_names_out()
+    array(['and this', 'document is', 'first document', 'is the', 'is this',
+           'second document', 'the first', 'the second', 'the third', 'third one',
+           'this document', 'this is', 'this the'], ...)
      >>> print(X2.toarray())
      [[0 0 1 1 0 0 1 0 0 0 0 1 0]
      [0 1 0 1 0 1 0 1 0 0 1 0 0]
@@ -1386,6 +1388,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 for i in range(n_samples)
             ]
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name.
 
@@ -1394,10 +1400,28 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         feature_names : list
             A list of feature names.
         """
-
         self._check_vocabulary()
 
         return [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))]
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        self._check_vocabulary()
+        return np.asarray(
+            [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))],
+            dtype=object,
+        )
 
     def _more_tags(self):
         return {"X_types": ["string"]}
@@ -1408,7 +1432,7 @@ def _make_int_array():
     return array.array(str("i"))
 
 
-class TfidfTransformer(TransformerMixin, BaseEstimator):
+class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform a count matrix to a normalized tf or tf-idf representation.
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
@@ -1858,8 +1882,9 @@ class TfidfVectorizer(CountVectorizer):
     ... ]
     >>> vectorizer = TfidfVectorizer()
     >>> X = vectorizer.fit_transform(corpus)
-    >>> print(vectorizer.get_feature_names())
-    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+    >>> vectorizer.get_feature_names_out()
+    array(['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third',
+           'this'], ...)
     >>> print(X.shape)
     (4, 9)
     """
