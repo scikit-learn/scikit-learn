@@ -206,6 +206,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         )
         if self.n_features_to_select in ("auto", "warn", None):
             if self.tol is not None:
+                # With auto feature selection, `n_features_to_select_` will be updated
+                # to `support_.sum()` after features are selected.
                 self.n_features_to_select_ = n_features - 1
             else:
                 self.n_features_to_select_ = n_features // 2
