@@ -41,7 +41,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         If integer, the parameter is the absolute number of features to select.
         If float between 0 and 1, it is the fraction of features to select.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
            The option `"auto"` was added in version 1.0.
 
         .. deprecated:: 1.0
