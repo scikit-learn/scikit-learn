@@ -253,7 +253,7 @@ def test_pipeline_support():
     pipe.transform(X)
 
 
-# FIXME : to be removed in 1.2
+# FIXME : to be removed in 1.3
 def test_raise_deprecation_warning():
     """Check that we raise a FutureWarning with `n_features_to_select`."""
     n_samples, n_features = 50, 3
