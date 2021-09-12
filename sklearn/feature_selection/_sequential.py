@@ -57,7 +57,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         if `n_features_to_select` has not been reached. `tol` is enabled only
         when `n_features_to_select` is `"auto"`.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
