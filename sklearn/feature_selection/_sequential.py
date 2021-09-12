@@ -42,7 +42,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         If float between 0 and 1, it is the fraction of features to select.
 
         .. versionadded:: 1.1
-           The option `"auto"` was added in version 1.0.
+           The option `"auto"` was added in version 1.1.
 
         .. deprecated:: 1.0
            The default changed from `None` to `"warn"` in 1.0 and will become
