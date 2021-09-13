@@ -424,7 +424,7 @@ def test_tpr_fpr_tnr_fnr_scores_multiclass():
     assert_array_almost_equal(fnr, [0.21, 0.1, 0.9], 2)
 
 
-@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
 def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
