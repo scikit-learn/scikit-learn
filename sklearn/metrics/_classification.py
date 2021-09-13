@@ -544,7 +544,8 @@ def multilabel_confusion_matrix(
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0" % np.min(labels)
+                    "Got %d < 0"
+                    % np.min(labels)
                 )
 
         if n_labels is not None:
@@ -2290,8 +2291,7 @@ def log_loss(
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes) \
-            or (n_samples,)
+    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
@@ -2658,7 +2658,7 @@ def tpr_fpr_tnr_fnr_scores(
     labels=None,
     pos_label=1,
     average=None,
-    warn_for=("tpr", "fpr", "tnr", "fnr"),
+    warn_for=("TPR", "FPR", "TNR", "FNR"),
     sample_weight=None,
     zero_division="warn",
 ):
@@ -2692,13 +2692,13 @@ def tpr_fpr_tnr_fnr_scores(
         Estimated targets as returned by a classifier.
 
     labels : list, default=None
-        The set of labels to include when ``average != 'binary'``, and their
-        order if ``average is None``. Labels present in the data can be
+        The set of labels to include when `average != "binary"`, and their
+        order if `average is None`. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
         majority negative class, while labels not present in the data will
         result in 0 components in a macro average. For multilabel targets,
-        labels are column indices. By default, all labels in ``y_true`` and
-        ``y_pred`` are used in sorted order.
+        labels are column indices. By default, all labels in `y_true` and
+        `y_pred` are used in sorted order.
 
     pos_label : str or int, default=1
         The class to report if `average="binary"` and the data is binary.
@@ -2895,12 +2895,12 @@ def specificity_score(
 
     labels : array-like, default=None
         The set of labels to include when `average != "binary"`, and their
-        order if ``average is None``. Labels present in the data can be
+        order if `average is None`. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
         majority negative class, while labels not present in the data will
         result in 0 components in a macro average. For multilabel targets,
-        labels are column indices. By default, all labels in ``y_true`` and
-        ``y_pred`` are used in sorted order.
+        labels are column indices. By default, all labels in `y_true` and
+        `y_pred` are used in sorted order.
 
     pos_label : str or int, default=1
         The class to report if `average="binary"` and the data is binary.
@@ -2911,7 +2911,7 @@ def specificity_score(
     average : str, {None, 'binary', 'micro', 'macro', 'samples', 'weighted'} \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
-        If ``None``, the scores for each class are returned. Otherwise, this
+        If `None`, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
         `"binary"`:
@@ -2989,7 +2989,7 @@ def specificity_score(
         labels=labels,
         pos_label=pos_label,
         average=average,
-        warn_for=("tnr",),
+        warn_for=("TNR",),
         sample_weight=sample_weight,
         zero_division=zero_division,
     )
