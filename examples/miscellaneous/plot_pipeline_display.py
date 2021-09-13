@@ -114,29 +114,36 @@ pipe  # click on the diagram below to see the details of each step
 # :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
 # representation.
 
-from sklearn.compose import make_column_selector as selector
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import LogisticRegression
+import numpy as np
 from sklearn.pipeline import make_pipeline
-import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.linear_model import LogisticRegression
 from sklearn import set_config
 
-numerical_columns_selector = selector(dtype_exclude=object)
-categorical_columns_selector = selector(dtype_include=object)
+numeric_preprocessor = Pipeline(
+    steps=[
+        ("imputation_mean", SimpleImputer(missing_values=np.nan, strategy="mean")),
+        ("scaler", StandardScaler()),
+    ]
+)
 
-data = pd.DataFrame()
-
-numerical_columns = numerical_columns_selector(data)
-categorical_columns = categorical_columns_selector(data)
-
-categorical_preprocessor = OneHotEncoder(handle_unknown="ignore")
-numerical_preprocessor = StandardScaler()
+categorical_preprocessor = Pipeline(
+    steps=[
+        (
+            "imputation_constant",
+            SimpleImputer(fill_value="missing", strategy="constant"),
+        ),
+        ("onehot", OneHotEncoder(handle_unknown="ignore")),
+    ]
+)
 
 preprocessor = ColumnTransformer(
     [
-        ("one-hot-encoder", categorical_preprocessor, categorical_columns),
-        ("standard-scaler", numerical_preprocessor, numerical_columns),
+        ("categorical", categorical_preprocessor, ["state", "gender"]),
+        ("numerical", numeric_preprocessor, ["age", "weight"]),
     ]
 )
 
@@ -155,29 +162,24 @@ pipe  # click on the diagram below to see the details of each step
 # :class:`~sklearn.ensemble.RandomForestClassifier` and displays its visual
 # representation.
 
-from sklearn.compose import make_column_selector as selector
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.pipeline import make_pipeline
 import numpy as np
-import pandas as pd
+from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
 from sklearn import set_config
 
-numerical_columns_selector = selector(dtype_exclude=object)
-categorical_columns_selector = selector(dtype_include=object)
-
-numeric_transformer = Pipeline(
+numeric_preprocessor = Pipeline(
     steps=[
         ("imputation_mean", SimpleImputer(missing_values=np.nan, strategy="mean")),
         ("scaler", StandardScaler()),
     ]
 )
 
-categorical_transformer = Pipeline(
+categorical_preprocessor = Pipeline(
     steps=[
         (
             "imputation_constant",
@@ -187,15 +189,10 @@ categorical_transformer = Pipeline(
     ]
 )
 
-data = pd.DataFrame()
-
-numerical_columns = numerical_columns_selector(data)
-categorical_columns = categorical_columns_selector(data)
-
 preprocessor = ColumnTransformer(
-    transformers=[
-        ("num", numeric_transformer, numerical_columns),
-        ("cat", categorical_transformer, categorical_columns),
+    [
+        ("categorical", categorical_preprocessor, ["state", "gender"]),
+        ("numerical", numeric_preprocessor, ["age", "weight"]),
     ]
 )
 
