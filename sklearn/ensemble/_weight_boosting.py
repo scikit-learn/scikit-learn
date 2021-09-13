@@ -961,8 +961,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    no_improvement : {'reset_weights', 'stop', 'warn', 'continue'},
-        default='warn'
+    no_improvement : {'reset_weights', 'stop', 'warn', 'continue'}, default='warn'
         Determines a strategy when an error rate is increasing during training.
         - `reset_weights` resets sample weights and continues training.
         - `stop` finish training like as early stopping.
@@ -1180,7 +1179,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         elif iboost == self.n_estimators - 1:
             update_weight_method = "do_nothing"
         else:
-            if self.previous_beta_ > beta:
+            if self.estimator_errors_[iboost - 1] > estimator_error:
                 if self.no_improvement == "reset_weights":
                     update_weight_method = "reset"
                 elif self.no_improvement == "stop":
@@ -1208,8 +1207,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             sample_weight[sample_mask] = 1 / len(sample_weight)
         elif update_weight_method == "do_nothing":
             pass
-
-        self.previous_beta_ = beta
 
         return sample_weight, estimator_weight, estimator_error
 
