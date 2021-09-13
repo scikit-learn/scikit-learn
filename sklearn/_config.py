@@ -5,10 +5,10 @@ from contextlib import contextmanager as contextmanager
 import threading
 
 _global_config = {
-    'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
-    'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
-    'print_changed_only': True,
-    'display': 'text',
+    "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
+    "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
+    "print_changed_only": True,
+    "display": "text",
 }
 _threadlocal = threading.local()
 
@@ -16,7 +16,7 @@ _threadlocal = threading.local()
 def _get_threadlocal_config():
     """Get a threadlocal **mutable** configuration. If the configuration
     does not exist, copy the default global configuration."""
-    if not hasattr(_threadlocal, 'global_config'):
+    if not hasattr(_threadlocal, "global_config"):
         _threadlocal.global_config = _global_config.copy()
     return _threadlocal.global_config
 
@@ -39,8 +39,9 @@ def get_config():
     return _get_threadlocal_config().copy()
 
 
-def set_config(assume_finite=None, working_memory=None,
-               print_changed_only=None, display=None):
+def set_config(
+    assume_finite=None, working_memory=None, print_changed_only=None, display=None
+):
     """Set global scikit-learn configuration
 
     .. versionadded:: 0.19
@@ -87,13 +88,13 @@ def set_config(assume_finite=None, working_memory=None,
     local_config = _get_threadlocal_config()
 
     if assume_finite is not None:
-        local_config['assume_finite'] = assume_finite
+        local_config["assume_finite"] = assume_finite
     if working_memory is not None:
-        local_config['working_memory'] = working_memory
+        local_config["working_memory"] = working_memory
     if print_changed_only is not None:
-        local_config['print_changed_only'] = print_changed_only
+        local_config["print_changed_only"] = print_changed_only
     if display is not None:
-        local_config['display'] = display
+        local_config["display"] = display
 
 
 @contextmanager

@@ -22,7 +22,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import PartialDependenceDisplay
 
 
 # %%
@@ -49,22 +49,22 @@ mlp.fit(X, y)
 #
 # We plot partial dependence curves for features "age" and "bmi" (body mass
 # index) for the decision tree. With two features,
-# :func:`~sklearn.inspection.plot_partial_dependence` expects to plot two
-# curves. Here the plot function place a grid of two plots using the space
+# :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` expects to plot
+# two curves. Here the plot function place a grid of two plots using the space
 # defined by `ax` .
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Decision Tree")
-tree_disp = plot_partial_dependence(tree, X, ["age", "bmi"], ax=ax)
+tree_disp = PartialDependenceDisplay.from_estimator(tree, X, ["age", "bmi"], ax=ax)
 
 # %%
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
 # In this case, `line_kw` is passed to
-# :func:`~sklearn.inspection.plot_partial_dependence` to change the color of
-# the curve.
+# :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` to change the
+# color of the curve.
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Multi-layer Perceptron")
-mlp_disp = plot_partial_dependence(mlp, X, ["age", "bmi"], ax=ax,
-                                   line_kw={"color": "red"})
+mlp_disp = PartialDependenceDisplay.from_estimator(mlp, X, ["age", "bmi"], ax=ax,
+                                                   line_kw={"color": "red"})
 
 # %%
 # Plotting partial dependence of the two models together
@@ -129,7 +129,6 @@ plt.show()
 # Here, we plot the partial dependence curves for a single feature, "age", on
 # the same axes. In this case, `tree_disp.axes_` is passed into the second
 # plot function.
-tree_disp = plot_partial_dependence(tree, X, ["age"])
-mlp_disp = plot_partial_dependence(mlp, X, ["age"],
-                                   ax=tree_disp.axes_,
-                                   line_kw={"color": "red"})
+tree_disp = PartialDependenceDisplay.from_estimator(tree, X, ["age"])
+mlp_disp = PartialDependenceDisplay.from_estimator(
+    mlp, X, ["age"], ax=tree_disp.axes_, line_kw={"color": "red"})

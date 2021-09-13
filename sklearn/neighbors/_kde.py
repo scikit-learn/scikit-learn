@@ -15,9 +15,15 @@ from ._ball_tree import BallTree, DTYPE
 from ._kd_tree import KDTree
 
 
-VALID_KERNELS = ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear',
-                 'cosine']
-TREE_DICT = {'ball_tree': BallTree, 'kd_tree': KDTree}
+VALID_KERNELS = [
+    "gaussian",
+    "tophat",
+    "epanechnikov",
+    "exponential",
+    "linear",
+    "cosine",
+]
+TREE_DICT = {"ball_tree": BallTree, "kd_tree": KDTree}
 
 
 # TODO: implement a brute force version for testing purposes
@@ -71,8 +77,19 @@ class KernelDensity(BaseEstimator):
 
     Attributes
     ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     tree_ : ``BinaryTree`` instance
         The tree algorithm for fast generalized N-point problems.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -93,9 +110,20 @@ class KernelDensity(BaseEstimator):
     >>> log_density
     array([-1.52955942, -1.51462041, -1.60244657])
     """
-    def __init__(self, *, bandwidth=1.0, algorithm='auto',
-                 kernel='gaussian', metric="euclidean", atol=0, rtol=0,
-                 breadth_first=True, leaf_size=40, metric_params=None):
+
+    def __init__(
+        self,
+        *,
+        bandwidth=1.0,
+        algorithm="auto",
+        kernel="gaussian",
+        metric="euclidean",
+        atol=0,
+        rtol=0,
+        breadth_first=True,
+        leaf_size=40,
+        metric_params=None,
+    ):
         self.algorithm = algorithm
         self.bandwidth = bandwidth
         self.kernel = kernel
@@ -119,19 +147,19 @@ class KernelDensity(BaseEstimator):
     def _choose_algorithm(self, algorithm, metric):
         # given the algorithm string + metric string, choose the optimal
         # algorithm to compute the result.
-        if algorithm == 'auto':
+        if algorithm == "auto":
             # use KD Tree if possible
             if metric in KDTree.valid_metrics:
-                return 'kd_tree'
+                return "kd_tree"
             elif metric in BallTree.valid_metrics:
-                return 'ball_tree'
+                return "ball_tree"
             else:
                 raise ValueError("invalid metric: '{0}'".format(metric))
         elif algorithm in TREE_DICT:
             if metric not in TREE_DICT[algorithm].valid_metrics:
-                raise ValueError("invalid metric for {0}: "
-                                 "'{1}'".format(TREE_DICT[algorithm],
-                                                metric))
+                raise ValueError(
+                    "invalid metric for {0}: '{1}'".format(TREE_DICT[algorithm], metric)
+                )
             return algorithm
         else:
             raise ValueError("invalid algorithm: '{0}'".format(algorithm))
@@ -157,27 +185,30 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         self : object
-            Returns instance of object.
+            Returns the instance itself.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
-        X = self._validate_data(X, order='C', dtype=DTYPE)
+        X = self._validate_data(X, order="C", dtype=DTYPE)
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, DTYPE)
-            if sample_weight.min() <= 0:
-                raise ValueError("sample_weight must have positive values")
+            sample_weight = _check_sample_weight(
+                sample_weight, X, DTYPE, only_non_negative=True
+            )
 
         kwargs = self.metric_params
         if kwargs is None:
             kwargs = {}
-        self.tree_ = TREE_DICT[algorithm](X, metric=self.metric,
-                                          leaf_size=self.leaf_size,
-                                          sample_weight=sample_weight,
-                                          **kwargs)
+        self.tree_ = TREE_DICT[algorithm](
+            X,
+            metric=self.metric,
+            leaf_size=self.leaf_size,
+            sample_weight=sample_weight,
+            **kwargs,
+        )
         return self
 
     def score_samples(self, X):
-        """Evaluate the log density model on the data.
+        """Compute the log-likelihood of each sample under the model.
 
         Parameters
         ----------
@@ -188,7 +219,7 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         density : ndarray of shape (n_samples,)
-            The array of log(density) evaluations. These are normalized to be
+            Log-likelihood of each sample in `X`. These are normalized to be
             probability densities, so values will be low for high-dimensional
             data.
         """
@@ -196,20 +227,26 @@ class KernelDensity(BaseEstimator):
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
-        X = self._validate_data(X, order='C', dtype=DTYPE, reset=False)
+        X = self._validate_data(X, order="C", dtype=DTYPE, reset=False)
         if self.tree_.sample_weight is None:
             N = self.tree_.data.shape[0]
         else:
             N = self.tree_.sum_weight
         atol_N = self.atol * N
         log_density = self.tree_.kernel_density(
-            X, h=self.bandwidth, kernel=self.kernel, atol=atol_N,
-            rtol=self.rtol, breadth_first=self.breadth_first, return_log=True)
+            X,
+            h=self.bandwidth,
+            kernel=self.kernel,
+            atol=atol_N,
+            rtol=self.rtol,
+            breadth_first=self.breadth_first,
+            return_log=True,
+        )
         log_density -= np.log(N)
         return log_density
 
     def score(self, X, y=None):
-        """Compute the total log probability density under the model.
+        """Compute the total log-likelihood under the model.
 
         Parameters
         ----------
@@ -253,7 +290,7 @@ class KernelDensity(BaseEstimator):
         """
         check_is_fitted(self)
         # TODO: implement sampling for other valid kernel shapes
-        if self.kernel not in ['gaussian', 'tophat']:
+        if self.kernel not in ["gaussian", "tophat"]:
             raise NotImplementedError()
 
         data = np.asarray(self.tree_.data)
@@ -266,24 +303,28 @@ class KernelDensity(BaseEstimator):
             cumsum_weight = np.cumsum(np.asarray(self.tree_.sample_weight))
             sum_weight = cumsum_weight[-1]
             i = np.searchsorted(cumsum_weight, u * sum_weight)
-        if self.kernel == 'gaussian':
+        if self.kernel == "gaussian":
             return np.atleast_2d(rng.normal(data[i], self.bandwidth))
 
-        elif self.kernel == 'tophat':
+        elif self.kernel == "tophat":
             # we first draw points from a d-dimensional normal distribution,
             # then use an incomplete gamma function to map them to a uniform
             # d-dimensional tophat distribution.
             dim = data.shape[1]
             X = rng.normal(size=(n_samples, dim))
             s_sq = row_norms(X, squared=True)
-            correction = (gammainc(0.5 * dim, 0.5 * s_sq) ** (1. / dim)
-                          * self.bandwidth / np.sqrt(s_sq))
+            correction = (
+                gammainc(0.5 * dim, 0.5 * s_sq) ** (1.0 / dim)
+                * self.bandwidth
+                / np.sqrt(s_sq)
+            )
             return data[i] + X * correction[:, np.newaxis]
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'sample_weight must have positive values',
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "sample_weight must have positive values"
+                ),
             }
         }

@@ -5,9 +5,19 @@ set -x
 
 UNAMESTR=`uname`
 
+if [[ "$DISTRIB" == "conda-mamba-pypy3" ]]; then
+    # condaforge/mambaforge-pypy3 needs compilers
+    apt-get -yq update
+    apt-get -yq install build-essential
+fi
+
 make_conda() {
     TO_INSTALL="$@"
-    conda create -n $VIRTUALENV --yes $TO_INSTALL
+    if [[ "$DISTRIB" == *"mamba"* ]]; then
+        mamba create -n $VIRTUALENV --yes $TO_INSTALL
+    else
+        conda create -n $VIRTUALENV --yes $TO_INSTALL
+    fi
     source activate $VIRTUALENV
 }
 
@@ -25,7 +35,7 @@ setup_ccache() {
 # imports get_dep
 source build_tools/shared.sh
 
-if [[ "$DISTRIB" == "conda" ]]; then
+if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
     if [[ "$CONDA_CHANNEL" != "" ]]; then
         TO_INSTALL="-c $CONDA_CHANNEL"
@@ -33,7 +43,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL=""
     fi
 
-    TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION ccache pip blas[build=$BLAS]"
+    if [[ "$DISTRIB" == *"pypy"* ]]; then
+        TO_INSTALL="$TO_INSTALL pypy"
+    else
+        TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
+    fi
+
+    TO_INSTALL="$TO_INSTALL ccache pip blas[build=$BLAS]"
 
     TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
@@ -56,6 +72,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # instead because llvm-ar errors
             export AR=/usr/bin/ar
         fi
+    else
+        # FIXME: temporary fix to link against system libraries on linux
+        export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 	make_conda $TO_INSTALL
     setup_ccache
@@ -81,6 +100,8 @@ elif [[ "$DISTRIB" == "debian-32" ]]; then
                           $(get_dep joblib $JOBLIB_VERSION)
 
 elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    # FIXME: temporary fix to link against system libraries on linux
+    export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     # Since conda main channel usually lacks behind on the latest releases,
     # we use pypi to test against the latest releases of the dependencies.
     # conda is still used as a convenient way to install Python and pip.
@@ -96,15 +117,13 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # and install a version less than 3.0.0 until the issue #18316 is solved.
     python -m pip install "lightgbm<3.0.0" --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+    # FIXME: temporary fix to link against system libraries on linux
+    export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     make_conda "ccache python=$PYTHON_VERSION"
     python -m pip install -U pip
     echo "Installing numpy and scipy master wheels"
     dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas
-
-    # issue with metadata in scipy dev builds https://github.com/scipy/scipy/issues/13196
-    # --use-deprecated=legacy-resolver needs to be included
-    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url scipy --use-deprecated=legacy-resolver
+    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
     pip install --pre cython
     setup_ccache
     echo "Installing joblib master"

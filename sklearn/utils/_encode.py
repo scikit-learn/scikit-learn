@@ -41,7 +41,7 @@ def _unique(values, *, return_inverse=False):
     # here we clip the nans and remove it from uniques
     if uniques.size and is_scalar_nan(uniques[-1]):
         nan_idx = np.searchsorted(uniques, np.nan)
-        uniques = uniques[:nan_idx + 1]
+        uniques = uniques[: nan_idx + 1]
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
 
@@ -52,6 +52,7 @@ def _unique(values, *, return_inverse=False):
 
 class MissingValues(NamedTuple):
     """Data class for missing data information"""
+
     nan: bool
     none: bool
 
@@ -81,8 +82,9 @@ def _extract_missing(values):
     missing_values: MissingValues
         Object with missing value information.
     """
-    missing_values_set = {value for value in values
-                          if value is None or is_scalar_nan(value)}
+    missing_values_set = {
+        value for value in values if value is None or is_scalar_nan(value)
+    }
 
     if not missing_values_set:
         return values, MissingValues(nan=False, none=False)
@@ -104,6 +106,7 @@ def _extract_missing(values):
 
 class _nandict(dict):
     """Dictionary with support for nans."""
+
     def __init__(self, mapping):
         super().__init__(mapping)
         for key, value in mapping.items():
@@ -112,7 +115,7 @@ class _nandict(dict):
                 break
 
     def __missing__(self, key):
-        if hasattr(self, 'nan_value') and is_scalar_nan(key):
+        if hasattr(self, "nan_value") and is_scalar_nan(key):
             return self.nan_value
         raise KeyError(key)
 
@@ -133,10 +136,11 @@ def _unique_python(values, *, return_inverse):
         uniques.extend(missing_values.to_list())
         uniques = np.array(uniques, dtype=values.dtype)
     except TypeError:
-        types = sorted(t.__qualname__
-                       for t in set(type(v) for v in values))
-        raise TypeError("Encoders require their input to be uniformly "
-                        f"strings or numbers. Got {types}")
+        types = sorted(t.__qualname__ for t in set(type(v) for v in values))
+        raise TypeError(
+            "Encoders require their input to be uniformly "
+            f"strings or numbers. Got {types}"
+        )
 
     if return_inverse:
         return uniques, _map_to_integer(values, uniques)
@@ -173,7 +177,7 @@ def _encode(values, *, uniques, check_unknown=True):
     encoded : ndarray
         Encoded values
     """
-    if values.dtype.kind in 'OUS':
+    if values.dtype.kind in "OUS":
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
@@ -182,8 +186,7 @@ def _encode(values, *, uniques, check_unknown=True):
         if check_unknown:
             diff = _check_unknown(values, uniques)
             if diff:
-                raise ValueError(f"y contains previously unseen labels: "
-                                 f"{str(diff)}")
+                raise ValueError(f"y contains previously unseen labels: {str(diff)}")
         return np.searchsorted(uniques, values)
 
 
@@ -214,7 +217,7 @@ def _check_unknown(values, known_values, return_mask=False):
     """
     valid_mask = None
 
-    if values.dtype.kind in 'OUS':
+    if values.dtype.kind in "OUS":
         values_set = set(values)
         values_set, missing_in_values = _extract_missing(values_set)
 
@@ -226,9 +229,13 @@ def _check_unknown(values, known_values, return_mask=False):
         none_in_diff = missing_in_values.none and not missing_in_uniques.none
 
         def is_valid(value):
-            return (value in uniques_set or
-                    missing_in_uniques.none and value is None or
-                    missing_in_uniques.nan and is_scalar_nan(value))
+            return (
+                value in uniques_set
+                or missing_in_uniques.none
+                and value is None
+                or missing_in_uniques.nan
+                and is_scalar_nan(value)
+            )
 
         if return_mask:
             if diff or nan_in_diff or none_in_diff:
@@ -243,8 +250,7 @@ def _check_unknown(values, known_values, return_mask=False):
             diff.append(np.nan)
     else:
         unique_values = np.unique(values)
-        diff = np.setdiff1d(unique_values, known_values,
-                            assume_unique=True)
+        diff = np.setdiff1d(unique_values, known_values, assume_unique=True)
         if return_mask:
             if diff.size:
                 valid_mask = np.in1d(values, known_values)

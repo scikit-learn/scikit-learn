@@ -66,11 +66,11 @@ out_dims = range(20, 400, 20)
 
 # Evaluate Linear SVM
 lsvm = LinearSVC().fit(X_train, y_train)
-lsvm_score = 100*lsvm.score(X_test, y_test)
+lsvm_score = 100 * lsvm.score(X_test, y_test)
 
 # Evaluate kernelized SVM
-ksvm = SVC(kernel="poly", degree=2, gamma=1.).fit(X_train, y_train)
-ksvm_score = 100*ksvm.score(X_test, y_test)
+ksvm = SVC(kernel="poly", degree=2, gamma=1.0).fit(X_train, y_train)
+ksvm_score = 100 * ksvm.score(X_test, y_test)
 
 # Evaluate PolynomialCountSketch + LinearSVM
 ps_svm_scores = []
@@ -80,11 +80,14 @@ n_runs = 5
 for k in out_dims:
     score_avg = 0
     for _ in range(n_runs):
-        ps_svm = Pipeline([("PS", PolynomialCountSketch(degree=2,
-                                                        n_components=k)),
-                           ("SVM", LinearSVC())])
+        ps_svm = Pipeline(
+            [
+                ("PS", PolynomialCountSketch(degree=2, n_components=k)),
+                ("SVM", LinearSVC()),
+            ]
+        )
         score_avg += ps_svm.fit(X_train, y_train).score(X_test, y_test)
-    ps_svm_scores.append(100*score_avg/n_runs)
+    ps_svm_scores.append(100 * score_avg / n_runs)
 
 # Evaluate Nystroem + LinearSVM
 ny_svm_scores = []
@@ -93,23 +96,39 @@ n_runs = 5
 for k in out_dims:
     score_avg = 0
     for _ in range(n_runs):
-        ny_svm = Pipeline([("NY", Nystroem(kernel="poly", gamma=1., degree=2,
-                                           coef0=0, n_components=k)),
-                           ("SVM", LinearSVC())])
+        ny_svm = Pipeline(
+            [
+                (
+                    "NY",
+                    Nystroem(
+                        kernel="poly", gamma=1.0, degree=2, coef0=0, n_components=k
+                    ),
+                ),
+                ("SVM", LinearSVC()),
+            ]
+        )
         score_avg += ny_svm.fit(X_train, y_train).score(X_test, y_test)
-    ny_svm_scores.append(100*score_avg/n_runs)
+    ny_svm_scores.append(100 * score_avg / n_runs)
 
 # Show results
 fig, ax = plt.subplots(figsize=(6, 4))
 ax.set_title("Accuracy results")
-ax.plot(out_dims, ps_svm_scores, label="PolynomialCountSketch + linear SVM",
-        c="orange")
-ax.plot(out_dims, ny_svm_scores, label="Nystroem + linear SVM",
-        c="blue")
-ax.plot([out_dims[0], out_dims[-1]], [lsvm_score, lsvm_score],
-        label="Linear SVM", c="black", dashes=[2, 2])
-ax.plot([out_dims[0], out_dims[-1]], [ksvm_score, ksvm_score],
-        label="Poly-kernel SVM", c="red", dashes=[2, 2])
+ax.plot(out_dims, ps_svm_scores, label="PolynomialCountSketch + linear SVM", c="orange")
+ax.plot(out_dims, ny_svm_scores, label="Nystroem + linear SVM", c="blue")
+ax.plot(
+    [out_dims[0], out_dims[-1]],
+    [lsvm_score, lsvm_score],
+    label="Linear SVM",
+    c="black",
+    dashes=[2, 2],
+)
+ax.plot(
+    [out_dims[0], out_dims[-1]],
+    [ksvm_score, ksvm_score],
+    label="Poly-kernel SVM",
+    c="red",
+    dashes=[2, 2],
+)
 ax.legend()
 ax.set_xlabel("N_components for PolynomialCountSketch and Nystroem")
 ax.set_ylabel("Accuracy (%)")
@@ -137,7 +156,7 @@ for k in out_dims:
 # This can take a while due to the inefficient training phase
 ny_svm_times = []
 for k in out_dims:
-    ny = Nystroem(kernel="poly", gamma=1., degree=2, coef0=0, n_components=k)
+    ny = Nystroem(kernel="poly", gamma=1.0, degree=2, coef0=0, n_components=k)
 
     start = time()
     ny.fit_transform(fakeData, None)

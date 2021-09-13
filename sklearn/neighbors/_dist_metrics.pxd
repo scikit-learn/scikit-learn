@@ -51,12 +51,8 @@ cdef class DistanceMetric:
     # Because we don't expect to instantiate a lot of these objects, the
     # extra memory overhead of this setup should not be an issue.
     cdef DTYPE_t p
-    #cdef DTYPE_t[::1] vec
-    #cdef DTYPE_t[:, ::1] mat
-    cdef np.ndarray vec
-    cdef np.ndarray mat
-    cdef DTYPE_t* vec_ptr
-    cdef DTYPE_t* mat_ptr
+    cdef DTYPE_t[::1] vec
+    cdef DTYPE_t[:, ::1] mat
     cdef ITYPE_t size
     cdef object func
     cdef object kwargs
