@@ -1008,19 +1008,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         Generate (name, trans, weight) tuples excluding None and
         'drop' transformers.
         """
+
         get_weight = (self.transformer_weights or {}).get
 
-        return (
-            (
-                name,
-                FunctionTransformer(),
-                get_weight(name),
-            )
-            if trans == "passthrough"
-            else (name, trans, get_weight(name))
-            for name, trans in self.transformer_list
-            if trans != "drop"
-        )
+        for name, trans in self.transformer_list:
+            if trans == "drop":
+                continue
+            if trans == "passthrough":
+                trans = FunctionTransformer()
+            yield (name, trans, get_weight(name))
 
     @deprecated(
         "get_feature_names is deprecated in 1.0 and will be removed "
