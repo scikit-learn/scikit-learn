@@ -31,7 +31,6 @@ DOCSTRING_IGNORE_LIST = [
     "NearestCentroid",
     "NeighborhoodComponentsAnalysis",
     "Normalizer",
-    "OneVsRestClassifier",
     "OrdinalEncoder",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
