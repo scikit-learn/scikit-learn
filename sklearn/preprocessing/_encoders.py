@@ -854,6 +854,7 @@ class OrdinalEncoder(_BaseEncoder):
         Returns
         -------
         self
+            Fitted encoder.
         """
         handle_unknown_strategies = ("error", "use_encoded_value")
         if self.handle_unknown not in handle_unknown_strategies:
