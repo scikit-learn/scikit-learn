@@ -25,14 +25,13 @@ from .base import (
     RegressorMixin,
     clone,
     MetaEstimatorMixin,
-    is_classifier,
 )
+from .metrics._plot.base import BaseBinaryClassifierCurveDisplay
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
     column_or_1d,
     deprecated,
     indexable,
-    check_matplotlib_support,
 )
 
 from .utils.multiclass import check_classification_targets
@@ -43,7 +42,6 @@ from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
-from .metrics._plot.base import _get_response
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -955,7 +953,7 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
     return prob_true, prob_pred
 
 
-class CalibrationDisplay:
+class CalibrationDisplay(BaseBinaryClassifierCurveDisplay):
     """Calibration curve (also known as reliability diagram) visualization.
 
     It is recommended to use
@@ -1055,7 +1053,7 @@ class CalibrationDisplay:
         display : :class:`~sklearn.calibration.CalibrationDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("CalibrationDisplay.plot")
+        super().plot()
         import matplotlib.pyplot as plt
 
         if ax is None:
@@ -1179,19 +1177,17 @@ class CalibrationDisplay:
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_estimator"
-        check_matplotlib_support(method_name)
-
-        if not is_classifier(estimator):
-            raise ValueError("'estimator' should be a fitted classifier.")
-
         # FIXME: `pos_label` should not be set to None
         # We should allow any int or string in `calibration_curve`.
-        y_prob, _ = _get_response(
-            X, estimator, response_method="predict_proba", pos_label=None
+        y_prob, _, name = super().from_estimator(
+            estimator,
+            X,
+            y,
+            response_method="predict_proba",
+            pos_label=None,
+            name=name,
         )
 
-        name = name if name is not None else estimator.__class__.__name__
         return cls.from_predictions(
             y,
             y_prob,
@@ -1292,9 +1288,14 @@ class CalibrationDisplay:
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_estimator"
-        check_matplotlib_support(method_name)
+        _, name = super().from_predictions(
+            y_true,
+            y_prob,
+            pos_label=None,
+            name=name,
+        )
 
+        # FIXME: `pos_label` should be a parameter of `calibration_curve`
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=n_bins, strategy=strategy
         )
