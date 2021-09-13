@@ -50,7 +50,6 @@ DOCSTRING_IGNORE_LIST = [
     "QuantileRegressor",
     "QuantileTransformer",
     "RANSACRegressor",
-    "RadiusNeighborsTransformer",
     "RandomizedSearchCV",
     "RobustScaler",
     "SGDOneClassSVM",
