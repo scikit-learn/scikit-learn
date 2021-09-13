@@ -30,8 +30,6 @@ parameter is used as positional, a `TypeError` is now raised.
 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
 for more details.
 
-Put the changes in their relevant module.
-
 Changed models
 --------------
 
@@ -135,13 +133,14 @@ Changelog
   1.2. :pr:`20165` by `Thomas Fan`_.
 
 - |API| :term:`get_feature_names_out` has been added to the transformer API
-  to get the names of the output features. :pr:`18444` by `Thomas Fan`_.
+  to get the names of the output features. :term:`get_feature_names` has in
+  turn been deprecated. :pr:`18444` by `Thomas Fan`_.
 
 - |API| All estimators store `feature_names_in_` when fitted on pandas Dataframes.
-  These feature names are compared to names seen in `non-fit` methods,
-  `i.e.` `transform` and will raise a `FutureWarning` if they are not consistent.
-  These `FutureWarning`s will become `ValueError`s in 1.2.
-  :pr:`18010` by `Thomas Fan`_.
+  These feature names are compared to names seen in non-`fit` methods, e.g.
+  `transform` and will raise a `FutureWarning` if they are not consistent.
+  These ``FutureWarning`` s will become ``ValueError`` s in 1.2. :pr:`18010` by
+  `Thomas Fan`_.
 
 :mod:`sklearn.base`
 ...................
@@ -154,7 +153,7 @@ Changelog
 - |Feature| :func:`calibration.CalibrationDisplay` added to plot
   calibration curves. :pr:`17443` by :user:`Lucy Liu <lucyleeow>`.
 
-- |Fix| The predict and predict_proba methods of
+- |Fix| The ``predict`` and ``predict_proba`` methods of
   :class:`calibration.CalibratedClassifierCV` can now properly be used on
   prefitted pipelines. :pr:`19641` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
@@ -166,10 +165,10 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Efficiency| The "k-means++" initialization of :class:`cluster.KMeans` and
-  :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
-  settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Efficiency| The ``"k-means++"`` initialization of :class:`cluster.KMeans`
+  and :class:`cluster.MiniBatchKMeans` is now faster, especially in multicore
+  settings. :pr:`19002` by :user:`Jon Crall <Erotemic>` and :user:`Jérémie du
+  Boisberranger <jeremiedbb>`.
 
 - |Efficiency| :class:`cluster.KMeans` with `algorithm='elkan'` is now faster
   in multicore settings. :pr:`19052` by
@@ -216,21 +215,17 @@ Changelog
   deprecated and will be removed in 1.2. :pr:`19297` by `Thomas Fan`_.
 
 - |API| the default value for the `batch_size` parameter of
-  :class:`MiniBatchKMeans` was changed from 100 to 1024 due to efficiency
-  reasons. The `n_iter_` attribute of :class:`MiniBatchKMeans` now reports the
-  number of started epochs and the `n_steps_` attribute reports the number of
-  mini batches processed. :pr:`17622`
-  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  :class:`cluster.MiniBatchKMeans` was changed from 100 to 1024 due to
+  efficiency reasons. The `n_iter_` attribute of
+  :class:`cluster.MiniBatchKMeans` now reports the number of started epochs and
+  the `n_steps_` attribute reports the number of mini batches processed.
+  :pr:`17622` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |API| :func:`cluster.spectral_clustering` raises an improved error when passed
   a `np.matrix`. :pr:`20560` by `Thomas Fan`_.
 
 :mod:`sklearn.compose`
 ......................
-
-- |API| Adds `prefix_feature_names_out` to :class:`compose.ColumnTransformer`.
-  This flag controls the prefixing of feature names out in
-  :term:`get_feature_names_out`. :pr:`18444` by `Thomas Fan`_.
 
 - |Enhancement| :class:`compose.ColumnTransformer` now records the output
   of each transformer in `output_indices_`. :pr:`18393` by
@@ -247,20 +242,25 @@ Changelog
   :pr:`19244` by :user:`Ricardo <ricardojnf>`.
 
 - |FIX| :meth:`compose.ColumnTransformer.get_feature_names` supports
-  non-string feature names returned by any of its transformers.
-  :pr:`18459` by :user:`Albert Villanova del Moral <albertvillanova>` and
-  :user:`Alonso Silva Allende <alonsosilvaallende>`.
+  non-string feature names returned by any of its transformers. However, note
+  that ``get_feature_names`` is deprecated, use ``get_feature_names_out``
+  instead. :pr:`18459` by :user:`Albert Villanova del Moral <albertvillanova>`
+  and :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
 - |Fix| :class:`compose.TransformedTargetRegressor` now takes nD targets with
   an adequate transformer.
   :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`.
 
+- |API| Adds `prefix_feature_names_out` to :class:`compose.ColumnTransformer`.
+  This flag controls the prefixing of feature names out in
+  :term:`get_feature_names_out`. :pr:`18444` by `Thomas Fan`_.
+
 :mod:`sklearn.covariance`
 .........................
 
 - |Fix| Adds arrays check to :func:`covariance.ledoit_wolf` and
-  :func:`covariance.ledoit_wolf_shrinkage`.
-  :pr:`20416` by :user:`Hugo Defois <defoishugo>`.
+  :func:`covariance.ledoit_wolf_shrinkage`. :pr:`20416` by :user:`Hugo Defois
+  <defoishugo>`.
 
 - |API| Deprecates the following keys in `cv_results_`: `'mean_score'`,
   `'std_score'`, and `'split(k)_score'` in favor of `'mean_test_score'`
@@ -308,28 +308,31 @@ Changelog
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
-- |Fix| Fixed :func:`dict_learning`, used by :class:`DictionaryLearning`, to
-  ensure determinism of the output. Achieved by flipping signs of the SVD
-  output which is used to initialize the code.
-  :pr:`18433` by :user:`Bruno Charron <brcharron>`.
+- |Fix| Fixed :func:`dict_learning`, used by
+  :class:`decomposition.DictionaryLearning`, to ensure determinism of the
+  output. Achieved by flipping signs of the SVD output which is used to
+  initialize the code. :pr:`18433` by :user:`Bruno Charron <brcharron>`.
 
-- |Fix| Fixed a bug in :class:`MiniBatchDictionaryLearning`,
-  :class:`MiniBatchSparsePCA` and :func:`dict_learning_online` where the
-  update of the dictionary was incorrect. :pr:`19198` by
+- |Fix| Fixed a bug in :class:`decomposition.MiniBatchDictionaryLearning`,
+  :class:`decomposition.MiniBatchSparsePCA` and
+  :func:`decomposition.dict_learning_online` where the update of the dictionary
+  was incorrect. :pr:`19198` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`decomposition.DictionaryLearning`,
+  :class:`decomposition.SparsePCA`,
+  :class:`decomposition.MiniBatchDictionaryLearning`,
+  :class:`decomposition.MiniBatchSparsePCA`,
+  :func:`decomposition.dict_learning` and
+  :func:`decomposition.dict_learning_online` where the restart of unused atoms
+  during the dictionary update was not working as expected. :pr:`19198` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Fix| Fixed a bug in :class:`DictionaryLearning`, :class:`SparsePCA`,
-  :class:`MiniBatchDictionaryLearning`, :class:`MiniBatchSparsePCA`,
-  :func:`dict_learning` and :func:`dict_learning_online` where the restart of
-  unused atoms during the dictionary update was not working as expected.
-  :pr:`19198` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |API| In :class:`decomposition.DictionaryLearning`,
   :class:`decomposition.MiniBatchDictionaryLearning`,
-  :func:`dict_learning` and :func:`dict_learning_online`,
-  `transform_alpha` will be equal to `alpha` instead of 1.0 by default
-  starting from version 1.2
-  :pr:`19159` by :user:`Benoît Malézieux <bmalezieux>`.
+  :func:`decomposition.dict_learning` and
+  :func:`decomposition.dict_learning_online`, `transform_alpha` will be equal
+  to `alpha` instead of 1.0 by default starting from version 1.2 :pr:`19159` by
+  :user:`Benoît Malézieux <bmalezieux>`.
 
 - |API| Rename variable names in :class:`KernelPCA` to improve
   readability. `lambdas_` and `alphas_` are renamed to `eigenvalues_`
@@ -368,9 +371,9 @@ Changelog
   :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
   :pr:`19564` by `Thomas Fan`_.
 
-- |Enhancement| Documented and tested support of the Poisson criterion for
-  :class:`ensemble.RandomForestRegressor`. :pr:`19836` by
-  :user:`Brian Sun <bsun94>`.
+- |Enhancement| Added Poisson criterion to
+  :class:`ensemble.RandomForestRegressor`. :pr:`19836` by :user:`Brian Sun
+  <bsun94>`.
 
 - |Fix| Do not allow to compute out-of-bag (OOB) score in
   :class:`ensemble.RandomForestClassifier` and
@@ -384,7 +387,7 @@ Changelog
   to avoid underflows.
   :pr:`10096` by :user:`Fenil Suchak <fenilsuchak>`.
 
-- |Fix| Fixed the range of the argument max_samples to be (0.0, 1.0]
+- |Fix| Fixed the range of the argument ``max_samples`` to be ``(0.0, 1.0]``
   in :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, where `max_samples=1.0` is
   interpreted as using all `n_samples` for bootstrapping. :pr:`20159` by
@@ -435,10 +438,10 @@ Changelog
   :user:`Gil Rutter <g-rutter>`, and :user:`Adrin Jalali <adrinjalali>`.
 
 - |FIX| Fix a bug in :func:`isotonic.isotonic_regression` where the
-  `sample_weight` passed by a user were overwritten during the fit.
+  `sample_weight` passed by a user were overwritten during ``fit``.
   :pr:`20515` by :user:`Carsten Allefeld <allefeld>`.
 
-- |Fix| Change :func:`feature_selection.SequentialFeatureSelection` to
+- |Fix| Change :func:`feature_selection.SequentialFeatureSelector` to
   allow for unsupervised modelling so that the `fit` signature need not
   do any `y` validation and allow for `y=None`.
   :pr:`19568` by :user:`Shyam Desai <ShyamDesai>`.
@@ -456,20 +459,19 @@ Changelog
 .........................
 
 - |Enhancement| Add `max_samples` parameter in
-  :func:`inspection._permutation_importance`. It enables to draw a subset of
-  the samples to compute the permutation importance. This is useful to
-  keep the method tractable when evaluating feature importance on
-  large datasets.
+  :func:`inspection.permutation_importance`. It enables to draw a subset of the
+  samples to compute the permutation importance. This is useful to keep the
+  method tractable when evaluating feature importance on large datasets.
   :pr:`20431` by :user:`Oliver Pfaffel <o1iv3r>`.
 
 - |Enhancement| Add kwargs to format ICE and PD lines separately in partial
-  dependence plots :func:`~sklearn.inspection.plot_partial_dependence` and
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.plot`.
-  :pr:`19428` by :user:`Mehdi Hamoumi <mhham>`.
+  dependence plots :func:`inspection.plot_partial_dependence` and
+  :meth:`inspection.PartialDependenceDisplay.plot`. :pr:`19428` by :user:`Mehdi
+  Hamoumi <mhham>`.
 
 - |Fix| Allow multiple scorers input to
-  :func:`~sklearn.inspection.permutation_importance`.
-  :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
+  :func:`inspection.permutation_importance`. :pr:`19411` by :user:`Simona
+  Maggio <simonamaggio>`.
 
 - |API| :class:`inspection.PartialDependenceDisplay` exposes a class method:
   :func:`~inspection.PartialDependenceDisplay.from_estimator`.
@@ -479,10 +481,10 @@ Changelog
 :mod:`sklearn.kernel_approximation`
 ...................................
 
-- |Fix| Fix a bug in :class:`sklearn.kernel_approximation.Nystroem`
-  where the attribute `component_indices_` did not correspond
-  to the subset of samples indices used to generate the approximated kernel.
-  :pr:`20554` by :user:`Xiangyin Kong <kxytim>`.
+- |Fix| Fix a bug in :class:`kernel_approximation.Nystroem`
+  where the attribute `component_indices_` did not correspond to the subset of
+  sample indices used to generate the approximated kernel. :pr:`20554` by
+  :user:`Xiangyin Kong <kxytim>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -941,4 +943,58 @@ Code and Documentation Contributors
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.24, including:
 
-TODO: update at the time of the release.
+Abdulelah S. Al Mesfer, Abhinav Gupta, Adam J. Stewart, Adam Li, Adam Midvidy,
+Adrian Garcia Badaracco, Adrian Sadłocha, Adrin Jalali, Agamemnon Krasoulis,
+Alberto Rubiales, Albert Thomas, Albert Villanova del Moral, Alek Lefebvre,
+Alessia Marcolini, Alexandr Fonari, Alihan Zihna, Aline Ribeiro de Almeida,
+Amanda, Amanda Dsouza, Amol Deshmukh, Ana Pessoa, Anavelyz, Andreas Mueller,
+Andrew Delong, Ashish, Ashvith Shetty, Atsushi Nukariya, Avi Gupta, Ayush
+Singh, baam, BaptBillard, Benjamin Pedigo, Bertrand Thirion, Bharat
+Raghunathan, bmalezieux, Brian Rice, Brian Sun, Bruno Charron, Bryan Chen,
+bumblebee, caherrera-meli, Carsten Allefeld, CeeThinwa, Chiara Marmo,
+chrissobel, Christian Lorentzen, Christopher Yeh, Chuliang Xiao, Clément
+Fauchereau, cliffordEmmanuel, Conner Shen, Connor Tann, David Dale, David Katz,
+David Poznik, Divyanshu Deoli, dmallia17, Dmitry Kobak, DS_anas, Eduardo
+Jardim, EdwinWenink, EL-ATEIF Sara, Eleni Markou, Eric Fiegel, Erich Schubert,
+Ezri-Mudde, Fatos Morina, Felipe Rodrigues, Felix Hafner, Fenil Suchak,
+flyingdutchman23, Flynn, Fortune Uwha, Francois Berenger, Frankie Robertson,
+Frans Larsson, Frederick Robinson, Gabriel S Vicente, Gael Varoquaux, genvalen,
+Geoffrey Thomas, geroldcsendes, Gleb Levitskiy, Glen, Glòria Macià Muñoz,
+gregorystrubel, groceryheist, Guillaume Lemaitre, guiweber, Haidar Almubarak,
+Hans Moritz Günther, Haoyin Xu, Harris Mirza, Harry Wei, Harutaka Kawamura,
+Hassan Alsawadi, Helder Geovane Gomes de Lima, Hugo DEFOIS, Igor Ilic, Ikko
+Ashimine, Isaack Mungui, Ishaan Bhat, Ishan Mishra, Iván Pulido, iwhalvic,
+Jack Liu, James Alan Preiss, James Budarz, James Lamb, Jannik, Jeff Zhao,
+Jennifer Maldonado, Jérémie du Boisberranger, Jesse Lima, Jianzhu Guo,
+jnboehm, Joel Nothman, JohanWork, John Paton, Jonathan Schneider, Jon Crall,
+Jon Haitz Legarreta Gorroño, Joris Van den Bossche, José Manuel Nápoles
+Duarte, Juan Carlos Alfaro Jiménez, Juan Martin Loyola, Julien Jerphanion,
+Julio Batista Silva, julyrashchenko, JVM, Kadatatlu Kishore, Karen Palacio, Kei
+Ishikawa, kmatt10, kobaski, Kot271828, Kunj, KurumeYuta, kxytim, lacrosse91,
+LalliAcqua, Laveen Bagai, Leonardo Rocco, Leonardo Uieda, Leopoldo Corona, Loic
+Esteve, LSturtew, Luca Bittarello, Luccas Quadros, Lucy Jiménez, Lucy Liu,
+ly648499246, Mabu Manaileng, makoeppel, Marco Gorelli, Maren Westermann,
+Mariangela, Maria Telenczuk, marielaraj, Martin Hirzel, Mateo Noreña, Mathieu
+Blondel, Mathis Batoul, mathurinm, Matthew Calcote, Maxime Prieur, Maxwell,
+Mehdi Hamoumi, Mehmet Ali Özer, Miao Cai, Michal Karbownik, michalkrawczyk,
+Mitzi, mlondschien, Mohamed Haseeb, Mohamed Khoualed, Muhammad Jarir Kanji,
+murata-yu, Nadim Kawwa, Nanshan Li, naozin555, Nate Parsons, Neal Fultz, Nic
+Annau, Nicolas Hug, Nicolas Miller, Nico Stefani, Nigel Bosch, Nodar
+Okroshiashvili, Norbert Preining, novaya, Ogbonna Chibuike Stephen, OGordon100,
+Oliver Pfaffel, Olivier Grisel, Oras Phongpanangam, Pablo Duque, Pablo
+Ibieta-Jimenez, Patric Lacouth, Paulo S. Costa, Paweł Olszewski, Peter Dye,
+PierreAttard, Pierre-Yves Le Borgne, PranayAnchuri, Prince Canuma, putschblos,
+qdeffense, RamyaNP, ranjanikrishnan, Ray Bell, Rene Jean Corneille, Reshama
+Shaikh, ricardojnf, RichardScottOZ, Rodion Martynov, Rohan Paul, Roman Lutz,
+Roman Yurchak, Samuel Brice, Sandy Khosasi, Sean Benhur J, Sebastian Flores,
+Sebastian Pölsterl, Shao Yang Hong, shinehide, shinnar, shivamgargsya,
+Shooter23, Shuhei Kayawari, Shyam Desai, simonamaggio, Sina Tootoonian,
+solosilence, Steven Kolawole, Steve Stagg, Surya Prakash, swpease, Sylvain
+Marié, Takeshi Oura, Terence Honles, TFiFiE, Thomas A Caswell, Thomas J. Fan,
+Tim Gates, TimotheeMathieu, Timothy Wolodzko, Tim Vink, t-jakubek, t-kusanagi,
+tliu68, Tobias Uhmann, tom1092, Tomás Moreyra, Tomás Ronald Hughes, Tom
+Dupré la Tour, Tommaso Di Noto, Tomohiro Endo, Toshihiro NAKAE, tsuga, Uttam
+kumar, vadim-ushtanit, Vangelis Gkiastas, Venkatachalam N, Vilém Zouhar,
+Vinicius Rios Fuck, Vlasovets, waijean, Whidou, xavier dupré, xiaoyuchai,
+Yasmeen Alsaedy, yoch, Yosuke KOBAYASHI, Yu Feng, YusukeNagasaka, yzhenman,
+Zero, ZeyuSun, ZhaoweiWang, Zito, Zito Relova
