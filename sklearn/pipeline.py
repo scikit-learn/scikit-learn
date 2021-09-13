@@ -1013,7 +1013,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return (
             (
                 name,
-                FunctionTransformer(accept_sparse=True, check_inverse=False),
+                FunctionTransformer(),
                 get_weight(name),
             )
             if trans == "passthrough"
