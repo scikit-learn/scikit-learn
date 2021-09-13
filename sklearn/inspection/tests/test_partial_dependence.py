@@ -9,7 +9,9 @@ import pytest
 import sklearn
 from sklearn.inspection import partial_dependence
 from sklearn.inspection._partial_dependence import (
+    cartesian,
     _grid_from_X,
+    _grid_from_custom_grid,
     _partial_dependence_brute,
     _partial_dependence_recursion,
 )
@@ -31,6 +33,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import scale
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import make_pipeline
 from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
@@ -40,6 +43,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils import _IS_32BIT
 from sklearn.utils.validation import check_random_state
 from sklearn.tree.tests.test_tree import assert_is_subtree
+from sklearn.impute import SimpleImputer
 
 
 # toy sample
@@ -85,7 +89,10 @@ iris = load_iris()
 @pytest.mark.parametrize("grid_resolution", (5, 10))
 @pytest.mark.parametrize("features", ([1], [1, 2]))
 @pytest.mark.parametrize("kind", ("average", "individual", "both"))
-def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
+@pytest.mark.parametrize("use_custom_grid", [True, False])
+def test_output_shape(
+    Estimator, method, data, grid_resolution, features, kind, use_custom_grid
+):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
     # - classifiers with binary and multiclass settings
@@ -102,6 +109,11 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     (X, y), n_targets = data
     n_instances = X.shape[0]
 
+    custom_grid = None
+    if use_custom_grid:
+        grid_resolution = 5
+        custom_grid = {f: X[:grid_resolution, f] for f in features}
+
     est.fit(X, y)
     result = partial_dependence(
         est,
@@ -110,6 +122,7 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
         method=method,
         kind=kind,
         grid_resolution=grid_resolution,
+        custom_grid=custom_grid,
     )
     pdp, axes = result, result["grid_values"]
 
@@ -220,6 +233,30 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
         assert grid.shape == (25, 2)
         assert axes[0].shape[0] == nunique["cat"]
         assert axes[1].shape[0] == nunique["cat"]
+
+
+@pytest.mark.parametrize(
+    "custom_grid, features",
+    [
+        (
+            {
+                1: np.array([1, 2, 3]),
+                2: np.array([1, 2, 3]),
+                "foo": np.array([4, 5, 6]),
+            },
+            [1, 2, "foo"],
+        ),
+        (
+            {1: [1, 2, 3], 2: np.array([1, 2, 3]), "foo": np.array([4, 5, 6])},
+            [1, "foo", 2],
+        ),
+    ],
+)
+def test_grid_from_custom_grid(custom_grid, features):
+    grid, values = _grid_from_custom_grid(features, custom_grid)
+    np.testing.assert_array_equal(grid, cartesian(values))
+    for val, feature in zip(values, features):
+        np.testing.assert_array_equal(val, custom_grid[feature])
 
 
 @pytest.mark.parametrize(
@@ -550,6 +587,24 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
             {"features": [0], "method": "recursion"},
             "Only the following estimators support the 'recursion' method:",
         ),
+        (
+            LinearRegression(),
+            {"features": [0, 1], "custom_grid": {0: [1, 2, 3]}},
+            "If custom_grid is specified, its keys must equal the values in features!",
+        ),
+        (
+            LinearRegression(),
+            {
+                "features": [0, 1],
+                "custom_grid": {0: [1, 2, 3], 1: [4, 5, 6], 2: [7, 8, 9]},
+            },
+            "If custom_grid is specified, its keys must equal the values in features!",
+        ),
+        (
+            LinearRegression(),
+            {"features": [0, 1], "custom_grid": {0: [1, 2, 3], 1: np.ones((3, 3))}},
+            "Grid for feature 1 is not a one-dimensional array. Got 2 dimensions",
+        ),
     ],
 )
 def test_partial_dependence_error(estimator, params, err_msg):
@@ -701,6 +756,38 @@ def test_partial_dependence_pipeline():
 
 
 @pytest.mark.parametrize(
+    "features, custom_grid, n_vals_expected",
+    [
+        (["b"], {"b": ["a", "b"]}, 2),
+        (["b"], {"b": ["a"]}, 1),
+        (["a", "b"], {"a": [1, 2], "b": ["a", "b"]}, 4),
+    ],
+)
+def test_partial_dependence_pipeline_custom_grid(
+    features, custom_grid, n_vals_expected
+):
+    pd = pytest.importorskip("pandas")
+    pl = make_pipeline(
+        SimpleImputer(strategy="most_frequent"), OneHotEncoder(), DummyClassifier()
+    )
+
+    X = pd.DataFrame({"a": [1, 2, 3, 4], "b": ["a", "b", "a", "b"]})
+    y = pd.Series([0, 1, 0, 1])
+    pl.fit(X, y)
+
+    X_holdout = pd.DataFrame({"a": [1, 2, 3, 4], "b": ["a", "b", "a", None]})
+    part_dep = partial_dependence(
+        pl,
+        X_holdout,
+        features=features,
+        grid_resolution=3,
+        custom_grid=custom_grid,
+        kind="average",
+    )
+    assert part_dep["average"].size == n_vals_expected
+
+
+@pytest.mark.parametrize(
     "estimator",
     [
         LogisticRegression(max_iter=1000, random_state=0),
@@ -782,11 +869,25 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     ],
     ids=["scalar-int", "scalar-str", "list-int", "list-str", "mask"],
 )
-def test_partial_dependence_feature_type(features, expected_pd_shape):
+@pytest.mark.parametrize("use_custom_grid", [True, False])
+def test_partial_dependence_feature_type(features, expected_pd_shape, use_custom_grid):
     # check all possible features type supported in PDP
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(iris.data, columns=iris.feature_names)
 
+    if use_custom_grid and features == [True, False, True, False]:
+        pytest.mark.xfail(
+            "Custom grid is expected to raise a value error with a feature mask."
+        )
+    elif use_custom_grid and features != [True, False, True, False]:
+        custom_grid = {}
+        if isinstance(features, (str, int)):
+            features = [features]
+        for f in features:
+            col_name = f if isinstance(f, str) else df.columns[f]
+            custom_grid[f] = df.loc[:10, col_name]
+    else:
+        custom_grid = None
     preprocessor = make_column_transformer(
         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)]),
