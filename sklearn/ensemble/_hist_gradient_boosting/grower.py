@@ -66,12 +66,20 @@ class TreeNode:
         start position of the node's sample_indices in splitter.partition.
     partition_stop : int
         stop position of the node's sample_indices in splitter.partition.
+    allowed_features : None or ndarray, dtype=int
+        Indices of features allowed to split for children.
+    interaction_cst_idx : None or list of ints
+        Indices of the interaction sets/groups that have to be applied on
+        splits of child nodes. The less sets the harder the constraint as
+        less sets contain less features.
     """
 
     split_info = None
     left_child = None
     right_child = None
     histograms = None
+    allowed_features = None
+    interaction_cst_idx = None
 
     # start and stop indices of the node in the splitter.partition
     # array. Concretely,
@@ -429,9 +437,16 @@ class TreeGrower:
         self.root.histograms = self.histogram_builder.compute_histograms_brute(
             self.root.sample_indices
         )
+
+        if self.interaction_cst is not None:
+            allowed_features = set().union(*self.interaction_cst)
+            self.root.allowed_features = np.array(
+                list(allowed_features), dtype=np.uint32
+            )
+
         self._compute_best_split_and_push(self.root)
 
-    def _compute_best_split_and_push(self, node, parent_feature_idx=None):
+    def _compute_best_split_and_push(self, node):
         """Compute the best possible split (SplitInfo) of a given node.
 
         Also push it in the heap of splittable nodes if gain isn't zero.
@@ -439,10 +454,6 @@ class TreeGrower:
         (best gain = 0), or if no split would satisfy the constraints,
         (min_hessians_to_split, min_gain_to_split, min_samples_leaf)
         """
-        if (self.interaction_cst is None) or (parent_feature_idx is None):
-            allowed_features = None
-        else:
-            allowed_features = self._get_allowed_features(parent_feature_idx)
 
         node.split_info = self.splitter.find_node_split(
             node.n_samples,
@@ -452,12 +463,17 @@ class TreeGrower:
             node.value,
             node.children_lower_bound,
             node.children_upper_bound,
-            allowed_features,
+            node.allowed_features,
         )
 
         if node.split_info.gain <= 0:  # no valid split
             self._finalize_leaf(node)
         else:
+            # Update node.allowed_features, node.interaction_cst_idx to be inherited by
+            # child nodes.
+            if self.interaction_cst is not None:
+                self._update_interactions(node)
+
             heappush(self.splittable_nodes, node)
 
     def split_next(self):
@@ -593,13 +609,9 @@ class TreeGrower:
 
             tic = time()
             if should_split_left:
-                self._compute_best_split_and_push(
-                    left_child_node, parent_feature_idx=node.split_info.feature_idx
-                )
+                self._compute_best_split_and_push(left_child_node)
             if should_split_right:
-                self._compute_best_split_and_push(
-                    right_child_node, parent_feature_idx=node.split_info.feature_idx
-                )
+                self._compute_best_split_and_push(right_child_node)
             self.total_find_split_time += time() - tic
 
             # Release memory used by histograms as they are no longer needed
@@ -614,13 +626,38 @@ class TreeGrower:
 
         return left_child_node, right_child_node
 
-    def _get_allowed_features(self, parent_feature_idx):
-        """Return all feature indices allowed to be split by interaction_cst."""
+    def _update_interactions(self, node):
+        r"""Update features allowed by interactions for child nods.
+
+        Update node.allowed_features and node.interaction_cst_idx.
+
+        Example: Assume constraints [{0, 1}, {1, 2}].
+           1      <- Both constraint groups could be applied from now on
+          / \
+         1   2    <- Left split still fulfills both constraint groups.
+        / \ / \      Right split at feature 2 has only group {1, 2} from now on.
+
+        Parameters:
+        ----------
+        node : TreeNode
+            A node that might have children and whose interaction info is updated
+            inplace.
+        """
+        # Case of no interactions is already captured before function call.
+        if node.interaction_cst_idx is None:
+            # Already split root node
+            node.interaction_cst_idx = range(len(self.interaction_cst))
+
+        # Note: This is for nodes that are already split and have a
+        # node.split_info.feature_idx.
         allowed_features = set()
-        for group in self.interaction_cst:
-            if parent_feature_idx in group:
-                allowed_features.update(group)
-        return np.array(list(allowed_features), dtype=int)
+        interaction_cst_idx = list()
+        for i in node.interaction_cst_idx:
+            if node.split_info.feature_idx in self.interaction_cst[i]:
+                interaction_cst_idx.append(i)
+                allowed_features.update(self.interaction_cst[i])
+        node.allowed_features = np.array(list(allowed_features), dtype=np.uint32)
+        node.interaction_cst_idx = interaction_cst_idx
 
     def _finalize_leaf(self, node):
         """Make node a leaf of the tree being grown."""

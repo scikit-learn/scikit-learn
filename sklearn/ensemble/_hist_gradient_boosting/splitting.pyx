@@ -411,7 +411,7 @@ cdef class Splitter:
             const Y_DTYPE_C value,
             const Y_DTYPE_C lower_bound=-INFINITY,
             const Y_DTYPE_C upper_bound=INFINITY,
-            const int [:] allowed_features=None,
+            const unsigned int [:] allowed_features=None,
             ):
         """For each feature, find the best bin to split on at a given node.
 
@@ -444,7 +444,7 @@ cdef class Splitter:
         upper_bound : float
             Upper bound for the children values for respecting the monotonic
             constraints.
-        allowed_features : ndarray, dtype=int
+        allowed_features : None or ndarray, dtype=np.uint32
             Indices of the features that are allowed by interaction constraints to be
             split.
 
