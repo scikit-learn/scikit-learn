@@ -3044,8 +3044,7 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
-        """
-        Fit PowerTransformer to X, then transform X.
+        """Fit `PowerTransformer` to `X`, then transform `X`.
 
         Parameters
         ----------
@@ -3053,8 +3052,8 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             The data used to estimate the optimal transformation parameters
             and to be transformed using a power transformation.
 
-        y : None
-            Ignored.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
