@@ -1748,7 +1748,7 @@ def precision_score(
     return p
 
 
-recall_score(
+def recall_score(
     y_true,
     y_pred,
     *,
