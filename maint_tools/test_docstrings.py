@@ -33,7 +33,6 @@ DOCSTRING_IGNORE_LIST = [
     "NearestCentroid",
     "NeighborhoodComponentsAnalysis",
     "Normalizer",
-    "OPTICS",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
     "OrdinalEncoder",
