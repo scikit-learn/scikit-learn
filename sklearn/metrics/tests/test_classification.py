@@ -355,33 +355,25 @@ def test_tpr_fpr_tnr_fnr_scores_binary_averaged():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # compute scores with default labels introspection
-    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_scores(
-        y_true, y_pred, average=None
-    )
+    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average=None)
     assert_array_almost_equal(tprs, [0.88, 0.68], 2)
     assert_array_almost_equal(fprs, [0.32, 0.12], 2)
     assert_array_almost_equal(tnrs, [0.68, 0.88], 2)
     assert_array_almost_equal(fnrs, [0.12, 0.32], 2)
 
-    tn, fp, fn, tp = assert_no_warnings(
-        confusion_matrix, y_true, y_pred
-    ).ravel()
+    tn, fp, fn, tp = assert_no_warnings(confusion_matrix, y_true, y_pred).ravel()
     assert_array_almost_equal(tp / (tp + fn), 0.68, 2)
     assert_array_almost_equal(fp / (tn + fp), 0.12, 2)
     assert_array_almost_equal(tn / (tn + fp), 0.88, 2)
     assert_array_almost_equal(fn / (tp + fn), 0.32, 2)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
-        y_true, y_pred, average='macro'
-    )
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="macro")
     assert tpr == np.mean(tprs)
     assert fpr == np.mean(fprs)
     assert tnr == np.mean(tnrs)
     assert fnr == np.mean(fnrs)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
-        y_true, y_pred, average='weighted'
-    )
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="weighted")
     support = np.bincount(y_true)
     assert tpr == np.average(tprs, weights=support)
     assert fpr == np.average(fprs, weights=support)
@@ -394,34 +386,26 @@ def test_tpr_fpr_tnr_fnr_scores_multiclass():
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute scores with default labels introspection
-    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_scores(
-        y_true, y_pred, average=None
-    )
+    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average=None)
     assert_array_almost_equal(tprs, [0.79, 0.1, 0.9], 2)
     assert_array_almost_equal(fprs, [0.08, 0.14, 0.45], 2)
     assert_array_almost_equal(tnrs, [0.92, 0.86, 0.55], 2)
     assert_array_almost_equal(fnrs, [0.21, 0.9, 0.1], 2)
 
     # averaging tests
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
-        y_true, y_pred, average='micro'
-    )
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="micro")
     assert_array_almost_equal(tpr, 0.53, 2)
     assert_array_almost_equal(fpr, 0.23, 2)
     assert_array_almost_equal(tnr, 0.77, 2)
     assert_array_almost_equal(fnr, 0.47, 2)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
-        y_true, y_pred, average='macro'
-    )
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="macro")
     assert_array_almost_equal(tpr, 0.6, 2)
     assert_array_almost_equal(fpr, 0.22, 2)
     assert_array_almost_equal(tnr, 0.78, 2)
     assert_array_almost_equal(fnr, 0.4, 2)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
-        y_true, y_pred, average='weighted'
-    )
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="weighted")
     assert_array_almost_equal(tpr, 0.53, 2)
     assert_array_almost_equal(fpr, 0.2, 2)
     assert_array_almost_equal(tnr, 0.8, 2)
@@ -449,9 +433,7 @@ def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
 
     zero_division_value = 1.0 if zero_division == 1.0 else 0.0
     tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
-        y_true, y_pred,
-        average=None,
-        zero_division=zero_division
+        y_true, y_pred, average=None, zero_division=zero_division
     )
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0, zero_division_value], 2)
     assert_array_almost_equal(fpr, [0.0, 0.0, 0.0, 1 / 3.0], 2)
@@ -459,10 +441,7 @@ def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
     assert_array_almost_equal(fnr, [1.0, 0.5, 0.0, zero_division_value], 2)
 
     tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
-        y_true,
-        y_pred,
-        average="macro",
-        zero_division=zero_division
+        y_true, y_pred, average="macro", zero_division=zero_division
     )
     assert_almost_equal(tpr, 0.625 if zero_division_value else 0.375)
     assert_almost_equal(fpr, 1 / 3.0 / 4.0)
@@ -470,10 +449,7 @@ def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
     assert_almost_equal(fnr, 0.625 if zero_division_value else 0.375)
 
     tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
-        y_true,
-        y_pred,
-        average="micro",
-        zero_division=zero_division
+        y_true, y_pred, average="micro", zero_division=zero_division
     )
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.125)
@@ -481,10 +457,7 @@ def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
     assert_almost_equal(fnr, 0.5)
 
     tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
-        y_true,
-        y_pred,
-        average="weighted",
-        zero_division=zero_division
+        y_true, y_pred, average="weighted", zero_division=zero_division
     )
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0)
@@ -496,7 +469,7 @@ def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
         y_pred,
         average="samples",
         sample_weight=[1, 1, 2],
-        zero_division=zero_division
+        zero_division=zero_division,
     )
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.08333, 5)
@@ -1067,8 +1040,7 @@ def test_zero_precision_recall():
         assert_almost_equal(precision_score(y_true, y_pred, average="macro"), 0.0, 2)
         assert_almost_equal(recall_score(y_true, y_pred, average="macro"), 0.0, 2)
         assert_almost_equal(f1_score(y_true, y_pred, average="macro"), 0.0, 2)
-        assert_almost_equal(
-            specificity_score(y_true, y_pred, average='macro'), 0.5, 2)
+        assert_almost_equal(specificity_score(y_true, y_pred, average='macro'), 0.5, 2)
 
     finally:
         np.seterr(**old_error_settings)
@@ -2217,16 +2189,22 @@ def test_fscore_warnings(zero_division):
                 assert len(record) == 0
 
 
-@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
 def test_specificity_warnings(zero_division):
-    assert_no_warnings(specificity_score,
-                       np.array([[0, 0], [0, 0]]),
-                       np.array([[1, 1], [1, 1]]),
-                       average='micro', zero_division=zero_division)
+    assert_no_warnings(
+        specificity_score,
+        np.array([[0, 0], [0, 0]]),
+        np.array([[1, 1], [1, 1]]),
+        average="micro",
+        zero_division=zero_division,
+    )
 
-    specificity_score(np.array([[1, 1], [1, 1]]),
-                      np.array([[0, 0], [0, 0]]),
-                      average='micro', zero_division=zero_division)
+    specificity_score(
+        np.array([[1, 1], [1, 1]]),
+        np.array([[0, 0], [0, 0]]),
+        average="micro",
+        zero_division=zero_division,
+    )
     if zero_division == "warn":
         pytest.warns(Warning if zero_division == "warn" else None)
 
