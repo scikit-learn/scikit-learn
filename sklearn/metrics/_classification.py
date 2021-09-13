@@ -2978,11 +2978,14 @@ def specificity_score(
     >>> specificity_score(y_true, y_pred, average=None, zero_division=1)
     array([1. , 0.66..., 0.83...])
     """
-    _, _, tnr, _ = tpr_fpr_tnr_fnr_scores(y_true, y_pred,
-                                          labels=labels,
-                                          pos_label=pos_label,
-                                          average=average,
-                                          warn_for=('tnr',),
-                                          sample_weight=sample_weight,
-                                          zero_division=zero_division)
+    _, _, tnr, _ = tpr_fpr_tnr_fnr_scores(
+        y_true,
+        y_pred,
+        labels=labels,
+        pos_label=pos_label,
+        average=average,
+        warn_for=("tnr",),
+        sample_weight=sample_weight,
+        zero_division=zero_division,
+    )
     return tnr
