@@ -277,8 +277,8 @@ class OneVsRestClassifier(
 
     See Also
     --------
-    sklearn.multioutput.MultiOutputClassifier : Alternate way of extending an
-        estimator for multilabel classification.
+    MultiOutputClassifier : Alternate way of extending an estimator for
+        multilabel classification.
     sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
         to binary indicator matrix.
 
@@ -320,7 +320,7 @@ class OneVsRestClassifier(
         Returns
         -------
         self : object
-               Instance of fitted estimator.
+            Instance of fitted estimator.
         """
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
         # outperform or match a dense label binarizer in all cases and has also
@@ -380,7 +380,7 @@ class OneVsRestClassifier(
         Returns
         -------
         self : object
-               Instance of partially fitted estimator.
+            Instance of partially fitted estimator.
         """
         if _check_partial_fit_first_call(self, classes):
             if not hasattr(self.estimator, "partial_fit"):
@@ -506,14 +506,14 @@ class OneVsRestClassifier(
     def decision_function(self, X):
         """Decision function for the OneVsRestClassifier.
 
-           Return the distance of each sample from the decision boundary for each
-           class. This can only be used with estimators which implement the
-           `decision_function` method.
+        Return the distance of each sample from the decision boundary for each
+        class. This can only be used with estimators which implement the
+        `decision_function` method.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Input data for the `decision_function` estimator.
+            Input data.
 
         Returns
         -------
