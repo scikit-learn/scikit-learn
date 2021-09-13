@@ -338,8 +338,8 @@ def test_ovr_fit_predict_svc():
 def test_ovr_multilabel_dataset():
     base_clf = MultinomialNB(alpha=1)
     for au, prec, recall, specificity in zip(
-            (True, False), (0.51, 0.66), (0.51, 0.80)
-            ):
+        (True, False), (0.51, 0.66), (0.51, 0.80), (0.66, 0.71)
+    ):
         X, Y = datasets.make_multilabel_classification(
             n_samples=100,
             n_features=20,
@@ -362,8 +362,7 @@ def test_ovr_multilabel_dataset():
             recall_score(Y_test, Y_pred, average="micro"), recall, decimal=2
         )
         assert_almost_equal(
-            specificity_score(
-                Y_test, Y_pred, average="micro"), specificity, decimal=2
+            specificity_score(Y_test, Y_pred, average="micro"), specificity, decimal=2
         )
 
 
