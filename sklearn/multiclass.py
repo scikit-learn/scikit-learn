@@ -617,7 +617,7 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
 
 
 class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
-    """One-vs-one multiclass strategy
+    """One-vs-one multiclass strategy.
 
     This strategy consists in fitting one classifier per class pair.
     At prediction time, the class which received the most votes is selected.
@@ -654,7 +654,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Array containing labels.
 
     n_classes_ : int
-        Number of classes
+        Number of classes.
 
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
@@ -676,6 +676,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    See Also
+    --------
+    OneVsRestClassifier : One-vs-all multiclass strategy.
 
     Examples
     --------
@@ -709,7 +713,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
+            The fitted underlying estimator.
         """
         # We need to validate the data because we do a safe_indexing later.
         X, y = self._validate_data(
@@ -746,12 +751,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     @available_if(_estimators_has("partial_fit"))
     def partial_fit(self, X, y, classes=None):
-        """Partially fit underlying estimators
+        """Partially fit underlying estimators.
 
         Should be used when memory is inefficient to train all data. Chunks
         of data can be passed in several iteration, where the first call
         should have an array of all target variables.
-
 
         Parameters
         ----------
@@ -770,7 +774,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
+            The partially fitted underlying estimator.
         """
         first_call = _check_partial_fit_first_call(self, classes)
         if first_call:
@@ -842,11 +847,12 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
-        Y : array-like of shape (n_samples, n_classes) or (n_samples,) for \
-            binary classification.
+        Y : array-like of shape (n_samples, n_classes) or (n_samples,)
+            Result of calling `decision_function` on the final estimator.
 
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
@@ -879,6 +885,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     @property
     def n_classes_(self):
+        """Number of classes."""
         return len(self.classes_)
 
     # TODO: Remove in 1.1
