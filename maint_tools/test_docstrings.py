@@ -14,7 +14,6 @@ DOCSTRING_IGNORE_LIST = [
     "HalvingRandomSearchCV",
     "HashingVectorizer",
     "HuberRegressor",
-    "Isomap",
     "IterativeImputer",
     "KNNImputer",
     "LabelPropagation",
