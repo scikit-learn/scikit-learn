@@ -787,8 +787,7 @@ for name, metric in [
     ("recall", recall_score),
     ("f1", f1_score),
     ("jaccard", jaccard_score),
-    ('specificity', 
-    ),
+    ("specificity", specificity_score),
 ]:
     SCORERS[name] = make_scorer(metric, average="binary")
     for average in ["macro", "micro", "samples", "weighted"]:
