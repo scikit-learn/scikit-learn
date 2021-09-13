@@ -101,11 +101,6 @@ runtime:
 - Joblib (>= |JoblibMinVersion|),
 - threadpoolctl (>= |ThreadpoolctlMinVersion|).
 
-Those dependencies are **automatically installed by pip** if they were missing
-when building scikit-learn from source using `pip install -e .`. If
-`--no-build-isolation` flag is provided, then NumPy and SciPy needs to be
-installed first.
-
 .. note::
 
    For running on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
