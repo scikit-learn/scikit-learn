@@ -544,8 +544,7 @@ def multilabel_confusion_matrix(
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0"
-                    % np.min(labels)
+                    "Got %d < 0" % np.min(labels)
                 )
 
         if n_labels is not None:
@@ -2659,9 +2658,9 @@ def tpr_fpr_tnr_fnr_scores(
     labels=None,
     pos_label=1,
     average=None,
-    warn_for=('tpr', 'fpr', 'tnr', 'fnr'),
+    warn_for=("tpr", "fpr", "tnr", "fnr"),
     sample_weight=None,
-    zero_division="warn"
+    zero_division="warn",
 ):
     """Compute True Positive Rate (TPR), False Positive Rate (FPR),\
     True Negative Rate (TNR), False Negative Rate (FNR) for each class
@@ -2806,10 +2805,14 @@ def tpr_fpr_tnr_fnr_scores(
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, fp_sum, tn_sum, fn_sum, pos_sum, neg_sum
-    samplewise = average == 'samples'
-    MCM = multilabel_confusion_matrix(y_true, y_pred,
-                                      sample_weight=sample_weight,
-                                      labels=labels, samplewise=samplewise)
+    samplewise = average == "samples"
+    MCM = multilabel_confusion_matrix(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        labels=labels,
+        samplewise=samplewise,
+    )
     tn_sum = MCM[:, 0, 0]
     fp_sum = MCM[:, 0, 1]
     fn_sum = MCM[:, 1, 0]
@@ -2817,7 +2820,7 @@ def tpr_fpr_tnr_fnr_scores(
     neg_sum = tn_sum + fp_sum
     pos_sum = fn_sum + tp_sum
 
-    if average == 'micro':
+    if average == "micro":
         tp_sum = np.array([tp_sum.sum()])
         fp_sum = np.array([fp_sum.sum()])
         tn_sum = np.array([tn_sum.sum()])
@@ -2827,33 +2830,39 @@ def tpr_fpr_tnr_fnr_scores(
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
-    tpr = _prf_divide(tp_sum, pos_sum, 'TPR', 'positives',
-                      average, warn_for, zero_division)
-    fpr = _prf_divide(fp_sum, neg_sum, 'FPR', 'negatives',
-                      average, warn_for, zero_division)
-    tnr = _prf_divide(tn_sum, neg_sum, 'TNR', 'negatives',
-                      average, warn_for, zero_division)
-    fnr = _prf_divide(fn_sum, pos_sum, 'FNR', 'positives',
-                      average, warn_for, zero_division)
+    tpr = _prf_divide(
+        tp_sum, pos_sum, "TPR", "positives", average, warn_for, zero_division
+    )
+    fpr = _prf_divide(
+        fp_sum, neg_sum, "FPR", "negatives", average, warn_for, zero_division
+    )
+    tnr = _prf_divide(
+        tn_sum, neg_sum, "TNR", "negatives", average, warn_for, zero_division
+    )
+    fnr = _prf_divide(
+        fn_sum, pos_sum, "FNR", "positives", average, warn_for, zero_division
+    )
     # Average the results
-    if average == 'weighted':
+    if average == "weighted":
         weights = pos_sum
         if weights.sum() == 0:
             zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
             # TPR and FNR is zero_division if there are no positive labels
             # FPR and TNR is zero_division if there are no negative labels
-            return (zero_division_value if pos_sum.sum() == 0 else 0,
-                    zero_division_value if neg_sum.sum() == 0 else 0,
-                    zero_division_value if neg_sum.sum() == 0 else 0,
-                    zero_division_value if pos_sum.sum() == 0 else 0)
+            return (
+                zero_division_value if pos_sum.sum() == 0 else 0,
+                zero_division_value if neg_sum.sum() == 0 else 0,
+                zero_division_value if neg_sum.sum() == 0 else 0,
+                zero_division_value if pos_sum.sum() == 0 else 0,
+            )
 
-    elif average == 'samples':
+    elif average == "samples":
         weights = sample_weight
     else:
         weights = None
 
     if average is not None:
-        assert average != 'binary' or len(fpr) == 1
+        assert average != "binary" or len(fpr) == 1
         fpr = np.average(fpr, weights=weights)
         tnr = np.average(tnr, weights=weights)
         fnr = np.average(fnr, weights=weights)
@@ -2867,9 +2876,9 @@ def specificity_score(
     *,
     labels=None,
     pos_label=1,
-    average='binary',
+    average="binary",
     sample_weight=None,
-    zero_division="warn"
+    zero_division="warn",
 ):
     """Compute specificity, also known as true negative rate.
 
