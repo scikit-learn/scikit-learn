@@ -133,7 +133,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [-0.5,  2.5, -2.5, -0.5],
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
-
     """
 
     def __init__(self, n_bins=5, *, encode="onehot", strategy="quantile", dtype=None):
@@ -157,7 +156,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X, dtype="numeric")
 
