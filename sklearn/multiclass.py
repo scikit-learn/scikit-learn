@@ -679,7 +679,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     See Also
     --------
-    sklearn.multiclass.OneVsRestClassifier : One-vs-all multiclass strategy.
+    OneVsRestClassifier : One-vs-all multiclass strategy.
 
     Examples
     --------
@@ -714,7 +714,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         self : object
-               The fitted underlying estimator.
+            The fitted underlying estimator.
         """
         # We need to validate the data because we do a safe_indexing later.
         X, y = self._validate_data(
@@ -775,7 +775,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         self : object
-               The partially fitted underlying estimator.
+            The partially fitted underlying estimator.
         """
         first_call = _check_partial_fit_first_call(self, classes)
         if first_call:
