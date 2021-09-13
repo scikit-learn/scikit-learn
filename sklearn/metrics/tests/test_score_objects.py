@@ -1082,8 +1082,7 @@ def test_brier_score_loss_pos_label(string_labeled_classification_problem):
 
 
 @pytest.mark.parametrize(
-    "score_func", [f1_score, precision_score, recall_score, jaccard_score,
-                   specificity_score]
+    "score_func", [f1_score, precision_score, recall_score, jaccard_score, specificity_score]
 )
 def test_non_symmetric_metric_pos_label(
     score_func, string_labeled_classification_problem
