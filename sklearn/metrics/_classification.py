@@ -2662,25 +2662,24 @@ def tpr_fpr_tnr_fnr_scores(
     sample_weight=None,
     zero_division="warn",
 ):
-    """Compute True Positive Rate (TPR), False Positive Rate (FPR),\
-    True Negative Rate (TNR), False Negative Rate (FNR) for each class
+    """Compute TPR, FPR, TNR, FNR for each class.
 
-    The TPR is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
-    true positives and ``fn`` the number of false negatives.
+    The TPR is the ratio `tp / (tp + fn)` where `tp` is the number of
+    true positives and `fn` the number of false negatives.
 
-    The FPR is the ratio ``fp / (tn + fp)`` where ``tn`` is the number of
-    true negatives and ``fp`` the number of false positives.
+    The FPR is the ratio `fp / (tn + fp)` where `tn` is the number of
+    true negatives and `fp` the number of false positives.
 
-    The TNR is the ratio ``tn / (tn + fp)`` where ``tn`` is the number of
-    true negatives and ``fp`` the number of false positives.
+    The TNR is the ratio `tn / (tn + fp)` where `tn` is the number of
+    true negatives and `fp` the number of false positives.
 
-    The FNR is the ratio ``fn / (tp + fn)`` where ``tp`` is the number of
-    true positives and ``fn`` the number of false negatives.
+    The FNR is the ratio `fn / (tp + fn)` where `tp` is the number of
+    true positives and `fn` the number of false negatives.
 
-    If ``pos_label is None`` and in binary classification, this function
+    If `pos_label is None` and in binary classification, this function
     returns the true positive rate, false positive rate, true negative rate
-    and false negative rate if ``average`` is one of ``'micro'``, ``'macro'``,
-    ``'weighted'`` or ``'samples'``.
+    and false negative rate if `average` is one of `"micro"`, `"macro"`,
+    `"weighted"` or `"samples"`.
 
     Parameters
     ----------
@@ -2702,30 +2701,30 @@ def tpr_fpr_tnr_fnr_scores(
         ``y_pred`` are used in sorted order.
 
     pos_label : str or int, default=1
-        The class to report if ``average='binary'`` and the data is binary.
+        The class to report if `average="binary"` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
-        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        setting `labels=[pos_label]` and `average != "binary"` will report
         scores for that label only.
 
-    average : str, {None, 'binary', 'micro', 'macro', 'samples', 'weighted'}, \
+    average : str, {None, "binary", "micro", "macro", "samples", "weighted"}, \
         default=None
-        If ``None``, the scores for each class are returned. Otherwise, this
+        If `None`, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
-        ``'binary'``:
-            Only report results for the class specified by ``pos_label``.
-            This is applicable only if targets (``y_{true,pred}``) are binary.
-        ``'micro'``:
+        `"binary"`:
+            Only report results for the class specified by `pos_label`.
+            This is applicable only if targets (`y_{true,pred}`) are binary.
+        `"micro"`:
             Calculate metrics globally by counting the total true positives,
             false negatives and false positives.
-        ``'macro'``:
+        `"macro"`:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
-        ``'weighted'``:
+        `"weighted"`:
             Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance.
-        ``'samples'``:
+        `"samples"`:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
@@ -2737,7 +2736,7 @@ def tpr_fpr_tnr_fnr_scores(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : str or int, {'warn', 0, 1}, default="warn"
+    zero_division : str or int, {"warn", 0, 1}, default="warn"
         Sets the value to return when there is a zero division:
            - tpr, fnr: when there are no positive labels
            - fpr, tnr: when there are no negative labels
@@ -2757,7 +2756,7 @@ def tpr_fpr_tnr_fnr_scores(
 
     fnr : float (if average is not None), \
         or ndarray of shape (n_unique_labels,)
-        The number of occurrences of each label in ``y_true``.
+        The number of occurrences of each label in `y_true`.
 
     References
     ----------
@@ -2775,14 +2774,11 @@ def tpr_fpr_tnr_fnr_scores(
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='macro')
-    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666,
-     0.6666666666666666)
+    (0.33..., 0.33..., 0.66..., 0.66...)
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='micro')
-    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666,
-     0.6666666666666666)
+    (0.33..., 0.33..., 0.66..., 0.66...)
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='weighted')
-    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666,
-    0.6666666666666666)
+    (0.33..., 0.33..., 0.66..., 0.66...)
 
     It is possible to compute per-label FPR, FNR, TNR, TPR and
     supports instead of averaging:
@@ -2794,11 +2790,11 @@ def tpr_fpr_tnr_fnr_scores(
 
     Notes
     -----
-    When ``true positive + false negative == 0``, TPR, FNR are undefined;
-    When ``true negative + false positive == 0``, FPR, TNR are undefined.
+    When `true positive + false negative == 0`, TPR, FNR are undefined;
+    When `true negative + false positive == 0`, FPR, TNR are undefined.
     In such cases, by default the metric will be set to 0, as will F-score,
-    and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``.
+    and `UndefinedMetricWarning` will be raised. This behavior can be
+    modified with `zero_division`.
     """
     _check_zero_division(zero_division)
 
@@ -2882,8 +2878,8 @@ def specificity_score(
 ):
     """Compute specificity, also known as true negative rate.
 
-    The specificity is the ratio ``tn / (tn + fp)`` where ``tn`` is the number
-    of true negatives and ``fp`` is the number of false positives.
+    The specificity is the ratio `tn / (tn + fp)` where `tn` is the number
+    of true negatives and `fp` is the number of false positives.
     The specificity is intuitively the ability of the classifier to find
     all the negative samples.
 
@@ -2898,7 +2894,7 @@ def specificity_score(
         Estimated targets as returned by a classifier.
 
     labels : array-like, default=None
-        The set of labels to include when ``average != 'binary'``, and their
+        The set of labels to include when `average != "binary"`, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
         majority negative class, while labels not present in the data will
@@ -2907,9 +2903,9 @@ def specificity_score(
         ``y_pred`` are used in sorted order.
 
     pos_label : str or int, default=1
-        The class to report if ``average='binary'`` and the data is binary.
+        The class to report if `average="binary"` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
-        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        setting `labels=[pos_label]` and `average != "binary"` will report
         scores for that label only.
 
     average : str, {None, 'binary', 'micro', 'macro', 'samples', 'weighted'} \
@@ -2918,21 +2914,21 @@ def specificity_score(
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
-        ``'binary'``:
-            Only report results for the class specified by ``pos_label``.
-            This is applicable only if targets (``y_{true,pred}``) are binary.
-        ``'micro'``:
+        `"binary"`:
+            Only report results for the class specified by `pos_label`.
+            This is applicable only if targets (`y_{true,pred}`) are binary.
+        `"micro"`:
             Calculate metrics globally by counting the total true positives,
             false negatives and false positives.
-        ``'macro'``:
+        `"macro"`:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
-        ``'weighted'``:
+        `"weighted"`:
             Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
-        ``'samples'``:
+        `"samples"`:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
@@ -2959,9 +2955,9 @@ def specificity_score(
 
     Notes
     -----
-    When ``true negative + false positive == 0``, specificity returns 0 and
-    raises ``UndefinedMetricWarning``. This behavior can be modified with
-    ``zero_division``.
+    When `true negative + false positive == 0`, specificity returns 0 and
+    raises `UndefinedMetricWarning`. This behavior can be modified with
+    `zero_division`.
 
     References
     ----------
