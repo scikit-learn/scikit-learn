@@ -146,8 +146,9 @@ CLASSIFICATION_METRICS = {
     "f0.5_score": partial(fbeta_score, beta=0.5),
     "matthews_corrcoef_score": matthews_corrcoef,
     "tpr_fpr_tnr_fnr_scores": tpr_fpr_tnr_fnr_scores,
-    "binary_tpr_fpr_tnr_fnr_scores":
-    partial(tpr_fpr_tnr_fnr_scores, average="binary"),
+    "binary_tpr_fpr_tnr_fnr_scores": partial(
+        tpr_fpr_tnr_fnr_scores, average="binary"
+    ),
     "specificity_score": specificity_score,
     "binary_specificity_score": partial(specificity_score, average="binary"),
     "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
@@ -156,18 +157,21 @@ CLASSIFICATION_METRICS = {
     "weighted_precision_score": partial(precision_score, average="weighted"),
     "weighted_recall_score": partial(recall_score, average="weighted"),
     "weighted_jaccard_score": partial(jaccard_score, average="weighted"),
-    "weighted_tpr_fpr_tnr_fnr_scores":
-    partial(tpr_fpr_tnr_fnr_scores, average="weighted"),
-    "weighted_specificity_score":
-    partial(specificity_score, average="weighted"),
+    "weighted_tpr_fpr_tnr_fnr_scores": partial(
+        tpr_fpr_tnr_fnr_scores, average="weighted"
+    ),
+    "weighted_specificity_score": partial(
+        specificity_score, average="weighted"
+    ),
     "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
     "micro_f1_score": partial(f1_score, average="micro"),
     "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
     "micro_precision_score": partial(precision_score, average="micro"),
     "micro_recall_score": partial(recall_score, average="micro"),
     "micro_jaccard_score": partial(jaccard_score, average="micro"),
-    "micro_tpr_fpr_tnr_fnr_scores":
-    partial(tpr_fpr_tnr_fnr_scores, average="micro"),
+    "micro_tpr_fpr_tnr_fnr_scores": partial(
+        tpr_fpr_tnr_fnr_scores, average="micro"
+    ),
     "micro_specificity_score": partial(specificity_score, average="micro"),
     "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
     "macro_f1_score": partial(f1_score, average="macro"),
@@ -175,8 +179,9 @@ CLASSIFICATION_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
     "macro_jaccard_score": partial(jaccard_score, average="macro"),
-    "macro_tpr_fpr_tnr_fnr_scores":
-    partial(tpr_fpr_tnr_fnr_scores, average="macro"),
+    "macro_tpr_fpr_tnr_fnr_scores": partial(
+        tpr_fpr_tnr_fnr_scores, average="macro"
+    ),
     "macro_specificity_score": partial(specificity_score, average="macro"),
     "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
     "samples_f1_score": partial(f1_score, average="samples"),
@@ -184,8 +189,9 @@ CLASSIFICATION_METRICS = {
     "samples_precision_score": partial(precision_score, average="samples"),
     "samples_recall_score": partial(recall_score, average="samples"),
     "samples_jaccard_score": partial(jaccard_score, average="samples"),
-    "samples_tpr_fpr_tnr_fnr_scores":
-    partial(tpr_fpr_tnr_fnr_scores, average="samples"),
+    "samples_tpr_fpr_tnr_fnr_scores": partial(
+        tpr_fpr_tnr_fnr_scores, average="samples"
+    ),
     "samples_specificity_score": partial(specificity_score, average="samples"),
     "cohen_kappa_score": cohen_kappa_score,
 }
