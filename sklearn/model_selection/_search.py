@@ -451,8 +451,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         score : float
-                The score defined by ``scoring`` if provided, and the
-                ``best_estimator_.score`` method otherwise.
+            The score defined by ``scoring`` if provided, and the
+            ``best_estimator_.score`` method otherwise.
         """
         _check_refit(self, "score")
         check_is_fitted(self)
@@ -493,7 +493,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         y_score : ndarray of shape (n_samples,)
-                  The ``best_estimator_.score_samples`` method.
+            The ``best_estimator_.score_samples`` method.
         """
         check_is_fitted(self)
         return self.best_estimator_.score_samples(X)
@@ -513,9 +513,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        y : ndarray of shape (n_samples,)
-            The predicted labels or values for X based on the estimator with the
-            best found parameters.
+        y_pred : ndarray of shape (n_samples,)
+            The predicted labels or values for `X` based on the estimator with
+            the best found parameters.
         """
         check_is_fitted(self)
         return self.best_estimator_.predict(X)
@@ -535,10 +535,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        p : ndarray of shape (n_samples,) or (n_samples, n_classes)
-            Predicted class probabilities for X based on the estimator with
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Predicted class probabilities for `X` based on the estimator with
             the best found parameters. The order of the classes corresponds
-            to that in the attribute :term:`classes_`.
+            to that in the fitted attribute :term:`classes_`.
         """
         check_is_fitted(self)
         return self.best_estimator_.predict_proba(X)
@@ -558,10 +558,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        p : ndarray of shape (n_samples,) or (n_samples, n_classes)
-            Predicted class log-probabilities for X based on the estimator with
-            the best found parameters. The order of the classes corresponds
-            to that in the attribute :term:`classes_`.
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Predicted class log-probabilities for `X` based on the estimator
+            with the best found parameters. The order of the classes
+            corresponds to that in the fitted attribute :term:`classes_`.
         """
         check_is_fitted(self)
         return self.best_estimator_.predict_log_proba(X)
@@ -581,10 +581,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        score : ndarray of shape (n_samples,) or (n_samples, n_classes) \
+        y_score : ndarray of shape (n_samples,) or (n_samples, n_classes) \
                 or (n_samples, n_classes * (n_classes-1) / 2)
-                Result of the decision function for X based on the estimator with
-                the best found parameters.
+            Result of the decision function for `X` based on the estimator with
+            the best found parameters.
         """
         check_is_fitted(self)
         return self.best_estimator_.decision_function(X)
@@ -604,10 +604,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        Xt : {array-like, sparse matrix} of shape (n_features,) \
-             or (n_samples, n_features)
-             X transformed in the new space based on the estimator with
-             the best found parameters.
+        Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            `X` transformed in the new space based on the estimator with
+            the best found parameters.
         """
         check_is_fitted(self)
         return self.best_estimator_.transform(X)
@@ -627,10 +626,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        X : {ndarray, sparse matrix, list} of shape (n_features,) \
-            or (n_samples, n_features)
-            Result of the inverse_transform function for Xt based on the estimator
-            with the best found parameters.
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Result of the `inverse_transform` function for `Xt` based on the
+            estimator with the best found parameters.
         """
         check_is_fitted(self)
         return self.best_estimator_.inverse_transform(Xt)
@@ -639,15 +637,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def n_features_in_(self):
         """Number of features seen during :term:`fit`.
 
-        Only available if `best_estimator_` is defined
-        (see the documentation for the `refit` parameter for more details)
-        and that `best_estimator_` exposes `feature_names_in_` when fit.
-
-        Returns
-        -------
-        n : int
-            Number of features seen during :term:`fit` based on the estimator
-            with the best found parameters.
+        Only available when `refit=True`.
         """
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() fails if the search estimator isn't fitted.
@@ -664,16 +654,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     @property
     def classes_(self):
-        """The class labels.
+        """Class labels.
 
-        Only available if the underlying estimator implements
-        ``classes_`` and ``refit=True``.
-
-        Returns
-        ----------
-        classes_ : ndarray of shape (n_classes,)
-                   The class labels of the estimator with the best found
-                   paramaters.
+        Only available when `refit=True` and the estimator is a classifier.
         """
         _estimator_has("classes_")(self)
         return self.best_estimator_.classes_
@@ -799,7 +782,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         self : object
-               Instance of fitted estimator.
+            Instance of fitted estimator.
         """
         estimator = self.estimator
         refit_metric = "score"
