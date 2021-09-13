@@ -275,6 +275,13 @@ class OneVsRestClassifier(
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    MultiOutputClassifier : Alternate way of extending an estimator for
+        multilabel classification.
+    sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
+        to binary indicator matrix.
+
     Examples
     --------
     >>> import numpy as np
@@ -292,13 +299,6 @@ class OneVsRestClassifier(
     >>> clf = OneVsRestClassifier(SVC()).fit(X, y)
     >>> clf.predict([[-19, -20], [9, 9], [-5, 5]])
     array([2, 0, 1])
-
-    See Also
-    --------
-    sklearn.multioutput.MultiOutputClassifier : Alternate way of extending an
-        estimator for multilabel classification.
-    sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
-        to binary indicator matrix.
     """
 
     def __init__(self, estimator, *, n_jobs=None):
@@ -319,7 +319,8 @@ class OneVsRestClassifier(
 
         Returns
         -------
-        self
+        self : object
+            Instance of fitted estimator.
         """
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
         # outperform or match a dense label binarizer in all cases and has also
@@ -355,7 +356,7 @@ class OneVsRestClassifier(
 
     @available_if(_estimators_has("partial_fit"))
     def partial_fit(self, X, y, classes=None):
-        """Partially fit underlying estimators
+        """Partially fit underlying estimators.
 
         Should be used when memory is inefficient to train all data.
         Chunks of data can be passed in several iteration.
@@ -378,7 +379,8 @@ class OneVsRestClassifier(
 
         Returns
         -------
-        self
+        self : object
+            Instance of partially fitted estimator.
         """
         if _check_partial_fit_first_call(self, classes):
             if not hasattr(self.estimator, "partial_fit"):
@@ -477,6 +479,7 @@ class OneVsRestClassifier(
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
@@ -501,18 +504,22 @@ class OneVsRestClassifier(
 
     @available_if(_estimators_has("decision_function"))
     def decision_function(self, X):
-        """Returns the distance of each sample from the decision boundary for
-        each class. This can only be used with estimators which implement the
-        decision_function method.
+        """Decision function for the OneVsRestClassifier.
+
+        Return the distance of each sample from the decision boundary for each
+        class. This can only be used with estimators which implement the
+        `decision_function` method.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
         T : array-like of shape (n_samples, n_classes) or (n_samples,) for \
             binary classification.
+            Result of calling `decision_function` on the final estimator.
 
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
@@ -527,11 +534,12 @@ class OneVsRestClassifier(
 
     @property
     def multilabel_(self):
-        """Whether this is a multilabel classifier"""
+        """Whether this is a multilabel classifier."""
         return self.label_binarizer_.y_type_.startswith("multilabel")
 
     @property
     def n_classes_(self):
+        """Number of classes."""
         return len(self.classes_)
 
     # TODO: Remove coef_ attribute in 1.1
