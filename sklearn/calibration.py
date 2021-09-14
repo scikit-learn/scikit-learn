@@ -1041,8 +1041,8 @@ class CalibrationDisplay:
             created.
 
         name : str, default=None
-            Name for labeling curve. If `None`, the name of the estimator
-            is used.
+            Name for labeling curve. If `None`, use `estimator_name` if
+            not `None`, otherwise no labeling is shown.
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
