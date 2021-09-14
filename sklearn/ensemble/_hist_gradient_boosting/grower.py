@@ -72,8 +72,8 @@ class TreeNode:
         Indices of features allowed to split for children.
     interaction_cst_idx : None or list of ints
         Indices of the interaction sets/groups that have to be applied on
-        splits of child nodes. The less sets the harder the constraint as
-        less sets contain less features.
+        splits of child nodes. The fewer sets the harder the constraint as
+        fewer sets contain fewer features.
     """
 
     split_info = None
