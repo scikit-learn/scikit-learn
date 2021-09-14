@@ -454,7 +454,7 @@ cdef class Splitter:
             The info about the best possible split among all features.
         """
         cdef:
-            int feature_idx
+            unsigned int feature_idx
             int best_feature_idx
             int n_features = self.n_features
             split_info_struct split_info
