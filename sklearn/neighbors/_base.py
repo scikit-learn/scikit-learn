@@ -23,7 +23,10 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..metrics._pairwise_distances_reduction import ArgKmin, RadiusNeighborhood
+from ..metrics._pairwise_distances_reduction import (
+    PairwiseDistancesArgKmin,
+    PairwiseDistancesRadiusNeighborhood,
+)
 from ..utils import (
     check_array,
     gen_even_slices,
@@ -757,10 +760,10 @@ class KNeighborsMixin:
                 X, n_neighbors=n_neighbors, return_distance=return_distance
             )
 
-        elif self._fit_method == "brute" and ArgKmin.is_usable_for(
+        elif self._fit_method == "brute" and PairwiseDistancesArgKmin.is_usable_for(
             X, self._fit_X, self.effective_metric_
         ):
-            results = ArgKmin.get_for(
+            results = PairwiseDistancesArgKmin.get_for(
                 X=X,
                 Y=self._fit_X,
                 k=n_neighbors,
@@ -1085,10 +1088,13 @@ class RadiusNeighborsMixin:
                 X, radius=radius, return_distance=return_distance
             )
 
-        elif self._fit_method == "brute" and RadiusNeighborhood.is_usable_for(
-            X, self._fit_X, self.effective_metric_
+        elif (
+            self._fit_method == "brute"
+            and PairwiseDistancesRadiusNeighborhood.is_usable_for(
+                X, self._fit_X, self.effective_metric_
+            )
         ):
-            results = RadiusNeighborhood.get_for(
+            results = PairwiseDistancesRadiusNeighborhood.get_for(
                 X=X,
                 Y=self._fit_X,
                 radius=radius,
