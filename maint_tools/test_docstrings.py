@@ -64,7 +64,6 @@ DOCSTRING_IGNORE_LIST = [
     "TheilSenRegressor",
     "TransformedTargetRegressor",
     "TweedieRegressor",
-    "VarianceThreshold",
 ]
 
 

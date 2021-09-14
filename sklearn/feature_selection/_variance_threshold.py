@@ -39,6 +39,15 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    SelectFromModel: Meta-transformer for selecting features based on
+        importance weights.
+    SelectPercentile : Select features according to a percentile of the highest
+        scores.
+    SequentialFeatureSelector : Transformer that performs Sequential Feature
+        Selection.
+
     Notes
     -----
     Allows NaN in the input.
@@ -66,7 +75,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Sample vectors from which to compute variances.
+            Data from which to compute variances, where `n_samples` is
+            the number of samples and `n_features` is the number of features.
 
         y : any, default=None
             Ignored. This parameter exists only for compatibility with
@@ -74,7 +84,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
+            Returns the instance itself.
         """
         X = self._validate_data(
             X,
