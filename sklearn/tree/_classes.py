@@ -399,18 +399,24 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
-            self.builder_ = DepthFirstTreeBuilder(splitter, min_samples_split,
-                                                  min_samples_leaf,
-                                                  min_weight_leaf,
-                                                  max_depth,
-                                                  self.min_impurity_decrease)
+            self.builder_ = DepthFirstTreeBuilder(
+                splitter,
+                min_samples_split,
+                min_samples_leaf,
+                min_weight_leaf,
+                max_depth,
+                self.min_impurity_decrease,
+            )
         else:
-            self.builder_ = BestFirstTreeBuilder(splitter, min_samples_split,
-                                                 min_samples_leaf,
-                                                 min_weight_leaf,
-                                                 max_depth,
-                                                 max_leaf_nodes,
-                                                 self.min_impurity_decrease)
+            self.builder_ = BestFirstTreeBuilder(
+                splitter,
+                min_samples_split,
+                min_samples_leaf,
+                min_weight_leaf,
+                max_depth,
+                max_leaf_nodes,
+                self.min_impurity_decrease,
+            )
 
         self.builder_.build(self.tree_, X, y, sample_weight)
 
@@ -427,10 +433,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         try:
             self.tree_
         except AttributeError:
-            self.fit(
-                X, y,
-                sample_weight=sample_weight,
-                check_input=check_input)
+            self.fit(X, y, sample_weight=sample_weight, check_input=check_input)
             return self
 
         if self.ccp_alpha < 0.0:
@@ -442,23 +445,28 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # csr.
             check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
             check_y_params = dict(ensure_2d=False, dtype=None)
-            X, y = self._validate_data(X, y,
-                                       validate_separately=(check_X_params,
-                                                            check_y_params))
+            X, y = self._validate_data(
+                X, y, validate_separately=(check_X_params, check_y_params)
+            )
             if issparse(X):
                 X.sort_indices()
 
                 if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
-                    raise ValueError("No support for np.int64 index based "
-                                     "sparse matrices")
+                    raise ValueError(
+                        "No support for np.int64 index based sparse matrices"
+                    )
 
             if self.criterion == "poisson":
                 if np.any(y < 0):
-                    raise ValueError("Some value(s) of y are negative which is"
-                                     " not allowed for Poisson regression.")
+                    raise ValueError(
+                        "Some value(s) of y are negative which is"
+                        " not allowed for Poisson regression."
+                    )
                 if np.sum(y) <= 0:
-                    raise ValueError("Sum of y is not positive which is "
-                                     "necessary for Poisson regression.")
+                    raise ValueError(
+                        "Sum of y is not positive which is "
+                        "necessary for Poisson regression."
+                    )
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
@@ -477,8 +485,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
             y_encoded = np.zeros(y.shape, dtype=int)
             for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k],
-                                                       return_inverse=True)
+                classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
             y = y_encoded
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
@@ -1040,10 +1047,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().partial_fit(
-            X, y,
-            sample_weight=sample_weight,
-            check_input=check_input)
+        super().partial_fit(X, y, sample_weight=sample_weight, check_input=check_input)
         return self
 
     def predict_proba(self, X, check_input=True):
@@ -1457,10 +1461,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().partial_fit(
-            X, y,
-            sample_weight=sample_weight,
-            check_input=check_input)
+        super().partial_fit(X, y, sample_weight=sample_weight, check_input=check_input)
         return self
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
