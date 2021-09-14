@@ -94,7 +94,9 @@ def _get_response(X, estimator, response_method, pos_label=None):
 
     y_pred = prediction_method(X)
 
-    if pos_label is not None and pos_label not in estimator.classes_:
+    # Checking that a scalar is contained in a NumPy array will raise a FutureWarning.
+    # We need to convert it into a list.
+    if pos_label is not None and pos_label not in list(estimator.classes_):
         raise ValueError(
             "The class provided by 'pos_label' is unknown. Got "
             f"{pos_label} instead of one of {estimator.classes_}"
@@ -111,7 +113,7 @@ def _get_response(X, estimator, response_method, pos_label=None):
             pos_label = estimator.classes_[1]
             y_pred = y_pred[:, 1]
         else:
-            class_idx = np.flatnonzero(estimator.classes_ == pos_label)
+            class_idx = np.flatnonzero(estimator.classes_ == pos_label)[0]
             y_pred = y_pred[:, class_idx]
     else:
         if pos_label is None:
