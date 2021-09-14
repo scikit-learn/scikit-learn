@@ -139,6 +139,13 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
 
+    def __reduce__(self):
+      """Reduce re-implementation, for pickling."""
+      return(DepthFirstTreeBuilder, (self.splitter, self.min_samples_split,
+                                     self.min_samples_leaf, self.max_depth,
+                                     self.min_impurity_decrease,
+                                     self.min_impurity_split))
+
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
@@ -473,6 +480,15 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
+
+    def __reduce__(self):
+      """Reduce re-implementation, for pickling."""
+      return(BestFirstTreeBuilder, (self.splitter, self.min_samples_split,
+                                    self.min_samples_leaf,
+                                    self.min_weight_leaf, self.max_depth,
+                                    self.max_leaf_nodes,
+                                    self.min_impurity_decrease,
+                                    self.min_impurity_split))
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
