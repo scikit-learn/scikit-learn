@@ -315,7 +315,7 @@ cdef class DistanceMetric:
         """
         return self.dist(x1, x2, size)
 
-    cdef DTYPE_t sparse_dist(
+    cdef DTYPE_t csr_dist(
         self,
         const DTYPE_t[:] x1_data,
         const ITYPE_t[:] x1_indices,
@@ -329,7 +329,7 @@ cdef class DistanceMetric:
         """
         return -999
 
-    cdef DTYPE_t sparse_rdist(
+    cdef DTYPE_t csr_rdist(
         self,
         const DTYPE_t[:] x1_data,
         const ITYPE_t[:] x1_indices,
@@ -346,7 +346,7 @@ cdef class DistanceMetric:
         Euclidean metric, the rank-preserving surrogate distance is the
         squared-euclidean distance.
         """
-        return self.sparse_dist(x1_data, x1_indices, x2_data, x2_indices)
+        return self.csr_dist(x1_data, x1_indices, x2_data, x2_indices)
 
     cdef int pdist(self, const DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1:
         """compute the pairwise distances between points in X"""
@@ -1402,7 +1402,7 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
             ITYPE_t yj_start = self.Y_indptr[j]
             ITYPE_t yj_end = self.Y_indptr[j + 1]
 
-        return self.distance_metric.sparse_rdist(
+        return self.distance_metric.csr_rdist(
             self.X_data[xi_start:xi_end],
             self.X_indices[xi_start:xi_end],
             self.Y_data[yj_start:yj_end],
@@ -1417,7 +1417,7 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
             ITYPE_t yj_start = self.Y_indptr[j]
             ITYPE_t yj_end = self.Y_indptr[j + 1]
 
-        return self.distance_metric.sparse_dist(
+        return self.distance_metric.csr_dist(
             self.X_data[xi_start:xi_end],
             self.X_indices[xi_start:xi_end],
             self.Y_data[yj_start:yj_end],
@@ -1486,7 +1486,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         # https://github.com/scikit-learn/scikit-learn/issues/17299
         # Ideally, we could pass pointers and indices and access elements
         # then in distance_metric.dist
-        return self.distance_metric.sparse_rdist(
+        return self.distance_metric.csr_rdist(
             self.X_data[xi_start:xi_end],
             self.X_indices[xi_start:xi_end],
             self.Y[j, :],
@@ -1500,7 +1500,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
             ITYPE_t xi_end = self.X_indptr[i + 1]
 
         # TODO: same as previous comment
-        return self.distance_metric.sparse_dist(
+        return self.distance_metric.csr_dist(
             self.X_data[xi_start:xi_end],
             self.X_indices[xi_start:xi_end],
             self.Y[j, :],

@@ -62,7 +62,7 @@ cdef class DistanceMetric:
     cdef DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                        ITYPE_t size) nogil except -1
 
-    cdef DTYPE_t sparse_dist(
+    cdef DTYPE_t csr_dist(
         self,
         const DTYPE_t[:] x1_data,
         const ITYPE_t[:] x1_indices,
@@ -70,7 +70,7 @@ cdef class DistanceMetric:
         const ITYPE_t[:] x2_indices,
     ) nogil except -1
 
-    cdef DTYPE_t sparse_rdist(
+    cdef DTYPE_t csr_rdist(
         self,
         const DTYPE_t[:] x1_data,
         const ITYPE_t[:] x1_indices,
