@@ -801,3 +801,24 @@ def test_calibration_curve_pos_label_error_str(dtype_y_str):
     )
     with pytest.raises(ValueError, match=err_msg):
         calibration_curve(y1, y2)
+
+
+@pytest.mark.parametrize("dtype_y_str", [str, object])
+def test_calibration_curve_pos_label(dtype_y_str):
+    """Check the behaviour when passing explicitly `pos_label`."""
+    y_true = np.array([0, 0, 0, 1, 1, 1, 1, 1, 1])
+    classes = np.array(["spam", "egg"], dtype=dtype_y_str)
+    y_true_str = classes[y_true]
+    y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.65, 0.7, 0.8, 0.9, 1.0])
+
+    # default case
+    prob_true, _ = calibration_curve(y_true, y_pred, n_bins=4)
+    assert_allclose(prob_true, [0, 0.5, 1, 1])
+    # if `y_true` contains `str`, then `pos_label` is required
+    prob_true, _ = calibration_curve(y_true_str, y_pred, n_bins=4, pos_label="egg")
+    assert_allclose(prob_true, [0, 0.5, 1, 1])
+
+    prob_true, _ = calibration_curve(y_true, 1 - y_pred, n_bins=4, pos_label=0)
+    assert_allclose(prob_true, [0, 0, 0.5, 1])
+    prob_true, _ = calibration_curve(y_true_str, 1 - y_pred, n_bins=4, pos_label="spam")
+    assert_allclose(prob_true, [0, 0, 0.5, 1])
