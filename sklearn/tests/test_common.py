@@ -104,9 +104,7 @@ def _tested_estimators(type_filter=None):
 @parametrize_with_checks(list(_tested_estimators()))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
-    with ignore_warnings(
-        category=(FutureWarning, ConvergenceWarning, UserWarning, FutureWarning)
-    ):
+    with ignore_warnings(category=(FutureWarning, ConvergenceWarning, UserWarning)):
         _set_checking_parameters(estimator)
         check(estimator)
 
@@ -304,7 +302,6 @@ def test_search_cv(estimator, check, request):
             FutureWarning,
             ConvergenceWarning,
             UserWarning,
-            FutureWarning,
             FitFailedWarning,
         )
     ):
@@ -351,13 +348,12 @@ column_name_estimators = list(
 )
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
-    with ignore_warnings(category=(FutureWarning)):
-        with pytest.warns(None) as record:
-            check_dataframe_column_names_consistency(
-                estimator.__class__.__name__, estimator
-            )
-        for warning in record:
-            assert "was fitted without feature names" not in str(warning.message)
+    with pytest.warns(None) as record:
+        check_dataframe_column_names_consistency(
+            estimator.__class__.__name__, estimator
+        )
+    for warning in record:
+        assert "was fitted without feature names" not in str(warning.message)
 
 
 # TODO: As more modules support get_feature_names_out they should be removed
