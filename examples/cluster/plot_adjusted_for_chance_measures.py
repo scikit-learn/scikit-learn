@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 from time import time
 from sklearn import metrics
 
+
 def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
                              fixed_n_classes=None, n_runs=5, seed=42):
     """Compute score for 2 random uniform cluster labelings.
@@ -57,6 +58,7 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
 
 def ami_score(U, V):
     return metrics.adjusted_mutual_info_score(U, V)
+
 
 score_funcs = [
     metrics.adjusted_rand_score,

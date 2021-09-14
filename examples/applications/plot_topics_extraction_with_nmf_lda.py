@@ -103,7 +103,7 @@ nmf = NMF(n_components=n_components, random_state=1,
 print("done in %0.3fs." % (time() - t0))
 
 
-tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+tfidf_feature_names = tfidf_vectorizer.get_feature_names_out()
 plot_top_words(nmf, tfidf_feature_names, n_top_words,
                'Topics in NMF model (Frobenius norm)')
 
@@ -117,7 +117,7 @@ nmf = NMF(n_components=n_components, random_state=1,
           l1_ratio=.5).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
-tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+tfidf_feature_names = tfidf_vectorizer.get_feature_names_out()
 plot_top_words(nmf, tfidf_feature_names, n_top_words,
                'Topics in NMF model (generalized Kullback-Leibler divergence)')
 
@@ -132,5 +132,5 @@ t0 = time()
 lda.fit(tf)
 print("done in %0.3fs." % (time() - t0))
 
-tf_feature_names = tf_vectorizer.get_feature_names()
+tf_feature_names = tf_vectorizer.get_feature_names_out()
 plot_top_words(lda, tf_feature_names, n_top_words, 'Topics in LDA model')

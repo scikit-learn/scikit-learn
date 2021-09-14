@@ -37,6 +37,7 @@ def pdf(x):
     return 0.5 * (stats.norm(scale=0.25 / e).pdf(x)
                   + stats.norm(scale=4 / e).pdf(x))
 
+
 y = np.random.normal(scale=0.5, size=(30000))
 x = np.random.normal(scale=0.5, size=(30000))
 z = np.random.normal(scale=0.1, size=len(x))

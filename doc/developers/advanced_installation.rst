@@ -60,11 +60,12 @@ feature, code or documentation improvement).
 #. Optional (but recommended): create and activate a dedicated virtualenv_
    or `conda environment`_.
 
-#. Install Cython_ and build the project with pip in :ref:`editable_mode`:
+#. Install NumPy_, SciPy_, and Cython_ and build the project with pip in
+   :ref:`editable_mode`:
 
    .. prompt:: bash $
 
-        pip install cython
+        pip install numpy scipy cython
         pip install --verbose --no-build-isolation --editable .
 
 #. Check that the installed scikit-learn has a version number ending with
@@ -94,7 +95,7 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.6),
+- Python (>= 3.7),
 - NumPy (>= |NumpyMinVersion|),
 - SciPy (>= |ScipyMinVersion|),
 - Joblib (>= |JoblibMinVersion|),
@@ -436,6 +437,8 @@ the base system and these steps will not be necessary.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _Cython: https://cython.org
+.. _NumPy: https://numpy.org
+.. _SciPy: https://www.scipy.org
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
@@ -479,9 +482,9 @@ repository:
 
 .. prompt:: bash $
 
-    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
 
 Then, add the oneAPI repository to your APT repositories:
 
@@ -490,11 +493,12 @@ Then, add the oneAPI repository to your APT repositories:
     sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
     sudo apt-get update
 
-Install ICC, packaged under the name ``intel-oneapi-icc``:
+Install ICC, packaged under the name
+``intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic``:
 
 .. prompt:: bash $
 
-    sudo apt-get install intel-oneapi-icc
+    sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
 
 Before using ICC, you need to set up environment variables:
 

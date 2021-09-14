@@ -60,6 +60,7 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row, cmap=plt.cm.gray):
         plt.yticks(())
     plt.subplots_adjust(0.01, 0.05, 0.99, 0.93, 0.04, 0.)
 
+
 # #############################################################################
 # List of the different estimators, whether to center and transpose the
 # problem, and whether the transformer uses the clustering API.

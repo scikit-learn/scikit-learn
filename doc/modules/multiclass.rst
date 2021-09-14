@@ -295,7 +295,7 @@ used. It is a percentage of the total number of classes.
 A number between 0 and 1 will require fewer classifiers than
 one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
 represent each class unambiguously. However, in practice, it may not lead to
-good accuracy since ``log2(n_classes)`` is much smaller than n_classes.
+good accuracy since ``log2(n_classes)`` is much smaller than `n_classes`.
 
 A number greater than 1 will require more classifiers than
 one-vs-the-rest. In this case, some classifiers will in theory correct for
@@ -524,7 +524,7 @@ Target format
 -------------
 
 A valid representation of :term:`multioutput` `y` is a dense matrix of shape
-``(n_samples, n_classes)`` of floats. A column wise concatenation of
+``(n_samples, n_output)`` of floats. A column wise concatenation of
 :term:`continuous` variables. An example of ``y`` for 3 samples:
 
   >>> y = np.array([[31.4, 94], [40.5, 109], [25.0, 30]])

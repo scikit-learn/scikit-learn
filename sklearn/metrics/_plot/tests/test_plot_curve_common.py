@@ -13,6 +13,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import plot_det_curve
 from sklearn.metrics import plot_roc_curve
 
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:Function plot_roc_curve is deprecated",
+)
+
 
 @pytest.fixture(scope="module")
 def data():
@@ -25,31 +29,50 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
 def test_plot_curve_error_non_binary(pyplot, data, plot_func):
     X, y = data
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    msg = "DecisionTreeClassifier should be a binary classifier"
+    msg = (
+        "Expected 'estimator' to be a binary classifier, but got DecisionTreeClassifier"
+    )
     with pytest.raises(ValueError, match=msg):
         plot_func(clf, X, y)
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
     "response_method, msg",
-    [("predict_proba", "response method predict_proba is not defined in "
-                       "MyClassifier"),
-     ("decision_function", "response method decision_function is not defined "
-                           "in MyClassifier"),
-     ("auto", "response method decision_function or predict_proba is not "
-              "defined in MyClassifier"),
-     ("bad_method", "response_method must be 'predict_proba', "
-                    "'decision_function' or 'auto'")]
+    [
+        (
+            "predict_proba",
+            "response method predict_proba is not defined in MyClassifier",
+        ),
+        (
+            "decision_function",
+            "response method decision_function is not defined in MyClassifier",
+        ),
+        (
+            "auto",
+            "response method decision_function or predict_proba is not "
+            "defined in MyClassifier",
+        ),
+        (
+            "bad_method",
+            "response_method must be 'predict_proba', 'decision_function' or 'auto'",
+        ),
+    ],
 )
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
 def test_plot_curve_error_no_response(
-    pyplot, data_binary, response_method, msg, plot_func,
+    pyplot,
+    data_binary,
+    response_method,
+    msg,
+    plot_func,
 ):
     X, y = data_binary
 
@@ -64,10 +87,9 @@ def test_plot_curve_error_no_response(
         plot_func(clf, X, y, response_method=response_method)
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
-def test_plot_curve_estimator_name_multiple_calls(
-    pyplot, data_binary, plot_func
-):
+def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func):
     # non-regression test checking that the `name` used when calling
     # `plot_func` is used as well when calling `disp.plot()`
     X, y = data_binary
@@ -84,11 +106,17 @@ def test_plot_curve_estimator_name_multiple_calls(
     assert clf_name in disp.line_.get_label()
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
-    "clf", [LogisticRegression(),
-            make_pipeline(StandardScaler(), LogisticRegression()),
-            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
-                          LogisticRegression())])
+    "clf",
+    [
+        LogisticRegression(),
+        make_pipeline(StandardScaler(), LogisticRegression()),
+        make_pipeline(
+            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
+        ),
+    ],
+)
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
 def test_plot_det_curve_not_fitted_errors(pyplot, data_binary, clf, plot_func):
     X, y = data_binary

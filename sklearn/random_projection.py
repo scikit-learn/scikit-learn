@@ -38,17 +38,17 @@ from .base import BaseEstimator, TransformerMixin
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array, check_is_fitted
-from .utils.validation import _deprecate_positional_args
+from .utils.validation import check_is_fitted
 from .exceptions import DataDimensionalityWarning
 
 
-__all__ = ["SparseRandomProjection",
-           "GaussianRandomProjection",
-           "johnson_lindenstrauss_min_dim"]
+__all__ = [
+    "SparseRandomProjection",
+    "GaussianRandomProjection",
+    "johnson_lindenstrauss_min_dim",
+]
 
 
-@_deprecate_positional_args
 def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     """Find a 'safe' number of components to randomly project to.
 
@@ -120,37 +120,36 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     n_samples = np.asarray(n_samples)
 
     if np.any(eps <= 0.0) or np.any(eps >= 1):
-        raise ValueError(
-            "The JL bound is defined for eps in ]0, 1[, got %r" % eps)
+        raise ValueError("The JL bound is defined for eps in ]0, 1[, got %r" % eps)
 
     if np.any(n_samples) <= 0:
         raise ValueError(
             "The JL bound is defined for n_samples greater than zero, got %r"
-            % n_samples)
+            % n_samples
+        )
 
     denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
-    return (4 * np.log(n_samples) / denominator).astype(int)
+    return (4 * np.log(n_samples) / denominator).astype(np.int64)
 
 
 def _check_density(density, n_features):
     """Factorize density check according to Li et al."""
-    if density == 'auto':
+    if density == "auto":
         density = 1 / np.sqrt(n_features)
 
     elif density <= 0 or density > 1:
-        raise ValueError("Expected density in range ]0, 1], got: %r"
-                         % density)
+        raise ValueError("Expected density in range ]0, 1], got: %r" % density)
     return density
 
 
 def _check_input_size(n_components, n_features):
     """Factorize argument checking for random matrix generation."""
     if n_components <= 0:
-        raise ValueError("n_components must be strictly positive, got %d" %
-                         n_components)
+        raise ValueError(
+            "n_components must be strictly positive, got %d" % n_components
+        )
     if n_features <= 0:
-        raise ValueError("n_features must be strictly positive, got %d" %
-                         n_features)
+        raise ValueError("n_features must be strictly positive, got %d" % n_features)
 
 
 def _gaussian_random_matrix(n_components, n_features, random_state=None):
@@ -187,14 +186,13 @@ def _gaussian_random_matrix(n_components, n_features, random_state=None):
     """
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)
-    components = rng.normal(loc=0.0,
-                            scale=1.0 / np.sqrt(n_components),
-                            size=(n_components, n_features))
+    components = rng.normal(
+        loc=0.0, scale=1.0 / np.sqrt(n_components), size=(n_components, n_features)
+    )
     return components
 
 
-def _sparse_random_matrix(n_components, n_features, density='auto',
-                          random_state=None):
+def _sparse_random_matrix(n_components, n_features, density="auto", random_state=None):
     """Generalized Achlioptas random sparse matrix for random projection.
 
     Setting density to 1 / 3 will yield the original matrix by Dimitris
@@ -272,8 +270,9 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
         for _ in range(n_components):
             # find the indices of the non-zero components for row i
             n_nonzero_i = rng.binomial(n_features, density)
-            indices_i = sample_without_replacement(n_features, n_nonzero_i,
-                                                   random_state=rng)
+            indices_i = sample_without_replacement(
+                n_features, n_nonzero_i, random_state=rng
+            )
             indices.append(indices_i)
             offset += n_nonzero_i
             indptr.append(offset)
@@ -284,8 +283,9 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
         data = rng.binomial(1, 0.5, size=np.size(indices)) * 2 - 1
 
         # build the CSR structure by concatenating the rows
-        components = sp.csr_matrix((data, indices, indptr),
-                                   shape=(n_components, n_features))
+        components = sp.csr_matrix(
+            (data, indices, indptr), shape=(n_components, n_features)
+        )
 
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
@@ -298,8 +298,9 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self, n_components='auto', *, eps=0.1, dense_output=False,
-                 random_state=None):
+    def __init__(
+        self, n_components="auto", *, eps=0.1, dense_output=False, random_state=None
+    ):
         self.n_components = n_components
         self.eps = eps
         self.dense_output = dense_output
@@ -335,38 +336,41 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             matrix dimensions based on the theory referenced in the
             afore mentioned papers.
 
-        y
-            Ignored
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
-        self
-
+        self : object
+            BaseRandomProjection class instance.
         """
-        X = self._validate_data(X, accept_sparse=['csr', 'csc'])
+        X = self._validate_data(X, accept_sparse=["csr", "csc"])
 
         n_samples, n_features = X.shape
 
-        if self.n_components == 'auto':
+        if self.n_components == "auto":
             self.n_components_ = johnson_lindenstrauss_min_dim(
-                n_samples=n_samples, eps=self.eps)
+                n_samples=n_samples, eps=self.eps
+            )
 
             if self.n_components_ <= 0:
                 raise ValueError(
-                    'eps=%f and n_samples=%d lead to a target dimension of '
-                    '%d which is invalid' % (
-                        self.eps, n_samples, self.n_components_))
+                    "eps=%f and n_samples=%d lead to a target dimension of "
+                    "%d which is invalid" % (self.eps, n_samples, self.n_components_)
+                )
 
             elif self.n_components_ > n_features:
                 raise ValueError(
-                    'eps=%f and n_samples=%d lead to a target dimension of '
-                    '%d which is larger than the original space with '
-                    'n_features=%d' % (self.eps, n_samples, self.n_components_,
-                                       n_features))
+                    "eps=%f and n_samples=%d lead to a target dimension of "
+                    "%d which is larger than the original space with "
+                    "n_features=%d"
+                    % (self.eps, n_samples, self.n_components_, n_features)
+                )
         else:
             if self.n_components <= 0:
-                raise ValueError("n_components must be greater than 0, got %s"
-                                 % self.n_components)
+                raise ValueError(
+                    "n_components must be greater than 0, got %s" % self.n_components
+                )
 
             elif self.n_components > n_features:
                 warnings.warn(
@@ -374,23 +378,24 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
                     " features: n_features < n_components (%s < %s)."
                     "The dimensionality of the problem will not be reduced."
                     % (n_features, self.n_components),
-                    DataDimensionalityWarning)
+                    DataDimensionalityWarning,
+                )
 
             self.n_components_ = self.n_components
 
         # Generate a projection matrix of size [n_components, n_features]
-        self.components_ = self._make_random_matrix(self.n_components_,
-                                                    n_features)
+        self.components_ = self._make_random_matrix(self.n_components_, n_features)
 
         # Check contract
         assert self.components_.shape == (self.n_components_, n_features), (
-                'An error has occurred the self.components_ matrix has '
-                ' not the proper shape.')
+            "An error has occurred the self.components_ matrix has "
+            " not the proper shape."
+        )
 
         return self
 
     def transform(self, X):
-        """Project the data by using matrix product with the random matrix
+        """Project the data by using matrix product with the random matrix.
 
         Parameters
         ----------
@@ -402,18 +407,17 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         X_new : {ndarray, sparse matrix} of shape (n_samples, n_components)
             Projected array.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
-
         check_is_fitted(self)
+        X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
-                'Impossible to perform projection:'
-                'X at fit stage had a different number of features. '
-                '(%s != %s)' % (X.shape[1], self.components_.shape[1]))
+                "Impossible to perform projection:"
+                "X at fit stage had a different number of features. "
+                "(%s != %s)" % (X.shape[1], self.components_.shape[1])
+            )
 
-        X_new = safe_sparse_dot(X, self.components_.T,
-                                dense_output=self.dense_output)
+        X_new = safe_sparse_dot(X, self.components_.T, dense_output=self.dense_output)
         return X_new
 
 
@@ -462,6 +466,22 @@ class GaussianRandomProjection(BaseRandomProjection):
     components_ : ndarray of shape (n_components, n_features)
         Random matrix used for the projection.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    SparseRandomProjection : Reduce dimensionality through sparse
+        random projection.
+
     Examples
     --------
     >>> import numpy as np
@@ -472,19 +492,15 @@ class GaussianRandomProjection(BaseRandomProjection):
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
-
-    See Also
-    --------
-    SparseRandomProjection
-
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components='auto', *, eps=0.1, random_state=None):
+
+    def __init__(self, n_components="auto", *, eps=0.1, random_state=None):
         super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=True,
-            random_state=random_state)
+            random_state=random_state,
+        )
 
     def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix.
@@ -505,9 +521,9 @@ class GaussianRandomProjection(BaseRandomProjection):
 
         """
         random_state = check_random_state(self.random_state)
-        return _gaussian_random_matrix(n_components,
-                                       n_features,
-                                       random_state=random_state)
+        return _gaussian_random_matrix(
+            n_components, n_features, random_state=random_state
+        )
 
 
 class SparseRandomProjection(BaseRandomProjection):
@@ -590,6 +606,17 @@ class SparseRandomProjection(BaseRandomProjection):
     density_ : float in range 0.0 - 1.0
         Concrete density computed from when density = "auto".
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> import numpy as np
@@ -619,14 +646,22 @@ class SparseRandomProjection(BaseRandomProjection):
            https://users.soe.ucsc.edu/~optas/papers/jl.pdf
 
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components='auto', *, density='auto', eps=0.1,
-                 dense_output=False, random_state=None):
+
+    def __init__(
+        self,
+        n_components="auto",
+        *,
+        density="auto",
+        eps=0.1,
+        dense_output=False,
+        random_state=None,
+    ):
         super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=dense_output,
-            random_state=random_state)
+            random_state=random_state,
+        )
 
         self.density = density
 
@@ -650,7 +685,6 @@ class SparseRandomProjection(BaseRandomProjection):
         """
         random_state = check_random_state(self.random_state)
         self.density_ = _check_density(self.density, n_features)
-        return _sparse_random_matrix(n_components,
-                                     n_features,
-                                     density=self.density_,
-                                     random_state=random_state)
+        return _sparse_random_matrix(
+            n_components, n_features, density=self.density_, random_state=random_state
+        )

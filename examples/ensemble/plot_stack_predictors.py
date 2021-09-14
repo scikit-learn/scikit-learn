@@ -160,7 +160,6 @@ rf_pipeline = make_pipeline(
 rf_pipeline
 
 # %%
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 gbdt_pipeline = make_pipeline(
