@@ -94,7 +94,9 @@ def _get_response(X, estimator, response_method, pos_label=None):
 
     y_pred = prediction_method(X)
 
-    if pos_label is not None and pos_label not in estimator.classes_:
+    # `not in` between a `str` and a NumPy array will raise a FutureWarning;
+    # thus we convert the array of classes into a Python list.
+    if pos_label is not None and pos_label not in list(estimator.classes_):
         raise ValueError(
             "The class provided by 'pos_label' is unknown. Got "
             f"{pos_label} instead of one of {estimator.classes_}"
