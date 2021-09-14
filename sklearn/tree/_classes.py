@@ -429,11 +429,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def partial_fit(
-        self, X, y, classes=np.unique(y), sample_weight=None, check_input=True
-    ):
+    def partial_fit(self, X, y, classes=None, sample_weight=None, check_input=True):
+        if classes == None:
+            classes = np.unique(y)
+
         # Fit if no tree exists yet
-        if _check_partial_fit_first_call(self, classes):
+        if _check_partial_fit_first_call(self, classes=classes):
             self.fit(X, y, sample_weight=sample_weight, check_input=check_input)
             return self
 
@@ -1021,9 +1022,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         )
         return self
 
-    def partial_fit(
-        self, X, y, classes=np.unique(y), sample_weight=None, check_input=True
-    ):
+    def partial_fit(self, X, y, classes=classes, sample_weight=None, check_input=True):
         """Update a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -1444,9 +1443,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         )
         return self
 
-    def partial_fit(
-        self, X, y, classes=np.unique(y), sample_weight=None, check_input=True
-    ):
+    def partial_fit(self, X, y, classes=classes, sample_weight=None, check_input=True):
         """Update a decision tree regressor from the training set (X, y).
 
         Parameters
