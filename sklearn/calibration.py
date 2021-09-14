@@ -1086,6 +1086,9 @@ class CalibrationDisplay:
             fig, ax = plt.subplots()
 
         name = self.estimator_name if name is None else name
+        info_pos_label = (
+            f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
+        )
 
         line_kwargs = {}
         if name is not None:
@@ -1101,7 +1104,9 @@ class CalibrationDisplay:
         if "label" in line_kwargs:
             ax.legend(loc="lower right")
 
-        ax.set(xlabel="Mean predicted probability", ylabel="Fraction of positives")
+        xlabel = "Mean predicted probability" + info_pos_label
+        ylabel = "Fraction of positives" + info_pos_label
+        ax.set(xlabel=xlabel, ylabel=ylabel)
 
         self.ax_ = ax
         self.figure_ = ax.figure
@@ -1334,7 +1339,7 @@ class CalibrationDisplay:
         check_matplotlib_support(method_name)
 
         prob_true, prob_pred = calibration_curve(
-            y_true, y_prob, n_bins=n_bins, strategy=strategy
+            y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
         )
         name = "Classifier" if name is None else name
         pos_label = _check_pos_label_consistency(pos_label, y_true)

@@ -111,7 +111,7 @@ def _get_response(X, estimator, response_method, pos_label=None):
             pos_label = estimator.classes_[1]
             y_pred = y_pred[:, 1]
         else:
-            class_idx = np.flatnonzero(estimator.classes_ == pos_label)
+            class_idx = np.flatnonzero(estimator.classes_ == pos_label)[0]
             y_pred = y_pred[:, class_idx]
     else:
         if pos_label is None:
