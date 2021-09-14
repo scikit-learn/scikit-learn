@@ -429,7 +429,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def partial_fit(self, X, y, classes=None, sample_weight=None, check_input=True):
+    def partial_fit(
+        self, X, y, classes=np.unique(y), sample_weight=None, check_input=True
+    ):
         # Fit if no tree exists yet
         if _check_partial_fit_first_call(self, classes):
             self.fit(X, y, sample_weight=sample_weight, check_input=check_input)
@@ -467,8 +469,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                         "necessary for Poisson regression."
                     )
 
+        if X.shape[1] != self.n_features_in_:
+            msg = "Number of features %d does not match previous data %d."
+            raise ValueError(msg % (X.shape[1], self.n_features_in_))
+
         # Determine output settings
-        n_samples, self.n_features_in_ = X.shape
         is_classification = is_classifier(self)
 
         y = np.atleast_1d(y)
@@ -1016,7 +1021,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         )
         return self
 
-    def partial_fit(self, X, y, classes=None, sample_weight=None, check_input=True):
+    def partial_fit(
+        self, X, y, classes=np.unique(y), sample_weight=None, check_input=True
+    ):
         """Update a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -1437,8 +1444,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         )
         return self
 
-    def partial_fit(self, X, y, classes=None, sample_weight=None, check_input=True):
-        """Update a decision tree classifier from the training set (X, y).
+    def partial_fit(
+        self, X, y, classes=np.unique(y), sample_weight=None, check_input=True
+    ):
+        """Update a decision tree regressor from the training set (X, y).
 
         Parameters
         ----------
@@ -1468,7 +1477,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         Returns
         -------
-        self : DecisionTreeClassifier
+        self : DecisionTreeRegressor
             Fitted estimator.
         """
 
@@ -1697,6 +1706,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
+
+    builder_ : TreeBuilder instance
+        The underlying TreeBuilder object.
 
     See Also
     --------
@@ -1938,6 +1950,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
+
+    builder_ : TreeBuilder instance
+        The underlying TreeBuilder object.
 
     See Also
     --------
