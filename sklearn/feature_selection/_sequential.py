@@ -139,12 +139,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
-        """Learn the features to select.
+        """Learn the features to select from X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
+
         y : array-like of shape (n_samples,), default=None
             Target values. This parameter may be ignored for
             unsupervised learning.
@@ -152,6 +154,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         tags = self._get_tags()
         X = self._validate_data(
