@@ -441,6 +441,7 @@ class TreeGrower:
         )
 
         if self.interaction_cst is not None:
+            self.root.interaction_cst_idx = list(range(len(self.interaction_cst)))
             allowed_features = set().union(*self.interaction_cst)
             self.root.allowed_features = np.array(
                 list(allowed_features), dtype=np.uint32
@@ -458,21 +459,21 @@ class TreeGrower:
         """
 
         node.split_info = self.splitter.find_node_split(
-            node.n_samples,
-            node.histograms,
-            node.sum_gradients,
-            node.sum_hessians,
-            node.value,
-            node.children_lower_bound,
-            node.children_upper_bound,
-            node.allowed_features,
+            n_samples=node.n_samples,
+            histograms=node.histograms,
+            sum_gradients=node.sum_gradients,
+            sum_hessians=node.sum_hessians,
+            value=node.value,
+            lower_bound=node.children_lower_bound,
+            upper_bound=node.children_upper_bound,
+            allowed_features=node.allowed_features,
         )
 
         if node.split_info.gain <= 0:  # no valid split
             self._finalize_leaf(node)
         else:
-            # Update node.allowed_features, node.interaction_cst_idx to be inherited by
-            # child nodes.
+            # Update node.allowed_features and node.interaction_cst_idx to be inherited
+            # by child nodes.
             if self.interaction_cst is not None:
                 self._update_interactions(node)
 
@@ -526,6 +527,13 @@ class TreeGrower:
         left_child_node.partition_stop = node.partition_start + right_child_pos
         right_child_node.partition_start = left_child_node.partition_stop
         right_child_node.partition_stop = node.partition_stop
+
+        # set interaction constraints (the indices of the constraints sets)
+        if self.interaction_cst is not None:
+            left_child_node.interaction_cst_idx = node.interaction_cst_idx
+            left_child_node.allowed_features = node.allowed_features
+            right_child_node.interaction_cst_idx = node.interaction_cst_idx
+            right_child_node.allowed_features = node.allowed_features
 
         if not self.has_missing_values[node.split_info.feature_idx]:
             # If no missing values are encountered at fit time, then samples
@@ -645,13 +653,10 @@ class TreeGrower:
             A node that might have children and whose interaction info is updated
             inplace.
         """
-        # Case of no interactions is already captured before function call.
-        if node.interaction_cst_idx is None:
-            # Already split root node
-            node.interaction_cst_idx = range(len(self.interaction_cst))
-
-        # Note: This is for nodes that are already split and have a
-        # node.split_info.feature_idx.
+        # Note:
+        #  - Case of no interactions is already captured before function call.
+        #  - This is for nodes that are already split and have a
+        #    node.split_info.feature_idx.
         allowed_features = set()
         interaction_cst_idx = list()
         for i in node.interaction_cst_idx:

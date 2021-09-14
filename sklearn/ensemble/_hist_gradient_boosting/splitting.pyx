@@ -454,9 +454,10 @@ cdef class Splitter:
             The info about the best possible split among all features.
         """
         cdef:
-            unsigned int feature_idx
-            int best_feature_idx
-            int n_features = self.n_features
+            int feature_idx
+            int split_info_idx
+            int best_split_info_idx
+            int n_allowed_features = self.n_features
             split_info_struct split_info
             split_info_struct * split_infos
             const unsigned char [::1] has_missing_values = self.has_missing_values
@@ -464,7 +465,6 @@ cdef class Splitter:
             const signed char [::1] monotonic_cst = self.monotonic_cst
             int n_threads = self.n_threads
             bint has_interaction_cst = False
-            int n_allowed_features = self.n_features
 
         if allowed_features is not None:
             has_interaction_cst = True
@@ -473,28 +473,33 @@ cdef class Splitter:
         with nogil:
 
             split_infos = <split_info_struct *> malloc(
-                n_features * sizeof(split_info_struct))
+                n_allowed_features * sizeof(split_info_struct))
 
-            for feature_idx in prange(n_allowed_features, schedule='static',
-                                      num_threads=n_threads):
+            # split_info_idx is index of split_infos of size n_features_allowed
+            # features_idx is the index of the feature column in X
+            for split_info_idx in prange(n_allowed_features, schedule='static',
+                                         num_threads=n_threads):
                 if has_interaction_cst:
-                    feature_idx = allowed_features[feature_idx]
-                split_infos[feature_idx].feature_idx = feature_idx
+                    feature_idx = allowed_features[split_info_idx]
+                else:
+                    feature_idx = split_info_idx
+
+                split_infos[split_info_idx].feature_idx = feature_idx
 
                 # For each feature, find best bin to split on
                 # Start with a gain of -1 (if no better split is found, that
                 # means one of the constraints isn't respected
                 # (min_samples_leaf, etc) and the grower will later turn the
                 # node into a leaf.
-                split_infos[feature_idx].gain = -1
-                split_infos[feature_idx].is_categorical = is_categorical[feature_idx]
+                split_infos[split_info_idx].gain = -1
+                split_infos[split_info_idx].is_categorical = is_categorical[feature_idx]
 
                 if is_categorical[feature_idx]:
                     self._find_best_bin_to_split_category(
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
                         value, monotonic_cst[feature_idx], lower_bound,
-                        upper_bound, &split_infos[feature_idx])
+                        upper_bound, &split_infos[split_info_idx])
                 else:
                     # We will scan bins from left to right (in all cases), and
                     # if there are any missing values, we will also scan bins
@@ -510,7 +515,7 @@ cdef class Splitter:
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
                         value, monotonic_cst[feature_idx],
-                        lower_bound, upper_bound, &split_infos[feature_idx])
+                        lower_bound, upper_bound, &split_infos[split_info_idx])
 
                     if has_missing_values[feature_idx]:
                         # We need to explore both directions to check whether
@@ -520,12 +525,13 @@ cdef class Splitter:
                             feature_idx, histograms, n_samples,
                             sum_gradients, sum_hessians,
                             value, monotonic_cst[feature_idx],
-                            lower_bound, upper_bound, &split_infos[feature_idx])
+                            lower_bound, upper_bound, &split_infos[split_info_idx])
 
             # then compute best possible split among all features
-            best_feature_idx = self._find_best_feature_to_split_helper(
-                split_infos)
-            split_info = split_infos[best_feature_idx]
+            # split_info is the index of the best split_info
+            best_split_info_idx = self._find_best_feature_to_split_helper(
+                split_infos, n_allowed_features)
+            split_info = split_infos[best_split_info_idx]
 
         out = SplitInfo(
             split_info.gain,
@@ -551,18 +557,19 @@ cdef class Splitter:
         return out
 
     cdef unsigned int _find_best_feature_to_split_helper(
-            self,
-            split_info_struct * split_infos) nogil:  # IN
-        """Returns the best feature among those in splits_infos."""
+        self,
+        split_info_struct * split_infos,  # IN
+        int n_allowed_features,
+    ) nogil:
+        """Return the index of split_infos with the best feature split."""
         cdef:
-            unsigned int feature_idx
-            unsigned int best_feature_idx = 0
+            unsigned int split_info_idx
+            unsigned int best_split_info_idx = 0
 
-        for feature_idx in range(1, self.n_features):
-            if (split_infos[feature_idx].gain >
-                    split_infos[best_feature_idx].gain):
-                best_feature_idx = feature_idx
-        return best_feature_idx
+        for split_info_idx in range(1, n_allowed_features):
+            if (split_infos[split_info_idx].gain > split_infos[best_split_info_idx].gain):
+                best_split_info_idx = split_info_idx
+        return best_split_info_idx
 
     cdef void _find_best_bin_to_split_left_to_right(
             Splitter self,
