@@ -993,8 +993,8 @@ class CalibrationDisplay:
     y_prob : ndarray of shape (n_samples,)
         Probability estimates for the positive class, for each sample.
 
-    name : str, default=None
-        Name for labeling curve.
+    estimator_name : str, default=None
+        Name of estimator. If None, the estimator name is not shown.
 
     Attributes
     ----------
@@ -1035,11 +1035,11 @@ class CalibrationDisplay:
     <...>
     """
 
-    def __init__(self, prob_true, prob_pred, y_prob, *, name=None):
+    def __init__(self, prob_true, prob_pred, y_prob, *, estimator_name=None):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
-        self.name = name
+        self.estimator_name = estimator_name
 
     def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
         """Plot visualization.
@@ -1054,7 +1054,8 @@ class CalibrationDisplay:
             created.
 
         name : str, default=None
-            Name for labeling curve.
+            Name for labeling curve. If `None`, use `estimator_name` if
+            not `None`, otherwise no labeling is shown.
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
@@ -1074,8 +1075,7 @@ class CalibrationDisplay:
         if ax is None:
             fig, ax = plt.subplots()
 
-        name = self.name if name is None else name
-        self.name = name
+        name = self.estimator_name if name is None else name
 
         line_kwargs = {}
         if name is not None:
@@ -1311,6 +1311,9 @@ class CalibrationDisplay:
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=n_bins, strategy=strategy
         )
+        name = name if name is not None else "Classifier"
 
-        disp = cls(prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob, name=name)
+        disp = cls(
+            prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob, estimator_name=name
+        )
         return disp.plot(ax=ax, ref_line=ref_line, **kwargs)

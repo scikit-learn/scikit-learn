@@ -31,7 +31,6 @@ DOCSTRING_IGNORE_LIST = [
     "NearestCentroid",
     "NeighborhoodComponentsAnalysis",
     "Normalizer",
-    "OrdinalEncoder",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "OutputCodeClassifier",
@@ -51,7 +50,6 @@ DOCSTRING_IGNORE_LIST = [
     "SGDOneClassSVM",
     "SGDRegressor",
     "SelfTrainingClassifier",
-    "SequentialFeatureSelector",
     "SimpleImputer",
     "SparseRandomProjection",
     "SpectralBiclustering",
@@ -64,7 +62,6 @@ DOCSTRING_IGNORE_LIST = [
     "TheilSenRegressor",
     "TransformedTargetRegressor",
     "TweedieRegressor",
-    "VarianceThreshold",
 ]
 
 

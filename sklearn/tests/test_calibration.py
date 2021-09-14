@@ -693,7 +693,7 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     assert_allclose(viz.prob_pred, prob_pred)
     assert_allclose(viz.y_prob, y_prob)
 
-    assert viz.name == "LogisticRegression"
+    assert viz.estimator_name == "LogisticRegression"
 
     # cannot fail thanks to pyplot fixture
     import matplotlib as mpl  # noqa
@@ -715,7 +715,7 @@ def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     clf.fit(X, y)
     viz = CalibrationDisplay.from_estimator(clf, X, y)
     assert clf.__class__.__name__ in viz.line_.get_label()
-    assert viz.name == clf.__class__.__name__
+    assert viz.estimator_name == clf.__class__.__name__
 
 
 @pytest.mark.parametrize(
@@ -726,24 +726,23 @@ def test_calibration_display_default_labels(pyplot, name, expected_label):
     prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
     y_prob = np.array([])
 
-    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, name=name)
+    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, estimator_name=name)
     viz.plot()
     assert viz.line_.get_label() == expected_label
 
 
 def test_calibration_display_label_class_plot(pyplot):
     # Checks that when instantiating `CalibrationDisplay` class then calling
-    # `plot`, `self.name` is the one given in `plot`
+    # `plot`, `self.estimator_name` is the one given in `plot`
     prob_true = np.array([0, 1, 1, 0])
     prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
     y_prob = np.array([])
 
     name = "name one"
-    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, name=name)
-    assert viz.name == name
+    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, estimator_name=name)
+    assert viz.estimator_name == name
     name = "name two"
     viz.plot(name=name)
-    assert viz.name == name
     assert viz.line_.get_label() == name
 
 
@@ -764,7 +763,7 @@ def test_calibration_display_name_multiple_calls(
     params = (clf, X, y) if constructor_name == "from_estimator" else (y, y_prob)
 
     viz = constructor(*params, name=clf_name)
-    assert viz.name == clf_name
+    assert viz.estimator_name == clf_name
     pyplot.close("all")
     viz.plot()
     assert clf_name == viz.line_.get_label()
