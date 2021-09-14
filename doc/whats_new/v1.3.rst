@@ -265,6 +265,11 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
+- |Feature| Add `custom_grid` parameter in
+  :func:`inspection.partial_dependence`. It enables users to pass their own grid
+    of values at which the partial dependence should be calculated.
+  :pr:`26202` by :user:`Freddy A. Boulton <freddyaboulton>` and :user:`Stephen Pardy <stephenpardy>`.
+
 - |API| :func:`inspection.partial_dependence` returns a :class:`utils.Bunch` with
   new key: `grid_values`. The `values` key is deprecated in favor of `grid_values`
   and the `values` key will be removed in 1.5.
