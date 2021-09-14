@@ -415,7 +415,7 @@ Changelog
 
 - |Feature| Add `custom_grid` parameter in
   :func:`inspection.partial_dependence`. It enables users to pass their own grid
-    of values at which the partial dependence should be calculated.
+  of values at which the partial dependence should be calculated.
   :pr:`21033` by :user:`Freddy A. Boulton <freddyaboulton>`.
 
 :mod:`sklearn.utils`
