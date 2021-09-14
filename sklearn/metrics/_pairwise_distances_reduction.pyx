@@ -471,7 +471,7 @@ cdef class PairwiseDistancesReduction:
         """Interact with datastructures after executing all the reductions."""
         return
 
-cdef class ArgKmin(PairwiseDistancesReduction):
+cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     f"""Computes the argkmin of vectors (rows) of a set of
     vectors (rows) of X on another set of vectors (rows) of Y.
 
@@ -516,8 +516,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         chunk_size=None,
         dict metric_kwargs=dict(),
         n_threads=None,
-    ) -> ArgKmin:
-        f"""Return the ArgKmin implementation for the given arguments.
+    ) -> PairwiseDistancesArgKmin:
+        f"""Return the PairwiseDistancesArgKmin implementation for the given arguments.
 
         Parameters
         ----------
@@ -547,23 +547,26 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         n_threads: int, default=None
             The number of OpenMP threads to use for the reduction.
             Parallelism is done on chunks and the sharding of chunks
-            depends on the `strategy` set on :method:`~ArgKmin.compute`.
+            depends on the `strategy` set on
+            :method:`~PairwiseDistancesArgKmin.compute`.
 
             None and -1 means using all processors.
 
         Returns
         -------
-        argkmin: ArgKmin
-            The suited ArgKmin implementation.
+        argkmin: PairwiseDistancesArgKmin
+            The suited PairwiseDistancesArgKmin implementation.
         """
         # This factory comes to handle specialisations.
         if metric in {"fast_euclidean", "fast_sqeuclidean"} and not issparse(X) and not issparse(Y):
             use_squared_distances = metric == "fast_sqeuclidean"
-            return FastEuclideanArgKmin(X=X, Y=Y, k=k,
-                                        use_squared_distances=use_squared_distances,
-                                        chunk_size=chunk_size)
+            return FastEuclideanPairwiseDistancesArgKmin(
+                X=X, Y=Y, k=k,
+                use_squared_distances=use_squared_distances,
+                chunk_size=chunk_size
+            )
 
-        return ArgKmin(
+        return PairwiseDistancesArgKmin(
             datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
             k=k,
             chunk_size=chunk_size,
@@ -790,7 +793,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             Indices of argkmin of vectors of X in Y.
         """
 
-        # Results returned by ArgKmin.compute used as the main heaps
+        # Results returned by PairwiseDistancesArgKmin.compute used as the main heaps.
         self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_X, self.k), DBL_MAX, dtype=DTYPE)
 
@@ -823,8 +826,8 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         return np.asarray(self.argkmin_indices)
 
 
-cdef class FastEuclideanArgKmin(ArgKmin):
-    """Fast specialized alternative for ArgKmin on EuclideanDistance.
+cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
+    """Fast specialized alternative for PairwiseDistancesArgKmin on EuclideanDistance.
 
     Notes
     -----
@@ -832,8 +835,8 @@ cdef class FastEuclideanArgKmin(ArgKmin):
     better running time when the alternative is IO bound, but it can suffer
     from numerical instability.
 
-    ArgKmin with EuclideanDistance must be used when higher numerical precision
-    is needed.
+    PairwiseDistancesArgKmin with EuclideanDistance must be used when higher
+    numerical precision is needed.
     """
 
     cdef:
@@ -848,7 +851,7 @@ cdef class FastEuclideanArgKmin(ArgKmin):
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        return (ArgKmin.is_usable_for(X, Y, metric) and
+        return (PairwiseDistancesArgKmin.is_usable_for(X, Y, metric) and
                 not _in_unstable_openblas_configuration())
 
     def __init__(
@@ -859,7 +862,7 @@ cdef class FastEuclideanArgKmin(ArgKmin):
         bint use_squared_distances=False,
         chunk_size=None,
     ):
-        ArgKmin.__init__(
+        PairwiseDistancesArgKmin.__init__(
             self,
             # The datasets pair here is used for exact distances computations
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
@@ -886,14 +889,14 @@ cdef class FastEuclideanArgKmin(ArgKmin):
     @final
     cdef void compute_exact_distances(self) nogil:
         if not self.use_squared_distances:
-            ArgKmin.compute_exact_distances(self)
+            PairwiseDistancesArgKmin.compute_exact_distances(self)
 
     @final
     cdef void _on_X_parallel_init(
         self,
         ITYPE_t thread_num,
     ) nogil:
-        ArgKmin._on_X_parallel_init(self, thread_num)
+        PairwiseDistancesArgKmin._on_X_parallel_init(self, thread_num)
 
         # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
         self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
@@ -905,7 +908,7 @@ cdef class FastEuclideanArgKmin(ArgKmin):
         self,
         ITYPE_t thread_num
     ) nogil:
-        ArgKmin._on_X_parallel_finalize(self, thread_num)
+        PairwiseDistancesArgKmin._on_X_parallel_finalize(self, thread_num)
         free(self.dist_middle_terms_chunks[thread_num])
 
     @final
@@ -914,7 +917,7 @@ cdef class FastEuclideanArgKmin(ArgKmin):
         ITYPE_t num_threads,
     ) nogil:
         cdef ITYPE_t thread_num
-        ArgKmin._on_Y_init(self, num_threads)
+        PairwiseDistancesArgKmin._on_Y_init(self, num_threads)
 
         for thread_num in range(num_threads):
             # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
@@ -928,7 +931,7 @@ cdef class FastEuclideanArgKmin(ArgKmin):
         ITYPE_t num_threads,
     ) nogil:
         cdef ITYPE_t thread_num
-        ArgKmin._on_Y_finalize(self, num_threads)
+        PairwiseDistancesArgKmin._on_Y_finalize(self, num_threads)
 
         for thread_num in range(num_threads):
             free(self.dist_middle_terms_chunks[thread_num])
@@ -1001,7 +1004,7 @@ cdef class FastEuclideanArgKmin(ArgKmin):
                 )
 
 
-cdef class RadiusNeighborhood(PairwiseDistancesReduction):
+cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
     """Returns radius-based neighbors vectors' indices in a dataset Y of
     of vectors in a dataset X.
 
@@ -1021,7 +1024,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
     n_threads: int, default=None
         The number of OpenMP threads to use for the reduction.
         Parallelism is done on chunks and the sharding of chunks
-        depends on the `strategy` set on :method:`~RadiusNeighborhood.compute`.
+        depends on the `strategy` set on
+        :method:`~PairwiseDistancesRadiusNeighborhood.compute`.
 
         None and -1 means using all processors.
     """
@@ -1035,7 +1039,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         # vectors' rank-preserving surrogate distances.
         DTYPE_t proxy_radius
 
-        # Neighbors informations are returned as np.ndarray or np.ndarray.
+        # Neighbors indices and distances are returned as np.ndarray or np.ndarray.
         #
         # We want resizable buffers which we will to wrapped within numpy
         # arrays at the end. std::vector comes as a handy interface for
@@ -1068,8 +1072,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         chunk_size=None,
         dict metric_kwargs=dict(),
         n_threads=None,
-    ) -> RadiusNeighborhood:
-        f"""Return the RadiusNeighborhood implementation for the given arguments.
+    ) -> PairwiseDistancesRadiusNeighborhood:
+        f"""Return the PairwiseDistancesRadiusNeighborhood implementation for the given arguments.
 
         Parameters
         ----------
@@ -1099,23 +1103,26 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         n_threads: int, default=None
             The number of OpenMP threads to use for the reduction.
             Parallelism is done on chunks and the sharding of chunks
-            depends on the `strategy` set on :method:`~RadiusNeighborhood.compute`.
+            depends on the `strategy` set on
+            :method:`~PairwiseDistancesRadiusNeighborhood.compute`.
 
             None and -1 means using all processors.
 
         Returns
         -------
-        radius_neighborhood: RadiusNeighborhood
-            The suited RadiusNeighborhood implementation.
+        radius_neighborhood: PairwiseDistancesRadiusNeighborhood
+            The suited PairwiseDistancesRadiusNeighborhood implementation.
         """
         # This factory comes to handle specialisations.
         if metric in {"fast_euclidean", "fast_sqeuclidean"} and not issparse(X) and not issparse(Y):
             use_squared_distances = metric == "fast_sqeuclidean"
-            return FastEuclideanRadiusNeighborhood(X=X, Y=Y, radius=radius,
-                                                   use_squared_distances=use_squared_distances,
-                                                   chunk_size=chunk_size)
+            return FastEuclideanPairwiseDistancesRadiusNeighborhood(
+                X=X, Y=Y, radius=radius,
+                use_squared_distances=use_squared_distances,
+                chunk_size=chunk_size
+            )
 
-        return RadiusNeighborhood(
+        return PairwiseDistancesRadiusNeighborhood(
             datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
             radius=radius,
             chunk_size=chunk_size,
@@ -1398,8 +1405,8 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         return res
 
 
-cdef class FastEuclideanRadiusNeighborhood(RadiusNeighborhood):
-    """Fast specialized alternative for RadiusNeighborhood on EuclideanDistance.
+cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRadiusNeighborhood):
+    """Fast specialized alternative for PairwiseDistancesRadiusNeighborhood on EuclideanDistance.
 
     Notes
     -----
@@ -1423,7 +1430,7 @@ cdef class FastEuclideanRadiusNeighborhood(RadiusNeighborhood):
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        return (RadiusNeighborhood.is_usable_for(X, Y, metric)
+        return (PairwiseDistancesRadiusNeighborhood.is_usable_for(X, Y, metric)
                 and not _in_unstable_openblas_configuration())
 
     def __init__(
@@ -1434,7 +1441,7 @@ cdef class FastEuclideanRadiusNeighborhood(RadiusNeighborhood):
         bint use_squared_distances=False,
         chunk_size=None,
     ):
-        RadiusNeighborhood.__init__(
+        PairwiseDistancesRadiusNeighborhood.__init__(
             self,
             # The datasets pair here is used for exact distances computations
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
@@ -1466,14 +1473,14 @@ cdef class FastEuclideanRadiusNeighborhood(RadiusNeighborhood):
     @final
     cdef void compute_exact_distances(self) nogil:
         if not self.use_squared_distances:
-            RadiusNeighborhood.compute_exact_distances(self)
+            PairwiseDistancesRadiusNeighborhood.compute_exact_distances(self)
 
     @final
     cdef void _on_X_parallel_init(
         self,
         ITYPE_t thread_num,
     ) nogil:
-        RadiusNeighborhood._on_X_parallel_init(self, thread_num)
+        PairwiseDistancesRadiusNeighborhood._on_X_parallel_init(self, thread_num)
 
         # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
         self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
@@ -1485,7 +1492,7 @@ cdef class FastEuclideanRadiusNeighborhood(RadiusNeighborhood):
         self,
         ITYPE_t thread_num
     ) nogil:
-        RadiusNeighborhood._on_X_parallel_finalize(self, thread_num)
+        PairwiseDistancesRadiusNeighborhood._on_X_parallel_finalize(self, thread_num)
         free(self.dist_middle_terms_chunks[thread_num])
 
     @final
@@ -1494,7 +1501,7 @@ cdef class FastEuclideanRadiusNeighborhood(RadiusNeighborhood):
         ITYPE_t num_threads,
     ) nogil:
         cdef ITYPE_t thread_num
-        RadiusNeighborhood._on_Y_init(self, num_threads)
+        PairwiseDistancesRadiusNeighborhood._on_Y_init(self, num_threads)
 
         for thread_num in range(num_threads):
             # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
@@ -1508,7 +1515,7 @@ cdef class FastEuclideanRadiusNeighborhood(RadiusNeighborhood):
         ITYPE_t num_threads,
     ) nogil:
         cdef ITYPE_t thread_num
-        RadiusNeighborhood._on_Y_finalize(self, num_threads)
+        PairwiseDistancesRadiusNeighborhood._on_Y_finalize(self, num_threads)
 
         for thread_num in range(num_threads):
             free(self.dist_middle_terms_chunks[thread_num])
@@ -1561,8 +1568,7 @@ cdef class FastEuclideanRadiusNeighborhood(RadiusNeighborhood):
         # dist_middle_terms = -2 * X_c.dot(Y_c.T)
         _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, C, ldc)
 
-        # Pushing the distance and their associated indices on heaps
-        # which keep tracks of the argkmin.
+        # Pushing the distance and their associated indices in vectors.
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
                 # ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²

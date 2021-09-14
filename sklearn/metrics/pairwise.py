@@ -31,7 +31,7 @@ from ..utils._mask import _get_mask
 from ..utils.fixes import delayed
 from ..utils.fixes import sp_version, parse_version
 
-from ._pairwise_distances_reduction import ArgKmin
+from ._pairwise_distances_reduction import PairwiseDistancesArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
 
@@ -653,8 +653,8 @@ def pairwise_distances_argmin_min(
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    if ArgKmin.is_usable_for(X, Y, metric):
-        values, indices = ArgKmin.get_for(
+    if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
+        values, indices = PairwiseDistancesArgKmin.get_for(
             X=X, Y=Y, k=1, metric=metric, metric_kwargs=metric_kwargs
         ).compute(strategy="auto", return_distance=True)
         values = values.flatten()

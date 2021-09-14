@@ -22,10 +22,10 @@ from sklearn.metrics._dist_metrics import (
 
 from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
-    ArgKmin,
-    RadiusNeighborhood,
-    FastEuclideanArgKmin,
-    FastEuclideanRadiusNeighborhood,
+    PairwiseDistancesArgKmin,
+    PairwiseDistancesRadiusNeighborhood,
+    FastEuclideanPairwiseDistancesArgKmin,
+    FastEuclideanPairwiseDistancesRadiusNeighborhood,
 )
 
 from sklearn.utils import _in_unstable_openblas_configuration
@@ -66,8 +66,8 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices):
 
 
 ASSERT_RESULT = {
-    ArgKmin: assert_argkmin_results_equality,
-    RadiusNeighborhood: assert_radius_neighborhood_results_equality,
+    PairwiseDistancesArgKmin: assert_argkmin_results_equality,
+    PairwiseDistancesRadiusNeighborhood: assert_radius_neighborhood_results_equality,
 }
 
 
@@ -104,27 +104,33 @@ def test_argkmin_factory_method_wrong_usages():
     with pytest.raises(
         ValueError, match="Only 64bit float datasets are supported for X and Y."
     ):
-        ArgKmin.get_for(X=X.astype(np.float32), Y=Y, k=k, metric=metric)
+        PairwiseDistancesArgKmin.get_for(
+            X=X.astype(np.float32), Y=Y, k=k, metric=metric
+        )
 
     with pytest.raises(
         ValueError, match="Only 64bit float datasets are supported for X and Y."
     ):
-        ArgKmin.get_for(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
+        PairwiseDistancesArgKmin.get_for(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
 
     with pytest.raises(ValueError, match="k == -1, must be >= 1."):
-        ArgKmin.get_for(X=X, Y=Y, k=-1, metric=metric)
+        PairwiseDistancesArgKmin.get_for(X=X, Y=Y, k=-1, metric=metric)
 
     with pytest.raises(ValueError, match="k == 0, must be >= 1."):
-        ArgKmin.get_for(X=X, Y=Y, k=0.1, metric=metric)
+        PairwiseDistancesArgKmin.get_for(X=X, Y=Y, k=0.1, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
-        ArgKmin.get_for(X=X, Y=Y, k=k, metric="wrong metric")
+        PairwiseDistancesArgKmin.get_for(X=X, Y=Y, k=k, metric="wrong metric")
 
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
-        ArgKmin.get_for(X=np.array([1.0, 2.0]), Y=Y, k=k, metric=metric)
+        PairwiseDistancesArgKmin.get_for(
+            X=np.array([1.0, 2.0]), Y=Y, k=k, metric=metric
+        )
 
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
-        ArgKmin.get_for(X=X, Y=np.array([1.0, 2.0]), k=k, metric=metric)
+        PairwiseDistancesArgKmin.get_for(
+            X=X, Y=np.array([1.0, 2.0]), k=k, metric=metric
+        )
 
 
 def test_radius_neighborhood_factory_method_wrong_usages():
@@ -137,30 +143,32 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     with pytest.raises(
         ValueError, match="Only 64bit float datasets are supported for X and Y."
     ):
-        RadiusNeighborhood.get_for(
+        PairwiseDistancesRadiusNeighborhood.get_for(
             X=X.astype(np.float32), Y=Y, radius=radius, metric=metric
         )
 
     with pytest.raises(
         ValueError, match="Only 64bit float datasets are supported for X and Y."
     ):
-        RadiusNeighborhood.get_for(
+        PairwiseDistancesRadiusNeighborhood.get_for(
             X=X, Y=Y.astype(np.int32), radius=radius, metric=metric
         )
 
     with pytest.raises(ValueError, match="radius == -1.0, must be >= 0."):
-        RadiusNeighborhood.get_for(X=X, Y=Y, radius=-1, metric=metric)
+        PairwiseDistancesRadiusNeighborhood.get_for(X=X, Y=Y, radius=-1, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
-        RadiusNeighborhood.get_for(X=X, Y=Y, radius=radius, metric="wrong metric")
+        PairwiseDistancesRadiusNeighborhood.get_for(
+            X=X, Y=Y, radius=radius, metric="wrong metric"
+        )
 
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
-        RadiusNeighborhood.get_for(
+        PairwiseDistancesRadiusNeighborhood.get_for(
             X=np.array([1.0, 2.0]), Y=Y, radius=radius, metric=metric
         )
 
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
-        RadiusNeighborhood.get_for(
+        PairwiseDistancesRadiusNeighborhood.get_for(
             X=X, Y=np.array([1.0, 2.0]), radius=radius, metric=metric
         )
 
@@ -170,8 +178,11 @@ def test_radius_neighborhood_factory_method_wrong_usages():
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction, FastPairwiseDistancesReduction",
     [
-        (ArgKmin, FastEuclideanArgKmin),
-        (RadiusNeighborhood, FastEuclideanRadiusNeighborhood),
+        (PairwiseDistancesArgKmin, FastEuclideanPairwiseDistancesArgKmin),
+        (
+            PairwiseDistancesRadiusNeighborhood,
+            FastEuclideanPairwiseDistancesRadiusNeighborhood,
+        ),
     ],
 )
 def test_pairwise_distances_reduction_factory_method(
@@ -232,7 +243,10 @@ def test_pairwise_distances_reduction_factory_method(
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
-@pytest.mark.parametrize("PairwiseDistancesReduction", [ArgKmin, RadiusNeighborhood])
+@pytest.mark.parametrize(
+    "PairwiseDistancesReduction",
+    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+)
 def test_chunk_size_agnosticism(
     PairwiseDistancesReduction,
     seed,
@@ -250,7 +264,7 @@ def test_chunk_size_agnosticism(
 
     parameter = (
         10
-        if PairwiseDistancesReduction is ArgKmin
+        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
         # Scaling the radius with the dimensions
         else 10 ** np.log(n_features)
     )
@@ -270,7 +284,10 @@ def test_chunk_size_agnosticism(
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
-@pytest.mark.parametrize("PairwiseDistancesReduction", [ArgKmin, RadiusNeighborhood])
+@pytest.mark.parametrize(
+    "PairwiseDistancesReduction",
+    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+)
 def test_n_threads_agnosticism(
     PairwiseDistancesReduction,
     seed,
@@ -288,7 +305,7 @@ def test_n_threads_agnosticism(
 
     parameter = (
         10
-        if PairwiseDistancesReduction is ArgKmin
+        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
         # Scaling the radius with the dimensions
         else 10 ** np.log(n_features)
     )
@@ -307,7 +324,10 @@ def test_n_threads_agnosticism(
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
 @pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
-@pytest.mark.parametrize("PairwiseDistancesReduction", [ArgKmin, RadiusNeighborhood])
+@pytest.mark.parametrize(
+    "PairwiseDistancesReduction",
+    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+)
 def test_strategies_consistency(
     PairwiseDistancesReduction,
     metric,
@@ -337,7 +357,7 @@ def test_strategies_consistency(
 
     parameter = (
         10
-        if PairwiseDistancesReduction is ArgKmin
+        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
         # Scaling the radius with the dimensions
         else 10 ** np.log(n_features)
     )
@@ -391,19 +411,19 @@ def test_fast_sqeuclidean_correctness(
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    eucl_dist, eucl_indices = ArgKmin.get_for(X, Y, k, metric="euclidean").compute(
-        return_distance=True
-    )
-    fse_dist, fse_indices = ArgKmin.get_for(X, Y, k, metric="fast_euclidean").compute(
-        return_distance=True
-    )
+    eucl_dist, eucl_indices = PairwiseDistancesArgKmin.get_for(
+        X, Y, k, metric="euclidean"
+    ).compute(return_distance=True)
+    fse_dist, fse_indices = PairwiseDistancesArgKmin.get_for(
+        X, Y, k, metric="fast_euclidean"
+    ).compute(return_distance=True)
 
     assert_argkmin_results_equality(eucl_dist, fse_dist, eucl_indices, fse_indices)
 
-    eucl_dist, eucl_indices = RadiusNeighborhood.get_for(
+    eucl_dist, eucl_indices = PairwiseDistancesRadiusNeighborhood.get_for(
         X, Y, radius, metric="euclidean"
     ).compute(return_distance=True)
-    fse_dist, fse_indices = RadiusNeighborhood.get_for(
+    fse_dist, fse_indices = PairwiseDistancesRadiusNeighborhood.get_for(
         X, Y, radius, metric="fast_euclidean"
     ).compute(return_distance=True)
 
@@ -438,11 +458,11 @@ def test_fast_sqeuclidean_translation_invariance(
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    reference_dist, reference_indices = ArgKmin.get_for(
+    reference_dist, reference_indices = PairwiseDistancesArgKmin.get_for(
         X, Y, k, metric="fast_sqeuclidean"
     ).compute(return_distance=True)
 
-    dist, indices = ArgKmin.get_for(
+    dist, indices = PairwiseDistancesArgKmin.get_for(
         X + translation, Y + translation, k, metric="fast_sqeuclidean"
     ).compute(return_distance=True)
 
