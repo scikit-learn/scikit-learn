@@ -37,6 +37,7 @@ from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
 
 from ._criterion import Criterion
@@ -428,11 +429,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def partial_fit(self, X, y, sample_weight=None, check_input=True):
+    def partial_fit(self, X, y, classes=None, sample_weight=None, check_input=True):
         # Fit if no tree exists yet
-        try:
-            self.tree_
-        except AttributeError:
+        if _check_partial_fit_first_call(self, classes):
             self.fit(X, y, sample_weight=sample_weight, check_input=check_input)
             return self
 
@@ -1017,7 +1016,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         )
         return self
 
-    def partial_fit(self, X, y, sample_weight=None, check_input=True):
+    def partial_fit(self, X, y, classes=None, sample_weight=None, check_input=True):
         """Update a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -1029,6 +1028,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels) as integers or strings.
+
+        classes : array-like of shape (n_classes,), default=None
+            List of all the classes that can possibly appear in the y vector.
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -1047,7 +1051,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().partial_fit(X, y, sample_weight=sample_weight, check_input=check_input)
+        super().partial_fit(
+            X, y, classes=classes, sample_weight=sample_weight, check_input=check_input
+        )
         return self
 
     def predict_proba(self, X, check_input=True):
@@ -1431,7 +1437,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         )
         return self
 
-    def partial_fit(self, X, y, sample_weight=None, check_input=True):
+    def partial_fit(self, X, y, classes=None, sample_weight=None, check_input=True):
         """Update a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -1443,6 +1449,11 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels) as integers or strings.
+
+        classes : array-like of shape (n_classes,), default=None
+            List of all the classes that can possibly appear in the y vector.
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -1461,7 +1472,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().partial_fit(X, y, sample_weight=sample_weight, check_input=check_input)
+        super().partial_fit(
+            X, y, classes=classes, sample_weight=sample_weight, check_input=check_input
+        )
         return self
 
     def _compute_partial_dependence_recursion(self, grid, target_features):

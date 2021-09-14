@@ -139,7 +139,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
     def __reduce__(self):
       """Reduce re-implementation, for pickling."""
       return(DepthFirstTreeBuilder, (self.splitter, self.min_samples_split,
-                                     self.min_samples_leaf, self.max_depth,
+                                     self.min_samples_leaf,
+                                     self.min_weight_leaf,
+                                     self.max_depth,
                                      self.min_impurity_decrease))
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
