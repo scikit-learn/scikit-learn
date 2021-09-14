@@ -785,3 +785,19 @@ def test_calibration_display_ref_line(pyplot, iris_data_binary):
 
     labels = viz2.ax_.get_legend_handles_labels()[1]
     assert labels.count("Perfectly calibrated") == 1
+
+
+@pytest.mark.parametrize("dtype_y_str", [str, object])
+def test_calibration_curve_pos_label_error_str(dtype_y_str):
+    """Check error message when a `pos_label` is not specified with `str` targets."""
+    rng = np.random.RandomState(42)
+    y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=dtype_y_str)
+    y2 = rng.randint(0, 2, size=y1.size)
+
+    err_msg = (
+        "y_true takes value in {'eggs', 'spam'} and pos_label is not "
+        "specified: either make y_true take value in {0, 1} or {-1, 1} or "
+        "pass pos_label explicit"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        calibration_curve(y1, y2)
