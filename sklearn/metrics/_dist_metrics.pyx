@@ -1228,10 +1228,10 @@ cdef class DatasetsPair:
         Parameters
         ----------
         X : {ndarray, sparse matrix} of shape (n_X, d)
-            Input data.
+            Input data. If provided as a sparse matrix, it must be in CSR format.
 
         Y : {ndarray, sparse matrix} of shape (n_Y, d)
-            Input data.
+            Input data. If provided as a sparse matrix, it must be in CSR format.
 
         metric : str, default='euclidean'
             The distance metric to use for argkmin. The default metric is
@@ -1255,9 +1255,6 @@ cdef class DatasetsPair:
 
         if X.dtype != np.float64 or Y.dtype != np.float64:
             raise ValueError("Only 64bit float datasets are supported for X and Y.")
-
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
-        Y = check_array(Y, dtype=DTYPE, accept_sparse='csr')
 
         # Metric-specific checks that do not replace nor duplicate `check_array`.
         distance_metric._validate_data(X)
@@ -1351,10 +1348,10 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
     Parameters
     ----------
     X: sparse matrix of shape (n_X, d)
-        Rows represent vectors.
+        Rows represent vectors. Must be in CSR format.
 
     Y: sparse matrix of shape (n_X, d)
-        Rows represent vectors.
+        Rows represent vectors. Must be in CSR format.
 
     distance_metric: DistanceMetric
         The distance metric responsible for computing distances
@@ -1434,7 +1431,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
     Parameters
     ----------
     X: sparse matrix of shape (n_X, d)
-        Rows represent vectors.
+        Rows represent vectors. Must be in CSR format.
 
     Y: ndarray of shape (n_Y, d)
         Rows represent vectors.
@@ -1520,7 +1517,7 @@ cdef class DenseSparseDatasetsPair(DatasetsPair):
         Rows represent vectors.
 
     Y: sparse matrix of shape (n_Y, d)
-        Rows represent vectors.
+        Rows represent vectors. Must be in CSR format.
 
     distance_metric: DistanceMetric
         The distance metric responsible for computing distances
