@@ -740,7 +740,7 @@ Changelog
   :pr:`19473` by :user:`jiefangxuanyan <jiefangxuanyan>` and
   :user:`Julien Jerphanion <jjerphan>`.
 
-- |FIX| :class:`metrics.DistanceMetric` subclasses now support readonly
+- |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
   memory-mapped datasets. :pr:`19883` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
