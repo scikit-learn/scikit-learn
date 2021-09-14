@@ -506,33 +506,30 @@ Changelog
   :pr:`16449` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Feature| Added new solver `lbfgs` (available with `solver="lbfgs"`)
-  and `positive` argument to class:`linear_model.Ridge`.
-  When `positive` is set to True, forces the coefficients to be positive
-  (only supported by `lbfgs`).
-  :pr:`20231` by :user:`Toshihiro Nakae <tnakae>`.
+  and `positive` argument to :class:`linear_model.Ridge`. When `positive` is
+  set to `True`, forces the coefficients to be positive (only supported by
+  `lbfgs`). :pr:`20231` by :user:`Toshihiro Nakae <tnakae>`.
 
 - |Efficiency| The implementation of :class:`linear_model.LogisticRegression`
   has been optimised for dense matrices when using `solver='newton-cg'` and
   `multi_class!='multinomial'`.
   :pr:`19571` by :user:`Julien Jerphanion <jjerphan>`.
 
-- |Efficiency| The implementation of `fit` for `PolynomialFeatures` transformer
-  is now faster. This is especially noticeable on large sparse input.
-  :pr:`19734` by :user:`Fred Robinson <frrad>`.
-
 - |Enhancement| `fit` method preserves dtype for numpy.float32 in
-  :class:`Lars`, :class:`LassoLars`, :class:`LassoLars`, :class:`LarsCV` and
-  :class:`LassoLarsCV`. :pr:`20155` by :user:`Takeshi Oura <takoika>`.
+  :class:`linear_model.Lars`, :class:`linear_model.LassoLars`,
+  :class:`linear_model.LassoLars`, :class:`linear_model.LarsCV` and
+  :class:`linear_model.LassoLarsCV`. :pr:`20155` by :user:`Takeshi Oura
+  <takoika>`.
 
 - |Enhancement| Validate user-supplied gram matrix passed to linear models
   via the `precompute` argument. :pr:`19004` by :user:`Adam Midvidy <amidvidy>`.
 
-- |Fix| :meth:`ElasticNet.fit` no longer modifies `sample_weight` in place.
-  :pr:`19055` by `Thomas Fan`_.
+- |Fix| :meth:`linear_model.ElasticNet.fit` no longer modifies `sample_weight`
+  in place. :pr:`19055` by `Thomas Fan`_.
 
-- |Fix| :class:`Lasso`, :class:`ElasticNet` no longer have a `dual_gap_`
-  not corresponding to their objective. :pr:`19172` by
-  :user:`Mathurin Massias <mathurinm>`
+- |Fix| :class:`linear_model.Lasso` and :class:`linear_model.ElasticNet` no
+  longer have a `dual_gap_` not corresponding to their objective. :pr:`19172`
+  by :user:`Mathurin Massias <mathurinm>`
 
 - |Fix| `sample_weight` are now fully taken into account in linear models
   when `normalize=True` for both feature centering and feature
@@ -545,13 +542,9 @@ Changelog
   a model perfectly on some datasets when `residual_threshold=0`.
   :pr:`19499` by :user:`Gregory Strubel <gregorystrubel>`.
 
-- |Fix| Sample weight invariance for class:`Ridge` was fixed in :pr:`19616` by
-  :user:`Oliver Grisel <ogrisel>` and
-  :user:`Christian Lorentzen <lorentzenchr>`.
-
-- |Fix| The :func:`preprocessing.StandardScaler.inverse_transform` method
-  now raises error when the input data is 1D.
-  :pr:`19752` by :user:`Zhehao Liu <Max1993Liu>`.
+- |Fix| Sample weight invariance for :class:`linear_model.Ridge` was fixed in
+  :pr:`19616` by :user:`Oliver Grisel <ogrisel>` and :user:`Christian Lorentzen
+  <lorentzenchr>`.
 
 - |Fix| The dictionary `params` in :func:`linear_model.enet_path` and
   :func:`linear_model.lasso_path` should only contain parameter of the
@@ -559,60 +552,54 @@ Changelog
   :pr:`19391` by :user:`Shao Yang Hong <hongshaoyang>`.
 
 - |API| Raise a warning in :class:`linear_model.RANSACRegressor` that from
-  version 1.2, `min_samples` need to be set explicitly for model other than
-  :class:`linear_model.LinearRegression`.
-  :pr:`19390` by :user:`Shao Yang Hong <hongshaoyang>`.
+  version 1.2, `min_samples` need to be set explicitly for models other than
+  :class:`linear_model.LinearRegression`. :pr:`19390` by :user:`Shao Yang Hong
+  <hongshaoyang>`.
 
 - |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression`
-  is deprecated and will be removed in 1.2.
-  Motivation for this deprecation: ``normalize`` parameter did not take any
-  effect if ``fit_intercept`` was set to False and therefore was deemed
-  confusing.
-  The behavior of the deprecated LinearModel(normalize=True) can be
-  reproduced with :class:`~sklearn.pipeline.Pipeline` with
-  :class:`~sklearn.preprocessing.LinearModel` (where LinearModel is
-  LinearRegression, Ridge, RidgeClassifier, RidgeCV or RidgeClassifierCV) as
-  follows:
-  make_pipeline(StandardScaler(with_mean=False), LinearModel()).
-  The ``normalize`` parameter in :class:`linear_model.LinearRegression` was
-  deprecated in :pr:`17743` by
+  is deprecated and will be removed in 1.2. Motivation for this deprecation:
+  ``normalize`` parameter did not take any effect if ``fit_intercept`` was set
+  to False and therefore was deemed confusing. The behavior of the deprecated
+  ``LinearModel(normalize=True)`` can be reproduced with a
+  :class:`~sklearn.pipeline.Pipeline` with ``LinearModel`` (where
+  ``LinearModel`` is :class:`~linear_model.LinearRegression`,
+  :class:`~linear_model.Ridge`, :class:`~linear_model.RidgeClassifier`,
+  :class:`~linear_model.RidgeCV` or :class:`~linear_model.RidgeClassifierCV`)
+  as follows: ``make_pipeline(StandardScaler(with_mean=False),
+  LinearModel())``. The ``normalize`` parameter in
+  :class:`~linear_model.LinearRegression` was deprecated in :pr:`17743` by
   :user:`Maria Telenczuk <maikia>` and :user:`Alexandre Gramfort <agramfort>`.
-  Same for :class:`linear_model.Ridge`,  :class:`linear_model.RidgeClassifier`,
-  :class:`linear_model.RidgeCV`, and :class:`linear_model.RidgeClassifierCV`,
-  in: :pr:`17772` by :user:`Maria Telenczuk <maikia>` and
-  :user:`Alexandre Gramfort <agramfort>`.
-  Same for :class:`linear_model.BayesianRidge`,
-  :class:`linear_model.ARDRegression` in:
-  :pr:`17746` by :user:`Maria Telenczuk <maikia>`.
-  Same for :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
-  :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
-  :class:`linear_model.MultiTaskLasso`, :class:`linear_model.MultiTaskLassoCV`,
-  :class:`linear_model.MultiTaskElasticNet`,
-  :class:`linear_model.MultiTaskElasticNetCV`, in:
-  :pr:`17785` by :user:`Maria Telenczuk <maikia>` and
-  :user:`Alexandre Gramfort <agramfort>`.
+  Same for :class:`~linear_model.Ridge`,
+  :class:`~linear_model.RidgeClassifier`, :class:`~linear_model.RidgeCV`, and
+  :class:`~linear_model.RidgeClassifierCV`, in: :pr:`17772` by :user:`Maria
+  Telenczuk <maikia>` and :user:`Alexandre Gramfort <agramfort>`. Same for
+  :class:`~linear_model.BayesianRidge`, :class:`~linear_model.ARDRegression`
+  in: :pr:`17746` by :user:`Maria Telenczuk <maikia>`. Same for
+  :class:`~linear_model.Lasso`, :class:`~linear_model.LassoCV`,
+  :class:`~linear_model.ElasticNet`, :class:`~linear_model.ElasticNetCV`,
+  :class:`~linear_model.MultiTaskLasso`,
+  :class:`~linear_model.MultiTaskLassoCV`,
+  :class:`~linear_model.MultiTaskElasticNet`,
+  :class:`~linear_model.MultiTaskElasticNetCV`, in: :pr:`17785` by :user:`Maria
+  Telenczuk <maikia>` and :user:`Alexandre Gramfort <agramfort>`.
 
-- The ``normalize`` parameter of :class:`linear_model.OrthogonalMatchingPursuit`
-  :class:`linear_model.OrthogonalMatchingPursuitCV` will default to
-  False in 1.2 and will be removed in 1.4.
-  :pr:`17750` by :user:`Maria Telenczuk <maikia>` and
-  :user:`Alexandre Gramfort <agramfort>`.
-  Same for :class:`linear_model.Lars`
-  :class:`linear_model.LarsCV` :class:`linear_model.LassoLars`
-  :class:`linear_model.LassoLarsCV` :class:`linear_model.LassoLarsIC`,
-  in :pr:`17769` by :user:`Maria Telenczuk <maikia>` and
-  :user:`Alexandre Gramfort <agramfort>`.
+- |API| The ``normalize`` parameter of
+  :class:`~linear_model.OrthogonalMatchingPursuit` and
+  :class:`~linear_model.OrthogonalMatchingPursuitCV` will default to False in
+  1.2 and will be removed in 1.4. :pr:`17750` by :user:`Maria Telenczuk
+  <maikia>` and :user:`Alexandre Gramfort <agramfort>`. Same for
+  :class:`~linear_model.Lars` :class:`~linear_model.LarsCV`
+  :class:`~linear_model.LassoLars` :class:`~linear_model.LassoLarsCV`
+  :class:`~linear_model.LassoLarsIC`, in :pr:`17769` by :user:`Maria Telenczuk
+  <maikia>` and :user:`Alexandre Gramfort <agramfort>`.
 
 - |API| Keyword validation has moved from `__init__` and `set_params` to `fit`
   for the following estimators conforming to scikit-learn's conventions:
-  :class:`linear_model.SGDClassifier`,
-  :class:`linear_model.SparseSGDClassifier`,
-  :class:`linear_model.SGDRegressor`,
-  :class:`linear_model.SparseSGDRegressor`,
-  :class:`linear_model.SGDOneClassSVM`,
-  :class:`linear_model.SparseSGDOneClassSVM`,
-  :class:`linear_model.PassiveAggressiveClassifier`,
-  :class:`linear_model.PassiveAggressiveRegressor`.
+  :class:`~linear_model.SGDClassifier`,
+  :class:`~linear_model.SGDRegressor`,
+  :class:`~linear_model.SGDOneClassSVM`,
+  :class:`~linear_model.PassiveAggressiveClassifier`, and
+  :class:`~linear_model.PassiveAggressiveRegressor`.
   :pr:`20683` by `Guillaume Lemaitre`_.
 
 :mod:`sklearn.manifold`
@@ -669,9 +656,9 @@ Changelog
   :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
-- |Fix| avoid overflow in :func:`metrics.cluster.adjust_rand_score` with large
-  amount of data.
-  :pr:`20312` by :user:`Divyanshu Deoli <divyanshudeoli>`.
+- |Fix| avoid overflow in :func:`metrics.cluster.adjusted_rand_score` with
+  large amount of data. :pr:`20312` by :user:`Divyanshu Deoli
+  <divyanshudeoli>`.
 
 - |API| :class:`metrics.ConfusionMatrixDisplay` exposes two class methods
   :func:`~metrics.ConfusionMatrixDisplay.from_estimator` and
@@ -755,7 +742,7 @@ Changelog
 
 - |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
   :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
-  and :class:`neighbors.RadiusNeighborsRegressor` does not validate `weights` in
+  and :class:`neighbors.RadiusNeighborsRegressor` do not validate `weights` in
   `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
   :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
@@ -774,9 +761,8 @@ Changelog
 .......................
 
 - |API| The `predict_proba` and `predict_log_proba` methods of the
-  :class:`Pipeline` class now support passing prediction kwargs to
-  the final estimator.
-  :pr:`19790` by :user:`Christopher Flynn <crflynn>`.
+  :class:`pipeline.Pipeline` now support passing prediction kwargs to the final
+  estimator. :pr:`19790` by :user:`Christopher Flynn <crflynn>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -804,12 +790,21 @@ Changelog
   a tuple to `degree`, i.e. `degree=(min_degree, max_degree)`.
   :pr:`20250` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Efficiency| `preprocessing.StandardScaler` is faster and more memory
+- |Efficiency| :class:`preprocessing.StandardScaler` is faster and more memory
   efficient. :pr:`20652` by `Thomas Fan`_.
 
 - |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
   :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
+
+- |Efficiency| The implementation of `fit` for
+  :class:`preprocessing.PolynomialFeatures` transformer is now faster. This is
+  especially noticeable on large sparse input. :pr:`19734` by :user:`Fred
+  Robinson <frrad>`.
+
+- |Fix| The :func:`preprocessing.StandardScaler.inverse_transform` method
+  now raises error when the input data is 1D. :pr:`19752` by :user:`Zhehao Liu
+  <Max1993Liu>`.
 
 - |Fix| :func:`preprocessing.scale`, :class:`preprocessing.StandardScaler`
   and similar scalers detect near-constant features to avoid scaling them to
@@ -823,7 +818,7 @@ Changelog
   correctly handles integer dtypes. :pr:`19356` by :user:`makoeppel`.
 
 - |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` is not
-  supporting sparse matrix and raise the appropriate error message.
+  supporting sparse matrix and raises the appropriate error message.
   :pr:`19879` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| The `fit` method of :class:`preprocessing.OrdinalEncoder` will not
@@ -836,13 +831,13 @@ Changelog
   (`np.float64` or `np.int64`).
   :pr:`20727` by `Guillaume Lemaitre`_.
 
+- |Fix| :class:`preprocessing.FunctionTransformer` does not set `n_features_in_`
+  based on the input to `inverse_transform`. :pr:`20961` by `Thomas Fan`_.
+
 - |API| The `n_input_features_` attribute of
   :class:`preprocessing.PolynomialFeatures` is deprecated in favor of
   `n_features_in_` and will be removed in 1.2. :pr:`20240` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Fix| :class:`preprocessing.FunctionTransformer` does not set `n_features_in_`
-  based on the input to `inverse_transform`. :pr:`20961` by `Thomas Fan`_.
 
 :mod:`sklearn.svm`
 ...................
@@ -887,8 +882,8 @@ Changelog
   :pr:`19948` by `Joel Nothman`_.
 
 - |Enhancement| :func:`utils.validation.check_is_fitted` now uses
-  ``__sklearn_is_fitted__`` if available, instead of checking for attributes ending with
-  an underscore. This also makes :class:`Pipeline` and
+  ``__sklearn_is_fitted__`` if available, instead of checking for attributes
+  ending with an underscore. This also makes :class:`pipeline.Pipeline` and
   :class:`preprocessing.FunctionTransformer` pass
   ``check_is_fitted(estimator)``. :pr:`20657` by `Adrin Jalali`_.
 
@@ -896,8 +891,9 @@ Changelog
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Fix| Propreties that are decorated with :func:`utils.deprecated` correctly
-  wraps the property's docstring. :pr:`20385` by `Thomas Fan`_.
+- |Fix| The docstrings of propreties that are decorated with
+  :func:`utils.deprecated` are now properly wrapped. :pr:`20385` by `Thomas
+  Fan`_.
 
 - |Fix| :func:`utils.stats._weighted_percentile` now correctly ignores
   zero-weighted observations smaller than the smallest observation with
@@ -920,6 +916,10 @@ Changelog
   `np.int64`).
   :pr:`20727` by `Guillaume Lemaitre`_.
 
+- |Fix| Support for `np.matrix` is deprecated in
+  :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
+  1.2. :pr:`20165` by `Thomas Fan`_.
+
 - |API| :func:`utils._testing.assert_warns` and
   :func:`utils._testing.assert_warns_message` are deprecated in 1.0 and will
   be removed in 1.2. Used `pytest.warns` context manager instead. Note that
@@ -929,13 +929,6 @@ Changelog
 - |API| Fixed several bugs in :func:`utils.graph.graph_shortest_path`, which is
   now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
   by `Tom Dupre la Tour`_.
-
-:mod:`sklearn.validation`
-.........................
-
-- |Fix| Support for `np.matrix` is deprecated in
-  :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
-  1.2. :pr:`20165` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
