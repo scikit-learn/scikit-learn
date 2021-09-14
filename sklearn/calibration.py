@@ -1298,7 +1298,7 @@ class CalibrationDisplay:
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=n_bins, strategy=strategy
         )
-        name = name if name is not None else "Calibrated classifier"
+        name = name if name is not None else "Classifier"
 
         disp = cls(
             prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob, estimator_name=name
