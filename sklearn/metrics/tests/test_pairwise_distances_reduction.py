@@ -126,11 +126,6 @@ def test_argkmin_factory_method_wrong_usages():
     with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
         ArgKmin.get_for(X=X, Y=np.array([1.0, 2.0]), k=k, metric=metric)
 
-    with pytest.raises(
-        ValueError, match="Vectors of X and Y must have the same number of dimensions"
-    ):
-        ArgKmin.get_for(X=X[:, ::2], Y=Y, k=k, metric=metric)
-
 
 def test_radius_neighborhood_factory_method_wrong_usages():
     rng = np.random.RandomState(1)
@@ -168,11 +163,6 @@ def test_radius_neighborhood_factory_method_wrong_usages():
         RadiusNeighborhood.get_for(
             X=X, Y=np.array([1.0, 2.0]), radius=radius, metric=metric
         )
-
-    with pytest.raises(
-        ValueError, match="Vectors of X and Y must have the same number of dimensions"
-    ):
-        RadiusNeighborhood.get_for(X=X[:, ::2], Y=Y, radius=radius, metric=metric)
 
 
 @fails_if_unstable_openblas
