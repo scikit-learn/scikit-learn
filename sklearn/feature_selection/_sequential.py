@@ -97,6 +97,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
     See Also
     --------
+    GenericUnivariateSelect : Univariate feature selector with configurable
+        strategy.
     RFE : Recursive feature elimination based on importance weights.
     RFECV : Recursive feature elimination based on importance weights, with
         automatic selection of the number of features.
