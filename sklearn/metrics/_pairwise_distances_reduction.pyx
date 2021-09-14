@@ -163,7 +163,7 @@ cdef np.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 #####################
 
 cdef class PairwiseDistancesReduction:
-    f"""Abstract class which compute pairwise distances between
+    """Abstract class which compute pairwise distances between
     a set of vectors (rows) X and another set of vectors (rows) of Y
     and apply a reduction on top.
 
@@ -178,7 +178,7 @@ cdef class PairwiseDistancesReduction:
     chunk_size: int, default=None,
         The number of vectors per chunk. If None (default) looks-up in
         scikit-learn configuration for `pairwise_dist_chunk_size`,
-        and use {CHUNK_SIZE} if it is not set.
+        and use 256 if it is not set.
 
     n_threads: int, default=None
         The number of OpenMP threads to use for the reduction.
@@ -472,7 +472,7 @@ cdef class PairwiseDistancesReduction:
         return
 
 cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
-    f"""Computes the argkmin of vectors (rows) of a set of
+    """Computes the argkmin of vectors (rows) of a set of
     vectors (rows) of X on another set of vectors (rows) of Y.
 
     Parameters
@@ -486,7 +486,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     chunk_size: int, default=None,
         The number of vectors per chunk. If None (default) looks-up in
         scikit-learn configuration for `pairwise_dist_chunk_size`,
-        and use {CHUNK_SIZE} if it is not set.
+        and use 256 if it is not set.
 
     n_threads: int, default=None
         The number of OpenMP threads to use for the reduction.
@@ -517,7 +517,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         dict metric_kwargs=dict(),
         n_threads=None,
     ) -> PairwiseDistancesArgKmin:
-        f"""Return the PairwiseDistancesArgKmin implementation for the given arguments.
+        """Return the PairwiseDistancesArgKmin implementation for the given arguments.
 
         Parameters
         ----------
@@ -539,7 +539,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         chunk_size: int, default=None,
             The number of vectors per chunk. If None (default) looks-up in
             scikit-learn configuration for `pairwise_dist_chunk_size`,
-            and use {CHUNK_SIZE} if it is not set.
+            and use 256 if it is not set.
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
@@ -1019,7 +1019,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
     chunk_size: int, default=None,
         The number of vectors per chunk. If None (default) looks-up in
         scikit-learn configuration for `pairwise_dist_chunk_size`,
-        and use {CHUNK_SIZE} if it is not set.
+        and use 256 if it is not set.
 
     n_threads: int, default=None
         The number of OpenMP threads to use for the reduction.
@@ -1073,7 +1073,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         dict metric_kwargs=dict(),
         n_threads=None,
     ) -> PairwiseDistancesRadiusNeighborhood:
-        f"""Return the PairwiseDistancesRadiusNeighborhood implementation for the given arguments.
+        """Return the PairwiseDistancesRadiusNeighborhood implementation for the given arguments.
 
         Parameters
         ----------
@@ -1095,7 +1095,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         chunk_size: int, default=None,
             The number of vectors per chunk. If None (default) looks-up in
             scikit-learn configuration for `pairwise_dist_chunk_size`,
-            and use {CHUNK_SIZE} if it is not set.
+            and use 256 if it is not set.
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
