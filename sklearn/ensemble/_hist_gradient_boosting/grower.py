@@ -55,6 +55,8 @@ class TreeNode:
         The sum of the hessians of the samples at the node.
     split_info : SplitInfo or None
         The result of the split evaluation.
+    is_leaf : bool
+        True if node is a leaf
     left_child : TreeNode or None
         The left child of the node. None for leaves.
     right_child : TreeNode or None
