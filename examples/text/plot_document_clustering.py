@@ -217,7 +217,7 @@ if not opts.use_hashing:
     else:
         order_centroids = km.cluster_centers_.argsort()[:, ::-1]
 
-    terms = vectorizer.get_feature_names()
+    terms = vectorizer.get_feature_names_out()
     for i in range(true_k):
         print("Cluster %d:" % i, end='')
         for ind in order_centroids[i, :10]:

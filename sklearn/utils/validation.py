@@ -1242,7 +1242,7 @@ def check_scalar(
     *,
     min_val=None,
     max_val=None,
-    closed="neither",
+    include_boundaries="both",
 ):
     """Validate scalar parameters type and value.
 
@@ -1265,9 +1265,15 @@ def check_scalar(
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
-    closed : {"left", "right", "both", "neither"}, default="neither"
-        Whether the interval is closed on the left-side, right-side, both or
-        neither.
+    include_boundaries : {"left", "right", "both", "neither"}, default="both"
+        Whether the interval defined by `min_val` and `max_val` should include
+        the boundaries. Possible choices are:
+
+        - `"left"`: only `min_val` is included in the valid interval;
+        - `"right"`: only `max_val` is included in the valid interval;
+        - `"both"`: `min_val` and `max_val` are included in the valid interval;
+        - `"neither"`: neither `min_val` nor `max_val` are included in the
+          valid interval.
 
     Returns
     -------
@@ -1286,22 +1292,29 @@ def check_scalar(
     if not isinstance(x, target_type):
         raise TypeError(f"{name} must be an instance of {target_type}, not {type(x)}.")
 
-    expected_closed = {"left", "right", "both", "neither"}
-    if closed not in expected_closed:
-        raise ValueError(f"Unknown value for `closed`: {closed}")
+    expected_include_boundaries = ("left", "right", "both", "neither")
+    if include_boundaries not in expected_include_boundaries:
+        raise ValueError(
+            f"Unknown value for `include_boundaries`: {repr(include_boundaries)}. "
+            f"Possible values are: {expected_include_boundaries}."
+        )
 
-    comparison_operator = operator.le if closed in ("left", "both") else operator.lt
+    comparison_operator = (
+        operator.lt if include_boundaries in ("left", "both") else operator.le
+    )
     if min_val is not None and comparison_operator(x, min_val):
         raise ValueError(
             f"{name} == {x}, must be"
-            f" {'>' if closed in ('left', 'both') else '>='} {min_val}."
+            f" {'>=' if include_boundaries in ('left', 'both') else '>'} {min_val}."
         )
 
-    comparison_operator = operator.ge if closed in ("right", "both") else operator.gt
+    comparison_operator = (
+        operator.gt if include_boundaries in ("right", "both") else operator.ge
+    )
     if max_val is not None and comparison_operator(x, max_val):
         raise ValueError(
             f"{name} == {x}, must be"
-            f" {'<' if closed in ('right', 'both') else '<='} {max_val}."
+            f" {'<=' if include_boundaries in ('right', 'both') else '<'} {max_val}."
         )
 
     return x
@@ -1479,7 +1492,9 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     return lambdas
 
 
-def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
+def _check_sample_weight(
+    sample_weight, X, dtype=None, copy=False, only_non_negative=False
+):
     """Validate sample weights.
 
     Note that passing sample_weight=None will output an array of ones.
@@ -1490,17 +1505,22 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
     Parameters
     ----------
     sample_weight : {ndarray, Number or None}, shape (n_samples,)
-       Input sample weights.
+        Input sample weights.
 
     X : {ndarray, list, sparse matrix}
         Input data.
 
+    only_non_negative : bool, default=False,
+        Whether or not the weights are expected to be non-negative.
+
+        .. versionadded:: 1.0
+
     dtype : dtype, default=None
-       dtype of the validated `sample_weight`.
-       If None, and the input `sample_weight` is an array, the dtype of the
-       input is preserved; otherwise an array with the default numpy dtype
-       is be allocated.  If `dtype` is not one of `float32`, `float64`,
-       `None`, the output will be of dtype `float64`.
+        dtype of the validated `sample_weight`.
+        If None, and the input `sample_weight` is an array, the dtype of the
+        input is preserved; otherwise an array with the default numpy dtype
+        is be allocated.  If `dtype` is not one of `float32`, `float64`,
+        `None`, the output will be of dtype `float64`.
 
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
@@ -1508,7 +1528,7 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
     Returns
     -------
     sample_weight : ndarray of shape (n_samples,)
-       Validated sample weight. It is guaranteed to be "C" contiguous.
+        Validated sample weight. It is guaranteed to be "C" contiguous.
     """
     n_samples = _num_samples(X)
 
@@ -1539,6 +1559,9 @@ def _check_sample_weight(sample_weight, X, dtype=None, copy=False):
                     sample_weight.shape, (n_samples,)
                 )
             )
+
+    if only_non_negative:
+        check_non_negative(sample_weight, "`sample_weight`")
 
     return sample_weight
 
@@ -1668,3 +1691,50 @@ def _get_feature_names(X):
     # Only feature names of all strings are supported
     if types[0] == "str":
         return feature_names
+
+
+def _check_feature_names_in(estimator, input_features=None):
+    """Get output feature names for transformation.
+
+    Parameters
+    ----------
+    input_features : array-like of str or None, default=None
+        Input features.
+
+        - If `input_features` is `None`, then `feature_names_in_` is
+            used as feature names in. If `feature_names_in_` is not defined,
+            then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+        - If `input_features` is an array-like, then `input_features` must
+            match `feature_names_in_` if `feature_names_in_` is defined.
+
+    Returns
+    -------
+    feature_names_in : ndarray of str
+        Feature names in.
+    """
+
+    feature_names_in_ = getattr(estimator, "feature_names_in_", None)
+    n_features_in_ = getattr(estimator, "n_features_in_", None)
+
+    if input_features is not None:
+        input_features = np.asarray(input_features, dtype=object)
+        if feature_names_in_ is not None and not np.array_equal(
+            feature_names_in_, input_features
+        ):
+            raise ValueError("input_features is not equal to feature_names_in_")
+
+        if n_features_in_ is not None and len(input_features) != n_features_in_:
+            raise ValueError(
+                "input_features should have length equal to number of "
+                f"features ({n_features_in_}), got {len(input_features)}"
+            )
+        return input_features
+
+    if feature_names_in_ is not None:
+        return feature_names_in_
+
+    # Generates feature names if `n_features_in_` is defined
+    if n_features_in_ is None:
+        raise ValueError("Unable to generate feature names without n_features_in_")
+
+    return np.asarray([f"x{i}" for i in range(n_features_in_)], dtype=object)

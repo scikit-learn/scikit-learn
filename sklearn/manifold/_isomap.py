@@ -19,7 +19,7 @@ from ..externals._packaging.version import parse as parse_version
 
 
 class Isomap(TransformerMixin, BaseEstimator):
-    """Isomap Embedding
+    """Isomap Embedding.
 
     Non-linear dimensionality reduction through Isometric Mapping
 
@@ -28,10 +28,10 @@ class Isomap(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     n_neighbors : int, default=5
-        number of neighbors to consider for each point.
+        Number of neighbors to consider for each point.
 
     n_components : int, default=2
-        number of coordinates for the manifold
+        Number of coordinates for the manifold.
 
     eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
         'auto' : Attempt to choose the most efficient solver
@@ -71,7 +71,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    metric : string, or callable, default="minkowski"
+    metric : str, or callable, default="minkowski"
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
@@ -121,6 +121,23 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    sklearn.decomposition.PCA : Principal component analysis that is a linear
+        dimensionality reduction method.
+    sklearn.decomposition.KernelPCA : Non-linear dimensionality reduction using
+        kernels and PCA.
+    MDS : Manifold learning using multidimensional scaling.
+    TSNE : T-distributed Stochastic Neighbor Embedding.
+    LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
+    SpectralEmbedding : Spectral embedding for non-linear dimensionality.
+
+    References
+    ----------
+
+    .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
+           framework for nonlinear dimensionality reduction. Science 290 (5500)
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -132,12 +149,6 @@ class Isomap(TransformerMixin, BaseEstimator):
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
-
-    References
-    ----------
-
-    .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
-           framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
 
     def __init__(
@@ -251,6 +262,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Returns
         -------
         reconstruction_error : float
+            Reconstruction error.
 
         Notes
         -----
@@ -270,7 +282,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
 
     def fit(self, X, y=None):
-        """Compute the embedding vectors for data X
+        """Compute the embedding vectors for data X.
 
         Parameters
         ----------
@@ -280,10 +292,12 @@ class Isomap(TransformerMixin, BaseEstimator):
             object.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns a fitted instance of self.
         """
         self._fit_transform(X)
         return self
@@ -298,10 +312,12 @@ class Isomap(TransformerMixin, BaseEstimator):
             and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            X transformed in the new space.
         """
         self._fit_transform(X)
         return self.embedding_
@@ -327,6 +343,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : array-like, shape (n_queries, n_components)
+            X transformed in the new space.
         """
         check_is_fitted(self)
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
