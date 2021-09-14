@@ -56,6 +56,25 @@ def test_get_response_predict_proba():
     assert pos_label == 0
 
 
+def test_get_response_warning():
+    """Check that we don't raise a FutureWarning issued by NumPy."""
+    X, y = load_iris(return_X_y=True)
+    X_binary, y_binary = X[:100], y[:100]
+
+    classifier = DecisionTreeClassifier().fit(X_binary, y_binary)
+    with pytest.warns(None) as record:
+        try:
+            _get_response(
+                X_binary,
+                classifier,
+                response_method="predict_proba",
+                pos_label="unknown",
+            )
+        except ValueError:
+            pass
+    assert len(record) == 0
+
+
 def test_get_response_decision_function():
     """Check the behaviour of `get_response` using `decision_function`."""
     X, y = load_iris(return_X_y=True)
