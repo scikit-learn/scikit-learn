@@ -58,6 +58,7 @@ cm_display = ConfusionMatrixDisplay(cm).plot()
 # a decision function, we will use it to plot the roc curve:
 from sklearn.metrics import roc_curve
 from sklearn.metrics import RocCurveDisplay
+
 y_score = clf.decision_function(X_test)
 
 fpr, tpr, _ = roc_curve(y_test, y_score, pos_label=clf.classes_[1])
@@ -71,8 +72,7 @@ roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import PrecisionRecallDisplay
 
-prec, recall, _ = precision_recall_curve(y_test, y_score,
-                                         pos_label=clf.classes_[1])
+prec, recall, _ = precision_recall_curve(y_test, y_score, pos_label=clf.classes_[1])
 pr_display = PrecisionRecallDisplay(precision=prec, recall=recall).plot()
 
 # %%
@@ -85,6 +85,7 @@ pr_display = PrecisionRecallDisplay(precision=prec, recall=recall).plot()
 
 # sphinx_gallery_thumbnail_number = 4
 import matplotlib.pyplot as plt
+
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 
 roc_display.plot(ax=ax1)

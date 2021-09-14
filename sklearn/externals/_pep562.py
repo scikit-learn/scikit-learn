@@ -23,7 +23,7 @@ IN THE SOFTWARE.
 from __future__ import unicode_literals
 import sys
 
-__all__ = ('Pep562',)
+__all__ = ("Pep562",)
 
 
 class Pep562(object):
@@ -38,8 +38,8 @@ class Pep562(object):
         """Acquire `__getattr__` and `__dir__`, but only replace module for versions less than Python 3.7."""
 
         self._module = sys.modules[name]
-        self._get_attr = getattr(self._module, '__getattr__', None)
-        self._get_dir = getattr(self._module, '__dir__', None)
+        self._get_attr = getattr(self._module, "__getattr__", None)
+        self._get_dir = getattr(self._module, "__dir__", None)
         sys.modules[name] = self
 
     def __dir__(self):

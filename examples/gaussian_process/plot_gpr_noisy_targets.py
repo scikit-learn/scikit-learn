@@ -41,7 +41,7 @@ def f(x):
 
 # ----------------------------------------------------------------------
 #  First the noiseless case
-X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
+X = np.atleast_2d([1.0, 3.0, 5.0, 6.0, 7.0, 8.0]).T
 
 # Observations
 y = f(X).ravel()
@@ -63,17 +63,21 @@ y_pred, sigma = gp.predict(x, return_std=True)
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
 plt.figure()
-plt.plot(x, f(x), 'r:', label=r'$f(x) = x\,\sin(x)$')
-plt.plot(X, y, 'r.', markersize=10, label='Observations')
-plt.plot(x, y_pred, 'b-', label='Prediction')
-plt.fill(np.concatenate([x, x[::-1]]),
-         np.concatenate([y_pred - 1.9600 * sigma,
-                        (y_pred + 1.9600 * sigma)[::-1]]),
-         alpha=.5, fc='b', ec='None', label='95% confidence interval')
-plt.xlabel('$x$')
-plt.ylabel('$f(x)$')
+plt.plot(x, f(x), "r:", label=r"$f(x) = x\,\sin(x)$")
+plt.plot(X, y, "r.", markersize=10, label="Observations")
+plt.plot(x, y_pred, "b-", label="Prediction")
+plt.fill(
+    np.concatenate([x, x[::-1]]),
+    np.concatenate([y_pred - 1.9600 * sigma, (y_pred + 1.9600 * sigma)[::-1]]),
+    alpha=0.5,
+    fc="b",
+    ec="None",
+    label="95% confidence interval",
+)
+plt.xlabel("$x$")
+plt.ylabel("$f(x)$")
 plt.ylim(-10, 20)
-plt.legend(loc='upper left')
+plt.legend(loc="upper left")
 
 # ----------------------------------------------------------------------
 # now the noisy case
@@ -87,8 +91,7 @@ noise = np.random.normal(0, dy)
 y += noise
 
 # Instantiate a Gaussian Process model
-gp = GaussianProcessRegressor(kernel=kernel, alpha=dy ** 2,
-                              n_restarts_optimizer=10)
+gp = GaussianProcessRegressor(kernel=kernel, alpha=dy ** 2, n_restarts_optimizer=10)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters
 gp.fit(X, y)
@@ -99,16 +102,20 @@ y_pred, sigma = gp.predict(x, return_std=True)
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
 plt.figure()
-plt.plot(x, f(x), 'r:', label=r'$f(x) = x\,\sin(x)$')
-plt.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label='Observations')
-plt.plot(x, y_pred, 'b-', label='Prediction')
-plt.fill(np.concatenate([x, x[::-1]]),
-         np.concatenate([y_pred - 1.9600 * sigma,
-                        (y_pred + 1.9600 * sigma)[::-1]]),
-         alpha=.5, fc='b', ec='None', label='95% confidence interval')
-plt.xlabel('$x$')
-plt.ylabel('$f(x)$')
+plt.plot(x, f(x), "r:", label=r"$f(x) = x\,\sin(x)$")
+plt.errorbar(X.ravel(), y, dy, fmt="r.", markersize=10, label="Observations")
+plt.plot(x, y_pred, "b-", label="Prediction")
+plt.fill(
+    np.concatenate([x, x[::-1]]),
+    np.concatenate([y_pred - 1.9600 * sigma, (y_pred + 1.9600 * sigma)[::-1]]),
+    alpha=0.5,
+    fc="b",
+    ec="None",
+    label="95% confidence interval",
+)
+plt.xlabel("$x$")
+plt.ylabel("$f(x)$")
 plt.ylim(-10, 20)
-plt.legend(loc='upper left')
+plt.legend(loc="upper left")
 
 plt.show()
