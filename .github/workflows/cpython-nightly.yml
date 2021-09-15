@@ -2,8 +2,8 @@ name: CPython Nightly
 
 on:
   schedule:
-    # Nightly build at 1:00 A.M. on Sunday
-    - cron: "0 1 * * 0"
+    # Nightly build at 1:00 A.M.
+    - cron: "0 1 * * *"
   pull_request:
   # Manual run
   workflow_dispatch:
