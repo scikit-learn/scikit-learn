@@ -705,8 +705,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
 
     See Also
     --------
-    CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
-
+    CountVectorizer : Convert a collection of text documents to a matrix of
+        token counts.
     TfidfVectorizer : Convert a collection of raw documents to a matrix of
         TF-IDF features.
 
@@ -773,8 +773,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         X : ndarray of shape [n_samples, n_features]
             Training data.
 
-        y : None
-            This parameter is ignored.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -791,8 +791,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         X : ndarray of shape [n_samples, n_features]
             Training data.
 
-        y : None
-            This parameter is ignored.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
