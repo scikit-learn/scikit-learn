@@ -339,7 +339,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     See Also
     --------
-    NearestNeighbors : Unsupervised learner for implementing neighbor searches.
+    KMeans : K-Means clustering.
 
     Notes
     -----
