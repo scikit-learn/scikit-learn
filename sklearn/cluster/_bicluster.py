@@ -351,7 +351,7 @@ class SpectralCoclustering(BaseSpectral):
                 r, c = self.n_clusters
                 int(r)
                 int(c)
- 
+
     def _fit(self, X):
         super().fit(X)
         normalized_data, row_diag, col_diag = _scale_normalize(X)
