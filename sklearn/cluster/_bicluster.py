@@ -330,7 +330,7 @@ class SpectralCoclustering(BaseSpectral):
         super().__init__(
             n_clusters, svd_method, n_svd_vecs, mini_batch, init, n_init, random_state
         )
-        
+
     def _check_parameters(self, n_sample):
         super()._check_parameters(n_sample)
         legal_methods = ('randomized', 'arpack')
@@ -351,7 +351,7 @@ class SpectralCoclustering(BaseSpectral):
                 r, c = self.n_clusters
                 int(r)
                 int(c)
-                
+ 
     def _fit(self, X):
         super().fit(X)
         normalized_data, row_diag, col_diag = _scale_normalize(X)
