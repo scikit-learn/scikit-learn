@@ -527,8 +527,8 @@ class SpectralBiclustering(BaseSpectral):
                 )
             )
         check_scalar(self.n_clusters, "n_clusters",
-                     target_type=(numbers.Integral, 
-                     (numbers.Integral, numbers.Integral)),
+                     target_type=(numbers.Integral,
+                    (numbers.Integral, numbers.Integral)),
                      min_val=1,
                      max_val=n_samples)
         try:
