@@ -2967,7 +2967,7 @@ def specificity_score(
     References
     ----------
     .. [1] `Wikipedia entry for sensitivity and specificity
-           <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_.
+           <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
 
     Examples
     --------
