@@ -407,8 +407,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Samples to cluster.
 
-        y : NoneType
-            This parameter is ignored.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
