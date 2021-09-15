@@ -149,6 +149,7 @@ __all__ = [
     "mutual_info_score",
     "ndcg_score",
     "normalized_mutual_info_score",
+    "npv_score",
     "pair_confusion_matrix",
     "pairwise_distances",
     "pairwise_distances_argmin",
