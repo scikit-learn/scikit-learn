@@ -181,7 +181,7 @@ def test_grid_from_X():
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (grid_resolution,)
 
-    # Check that uses custom_grid
+    # Check that uses custom_range
     X = rng.normal(size=(20, 2))
     X[n_unique_values - 1 :, 0] = 12345
     col_1_range = [0, 2, 3]
@@ -193,7 +193,7 @@ def test_grid_from_X():
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (len(col_1_range),)
 
-    # Check that grid_resolution does not impact custom_grid
+    # Check that grid_resolution does not impact custom_range
     X = rng.normal(size=(20, 2))
     col_0_range = [0, 2, 3, 4, 5, 6]
     grid_resolution = 5
