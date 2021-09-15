@@ -35,6 +35,7 @@ from ._validation import _warn_about_fit_failures
 from ..exceptions import NotFittedError
 from joblib import Parallel
 from ..utils import check_random_state
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.random import sample_without_replacement
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
@@ -983,6 +984,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
         return results
+
+    def _sk_visual_block_(self):
+        if not hasattr(self, "best_estimator_"):
+            return super()._sk_visual_block_()
+        return _VisualBlock("parallel", [self.best_estimator_])
 
 
 class GridSearchCV(BaseSearchCV):

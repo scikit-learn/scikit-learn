@@ -24,6 +24,7 @@ from sklearn.utils._testing import (
     MinimalTransformer,
 )
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
+from sklearn import config_context
 
 from scipy.stats import bernoulli, expon, uniform
 
@@ -66,8 +67,15 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import r2_score
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.dummy import DummyClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
+from sklearn.linear_model import (
+    Ridge,
+    SGDClassifier,
+    LinearRegression,
+    LogisticRegression,
+)
 from sklearn.ensemble import HistGradientBoostingClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
@@ -2375,3 +2383,41 @@ def test_search_cv_verbose_3(capsys, return_train_score):
     else:
         match = re.findall(r"score=[\d\.]+", captured)
     assert len(match) == 3
+
+
+def test_search_html_repr():
+    """Test different html_reprs for GridSearchCV."""
+    X, y = make_classification(random_state=0)
+
+    pipeline = Pipeline([("scale", StandardScaler()), ("clf", DummyClassifier())])
+
+    search_cv = GridSearchCV(
+        pipeline,
+        param_grid={"clf": [DummyClassifier(), LogisticRegression()]},
+        refit=False,
+    )
+
+    # Unfitted shows the original pipeline
+    with config_context(display="diagram"):
+        repr_html = search_cv._repr_html_()
+        assert "DummyClassifier</label>" in repr_html
+
+    # Fitted with refit=False repr_html shows the original pipeline
+    search_cv.fit(X, y)
+    with config_context(display="diagram"):
+        repr_html = search_cv._repr_html_()
+        assert "DummyClassifier</label>" in repr_html
+
+    # Fitted with `refit=True` repr_html the best_estimator_
+    search_cv = GridSearchCV(
+        pipeline,
+        param_grid={"clf": [DummyClassifier(), LogisticRegression()]},
+    )
+    search_cv.fit(X, y)
+
+    with config_context(display="diagram"):
+        repr_html = search_cv._repr_html_()
+        # The best estimator is displayed
+        assert "LogisticRegression</label>" in repr_html
+        # The dummy classifier is not displayed anymore
+        assert "DummyClassifier</label>" not in repr_html
