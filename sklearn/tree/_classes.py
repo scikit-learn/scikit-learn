@@ -219,7 +219,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
             y_encoded = np.zeros(y.shape, dtype=int)
             for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
+                if classes is None:
+                    classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
+                else:
+                    classes_k, y_encoded[:, k] = np.copy(classes)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
             y = y_encoded
