@@ -567,7 +567,7 @@ using the caching properties of the scikit-learn pipeline:
     >>> from sklearn.pipeline import make_pipeline
     >>> estimator = make_pipeline(
     ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
-    ...     Isomap(neighbors_algorithm='precomputed'),
+    ...     Isomap(metric='precomputed'),
     ...     memory='/path/to/cache')
 
 Second, precomputing the graph can give finer control on the nearest neighbors

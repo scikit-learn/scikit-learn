@@ -336,13 +336,13 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             matrix dimensions based on the theory referenced in the
             afore mentioned papers.
 
-        y
-            Ignored
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
-        self
-
+        self : object
+            BaseRandomProjection class instance.
         """
         X = self._validate_data(X, accept_sparse=["csr", "csc"])
 
@@ -395,7 +395,7 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def transform(self, X):
-        """Project the data by using matrix product with the random matrix
+        """Project the data by using matrix product with the random matrix.
 
         Parameters
         ----------
@@ -477,6 +477,11 @@ class GaussianRandomProjection(BaseRandomProjection):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    SparseRandomProjection : Reduce dimensionality through sparse
+        random projection.
+
     Examples
     --------
     >>> import numpy as np
@@ -487,11 +492,6 @@ class GaussianRandomProjection(BaseRandomProjection):
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
-
-    See Also
-    --------
-    SparseRandomProjection
-
     """
 
     def __init__(self, n_components="auto", *, eps=0.1, random_state=None):

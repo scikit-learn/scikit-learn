@@ -94,8 +94,8 @@ class RocCurveDisplay:
             created.
 
         name : str, default=None
-            Name of ROC Curve for labeling. If `None`, use the name of the
-            estimator.
+            Name of ROC Curve for labeling. If `None`, use `estimator_name` if
+            not `None`, otherwise no labeling is shown.
 
         Returns
         -------

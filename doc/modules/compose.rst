@@ -139,6 +139,27 @@ or by name::
     >>> pipe['reduce_dim']
     PCA()
 
+To enable model inspection, :class:`~sklearn.pipeline.Pipeline` has a
+``get_feature_names_out()`` method, just like all transformers. You can use
+pipeline slicing to get the feature names going into each step::
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.feature_selection import SelectKBest
+    >>> iris = load_iris()
+    >>> pipe = Pipeline(steps=[
+    ...    ('select', SelectKBest(k=2)),
+    ...    ('clf', LogisticRegression())])
+    >>> pipe.fit(iris.data, iris.target)
+    Pipeline(steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
+    >>> pipe[:-1].get_feature_names_out()
+    array(['x2', 'x3'], ...)
+
+You can also provide custom feature names for the input data using
+``get_feature_names_out``::
+
+    >>> pipe[:-1].get_feature_names_out(iris.feature_names)
+    array(['petal length (cm)', 'petal width (cm)'], ...)
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
@@ -426,21 +447,20 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> from sklearn.preprocessing import OneHotEncoder
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
+  ...     [('categories', OneHotEncoder(dtype='int'), ['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...     remainder='drop')
+  ...     remainder='drop', prefix_feature_names_out=False)
 
   >>> column_trans.fit(X)
-  ColumnTransformer(transformers=[('city_category', OneHotEncoder(dtype='int'),
+  ColumnTransformer(prefix_feature_names_out=False,
+                    transformers=[('categories', OneHotEncoder(dtype='int'),
                                    ['city']),
                                   ('title_bow', CountVectorizer(), 'title')])
 
-  >>> column_trans.get_feature_names()
-  ['city_category__x0_London', 'city_category__x0_Paris', 'city_category__x0_Sallisaw',
-  'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
-  'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
-  'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
-  'title_bow__wrath']
+  >>> column_trans.get_feature_names_out()
+  array(['city_London', 'city_Paris', 'city_Sallisaw', 'bow', 'feast',
+  'grapes', 'his', 'how', 'last', 'learned', 'moveable', 'of', 'the',
+   'trick', 'watson', 'wrath'], ...)
 
   >>> column_trans.transform(X).toarray()
   array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],

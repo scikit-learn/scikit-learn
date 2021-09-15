@@ -7,6 +7,7 @@
 import warnings
 import itertools
 
+import re
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse, stats
@@ -2642,3 +2643,51 @@ def test_standard_scaler_raise_error_for_1d_input():
     err_msg = "Expected 2D array, got 1D array instead"
     with pytest.raises(ValueError, match=err_msg):
         scaler.inverse_transform(X_2d[:, 0])
+
+
+@pytest.mark.parametrize(
+    "Transformer",
+    [
+        MinMaxScaler,
+        MaxAbsScaler,
+        RobustScaler,
+        StandardScaler,
+        QuantileTransformer,
+        PowerTransformer,
+    ],
+)
+def test_one_to_one_features(Transformer):
+    """Check one-to-one transformers give correct feature names."""
+    tr = Transformer().fit(iris.data)
+    names_out = tr.get_feature_names_out(iris.feature_names)
+    assert_array_equal(names_out, iris.feature_names)
+
+
+@pytest.mark.parametrize(
+    "Transformer",
+    [
+        MinMaxScaler,
+        MaxAbsScaler,
+        RobustScaler,
+        StandardScaler,
+        QuantileTransformer,
+        PowerTransformer,
+    ],
+)
+def test_one_to_one_features_pandas(Transformer):
+    """Check one-to-one transformers give correct feature names."""
+    pd = pytest.importorskip("pandas")
+
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+    tr = Transformer().fit(df)
+
+    names_out_df_default = tr.get_feature_names_out()
+    assert_array_equal(names_out_df_default, iris.feature_names)
+
+    names_out_df_valid_in = tr.get_feature_names_out(iris.feature_names)
+    assert_array_equal(names_out_df_valid_in, iris.feature_names)
+
+    msg = re.escape("input_features is not equal to feature_names_in_")
+    with pytest.raises(ValueError, match=msg):
+        invalid_names = list("abcd")
+        tr.get_feature_names_out(invalid_names)
