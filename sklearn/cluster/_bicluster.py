@@ -112,7 +112,8 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                     self.svd_method, legal_svd_methods
                 )
             )
-        check_scalar(self.n_clusters, "n_clusters", target_type=numbers.Integral, min_val=1, max_val=n_samples)
+        check_scalar(self.n_clusters, "n_clusters", target_type=numbers.Integral,
+                     min_val=1, max_val=n_samples)
         check_scalar(self.n_init, "n_init", target_type=numbers.Integral, min_val=1)
 
     def fit(self, X, y=None):
@@ -519,8 +520,10 @@ class SpectralBiclustering(BaseSpectral):
                     " or an iterable with two integers:"
                     " (n_row_clusters, n_column_clusters)"
                 ) from e
-        check_scalar(self.n_components, "n_components", target_type=numbers.Integral, min_val=1)
-        check_scalar(self.n_best, "n_best", target_type=numbers.Integral, min_val=1, max_val=self.n_components)
+        check_scalar(self.n_components, "n_components", target_type=numbers.Integral,
+                     min_val=1)
+        check_scalar(self.n_best, "n_best", target_type=numbers.Integral,
+                     min_val=1, max_val=self.n_components)
 
     def _fit(self, X):
         n_sv = self.n_components
