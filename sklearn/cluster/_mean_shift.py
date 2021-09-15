@@ -412,8 +412,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        self : MeanShift object
-               Object with calculated cluster centers and labels.
+        self : object
+               Fitted instance.
         """
         X = self._validate_data(X)
         bandwidth = self.bandwidth
