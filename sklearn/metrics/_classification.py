@@ -2998,3 +2998,162 @@ def specificity_score(
         zero_division=zero_division,
     )
     return tnr
+
+
+def npv_score(
+    y_true,
+    y_pred,
+    labels=None,
+    pos_label=1,
+    average="binary",
+    sample_weight=None,
+    zero_division="warn",
+):
+    """Compute the negative predictive value (NPV).
+
+    .. versionadded:: 1.1
+
+    The NPV is the ratio `TN / (TN + FN)` where `TN` is the number of true
+    negatives and `FN` is the number of false negatives.
+    The NPV is intuitively the ability of the classifier to mark the negative
+    samples correctly.
+
+    The best value is 1 and the worst value is 0.
+
+    Parameters
+    ----------
+    y_true : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) target values.
+    y_pred : 1d array-like, or label indicator array / sparse matrix
+        Estimated targets as returned by a classifier.
+    labels : array-like, default=None
+        The set of labels to include when `average != "binary"`, and their
+        order if `average is None`. Labels present in the data can be
+        excluded, for example to calculate a multiclass average ignoring a
+        majority negative class, while labels not present in the data will
+        result in 0 components in a macro average. For multilabel targets,
+        labels are column indices. By default, all labels in `y_true` and
+        `y_pred` are used in sorted order.
+    pos_label : str or int, default=1
+        The class to report if `average="binary"` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting `labels=[pos_label]` and `average != "binary"` will report
+        scores for that label only.
+    average : str, {None, "binary", "micro", "macro", "samples", "weighted"} \
+            default="binary"
+        This parameter is required for multiclass/multilabel targets.
+        If `None`, the scores for each class are returned. Otherwise, this
+        determines the type of averaging performed on the data:
+        `"binary"`:
+            Only report results for the class specified by `pos_label`.
+            This is applicable only if targets (`y_{true,pred}`) are binary.
+        `"micro"`:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        `"macro"`:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        `"weighted"`:
+            Calculate metrics for each label, and find their average weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+        `"samples"`:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
+
+    Returns
+    -------
+    NPV : float or ndarray of shape (n_unique_labels,), dtype=np.float64
+        The negative predictive value of the positive class in binary
+        classification or weighted average of the NPV of each class for
+        the multiclass task.
+
+    See Also
+    --------
+    precision_score, classification_report, precision_recall_fscore_support,
+    recall_score, balanced_accuracy_score, multilabel_confusion_matrix
+
+    Notes
+    -----
+    When `true negative + false negative == 0`, npv_score returns 0 and
+    raises `UndefinedMetricWarning`. This behavior can be modified with
+    `zero_division`.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for positive and negative predictive values
+           (PPV and NPV respectively)
+           <https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values>`_
+
+    Examples
+    --------
+    >>> from sklearn.metrics import npv_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> npv_score(y_true, y_pred, average='macro')
+    0.70...
+    >>> npv_score(y_true, y_pred, average='micro')
+    0.66...
+    >>> npv_score(y_true, y_pred, average='weighted')
+    0.70...
+    >>> npv_score(y_true, y_pred, average=None)
+    array([1. , 0.5, 0.6])
+    >>> y_pred = [0, 0, 0, 0, 0, 0]
+    >>> npv_score(y_true, y_pred, average=None)
+    array([0. , 0.66..., 0.66...])
+    >>> npv_score(y_true, y_pred, average=None, zero_division=1)
+    array([1. , 0.66..., 0.66...])
+    """
+    _check_zero_division(zero_division)
+
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+
+    # Calculate tn_sum, fn_sum, neg_calls_sum
+    samplewise = average == "samples"
+    MCM = multilabel_confusion_matrix(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        labels=labels,
+        samplewise=samplewise,
+    )
+    tp_sum = MCM[:, 1, 1]
+    tn_sum = MCM[:, 0, 0]
+    fn_sum = MCM[:, 1, 0]
+    pos_sum = tp_sum + fn_sum
+    neg_calls_sum = tn_sum + fn_sum
+
+    if average == "micro":
+        tn_sum = np.array([tn_sum.sum()])
+        fn_sum = np.array([fn_sum.sum()])
+        neg_calls_sum = np.array([neg_calls_sum.sum()])
+
+    # Divide, and on zero-division, set scores and/or warn according to
+    # zero_division:
+    NPV = _prf_divide(
+        tn_sum, neg_calls_sum, "NPV", "negative call", average, "NPV", zero_division
+    )
+
+    # Average the results
+    if average == "weighted":
+        weights = pos_sum
+        if weights.sum() == 0:
+            zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
+            # NPV is zero_division if there are no negative calls
+            return zero_division_value if neg_calls_sum.sum() == 0 else 0
+    elif average == "samples":
+        weights = sample_weight
+    else:
+        weights = None
+    if average is not None:
+        assert average != "binary" or len(NPV) == 1
+        NPV = np.average(NPV, weights=weights)
+
+    return NPV
