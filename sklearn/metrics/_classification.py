@@ -2664,17 +2664,17 @@ def tpr_fpr_tnr_fnr_scores(
 ):
     """Compute TPR, FPR, TNR, FNR for each class.
 
-    The TPR is the ratio `TP / (TP + FN)` where `tp` is the number of
-    true positives and `fn` the number of false negatives.
+    True Positive Rate (TPR) is the ratio `TP / (TP + FN)` where `TP`
+    is the number of true positives and `FN` the number of false negatives.
 
-    The FPR is the ratio `FP / (TN + FP)` where `tn` is the number of
-    true negatives and `FP` the number of false positives.
+    False Positive Rate (FPR) is the ratio `FP / (TN + FP)` where `TN`
+    is the number of true negatives and `FP` the number of false positives.
 
-    The TNR is the ratio `TN / (TN + FP)` where `tn` is the number of
-    true negatives and `FP` the number of false positives.
+    True Negative Rate (TNR) is the ratio `TN / (TN + FP)` where `TN`
+    is the number of true negatives and `FP` the number of false positives.
 
-    The FNR is the ratio `FN / (TP + FN)` where `tp` is the number of
-    true positives and `FN` the number of false negatives.
+    False Negative Rate (FNR) is the ratio `FN / (TP + FN)` where `TP`
+    is the number of true positives and `FN` the number of false negatives.
 
     If `pos_label is None` and in binary classification, this function
     returns the true positive rate, false positive rate, true negative rate
@@ -2809,20 +2809,20 @@ def tpr_fpr_tnr_fnr_scores(
         labels=labels,
         samplewise=samplewise,
     )
-    tn_sum = MCM[:, 0, 0]
-    fp_sum = MCM[:, 0, 1]
-    fn_sum = MCM[:, 1, 0]
     tp_sum = MCM[:, 1, 1]
+    fp_sum = MCM[:, 0, 1]
+    tn_sum = MCM[:, 0, 0]
+    fn_sum = MCM[:, 1, 0]
+    pos_sum = tp_sum + fn_sum
     neg_sum = tn_sum + fp_sum
-    pos_sum = fn_sum + tp_sum
 
     if average == "micro":
         tp_sum = np.array([tp_sum.sum()])
         fp_sum = np.array([fp_sum.sum()])
         tn_sum = np.array([tn_sum.sum()])
         fn_sum = np.array([fn_sum.sum()])
-        neg_sum = np.array([neg_sum.sum()])
         pos_sum = np.array([pos_sum.sum()])
+        neg_sum = np.array([neg_sum.sum()])
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
@@ -2859,10 +2859,10 @@ def tpr_fpr_tnr_fnr_scores(
 
     if average is not None:
         assert average != "binary" or len(fpr) == 1
+        tpr = np.average(tpr, weights=weights)
         fpr = np.average(fpr, weights=weights)
         tnr = np.average(tnr, weights=weights)
         fnr = np.average(fnr, weights=weights)
-        tpr = np.average(tpr, weights=weights)
     return tpr, fpr, tnr, fnr
 
 
@@ -2881,7 +2881,7 @@ def specificity_score(
     The specificity is the ratio `TN / (TN + FP)` where `TN` is the number
     of true negatives and `FP` is the number of false positives.
     The specificity is intuitively the ability of the classifier to find
-    all the negative samples.
+    all the negative samples. It is also called selectivity.
 
     The best value is 1 and the worst value is 0.
 
