@@ -36,7 +36,7 @@ __all__ = [
 ]
 
 
-def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
+def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_range):
     """Generate a grid of points based on the percentiles of X.
 
     The grid is a cartesian product between the columns of ``values``. The
@@ -65,6 +65,10 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
         The number of equally spaced points to be placed on the grid for each
         feature.
 
+    custom_range: dict
+        Mapping from column index of X to an array-like of values where
+        the partial dependence should be calculated for that feature
+
     Returns
     -------
     grid : ndarray of shape (n_points, n_target_features)
@@ -73,8 +77,9 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
 
     values : list of 1d ndarrays
         The values with which the grid has been created. The size of each
-        array ``values[j]`` is either ``grid_resolution``, or the number of
-        unique values in ``X[:, j]``, whichever is smaller.
+        array ``values[j]`` is either ``grid_resolution``, the number of
+        unique values in ``X[:, j]``, if j is not in ``custom_range``.
+        If j is in ``custom_range``, then it is the length of ``custom_range[j]``.
     """
     if not isinstance(percentiles, Iterable) or len(percentiles) != 2:
         raise ValueError("'percentiles' must be a sequence of 2 elements.")
@@ -90,90 +95,60 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
     # TODO: we should handle missing values (i.e. `np.nan`) specifically and store them
     # in a different Bunch attribute.
     for feature, is_cat in enumerate(is_categorical):
-        try:
-            uniques = np.unique(_safe_indexing(X, feature, axis=1))
-        except TypeError as exc:
-            # `np.unique` will fail in the presence of `np.nan` and `str` categories
-            # due to sorting. Temporary, we reraise an error explaining the problem.
-            raise ValueError(
-                f"The column #{feature} contains mixed data types. Finding unique "
-                "categories fail due to sorting. It usually means that the column "
-                "contains `np.nan` values together with `str` categories. Such use "
-                "case is not yet supported in scikit-learn."
-            ) from exc
-        if is_cat or uniques.shape[0] < grid_resolution:
-            # Use the unique values either because:
-            # - feature has low resolution use unique values
-            # - feature is categorical
-            axis = uniques
-        else:
-            # create axis based on percentiles and grid resolution
-            emp_percentiles = mquantiles(
-                _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
-            )
-            if np.allclose(emp_percentiles[0], emp_percentiles[1]):
+        if feature in custom_range:
+            # Use values in the custom range
+            feature_range = custom_range[feature]
+            if not isinstance(feature_range, np.ndarray):
+                feature_range = np.array(feature_range)
+            if feature_range.ndim != 1:
                 raise ValueError(
-                    "percentiles are too close to each other, "
-                    "unable to build the grid. Please choose percentiles "
-                    "that are further apart."
+                    "Grid for feature {} is not a one-dimensional array. Got {}"
+                    " dimensions".format(feature, feature_range.ndim)
                 )
-            axis = np.linspace(
-                emp_percentiles[0],
-                emp_percentiles[1],
-                num=grid_resolution,
-                endpoint=True,
-            )
+            axis = feature_range
+        else:
+            try:
+                uniques = np.unique(_safe_indexing(X, feature, axis=1))
+            except TypeError as exc:
+                # `np.unique` will fail in the presence of `np.nan` and `str` categories
+                # due to sorting. Temporary, we reraise an error explaining the problem.
+                raise ValueError(
+                    f"The column #{feature} contains mixed data types. Finding unique "
+                    "categories fail due to sorting. It usually means that the column "
+                    "contains `np.nan` values together with `str` categories. Such use "
+                    "case is not yet supported in scikit-learn."
+                ) from exc
+
+            if is_cat or uniques.shape[0] < grid_resolution:
+                # Use the unique values either because:
+                # - feature has low resolution use unique values
+                # - feature is categorical
+                axis = uniques
+            else:
+                # create axis based on percentiles and grid resolution
+                emp_percentiles = mquantiles(
+                    _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
+                )
+                if np.allclose(emp_percentiles[0], emp_percentiles[1]):
+                    raise ValueError(
+                        "percentiles are too close to each other, "
+                        "unable to build the grid. Please choose percentiles "
+                        "that are further apart."
+                    )
+                axis = np.linspace(
+                    emp_percentiles[0],
+                    emp_percentiles[1],
+                    num=grid_resolution,
+                    endpoint=True,
+                )
         values.append(axis)
 
-    return cartesian(values), values
-
-
-def _grid_from_custom_grid(features, custom_grid):
-    """Generate a cartesian product of the 1-d grids in custom_grid.
-
-    Parameters
-    ----------
-    features : scalar, array-like
-        The features for which the partial dependency should be computed.
-
-    custom_grid : dict
-        A dictionary mapping an element of `features` to an array of values where
-        the partial dependence should be calculated for that feature
-
-    Returns
-    -------
-    grid : ndarray, shape (n_points, n_target_features)
-        A value for each feature at each point in the grid. ``n_points`` is
-        the product of the lengths of the arrays in custom_grid.
-
-    values : list of 1d ndarrays
-        The values with which the grid has been created. The size of each
-        array ``values[j]`` is the size of the grid in custom_grid.
-    """
-
-    if isinstance(features, (str, int, float, bool)):
-        features = [features]
-    if set(features) != custom_grid.keys():
-        raise ValueError(
-            "If custom_grid is specified, its keys must equal the values in features!"
-        )
-    values = []
-    for feature in features:
-        value = custom_grid[feature]
-        if not isinstance(value, np.ndarray):
-            value = np.array(value)
-        if value.ndim != 1:
-            raise ValueError(
-                "Grid for feature {} is not a one-dimensional array. Got {} dimensions"
-                .format(feature, value.ndim)
-            )
-        values.append(value)
+    # Store cartesian in grid of dtype=object to support grids of str/numeric values
     shape = (len(v) for v in values)
     ix = np.indices(shape)
     ix = ix.reshape(len(values), -1).T
     out = np.empty_like(ix, dtype=object)
-    grid = cartesian(values, out)
-    return grid, values
+    return cartesian(values, out), values
 
 
 def _partial_dependence_recursion(est, grid, features):
@@ -284,7 +259,7 @@ def partial_dependence(
     grid_resolution=100,
     method="auto",
     kind="average",
-    custom_grid=None,
+    custom_range=None,
 ):
     """Partial dependence of ``features``.
 
@@ -407,11 +382,12 @@ def partial_dependence(
 
         .. versionadded:: 0.24
 
-    custom_grid: dict
+    custom_range: dict
         A dictionary mapping an element of `features` to an array of values where
-        the partial dependence should be calculated for that feature. The length
-        of `custom_grid` must match the length of `features`.
+        the partial dependence should be calculated for that feature. Setting a range
+        of values for a feature overrides `grid_resolution` and `percentiles`.
 
+        .. versionadded:: 1.3
 
     Returns
     -------
@@ -565,7 +541,6 @@ def partial_dependence(
         _get_column_indices(X, features), dtype=np.int32, order="C"
     ).ravel()
 
-<<<<<<< HEAD
     feature_names = _check_feature_names(X, feature_names)
 
     n_features = X.shape[1]
@@ -598,21 +573,22 @@ def partial_dependence(
                 f" integer, or string. Got {categorical_features.dtype} instead."
             )
 
+    custom_range = custom_range or {}
+    if isinstance(features, (str, int, float, bool)):
+        features = [features]
+    custom_range = {
+        index: custom_range.get(feature)
+        for index, feature in enumerate(features)
+        if feature in custom_range
+    }
+
     grid, values = _grid_from_X(
         _safe_indexing(X, features_indices, axis=1),
         percentiles,
         is_categorical,
         grid_resolution,
+        custom_range,
     )
-=======
-    custom_grid = custom_grid or {}
-    if custom_grid:
-        grid, values = _grid_from_custom_grid(features, custom_grid)
-    else:
-        grid, values = _grid_from_X(
-            _safe_indexing(X, features_indices, axis=1), percentiles, grid_resolution
-        )
->>>>>>> f4884e59e (Add custom_grid argument for partial dependence)
 
     if method == "brute":
         averaged_predictions, predictions = _partial_dependence_brute(
