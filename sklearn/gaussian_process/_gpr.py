@@ -187,10 +187,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         if self.kernel_.requires_vector_input:
             X, y = self._validate_data(X, y, multi_output=True, y_numeric=True,
-                                       ensure_2d=True, dtype="numeric")
+                                       ensure_2d=True, dtype="numeric", force_all_finite=False)
         else:
             X, y = self._validate_data(X, y, multi_output=True, y_numeric=True,
-                                       ensure_2d=False, dtype=None)
+                                       ensure_2d=False, dtype=None, force_all_finite=False)
 
         # Normalize target value
         if self.normalize_y:
