@@ -37,6 +37,7 @@ from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
 from ._classification import tpr_fpr_tnr_fnr_scores
 from ._classification import specificity_score
+from ._classification import npv_score
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
