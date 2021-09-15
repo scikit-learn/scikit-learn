@@ -112,10 +112,6 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                     self.svd_method, legal_svd_methods
                 )
             )
-        check_scalar(self.n_clusters, "n_clusters",
-                     target_type=(numbers.Integral,(numbers.Integral,numbers.Integral)),
-                     min_val=1,
-                     max_val=n_samples)
         check_scalar(self.n_init, "n_init", target_type=numbers.Integral, min_val=1)
 
     def fit(self, X, y=None):
@@ -334,8 +330,30 @@ class SpectralCoclustering(BaseSpectral):
         super().__init__(
             n_clusters, svd_method, n_svd_vecs, mini_batch, init, n_init, random_state
         )
+        
+    def _check_parameters(self, n_sample):
+        super()._check_parameters(n_sample)
+        legal_methods = ('randomized', 'arpack')
+        if self.method not in legal_methods:
+            raise ValueError(
+                "Unknown method: '{0}'. method must be one of {1}.".format(
+                    self.method, legal_methods
+                )
+            )
+        check_scalar(self.n_clusters, "n_clusters",
+                     target_type=(numbers.Integral),
+                     min_val=1,
+                     max_val=n_samples)
+        try:
+            int(self.n_clusters)
+        except TypeError:
+            try:
+                r, c = self.n_clusters
+                int(r)
+                int(c)
 
     def _fit(self, X):
+        super().fit(X)
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, v = self._svd(normalized_data, n_sv, n_discard=1)
@@ -508,6 +526,10 @@ class SpectralBiclustering(BaseSpectral):
                     self.method, legal_methods
                 )
             )
+        check_scalar(self.n_clusters, "n_clusters",
+                     target_type=(numbers.Integral, (numbers.Integral, numbers.Integral)),
+                     min_val=1,
+                     max_val=n_samples)
         try:
             int(self.n_clusters)
         except TypeError:
@@ -515,19 +537,13 @@ class SpectralBiclustering(BaseSpectral):
                 r, c = self.n_clusters
                 int(r)
                 int(c)
-            except (ValueError, TypeError) as e:
-                raise ValueError(
-                    "Incorrect parameter n_clusters has value:"
-                    " {}. It should either be a single integer"
-                    " or an iterable with two integers:"
-                    " (n_row_clusters, n_column_clusters)"
-                ) from e
         check_scalar(self.n_components, "n_components", target_type=numbers.Integral,
                      min_val=1)
         check_scalar(self.n_best, "n_best", target_type=numbers.Integral,
                      min_val=1, max_val=self.n_components)
 
     def _fit(self, X):
+        super().fit(X)
         n_sv = self.n_components
         if self.method == "bistochastic":
             normalized_data = _bistochastic_normalize(X)
