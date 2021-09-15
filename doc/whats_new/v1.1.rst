@@ -46,7 +46,7 @@ Changelog
   :class:`model_selection.RandomizedSearchCV`,
   :class:`model_selection.HalvingGridSearchCV`, and
   :class:`model_selection.HalvingRandomSearchCV` will show the best estimator
-  when `refit=True`. :pr:`xxxxx` by `Thomas Fan`_.
+  when `refit=True`. :pr:`21058` by `Thomas Fan`_.
 
 :mod:`sklearn.utils`
 ....................
