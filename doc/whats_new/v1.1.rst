@@ -41,8 +41,8 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Feature| Add :func:`metrics.fpr_tpr_fnr_tnr_scores`
-  and :func:`metrics.specificity_score`.
+- |Feature| Add :func:`metrics.fpr_tpr_fnr_tnr_scores`,
+  :func:`metrics.specificity_score` and :func:`metrics.npv_score`.
   :pr:`19556` by :user:`Hao Chun Chang <haochunchang>`
   and :user:`Pawel Kranzberg <Pawel-Kranzberg>`.
 
