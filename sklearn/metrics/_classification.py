@@ -2662,18 +2662,20 @@ def tpr_fpr_tnr_fnr_scores(
     sample_weight=None,
     zero_division="warn",
 ):
-    """Compute TPR, FPR, TNR, FNR for each class.
+    """Compute the TPR, FPR, TNR, FNR for each class.
 
-    True Positive Rate (TPR) is the ratio `TP / (TP + FN)` where `TP`
+    .. versionadded:: 1.1
+
+    The true positive rate (TPR) is the ratio `TP / (TP + FN)` where `TP`
     is the number of true positives and `FN` the number of false negatives.
 
-    False Positive Rate (FPR) is the ratio `FP / (TN + FP)` where `TN`
+    The false positive rate (FPR) is the ratio `FP / (TN + FP)` where `TN`
     is the number of true negatives and `FP` the number of false positives.
 
-    True Negative Rate (TNR) is the ratio `TN / (TN + FP)` where `TN`
+    The true negative rate (TNR) is the ratio `TN / (TN + FP)` where `TN`
     is the number of true negatives and `FP` the number of false positives.
 
-    False Negative Rate (FNR) is the ratio `FN / (TP + FN)` where `TP`
+    The false negative rate (FNR) is the ratio `FN / (TP + FN)` where `TP`
     is the number of true positives and `FN` the number of false negatives.
 
     If `pos_label is None` and in binary classification, this function
@@ -2876,7 +2878,9 @@ def specificity_score(
     sample_weight=None,
     zero_division="warn",
 ):
-    """Compute specificity, also known as true negative rate.
+    """Compute the specificity, also known as the true negative rate (TNR).
+
+    .. versionadded:: 1.1
 
     The specificity is the ratio `TN / (TN + FP)` where `TN` is the number
     of true negatives and `FP` is the number of false positives.
@@ -2944,13 +2948,14 @@ def specificity_score(
     -------
     specificity : float (if average is not None) or array of float of shape
         (n_unique_labels,)
-        Specificity of the positive class in binary classification or weighted
-        average of the specificity of each class for the multiclass task.
+        The specificity of the positive class in binary classification or 
+        weighted average of the specificity of each class for the multiclass
+        task.
 
     See Also
     --------
-    classification_report, precision_recall_fscore_support, recall_score,
-    balanced_accuracy_score, multilabel_confusion_matrix,
+    classification_report, precision_recall_fscore_support, precision_score,
+    recall_score, balanced_accuracy_score, multilabel_confusion_matrix,
     tpr_fpr_tnr_fnr_scores
 
     Notes
