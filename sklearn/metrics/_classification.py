@@ -2664,17 +2664,17 @@ def tpr_fpr_tnr_fnr_scores(
 ):
     """Compute TPR, FPR, TNR, FNR for each class.
 
-    The TPR is the ratio `tp / (tp + fn)` where `tp` is the number of
+    The TPR is the ratio `TP / (TP + FN)` where `tp` is the number of
     true positives and `fn` the number of false negatives.
 
-    The FPR is the ratio `fp / (tn + fp)` where `tn` is the number of
-    true negatives and `fp` the number of false positives.
+    The FPR is the ratio `FP / (TN + FP)` where `tn` is the number of
+    true negatives and `FP` the number of false positives.
 
-    The TNR is the ratio `tn / (tn + fp)` where `tn` is the number of
-    true negatives and `fp` the number of false positives.
+    The TNR is the ratio `TN / (TN + FP)` where `tn` is the number of
+    true negatives and `FP` the number of false positives.
 
-    The FNR is the ratio `fn / (tp + fn)` where `tp` is the number of
-    true positives and `fn` the number of false negatives.
+    The FNR is the ratio `FN / (TP + FN)` where `tp` is the number of
+    true positives and `FN` the number of false negatives.
 
     If `pos_label is None` and in binary classification, this function
     returns the true positive rate, false positive rate, true negative rate
@@ -2738,8 +2738,8 @@ def tpr_fpr_tnr_fnr_scores(
 
     zero_division : str or int, {"warn", 0, 1}, default="warn"
         Sets the value to return when there is a zero division:
-           - tpr, fnr: when there are no positive labels
-           - fpr, tnr: when there are no negative labels
+           - TPR, FNR: when there are no positive labels
+           - FPR, TNR: when there are no negative labels
 
         If set to "warn", this acts as 0, but warnings are also raised.
 
@@ -2878,8 +2878,8 @@ def specificity_score(
 ):
     """Compute specificity, also known as true negative rate.
 
-    The specificity is the ratio `tn / (tn + fp)` where `tn` is the number
-    of true negatives and `fp` is the number of false positives.
+    The specificity is the ratio `TN / (TN + FP)` where `TN` is the number
+    of true negatives and `FP` is the number of false positives.
     The specificity is intuitively the ability of the classifier to find
     all the negative samples.
 
@@ -2908,8 +2908,8 @@ def specificity_score(
         setting `labels=[pos_label]` and `average != "binary"` will report
         scores for that label only.
 
-    average : str, {None, 'binary', 'micro', 'macro', 'samples', 'weighted'} \
-            default='binary'
+    average : str, {None, "binary", "micro", "macro", "samples", "weighted"} \
+            default="binary"
         This parameter is required for multiclass/multilabel targets.
         If `None`, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
