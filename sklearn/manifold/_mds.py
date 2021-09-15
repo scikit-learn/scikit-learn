@@ -154,7 +154,7 @@ def smacof(
     random_state=None,
     return_n_iter=False,
 ):
-    """Computes multidimensional scaling using the SMACOF algorithm.
+    """Compute multidimensional scaling using the SMACOF algorithm.
 
     The SMACOF (Scaling by MAjorizing a COmplicated Function) algorithm is a
     multidimensional scaling algorithm which minimizes an objective function
@@ -163,7 +163,8 @@ def smacof(
     stress, and is more powerful than traditional techniques such as gradient
     descent.
 
-    The SMACOF algorithm for metric MDS can summarized by the following steps:
+    The SMACOF algorithm for metric MDS can be summarized by the following
+    steps:
 
     1. Set an initial start configuration, randomly or not.
     2. Compute the stress
