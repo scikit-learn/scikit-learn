@@ -2747,18 +2747,18 @@ def tpr_fpr_tnr_fnr_scores(
 
     Returns
     -------
-    tpr : float (if average is not None), \
-        or ndarray of shape (n_unique_labels,)
+    tpr : float or ndarray of shape (n_unique_labels,), dtype=np.float64
 
-    fpr : float (if average is not None), \
-        or ndarray of shape (n_unique_labels,)
+    fpr : float or ndarray of shape (n_unique_labels,), dtype=np.float64
 
-    tnr : float (if average is not None), \
-        or ndarray of shape (n_unique_labels,)
+    tnr : float or ndarray of shape (n_unique_labels,), dtype=np.float64
 
-    fnr : float (if average is not None), \
-        or ndarray of shape (n_unique_labels,)
-        The number of occurrences of each label in `y_true`.
+    fnr : float or ndarray of shape (n_unique_labels,), dtype=np.float64
+
+    See Also
+    --------
+    classification_report, precision_recall_fscore_support, precision_score,
+    recall_score, balanced_accuracy_score, multilabel_confusion_matrix
 
     References
     ----------
@@ -2946,9 +2946,8 @@ def specificity_score(
 
     Returns
     -------
-    specificity : float (if average is not None) or array of float of shape
-        (n_unique_labels,)
-        The specificity of the positive class in binary classification or 
+    specificity : float or ndarray of shape (n_unique_labels,), dtype=np.float64
+        The specificity of the positive class in binary classification or
         weighted average of the specificity of each class for the multiclass
         task.
 
