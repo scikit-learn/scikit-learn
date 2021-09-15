@@ -18,7 +18,6 @@ DOCSTRING_IGNORE_LIST = [
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
     "MDS",
-    "MeanShift",
     "MiniBatchKMeans",
     "MissingIndicator",
     "MultiLabelBinarizer",
