@@ -658,7 +658,7 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
 
     # predict centroid labels
     pred = km.predict(km.cluster_centers_)
-    assert_allclose(v_measure_score(pred, np.arange(10)), 1)
+    assert_array_equal(pred, np.arange(10))
 
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
