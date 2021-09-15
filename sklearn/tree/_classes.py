@@ -211,24 +211,35 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             check_classification_targets(y)
             y = np.copy(y)
 
-            self.classes_ = []
-            self.n_classes_ = []
-
             if self.class_weight is not None:
                 y_original = np.copy(y)
-
-            y_encoded = np.zeros(y.shape, dtype=int)
-            for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
-                self.classes_.append(classes_k)
-                self.n_classes_.append(classes_k.shape[0])
-            y = y_encoded
-
-            if self.class_weight is not None:
                 expanded_class_weight = compute_sample_weight(
                     self.class_weight, y_original
                 )
 
+            self.classes_ = []
+            self.n_classes_ = []
+
+            y_encoded = np.zeros(y.shape, dtype=int)
+            if classes is not None:
+                classes = np.atleast_1d(classes)
+                if classes.ndim == 1:
+                    classes = np.array([classes])
+
+                for k in classes:
+                    self.classes_.append(np.array(k))
+                    self.n_classes_.append(np.array(k).shape[0])
+
+                for i in range(n_samples):
+                    for j in range(self.n_outputs_):
+                        y_encoded[i, j] = np.where(self.classes_[j] == y[i, j])[0][0]
+            else:
+                for k in range(self.n_outputs_):
+                    classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
+                    self.classes_.append(classes_k)
+                    self.n_classes_.append(classes_k.shape[0])
+
+            y = y_encoded
             self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
