@@ -38,8 +38,6 @@ DOCSTRING_IGNORE_LIST = [
     "PatchExtractor",
     "PolynomialFeatures",
     "QuadraticDiscriminantAnalysis",
-    "QuantileRegressor",
-    "QuantileTransformer",
     "RANSACRegressor",
     "RandomizedSearchCV",
     "RobustScaler",
