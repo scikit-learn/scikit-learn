@@ -638,11 +638,6 @@ Changelog
 - |Feature| :func:`metrics.mean_pinball_loss` exposes the pinball loss for
   quantile regression. :pr:`19415` by :user:`Xavier Dupré <sdpython>`
   and :user:`Oliver Grisel <ogrisel>`.
-  
-- |Feature| Add :func:`metrics.fpr_tpr_fnr_tnr_scores`
-  and :func:`metrics.specificity_score`.
-  :pr:`19556` by :user:`Hao Chun Chang <haochunchang>`
-  and :user:`Pawel Kranzberg <Pawel-Kranzberg>`.
 
 - |Feature| :func:`metrics.d2_tweedie_score` calculates the D^2 regression
   score for Tweedie deviances with power parameter ``power``. This is a
