@@ -555,7 +555,7 @@ class _VectorizerMixin:
 
 
 class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
-    r"""Convert a collection of text documents to a matrix of token occurrences
+    r"""Convert a collection of text documents to a matrix of token occurrences.
 
     It turns a collection of text documents into a scipy.sparse matrix holding
     token occurrence counts (or binary occurrence information), possibly
@@ -568,10 +568,10 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     This strategy has several advantages:
 
     - it is very low memory scalable to large datasets as there is no need to
-      store a vocabulary dictionary in memory
+      store a vocabulary dictionary in memory.
 
     - it is fast to pickle and un-pickle as it holds no state besides the
-      constructor parameters
+      constructor parameters.
 
     - it can be used in a streaming (partial fit) or parallel pipeline as there
       is no state computed during fit.
@@ -595,7 +595,6 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
 
     Parameters
     ----------
-
     input : {'filename', 'file', 'content'}, default='content'
         - If `'filename'`, the sequence passed as an argument to fit is
           expected to be a list of filenames that need reading to fetch
@@ -607,7 +606,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         - If `'content'`, the input is expected to be a sequence of items that
           can be of type string or byte.
 
-    encoding : string, default='utf-8'
+    encoding : str, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
         decode.
 
@@ -686,7 +685,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
 
-    binary : bool, default=False.
+    binary : bool, default=False
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
         counts.
@@ -704,6 +703,13 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     dtype : type, default=np.float64
         Type of the matrix returned by fit_transform() or transform().
 
+    See Also
+    --------
+    CountVectorizer : Convert a collection of text documents to a matrix of
+        token counts.
+    TfidfVectorizer : Convert a collection of raw documents to a matrix of
+        TF-IDF features.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import HashingVectorizer
@@ -717,11 +723,6 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     >>> X = vectorizer.fit_transform(corpus)
     >>> print(X.shape)
     (4, 16)
-
-    See Also
-    --------
-    CountVectorizer, TfidfVectorizer
-
     """
 
     def __init__(
@@ -762,7 +763,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self.dtype = dtype
 
     def partial_fit(self, X, y=None):
-        """Does nothing: this transformer is stateless.
+        """No-op: this transformer is stateless.
 
         This method is just there to mark the fact that this transformer
         can work in a streaming setup.
@@ -771,16 +772,32 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         ----------
         X : ndarray of shape [n_samples, n_features]
             Training data.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        self : object
+            HashingVectorizer instance.
         """
         return self
 
     def fit(self, X, y=None):
-        """Does nothing: this transformer is stateless.
+        """No-op: this transformer is stateless.
 
         Parameters
         ----------
         X : ndarray of shape [n_samples, n_features]
             Training data.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        self : object
+            HashingVectorizer instance.
         """
         # triggers a parameter validation
         if isinstance(X, str):

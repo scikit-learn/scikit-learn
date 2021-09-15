@@ -2974,21 +2974,6 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import PowerTransformer
-    >>> pt = PowerTransformer()
-    >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(pt.fit(data))
-    PowerTransformer()
-    >>> print(pt.lambdas_)
-    [ 1.386... -3.100...]
-    >>> print(pt.transform(data))
-    [[-1.316... -0.707...]
-     [ 0.209... -0.707...]
-     [ 1.106...  1.414...]]
-
     See Also
     --------
     power_transform : Equivalent function without the estimator API.
@@ -3014,6 +2999,21 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PowerTransformer
+    >>> pt = PowerTransformer()
+    >>> data = [[1, 2], [3, 2], [4, 5]]
+    >>> print(pt.fit(data))
+    PowerTransformer()
+    >>> print(pt.lambdas_)
+    [ 1.386... -3.100...]
+    >>> print(pt.transform(data))
+    [[-1.316... -0.707...]
+     [ 0.209... -0.707...]
+     [ 1.106...  1.414...]]
     """
 
     def __init__(self, method="yeo-johnson", *, standardize=True, copy=True):
@@ -3044,6 +3044,22 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
+        """Fit `PowerTransformer` to `X`, then transform `X`.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data used to estimate the optimal transformation parameters
+            and to be transformed using a power transformation.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_features)
+            Transformed data.
+        """
         return self._fit(X, y, force_transform=True)
 
     def _fit(self, X, y=None, force_transform=False):
