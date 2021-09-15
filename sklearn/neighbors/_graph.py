@@ -334,7 +334,7 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
     --------
     >>> from sklearn.datasets import load_wine
     >>> from sklearn.neighbors import KNeighborsTransformer
-    >>> X, _ = load_wine(return_X_y = True)
+    >>> X, _ = load_wine(return_X_y=True)
     >>> X.shape
     (178, 13)
     >>> transformer = KNeighborsTransformer(n_neighbors=5, mode='distance')
@@ -557,7 +557,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
     >>> from sklearn.cluster import DBSCAN
     >>> from sklearn.neighbors import RadiusNeighborsTransformer
     >>> from sklearn.pipeline import make_pipeline
-    >>> X, _ = load_wine(return_X_y = True)
+    >>> X, _ = load_wine(return_X_y=True)
     >>> estimator = make_pipeline(
     ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
     ...     DBSCAN(eps=25.0, metric='precomputed'))
