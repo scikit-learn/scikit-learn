@@ -567,3 +567,53 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
         assert predictor.get_max_depth() < predictor_ohe.get_max_depth()
 
     np.testing.assert_allclose(preds, preds_ohe)
+
+
+@pytest.mark.parametrize("seed", range(20))
+def test_grower_interaction_constraints(seed):
+    """Check that grower respects interaction constraints."""
+    rng = np.random.RandomState(seed)
+    n_features = 6
+    interaction_cst = [{0, 1}, {1, 2}, {3, 4, 5}]
+    n_samples = 10
+    n_bins = 10
+    X_binned = rng.randint(
+        0, n_bins - 1, size=(n_samples, n_features), dtype=X_BINNED_DTYPE
+    )
+    X_binned = np.asfortranarray(X_binned)
+    gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
+    hessians = np.ones(shape=1, dtype=G_H_DTYPE)
+
+    grower = TreeGrower(
+        X_binned,
+        gradients,
+        hessians,
+        max_depth=3,
+        n_bins=n_bins,
+        shrinkage=1.0,
+        max_leaf_nodes=None,
+        min_samples_leaf=1,
+        interaction_cst=interaction_cst,
+    )
+    grower.grow()
+
+    def get_all_children(node):
+        res = []
+        if node.is_leaf:
+            return res
+        for n in [node.left_child, node.right_child]:
+            res.append(n)
+            if not n.is_leaf:
+                res.extend(get_all_children(n))
+        return res
+
+    map = {0: {0, 1}, 1: {0, 1, 2}, 2: {1, 2}}
+    if grower.root.split_info.feature_idx in {0, 1, 2}:
+        constraint_set = map[grower.root.split_info.feature_idx]
+        for node in get_all_children(grower.root):
+            if not node.is_leaf:
+                assert node.split_info.feature_idx in constraint_set
+    elif grower.root.split_info.feature_idx in {3, 4, 5}:
+        for node in get_all_children(grower.root):
+            if not node.is_leaf:
+                assert node.split_info.feature_idx in {3, 4, 5}
