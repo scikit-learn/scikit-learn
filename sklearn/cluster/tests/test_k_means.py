@@ -352,12 +352,7 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
 
     labels_1 = kmeans.fit(X).predict(X)
     labels_2 = kmeans.fit_predict(X)
-
-    # Due to randomness in the order in which chunks of data are processed when
-    # using more than one thread, the absolute values of the labels can be
-    # different between the 2 strategies but they should correspond to the same
-    # clustering.
-    assert v_measure_score(labels_1, labels_2) == pytest.approx(1, abs=1e-15)
+    assert_array_equal(labels_1, labels_2)
 
 
 def test_minibatch_kmeans_verbose():
@@ -623,25 +618,6 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
     X, _ = make_blobs(n_samples=500, n_features=10, centers=10, random_state=0)
     X = array_constr(X)
 
-    # With n_init = 1
-    km = Estimator(n_clusters=10, init=init, n_init=1, random_state=0)
-    if algorithm is not None:
-        km.set_params(algorithm=algorithm)
-    km.fit(X)
-    labels = km.labels_
-
-    # re-predict labels for training set using predict
-    pred = km.predict(X)
-    assert_array_equal(pred, labels)
-
-    # re-predict labels for training set using fit_predict
-    pred = km.fit_predict(X)
-    assert_array_equal(pred, labels)
-
-    # predict centroid labels
-    pred = km.predict(km.cluster_centers_)
-    assert_array_equal(pred, np.arange(10))
-
     km = Estimator(n_clusters=10, init=init, n_init=10, random_state=0)
     if algorithm is not None:
         km.set_params(algorithm=algorithm)
@@ -715,7 +691,7 @@ def test_integer_input(Estimator, array_constr, dtype, init):
     assert km.cluster_centers_.dtype == np.float64
 
     expected_labels = [0, 1, 1, 0, 0, 1]
-    assert_allclose(v_measure_score(km.labels_, expected_labels), 1)
+    assert_array_equal(km.labels_, expected_labels)
 
     # Same with partial_fit (#14314)
     if Estimator is MiniBatchKMeans:
@@ -774,8 +750,8 @@ def test_k_means_function():
     assert cluster_centers.shape == (n_clusters, n_features)
     assert np.unique(labels).shape[0] == n_clusters
 
-    # check that the labels assignment are perfect (up to a permutation)
-    assert_allclose(v_measure_score(true_labels, labels), 1.0)
+    # check that the labels assignment are perfect
+    assert_array_equal(true_labels, labels)
     assert inertia > 0.0
 
 
