@@ -150,7 +150,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.n_leaves
 
     def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
+        self,
+        X,
+        y,
+        classes=None,
+        sample_weight=None,
+        check_input=True,
+        X_idx_sorted="deprecated",
     ):
 
         random_state = check_random_state(self.random_state)
@@ -430,9 +436,23 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def partial_fit(self, X, y, classes=None, sample_weight=None, check_input=True):
+        # Determine output settings
+        is_classification = is_classifier(self)
+
+        if is_classification:
+            first_call = _check_partial_fit_first_call(self, classes=classes)
+        else:
+            first_call = _check_partial_fit_first_call(self, classes=[])
+
         # Fit if no tree exists yet
-        if _check_partial_fit_first_call(self, classes=classes):
-            self.fit(X, y, sample_weight=sample_weight, check_input=check_input)
+        if first_call:
+            self.fit(
+                X,
+                y,
+                classes=classes,
+                sample_weight=sample_weight,
+                check_input=check_input,
+            )
             return self
 
         if self.ccp_alpha < 0.0:
@@ -470,9 +490,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if X.shape[1] != self.n_features_in_:
             msg = "Number of features %d does not match previous data %d."
             raise ValueError(msg % (X.shape[1], self.n_features_in_))
-
-        # Determine output settings
-        is_classification = is_classifier(self)
 
         y = np.atleast_1d(y)
 
@@ -973,7 +990,13 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         )
 
     def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
+        self,
+        X,
+        y,
+        classes=None,
+        sample_weight=None,
+        check_input=True,
+        X_idx_sorted="deprecated",
     ):
         """Build a decision tree classifier from the training set (X, y).
 
@@ -1013,6 +1036,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         super().fit(
             X,
             y,
+            classes=classes,
             sample_weight=sample_weight,
             check_input=check_input,
             X_idx_sorted=X_idx_sorted,
@@ -1395,7 +1419,13 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         )
 
     def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
+        self,
+        X,
+        y,
+        classes=None,
+        sample_weight=None,
+        check_input=True,
+        X_idx_sorted="deprecated",
     ):
         """Build a decision tree regressor from the training set (X, y).
 
@@ -1434,6 +1464,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         super().fit(
             X,
             y,
+            classes=classes,
             sample_weight=sample_weight,
             check_input=check_input,
             X_idx_sorted=X_idx_sorted,
