@@ -339,19 +339,6 @@ def test_fortran_aligned_data(Estimator):
 )
 def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     # check that fit.predict gives same result as fit_predict
-    # There's a very small chance of failure with elkan on unstructured dataset
-    # because predict method uses fast euclidean distances computation which
-    # may cause small numerical instabilities.
-    # NB: This test is largely redundant with respect to test_predict and
-    #     test_predict_equal_labels.  This test has the added effect of
-    #     testing idempotence of the fittng procesdure which appears to
-    #     be where it fails on some MacOS setups.
-    if sys.platform == "darwin":
-        pytest.xfail(
-            "Known failures on MacOS, See "
-            "https://github.com/scikit-learn/scikit-learn/issues/12644"
-        )
-
     rng = np.random.RandomState(seed)
 
     X = make_blobs(n_samples=1000, n_features=10, centers=10, random_state=rng)[
@@ -633,16 +620,6 @@ def test_score_max_iter(Estimator):
 def test_predict(Estimator, algorithm, init, dtype, array_constr):
     # Check the predict method and the equivalence between fit.predict and
     # fit_predict.
-
-    # There's a very small chance of failure with elkan on unstructured dataset
-    # because predict method uses fast euclidean distances computation which
-    # may cause small numerical instabilities.
-    if sys.platform == "darwin":
-        pytest.xfail(
-            "Known failures on MacOS, See "
-            "https://github.com/scikit-learn/scikit-learn/issues/12644"
-        )
-
     X, _ = make_blobs(n_samples=500, n_features=10, centers=10, random_state=0)
     X = array_constr(X)
 
