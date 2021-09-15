@@ -642,13 +642,6 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
     pred = km.predict(km.cluster_centers_)
     assert_array_equal(pred, np.arange(10))
 
-    # With n_init > 1
-    # Due to randomness in the order in which chunks of data are processed when
-    # using more than one thread, there might be different rounding errors for
-    # the computation of the inertia between 2 runs. This might result in a
-    # different ranking of 2 inits, hence a different labeling, even if they
-    # give the same clustering. We only check the labels up to a permutation.
-
     km = Estimator(n_clusters=10, init=init, n_init=10, random_state=0)
     if algorithm is not None:
         km.set_params(algorithm=algorithm)
@@ -657,11 +650,11 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
 
     # re-predict labels for training set using predict
     pred = km.predict(X)
-    assert_allclose(v_measure_score(pred, labels), 1)
+    assert_array_equal(pred, labels)
 
     # re-predict labels for training set using fit_predict
     pred = km.fit_predict(X)
-    assert_allclose(v_measure_score(pred, labels), 1)
+    assert_array_equal(pred, labels)
 
     # predict centroid labels
     pred = km.predict(km.cluster_centers_)
