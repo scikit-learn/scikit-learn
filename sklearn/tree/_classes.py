@@ -153,9 +153,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self,
         X,
         y,
-        classes=None,
         sample_weight=None,
         check_input=True,
+        classes=None,
         X_idx_sorted="deprecated",
     ):
 
@@ -993,9 +993,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         self,
         X,
         y,
-        classes=None,
         sample_weight=None,
         check_input=True,
+        classes=None,
         X_idx_sorted="deprecated",
     ):
         """Build a decision tree classifier from the training set (X, y).
@@ -1036,9 +1036,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         super().fit(
             X,
             y,
-            classes=classes,
             sample_weight=sample_weight,
             check_input=check_input,
+            classes=classes,
             X_idx_sorted=X_idx_sorted,
         )
         return self
@@ -1422,9 +1422,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         self,
         X,
         y,
-        classes=None,
         sample_weight=None,
         check_input=True,
+        classes=None,
         X_idx_sorted="deprecated",
     ):
         """Build a decision tree regressor from the training set (X, y).
@@ -1464,9 +1464,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         super().fit(
             X,
             y,
-            classes=classes,
             sample_weight=sample_weight,
             check_input=check_input,
+            classes=classes,
             X_idx_sorted=X_idx_sorted,
         )
         return self
