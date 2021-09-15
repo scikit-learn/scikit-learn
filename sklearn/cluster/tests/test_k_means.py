@@ -750,8 +750,8 @@ def test_k_means_function():
     assert cluster_centers.shape == (n_clusters, n_features)
     assert np.unique(labels).shape[0] == n_clusters
 
-    # check that the labels assignment are perfect
-    assert_array_equal(true_labels, labels)
+    # check that the labels assignment are perfect (up to a permutation)
+    assert_allclose(v_measure_score(true_labels, labels), 1.0)
     assert inertia > 0.0
 
 
