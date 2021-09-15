@@ -404,8 +404,13 @@ class MeanShift(ClusterMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Samples to cluster.
 
-        y : Ignored
+        y : NoneType
+            This parameter is ignored.
 
+        Returns
+        -------
+        self : MeanShift object
+               Object with calculated cluster centers and labels.
         """
         X = self._validate_data(X)
         bandwidth = self.bandwidth
