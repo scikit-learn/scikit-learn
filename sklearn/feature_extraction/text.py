@@ -776,12 +776,20 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         return self
 
     def fit(self, X, y=None):
-        """Does nothing: this transformer is stateless.
+        """No-op: this transformer is stateless.
 
         Parameters
         ----------
         X : ndarray of shape [n_samples, n_features]
             Training data.
+
+        y : None
+            This parameter is ignored.
+
+        Returns
+        -------
+        self : object
+            Fitted vectorizer.
         """
         # triggers a parameter validation
         if isinstance(X, str):
