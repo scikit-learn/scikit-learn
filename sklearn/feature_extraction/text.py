@@ -60,7 +60,7 @@ def _preprocess(doc, accent_function=None, lower=False):
         Function for handling accented characters. Common strategies include
         normalizing and removing.
     lower: bool, default=False
-        Whether to use str.lower to lowercase all fo the text
+        Whether to use str.lower to lowercase all of the text
 
     Returns
     -------

@@ -318,7 +318,7 @@ class RANSACRegressor(
             if not isinstance(base_estimator, LinearRegression):
                 # FIXME: in 1.2, turn this warning into an error
                 warnings.warn(
-                    "From version 1.2, `min_samples` needs to be explicitely "
+                    "From version 1.2, `min_samples` needs to be explicitly "
                     "set otherwise an error will be raised. To keep the "
                     "current behavior, you need to set `min_samples` to "
                     f"`X.shape[1] + 1 that is {X.shape[1] + 1}",

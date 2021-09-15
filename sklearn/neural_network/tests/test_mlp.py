@@ -393,7 +393,7 @@ def test_multilabel_classification():
         mlp.partial_fit(X, y, classes=[0, 1, 2, 3, 4])
     assert mlp.score(X, y) > 0.9
 
-    # Make sure early stopping still work now that spliting is stratified by
+    # Make sure early stopping still work now that splitting is stratified by
     # default (it is disabled for multilabel classification)
     mlp = MLPClassifier(early_stopping=True)
     mlp.fit(X, y).predict(X)
