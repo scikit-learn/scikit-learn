@@ -763,7 +763,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self.dtype = dtype
 
     def partial_fit(self, X, y=None):
-        """Does nothing: this transformer is stateless.
+        """No-op: this transformer is stateless.
 
         This method is just there to mark the fact that this transformer
         can work in a streaming setup.
@@ -772,6 +772,14 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         ----------
         X : ndarray of shape [n_samples, n_features]
             Training data.
+
+        y : None
+            This parameter is ignored.
+
+        Returns
+        -------
+        self : object
+            HashingVectorizer instance.
         """
         return self
 
@@ -789,7 +797,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted vectorizer.
+            HashingVectorizer instance.
         """
         # triggers a parameter validation
         if isinstance(X, str):
