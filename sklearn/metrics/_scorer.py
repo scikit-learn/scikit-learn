@@ -47,6 +47,7 @@ from . import (
     jaccard_score,
     mean_absolute_percentage_error,
     specificity_score,
+    npv_score,
 )
 
 from .cluster import adjusted_rand_score
@@ -788,6 +789,7 @@ for name, metric in [
     ("f1", f1_score),
     ("jaccard", jaccard_score),
     ("specificity", specificity_score),
+    ("npv", npv_score),
 ]:
     SCORERS[name] = make_scorer(metric, average="binary")
     for average in ["macro", "micro", "samples", "weighted"]:
