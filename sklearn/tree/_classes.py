@@ -1021,6 +1021,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
+        classes : array-like of shape (n_classes,), default=None
+            List of all the classes that can possibly appear in the y vector.
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+
         X_idx_sorted : deprecated, default="deprecated"
             This parameter is deprecated and has no effect.
             It will be removed in 1.1 (renaming of 0.26).
@@ -1448,6 +1453,11 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         check_input : bool, default=True
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
+
+        classes : array-like of shape (n_classes,), default=None
+            List of all the classes that can possibly appear in the y vector.
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
 
         X_idx_sorted : deprecated, default="deprecated"
             This parameter is deprecated and has no effect.
