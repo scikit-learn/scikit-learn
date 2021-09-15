@@ -562,13 +562,18 @@ First, the precomputed graph can be re-used multiple times, for instance while
 varying a parameter of the estimator. This can be done manually by the user, or
 using the caching properties of the scikit-learn pipeline:
 
-    >>> from sklearn.manifold import Isomap
     >>> from sklearn.neighbors import KNeighborsTransformer
+    >>> from sklearn.manifold import Isomap
     >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.datasets import make_regression
+    >>> X, _ = make_regression(n_samples=50, n_features=25, random_state=0)
     >>> estimator = make_pipeline(
-    ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
-    ...     Isomap(metric='precomputed'),
+    ...     KNeighborsTransformer(mode='distance'),
+    ...     Isomap(n_components=3, metric='precomputed'),
     ...     memory='/path/to/cache')
+    >>> X_embedded = estimator.fit_transform(X)
+    >>> X_embedded.shape
+    (50, 3)
 
 Second, precomputing the graph can give finer control on the nearest neighbors
 estimation, for instance enabling multiprocessing though the parameter
