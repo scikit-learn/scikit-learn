@@ -498,7 +498,7 @@ class SpectralBiclustering(BaseSpectral):
         self.n_best = n_best
 
     def _check_parameters(self, n_sample):
-        super()._check_parameters()
+        super()._check_parameters(n_sample)
         legal_methods = ("bistochastic", "scale", "log")
         if self.method not in legal_methods:
             raise ValueError(
