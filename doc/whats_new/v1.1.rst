@@ -38,6 +38,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Add :func:`metrics.fpr_tpr_fnr_tnr_scores`
+  and :func:`metrics.specificity_score`.
+  :pr:`19556` by :user:`Hao Chun Chang <haochunchang>`
+  and :user:`Pawel Kranzberg <Pawel-Kranzberg>`.
+
 :mod:`sklearn.utils`
 ....................
 
