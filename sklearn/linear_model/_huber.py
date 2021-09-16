@@ -205,6 +205,11 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         A boolean mask which is set to True where the samples are identified
         as outliers.
 
+    See Also
+    --------
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
+
     References
     ----------
     .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
