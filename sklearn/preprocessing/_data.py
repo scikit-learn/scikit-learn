@@ -1860,7 +1860,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         values.
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
 
@@ -1877,6 +1877,10 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    normalize : Equivalent function without the estimator API.
+
     Notes
     -----
     This estimator is stateless (besides constructor parameters), the
@@ -1885,10 +1889,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
-    See Also
-    --------
-    normalize : Equivalent function without the estimator API.
 
     Examples
     --------
@@ -1920,8 +1920,8 @@ class Normalizer(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data to estimate the normalization parameters.
 
-        y : None
-            Ignored.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
