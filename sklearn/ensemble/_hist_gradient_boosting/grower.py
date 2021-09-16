@@ -74,14 +74,14 @@ class TreeNode:
         Indices of the interaction sets/groups that have to be applied on
         splits of child nodes. The fewer sets the harder the constraint as
         fewer sets contain fewer features.
+    children_lower_bound : float
+    children_upper_bound : float
     """
 
     split_info = None
     left_child = None
     right_child = None
     histograms = None
-    allowed_features = None
-    interaction_cst_idx = None
 
     # start and stop indices of the node in the splitter.partition
     # array. Concretely,
@@ -102,6 +102,8 @@ class TreeNode:
         self.sum_hessians = sum_hessians
         self.value = value
         self.is_leaf = False
+        self.allowed_features = None
+        self.interaction_cst_idx = None
         self.set_children_bounds(float("-inf"), float("+inf"))
 
     def set_children_bounds(self, lower, upper):
