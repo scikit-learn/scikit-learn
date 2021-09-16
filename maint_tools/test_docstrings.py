@@ -28,7 +28,6 @@ DOCSTRING_IGNORE_LIST = [
     "Normalizer",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
-    "OutputCodeClassifier",
     "PLSCanonical",
     "PLSRegression",
     "PLSSVD",
