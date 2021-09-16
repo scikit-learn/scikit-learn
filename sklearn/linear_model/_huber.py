@@ -205,6 +205,13 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         A boolean mask which is set to True where the samples are identified
         as outliers.
 
+    References
+    ----------
+    .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
+           Concomitant scale estimates, pg 172
+    .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
+           https://statweb.stanford.edu/~owen/reports/hhu.pdf
+
     Examples
     --------
     >>> import numpy as np
@@ -227,13 +234,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Huber coefficients: [17.7906... 31.0106...]
     >>> print("Linear Regression coefficients:", linear.coef_)
     Linear Regression coefficients: [-1.9221...  7.0226...]
-
-    References
-    ----------
-    .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
-           Concomitant scale estimates, pg 172
-    .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
-           https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
 
     def __init__(
