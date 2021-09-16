@@ -315,9 +315,9 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 "returning full covariance.")
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = check_array(X, ensure_2d=True, dtype="numeric")
+            X = check_array(X, ensure_2d=True, dtype="numeric", force_all_finite=False)
         else:
-            X = check_array(X, ensure_2d=False, dtype=None)
+            X = check_array(X, ensure_2d=False, dtype=None, force_all_finite=False)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             if self.kernel is None:
