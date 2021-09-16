@@ -99,8 +99,8 @@ def _get_response(X, estimator, response_method, pos_label=None):
                 f"{pos_label} instead of one of {estimator.classes_}"
             ) from e
     else:
-        pos_label = estimator.classes_[1]
         class_idx = 1
+        pos_label = estimator.classes_[class_idx]
 
     if y_pred.ndim != 1:  # `predict_proba`
         y_pred_shape = y_pred.shape[1]
