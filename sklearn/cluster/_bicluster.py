@@ -104,7 +104,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_init = n_init
         self.random_state = random_state
 
-    def _check_parameters(self, n_samples):
+    def _check_parameters(self):
         legal_svd_methods = ("randomized", "arpack")
         if self.svd_method not in legal_svd_methods:
             raise ValueError(
@@ -331,8 +331,8 @@ class SpectralCoclustering(BaseSpectral):
             n_clusters, svd_method, n_svd_vecs, mini_batch, init, n_init, random_state
         )
 
-    def _check_parameters(self, n_sample):
-        super()._check_parameters(n_sample)
+    def _check_parameters(self, n_samples):
+        super()._check_parameters(n_samples)
         legal_methods = ('randomized', 'arpack')
         if self.method not in legal_methods:
             raise ValueError(
@@ -515,8 +515,8 @@ class SpectralBiclustering(BaseSpectral):
         self.n_components = n_components
         self.n_best = n_best
 
-    def _check_parameters(self, n_sample):
-        super()._check_parameters(n_sample)
+    def _check_parameters(self, n_samples):
+        super()._check_parameters()
         legal_methods = ("bistochastic", "scale", "log")
         if self.method not in legal_methods:
             raise ValueError(
