@@ -532,9 +532,17 @@ class SpectralBiclustering(BaseSpectral):
         try:
             int(self.n_clusters)
         except TypeError:
-            r, c = self.n_clusters
-            int(r)
-            int(c)
+            try:
+                r, c = self.n_clusters
+                int(r)
+                int(c)
+            except (ValueError, TypeError) as e:
+                raise ValueError(
+                    "Incorrect parameter n_clusters has value:"
+                    " {}. It should either be a single integer"
+                    " or an iterable with two integers:"
+                    " (n_row_clusters, n_column_clusters)"
+                ) from e
         check_scalar(self.n_components, "n_components", target_type=numbers.Integral,
                      min_val=1)
         check_scalar(self.n_best, "n_best", target_type=numbers.Integral,
