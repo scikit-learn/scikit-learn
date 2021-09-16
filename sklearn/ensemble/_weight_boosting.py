@@ -33,6 +33,7 @@ from scipy.special import xlogy
 
 from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
+from ..exceptions import ConvergenceWarning
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, _safe_indexing
@@ -1183,16 +1184,14 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
                 if self.no_improvement == "reset_weights":
                     update_weight_method = "reset"
                 elif self.no_improvement == "stop":
-                    warnings.warn(
-                        "Terminates training because the estimator error has increased."
-                    )
                     return None, None, None
                 elif self.no_improvement == "warn":
                     update_weight_method = "update"
                     warnings.warn(
-                        "The estimator error has increased. "
+                        "The estimator training error has increased. "
                         "Please consider hyper-parameter tuning for "
-                        "the base estimators."
+                        "the base estimators.",
+                        ConvergenceWarning,
                     )
                 else:
                     update_weight_method = "update"

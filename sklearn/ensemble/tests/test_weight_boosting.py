@@ -644,5 +644,5 @@ def test_adaboost_regressor_reset_weights():
     assert mae_cont == mae_any
 
     adaboost_500.set_params(no_improvement="warn")
-    with pytest.warns(UserWarning, match="The estimator error has increased."):
+    with pytest.warns(UserWarning, match="The estimator training error has increased."):
         adaboost_500.fit(X_train, y_train)
