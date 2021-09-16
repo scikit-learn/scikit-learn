@@ -66,6 +66,11 @@ enhance the functionality of scikit-learn's estimators.
 
 **Experimentation frameworks**
 
+- `Neptune <https://neptune.ai/>`_ Metadata store for MLOps, 
+  built for teams that run a lot of experiments.‌ It gives you a single 
+  place to log, store, display, organize, compare, and query all your 
+  model building metadata.
+
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
 
@@ -342,6 +347,9 @@ and promote community efforts.
   (`source <https://github.com/apachecn/sklearn-doc-zh>`__)
 - `Persian translation <https://sklearn.ir/>`_
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
+- `Spanish translation <https://qu4nt.github.io/sklearn-doc-es/>`_
+  (`source <https://github.com/qu4nt/sklearn-doc-es>`__)
+  
 
 .. rubric:: Footnotes
 

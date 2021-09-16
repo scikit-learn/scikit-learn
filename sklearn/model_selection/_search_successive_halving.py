@@ -227,8 +227,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
         ----------
 
         X : array-like, shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_output), optional
             Target relative to X for classification or regression;
@@ -240,7 +240,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of string -> object
-            Parameters passed to the ``fit`` method of the estimator
+            Parameters passed to the ``fit`` method of the estimator.
+
+        Returns
+        -------
+        self : object
+            Instance of fitted estimator.
         """
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator)
@@ -410,7 +415,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     Parameters
     ----------
-    estimator : estimator object.
+    estimator : estimator object
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
@@ -496,7 +501,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             deactivating shuffling (`shuffle=False`), or by setting the
             `cv`'s `random_state` parameter to an integer.
 
-    scoring : string, callable, or None, default=None
+    scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
@@ -513,7 +518,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -626,10 +631,20 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         the underlying estimator is a classifier.
 
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if the
-        underlying estimator exposes such an attribute when fit.
+        Number of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `n_features_in_` when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `feature_names_in_` when fit.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -730,7 +745,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     Parameters
     ----------
-    estimator : estimator object.
+    estimator : estimator object
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
@@ -822,7 +837,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
             deactivating shuffling (`shuffle=False`), or by setting the
             `cv`'s `random_state` parameter to an integer.
 
-    scoring : string, callable, or None, default=None
+    scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
@@ -839,7 +854,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -954,10 +969,20 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         the underlying estimator is a classifier.
 
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if the
-        underlying estimator exposes such an attribute when fit.
+        Number of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `n_features_in_` when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `feature_names_in_` when fit.
+
+        .. versionadded:: 1.0
 
     See Also
     --------

@@ -89,7 +89,7 @@ vectorizer = DictVectorizer()
 vectorizer.fit_transform(token_freqs(d) for d in raw_data)
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
-print("Found %d unique terms" % len(vectorizer.get_feature_names()))
+print("Found %d unique terms" % len(vectorizer.get_feature_names_out()))
 print()
 
 print("FeatureHasher on frequency dicts")

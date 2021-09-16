@@ -189,6 +189,12 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     DBSCAN : A similar clustering for a specified neighborhood radius (eps).
@@ -262,13 +268,13 @@ class OPTICS(ClusterMixin, BaseEstimator):
             A feature array, or array of distances between samples if
             metric='precomputed'.
 
-        y : ignored
-            Ignored.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
-        self : instance of OPTICS
-            The instance.
+        self : object
+            Returns a fitted instance of self.
         """
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
@@ -354,7 +360,7 @@ def _validate_size(size, n_samples, param_name):
 
 # OPTICS helper functions
 def _compute_core_distances_(X, neighbors, min_samples, working_memory):
-    """Compute the k-th nearest neighbor of each sample
+    """Compute the k-th nearest neighbor of each sample.
 
     Equivalent to neighbors.kneighbors(X, self.min_samples)[0][:, -1]
     but with more memory efficiency.

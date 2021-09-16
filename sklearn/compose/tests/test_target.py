@@ -375,3 +375,24 @@ def test_transform_target_regressor_route_pipeline():
     pip.fit(X, y, **{"est__check_input": False})
 
     assert regr.transformer_.fit_counter == 1
+
+
+class DummyRegressorWithExtraPredictParams(DummyRegressor):
+    def predict(self, X, check_input=True):
+        # In the test below we make sure that the check input parameter is
+        # passed as false
+        self.predict_called = True
+        assert not check_input
+        return super().predict(X)
+
+
+def test_transform_target_regressor_pass_extra_predict_parameters():
+    # Checks that predict kwargs are passed to regressor.
+    X, y = friedman
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraPredictParams(), transformer=DummyTransformer()
+    )
+
+    regr.fit(X, y)
+    regr.predict(X, check_input=False)
+    assert regr.regressor_.predict_called

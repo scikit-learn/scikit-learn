@@ -30,6 +30,10 @@ jobs:
     THREADPOOLCTL_VERSION: 'latest'
     COVERAGE: 'false'
     TEST_DOCSTRINGS: 'false'
+    BLAS: 'openblas'
+    # Set in azure-pipelines.yml
+    DISTRIB: ''
+    DOCKER_CONTAINER: ''
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
@@ -45,7 +49,7 @@ jobs:
         -w /io
         --detach
         --name skcontainer
-        -e DISTRIB=debian-32
+        -e DISTRIB=$DISTRIB
         -e TEST_DIR=/temp_dir
         -e JUNITXML=$JUNITXML
         -e VIRTUALENV=testvenv
@@ -63,7 +67,8 @@ jobs:
         -e OMP_NUM_THREADS=$OMP_NUM_THREADS
         -e OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
-        i386/debian:10.9
+        -e BLAS=$BLAS
+        $DOCKER_CONTAINER
         sleep 1000000
       displayName: 'Start container'
     - script: >
