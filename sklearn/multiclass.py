@@ -1091,7 +1091,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        y : array-like of shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             Predicted multi-class targets.
         """
         check_is_fitted(self)
