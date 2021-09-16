@@ -276,7 +276,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted HuberRegressor estimator.
+            Fitted `HuberRegressor` estimator.
         """
         X, y = self._validate_data(
             X,
