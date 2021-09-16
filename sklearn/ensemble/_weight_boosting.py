@@ -1190,7 +1190,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
                 elif self.no_improvement == "warn":
                     update_weight_method = "update"
                     warnings.warn(
-                        "The estimator error has increased. "
+                        "The estimator training error has increased. "
                         "Please consider hyper-parameter tuning for "
                         "the base estimators."
                     )
