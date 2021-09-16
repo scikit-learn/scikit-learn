@@ -2,6 +2,7 @@
 #
 # License: BSD 3 clause
 
+import platform
 import pytest
 
 import numpy as np
@@ -54,6 +55,11 @@ def test_linear_model_normalize_deprecation_message(
         model.fit(X, y)
     # Filter record in case other unrelated warnings are raised
     unwanted = [r for r in record if r.category != warning_category]
+    if platform.system() == "Darwin" and platform.processor() == "arm":
+        # On macOS with a Apple Silicon M1 processor, we can get a spurious
+        # RuntimeWarning when executing this code. Let us just filter those
+        # warnings out. See: https://github.com/numpy/numpy/issues/18555
+        unwanted = [r for r in unwanted if r.category != RuntimeWarning]
     if len(unwanted):
         msg = "unexpected warnings:\n"
         for w in unwanted:
