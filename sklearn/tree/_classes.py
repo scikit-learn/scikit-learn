@@ -446,88 +446,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def partial_fit(self, X, y, classes=None, sample_weight=None, check_input=True):
-        # Determine output settings
-        is_classification = is_classifier(self)
-
-        if is_classification:
-            first_call = _check_partial_fit_first_call(self, classes=classes)
-        else:
-            first_call = _check_partial_fit_first_call(self, classes=[])
-
-        # Fit if no tree exists yet
-        if first_call:
-            self.fit(
-                X,
-                y,
-                sample_weight=sample_weight,
-                check_input=check_input,
-                classes=classes,
-            )
-            return self
-
-        if self.ccp_alpha < 0.0:
-            raise ValueError("ccp_alpha must be greater than or equal to 0")
-
-        if check_input:
-            # Need to validate separately here.
-            # We can't pass multi_ouput=True because that would allow y to be
-            # csr.
-            check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
-            check_y_params = dict(ensure_2d=False, dtype=None)
-            X, y = self._validate_data(
-                X, y, reset=False, validate_separately=(check_X_params, check_y_params)
-            )
-            if issparse(X):
-                X.sort_indices()
-
-                if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
-                    raise ValueError(
-                        "No support for np.int64 index based sparse matrices"
-                    )
-
-            if self.criterion == "poisson":
-                if np.any(y < 0):
-                    raise ValueError(
-                        "Some value(s) of y are negative which is"
-                        " not allowed for Poisson regression."
-                    )
-                if np.sum(y) <= 0:
-                    raise ValueError(
-                        "Sum of y is not positive which is "
-                        "necessary for Poisson regression."
-                    )
-
-        if X.shape[1] != self.n_features_in_:
-            msg = "Number of features %d does not match previous data %d."
-            raise ValueError(msg % (X.shape[1], self.n_features_in_))
-
-        y = np.atleast_1d(y)
-
-        if y.ndim == 1:
-            # reshape is necessary to preserve the data contiguity against vs
-            # [:, np.newaxis] that does not.
-            y = np.reshape(y, (-1, 1))
-
-        if is_classification:
-            check_classification_targets(y)
-            y = np.copy(y)
-
-            y_encoded = np.zeros(y.shape, dtype=int)
-            for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
-            y = y_encoded
-
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
-
-        # Update tree
-        self.builder_.update(self.tree_, X, y, sample_weight)
-
-        self._prune_tree()
-
-        return self
-
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
         if check_input:
@@ -1094,9 +1012,83 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().partial_fit(
-            X, y, classes=classes, sample_weight=sample_weight, check_input=check_input
-        )
+        first_call = _check_partial_fit_first_call(self, classes=classes)
+
+        # Fit if no tree exists yet
+        if first_call:
+            self.fit(
+                X,
+                y,
+                sample_weight=sample_weight,
+                check_input=check_input,
+                classes=classes,
+            )
+            return self
+
+        if self.ccp_alpha < 0.0:
+            raise ValueError("ccp_alpha must be greater than or equal to 0")
+
+        if check_input:
+            # Need to validate separately here.
+            # We can't pass multi_ouput=True because that would allow y to be
+            # csr.
+            check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
+            check_y_params = dict(ensure_2d=False, dtype=None)
+            X, y = self._validate_data(
+                X, y, reset=False, validate_separately=(check_X_params, check_y_params)
+            )
+            if issparse(X):
+                X.sort_indices()
+
+                if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
+                    raise ValueError(
+                        "No support for np.int64 index based sparse matrices"
+                    )
+
+            if self.criterion == "poisson":
+                if np.any(y < 0):
+                    raise ValueError(
+                        "Some value(s) of y are negative which is"
+                        " not allowed for Poisson regression."
+                    )
+                if np.sum(y) <= 0:
+                    raise ValueError(
+                        "Sum of y is not positive which is "
+                        "necessary for Poisson regression."
+                    )
+
+        if X.shape[1] != self.n_features_in_:
+            msg = "Number of features %d does not match previous data %d."
+            raise ValueError(msg % (X.shape[1], self.n_features_in_))
+
+        y = np.atleast_1d(y)
+
+        if y.ndim == 1:
+            # reshape is necessary to preserve the data contiguity against vs
+            # [:, np.newaxis] that does not.
+            y = np.reshape(y, (-1, 1))
+
+        check_classification_targets(y)
+        y = np.copy(y)
+
+        classes = self.classes_
+        if self.n_outputs_ == 1:
+            classes = [classes]
+
+        y_encoded = np.zeros(y.shape, dtype=int)
+        for i in range(X.shape[0]):
+            for j in range(self.n_outputs_):
+                y_encoded[i, j] = np.where(classes[j] == y[i, j])[0][0]
+        y = y_encoded
+
+        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+        # Update tree
+        self.builder_.update(self.tree_, X, y, sample_weight)
+
+        self._prune_tree()
+
         return self
 
     def predict_proba(self, X, check_input=True):
@@ -1467,8 +1459,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         classes : array-like of shape (n_classes,), default=None
             List of all the classes that can possibly appear in the y vector.
-            Must be provided at the first call to partial_fit, can be omitted
-            in subsequent calls.
 
         X_idx_sorted : deprecated, default="deprecated"
             This parameter is deprecated and has no effect.
@@ -1487,48 +1477,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             y,
             sample_weight=sample_weight,
             check_input=check_input,
-            classes=classes,
             X_idx_sorted=X_idx_sorted,
-        )
-        return self
-
-    def partial_fit(self, X, y, classes=None, sample_weight=None, check_input=True):
-        """Update a decision tree regressor from the training set (X, y).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The training input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csc_matrix``.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            The target values (class labels) as integers or strings.
-
-        classes : array-like of shape (n_classes,), default=None
-            List of all the classes that can possibly appear in the y vector.
-            Must be provided at the first call to partial_fit, can be omitted
-            in subsequent calls.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. Splits are also
-            ignored if they would result in any single class carrying a
-            negative weight in either child node.
-
-        check_input : bool, default=True
-            Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
-
-        Returns
-        -------
-        self : DecisionTreeRegressor
-            Fitted estimator.
-        """
-
-        super().partial_fit(
-            X, y, classes=classes, sample_weight=sample_weight, check_input=check_input
         )
         return self
 
