@@ -347,10 +347,9 @@ class SpectralCoclustering(BaseSpectral):
         try:
             int(self.n_clusters)
         except TypeError:
-            try:
-                r, c = self.n_clusters
-                int(r)
-                int(c)
+            r, c = self.n_clusters
+            int(r)
+            int(c)
 
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
@@ -533,10 +532,9 @@ class SpectralBiclustering(BaseSpectral):
         try:
             int(self.n_clusters)
         except TypeError:
-            try:
-                r, c = self.n_clusters
-                int(r)
-                int(c)
+            r, c = self.n_clusters
+            int(r)
+            int(c)
         check_scalar(self.n_components, "n_components", target_type=numbers.Integral,
                      min_val=1)
         check_scalar(self.n_best, "n_best", target_type=numbers.Integral,
