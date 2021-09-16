@@ -332,7 +332,7 @@ class SpectralCoclustering(BaseSpectral):
         )
 
     def _check_parameters(self, n_samples):
-        super()._check_parameters(n_samples)
+        super()._check_parameters()
         legal_methods = ('randomized', 'arpack')
         if self.method not in legal_methods:
             raise ValueError(
