@@ -353,7 +353,6 @@ class SpectralCoclustering(BaseSpectral):
                 int(c)
 
     def _fit(self, X):
-        super().fit(X)
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, v = self._svd(normalized_data, n_sv, n_discard=1)
@@ -544,7 +543,6 @@ class SpectralBiclustering(BaseSpectral):
                      min_val=1, max_val=self.n_components)
 
     def _fit(self, X):
-        super().fit(X)
         n_sv = self.n_components
         if self.method == "bistochastic":
             normalized_data = _bistochastic_normalize(X)
