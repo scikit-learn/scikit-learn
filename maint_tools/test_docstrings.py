@@ -25,7 +25,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultiTaskLassoCV",
     "NearestCentroid",
     "NeighborhoodComponentsAnalysis",
-    "Normalizer",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "OutputCodeClassifier",
