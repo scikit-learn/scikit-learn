@@ -161,6 +161,8 @@ cdef class Splitter:
         be ignored.
     hessians_are_constant: bool, default is False
         Whether hessians are constant.
+    n_threads : int, default=1
+         Number of OpenMP threads to use.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
@@ -392,11 +394,12 @@ cdef class Splitter:
                     &left_indices_buffer[offset_in_buffers[thread_idx]],
                     sizeof(unsigned int) * left_counts[thread_idx]
                 )
-                memcpy(
-                    &sample_indices[right_offset[thread_idx]],
-                    &right_indices_buffer[offset_in_buffers[thread_idx]],
-                    sizeof(unsigned int) * right_counts[thread_idx]
-                )
+                if right_counts[thread_idx] > 0:
+                    memcpy(
+                        &sample_indices[right_offset[thread_idx]],
+                        &right_indices_buffer[offset_in_buffers[thread_idx]],
+                        sizeof(unsigned int) * right_counts[thread_idx]
+                    )
 
         return (sample_indices[:right_child_position],
                 sample_indices[right_child_position:],

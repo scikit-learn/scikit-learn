@@ -474,11 +474,6 @@ class TreeGrower:
         if node.split_info.gain <= 0:  # no valid split
             self._finalize_leaf(node)
         else:
-            # Update node.allowed_features and node.interaction_cst_idx to be inherited
-            # by child nodes.
-            if self.interaction_cst is not None:
-                self._update_interactions(node)
-
             heappush(self.splittable_nodes, node)
 
     def split_next(self):
@@ -532,10 +527,14 @@ class TreeGrower:
 
         # set interaction constraints (the indices of the constraints sets)
         if self.interaction_cst is not None:
-            left_child_node.interaction_cst_idx = node.interaction_cst_idx
-            left_child_node.allowed_features = node.allowed_features
-            right_child_node.interaction_cst_idx = node.interaction_cst_idx
-            right_child_node.allowed_features = node.allowed_features
+            # Calculate allowed_features and interaction_cst_idx only once and inherit
+            # them by child nodes.
+            (
+                left_child_node.allowed_features,
+                left_child_node.interaction_cst_idx,
+            ) = self._compute_interactions(node)
+            right_child_node.interaction_cst_idx = left_child_node.interaction_cst_idx
+            right_child_node.allowed_features = left_child_node.allowed_features
 
         if not self.has_missing_values[node.split_info.feature_idx]:
             # If no missing values are encountered at fit time, then samples
@@ -638,10 +637,8 @@ class TreeGrower:
 
         return left_child_node, right_child_node
 
-    def _update_interactions(self, node):
-        r"""Update features allowed by interactions for child nods.
-
-        Update node.allowed_features and node.interaction_cst_idx.
+    def _compute_interactions(self, node):
+        r"""Compute features allowed by interactions to be inherited by child nodes.
 
         Example: Assume constraints [{0, 1}, {1, 2}].
            1      <- Both constraint groups could be applied from now on
@@ -652,8 +649,17 @@ class TreeGrower:
         Parameters:
         ----------
         node : TreeNode
-            A node that might have children and whose interaction info is updated
-            inplace.
+            A node that might have children. Based on its feature_idx, the interaction
+            constraints for possible child nodes are computed.
+
+        Returns
+        -------
+        allowed_features : None or ndarray, dtype=int
+            Indices of features allowed to split for children.
+        interaction_cst_idx : None or list of ints
+            Indices of the interaction sets/groups that have to be applied on
+            splits of child nodes. The fewer sets the harder the constraint as
+            fewer sets contain fewer features.
         """
         # Note:
         #  - Case of no interactions is already captured before function call.
@@ -665,8 +671,7 @@ class TreeGrower:
             if node.split_info.feature_idx in self.interaction_cst[i]:
                 interaction_cst_idx.append(i)
                 allowed_features.update(self.interaction_cst[i])
-        node.allowed_features = np.array(list(allowed_features), dtype=np.uint32)
-        node.interaction_cst_idx = interaction_cst_idx
+        return np.array(list(allowed_features), dtype=np.uint32), interaction_cst_idx
 
     def _finalize_leaf(self, node):
         """Make node a leaf of the tree being grown."""
