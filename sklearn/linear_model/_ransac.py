@@ -566,6 +566,7 @@ class RANSACRegressor(
         Parameters
         ----------
         X : numpy array of shape [n_samples, n_features]
+            Input data.
 
         Returns
         -------
