@@ -96,7 +96,7 @@ def _get_response(X, estimator, response_method, pos_label=None):
         except ValueError as e:
             raise ValueError(
                 "The class provided by 'pos_label' is unknown. Got "
-                f"{pos_label} instead of one of {estimator.classes_}"
+                f"{pos_label} instead of one of {set(estimator.classes_)}"
             ) from e
     else:
         class_idx = 1
