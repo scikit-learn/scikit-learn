@@ -214,6 +214,12 @@ class RANSACRegressor(
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
+    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
+
     References
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
