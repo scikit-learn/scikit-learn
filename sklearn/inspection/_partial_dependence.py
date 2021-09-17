@@ -292,7 +292,7 @@ def partial_dependence(
           This is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
-          probabilities. Since the `'recursion'` method implicitely computes
+          probabilities. Since the `'recursion'` method implicitly computes
           the average of the Individual Conditional Expectation (ICE) by
           design, it is not compatible with ICE and thus `kind` must be
           `'average'`.

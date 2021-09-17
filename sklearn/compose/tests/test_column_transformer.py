@@ -1666,7 +1666,7 @@ def test_get_feature_names_empty_selection(selector):
 def test_feature_names_in_():
     """Feature names are stored in column transformer.
 
-    Column transfomer deliberately does not check for column name consistency.
+    Column transformer deliberately does not check for column name consistency.
     It only checks that the non-dropped names seen in `fit` are seen
     in `transform`. This behavior is already tested in
     `test_feature_name_validation_missing_columns_drop_passthough`"""

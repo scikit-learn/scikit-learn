@@ -57,7 +57,7 @@ ax.set_title("Decision Tree")
 tree_disp = PartialDependenceDisplay.from_estimator(tree, X, ["age", "bmi"], ax=ax)
 
 # %%
-# The partial depdendence curves can be plotted for the multi-layer perceptron.
+# The partial dependence curves can be plotted for the multi-layer perceptron.
 # In this case, `line_kw` is passed to
 # :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` to change the
 # color of the curve.

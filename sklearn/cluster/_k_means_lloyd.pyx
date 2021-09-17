@@ -279,7 +279,7 @@ def lloyd_iter_chunked_sparse(
         int n_features = X.shape[1]
         int n_clusters = centers_new.shape[0]
 
-        # Chosed same as for dense. Does not have the same impact since with
+        # Choose same as for dense. Does not have the same impact since with
         # sparse data the pairwise distances matrix is not precomputed.
         # However, splitting in chunks is necessary to get parallelism.
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
