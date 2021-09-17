@@ -607,15 +607,26 @@ def test_grower_interaction_constraints():
             max_leaf_nodes=None,
             min_samples_leaf=1,
             interaction_cst=interaction_cst,
-            n_threads=2,
+            n_threads=n_threads,
         )
         grower.grow()
 
         root_feature_splits.append(grower.root.split_info.feature_idx)
 
-        map = {0: {0, 1}, 1: {0, 1, 2}, 2: {1, 2}}
         if grower.root.split_info.feature_idx in {0, 1, 2}:
-            constraint_set = map[grower.root.split_info.feature_idx]
+            root_feature_idx = grower.root.split_info.feature_idx
+            constraint_set = {0: {0, 1}, 1: {0, 1, 2}, 2: {1, 2}}[root_feature_idx]
+            for node in (grower.root.left_child, grower.root.right_child):
+                # test allowed_features of children of root node
+                assert_array_equal(node.allowed_features, list(constraint_set))
+            if root_feature_idx in {0, 2}:
+                # test that {0, 1} and {1, 2} don't interact with each other
+                for node in get_all_children(grower.root):
+                    if not node.is_leaf:
+                        assert (
+                            node.split_info.feature_idx
+                            in {0: {0, 1}, 2: {1, 2}}[root_feature_idx]
+                        )
             for node in get_all_children(grower.root):
                 if not node.is_leaf:
                     assert node.split_info.feature_idx in constraint_set
