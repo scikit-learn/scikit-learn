@@ -374,7 +374,7 @@ isolation from the Python packages installed via the system packager. When
 using an isolated environment, ``pip3`` should be replaced by ``pip`` in the
 above commands.
 
-When precompiled wheels of the runtime dependencies are not avalaible for your
+When precompiled wheels of the runtime dependencies are not available for your
 architecture (e.g. ARM), you can install the system versions:
 
 .. prompt:: bash $

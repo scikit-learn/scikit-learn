@@ -537,7 +537,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
             for classes, label in zip(classes_, outlier_label_):
                 if _is_arraylike(label) and not isinstance(label, str):
-                    # ensure the outlier lable for each output is a scalar.
+                    # ensure the outlier label for each output is a scalar.
                     raise TypeError(
                         "The outlier_label of classes {} is "
                         "supposed to be a scalar, got "

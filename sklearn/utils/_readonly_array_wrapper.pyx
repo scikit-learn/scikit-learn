@@ -1,5 +1,5 @@
 """
-ReadonlyArrayWrapper implements the buffer protocol to make the wraped buffer behave as if
+ReadonlyArrayWrapper implements the buffer protocol to make the wrapped buffer behave as if
 writeable, even for readonly buffers. This way, even readonly arrays can be passed as
 argument of type (non const) memoryview.
 This is a workaround for the missing support for const fused-typed memoryviews in

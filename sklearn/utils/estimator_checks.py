@@ -2625,7 +2625,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
 
 
 def _choose_check_classifiers_labels(name, y, y_names):
-    # Semisupervised classifers use -1 as the indicator for an unlabeled
+    # Semisupervised classifiers use -1 as the indicator for an unlabeled
     # sample.
     return (
         y

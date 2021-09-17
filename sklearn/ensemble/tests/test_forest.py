@@ -597,7 +597,7 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2):
 @pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
 def test_forest_oob_warning(ForestEstimator):
     """Check that a warning is raised when not enough estimator and the OOB
-    estimates will be inacurrate."""
+    estimates will be inaccurate."""
     estimator = ForestEstimator(
         n_estimators=1,
         oob_score=True,

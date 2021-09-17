@@ -134,7 +134,7 @@ plt.show()
 #
 # On the other hand, the PLS regressor manages to capture the effect of the
 # direction with the lowest variance, thanks to its use of target information
-# during the transformation: it can recogize that this direction is actually
+# during the transformation: it can recognize that this direction is actually
 # the most predictive. We note that the first PLS component is negatively
 # correlated with the target, which comes from the fact that the signs of
 # eigenvectors are arbitrary.
