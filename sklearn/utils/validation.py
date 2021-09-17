@@ -1693,8 +1693,10 @@ def _get_feature_names(X):
         return feature_names
 
 
-def _check_feature_names_in(estimator, input_features=None):
-    """Get output feature names for transformation.
+def _check_feature_names_in(estimator, input_features=None, *, generate_names=True):
+    """Check input_features and generate names if needed.
+
+    Commonly used in :term:`get_feature_names_out`.
 
     Parameters
     ----------
@@ -1707,9 +1709,15 @@ def _check_feature_names_in(estimator, input_features=None):
         - If `input_features` is an array-like, then `input_features` must
             match `feature_names_in_` if `feature_names_in_` is defined.
 
+    generate_names : bool, default=True
+        Wether to generate names when `input_features` is `None` and
+        `estimator.feature_names_in_` is not defined. This is useful for jransformers
+        validates `input_features` but does not require them in
+        :term:`get_feature_names_out` i.e. `PCA`.
+
     Returns
     -------
-    feature_names_in : ndarray of str
+    feature_names_in : ndarray of str or `None`
         Feature names in.
     """
 
@@ -1732,6 +1740,9 @@ def _check_feature_names_in(estimator, input_features=None):
 
     if feature_names_in_ is not None:
         return feature_names_in_
+
+    if not generate_names:
+        return
 
     # Generates feature names if `n_features_in_` is defined
     if n_features_in_ is None:

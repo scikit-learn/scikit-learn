@@ -35,6 +35,7 @@ from ..utils.validation import (
     check_random_state,
     _check_sample_weight,
     FLOAT_DTYPES,
+    _check_feature_names_in,
 )
 
 from ._encoders import OneHotEncoder
@@ -1833,7 +1834,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         return X
 
 
-class Normalizer(TransformerMixin, BaseEstimator):
+class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -2004,7 +2005,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(TransformerMixin, BaseEstimator):
+class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Binarize data (set feature values to 0 or 1) according to a threshold.
 
     Values greater than the threshold map to 1, while values less than
@@ -2265,6 +2266,26 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         K += self.K_fit_all_
 
         return K
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        _check_feature_names_in(self, input_features, generate_names=False)
+        class_name = self.__class__.__name__.lower()
+        return np.asarray(
+            [f"{class_name}{i}" for i in range(self.n_features_in_)],
+            dtype=object,
+        )
 
     def _more_tags(self):
         return {"pairwise": True}
