@@ -39,7 +39,6 @@ DOCSTRING_IGNORE_LIST = [
     "SGDOneClassSVM",
     "SGDRegressor",
     "SelfTrainingClassifier",
-    "SimpleImputer",
     "SparseRandomProjection",
     "SpectralBiclustering",
     "SpectralClustering",
