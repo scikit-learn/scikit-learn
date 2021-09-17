@@ -772,35 +772,11 @@ Picking by largest amount of data points in most cases produces result as
 accurate as picking by SSE and is faster (especially for larger amount of data
 points, where calculating error may be costly).
 
-Difference between Bisect K-Means and regular K-Means can be seen on example below -
-while regular K-Means tend to create non-related clusters, clusters from Bisect K-Means
-create quite visible hierarchy.
+Difference between Bisect K-Means and regular K-Means can be seen on example
+:ref:`plot_kmeans_comparison.py` - while regular K-Means tend to create non-related
+clusters, clusters from Bisect K-Means are well ordered and create quite visible hierarchy.
 
-  >>> from sklearn.cluster import KMeans, BisectKMeans
-  >>> import numpy as np
-  >>> X = np.random.RandomState(0).uniform(-10, 10, (20, 2))
-  >>>
-  >>> kmeans = KMeans(n_clusters=4, random_state=0).fit(X)
-  >>> b_means = BisectKMeans(n_clusters=4, random_state=0, bisect_strategy='largest_cluster').fit(X)
-  >>> with np.printoptions(precision = 3):
-  ...   kmeans.cluster_centers_
-  array([[-7.739,  5.236],
-         [ 0.294,  3.564],
-         [-8.579, -8.257],
-         [ 7.824,  3.053]])
-
-  >>> with np.printoptions(precision = 3):
-  ...   b_means.cluster_centers_
-  array([[-7.879,  2.987],
-         [ 7.824,  3.053],
-         [ 0.08 ,  6.565],
-         [ 0.466,  1.163]])
-  >>> kmeans.labels_
-  array([1, 1, 1, 1, 3, 3, 1, 2, 0, 3, 3, 1, 0, 0, 1, 0, 1, 0, 1, 3],
-        dtype=int32)
-  >>> b_means.labels_
-  array([2, 3, 3, 2, 1, 1, 2, 0, 0, 1, 1, 2, 0, 0, 3, 0, 3, 0, 3, 1],
-        dtype=int32)
+That approach also prevents creating empty clusters.
 
 .. topic:: References:
 
