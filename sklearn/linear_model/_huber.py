@@ -209,7 +209,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     --------
     RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
     TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
-    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD
+    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
 
     References
     ----------
