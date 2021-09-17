@@ -45,7 +45,7 @@ Changelog
   :class:`preprocessing.Normalizer`,
   :class:`preprocessing.KernelCenterer`,
   :class:`preprocessing.OrdinalEncoder`, and
-  :class:`preprocessing.Binarizer`. :pr:`xxxxx` by `Thomas Fan`_.
+  :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
 
 :mod:`sklearn.utils`
 ....................
