@@ -214,6 +214,12 @@ class RANSACRegressor(
 
         .. versionadded:: 1.0
 
+    References
+    ----------
+    .. [1] https://en.wikipedia.org/wiki/RANSAC
+    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
+    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
+
     Examples
     --------
     >>> from sklearn.linear_model import RANSACRegressor
@@ -225,12 +231,6 @@ class RANSACRegressor(
     0.9885...
     >>> reg.predict(X[:1,])
     array([-31.9417...])
-
-    References
-    ----------
-    .. [1] https://en.wikipedia.org/wiki/RANSAC
-    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
-    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """  # noqa: E501
 
     def __init__(
