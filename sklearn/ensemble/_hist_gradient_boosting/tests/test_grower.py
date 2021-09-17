@@ -569,33 +569,13 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
     np.testing.assert_allclose(preds, preds_ohe)
 
 
-@pytest.mark.parametrize("seed", range(20))
-def test_grower_interaction_constraints(seed):
+def test_grower_interaction_constraints():
     """Check that grower respects interaction constraints."""
-    rng = np.random.RandomState(seed)
     n_features = 6
     interaction_cst = [{0, 1}, {1, 2}, {3, 4, 5}]
-    n_samples = 10
-    n_bins = 10
-    X_binned = rng.randint(
-        0, n_bins - 1, size=(n_samples, n_features), dtype=X_BINNED_DTYPE
-    )
-    X_binned = np.asfortranarray(X_binned)
-    gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
-    hessians = np.ones(shape=1, dtype=G_H_DTYPE)
-
-    grower = TreeGrower(
-        X_binned,
-        gradients,
-        hessians,
-        max_depth=3,
-        n_bins=n_bins,
-        shrinkage=1.0,
-        max_leaf_nodes=None,
-        min_samples_leaf=1,
-        interaction_cst=interaction_cst,
-    )
-    grower.grow()
+    n_samples = 5
+    n_bins = 6
+    root_feature_splits = []
 
     def get_all_children(node):
         res = []
@@ -607,13 +587,42 @@ def test_grower_interaction_constraints(seed):
                 res.extend(get_all_children(n))
         return res
 
-    map = {0: {0, 1}, 1: {0, 1, 2}, 2: {1, 2}}
-    if grower.root.split_info.feature_idx in {0, 1, 2}:
-        constraint_set = map[grower.root.split_info.feature_idx]
-        for node in get_all_children(grower.root):
-            if not node.is_leaf:
-                assert node.split_info.feature_idx in constraint_set
-    elif grower.root.split_info.feature_idx in {3, 4, 5}:
-        for node in get_all_children(grower.root):
-            if not node.is_leaf:
-                assert node.split_info.feature_idx in {3, 4, 5}
+    for seed in range(20):
+        rng = np.random.RandomState(seed)
+
+        X_binned = rng.randint(
+            0, n_bins - 1, size=(n_samples, n_features), dtype=X_BINNED_DTYPE
+        )
+        X_binned = np.asfortranarray(X_binned)
+        gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
+        hessians = np.ones(shape=1, dtype=G_H_DTYPE)
+
+        grower = TreeGrower(
+            X_binned,
+            gradients,
+            hessians,
+            max_depth=3,
+            n_bins=n_bins,
+            shrinkage=1.0,
+            max_leaf_nodes=None,
+            min_samples_leaf=1,
+            interaction_cst=interaction_cst,
+            n_threads=2,
+        )
+        grower.grow()
+
+        root_feature_splits.append(grower.root.split_info.feature_idx)
+
+        map = {0: {0, 1}, 1: {0, 1, 2}, 2: {1, 2}}
+        if grower.root.split_info.feature_idx in {0, 1, 2}:
+            constraint_set = map[grower.root.split_info.feature_idx]
+            for node in get_all_children(grower.root):
+                if not node.is_leaf:
+                    assert node.split_info.feature_idx in constraint_set
+        elif grower.root.split_info.feature_idx in {3, 4, 5}:
+            for node in get_all_children(grower.root):
+                if not node.is_leaf:
+                    assert node.split_info.feature_idx in {3, 4, 5}
+
+    # Make sure that every feature is used at least once as split for the root node.
+    assert len(set(root_feature_splits)) == n_features
