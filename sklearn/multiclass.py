@@ -956,10 +956,10 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     estimators_ : list of `int(n_classes * code_size)` estimators
         Estimators used for predictions.
 
-    classes_ : array-like of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         Array containing labels.
 
-    code_book_ : array-like of shape (n_classes, code_size)
+    code_book_ : ndarray of shape (n_classes, code_size)
         Binary array containing the code of each class.
 
     n_features_in_ : int
@@ -968,7 +968,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    feature_names_in_ : array-like of shape (`n_features_in_`,)
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
 
