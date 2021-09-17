@@ -216,7 +216,7 @@ class RANSACRegressor(
 
     See Also
     --------
-    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    HuberRegressor : Linear regression model that is robust to outliers.
     TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
     SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
 
