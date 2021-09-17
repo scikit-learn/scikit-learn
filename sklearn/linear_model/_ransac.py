@@ -287,6 +287,11 @@ class RANSACRegressor(
 
             .. versionadded:: 0.18
 
+        Returns
+        -------
+        self : object
+            Fitted `RANSACRegressor` estimator.
+
         Raises
         ------
         ValueError
