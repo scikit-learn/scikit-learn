@@ -293,7 +293,6 @@ class RANSACRegressor(
             If no valid consensus set could be found. This occurs if
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
-
         """
         # Need to validate separately here. We can't pass multi_ouput=True
         # because that would allow y to be csr. Delay expensive finiteness
