@@ -274,7 +274,7 @@ class RANSACRegressor(
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
@@ -565,7 +565,7 @@ class RANSACRegressor(
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
@@ -589,10 +589,10 @@ class RANSACRegressor(
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples, n_features]
+        X : (array-like or sparse matrix} of shape (n_samples, n_features)
             Training data.
 
-        y : array, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
         Returns
