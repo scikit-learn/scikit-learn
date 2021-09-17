@@ -70,7 +70,7 @@ observation ranking and clustering.
 # are Gaussian distributed with mean of 0 but feature 1 has a standard
 # deviation equal to 2 and feature 2 has a standard deviation equal to 1. Next,
 # 25 samples are replaced with Gaussian outlier samples where feature 1 has
-# a standard devation equal to 1 and feature 2 has a standard deviation equal
+# a standard deviation equal to 1 and feature 2 has a standard deviation equal
 # to 7.
 
 import numpy as np

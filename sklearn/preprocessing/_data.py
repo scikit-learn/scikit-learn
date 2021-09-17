@@ -103,7 +103,7 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
     elif isinstance(scale, np.ndarray):
         if constant_mask is None:
             # Detect near constant values to avoid dividing by a very small
-            # value that could lead to suprising results and numerical
+            # value that could lead to surprising results and numerical
             # stability issues.
             constant_mask = scale < 10 * np.finfo(scale.dtype).eps
 
@@ -384,7 +384,7 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
             del self.scale_
@@ -770,7 +770,7 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
             del self.scale_
@@ -1121,7 +1121,7 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
             del self.scale_

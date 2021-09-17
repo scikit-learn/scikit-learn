@@ -33,7 +33,7 @@ Before a release
 
    - ``maint_tools/sort_whats_new.py`` can put what's new entries into
      sections. It's not perfect, and requires manual checking of the changes.
-     If the whats new list is well curated, it may not be necessary.
+     If the what's new list is well curated, it may not be necessary.
 
    - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
      requests that were merged but likely missing from What's New.
@@ -198,7 +198,7 @@ Making a release
   `Continuous Integration
   <https://en.wikipedia.org/wiki/Continuous_integration>`_. The CD workflow on
   GitHub Actions is also used to automatically create nightly builds and
-  publish packages for the developement branch of scikit-learn. See
+  publish packages for the development branch of scikit-learn. See
   :ref:`install_nightly_builds`.
 
 4. Once all the CD jobs have completed successfully in the PR, merge it,

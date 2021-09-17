@@ -1,7 +1,7 @@
 """Compatibility fixes for older version of python, numpy and scipy
 
 If you add content to this file, please give the version of the package
-at which the fixe is no longer needed.
+at which the fix is no longer needed.
 """
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
@@ -210,7 +210,7 @@ class _FuncWrapper:
 
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0):
-    """Implements a simplified linspace function as of numpy verion >= 1.16.
+    """Implements a simplified linspace function as of numpy version >= 1.16.
 
     As of numpy 1.16, the arguments start and stop can be array-like and
     there is an optional argument `axis`.

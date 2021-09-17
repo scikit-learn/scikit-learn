@@ -2381,7 +2381,7 @@ of 0.0.
 A scorer object with a specific choice of ``power`` can be built by::
 
   >>> from sklearn.metrics import d2_tweedie_score, make_scorer
-  >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, pwoer=1.5)
+  >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
 
 .. _pinball_loss:
 
