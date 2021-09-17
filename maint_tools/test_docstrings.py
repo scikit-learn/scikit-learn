@@ -26,7 +26,6 @@ DOCSTRING_IGNORE_LIST = [
     "NeighborhoodComponentsAnalysis",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
-    "OutputCodeClassifier",
     "PLSCanonical",
     "PLSRegression",
     "PLSSVD",
