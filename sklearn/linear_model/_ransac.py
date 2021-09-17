@@ -95,7 +95,7 @@ class RANSACRegressor(
         :class:`linear_model.LinearRegression` is used, the user is
         encouraged to provide a value.
 
-        .. deprecated :: 1.0
+        .. deprecated:: 1.0
            Not setting `min_samples` explicitly will raise an error in version
            1.2 for models other than
            :class:`~sklearn.linear_model.LinearRegression`. To keep the old
@@ -147,7 +147,7 @@ class RANSACRegressor(
         as 0.99 (the default) and e is the current fraction of inliers w.r.t.
         the total number of samples.
 
-    loss : string, callable, default='absolute_error'
+    loss : str, callable, default='absolute_error'
         String inputs, 'absolute_error' and 'squared_error' are supported which
         find the absolute error and squared error per sample respectively.
 
@@ -214,6 +214,18 @@ class RANSACRegressor(
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    HuberRegressor : Linear regression model that is robust to outliers.
+    TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
+    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
+
+    References
+    ----------
+    .. [1] https://en.wikipedia.org/wiki/RANSAC
+    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
+    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
+
     Examples
     --------
     >>> from sklearn.linear_model import RANSACRegressor
@@ -225,12 +237,6 @@ class RANSACRegressor(
     0.9885...
     >>> reg.predict(X[:1,])
     array([-31.9417...])
-
-    References
-    ----------
-    .. [1] https://en.wikipedia.org/wiki/RANSAC
-    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
-    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """  # noqa: E501
 
     def __init__(
@@ -268,7 +274,7 @@ class RANSACRegressor(
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
@@ -281,13 +287,17 @@ class RANSACRegressor(
 
             .. versionadded:: 0.18
 
+        Returns
+        -------
+        self : object
+            Fitted `RANSACRegressor` estimator.
+
         Raises
         ------
         ValueError
             If no valid consensus set could be found. This occurs if
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
-
         """
         # Need to validate separately here. We can't pass multi_ouput=True
         # because that would allow y to be csr. Delay expensive finiteness
@@ -555,7 +565,8 @@ class RANSACRegressor(
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
@@ -572,16 +583,16 @@ class RANSACRegressor(
         return self.estimator_.predict(X)
 
     def score(self, X, y):
-        """Returns the score of the prediction.
+        """Return the score of the prediction.
 
         This is a wrapper for `estimator_.score(X, y)`.
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples, n_features]
+        X : (array-like or sparse matrix} of shape (n_samples, n_features)
             Training data.
 
-        y : array, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
         Returns
