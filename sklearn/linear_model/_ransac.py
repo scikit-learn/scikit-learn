@@ -147,7 +147,7 @@ class RANSACRegressor(
         as 0.99 (the default) and e is the current fraction of inliers w.r.t.
         the total number of samples.
 
-    loss : string, callable, default='absolute_error'
+    loss : str, callable, default='absolute_error'
         String inputs, 'absolute_error' and 'squared_error' are supported which
         find the absolute error and squared error per sample respectively.
 
