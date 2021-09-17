@@ -583,7 +583,7 @@ class RANSACRegressor(
         return self.estimator_.predict(X)
 
     def score(self, X, y):
-        """Returns the score of the prediction.
+        """Return the score of the prediction.
 
         This is a wrapper for `estimator_.score(X, y)`.
 
