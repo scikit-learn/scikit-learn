@@ -95,7 +95,7 @@ class RANSACRegressor(
         :class:`linear_model.LinearRegression` is used, the user is
         encouraged to provide a value.
 
-        .. deprecated :: 1.0
+        .. deprecated:: 1.0
            Not setting `min_samples` explicitly will raise an error in version
            1.2 for models other than
            :class:`~sklearn.linear_model.LinearRegression`. To keep the old
