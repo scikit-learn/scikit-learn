@@ -51,6 +51,7 @@ from sklearn.metrics import mean_gamma_deviance
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import mean_pinball_loss
+from sklearn.metrics import npv_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
@@ -149,6 +150,8 @@ CLASSIFICATION_METRICS = {
     "binary_tpr_fpr_tnr_fnr_scores": partial(tpr_fpr_tnr_fnr_scores, average="binary"),
     "specificity_score": specificity_score,
     "binary_specificity_score": partial(specificity_score, average="binary"),
+    "npv_score": npv_score,
+    "binary_npv_score": partial(npv_score, average="binary"),
     "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
     "weighted_f1_score": partial(f1_score, average="weighted"),
     "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
@@ -159,6 +162,7 @@ CLASSIFICATION_METRICS = {
         tpr_fpr_tnr_fnr_scores, average="weighted"
     ),
     "weighted_specificity_score": partial(specificity_score, average="weighted"),
+    "weighted_npv_score": partial(npv_score, average="weighted"),
     "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
     "micro_f1_score": partial(f1_score, average="micro"),
     "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
@@ -167,6 +171,7 @@ CLASSIFICATION_METRICS = {
     "micro_jaccard_score": partial(jaccard_score, average="micro"),
     "micro_tpr_fpr_tnr_fnr_scores": partial(tpr_fpr_tnr_fnr_scores, average="micro"),
     "micro_specificity_score": partial(specificity_score, average="micro"),
+    "micro_npv_score": partial(npv_score, average="micro"),
     "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
     "macro_f1_score": partial(f1_score, average="macro"),
     "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
@@ -175,6 +180,7 @@ CLASSIFICATION_METRICS = {
     "macro_jaccard_score": partial(jaccard_score, average="macro"),
     "macro_tpr_fpr_tnr_fnr_scores": partial(tpr_fpr_tnr_fnr_scores, average="macro"),
     "macro_specificity_score": partial(specificity_score, average="macro"),
+    "macro_npv_score": partial(npv_score, average="macro"),
     "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
     "samples_f1_score": partial(f1_score, average="samples"),
     "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
@@ -185,6 +191,7 @@ CLASSIFICATION_METRICS = {
         tpr_fpr_tnr_fnr_scores, average="samples"
     ),
     "samples_specificity_score": partial(specificity_score, average="samples"),
+    "samples_npv_score": partial(npv_score, average="samples"),
     "cohen_kappa_score": cohen_kappa_score,
 }
 
@@ -285,6 +292,7 @@ METRIC_UNDEFINED_BINARY = {
     "samples_jaccard_score",
     "samples_tpr_fpr_tnr_fnr_scores",
     "samples_specificity_score",
+    "samples_npv_score",
     "coverage_error",
     "unnormalized_multilabel_confusion_matrix_sample",
     "label_ranking_loss",
@@ -314,8 +322,10 @@ METRIC_UNDEFINED_MULTICLASS = {
     "f0.5_score",
     "tpr_fpr_tnr_fnr_scores",
     "specificity_score",
+    "npv_score",
     "binary_tpr_fpr_tnr_fnr_scores",
     "binary_specificity_score",
+    "binary_npv_score",
     # curves
     "roc_curve",
     "precision_recall_curve",
@@ -335,7 +345,9 @@ METRICS_WITH_AVERAGING = {
     "f2_score",
     "f0.5_score",
     "jaccard_score",
+    "tpr_fpr_tnr_fnr_scores",
     "specificity_score",
+    "npv_score",
 }
 
 # Threshold-based metrics with an "average" argument
@@ -363,6 +375,7 @@ METRICS_WITH_POS_LABEL = {
     "samples_average_precision_score",
     "tpr_fpr_tnr_fnr_scores",
     "specificity_score",
+    "npv_score",
 }
 
 # Metrics with a "labels" argument
@@ -382,6 +395,7 @@ METRICS_WITH_LABELS = {
     "jaccard_score",
     "tpr_fpr_tnr_fnr_scores",
     "specificity_score",
+    "npv_score",
     "weighted_f0.5_score",
     "weighted_f1_score",
     "weighted_f2_score",
@@ -390,6 +404,7 @@ METRICS_WITH_LABELS = {
     "weighted_jaccard_score",
     "weighted_tpr_fpr_tnr_fnr_scores",
     "weighted_specificity_score",
+    "weighted_npv_score",
     "micro_f0.5_score",
     "micro_f1_score",
     "micro_f2_score",
@@ -398,6 +413,7 @@ METRICS_WITH_LABELS = {
     "micro_jaccard_score",
     "micro_tpr_fpr_tnr_fnr_scores",
     "micro_specificity_score",
+    "micro_npv_score",
     "macro_f0.5_score",
     "macro_f1_score",
     "macro_f2_score",
@@ -406,6 +422,7 @@ METRICS_WITH_LABELS = {
     "macro_jaccard_score",
     "macro_tpr_fpr_tnr_fnr_scores",
     "macro_specificity_score",
+    "macro_npv_score",
     "unnormalized_multilabel_confusion_matrix",
     "unnormalized_multilabel_confusion_matrix_sample",
     "cohen_kappa_score",
@@ -453,6 +470,7 @@ MULTILABELS_METRICS = {
     "weighted_jaccard_score",
     "weighted_tpr_fpr_tnr_fnr_scores",
     "weighted_specificity_score",
+    "weighted_npv_score",
     "macro_f0.5_score",
     "macro_f1_score",
     "macro_f2_score",
@@ -461,6 +479,7 @@ MULTILABELS_METRICS = {
     "macro_jaccard_score",
     "macro_tpr_fpr_tnr_fnr_scores",
     "macro_specificity_score",
+    "macro_npv_score",
     "micro_f0.5_score",
     "micro_f1_score",
     "micro_f2_score",
@@ -469,6 +488,7 @@ MULTILABELS_METRICS = {
     "micro_jaccard_score",
     "micro_tpr_fpr_tnr_fnr_scores",
     "micro_specificity_score",
+    "micro_npv_score",
     "unnormalized_multilabel_confusion_matrix",
     "samples_f0.5_score",
     "samples_f1_score",
@@ -478,6 +498,7 @@ MULTILABELS_METRICS = {
     "samples_jaccard_score",
     "samples_tpr_fpr_tnr_fnr_scores",
     "samples_specificity_score",
+    "samples_npv_score",
 }
 
 # Regression metrics with "multioutput-continuous" format support
@@ -504,7 +525,6 @@ SYMMETRIC_METRICS = {
     "jaccard_score",
     "samples_jaccard_score",
     "f1_score",
-    "micro_f1_score",
     "macro_f1_score",
     "weighted_recall_score",
     # P = R = F = accuracy in multiclass case
@@ -515,6 +535,7 @@ SYMMETRIC_METRICS = {
     "micro_recall_score",
     "micro_tpr_fpr_tnr_fnr_scores",
     "micro_specificity_score",
+    "micro_npv_score",
     "matthews_corrcoef_score",
     "mean_absolute_error",
     "mean_squared_error",
@@ -544,6 +565,7 @@ NOT_SYMMETRIC_METRICS = {
     "f0.5_score",
     "tpr_fpr_tnr_fnr_scores",
     "specificity_score",
+    "npv_score",
     "weighted_f0.5_score",
     "weighted_f1_score",
     "weighted_f2_score",
@@ -551,6 +573,7 @@ NOT_SYMMETRIC_METRICS = {
     "weighted_jaccard_score",
     "weighted_tpr_fpr_tnr_fnr_scores",
     "weighted_specificity_score",
+    "weighted_npv_score",
     "unnormalized_multilabel_confusion_matrix",
     "macro_f0.5_score",
     "macro_f2_score",
@@ -558,6 +581,7 @@ NOT_SYMMETRIC_METRICS = {
     "macro_recall_score",
     "macro_tpr_fpr_tnr_fnr_scores",
     "macro_specificity_score",
+    "macro_npv_score",
     "log_loss",
     "hinge_loss",
     "mean_gamma_deviance",
