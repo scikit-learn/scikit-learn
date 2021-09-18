@@ -32,6 +32,7 @@ from sklearn.metrics import (
     roc_auc_score,
     top_k_accuracy_score,
     specificity_score,
+    npv_score,
 )
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
@@ -107,6 +108,10 @@ CLF_SCORERS = [
     "specificity_weighted",
     "specificity_macro",
     "specificity_micro",
+    "npv",
+    "npv_weighted",
+    "npv_macro",
+    "npv_micro",
 ]
 
 # All supervised cluster scorers (They behave like classification metric)
@@ -128,6 +133,7 @@ MULTILABEL_ONLY_SCORERS = [
     "f1_samples",
     "jaccard_samples",
     "specificity_samples",
+    "npv_samples",
 ]
 
 REQUIRE_POSITIVE_Y_SCORERS = ["neg_mean_poisson_deviance", "neg_mean_gamma_deviance"]
@@ -400,6 +406,7 @@ def test_make_scorer():
         ("jaccard_micro", partial(jaccard_score, average="micro")),
         ("top_k_accuracy", top_k_accuracy_score),
         ("specificity", specificity_score),
+        ("npv", npv_score),
     ],
 )
 def test_classification_binary_scores(scorer_name, metric):
@@ -435,6 +442,9 @@ def test_classification_binary_scores(scorer_name, metric):
         ("specificity_weighted", partial(specificity_score, average="weighted")),
         ("specificity_macro", partial(specificity_score, average="macro")),
         ("specificity_micro", partial(specificity_score, average="micro")),
+        ("npv_weighted", partial(npv_score, average="weighted")),
+        ("npv_macro", partial(npv_score, average="macro")),
+        ("npv_micro", partial(npv_score, average="micro")),
     ],
 )
 def test_classification_multiclass_scores(scorer_name, metric):
@@ -1083,7 +1093,14 @@ def test_brier_score_loss_pos_label(string_labeled_classification_problem):
 
 @pytest.mark.parametrize(
     "score_func",
-    [f1_score, precision_score, recall_score, jaccard_score, specificity_score],
+    [
+        f1_score,
+        precision_score,
+        recall_score,
+        jaccard_score,
+        specificity_score,
+        npv_score,
+    ],
 )
 def test_non_symmetric_metric_pos_label(
     score_func, string_labeled_classification_problem
