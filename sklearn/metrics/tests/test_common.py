@@ -345,7 +345,6 @@ METRICS_WITH_AVERAGING = {
     "f2_score",
     "f0.5_score",
     "jaccard_score",
-    "tpr_fpr_tnr_fnr_scores",
     "specificity_score",
     "npv_score",
 }
