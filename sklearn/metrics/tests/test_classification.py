@@ -41,6 +41,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import tpr_fpr_tnr_fnr_scores
 from sklearn.metrics import specificity_score
+from sklearn.metrics import npv_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
@@ -351,7 +352,7 @@ def test_precision_recall_f_ignored_labels():
 
 
 def test_tpr_fpr_tnr_fnr_scores_binary_averaged():
-    # Test TPR, FPR, TNR, FNR Score for binary classification task
+    # Test TPR, FPR, TNR, FNR scores for binary classification task
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # compute scores with default labels introspection
@@ -382,7 +383,7 @@ def test_tpr_fpr_tnr_fnr_scores_binary_averaged():
 
 
 def test_tpr_fpr_tnr_fnr_scores_multiclass():
-    # Test TPR, FPR, TNR, FNR Score for multiclass classification task
+    # Test TPR, FPR, TNR, FNR scores for multiclass classification task
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute scores with default labels introspection
@@ -2209,6 +2210,71 @@ def test_specificity_warnings(zero_division):
         pytest.warns(Warning if zero_division == "warn" else None)
 
     specificity_score([1, 1], [1, 1])
+    if zero_division == "warn":
+        pytest.warns(Warning if zero_division == "warn" else None)
+
+
+def test_npv_score_binary_averaged():
+    # Test NPV score for binary classification task
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    # compute scores with default labels
+    npv_none = npv_score(y_true, y_pred, average=None)
+    assert_array_almost_equal(npv_none, [0.85, 0.73], 2)
+
+    npv_macro = npv_score(y_true, y_pred, average="macro")
+    assert npv_macro == np.mean(npv_none)
+
+    npw_weighted = npv_score(y_true, y_pred, average="weighted")
+    support = np.bincount(y_true)
+    assert npw_weighted == np.average(npv_none, weights=support)
+
+
+def test_npv_score_multiclass():
+    # Test NPV score for multiclass classification task
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    # compute scores with default labels
+    assert_array_almost_equal(
+        npv_score(y_true, y_pred, average=None), [0.9, 0.58, 0.94], 2
+    )
+
+    # averaging tests
+    assert_array_almost_equal(npv_score(y_true, y_pred, average="micro"), 0.77, 2)
+
+    assert_array_almost_equal(npv_score(y_true, y_pred, average="macro"), 0.81, 2)
+
+    assert_array_almost_equal(npv_score(y_true, y_pred, average="weighted"), 0.78, 2)
+
+    with pytest.raises(ValueError):
+        npv_score(y_true, y_pred, average="samples")
+
+    # same prediction but with and explicit label ordering
+    assert_array_almost_equal(
+        npv_score(y_true, y_pred, labels=[0, 2, 1], average=None), [0.9, 0.94, 0.58], 2
+    )
+
+
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
+def test_npv_warnings(zero_division):
+    assert_no_warnings(
+        npv_score,
+        np.array([[1, 1], [1, 1]]),
+        np.array([[0, 0], [0, 0]]),
+        average="micro",
+        zero_division=zero_division,
+    )
+
+    npv_score(
+        np.array([[0, 0], [0, 0]]),
+        np.array([[1, 1], [1, 1]]),
+        average="micro",
+        zero_division=zero_division,
+    )
+    if zero_division == "warn":
+        pytest.warns(Warning if zero_division == "warn" else None)
+
+    npv_score([1, 1], [1, 1])
     if zero_division == "warn":
         pytest.warns(Warning if zero_division == "warn" else None)
 
