@@ -342,7 +342,6 @@ Some also work in the multilabel case:
    recall_score
    specificity_score
    npv_score
-   fpr_tpr_fnr_tnr_scores
    roc_auc_score
    zero_one_loss
 
