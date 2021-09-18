@@ -121,17 +121,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 "monotonic constraints are not supported for multiclass classification."
             )
 
-        if (
-            self.interaction_cst is not None
-            and not isinstance(self.interaction_cst, Sequence)
-            and not all(isinstance(x, (Sequence, set)) for x in self.interaction_cst)
-        ):
-            # TODO: better validation
-            # lets start with list or set of {list, tuple, set}
-            raise ValueError(
-                "interaction constraints must be None or a Sequence of {Sequence, set}"
-            )
-
     def _check_categories(self, X):
         """Check and validate categorical features in X
 
@@ -217,6 +206,32 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return is_categorical, known_categories
 
+    def _check_interaction_cst(self, n_features):
+        """Check and validation interaction constraints."""
+        if self.interaction_cst is None:
+            return None
+
+        if self.interaction_cst is not None:
+            if not (
+                isinstance(self.interaction_cst, Sequence)
+                and all(isinstance(x, (Sequence, set)) for x in self.interaction_cst)
+            ):
+                raise ValueError(
+                    "Interaction constraints must be None or a Sequence of {Sequence,"
+                    " set}"
+                )
+            if not all(
+                (x == int(x) and 0 <= x and x < n_features)
+                for cst_set in self.interaction_cst
+                for x in cst_set
+            ):
+                raise ValueError(
+                    "Interaction constraints must consist of integers indices in [0,"
+                    " n_features - 1], specifying the position of features."
+                )
+
+            return [set([int(x) for x in group]) for group in self.interaction_cst]
+
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
 
@@ -270,12 +285,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.is_categorical_, known_categories = self._check_categories(X)
 
         # convert to list of sets and convert to integers
-        if self.interaction_cst is None:
-            self._interaction_cst = None
-        else:
-            self._interaction_cst = [
-                set([int(x) for x in group]) for group in self.interaction_cst
-            ]
+        interaction_cst = self._check_interaction_cst(self._n_features)
 
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
@@ -538,7 +548,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     has_missing_values=has_missing_values,
                     is_categorical=self.is_categorical_,
                     monotonic_cst=self.monotonic_cst,
-                    interaction_cst=self._interaction_cst,
+                    interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
