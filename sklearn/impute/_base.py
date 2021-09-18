@@ -206,7 +206,7 @@ class SimpleImputer(_BaseImputer):
     Notes
     -----
     Columns which only contained missing values at :meth:`fit` are discarded
-    upon :meth:`transform` if strategy is not "constant".
+    upon :meth:`transform` if strategy is not `"constant"`.
 
     Examples
     --------
