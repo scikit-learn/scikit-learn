@@ -1,5 +1,5 @@
 # cython: cdivision=True
-# cython: boundscheck=False
+# cython: boundscheck=True
 # cython: wraparound=False
 # cython: language_level=3
 
@@ -394,12 +394,12 @@ cdef class Splitter:
                     &left_indices_buffer[offset_in_buffers[thread_idx]],
                     sizeof(unsigned int) * left_counts[thread_idx]
                 )
-                if right_counts[thread_idx] > 0:
-                    memcpy(
-                        &sample_indices[right_offset[thread_idx]],
-                        &right_indices_buffer[offset_in_buffers[thread_idx]],
-                        sizeof(unsigned int) * right_counts[thread_idx]
-                    )
+                #if right_counts[thread_idx] > 0:
+                memcpy(
+                    &sample_indices[right_offset[thread_idx]],
+                    &right_indices_buffer[offset_in_buffers[thread_idx]],
+                    sizeof(unsigned int) * right_counts[thread_idx]
+                )
 
         return (sample_indices[:right_child_position],
                 sample_indices[right_child_position:],
