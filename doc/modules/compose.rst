@@ -449,10 +449,10 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> column_trans = ColumnTransformer(
   ...     [('categories', OneHotEncoder(dtype='int'), ['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...     remainder='drop', prefix_feature_names_out=False)
+  ...     remainder='drop', verbose_feature_names_out=False)
 
   >>> column_trans.fit(X)
-  ColumnTransformer(prefix_feature_names_out=False,
+  ColumnTransformer(verbose_feature_names_out=False,
                     transformers=[('categories', OneHotEncoder(dtype='int'),
                                    ['city']),
                                   ('title_bow', CountVectorizer(), 'title')])
