@@ -2683,6 +2683,8 @@ def tpr_fpr_tnr_fnr_scores(
     and false negative rate if `average` is one of `"micro"`, `"macro"`,
     `"weighted"` or `"samples"`.
 
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
     Parameters
     ----------
     y_true : {array-like, label indicator array, sparse matrix} \
@@ -2896,6 +2898,8 @@ def specificity_score(
 
     The best value is 1 and the worst value is 0.
 
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
     Parameters
     ----------
      y_true : {array-like, label indicator array, sparse matrix} \
@@ -3033,6 +3037,8 @@ def npv_score(
     the ability of the classifier to mark the negative samples correctly.
 
     The best value is 1 and the worst value is 0.
+
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
     ----------
