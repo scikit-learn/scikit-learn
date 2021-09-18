@@ -66,6 +66,29 @@ def _make_dumb_dataset(n_samples):
         ({"validation_fraction": -1}, "validation_fraction=-1 must be strictly"),
         ({"validation_fraction": 0}, "validation_fraction=0 must be strictly"),
         ({"tol": -1}, "tol=-1 must not be smaller than 0"),
+        (
+            {"interaction_cst": np.array([[0, 1]])},
+            "Interaction constraints must be None or a Sequence of {Sequence, set}",
+        ),
+        (
+            {"interaction_cst": [0, 1]},
+            "Interaction constraints must be None or a Sequence of {Sequence, set}",
+        ),
+        (
+            {"interaction_cst": [{0, 9999}]},
+            r"Interaction constraints must consist of integers indices in \[0,"
+            r" n_features - 1\], specifying the position of features.",
+        ),
+        (
+            {"interaction_cst": [{-1, 0}]},
+            r"Interaction constraints must consist of integers indices in \[0,"
+            r" n_features - 1\], specifying the position of features.",
+        ),
+        (
+            {"interaction_cst": [{0.5}]},
+            r"Interaction constraints must consist of integers indices in \[0,"
+            r" n_features - 1\], specifying the position of features.",
+        ),
     ],
 )
 def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
