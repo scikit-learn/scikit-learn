@@ -2759,15 +2759,15 @@ def tpr_fpr_tnr_fnr_scores(
 
     See Also
     --------
-    classification_report - a text report showing the key classification metrics
-    precision_recall_fscore_support - the key classification metrics
-    precision_score - precision or positive predictive value (PPV)
-    recall_score - recall, sensitivity, hit rate, or true positive rate (TPR)
-    specificity_score - specificity, selectivity or true negative rate (TNR)
-    multilabel_confusion_matrix - confusion matrices for each class or sample
-    balanced_accuracy_score - accuracy metric for imbalanced datasets
-    tpr_fpr_tnr_fnr_scores - four basic (mis-)classification rates
-    npv_score - negative predictive value (NPV)
+    classification_report : A text report showing the key classification metrics.
+    precision_recall_fscore_support : The key classification metrics.
+    precision_score : Precision or positive predictive value (PPV).
+    recall_score : Recall, sensitivity, hit rate, or true positive rate (TPR).
+    specificity_score : Specificity, selectivity or true negative rate (TNR).
+    multilabel_confusion_matrix : Confusion matrices for each class or sample.
+    balanced_accuracy_score : Accuracy metric for imbalanced datasets.
+    tpr_fpr_tnr_fnr_scores : Four basic (mis-)classification rates.
+    npv_score : Negative predictive value (NPV).
 
     References
     ----------
@@ -2967,14 +2967,14 @@ def specificity_score(
 
     See Also
     --------
-    classification_report - a text report showing the key classification metrics
-    precision_recall_fscore_support - the key classification metrics
-    precision_score - precision or positive predictive value (PPV)
-    recall_score - recall, sensitivity, hit rate, or true positive rate (TPR)
-    multilabel_confusion_matrix - confusion matrices for each class or sample
-    balanced_accuracy_score - accuracy metric for imbalanced datasets
-    tpr_fpr_tnr_fnr_scores - four basic (mis-)classification rates
-    npv_score - negative predictive value (NPV)
+    classification_report : A text report showing the key classification metrics.
+    precision_recall_fscore_support : The key classification metrics.
+    precision_score : Precision or positive predictive value (PPV).
+    recall_score : Recall, sensitivity, hit rate, or true positive rate (TPR).
+    multilabel_confusion_matrix : Confusion matrices for each class or sample.
+    balanced_accuracy_score : Accuracy metric for imbalanced datasets.
+    tpr_fpr_tnr_fnr_scores : Four basic (mis-)classification rates.
+    npv_score : Negative predictive value (NPV).
 
     Notes
     -----
@@ -3107,14 +3107,14 @@ def npv_score(
 
     See Also
     --------
-    classification_report - a text report showing the key classification metrics
-    precision_recall_fscore_support - the key classification metrics
-    precision_score - precision or positive predictive value (PPV)
-    recall_score - recall, sensitivity, hit rate, or true positive rate (TPR)
-    specificity_score - specificity, selectivity or true negative rate (TNR)
-    multilabel_confusion_matrix - confusion matrices for each class or sample
-    balanced_accuracy_score - accuracy metric for imbalanced datasets
-    tpr_fpr_tnr_fnr_scores - four basic (mis-)classification rates
+    classification_report : A text report showing the key classification metrics.
+    precision_recall_fscore_support : The key classification metrics.
+    precision_score : Precision or positive predictive value (PPV).
+    recall_score : Recall, sensitivity, hit rate, or true positive rate (TPR).
+    specificity_score : Specificity, selectivity or true negative rate (TNR).
+    multilabel_confusion_matrix : Confusion matrices for each class or sample.
+    balanced_accuracy_score : Accuracy metric for imbalanced datasets.
+    tpr_fpr_tnr_fnr_scores : Four basic (mis-)classification rates.
 
     Notes
     -----
