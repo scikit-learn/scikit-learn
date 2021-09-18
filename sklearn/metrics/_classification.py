@@ -2757,8 +2757,15 @@ def tpr_fpr_tnr_fnr_scores(
 
     See Also
     --------
-    classification_report, precision_recall_fscore_support, precision_score,
-    recall_score, balanced_accuracy_score, multilabel_confusion_matrix
+    classification_report - a text report showing the key classification metrics
+    precision_recall_fscore_support - the key classification metrics
+    precision_score - precision or positive predictive value (PPV)
+    recall_score - recall, sensitivity, hit rate, or true positive rate (TPR)
+    specificity_score - specificity, selectivity or true negative rate (TNR)
+    multilabel_confusion_matrix - confusion matrices for each class or sample
+    balanced_accuracy_score - accuracy metric for imbalanced datasets
+    tpr_fpr_tnr_fnr_scores - four basic (mis-)classification rates
+    npv_score - negative predictive value (NPV)
 
     References
     ----------
@@ -2891,10 +2898,12 @@ def specificity_score(
 
     Parameters
     ----------
-    y_true : 1d array-like, or label indicator array / sparse matrix
+     y_true : {array-like, label indicator array, sparse matrix} \
+            of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : 1d array-like, or label indicator array / sparse matrix
+    y_pred : {array-like, label indicator array, sparse matrix} \
+            of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
     labels : array-like, default=None
@@ -2949,13 +2958,19 @@ def specificity_score(
     specificity : float or ndarray of shape (n_unique_labels,), dtype=np.float64
         The specificity of the positive class in binary classification or
         weighted average of the specificity of each class for the multiclass
-        task.
+        task. Scalar is returned if averaging (i.e., when `average` is not `None`),
+        array - otherwise.
 
     See Also
     --------
-    classification_report, precision_recall_fscore_support, precision_score,
-    recall_score, balanced_accuracy_score, multilabel_confusion_matrix,
-    tpr_fpr_tnr_fnr_scores
+    classification_report - a text report showing the key classification metrics
+    precision_recall_fscore_support - the key classification metrics
+    precision_score - precision or positive predictive value (PPV)
+    recall_score - recall, sensitivity, hit rate, or true positive rate (TPR)
+    multilabel_confusion_matrix - confusion matrices for each class or sample
+    balanced_accuracy_score - accuracy metric for imbalanced datasets
+    tpr_fpr_tnr_fnr_scores - four basic (mis-)classification rates
+    npv_score - negative predictive value (NPV)
 
     Notes
     -----
@@ -3014,18 +3029,21 @@ def npv_score(
     .. versionadded:: 1.1
 
     The NPV is the ratio `TN / (TN + FN)` where `TN` is the number of true
-    negatives and `FN` is the number of false negatives.
-    The NPV is intuitively the ability of the classifier to mark the negative
-    samples correctly.
+    negatives and `FN` is the number of false negatives. The NPV is intuitively
+    the ability of the classifier to mark the negative samples correctly.
 
     The best value is 1 and the worst value is 0.
 
     Parameters
     ----------
-    y_true : 1d array-like, or label indicator array / sparse matrix
+    y_true : {array-like, label indicator array, sparse matrix} \
+            of shape (n_samples,)
         Ground truth (correct) target values.
-    y_pred : 1d array-like, or label indicator array / sparse matrix
+
+    y_pred : {array-like, label indicator array, sparse matrix} \
+            of shape (n_samples,)
         Estimated targets as returned by a classifier.
+
     labels : array-like, default=None
         The set of labels to include when `average != "binary"`, and their
         order if `average is None`. Labels present in the data can be
@@ -3034,16 +3052,19 @@ def npv_score(
         result in 0 components in a macro average. For multilabel targets,
         labels are column indices. By default, all labels in `y_true` and
         `y_pred` are used in sorted order.
+
     pos_label : str or int, default=1
         The class to report if `average="binary"` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting `labels=[pos_label]` and `average != "binary"` will report
         scores for that label only.
+
     average : str, {None, "binary", "micro", "macro", "samples", "weighted"} \
             default="binary"
         This parameter is required for multiclass/multilabel targets.
         If `None`, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
+
         `"binary"`:
             Only report results for the class specified by `pos_label`.
             This is applicable only if targets (`y_{true,pred}`) are binary.
@@ -3062,8 +3083,10 @@ def npv_score(
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
+
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
     zero_division : "warn", 0 or 1, default="warn"
         Sets the value to return when there is a zero division. If set to
         "warn", this acts as 0, but warnings are also raised.
@@ -3073,12 +3096,19 @@ def npv_score(
     NPV : float or ndarray of shape (n_unique_labels,), dtype=np.float64
         The negative predictive value of the positive class in binary
         classification or weighted average of the NPV of each class for
-        the multiclass task.
+        the multiclass task. Scalar is returned if averaging (i.e., when
+        `average` is not `None`), array - otherwise.
 
     See Also
     --------
-    precision_score, classification_report, precision_recall_fscore_support,
-    recall_score, balanced_accuracy_score, multilabel_confusion_matrix
+    classification_report - a text report showing the key classification metrics
+    precision_recall_fscore_support - the key classification metrics
+    precision_score - precision or positive predictive value (PPV)
+    recall_score - recall, sensitivity, hit rate, or true positive rate (TPR)
+    specificity_score - specificity, selectivity or true negative rate (TNR)
+    multilabel_confusion_matrix - confusion matrices for each class or sample
+    balanced_accuracy_score - accuracy metric for imbalanced datasets
+    tpr_fpr_tnr_fnr_scores - four basic (mis-)classification rates
 
     Notes
     -----
