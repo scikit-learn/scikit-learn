@@ -195,6 +195,11 @@ class BisectKMeans(KMeans):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
+
     See Also
     --------
     KMeans : Original implementation of K-Means algorithm.
