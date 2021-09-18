@@ -134,7 +134,7 @@ class SimpleImputer(_BaseImputer):
         nullable integer dtypes with missing values, `missing_values`
         should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
-    strategy : string, default='mean'
+    strategy : str, default='mean'
         The imputation strategy.
 
         - If "mean", then replace missing values using the mean along
@@ -150,25 +150,25 @@ class SimpleImputer(_BaseImputer):
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
 
-    fill_value : string or numerical value, default=None
+    fill_value : str or numerical value, default=None
         When strategy == "constant", fill_value is used to replace all
         occurrences of missing_values.
         If left to the default, fill_value will be 0 when imputing numerical
         data and "missing_value" for strings or object data types.
 
-    verbose : integer, default=0
+    verbose : int, default=0
         Controls the verbosity of the imputer.
 
-    copy : boolean, default=True
-        If True, a copy of X will be created. If False, imputation will
+    copy : bool, default=True
+        If True, a copy of `X` will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
         a new copy will always be made, even if `copy=False`:
 
-        - If X is not an array of floating values;
-        - If X is encoded as a CSR matrix;
-        - If add_indicator=True.
+        - If `X` is not an array of floating values;
+        - If `X` is encoded as a CSR matrix;
+        - If `add_indicator=True`.
 
-    add_indicator : boolean, default=False
+    add_indicator : bool, default=False
         If True, a :class:`MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
@@ -186,7 +186,7 @@ class SimpleImputer(_BaseImputer):
 
     indicator_ : :class:`~sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
-        ``None`` if add_indicator is False.
+        `None` if `add_indicator=False`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -203,6 +203,11 @@ class SimpleImputer(_BaseImputer):
     --------
     IterativeImputer : Multivariate imputation of missing values.
 
+    Notes
+    -----
+    Columns which only contained missing values at :meth:`fit` are discarded
+    upon :meth:`transform` if strategy is not `"constant"`.
+
     Examples
     --------
     >>> import numpy as np
@@ -215,12 +220,6 @@ class SimpleImputer(_BaseImputer):
     [[ 7.   2.   3. ]
      [ 4.   3.5  6. ]
      [10.   3.5  9. ]]
-
-    Notes
-    -----
-    Columns which only contained missing values at :meth:`fit` are discarded
-    upon :meth:`transform` if strategy is not "constant".
-
     """
 
     def __init__(
@@ -301,17 +300,21 @@ class SimpleImputer(_BaseImputer):
         return X
 
     def fit(self, X, y=None):
-        """Fit the imputer on X.
+        """Fit the imputer on `X`.
 
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Input data, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
-        self : SimpleImputer
+        self : object
+            Fitted estimator.
         """
         X = self._validate_input(X, in_fit=True)
 
@@ -449,7 +452,7 @@ class SimpleImputer(_BaseImputer):
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
 
     def transform(self, X):
-        """Impute all missing values in X.
+        """Impute all missing values in `X`.
 
         Parameters
         ----------
@@ -538,10 +541,10 @@ class SimpleImputer(_BaseImputer):
         This operation can only be performed after :class:`SimpleImputer` is
         instantiated with `add_indicator=True`.
 
-        Note that ``inverse_transform`` can only invert the transform in
+        Note that `inverse_transform` can only invert the transform in
         features that have binary indicators for missing values. If a feature
-        has no missing values at ``fit`` time, the feature won't have a binary
-        indicator, and the imputation done at ``transform`` time won't be
+        has no missing values at `fit` time, the feature won't have a binary
+        indicator, and the imputation done at `transform` time won't be
         inverted.
 
         .. versionadded:: 0.24
@@ -556,7 +559,7 @@ class SimpleImputer(_BaseImputer):
         Returns
         -------
         X_original : ndarray of shape (n_samples, n_features)
-            The original X with missing values as it was prior
+            The original `X` with missing values as it was prior
             to imputation.
         """
         check_is_fitted(self)
