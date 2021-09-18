@@ -1116,7 +1116,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.23
 
-    interaction_cst : TODO
+    interaction_cst : list of lists or sets of int, default=None
+        Each inner list or set specifies the feature indices that are allowed
+        to interact with each other, meaning splits in child nodes are only
+        allowed in those sets. For instance, `[{0, 1}, {2, 3, 4}]` says that
+        a single tree is either only split on features 0 and 1 or only on
+        features 2, 3 and 4. If there are more featres, e.g. 5 and 6, those
+        are not allowed to be split on as they are not listed.
 
         .. versionadded:: 1.1
 
@@ -1434,7 +1440,13 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.23
 
-    interaction_cst : TODO
+    interaction_cst : list of lists or sets of int, default=None
+        Each inner list or set specifies the feature indices that are allowed
+        to interact with each other, meaning splits in child nodes are only
+        allowed in those sets. For instance, `[{0, 1}, {2, 3, 4}]` says that
+        a single tree is either only split on features 0 and 1 or only on
+        features 2, 3 and 4. If there are more featres, e.g. 5 and 6, those
+        are not allowed to be split on as they are not listed.
 
         .. versionadded:: 1.1
 
