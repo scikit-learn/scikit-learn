@@ -773,7 +773,7 @@ accurate as picking by SSE and is faster (especially for larger amount of data
 points, where calculating error may be costly).
 
 Difference between Bisect K-Means and regular K-Means can be seen on example
-:ref:`plot_kmeans_comparison.py` - while regular K-Means tend to create non-related
+:ref:`..\examples\plot_kmeans_comparison.py` - while regular K-Means tend to create non-related
 clusters, clusters from Bisect K-Means are well ordered and create quite visible hierarchy.
 
 That approach also prevents creating empty clusters.
