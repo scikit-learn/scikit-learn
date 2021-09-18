@@ -369,9 +369,7 @@ def test_ovr_multilabel_dataset():
         assert_almost_equal(
             specificity_score(Y_test, Y_pred, average="micro"), specificity, decimal=2
         )
-        assert_almost_equal(
-            npv_score(Y_test, Y_pred, average="micro"), npv, decimal=2
-        )
+        assert_almost_equal(npv_score(Y_test, Y_pred, average="micro"), npv, decimal=2)
 
 
 def test_ovr_multilabel_predict_proba():
