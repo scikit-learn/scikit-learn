@@ -27,7 +27,7 @@ from ..exceptions import ConvergenceWarning
 
 
 class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
-    """Neighborhood Components Analysis
+    """Neighborhood Components Analysis.
 
     Neighborhood Component Analysis (NCA) is a machine learning algorithm for
     metric learning. It learns a linear transformation in a supervised fashion
@@ -138,6 +138,22 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    sklearn.discriminant_analysis.LinearDiscriminantAnalysis : Linear
+        Discriminant Analysis.
+    sklearn.decomposition.PCA : Principal component analysis (PCA).
+
+    References
+    ----------
+    .. [1] J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov.
+           "Neighbourhood Components Analysis". Advances in Neural Information
+           Processing Systems. 17, 513-520, 2005.
+           http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf
+
+    .. [2] Wikipedia entry on Neighborhood Components Analysis
+           https://en.wikipedia.org/wiki/Neighbourhood_components_analysis
+
     Examples
     --------
     >>> from sklearn.neighbors import NeighborhoodComponentsAnalysis
@@ -159,17 +175,6 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
     KNeighborsClassifier(...)
     >>> print(knn.score(nca.transform(X_test), y_test))
     0.961904...
-
-    References
-    ----------
-    .. [1] J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov.
-           "Neighbourhood Components Analysis". Advances in Neural Information
-           Processing Systems. 17, 513-520, 2005.
-           http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf
-
-    .. [2] Wikipedia entry on Neighborhood Components Analysis
-           https://en.wikipedia.org/wiki/Neighbourhood_components_analysis
-
     """
 
     def __init__(
@@ -207,7 +212,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            returns a trained NeighborhoodComponentsAnalysis model.
+            Fitted estimator.
         """
 
         # Verify inputs X and y and NCA parameters, and transform a copy if
@@ -266,7 +271,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Applies the learned transformation to the given data.
+        """Apply the learned transformation to the given data.
 
         Parameters
         ----------
