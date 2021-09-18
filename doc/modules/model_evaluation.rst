@@ -72,6 +72,8 @@ Scoring                                Function                                 
 'precision' etc.                       :func:`metrics.precision_score`                    suffixes apply as with 'f1'
 'recall' etc.                          :func:`metrics.recall_score`                       suffixes apply as with 'f1'
 'jaccard' etc.                         :func:`metrics.jaccard_score`                      suffixes apply as with 'f1'
+'specificity' etc.                     :func:`metrics.specificity_score`                  suffixes apply as with 'f1'
+'npv' etc.                             :func:`metrics.npv_score`                          suffixes apply as with 'f1'
 'roc_auc'                              :func:`metrics.roc_auc_score`
 'roc_auc_ovr'                          :func:`metrics.roc_auc_score`
 'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
@@ -338,6 +340,9 @@ Some also work in the multilabel case:
    precision_recall_fscore_support
    precision_score
    recall_score
+   specificity_score
+   npv_score
+   fpr_tpr_fnr_tnr_scores
    roc_auc_score
    zero_one_loss
 
@@ -793,6 +798,7 @@ score:
    precision_recall_fscore_support
    precision_score
    recall_score
+   fpr_tpr_fnr_tnr_scores
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
@@ -805,6 +811,18 @@ precision-recall curve as follows.
         :target: ../auto_examples/model_selection/plot_precision_recall.html#plot-the-precision-recall-curve
         :scale: 75
         :align: center
+
+Precision can also be referred to as the `positive predictive value (PPV)
+<https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values>`_,
+e.g. in the context of bioscience. A closely related metric is 
+`negative predictive value (NPV) <https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values>`_
+, implemented by the :func:`npv_score`.
+
+Recall can also be called the hit rate, or true positive rate (TPR). Especially
+in biostatistics, it is also known as `sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+, which is related to `specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_.
+In turn, specificity is also referred to as selectivity, or true negative rate (TNR), 
+and is implemented by the :func:`specificity_score`.
 
 .. topic:: Examples:
 
@@ -850,10 +868,10 @@ following table:
 +-------------------+------------------------------------------------+
 |                   |    Actual class (observation)                  |
 +-------------------+---------------------+--------------------------+
-|   Predicted class | tp (true positive)  | fp (false positive)      |
+|   Predicted class | TP (true positive)  | FP (false positive)      |
 |   (expectation)   | Correct result      | Unexpected result        |
 |                   +---------------------+--------------------------+
-|                   | fn (false negative) | tn (true negative)       |
+|                   | FN (false negative) | TN (true negative)       |
 |                   | Missing result      | Correct absence of result|
 +-------------------+---------------------+--------------------------+
 
