@@ -798,7 +798,6 @@ score:
    precision_recall_fscore_support
    precision_score
    recall_score
-   fpr_tpr_fnr_tnr_scores
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
