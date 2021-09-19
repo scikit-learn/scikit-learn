@@ -85,7 +85,7 @@ or with conda::
 #   :align: center
 #
 # The following code shows splines in action, for more information, please
-# refer to the :ref:`User Guide <spline_transformer>.`
+# refer to the :ref:`User Guide <spline_transformer>`.
 
 import numpy as np
 from sklearn.preprocessing import SplineTransformer
