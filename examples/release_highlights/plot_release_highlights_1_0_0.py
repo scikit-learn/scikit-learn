@@ -213,7 +213,7 @@ pipe[:-1].get_feature_names_out()
 # large number of training samples (> 10,000) for which the SGD variant can be
 # several orders of magnitude faster. Please check this :ref:`example
 # <sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py>` to see how
-# it's used, and :ref:`User Guide <sgd_online_one_class_svm>` for more details.
+# it's used, and the :ref:`User Guide <sgd_online_one_class_svm>` for more details.
 #
 # .. figure:: ../miscellaneous/images/sphx_glr_plot_anomaly_comparison_001.png
 #    :target: ../miscellaneous/plot_anomaly_comparison.html
