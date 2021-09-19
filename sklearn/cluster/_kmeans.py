@@ -80,7 +80,7 @@ def kmeans_plusplus(
     Returns
     -------
     centers : ndarray of shape (n_clusters, n_features)
-        The inital centers for k-means.
+        The initial centers for k-means.
 
     indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
@@ -172,7 +172,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
     Returns
     -------
     centers : ndarray of shape (n_clusters, n_features)
-        The inital centers for k-means.
+        The initial centers for k-means.
 
     indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
@@ -830,7 +830,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         intensive due to the allocation of an extra array of shape
         (n_samples, n_clusters).
 
-        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
+        For now "auto" (kept for backward compatibility) chooses "elkan" but it
         might change in the future for a better heuristic.
 
         .. versionchanged:: 0.18
@@ -1616,7 +1616,7 @@ class MiniBatchKMeans(KMeans):
         .. versionadded:: 1.0
 
     counts_ : ndarray of shape (n_clusters,)
-        Weigth sum of each cluster.
+        Weight sum of each cluster.
 
         .. deprecated:: 0.24
            This attribute is deprecated in 0.24 and will be removed in

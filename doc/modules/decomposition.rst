@@ -829,7 +829,7 @@ and the intensity of the regularization with the :attr:`alpha_W` and :attr:`alph
 (:math:`\alpha_W` and :math:`\alpha_H`) parameters. The priors are scaled by the number
 of samples (:math:`n\_samples`) for `H` and the number of features (:math:`n\_features`)
 for `W` to keep their impact balanced with respect to one another and to the data fit
-term as independant as possible of the size of the training set. Then the priors terms
+term as independent as possible of the size of the training set. Then the priors terms
 are:
 
 .. math::

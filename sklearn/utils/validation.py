@@ -608,7 +608,7 @@ def check_array(
     has_pd_integer_array = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
-        # array.sparse exists and sparsity will be perserved (later).
+        # array.sparse exists and sparsity will be preserved (later).
         with suppress(ImportError):
             from pandas.api.types import is_sparse
 
