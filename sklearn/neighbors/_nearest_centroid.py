@@ -33,16 +33,16 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     metric : str or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.pairwise_distances for its
-        metric parameter.
-        The centroids for the samples corresponding to each class is the point
-        from which the sum of the distances (according to the metric) of all
-        samples that belong to that particular class are minimized.
-        If the "manhattan" metric is provided, this centroid is the median and
-        for all other metrics, the centroid is now set to be the mean.
+        the options allowed by
+        :func:`~sklearn.metrics.pairwise_distances` for its metric
+        parameter. The centroids for the samples corresponding to each class is
+        the point from which the sum of the distances (according to the metric)
+        of all samples that belong to that particular class are minimized.
+        If the `"manhattan"` metric is provided, this centroid is the median
+        and for all other metrics, the centroid is now set to be the mean.
 
         .. versionchanged:: 0.19
-            ``metric='precomputed'`` was deprecated and now raises an error
+            `metric='precomputed'` was deprecated and now raises an error
 
     shrink_threshold : float, default=None
         Threshold for shrinking centroids to remove features.
@@ -110,7 +110,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             `n_features` is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
         y : array-like of shape (n_samples,)
-            Target values (integers).
+            Target values.
 
         Returns
         -------
@@ -195,9 +195,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        """Perform classification on an array of test vectors X.
+        """Perform classification on an array of test vectors `X`.
 
-        The predicted class C for each sample in X is returned.
+        The predicted class `C` for each sample in `X` is returned.
 
         Parameters
         ----------
@@ -211,9 +211,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         Notes
         -----
-        If the metric constructor parameter is "precomputed", X is assumed to
-        be the distance matrix between the data to be predicted and
-        ``self.centroids_``.
+        If the metric constructor parameter is `"precomputed"`, `X` is assumed
+        to be the distance matrix between the data to be predicted and
+        `self.centroids_`.
         """
         check_is_fitted(self)
 
