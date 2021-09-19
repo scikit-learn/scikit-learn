@@ -6,16 +6,16 @@ Release Highlights for scikit-learn 1.0
 
 .. currentmodule:: sklearn
 
-We are very pleased to announce the release of scikit-learn 1.0! The library has
-been stable for quite some time, releasing version 1.0 is recognizing that and
-signalling it to our users. This release does not include any breaking changes
-apart from the usual two-release deprecation cycle. For the future, we do our
-best to keep this pattern.
+We are very pleased to announce the release of scikit-learn 1.0! The library
+has been stable for quite some time, releasing version 1.0 is recognizing that
+and signalling it to our users. This release does not include any breaking
+changes apart from the usual two-release deprecation cycle. For the future, we
+do our best to keep this pattern.
 
-This release includes some new key features as well as many improvements and bug
-fixes. We detail below a few of the major features of this release. **For an
-exhaustive list of all the changes**, please refer to the :ref:`release notes
-<changes_1_0>`.
+This release includes some new key features as well as many improvements and
+bug fixes. We detail below a few of the major features of this release. **For
+an exhaustive list of all the changes**, please refer to the :ref:`release
+notes <changes_1_0>`.
 
 To install the latest version (with pip)::
 
@@ -136,12 +136,14 @@ spline.fit_transform(X)
 ##############################################################################
 # Feature Names Support
 # --------------------------------------------------------------------------
-# When an estimator is passed a pandas' dataframe during :term:`fit`, the
-# estimator will set a `feature_names_in_` attribute containing the feature
-# names. Note that feature names support is only enabled when the column names
-# in the dataframe are all strings. `feature_names_in_` is used to check that
-# the column names of the dataframe passed in non-:term:`fit`, such as
-# :term:`predict`, are consistent with features in :term:`fit`:
+# When an estimator is passed a `pandas' dataframe
+# <https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe>`_ during
+# :term:`fit`, the estimator will set a `feature_names_in_` attribute
+# containing the feature names. Note that feature names support is only enabled
+# when the column names in the dataframe are all strings. `feature_names_in_`
+# is used to check that the column names of the dataframe passed in
+# non-:term:`fit`, such as :term:`predict`, are consistent with features in
+# :term:`fit`:
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 
@@ -150,8 +152,8 @@ scalar = StandardScaler().fit(X)
 scalar.feature_names_in_
 
 # %%
-# The support of :term:`get_feature_names_out` is avaliable for transformers that
-# already had :term:`get_feature_names` and transformers with a one-to-one
+# The support of :term:`get_feature_names_out` is avaliable for transformers
+# that already had :term:`get_feature_names` and transformers with a one-to-one
 # correspondence between input and output such as
 # :class:`~preprocessing.StandardScalar`. :term:`get_feature_names_out` support
 # will be added to all other transformers in future releases. Additionally,
@@ -190,10 +192,10 @@ pipe[:-1].get_feature_names_out()
 # --------------------------------------------------------------------------
 # :class:`metrics.ConfusionMatrixDisplay`,
 # :class:`metrics.PrecisionRecallDisplay`, :class:`metrics.DetCurveDisplay`,
-# and :class:`inspection.PartialDependenceDisplay` now expose two class methods:
-# `from_estimator` and `from_predictions` which allow users to create a plot
-# given the predictions or an estimator. This means the corresponsing `plot_*`
-# functions are deprecated. Please check :ref:`example one
+# and :class:`inspection.PartialDependenceDisplay` now expose two class
+# methods: `from_estimator` and `from_predictions` which allow users to create
+# a plot given the predictions or an estimator. This means the corresponsing
+# `plot_*` functions are deprecated. Please check :ref:`example one
 # <sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py>` and
 # :ref:`example two
 # <sphx_glr_auto_examples_classification_plot_digits_classification.py>` for
@@ -207,13 +209,15 @@ pipe[:-1].get_feature_names_out()
 # Combined with kernel approximation techniques,
 # :class:`~linear_model.SGDOneClassSVM` can be used to approximate the solution
 # of a kernelized One-Class SVM, implemented in :class:`~svm.OneClassSVM`, with
-# a fit time complexity linear in the number of samples. Note that the complexity of a
-# kernelized One-Class SVM is at best quadratic in the number of samples.
-# :class:`~linear_model.SGDOneClassSVM` is thus well suited for datasets with a
-# large number of training samples (> 10,000) for which the SGD variant can be
-# several orders of magnitude faster. Please check this :ref:`example
+# a fit time complexity linear in the number of samples. Note that the
+# complexity of a kernelized One-Class SVM is at best quadratic in the number
+# of samples. :class:`~linear_model.SGDOneClassSVM` is thus well suited for
+# datasets with a large number of training samples (> 10,000) for which the SGD
+# variant can be several orders of magnitude faster. Please check this
+# :ref:`example
 # <sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py>` to see how
-# it's used, and the :ref:`User Guide <sgd_online_one_class_svm>` for more details.
+# it's used, and the :ref:`User Guide <sgd_online_one_class_svm>` for more
+# details.
 #
 # .. figure:: ../miscellaneous/images/sphx_glr_plot_anomaly_comparison_001.png
 #    :target: ../miscellaneous/plot_anomaly_comparison.html
