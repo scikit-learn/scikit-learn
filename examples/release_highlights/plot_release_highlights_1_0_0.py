@@ -150,7 +150,7 @@ scalar = StandardScaler().fit(X)
 scalar.feature_names_in_
 
 # %%
-# :term:`get_feature_names_out` support is avaliable for transformers that
+# The support of :term:`get_feature_names_out` is avaliable for transformers that
 # already had :term:`get_feature_names` and transformers with a one-to-one
 # correspondence between input and output such as
 # :class:`~preprocessing.StandardScalar`. :term:`get_feature_names_out` support
