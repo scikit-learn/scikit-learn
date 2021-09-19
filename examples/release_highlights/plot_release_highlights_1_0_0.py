@@ -207,7 +207,7 @@ pipe[:-1].get_feature_names_out()
 # Combined with kernel approximation techniques,
 # :class:`~linear_model.SGDOneClassSVM` can be used to approximate the solution
 # of a kernelized One-Class SVM, implemented in :class:`~svm.OneClassSVM`, with
-# a linear complexity in the number of samples. Note that the complexity of a
+# a fit time complexity linear in the number of samples. Note that the complexity of a
 # kernelized One-Class SVM is at best quadratic in the number of samples.
 # :class:`~linear_model.SGDOneClassSVM` is thus well suited for datasets with a
 # large number of training samples (> 10,000) for which the SGD variant can be
