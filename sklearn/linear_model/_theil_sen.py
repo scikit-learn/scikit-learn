@@ -400,6 +400,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         Returns
         -------
         self : returns an instance of self.
+            Fitted `TheilSenRegressor` estimator.
         """
         random_state = check_random_state(self.random_state)
         X, y = self._validate_data(X, y, y_numeric=True)
