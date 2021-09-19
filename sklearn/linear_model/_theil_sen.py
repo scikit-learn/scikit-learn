@@ -255,7 +255,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         A random number generator instance to define the state of the random
         permutations generator. Pass an int for reproducible output across
         multiple function calls.
-        See :term:`Glossary <random_state>`
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int, default=None
         Number of CPUs to use during the cross validation.
