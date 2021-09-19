@@ -173,7 +173,7 @@ preprocessor = ColumnTransformer(
 preprocessor.get_feature_names_out()
 
 # %%
-# When this ``preprocessor``` is used with a pipeline, the feature names used
+# When this ``preprocessor`` is used with a pipeline, the feature names used
 # by the classifier are obtained by slicing and calling
 # :term:`get_feature_names_out`:
 from sklearn.linear_model import LogisticRegression
