@@ -154,7 +154,7 @@ scalar.feature_names_in_
 # already had :term:`get_feature_names` and transformers with a one-to-one
 # correspondence between input and output such as
 # :class:`~preprocessing.StandardScalar`. :term:`get_feature_names_out` support
-# will be added to all other transformers in a future release. Additionally,
+# will be added to all other transformers in future releases. Additionally,
 # :meth:`compose.ColumnTransformer.get_feature_names_out` is avaliable to
 # combine features names of its transformers:
 from sklearn.compose import ColumnTransformer
