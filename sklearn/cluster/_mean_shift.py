@@ -487,7 +487,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like} of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             New data to predict.
 
         Returns
