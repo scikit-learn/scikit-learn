@@ -66,18 +66,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    Examples
-    --------
-    >>> from sklearn.neighbors import NearestCentroid
-    >>> import numpy as np
-    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> y = np.array([1, 1, 1, 2, 2, 2])
-    >>> clf = NearestCentroid()
-    >>> clf.fit(X, y)
-    NearestCentroid()
-    >>> print(clf.predict([[-0.8, -1]]))
-    [1]
-
     See Also
     --------
     KNeighborsClassifier : Nearest neighbors classifier.
@@ -94,6 +82,17 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     of the National Academy of Sciences of the United States of America,
     99(10), 6567-6572. The National Academy of Sciences.
 
+    Examples
+    --------
+    >>> from sklearn.neighbors import NearestCentroid
+    >>> import numpy as np
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    >>> y = np.array([1, 1, 1, 2, 2, 2])
+    >>> clf = NearestCentroid()
+    >>> clf.fit(X, y)
+    NearestCentroid()
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
     """
 
     def __init__(self, metric="euclidean", *, shrink_threshold=None):
@@ -111,7 +110,12 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             `n_features` is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
         y : array-like of shape (n_samples,)
-            Target values (integers)
+            Target values (integers).
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         if self.metric == "precomputed":
             raise ValueError("Precomputed is not supported.")
@@ -197,11 +201,13 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Test samples.
 
         Returns
         -------
         C : ndarray of shape (n_samples,)
+            The predicted classes.
 
         Notes
         -----
