@@ -103,17 +103,6 @@ def test_parallel():
     assert_array_equal(ms1.labels_, ms2.labels_)
 
 
-def test_meanshift_predict_sparse_matrix():
-    # Tests to make sure MeanShift.predict works with sparse input
-    # Fixes issue #20733
-    ms = MeanShift(bandwidth=1.2)
-    ms.fit(X)
-    X_dense = np.array([[0.0, 0.0], [5.0, 5.0]])
-    labels_dense = ms.predict(X_dense)
-    labels_sparse = ms.predict(sparse.csr_matrix(X_dense))
-    assert_array_equal(labels_dense, labels_sparse)
-
-
 def test_meanshift_predict():
     # Test MeanShift.predict
     ms = MeanShift(bandwidth=1.2)

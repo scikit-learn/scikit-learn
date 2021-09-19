@@ -487,7 +487,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like} of shape (n_samples, n_features)
             New data to predict.
 
         Returns
@@ -496,6 +496,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self._validate_data(X, reset=False)
         with config_context(assume_finite=True):
             return pairwise_distances_argmin(X, self.cluster_centers_)
