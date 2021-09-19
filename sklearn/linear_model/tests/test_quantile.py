@@ -6,12 +6,14 @@ import numpy as np
 import pytest
 from pytest import approx
 from scipy.optimize import minimize
+from scipy import sparse
 
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.metrics import mean_pinball_loss
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils.fixes import parse_version, sp_version
 
 
@@ -242,3 +244,16 @@ def test_linprog_failure():
     msg = "Linear programming for QuantileRegressor did not succeed."
     with pytest.warns(ConvergenceWarning, match=msg):
         reg.fit(X, y)
+
+
+def test_sparse_input():
+    rng = np.random.RandomState(42)
+    n = 100
+    X = sparse.eye(n, n)
+    beta = rng.rand(n)
+    y = X * beta[:, np.newaxis]
+    reg = QuantileRegressor(alpha=0).fit(X, y)
+    reg.fit(X, y.ravel())
+    assert_array_almost_equal(beta, reg.coef_ + reg.intercept_)
+
+    assert_array_almost_equal(reg.predict(X) - y.ravel(), 0)

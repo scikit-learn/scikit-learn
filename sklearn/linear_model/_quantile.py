@@ -4,11 +4,13 @@
 import warnings
 
 import numpy as np
+from scipy import sparse
 from scipy.optimize import linprog
 
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
 from ..exceptions import ConvergenceWarning
+from ..utils import _safe_indexing
 from ..utils.validation import _check_sample_weight
 from ..utils.fixes import sp_version, parse_version
 
@@ -127,7 +129,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             Returns self.
         """
         X, y = self._validate_data(
-            X, y, accept_sparse=False, y_numeric=True, multi_output=False
+            X,
+            y,
+            accept_sparse=["csr", "csc", "coo"],
+            y_numeric=True,
+            multi_output=False,
         )
         sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -218,13 +224,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         #
         # Filtering out zero samples weights from the beginning makes life
         # easier for the linprog solver.
-        mask = sample_weight != 0
-        n_mask = int(np.sum(mask))  # use n_mask instead of n_samples
+        indices = np.flatnonzero(sample_weight != 0)
+        n_indices = len(indices)  # use n_mask instead of n_samples
         c = np.concatenate(
             [
                 np.full(2 * n_params, fill_value=alpha),
-                sample_weight[mask] * self.quantile,
-                sample_weight[mask] * (1 - self.quantile),
+                _safe_indexing(sample_weight, indices) * self.quantile,
+                _safe_indexing(sample_weight, indices) * (1 - self.quantile),
             ]
         )
         if self.fit_intercept:
@@ -232,23 +238,31 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[0] = 0
             c[n_params] = 0
 
-            A_eq = np.concatenate(
-                [
-                    np.ones((n_mask, 1)),
-                    X[mask],
-                    -np.ones((n_mask, 1)),
-                    -X[mask],
-                    np.eye(n_mask),
-                    -np.eye(n_mask),
-                ],
-                axis=1,
-            )
-        else:
-            A_eq = np.concatenate(
-                [X[mask], -X[mask], np.eye(n_mask), -np.eye(n_mask)], axis=1
-            )
+        X = _safe_indexing(X, indices)
 
-        b_eq = y[mask]
+        if sparse.issparse(X):
+            sparse_constructor = {
+                "csr": sparse.csr_matrix,
+                "csc": sparse.csc_matrix,
+                "coo": sparse.coo_matrix,
+            }
+            eye = sparse.eye(n_indices, dtype=X.dtype, format=X.format)
+            if self.fit_intercept:
+                ones = sparse_constructor[X.format](
+                    np.ones(shape=(n_indices, 1), dtype=X.dtype)
+                )
+                A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye])
+            else:
+                A_eq = sparse.hstack([X, -X, eye, -eye])
+        else:
+            eye = np.eye(n_indices)
+            if self.fit_intercept:
+                ones = np.ones((n_indices, 1))
+                A_eq = np.concatenate([ones, X, -ones, -X, eye, -eye], axis=1)
+            else:
+                A_eq = np.concatenate([X, -X, eye, -eye], axis=1)
+
+        b_eq = _safe_indexing(y, indices)
 
         result = linprog(
             c=c,
