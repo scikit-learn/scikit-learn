@@ -295,6 +295,12 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         .. versionadded:: 1.0
 
+    References
+    ----------
+    - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
+      Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
+      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
+
     Examples
     --------
     >>> from sklearn.linear_model import TheilSenRegressor
@@ -306,12 +312,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     0.9884...
     >>> reg.predict(X[:1,])
     array([-31.5871...])
-
-    References
-    ----------
-    - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
-      Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
-      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
 
     def __init__(
