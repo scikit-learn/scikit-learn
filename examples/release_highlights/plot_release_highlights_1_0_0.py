@@ -197,7 +197,7 @@ pipe[:-1].get_feature_names_out()
 # <sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py>` and
 # :ref:`example two
 # <sphx_glr_auto_examples_classification_plot_digits_classification.py>` for
-# examples of how to use the new plotting functionalities.
+# how to use the new plotting functionalities.
 
 ##############################################################################
 # Online One-Class SVM
