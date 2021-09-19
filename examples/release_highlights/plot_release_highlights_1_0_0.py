@@ -78,7 +78,7 @@ or with conda::
 # spline basis functions for continuous/numerical features with the new
 # :class:`~preprocessing.SplineTransformer`. Splines are piecewise polynomials,
 # parametrized by their polynomial degree and the positions of the knots. The
-# :class:`~preprocessing.SplineTransformer` implements a B-spline basis
+# :class:`~preprocessing.SplineTransformer` implements a B-spline basis.
 #
 # .. figure:: ../linear_model/images/sphx_glr_plot_polynomial_interpolation_001.png
 #   :target: ../linear_model/plot_polynomial_interpolation.html
