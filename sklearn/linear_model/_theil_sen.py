@@ -295,6 +295,12 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    HuberRegressor : Linear regression model that is robust to outliers.
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
+
     References
     ----------
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
