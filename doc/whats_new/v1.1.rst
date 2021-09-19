@@ -43,7 +43,7 @@ Changelog
 
 - |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
   :class:`feature_extraction.TfidfVectorizer` by raising an
-  error when min_idf or max_idf is a float and > 1.0.
+  error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
   :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
 :mod:`sklearn.utils`

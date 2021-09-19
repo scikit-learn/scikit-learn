@@ -29,7 +29,7 @@ from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
-from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
+from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check_scalar
 from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
@@ -1103,25 +1103,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self.stop_words = stop_words
         self.max_df = max_df
         self.min_df = min_df
-        if max_df < 0 or min_df < 0:
-            raise ValueError("negative value for max_df or min_df")
-        if not isinstance(min_df, numbers.Integral) and min_df > 1.0:
-            raise ValueError(
-                "min_df is out of range for a float value. Use an int or a float"
-                " between 0.0 and 1.0."
-            )
-        if not isinstance(max_df, numbers.Integral) and max_df > 1.0:
-            raise ValueError(
-                "max_df is out of range for a float value. Use an int or a float"
-                " between 0.0 and 1.0."
-            )
         self.max_features = max_features
-        if max_features is not None:
-            if not isinstance(max_features, numbers.Integral) or max_features <= 0:
-                raise ValueError(
-                    "max_features=%r, neither a positive integer nor None"
-                    % max_features
-                )
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary
@@ -1257,6 +1239,25 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         )
         X.sort_indices()
         return vocabulary, X
+
+    def _validate_params(self):
+        """Validation of min_df, max_df and max_features"""
+        super()._validate_params()
+
+        if self.max_features is not None:
+            check_scalar(self.max_features, "max_features", int, min_val=0)
+
+        if self.min_df is not None:
+            try:
+                check_scalar(self.min_df, "min_df", int, min_val=0)
+            except TypeError:
+                check_scalar(self.min_df, "min_df", float, min_val=0.0, max_val=1.0)
+
+        if self.max_df is not None:
+            try:
+                check_scalar(self.max_df, "max_df", int, min_val=0)
+            except TypeError:
+                check_scalar(self.max_df, "max_df", float, min_val=0.0, max_val=1.0)
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
