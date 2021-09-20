@@ -13,9 +13,8 @@ from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils.extmath import row_norms
-from ..utils import deprecated
-from ..utils import check_scalar
-from ..utils.validation import check_is_fitted
+from ..utils import check_scalar, deprecated
+from ..utils.validation import _num_samples, check_is_fitted
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
 from .._config import config_context
@@ -519,22 +518,24 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             "threshold",
             target_type=numbers.Real,
             min_val=0.0,
-            closed="neither"
+            include_boundaries="neither",
         )
         check_scalar(
             self.branching_factor,
             "branching_factor",
             target_type=numbers.Integral,
             min_val=1,
-            closed="neither"
+            include_boundaries="neither",
         )
-        check_scalar(
-            self.n_clusters,
-            "n_clusters",
-            target_type=numbers.Integral,
-            min_val=1,
-            closed="left"
-        )
+        if isinstance(self.n_clusters, numbers.Number):
+            check_scalar(
+                self.n_clusters,
+                "n_clusters",
+                target_type=numbers.Integral,
+                min_val=1,
+                max_val=_num_samples(X),
+                include_boundaries="both",
+            )
 
         # TODO: Remove deprected flags in 1.2
         self._deprecated_fit, self._deprecated_partial_fit = True, False
@@ -722,7 +723,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             if len(centroids) < self.n_clusters:
                 not_enough_centroids = True
         elif clusterer is not None and not hasattr(clusterer, "fit_predict"):
-            raise ValueError(
+            raise TypeError(
                 "n_clusters should be an instance of ClusterMixin or an int"
             )
 

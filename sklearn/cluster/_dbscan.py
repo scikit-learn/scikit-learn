@@ -365,34 +365,32 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             "eps",
             target_type=numbers.Real,
             min_val=0.0,
-            closed="neither"
+            include_boundaries="neither",
         )
         check_scalar(
             self.min_samples,
             "min_samples",
             target_type=numbers.Integral,
             min_val=1,
-            closed="left"
+            include_boundaries="left",
         )
         check_scalar(
             self.leaf_size,
             "leaf_size",
             target_type=numbers.Integral,
             min_val=1,
-            closed="left"
+            include_boundaries="left",
         )
-        check_scalar(
-            self.p,
-            "p",
-            target_type=numbers.Real,
-            min_val=1.0,
-            closed="left"
-        )
-        check_scalar(
-            self.n_jobs,
-            "n_jobs",
-            target_type=numbers.Integral
-        )
+        if self.p is not None:
+            check_scalar(
+                self.p,
+                "p",
+                target_type=numbers.Real,
+                min_val=1.0,
+                include_boundaries="left",
+            )
+        if self.n_jobs is not None:
+            check_scalar(self.n_jobs, "n_jobs", target_type=numbers.Integral)
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,
