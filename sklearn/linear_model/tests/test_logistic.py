@@ -2242,6 +2242,7 @@ def test_sample_weight_not_modified(multi_class, class_weight):
 @pytest.mark.parametrize("solver", ["liblinear", "lbfgs", "newton-cg", "sag", "saga"])
 def test_large_sparse_matrix(solver):
     # Solvers either accept large sparse matrices, or raise helpful error.
+    # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
     X = sp.rand(20, 10, format="csr")
