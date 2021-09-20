@@ -432,7 +432,7 @@ def _generate_test_scale_and_stability_datasets():
     X *= 1000
     yield X, Y
 
-    # Data set where one of the features is constaint
+    # Data set where one of the features is constraint
     X, Y = load_linnerud(return_X_y=True)
     # causes X[:, -1].std() to be zero
     X[:, -1] = 1.0

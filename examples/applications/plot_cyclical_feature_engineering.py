@@ -215,7 +215,7 @@ gbrt_pipeline = make_pipeline(
 # %%
 #
 # Lets evaluate our gradient boosting model with the mean absolute error of the
-# relative demand averaged accross our 5 time-based cross-validation splits:
+# relative demand averaged across our 5 time-based cross-validation splits:
 
 
 def evaluate(model, X, y, cv):
@@ -223,7 +223,7 @@ def evaluate(model, X, y, cv):
         model,
         X,
         y,
-        cv=ts_cv,
+        cv=cv,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
     )
     mae = -cv_results["test_neg_mean_absolute_error"]

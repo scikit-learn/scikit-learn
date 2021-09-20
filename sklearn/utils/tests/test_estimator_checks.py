@@ -504,7 +504,7 @@ def test_check_estimator():
     msg = "Estimator changes __dict__ during predict"
     with raises(AssertionError, match=msg):
         check_estimator(ChangesDict())
-    # check that `fit` only changes attribures that
+    # check that `fit` only changes attributes that
     # are private (start with an _ or end with a _).
     msg = (
         "Estimator ChangesWrongAttribute should not change or mutate  "
@@ -717,6 +717,15 @@ def test_check_dataframe_column_names_consistency():
     with raises(ValueError, match=err_msg):
         check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
     check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
+
+    lr = LogisticRegression()
+    check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+    lr.__doc__ = "Docstring that does not document the estimator's attributes"
+    err_msg = (
+        "Estimator LogisticRegression does not document its feature_names_in_ attribute"
+    )
+    with raises(ValueError, match=err_msg):
+        check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
 
 
 class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
