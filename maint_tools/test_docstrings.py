@@ -22,7 +22,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultiTaskElasticNetCV",
     "MultiTaskLasso",
     "MultiTaskLassoCV",
-    "NearestCentroid",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "PLSCanonical",
