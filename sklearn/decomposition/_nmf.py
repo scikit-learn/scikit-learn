@@ -924,7 +924,7 @@ def non_negative_factorization(
 
     The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
     `H` to keep their impact balanced with respect to one another and to the data fit
-    term as independant as possible of the size `n_samples` of the training set.
+    term as independent as possible of the size `n_samples` of the training set.
 
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
@@ -1142,7 +1142,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
     The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
     `H` to keep their impact balanced with respect to one another and to the data fit
-    term as independant as possible of the size `n_samples` of the training set.
+    term as independent as possible of the size `n_samples` of the training set.
 
     The objective function is minimized with an alternating minimization of W
     and H.

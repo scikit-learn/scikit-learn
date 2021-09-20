@@ -18,7 +18,7 @@ CYTHON_MIN_VERSION = "0.28.5"
 
 # 'build' and 'install' is included to have structured metadata for CI.
 # It will NOT be included in setup's extras_require
-# The values are (version_spec, comma seperated tags)
+# The values are (version_spec, comma separated tags)
 dependent_packages = {
     "numpy": (NUMPY_MIN_VERSION, "build, install"),
     "scipy": (SCIPY_MIN_VERSION, "build, install"),

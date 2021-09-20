@@ -7,7 +7,7 @@ by Andreas Mueller:
 
 (https://peekaboo-vision.blogspot.de/2013/01/machine-learning-cheat-sheet-for-scikit.html)
 
-The image is made interactive using an imagemap, and uses the jQuery Map Hilight plugin module
+The image is made interactive using an imagemap, and uses the jQuery Map Highlight plugin module
 by David Lynch (https://davidlynch.org/projects/maphilight/docs/) to highlight
 the different items on the image upon mouseover.
 

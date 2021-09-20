@@ -54,7 +54,7 @@ Highlights
 
 - Out-of core learning of PCA via :class:`decomposition.IncrementalPCA`.
 
-- Probability callibration of classifiers using
+- Probability calibration of classifiers using
   :class:`calibration.CalibratedClassifierCV`.
 
 - :class:`cluster.Birch` clustering method for large-scale datasets.

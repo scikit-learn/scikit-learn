@@ -466,7 +466,7 @@ class IterativeImputer(_BaseImputer):
         if self.n_nearest_features is None or self.n_nearest_features >= n_features:
             return None
         with np.errstate(invalid="ignore"):
-            # if a feature in the neighboorhood has only a single value
+            # if a feature in the neighborhood has only a single value
             # (e.g., categorical feature), the std. dev. will be null and
             # np.corrcoef will raise a warning due to a division by zero
             abs_corr_mat = np.abs(np.corrcoef(X_filled.T))
