@@ -306,7 +306,7 @@ def plot_partial_dependence(
         - integer or string array-like: integer indices or strings indicating
           categorical features.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -703,7 +703,7 @@ class PartialDependenceDisplay:
         The list should be same size as `features`. If `None`, all features
         are assumed to be continuous.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     Attributes
     ----------
@@ -758,7 +758,7 @@ class PartialDependenceDisplay:
         correspond to a nonexisting axes or an axes that does not include a
         bar plot.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     heatmaps_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `heatmaps_[i, j]` is the partial dependence
@@ -768,7 +768,7 @@ class PartialDependenceDisplay:
         that are None correspond to a nonexisting axes or an axes that does not
         include a heatmap.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     figure_ : matplotlib Figure
         Figure containing partial dependence plots.
@@ -1031,6 +1031,19 @@ class PartialDependenceDisplay:
             Controls the randomness of the selected samples when subsamples is not
             `None` and `kind` is either `'both'` or `'individual'`.
             See :term:`Glossary <random_state>` for details.
+
+    categorical_features : array-like of shape (n_features,) or shape \
+            (n_categorical_features,), dtype={bool, int, str}, default=None
+        Indicates the categorical features.
+
+        - `None`: no feature will be considered categorical;
+        - boolean array-like: boolean mask of shape `(n_features,)` indicating
+          which features are categorical. Thus, this array has the same shape
+          has `X.shape[1]`;
+        - integer or string array-like: integer indices or strings indicating
+          categorical features.
+
+        .. versionadded:: 1.1
 
         Returns
         -------
