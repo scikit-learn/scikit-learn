@@ -480,7 +480,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "`fit_` is deprecated in 1.0 and will be removed in 1.2."
+        "`fit_` is deprecated in 1.0 and will be removed in 1.2"
     )
     @property
     def fit_(self):
@@ -489,7 +489,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2."
+        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2"
     )
     @property
     def partial_fit_(self):
@@ -512,7 +512,32 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        # TODO: Remove deprecated flags in 1.2
+
+        check_scalar(
+            self.threshold,
+            "threshold",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+        check_scalar(
+            self.branching_factor,
+            "branching_factor",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="neither",
+        )
+        if isinstance(self.n_clusters, numbers.Number):
+            check_scalar(
+                self.n_clusters,
+                "n_clusters",
+                target_type=numbers.Integral,
+                min_val=1,
+                max_val=_num_samples(X),
+                include_boundaries="both",
+            )
+
+        # TODO: Remove deprected flags in 1.2
         self._deprecated_fit, self._deprecated_partial_fit = True, False
         return self._fit(X, partial=False)
 
@@ -614,7 +639,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        # TODO: Remove deprecated flags in 1.2
+        # TODO: Remove deprected flags in 1.2
         self._deprecated_partial_fit, self._deprecated_fit = True, False
         if X is None:
             # Perform just the final global clustering step.
