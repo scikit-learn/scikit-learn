@@ -482,6 +482,21 @@ def test_radius_neighbors_classifier(
             assert_array_equal(y_pred, y_str[:n_test_pts])
 
 
+# TODO: Remove in v1.2
+def test_radius_neighbors_classifier_kwargs_is_deprecated():
+    extra_kwargs = {
+        "unused_param": "",
+        "extra_param": None,
+    }
+    msg = (
+        "Passing additional keyword parameters has no effect and is deprecated "
+        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
+        f"keyword parameter(s) are: {extra_kwargs.keys()}."
+    )
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        neighbors.RadiusNeighborsClassifier(**extra_kwargs)
+
+
 def test_radius_neighbors_classifier_when_no_neighbors():
     # Test radius-based classifier when no neighbors found.
     # In this case it should rise an informative exception
@@ -727,6 +742,21 @@ def test_radius_neighbors_returns_array_of_objects():
 
     assert_array_equal(neigh_dist, expected_dist)
     assert_array_equal(neigh_ind, expected_ind)
+
+
+@pytest.mark.parametrize("algorithm", ["ball_tree", "kd_tree", "brute"])
+def test_query_equidistant_kth_nn(algorithm):
+    # For several candidates for the k-th nearest neighbor position,
+    # the first candidate should be chosen
+    query_point = np.array([[0, 0]])
+    equidistant_points = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
+    # The 3rd and 4th points should not replace the 2nd point
+    # for the 2th nearest neighbor position
+    k = 2
+    knn_indices = np.array([[0, 1]])
+    nn = neighbors.NearestNeighbors(algorithm=algorithm).fit(equidistant_points)
+    indices = np.sort(nn.kneighbors(query_point, n_neighbors=k, return_distance=False))
+    assert_array_equal(indices, knn_indices)
 
 
 @pytest.mark.parametrize(

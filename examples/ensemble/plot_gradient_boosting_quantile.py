@@ -184,7 +184,7 @@ pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 # the fact the squared error estimator is very sensitive to large outliers
 # which can cause significant overfitting. This can be seen on the right hand
 # side of the previous plot. The conditional median estimator is biased
-# (underestimation for this asymetric noise) but is also naturally robust to
+# (underestimation for this asymmetric noise) but is also naturally robust to
 # outliers and overfits less.
 #
 # Calibration of the confidence interval

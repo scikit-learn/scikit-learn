@@ -167,6 +167,12 @@ class IterativeImputer(_BaseImputer):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_features_with_missing_ : int
         Number of features with missing values.
 
@@ -460,7 +466,7 @@ class IterativeImputer(_BaseImputer):
         if self.n_nearest_features is None or self.n_nearest_features >= n_features:
             return None
         with np.errstate(invalid="ignore"):
-            # if a feature in the neighboorhood has only a single value
+            # if a feature in the neighborhood has only a single value
             # (e.g., categorical feature), the std. dev. will be null and
             # np.corrcoef will raise a warning due to a division by zero
             abs_corr_mat = np.abs(np.corrcoef(X_filled.T))

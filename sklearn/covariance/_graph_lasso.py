@@ -74,6 +74,29 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
+class _DictWithDeprecatedKeys(dict):
+    """Dictionary with deprecated keys.
+
+    Currently only be used in GraphicalLassoCV to deprecate keys"""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._deprecated_key_to_new_key = {}
+
+    def __getitem__(self, key):
+        if key in self._deprecated_key_to_new_key:
+            warnings.warn(
+                f"Key: '{key}', is deprecated in 1.0 and will be "
+                f"removed in 1.2. Use '{self._deprecated_key_to_new_key[key]}' instead",
+                FutureWarning,
+            )
+        return super().__getitem__(key)
+
+    def _set_deprecated(self, value, *, new_key, deprecated_key):
+        self._deprecated_key_to_new_key[deprecated_key] = new_key
+        self[new_key] = self[deprecated_key] = value
+
+
 # The g-lasso algorithm
 def graphical_lasso(
     emp_cov,
@@ -372,6 +395,12 @@ class GraphicalLasso(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     graphical_lasso : L1-penalized covariance estimator.
@@ -637,7 +666,7 @@ class GraphicalLassoCV(GraphicalLasso):
         stable.
 
     n_jobs : int, default=None
-        number of jobs to run in parallel.
+        Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -691,14 +720,41 @@ class GraphicalLassoCV(GraphicalLasso):
         alphas : ndarray of shape (n_alphas,)
             All penalization parameters explored.
 
+        split(k)_test_score : ndarray of shape (n_alphas,)
+            Log-likelihood score on left-out data across (k)th fold.
+
+            .. versionadded:: 1.0
+
+        mean_test_score : ndarray of shape (n_alphas,)
+            Mean of scores over the folds.
+
+            .. versionadded:: 1.0
+
+        std_test_score : ndarray of shape (n_alphas,)
+            Standard deviation of scores over the folds.
+
+            .. versionadded:: 1.0
+
         split(k)_score : ndarray of shape (n_alphas,)
             Log-likelihood score on left-out data across (k)th fold.
+
+            .. deprecated:: 1.0
+                `split(k)_score` is deprecated in 1.0 and will be removed in 1.2.
+                Use `split(k)_test_score` instead.
 
         mean_score : ndarray of shape (n_alphas,)
             Mean of scores over the folds.
 
+            .. deprecated:: 1.0
+                `mean_score` is deprecated in 1.0 and will be removed in 1.2.
+                Use `mean_test_score` instead.
+
         std_score : ndarray of shape (n_alphas,)
             Standard deviation of scores over the folds.
+
+            .. deprecated:: 1.0
+                `std_score` is deprecated in 1.0 and will be removed in 1.2.
+                Use `std_test_score` instead.
 
         .. versionadded:: 0.24
 
@@ -709,6 +765,30 @@ class GraphicalLassoCV(GraphicalLasso):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    graphical_lasso : L1-penalized covariance estimator.
+    GraphicalLasso : Sparse inverse covariance with
+        cross-validated choice of the l1 penalty.
+
+    Notes
+    -----
+    The search for the optimal penalization parameter (alpha) is done on an
+    iteratively refined grid: first the cross-validated scores on a grid are
+    computed, then a new refined grid is centered around the maximum, and so
+    on.
+
+    One of the challenges which is faced here is that the solvers can
+    fail to converge to a well-conditioned estimate. The corresponding
+    values of alpha then come out as missing values, but the optimum may
+    be close to these missing values.
 
     Examples
     --------
@@ -730,22 +810,6 @@ class GraphicalLassoCV(GraphicalLasso):
            [0.017, 0.036, 0.094, 0.69 ]])
     >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
-
-    See Also
-    --------
-    graphical_lasso, GraphicalLasso
-
-    Notes
-    -----
-    The search for the optimal penalization parameter (alpha) is done on an
-    iteratively refined grid: first the cross-validated scores on a grid are
-    computed, then a new refined grid is centered around the maximum, and so
-    on.
-
-    One of the challenges which is faced here is that the solvers can
-    fail to converge to a well-conditioned estimate. The corresponding
-    values of alpha then come out as missing values, but the optimum may
-    be close to these missing values.
     """
 
     def __init__(
@@ -776,12 +840,12 @@ class GraphicalLassoCV(GraphicalLasso):
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
-        """Fits the GraphicalLasso covariance model to X.
+        """Fit the GraphicalLasso covariance model to X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Data from which to compute the covariance estimate
+            Data from which to compute the covariance estimate.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -789,6 +853,7 @@ class GraphicalLassoCV(GraphicalLasso):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2, estimator=self)
@@ -906,13 +971,27 @@ class GraphicalLassoCV(GraphicalLasso):
             )
         )
         grid_scores = np.array(grid_scores)
-        self.cv_results_ = {"alphas": np.array(alphas)}
-        for i in range(grid_scores.shape[1]):
-            key = "split{}_score".format(i)
-            self.cv_results_[key] = grid_scores[:, i]
 
-        self.cv_results_["mean_score"] = np.mean(grid_scores, axis=1)
-        self.cv_results_["std_score"] = np.std(grid_scores, axis=1)
+        # TODO(1.2): Use normal dict for cv_results_ instead of _DictWithDeprecatedKeys
+        self.cv_results_ = _DictWithDeprecatedKeys(alphas=np.array(alphas))
+
+        for i in range(grid_scores.shape[1]):
+            self.cv_results_._set_deprecated(
+                grid_scores[:, i],
+                new_key=f"split{i}_test_score",
+                deprecated_key=f"split{i}_score",
+            )
+
+        self.cv_results_._set_deprecated(
+            np.mean(grid_scores, axis=1),
+            new_key="mean_test_score",
+            deprecated_key="mean_score",
+        )
+        self.cv_results_._set_deprecated(
+            np.std(grid_scores, axis=1),
+            new_key="std_test_score",
+            deprecated_key="std_score",
+        )
 
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
@@ -939,10 +1018,15 @@ class GraphicalLassoCV(GraphicalLasso):
     )
     @property
     def grid_scores_(self):
-        # remove 3 for mean_score, std_score, and alphas
-        n_alphas = len(self.cv_results_) - 3
+        n_splits = len(
+            [
+                key
+                for key in self.cv_results_
+                if key.startswith("split") and key.endswith("_test_score")
+            ]
+        )
         return np.asarray(
-            [self.cv_results_["split{}_score".format(i)] for i in range(n_alphas)]
+            [self.cv_results_["split{}_test_score".format(i)] for i in range(n_splits)]
         ).T
 
     # TODO: Remove in 1.1 when cv_alphas_ is deprecated

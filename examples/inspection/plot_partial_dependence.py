@@ -235,7 +235,7 @@ print(f"Test R2 score: {mlp_model.score(X_test, y_test):.2f}")
 # use in explaining the impact of a given feature on the prediction function of
 # a poor model. In this regard, our model is working reasonably well.
 import matplotlib.pyplot as plt
-from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import PartialDependenceDisplay
 
 print("Computing partial dependence plots...")
 features = [
@@ -248,7 +248,7 @@ features = [
 ]
 tic = time()
 _, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8))
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     mlp_model,
     X_train,
     features,
@@ -304,7 +304,7 @@ features = [
     "weather",
     "hour",
 ]
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
     features,
@@ -358,7 +358,7 @@ print("Computing partial dependence plots and individual conditional expectation
 tic = time()
 _, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True)
 features = ["temp", "humidity"]
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
     features,
@@ -385,15 +385,16 @@ _ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
 # Heatmap representation
 # ......................
 #
-# PDPs with two features of interest enable us to visualize interactions among them.
-# However, ICEs cannot be plotted in an easy manner and thus interpreted. We will show
-# the representation of available in :func:`~sklearn.inspection.plot_partial_dependence`
-# that is a 2D heatmap.
+# PDPs with two features of interest enable us to visualize interactions among
+# them. However, ICEs cannot be plotted in an easy manner and thus interpreted.
+# We will show the representation of available in
+# :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` that is a
+# 2D heatmap.
 print("Computing partial dependence plots...")
 features = ["temp", "humidity", ("temp", "humidity")]
 _, ax = plt.subplots(ncols=3, figsize=(9, 4))
 tic = time()
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
     features,
@@ -420,7 +421,7 @@ print("Computing partial dependence plots...")
 features = ["season", "weather", ("season", "weather")]
 _, ax = plt.subplots(ncols=3, figsize=(14, 4))
 tic = time()
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
     features,

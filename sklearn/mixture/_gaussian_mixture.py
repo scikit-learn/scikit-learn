@@ -604,6 +604,17 @@ class GaussianMixture(BaseMixture):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    BayesianGaussianMixture : Gaussian mixture model fit with a variational
+        inference.
+
     Examples
     --------
     >>> import numpy as np
@@ -615,11 +626,6 @@ class GaussianMixture(BaseMixture):
            [ 1.,  2.]])
     >>> gm.predict([[0, 0], [12, 3]])
     array([1, 0])
-
-    See Also
-    --------
-    BayesianGaussianMixture : Gaussian mixture model fit with a variational
-        inference.
     """
 
     def __init__(
@@ -805,6 +811,7 @@ class GaussianMixture(BaseMixture):
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
+            The input samples.
 
         Returns
         -------
@@ -821,6 +828,7 @@ class GaussianMixture(BaseMixture):
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
+            The input samples.
 
         Returns
         -------

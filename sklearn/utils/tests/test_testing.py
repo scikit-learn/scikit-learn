@@ -11,7 +11,7 @@ from scipy import sparse
 import pytest
 
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.metaestimators import available_if, if_delegate_has_method
 from sklearn.utils._testing import (
     assert_raises,
     assert_warns,
@@ -224,7 +224,11 @@ class TestWarns(unittest.TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             filters_orig = warnings.filters[:]
-            assert assert_warns(UserWarning, f) == 3
+
+            # TODO: remove in 1.2
+            with pytest.warns(FutureWarning):
+                assert assert_warns(UserWarning, f) == 3
+
             # test that assert_warns doesn't have side effects on warnings
             # filters
             assert warnings.filters == filters_orig
@@ -232,6 +236,8 @@ class TestWarns(unittest.TestCase):
             assert_no_warnings(f)
         assert assert_no_warnings(lambda x: x, 1) == 1
 
+    # TODO: remove in 1.2
+    @ignore_warnings(category=FutureWarning)
     def test_warn_wrong_warning(self):
         def f():
             warnings.warn("yo", FutureWarning)
@@ -422,6 +428,55 @@ class MockMetaEstimator:
         """
         self.delegate = delegate
 
+    @available_if(lambda self: hasattr(self.delegate, "predict"))
+    def predict(self, X):
+        """This is available only if delegate has predict.
+
+        Parameters
+        ----------
+        y : ndarray
+            Parameter y
+        """
+        return self.delegate.predict(X)
+
+    @available_if(lambda self: hasattr(self.delegate, "score"))
+    @deprecated("Testing a deprecated delegated method")
+    def score(self, X):
+        """This is available only if delegate has score.
+
+        Parameters
+        ---------
+        y : ndarray
+            Parameter y
+        """
+
+    @available_if(lambda self: hasattr(self.delegate, "predict_proba"))
+    def predict_proba(self, X):
+        """This is available only if delegate has predict_proba.
+
+        Parameters
+        ---------
+        X : ndarray
+            Parameter X
+        """
+        return X
+
+    @deprecated("Testing deprecated function with wrong params")
+    def fit(self, X, y):
+        """Incorrect docstring but should not be tested"""
+
+
+class MockMetaEstimatorDeprecatedDelegation:
+    def __init__(self, delegate):
+        """MetaEstimator to check if doctest on delegated methods work.
+
+        Parameters
+        ---------
+        delegate : estimator
+            Delegated estimator.
+        """
+        self.delegate = delegate
+
     @if_delegate_has_method(delegate="delegate")
     def predict(self, X):
         """This is available only if delegate has predict.
@@ -460,7 +515,14 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
-def test_check_docstring_parameters():
+@pytest.mark.parametrize(
+    "mock_meta",
+    [
+        MockMetaEstimator(delegate=MockEst()),
+        MockMetaEstimatorDeprecatedDelegation(delegate=MockEst()),
+    ],
+)
+def test_check_docstring_parameters(mock_meta):
     pytest.importorskip(
         "numpydoc", reason="numpydoc is required to test the docstrings"
     )
@@ -477,6 +539,7 @@ def test_check_docstring_parameters():
         check_docstring_parameters(Klass.f_bad_sections)
 
     incorrect = check_docstring_parameters(f_check_param_definition)
+    mock_meta_name = mock_meta.__class__.__name__
     assert incorrect == [
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('a: int')",
@@ -525,7 +588,7 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + "sklearn.utils.tests.test_testing.MockMetaEstimator.predict",
+            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
             "There's a parameter name mismatch in function docstring w.r.t."
             " function signature, at index 0 diff: 'X' != 'y'",
             "Full diff:",
@@ -536,7 +599,7 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + "sklearn.utils.tests.test_testing.MockMetaEstimator."
+            + f"sklearn.utils.tests.test_testing.{mock_meta_name}."
             + "predict_proba",
             "Parameters in function docstring have less items w.r.t. function"
             " signature, first missing item: X",
@@ -546,7 +609,7 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + "sklearn.utils.tests.test_testing.MockMetaEstimator.score",
+            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.score",
             "Parameters in function docstring have less items w.r.t. function"
             " signature, first missing item: X",
             "Full diff:",
@@ -554,7 +617,7 @@ def test_check_docstring_parameters():
             "+ []",
         ],
         [
-            "In function: " + "sklearn.utils.tests.test_testing.MockMetaEstimator.fit",
+            "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
             "Parameters in function docstring have less items w.r.t. function"
             " signature, first missing item: X",
             "Full diff:",
@@ -562,8 +625,6 @@ def test_check_docstring_parameters():
             "+ []",
         ],
     ]
-
-    mock_meta = MockMetaEstimator(delegate=MockEst())
 
     for msg, f in zip(
         messages,
