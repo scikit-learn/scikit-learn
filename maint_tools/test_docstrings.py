@@ -23,7 +23,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultiTaskLasso",
     "MultiTaskLassoCV",
     "NearestCentroid",
-    "NeighborhoodComponentsAnalysis",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "PLSCanonical",
