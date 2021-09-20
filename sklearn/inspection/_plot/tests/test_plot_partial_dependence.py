@@ -596,13 +596,8 @@ dummy_classification_data = make_classification(random_state=0)
         ),
         (
             dummy_classification_data,
-            {"features": [(1, 2)], "kind": "individual"},
-            "It is not possible to display individual effects for more than one",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [(1, 2)], "kind": "both"},
-            "It is not possible to display individual effects for more than one",
+            {"features": [1, 2], "kind": ["both"]},
+            "When `kind` is provided as a list of strings, it should contain",
         ),
         (
             dummy_classification_data,
@@ -901,3 +896,93 @@ def test_plot_partial_dependence_lines_kw(
         assert line.get_linestyle() == ice_lines_kw["linestyle"]
     else:
         assert line.get_linestyle() == "-"
+
+
+def test_partial_dependence_kind_list(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that we can provide a list of strings to kind parameter."""
+    matplotlib = pytest.importorskip("matplotlib")
+
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        features=[0, 2, (1, 2)],
+        grid_resolution=20,
+        kind=["both", "both", "average"],
+    )
+
+    for idx in [0, 1]:
+        assert all(
+            [
+                isinstance(line, matplotlib.lines.Line2D)
+                for line in disp.lines_[0, idx].ravel()
+            ]
+        )
+        assert disp.contours_[0, idx] is None
+
+    assert disp.contours_[0, 2] is not None
+    assert all([line is None for line in disp.lines_[0, 2].ravel()])
+
+
+@pytest.mark.parametrize(
+    "features, kind",
+    [
+        ([0, 2, (1, 2)], "individual"),
+        ([0, 2, (1, 2)], "both"),
+        ([(0, 1), (0, 2), (1, 2)], "individual"),
+        ([(0, 1), (0, 2), (1, 2)], "both"),
+        ([0, 2, (1, 2)], ["individual", "individual", "individual"]),
+        ([0, 2, (1, 2)], ["both", "both", "both"]),
+    ],
+)
+def test_partial_dependence_kind_warning(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+    features,
+    kind,
+):
+    """Check that we can provide kind="both" but that a warning will be raised
+    due to the 2-way PD."""
+    matplotlib = pytest.importorskip("matplotlib")
+
+    warn_msg = (
+        "You requested an ICE plot with 2-way feature interactions. "
+        "This is impossible to render."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        disp = plot_partial_dependence_func(
+            clf_diabetes,
+            diabetes.data,
+            features=features,
+            grid_resolution=20,
+            kind=kind,
+        )
+
+    indices_one_way = [
+        i for i in range(len(features)) if not isinstance(features[i], tuple)
+    ]
+    indices_two_way = [
+        i for i in range(len(features)) if isinstance(features[i], tuple)
+    ]
+
+    # check the data for the one-way PD
+    for idx in indices_one_way:
+        assert all(
+            [
+                isinstance(line, matplotlib.lines.Line2D)
+                for line in disp.lines_[0, idx].ravel()
+            ]
+        )
+        assert disp.contours_[0, idx] is None
+
+    # check the data for the two-way PD
+    for idx in indices_two_way:
+        assert disp.contours_[0, idx] is not None
+        if disp.lines_.ndim == 3:
+            assert all([line is None for line in disp.lines_[0, idx].ravel()])
+        else:
+            assert all([line is None for line in disp.lines_.ravel()])

@@ -458,33 +458,19 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Enhancement| Add `max_samples` parameter in
-  :func:`inspection.permutation_importance`. It enables to draw a subset of the
-  samples to compute the permutation importance. This is useful to keep the
-  method tractable when evaluating feature importance on large datasets.
-  :pr:`20431` by :user:`Oliver Pfaffel <o1iv3r>`.
+- |Enhancement| Allow multiple scorers input to
+  :func:`~sklearn.inspection.permutation_importance`.
+  :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 
-- |Enhancement| Add kwargs to format ICE and PD lines separately in partial
-  dependence plots :func:`inspection.plot_partial_dependence` and
-  :meth:`inspection.PartialDependenceDisplay.plot`. :pr:`19428` by :user:`Mehdi
-  Hamoumi <mhham>`.
+- |Enhancement| in :func:`~sklearn.inspection.plot_partial_dependence`, allow
+  `kind` to accept a list of strings to specify for each feature interaction
+  which type of plot a user wants to draw.
+  :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Allow multiple scorers input to
-  :func:`inspection.permutation_importance`. :pr:`19411` by :user:`Simona
-  Maggio <simonamaggio>`.
-
-- |API| :class:`inspection.PartialDependenceDisplay` exposes a class method:
-  :func:`~inspection.PartialDependenceDisplay.from_estimator`.
-  :func:`inspection.plot_partial_dependence` is deprecated in favor of the
-  class method and will be removed in 1.2. :pr:`20959` by `Thomas Fan`_.
-
-:mod:`sklearn.kernel_approximation`
-...................................
-
-- |Fix| Fix a bug in :class:`kernel_approximation.Nystroem`
-  where the attribute `component_indices_` did not correspond to the subset of
-  sample indices used to generate the approximated kernel. :pr:`20554` by
-  :user:`Xiangyin Kong <kxytim>`.
+- |Fix| in :func:`~sklearn.inspection.plot_partial_dependence`, instead of
+  raising an error, asking for ICE plots (`kind='both'` or `kind='individual'`)
+  on a 2-way plot will use regular PDP and raise a warning.
+  :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.linear_model`
 ...........................

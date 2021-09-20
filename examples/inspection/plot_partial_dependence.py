@@ -253,10 +253,13 @@ display = PartialDependenceDisplay.from_estimator(
     X_train,
     features,
     categorical_features=categorical_features,
-    kind="average",
+    kind=["both"] * 3 + ["average"] * 3,
     grid_resolution=100,
     n_jobs=3,
     ax=ax,
+    pd_line_kw={"color": "tab:orange"},
+    ice_lines_kw={"alpha": 0.2},
+    subsample=100,
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
@@ -309,11 +312,14 @@ display = PartialDependenceDisplay.from_estimator(
     X_train,
     features,
     categorical_features=categorical_features,
-    kind="average",
+    kind=["both"] * 3 + ["average"] * 3,
     grid_resolution=100,
     n_jobs=3,
     ax=ax,
     method="brute",
+    pd_line_kw={"color": "tab:orange"},
+    ice_lines_kw={"alpha": 0.2},
+    subsample=100,
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
