@@ -70,6 +70,9 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
     if sklearn_params['loss'] == 'categorical_crossentropy':
         # LightGBM multiplies hessians by 2 in multiclass loss.
         lightgbm_params['min_sum_hessian_in_leaf'] *= 2
+        # LightGBM 3.0 introduced a different scaling of the hessian for the multiclass case.
+        # It is equivalent of scaling the learning rate.
+        # See https://github.com/microsoft/LightGBM/pull/3256.
         if n_classes is not None:
             lightgbm_params['learning_rate'] *= n_classes / (n_classes - 1)
 
