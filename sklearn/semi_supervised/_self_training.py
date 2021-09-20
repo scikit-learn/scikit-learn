@@ -246,7 +246,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 if n_to_select == max_proba.shape[0]:
                     selected = np.ones_like(max_proba, dtype=bool)
                 else:
-                    # NB these are indicies, not a mask
+                    # NB these are indices, not a mask
                     selected = np.argpartition(-max_proba, n_to_select)[:n_to_select]
 
             # Map selected indices into original array

@@ -39,7 +39,7 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
-    # Container is detached and sleeping, allowing steps to run commmands
+    # Container is detached and sleeping, allowing steps to run commands
     # in the container. The TEST_DIR is mapped allowing the host to access
     # the JUNITXML file
     - script: >

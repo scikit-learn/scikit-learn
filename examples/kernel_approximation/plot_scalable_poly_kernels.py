@@ -1,6 +1,6 @@
 """
 =======================================================
-Scalable learning with polynomial kernel aproximation
+Scalable learning with polynomial kernel approximation
 =======================================================
 
 This example illustrates the use of :class:`PolynomialCountSketch` to
@@ -143,7 +143,7 @@ results["KSVM"] = {"time": ksvm_time, "score": ksvm_score}
 print(f"Kernel-SVM score on raw featrues: {ksvm_score:.2f}%")
 
 # %%
-# Finally, plot the resuts of the different methods against their training
+# Finally, plot the results of the different methods against their training
 # times. As we can see, the kernelized SVM achieves a higher accuracy,
 # but its training time is much larger and, most importantly, will grow
 # much faster if the number of training samples increases.
@@ -170,7 +170,7 @@ ax.scatter([results["KSVM"]["time"], ], [results["KSVM"]["score"], ],
            label="Kernel SVM", c="red", marker="x")
 
 ax.set_xlabel("Training time (s)")
-ax.set_ylabel("Accurary (%)")
+ax.set_ylabel("Accuracy (%)")
 ax.legend()
 plt.show()
 

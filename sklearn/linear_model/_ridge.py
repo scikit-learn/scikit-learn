@@ -1546,7 +1546,7 @@ class _RidgeGCV(LinearModel):
 
     def _sparse_multidot_diag(self, X, A, X_mean, sqrt_sw):
         """Compute the diagonal of (X - X_mean).dot(A).dot((X - X_mean).T)
-        without explicitely centering X nor computing X.dot(A)
+        without explicitly centering X nor computing X.dot(A)
         when X is sparse.
 
         Parameters

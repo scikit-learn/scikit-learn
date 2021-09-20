@@ -504,7 +504,7 @@ def test_check_estimator():
     msg = "Estimator changes __dict__ during predict"
     with raises(AssertionError, match=msg):
         check_estimator(ChangesDict())
-    # check that `fit` only changes attribures that
+    # check that `fit` only changes attributes that
     # are private (start with an _ or end with a _).
     msg = (
         "Estimator ChangesWrongAttribute should not change or mutate  "
