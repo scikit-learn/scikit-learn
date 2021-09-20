@@ -602,6 +602,10 @@ Changelog
   :class:`~linear_model.PassiveAggressiveRegressor`.
   :pr:`20683` by `Guillaume Lemaitre`_.
 
+- |Enhancement| Sparse input data will be allowed for
+  :class:`linear_model.QuantileRegressor` now.
+  :pr:`21086` by `Venkatachalam Natchiappan`.
+
 :mod:`sklearn.manifold`
 .......................
 
