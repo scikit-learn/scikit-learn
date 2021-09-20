@@ -229,10 +229,7 @@ def test_same_predictions_multiclass_classification(
     acc_lightgbm = accuracy_score(y_train, pred_lightgbm)
     acc_sklearn = accuracy_score(y_train, pred_sklearn)
 
-    # TODO: Used decimal=2 when seed=0. acc_sklearn is 0.02 higher than
-    # acc_lightgbm with seed=0
-    decimal = 1 if seed == 0 else 2
-    np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn, decimal=decimal)
+    np.testing.assert_allclose(acc_lightgbm, acc_sklearn, rtol=0, atol=5e-2)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
 
