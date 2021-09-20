@@ -45,7 +45,6 @@ DOCSTRING_IGNORE_LIST = [
     "SplineTransformer",
     "StackingClassifier",
     "StackingRegressor",
-    "TheilSenRegressor",
     "TransformedTargetRegressor",
     "TweedieRegressor",
 ]
