@@ -2237,3 +2237,21 @@ def test_sample_weight_not_modified(multi_class, class_weight):
     )
     clf.fit(X, y, sample_weight=W)
     assert_allclose(expected, W)
+
+
+@pytest.mark.parametrize("solver", ["liblinear", "lbfgs", "newton-cg", "sag", "saga"])
+def test_large_sparse_matrix(solver):
+    # Solvers either accept large sparse matrices, or raise helpful error.
+
+    # generate sparse matrix with int64 indices
+    X = sp.rand(20, 10, format="csr")
+    for attr in ["indices", "indptr"]:
+        setattr(X, attr, getattr(X, attr).astype("int64"))
+    y = np.random.randint(2, size=X.shape[0])
+
+    if solver in ["liblinear", "sag", "saga"]:
+        msg = "Only sparse matrices with 32-bit integer indices"
+        with pytest.raises(ValueError, match=msg):
+            LogisticRegression(solver=solver).fit(X, y)
+    else:
+        LogisticRegression(solver=solver).fit(X, y)
