@@ -7,8 +7,6 @@ Neighborhood Component Analysis
 #          John Chiotellis <ioannis.chiotellis@in.tum.de>
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 from warnings import warn
 import numpy as np
 import sys
