@@ -1521,10 +1521,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : ndarray of shape (n_samples,)
-            Target values
+            Target values.
 
         coef_init : ndarray of shape (n_features,), default=None
             The initial coefficients to warm-start the optimization.
