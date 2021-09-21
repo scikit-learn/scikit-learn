@@ -7,7 +7,10 @@
 from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import connected_components
 
+from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
 
 
@@ -61,3 +64,62 @@ def span_tree_top_n_weights_idx(
         )
 
     return unravel_idx
+
+
+class ConnectedComponentsClustering(ClusterMixin, BaseEstimator):
+
+    """TODO"""
+
+    def __init__(
+        self,
+        threshold: float,
+        metric: Union[str, Callable] = "euclidean",
+        n_jobs: Optional[int] = None,
+    ) -> None:
+        """TODO"""
+
+        self.threshold = threshold
+        self.metric = metric
+        self.n_jobs = n_jobs
+
+    def fit(
+        self,
+        X: np.ndarray,
+        y: np.ndarray = None,
+    ):
+        """TODO"""
+
+        X = self._validate_data(X, accept_sparse="csr")
+
+        distances = _pairwise_distances(
+            X=X,
+            metric=self.metric,
+            n_jobs=self.n_jobs,
+        )
+
+        adjacency_matrix = distances_to_adjacency_matrix(
+            distances=distances,
+            threshold=self.threshold,
+        )
+
+        graph = csr_matrix(adjacency_matrix)
+
+        _, labels = connected_components(
+            csgraph=graph,
+            directed=True,
+            return_labels=True,
+        )
+
+        self.labels_ = labels
+
+        return self
+
+    def fit_predict(
+        self,
+        X: np.ndarray,
+        y: np.ndarray = None,
+    ):
+        """TODO"""
+
+        self.fit(X)
+        return self.labels_
