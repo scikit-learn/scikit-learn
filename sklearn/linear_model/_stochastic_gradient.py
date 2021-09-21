@@ -1436,10 +1436,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Subset of training data
+            Subset of training data.
 
         y : numpy array of shape (n_samples,)
-            Subset of target values
+            Subset of target values.
 
         sample_weight : array-like, shape (n_samples,), default=None
             Weights applied to individual samples.
