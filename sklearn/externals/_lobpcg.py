@@ -20,7 +20,6 @@ References
        https://bitbucket.org/joseroman/blopex
 """
 
-from __future__ import division, print_function, absolute_import
 import numpy as np
 from scipy.linalg import (inv, eigh, cho_factor, cho_solve, cholesky, orth,
                           LinAlgError)
