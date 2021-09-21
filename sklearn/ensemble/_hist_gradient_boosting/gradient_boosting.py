@@ -2,7 +2,7 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Iterable
 from functools import partial
 import warnings
 
@@ -211,26 +211,31 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.interaction_cst is None:
             return None
 
-        if self.interaction_cst is not None:
-            if not (
-                isinstance(self.interaction_cst, Sequence)
-                and all(isinstance(x, (Sequence, set)) for x in self.interaction_cst)
-            ):
-                raise ValueError(
-                    "Interaction constraints must be None or a Sequence of {Sequence,"
-                    " set}"
-                )
-            if not all(
-                (x == int(x) and 0 <= x and x < n_features)
-                for cst_set in self.interaction_cst
-                for x in cst_set
-            ):
-                raise ValueError(
-                    "Interaction constraints must consist of integers indices in [0,"
-                    " n_features - 1], specifying the position of features."
-                )
+        if not (
+            isinstance(self.interaction_cst, Iterable)
+            and all(isinstance(x, Iterable) for x in self.interaction_cst)
+        ):
+            raise ValueError(
+                "Interaction constraints must be None or an iterable of iterables"
+            )
+        if not all(
+            (x == int(x) and 0 <= x and x < n_features)
+            for cst_set in self.interaction_cst
+            for x in cst_set
+        ):
+            raise ValueError(
+                "Interaction constraints must consist of integer indices in [0,"
+                " n_features - 1], specifying the position of features."
+            )
 
-            return [set([int(x) for x in group]) for group in self.interaction_cst]
+        constraints = [set([int(x) for x in group]) for group in self.interaction_cst]
+
+        # Add all not listed features as own group by default.
+        rest = set(range(n_features)).difference(set().union(*constraints))
+        if len(rest) > 0:
+            constraints.append(rest)
+
+        return constraints
 
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
