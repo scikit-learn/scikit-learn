@@ -110,7 +110,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -559,7 +559,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     multi_class : {'one_vs_rest', 'one_vs_one'}, default='one_vs_rest'
         Specifies how multi-class classification problems are handled.
