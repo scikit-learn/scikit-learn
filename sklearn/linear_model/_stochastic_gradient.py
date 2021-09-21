@@ -1447,7 +1447,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns an instance of self.
         """
         self._validate_params(for_partial_fit=True)
         return self._partial_fit(
