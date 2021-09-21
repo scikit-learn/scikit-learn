@@ -1578,6 +1578,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
