@@ -35,7 +35,6 @@ DOCSTRING_IGNORE_LIST = [
     "RandomizedSearchCV",
     "RobustScaler",
     "SGDOneClassSVM",
-    "SGDRegressor",
     "SelfTrainingClassifier",
     "SparseRandomProjection",
     "SpectralBiclustering",
