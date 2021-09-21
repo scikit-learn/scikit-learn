@@ -7,9 +7,8 @@
 from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
-from ..metrics import pairwise_distances
 
-# from .check import _check_matrix, check_symmetric
+from ..metrics import pairwise_distances
 
 
 def _pairwise_distances(
@@ -18,8 +17,6 @@ def _pairwise_distances(
     n_jobs: Optional[int] = None,
 ) -> np.ndarray:
     """TODO"""
-
-    # assert _check_matrix(X)
 
     distances = pairwise_distances(X=X, metric=metric, n_jobs=n_jobs)
 
@@ -31,8 +28,6 @@ def distances_to_adjacency_matrix(
     threshold: float,
 ) -> np.ndarray:
     """TODO"""
-
-    # assert check_symmetric(distances)
 
     N = distances.shape[0]
 
