@@ -1774,8 +1774,8 @@ def test_max_features_deprecation(Estimator):
     est = Estimator(max_features="auto")
 
     err_msg = (
-        r"`max_features='auto'` has been deprecated in 1.0 "
-        r"and will be removed in 1.2. To keep the past behaviour, "
+        r"`max_features='auto'` has been deprecated in 1.1 "
+        r"and will be removed in 1.3. To keep the past behaviour, "
         r"explicitly set `max_features=(1.0|'sqrt')` or remove this "
         r"parameter as it is also the default value for RandomForest"
         r"(Regressors|Classifiers) and ExtraTrees(Regressors|"
