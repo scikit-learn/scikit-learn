@@ -1573,7 +1573,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         return scores.ravel()
 
     def predict(self, X):
-        """Predict using the linear model
+        """Predict using the linear model.
 
         Parameters
         ----------
