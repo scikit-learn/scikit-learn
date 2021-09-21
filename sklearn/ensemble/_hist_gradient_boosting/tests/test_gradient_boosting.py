@@ -67,26 +67,26 @@ def _make_dumb_dataset(n_samples):
         ({"validation_fraction": 0}, "validation_fraction=0 must be strictly"),
         ({"tol": -1}, "tol=-1 must not be smaller than 0"),
         (
-            {"interaction_cst": np.array([[0, 1]])},
-            "Interaction constraints must be None or a Sequence of {Sequence, set}",
+            {"interaction_cst": "string"},
+            "",
         ),
         (
             {"interaction_cst": [0, 1]},
-            "Interaction constraints must be None or a Sequence of {Sequence, set}",
+            "Interaction constraints must be None or an iterable of iterables",
         ),
         (
             {"interaction_cst": [{0, 9999}]},
-            r"Interaction constraints must consist of integers indices in \[0,"
+            r"Interaction constraints must consist of integer indices in \[0,"
             r" n_features - 1\], specifying the position of features.",
         ),
         (
             {"interaction_cst": [{-1, 0}]},
-            r"Interaction constraints must consist of integers indices in \[0,"
+            r"Interaction constraints must consist of integer indices in \[0,"
             r" n_features - 1\], specifying the position of features.",
         ),
         (
             {"interaction_cst": [{0.5}]},
-            r"Interaction constraints must consist of integers indices in \[0,"
+            r"Interaction constraints must consist of integer indices in \[0,"
             r" n_features - 1\], specifying the position of features.",
         ),
     ],
@@ -1081,6 +1081,21 @@ def test_uint8_predict(Est):
     est = Est()
     est.fit(X, y)
     est.predict(X)
+
+
+@pytest.mark.parametrize(
+    "interaction_cst, n_features, result",
+    [
+        (None, 931, None),
+        ([{0, 1}], 2, [{0, 1}]),
+        ([(1, 0), [5, 1]], 6, [{0, 1}, {1, 5}, {2, 3, 4}]),
+    ],
+)
+def test_check_interaction_cst(interaction_cst, n_features, result):
+    """Checkt that _check_interaction_cst returns the expected list of sets"""
+    est = HistGradientBoostingRegressor()
+    est.set_params(interaction_cst=interaction_cst)
+    assert est._check_interaction_cst(n_features) == result
 
 
 # TODO: Remove in v1.2
