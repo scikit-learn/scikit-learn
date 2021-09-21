@@ -1861,6 +1861,10 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    Ridge, ElasticNet, Lasso, sklearn.svm.SVR
+
     Examples
     --------
     >>> import numpy as np
@@ -1877,11 +1881,6 @@ class SGDRegressor(BaseSGDRegressor):
     >>> reg.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdregressor', SGDRegressor())])
-
-    See Also
-    --------
-    Ridge, ElasticNet, Lasso, sklearn.svm.SVR
-
     """
 
     def __init__(
