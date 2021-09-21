@@ -531,7 +531,7 @@ cdef class Splitter:
                             lower_bound, upper_bound, &split_infos[split_info_idx])
 
             # then compute best possible split among all features
-            # split_info is the index of the best split_info
+            # split_info is set to the best of split_infos
             best_split_info_idx = self._find_best_feature_to_split_helper(
                 split_infos, n_allowed_features)
             split_info = split_infos[best_split_info_idx]

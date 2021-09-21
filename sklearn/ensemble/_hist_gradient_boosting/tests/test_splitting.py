@@ -921,5 +921,5 @@ def test_split_interaction_constraints():
         allowed_features=allowed_features,
     )
 
-    # only features 0 and 1 are allowed to be split on
+    # only features 0 and 3 are allowed to be split on
     assert si_root.feature_idx in {0, 3}

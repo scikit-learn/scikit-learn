@@ -70,7 +70,7 @@ class TreeNode:
         stop position of the node's sample_indices in splitter.partition.
     allowed_features : None or ndarray, dtype=int
         Indices of features allowed to split for children.
-    interaction_cst_idx : None or list of ints
+    interaction_cst_indices : None or list of ints
         Indices of the interaction sets/groups that have to be applied on
         splits of child nodes. The fewer sets the harder the constraint as
         fewer sets contain fewer features.
@@ -103,7 +103,7 @@ class TreeNode:
         self.value = value
         self.is_leaf = False
         self.allowed_features = None
-        self.interaction_cst_idx = None
+        self.interaction_cst_indices = None
         self.set_children_bounds(float("-inf"), float("+inf"))
 
     def set_children_bounds(self, lower, upper):
@@ -443,7 +443,7 @@ class TreeGrower:
         )
 
         if self.interaction_cst is not None:
-            self.root.interaction_cst_idx = list(range(len(self.interaction_cst)))
+            self.root.interaction_cst_indices = list(range(len(self.interaction_cst)))
             allowed_features = set().union(*self.interaction_cst)
             self.root.allowed_features = np.array(
                 list(allowed_features), dtype=np.uint32
@@ -527,13 +527,15 @@ class TreeGrower:
 
         # set interaction constraints (the indices of the constraints sets)
         if self.interaction_cst is not None:
-            # Calculate allowed_features and interaction_cst_idx only once and inherit
-            # them by child nodes.
+            # Calculate allowed_features and interaction_cst_indices only once and
+            # inherit them by child nodes.
             (
                 left_child_node.allowed_features,
-                left_child_node.interaction_cst_idx,
+                left_child_node.interaction_cst_indices,
             ) = self._compute_interactions(node)
-            right_child_node.interaction_cst_idx = left_child_node.interaction_cst_idx
+            right_child_node.interaction_cst_indices = (
+                left_child_node.interaction_cst_indices
+            )
             right_child_node.allowed_features = left_child_node.allowed_features
 
         if not self.has_missing_values[node.split_info.feature_idx]:
@@ -656,7 +658,7 @@ class TreeGrower:
         -------
         allowed_features : None or ndarray, dtype=int
             Indices of features allowed to split for children.
-        interaction_cst_idx : None or list of ints
+        interaction_cst_indices : None or list of ints
             Indices of the interaction sets/groups that have to be applied on
             splits of child nodes. The fewer sets the harder the constraint as
             fewer sets contain fewer features.
@@ -666,12 +668,15 @@ class TreeGrower:
         #  - This is for nodes that are already split and have a
         #    node.split_info.feature_idx.
         allowed_features = set()
-        interaction_cst_idx = list()
-        for i in node.interaction_cst_idx:
+        interaction_cst_indices = list()
+        for i in node.interaction_cst_indices:
             if node.split_info.feature_idx in self.interaction_cst[i]:
-                interaction_cst_idx.append(i)
+                interaction_cst_indices.append(i)
                 allowed_features.update(self.interaction_cst[i])
-        return np.array(list(allowed_features), dtype=np.uint32), interaction_cst_idx
+        return (
+            np.array(list(allowed_features), dtype=np.uint32),
+            interaction_cst_indices,
+        )
 
     def _finalize_leaf(self, node):
         """Make node a leaf of the tree being grown."""
