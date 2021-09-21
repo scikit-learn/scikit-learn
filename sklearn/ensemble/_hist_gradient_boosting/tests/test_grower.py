@@ -573,7 +573,7 @@ def test_grower_interaction_constraints():
     """Check that grower respects interaction constraints."""
     n_features = 6
     interaction_cst = [{0, 1}, {1, 2}, {3, 4, 5}]
-    n_samples = 5
+    n_samples = 10
     n_bins = 6
     root_feature_splits = []
 
@@ -601,7 +601,7 @@ def test_grower_interaction_constraints():
             X_binned,
             gradients,
             hessians,
-            max_depth=3,
+            max_depth=5,
             n_bins=n_bins,
             shrinkage=1.0,
             max_leaf_nodes=None,
