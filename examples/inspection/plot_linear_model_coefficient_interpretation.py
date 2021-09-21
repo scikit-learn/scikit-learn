@@ -135,7 +135,7 @@ numerical_columns = ["EDUCATION", "EXPERIENCE", "AGE"]
 preprocessor = make_column_transformer(
     (OneHotEncoder(drop="if_binary"), categorical_columns),
     remainder="passthrough",
-    prefix_feature_names_out=False,
+    verbose_feature_names_out=False,
 )
 
 # %%
