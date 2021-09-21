@@ -86,7 +86,7 @@ If you want to cite scikit-learn for its API or design, you may also want to con
 following paper:
 
   `API design for machine learning software: experiences from the scikit-learn
-  project <https://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+  project <:arxiv:`1309.0238`>`_, Buitinck *et al.*, 2013.
 
   Bibtex entry::
 

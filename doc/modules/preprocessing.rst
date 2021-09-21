@@ -979,12 +979,12 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
 
     * Eilers, P., & Marx, B. (1996). Flexible Smoothing with B-splines and
       Penalties. Statist. Sci. 11 (1996), no. 2, 89--121.
-      `doi:10.1214/ss/1038425655 <https://doi.org/10.1214/ss/1038425655>`_
+      `doi:10.1214/ss/1038425655 <:doi:`10.1214/ss/1038425655`>`_
 
     * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. A review of
       spline function procedures in R. BMC Med Res Methodol 19, 46 (2019).
       `doi:10.1186/s12874-019-0666-3
-      <https://doi.org/10.1186/s12874-019-0666-3>`_
+      <:doi:`10.1186/s12874-019-0666-3`>`_
 
 .. _function_transformer:
 

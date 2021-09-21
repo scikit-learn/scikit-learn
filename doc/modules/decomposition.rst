@@ -344,7 +344,7 @@ components is less than 10 (strict) and the number of samples is more than 200
         - Algorithm 4.3 in
           `"Finding structure with randomness: Stochastic algorithms for
           constructing approximate matrix decompositions"
-          <https://arxiv.org/abs/0909.4061>`_
+          <:arxiv:`0909.4061`>`_
           Halko, et al., 2009
 
         - `"An implementation of a randomized algorithm for principal component

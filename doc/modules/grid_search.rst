@@ -539,7 +539,7 @@ since it has reached the last iteration (3) with the highest score:
        proc. of Machine Learning Research, 2016.
     .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
        `Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
-       <https://arxiv.org/abs/1603.06560>`_, in Machine Learning Research
+       <:arxiv:`1603.06560`>`_, in Machine Learning Research
        18, 2018.
 
 .. _grid_search_tips:

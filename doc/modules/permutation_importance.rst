@@ -185,4 +185,4 @@ example:
 .. topic:: References:
 
    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-       2001. https://doi.org/10.1023/A:1010933404324
+       2001. :doi:`10.1023/A:1010933404324`
