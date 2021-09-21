@@ -801,6 +801,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        """Return the family of the regressor."""
         # We use a property with a setter to make sure that the family is
         # always a Tweedie distribution, and that self.power and
         # self.family.power are identical by construction.
