@@ -115,7 +115,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
     n_threads : int, default=None
         Number of OpenMP threads to use. `_openmp_effective_n_threads` is called
         to determine the effective number of threads use, which takes cgroups CPU
