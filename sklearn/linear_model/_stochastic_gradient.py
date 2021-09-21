@@ -1863,7 +1863,13 @@ class SGDRegressor(BaseSGDRegressor):
 
     See Also
     --------
-    Ridge, ElasticNet, Lasso, sklearn.svm.SVR
+    HuberRegressor : Linear regression model that is robust to outliers.
+    Lars : Least Angle Regression model.
+    Lasso : Linear Model trained with L1 prior as regularizer.
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    Ridge : Linear least squares with l2 regularization.
+    sklearn.svm.SVR : Epsilon-Support Vector Regression.
+    TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
 
     Examples
     --------
