@@ -1497,7 +1497,7 @@ problem. The current implementation is based on
     Statistical Science, 12, 279-300. :doi:`10.1214/ss/1030037960`
 
   * Koenker, R. (2005). Quantile Regression.
-    Cambridge University Press. :doi:`10.1017/CBO9780511754098`
+    Cambridge University Press. https://doi.org/10.1017/CBO9780511754098
 
 
 .. _polynomial_regression:
