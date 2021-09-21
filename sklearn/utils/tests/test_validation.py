@@ -52,8 +52,8 @@ from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _get_feature_names,
     _check_feature_names_in,
+    _check_fit_params,
 )
-from sklearn.utils.validation import _check_fit_params
 from sklearn.base import BaseEstimator
 import sklearn
 
@@ -1252,6 +1252,14 @@ def test_check_sample_weight():
     X = np.ones((5, 2), dtype=int)
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
+
+    # check negative weight when only_non_negative=True
+    X = np.ones((5, 2))
+    sample_weight = np.ones(_num_samples(X))
+    sample_weight[-1] = -10
+    err_msg = "Negative values in data passed to `sample_weight`"
+    with pytest.raises(ValueError, match=err_msg):
+        _check_sample_weight(sample_weight, X, only_non_negative=True)
 
 
 @pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])

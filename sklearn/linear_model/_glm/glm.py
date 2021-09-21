@@ -606,6 +606,11 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    PoissonRegressor : Generalized Linear Model with a Poisson distribution.
+    TweedieRegressor : Generalized Linear Model with a Tweedie distribution.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -648,6 +653,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        """Return the family of the regressor."""
         # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
         return "gamma"
 

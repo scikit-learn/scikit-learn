@@ -607,7 +607,7 @@ def test_cross_val_score_pandas():
         pass
     for TargetType, InputFeatureType in types:
         # X dataframe, y series
-        # 3 fold cross val is used so we need atleast 3 samples per class
+        # 3 fold cross val is used so we need at least 3 samples per class
         X_df, y_ser = InputFeatureType(X), TargetType(y2)
         check_df = lambda x: isinstance(x, InputFeatureType)
         check_series = lambda x: isinstance(x, TargetType)
@@ -1049,7 +1049,7 @@ def test_cross_val_predict_input_types():
     multioutput_y = np.column_stack([y, y[::-1]])
 
     clf = Ridge(fit_intercept=False, random_state=0)
-    # 3 fold cv is used --> atleast 3 samples per class
+    # 3 fold cv is used --> at least 3 samples per class
     # Smoke test
     predictions = cross_val_predict(clf, X, y)
     assert predictions.shape == (150,)

@@ -1006,7 +1006,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
 
 
 def load_linnerud(*, return_X_y=False, as_frame=False):
-    """Load and return the physical excercise linnerud dataset.
+    """Load and return the physical exercise Linnerud dataset.
 
     This dataset is suitable for multi-ouput regression tasks.
 
@@ -1161,7 +1161,7 @@ def load_boston(*, return_X_y=False):
 
     .. deprecated:: 1.0
        This function is deprecated in 1.0 and will be removed in 1.2. See the
-       warning message below for futher details regarding the alternative
+       warning message below for further details regarding the alternative
        datasets.
 
     .. warning::

@@ -19,7 +19,7 @@ This example was inspired by the `XGBoost documentation
 <https://xgboost.readthedocs.io/en/latest/tutorials/monotonic.html>`_.
 """
 from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import PartialDependenceDisplay
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -43,7 +43,7 @@ fig, ax = plt.subplots()
 # Without any constraint
 gbdt = HistGradientBoostingRegressor()
 gbdt.fit(X, y)
-disp = plot_partial_dependence(
+disp = PartialDependenceDisplay.from_estimator(
     gbdt,
     X,
     features=[0, 1],
@@ -55,7 +55,7 @@ disp = plot_partial_dependence(
 gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
 gbdt.fit(X, y)
 
-plot_partial_dependence(
+PartialDependenceDisplay.from_estimator(
     gbdt,
     X,
     features=[0, 1],

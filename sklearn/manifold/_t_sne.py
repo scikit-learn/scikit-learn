@@ -798,7 +798,7 @@ class TSNE(BaseEstimator):
 
         if isinstance(self._init, str) and self._init == "pca" and issparse(X):
             raise TypeError(
-                "PCA initialization is currently not suported "
+                "PCA initialization is currently not supported "
                 "with the sparse input matrix. Use "
                 'init="random" instead.'
             )
