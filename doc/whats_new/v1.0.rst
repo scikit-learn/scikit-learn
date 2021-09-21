@@ -251,9 +251,9 @@ Changelog
   an adequate transformer.
   :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`.
 
-- |API| Adds `prefix_feature_names_out` to :class:`compose.ColumnTransformer`.
+- |API| Adds `verbose_feature_names_out` to :class:`compose.ColumnTransformer`.
   This flag controls the prefixing of feature names out in
-  :term:`get_feature_names_out`. :pr:`18444` by `Thomas Fan`_.
+  :term:`get_feature_names_out`. :pr:`18444` and :pr:`21080` by `Thomas Fan`_.
 
 :mod:`sklearn.covariance`
 .........................
