@@ -71,7 +71,7 @@ until all samples have labels or no new samples are selected in that iteration.
        supervised methods. In Proceedings of the 33rd annual meeting on
        Association for Computational Linguistics (ACL '95). Association for
        Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
-       :doi:`10.3115/981658.981684`
+       https://doi.org/10.3115/981658.981684
 
 .. _label_propagation:
 
