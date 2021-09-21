@@ -169,7 +169,7 @@ preprocessor = ColumnTransformer(
         ("numerical", StandardScaler(), ["age"]),
         ("categorical", OneHotEncoder(), ["pet"]),
     ],
-    prefix_feature_names_out=False,
+    verbose_feature_names_out=False,
 ).fit(X)
 
 preprocessor.get_feature_names_out()
