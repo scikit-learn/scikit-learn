@@ -1,5 +1,7 @@
 import numpy as np
 import scipy as sp
+import time
+from scipy.linalg import svd
 
 import pytest
 
@@ -657,8 +659,7 @@ def test_assess_dimesion_rank_one():
     for rank in range(2, n_features):
         assert _assess_dimension(s, rank, n_samples) == -np.inf
 
-import time
-from scipy.linalg import svd
+
 def test_pca_svd_output():
     np.random.seed(12345)
     nfeat = 20  # try 10, 11, 12, 20, 100
@@ -671,8 +672,10 @@ def test_pca_svd_output():
     pca = PCA(n_components=1)
     t1 = time.perf_counter()
     # vals0 = pca.fit_transform(data) # origin method
-    vals0 = pca.fit_transform(data, n_oversamples_rate=1).reshape(-1) # The result is the same as svd and svds
-    # vals0 = pca.fit_transform(data, n_oversamples_rate=0.7).reshape(-1) # The results are different
+    # The result is the same as svd and svds
+    vals0 = pca.fit_transform(data, n_oversamples_rate=1).reshape(-1)
+    # The results are different
+    # vals0 = pca.fit_transform(data, n_oversamples_rate=0.7).reshape(-1)
     t2 = time.perf_counter()
     print("pca time cost：{}".format(t2 - t1))
     print(np.shape(vals0))
@@ -691,4 +694,6 @@ def test_pca_svd_output():
     vals2 = U2[:, 0] * s2[0]
 
     print("\nthe next three rows should be the same up to sign:")
-    print(" PCA       ", vals0[0:5], "\n sparse SVD", vals1[0:5], "\n dense SVD ", vals2[0:5], "\n")
+    print("PCA:", vals0[0:5])
+    print("sparse SVD:", vals1[0:5])
+    print("dense SVD:", vals2[0:5])

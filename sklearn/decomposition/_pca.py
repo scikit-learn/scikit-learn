@@ -382,7 +382,7 @@ class PCA(_BasePCA):
         self._fit(X)
         return self
 
-    def fit_transform(self, X, y=None, n_oversamples_rate = 0.8):
+    def fit_transform(self, X, y=None, n_oversamples_rate=0.8):
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
@@ -406,7 +406,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, Vt = self._fit(X, n_oversamples_rate = n_oversamples_rate)
+        U, S, Vt = self._fit(X, n_oversamples_rate=n_oversamples_rate)
         U = U[:, : self.n_components_]
 
         if self.whiten:
@@ -458,7 +458,8 @@ class PCA(_BasePCA):
         if self._fit_svd_solver == "full":
             return self._fit_full(X, n_components)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
-            return self._fit_truncated(X, n_components, self._fit_svd_solver, n_oversamples_rate=n_oversamples_rate)
+            return self._fit_truncated(X, n_components, self._fit_svd_solver,
+                                       n_oversamples_rate=n_oversamples_rate)
         else:
             raise ValueError(
                 "Unrecognized svd_solver='{0}'".format(self._fit_svd_solver)
