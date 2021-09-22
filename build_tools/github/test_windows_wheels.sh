@@ -7,7 +7,7 @@ PYTHON_VERSION=$1
 BITNESS=$2
 
 if [[ "$BITNESS" == "32" ]]; then
-    # For 32-bit architecture use the regular
+    # 32-bit architecture use the regular
     # test command (outside of the minimal Docker container)
     cp $CONFTEST_PATH $CONFTEST_NAME
     pytest --pyargs sklearn

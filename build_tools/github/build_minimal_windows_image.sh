@@ -7,7 +7,7 @@ PYTHON_VERSION=$1
 BITNESS=$2
 
 if [[ "$BITNESS" == "32" ]]; then
-    # For 32-bit architectures are not supported
+    # 32-bit architectures are not supported
     # by the official Docker images: Tests will just be run
     # on the host (instead of the minimal Docker container).
     exit 0
