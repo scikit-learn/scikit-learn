@@ -38,6 +38,16 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Feature| Added interaction constraints for
+  :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` via the new
+  argument `interaction_cst`.
+  :pr:`21020` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.utils`
 ....................
 
