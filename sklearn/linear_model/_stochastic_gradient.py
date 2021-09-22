@@ -2383,6 +2383,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         coef_init : array, shape (n_classes, n_features)
             The initial coefficients to warm-start the optimization.
