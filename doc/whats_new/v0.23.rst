@@ -62,6 +62,11 @@ Changelog
   :pr:`17985` by :user:`Alan Butler <aldee153>` and
   :user:`Amanda Dsouza <amy12xx>`.
 
+- |Fix| Fixed a bug in
+  :func:`decomposition.PCA.fit_transform` which has problem that
+  PCA returns highly inaccurate results when number of features is large.
+  :pr:`21109` by `Bin Chen, Wei Guo, Zeng Lin`.
+
 :mod:`sklearn.ensemble`
 .......................
 

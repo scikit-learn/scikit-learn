@@ -406,7 +406,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, Vt = self._fit(X, n_oversamples_rate)
+        U, S, Vt = self._fit(X, n_oversamples_rate = n_oversamples_rate)
         U = U[:, : self.n_components_]
 
         if self.whiten:
@@ -458,7 +458,7 @@ class PCA(_BasePCA):
         if self._fit_svd_solver == "full":
             return self._fit_full(X, n_components)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
-            return self._fit_truncated(X, n_components, self._fit_svd_solver, n_oversamples_rate)
+            return self._fit_truncated(X, n_components, self._fit_svd_solver, n_oversamples_rate=n_oversamples_rate)
         else:
             raise ValueError(
                 "Unrecognized svd_solver='{0}'".format(self._fit_svd_solver)
@@ -530,7 +530,7 @@ class PCA(_BasePCA):
 
         return U, S, Vt
 
-    def _fit_truncated(self, X, n_components, svd_solver, n_oversamples_rate):
+    def _fit_truncated(self, X, n_components, svd_solver, n_oversamples_rate=0.8):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
