@@ -331,19 +331,15 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> from sklearn.cluster import MeanShift
-    >>> import numpy as np
-    >>> X = np.array([[1, 1], [2, 1], [1, 0],
-    ...               [4, 7], [3, 5], [3, 6]])
-    >>> clustering = MeanShift(bandwidth=2).fit(X)
-    >>> clustering.labels_
-    array([1, 1, 1, 0, 0, 0])
-    >>> clustering.predict([[0, 0], [5, 5]])
-    array([1, 0])
-    >>> clustering
-    MeanShift(bandwidth=2)
+    KMeans : K-Means clustering.
 
     Notes
     -----
@@ -369,6 +365,19 @@ class MeanShift(ClusterMixin, BaseEstimator):
     feature space analysis". IEEE Transactions on Pattern Analysis and
     Machine Intelligence. 2002. pp. 603-619.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import MeanShift
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = MeanShift(bandwidth=2).fit(X)
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+    >>> clustering.predict([[0, 0], [5, 5]])
+    array([1, 0])
+    >>> clustering
+    MeanShift(bandwidth=2)
     """
 
     def __init__(
@@ -399,7 +408,12 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Samples to cluster.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
+        Returns
+        -------
+        self : object
+               Fitted instance.
         """
         X = self._validate_data(X)
         bandwidth = self.bandwidth

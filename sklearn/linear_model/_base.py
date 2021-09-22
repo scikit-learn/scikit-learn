@@ -570,6 +570,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     Ridge : Ridge regression addresses some of the
@@ -657,7 +663,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, only_non_negative=True
+            )
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X,

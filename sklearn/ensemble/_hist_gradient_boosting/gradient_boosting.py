@@ -237,7 +237,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # computation
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
-            # TODO: remove when PDP suports sample weights
+            # TODO: remove when PDP supports sample weights
             self._fitted_with_sw = True
 
         rng = check_random_state(self.random_state)
@@ -1163,6 +1163,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1473,6 +1478,11 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------

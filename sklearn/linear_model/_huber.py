@@ -186,6 +186,12 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` has run for.
@@ -198,6 +204,19 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     outliers_ : array, shape (n_samples,)
         A boolean mask which is set to True where the samples are identified
         as outliers.
+
+    See Also
+    --------
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
+    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
+
+    References
+    ----------
+    .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
+           Concomitant scale estimates, pg 172
+    .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
+           https://statweb.stanford.edu/~owen/reports/hhu.pdf
 
     Examples
     --------
@@ -221,13 +240,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Huber coefficients: [17.7906... 31.0106...]
     >>> print("Linear Regression coefficients:", linear.coef_)
     Linear Regression coefficients: [-1.9221...  7.0226...]
-
-    References
-    ----------
-    .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
-           Concomitant scale estimates, pg 172
-    .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
-           https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
 
     def __init__(
@@ -253,8 +265,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like, shape (n_samples,)
             Target vector relative to X.
@@ -265,6 +277,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Returns
         -------
         self : object
+            Fitted `HuberRegressor` estimator.
         """
         X, y = self._validate_data(
             X,

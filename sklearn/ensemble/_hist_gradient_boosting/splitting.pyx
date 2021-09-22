@@ -8,7 +8,7 @@
 - Find the best possible split of a node. For a given node, a split is
   characterized by a feature and a bin.
 - Apply a split to a node, i.e. split the indices of the samples at the node
-  into the newly created left and right childs.
+  into the newly created left and right children.
 """
 # Author: Nicolas Hug
 
@@ -206,7 +206,7 @@ cdef class Splitter:
         self.n_threads = n_threads
 
         # The partition array maps each sample index into the leaves of the
-        # tree (a leaf in this context is a node that isn't splitted yet, not
+        # tree (a leaf in this context is a node that isn't split yet, not
         # necessarily a 'finalized' leaf). Initially, the root contains all
         # the indices, e.g.:
         # partition = [abcdefghijkl]

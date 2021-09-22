@@ -18,9 +18,7 @@ from ..base import BaseEstimator, TransformerMixin
 
 from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
-from ..utils.validation import check_array
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _num_samples
+from ..utils.validation import _num_samples, check_array, check_is_fitted
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils._encode import _encode, _unique
@@ -190,7 +188,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-
     neg_label : int, default=0
         Value with which negative labels must be encoded.
 
@@ -203,7 +200,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-
     classes_ : ndarray of shape (n_classes,)
         Holds the label for each class.
 
@@ -216,6 +212,13 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     sparse_input_ : bool
         True if the input data to transform is given as a sparse matrix, False
         otherwise.
+
+    See Also
+    --------
+    label_binarize : Function to perform the transform operation of
+        LabelBinarizer with fixed classes.
+    OneHotEncoder : Encode categorical features using a one-hot aka one-of-K
+        scheme.
 
     Examples
     --------
@@ -250,13 +253,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
            [0, 1, 0],
            [0, 0, 1],
            [0, 1, 0]])
-
-    See Also
-    --------
-    label_binarize : Function to perform the transform operation of
-        LabelBinarizer with fixed classes.
-    OneHotEncoder : Encode categorical features using a one-hot aka one-of-K
-        scheme.
     """
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
@@ -290,7 +286,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns the instance itself.
         """
         self.y_type_ = type_of_target(y)
         if "multioutput" in self.y_type_:
@@ -305,8 +302,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, y):
-        """Fit label binarizer and transform multi-class labels to binary
-        labels.
+        """Fit label binarizer/transform multi-class labels to binary labels.
 
         The output of transform is sometimes referred to as
         the 1-of-K coding scheme.
@@ -845,7 +841,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         return self._cached_dict
 
     def _transform(self, y, class_mapping):
-        """Transforms the label sets with a given mapping
+        """Transforms the label sets with a given mapping.
 
         Parameters
         ----------
