@@ -1985,7 +1985,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    learning_rate : string, optional
+    learning_rate : str, optional
         The learning rate schedule to use with `fit`. (If using `partial_fit`,
         learning rate must be controlled directly).
 
