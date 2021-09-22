@@ -1757,7 +1757,7 @@ def test_n_features_deprecation(Estimator):
         est.n_features_
 
 
-# TODO: Remove in v1.2
+# TODO: Remove in v1.3
 @pytest.mark.parametrize(
     "Estimator",
     [
