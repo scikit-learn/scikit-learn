@@ -3,7 +3,7 @@ repos:
     rev: v2.3.0
     hooks:
     -   id: check-yaml
-    -   id: end-of-file-fixer
+#    -   id: end-of-file-fixer
     -   id: trailing-whitespace
 -   repo: https://github.com/psf/black
     rev: 21.6b0
@@ -19,4 +19,4 @@ repos:
     hooks:
      -  id: mypy
         files: sklearn/
-        additional_dependencies: [pytest==3.5.1]
+        additional_dependencies: [pytest==6.2.4]
