@@ -166,6 +166,12 @@ def test_sample_weight(data, method, ensemble):
     X_train, y_train, sw_train = X[:n_samples], y[:n_samples], sample_weight[:n_samples]
     X_test = X[n_samples:]
 
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(
+        X_train
+    )  # compute mean, std and transform training data as well
+    X_test = scaler.transform(X_test)
+
     base_estimator = LinearSVC(random_state=42)
     calibrated_clf = CalibratedClassifierCV(
         base_estimator, method=method, ensemble=ensemble
@@ -184,7 +190,7 @@ def test_sample_weight(data, method, ensemble):
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
-def test_sample_weight_class_imbalanced(data, method, ensemble):
+def test_sample_weight_class_imbalanced(method, ensemble):
     X, y = make_blobs((100, 1000), center_box=(-1, 1), random_state=42)
 
     # Compute weigths to compensate the unbalance of the dataset
@@ -194,6 +200,12 @@ def test_sample_weight_class_imbalanced(data, method, ensemble):
         X, y, sample_weight, stratify=y, random_state=42
     )
 
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(
+        X_train
+    )  # compute mean, std and transform training data as well
+    X_test = scaler.transform(X_test)
+
     base_estimator = LinearSVC(random_state=42)
     calibrated_clf = CalibratedClassifierCV(
         base_estimator, method=method, ensemble=ensemble
@@ -202,6 +214,36 @@ def test_sample_weight_class_imbalanced(data, method, ensemble):
     predictions = calibrated_clf.predict_proba(X_test)[:, 1]
 
     assert brier_score_loss(y_test, predictions, sample_weight=sw_test) < 0.2
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+def test_sample_weight_class_imbalanced_ensemble_equivalent(method):
+    X, y = make_blobs((100, 1000), center_box=(-1, 1), random_state=42)
+
+    # Compute weigths to compensate the unbalance of the dataset
+    sample_weight = 9 * (y == 0) + 1
+
+    X_train, X_test, y_train, y_test, sw_train, sw_test = train_test_split(
+        X, y, sample_weight, stratify=y, random_state=42
+    )
+
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(
+        X_train
+    )  # compute mean, std and transform training data as well
+    X_test = scaler.transform(X_test)
+
+    predictions = []
+    for ensemble in [True, False]:
+        base_estimator = LinearSVC(random_state=42)
+        calibrated_clf = CalibratedClassifierCV(
+            base_estimator, method=method, ensemble=ensemble
+        )
+        calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
+        predictions.append(calibrated_clf.predict_proba(X_test)[:, 1])
+
+    diff = np.linalg.norm(predictions[0] - predictions[1])
+    assert diff < 1.5
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
