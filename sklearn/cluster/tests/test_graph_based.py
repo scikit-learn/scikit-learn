@@ -5,7 +5,7 @@ Tests for Graph-Based clustering algorithms
 from typing import Dict, Tuple
 
 import numpy as np
-from .. import datasets
+from sklearn import datasets
 
 
 def prepare_sklearn_clustering_datasets() -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
