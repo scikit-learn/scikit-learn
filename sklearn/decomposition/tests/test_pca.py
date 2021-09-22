@@ -656,3 +656,39 @@ def test_assess_dimesion_rank_one():
     assert np.isfinite(_assess_dimension(s, rank=1, n_samples=n_samples))
     for rank in range(2, n_features):
         assert _assess_dimension(s, rank, n_samples) == -np.inf
+
+import time
+from scipy.linalg import svd
+def test_pca_svd_output():
+    np.random.seed(12345)
+    nfeat = 20  # try 10, 11, 12, 20, 100
+
+    data = np.random.randn(10 ** 5, nfeat)
+    data = data - data.mean(axis=0)
+    print(np.shape(data))
+
+    # pca
+    pca = PCA(n_components=1)
+    t1 = time.perf_counter()
+    # vals0 = pca.fit_transform(data) # origin method
+    vals0 = pca.fit_transform(data, n_oversamples_rate=1).reshape(-1) # The result is the same as svd and svds
+    # vals0 = pca.fit_transform(data, n_oversamples_rate=0.7).reshape(-1) # The results are different
+    t2 = time.perf_counter()
+    print("pca time cost：{}".format(t2 - t1))
+    print(np.shape(vals0))
+
+    # sparse svd
+    from scipy.sparse.linalg import svds
+
+    if data.shape[1] > 1:
+        U1, s1, _ = svds(data, k=1, return_singular_vectors="u")
+        vals1 = U1[:, 0] * s1[0]
+    else:
+        vals1 = data[:, 0]
+
+    # dense svd
+    U2, s2, Vh2 = svd(data, full_matrices=False)
+    vals2 = U2[:, 0] * s2[0]
+
+    print("\nthe next three rows should be the same up to sign:")
+    print(" PCA       ", vals0[0:5], "\n sparse SVD", vals1[0:5], "\n dense SVD ", vals2[0:5], "\n")

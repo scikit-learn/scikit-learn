@@ -382,7 +382,7 @@ class PCA(_BasePCA):
         self._fit(X)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, n_oversamples_rate = 0.8):
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
@@ -394,6 +394,8 @@ class PCA(_BasePCA):
         y : Ignored
             Ignored.
 
+        n_oversamples_rate : The percentage of features that need to be cut
+
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
@@ -404,7 +406,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, Vt = self._fit(X)
+        U, S, Vt = self._fit(X, n_oversamples_rate)
         U = U[:, : self.n_components_]
 
         if self.whiten:
@@ -416,7 +418,7 @@ class PCA(_BasePCA):
 
         return U
 
-    def _fit(self, X):
+    def _fit(self, X, n_oversamples_rate=0.8):
         """Dispatch to the right submethod depending on the chosen solver."""
 
         # Raise an error for sparse input.
@@ -456,7 +458,7 @@ class PCA(_BasePCA):
         if self._fit_svd_solver == "full":
             return self._fit_full(X, n_components)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
-            return self._fit_truncated(X, n_components, self._fit_svd_solver)
+            return self._fit_truncated(X, n_components, self._fit_svd_solver, n_oversamples_rate)
         else:
             raise ValueError(
                 "Unrecognized svd_solver='{0}'".format(self._fit_svd_solver)
@@ -528,7 +530,7 @@ class PCA(_BasePCA):
 
         return U, S, Vt
 
-    def _fit_truncated(self, X, n_components, svd_solver):
+    def _fit_truncated(self, X, n_components, svd_solver, n_oversamples_rate):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
@@ -577,9 +579,11 @@ class PCA(_BasePCA):
 
         elif svd_solver == "randomized":
             # sign flipping is done inside
+            n_oversamples = int(min(X.shape) * n_oversamples_rate)
             U, S, Vt = randomized_svd(
                 X,
                 n_components=n_components,
+                n_oversamples=n_oversamples,
                 n_iter=self.iterated_power,
                 flip_sign=True,
                 random_state=random_state,
