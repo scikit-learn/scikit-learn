@@ -2059,6 +2059,17 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    sklearn.svm.OneClassSVM
+
+    Notes
+    -----
+    This estimator has a linear complexity in the number of training samples
+    and is thus better suited than the `sklearn.svm.OneClassSVM`
+    implementation for datasets with a large number of training samples (say
+    > 10,000).
+
     Examples
     --------
     >>> import numpy as np
@@ -2070,17 +2081,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     >>> print(clf.predict([[4, 4]]))
     [1]
-
-    See also
-    --------
-    sklearn.svm.OneClassSVM
-
-    Notes
-    -----
-    This estimator has a linear complexity in the number of training samples
-    and is thus better suited than the `sklearn.svm.OneClassSVM`
-    implementation for datasets with a large number of training samples (say
-    > 10,000).
     """
 
     loss_functions = {"hinge": (Hinge, 1.0)}
