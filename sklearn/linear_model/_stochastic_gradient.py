@@ -2295,6 +2295,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Subset of the training data.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
