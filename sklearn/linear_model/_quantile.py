@@ -238,6 +238,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[0] = 0
             c[n_params] = 0
 
+        if (sparse.issparse(X)) and (X.format == "coo"):
+            X = X.tocsr()
         X = _safe_indexing(X, indices)
 
         if sparse.issparse(X):
