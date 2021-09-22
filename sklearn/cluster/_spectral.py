@@ -258,14 +258,13 @@ def spectral_clustering(
       Ulrike von Luxburg
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
 
-    - Modern Preconditioned Eigensolvers for Spectral Image Segmentation
-      and Graph Bisection, 2003
-      Andrew Knyazev
-      https://bit.ly/3tmTR4k
+    - Multiclass spectral clustering, 2003
+      Stella X. Yu, Jianbo Shi
+      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
-    - Multiscale Spectral Graph Partitioning and Image Segmentation, 2006
-      Andrew Knyazev
-      https://bit.ly/3toJU6i
+    - Toward the Optimal Preconditioned Eigensolver: Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+      A. V. Knyazev
+      SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541. DOI:10.1137/S1064827500366124
 
     Notes
     -----
@@ -505,7 +504,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
-    """
+
+    - Toward the Optimal Preconditioned Eigensolver: Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+      A. V. Knyazev
+      SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541. DOI:10.1137/S1064827500366124
+      """
 
     def __init__(
         self,
