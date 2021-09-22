@@ -181,10 +181,6 @@ Changelog
   computation of the tree, using the `memory` parameter.  :pr:`19024` by
   :user:`Frankie Robertson <frankier>`.
 
-- |Enhancement| The `predict` and `fit_predict` methods of
-  :class:`cluster.AffinityPropagation` now accept sparse data type for input
-  data.
-  :pr:`20117` by :user:`Venkatachalam Natchiappan <venkyyuvy>`
 
 - |Fix| Fixed a bug in :class:`cluster.MiniBatchKMeans` where the sample
   weights were partially ignored when the input is sparse. :pr:`17622` by

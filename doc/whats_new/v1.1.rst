@@ -38,6 +38,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.linear_model`
+---------------------------
+
+- |Enhancement| The `predict` and `fit_predict` methods of
+  :class:`cluster.AffinityPropagation` now accept sparse data type for input
+  data.
+  :pr:`20117` by :user:`Venkatachalam Natchiappan <venkyyuvy>`
+
 :mod:`sklearn.utils`
 ....................
 
