@@ -1975,8 +1975,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, optional
-        The verbosity level
+    verbose : int, optional
+        The verbosity level.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -2061,7 +2061,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     See Also
     --------
-    sklearn.svm.OneClassSVM
+    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
 
     Notes
     -----
