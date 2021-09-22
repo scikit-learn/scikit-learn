@@ -2304,7 +2304,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns a fitted instance of self.
         """
 
         alpha = self.nu / 2
@@ -2403,7 +2404,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Returns
         -------
         self : object
-            Returns an instance of self.
+            Returns a fitted instance of self.
         """
 
         alpha = self.nu / 2
