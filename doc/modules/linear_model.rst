@@ -1494,7 +1494,7 @@ problem. The current implementation is based on
 
   * Portnoy, S., & Koenker, R. (1997). The Gaussian hare and the Laplacian
     tortoise: computability of squared-error versus absolute-error estimators.
-    Statistical Science, 12, 279-300. :doi:`10.1214/ss/1030037960`
+    Statistical Science, 12, 279-300. https://doi.org/10.1214/ss/1030037960
 
   * Koenker, R. (2005). Quantile Regression.
     Cambridge University Press. https://doi.org/10.1017/CBO9780511754098
