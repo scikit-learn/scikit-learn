@@ -1,3 +1,7 @@
+"""
+Tests for Graph-Based clustering algorithms
+"""
+
 from typing import Dict, Tuple
 
 import numpy as np
