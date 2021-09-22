@@ -50,7 +50,7 @@ _ = ax.set(
 # a hourly basis:
 df["count"].max()
 
-# %% [markdown]
+# %%
 #
 # Let us rescale the target variable (number of hourly bike rentals) to predict
 # a relative demand so that the mean absolute error is more easily interpreted
@@ -159,6 +159,13 @@ X.iloc[test_4]
 X.iloc[train_4]
 
 # %%
+# FIXME:
+# Make a single split to make the partial dependence plots
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False, test_size=0.2)
+
+# %%
 # All is well. We are now ready to do some predictive modeling!
 #
 # Gradient Boosting
@@ -235,6 +242,214 @@ def evaluate(model, X, y, cv):
 
 
 evaluate(gbrt_pipeline, X, y, cv=ts_cv)
+
+# %%
+# FIXME: make the partial dependence plot
+from sklearn.inspection import PartialDependenceDisplay
+
+features = [
+    # nominal features
+    "weather",
+    "season",
+    "holiday",
+    "workingday",
+    # numerical features
+    "temp",
+    "humidity",
+    "windspeed",
+    "hour",
+]
+fig, ax = plt.subplots(ncols=4, nrows=2, figsize=(12, 10))
+gbrt_pipeline.fit(X_train, y_train)
+PartialDependenceDisplay.from_estimator(
+    gbrt_pipeline,
+    X_train,
+    features=features,
+    categorical_features=categorical_columns,
+    kind=["average"] * 4 + ["both"] * 4,
+    ax=ax,
+    pd_line_kw={"color": "tab:orange"},
+    ice_lines_kw={"alpha": 0.2},
+    subsample=100,
+)
+fig.subplots_adjust(hspace=0.3)
+
+# %%
+import itertools
+
+features = [
+    "weather",
+    "season",
+    "holiday",
+    "workingday",
+]
+
+fig, ax = plt.subplots(ncols=3, nrows=2, figsize=(14, 10))
+gbrt_pipeline.fit(X_train, y_train)
+PartialDependenceDisplay.from_estimator(
+    gbrt_pipeline,
+    X_train,
+    features=list(itertools.combinations(features, 2)),
+    categorical_features=categorical_columns,
+    kind="average",
+    ax=ax,
+)
+fig.subplots_adjust(hspace=0.3, wspace=0.3)
+
+# %%
+import itertools
+
+features = [
+    "temp",
+    "humidity",
+    "windspeed",
+    "hour",
+]
+
+fig, ax = plt.subplots(ncols=3, nrows=2, figsize=(14, 10))
+gbrt_pipeline.fit(X_train, y_train)
+PartialDependenceDisplay.from_estimator(
+    gbrt_pipeline,
+    X_train,
+    features=list(itertools.combinations(features, 2)),
+    categorical_features=categorical_columns,
+    kind="average",
+    ax=ax,
+    grid_resolution=20,
+    n_jobs=-1,
+)
+fig.subplots_adjust(hspace=0.3, wspace=0.3)
+
+features = [
+    # nominal features
+    "weather",
+    "season",
+    "holiday",
+    "workingday",
+    # numerical features
+    "temp",
+    "humidity",
+    "windspeed",
+    "hour",
+]
+fig, ax = plt.subplots(ncols=4, nrows=2, figsize=(12, 10))
+gbrt_pipeline.fit(X_train, y_train)
+PartialDependenceDisplay.from_estimator(
+    gbrt_pipeline,
+    X_test,
+    features=features,
+    categorical_features=categorical_columns,
+    kind=["average"] * 4 + ["both"] * 4,
+    ax=ax,
+    pd_line_kw={"color": "tab:orange"},
+    ice_lines_kw={"alpha": 0.2},
+    subsample=100,
+    n_jobs=-1,
+)
+fig.subplots_adjust(hspace=0.3)
+
+# %%
+import itertools
+
+features = [
+    "weather",
+    "season",
+    "holiday",
+    "workingday",
+]
+
+fig, ax = plt.subplots(ncols=3, nrows=2, figsize=(14, 10))
+gbrt_pipeline.fit(X_train, y_train)
+PartialDependenceDisplay.from_estimator(
+    gbrt_pipeline,
+    X_test,
+    features=list(itertools.combinations(features, 2)),
+    categorical_features=categorical_columns,
+    kind="average",
+    ax=ax,
+    n_jobs=-1,
+)
+fig.subplots_adjust(hspace=0.3, wspace=0.3)
+
+# %%
+import itertools
+
+features = [
+    "temp",
+    "humidity",
+    "windspeed",
+    "hour",
+]
+
+fig, ax = plt.subplots(ncols=3, nrows=2, figsize=(14, 10))
+gbrt_pipeline.fit(X_train, y_train)
+PartialDependenceDisplay.from_estimator(
+    gbrt_pipeline,
+    X_test,
+    features=list(itertools.combinations(features, 2)),
+    categorical_features=categorical_columns,
+    kind="average",
+    ax=ax,
+    grid_resolution=20,
+    n_jobs=-1,
+)
+fig.subplots_adjust(hspace=0.3, wspace=0.3)
+
+# %%
+categorical_columns = [
+    "weather",
+    "season",
+    "holiday",
+    "workingday",
+]
+categories = [
+    ["clear", "misty", "rain"],
+    ["spring", "summer", "fall", "winter"],
+    [0.0, 1.0],
+    ["False", "True"],
+]
+ordinal_encoder = OrdinalEncoder(categories=categories)
+
+
+gbrt_pipeline = make_pipeline(
+    ColumnTransformer(
+        transformers=[
+            ("categorical", ordinal_encoder, categorical_columns),
+        ],
+        remainder="passthrough",
+    ),
+    HistGradientBoostingRegressor(
+        categorical_features=range(4),
+    ),
+)
+
+features = [
+    ("hour", "weekday"),
+    ("hour", "holiday"),
+    ("temp", "weekday"),
+    ("humidity", "weekday"),
+]
+
+fig, ax = plt.subplots(ncols=2, nrows=2, figsize=(8, 10))
+X_train_cvt_num = X_train.copy()
+X_train_cvt_num["holiday"] = X_train_cvt_num["holiday"].apply(
+    lambda x: 1 if x == "True" else 0
+)
+X_test_cvt_num = X_test.copy()
+X_test_cvt_num["holiday"] = X_test_cvt_num["holiday"].apply(
+    lambda x: 1 if x == "True" else 0
+)
+gbrt_pipeline.fit(X_train_cvt_num, y_train)
+PartialDependenceDisplay.from_estimator(
+    gbrt_pipeline,
+    X_test_cvt_num,
+    features=features,
+    kind="average",
+    ax=ax,
+    grid_resolution=20,
+    n_jobs=-1,
+)
+fig.subplots_adjust(hspace=0.3, wspace=0.3)
 
 # %%
 # This model has an average error around 4 to 5% of the maximum demand. This is
