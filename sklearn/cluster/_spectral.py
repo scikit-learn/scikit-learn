@@ -265,7 +265,8 @@ def spectral_clustering(
     - Toward the Optimal Preconditioned Eigensolver:
       Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
       A. V. Knyazev
-      SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541. DOI:10.1137/S1064827500366124
+      SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
+      DOI:10.1137/S1064827500366124
 
     Notes
     -----
@@ -507,9 +508,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     - Toward the Optimal Preconditioned Eigensolver:
-      Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+      Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
       A. V. Knyazev
-      SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541. DOI:10.1137/S1064827500366124
+      SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
+      DOI:10.1137/S1064827500366124
+
     """
 
     def __init__(
