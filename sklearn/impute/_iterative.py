@@ -56,7 +56,7 @@ class IterativeImputer(_BaseImputer):
         nullable integer dtypes with missing values, `missing_values`
         should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
-    sample_posterior : boolean, default=False
+    sample_posterior : bool, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
         fitted estimator for each imputation. Estimator must support
         ``return_std`` in its ``predict`` method if set to ``True``. Set to
@@ -102,7 +102,7 @@ class IterativeImputer(_BaseImputer):
         "random"
             A random order for each round.
 
-    skip_complete : boolean, default=False
+    skip_complete : bool, default=False
         If ``True`` then features with missing values during ``transform``
         which did not have any missing values during ``fit`` will be imputed
         with the initial imputation method only. Set to ``True`` if you have
@@ -137,7 +137,7 @@ class IterativeImputer(_BaseImputer):
         ``sample_posterior`` is True. Use an integer for determinism.
         See :term:`the Glossary <random_state>`.
 
-    add_indicator : boolean, default=False
+    add_indicator : bool, default=False
         If True, a :class:`MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
@@ -188,20 +188,6 @@ class IterativeImputer(_BaseImputer):
     --------
     SimpleImputer : Univariate imputation of missing values.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.experimental import enable_iterative_imputer
-    >>> from sklearn.impute import IterativeImputer
-    >>> imp_mean = IterativeImputer(random_state=0)
-    >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
-    IterativeImputer(random_state=0)
-    >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
-    >>> imp_mean.transform(X)
-    array([[ 6.9584...,  2.       ,  3.        ],
-           [ 4.       ,  2.6000...,  6.        ],
-           [10.       ,  4.9999...,  9.        ]])
-
     Notes
     -----
     To support imputation in inductive mode we store each feature's estimator
@@ -222,6 +208,20 @@ class IterativeImputer(_BaseImputer):
         Multivariate Data Suitable for use with an Electronic Computer".
         Journal of the Royal Statistical Society 22(2): 302-306.
         <https://www.jstor.org/stable/2984099>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.experimental import enable_iterative_imputer
+    >>> from sklearn.impute import IterativeImputer
+    >>> imp_mean = IterativeImputer(random_state=0)
+    >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
+    IterativeImputer(random_state=0)
+    >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
+    >>> imp_mean.transform(X)
+    array([[ 6.9584...,  2.       ,  3.        ],
+           [ 4.       ,  2.6000...,  6.        ],
+           [10.       ,  4.9999...,  9.        ]])
     """
 
     def __init__(
@@ -573,7 +573,7 @@ class IterativeImputer(_BaseImputer):
         return limit
 
     def fit_transform(self, X, y=None):
-        """Fits the imputer on X and return the transformed X.
+        """Fit the imputer on X and return the transformed X.
 
         Parameters
         ----------
@@ -581,7 +581,8 @@ class IterativeImputer(_BaseImputer):
             Input data, where "n_samples" is the number of samples and
             "n_features" is the number of features.
 
-        y : ignored.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -704,10 +705,10 @@ class IterativeImputer(_BaseImputer):
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def transform(self, X):
-        """Imputes all missing values in X.
+        """Impute all missing values in X.
 
         Note that this is stochastic, and that if random_state is not fixed,
-        repeated calls, or permuted input, will yield different results.
+        repeated calls, or permuted input, results will differ.
 
         Parameters
         ----------
@@ -756,7 +757,7 @@ class IterativeImputer(_BaseImputer):
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def fit(self, X, y=None):
-        """Fits the imputer on X and return self.
+        """Fit the imputer on X and return self.
 
         Parameters
         ----------
@@ -764,7 +765,8 @@ class IterativeImputer(_BaseImputer):
             Input data, where "n_samples" is the number of samples and
             "n_features" is the number of features.
 
-        y : ignored
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
