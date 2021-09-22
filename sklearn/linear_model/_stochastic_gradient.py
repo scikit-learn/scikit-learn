@@ -2401,7 +2401,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
 
         alpha = self.nu / 2
