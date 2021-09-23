@@ -12,6 +12,7 @@ from sklearn.decomposition import PCA
 from sklearn.datasets import load_iris
 from sklearn.decomposition._pca import _assess_dimension
 from sklearn.decomposition._pca import _infer_dimension
+from scipy.sparse.linalg import svds
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
@@ -681,13 +682,12 @@ def test_pca_svd_output():
     print(np.shape(vals0))
 
     # sparse svd
-    from scipy.sparse.linalg import svds
-
-    if data.shape[1] > 1:
-        U1, s1, _ = svds(data, k=1, return_singular_vectors="u")
-        vals1 = U1[:, 0] * s1[0]
-    else:
-        vals1 = data[:, 0]
+    vals1 = data[:, 0]
+    # if data.shape[1] > 1:
+    U1, s1, _ = svds(data, k=1, return_singular_vectors="u")
+    vals1 = U1[:, 0] * s1[0]
+    # else:
+    #     vals1 = data[:, 0]
 
     # dense svd
     U2, s2, Vh2 = svd(data, full_matrices=False)
