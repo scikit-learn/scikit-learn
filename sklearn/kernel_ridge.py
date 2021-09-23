@@ -155,7 +155,10 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return pairwise_kernels(X, Y, metric=self.kernel, filter_params=True, **params)
 
     def _more_tags(self):
-        return {"pairwise": self.kernel == "precomputed"}
+        return {
+            "pairwise": self.kernel == "precomputed",
+            "allow_negative_sample_weight": False,
+        }
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
@@ -233,6 +236,3 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)
-
-    def _more_tags(self):
-        return {"allow_negative_sample_weight": False}
