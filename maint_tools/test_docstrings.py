@@ -37,7 +37,6 @@ DOCSTRING_IGNORE_LIST = [
     "SelfTrainingClassifier",
     "SparseRandomProjection",
     "SpectralBiclustering",
-    "SpectralClustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
     "SplineTransformer",
