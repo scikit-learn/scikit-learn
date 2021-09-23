@@ -1581,7 +1581,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if sample_weight is not None:
             if sparse.issparse(X):
                 raise ValueError("Sample weights do not (yet) support sparse matrices.")
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, only_non_negative=True
+            )
 
         model = self._get_estimator()
 
@@ -1729,7 +1731,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
-            }
+            },
+            "allow_negative_sample_weight": False,
         }
 
 

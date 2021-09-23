@@ -37,6 +37,7 @@ from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.pipeline import make_pipeline
 
 from sklearn.utils import IS_PYPY
+from sklearn.utils.validation import has_fit_parameter
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
@@ -44,6 +45,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import (
     _construct_instance,
+    _construct_data_for_fit,
     _set_checking_parameters,
     _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
@@ -329,6 +331,32 @@ def test_valid_tag_types(estimator):
 def test_check_n_features_in_after_fitting(estimator):
     _set_checking_parameters(estimator)
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
+def test_negative_sample_weight_support(estimator):
+    """
+    In `_tested_estimators()`, where `fit` has `sample_weight` parameter
+    all (`1darray`, `2darray`) `X_types` tags are supported in
+    `_construct_data_for_fit`. If new estimators will be added to this
+    list with other ´X_types´ tags, then the `_construct_data_for_fit`
+    function have to be updated with the new cases.
+    """
+
+    if has_fit_parameter(estimator, "sample_weight"):
+        data = _construct_data_for_fit(
+            estimator=estimator, construct_sample_weight=True
+        )
+        # sample_weight was np.ones(30)
+        data["sample_weight"][0] = -1
+        if not estimator._get_tags()["allow_negative_sample_weight"]:
+            err_msg = "Negative values in data passed to `sample_weight`"
+            with pytest.raises(ValueError, match=err_msg):
+                estimator.fit(**data)
+        else:
+            estimator.fit(**data)
 
 
 # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that

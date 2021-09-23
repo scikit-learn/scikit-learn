@@ -724,6 +724,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
+    def _more_tags(self):
+        return {"allow_negative_sample_weight": False}
+
 
 def _check_precomputed_gram_matrix(
     X, precompute, X_offset, X_scale, rtol=1e-7, atol=1e-5

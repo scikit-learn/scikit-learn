@@ -19,6 +19,7 @@ _DEFAULT_TAGS = {
     "preserves_dtype": [np.float64],
     "requires_y": False,
     "pairwise": False,
+    "allow_negative_sample_weight": True,
 }
 
 

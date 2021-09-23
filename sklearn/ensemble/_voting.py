@@ -416,6 +416,13 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         else:
             return self._predict(X)
 
+    def _more_tags(self):
+        for est in self.estimators:
+            if not est[1]._get_tags()["allow_negative_sample_weight"]:
+                return {"allow_negative_sample_weight": False}
+        else:
+            return {"allow_negative_sample_weight": True}
+
 
 class VotingRegressor(RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
@@ -562,3 +569,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         """
         check_is_fitted(self)
         return self._predict(X)
+
+    def _more_tags(self):
+        for est in self.estimators:
+            if not est[1]._get_tags()["allow_negative_sample_weight"]:
+                return {"allow_negative_sample_weight": False}
+        else:
+            return {"allow_negative_sample_weight": True}

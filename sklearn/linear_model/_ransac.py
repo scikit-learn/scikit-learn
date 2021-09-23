@@ -615,5 +615,8 @@ class RANSACRegressor(
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
-            }
+            },
+            "allow_negative_sample_weight": self.base_estimator._get_tags()[
+                "allow_negative_sample_weight"
+            ],
         }

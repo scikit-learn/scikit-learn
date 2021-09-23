@@ -240,7 +240,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
         X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True)
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, only_non_negative=True
+            )
 
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X,
@@ -423,6 +425,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
         )
 
         return score
+
+    def _more_tags(self):
+        return {"allow_negative_sample_weight": False}
 
 
 ###############################################################################

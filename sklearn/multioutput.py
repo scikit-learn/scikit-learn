@@ -238,7 +238,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         return np.asarray(y).T
 
     def _more_tags(self):
-        return {"multioutput_only": True}
+        return {
+            "multioutput_only": True,
+            "allow_negative_sample_weight": self.estimator._get_tags()["allow_negative_sample_weight"],
+        }
 
 
 class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):

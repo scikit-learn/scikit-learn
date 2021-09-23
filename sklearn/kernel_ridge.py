@@ -192,7 +192,9 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
         )
         if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = _check_sample_weight(sample_weight, X)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, only_non_negative=True
+            )
 
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
@@ -231,3 +233,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)
+
+    def _more_tags(self):
+        return {"allow_negative_sample_weight": False}

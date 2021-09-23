@@ -749,7 +749,9 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             solver = self.solver
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, only_non_negative=True
+            )
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
@@ -806,6 +808,9 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
+
+    def _more_tags(self):
+        return {"allow_negative_sample_weight": False}
 
 
 class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
@@ -1953,6 +1958,11 @@ class _BaseRidgeCV(LinearModel):
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, only_non_negative=True
+            )
+
         cv = self.cv
         if cv is None:
             estimator = _RidgeGCV(
@@ -2000,6 +2010,9 @@ class _BaseRidgeCV(LinearModel):
             self.feature_names_in_ = estimator.feature_names_in_
 
         return self
+
+    def _more_tags(self):
+        return {"allow_negative_sample_weight": False}
 
 
 class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):

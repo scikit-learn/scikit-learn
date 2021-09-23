@@ -326,5 +326,6 @@ class KernelDensity(BaseEstimator):
                 "check_sample_weights_invariance": (
                     "sample_weight must have positive values"
                 ),
-            }
+            },
+            "allow_negative_sample_weight": False,
         }

@@ -573,6 +573,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             final_estimator = self.final_estimator
         return super()._sk_visual_block_(final_estimator)
 
+    def _more_tags(self):
+        for est in self.estimators:
+            if not est[1]._get_tags()["allow_negative_sample_weight"]:
+                return {"allow_negative_sample_weight": False}
+        else:
+            return {"allow_negative_sample_weight": True}
+
 
 class StackingRegressor(RegressorMixin, _BaseStacking):
     """Stack of estimators with a final regressor.
@@ -776,3 +783,10 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         else:
             final_estimator = self.final_estimator
         return super()._sk_visual_block_(final_estimator)
+
+    def _more_tags(self):
+        for est in self.estimators:
+            if not est[1]._get_tags()["allow_negative_sample_weight"]:
+                return {"allow_negative_sample_weight": False}
+        else:
+            return {"allow_negative_sample_weight": True}
