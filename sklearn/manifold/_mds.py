@@ -61,7 +61,7 @@ def _smacof_single(
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -220,7 +220,7 @@ def smacof(
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
@@ -347,7 +347,7 @@ class MDS(BaseEstimator):
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     dissimilarity : {'euclidean', 'precomputed'}, default='euclidean'
         Dissimilarity measure to use:

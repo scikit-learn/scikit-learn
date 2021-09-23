@@ -34,7 +34,6 @@ DOCSTRING_IGNORE_LIST = [
     "QuadraticDiscriminantAnalysis",
     "RandomizedSearchCV",
     "RobustScaler",
-    "SGDOneClassSVM",
     "SelfTrainingClassifier",
     "SparseRandomProjection",
     "SpectralBiclustering",
@@ -45,7 +44,6 @@ DOCSTRING_IGNORE_LIST = [
     "StackingClassifier",
     "StackingRegressor",
     "TransformedTargetRegressor",
-    "TweedieRegressor",
 ]
 
 
