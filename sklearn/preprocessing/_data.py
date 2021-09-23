@@ -103,7 +103,7 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
     elif isinstance(scale, np.ndarray):
         if constant_mask is None:
             # Detect near constant values to avoid dividing by a very small
-            # value that could lead to suprising results and numerical
+            # value that could lead to surprising results and numerical
             # stability issues.
             constant_mask = scale < 10 * np.finfo(scale.dtype).eps
 
@@ -384,7 +384,7 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
             del self.scale_
@@ -770,7 +770,7 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
             del self.scale_
@@ -1121,7 +1121,7 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
             del self.scale_
@@ -1860,7 +1860,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         values.
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
 
@@ -1877,6 +1877,10 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    normalize : Equivalent function without the estimator API.
+
     Notes
     -----
     This estimator is stateless (besides constructor parameters), the
@@ -1885,10 +1889,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
-    See Also
-    --------
-    normalize : Equivalent function without the estimator API.
 
     Examples
     --------
@@ -1920,8 +1920,8 @@ class Normalizer(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data to estimate the normalization parameters.
 
-        y : None
-            Ignored.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -2388,7 +2388,7 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
         noise.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`
+        See :term:`Glossary <random_state>`.
 
     copy : bool, default=True
         Set to False to perform inplace transformation and avoid a copy (if the
@@ -2417,16 +2417,6 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
 
         .. versionadded:: 1.0
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import QuantileTransformer
-    >>> rng = np.random.RandomState(0)
-    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
-    >>> qt.fit_transform(X)
-    array([...])
-
     See Also
     --------
     quantile_transform : Equivalent function without the estimator API.
@@ -2445,6 +2435,16 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import QuantileTransformer
+    >>> rng = np.random.RandomState(0)
+    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
+    >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
+    >>> qt.fit_transform(X)
+    array([...])
     """
 
     def __init__(
@@ -2974,21 +2974,6 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import PowerTransformer
-    >>> pt = PowerTransformer()
-    >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(pt.fit(data))
-    PowerTransformer()
-    >>> print(pt.lambdas_)
-    [ 1.386... -3.100...]
-    >>> print(pt.transform(data))
-    [[-1.316... -0.707...]
-     [ 0.209... -0.707...]
-     [ 1.106...  1.414...]]
-
     See Also
     --------
     power_transform : Equivalent function without the estimator API.
@@ -3014,6 +2999,21 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PowerTransformer
+    >>> pt = PowerTransformer()
+    >>> data = [[1, 2], [3, 2], [4, 5]]
+    >>> print(pt.fit(data))
+    PowerTransformer()
+    >>> print(pt.lambdas_)
+    [ 1.386... -3.100...]
+    >>> print(pt.transform(data))
+    [[-1.316... -0.707...]
+     [ 0.209... -0.707...]
+     [ 1.106...  1.414...]]
     """
 
     def __init__(self, method="yeo-johnson", *, standardize=True, copy=True):
@@ -3044,6 +3044,22 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
+        """Fit `PowerTransformer` to `X`, then transform `X`.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data used to estimate the optimal transformation parameters
+            and to be transformed using a power transformation.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_features)
+            Transformed data.
+        """
         return self._fit(X, y, force_transform=True)
 
     def _fit(self, X, y=None, force_transform=False):

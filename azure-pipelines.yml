@@ -182,9 +182,9 @@ jobs:
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
 
-- template: build_tools/azure/posix-32.yml
+- template: build_tools/azure/posix-docker.yml
   parameters:
-    name: Linux32
+    name: Linux_Docker
     vmImage: ubuntu-20.04
     dependsOn: [linting, git_commit]
     condition: |
@@ -194,8 +194,14 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
+      pypy3:
+        DISTRIB: 'conda-mamba-pypy3'
+        DOCKER_CONTAINER: 'condaforge/mambaforge-pypy3:4.10.3-5'
+        PILLOW_VERSION: 'none'
+        PANDAS_VERSION: 'none'
       debian_atlas_32bit:
         DISTRIB: 'debian-32'
+        DOCKER_CONTAINER: 'i386/debian:10.9'
         JOBLIB_VERSION: 'min'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
