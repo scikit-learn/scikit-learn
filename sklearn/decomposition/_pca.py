@@ -394,7 +394,7 @@ class PCA(_BasePCA):
         y : Ignored
             Ignored.
 
-        n_oversamples_rate : The percentage of features that need to be cut
+        n_oversamples_rate : The percentage of features that need to be cut.
 
         Returns
         -------
