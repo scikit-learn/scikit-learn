@@ -45,7 +45,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import (
     _construct_instance,
-    _construct_data_for_fit,
+    _create_data_for_fit,
     _set_checking_parameters,
     _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
@@ -346,9 +346,7 @@ def test_negative_sample_weight_support(estimator):
     """
 
     if has_fit_parameter(estimator, "sample_weight"):
-        data = _construct_data_for_fit(
-            estimator=estimator, construct_sample_weight=True
-        )
+        data = _create_data_for_fit(estimator=estimator, construct_sample_weight=True)
         # sample_weight was np.ones(30)
         data["sample_weight"][0] = -1
         if not estimator._get_tags()["allow_negative_sample_weight"]:

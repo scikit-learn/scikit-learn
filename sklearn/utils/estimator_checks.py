@@ -399,7 +399,7 @@ def _construct_instance(Estimator):
     return estimator
 
 
-def _construct_data_for_fit(estimator, construct_sample_weight=False):
+def _create_data_for_fit(estimator, construct_sample_weight=False):
     """
     Supported `X_types` tags: `1darray`, `2darray`
 
