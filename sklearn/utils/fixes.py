@@ -17,6 +17,7 @@ import numpy as np
 import scipy.sparse as sp
 import scipy
 import scipy.stats
+from contextlib import suppress
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 from .._config import config_context, get_config
 from ..externals._packaging.version import parse as parse_version
@@ -36,6 +37,9 @@ else:
 
 
 def _object_dtype_isnan(X):
+    with suppress(ImportError):
+        import pandas
+        return pandas.isna(X)
     return X != X
 
 
