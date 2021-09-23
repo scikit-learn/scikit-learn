@@ -190,18 +190,15 @@ def test_birch_fit_attributes_deprecated(attribute):
     [
         ({"threshold": -1.0}, ValueError, "threshold == -1.0, must be > 0.0."),
         ({"threshold": 0.0}, ValueError, "threshold == 0.0, must be > 0.0."),
-        ({"branching_factor": 0}, ValueError,
-         "branching_factor == 0, must be > 1."),
-        ({"branching_factor": 1}, ValueError,
-         "branching_factor == 1, must be > 1."),
+        ({"branching_factor": 0}, ValueError, "branching_factor == 0, must be > 1."),
+        ({"branching_factor": 1}, ValueError, "branching_factor == 1, must be > 1."),
         (
             {"branching_factor": 1.5},
             TypeError,
             "branching_factor must be an instance of <class 'numbers.Integral'>, not"
             " <class 'float'>.",
         ),
-        ({"branching_factor": -2}, ValueError,
-         "branching_factor == -2, must be > 1."),
+        ({"branching_factor": -2}, ValueError, "branching_factor == -2, must be > 1."),
         ({"n_clusters": 0}, ValueError, "n_clusters == 0, must be >= 1."),
         (
             {"n_clusters": 2.5},
