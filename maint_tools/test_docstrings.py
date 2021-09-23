@@ -22,8 +22,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultiTaskElasticNetCV",
     "MultiTaskLasso",
     "MultiTaskLassoCV",
-    "NearestCentroid",
-    "NeighborhoodComponentsAnalysis",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "PLSCanonical",
@@ -36,7 +34,6 @@ DOCSTRING_IGNORE_LIST = [
     "QuadraticDiscriminantAnalysis",
     "RandomizedSearchCV",
     "RobustScaler",
-    "SGDOneClassSVM",
     "SGDRegressor",
     "SelfTrainingClassifier",
     "SparseRandomProjection",
@@ -47,9 +44,7 @@ DOCSTRING_IGNORE_LIST = [
     "SplineTransformer",
     "StackingClassifier",
     "StackingRegressor",
-    "TheilSenRegressor",
     "TransformedTargetRegressor",
-    "TweedieRegressor",
 ]
 
 
