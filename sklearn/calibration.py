@@ -1098,9 +1098,9 @@ class CalibrationDisplay:
         ax=None,
         **kwargs,
     ):
-        """Plot calibration curve using an binary classifier and data.
+        """Plot calibration curve using a binary classifier and data.
 
-        Calibration curve, also known as reliability diagram, uses inputs
+        A calibration curve, also known as a reliability diagram, uses inputs
         from a binary classifier and plots the average predicted probability
         for each bin against the fraction of positive classes, on the
         y-axis.
