@@ -489,6 +489,9 @@ class TreeGrower:
         # Consider the node with the highest loss reduction (a.k.a. gain)
         node = heappop(self.splittable_nodes)
 
+        print("\nGROWER:")
+        print(f"\npartition.shape = {self.splitter.partition.shape}", flush=True)
+
         tic = time()
         (
             sample_indices_left,
