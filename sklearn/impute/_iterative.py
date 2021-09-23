@@ -92,16 +92,11 @@ class IterativeImputer(_BaseImputer):
             'random'}, default='ascending'
         The order in which the features will be imputed. Possible values:
 
-        - `'ascending'`
-            From features with fewest missing values to most.
-        - `'descending'`
-            From features with most missing values to fewest.
-        - `'roman'`
-            Left to right.
-        - `'arabic'`
-            Right to left.
-        - `'random'`
-            A random order for each round.
+        - `'ascending'`: From features with fewest missing values to most.
+        - `'descending'`: From features with most missing values to fewest.
+        - `'roman'`: Left to right.
+        - `'arabic'`: Right to left.
+        - `'random'`: A random order for each round.
 
     skip_complete : bool, default=False
         If `True` then features with missing values during :meth:`transform`
@@ -553,7 +548,7 @@ class IterativeImputer(_BaseImputer):
         ----------
         limit: scalar or array-like
             The user-specified limit (i.e, min_value or max_value).
-        limit_type: str, "max" or "min"
+        limit_type: {'max', 'min'}
             Type of limit to validate.
         n_features: int
             Number of features in the dataset.
