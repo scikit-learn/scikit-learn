@@ -72,7 +72,6 @@ DOCSTRING_IGNORE_LIST = [
     "SimpleImputer",
     "SparseRandomProjection",
     "SpectralBiclustering",
-    "SpectralClustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
     "SplineTransformer",
