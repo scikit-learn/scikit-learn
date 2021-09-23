@@ -511,7 +511,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        # TODO: Remove deprected flags in 1.2
+        # TODO: Remove deprecated flags in 1.2
         self._deprecated_fit, self._deprecated_partial_fit = True, False
         return self._fit(X, partial=False)
 
@@ -615,7 +615,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        # TODO: Remove deprected flags in 1.2
+        # TODO: Remove deprecated flags in 1.2
         self._deprecated_partial_fit, self._deprecated_fit = True, False
         if X is None:
             # Perform just the final global clustering step.

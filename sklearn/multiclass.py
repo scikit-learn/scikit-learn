@@ -913,7 +913,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
 
 class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
-    """(Error-Correcting) Output-Code multiclass strategy
+    """(Error-Correcting) Output-Code multiclass strategy.
 
     Output-code based strategies consist in representing each class with a
     binary code (an array of 0s and 1s). At fitting time, one binary
@@ -956,10 +956,10 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     estimators_ : list of `int(n_classes * code_size)` estimators
         Estimators used for predictions.
 
-    classes_ : numpy array of shape [n_classes]
+    classes_ : ndarray of shape (n_classes,)
         Array containing labels.
 
-    code_book_ : numpy array of shape [n_classes, code_size]
+    code_book_ : ndarray of shape (n_classes, code_size)
         Binary array containing the code of each class.
 
     n_features_in_ : int
@@ -974,19 +974,10 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.multiclass import OutputCodeClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.datasets import make_classification
-    >>> X, y = make_classification(n_samples=100, n_features=4,
-    ...                            n_informative=2, n_redundant=0,
-    ...                            random_state=0, shuffle=False)
-    >>> clf = OutputCodeClassifier(
-    ...     estimator=RandomForestClassifier(random_state=0),
-    ...     random_state=0).fit(X, y)
-    >>> clf.predict([[0, 0, 0, 0]])
-    array([1])
+    OneVsRestClassifier : One-vs-all multiclass strategy.
+    OneVsOneClassifier : One-vs-one multiclass strategy.
 
     References
     ----------
@@ -1005,6 +996,20 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     .. [3] "The Elements of Statistical Learning",
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
+
+    Examples
+    --------
+    >>> from sklearn.multiclass import OutputCodeClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=100, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = OutputCodeClassifier(
+    ...     estimator=RandomForestClassifier(random_state=0),
+    ...     random_state=0).fit(X, y)
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
     """
 
     def __init__(self, estimator, *, code_size=1.5, random_state=None, n_jobs=None):
@@ -1021,12 +1026,13 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : numpy array of shape [n_samples]
+        y : array-like of shape (n_samples,)
             Multi-class targets.
 
         Returns
         -------
-        self
+        self : object
+            Returns a fitted instance of self.
         """
         y = self._validate_data(X="no_validation", y=y)
 
@@ -1085,7 +1091,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        y : numpy array of shape [n_samples]
+        y : ndarray of shape (n_samples,)
             Predicted multi-class targets.
         """
         check_is_fitted(self)

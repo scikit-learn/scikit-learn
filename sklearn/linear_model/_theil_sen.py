@@ -255,7 +255,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         A random number generator instance to define the state of the random
         permutations generator. Pass an int for reproducible output across
         multiple function calls.
-        See :term:`Glossary <random_state>`
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int, default=None
         Number of CPUs to use during the cross validation.
@@ -295,6 +295,18 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    HuberRegressor : Linear regression model that is robust to outliers.
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
+
+    References
+    ----------
+    - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
+      Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
+      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
+
     Examples
     --------
     >>> from sklearn.linear_model import TheilSenRegressor
@@ -306,12 +318,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     0.9884...
     >>> reg.predict(X[:1,])
     array([-31.5871...])
-
-    References
-    ----------
-    - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
-      Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
-      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
 
     def __init__(
@@ -394,6 +400,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         Returns
         -------
         self : returns an instance of self.
+            Fitted `TheilSenRegressor` estimator.
         """
         random_state = check_random_state(self.random_state)
         X, y = self._validate_data(X, y, y_numeric=True)

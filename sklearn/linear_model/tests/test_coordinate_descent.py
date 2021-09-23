@@ -406,7 +406,7 @@ def _scale_alpha_inplace(estimator, n_samples):
 )
 def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # Test that linear models (LinearModel) set with normalize set to True are
-    # doing the same as the same linear model preceeded by StandardScaler
+    # doing the same as the same linear model preceded by StandardScaler
     # in the pipeline and with normalize set to False
 
     # normalize is True
@@ -567,7 +567,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     ],
 )
 def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
-    # Test that linear model preceeded by StandardScaler in the pipeline and
+    # Test that linear model preceded by StandardScaler in the pipeline and
     # with normalize set to False gives the same y_pred and the same .coef_
     # given X sparse or dense
 
