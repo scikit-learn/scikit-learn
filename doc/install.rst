@@ -247,7 +247,7 @@ command:
 
 .. prompt:: bash $
 
-  sudo port install py36-scikit-learn
+  sudo port install py39-scikit-learn
 
 
 Anaconda and Enthought Deployment Manager for all supported platforms
