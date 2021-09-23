@@ -240,7 +240,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
     def _more_tags(self):
         return {
             "multioutput_only": True,
-            "allow_negative_sample_weight": self.estimator._get_tags()["allow_negative_sample_weight"],
+            "allow_negative_sample_weight": self.estimator._get_tags()[
+                "allow_negative_sample_weight"
+            ],
         }
 
 
