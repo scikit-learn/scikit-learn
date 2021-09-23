@@ -2,6 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_0_1:
+
+Version 1.0.1
+==============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.calibration`
+......................
+
+- |Fix| Fixed :class:`calibration.CalibratedClassifierCV` to handle correctly
+  `sample_weight` when `ensemble=False`.
+  :pr:`20638` by :user:`Julien Bohné <JulienB-78>`.
+
 .. _changes_1_0:
 
 Version 1.0.0
