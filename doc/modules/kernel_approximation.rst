@@ -247,7 +247,7 @@ or store training examples.
       <https://www.robots.ox.ac.uk/~vgg/publications/2010/Sreekanth10/sreekanth10.pdf>`_
       Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
     .. [PP2013] `"Fast and scalable polynomial kernels via explicit feature maps"
-      <:doi:`10.1145/2487575.2487591`>`_
+      <https://doi.org/10.1145/2487575.2487591>`_
       Pham, N., & Pagh, R. - 2013
     .. [CCF2002] `"Finding frequent items in data streams"
       <http://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
