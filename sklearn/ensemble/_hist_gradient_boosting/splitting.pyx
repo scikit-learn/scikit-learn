@@ -389,8 +389,9 @@ cdef class Splitter:
                     sizeof(unsigned int) * left_counts[thread_idx]
                 )
                 if right_counts[thread_idx] > 0:
-                    # if n_threads >= 2 one has right_counts[-1] = 0 and
-                    # right_offset[-1] = len(sample_indices) leading to
+                    # If n_threads >= 2, one might have right_counts[-1] = 0 and
+                    # right_offset[-1] = len(sample_indices) leading to evaluating
+                    # &sample_indices[right_offset[-1]] which produces
                     # IndexError: Out of bounds on buffer access (with boundscheck=True)
                     memcpy(
                         &sample_indices[right_offset[thread_idx]],
