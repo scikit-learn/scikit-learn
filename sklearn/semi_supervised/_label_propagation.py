@@ -225,18 +225,20 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     def fit(self, X, y):
         """Fit a semi-supervised label propagation model to X.
 
-        All the input data is provided matrix X (labeled and unlabeled)
-        and corresponding label matrix y with a dedicated marker value for
-        unlabeled samples.
+        The input samples (labeled and unlabeled) are provided by matrix X,
+        and target labels are provided by matrix y. We conventionally apply the
+        label -1 to unlabeled samples in matrix y in a semi-supervised
+        classification.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            A matrix of shape (n_samples, n_samples) will be created from this.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             `n_labeled_samples` (unlabeled points are marked as -1)
-            All unlabeled samples will be transductively assigned labels.
+            All unlabeled samples will be transductively assigned a label.
 
         Returns
         -------
