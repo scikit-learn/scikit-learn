@@ -340,13 +340,13 @@ def test_negative_sample_weight_support(estimator):
     """
     In `_tested_estimators()`, where `fit` has `sample_weight` parameter
     all (`1darray`, `2darray`) `X_types` tags are supported in
-    `_construct_data_for_fit`. If new estimators will be added to this
-    list with other ´X_types´ tags, then the `_construct_data_for_fit`
+    `_create_data_for_fit`. If new estimators will be added to this
+    list with other ´X_types´ tags, then the `_create_data_for_fit`
     function have to be updated with the new cases.
     """
 
     if has_fit_parameter(estimator, "sample_weight"):
-        data = _create_data_for_fit(estimator=estimator, construct_sample_weight=True)
+        data = _create_data_for_fit(estimator=estimator, create_sample_weight=True)
         # sample_weight was np.ones(30)
         data["sample_weight"][0] = -1
         if not estimator._get_tags()["allow_negative_sample_weight"]:
