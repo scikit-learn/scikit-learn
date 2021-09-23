@@ -32,7 +32,7 @@ DOCSTRING_IGNORE_LIST = [
     "PatchExtractor",
     "PolynomialFeatures",
     "QuadraticDiscriminantAnalysis",
-    "RandomizedSearchCV",
+    #"RandomizedSearchCV",
     "RobustScaler",
     "SGDRegressor",
     "SelfTrainingClassifier",
