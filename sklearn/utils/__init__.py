@@ -15,6 +15,7 @@ import platform
 import struct
 import timeit
 from pathlib import Path
+from contextlib import suppress
 
 import warnings
 import numpy as np
@@ -1010,9 +1011,10 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    import pandas
-    if x is pandas.NA:
-        return True
+    with suppress(ImportError):
+        import pandas
+        if x is pandas.NA:
+            return True
     return isinstance(x, numbers.Real) and math.isnan(x)
 
 
