@@ -388,11 +388,15 @@ cdef class Splitter:
                     &left_indices_buffer[offset_in_buffers[thread_idx]],
                     sizeof(unsigned int) * left_counts[thread_idx]
                 )
-                memcpy(
-                    &sample_indices[right_offset[thread_idx]],
-                    &right_indices_buffer[offset_in_buffers[thread_idx]],
-                    sizeof(unsigned int) * right_counts[thread_idx]
-                )
+                if right_counts[thread_idx] > 0:
+                    # if n_threads >= 2 one has right_counts[-1] = 0 and
+                    # right_offset[-1] = len(sample_indices) leading to
+                    # IndexError: Out of bounds on buffer access (with boundscheck=True)
+                    memcpy(
+                        &sample_indices[right_offset[thread_idx]],
+                        &right_indices_buffer[offset_in_buffers[thread_idx]],
+                        sizeof(unsigned int) * right_counts[thread_idx]
+                    )
 
         return (sample_indices[:right_child_position],
                 sample_indices[right_child_position:],
@@ -839,7 +843,7 @@ cdef class Splitter:
         # other category. The low-support categories will always be mapped to
         # the right child. We scan the sorted categories array from left to
         # right and from right to left, and we stop at the middle.
-        
+
         # Considering ordered categories A B C D, with E being a low-support
         # category: A B C D
         #              ^
