@@ -25,6 +25,7 @@ The module structure is the following:
 
 from abc import ABCMeta, abstractmethod
 
+import numbers
 import numpy as np
 
 import warnings
@@ -36,6 +37,7 @@ from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, _safe_indexing
+from ..utils import check_scalar
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
@@ -478,6 +480,19 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         self : object
             Fitted estimator.
         """
+        check_scalar(
+            self.n_estimators,
+            "n_estimators",
+            target_type=numbers.Integral,
+            min_val=,
+            max_val=,
+
+        )
+
+        check_scalar(
+            self.learning_rate,
+            "learning_rate"
+        )
         # Check that algorithm is supported
         if self.algorithm not in ("SAMME", "SAMME.R"):
             raise ValueError("algorithm %s is not supported" % self.algorithm)
