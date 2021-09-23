@@ -50,7 +50,7 @@ from typing import List
 from scipy.sparse import issparse
 from threadpoolctl import threadpool_limits
 from ._dist_metrics import BOOL_METRICS, METRIC_MAPPING
-from ..utils import check_array, check_scalar, _in_unstable_openblas_configuration
+from ..utils import check_scalar, _in_unstable_openblas_configuration
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs import ITYPE, DTYPE
 

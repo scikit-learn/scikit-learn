@@ -1228,10 +1228,14 @@ cdef class DatasetsPair:
         Parameters
         ----------
         X : {ndarray, sparse matrix} of shape (n_X, d)
-            Input data. If provided as a sparse matrix, it must be in CSR format.
+            Input data.
+            If provided as a ndarray, it must be C-contiguous.
+            If provided as a sparse matrix, it must be in CSR format.
 
         Y : {ndarray, sparse matrix} of shape (n_Y, d)
-            Input data. If provided as a sparse matrix, it must be in CSR format.
+            Input data.
+            If provided as a ndarray, it must be C-contiguous.
+            If provided as a sparse matrix, it must be in CSR format.
 
         metric : str, default='euclidean'
             The distance metric to use for argkmin. The default metric is
@@ -1299,10 +1303,10 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
     Parameters
     ----------
     X: ndarray of shape (n_X, d)
-        Rows represent vectors.
+        Rows represent vectors. Must be C-contiguous.
 
     Y: ndarray of shape (n_Y, d)
-        Rows represent vectors.
+        Rows represent vectors. Must be C-contiguous.
 
     distance_metric: DistanceMetric
         The distance metric responsible for computing distances
@@ -1317,8 +1321,9 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
 
     def __init__(self, X, Y, DistanceMetric distance_metric):
         DatasetsPair.__init__(self, distance_metric)
-        self.X = check_array(X, dtype=DTYPE, order='C')
-        self.Y = check_array(Y, dtype=DTYPE, order='C')
+        # Arrays have already been checked
+        self.X = X
+        self.Y = Y
         self.d = X.shape[1]
 
     @final
@@ -1380,9 +1385,6 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
     def __init__(self, X, Y, DistanceMetric distance_metric):
         DatasetsPair.__init__(self, distance_metric)
 
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
-        Y = check_array(Y, dtype=DTYPE, accept_sparse='csr')
-
         self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
         self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr_matrix(Y)
 
@@ -1434,7 +1436,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         Rows represent vectors. Must be in CSR format.
 
     Y: ndarray of shape (n_Y, d)
-        Rows represent vectors.
+        Rows represent vectors. Must be C-contiguous.
 
     distance_metric: DistanceMetric
         The distance metric responsible for computing distances
@@ -1462,10 +1464,10 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
     def __init__(self, X, Y, DistanceMetric distance_metric):
         DatasetsPair.__init__(self, distance_metric)
 
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
         self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
 
-        self.Y = check_array(Y, dtype=DTYPE)
+        # This array already has been checked here
+        self.Y = Y
         self.Y_indices = np.arange(self.Y.shape[1], dtype=ITYPE)
 
     @final
@@ -1514,7 +1516,7 @@ cdef class DenseSparseDatasetsPair(DatasetsPair):
     Parameters
     ----------
     X: ndarray of shape (n_X, d)
-        Rows represent vectors.
+        Rows represent vectors. Must be C-contiguous.
 
     Y: sparse matrix of shape (n_Y, d)
         Rows represent vectors. Must be in CSR format.

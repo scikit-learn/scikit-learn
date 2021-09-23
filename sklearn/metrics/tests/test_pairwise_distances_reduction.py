@@ -1,17 +1,7 @@
-import itertools
-
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal, assert_allclose
-from scipy.sparse import (
-    bsr_matrix,
-    coo_matrix,
-    csc_matrix,
-    csr_matrix,
-    dia_matrix,
-    dok_matrix,
-    lil_matrix,
-)
+from scipy.sparse import csr_matrix
 
 from sklearn.metrics._dist_metrics import (
     DenseDenseDatasetsPair,
@@ -91,7 +81,7 @@ def test_pairwise_distances_reduction_is_usable_for():
 
     # TODO: remove once sparse matrices are supported
     assert not PairwiseDistancesReduction.is_usable_for(csr_matrix(X), Y, metric)
-    assert not PairwiseDistancesReduction.is_usable_for(X, csc_matrix(Y), metric)
+    assert not PairwiseDistancesReduction.is_usable_for(X, csr_matrix(Y), metric)
 
 
 def test_argkmin_factory_method_wrong_usages():
@@ -117,19 +107,21 @@ def test_argkmin_factory_method_wrong_usages():
         PairwiseDistancesArgKmin.get_for(X=X, Y=Y, k=-1, metric=metric)
 
     with pytest.raises(ValueError, match="k == 0, must be >= 1."):
-        PairwiseDistancesArgKmin.get_for(X=X, Y=Y, k=0.1, metric=metric)
+        PairwiseDistancesArgKmin.get_for(X=X, Y=Y, k=0, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
         PairwiseDistancesArgKmin.get_for(X=X, Y=Y, k=k, metric="wrong metric")
 
-    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
+    with pytest.raises(
+        ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
+    ):
         PairwiseDistancesArgKmin.get_for(
             X=np.array([1.0, 2.0]), Y=Y, k=k, metric=metric
         )
 
-    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
+    with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
         PairwiseDistancesArgKmin.get_for(
-            X=X, Y=np.array([1.0, 2.0]), k=k, metric=metric
+            X=np.asfortranarray(X), Y=Y, k=k, metric=metric
         )
 
 
@@ -162,14 +154,16 @@ def test_radius_neighborhood_factory_method_wrong_usages():
             X=X, Y=Y, radius=radius, metric="wrong metric"
         )
 
-    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
+    with pytest.raises(
+        ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
+    ):
         PairwiseDistancesRadiusNeighborhood.get_for(
             X=np.array([1.0, 2.0]), Y=Y, radius=radius, metric=metric
         )
 
-    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
+    with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
         PairwiseDistancesRadiusNeighborhood.get_for(
-            X=X, Y=np.array([1.0, 2.0]), radius=radius, metric=metric
+            X=np.asfortranarray(X), Y=Y, radius=radius, metric=metric
         )
 
 
@@ -200,36 +194,20 @@ def test_pairwise_distances_reduction_factory_method(
     dense_dense_instance = PairwiseDistancesReduction.get_for(X, Y, dummy_arg, metric)
     assert isinstance(dense_dense_instance.datasets_pair, DenseDenseDatasetsPair)
 
-    sparse_matrix_constructors = [
-        lil_matrix,
-        csc_matrix,
-        csr_matrix,
-        bsr_matrix,
-        coo_matrix,
-        dia_matrix,
-        dok_matrix,
-    ]
+    sparse_sparse_instance = PairwiseDistancesReduction.get_for(
+        csr_matrix(X), csr_matrix(Y), dummy_arg, metric
+    )
+    assert isinstance(sparse_sparse_instance.datasets_pair, SparseSparseDatasetsPair)
 
-    for c_X, c_Y in itertools.combinations_with_replacement(
-        sparse_matrix_constructors, r=2
-    ):
-        sparse_sparse_instance = PairwiseDistancesReduction.get_for(
-            c_X(X), c_Y(Y), dummy_arg, metric
-        )
-        assert isinstance(
-            sparse_sparse_instance.datasets_pair, SparseSparseDatasetsPair
-        )
+    dense_sparse_instance = PairwiseDistancesReduction.get_for(
+        X, csr_matrix(Y), dummy_arg, metric=metric
+    )
+    assert isinstance(dense_sparse_instance.datasets_pair, DenseSparseDatasetsPair)
 
-    for constructor in sparse_matrix_constructors:
-        dense_sparse_instance = PairwiseDistancesReduction.get_for(
-            X, constructor(Y), dummy_arg, metric=metric
-        )
-        assert isinstance(dense_sparse_instance.datasets_pair, DenseSparseDatasetsPair)
-
-        sparse_dense_instance = PairwiseDistancesReduction.get_for(
-            constructor(X), Y, dummy_arg, metric=metric
-        )
-        assert isinstance(sparse_dense_instance.datasets_pair, SparseDenseDatasetsPair)
+    sparse_dense_instance = PairwiseDistancesReduction.get_for(
+        csr_matrix(X), Y, dummy_arg, metric=metric
+    )
+    assert isinstance(sparse_dense_instance.datasets_pair, SparseDenseDatasetsPair)
 
     # Test specialisations creation
     fast_euclidean_instance = PairwiseDistancesReduction.get_for(
@@ -352,8 +330,8 @@ def test_strategies_consistency(
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
-        X = X[:, :2]
-        Y = Y[:, :2]
+        X = np.ascontiguousarray(X[:, :2])
+        Y = np.ascontiguousarray(Y[:, :2])
 
     parameter = (
         10
