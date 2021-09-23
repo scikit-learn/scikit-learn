@@ -6,6 +6,9 @@ from .fixes import _object_dtype_isnan
 
 
 def _get_dense_mask(X, value_to_mask):
+    import pandas as pd
+    if value_to_mask is pd.NA:
+        return pd.isna(X)
     if is_scalar_nan(value_to_mask):
         if X.dtype.kind == "f":
             Xt = np.isnan(X)

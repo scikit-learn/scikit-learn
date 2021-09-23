@@ -1010,6 +1010,9 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
+    import pandas
+    if x is pandas.NA:
+        return True
     return isinstance(x, numbers.Real) and math.isnan(x)
 
 
