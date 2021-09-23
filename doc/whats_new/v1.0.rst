@@ -9,6 +9,9 @@ Version 1.0.0
 
 **September 2021**
 
+For a short description of the main highlights of the release, please
+refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
 
 .. include:: changelog_legend.inc
 
