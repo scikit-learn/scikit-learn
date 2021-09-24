@@ -147,11 +147,11 @@ pip install "$(get_dep numpy $NUMPY_VERSION)" \
             "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
             "$(get_dep sphinx $SPHINX_VERSION)" \
             "$(get_dep pandas $PANDAS_VERSION)" \
-            "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
-            "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
-            "$(get_dep numpydoc $NUMPYDOC_VERSION)"
-            "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)"
-            "$(get_dep sphinxext-opengraph $SPHINXEXT_OPENGRAPH_VERSION)"
+            "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"  \
+            "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)" \
+            "$(get_dep numpydoc $NUMPYDOC_VERSION)" \
+            "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)" \
+            "$(get_dep sphinxext-opengraph $SPHINXEXT_OPENGRAPH_VERSION)" \
             joblib memory_profiler seaborn pillow pytest coverage
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
