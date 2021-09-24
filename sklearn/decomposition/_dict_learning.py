@@ -1035,7 +1035,7 @@ class _BaseSparseCoding(TransformerMixin):
         self.positive_code = positive_code
 
     def _transform(self, X, dictionary):
-        """Private method allowing to accomodate both DictionaryLearning and
+        """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 

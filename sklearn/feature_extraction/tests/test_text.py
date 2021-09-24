@@ -96,7 +96,7 @@ def test_strip_accents():
     assert strip_accents_unicode(a) == expected
 
     # strings that are already decomposed
-    a = "o\u0308"  # o with diaresis
+    a = "o\u0308"  # o with diaeresis
     expected = "o"
     assert strip_accents_unicode(a) == expected
 

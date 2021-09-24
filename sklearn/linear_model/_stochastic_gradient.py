@@ -1088,7 +1088,7 @@ class SGDClassifier(BaseSGDClassifier):
         existing counter.
 
     average : bool or int, default=False
-        When set to True, computes the averaged SGD weights accross all
+        When set to True, computes the averaged SGD weights across all
         updates and stores the result in the ``coef_`` attribute. If set to
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
@@ -1436,10 +1436,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Subset of training data
+            Subset of training data.
 
         y : numpy array of shape (n_samples,)
-            Subset of target values
+            Subset of target values.
 
         sample_weight : array-like, shape (n_samples,), default=None
             Weights applied to individual samples.
@@ -1447,7 +1447,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns an instance of self.
         """
         self._validate_params(for_partial_fit=True)
         return self._partial_fit(
@@ -1521,10 +1522,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : ndarray of shape (n_samples,)
-            Target values
+            Target values.
 
         coef_init : ndarray of shape (n_features,), default=None
             The initial coefficients to warm-start the optimization.
@@ -1537,7 +1538,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted `SGDRegressor` estimator.
         """
         return self._fit(
             X,
@@ -1571,11 +1573,12 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         return scores.ravel()
 
     def predict(self, X):
-        """Predict using the linear model
+        """Predict using the linear model.
 
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
@@ -1670,7 +1673,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
 
 class SGDRegressor(BaseSGDRegressor):
-    """Linear model fitted by minimizing a regularized empirical loss with SGD
+    """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with
@@ -1765,7 +1768,7 @@ class SGDRegressor(BaseSGDRegressor):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    learning_rate : string, default='invscaling'
+    learning_rate : str, default='invscaling'
         The learning rate schedule:
 
         - 'constant': `eta = eta0`
@@ -1829,7 +1832,7 @@ class SGDRegressor(BaseSGDRegressor):
         existing counter.
 
     average : bool or int, default=False
-        When set to True, computes the averaged SGD weights accross all
+        When set to True, computes the averaged SGD weights across all
         updates and stores the result in the ``coef_`` attribute. If set to
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
@@ -1861,6 +1864,16 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    HuberRegressor : Linear regression model that is robust to outliers.
+    Lars : Least Angle Regression model.
+    Lasso : Linear Model trained with L1 prior as regularizer.
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    Ridge : Linear least squares with l2 regularization.
+    sklearn.svm.SVR : Epsilon-Support Vector Regression.
+    TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
+
     Examples
     --------
     >>> import numpy as np
@@ -1877,11 +1890,6 @@ class SGDRegressor(BaseSGDRegressor):
     >>> reg.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdregressor', SGDRegressor())])
-
-    See Also
-    --------
-    Ridge, ElasticNet, Lasso, sklearn.svm.SVR
-
     """
 
     def __init__(
@@ -1975,8 +1983,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, optional
-        The verbosity level
+    verbose : int, optional
+        The verbosity level.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -1985,7 +1993,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    learning_rate : string, optional
+    learning_rate : str, optional
         The learning rate schedule to use with `fit`. (If using `partial_fit`,
         learning rate must be controlled directly).
 
@@ -2059,6 +2067,17 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
+
+    Notes
+    -----
+    This estimator has a linear complexity in the number of training samples
+    and is thus better suited than the `sklearn.svm.OneClassSVM`
+    implementation for datasets with a large number of training samples (say
+    > 10,000).
+
     Examples
     --------
     >>> import numpy as np
@@ -2070,17 +2089,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     >>> print(clf.predict([[4, 4]]))
     [1]
-
-    See also
-    --------
-    sklearn.svm.OneClassSVM
-
-    Notes
-    -----
-    This estimator has a linear complexity in the number of training samples
-    and is thus better suited than the `sklearn.svm.OneClassSVM`
-    implementation for datasets with a large number of training samples (say
-    > 10,000).
     """
 
     loss_functions = {"hinge": (Hinge, 1.0)}
@@ -2295,6 +2303,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Subset of the training data.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
@@ -2302,7 +2312,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns a fitted instance of self.
         """
 
         alpha = self.nu / 2
@@ -2383,6 +2394,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         coef_init : array, shape (n_classes, n_features)
             The initial coefficients to warm-start the optimization.
@@ -2398,7 +2411,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns a fitted instance of self.
         """
 
         alpha = self.nu / 2

@@ -49,6 +49,13 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
+  message when the solver does not support sparse matrices with int64 indices.
+  :pr:`21093` by `Tom Dupre la Tour`_.
+
 :mod:`sklearn.utils`
 ....................
 
@@ -64,6 +71,12 @@ Changelog
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
+  Setting a transformer to "passthrough" will pass the features unchanged.
+  :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
 Code and Documentation Contributors
 -----------------------------------

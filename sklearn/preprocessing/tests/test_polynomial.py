@@ -359,7 +359,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     dXt = Xt
     # We expect splines of degree `degree` to be (`degree`-1) times
     # continuously differentiable. I.e. for d = 0, ..., `degree` - 1 the d-th
-    # derivative should be continous. This is the case if the (d+1)-th
+    # derivative should be continuous. This is the case if the (d+1)-th
     # numerical derivative is reasonably small (smaller than `tol` in absolute
     # value). We thus compute d-th numeric derivatives for d = 1, ..., `degree`
     # and compare them to `tol`.
@@ -373,7 +373,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
         # Compute d-th numeric derivative
         dXt = diff / delta
 
-    # As degree `degree` splines are not `degree` times continously
+    # As degree `degree` splines are not `degree` times continuously
     # differentiable at the knots, the `degree + 1`-th numeric derivative
     # should have spikes at the knots.
     diff = np.diff(dXt, axis=0)

@@ -80,7 +80,7 @@ results_df[
 # We can see that the estimator using the `'rbf'` kernel performed best,
 # closely followed by `'linear'`. Both estimators with a `'poly'` kernel
 # performed worse, with the one using a two-degree polynomial achieving a much
-# lower perfomance than all other models.
+# lower performance than all other models.
 #
 # Usually, the analysis just ends here, but half the story is missing. The
 # output of :class:`~sklearn.model_selection.GridSearchCV` does not provide
@@ -101,7 +101,7 @@ results_df[
 # Let's inspect this partition effect by plotting the performance of all models
 # in each fold, and calculating the correlation between models across folds:
 
-# create df of model scores ordered by perfomance
+# create df of model scores ordered by performance
 model_scores = results_df.filter(regex=r'split\d*_test_score')
 
 # plot 30 examples of dependency between cv fold and AUC scores
@@ -146,7 +146,7 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # described in the previous section. We will use the one proven to obtain the
 # highest replicability scores (which rate how similar the performance of a
 # model is when evaluating it on different random partitions of the same
-# dataset) while mantaining a low rate of false postitives and false negatives:
+# dataset) while maintaining a low rate of false positives and false negatives:
 # the Nadeau and Bengio's corrected t-test [2]_ that uses a 10 times repeated
 # 10-fold cross validation [3]_.
 #

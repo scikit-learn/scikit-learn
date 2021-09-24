@@ -54,7 +54,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         with power of 2 or higher of the same input feature are excluded:
 
             - included: ``x[0]``, `x[1]`, ``x[0] * x[1]``, etc.
-            - exluded: ``x[0] ** 2``, ``x[0] ** 2 * x[1]``, etc.
+            - excluded: ``x[0] ** 2``, ``x[0] ** 2 * x[1]``, etc.
 
     include_bias : bool, default=True
         If True (default), then include a bias column, the feature in which

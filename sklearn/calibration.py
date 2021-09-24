@@ -132,7 +132,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         If `True`, the `base_estimator` is fitted using training data and
         calibrated using testing data, for each `cv` fold. The final estimator
-        is an ensemble of `n_cv` fitted classifer and calibrator pairs, where
+        is an ensemble of `n_cv` fitted classifier and calibrator pairs, where
         `n_cv` is the number of cross-validation folds. The output is the
         average predicted probabilities of all pairs.
 
@@ -1127,9 +1127,9 @@ class CalibrationDisplay:
         ax=None,
         **kwargs,
     ):
-        """Plot calibration curve using an binary classifier and data.
+        """Plot calibration curve using a binary classifier and data.
 
-        Calibration curve, also known as reliability diagram, uses inputs
+        A calibration curve, also known as a reliability diagram, uses inputs
         from a binary classifier and plots the average predicted probability
         for each bin against the fraction of positive classes, on the
         y-axis.

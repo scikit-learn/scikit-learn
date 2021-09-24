@@ -332,12 +332,15 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
 
     Examples
     --------
-    >>> from sklearn.manifold import Isomap
+    >>> from sklearn.datasets import load_wine
     >>> from sklearn.neighbors import KNeighborsTransformer
-    >>> from sklearn.pipeline import make_pipeline
-    >>> estimator = make_pipeline(
-    ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
-    ...     Isomap(metric='precomputed'))
+    >>> X, _ = load_wine(return_X_y=True)
+    >>> X.shape
+    (178, 13)
+    >>> transformer = KNeighborsTransformer(n_neighbors=5, mode='distance')
+    >>> X_dist_graph = transformer.fit_transform(X)
+    >>> X_dist_graph.shape
+    (178, 178)
     """
 
     def __init__(
@@ -549,12 +552,19 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_wine
     >>> from sklearn.cluster import DBSCAN
     >>> from sklearn.neighbors import RadiusNeighborsTransformer
     >>> from sklearn.pipeline import make_pipeline
+    >>> X, _ = load_wine(return_X_y=True)
     >>> estimator = make_pipeline(
     ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
-    ...     DBSCAN(min_samples=30, metric='precomputed'))
+    ...     DBSCAN(eps=25.0, metric='precomputed'))
+    >>> X_clustered = estimator.fit_predict(X)
+    >>> clusters, counts = np.unique(X_clustered, return_counts=True)
+    >>> print(counts)
+    [ 29  15 111  11  12]
     """
 
     def __init__(
