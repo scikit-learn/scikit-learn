@@ -16,6 +16,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesRadiusNeighborhood,
     FastEuclideanPairwiseDistancesArgKmin,
     FastEuclideanPairwiseDistancesRadiusNeighborhood,
+    _sqeuclidean_row_norms,
 )
 
 from sklearn.utils import _in_unstable_openblas_configuration
@@ -445,3 +446,24 @@ def test_fast_sqeuclidean_translation_invariance(
     ).compute(return_distance=True)
 
     assert_argkmin_results_equality(reference_dist, dist, reference_indices, indices)
+
+
+@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_features", [5, 10, 100])
+@pytest.mark.parametrize("num_threads", [1, 2, 8])
+def test_sqeuclidean_row_norms(
+    seed,
+    n_samples,
+    n_features,
+    num_threads,
+    dtype=np.float64,
+):
+    rng = np.random.RandomState(seed)
+    spread = 100
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    sq_row_norm_reference = np.linalg.norm(X, axis=1) ** 2
+    sq_row_norm = np.asarray(_sqeuclidean_row_norms(X, num_threads=num_threads))
+
+    assert_allclose(sq_row_norm_reference, sq_row_norm)

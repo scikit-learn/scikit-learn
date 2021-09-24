@@ -38,6 +38,7 @@ from ..utils._cython_blas cimport (
   NoTrans,
   RowMajor,
   Trans,
+  _dot,
   _gemm,
 )
 from ..utils._heap cimport simultaneous_sort, heap_push
@@ -115,6 +116,29 @@ cdef class StdVectorSentinelITYPE(StdVectorSentinel):
         sentinel.vec.swap(deref(vec_ptr))
         return sentinel
 
+
+cpdef DTYPE_t[::1] _sqeuclidean_row_norms(
+    const DTYPE_t[:, ::1] X,
+    ITYPE_t num_threads,
+):
+    """Compute the squared euclidean norm of the rows of X in parallel.
+
+    This is faster than using np.einsum("ij, ij->i") even when using a single thread.
+    """
+    cdef:
+        # Casting for X to remove the const qualifier is needed because APIs
+        # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
+        # const qualifier.
+        DTYPE_t * X_ptr = <DTYPE_t *> &X[0, 0]
+        ITYPE_t idx = 0
+        ITYPE_t n = X.shape[0]
+        ITYPE_t d = X.shape[1]
+        DTYPE_t[::1] row_norms = np.empty(n, dtype=DTYPE)
+
+    for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
+        row_norms[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
+
+    return row_norms
 
 cdef np.ndarray vector_to_nd_array(vector_DITYPE_t * vect_ptr):
     """Create a numpy ndarray given a C++ vector.
@@ -242,7 +266,6 @@ cdef class PairwiseDistancesReduction:
 
         check_scalar(chunk_size, "chunk_size", Integral, min_val=1)
         self.chunk_size = chunk_size
-
 
         self.effective_omp_n_thread = _openmp_effective_n_threads(n_threads)
 
@@ -873,8 +896,8 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         cdef:
             DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
         self.X, self.Y = datasets_pair.X, datasets_pair.Y
-        self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
-        self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
+        self.X_sq_norms = _sqeuclidean_row_norms(self.X, self.effective_omp_n_thread)
+        self.Y_sq_norms = _sqeuclidean_row_norms(self.Y, self.effective_omp_n_thread)
         self.use_squared_distances = use_squared_distances
 
         # Temporary datastructures used in threads
@@ -1452,8 +1475,8 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         cdef:
             DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
         self.X, self.Y = datasets_pair.X, datasets_pair.Y
-        self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
-        self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
+        self.X_sq_norms = _sqeuclidean_row_norms(self.X, self.effective_omp_n_thread)
+        self.Y_sq_norms = _sqeuclidean_row_norms(self.Y, self.effective_omp_n_thread)
         self.use_squared_distances = use_squared_distances
 
         if use_squared_distances:
