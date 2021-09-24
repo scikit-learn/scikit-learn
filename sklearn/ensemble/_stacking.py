@@ -480,6 +480,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Returns
         -------
         self : object
+            Returns a fitted instance of estimator.
         """
         check_classification_targets(y)
         self._le = LabelEncoder().fit(y)
