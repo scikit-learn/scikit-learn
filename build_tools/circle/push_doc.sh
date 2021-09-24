@@ -34,7 +34,10 @@ then
 	git rm -rf $DIR/ && rm -rf $DIR/
 fi
 
-cp -R $GITHUB_WORKSPACE/docs $DIR
+cp -R ../docs $DIR
+
+ls -l ../docs
+ls -l $DIR
 
 git config user.email "olivier.grisel+sklearn-ci@gmail.com"
 git config user.name "sklearn-ci"
