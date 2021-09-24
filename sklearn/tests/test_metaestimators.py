@@ -5,7 +5,7 @@ from inspect import signature
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator
+from sklearn.base import clone, BaseEstimator
 from sklearn.base import is_regressor
 from sklearn.datasets import make_classification
 from sklearn.utils import all_estimators
@@ -21,7 +21,7 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.linear_model import Ridge, LogisticRegression
-from sklearn.preprocessing import StandardScaler, MaxAbsScaler
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler, FunctionTransformer
 
 
 class DelegatorData:
@@ -185,21 +185,35 @@ def test_metaestimator_delegation():
             )
 
 
-def _generate_meta_estimator_instances_with_pipeline():
-    """Generate instances of meta-estimators fed with a pipeline
+def _generate_meta_estimator_instances_with_pipeline(first_step=None):
+    """Generate instances of meta-estimators fed with a pipeline.
 
     Are considered meta-estimators all estimators accepting one of "estimator",
     "base_estimator" or "estimators".
+
+    Parameters
+    ----------
+    first_step : None or estimator instance, default=None
+        The first step of the pipeline to pass to the meta-estimator.
+        If `None`, a `TfidfVectorizer` is used.
+
+    Yields
+    ------
+    estimator : estimator instance
+        A meta-estimator instance.
+
     """
+    if first_step is None:
+        first_step = TfidfVectorizer()
     for _, Estimator in sorted(all_estimators()):
         sig = set(signature(Estimator).parameters)
 
         if "estimator" in sig or "base_estimator" in sig or "regressor" in sig:
             if is_regressor(Estimator):
-                estimator = make_pipeline(TfidfVectorizer(), Ridge())
+                estimator = make_pipeline(first_step, Ridge())
                 param_grid = {"ridge__alpha": [0.1, 1.0]}
             else:
-                estimator = make_pipeline(TfidfVectorizer(), LogisticRegression())
+                estimator = make_pipeline(first_step, LogisticRegression())
                 param_grid = {"logisticregression__C": [0.1, 1.0]}
 
             if "param_grid" in sig or "param_distributions" in sig:
@@ -212,10 +226,10 @@ def _generate_meta_estimator_instances_with_pipeline():
         elif "transformer_list" in sig:
             # FeatureUnion
             transformer_list = [
-                ("trans1", make_pipeline(TfidfVectorizer(), MaxAbsScaler())),
+                ("trans1", make_pipeline(first_step, MaxAbsScaler())),
                 (
                     "trans2",
-                    make_pipeline(TfidfVectorizer(), StandardScaler(with_mean=False)),
+                    make_pipeline(first_step, StandardScaler(with_mean=False)),
                 ),
             ]
             yield Estimator(transformer_list)
@@ -224,8 +238,8 @@ def _generate_meta_estimator_instances_with_pipeline():
             # stacking, voting
             if is_regressor(Estimator):
                 estimator = [
-                    ("est1", make_pipeline(TfidfVectorizer(), Ridge(alpha=0.1))),
-                    ("est2", make_pipeline(TfidfVectorizer(), Ridge(alpha=1))),
+                    ("est1", make_pipeline(first_step, Ridge(alpha=0.1))),
+                    ("est2", make_pipeline(first_step, Ridge(alpha=1))),
                 ]
             else:
                 estimator = [
@@ -299,3 +313,30 @@ def test_meta_estimators_delegate_data_validation(estimator):
 
     # n_features_in_ should not be defined since data is not tabular data.
     assert not hasattr(estimator, "n_features_in_")
+
+
+@pytest.mark.parametrize(
+    "estimator_orig",
+    [
+        est
+        for est in _generate_meta_estimator_instances_with_pipeline(
+            first_step=FunctionTransformer()
+        )
+    ],
+    ids=_get_meta_estimator_id,
+)
+def test_meta_estimators_sample_weight_with_pipeline(estimator_orig):
+    estimator = clone(estimator_orig)
+    rng = np.random.RandomState(0)
+    set_random_state(estimator)
+
+    n_samples = 100
+    X = rng.randn(n_samples, 10)
+    y = rng.randint(3, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    sample_weight = np.ones(y.shape[0])
+    sample_weight[0] = 10.0
+
+    with pytest.raises((ValueError, TypeError), match="sample.*weight"):
+        estimator.fit(X, y, sample_weight=sample_weight)
