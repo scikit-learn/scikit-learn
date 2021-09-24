@@ -210,6 +210,12 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
+    n_oversamples_rate : float, default=0.8
+        The percentage of features that need to be extract.
+        Must be of range [0, infinity).
+
+        .. versionadded:: 0.18.0
+
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
@@ -353,6 +359,7 @@ class PCA(_BasePCA):
         tol=0.0,
         iterated_power="auto",
         random_state=None,
+        n_oversamples_rate=0.8
     ):
         self.n_components = n_components
         self.copy = copy
@@ -361,6 +368,7 @@ class PCA(_BasePCA):
         self.tol = tol
         self.iterated_power = iterated_power
         self.random_state = random_state
+        self.n_oversamples_rate = n_oversamples_rate
 
     def fit(self, X, y=None):
         """Fit the model with X.
@@ -382,7 +390,7 @@ class PCA(_BasePCA):
         self._fit(X)
         return self
 
-    def fit_transform(self, X, y=None, n_oversamples_rate=0.8):
+    def fit_transform(self, X, y=None):
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
@@ -394,8 +402,6 @@ class PCA(_BasePCA):
         y : Ignored
             Ignored.
 
-        n_oversamples_rate : float
-            The percentage of features that need to be extract.
 
         Returns
         -------
@@ -407,7 +413,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, Vt = self._fit(X, n_oversamples_rate=n_oversamples_rate)
+        U, S, Vt = self._fit(X)
         U = U[:, : self.n_components_]
 
         if self.whiten:
@@ -419,7 +425,7 @@ class PCA(_BasePCA):
 
         return U
 
-    def _fit(self, X, n_oversamples_rate=0.8):
+    def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
 
         # Raise an error for sparse input.
@@ -463,7 +469,6 @@ class PCA(_BasePCA):
                 X,
                 n_components,
                 self._fit_svd_solver,
-                n_oversamples_rate=n_oversamples_rate,
             )
         else:
             raise ValueError(
@@ -536,7 +541,7 @@ class PCA(_BasePCA):
 
         return U, S, Vt
 
-    def _fit_truncated(self, X, n_components, svd_solver, n_oversamples_rate=0.8):
+    def _fit_truncated(self, X, n_components, svd_solver):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
@@ -585,7 +590,7 @@ class PCA(_BasePCA):
 
         elif svd_solver == "randomized":
             # sign flipping is done inside
-            n_oversamples = int(min(X.shape) * n_oversamples_rate)
+            n_oversamples = int(min(X.shape) * self.n_oversamples_rate)
             U, S, Vt = randomized_svd(
                 X,
                 n_components=n_components,

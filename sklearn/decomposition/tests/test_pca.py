@@ -670,11 +670,11 @@ def test_pca_svd_output():
     print(np.shape(data))
 
     # pca
-    pca = PCA(n_components=1)
+    pca = PCA(n_components=1, n_oversamples_rate=1)
     t1 = time.perf_counter()
     # vals0 = pca.fit_transform(data) # origin method
     # The result is the same as svd and svds
-    vals0 = pca.fit_transform(data, n_oversamples_rate=1).reshape(-1)
+    vals0 = pca.fit_transform(data).reshape(-1)
     # The results are different
     # vals0 = pca.fit_transform(data, n_oversamples_rate=0.7).reshape(-1)
     t2 = time.perf_counter()
