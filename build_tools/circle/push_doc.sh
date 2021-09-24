@@ -8,17 +8,22 @@ set -ex
 cd scikit-learn.github.io
 
 DOC_REPO="scikit-learn.github.io"
-BRANCH=$(basename "$GITHUB_REF")
 
-if [ "$GITHUB_REF" =~ "main" ]
+if [ -z "$GITHUB_BASE_REF" ]; then
+	REF="$GITHUB_REF"
+else
+	REF="$GITHUB_BASE_REF"
+fi
+
+if [ "$REF" = "main" ]
 then
     DIR=dev
 else
     # Strip off .X
-    DIR="${BRANCH::-2}"
+    DIR="${REF::-2}"
 fi
 
-MSG="Pushing the docs to $DIR/ for branch: $BRANCH, commit $GITHUB_SHA"
+MSG="Pushing the docs to $DIR/ for branch: $REF, commit $GITHUB_SHA"
 
 # check if it's a new branch
 echo $DIR > .git/info/sparse-checkout
@@ -36,10 +41,6 @@ if [ -d $DIR ]
 then
 	git rm -rf $DIR/ && rm -rf $DIR/
 fi
-
-ls -l .
-ls -l ..
-ls -l $GITHUB_WORKSPACE/docs
 
 cp -R $GITHUB_WORKSPACE/docs $DIR
 

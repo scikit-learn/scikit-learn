@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -61,18 +61,16 @@ jobs:
         with:
           name: docs
 
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
+        with:
+          path: scikit-learn
+
       - name: Checkout scikit-learn.github.io
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
         with:
           repository: scikit-learn/scikit-learn.github.io
-          ssh-key: ${{ secrets.SSK_KEY }}
           path: scikit-learn.github.io
-
-      - name: Checkout scikit-learn
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: scikit-learn
 
       - name: Push documentation
         run: scikit-learn/build_tools/circle/push_doc.sh
