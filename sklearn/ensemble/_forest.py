@@ -2454,11 +2454,11 @@ class RandomTreesEmbedding(BaseForest):
 
     Attributes
     ----------
-    base_estimator_ : DecisionTreeClassifier instance
+    base_estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier` instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of DecisionTreeClassifier instances
+    estimators_ : list of :class:`~sklearn.tree.ExtraTreeClassifier` instances
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
