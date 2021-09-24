@@ -56,10 +56,10 @@ jobs:
     runs-on: ubuntu-latest
     # needs: [build]
     steps:
-      - name: Download documentation
-        uses: actions/download-artifact@v2
-        with:
-          name: docs
+      # - name: Download documentation
+      # uses: actions/download-artifact@v2
+      # with:
+      # name: docs
 
       - name: Checkout scikit-learn.github.io
         uses: actions/checkout@v2
