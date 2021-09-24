@@ -709,7 +709,7 @@ def test_column_transformer_get_set_params():
         "trans2__with_std": True,
         "transformers": ct.transformers,
         "transformer_weights": None,
-        "prefix_feature_names_out": True,
+        "verbose_feature_names_out": True,
         "verbose": False,
     }
 
@@ -730,7 +730,7 @@ def test_column_transformer_get_set_params():
         "trans2__with_std": True,
         "transformers": ct.transformers,
         "transformer_weights": None,
-        "prefix_feature_names_out": True,
+        "verbose_feature_names_out": True,
         "verbose": False,
     }
 
@@ -1149,7 +1149,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "trans1__with_std": True,
         "transformers": ct.transformers,
         "transformer_weights": None,
-        "prefix_feature_names_out": True,
+        "verbose_feature_names_out": True,
         "verbose": False,
     }
 
@@ -1169,7 +1169,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "trans1": "passthrough",
         "transformers": ct.transformers,
         "transformer_weights": None,
-        "prefix_feature_names_out": True,
+        "verbose_feature_names_out": True,
         "verbose": False,
     }
     assert ct.get_params() == exp
@@ -1760,8 +1760,8 @@ class TransWithNames(Trans):
         ),
     ],
 )
-def test_feature_names_out_prefix_true(transformers, remainder, expected_names):
-    """Check feature_names_out for prefix_feature_names_out==True (default)"""
+def test_verbose_feature_names_out_true(transformers, remainder, expected_names):
+    """Check feature_names_out for verbose_feature_names_out=True (default)"""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
     ct = ColumnTransformer(
@@ -1835,14 +1835,14 @@ def test_feature_names_out_prefix_true(transformers, remainder, expected_names):
         ),
     ],
 )
-def test_feature_names_out_prefix_false(transformers, remainder, expected_names):
-    """Check feature_names_out for prefix_feature_names_out==True (default)"""
+def test_verbose_feature_names_out_false(transformers, remainder, expected_names):
+    """Check feature_names_out for verbose_feature_names_out=False"""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
     ct = ColumnTransformer(
         transformers,
         remainder=remainder,
-        prefix_feature_names_out=False,
+        verbose_feature_names_out=False,
     )
     ct.fit(df)
 
@@ -1923,23 +1923,23 @@ def test_feature_names_out_prefix_false(transformers, remainder, expected_names)
         ),
     ],
 )
-def test_feature_names_out_prefix_false_errors(
+def test_verbose_feature_names_out_false_errors(
     transformers, remainder, colliding_columns
 ):
-    """Check feature_names_out for prefix_feature_names_out==False"""
+    """Check feature_names_out for verbose_feature_names_out=False"""
 
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
     ct = ColumnTransformer(
         transformers,
         remainder=remainder,
-        prefix_feature_names_out=False,
+        verbose_feature_names_out=False,
     )
     ct.fit(df)
 
     msg = re.escape(
         f"Output feature names: {colliding_columns} are not unique. Please set "
-        "prefix_feature_names_out=True to add prefixes to feature names"
+        "verbose_feature_names_out=True to add prefixes to feature names"
     )
     with pytest.raises(ValueError, match=msg):
         ct.get_feature_names_out()
