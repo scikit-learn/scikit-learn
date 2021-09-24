@@ -1,0 +1,38 @@
+# Workflow to build and publish the documentation
+name: Documentation builder
+
+on:
+  schedule:
+    # Nightly build at 3:42 A.M.
+    - cron: "42 3 */1 * *"
+  push:
+    branches:
+      - main
+      # Release branches
+      - "[0-9]+.[0-9]+.X"
+  pull_request:
+    branches:
+      - main
+      - "[0-9]+.[0-9]+.X"
+  # Manual run
+  workflow_dispatch:
+
+jobs:
+  #
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Build documentation
+        run: build_tools/.github/build_docs.sh
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v2
+        with:
+          name: docs
+          path: doc/_build/html/stable

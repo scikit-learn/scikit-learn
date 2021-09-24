@@ -6,22 +6,7 @@
 
 set -ex
 
-if [ -z $CIRCLE_PROJECT_USERNAME ];
-then USERNAME="sklearn-ci";
-else USERNAME=$CIRCLE_PROJECT_USERNAME;
-fi
-
 DOC_REPO="scikit-learn.github.io"
-GENERATED_DOC_DIR=$1
-
-if [[ -z "$GENERATED_DOC_DIR" ]]; then
-    echo "Need to pass directory of the generated doc as argument"
-    echo "Usage: $0 <generated_doc_dir>"
-    exit 1
-fi
-
-# Absolute path needed because we use cd further down in this script
-GENERATED_DOC_DIR=$(readlink -f $GENERATED_DOC_DIR)
 
 if [ "$CIRCLE_BRANCH" = "main" ]
 then
@@ -57,7 +42,7 @@ then
 fi
 cp -R $GENERATED_DOC_DIR $dir
 git config user.email "olivier.grisel+sklearn-ci@gmail.com"
-git config user.name $USERNAME
+git config user.name "sklearn-ci"
 git config push.default matching
 git add -f $dir/
 git commit -m "$MSG" $dir

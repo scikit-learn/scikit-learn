@@ -18,15 +18,15 @@ set -e
 # behavior is to quick build the documentation.
 
 get_build_type() {
-    if [ -z "$CIRCLE_SHA1" ]
+    if [ -z "$GITHUB_SHA" ]
     then
-        echo SKIP: undefined CIRCLE_SHA1
+        echo SKIP: undefined GITHUB_SHA
         return
     fi
-    commit_msg=$(git log --format=%B -n 1 $CIRCLE_SHA1)
+    commit_msg=$(git log --format=%B -n 1 $GITHUB_SHA)
     if [ -z "$commit_msg" ]
     then
-        echo QUICK BUILD: failed to inspect commit $CIRCLE_SHA1
+        echo QUICK BUILD: failed to inspect commit $GITHUB_SHA
         return
     fi
     if [[ "$commit_msg" =~ \[doc\ skip\] ]]
@@ -44,12 +44,12 @@ get_build_type() {
         echo BUILD: [doc build] marker found
         return
     fi
-    if [ -z "$CI_PULL_REQUEST" ]
+    if [[ "$GITHUB_EVENT_NAME" != pull_request ]]
     then
         echo BUILD: not a pull request
         return
     fi
-    git_range="origin/main...$CIRCLE_SHA1"
+    git_range="origin/main...$GITHUB_SHA"
     git fetch origin main >&2 || (echo QUICK BUILD: failed to get changed filenames for $git_range; return)
     filenames=$(git diff --name-only $git_range)
     if [ -z "$filenames" ]
@@ -114,7 +114,7 @@ then
     exit 0
 fi
 
-if [[ "$CIRCLE_BRANCH" =~ ^main$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
+if [[ "$GITHUB_REF" =~ ^main$|^[0-9]+\.[0-9]+\.X$ && "$GITHUB_EVENT_NAME" != pull_request ]]
 then
     # ZIP linked into HTML
     make_args=dist
@@ -138,49 +138,21 @@ sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng gsfonts ccache zip optipng
 
-# deactivate circleci virtualenv and setup a miniconda env instead
-if [[ `type -t deactivate` ]]; then
-  deactivate
-fi
-
-MINICONDA_PATH=$HOME/miniconda
-# Install dependencies with miniconda
-wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-   -O miniconda.sh
-chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
-
-ccache -M 512M
-export CCACHE_COMPRESS=1
-
-# Old packages coming from the 'free' conda channel have been removed but we
-# are using them for our min-dependencies doc generation. See
-# https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/ for
-# more details.
-if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
-    conda config --set restore_free_channel true
-fi
-
 # imports get_dep
 source build_tools/shared.sh
 
-# packaging won't be needed once setuptools starts shipping packaging>=17.0
-conda create -n $CONDA_ENV_NAME --yes --quiet \
-    python="${PYTHON_VERSION:-*}" \
-    "$(get_dep numpy $NUMPY_VERSION)" \
-    "$(get_dep scipy $SCIPY_VERSION)" \
-    "$(get_dep cython $CYTHON_VERSION)" \
-    "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
-    "$(get_dep sphinx $SPHINX_VERSION)" \
-    "$(get_dep pandas $PANDAS_VERSION)" \
-    joblib memory_profiler packaging seaborn pillow pytest coverage
-
-source activate testenv
-pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
-pip install "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
-pip install "$(get_dep numpydoc $NUMPYDOC_VERSION)"
-pip install "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)"
-pip install "$(get_dep sphinxext-opengraph $SPHINXEXT_OPENGRAPH_VERSION)"
+pip install "$(get_dep numpy $NUMPY_VERSION)" \
+            "$(get_dep scipy $SCIPY_VERSION)" \
+            "$(get_dep cython $CYTHON_VERSION)" \
+            "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
+            "$(get_dep sphinx $SPHINX_VERSION)" \
+            "$(get_dep pandas $PANDAS_VERSION)" \
+            "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
+            "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
+            "$(get_dep numpydoc $NUMPYDOC_VERSION)"
+            "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)"
+            "$(get_dep sphinxext-opengraph $SPHINXEXT_OPENGRAPH_VERSION)"
+            joblib memory_profiler seaborn pillow pytest coverage
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
@@ -189,72 +161,15 @@ python setup.py develop
 
 export OMP_NUM_THREADS=1
 
-if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
+if [[ "$GITHUB_SHA" =~ ^main$ && "$GITHUB_EVENT_NAME" == pull_request ]]
 then
     # List available documentation versions if on main
     python build_tools/circle/list_versions.py > doc/versions.rst
 fi
 
 # The pipefail is requested to propagate exit code
-set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
+cd doc && make $make_args
 
 # Insert the version warning for deployment
 find _build/html/stable -name "*.html" | xargs sed -i '/<\/body>/ i \
 \    <script src="https://scikit-learn.org/versionwarning.js"></script>'
-
-cd -
-set +o pipefail
-
-affected_doc_paths() {
-    files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
-    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
-    echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
-    sklearn_files=$(echo "$files" | grep '^sklearn/')
-    if [ -n "$sklearn_files" ]
-    then
-        grep -hlR -f<(echo "$sklearn_files" | sed 's/^/scikit-learn\/blob\/[a-z0-9]*\//') doc/_build/html/stable/modules/generated | cut -d/ -f5-
-    fi
-}
-
-affected_doc_warnings() {
-    files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
-    # Look for sphinx warnings only in files affected by the PR
-    if [ -n "$files" ]
-    then
-        for af in ${files[@]}
-        do
-          warn+=`grep WARNING ~/log.txt | grep $af`
-        done
-    fi
-    echo "$warn"
-}
-
-if [ -n "$CI_PULL_REQUEST" ]
-then
-    echo "The following documentation warnings may have been generated by PR #$CI_PULL_REQUEST:"
-    warnings=$(affected_doc_warnings)
-    if [ -z "$warnings" ]
-    then
-        warnings="/home/circleci/project/ no warnings"
-    fi
-    echo "$warnings"
-
-    echo "The following documentation files may have been changed by PR #$CI_PULL_REQUEST:"
-    affected=$(affected_doc_paths)
-    echo "$affected"
-    (
-    echo '<html><body><ul>'
-    echo "$affected" | sed 's|.*|<li><a href="&">&</a> [<a href="https://scikit-learn.org/dev/&">dev</a>, <a href="https://scikit-learn.org/stable/&">stable</a>]</li>|'
-    echo '</ul><p>General: <a href="index.html">Home</a> | <a href="modules/classes.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p>'
-    echo '<strong>Sphinx Warnings in affected files</strong><ul>'
-    echo "$warnings" | sed 's/\/home\/circleci\/project\//<li>/g'
-    echo '</ul></body></html>'
-    ) > 'doc/_build/html/stable/_changed.html'
-
-    if [ "$warnings" != "/home/circleci/project/ no warnings" ]
-    then
-        echo "Sphinx generated warnings when building the documentation related to files modified in this PR."
-        echo "Please check doc/_build/html/stable/_changed.html"
-        exit 1
-    fi
-fi
