@@ -15,8 +15,7 @@ else
 	REF="$GITHUB_BASE_REF"
 fi
 
-if [ "$REF" = "main" ]
-then
+if [ "$REF" =~ "main" ]; then
     DIR=dev
 else
     # Strip off .X

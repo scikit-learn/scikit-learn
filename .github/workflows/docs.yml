@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -62,12 +62,12 @@ jobs:
           name: docs
 
       - name: Checkout scikit-learn
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
         with:
           path: scikit-learn
 
       - name: Checkout scikit-learn.github.io
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
         with:
           repository: scikit-learn/scikit-learn.github.io
           path: scikit-learn.github.io
