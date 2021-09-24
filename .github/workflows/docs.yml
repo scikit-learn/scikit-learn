@@ -65,13 +65,13 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: scikit-learn/scikit-learn.github.io
-          ref: ${{ github.event.pull_request.head.sha }}
           ssh-key: ${{ secrets.DOC_BUILDER_KEY }}
           path: scikit-learn.github.io
 
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           path: scikit-learn
 
       - name: Push documentation
