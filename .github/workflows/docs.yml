@@ -50,6 +50,7 @@ jobs:
   push:
     runs-on: ubuntu-latest
     needs: [build]
+    # if: github.event_name != 'pull_request'
     steps:
       - name: Download documentation
         uses: actions/download-artifact@v2
@@ -67,6 +68,7 @@ jobs:
         with:
           repository: scikit-learn/scikit-learn.github.io
           path: scikit-learn.github.io
+          # ssh-key: ${{ secrets.SKLEARN_CI_SSH_KEY }}
 
       - name: Push documentation
         run: scikit-learn/build_tools/circle/push_doc.sh
