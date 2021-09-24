@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-python@v2
 
       - name: Build documentation
-        run: build_tools/.github/build_docs.sh
+        run: build_tools/circle/build_doc.sh
 
       - name: Upload documentation
         uses: actions/upload-artifact@v2
