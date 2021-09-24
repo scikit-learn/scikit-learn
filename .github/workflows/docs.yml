@@ -64,6 +64,7 @@ jobs:
       - name: Checkout scikit-learn.github.io
         uses: actions/checkout@v2
         with:
+          repository: scikit-learn/scikit-learn.github.io
           ref: ${{ github.event.pull_request.head.sha }}
           ssh-key: ${{ secrets.DOC_BUILDER_KEY }}
           path: scikit-learn.github.io
