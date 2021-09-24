@@ -359,7 +359,7 @@ class PCA(_BasePCA):
         tol=0.0,
         iterated_power="auto",
         random_state=None,
-        n_oversamples_rate=0.8,
+        n_oversamples_rate=0.8
     ):
         self.n_components = n_components
         self.copy = copy
