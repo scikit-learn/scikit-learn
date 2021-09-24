@@ -9,13 +9,13 @@ cd scikit-learn.github.io
 
 DOC_REPO="scikit-learn.github.io"
 
-if [ -z "$GITHUB_BASE_REF" ]; then
+if [[ -z "$GITHUB_BASE_REF" ]]; then
 	REF="$GITHUB_REF"
 else
 	REF="$GITHUB_BASE_REF"
 fi
 
-if [ "$REF" =~ "main" ]; then
+if [[ "$REF" =~ "main" ]]; then
     DIR=dev
 else
     # Strip off .X
