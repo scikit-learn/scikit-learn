@@ -532,8 +532,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     @if_delegate_has_method(delegate="final_estimator_")
     def decision_function(self, X):
-        """Decision function for samples in X using \
-        `final_estimator_.decision_function`.
+        """Decision function for samples in `X` using the final estimator.
 
         Parameters
         ----------
