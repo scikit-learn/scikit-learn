@@ -1085,7 +1085,7 @@ def _approximate_mode(class_counts, n_draws, rng):
 def check_matplotlib_support(caller_name):
     """Raise ImportError with detailed error message if mpl is not installed.
 
-    Plot utilities like any of the Display's ploting functions should lazily import
+    Plot utilities like any of the Display's plotting functions should lazily import
     matplotlib and call this helper before any computation.
 
     Parameters
@@ -1143,7 +1143,7 @@ def all_estimators(type_filter=None):
     -------
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actuall type of the class.
+        and ``class`` is the actual type of the class.
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings

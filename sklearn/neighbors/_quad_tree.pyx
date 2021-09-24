@@ -356,7 +356,7 @@ cdef class _QuadTree:
                         child = self.cells[child_id]
                         n_points += child.cumulative_size
                         assert child.cell_id == child_id, (
-                            "Cell id not correctly initiliazed.")
+                            "Cell id not correctly initialized.")
                 if n_points != cell.cumulative_size:
                     raise ValueError(
                         "Cell {} is incoherent. Size={} but found {} points "
@@ -365,7 +365,7 @@ cdef class _QuadTree:
                                 n_points, cell.children))
 
         # Make sure that the number of point in the tree correspond to the
-        # cummulative size in root cell.
+        # cumulative size in root cell.
         if self.n_points != self.cells[0].cumulative_size:
             raise ValueError(
                 "QuadTree is incoherent. Size={} but found {} points "
@@ -557,7 +557,7 @@ cdef class _QuadTree:
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
         if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
-            raise ValueError("Can't intialize array!")
+            raise ValueError("Can't initialize array!")
         return arr
 
     cdef int _resize(self, SIZE_t capacity) nogil except -1:

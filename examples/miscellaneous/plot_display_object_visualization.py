@@ -22,7 +22,7 @@ print(__doc__)
 # `OpenML <https://www.openml.org/d/1464>`. This is a binary classification
 # problem where the target is whether an individual donated blood. Then the
 # data is split into a train and test dataset and a logistic regression is
-# fitted wtih the train dataset.
+# fitted with the train dataset.
 from sklearn.datasets import fetch_openml
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline

@@ -237,7 +237,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # computation
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
-            # TODO: remove when PDP suports sample weights
+            # TODO: remove when PDP supports sample weights
             self._fitted_with_sw = True
 
         rng = check_random_state(self.random_state)
