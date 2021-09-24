@@ -54,7 +54,7 @@ jobs:
   # Push the documentation
   push:
     runs-on: ubuntu-latest
-    needs: [build]
+    # needs: [build]
     steps:
       - name: Download documentation
         uses: actions/download-artifact@v2
@@ -75,4 +75,7 @@ jobs:
           path: scikit-learn
 
       - name: Push documentation
-        run: ../scikit-learn/build_tools/circle/push_doc.sh
+        # run: ../scikit-learn/build_tools/circle/push_doc.sh
+        run: |
+          ls -l
+          ls -l ..
