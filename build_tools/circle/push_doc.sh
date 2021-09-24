@@ -6,16 +6,17 @@
 set -ex
 
 DOC_REPO="scikit-learn.github.io"
+BRANCH=$(basename "$GITHUB_REF")
 
 if [ "$GITHUB_REF" =~ "main" ]
 then
     DIR=dev
 else
     # Strip off .X
-    DIR="${GITHUB_REF::-2}"
+    DIR="${BRANCH::-2}"
 fi
 
-MSG="Pushing the docs to $DIR/ for branch: $GITHUB_REF, commit $GITHUB_SHA"
+MSG="Pushing the docs to $DIR/ for branch: $BRANCH, commit $GITHUB_SHA"
 
 # check if it's a new branch
 echo $DIR > .git/info/sparse-checkout
