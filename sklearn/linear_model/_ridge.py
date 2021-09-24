@@ -1960,7 +1960,7 @@ class _BaseRidgeCV(LinearModel):
         """
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype, only_non_negative=True
+                sample_weight, X, only_non_negative=True
             )
 
         cv = self.cv
