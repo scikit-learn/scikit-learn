@@ -1710,9 +1710,9 @@ def _check_feature_names_in(estimator, input_features=None, *, generate_names=Tr
             match `feature_names_in_` if `feature_names_in_` is defined.
 
     generate_names : bool, default=True
-        Wether to generate names when `input_features` is `None` and
-        `estimator.feature_names_in_` is not defined. This is useful for jransformers
-        validates `input_features` but does not require them in
+        Whether to generate names when `input_features` is `None` and
+        `estimator.feature_names_in_` is not defined. This is useful for transformers
+        that validates `input_features` but does not require them in
         :term:`get_feature_names_out` i.e. `PCA`.
 
     Returns
