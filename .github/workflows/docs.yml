@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  #
+  # Build the documentation
   build:
     runs-on: ubuntu-latest
     steps:
@@ -50,3 +50,26 @@ jobs:
         with:
           name: docs
           path: doc/_build/html/stable
+
+  # Push the documentation
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download documentation
+        uses: actions/download-artifact@v2
+        with:
+          name: docs
+
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v1
+        with:
+          path: scikit-learn
+
+      - name: Checkout scikit-learn.github.io
+        uses: actions/checkout@v2
+        with:
+          path: scikit-learn.github.io
+          ssh-key: ${{ secrets.DOC_BUILDER_KEY }}
+
+      - name: Push documentation
+        run: $GITHUB_WORKSPACE/scikit-learn/build_tools/circle/push_doc.sh
