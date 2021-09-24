@@ -62,7 +62,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         of ``X`` that are obtained after ``transform``.
         If None, n_components is set to the number of features.
 
-    tol : float, defaul=1e-2
+    tol : float, default=1e-2
         Stopping tolerance for log-likelihood increase.
 
     copy : bool, default=True

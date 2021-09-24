@@ -272,7 +272,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     delta = delta_ - 2.0 * mu * emp_cov_trace.sum() + n_features * mu ** 2
     delta /= n_features
     # get final beta as the min between beta and delta
-    # We do this to prevent shrinking more than "1", which whould invert
+    # We do this to prevent shrinking more than "1", which would invert
     # the value of covariances
     beta = min(beta, delta)
     # finally get shrinkage

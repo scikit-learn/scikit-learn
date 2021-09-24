@@ -33,16 +33,16 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     metric : str or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.pairwise_distances for its
-        metric parameter.
-        The centroids for the samples corresponding to each class is the point
-        from which the sum of the distances (according to the metric) of all
-        samples that belong to that particular class are minimized.
-        If the "manhattan" metric is provided, this centroid is the median and
-        for all other metrics, the centroid is now set to be the mean.
+        the options allowed by
+        :func:`~sklearn.metrics.pairwise_distances` for its metric
+        parameter. The centroids for the samples corresponding to each class is
+        the point from which the sum of the distances (according to the metric)
+        of all samples that belong to that particular class are minimized.
+        If the `"manhattan"` metric is provided, this centroid is the median
+        and for all other metrics, the centroid is now set to be the mean.
 
         .. versionchanged:: 0.19
-            ``metric='precomputed'`` was deprecated and now raises an error
+            `metric='precomputed'` was deprecated and now raises an error
 
     shrink_threshold : float, default=None
         Threshold for shrinking centroids to remove features.
@@ -66,18 +66,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    Examples
-    --------
-    >>> from sklearn.neighbors import NearestCentroid
-    >>> import numpy as np
-    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> y = np.array([1, 1, 1, 2, 2, 2])
-    >>> clf = NearestCentroid()
-    >>> clf.fit(X, y)
-    NearestCentroid()
-    >>> print(clf.predict([[-0.8, -1]]))
-    [1]
-
     See Also
     --------
     KNeighborsClassifier : Nearest neighbors classifier.
@@ -94,6 +82,17 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     of the National Academy of Sciences of the United States of America,
     99(10), 6567-6572. The National Academy of Sciences.
 
+    Examples
+    --------
+    >>> from sklearn.neighbors import NearestCentroid
+    >>> import numpy as np
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    >>> y = np.array([1, 1, 1, 2, 2, 2])
+    >>> clf = NearestCentroid()
+    >>> clf.fit(X, y)
+    NearestCentroid()
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
     """
 
     def __init__(self, metric="euclidean", *, shrink_threshold=None):
@@ -111,7 +110,12 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             `n_features` is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
         y : array-like of shape (n_samples,)
-            Target values (integers)
+            Target values.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         if self.metric == "precomputed":
             raise ValueError("Precomputed is not supported.")
@@ -191,23 +195,25 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        """Perform classification on an array of test vectors X.
+        """Perform classification on an array of test vectors `X`.
 
-        The predicted class C for each sample in X is returned.
+        The predicted class `C` for each sample in `X` is returned.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Test samples.
 
         Returns
         -------
         C : ndarray of shape (n_samples,)
+            The predicted classes.
 
         Notes
         -----
-        If the metric constructor parameter is "precomputed", X is assumed to
-        be the distance matrix between the data to be predicted and
-        ``self.centroids_``.
+        If the metric constructor parameter is `"precomputed"`, `X` is assumed
+        to be the distance matrix between the data to be predicted and
+        `self.centroids_`.
         """
         check_is_fitted(self)
 
