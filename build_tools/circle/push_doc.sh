@@ -52,6 +52,6 @@ git config push.default matching
 
 git add -f $DIR/
 git commit -m "$MSG" $DIR
-git push
+# git push
 
 echo $MSG
