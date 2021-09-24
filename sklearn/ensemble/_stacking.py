@@ -387,6 +387,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     stack_method_ : list of str
         The method used by each base estimator.
 
+    See Also
+    --------
+    StackingRegressor : Stack of estimators with a final regressor.
+
     Notes
     -----
     When `predict_proba` is used by each estimator (i.e. most of the time for
@@ -424,7 +428,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     ... )
     >>> clf.fit(X_train, y_train).score(X_test, y_test)
     0.9...
-
     """
 
     def __init__(
