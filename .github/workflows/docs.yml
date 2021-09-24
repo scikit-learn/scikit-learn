@@ -54,18 +54,18 @@ jobs:
   # Push the documentation
   push:
     runs-on: ubuntu-latest
-    # needs: [build]
+    needs: [build]
     steps:
-      # - name: Download documentation
-      # uses: actions/download-artifact@v2
-      # with:
-      # name: docs
+        - name: Download documentation
+          uses: actions/download-artifact@v2
+          with:
+          name: docs
 
       - name: Checkout scikit-learn.github.io
         uses: actions/checkout@v2
         with:
           repository: scikit-learn/scikit-learn.github.io
-          ssh-key: ${{ secrets.DOC_BUILDER_KEY }}
+          ssh-key: ${{ secrets.SSK_KEY }}
           path: scikit-learn.github.io
 
       - name: Checkout scikit-learn
@@ -75,7 +75,4 @@ jobs:
           path: scikit-learn
 
       - name: Push documentation
-        # run: ../scikit-learn/build_tools/circle/push_doc.sh
-        run: |
-          ls -l
-          ls -l ..
+        run: scikit-learn/build_tools/circle/push_doc.sh

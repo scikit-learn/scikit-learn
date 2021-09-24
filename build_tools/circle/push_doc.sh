@@ -5,6 +5,8 @@
 
 set -ex
 
+cd scikit-learn.github.io
+
 DOC_REPO="scikit-learn.github.io"
 BRANCH=$(basename "$GITHUB_REF")
 
@@ -35,10 +37,11 @@ then
 	git rm -rf $DIR/ && rm -rf $DIR/
 fi
 
-cp -R ../docs $DIR
+ls -l .
+ls -l ..
+ls -l $GITHUB_WORKSPACE/docs
 
-ls -l ../docs
-ls -l $DIR
+cp -R $GITHUB_WORKSPACE/docs $DIR
 
 git config user.email "olivier.grisel+sklearn-ci@gmail.com"
 git config user.name "sklearn-ci"
