@@ -9,13 +9,15 @@ cd scikit-learn.github.io
 
 DOC_REPO="scikit-learn.github.io"
 
-if [[ -z "$GITHUB_BASE_REF" ]]; then
+if [[ -z "$GITHUB_BASE_REF" ]]
+then
 	REF="$GITHUB_REF"
 else
 	REF="$GITHUB_BASE_REF"
 fi
 
-if [[ "$REF" =~ "main" ]]; then
+if [[ "$REF" =~ "main" ]]
+then
     DIR=dev
 else
     # Strip off .X
@@ -26,7 +28,6 @@ MSG="Pushing the docs to $DIR/ for branch: $REF, commit $GITHUB_SHA"
 
 # check if it's a new branch
 echo $DIR > .git/info/sparse-checkout
-
 if ! git show HEAD:$DIR >/dev/null
 then
 	# directory does not exist. Need to make it so sparse checkout works
@@ -40,6 +41,8 @@ if [ -d $DIR ]
 then
 	git rm -rf $DIR/ && rm -rf $DIR/
 fi
+
+ls -l $GITHUB_WORKSPACE
 
 cp -R $GITHUB_WORKSPACE/docs $DIR
 
