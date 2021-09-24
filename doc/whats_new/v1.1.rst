@@ -60,6 +60,22 @@ Changelog
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
+:mod:`sklearn.tests`
+.......................
+
+- |Enhancement| Added a common test: :func:`test_negative_sample_weight_support`,
+  which checks all estimators with `sample_weight` parameter in `fit`
+  in `_tested_estimators()` in case of using negative
+  `sample_weight` in `fit`. Added a new tag: `"allow_negative_sample_weight"`
+  for the test. If the estimator supports the negative case
+  (default tag is `True`) there should be no error in case of negative values
+  in `sample_weight` in `fit`. Otherwise a given error have to be raised.
+  The following estimators raised other, misleading error. They are updated:
+  :class:`BayesianRidge`, :class:`KernelRidge`,
+  :class:`Ridge`, :class:`RidgeClassifier`,
+  :class:`ElasticNetCV`, :class:`LassoCV`.
+  :pr:`21132` by :user:`András Simon <simonandras>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
