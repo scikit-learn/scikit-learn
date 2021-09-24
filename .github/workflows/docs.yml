@@ -5,11 +5,6 @@ on:
   schedule:
     # Nightly build at 3:42 A.M.
     - cron: "42 3 */1 * *"
-  push:
-    branches:
-      - main
-      # Release branches
-      - "[0-9]+.[0-9]+.X"
   pull_request:
     branches:
       - main
@@ -60,6 +55,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: docs
+          path: docs
 
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
