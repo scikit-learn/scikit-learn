@@ -196,7 +196,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         )
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype, only_non_negative=True
+                sample_weight, X, only_non_negative=True
             )
 
         K = self._get_kernel(X)
