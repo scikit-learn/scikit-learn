@@ -402,7 +402,6 @@ class PCA(_BasePCA):
         y : Ignored
             Ignored.
 
-
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
