@@ -1087,7 +1087,7 @@ class CalibrationDisplay:
 
         name = self.estimator_name if name is None else name
         info_pos_label = (
-            f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
+            f" (Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         line_kwargs = {}

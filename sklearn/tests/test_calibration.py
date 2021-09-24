@@ -703,8 +703,8 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     assert isinstance(viz.ax_, mpl.axes.Axes)
     assert isinstance(viz.figure_, mpl.figure.Figure)
 
-    assert viz.ax_.get_xlabel() == "Mean predicted probability (Positive label: 1)"
-    assert viz.ax_.get_ylabel() == "Fraction of positives (Positive label: 1)"
+    assert viz.ax_.get_xlabel() == "Mean predicted probability (Positive class: 1)"
+    assert viz.ax_.get_ylabel() == "Fraction of positives (Positive class: 1)"
     assert viz.line_.get_label() == "LogisticRegression"
 
 
@@ -841,9 +841,9 @@ def test_calibration_display_pos_label(pyplot, iris_data_binary):
 
     assert (
         viz.ax_.get_xlabel()
-        == f"Mean predicted probability (Positive label: {pos_label})"
+        == f"Mean predicted probability (Positive class: {pos_label})"
     )
     assert (
-        viz.ax_.get_ylabel() == f"Fraction of positives (Positive label: {pos_label})"
+        viz.ax_.get_ylabel() == f"Fraction of positives (Positive class: {pos_label})"
     )
     assert viz.line_.get_label() == "LogisticRegression"
