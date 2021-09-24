@@ -315,6 +315,13 @@ def test_meta_estimators_delegate_data_validation(estimator):
     assert not hasattr(estimator, "n_features_in_")
 
 
+METAESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS_IN_PIPELINE = [
+    # AdaBoostRegressor can safely accepts `sample_weight` even with a `Pipeline`
+    # because the weights are not used when calling `pipeline.fit`.
+    "AdaBoostRegressor",
+]
+
+
 @pytest.mark.parametrize(
     "estimator_orig",
     [
@@ -322,10 +329,13 @@ def test_meta_estimators_delegate_data_validation(estimator):
         for est in _generate_meta_estimator_instances_with_pipeline(
             first_step=FunctionTransformer()
         )
+        if est.__class__.__name__
+        not in METAESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS_IN_PIPELINE
     ],
     ids=_get_meta_estimator_id,
 )
 def test_meta_estimators_sample_weight_with_pipeline(estimator_orig):
+    """Check that passing a `Pipeline` with `sample_weight` raises an error."""
     estimator = clone(estimator_orig)
     rng = np.random.RandomState(0)
     set_random_state(estimator)
