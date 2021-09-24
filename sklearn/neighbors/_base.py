@@ -413,7 +413,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X, y = self._validate_data(X, y, accept_sparse="csr", multi_output=True)
+                X, y = self._validate_data(
+                    X, y, accept_sparse="csr", multi_output=True, order="C"
+                )
 
             if is_classifier(self):
                 # Classification targets require a specific format
@@ -448,7 +450,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = self._validate_data(X, accept_sparse="csr")
+                X = self._validate_data(X, accept_sparse="csr", order="C")
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -733,10 +735,21 @@ class KNeighborsMixin:
                 % type(n_neighbors)
             )
 
+        use_pairwise_distances_reductions = (
+            self._fit_method == "brute"
+            and PairwiseDistancesArgKmin.is_usable_for(
+                X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
+            )
+        )
+
         if X is not None:
             query_is_train = False
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
+            elif use_pairwise_distances_reductions:
+                # We force the C-contiguity even if it creates a copy for F-ordered
+                # arrays because this implementation is more efficient.
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
             else:
                 X = self._validate_data(X, accept_sparse="csr", reset=False)
         else:
@@ -755,14 +768,7 @@ class KNeighborsMixin:
 
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
-        if self._fit_method == "brute" and self.metric == "precomputed" and issparse(X):
-            results = _kneighbors_from_graph(
-                X, n_neighbors=n_neighbors, return_distance=return_distance
-            )
-
-        elif self._fit_method == "brute" and PairwiseDistancesArgKmin.is_usable_for(
-            X, self._fit_X, self.effective_metric_
-        ):
+        if use_pairwise_distances_reductions:
             results = PairwiseDistancesArgKmin.get_for(
                 X=X,
                 Y=self._fit_X,
@@ -773,6 +779,13 @@ class KNeighborsMixin:
             ).compute(
                 strategy="auto",
                 return_distance=return_distance,
+            )
+
+        elif (
+            self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
+        ):
+            results = _kneighbors_from_graph(
+                X, n_neighbors=n_neighbors, return_distance=return_distance
             )
 
         elif self._fit_method == "brute":
@@ -1070,10 +1083,21 @@ class RadiusNeighborsMixin:
         """
         check_is_fitted(self)
 
+        use_pairwise_distances_reductions = (
+            self._fit_method == "brute"
+            and PairwiseDistancesRadiusNeighborhood.is_usable_for(
+                X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
+            )
+        )
+
         if X is not None:
             query_is_train = False
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
+            elif use_pairwise_distances_reductions:
+                # We force the C-contiguity even if it creates a copy for F-ordered
+                # arrays because this implementation is more efficient.
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
             else:
                 X = self._validate_data(X, accept_sparse="csr", reset=False)
         else:
@@ -1083,17 +1107,7 @@ class RadiusNeighborsMixin:
         if radius is None:
             radius = self.radius
 
-        if self._fit_method == "brute" and self.metric == "precomputed" and issparse(X):
-            results = _radius_neighbors_from_graph(
-                X, radius=radius, return_distance=return_distance
-            )
-
-        elif (
-            self._fit_method == "brute"
-            and PairwiseDistancesRadiusNeighborhood.is_usable_for(
-                X, self._fit_X, self.effective_metric_
-            )
-        ):
+        if use_pairwise_distances_reductions:
             results = PairwiseDistancesRadiusNeighborhood.get_for(
                 X=X,
                 Y=self._fit_X,
@@ -1105,6 +1119,13 @@ class RadiusNeighborsMixin:
                 strategy="auto",
                 return_distance=return_distance,
                 sort_results=sort_results,
+            )
+
+        elif (
+            self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
+        ):
+            results = _radius_neighbors_from_graph(
+                X, radius=radius, return_distance=return_distance
             )
 
         elif self._fit_method == "brute":
