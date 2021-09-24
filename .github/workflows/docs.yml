@@ -54,6 +54,7 @@ jobs:
   # Push the documentation
   push:
     runs-on: ubuntu-latest
+    needs: [build]
     steps:
       - name: Download documentation
         uses: actions/download-artifact@v2
