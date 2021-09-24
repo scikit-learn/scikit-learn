@@ -30,21 +30,20 @@ jobs:
 
       - name: Build documentation
         run: build_tools/circle/build_doc.sh
-        with:
-          env:
-            OMP_NUM_THREADS: 2
-            MKL_NUM_THREADS: 2
-            NUMPY_VERSION: latest
-            SCIPY_VERSION: latest
-            MATPLOTLIB_VERSION: latest
-            CYTHON_VERSION: latest
-            SCIKIT_IMAGE_VERSION: latest
-            SPHINX_VERSION: min
-            PANDAS_VERSION: latest
-            SPHINX_GALLERY_VERSION: latest
-            NUMPYDOC_VERSION: latest
-            SPHINX_PROMPT_VERSION: latest
-            SPHINXEXT_OPENGRAPH_VERSION: latest
+        env:
+          OMP_NUM_THREADS: 2
+          MKL_NUM_THREADS: 2
+          NUMPY_VERSION: latest
+          SCIPY_VERSION: latest
+          MATPLOTLIB_VERSION: latest
+          CYTHON_VERSION: latest
+          SCIKIT_IMAGE_VERSION: latest
+          SPHINX_VERSION: min
+          PANDAS_VERSION: latest
+          SPHINX_GALLERY_VERSION: latest
+          NUMPYDOC_VERSION: latest
+          SPHINX_PROMPT_VERSION: latest
+          SPHINXEXT_OPENGRAPH_VERSION: latest
 
       - name: Upload documentation
         uses: actions/upload-artifact@v2
