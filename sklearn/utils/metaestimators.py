@@ -194,8 +194,7 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         if delegate is None:
             return False
         # raise original AttributeError
-        if not hasattr(delegate, self.attribute_name):
-            getattr(delegate, self.attribute_name)
+        getattr(delegate, self.attribute_name)
 
         return True
 
