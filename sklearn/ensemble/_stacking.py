@@ -513,7 +513,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     @if_delegate_has_method(delegate="final_estimator_")
     def predict_proba(self, X):
-        """Predict class probabilities for X using
+        """Predict class probabilities for X using \
         `final_estimator_.predict_proba`.
 
         Parameters
