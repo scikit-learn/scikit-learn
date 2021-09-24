@@ -194,7 +194,10 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         if delegate is None:
             return False
         # raise original AttributeError
-        return getattr(delegate, self.attribute_name) or True
+        if not hasattr(delegate, self.attribute_name):
+            getattr(delegate, self.attribute_name)
+
+        return True
 
 
 def if_delegate_has_method(delegate):
