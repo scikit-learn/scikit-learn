@@ -7,7 +7,6 @@
 #
 # License: BSD 3 clause
 
-import warnings
 from inspect import signature
 from functools import partial
 
@@ -37,7 +36,10 @@ from .utils import (
 
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
-from .utils.validation import check_is_fitted, check_consistent_length
+from .utils.validation import (
+    check_is_fitted,
+    check_consistent_length,
+)
 from .utils.validation import _check_sample_weight, _num_samples
 from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
@@ -302,16 +304,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
             # sample_weight checks
             fit_parameters = signature(base_estimator.fit).parameters
-            supports_sw = "sample_weight" in fit_parameters
+            if "sample_weight" not in fit_parameters and sample_weight is not None:
+                raise ValueError(
+                    f"The estimator {base_estimator} does not support sample_weight"
+                )
             if sample_weight is not None:
-                sample_weight = _check_sample_weight(sample_weight, X)
-                if not supports_sw:
-                    estimator_name = type(base_estimator).__name__
-                    warnings.warn(
-                        f"Since {estimator_name} does not support "
-                        "sample_weights, sample weights will only be"
-                        " used for the calibration itself."
-                    )
+                _check_sample_weight(sample_weight, X)
 
             # Check that each cross-validation fold can have at least one
             # example per class
@@ -343,7 +341,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                         test=test,
                         method=self.method,
                         classes=self.classes_,
-                        supports_sw=supports_sw,
                         sample_weight=sample_weight,
                     )
                     for train, test in cv.split(X, y)
@@ -364,7 +361,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     pred_method, method_name, X, n_classes
                 )
 
-                if sample_weight is not None and supports_sw:
+                if sample_weight is not None:
                     this_estimator.fit(X, y, sample_weight)
                 else:
                     this_estimator.fit(X, y)
@@ -443,7 +440,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
 
 def _fit_classifier_calibrator_pair(
-    estimator, X, y, train, test, supports_sw, method, classes, sample_weight=None
+    estimator, X, y, train, test, method, classes, sample_weight=None
 ):
     """Fit a classifier/calibration pair on a given train/test split.
 
@@ -468,9 +465,6 @@ def _fit_classifier_calibrator_pair(
     test : ndarray, shape (n_test_indicies,)
         Indices of the testing subset.
 
-    supports_sw : bool
-        Whether or not the `estimator` supports sample weights.
-
     method : {'sigmoid', 'isotonic'}
         Method to use for calibration.
 
@@ -486,14 +480,14 @@ def _fit_classifier_calibrator_pair(
     """
     X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
     X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
-    if supports_sw and sample_weight is not None:
+    if sample_weight is not None:
         sw_train = _safe_indexing(sample_weight, train)
         sw_test = _safe_indexing(sample_weight, test)
     else:
         sw_train = None
         sw_test = None
 
-    if supports_sw:
+    if sample_weight is not None:
         estimator.fit(X_train, y_train, sample_weight=sw_train)
     else:
         estimator.fit(X_train, y_train)

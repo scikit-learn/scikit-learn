@@ -2,6 +2,24 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_0_1:
+
+Version 1.0.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Raise an error in :class:`calibration.CalibratedClassifierCV` when
+  `sample_weight` are used together with a :class:`pipeline.Pipeline` instead
+  of silently ignoring `sample_weight`.
+  :pr:`21143` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 .. _changes_1_0:
 
 Version 1.0.0
