@@ -12,6 +12,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_equal
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
+from sklearn.cluster._spectral import cluster_qr
 from sklearn.cluster._spectral import discretize
 from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import pairwise_distances
@@ -29,7 +30,9 @@ except ImportError:
 
 
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg"))
-@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize"))
+@pytest.mark.parametrize(
+    "assign_labels",
+    ("kmeans", "discretize", "cluster_qr"))
 def test_spectral_clustering(eigen_solver, assign_labels):
     S = np.array(
         [
@@ -283,7 +286,7 @@ def test_n_components():
     assert not np.array_equal(labels, labels_diff_ncomp)
 
 
-@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize"))
+@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
 def test_verbose(assign_labels, capsys):
     # Check verbose mode of KMeans for better coverage.
     X, y = make_blobs(
