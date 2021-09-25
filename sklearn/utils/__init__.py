@@ -984,6 +984,15 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     return chunk_n_rows
 
 
+def is_pd_na(x):
+    with suppress(ImportError):
+        import pandas
+
+        return x is pandas.NA
+
+    return False
+
+
 def is_scalar_nan(x):
     """Tests if x is NaN.
 
@@ -1011,11 +1020,6 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    with suppress(ImportError):
-        import pandas
-
-        if x is pandas.NA:
-            return True
     return isinstance(x, numbers.Real) and math.isnan(x)
 
 

@@ -16,10 +16,13 @@ from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils._mask import _get_mask
+from ..utils import is_pd_na
 from ..utils import is_scalar_nan
 
 
 def _check_inputs_dtype(X, missing_values):
+    if is_pd_na(missing_values):
+        return
     if X.dtype.kind in ("f", "i", "u") and not isinstance(missing_values, numbers.Real):
         raise ValueError(
             "'X' and 'missing_values' types are expected to be"
@@ -261,10 +264,10 @@ class SimpleImputer(_BaseImputer):
         else:
             dtype = FLOAT_DTYPES
 
-        if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
-        else:
+        if is_pd_na(self.missing_values) or is_scalar_nan(self.missing_values):
             force_all_finite = "allow-nan"
+        else:
+            force_all_finite = True
 
         try:
             X = self._validate_data(
