@@ -39,7 +39,7 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.cluster`
-....................
+......................
 
 - |Enhancement| :func:`cluster._spectral` now includes the 'cluster_qr' method
   that clusters samples in the embedding space just as 'kmeans' and 'discrete'.
