@@ -497,6 +497,10 @@ computed using a function of a gradient of the image.
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
     :scale: 65
 
+.. |coin_cluster_qr| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_003.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
+    :scale: 65
+
 Different label assignment strategies
 -------------------------------------
 
@@ -507,6 +511,8 @@ In particular, unless you control the ``random_state``, it may not be
 reproducible from run-to-run, as it depends on random initialization.
 The alternative ``"discretize"`` strategy is 100% reproducible, but tends
 to create parcels of fairly even and geometrical shape.
+The recently added option ``clusterQR`` is 100% also reproducible and tends
+to create the visually best partitioning.
 
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
