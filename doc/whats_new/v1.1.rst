@@ -43,8 +43,8 @@ Changelog
 
 - |Enhancement| :func:`cluster._spectral` now includes the 'cluster_qr' method
   that clusters samples in the embedding space just as 'kmeans' and 'discrete'.
-  :func:`cluster.plot_coin_segmentation' now compares all three alternatives.
-  Documentation :doc: 'modules/clustering' and unit :test: 'test_spectral.py'
+  :func:`cluster.plot_coin_segmentation` now compares all three alternatives.
+  Documentation :doc: `modules/clustering` and unit :test: `test_spectral.py`
   have been updated to incorporate 'cluster_qr'.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
 
