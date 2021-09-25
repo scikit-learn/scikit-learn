@@ -18,6 +18,35 @@ from ..manifold import spectral_embedding
 from ._kmeans import k_means
 
 
+def cluster_qr(vectors):
+    """Search for a partition matrix (clustering) which is
+    closest to the eigenvector embedding.
+    Parameters
+    ----------
+    vectors : array-like, shape: (n_samples, n_clusters)
+        The embedding space of the samples.
+    Returns
+    -------
+    labels : array of integers, shape: n_samples
+        The labels of the clusters.
+    References
+    ----------
+    https://github.com/asdamle/QR-spectral-clustering
+    https://arxiv.org/abs/1708.07481
+    """
+
+    from scipy.linalg import qr, svd
+
+    k = vectors.shape[1]
+    piv = qr(vectors.T, pivoting=True)[2]
+    piv = piv[0:k]
+    UtSV = svd(vectors[piv, :].T)
+    Ut = UtSV[0]
+    Vt = UtSV[2].T.conj()
+    vectors = abs(np.dot(vectors, np.dot(Ut, Vt.T)))
+    return vectors.argmax(axis=1).T
+
+
 def discretize(
     vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20, random_state=None
 ):
@@ -229,12 +258,16 @@ def spectral_clustering(
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
-    assign_labels : {'kmeans', 'discretize'}, default='kmeans'
+    assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy to use to assign labels in the embedding
-        space.  There are two ways to assign labels after the Laplacian
+        space.  There are three ways to assign labels after the Laplacian
         embedding.  k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another
         approach which is less sensitive to random initialization [3]_.
+        The newest cluster_qr method directly extract clusters from eigenvectors
+        in spectral clustering. In contrast to k-means and discretization, 
+        cluster_qr has no tuning parameters, e.g., runs no iterations, yet may outperform
+        k-means and discretization in terms of both quality and speed.
 
     verbose : bool, default=False
         Verbosity mode.
@@ -275,10 +308,11 @@ def spectral_clustering(
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
     """
-    if assign_labels not in ("kmeans", "discretize"):
+    if assign_labels not in ("kmeans", "discretize", 'cluster_qr'):
         raise ValueError(
             "The 'assign_labels' parameter should be "
-            "'kmeans' or 'discretize', but '%s' was given" % assign_labels
+            "'kmeans' or 'discretize', or 'cluster_qr', but '%s' was given" 
+            % assign_labels
         )
     if isinstance(affinity, np.matrix):
         raise TypeError(
@@ -312,6 +346,8 @@ def spectral_clustering(
         _, labels, _ = k_means(
             maps, n_clusters, random_state=random_state, n_init=n_init, verbose=verbose
         )
+    elif assign_labels == 'cluster_qr':
+        labels = cluster_qr(maps)
     else:
         labels = discretize(maps, random_state=random_state)
 
@@ -407,7 +443,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when ``eigen_solver='arpack'``.
 
-    assign_labels : {'kmeans', 'discretize'}, default='kmeans'
+    assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy for assigning labels in the embedding space. There are two
         ways to assign labels after the Laplacian embedding. k-means is a
         popular choice, but it can be sensitive to initialization.
