@@ -23,9 +23,7 @@ class SelectIndex(SelectorMixin, BaseEstimator):
             force_all_finite="allow-nan",
         )
 
-        n_columns = X.shape[1]
-
-        support_mask = np.zeros(n_columns, dtype=bool)
+        support_mask = np.zeros(self.n_features_in_, dtype=bool)
         support_mask[self.idx] = True
 
         self.support_mask = support_mask
