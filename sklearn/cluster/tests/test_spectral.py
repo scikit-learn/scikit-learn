@@ -12,7 +12,6 @@ from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_equal
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
-from sklearn.cluster._spectral import cluster_qr
 from sklearn.cluster._spectral import discretize
 from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import pairwise_distances
