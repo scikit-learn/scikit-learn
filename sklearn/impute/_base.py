@@ -610,7 +610,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    missing_values : int, float, string, np.nan or None, default=np.nan
+    missing_values : int, float, str, np.nan or None, default=np.nan
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For pandas' dataframes with
         nullable integer dtypes with missing values, `missing_values`
@@ -655,6 +655,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    SimpleImputer : Univariate imputation of missing values.
+    IterativeImputer : Multivariate imputation of missing values.
+
     Examples
     --------
     >>> import numpy as np
@@ -673,7 +678,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     array([[False,  True],
            [ True, False],
            [False, False]])
-
     """
 
     def __init__(
@@ -842,6 +846,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             Input data, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         Returns
         -------
         self : object
@@ -865,7 +872,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         or (n_samples, n_features_with_missing)
             The missing indicator for input data. The data type of ``Xt``
             will be boolean.
-
         """
         check_is_fitted(self)
 
@@ -901,13 +907,15 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         Returns
         -------
         Xt : {ndarray or sparse matrix}, shape (n_samples, n_features) \
         or (n_samples, n_features_with_missing)
             The missing indicator for input data. The data type of ``Xt``
             will be boolean.
-
         """
         imputer_mask = self._fit(X, y)
 
