@@ -514,11 +514,11 @@ to create parcels of fairly even and geometrical shape.
 The recently added option ``clusterQR`` is 100% also reproducible and tends
 to create the visually best partitioning.
 
-=====================================  =====================================
- ``assign_labels="kmeans"``              ``assign_labels="discretize"``
-=====================================  =====================================
-|coin_kmeans|                          |coin_discretize|
-=====================================  =====================================
+================================  ================================  ================================
+ ``assign_labels="kmeans"``        ``assign_labels="discretize"``    ``assign_labels="cluster_qr"``
+================================  ================================  ================================
+|coin_kmeans|                          |coin_discretize|                 |coin_cluster_qr|
+================================  ================================  ================================
 
 Spectral Clustering Graphs
 --------------------------
