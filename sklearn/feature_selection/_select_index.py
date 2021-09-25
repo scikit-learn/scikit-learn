@@ -7,7 +7,7 @@ from ._base import SelectorMixin
 from ..utils.validation import check_is_fitted
 
 
-class SelectIndex(SelectorMixin, BaseEstimator):
+class SelectColumnsByIndicies(SelectorMixin, BaseEstimator):
     """TODO"""
 
     def __init__(self, idx):
