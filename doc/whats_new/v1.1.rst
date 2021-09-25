@@ -60,6 +60,13 @@ Changelog
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
+:mod:`sklearn.feature_selection`
+.......................
+
+- |Enhancement| Added :class:`SelectColumnsByIndicies` which filters features/columns given indicies.
+  It is convenient, when on development stage you found the best features subset, and want to use it during inference.
+  :pr:`21150` by :user:`Dani El-Ayyass <dayyass>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
