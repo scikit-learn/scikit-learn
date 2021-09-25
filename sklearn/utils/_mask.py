@@ -7,7 +7,7 @@ from .fixes import _object_dtype_isnan
 
 
 def _get_dense_mask(X, value_to_mask):
-    with suppress(ImportError):
+    with suppress(ImportError, AttributeError):
         import pandas
 
         if value_to_mask is pandas.NA:
