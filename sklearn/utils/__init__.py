@@ -985,6 +985,16 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
 
 
 def is_pd_na(x):
+    """Test if x is pd.NA.
+
+    Parameters
+    ----------
+    x : any type
+
+    Returns
+    -------
+    boolean
+    """
     with suppress(ImportError):
         import pandas
 
