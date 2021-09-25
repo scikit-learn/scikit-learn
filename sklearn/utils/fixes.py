@@ -39,6 +39,7 @@ else:
 def _object_dtype_isnan(X):
     with suppress(ImportError):
         import pandas
+
         return pandas.isna(X)
     return X != X
 
