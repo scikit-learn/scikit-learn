@@ -995,7 +995,7 @@ def is_pd_na(x):
     -------
     boolean
     """
-    with suppress(ImportError):
+    with suppress(ImportError, AttributeError):
         import pandas
 
         return x is pandas.NA
