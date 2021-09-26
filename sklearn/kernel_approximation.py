@@ -914,7 +914,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         # sqrt of kernel matrix on basis vectors
         if self.use_rsvd:
-            U, S, V = randomized_svd(basis_kernel, n_components=n_components)
+            U, S, V = randomized_svd(basis_kernel)
         else:
             U, S, V = svd(basis_kernel)
         S = np.maximum(S, 1e-12)
