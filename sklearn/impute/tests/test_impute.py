@@ -1496,7 +1496,7 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
 
 
 def test_impute_pd_na():
-    pd = pytest.importorskip("pandas")
+    pd = pytest.importorskip("pandas", minversion="1.0")
 
     # Impute pandas array of string types.
     df = pd.DataFrame({"feature": pd.Series(["abc", None, "de"], dtype="string")})
