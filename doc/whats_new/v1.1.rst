@@ -41,10 +41,10 @@ Changelog
 :mod:`sklearn.linear_model`
 ---------------------------
 
-- |Enhancement| The `predict` and `fit_predict` methods of
-  :class:`cluster.AffinityPropagation` now accept sparse data type for input
-  data.
-  :pr:`20117` by :user:`Venkatachalam Natchiappan <venkyyuvy>`
+- |Enhancement| Sparse input data will be allowed for
+  :class:`linear_model.QuantileRegressor` now.
+  :pr:`21086` by `Venkatachalam Natchiappan`.
+
 
 :mod:`sklearn.utils`
 ....................
