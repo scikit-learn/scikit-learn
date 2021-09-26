@@ -203,6 +203,9 @@ def test_sample_weight_class_imbalanced(method, ensemble):
         X, y, sample_weight, stratify=y, random_state=42
     )
 
+    # FIXME: ideally we should create a `Pipeline` with the `StandardScaler`
+    # followed by the `LinearSVC`. However, `Pipeline` does not expose
+    # `sample_weight` and it will be silently ignored.
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
