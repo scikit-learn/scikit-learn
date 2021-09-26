@@ -60,6 +60,12 @@ Changelog
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
+:mod:`sklearn.impute`
+.......................
+
+- |Enhancement| Added support for `pd.NA` in :class:`SimpleImputer`.
+  :pr:`21114` by :user:`Ying Xiong <yxiong>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
