@@ -191,6 +191,8 @@ def test_sample_weight(data, method, ensemble):
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_sample_weight_class_imbalanced(method, ensemble):
+    """Use an imbalanced dataset to check that `sample_weight` is taken into
+    account in the calibration estimator."""
     X, y = make_blobs((100, 1000), center_box=(-1, 1), random_state=42)
 
     # Compute weights to compensate for the unbalance of the dataset
