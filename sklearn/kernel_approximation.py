@@ -26,6 +26,7 @@ from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
+from sklearn.utils.extmath import randomized_svd
 
 
 class PolynomialCountSketch(BaseEstimator, TransformerMixin):
@@ -842,6 +843,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
         n_components=100,
         random_state=None,
         n_jobs=None,
+        use_rsvd=False,
+        basis=None,
     ):
 
         self.kernel = kernel
@@ -852,6 +855,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
         self.n_components = n_components
         self.random_state = random_state
         self.n_jobs = n_jobs
+        self.use_rsvd = use_rsvd
+        self.basis = basis
 
     def fit(self, X, y=None):
         """Fit estimator to data.
@@ -876,7 +881,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         """
         X = self._validate_data(X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
-        n_samples = X.shape[0]
+        n_samples = X.shape[0] if self.basis is None else self.basis.shape[0]
 
         # get basis vectors
         if self.n_components > n_samples:
@@ -893,7 +898,11 @@ class Nystroem(TransformerMixin, BaseEstimator):
         n_components = min(n_samples, n_components)
         inds = rnd.permutation(n_samples)
         basis_inds = inds[:n_components]
-        basis = X[basis_inds]
+
+        if self.basis is None:
+            basis = X[basis_inds]
+        else:
+            basis = self.basis[basis_inds]
 
         basis_kernel = pairwise_kernels(
             basis,
@@ -904,7 +913,10 @@ class Nystroem(TransformerMixin, BaseEstimator):
         )
 
         # sqrt of kernel matrix on basis vectors
-        U, S, V = svd(basis_kernel)
+        if self.use_rsvd:
+            U, S, V = randomized_svd(basis_kernel, n_components=n_components)
+        else:
+            U, S, V = svd(basis_kernel)
         S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
