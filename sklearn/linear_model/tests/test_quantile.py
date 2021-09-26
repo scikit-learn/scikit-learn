@@ -251,11 +251,11 @@ def test_linprog_failure():
 def test_sparse_input(fit_intercept, format):
     rng = np.random.RandomState(42)
     n = 100
-    dim = 200
+    dim = 2
     X = sparse.rand(n, dim, format=format, density=0.1, random_state=rng)
     beta = rng.rand(dim)
     y = X * beta[:, np.newaxis]
-    reg = QuantileRegressor(alpha=2, fit_intercept=fit_intercept).fit(X, y)
+    reg = QuantileRegressor(alpha=0, fit_intercept=fit_intercept).fit(X, y)
     reg.fit(X, y.ravel())
     assert_array_almost_equal(beta, reg.coef_ + reg.intercept_)
 
