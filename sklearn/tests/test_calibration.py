@@ -194,7 +194,8 @@ def test_sample_weight_class_imbalanced(method, ensemble):
     X, y = make_blobs((100, 1000), center_box=(-1, 1), random_state=42)
 
     # Compute weights to compensate for the unbalance of the dataset
-    sample_weight = 9 * (y == 0) + 1
+     weights = np.array([0.9, 0.1])
+    sample_weight = weights[(y == 1).astype(int)]
 
     X_train, X_test, y_train, y_test, sw_train, sw_test = train_test_split(
         X, y, sample_weight, stratify=y, random_state=42
