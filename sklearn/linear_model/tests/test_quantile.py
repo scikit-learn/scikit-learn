@@ -262,10 +262,14 @@ def test_sparse_input(fit_intercept, format):
     assert_array_almost_equal(reg.predict(X) - y.ravel(), 0)
 
 
+@pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1, 0])
-def test_compare_sparse_with_dense_input(X_y_data, alpha):
+@pytest.mark.parametrize(
+    "sparse_format", [sparse.csr_matrix, sparse.csc_matrix, sparse.coo_matrix]
+)
+def test_compare_sparse_with_dense_input(X_y_data, alpha, fit_intercept, sparse_format):
     X, y = X_y_data
     reg_dense = QuantileRegressor(solver="highs", alpha=alpha).fit(X, y)
-    sparse_x = sparse.csr_matrix(X)
+    sparse_x = sparse_format(X)
     reg_sparse = QuantileRegressor(solver="highs", alpha=alpha).fit(sparse_x, y)
     assert_array_almost_equal(reg_dense.coef_, reg_sparse.coef_)
