@@ -984,8 +984,8 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     return chunk_n_rows
 
 
-def is_pd_na(x):
-    """Test if x is pd.NA.
+def _is_pandas_na(x):
+    """Test if x is pandas.NA.
 
     Parameters
     ----------
@@ -996,6 +996,7 @@ def is_pd_na(x):
     boolean
     """
     with suppress(ImportError, AttributeError):
+        # We also suppress `AttributeError` because older versions of pandas do not have `NA`.
         import pandas
 
         return x is pandas.NA
