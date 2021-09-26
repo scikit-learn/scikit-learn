@@ -204,9 +204,7 @@ def test_sample_weight_class_imbalanced(method, ensemble):
     )
 
     scaler = StandardScaler()
-    X_train = scaler.fit_transform(
-        X_train
-    )  # compute mean, std and transform training data as well
+    X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
     base_estimator = LinearSVC(random_state=42)
