@@ -1493,3 +1493,19 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     assert expected == _most_frequent(
         np.array(array, dtype=dtype), extra_value, n_repeat
     )
+
+
+def test_impute_pd_na():
+    pd = pytest.importorskip("pandas")
+
+    # Impute pandas array of string types.
+    df = pd.DataFrame({"feature": pd.Series(["abc", None, "de"], dtype="string")})
+    imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value="na")
+    assert_array_equal(
+        imputer.fit_transform(df), np.array([["abc"], ["na"], ["de"]], dtype="<U3")
+    )
+
+    # Impute pandas array of integer types.
+    df = pd.DataFrame({"feature": pd.Series([1, None, 3], dtype="Int64")})
+    imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-1)
+    assert_array_equal(imputer.fit_transform(df), [[1], [-1], [3]])
