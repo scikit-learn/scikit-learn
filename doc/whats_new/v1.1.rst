@@ -45,6 +45,9 @@ Changelog
   :class:`linear_model.QuantileRegressor` now.
   :pr:`21086` by `Venkatachalam Natchiappan`.
 
+- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
+  message when the solver does not support sparse matrices with int64 indices.
+  :pr:`21093` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.utils`
 ....................

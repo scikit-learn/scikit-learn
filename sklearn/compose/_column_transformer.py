@@ -112,7 +112,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    prefix_feature_names_out : bool, default=True
+    verbose_feature_names_out : bool, default=True
         If True, :meth:`get_feature_names_out` will prefix all feature names
         with the name of the transformer that generated that feature.
         If False, :meth:`get_feature_names_out` will not prefix any feature
@@ -204,7 +204,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         n_jobs=None,
         transformer_weights=None,
         verbose=False,
-        prefix_feature_names_out=True,
+        verbose_feature_names_out=True,
     ):
         self.transformers = transformers
         self.remainder = remainder
@@ -212,7 +212,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.verbose = verbose
-        self.prefix_feature_names_out = prefix_feature_names_out
+        self.verbose_feature_names_out = verbose_feature_names_out
 
     @property
     def _transformers(self):
@@ -489,7 +489,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # No feature names
             return np.array([], dtype=object)
 
-        if self.prefix_feature_names_out:
+        if self.verbose_feature_names_out:
             # Prefix the feature names out with the transformers name
             names = list(
                 chain.from_iterable(
@@ -499,7 +499,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
             return np.asarray(names, dtype=object)
 
-        # prefix_feature_names_out is False
+        # verbose_feature_names_out is False
         # Check that names are all unique without a prefix
         feature_names_count = Counter(
             chain.from_iterable(s for _, s in transformer_with_feature_names_out)
@@ -517,7 +517,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 names_repr = str(top_6_overlap)
             raise ValueError(
                 f"Output feature names: {names_repr} are not unique. Please set "
-                "prefix_feature_names_out=True to add prefixes to feature names"
+                "verbose_feature_names_out=True to add prefixes to feature names"
             )
 
         return np.concatenate(
@@ -856,7 +856,7 @@ def make_column_transformer(
     sparse_threshold=0.3,
     n_jobs=None,
     verbose=False,
-    prefix_feature_names_out=True,
+    verbose_feature_names_out=True,
 ):
     """Construct a ColumnTransformer from the given transformers.
 
@@ -919,7 +919,7 @@ def make_column_transformer(
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    prefix_feature_names_out : bool, default=True
+    verbose_feature_names_out : bool, default=True
         If True, :meth:`get_feature_names_out` will prefix all feature names
         with the name of the transformer that generated that feature.
         If False, :meth:`get_feature_names_out` will not prefix any feature
@@ -959,7 +959,7 @@ def make_column_transformer(
         remainder=remainder,
         sparse_threshold=sparse_threshold,
         verbose=verbose,
-        prefix_feature_names_out=prefix_feature_names_out,
+        verbose_feature_names_out=verbose_feature_names_out,
     )
 
 
