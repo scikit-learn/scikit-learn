@@ -246,13 +246,16 @@ def test_linprog_failure():
         reg.fit(X, y)
 
 
-def test_sparse_input():
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("format", ["csr", "coo", "csc"])
+def test_sparse_input(fit_intercept, format):
     rng = np.random.RandomState(42)
     n = 100
-    X = sparse.eye(n, n)
-    beta = rng.rand(n)
+    dim = 200
+    X = sparse.rand(n, dim, format=format, density=0.1, random_state=rng)
+    beta = rng.rand(dim)
     y = X * beta[:, np.newaxis]
-    reg = QuantileRegressor(alpha=0).fit(X, y)
+    reg = QuantileRegressor(alpha=2, fit_intercept=fit_intercept).fit(X, y)
     reg.fit(X, y.ravel())
     assert_array_almost_equal(beta, reg.coef_ + reg.intercept_)
 
