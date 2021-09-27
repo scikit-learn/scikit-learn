@@ -178,7 +178,7 @@ print(f" * uncalibrated classifier: {score:.3f}")
 print(f" * calibrated classifier: {cal_score:.3f}")
 
 # %%
-# Finally we generate a grid of possibile uncalibrated probabilities over
+# Finally we generate a grid of possible uncalibrated probabilities over
 # the 2-simplex, compute the corresponding calibrated probabilities and
 # plot arrows for each. The arrows are colored according the highest
 # uncalibrated probability. This illustrates the learned calibration map:

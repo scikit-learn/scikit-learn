@@ -29,6 +29,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
+from sklearn.metrics import d2_tweedie_score
 from sklearn.metrics import det_curve
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
@@ -78,7 +79,7 @@ from sklearn.metrics._base import _average_binary_score
 # all metrics that have the same behavior.
 #
 # Two types of datastructures are used in order to implement this system:
-# dictionaries of metrics and lists of metrics wit common properties.
+# dictionaries of metrics and lists of metrics with common properties.
 #
 # Dictionaries of metrics
 # ------------------------
@@ -110,6 +111,7 @@ REGRESSION_METRICS = {
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
     "mean_compound_poisson_deviance": partial(mean_tweedie_deviance, power=1.4),
+    "d2_tweedie_score": partial(d2_tweedie_score, power=1.4),
 }
 
 CLASSIFICATION_METRICS = {
@@ -510,6 +512,7 @@ NOT_SYMMETRIC_METRICS = {
     "mean_gamma_deviance",
     "mean_poisson_deviance",
     "mean_compound_poisson_deviance",
+    "d2_tweedie_score",
     "mean_absolute_percentage_error",
 }
 
@@ -526,6 +529,7 @@ METRICS_REQUIRE_POSITIVE_Y = {
     "mean_poisson_deviance",
     "mean_gamma_deviance",
     "mean_compound_poisson_deviance",
+    "d2_tweedie_score",
 }
 
 

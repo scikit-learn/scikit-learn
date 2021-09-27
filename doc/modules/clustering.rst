@@ -1843,7 +1843,8 @@ Advantages
 ~~~~~~~~~~
 
 - The computation of Davies-Bouldin is simpler than that of Silhouette scores.
-- The index is computed only quantities and features inherent to the dataset.
+- The index is solely based on quantities and features inherent to the dataset
+  as its computation only uses point-wise distances.
 
 Drawbacks
 ~~~~~~~~~

@@ -14,12 +14,12 @@ np.import_array()
 
 
 def _minibatch_update_dense(
-        np.ndarray[floating, ndim=2, mode="c"] X,  # IN
-        floating[::1] sample_weight,               # IN
-        floating[:, ::1] centers_old,              # IN
-        floating[:, ::1] centers_new,              # OUT
-        floating[::1] weight_sums,                 # INOUT
-        int[::1] labels,                           # IN
+        floating[:, ::1] X,            # IN READ-ONLY
+        floating[::1] sample_weight,   # IN READ-ONLY
+        floating[:, ::1] centers_old,  # IN
+        floating[:, ::1] centers_new,  # OUT
+        floating[::1] weight_sums,     # INOUT
+        int[::1] labels,               # IN
         int n_threads):
     """Update of the centers for dense MiniBatchKMeans.
 
@@ -59,7 +59,7 @@ def _minibatch_update_dense(
         indices = <int*> malloc(n_samples * sizeof(int))
 
         for cluster_idx in prange(n_clusters, schedule="static"):
-            update_center_dense(cluster_idx, &X[0, 0], sample_weight,
+            update_center_dense(cluster_idx, X, sample_weight,
                                 centers_old, centers_new, weight_sums, labels,
                                 indices)
 
@@ -68,8 +68,8 @@ def _minibatch_update_dense(
 
 cdef void update_center_dense(
         int cluster_idx,
-        floating *X,                   # IN
-        floating[::1] sample_weight,   # IN
+        floating[:, ::1] X,            # IN READ-ONLY
+        floating[::1] sample_weight,   # IN READ-ONLY
         floating[:, ::1] centers_old,  # IN
         floating[:, ::1] centers_new,  # OUT
         floating[::1] weight_sums,     # INOUT
@@ -103,7 +103,7 @@ cdef void update_center_dense(
         for k in range(n_indices):
             sample_idx = indices[k]
             for feature_idx in range(n_features):
-                centers_new[cluster_idx, feature_idx] += X[sample_idx * n_features + feature_idx] * sample_weight[sample_idx]
+                centers_new[cluster_idx, feature_idx] += X[sample_idx, feature_idx] * sample_weight[sample_idx]
 
         # Update the count statistics for this center
         weight_sums[cluster_idx] += wsum

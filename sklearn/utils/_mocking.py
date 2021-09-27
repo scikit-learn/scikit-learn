@@ -51,6 +51,9 @@ class MockDataFrame:
     def __ne__(self, other):
         return not self == other
 
+    def take(self, indices, axis=0):
+        return MockDataFrame(self.array.take(indices, axis=axis))
+
 
 class CheckingClassifier(ClassifierMixin, BaseEstimator):
     """Dummy classifier to test pipelining and meta-estimators.
@@ -176,8 +179,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples, n_outputs) or (n_samples,), \
                 default=None
@@ -284,8 +287,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Input data, where n_samples is the number of samples and
-            n_features is the number of features.
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Y : array-like of shape (n_samples, n_output) or (n_samples,)
             Target relative to X for classification or regression;

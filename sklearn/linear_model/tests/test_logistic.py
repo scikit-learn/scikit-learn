@@ -2297,3 +2297,22 @@ def test_lrcv_metadata_routing():
         match=re.escape(err_message.format(param=["my_groups"])),
     ):
         lrcv.fit(X, y, my_groups=groups)
+
+
+@pytest.mark.parametrize("solver", ["liblinear", "lbfgs", "newton-cg", "sag", "saga"])
+def test_large_sparse_matrix(solver):
+    # Solvers either accept large sparse matrices, or raise helpful error.
+    # Non-regression test for pull-request #21093.
+
+    # generate sparse matrix with int64 indices
+    X = sp.rand(20, 10, format="csr")
+    for attr in ["indices", "indptr"]:
+        setattr(X, attr, getattr(X, attr).astype("int64"))
+    y = np.random.randint(2, size=X.shape[0])
+
+    if solver in ["liblinear", "sag", "saga"]:
+        msg = "Only sparse matrices with 32-bit integer indices"
+        with pytest.raises(ValueError, match=msg):
+            LogisticRegression(solver=solver).fit(X, y)
+    else:
+        LogisticRegression(solver=solver).fit(X, y)
