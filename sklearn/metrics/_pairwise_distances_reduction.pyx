@@ -80,10 +80,6 @@ ctypedef fused vector_vector_DITYPE_t:
     vector[vector[DTYPE_t]]
 
 
-cdef extern from "numpy/arrayobject.h":
-    int PyArray_SetBaseObject(np.ndarray arr, PyObject *obj) nogil except -1
-
-
 cdef class StdVectorSentinel:
     """Wraps a reference to a vector which will be deallocated with this object.
 
@@ -92,6 +88,7 @@ cdef class StdVectorSentinel:
     manage the provided one's lifetime.
     """
     pass
+
 
 # We necessarily need to define two extension types extending StdVectorSentinel
 # because we need to provide the dtype of the vector but can't use numeric fused types.
@@ -150,8 +147,6 @@ cdef np.ndarray vector_to_nd_array(vector_DITYPE_t * vect_ptr):
     typenum = DTYPECODE if vector_DITYPE_t is vector[DTYPE_t] else ITYPECODE
     cdef:
         np.npy_intp size = deref(vect_ptr).size()
-        # TODO: use PyArray_SimpleNewFromData from the Numpy C API directly
-        # I've tried, but Cython fails when parsing the C API
         np.ndarray arr = np.PyArray_SimpleNewFromData(1, &size, typenum,
                                                       deref(vect_ptr).data())
         StdVectorSentinel sentinel
@@ -166,7 +161,7 @@ cdef np.ndarray vector_to_nd_array(vector_DITYPE_t * vect_ptr):
     # so we increase its reference counter.
     # See: https://docs.python.org/3/c-api/intro.html#reference-count-details
     Py_INCREF(sentinel)
-    PyArray_SetBaseObject(arr, <PyObject*>sentinel)
+    np.PyArray_SetBaseObject(arr, sentinel)
     return arr
 
 
