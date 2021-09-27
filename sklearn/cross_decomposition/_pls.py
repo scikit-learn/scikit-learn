@@ -334,7 +334,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         return x_scores
 
-    def inverse_transform(self, X=None, Y=None):
+    def inverse_transform(self, X, Y=None):
         """Transform data back to its original space.
 
         Parameters
