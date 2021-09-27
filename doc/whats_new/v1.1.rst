@@ -50,8 +50,7 @@ Changelog
 
 - |Enhancement| raise an error during cross-validation when the fits for all the
   splits failed. Similarly raise an error during grid-search when the fits for
-  all the models and all the splits failed. :pr:`20619` by :user:`Loïc Estève
-  <lesteve>`.
+  all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.pipeline`
 .......................
