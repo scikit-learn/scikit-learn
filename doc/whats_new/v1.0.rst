@@ -342,6 +342,11 @@ Changelog
   in 1.2. Use the new parameters `alpha_W` and `alpha_H` instead. :pr:`20512` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Fixed a bug in
+  :func:`decomposition.PCA.fit_transform` which has problem that
+  PCA returns highly inaccurate results when number of features is large.
+  :pr:`21109` by :user:`Smile <x-shadow-man>`.
+
 :mod:`sklearn.dummy`
 ....................
 

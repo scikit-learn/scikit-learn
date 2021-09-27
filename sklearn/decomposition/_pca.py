@@ -203,6 +203,12 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
+    n_oversamples_rate : float, default=0.8
+        The percentage of features that need to be extract.
+        Must be of range [0, infinity).
+
+        .. versionadded:: 1.1
+
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
@@ -210,11 +216,6 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    n_oversamples_rate : float, default=0.8
-        The percentage of features that need to be extract.
-        Must be of range [0, infinity).
-
-        .. versionadded:: 0.18.0
 
     Attributes
     ----------
@@ -358,8 +359,8 @@ class PCA(_BasePCA):
         svd_solver="auto",
         tol=0.0,
         iterated_power="auto",
-        random_state=None,
         n_oversamples_rate=0.8,
+        random_state=None,
     ):
         self.n_components = n_components
         self.copy = copy
@@ -367,8 +368,8 @@ class PCA(_BasePCA):
         self.svd_solver = svd_solver
         self.tol = tol
         self.iterated_power = iterated_power
-        self.random_state = random_state
         self.n_oversamples_rate = n_oversamples_rate
+        self.random_state = random_state
 
     def fit(self, X, y=None):
         """Fit the model with X.
