@@ -1419,20 +1419,6 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    Examples
-    --------
-    >>> from sklearn.preprocessing import RobustScaler
-    >>> X = [[ 1., -2.,  2.],
-    ...      [ -2.,  1.,  3.],
-    ...      [ 4.,  1., -2.]]
-    >>> transformer = RobustScaler().fit(X)
-    >>> transformer
-    RobustScaler()
-    >>> transformer.transform(X)
-    array([[ 0. , -2. ,  0. ],
-           [-1. ,  0. ,  0.4],
-           [ 1. ,  0. , -1.6]])
-
     See Also
     --------
     robust_scale : Equivalent function without the estimator API.
@@ -1449,6 +1435,20 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     https://en.wikipedia.org/wiki/Median
     https://en.wikipedia.org/wiki/Interquartile_range
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import RobustScaler
+    >>> X = [[ 1., -2.,  2.],
+    ...      [ -2.,  1.,  3.],
+    ...      [ 4.,  1., -2.]]
+    >>> transformer = RobustScaler().fit(X)
+    >>> transformer
+    RobustScaler()
+    >>> transformer.transform(X)
+    array([[ 0. , -2. ,  0. ],
+           [-1. ,  0. ,  0.4],
+           [ 1. ,  0. , -1.6]])
     """
 
     def __init__(
