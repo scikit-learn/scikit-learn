@@ -12,7 +12,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_equal
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
-from sklearn.cluster._spectral import discretize
+from sklearn.cluster._spectral import discretize, cluster_qr
 from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
@@ -191,25 +191,26 @@ def test_affinities():
         sp.fit(X)
 
 
-@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
+@pytest.mark.parametrize("assign_labels", ("discretize", "cluster_qr"))
 @pytest.mark.parametrize("n_samples", [50, 100, 150, 500])
 def test_direct_clustering(n_samples, assign_labels):
     # Test direct clustering using a noise assignment matrix
     random_state = np.random.RandomState(seed=8)
-    for n_class in range(2, 10):
-        # random class labels
-        y_true = random_state.randint(0, n_class + 1, n_samples)
-        y_true = np.array(y_true, float)
-        # noise class assignment matrix
-        y_indicator = sparse.coo_matrix(
-            (np.ones(n_samples), (np.arange(n_samples), y_true)),
-            shape=(n_samples, n_class + 1),
-        )
-        y_true_noisy = y_indicator.toarray() + 0.1 * random_state.randn(
-            n_samples, n_class + 1
-        )
-        y_pred = assign_labels(y_true_noisy, random_state=random_state)
-        assert adjusted_rand_score(y_true, y_pred) > 0.8
+    for fn in [assign_labels]:
+        for n_class in range(2, 10):
+            # random class labels
+            y_true = random_state.randint(0, n_class + 1, n_samples)
+            y_true = np.array(y_true, float)
+            # noise class assignment matrix
+            y_indicator = sparse.coo_matrix(
+                (np.ones(n_samples), (np.arange(n_samples), y_true)),
+                shape=(n_samples, n_class + 1),
+            )
+            y_true_noisy = y_indicator.toarray() + 0.1 * random_state.randn(
+                n_samples, n_class + 1
+            )
+            y_pred = fn(y_true_noisy, random_state=random_state)
+            assert adjusted_rand_score(y_true, y_pred) > 0.8
 
 
 # TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
