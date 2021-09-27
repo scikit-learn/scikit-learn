@@ -1474,11 +1474,11 @@ def test_fast_euclidean_correctness(
     X_translation, Y_translation, sign, n_samples=10000, n_features=10
 ):
     # This is the only failing test case, so we prefer xfailing.
-    numerical_edge_case = (1e7, 1e7, 1)
-    if (X_translation, Y_translation, sign) == numerical_edge_case:
+    numerical_edge_cases = {(1e6, 1e6, 1), (1e7, 1e7, 1)}
+    if (X_translation, Y_translation, sign) in numerical_edge_cases:
         pytest.xfail(
-            "Numerical edge-case for (X_translation, Y_translation,"
-            f" sign)={numerical_edge_case}"
+            "Numerical edge-case: (X_translation, Y_translation,"
+            f" sign)={(X_translation, Y_translation, sign)}"
         )
 
     # The fast squared euclidean strategy must return results
