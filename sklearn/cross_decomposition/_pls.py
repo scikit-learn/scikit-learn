@@ -413,8 +413,8 @@ class _PLS(
 
         Returns
         -------
-        `X_reconstructed` if `Y` is not given, `(X_reconstructed, Y_reconstructed)` otherwise.
-
+        X_reconstructed, Y_reconstructed : array-like or tuple of array-like
+            Return `X_reconstructed` if `Y` is not given, `(X_reconstructed, Y_reconstructed)` otherwise.
 
         Notes
         -----
