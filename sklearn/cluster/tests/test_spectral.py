@@ -196,7 +196,7 @@ def test_direct_clustering(n_samples):
     # Test direct clustering using a noise assignment matrix
     random_state = np.random.RandomState(seed=8)
     for fn in [discretize, cluster_qr]:
-        for n_class in range(2, 10):
+        for n_class in range(3, 10):
             # random class labels
             y_true = random_state.randint(0, n_class + 1, n_samples)
             y_true = np.array(y_true, float)
