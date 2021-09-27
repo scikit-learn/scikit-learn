@@ -2142,9 +2142,6 @@ class DataDependentFailingClassifier(BaseEstimator):
                 f"Classifier fit failed with {num_values_too_high} values too high"
             )
 
-    def predict(self, X):
-        return np.zeros(X.shape[0])
-
     def score(self, X=None, Y=None):
         return 0.0
 
