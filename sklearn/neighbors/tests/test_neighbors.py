@@ -25,7 +25,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import (
     VALID_METRICS_SPARSE,
 )
-from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
+from sklearn.neighbors._base import (
+    _is_sorted_by_data,
+    _check_precomputed,
+    KNeighborsMixin,
+)
 from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import (
     assert_allclose,
@@ -146,15 +150,127 @@ def test_unsupervised_kneighbors(
         )
 
 
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_features", [5, 10, 100])
+@pytest.mark.parametrize("n_query_pts", [1, 10, 100])
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
+@pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
 @pytest.mark.parametrize(
-    "NearestNeighbors",
+    "NeighborsMixinSubclass",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+def test_neigh_predictions_algorithm_agnosticity(
+    n_samples,
+    n_features,
+    n_query_pts,
+    metric,
+    n_neighbors,
+    radius,
+    NeighborsMixinSubclass,
+):
+    # The different algorithms must return identical predictions results
+    # on their common metrics.
+
+    # Redefining the rng locally to use the same generated X
+    local_rng = np.random.RandomState(0)
+    X = local_rng.rand(n_samples, n_features)
+    y = local_rng.randint(3, size=n_samples)
+
+    query = local_rng.rand(n_query_pts, n_features)
+
+    predict_results = []
+
+    parameter = (
+        n_neighbors if issubclass(NeighborsMixinSubclass, KNeighborsMixin) else radius
+    )
+
+    for algorithm in ALGORITHMS:
+        neigh = NeighborsMixinSubclass(parameter, algorithm=algorithm, metric=metric)
+        neigh.fit(X, y)
+
+        predict_results.append(neigh.predict(query))
+
+    for i in range(len(predict_results) - 1):
+        algorithm = ALGORITHMS[i]
+        next_algorithm = ALGORITHMS[i + 1]
+
+        predictions, next_predictions = predict_results[i], predict_results[i + 1]
+
+        assert_allclose(
+            predictions,
+            next_predictions,
+            err_msg=(
+                f"The '{algorithm}' and '{next_algorithm}' "
+                "algorithms return different predictions."
+            ),
+        )
+
+
+@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_features", [5, 10, 100])
+@pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
+@pytest.mark.parametrize(
+    "NeighborsMixinSubclass",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+def test_neighs_predictions_fast_euclidean_correctness(
+    seed,
+    n_samples,
+    n_features,
+    n_neighbors,
+    radius,
+    NeighborsMixinSubclass,
+    dtype=np.float64,
+):
+    # The fast euclidean strategy must return results
+    # that are close to the ones obtained with the euclidean distance
+    if n_samples < n_neighbors:
+        pytest.skip(
+            f"Skipping as n_samples (={n_samples}) < n_neighbors (={n_neighbors})",
+            allow_module_level=True,
+        )
+
+    rng = np.random.RandomState(seed)
+    X = rng.rand(n_samples, n_features).astype(dtype)
+    y = rng.randint(3, size=n_samples)
+
+    parameter = (
+        n_neighbors if issubclass(NeighborsMixinSubclass, KNeighborsMixin) else radius
+    )
+
+    fast_euclidean_clf = NeighborsMixinSubclass(
+        parameter, algorithm="brute", metric="euclidean"
+    ).fit(X, y)
+    euclidean_pred = fast_euclidean_clf.predict(X)
+
+    fast_euclidean_clf = NeighborsMixinSubclass(
+        parameter, algorithm="brute", metric="fast_euclidean"
+    ).fit(X, y)
+    fast_euclidean_pred = fast_euclidean_clf.predict(X)
+
+    assert_allclose(euclidean_pred, fast_euclidean_pred)
+
+
+@pytest.mark.parametrize(
+    "KNeighborsMixinSubclass",
     [
         neighbors.KNeighborsClassifier,
         neighbors.KNeighborsRegressor,
         neighbors.NearestNeighbors,
     ],
 )
-def test_unsupervised_inputs(NearestNeighbors):
+def test_unsupervised_inputs(KNeighborsMixinSubclass):
     # Test unsupervised inputs for neighbors estimators
 
     X = rng.random_sample((10, 3))
@@ -164,7 +280,7 @@ def test_unsupervised_inputs(NearestNeighbors):
 
     dist1, ind1 = nbrs_fid.kneighbors(X)
 
-    nbrs = NearestNeighbors(n_neighbors=1)
+    nbrs = KNeighborsMixinSubclass(n_neighbors=1)
 
     for data in (nbrs_fid, neighbors.BallTree(X), neighbors.KDTree(X)):
         nbrs.fit(data, y)
