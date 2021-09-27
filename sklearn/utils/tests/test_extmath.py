@@ -574,8 +574,8 @@ def test_randomized_svd_lapack_driver():
     n = 123
     m = 456
     k = 10
-
-    X = np.random.rand(n, m)
+    rng = np.random.RandomState(0)
+    X = rng.rand(n, m)
 
     # Number of components
     k = 10
