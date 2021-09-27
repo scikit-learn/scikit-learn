@@ -316,8 +316,8 @@ def test_meta_estimators_delegate_data_validation(estimator):
 
 
 METAESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS_IN_PIPELINE = [
-    # AdaBoostRegressor can safely accepts `sample_weight` even with a `Pipeline`
-    # because the weights are not used when calling `pipeline.fit`.
+    # AdaBoostRegressor can safely accepts `sample_weight` even with a
+    # `Pipeline` because the weights are not used when calling `pipeline.fit`.
     "AdaBoostRegressor",
 ]
 
@@ -335,7 +335,11 @@ METAESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS_IN_PIPELINE = [
     ids=_get_meta_estimator_id,
 )
 def test_meta_estimators_sample_weight_with_pipeline(estimator_orig):
-    """Check that passing a `Pipeline` with `sample_weight` raises an error."""
+    """Check that passing a `Pipeline` with `sample_weight` raises an error.
+
+    FIXME: in the future, `Pipeline` should be able to delegate `sample_weight`
+    to the inner estimator(s). An error should not be raised then.
+    """
     estimator = clone(estimator_orig)
     rng = np.random.RandomState(0)
     set_random_state(estimator)
