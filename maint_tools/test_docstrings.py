@@ -16,7 +16,6 @@ DOCSTRING_IGNORE_LIST = [
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
     "MiniBatchKMeans",
-    "MissingIndicator",
     "MultiLabelBinarizer",
     "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
