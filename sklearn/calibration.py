@@ -309,7 +309,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     f"The estimator {base_estimator} does not support sample_weight"
                 )
             if sample_weight is not None:
-                _check_sample_weight(sample_weight, X)
+                sample_weight = _check_sample_weight(sample_weight, X)
 
             # Check that each cross-validation fold can have at least one
             # example per class
