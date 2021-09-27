@@ -35,15 +35,15 @@ n_samples, n_features = X.shape
 
 np.random.seed(0)
 
+
 def nudge_images(X, y):
     # Having a larger dataset shows more clearly the behavior of the
     # methods, but we multiply the size of the dataset only by 2, as the
     # cost of the hierarchical clustering methods are strongly
     # super-linear in n_samples
     shift = lambda x: ndimage.shift(x.reshape((8, 8)),
-                                  .3 * np.random.normal(size=2),
-                                  mode='constant',
-                                  ).ravel()
+                                    .3 * np.random.normal(size=2),
+                                    mode='constant').ravel()
     X = np.concatenate([X, np.apply_along_axis(shift, 1, X)])
     Y = np.concatenate([y, y], axis=0)
     return X, Y
@@ -52,7 +52,7 @@ def nudge_images(X, y):
 X, y = nudge_images(X, y)
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Visualize the clustering
 def plot_clustering(X_red, labels, title=None):
     x_min, x_max = np.min(X_red, axis=0), np.max(X_red, axis=0)
@@ -71,7 +71,8 @@ def plot_clustering(X_red, labels, title=None):
     plt.axis('off')
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-#----------------------------------------------------------------------
+
+# ----------------------------------------------------------------------
 # 2D embedding of the digits dataset
 print("Computing embedding")
 X_red = manifold.SpectralEmbedding(n_components=2).fit_transform(X)

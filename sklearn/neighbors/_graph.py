@@ -8,26 +8,25 @@ from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 
 
 def _check_params(X, metric, p, metric_params):
     """Check the validity of the input parameters"""
-    params = zip(['metric', 'p', 'metric_params'],
-                 [metric, p, metric_params])
+    params = zip(["metric", "p", "metric_params"], [metric, p, metric_params])
     est_params = X.get_params()
     for param_name, func_param in params:
         if func_param != est_params[param_name]:
             raise ValueError(
-                "Got %s for %s, while the estimator has %s for "
-                "the same parameter." % (
-                    func_param, param_name, est_params[param_name]))
+                "Got %s for %s, while the estimator has %s for the same parameter."
+                % (func_param, param_name, est_params[param_name])
+            )
 
 
 def _query_include_self(X, include_self, mode):
     """Return the query based on include_self param"""
-    if include_self == 'auto':
-        include_self = mode == 'connectivity'
+    if include_self == "auto":
+        include_self = mode == "connectivity"
 
     # it does not include each sample as its own neighbors
     if not include_self:
@@ -36,10 +35,17 @@ def _query_include_self(X, include_self, mode):
     return X
 
 
-@_deprecate_positional_args
-def kneighbors_graph(X, n_neighbors, *, mode='connectivity',
-                     metric='minkowski', p=2, metric_params=None,
-                     include_self=False, n_jobs=None):
+def kneighbors_graph(
+    X,
+    n_neighbors,
+    *,
+    mode="connectivity",
+    metric="minkowski",
+    p=2,
+    metric_params=None,
+    include_self=False,
+    n_jobs=None,
+):
     """Computes the (weighted) graph of k-Neighbors for points in X
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
@@ -104,8 +110,13 @@ def kneighbors_graph(X, n_neighbors, *, mode='connectivity',
     radius_neighbors_graph
     """
     if not isinstance(X, KNeighborsMixin):
-        X = NearestNeighbors(n_neighbors=n_neighbors, metric=metric, p=p,
-                             metric_params=metric_params, n_jobs=n_jobs).fit(X)
+        X = NearestNeighbors(
+            n_neighbors=n_neighbors,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        ).fit(X)
     else:
         _check_params(X, metric, p, metric_params)
 
@@ -113,10 +124,17 @@ def kneighbors_graph(X, n_neighbors, *, mode='connectivity',
     return X.kneighbors_graph(X=query, n_neighbors=n_neighbors, mode=mode)
 
 
-@_deprecate_positional_args
-def radius_neighbors_graph(X, radius, *, mode='connectivity',
-                           metric='minkowski', p=2, metric_params=None,
-                           include_self=False, n_jobs=None):
+def radius_neighbors_graph(
+    X,
+    radius,
+    *,
+    mode="connectivity",
+    metric="minkowski",
+    p=2,
+    metric_params=None,
+    include_self=False,
+    n_jobs=None,
+):
     """Computes the (weighted) graph of Neighbors for points in X
 
     Neighborhoods are restricted the points at a distance lower than
@@ -185,8 +203,13 @@ def radius_neighbors_graph(X, radius, *, mode='connectivity',
     kneighbors_graph
     """
     if not isinstance(X, RadiusNeighborsMixin):
-        X = NearestNeighbors(radius=radius, metric=metric, p=p,
-                             metric_params=metric_params, n_jobs=n_jobs).fit(X)
+        X = NearestNeighbors(
+            radius=radius,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        ).fit(X)
     else:
         _check_params(X, metric, p, metric_params)
 
@@ -194,10 +217,8 @@ def radius_neighbors_graph(X, radius, *, mode='connectivity',
     return X.radius_neighbors_graph(query, radius, mode)
 
 
-class KNeighborsTransformer(KNeighborsMixin,
-                            TransformerMixin,
-                            NeighborsBase):
-    """Transform X into a (weighted) graph of k nearest neighbors
+class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
+    """Transform X into a (weighted) graph of k nearest neighbors.
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
 
@@ -237,7 +258,7 @@ class KNeighborsTransformer(KNeighborsMixin,
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        metric to use for distance computation. Any metric from scikit-learn
+        Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
         If metric is a callable function, it is called on each
@@ -288,26 +309,62 @@ class KNeighborsTransformer(KNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
+    See Also
+    --------
+    kneighbors_graph : Compute the weighted graph of k-neighbors for
+        points in X.
+    RadiusNeighborsTransformer : Transform X into a weighted graph of
+        neighbors nearer than a radius.
+
     Examples
     --------
-    >>> from sklearn.manifold import Isomap
+    >>> from sklearn.datasets import load_wine
     >>> from sklearn.neighbors import KNeighborsTransformer
-    >>> from sklearn.pipeline import make_pipeline
-    >>> estimator = make_pipeline(
-    ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
-    ...     Isomap(neighbors_algorithm='precomputed'))
+    >>> X, _ = load_wine(return_X_y=True)
+    >>> X.shape
+    (178, 13)
+    >>> transformer = KNeighborsTransformer(n_neighbors=5, mode='distance')
+    >>> X_dist_graph = transformer.fit_transform(X)
+    >>> X_dist_graph.shape
+    (178, 178)
     """
-    @_deprecate_positional_args
-    def __init__(self, *, mode='distance', n_neighbors=5, algorithm='auto',
-                 leaf_size=30, metric='minkowski', p=2, metric_params=None,
-                 n_jobs=1):
+
+    def __init__(
+        self,
+        *,
+        mode="distance",
+        n_neighbors=5,
+        algorithm="auto",
+        leaf_size=30,
+        metric="minkowski",
+        p=2,
+        metric_params=None,
+        n_jobs=1,
+    ):
         super(KNeighborsTransformer, self).__init__(
-            n_neighbors=n_neighbors, radius=None, algorithm=algorithm,
-            leaf_size=leaf_size, metric=metric, p=p,
-            metric_params=metric_params, n_jobs=n_jobs)
+            n_neighbors=n_neighbors,
+            radius=None,
+            algorithm=algorithm,
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        )
         self.mode = mode
 
     def fit(self, X, y=None):
@@ -318,6 +375,8 @@ class KNeighborsTransformer(KNeighborsMixin,
         X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
                 (n_samples, n_samples) if metric='precomputed'
             Training data.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -327,7 +386,7 @@ class KNeighborsTransformer(KNeighborsMixin,
         return self._fit(X)
 
     def transform(self, X):
-        """Computes the (weighted) graph of Neighbors for points in X
+        """Compute the (weighted) graph of Neighbors for points in X.
 
         Parameters
         ----------
@@ -343,9 +402,10 @@ class KNeighborsTransformer(KNeighborsMixin,
             The matrix is of CSR format.
         """
         check_is_fitted(self)
-        add_one = self.mode == 'distance'
-        return self.kneighbors_graph(X, mode=self.mode,
-                                     n_neighbors=self.n_neighbors + add_one)
+        add_one = self.mode == "distance"
+        return self.kneighbors_graph(
+            X, mode=self.mode, n_neighbors=self.n_neighbors + add_one
+        )
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
@@ -358,7 +418,8 @@ class KNeighborsTransformer(KNeighborsMixin,
         X : array-like of shape (n_samples, n_features)
             Training set.
 
-        y : ignored
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -372,20 +433,17 @@ class KNeighborsTransformer(KNeighborsMixin,
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_methods_sample_order_invariance':
-                'check is not applicable.'
+            "_xfail_checks": {
+                "check_methods_sample_order_invariance": "check is not applicable."
             }
         }
 
 
-class RadiusNeighborsTransformer(RadiusNeighborsMixin,
-                                 TransformerMixin,
-                                 NeighborsBase):
-    """Transform X into a (weighted) graph of neighbors nearer than a radius
+class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, NeighborsBase):
+    """Transform X into a (weighted) graph of neighbors nearer than a radius.
 
     The transformed data is a sparse graph as returned by
-    radius_neighbors_graph.
+    `radius_neighbors_graph`.
 
     Read more in the :ref:`User Guide <neighbors_transformer>`.
 
@@ -398,7 +456,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    radius : float, default=1.
+    radius : float, default=1.0
         Radius of neighborhood in the transformed sparse graph.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
@@ -420,7 +478,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        metric to use for distance computation. Any metric from scikit-learn
+        Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
         If metric is a callable function, it is called on each
@@ -471,26 +529,66 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
+    See Also
+    --------
+    kneighbors_graph : Compute the weighted graph of k-neighbors for
+        points in X.
+    KNeighborsTransformer : Transform X into a weighted graph of k
+        nearest neighbors.
+
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_wine
     >>> from sklearn.cluster import DBSCAN
     >>> from sklearn.neighbors import RadiusNeighborsTransformer
     >>> from sklearn.pipeline import make_pipeline
+    >>> X, _ = load_wine(return_X_y=True)
     >>> estimator = make_pipeline(
     ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
-    ...     DBSCAN(min_samples=30, metric='precomputed'))
+    ...     DBSCAN(eps=25.0, metric='precomputed'))
+    >>> X_clustered = estimator.fit_predict(X)
+    >>> clusters, counts = np.unique(X_clustered, return_counts=True)
+    >>> print(counts)
+    [ 29  15 111  11  12]
     """
-    @_deprecate_positional_args
-    def __init__(self, *, mode='distance', radius=1., algorithm='auto',
-                 leaf_size=30, metric='minkowski', p=2, metric_params=None,
-                 n_jobs=1):
+
+    def __init__(
+        self,
+        *,
+        mode="distance",
+        radius=1.0,
+        algorithm="auto",
+        leaf_size=30,
+        metric="minkowski",
+        p=2,
+        metric_params=None,
+        n_jobs=1,
+    ):
         super(RadiusNeighborsTransformer, self).__init__(
-            n_neighbors=None, radius=radius, algorithm=algorithm,
-            leaf_size=leaf_size, metric=metric, p=p,
-            metric_params=metric_params, n_jobs=n_jobs)
+            n_neighbors=None,
+            radius=radius,
+            algorithm=algorithm,
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        )
         self.mode = mode
 
     def fit(self, X, y=None):
@@ -502,6 +600,9 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
                 (n_samples, n_samples) if metric='precomputed'
             Training data.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         Returns
         -------
         self : RadiusNeighborsTransformer
@@ -510,12 +611,12 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
         return self._fit(X)
 
     def transform(self, X):
-        """Computes the (weighted) graph of Neighbors for points in X
+        """Compute the (weighted) graph of Neighbors for points in X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples_transform, n_features)
-            Sample data
+            Sample data.
 
         Returns
         -------
@@ -526,8 +627,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
             The matrix is of CSR format.
         """
         check_is_fitted(self)
-        return self.radius_neighbors_graph(X, mode=self.mode,
-                                           sort_results=True)
+        return self.radius_neighbors_graph(X, mode=self.mode, sort_results=True)
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
@@ -540,7 +640,8 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
         X : array-like of shape (n_samples, n_features)
             Training set.
 
-        y : ignored
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -554,8 +655,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_methods_sample_order_invariance':
-                'check is not applicable.'
+            "_xfail_checks": {
+                "check_methods_sample_order_invariance": "check is not applicable."
             }
         }

@@ -14,16 +14,25 @@ import warnings
 from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils.validation import _check_sample_weight, _deprecate_positional_args
+from ..utils.validation import _check_sample_weight
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
 
 
-@_deprecate_positional_args
-def dbscan(X, eps=0.5, *, min_samples=5, metric='minkowski',
-           metric_params=None, algorithm='auto', leaf_size=30, p=2,
-           sample_weight=None, n_jobs=None):
+def dbscan(
+    X,
+    eps=0.5,
+    *,
+    min_samples=5,
+    metric="minkowski",
+    metric_params=None,
+    algorithm="auto",
+    leaf_size=30,
+    p=2,
+    sample_weight=None,
+    n_jobs=None,
+):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
@@ -138,9 +147,16 @@ def dbscan(X, eps=0.5, *, min_samples=5, metric='minkowski',
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
 
-    est = DBSCAN(eps=eps, min_samples=min_samples, metric=metric,
-                 metric_params=metric_params, algorithm=algorithm,
-                 leaf_size=leaf_size, p=p, n_jobs=n_jobs)
+    est = DBSCAN(
+        eps=eps,
+        min_samples=min_samples,
+        metric=metric,
+        metric_params=metric_params,
+        algorithm=algorithm,
+        leaf_size=leaf_size,
+        p=p,
+        n_jobs=n_jobs,
+    )
     est.fit(X, sample_weight=sample_weight)
     return est.core_sample_indices_, est.labels_
 
@@ -167,7 +183,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         The number of samples (or total weight) in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
 
-    metric : string, or callable, default='euclidean'
+    metric : str, or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
@@ -218,17 +234,16 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
-    Examples
-    --------
-    >>> from sklearn.cluster import DBSCAN
-    >>> import numpy as np
-    >>> X = np.array([[1, 2], [2, 2], [2, 3],
-    ...               [8, 7], [8, 8], [25, 80]])
-    >>> clustering = DBSCAN(eps=3, min_samples=2).fit(X)
-    >>> clustering.labels_
-    array([ 0,  0,  0,  1,  1, -1])
-    >>> clustering
-    DBSCAN(eps=3, min_samples=2)
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -268,11 +283,32 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
     DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
     ACM Transactions on Database Systems (TODS), 42(3), 19.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import DBSCAN
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [2, 2], [2, 3],
+    ...               [8, 7], [8, 8], [25, 80]])
+    >>> clustering = DBSCAN(eps=3, min_samples=2).fit(X)
+    >>> clustering.labels_
+    array([ 0,  0,  0,  1,  1, -1])
+    >>> clustering
+    DBSCAN(eps=3, min_samples=2)
     """
-    @_deprecate_positional_args
-    def __init__(self, eps=0.5, *, min_samples=5, metric='euclidean',
-                 metric_params=None, algorithm='auto', leaf_size=30, p=None,
-                 n_jobs=None):
+
+    def __init__(
+        self,
+        eps=0.5,
+        *,
+        min_samples=5,
+        metric="euclidean",
+        metric_params=None,
+        algorithm="auto",
+        leaf_size=30,
+        p=None,
+        n_jobs=None,
+    ):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
@@ -293,21 +329,21 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             ``metric='precomputed'``. If a sparse matrix is provided, it will
             be converted into a sparse ``csr_matrix``.
 
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
         sample_weight : array-like of shape (n_samples,), default=None
             Weight of each sample, such that a sample with a weight of at least
             ``min_samples`` is by itself a core sample; a sample with a
             negative weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
 
-        y : Ignored
-            Not used, present here for API consistency by convention.
-
         Returns
         -------
-        self
-
+        self : object
+            Returns a fitted instance of self.
         """
-        X = self._validate_data(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse="csr")
 
         if not self.eps > 0.0:
             raise ValueError("eps must be positive.")
@@ -318,35 +354,38 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         # Calculate neighborhood for all samples. This leaves the original
         # point in, which needs to be considered later (i.e. point i is in the
         # neighborhood of point i. While True, its useless information)
-        if self.metric == 'precomputed' and sparse.issparse(X):
+        if self.metric == "precomputed" and sparse.issparse(X):
             # set the diagonal to explicit values, as a point is its own
             # neighbor
             with warnings.catch_warnings():
-                warnings.simplefilter('ignore', sparse.SparseEfficiencyWarning)
+                warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
 
         neighbors_model = NearestNeighbors(
-            radius=self.eps, algorithm=self.algorithm,
-            leaf_size=self.leaf_size, metric=self.metric,
-            metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs)
+            radius=self.eps,
+            algorithm=self.algorithm,
+            leaf_size=self.leaf_size,
+            metric=self.metric,
+            metric_params=self.metric_params,
+            p=self.p,
+            n_jobs=self.n_jobs,
+        )
         neighbors_model.fit(X)
         # This has worst case O(n^2) memory complexity
-        neighborhoods = neighbors_model.radius_neighbors(X,
-                                                         return_distance=False)
+        neighborhoods = neighbors_model.radius_neighbors(X, return_distance=False)
 
         if sample_weight is None:
-            n_neighbors = np.array([len(neighbors)
-                                    for neighbors in neighborhoods])
+            n_neighbors = np.array([len(neighbors) for neighbors in neighborhoods])
         else:
-            n_neighbors = np.array([np.sum(sample_weight[neighbors])
-                                    for neighbors in neighborhoods])
+            n_neighbors = np.array(
+                [np.sum(sample_weight[neighbors]) for neighbors in neighborhoods]
+            )
 
         # Initially, all samples are noise.
         labels = np.full(X.shape[0], -1, dtype=np.intp)
 
         # A list of all core samples found.
-        core_samples = np.asarray(n_neighbors >= self.min_samples,
-                                  dtype=np.uint8)
+        core_samples = np.asarray(n_neighbors >= self.min_samples, dtype=np.uint8)
         dbscan_inner(core_samples, neighborhoods, labels)
 
         self.core_sample_indices_ = np.where(core_samples)[0]
@@ -361,8 +400,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):
-        """Perform DBSCAN clustering from features or distance matrix,
-        and return cluster labels.
+        """Compute clusters from a data or distance matrix and predict labels.
 
         Parameters
         ----------
@@ -372,14 +410,14 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             ``metric='precomputed'``. If a sparse matrix is provided, it will
             be converted into a sparse ``csr_matrix``.
 
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
         sample_weight : array-like of shape (n_samples,), default=None
             Weight of each sample, such that a sample with a weight of at least
             ``min_samples`` is by itself a core sample; a sample with a
             negative weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
-
-        y : Ignored
-            Not used, present here for API consistency by convention.
 
         Returns
         -------

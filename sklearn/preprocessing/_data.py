@@ -8,9 +8,7 @@
 # License: BSD 3 clause
 
 
-from itertools import chain, combinations
 import warnings
-from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
 from scipy import sparse
@@ -18,46 +16,69 @@ from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
-from ..utils.extmath import row_norms
-from ..utils.extmath import _incremental_mean_and_var
-from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
-                                      inplace_csr_row_normalize_l2)
-from ..utils.sparsefuncs import (inplace_column_scale,
-                                 mean_variance_axis, incr_mean_variance_axis,
-                                 min_max_axis)
-from ..utils.validation import (check_is_fitted, check_random_state,
-                                _check_sample_weight,
-                                FLOAT_DTYPES, _deprecate_positional_args)
-from ._csr_polynomial_expansion import _csr_polynomial_expansion
+from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils.sparsefuncs_fast import (
+    inplace_csr_row_normalize_l1,
+    inplace_csr_row_normalize_l2,
+)
+from ..utils.sparsefuncs import (
+    inplace_column_scale,
+    mean_variance_axis,
+    incr_mean_variance_axis,
+    min_max_axis,
+)
+from ..utils.validation import (
+    check_is_fitted,
+    check_random_state,
+    _check_sample_weight,
+    FLOAT_DTYPES,
+)
 
 from ._encoders import OneHotEncoder
+
 
 BOUNDS_THRESHOLD = 1e-7
 
 __all__ = [
-    'Binarizer',
-    'KernelCenterer',
-    'MinMaxScaler',
-    'MaxAbsScaler',
-    'Normalizer',
-    'OneHotEncoder',
-    'RobustScaler',
-    'StandardScaler',
-    'QuantileTransformer',
-    'PowerTransformer',
-    'add_dummy_feature',
-    'binarize',
-    'normalize',
-    'scale',
-    'robust_scale',
-    'maxabs_scale',
-    'minmax_scale',
-    'quantile_transform',
-    'power_transform',
+    "Binarizer",
+    "KernelCenterer",
+    "MinMaxScaler",
+    "MaxAbsScaler",
+    "Normalizer",
+    "OneHotEncoder",
+    "RobustScaler",
+    "StandardScaler",
+    "QuantileTransformer",
+    "PowerTransformer",
+    "add_dummy_feature",
+    "binarize",
+    "normalize",
+    "scale",
+    "robust_scale",
+    "maxabs_scale",
+    "minmax_scale",
+    "quantile_transform",
+    "power_transform",
 ]
+
+
+def _is_constant_feature(var, mean, n_samples):
+    """Detect if a feature is indistinguishable from a constant feature.
+
+    The detection is based on its computed variance and on the theoretical
+    error bounds of the '2 pass algorithm' for variance computation.
+
+    See "Algorithms for computing the sample variance: analysis and
+    recommendations", by Chan, Golub, and LeVeque.
+    """
+    # In scikit-learn, variance is always computed using float64 accumulators.
+    eps = np.finfo(np.float64).eps
+
+    upper_bound = n_samples * eps * var + (n_samples * mean * eps) ** 2
+    return var <= upper_bound
 
 
 def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
@@ -76,13 +97,13 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
     """
     # if we are fitting on 1D arrays, scale might be a scalar
     if np.isscalar(scale):
-        if scale == .0:
-            scale = 1.
+        if scale == 0.0:
+            scale = 1.0
         return scale
     elif isinstance(scale, np.ndarray):
         if constant_mask is None:
             # Detect near constant values to avoid dividing by a very small
-            # value that could lead to suprising results and numerical
+            # value that could lead to surprising results and numerical
             # stability issues.
             constant_mask = scale < 10 * np.finfo(scale.dtype).eps
 
@@ -93,7 +114,6 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         return scale
 
 
-@_deprecate_positional_args
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
 
@@ -171,17 +191,25 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         :class:`~sklearn.pipeline.Pipeline`).
 
     """  # noqa
-    X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
-                    estimator='the scale function', dtype=FLOAT_DTYPES,
-                    force_all_finite='allow-nan')
+    X = check_array(
+        X,
+        accept_sparse="csc",
+        copy=copy,
+        ensure_2d=False,
+        estimator="the scale function",
+        dtype=FLOAT_DTYPES,
+        force_all_finite="allow-nan",
+    )
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
                 "Cannot center sparse matrices: pass `with_mean=False` instead"
-                " See docstring for motivation and alternatives.")
+                " See docstring for motivation and alternatives."
+            )
         if axis != 0:
-            raise ValueError("Can only scale sparse matrix on axis=0, "
-                             " got axis=%d" % axis)
+            raise ValueError(
+                "Can only scale sparse matrix on axis=0,  got axis=%d" % axis
+            )
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
@@ -204,11 +232,13 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
             # concerned feature is efficient, for instance by its mean or
             # maximum.
             if not np.allclose(mean_1, 0):
-                warnings.warn("Numerical issues were encountered "
-                              "when centering the data "
-                              "and might not be solved. Dataset may "
-                              "contain too large values. You may need "
-                              "to prescale your features.")
+                warnings.warn(
+                    "Numerical issues were encountered "
+                    "when centering the data "
+                    "and might not be solved. Dataset may "
+                    "contain too large values. You may need "
+                    "to prescale your features."
+                )
                 Xr -= mean_1
         if with_std:
             scale_ = _handle_zeros_in_scale(scale_, copy=False)
@@ -221,16 +251,18 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                 # due to the lack of precision of mean_. A solution is then to
                 # subtract the mean again:
                 if not np.allclose(mean_2, 0):
-                    warnings.warn("Numerical issues were encountered "
-                                  "when scaling the data "
-                                  "and might not be solved. The standard "
-                                  "deviation of the data is probably "
-                                  "very close to 0. ")
+                    warnings.warn(
+                        "Numerical issues were encountered "
+                        "when scaling the data "
+                        "and might not be solved. The standard "
+                        "deviation of the data is probably "
+                        "very close to 0. "
+                    )
                     Xr -= mean_2
     return X
 
 
-class MinMaxScaler(TransformerMixin, BaseEstimator):
+class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -295,10 +327,34 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *data_range_*
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
     n_samples_seen_ : int
         The number of samples processed by the estimator.
         It will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    minmax_scale : Equivalent function without the estimator API.
+
+    Notes
+    -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     Examples
     --------
@@ -316,22 +372,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
      [1.   1.  ]]
     >>> print(scaler.transform([[2, 2]]))
     [[1.5 0. ]]
-
-    See Also
-    --------
-    minmax_scale : Equivalent function without the estimator API.
-
-    Notes
-    -----
-    NaNs are treated as missing values: disregarded in fit, and maintained in
-    transform.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
         self.feature_range = feature_range
         self.copy = copy
@@ -342,10 +384,9 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
-        if hasattr(self, 'scale_'):
+        if hasattr(self, "scale_"):
             del self.scale_
             del self.min_
             del self.n_samples_seen_
@@ -370,7 +411,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y)
@@ -398,17 +438,25 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         """
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
-            raise ValueError("Minimum of desired feature range must be smaller"
-                             " than maximum. Got %s." % str(feature_range))
+            raise ValueError(
+                "Minimum of desired feature range must be smaller than maximum. Got %s."
+                % str(feature_range)
+            )
 
         if sparse.issparse(X):
-            raise TypeError("MinMaxScaler does not support sparse input. "
-                            "Consider using MaxAbsScaler instead.")
+            raise TypeError(
+                "MinMaxScaler does not support sparse input. "
+                "Consider using MaxAbsScaler instead."
+            )
 
-        first_pass = not hasattr(self, 'n_samples_seen_')
-        X = self._validate_data(X, reset=first_pass,
-                                estimator=self, dtype=FLOAT_DTYPES,
-                                force_all_finite="allow-nan")
+        first_pass = not hasattr(self, "n_samples_seen_")
+        X = self._validate_data(
+            X,
+            reset=first_pass,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
 
         data_min = np.nanmin(X, axis=0)
         data_max = np.nanmax(X, axis=0)
@@ -421,8 +469,9 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
             self.n_samples_seen_ += X.shape[0]
 
         data_range = data_max - data_min
-        self.scale_ = ((feature_range[1] - feature_range[0]) /
-                       _handle_zeros_in_scale(data_range, copy=True))
+        self.scale_ = (feature_range[1] - feature_range[0]) / _handle_zeros_in_scale(
+            data_range, copy=True
+        )
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_min_ = data_min
         self.data_max_ = data_max
@@ -444,8 +493,13 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, copy=self.copy, dtype=FLOAT_DTYPES,
-                                force_all_finite="allow-nan", reset=False)
+        X = self._validate_data(
+            X,
+            copy=self.copy,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+            reset=False,
+        )
 
         X *= self.scale_
         X += self.min_
@@ -468,18 +522,18 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
-                        force_all_finite="allow-nan")
+        X = check_array(
+            X, copy=self.copy, dtype=FLOAT_DTYPES, force_all_finite="allow-nan"
+        )
 
         X -= self.min_
         X /= self.scale_
         return X
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {"allow_nan": True}
 
 
-@_deprecate_positional_args
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
 
@@ -552,11 +606,12 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-    """  # noqa
+    """
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
-    X = check_array(X, copy=False, ensure_2d=False,
-                    dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
+    X = check_array(
+        X, copy=False, ensure_2d=False, dtype=FLOAT_DTYPES, force_all_finite="allow-nan"
+    )
     original_ndim = X.ndim
 
     if original_ndim == 1:
@@ -574,8 +629,8 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     return X
 
 
-class StandardScaler(TransformerMixin, BaseEstimator):
-    """Standardize features by removing the mean and scaling to unit variance
+class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+    """Standardize features by removing the mean and scaling to unit variance.
 
     The standard score of a sample `x` is calculated as:
 
@@ -647,6 +702,17 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         The variance for each feature in the training set. Used to compute
         `scale_`. Equal to ``None`` when ``with_std=False``.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_samples_seen_ : int or ndarray of shape (n_features,)
         The number of samples processed by the estimator for each feature.
         If there are no missing samples, the ``n_samples_seen`` will be an
@@ -655,23 +721,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         or an array of dtype float that sums the weights seen so far.
         Will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
-
-    Examples
-    --------
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
-    >>> scaler = StandardScaler()
-    >>> print(scaler.fit(data))
-    StandardScaler()
-    >>> print(scaler.mean_)
-    [0.5 0.5]
-    >>> print(scaler.transform(data))
-    [[-1. -1.]
-     [-1. -1.]
-     [ 1.  1.]
-     [ 1.  1.]]
-    >>> print(scaler.transform([[2, 2]]))
-    [[3. 3.]]
 
     See Also
     --------
@@ -692,9 +741,25 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-    """  # noqa
 
-    @_deprecate_positional_args
+    Examples
+    --------
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
+    >>> scaler = StandardScaler()
+    >>> print(scaler.fit(data))
+    StandardScaler()
+    >>> print(scaler.mean_)
+    [0.5 0.5]
+    >>> print(scaler.transform(data))
+    [[-1. -1.]
+     [-1. -1.]
+     [ 1.  1.]
+     [ 1.  1.]]
+    >>> print(scaler.transform([[2, 2]]))
+    [[3. 3.]]
+    """
+
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
@@ -705,10 +770,9 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
-        if hasattr(self, 'scale_'):
+        if hasattr(self, "scale_"):
             del self.scale_
             del self.n_samples_seen_
             del self.mean_
@@ -737,14 +801,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y, sample_weight)
 
     def partial_fit(self, X, y=None, sample_weight=None):
-        """
-        Online computation of mean and std on X for later scaling.
+        """Online computation of mean and std on X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
@@ -776,14 +838,18 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Fitted scaler.
         """
         first_call = not hasattr(self, "n_samples_seen_")
-        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
-                                estimator=self, dtype=FLOAT_DTYPES,
-                                force_all_finite='allow-nan', reset=first_call)
+        X = self._validate_data(
+            X,
+            accept_sparse=("csr", "csc"),
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+            reset=first_call,
+        )
         n_features = X.shape[1]
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X,
-                                                 dtype=X.dtype)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -793,36 +859,42 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         # transform it to a NumPy array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
         dtype = np.int64 if sample_weight is None else X.dtype
-        if not hasattr(self, 'n_samples_seen_'):
+        if not hasattr(self, "n_samples_seen_"):
             self.n_samples_seen_ = np.zeros(n_features, dtype=dtype)
         elif np.size(self.n_samples_seen_) == 1:
-            self.n_samples_seen_ = np.repeat(
-                self.n_samples_seen_, X.shape[1])
-            self.n_samples_seen_ = \
-                self.n_samples_seen_.astype(dtype, copy=False)
+            self.n_samples_seen_ = np.repeat(self.n_samples_seen_, X.shape[1])
+            self.n_samples_seen_ = self.n_samples_seen_.astype(dtype, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
-                    "instead. See docstring for motivation and alternatives.")
-            sparse_constructor = (sparse.csr_matrix
-                                  if X.format == 'csr' else sparse.csc_matrix)
+                    "instead. See docstring for motivation and alternatives."
+                )
+            sparse_constructor = (
+                sparse.csr_matrix if X.format == "csr" else sparse.csc_matrix
+            )
 
             if self.with_std:
                 # First pass
-                if not hasattr(self, 'scale_'):
-                    self.mean_, self.var_, self.n_samples_seen_ = \
-                        mean_variance_axis(X, axis=0, weights=sample_weight,
-                                           return_sum_weights=True)
+                if not hasattr(self, "scale_"):
+                    self.mean_, self.var_, self.n_samples_seen_ = mean_variance_axis(
+                        X, axis=0, weights=sample_weight, return_sum_weights=True
+                    )
                 # Next passes
                 else:
-                    self.mean_, self.var_, self.n_samples_seen_ = \
-                        incr_mean_variance_axis(X, axis=0,
-                                                last_mean=self.mean_,
-                                                last_var=self.var_,
-                                                last_n=self.n_samples_seen_,
-                                                weights=sample_weight)
+                    (
+                        self.mean_,
+                        self.var_,
+                        self.n_samples_seen_,
+                    ) = incr_mean_variance_axis(
+                        X,
+                        axis=0,
+                        last_mean=self.mean_,
+                        last_var=self.var_,
+                        last_n=self.n_samples_seen_,
+                        weights=sample_weight,
+                    )
                 # We force the mean and variance to float64 for large arrays
                 # See https://github.com/scikit-learn/scikit-learn/pull/12338
                 self.mean_ = self.mean_.astype(np.float64, copy=False)
@@ -832,17 +904,17 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 self.var_ = None
                 weights = _check_sample_weight(sample_weight, X)
                 sum_weights_nan = weights @ sparse_constructor(
-                    (np.isnan(X.data), X.indices, X.indptr),
-                    shape=X.shape)
-                self.n_samples_seen_ += (
-                    (np.sum(weights) - sum_weights_nan).astype(dtype)
+                    (np.isnan(X.data), X.indices, X.indptr), shape=X.shape
+                )
+                self.n_samples_seen_ += (np.sum(weights) - sum_weights_nan).astype(
+                    dtype
                 )
         else:
             # First pass
-            if not hasattr(self, 'scale_'):
-                self.mean_ = .0
+            if not hasattr(self, "scale_"):
+                self.mean_ = 0.0
                 if self.with_std:
-                    self.var_ = .0
+                    self.var_ = 0.0
                 else:
                     self.var_ = None
 
@@ -852,10 +924,13 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
 
             else:
-                self.mean_, self.var_, self.n_samples_seen_ = \
-                    _incremental_mean_and_var(X, self.mean_, self.var_,
-                                              self.n_samples_seen_,
-                                              sample_weight=sample_weight)
+                self.mean_, self.var_, self.n_samples_seen_ = _incremental_mean_and_var(
+                    X,
+                    self.mean_,
+                    self.var_,
+                    self.n_samples_seen_,
+                    sample_weight=sample_weight,
+                )
 
         # for backward-compatibility, reduce n_samples_seen_ to an integer
         # if the number of samples is the same for each feature (i.e. no
@@ -866,16 +941,19 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         if self.with_std:
             # Extract the list of near constant features on the raw variances,
             # before taking the square root.
-            constant_mask = self.var_ < 10 * np.finfo(X.dtype).eps
+            constant_mask = _is_constant_feature(
+                self.var_, self.mean_, self.n_samples_seen_
+            )
             self.scale_ = _handle_zeros_in_scale(
-                np.sqrt(self.var_), copy=False, constant_mask=constant_mask)
+                np.sqrt(self.var_), copy=False, constant_mask=constant_mask
+            )
         else:
             self.scale_ = None
 
         return self
 
     def transform(self, X, copy=None):
-        """Perform standardization by centering and scaling
+        """Perform standardization by centering and scaling.
 
         Parameters
         ----------
@@ -892,16 +970,22 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
-        X = self._validate_data(X, reset=False,
-                                accept_sparse='csr', copy=copy,
-                                estimator=self, dtype=FLOAT_DTYPES,
-                                force_all_finite='allow-nan')
+        X = self._validate_data(
+            X,
+            reset=False,
+            accept_sparse="csr",
+            copy=copy,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
 
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
-                    "instead. See docstring for motivation and alternatives.")
+                    "instead. See docstring for motivation and alternatives."
+                )
             if self.scale_ is not None:
                 inplace_column_scale(X, 1 / self.scale_)
         else:
@@ -912,7 +996,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         return X
 
     def inverse_transform(self, X, copy=None):
-        """Scale back the data to the original representation
+        """Scale back the data to the original representation.
 
         Parameters
         ----------
@@ -929,22 +1013,24 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
+        X = check_array(
+            X,
+            accept_sparse="csr",
+            copy=copy,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
+
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot uncenter sparse matrices: pass `with_mean=False` "
-                    "instead See docstring for motivation and alternatives.")
-            if not sparse.isspmatrix_csr(X):
-                X = X.tocsr()
-                copy = False
-            if copy:
-                X = X.copy()
+                    "instead See docstring for motivation and alternatives."
+                )
             if self.scale_ is not None:
                 inplace_column_scale(X, self.scale_)
         else:
-            X = np.asarray(X)
-            if copy:
-                X = X.copy()
             if self.with_std:
                 X *= self.scale_
             if self.with_mean:
@@ -952,11 +1038,10 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         return X
 
     def _more_tags(self):
-        return {'allow_nan': True,
-                'preserves_dtype': [np.float64, np.float32]}
+        return {"allow_nan": True, "preserves_dtype": [np.float64, np.float32]}
 
 
-class MaxAbsScaler(TransformerMixin, BaseEstimator):
+class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Scale each feature by its maximum absolute value.
 
     This estimator scales and translates each feature individually such
@@ -985,9 +1070,33 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     max_abs_ : ndarray of shape (n_features,)
         Per feature maximum absolute value.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
+
+    See Also
+    --------
+    maxabs_scale : Equivalent function without the estimator API.
+
+    Notes
+    -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     Examples
     --------
@@ -1002,22 +1111,8 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     array([[ 0.5, -1. ,  1. ],
            [ 1. ,  0. ,  0. ],
            [ 0. ,  1. , -0.5]])
-
-    See Also
-    --------
-    maxabs_scale : Equivalent function without the estimator API.
-
-    Notes
-    -----
-    NaNs are treated as missing values: disregarded in fit, and maintained in
-    transform.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, copy=True):
         self.copy = copy
 
@@ -1026,10 +1121,9 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
-        if hasattr(self, 'scale_'):
+        if hasattr(self, "scale_"):
             del self.scale_
             del self.n_samples_seen_
             del self.max_abs_
@@ -1056,8 +1150,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
-        """
-        Online computation of max absolute value of X for later scaling.
+        """Online computation of max absolute value of X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
@@ -1077,11 +1170,15 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-        first_pass = not hasattr(self, 'n_samples_seen_')
-        X = self._validate_data(X, reset=first_pass,
-                                accept_sparse=('csr', 'csc'), estimator=self,
-                                dtype=FLOAT_DTYPES,
-                                force_all_finite='allow-nan')
+        first_pass = not hasattr(self, "n_samples_seen_")
+        X = self._validate_data(
+            X,
+            reset=first_pass,
+            accept_sparse=("csr", "csc"),
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
 
         if sparse.issparse(X):
             mins, maxs = min_max_axis(X, axis=0, ignore_nan=True)
@@ -1100,7 +1197,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Scale the data
+        """Scale the data.
 
         Parameters
         ----------
@@ -1113,10 +1210,15 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
-                                copy=self.copy, reset=False,
-                                estimator=self, dtype=FLOAT_DTYPES,
-                                force_all_finite='allow-nan')
+        X = self._validate_data(
+            X,
+            accept_sparse=("csr", "csc"),
+            copy=self.copy,
+            reset=False,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
 
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
@@ -1125,7 +1227,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return X
 
     def inverse_transform(self, X):
-        """Scale back the data to the original representation
+        """Scale back the data to the original representation.
 
         Parameters
         ----------
@@ -1138,9 +1240,14 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = check_array(
+            X,
+            accept_sparse=("csr", "csc"),
+            copy=self.copy,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
 
         if sparse.issparse(X):
             inplace_column_scale(X, self.scale_)
@@ -1149,10 +1256,9 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return X
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {"allow_nan": True}
 
 
-@_deprecate_positional_args
 def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
 
@@ -1182,8 +1288,8 @@ def maxabs_scale(X, *, axis=0, copy=True):
 
     .. warning:: Risk of data leak
 
-        Do not use :func:`~sklearn.preprocessing.maxabs_scale` unless you know what
-        you are doing. A common mistake is to apply it to the entire data
+        Do not use :func:`~sklearn.preprocessing.maxabs_scale` unless you know
+        what you are doing. A common mistake is to apply it to the entire data
         *before* splitting into training and test sets. This will bias the
         model evaluation because information would have leaked from the test
         set to the training set.
@@ -1206,13 +1312,18 @@ def maxabs_scale(X, *, axis=0, copy=True):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-    """  # noqa
+    """
     # Unlike the scaler object, this function allows 1d input.
 
     # If copy is required, it will be done inside the scaler object.
-    X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
-                    ensure_2d=False, dtype=FLOAT_DTYPES,
-                    force_all_finite='allow-nan')
+    X = check_array(
+        X,
+        accept_sparse=("csr", "csc"),
+        copy=False,
+        ensure_2d=False,
+        dtype=FLOAT_DTYPES,
+        force_all_finite="allow-nan",
+    )
     original_ndim = X.ndim
 
     if original_ndim == 1:
@@ -1230,7 +1341,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     return X
 
 
-class RobustScaler(TransformerMixin, BaseEstimator):
+class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
@@ -1241,7 +1352,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     Centering and scaling happen independently on each feature by
     computing the relevant statistics on the samples in the training
     set. Median and interquartile range are then stored to be used on
-    later data using the ``transform`` method.
+    later data using the :meth:`transform` method.
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators. Typically this is done by removing the mean
@@ -1256,31 +1367,33 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     with_centering : bool, default=True
-        If True, center the data before scaling.
-        This will cause ``transform`` to raise an exception when attempted on
-        sparse matrices, because centering them entails building a dense
+        If `True`, center the data before scaling.
+        This will cause :meth:`transform` to raise an exception when attempted
+        on sparse matrices, because centering them entails building a dense
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
     with_scaling : bool, default=True
-        If True, scale the data to interquartile range.
+        If `True`, scale the data to interquartile range.
 
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0, \
-        default=(25.0, 75.0), == (1st quantile, 3rd quantile), == IQR
-        Quantile range used to calculate ``scale_``.
+        default=(25.0, 75.0)
+        Quantile range used to calculate `scale_`. By default this is equal to
+        the IQR, i.e., `q_min` is the first quantile and `q_max` is the third
+        quantile.
 
         .. versionadded:: 0.18
 
     copy : bool, default=True
-        If False, try to avoid a copy and do inplace scaling instead.
+        If `False`, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
         not a NumPy array or scipy.sparse CSR matrix, a copy may still be
         returned.
 
     unit_variance : bool, default=False
-        If True, scale data so that normally distributed features have a
+        If `True`, scale data so that normally distributed features have a
         variance of 1. In general, if the difference between the x-values of
-        ``q_max`` and ``q_min`` for a standard normal distribution is greater
+        `q_max` and `q_min` for a standard normal distribution is greater
         than 1, the dataset will be scaled down. If less than 1, the dataset
         will be scaled up.
 
@@ -1297,6 +1410,32 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *scale_* attribute.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    robust_scale : Equivalent function without the estimator API.
+    sklearn.decomposition.PCA : Further removes the linear correlation across
+        features with 'whiten=True'.
+
+    Notes
+    -----
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    https://en.wikipedia.org/wiki/Median
+    https://en.wikipedia.org/wiki/Interquartile_range
+
     Examples
     --------
     >>> from sklearn.preprocessing import RobustScaler
@@ -1310,27 +1449,17 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     array([[ 0. , -2. ,  0. ],
            [-1. ,  0. ,  0.4],
            [ 1. ,  0. , -1.6]])
-
-    See Also
-    --------
-    robust_scale : Equivalent function without the estimator API.
-
-    :class:`~sklearn.decomposition.PCA`
-        Further removes the linear correlation across features with
-        'whiten=True'.
-
-    Notes
-    -----
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
-    https://en.wikipedia.org/wiki/Median
-    https://en.wikipedia.org/wiki/Interquartile_range
     """
-    @_deprecate_positional_args
-    def __init__(self, *, with_centering=True, with_scaling=True,
-                 quantile_range=(25.0, 75.0), copy=True, unit_variance=False):
+
+    def __init__(
+        self,
+        *,
+        with_centering=True,
+        with_scaling=True,
+        quantile_range=(25.0, 75.0),
+        copy=True,
+        unit_variance=False,
+    ):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
         self.quantile_range = quantile_range
@@ -1346,8 +1475,8 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             The data used to compute the median and quantiles
             used for later scaling along the features axis.
 
-        y : None
-            Ignored.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -1356,20 +1485,24 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         """
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
-        X = self._validate_data(X, accept_sparse='csc', estimator=self,
-                                dtype=FLOAT_DTYPES,
-                                force_all_finite='allow-nan')
+        X = self._validate_data(
+            X,
+            accept_sparse="csc",
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
 
         q_min, q_max = self.quantile_range
         if not 0 <= q_min <= q_max <= 100:
-            raise ValueError("Invalid quantile range: %s" %
-                             str(self.quantile_range))
+            raise ValueError("Invalid quantile range: %s" % str(self.quantile_range))
 
         if self.with_centering:
             if sparse.issparse(X):
                 raise ValueError(
                     "Cannot center sparse matrices: use `with_centering=False`"
-                    " instead. See docstring for motivation and alternatives.")
+                    " instead. See docstring for motivation and alternatives."
+                )
             self.center_ = np.nanmedian(X, axis=0)
         else:
             self.center_ = None
@@ -1378,23 +1511,22 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             quantiles = []
             for feature_idx in range(X.shape[1]):
                 if sparse.issparse(X):
-                    column_nnz_data = X.data[X.indptr[feature_idx]:
-                                             X.indptr[feature_idx + 1]]
+                    column_nnz_data = X.data[
+                        X.indptr[feature_idx] : X.indptr[feature_idx + 1]
+                    ]
                     column_data = np.zeros(shape=X.shape[0], dtype=X.dtype)
-                    column_data[:len(column_nnz_data)] = column_nnz_data
+                    column_data[: len(column_nnz_data)] = column_nnz_data
                 else:
                     column_data = X[:, feature_idx]
 
-                quantiles.append(np.nanpercentile(column_data,
-                                                  self.quantile_range))
+                quantiles.append(np.nanpercentile(column_data, self.quantile_range))
 
             quantiles = np.transpose(quantiles)
 
             self.scale_ = quantiles[1] - quantiles[0]
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
             if self.unit_variance:
-                adjust = (stats.norm.ppf(q_max / 100.0) -
-                          stats.norm.ppf(q_min / 100.0))
+                adjust = stats.norm.ppf(q_max / 100.0) - stats.norm.ppf(q_min / 100.0)
                 self.scale_ = self.scale_ / adjust
         else:
             self.scale_ = None
@@ -1415,10 +1547,15 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
-                                copy=self.copy, estimator=self,
-                                dtype=FLOAT_DTYPES, reset=False,
-                                force_all_finite='allow-nan')
+        X = self._validate_data(
+            X,
+            accept_sparse=("csr", "csc"),
+            copy=self.copy,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            reset=False,
+            force_all_finite="allow-nan",
+        )
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1431,7 +1568,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         return X
 
     def inverse_transform(self, X):
-        """Scale back the data to the original representation
+        """Scale back the data to the original representation.
 
         Parameters
         ----------
@@ -1444,9 +1581,14 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = check_array(
+            X,
+            accept_sparse=("csr", "csc"),
+            copy=self.copy,
+            estimator=self,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1459,13 +1601,20 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         return X
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {"allow_nan": True}
 
 
-@_deprecate_positional_args
-def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
-                 quantile_range=(25.0, 75.0), copy=True, unit_variance=False):
-    """Standardize a dataset along any axis
+def robust_scale(
+    X,
+    *,
+    axis=0,
+    with_centering=True,
+    with_scaling=True,
+    quantile_range=(25.0, 75.0),
+    copy=True,
+    unit_variance=False,
+):
+    """Standardize a dataset along any axis.
 
     Center to the median and component wise scale
     according to the interquartile range.
@@ -1478,32 +1627,34 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
         The data to center and scale.
 
     axis : int, default=0
-        axis used to compute the medians and IQR along. If 0,
+        Axis used to compute the medians and IQR along. If 0,
         independently scale each feature, otherwise (if 1) scale
         each sample.
 
     with_centering : bool, default=True
-        If True, center the data before scaling.
+        If `True`, center the data before scaling.
 
     with_scaling : bool, default=True
-        If True, scale the data to unit variance (or equivalently,
+        If `True`, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
-    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
-        default=(25.0, 75.0), == (1st quantile, 3rd quantile), == IQR
-        Quantile range used to calculate ``scale_``.
+    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0,\
+        default=(25.0, 75.0)
+        Quantile range used to calculate `scale_`. By default this is equal to
+        the IQR, i.e., `q_min` is the first quantile and `q_max` is the third
+        quantile.
 
         .. versionadded:: 0.18
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to `False` to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
     unit_variance : bool, default=False
-        If True, scale data so that normally distributed features have a
+        If `True`, scale data so that normally distributed features have a
         variance of 1. In general, if the difference between the x-values of
-        ``q_max`` and ``q_min`` for a standard normal distribution is greater
+        `q_max` and `q_min` for a standard normal distribution is greater
         than 1, the dataset will be scaled down. If less than 1, the dataset
         will be scaled up.
 
@@ -1548,17 +1699,26 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
     RobustScaler : Performs centering and scaling using the Transformer API
         (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
     """
-    X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
-                    ensure_2d=False, dtype=FLOAT_DTYPES,
-                    force_all_finite='allow-nan')
+    X = check_array(
+        X,
+        accept_sparse=("csr", "csc"),
+        copy=False,
+        ensure_2d=False,
+        dtype=FLOAT_DTYPES,
+        force_all_finite="allow-nan",
+    )
     original_ndim = X.ndim
 
     if original_ndim == 1:
         X = X.reshape(X.shape[0], 1)
 
-    s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
-                     quantile_range=quantile_range,
-                     unit_variance=unit_variance, copy=copy)
+    s = RobustScaler(
+        with_centering=with_centering,
+        with_scaling=with_scaling,
+        quantile_range=quantile_range,
+        unit_variance=unit_variance,
+        copy=copy,
+    )
     if axis == 0:
         X = s.fit_transform(X)
     else:
@@ -1570,295 +1730,7 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
     return X
 
 
-class PolynomialFeatures(TransformerMixin, BaseEstimator):
-    """Generate polynomial and interaction features.
-
-    Generate a new feature matrix consisting of all polynomial combinations
-    of the features with degree less than or equal to the specified degree.
-    For example, if an input sample is two dimensional and of the form
-    [a, b], the degree-2 polynomial features are [1, a, b, a^2, ab, b^2].
-
-    Parameters
-    ----------
-    degree : int, default=2
-        The degree of the polynomial features.
-
-    interaction_only : bool, default=False
-        If true, only interaction features are produced: features that are
-        products of at most ``degree`` *distinct* input features (so not
-        ``x[1] ** 2``, ``x[0] * x[2] ** 3``, etc.).
-
-    include_bias : bool, default=True
-        If True (default), then include a bias column, the feature in which
-        all polynomial powers are zero (i.e. a column of ones - acts as an
-        intercept term in a linear model).
-
-    order : {'C', 'F'}, default='C'
-        Order of output array in the dense case. 'F' order is faster to
-        compute, but may slow down subsequent estimators.
-
-        .. versionadded:: 0.21
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import PolynomialFeatures
-    >>> X = np.arange(6).reshape(3, 2)
-    >>> X
-    array([[0, 1],
-           [2, 3],
-           [4, 5]])
-    >>> poly = PolynomialFeatures(2)
-    >>> poly.fit_transform(X)
-    array([[ 1.,  0.,  1.,  0.,  0.,  1.],
-           [ 1.,  2.,  3.,  4.,  6.,  9.],
-           [ 1.,  4.,  5., 16., 20., 25.]])
-    >>> poly = PolynomialFeatures(interaction_only=True)
-    >>> poly.fit_transform(X)
-    array([[ 1.,  0.,  1.,  0.],
-           [ 1.,  2.,  3.,  6.],
-           [ 1.,  4.,  5., 20.]])
-
-    Attributes
-    ----------
-    powers_ : ndarray of shape (n_output_features, n_input_features)
-        powers_[i, j] is the exponent of the jth input in the ith output.
-
-    n_input_features_ : int
-        The total number of input features.
-
-    n_output_features_ : int
-        The total number of polynomial output features. The number of output
-        features is computed by iterating over all suitably sized combinations
-        of input features.
-
-    See Also
-    --------
-    SplineTransformer : Transformer that generates univariate B-spline bases
-        for features
-
-    Notes
-    -----
-    Be aware that the number of features in the output array scales
-    polynomially in the number of features of the input array, and
-    exponentially in the degree. High degrees can cause overfitting.
-
-    See :ref:`examples/linear_model/plot_polynomial_interpolation.py
-    <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
-    """
-    @_deprecate_positional_args
-    def __init__(self, degree=2, *, interaction_only=False, include_bias=True,
-                 order='C'):
-        self.degree = degree
-        self.interaction_only = interaction_only
-        self.include_bias = include_bias
-        self.order = order
-
-    @staticmethod
-    def _combinations(n_features, degree, interaction_only, include_bias):
-        comb = (combinations if interaction_only else combinations_w_r)
-        start = int(not include_bias)
-        return chain.from_iterable(comb(range(n_features), i)
-                                   for i in range(start, degree + 1))
-
-    @property
-    def powers_(self):
-        check_is_fitted(self)
-
-        combinations = self._combinations(self.n_input_features_, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
-        return np.vstack([np.bincount(c, minlength=self.n_input_features_)
-                          for c in combinations])
-
-    def get_feature_names(self, input_features=None):
-        """
-        Return feature names for output features
-
-        Parameters
-        ----------
-        input_features : list of str of shape (n_features,), default=None
-            String names for input features if available. By default,
-            "x0", "x1", ... "xn_features" is used.
-
-        Returns
-        -------
-        output_feature_names : list of str of shape (n_output_features,)
-        """
-        powers = self.powers_
-        if input_features is None:
-            input_features = ['x%d' % i for i in range(powers.shape[1])]
-        feature_names = []
-        for row in powers:
-            inds = np.where(row)[0]
-            if len(inds):
-                name = " ".join("%s^%d" % (input_features[ind], exp)
-                                if exp != 1 else input_features[ind]
-                                for ind, exp in zip(inds, row[inds]))
-            else:
-                name = "1"
-            feature_names.append(name)
-        return feature_names
-
-    def fit(self, X, y=None):
-        """
-        Compute number of output features.
-
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The data.
-
-        y : None
-            Ignored.
-
-        Returns
-        -------
-        self : object
-            Fitted transformer.
-        """
-        n_samples, n_features = self._validate_data(
-            X, accept_sparse=True).shape
-        combinations = self._combinations(n_features, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
-        self.n_input_features_ = n_features
-        self.n_output_features_ = sum(1 for _ in combinations)
-        return self
-
-    def transform(self, X):
-        """Transform data to polynomial features.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The data to transform, row by row.
-
-            Prefer CSR over CSC for sparse input (for speed), but CSC is
-            required if the degree is 4 or higher. If the degree is less than
-            4 and the input format is CSC, it will be converted to CSR, have
-            its polynomial features generated, then converted back to CSC.
-
-            If the degree is 2 or 3, the method described in "Leveraging
-            Sparsity to Speed Up Polynomial Feature Expansions of CSR Matrices
-            Using K-Simplex Numbers" by Andrew Nystrom and John Hughes is
-            used, which is much faster than the method used on CSC input. For
-            this reason, a CSC input will be converted to CSR, and the output
-            will be converted back to CSC prior to being returned, hence the
-            preference of CSR.
-
-        Returns
-        -------
-        XP : {ndarray, sparse matrix} of shape (n_samples, NP)
-            The matrix of features, where NP is the number of polynomial
-            features generated from the combination of inputs. If a sparse
-            matrix is provided, it will be converted into a sparse
-            ``csr_matrix``.
-        """
-        check_is_fitted(self)
-
-        X = self._validate_data(X, order='F', dtype=FLOAT_DTYPES, reset=False,
-                                accept_sparse=('csr', 'csc'))
-
-        n_samples, n_features = X.shape
-
-        if n_features != self.n_input_features_:
-            raise ValueError("X shape does not match training shape")
-
-        if sparse.isspmatrix_csr(X):
-            if self.degree > 3:
-                return self.transform(X.tocsc()).tocsr()
-            to_stack = []
-            if self.include_bias:
-                to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
-            to_stack.append(X)
-            for deg in range(2, self.degree+1):
-                Xp_next = _csr_polynomial_expansion(X.data, X.indices,
-                                                    X.indptr, X.shape[1],
-                                                    self.interaction_only,
-                                                    deg)
-                if Xp_next is None:
-                    break
-                to_stack.append(Xp_next)
-            XP = sparse.hstack(to_stack, format='csr')
-        elif sparse.isspmatrix_csc(X) and self.degree < 4:
-            return self.transform(X.tocsr()).tocsc()
-        else:
-            if sparse.isspmatrix(X):
-                combinations = self._combinations(n_features, self.degree,
-                                                  self.interaction_only,
-                                                  self.include_bias)
-                columns = []
-                for comb in combinations:
-                    if comb:
-                        out_col = 1
-                        for col_idx in comb:
-                            out_col = X[:, col_idx].multiply(out_col)
-                        columns.append(out_col)
-                    else:
-                        bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
-                        columns.append(bias)
-                XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
-            else:
-                XP = np.empty((n_samples, self.n_output_features_),
-                              dtype=X.dtype, order=self.order)
-
-                # What follows is a faster implementation of:
-                # for i, comb in enumerate(combinations):
-                #     XP[:, i] = X[:, comb].prod(1)
-                # This implementation uses two optimisations.
-                # First one is broadcasting,
-                # multiply ([X1, ..., Xn], X1) -> [X1 X1, ..., Xn X1]
-                # multiply ([X2, ..., Xn], X2) -> [X2 X2, ..., Xn X2]
-                # ...
-                # multiply ([X[:, start:end], X[:, start]) -> ...
-                # Second optimisation happens for degrees >= 3.
-                # Xi^3 is computed reusing previous computation:
-                # Xi^3 = Xi^2 * Xi.
-
-                if self.include_bias:
-                    XP[:, 0] = 1
-                    current_col = 1
-                else:
-                    current_col = 0
-
-                # d = 0
-                XP[:, current_col:current_col + n_features] = X
-                index = list(range(current_col,
-                                   current_col + n_features))
-                current_col += n_features
-                index.append(current_col)
-
-                # d >= 1
-                for _ in range(1, self.degree):
-                    new_index = []
-                    end = index[-1]
-                    for feature_idx in range(n_features):
-                        start = index[feature_idx]
-                        new_index.append(current_col)
-                        if self.interaction_only:
-                            start += (index[feature_idx + 1] -
-                                      index[feature_idx])
-                        next_col = current_col + end - start
-                        if next_col <= current_col:
-                            break
-                        # XP[:, start:end] are terms of degree d - 1
-                        # that exclude feature #feature_idx.
-                        np.multiply(XP[:, start:end],
-                                    X[:, feature_idx:feature_idx + 1],
-                                    out=XP[:, current_col:next_col],
-                                    casting='no')
-                        current_col = next_col
-
-                    new_index.append(current_col)
-                    index = new_index
-
-        return XP
-
-
-@_deprecate_positional_args
-def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
+def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
     Read more in the :ref:`User Guide <preprocessing_normalization>`.
@@ -1906,44 +1778,50 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
     """
-    if norm not in ('l1', 'l2', 'max'):
+    if norm not in ("l1", "l2", "max"):
         raise ValueError("'%s' is not a supported norm" % norm)
 
     if axis == 0:
-        sparse_format = 'csc'
+        sparse_format = "csc"
     elif axis == 1:
-        sparse_format = 'csr'
+        sparse_format = "csr"
     else:
         raise ValueError("'%d' is not a supported axis" % axis)
 
-    X = check_array(X, accept_sparse=sparse_format, copy=copy,
-                    estimator='the normalize function', dtype=FLOAT_DTYPES)
+    X = check_array(
+        X,
+        accept_sparse=sparse_format,
+        copy=copy,
+        estimator="the normalize function",
+        dtype=FLOAT_DTYPES,
+    )
     if axis == 0:
         X = X.T
 
     if sparse.issparse(X):
-        if return_norm and norm in ('l1', 'l2'):
-            raise NotImplementedError("return_norm=True is not implemented "
-                                      "for sparse matrices with norm 'l1' "
-                                      "or norm 'l2'")
-        if norm == 'l1':
+        if return_norm and norm in ("l1", "l2"):
+            raise NotImplementedError(
+                "return_norm=True is not implemented "
+                "for sparse matrices with norm 'l1' "
+                "or norm 'l2'"
+            )
+        if norm == "l1":
             inplace_csr_row_normalize_l1(X)
-        elif norm == 'l2':
+        elif norm == "l2":
             inplace_csr_row_normalize_l2(X)
-        elif norm == 'max':
+        elif norm == "max":
             mins, maxes = min_max_axis(X, 1)
             norms = np.maximum(abs(mins), maxes)
             norms_elementwise = norms.repeat(np.diff(X.indptr))
             mask = norms_elementwise != 0
             X.data[mask] /= norms_elementwise[mask]
     else:
-        if norm == 'l1':
+        if norm == "l1":
             norms = np.abs(X).sum(axis=1)
-        elif norm == 'l2':
+        elif norm == "l2":
             norms = row_norms(X)
-        elif norm == 'max':
+        elif norm == "max":
             norms = np.max(abs(X), axis=1)
         norms = _handle_zeros_in_scale(norms, copy=False)
         X /= norms[:, np.newaxis]
@@ -1984,9 +1862,35 @@ class Normalizer(TransformerMixin, BaseEstimator):
         values.
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
+
+    Attributes
+    ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    normalize : Equivalent function without the estimator API.
+
+    Notes
+    -----
+    This estimator is stateless (besides constructor parameters), the
+    fit method does nothing but is useful when used in a pipeline.
+
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     Examples
     --------
@@ -2001,28 +1905,14 @@ class Normalizer(TransformerMixin, BaseEstimator):
     array([[0.8, 0.2, 0.4, 0.4],
            [0.1, 0.3, 0.9, 0.3],
            [0.5, 0.7, 0.5, 0.1]])
-
-    Notes
-    -----
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
-    See Also
-    --------
-    normalize : Equivalent function without the estimator API.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, norm='l2', *, copy=True):
+    def __init__(self, norm="l2", *, copy=True):
         self.norm = norm
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged
+        """Do nothing and return the estimator unchanged.
 
         This method is just there to implement the usual API and hence
         work in pipelines.
@@ -2032,19 +1922,19 @@ class Normalizer(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data to estimate the normalization parameters.
 
-        y : None
-            Ignored.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
         self : object
             Fitted transformer.
         """
-        self._validate_data(X, accept_sparse='csr')
+        self._validate_data(X, accept_sparse="csr")
         return self
 
     def transform(self, X, copy=None):
-        """Scale each non zero row of X to unit norm
+        """Scale each non zero row of X to unit norm.
 
         Parameters
         ----------
@@ -2061,14 +1951,13 @@ class Normalizer(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         copy = copy if copy is not None else self.copy
-        X = self._validate_data(X, accept_sparse='csr', reset=False)
+        X = self._validate_data(X, accept_sparse="csr", reset=False)
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
     def _more_tags(self):
-        return {'stateless': True}
+        return {"stateless": True}
 
 
-@_deprecate_positional_args
 def binarize(X, *, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix.
 
@@ -2100,11 +1989,10 @@ def binarize(X, *, threshold=0.0, copy=True):
     Binarizer : Performs binarization using the Transformer API
         (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
     """
-    X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
+    X = check_array(X, accept_sparse=["csr", "csc"], copy=copy)
     if sparse.issparse(X):
         if threshold < 0:
-            raise ValueError('Cannot binarize a sparse matrix with threshold '
-                             '< 0')
+            raise ValueError("Cannot binarize a sparse matrix with threshold < 0")
         cond = X.data > threshold
         not_cond = np.logical_not(cond)
         X.data[cond] = 1
@@ -2142,8 +2030,35 @@ class Binarizer(TransformerMixin, BaseEstimator):
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : bool, default=True
-        set to False to perform inplace binarization and avoid a copy (if
+        Set to False to perform inplace binarization and avoid a copy (if
         the input is already a numpy array or a scipy.sparse CSR matrix).
+
+    Attributes
+    ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    binarize : Equivalent function without the estimator API.
+    KBinsDiscretizer : Bin continuous data into intervals.
+    OneHotEncoder : Encode categorical features as a one-hot numeric array.
+
+    Notes
+    -----
+    If the input is a sparse matrix, only the non-zero values are subject
+    to update by the Binarizer class.
+
+    This estimator is stateless (besides constructor parameters), the
+    fit method does nothing but is useful when used in a pipeline.
 
     Examples
     --------
@@ -2158,21 +2073,8 @@ class Binarizer(TransformerMixin, BaseEstimator):
     array([[1., 0., 1.],
            [1., 0., 0.],
            [0., 1., 0.]])
-
-    Notes
-    -----
-    If the input is a sparse matrix, only the non-zero values are subject
-    to update by the Binarizer class.
-
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
-
-    See Also
-    --------
-    binarize : Equivalent function without the estimator API.
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, threshold=0.0, copy=True):
         self.threshold = threshold
         self.copy = copy
@@ -2196,7 +2098,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_data(X, accept_sparse='csr')
+        self._validate_data(X, accept_sparse="csr")
         return self
 
     def transform(self, X, copy=None):
@@ -2220,32 +2122,69 @@ class Binarizer(TransformerMixin, BaseEstimator):
         copy = copy if copy is not None else self.copy
         # TODO: This should be refactored because binarize also calls
         # check_array
-        X = self._validate_data(X, accept_sparse=['csr', 'csc'], copy=copy,
-                                reset=False)
+        X = self._validate_data(X, accept_sparse=["csr", "csc"], copy=copy, reset=False)
         return binarize(X, threshold=self.threshold, copy=False)
 
     def _more_tags(self):
-        return {'stateless': True}
+        return {"stateless": True}
 
 
 class KernelCenterer(TransformerMixin, BaseEstimator):
-    """Center a kernel matrix.
+    r"""Center an arbitrary kernel matrix :math:`K`.
 
-    Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
-    function mapping x to a Hilbert space. KernelCenterer centers (i.e.,
-    normalize to have zero mean) the data without explicitly computing phi(x).
-    It is equivalent to centering phi(x) with
-    sklearn.preprocessing.StandardScaler(with_std=False).
+    Let define a kernel :math:`K` such that:
+
+    .. math::
+        K(X, Y) = \phi(X) . \phi(Y)^{T}
+
+    :math:`\phi(X)` is a function mapping of rows of :math:`X` to a
+    Hilbert space and :math:`K` is of shape `(n_samples, n_samples)`.
+
+    This class allows to compute :math:`\tilde{K}(X, Y)` such that:
+
+    .. math::
+        \tilde{K(X, Y)} = \tilde{\phi}(X) . \tilde{\phi}(Y)^{T}
+
+    :math:`\tilde{\phi}(X)` is the centered mapped data in the Hilbert
+    space.
+
+    `KernelCenterer` centers the features without explicitly computing the
+    mapping :math:`\phi(\cdot)`. Working with centered kernels is sometime
+    expected when dealing with algebra computation such as eigendecomposition
+    for :class:`~sklearn.decomposition.KernelPCA` for instance.
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
     Attributes
     ----------
-    K_fit_rows_ : array of shape (n_samples,)
+    K_fit_rows_ : ndarray of shape (n_samples,)
         Average of each column of kernel matrix.
 
     K_fit_all_ : float
         Average of kernel matrix.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.kernel_approximation.Nystroem : Approximate a kernel map
+        using a subset of the training data.
+
+    References
+    ----------
+    .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       "Nonlinear component analysis as a kernel eigenvalue problem."
+       Neural computation 10.5 (1998): 1299-1319.
+       <https://www.mlpack.org/papers/kpca.pdf>`_
 
     Examples
     --------
@@ -2273,7 +2212,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         pass
 
     def fit(self, K, y=None):
-        """Fit KernelCenterer
+        """Fit KernelCenterer.
 
         Parameters
         ----------
@@ -2286,15 +2225,15 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted transformer.
+            Returns the instance itself.
         """
-
         K = self._validate_data(K, dtype=FLOAT_DTYPES)
 
         if K.shape[0] != K.shape[1]:
-            raise ValueError("Kernel matrix must be a square matrix."
-                             " Input is a {}x{} matrix."
-                             .format(K.shape[0], K.shape[1]))
+            raise ValueError(
+                "Kernel matrix must be a square matrix."
+                " Input is a {}x{} matrix.".format(K.shape[0], K.shape[1])
+            )
 
         n_samples = K.shape[0]
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
@@ -2315,13 +2254,13 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         K_new : ndarray of shape (n_samples1, n_samples2)
+            Returns the instance itself.
         """
         check_is_fitted(self)
 
         K = self._validate_data(K, copy=copy, dtype=FLOAT_DTYPES, reset=False)
 
-        K_pred_cols = (np.sum(K, axis=1) /
-                       self.K_fit_rows_.shape[0])[:, np.newaxis]
+        K_pred_cols = (np.sum(K, axis=1) / self.K_fit_rows_.shape[0])[:, np.newaxis]
 
         K -= self.K_fit_rows_
         K -= K_pred_cols
@@ -2330,12 +2269,14 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         return K
 
     def _more_tags(self):
-        return {'pairwise': True}
+        return {"pairwise": True}
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1.")
+    @deprecated(  # type: ignore
+        "Attribute `_pairwise` was deprecated in "
+        "version 0.24 and will be removed in 1.1."
+    )
     @property
     def _pairwise(self):
         return True
@@ -2367,7 +2308,7 @@ def add_dummy_feature(X, value=1.0):
     array([[1., 0., 1.],
            [1., 1., 0.]])
     """
-    X = check_array(X, accept_sparse=['csc', 'csr', 'coo'], dtype=FLOAT_DTYPES)
+    X = check_array(X, accept_sparse=["csc", "csr", "coo"], dtype=FLOAT_DTYPES)
     n_samples, n_features = X.shape
     shape = (n_samples, n_features + 1)
     if sparse.issparse(X):
@@ -2398,7 +2339,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
-class QuantileTransformer(TransformerMixin, BaseEstimator):
+class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2449,7 +2390,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         noise.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`
+        See :term:`Glossary <random_state>`.
 
     copy : bool, default=True
         Set to False to perform inplace transformation and avoid a copy (if the
@@ -2467,15 +2408,16 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     references_ : ndarray of shape (n_quantiles, )
         Quantiles of references.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import QuantileTransformer
-    >>> rng = np.random.RandomState(0)
-    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
-    >>> qt.fit_transform(X)
-    array([...])
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -2495,12 +2437,28 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import QuantileTransformer
+    >>> rng = np.random.RandomState(0)
+    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
+    >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
+    >>> qt.fit_transform(X)
+    array([...])
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, n_quantiles=1000, output_distribution='uniform',
-                 ignore_implicit_zeros=False, subsample=int(1e5),
-                 random_state=None, copy=True):
+    def __init__(
+        self,
+        *,
+        n_quantiles=1000,
+        output_distribution="uniform",
+        ignore_implicit_zeros=False,
+        subsample=int(1e5),
+        random_state=None,
+        copy=True,
+    ):
         self.n_quantiles = n_quantiles
         self.output_distribution = output_distribution
         self.ignore_implicit_zeros = ignore_implicit_zeros
@@ -2517,8 +2475,10 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
             The data used to scale along the features axis.
         """
         if self.ignore_implicit_zeros:
-            warnings.warn("'ignore_implicit_zeros' takes effect only with"
-                          " sparse matrix. This parameter has no effect.")
+            warnings.warn(
+                "'ignore_implicit_zeros' takes effect only with"
+                " sparse matrix. This parameter has no effect."
+            )
 
         n_samples, n_features = X.shape
         references = self.references_ * 100
@@ -2526,10 +2486,10 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         self.quantiles_ = []
         for col in X.T:
             if self.subsample < n_samples:
-                subsample_idx = random_state.choice(n_samples,
-                                                    size=self.subsample,
-                                                    replace=False)
-                col = col.take(subsample_idx, mode='clip')
+                subsample_idx = random_state.choice(
+                    n_samples, size=self.subsample, replace=False
+                )
+                col = col.take(subsample_idx, mode="clip")
             self.quantiles_.append(np.nanpercentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
         # Due to floating-point precision error in `np.nanpercentile`,
@@ -2553,33 +2513,29 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         self.quantiles_ = []
         for feature_idx in range(n_features):
-            column_nnz_data = X.data[X.indptr[feature_idx]:
-                                     X.indptr[feature_idx + 1]]
+            column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
             if len(column_nnz_data) > self.subsample:
-                column_subsample = (self.subsample * len(column_nnz_data) //
-                                    n_samples)
+                column_subsample = self.subsample * len(column_nnz_data) // n_samples
                 if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=column_subsample,
-                                           dtype=X.dtype)
+                    column_data = np.zeros(shape=column_subsample, dtype=X.dtype)
                 else:
                     column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
                 column_data[:column_subsample] = random_state.choice(
-                    column_nnz_data, size=column_subsample, replace=False)
+                    column_nnz_data, size=column_subsample, replace=False
+                )
             else:
                 if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=len(column_nnz_data),
-                                           dtype=X.dtype)
+                    column_data = np.zeros(shape=len(column_nnz_data), dtype=X.dtype)
                 else:
                     column_data = np.zeros(shape=n_samples, dtype=X.dtype)
-                column_data[:len(column_nnz_data)] = column_nnz_data
+                column_data[: len(column_nnz_data)] = column_nnz_data
 
             if not column_data.size:
                 # if no nnz, an error will be raised for computing the
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
             else:
-                self.quantiles_.append(
-                        np.nanpercentile(column_data, references))
+                self.quantiles_.append(np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
         # due to floating-point precision error in `np.nanpercentile`,
         # make sure the quantiles are monotonically increasing
@@ -2607,36 +2563,41 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
            Fitted transformer.
         """
         if self.n_quantiles <= 0:
-            raise ValueError("Invalid value for 'n_quantiles': %d. "
-                             "The number of quantiles must be at least one."
-                             % self.n_quantiles)
+            raise ValueError(
+                "Invalid value for 'n_quantiles': %d. "
+                "The number of quantiles must be at least one."
+                % self.n_quantiles
+            )
 
         if self.subsample <= 0:
-            raise ValueError("Invalid value for 'subsample': %d. "
-                             "The number of subsamples must be at least one."
-                             % self.subsample)
+            raise ValueError(
+                "Invalid value for 'subsample': %d. "
+                "The number of subsamples must be at least one."
+                % self.subsample
+            )
 
         if self.n_quantiles > self.subsample:
-            raise ValueError("The number of quantiles cannot be greater than"
-                             " the number of samples used. Got {} quantiles"
-                             " and {} samples.".format(self.n_quantiles,
-                                                       self.subsample))
+            raise ValueError(
+                "The number of quantiles cannot be greater than"
+                " the number of samples used. Got {} quantiles"
+                " and {} samples.".format(self.n_quantiles, self.subsample)
+            )
 
         X = self._check_inputs(X, in_fit=True, copy=False)
         n_samples = X.shape[0]
 
         if self.n_quantiles > n_samples:
-            warnings.warn("n_quantiles (%s) is greater than the total number "
-                          "of samples (%s). n_quantiles is set to "
-                          "n_samples."
-                          % (self.n_quantiles, n_samples))
+            warnings.warn(
+                "n_quantiles (%s) is greater than the total number "
+                "of samples (%s). n_quantiles is set to "
+                "n_samples." % (self.n_quantiles, n_samples)
+            )
         self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
 
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
-        self.references_ = np.linspace(0, 1, self.n_quantiles_,
-                                       endpoint=True)
+        self.references_ = np.linspace(0, 1, self.n_quantiles_, endpoint=True)
         if sparse.issparse(X):
             self._sparse_fit(X, rng)
         else:
@@ -2660,21 +2621,19 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
             lower_bound_y = quantiles[0]
             upper_bound_y = quantiles[-1]
             # for inverse transform, match a uniform distribution
-            with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-                if output_distribution == 'normal':
+            with np.errstate(invalid="ignore"):  # hide NaN comparison warnings
+                if output_distribution == "normal":
                     X_col = stats.norm.cdf(X_col)
                 # else output distribution is already a uniform distribution
 
         # find index for lower and higher bounds
-        with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-            if output_distribution == 'normal':
-                lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
-                                    lower_bound_x)
-                upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
-                                    upper_bound_x)
-            if output_distribution == 'uniform':
-                lower_bounds_idx = (X_col == lower_bound_x)
-                upper_bounds_idx = (X_col == upper_bound_x)
+        with np.errstate(invalid="ignore"):  # hide NaN comparison warnings
+            if output_distribution == "normal":
+                lower_bounds_idx = X_col - BOUNDS_THRESHOLD < lower_bound_x
+                upper_bounds_idx = X_col + BOUNDS_THRESHOLD > upper_bound_x
+            if output_distribution == "uniform":
+                lower_bounds_idx = X_col == lower_bound_x
+                upper_bounds_idx = X_col == upper_bound_x
 
         isfinite_mask = ~np.isnan(X_col)
         X_col_finite = X_col[isfinite_mask]
@@ -2686,53 +2645,59 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
             # If we don't do this, only one extreme of the duplicated is
             # used (the upper when we do ascending, and the
             # lower for descending). We take the mean of these two
-            X_col[isfinite_mask] = .5 * (
+            X_col[isfinite_mask] = 0.5 * (
                 np.interp(X_col_finite, quantiles, self.references_)
-                - np.interp(-X_col_finite, -quantiles[::-1],
-                            -self.references_[::-1]))
+                - np.interp(-X_col_finite, -quantiles[::-1], -self.references_[::-1])
+            )
         else:
-            X_col[isfinite_mask] = np.interp(X_col_finite,
-                                             self.references_, quantiles)
+            X_col[isfinite_mask] = np.interp(X_col_finite, self.references_, quantiles)
 
         X_col[upper_bounds_idx] = upper_bound_y
         X_col[lower_bounds_idx] = lower_bound_y
         # for forward transform, match the output distribution
         if not inverse:
-            with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-                if output_distribution == 'normal':
+            with np.errstate(invalid="ignore"):  # hide NaN comparison warnings
+                if output_distribution == "normal":
                     X_col = stats.norm.ppf(X_col)
                     # find the value to clip the data to avoid mapping to
                     # infinity. Clip such that the inverse transform will be
                     # consistent
                     clip_min = stats.norm.ppf(BOUNDS_THRESHOLD - np.spacing(1))
-                    clip_max = stats.norm.ppf(1 - (BOUNDS_THRESHOLD -
-                                                   np.spacing(1)))
+                    clip_max = stats.norm.ppf(1 - (BOUNDS_THRESHOLD - np.spacing(1)))
                     X_col = np.clip(X_col, clip_min, clip_max)
                 # else output distribution is uniform and the ppf is the
                 # identity function so we let X_col unchanged
 
         return X_col
 
-    def _check_inputs(self, X, in_fit, accept_sparse_negative=False,
-                      copy=False):
+    def _check_inputs(self, X, in_fit, accept_sparse_negative=False, copy=False):
         """Check inputs before fit and transform."""
-        X = self._validate_data(X, reset=in_fit,
-                                accept_sparse='csc', copy=copy,
-                                dtype=FLOAT_DTYPES,
-                                force_all_finite='allow-nan')
+        X = self._validate_data(
+            X,
+            reset=in_fit,
+            accept_sparse="csc",
+            copy=copy,
+            dtype=FLOAT_DTYPES,
+            force_all_finite="allow-nan",
+        )
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
-        with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-            if (not accept_sparse_negative and not self.ignore_implicit_zeros
-                    and (sparse.issparse(X) and np.any(X.data < 0))):
-                raise ValueError('QuantileTransformer only accepts'
-                                 ' non-negative sparse matrices.')
+        with np.errstate(invalid="ignore"):  # hide NaN comparison warnings
+            if (
+                not accept_sparse_negative
+                and not self.ignore_implicit_zeros
+                and (sparse.issparse(X) and np.any(X.data < 0))
+            ):
+                raise ValueError(
+                    "QuantileTransformer only accepts non-negative sparse matrices."
+                )
 
         # check the output distribution
-        if self.output_distribution not in ('normal', 'uniform'):
-            raise ValueError("'output_distribution' has to be either 'normal'"
-                             " or 'uniform'. Got '{}' instead.".format(
-                                 self.output_distribution))
+        if self.output_distribution not in ("normal", "uniform"):
+            raise ValueError(
+                "'output_distribution' has to be either 'normal'"
+                " or 'uniform'. Got '{}' instead.".format(self.output_distribution)
+            )
 
         return X
 
@@ -2753,19 +2718,17 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         X : ndarray of shape (n_samples, n_features)
             Projected data.
         """
-
         if sparse.issparse(X):
             for feature_idx in range(X.shape[1]):
-                column_slice = slice(X.indptr[feature_idx],
-                                     X.indptr[feature_idx + 1])
+                column_slice = slice(X.indptr[feature_idx], X.indptr[feature_idx + 1])
                 X.data[column_slice] = self._transform_col(
-                    X.data[column_slice], self.quantiles_[:, feature_idx],
-                    inverse)
+                    X.data[column_slice], self.quantiles_[:, feature_idx], inverse
+                )
         else:
             for feature_idx in range(X.shape[1]):
                 X[:, feature_idx] = self._transform_col(
-                    X[:, feature_idx], self.quantiles_[:, feature_idx],
-                    inverse)
+                    X[:, feature_idx], self.quantiles_[:, feature_idx], inverse
+                )
 
         return X
 
@@ -2807,22 +2770,27 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
             The projected data.
         """
         check_is_fitted(self)
-        X = self._check_inputs(X, in_fit=False, accept_sparse_negative=True,
-                               copy=self.copy)
+        X = self._check_inputs(
+            X, in_fit=False, accept_sparse_negative=True, copy=self.copy
+        )
 
         return self._transform(X, inverse=True)
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {"allow_nan": True}
 
 
-@_deprecate_positional_args
-def quantile_transform(X, *, axis=0, n_quantiles=1000,
-                       output_distribution='uniform',
-                       ignore_implicit_zeros=False,
-                       subsample=int(1e5),
-                       random_state=None,
-                       copy=True):
+def quantile_transform(
+    X,
+    *,
+    axis=0,
+    n_quantiles=1000,
+    output_distribution="uniform",
+    ignore_implicit_zeros=False,
+    subsample=int(1e5),
+    random_state=None,
+    copy=True,
+):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2937,22 +2905,25 @@ def quantile_transform(X, *, axis=0, n_quantiles=1000,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
-    n = QuantileTransformer(n_quantiles=n_quantiles,
-                            output_distribution=output_distribution,
-                            subsample=subsample,
-                            ignore_implicit_zeros=ignore_implicit_zeros,
-                            random_state=random_state,
-                            copy=copy)
+    n = QuantileTransformer(
+        n_quantiles=n_quantiles,
+        output_distribution=output_distribution,
+        subsample=subsample,
+        ignore_implicit_zeros=ignore_implicit_zeros,
+        random_state=random_state,
+        copy=copy,
+    )
     if axis == 0:
         return n.fit_transform(X)
     elif axis == 1:
         return n.fit_transform(X.T).T
     else:
-        raise ValueError("axis should be either equal to 0 or 1. Got"
-                         " axis={}".format(axis))
+        raise ValueError(
+            "axis should be either equal to 0 or 1. Got axis={}".format(axis)
+        )
 
 
-class PowerTransformer(TransformerMixin, BaseEstimator):
+class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations
@@ -2994,20 +2965,16 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     lambdas_ : ndarray of float of shape (n_features,)
         The parameters of the power transformation for the selected features.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import PowerTransformer
-    >>> pt = PowerTransformer()
-    >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(pt.fit(data))
-    PowerTransformer()
-    >>> print(pt.lambdas_)
-    [ 1.386... -3.100...]
-    >>> print(pt.transform(data))
-    [[-1.316... -0.707...]
-     [ 0.209... -0.707...]
-     [ 1.106...  1.414...]]
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -3034,9 +3001,24 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PowerTransformer
+    >>> pt = PowerTransformer()
+    >>> data = [[1, 2], [3, 2], [4, 5]]
+    >>> print(pt.fit(data))
+    PowerTransformer()
+    >>> print(pt.lambdas_)
+    [ 1.386... -3.100...]
+    >>> print(pt.transform(data))
+    [[-1.316... -0.707...]
+     [ 0.209... -0.707...]
+     [ 1.106...  1.414...]]
     """
-    @_deprecate_positional_args
-    def __init__(self, method='yeo-johnson', *, standardize=True, copy=True):
+
+    def __init__(self, method="yeo-johnson", *, standardize=True, copy=True):
         self.method = method
         self.standardize = standardize
         self.copy = copy
@@ -3064,27 +3046,44 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
+        """Fit `PowerTransformer` to `X`, then transform `X`.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data used to estimate the optimal transformation parameters
+            and to be transformed using a power transformation.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_features)
+            Transformed data.
+        """
         return self._fit(X, y, force_transform=True)
 
     def _fit(self, X, y=None, force_transform=False):
-        X = self._check_input(X, in_fit=True, check_positive=True,
-                              check_method=True)
+        X = self._check_input(X, in_fit=True, check_positive=True, check_method=True)
 
         if not self.copy and not force_transform:  # if call from fit()
             X = X.copy()  # force copy so that fit does not change X inplace
 
-        optim_function = {'box-cox': self._box_cox_optimize,
-                          'yeo-johnson': self._yeo_johnson_optimize
-                          }[self.method]
-        with np.errstate(invalid='ignore'):  # hide NaN warnings
+        optim_function = {
+            "box-cox": self._box_cox_optimize,
+            "yeo-johnson": self._yeo_johnson_optimize,
+        }[self.method]
+        with np.errstate(invalid="ignore"):  # hide NaN warnings
             self.lambdas_ = np.array([optim_function(col) for col in X.T])
 
         if self.standardize or force_transform:
-            transform_function = {'box-cox': boxcox,
-                                  'yeo-johnson': self._yeo_johnson_transform
-                                  }[self.method]
+            transform_function = {
+                "box-cox": boxcox,
+                "yeo-johnson": self._yeo_johnson_transform,
+            }[self.method]
             for i, lmbda in enumerate(self.lambdas_):
-                with np.errstate(invalid='ignore'):  # hide NaN warnings
+                with np.errstate(invalid="ignore"):  # hide NaN warnings
                     X[:, i] = transform_function(X[:, i], lmbda)
 
         if self.standardize:
@@ -3110,14 +3109,14 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             The transformed data.
         """
         check_is_fitted(self)
-        X = self._check_input(X, in_fit=False, check_positive=True,
-                              check_shape=True)
+        X = self._check_input(X, in_fit=False, check_positive=True, check_shape=True)
 
-        transform_function = {'box-cox': boxcox,
-                              'yeo-johnson': self._yeo_johnson_transform
-                              }[self.method]
+        transform_function = {
+            "box-cox": boxcox,
+            "yeo-johnson": self._yeo_johnson_transform,
+        }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
-            with np.errstate(invalid='ignore'):  # hide NaN warnings
+            with np.errstate(invalid="ignore"):  # hide NaN warnings
                 X[:, i] = transform_function(X[:, i], lmbda)
 
         if self.standardize:
@@ -3162,11 +3161,12 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         if self.standardize:
             X = self._scaler.inverse_transform(X)
 
-        inv_fun = {'box-cox': self._box_cox_inverse_tranform,
-                   'yeo-johnson': self._yeo_johnson_inverse_transform
-                   }[self.method]
+        inv_fun = {
+            "box-cox": self._box_cox_inverse_tranform,
+            "yeo-johnson": self._yeo_johnson_inverse_transform,
+        }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
-            with np.errstate(invalid='ignore'):  # hide NaN warnings
+            with np.errstate(invalid="ignore"):  # hide NaN warnings
                 X[:, i] = inv_fun(X[:, i], lmbda)
 
         return X
@@ -3190,15 +3190,14 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         pos = x >= 0
 
         # when x >= 0
-        if abs(lmbda) < np.spacing(1.):
+        if abs(lmbda) < np.spacing(1.0):
             x_inv[pos] = np.exp(x[pos]) - 1
         else:  # lmbda != 0
             x_inv[pos] = np.power(x[pos] * lmbda + 1, 1 / lmbda) - 1
 
         # when x < 0
-        if abs(lmbda - 2) > np.spacing(1.):
-            x_inv[~pos] = 1 - np.power(-(2 - lmbda) * x[~pos] + 1,
-                                       1 / (2 - lmbda))
+        if abs(lmbda - 2) > np.spacing(1.0):
+            x_inv[~pos] = 1 - np.power(-(2 - lmbda) * x[~pos] + 1, 1 / (2 - lmbda))
         else:  # lmbda == 2
             x_inv[~pos] = 1 - np.exp(-x[~pos])
 
@@ -3213,13 +3212,13 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         pos = x >= 0  # binary mask
 
         # when x >= 0
-        if abs(lmbda) < np.spacing(1.):
+        if abs(lmbda) < np.spacing(1.0):
             out[pos] = np.log1p(x[pos])
         else:  # lmbda != 0
             out[pos] = (np.power(x[pos] + 1, lmbda) - 1) / lmbda
 
         # when x < 0
-        if abs(lmbda - 2) > np.spacing(1.):
+        if abs(lmbda - 2) > np.spacing(1.0):
             out[~pos] = -(np.power(-x[~pos] + 1, 2 - lmbda) - 1) / (2 - lmbda)
         else:  # lmbda == 2
             out[~pos] = -np.log1p(-x[~pos])
@@ -3262,8 +3261,9 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         # choosing bracket -2, 2 like for boxcox
         return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
 
-    def _check_input(self, X, in_fit, check_positive=False, check_shape=False,
-                     check_method=False):
+    def _check_input(
+        self, X, in_fit, check_positive=False, check_shape=False, check_method=False
+    ):
         """Validate the input before fit and transform.
 
         Parameters
@@ -3284,37 +3284,46 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         check_method : bool, default=False
             If True, check that the transformation method is valid.
         """
-        X = self._validate_data(X, ensure_2d=True, dtype=FLOAT_DTYPES,
-                                copy=self.copy, force_all_finite='allow-nan',
-                                reset=in_fit)
+        X = self._validate_data(
+            X,
+            ensure_2d=True,
+            dtype=FLOAT_DTYPES,
+            copy=self.copy,
+            force_all_finite="allow-nan",
+            reset=in_fit,
+        )
 
         with np.warnings.catch_warnings():
-            np.warnings.filterwarnings(
-                'ignore', r'All-NaN (slice|axis) encountered')
-            if (check_positive and self.method == 'box-cox' and
-                    np.nanmin(X) <= 0):
-                raise ValueError("The Box-Cox transformation can only be "
-                                 "applied to strictly positive data")
+            np.warnings.filterwarnings("ignore", r"All-NaN (slice|axis) encountered")
+            if check_positive and self.method == "box-cox" and np.nanmin(X) <= 0:
+                raise ValueError(
+                    "The Box-Cox transformation can only be "
+                    "applied to strictly positive data"
+                )
 
         if check_shape and not X.shape[1] == len(self.lambdas_):
-            raise ValueError("Input data has a different number of features "
-                             "than fitting data. Should have {n}, data has {m}"
-                             .format(n=len(self.lambdas_), m=X.shape[1]))
+            raise ValueError(
+                "Input data has a different number of features "
+                "than fitting data. Should have {n}, data has {m}".format(
+                    n=len(self.lambdas_), m=X.shape[1]
+                )
+            )
 
-        valid_methods = ('box-cox', 'yeo-johnson')
+        valid_methods = ("box-cox", "yeo-johnson")
         if check_method and self.method not in valid_methods:
-            raise ValueError("'method' must be one of {}, "
-                             "got {} instead."
-                             .format(valid_methods, self.method))
+            raise ValueError(
+                "'method' must be one of {}, got {} instead.".format(
+                    valid_methods, self.method
+                )
+            )
 
         return X
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {"allow_nan": True}
 
 
-@_deprecate_positional_args
-def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
+def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     """
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for

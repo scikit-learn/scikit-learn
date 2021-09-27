@@ -80,7 +80,7 @@ results_df[
 # We can see that the estimator using the `'rbf'` kernel performed best,
 # closely followed by `'linear'`. Both estimators with a `'poly'` kernel
 # performed worse, with the one using a two-degree polynomial achieving a much
-# lower perfomance than all other models.
+# lower performance than all other models.
 #
 # Usually, the analysis just ends here, but half the story is missing. The
 # output of :class:`~sklearn.model_selection.GridSearchCV` does not provide
@@ -101,7 +101,7 @@ results_df[
 # Let's inspect this partition effect by plotting the performance of all models
 # in each fold, and calculating the correlation between models across folds:
 
-# create df of model scores ordered by perfomance
+# create df of model scores ordered by performance
 model_scores = results_df.filter(regex=r'split\d*_test_score')
 
 # plot 30 examples of dependency between cv fold and AUC scores
@@ -146,7 +146,7 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # described in the previous section. We will use the one proven to obtain the
 # highest replicability scores (which rate how similar the performance of a
 # model is when evaluating it on different random partitions of the same
-# dataset) while mantaining a low rate of false postitives and false negatives:
+# dataset) while maintaining a low rate of false positives and false negatives:
 # the Nadeau and Bengio's corrected t-test [2]_ that uses a 10 times repeated
 # 10-fold cross validation [3]_.
 #
@@ -178,7 +178,7 @@ def corrected_std(differences, n_train, n_test):
 
     Parameters
     ----------
-    differences : ndarray of shape (n_samples, 1)
+    differences : ndarray of shape (n_samples,)
         Vector containing the differences in the score metrics of two models.
     n_train : int
         Number of samples in the training set.
@@ -187,12 +187,14 @@ def corrected_std(differences, n_train, n_test):
 
     Returns
     -------
-    corrected_std : int
+    corrected_std : float
         Variance-corrected standard deviation of the set of differences.
     """
-    n = n_train + n_test
+    # kr = k times r, r times repeated k-fold crossvalidation,
+    # kr equals the number of times the model was evaluated
+    kr = len(differences)
     corrected_var = (
-        np.var(differences, ddof=1) * ((1 / n) + (n_test / n_train))
+        np.var(differences, ddof=1) * (1 / kr + n_test / n_train)
     )
     corrected_std = np.sqrt(corrected_var)
     return corrected_std
@@ -203,7 +205,7 @@ def compute_corrected_ttest(differences, df, n_train, n_test):
 
     Parameters
     ----------
-    differences : array-like of shape (n_samples, 1)
+    differences : array-like of shape (n_samples,)
         Vector containing the differences in the score metrics of two models.
     df : int
         Degrees of freedom.
@@ -279,10 +281,10 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 #
 # Bayesian estimation can be carried out in many forms to answer our question,
 # but in this example we will implement the approach suggested by Benavoli and
-# collegues [4]_.
+# colleagues [4]_.
 #
 # One way of defining our posterior using a closed-form expression is to select
-# a prior conjugate to the likelihood function. Benavoli and collegues [4]_
+# a prior conjugate to the likelihood function. Benavoli and colleagues [4]_
 # show that when comparing the performance of two classifiers we can model the
 # prior as a Normal-Gamma distribution (with both mean and variance unknown)
 # conjugate to a normal likelihood, to thus express the posterior as a normal
@@ -306,7 +308,7 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 #
 # Let's compute and plot the posterior:
 
-# intitialize random variable
+# initialize random variable
 t_post = t(
     df, loc=np.mean(differences),
     scale=corrected_std(differences, n_train, n_test)
@@ -327,7 +329,7 @@ plt.show()
 
 # %%
 # We can calculate the probability that the first model is better than the
-# second by computing the area under the curve of the posterior distirbution
+# second by computing the area under the curve of the posterior distribution
 # from zero to infinity. And also the reverse: we can calculate the probability
 # that the second model is better than the first by computing the area under
 # the curve from minus infinity to zero.

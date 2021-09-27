@@ -258,7 +258,6 @@ score_estimator(poisson_glm, df_test)
 # least-squares loss. Here we only fit trees with the Poisson loss to keep this
 # example concise.
 
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.preprocessing import OrdinalEncoder
 
@@ -441,7 +440,7 @@ plt.tight_layout()
 # well calibrated (to estimate the mean frequency of the entire population).
 #
 # The ``Ridge`` regression model can predict very low expected frequencies that
-# do not match the data. It can therefore severly under-estimate the risk for
+# do not match the data. It can therefore severely under-estimate the risk for
 # some policyholders.
 #
 # ``PoissonRegressor`` and ``HistGradientBoostingRegressor`` show better

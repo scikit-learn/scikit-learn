@@ -142,7 +142,8 @@ purpose.
     Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.
     Scikit-learn 0.21 supported Python 3.5-3.7.
     Scikit-learn 0.22 supported Python 3.5-3.8.
-    Scikit-learn now requires Python 3.6 or newer.
+    Scikit-learn 0.23 - 0.24 require Python 3.6 or newer.
+    Scikit-learn 1.0 and later requires Python 3.7 or newer.
 
 
 .. note::
@@ -157,7 +158,7 @@ Installing on Apple Silicon M1 hardware
 
 The recently introduced `macos/arm64` platform (sometimes also known as
 `macos/aarch64`) requires the open source community to upgrade the build
-configuation and automation to properly support it.
+configuration and automation to properly support it.
 
 At the time of writing (January 2021), the only way to get a working
 installation of scikit-learn on this hardware is to install scikit-learn and its
@@ -203,7 +204,7 @@ It can be installed by typing the following command:
 Debian/Ubuntu
 -------------
 
-The Debian/Ubuntu package is splitted in three different packages called
+The Debian/Ubuntu package is split in three different packages called
 ``python3-sklearn`` (python modules), ``python3-sklearn-lib`` (low-level
 implementations and bindings), ``python3-sklearn-doc`` (documentation).
 Only the Python 3 version is available in the Debian Buster (the more recent
@@ -246,7 +247,7 @@ command:
 
 .. prompt:: bash $
 
-  sudo port install py36-scikit-learn
+  sudo port install py39-scikit-learn
 
 
 Anaconda and Enthought Deployment Manager for all supported platforms

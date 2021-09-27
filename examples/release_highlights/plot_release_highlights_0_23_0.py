@@ -36,7 +36,6 @@ or with conda::
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import PoissonRegressor
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 n_samples, n_features = 1000, 20
@@ -111,7 +110,7 @@ print(completeness_score(kmeans.predict(X_test), y_test))
 # Various improvements were made to
 # :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. On top of the
-# Poisson loss mentionned above, these estimators now support :ref:`sample
+# Poisson loss mentioned above, these estimators now support :ref:`sample
 # weights <sw_hgbdt>`. Also, an automatic early-stopping criterion was added:
 # early-stopping is enabled by default when the number of samples exceeds 10k.
 # Finally, users can now define :ref:`monotonic constraints
@@ -124,7 +123,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.inspection import plot_partial_dependence
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 n_samples = 500

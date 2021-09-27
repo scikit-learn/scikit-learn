@@ -35,18 +35,22 @@ def test_imputation_missing_value_in_test_array(imputer):
 @pytest.mark.parametrize("marker", [np.nan, -1, 0])
 @pytest.mark.parametrize("imputer", IMPUTERS)
 def test_imputers_add_indicator(marker, imputer):
-    X = np.array([
-        [marker, 1,      5,      marker, 1],
-        [2,      marker, 1,      marker, 2],
-        [6,      3,      marker, marker, 3],
-        [1,      2,      9,      marker, 4]
-    ])
-    X_true_indicator = np.array([
-        [1., 0., 0., 1.],
-        [0., 1., 0., 1.],
-        [0., 0., 1., 1.],
-        [0., 0., 0., 1.]
-    ])
+    X = np.array(
+        [
+            [marker, 1, 5, marker, 1],
+            [2, marker, 1, marker, 2],
+            [6, 3, marker, marker, 3],
+            [1, 2, 9, marker, 4],
+        ]
+    )
+    X_true_indicator = np.array(
+        [
+            [1.0, 0.0, 0.0, 1.0],
+            [0.0, 1.0, 0.0, 1.0],
+            [0.0, 0.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+    )
     imputer.set_params(missing_values=marker, add_indicator=True)
 
     X_trans = imputer.fit_transform(X)
@@ -63,18 +67,22 @@ def test_imputers_add_indicator(marker, imputer):
 @pytest.mark.parametrize("marker", [np.nan, -1])
 @pytest.mark.parametrize("imputer", SPARSE_IMPUTERS)
 def test_imputers_add_indicator_sparse(imputer, marker):
-    X = sparse.csr_matrix([
-        [marker, 1,      5,      marker, 1],
-        [2,      marker, 1,      marker, 2],
-        [6,      3,      marker, marker, 3],
-        [1,      2,      9,      marker, 4]
-    ])
-    X_true_indicator = sparse.csr_matrix([
-        [1., 0., 0., 1.],
-        [0., 1., 0., 1.],
-        [0., 0., 1., 1.],
-        [0., 0., 0., 1.]
-    ])
+    X = sparse.csr_matrix(
+        [
+            [marker, 1, 5, marker, 1],
+            [2, marker, 1, marker, 2],
+            [6, 3, marker, marker, 3],
+            [1, 2, 9, marker, 4],
+        ]
+    )
+    X_true_indicator = sparse.csr_matrix(
+        [
+            [1.0, 0.0, 0.0, 1.0],
+            [0.0, 1.0, 0.0, 1.0],
+            [0.0, 0.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+    )
     imputer.set_params(missing_values=marker, add_indicator=True)
 
     X_trans = imputer.fit_transform(X)
@@ -92,17 +100,18 @@ def test_imputers_add_indicator_sparse(imputer, marker):
 @pytest.mark.parametrize("add_indicator", [True, False])
 def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
     # Test pandas IntegerArray with pd.NA
-    pd = pytest.importorskip('pandas', minversion="1.0")
+    pd = pytest.importorskip("pandas", minversion="1.0")
     marker = np.nan
-    imputer = imputer.set_params(add_indicator=add_indicator,
-                                 missing_values=marker)
+    imputer = imputer.set_params(add_indicator=add_indicator, missing_values=marker)
 
-    X = np.array([
-        [marker, 1,      5,      marker, 1],
-        [2,      marker, 1,      marker, 2],
-        [6,      3,      marker, marker, 3],
-        [1,      2,      9,      marker, 4]
-    ])
+    X = np.array(
+        [
+            [marker, 1, 5, marker, 1],
+            [2, marker, 1, marker, 2],
+            [6, 3, marker, marker, 3],
+            [1, 2, 9, marker, 4],
+        ]
+    )
     # fit on numpy array
     X_trans_expected = imputer.fit_transform(X)
 
