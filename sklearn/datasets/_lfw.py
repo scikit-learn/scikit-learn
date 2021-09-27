@@ -119,7 +119,7 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 def _load_imgs(file_paths, slice_, color, resize):
     """Internally used to load images"""
     # import PIL only when needed
-    from ..externals._pilutil import imread, imresize
+    from ..utils._pilutil import imread, imresize
 
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller

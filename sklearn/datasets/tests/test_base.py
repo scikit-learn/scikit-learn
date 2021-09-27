@@ -31,7 +31,7 @@ from sklearn.utils import Bunch
 from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_as_frame
 
-from sklearn.externals._pilutil import pillow_installed
+from sklearn.utils._pilutil import pillow_installed
 
 from sklearn.utils import IS_PYPY
 

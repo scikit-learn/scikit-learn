@@ -1365,7 +1365,7 @@ def load_sample_images():
     dtype('uint8')
     """
     # import PIL only when needed
-    from ..externals._pilutil import imread
+    from ..utils._pilutil import imread
 
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 

@@ -9,7 +9,7 @@ from _pytest.doctest import DoctestItem
 
 from sklearn.utils import _IS_32BIT
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-from sklearn.externals import _pilutil
+from sklearn.utils import _pilutil
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.datasets import fetch_20newsgroups
