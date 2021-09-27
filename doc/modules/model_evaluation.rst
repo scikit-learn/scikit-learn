@@ -911,7 +911,7 @@ Here are some small examples in binary classification::
 
 Multiclass and multilabel classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In multiclass and multilabel classification task, the notions of precision,
+In a multiclass and multilabel classification task, the notions of precision,
 recall, and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
 specified by the ``average`` argument to the
@@ -925,8 +925,8 @@ produce an F-score that is not between precision and recall.
 
 To make this more explicit, consider the following notation:
 
-* :math:`y` the set of *predicted* :math:`(sample, label)` pairs
-* :math:`\hat{y}` the set of *true* :math:`(sample, label)` pairs
+* :math:`y` the set of *true* :math:`(sample, label)` pairs
+* :math:`\hat{y}` the set of *predicted* :math:`(sample, label)` pairs
 * :math:`L` the set of labels
 * :math:`S` the set of samples
 * :math:`y_s` the subset of :math:`y` with sample :math:`s`,
@@ -946,15 +946,15 @@ Then the metrics are defined as:
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
 |``average``    | Precision                                                                                                        | Recall                                                                                                           | F\_beta                                                                                                              |
 +===============+==================================================================================================================+==================================================================================================================+======================================================================================================================+
-|``"micro"``    | :math:`P(y, \hat{y})`                                                                                            | :math:`R(y, \hat{y})`                                                                                            | :math:`F_\beta(y, \hat{y})`                                                                                          |
+|``"micro"``    | :math:`P(\hat{y}, y)`                                                                                            | :math:`R(\hat{y}, y)`                                                                                            | :math:`F_\beta(\hat{y}, y)`                                                                                          |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
-|``"samples"``  | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} P(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} R(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} F_\beta(y_s, \hat{y}_s)`                                              |
+|``"samples"``  | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} P(\hat{y}_s, y_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} R(\hat{y}_s, y_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} F_\beta(\hat{y}_s, y_s)`                                              |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
-|``"macro"``    | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} P(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} R(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} F_\beta(y_l, \hat{y}_l)`                                              |
+|``"macro"``    | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} P(\hat{y}_l, y_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} R(\hat{y}_l, y_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} F_\beta(\hat{y}_l, y_l)`                                              |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
-|``"weighted"`` | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| P(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| R(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| F_\beta(y_l, \hat{y}_l)`|
+|``"weighted"`` | :math:`\frac{1}{\sum_{l \in L} \left|y_l\right|} \sum_{l \in L} \left|y_l\right| P(\hat{y}_l), y_l`              | :math:`\frac{1}{\sum_{l \in L} \left|y_l\right|} \sum_{l \in L} \left|y_l\right| R(\hat{y}_l, y_l)`              | :math:`\frac{1}{\sum_{l \in L} \left|y_l\right|} \sum_{l \in L} \left|y_l\right| F_\beta(\hat{y}_l), y_l`            |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
-|``None``       | :math:`\langle P(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle R(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle F_\beta(y_l, \hat{y}_l) | l \in L \rangle`                                                            |
+|``None``       | :math:`\langle P(\hat{y}_l, y_l) | l \in L \rangle`                                                              | :math:`\langle R(\hat{y}_l, y_l) | l \in L \rangle`                                                              | :math:`\langle F_\beta(\hat{y}_l, y_l) | l \in L \rangle`                                                            |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
 
   >>> from sklearn import metrics
