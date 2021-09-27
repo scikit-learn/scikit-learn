@@ -15,9 +15,9 @@ Changelog
 :mod:`sklearn.calibration`
 ..........................
 
-- |Fix| Raise an error in :class:`calibration.CalibratedClassifierCV` when
-  `sample_weight` are used together with a :class:`pipeline.Pipeline` instead
-  of silently ignoring `sample_weight`.
+- |Fix| Raise an error instead of silently ignoring `sample_weight` in
+  :class:`calibration.CalibratedClassifierCV` when the underlying estimator
+  does not support it.
   :pr:`21143` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_0:
