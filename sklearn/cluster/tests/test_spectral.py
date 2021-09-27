@@ -191,12 +191,11 @@ def test_affinities():
         sp.fit(X)
 
 
-@pytest.mark.parametrize("assign_labels", ("discretize", "cluster_qr"))
 @pytest.mark.parametrize("n_samples", [50, 100, 150, 500])
 def test_direct_clustering(n_samples, assign_labels):
     # Test direct clustering using a noise assignment matrix
     random_state = np.random.RandomState(seed=8)
-    for fn in [assign_labels]:
+    for fn in [discretize, cluster_qr]:
         for n_class in range(2, 10):
             # random class labels
             y_true = random_state.randint(0, n_class + 1, n_samples)
