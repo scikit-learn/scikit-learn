@@ -216,7 +216,6 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
