@@ -262,6 +262,10 @@ def test_sparse_input(fit_intercept, format):
     assert_array_almost_equal(reg.predict(X) - y.ravel(), 0)
 
 
+@pytest.mark.skipif(
+    sp_version >= parse_version("1.6.0"),
+    reason="Solvers are available as of scipy 1.6.0",
+)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1, 0])
 @pytest.mark.parametrize(
