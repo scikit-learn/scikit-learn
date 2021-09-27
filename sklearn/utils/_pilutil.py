@@ -317,6 +317,7 @@ def fromimage(im, flatten=False, mode=None):
     a = array(im)
     return a
 
+
 _errstr = "Mode is unknown or incompatible with input array shape."
 
 
