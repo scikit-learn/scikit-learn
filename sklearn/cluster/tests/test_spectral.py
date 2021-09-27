@@ -192,7 +192,7 @@ def test_affinities():
 
 
 @pytest.mark.parametrize("n_samples", [50, 100, 150, 500])
-def test_direct_clustering(n_samples, assign_labels):
+def test_direct_clustering(n_samples):
     # Test direct clustering using a noise assignment matrix
     random_state = np.random.RandomState(seed=8)
     for fn in [discretize, cluster_qr]:
