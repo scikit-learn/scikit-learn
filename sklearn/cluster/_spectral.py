@@ -308,7 +308,7 @@ def spectral_clustering(
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
     """
-    if assign_labels not in ("kmeans", "discretize", 'cluster_qr'):
+    if assign_labels not in ("kmeans", "discretize", "cluster_qr"):
         raise ValueError(
             "The 'assign_labels' parameter should be "
             "'kmeans' or 'discretize', or 'cluster_qr', "
@@ -346,7 +346,7 @@ def spectral_clustering(
         _, labels, _ = k_means(
             maps, n_clusters, random_state=random_state, n_init=n_init, verbose=verbose
         )
-    elif assign_labels == 'cluster_qr':
+    elif assign_labels == "cluster_qr":
         labels = cluster_qr(maps)
     else:
         labels = discretize(maps, random_state=random_state)
