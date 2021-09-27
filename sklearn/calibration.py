@@ -939,7 +939,7 @@ def calibration_curve(
     labels = np.unique(y_true)
     if len(labels) > 2:
         raise ValueError(
-            "Only binary classification is supported. Provided labels {labels}."
+            f"Only binary classification is supported. Provided labels {labels}."
         )
     y_true = y_true == pos_label
 
