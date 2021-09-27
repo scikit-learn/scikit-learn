@@ -357,16 +357,13 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         This transformation will only be exact if `n_components=n_features`.
         """
         check_is_fitted(self)
-
-        if X is not None:
-            X = check_array(X, dtype=FLOAT_DTYPES)
-            # From pls space to original space
-            X_reconstructed = np.matmul(X, self.x_loadings_.T)
-            # Denormalize
-            X_reconstructed *= self._x_std
-            X_reconstructed += self._x_mean
-            return X_reconstructed
-
+        X = check_array(X, dtype=FLOAT_DTYPES)
+        # From pls space to original space
+        X_reconstructed = np.matmul(X, self.x_loadings_.T)
+        # Denormalize
+        X_reconstructed *= self._x_std
+        X_reconstructed += self._x_mean
+    
         if Y is not None:
             Y = check_array(Y, dtype=FLOAT_DTYPES)
             # From pls space to original space
@@ -374,7 +371,9 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             # Denormalize
             Y_reconstructed *= self._y_std
             Y_reconstructed += self._y_mean
-            return Y_reconstructed
+            return X_reconstructed, Y_reconstructed
+        
+        return X_reconstructed
 
     def predict(self, X, copy=True):
         """Predict targets of given samples.
