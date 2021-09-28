@@ -1190,7 +1190,7 @@ def load_boston(*, return_X_y=False):
             target = raw_df.values[1::2, 2]
 
         Alternative datasets include the California housing dataset [3]_
-        (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
+        (i.e. :func:`~sklearn.datasets.fetch_california_housing`) and Ames
         housing dataset [4]_. You can load the datasets as follows::
 
             from sklearn.datasets import fetch_california_housing
