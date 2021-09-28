@@ -116,6 +116,8 @@ jobs:
     environment:
       - OMP_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
+      - NUMPY_VERSION: 'latest'
+      - SCIPY_VERSION: 'latest'
       - CYTHON_VERSION: 'latest'
       - JOBLIB_VERSION: 'latest'
       - THREADPOOLCTL_VERSION: 'latest'
