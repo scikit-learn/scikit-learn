@@ -573,7 +573,7 @@ def test_grower_interaction_constraints():
     """Check that grower respects interaction constraints."""
     n_features = 6
     interaction_cst = [{0, 1}, {1, 2}, {3, 4, 5}]
-    n_samples = 3
+    n_samples = 10
     n_bins = 6
     root_feature_splits = []
 
@@ -587,7 +587,7 @@ def test_grower_interaction_constraints():
                 res.extend(get_all_children(n))
         return res
 
-    for seed in range(1):
+    for seed in range(20):
         rng = np.random.RandomState(seed)
 
         X_binned = rng.randint(
@@ -607,7 +607,7 @@ def test_grower_interaction_constraints():
             max_leaf_nodes=None,
             min_samples_leaf=1,
             interaction_cst=interaction_cst,
-            n_threads=2,
+            n_threads=n_threads,
         )
         grower.grow()
 

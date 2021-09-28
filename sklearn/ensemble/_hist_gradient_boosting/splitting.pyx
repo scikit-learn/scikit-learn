@@ -1,5 +1,5 @@
 # cython: cdivision=True
-# cython: boundscheck=True
+# cython: boundscheck=False
 # cython: wraparound=False
 # cython: language_level=3
 
@@ -332,7 +332,6 @@ cdef class Splitter:
             int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
             int [:] right_offset = np.zeros(n_threads, dtype=np.int32)
 
-
         # only set left_cat_bitset when is_categorical is True
         if is_categorical:
             left_cat_bitset = &cat_bitset_tmp[0]
@@ -388,32 +387,14 @@ cdef class Splitter:
             # map indices in left/right_indices_buffer back into
             # sample_indices. This also updates self.partition since
             # sample_indices is a view.
-            with gil:
-                print("\nsplit_indices")
-                print(f"n_threads = {n_threads}")
-                print(f"len(sample_indices) = {len(sample_indices)}")
-                print(f"sample_indices = {np.array(sample_indices)}")
             for thread_idx in prange(n_threads, schedule='static',
                                      chunksize=1):
-                with gil:
-                    print(
-                        f"\nthread_idx = {np.array(thread_idx)}"
-                        f"\noffset_in_buffers = {np.array(offset_in_buffers)}"
-                        f"\nleft_counts = {np.array(left_counts)}"
-                        f"\nleft_offset = {np.array(left_offset)}"
-                        f"\nleft_indices_buffer = {np.array(left_indices_buffer)}"
-                        f"\nright_counts = {np.array(right_counts)}"
-                        f"\nright_offset = {np.array(right_offset)}"
-                        f"\nright_indices_buffer = {np.array(right_indices_buffer)}",
-                        flush=True,
-                    )
-
                 memcpy(
                     &sample_indices[left_offset[thread_idx]],
                     &left_indices_buffer[offset_in_buffers[thread_idx]],
                     sizeof(unsigned int) * left_counts[thread_idx]
                 )
-                if right_counts[thread_idx] > -1:
+                if right_counts[thread_idx] > 0:
                     memcpy(
                         &sample_indices[right_offset[thread_idx]],
                         &right_indices_buffer[offset_in_buffers[thread_idx]],
