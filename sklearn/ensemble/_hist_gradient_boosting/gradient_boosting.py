@@ -207,7 +207,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return is_categorical, known_categories
 
     def _check_interaction_cst(self, n_features):
-        """Check and validation interaction constraints."""
+        """Check and validation for interaction constraints."""
         if self.interaction_cst is None:
             return None
 
@@ -289,7 +289,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self.is_categorical_, known_categories = self._check_categories(X)
 
-        # convert to list of sets and convert to integers
+        # Encode constraints into a list of sets of features indices (integers).
         interaction_cst = self._check_interaction_cst(self._n_features)
 
         # we need this stateful variable to tell raw_predict() that it was

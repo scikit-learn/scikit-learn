@@ -1092,7 +1092,7 @@ def test_uint8_predict(Est):
     ],
 )
 def test_check_interaction_cst(interaction_cst, n_features, result):
-    """Checkt that _check_interaction_cst returns the expected list of sets"""
+    """Check that _check_interaction_cst returns the expected list of sets"""
     est = HistGradientBoostingRegressor()
     est.set_params(interaction_cst=interaction_cst)
     assert est._check_interaction_cst(n_features) == result
