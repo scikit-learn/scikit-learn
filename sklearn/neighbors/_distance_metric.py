@@ -1,4 +1,4 @@
-# TODO: Remove this file in 1.2
+# TODO: Remove this file in 1.3
 import warnings
 
 from ..metrics import DistanceMetric as _DistanceMetric
@@ -10,7 +10,7 @@ class DistanceMetric(_DistanceMetric):
         warnings.warn(
             "sklearn.neighbors.DistanceMetric has been moved "
             "to sklearn.metrics.DistanceMetric in 1.0. "
-            "This import path will be removed in 1.2",
+            "This import path will be removed in 1.3",
             category=FutureWarning,
         )
 

@@ -85,13 +85,3 @@ def test_array_object_type():
     X = np.array([(1, 2, 3), (2, 5), (5, 5, 1, 2)], dtype=object)
     with pytest.raises(ValueError, match="setting an array element with a sequence"):
         BallTree(X)
-
-
-def test_bad_pyfunc_metric():
-    def wrong_distance(x, y):
-        return "1"
-
-    X = np.ones((5, 2))
-    msg = "Custom distance function must accept two vectors"
-    with pytest.raises(TypeError, match=msg):
-        BallTree(X, metric=wrong_distance)
