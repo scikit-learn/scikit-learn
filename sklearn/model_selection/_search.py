@@ -1347,7 +1347,7 @@ class GridSearchCV(BaseSearchCV):
     >>> svc = svm.SVC()
     >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
-    GridSearchCV(estimator=SVC(),
+    GridSearchCV(estimator=svm.SVC(),
                  param_grid={'C': [1, 10], 'kernel': ('linear', 'rbf')})
     >>> sorted(clf.cv_results_.keys())
     ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
