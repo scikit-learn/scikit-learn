@@ -191,7 +191,7 @@ def test_affinities():
         sp.fit(X)
 
 
-@pytest.mark.parametrize("_dtype", ["np.float32", "np.float64"])
+@pytest.mark.parametrize("_dtype", ["single", "double"])
 def test_cluster_qr(_dtype):
     # Test cluster_qr for fixed data different dtypes
     random_state = np.random.RandomState(seed=8)
