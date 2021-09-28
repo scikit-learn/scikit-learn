@@ -114,6 +114,8 @@ jobs:
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
     environment:
+      # Use the latest supported version of python
+      - PYTHON_VERSION: '3.9'
       - OMP_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
       - NUMPY_VERSION: 'latest'

@@ -33,7 +33,7 @@ export PATH=$MINICONDA_PATH/bin:$PATH
 mamba update --yes conda
 
 # Create environment and install dependencies
-mamba create -n testenv --yes python=3.7
+mamba create -n testenv --yes $(get_dep python $PYTHON_VERSION)
 mamba activate testenv
 
 # Use the latest by default
