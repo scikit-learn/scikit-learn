@@ -204,7 +204,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             "representing a percentage of features to "
             f"select. Got {self.n_features_to_select}"
         )
-        if self.n_features_to_select in ("auto", "warn", None):
+        if self.n_features_to_select in ("warn", None):
+            if self.tol is not None:
+                raise ValueError("tol is only enabled if `n_features_to_select='auto'`")
+            self.n_features_to_select_ = n_features // 2
+        elif self.n_features_to_select == "auto":
             if self.tol is not None:
                 self.n_features_to_select_ = n_features - 1
             else:
