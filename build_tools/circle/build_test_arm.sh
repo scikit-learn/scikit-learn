@@ -34,7 +34,7 @@ mamba update --yes conda
 
 # Create environment and install dependencies
 mamba create -n testenv --yes python=3.7
-source activate testenv
+mamba activate testenv
 
 # Use the latest by default
 mamba install --verbose -y  ccache \
@@ -65,7 +65,7 @@ conda list
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
 
-pip install --verbose --editable . --no-build-isolation
+pip install --verbose --no-build-isolation .
 ccache -s
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
