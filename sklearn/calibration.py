@@ -351,6 +351,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             else:
                 this_estimator = clone(base_estimator)
                 _, method_name = _get_prediction_method(this_estimator)
+                fit_params = (
+                    {"sample_weight": sample_weight}
+                    if sample_weight is not None and supports_sw
+                    else None
+                )
                 pred_method = partial(
                     cross_val_predict,
                     estimator=this_estimator,
@@ -359,6 +364,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     cv=cv,
                     method=method_name,
                     n_jobs=self.n_jobs,
+                    fit_params=fit_params,
                 )
                 predictions = _compute_predictions(
                     pred_method, method_name, X, n_classes
@@ -760,10 +766,17 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
 
     F = predictions  # F follows Platt's notations
 
-    # Bayesian priors (see Platt end of section 2.2)
-    prior0 = float(np.sum(y <= 0))
-    prior1 = y.shape[0] - prior0
-    T = np.zeros(y.shape)
+    # Bayesian priors (see Platt end of section 2.2):
+    # It corresponds to the number of samples, taking into account the
+    # `sample_weight`.
+    mask_negative_samples = y <= 0
+    if sample_weight is not None:
+        prior0 = (sample_weight[mask_negative_samples]).sum()
+        prior1 = (sample_weight[~mask_negative_samples]).sum()
+    else:
+        prior0 = float(np.sum(mask_negative_samples))
+        prior1 = y.shape[0] - prior0
+    T = np.zeros_like(y)
     T[y > 0] = (prior1 + 1.0) / (prior1 + 2.0)
     T[y <= 0] = 1.0 / (prior0 + 2.0)
     T1 = 1.0 - T
