@@ -66,7 +66,7 @@ conda list
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
 
-pip install --verbose --no-build-isolation .
+pip install --verbose --editable .
 ccache -s
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
