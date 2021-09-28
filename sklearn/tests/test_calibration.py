@@ -788,13 +788,18 @@ def test_calibration_display_ref_line(pyplot, iris_data_binary):
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
-def test_calibrated_classifier_cv_sample_weights_equivalence(data, method, ensemble):
-    from sklearn.datasets import load_iris
-
+def test_calibrated_classifier_cv_sample_weights_equivalence(method, ensemble):
+    """Check that passing repeating twice the dataset `X` is equivalent to
+    passing a `sample_weight` with a factor 2."""
     X, y = load_iris(return_X_y=True)
+    # Scale the data to avoid any convergence issue
+    X = StandardScaler().fit_transform(X)
+    # Only use 2 classes
     X, y = X[:100], y[:100]
     sample_weight = np.ones_like(y) * 2
 
+    # Interlace the data such that a 2-fold cross-validation will be equivalent
+    # to using the original dataset with a sample weights of 2
     X_twice = np.zeros((X.shape[0] * 2, X.shape[1]), dtype=X.dtype)
     X_twice[::2, :] = X
     X_twice[1::2, :] = X
@@ -824,6 +829,7 @@ def test_calibrated_classifier_cv_sample_weights_equivalence(data, method, ensem
             est_without_weights.base_estimator.coef_,
         )
 
+    # Check that the predictions are the same
     y_pred_with_weights = calibrated_clf_with_weights.predict_proba(X)
     y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
 
