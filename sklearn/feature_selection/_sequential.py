@@ -176,7 +176,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             warnings.warn(
                 "Leaving `n_features_to_select` to "
                 "None is deprecated in 1.0 and will become 'auto' "
-                "in 1.2. To keep the same behaviour as with None "
+                "in 1.3. To keep the same behaviour as with None "
                 "(i.e. select half of the features) and avoid "
                 "this warning, you should manually set "
                 "`n_features_to_select='auto'` and set tol=None "
@@ -195,7 +195,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         )
         n_features = X.shape[1]
 
-        # FIXME: to be fixed in 1.2
+        # FIXME: to be fixed in 1.3
         error_msg = (
             "n_features_to_select must be either 'auto', 'warn', "
             "None, an integer in [1, n_features - 1] "
