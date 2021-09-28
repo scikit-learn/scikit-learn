@@ -196,7 +196,7 @@ def test_cluster_qr():
     random_state = np.random.RandomState(seed=8)
     data = random_state.randn(10, 5)
     labels = cluster_qr(data)
-    assert not np.array_equal(labels, [2, 1, 3, 3, 2, 4, 1, 3, 4, 0])
+    assert not np.array_equal(labels, np.array([2, 1, 3, 3, 2, 4, 1, 3, 4, 0]))
 
 
 @pytest.mark.parametrize("n_samples", [50, 100, 150, 500])
