@@ -303,7 +303,7 @@ The following GitHub checklist might be helpful in a release PR::
       https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
     * [ ] upload the wheels and source tarball to PyPI
     * [ ] https://github.com/scikit-learn/scikit-learn/releases publish
-    * [ ] announce on mailing list and on twitter, and LinkedIn
+    * [ ] announce on mailing list and on Twitter, and LinkedIn
 
 Merging Pull Requests
 ---------------------
