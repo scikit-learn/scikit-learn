@@ -1221,7 +1221,7 @@ cdef class DatasetsPair:
         X,
         Y,
         str metric="euclidean",
-        dict metric_kwargs=dict(),
+        dict metric_kwargs=None,
     ) -> DatasetsPair:
         """Return the DatasetsPair implementation for the given arguments.
 
@@ -1254,7 +1254,7 @@ cdef class DatasetsPair:
         cdef:
             DistanceMetric distance_metric = DistanceMetric.get_metric(
                 metric,
-                **metric_kwargs
+                **(metric_kwargs or {})
             )
 
         if X.dtype != np.float64 or Y.dtype != np.float64:
@@ -1275,22 +1275,23 @@ cdef class DatasetsPair:
     @classmethod
     def unpack_csr_matrix(cls, X: csr_matrix):
         """Ensure getting ITYPE instead of int internally used for CSR matrices."""
-        # TODO: this adds another level of checks and conversion, could we remove it?
-        X_data = check_array(X.data, dtype=DTYPE, ensure_2d=False)
-        X_indices = check_array(X.indices, dtype=ITYPE, ensure_2d=False)
-        X_indptr = check_array(X.indptr, dtype=ITYPE, ensure_2d=False)
+        X_data = np.asarray(X.data, dtype=DTYPE)
+        X_indices = np.asarray(X.indices, dtype=ITYPE)
+        X_indptr = np.asarray(X.indptr, dtype=ITYPE)
         return X_data, X_indptr, X_indptr
 
     def __init__(self, DistanceMetric distance_metric):
         self.distance_metric = distance_metric
 
     cdef ITYPE_t n_X(self) nogil:
+        """Number of samples in X."""
         return -999
 
     cdef ITYPE_t n_Y(self) nogil:
+        """Number of samples in Y."""
         return -999
 
-    cdef DTYPE_t proxy_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.dist(i, j)
 
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
@@ -1313,14 +1314,8 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         between two vectors of (X, Y).
     """
 
-    def __cinit__(self):
-        # Initializing memory view to prevent memory errors and seg-faults
-        # in rare cases where __init__ is not called
-        self.X = np.empty((1, 1), dtype=DTYPE, order='C')
-        self.Y = np.empty((1, 1), dtype=DTYPE, order='C')
-
     def __init__(self, X, Y, DistanceMetric distance_metric):
-        DatasetsPair.__init__(self, distance_metric)
+        super().__init__(distance_metric)
         # Arrays have already been checked
         self.X = X
         self.Y = Y
@@ -1335,7 +1330,7 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t proxy_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.distance_metric.rdist(&self.X[i, 0],
                                           &self.Y[j, 0],
                                           self.d)
@@ -1348,7 +1343,7 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
 
 @final
 cdef class SparseSparseDatasetsPair(DatasetsPair):
-    """Compute distances between vectors of two sparse matrices.
+    """Compute distances between vectors of two CSR matrices.
 
     Parameters
     ----------
@@ -1371,16 +1366,6 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
         const ITYPE_t[:] Y_indices
         const ITYPE_t[:] Y_indptr
 
-    def __cinit__(self):
-        # Initializing memory view to prevent memory errors and seg-faults
-        # in rare cases where __init__ is not called
-        self.X_data = np.empty((1), dtype=DTYPE, order='C')
-        self.X_indices = np.empty((1), dtype=ITYPE, order='C')
-        self.X_indptr = np.empty((1), dtype=ITYPE, order='C')
-
-        self.Y_data = np.empty((1), dtype=DTYPE, order='C')
-        self.Y_indices = np.empty((1), dtype=ITYPE, order='C')
-        self.Y_indptr = np.empty((1), dtype=ITYPE, order='C')
 
     def __init__(self, X, Y, DistanceMetric distance_metric):
         DatasetsPair.__init__(self, distance_metric)
@@ -1397,7 +1382,7 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
         return self.Y_indptr.shape[0] -1
 
     @final
-    cdef DTYPE_t proxy_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         cdef:
             ITYPE_t xi_start = self.X_indptr[i]
             ITYPE_t xi_end = self.X_indptr[i + 1]
@@ -1428,7 +1413,7 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
 
 @final
 cdef class SparseDenseDatasetsPair(DatasetsPair):
-    """Compute distances between vectors of a sparse matrix and a dense array.
+    """Compute distances between vectors of a CSR matrix and a dense array.
 
     Parameters
     ----------
@@ -1450,19 +1435,8 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         const DTYPE_t[:, ::1] Y  # shape: (n_Y, d)
         const ITYPE_t[:] Y_indices
 
-    def __cinit__(self):
-        # Initializing memory view to prevent memory errors and seg-faults
-        # in rare cases where __init__ is not called
-        self.X_data = np.empty((1), dtype=DTYPE, order='C')
-        self.X_indices = np.empty((1), dtype=ITYPE, order='C')
-        self.X_indptr = np.empty((1), dtype=ITYPE, order='C')
-
-        self.Y = np.empty((1, 1), dtype=DTYPE, order='C')
-        self.Y_indices = np.empty((1), dtype=ITYPE, order='C')
-
-
     def __init__(self, X, Y, DistanceMetric distance_metric):
-        DatasetsPair.__init__(self, distance_metric)
+        super().__init__(distance_metric)
 
         self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
 
@@ -1479,7 +1453,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t proxy_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         cdef:
             ITYPE_t xi_start = self.X_indptr[i]
             ITYPE_t xi_end = self.X_indptr[i + 1]
@@ -1511,7 +1485,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
 
 @final
 cdef class DenseSparseDatasetsPair(DatasetsPair):
-    """Compute distances between vectors of a dense array and a sparse matrix.
+    """Compute distances between vectors of a dense array and a CSR matrix.
 
     Parameters
     ----------
@@ -1531,7 +1505,7 @@ cdef class DenseSparseDatasetsPair(DatasetsPair):
         DatasetsPair datasets_pair
 
     def __init__(self, X, Y, DistanceMetric distance_metric):
-        DatasetsPair.__init__(self, distance_metric)
+        super().__init__(distance_metric)
         # Swapping arguments on the constructor
         self.datasets_pair = SparseDenseDatasetsPair(Y, X, distance_metric)
 
@@ -1546,9 +1520,9 @@ cdef class DenseSparseDatasetsPair(DatasetsPair):
         return self.datasets_pair.n_X()
 
     @final
-    cdef DTYPE_t proxy_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         # Swapping arguments on the same interface
-        return self.datasets_pair.proxy_dist(j, i)
+        return self.datasets_pair.ranking_preserving_dist(j, i)
 
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:

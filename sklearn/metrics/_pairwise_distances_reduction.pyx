@@ -424,7 +424,7 @@ cdef class PairwiseDistancesReduction:
     # Placeholder methods which can be implemented
 
     cdef void compute_exact_distances(self) nogil:
-        """Convert proxy distances to exact distances or recompute them."""
+        """Convert ranking-preserving distances to exact distances or recompute them."""
         return
 
     cdef void _on_X_parallel_init(
@@ -521,7 +521,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         DTYPE_t[:, ::1] argkmin_distances
 
         # Used as array of pointers to private datastructures used in threads.
-        DTYPE_t ** heaps_proxy_distances_chunks
+        DTYPE_t ** heaps_r_distances_chunks
         ITYPE_t ** heaps_indices_chunks
 
     @classmethod
@@ -597,7 +597,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         chunk_size=None,
         n_threads=None,
     ):
-        PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size, n_threads)
+        super().__init__(datasets_pair, chunk_size, n_threads)
 
         check_scalar(k, "k", Integral, min_val=1)
         self.k = k
@@ -607,7 +607,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         # When reducing on small datasets, there can be more pointers than actual
         # threads used for the reduction but there won't be allocated but unused
         # datastructures.
-        self.heaps_proxy_distances_chunks = <DTYPE_t **> malloc(
+        self.heaps_r_distances_chunks = <DTYPE_t **> malloc(
             sizeof(DTYPE_t *) * self.effective_omp_n_thread
         )
         self.heaps_indices_chunks = <ITYPE_t **> malloc(
@@ -618,8 +618,8 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         if self.heaps_indices_chunks is not NULL:
             free(self.heaps_indices_chunks)
 
-        if self.heaps_proxy_distances_chunks is not NULL:
-            free(self.heaps_proxy_distances_chunks)
+        if self.heaps_r_distances_chunks is not NULL:
+            free(self.heaps_r_distances_chunks)
 
     cdef void _reduce_on_chunks(
         self,
@@ -634,7 +634,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
             ITYPE_t k = self.k
-            DTYPE_t *heaps_proxy_distances = self.heaps_proxy_distances_chunks[thread_num]
+            DTYPE_t *heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
         # Pushing the distance and their associated indices on heaps
@@ -642,10 +642,10 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         for i in range(n_X):
             for j in range(n_Y):
                 heap_push(
-                    heaps_proxy_distances + i * self.k,
+                    heaps_r_distances + i * self.k,
                     heaps_indices + i * self.k,
                     k,
-                    self._datasets_pair.proxy_dist(X_start + i, Y_start + j),
+                    self._datasets_pair.ranking_preserving_dist(X_start + i, Y_start + j),
                     Y_start + j,
                 )
 
@@ -658,7 +658,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     ) nogil:
         # As this strategy is embarrassingly parallel, we can set the
         # thread heaps pointers to the proper position on the main heaps
-        self.heaps_proxy_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
+        self.heaps_r_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
         self.heaps_indices_chunks[thread_num] = &self.argkmin_indices[X_start, 0]
 
     @final
@@ -674,7 +674,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         # Sorting indices of the argkmin for each query vector of X
         for idx in range(X_end - X_start):
             simultaneous_sort(
-                self.heaps_proxy_distances_chunks[thread_num] + idx * self.k,
+                self.heaps_r_distances_chunks[thread_num] + idx * self.k,
                 self.heaps_indices_chunks[thread_num] + idx * self.k,
                 self.k
             )
@@ -693,7 +693,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             # As chunks of X are shared across threads, so must their
             # heaps. To solve this, each thread has its own heaps
             # which are then synchronised back in the main ones.
-            self.heaps_proxy_distances_chunks[thread_num] = <DTYPE_t *> malloc(
+            self.heaps_r_distances_chunks[thread_num] = <DTYPE_t *> malloc(
                 heaps_size * sizeof(DTYPE_t)
             )
             self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(
@@ -707,7 +707,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     ) nogil:
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
-            self.heaps_proxy_distances_chunks[thread_num][idx] = DBL_MAX
+            self.heaps_r_distances_chunks[thread_num][idx] = DBL_MAX
             self.heaps_indices_chunks[thread_num][idx] = -1
 
     @final
@@ -729,7 +729,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                             &self.argkmin_distances[X_start + idx, 0],
                             &self.argkmin_indices[X_start + idx, 0],
                             self.k,
-                            self.heaps_proxy_distances_chunks[thread_num][idx * self.k + jdx],
+                            self.heaps_r_distances_chunks[thread_num][idx * self.k + jdx],
                             self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
                         )
 
@@ -743,7 +743,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         with nogil, parallel(num_threads=self.effective_omp_n_thread):
             # Deallocating temporary datastructures
             for thread_num in prange(num_threads, schedule='static'):
-                free(self.heaps_proxy_distances_chunks[thread_num])
+                free(self.heaps_r_distances_chunks[thread_num])
                 free(self.heaps_indices_chunks[thread_num])
 
             # Sort the main heaps into arrays in parallel
@@ -880,8 +880,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         bint use_squared_distances=False,
         chunk_size=None,
     ):
-        PairwiseDistancesArgKmin.__init__(
-            self,
+        super().__init__(
             # The datasets pair here is used for exact distances computations
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             k=k,
@@ -970,7 +969,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
             const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
-            DTYPE_t *heaps_proxy_distances = self.heaps_proxy_distances_chunks[thread_num]
+            DTYPE_t *heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
             # We compute the full pairwise squared distances matrix as follows
@@ -1009,10 +1008,11 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
                 heap_push(
-                    heaps_proxy_distances + i * k,
+                    heaps_r_distances + i * k,
                     heaps_indices + i * k,
                     k,
-                    # proxy distance: ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                    # Using the squared euclidean distance as the ranking-preserving distance:
+                    # |X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                     (
                         self.X_sq_norms[i + X_start] +
                         dist_middle_terms[i * Y_c.shape[0] + j] +
@@ -1051,13 +1051,13 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
     cdef:
         DTYPE_t radius
 
-        # DistanceMetric compute rank-preserving surrogate distance via rdist
+        # DistanceMetric compute ranking-preserving surrogate distance via rdist
         # which are proxies necessitating less computations.
-        # We get the proxy for the radius to be able to compare it against
-        # vectors' rank-preserving surrogate distances.
-        DTYPE_t proxy_radius
+        # We get the equivalent for the radius to be able to compare it against
+        # vectors' ranking-preserving surrogate distances.
+        DTYPE_t r_radius
 
-        # Neighbors indices and distances are returned as np.ndarray or np.ndarray.
+        # Neighbors indices and distances are returned as np.ndarray of np.ndarray.
         #
         # We want resizable buffers which we will to wrapped within numpy
         # arrays at the end. std::vector comes as a handy interface for
@@ -1088,7 +1088,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         DTYPE_t radius,
         str metric="fast_euclidean",
         chunk_size=None,
-        dict metric_kwargs=dict(),
+        dict metric_kwargs=None,
         n_threads=None,
     ) -> PairwiseDistancesRadiusNeighborhood:
         """Return the PairwiseDistancesRadiusNeighborhood implementation for the given arguments.
@@ -1153,11 +1153,11 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         chunk_size=None,
         n_threads=None,
     ):
-        PairwiseDistancesReduction.__init__(self, datasets_pair, chunk_size, n_threads)
+        super().__init__(datasets_pair, chunk_size, n_threads)
 
         check_scalar(radius, "radius", Real, min_val=0)
         self.radius = radius
-        self.proxy_radius = self._datasets_pair.distance_metric._dist_to_rdist(radius)
+        self.r_radius = self._datasets_pair.distance_metric._dist_to_rdist(radius)
         self.sort_results = False
 
         # Allocating pointers to datastructures but not the datastructures themselves.
@@ -1189,13 +1189,13 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
     ) nogil:
         cdef:
             ITYPE_t i, j
-            DTYPE_t proxy_dist_i_j
+            DTYPE_t r_dist_i_j
 
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
-                proxy_dist_i_j = self._datasets_pair.proxy_dist(i, j)
-                if proxy_dist_i_j <= self.proxy_radius:
-                    deref(self.neigh_distances_chunks[thread_num])[i].push_back(proxy_dist_i_j)
+                r_dist_i_j = self._datasets_pair.ranking_preserving_dist(i, j)
+                if r_dist_i_j <= self.r_radius:
+                    deref(self.neigh_distances_chunks[thread_num])[i].push_back(r_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
 
     @final
@@ -1312,7 +1312,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         return
 
     cdef void compute_exact_distances(self) nogil:
-        """Convert proxy distances to pairwise distances in parallel."""
+        """Convert ranking-preserving distances to pairwise distances in parallel."""
         cdef:
             ITYPE_t i, j
 
@@ -1459,8 +1459,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         bint use_squared_distances=False,
         chunk_size=None,
     ):
-        PairwiseDistancesRadiusNeighborhood.__init__(
-            self,
+        super().__init__(
             # The datasets pair here is used for exact distances computations
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             radius=radius,
@@ -1476,8 +1475,8 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
 
         if use_squared_distances:
             # In this specialisation and this setup, the value passed to the radius is
-            # already considered to be the the proxy radius, so we overwrite it.
-            self.proxy_radius = radius
+            # already considered to be the adapted radius, so we overwrite it.
+            self.r_radius = radius
 
         # Temporary datastructures used in threads
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
@@ -1589,12 +1588,13 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         # Pushing the distance and their associated indices in vectors.
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
-                # ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                # Using the squared euclidean distance as the ranking-preserving distance:
+                # |X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                 squared_dist_i_j = (
                     self.X_sq_norms[i + X_start]
                     + dist_middle_terms[i * Y_c.shape[0] + j]
                     + self.Y_sq_norms[j + Y_start]
                 )
-                if squared_dist_i_j <= self.proxy_radius:
+                if squared_dist_i_j <= self.r_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i + X_start].push_back(squared_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i + X_start].push_back(j + Y_start)

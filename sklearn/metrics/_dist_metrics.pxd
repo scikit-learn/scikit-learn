@@ -99,7 +99,7 @@ cdef class DatasetsPair:
 
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil
 
-    cdef DTYPE_t proxy_dist(self, ITYPE_t i, ITYPE_t j) nogil
+    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil
 
 
 cdef class DenseDenseDatasetsPair(DatasetsPair):
