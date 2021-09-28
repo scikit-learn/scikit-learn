@@ -191,6 +191,14 @@ def test_affinities():
         sp.fit(X)
 
 
+def test_cluster_qr():
+    # Test cluster_qr for fixed data
+    random_state = np.random.RandomState(seed=8)
+    data = random_state.randn(10, 5)
+    labels = cluster_qr(data)
+    assert labels == [2 1 3 3 2 4 1 3 4 0]
+
+
 @pytest.mark.parametrize("n_samples", [50, 100, 150, 500])
 def test_discretize(n_samples):
     # Test the discretize using a noise assignment matrix
