@@ -154,6 +154,7 @@ object to the same sample.
    :target: ../auto_examples/covariance/plot_covariance_estimation.html
    :align: center
    :scale: 65%
+   :alt:
 
    Bias-variance trade-off when setting the shrinkage: comparing the
    choices of Ledoit-Wolf and OAS estimators
@@ -178,6 +179,7 @@ object to the same sample.
    :target: ../auto_examples/covariance/plot_lw_vs_oas.html
    :align: center
    :scale: 75%
+   :alt:
 
 
 .. _sparse_inverse_covariance:
@@ -210,6 +212,7 @@ cross-validation to automatically set the ``alpha`` parameter.
    :target: ../auto_examples/covariance/plot_sparse_cov.html
    :align: center
    :scale: 60%
+   :alt:
 
    *A comparison of maximum likelihood, shrinkage and sparse estimates of
    the covariance and precision matrix in the very small samples
@@ -333,10 +336,12 @@ attributes of a :class:`MinCovDet` robust covariance estimator object.
 .. |robust_vs_emp| image:: ../auto_examples/covariance/images/sphx_glr_plot_robust_vs_empirical_covariance_001.png
    :target: ../auto_examples/covariance/plot_robust_vs_empirical_covariance.html
    :scale: 49%
+   :alt:
 
 .. |mahalanobis| image:: ../auto_examples/covariance/images/sphx_glr_plot_mahalanobis_distances_001.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
    :scale: 49%
+   :alt:
 
 
 

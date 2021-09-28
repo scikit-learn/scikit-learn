@@ -48,6 +48,7 @@ columns:
    :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_coclustering_003.png
    :align: center
    :scale: 50
+   :alt:
 
    An example of biclusters formed by partitioning rows and columns.
 
@@ -60,6 +61,7 @@ small:
    :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_biclustering_003.png
    :align: center
    :scale: 50
+   :alt:
 
    An example of checkerboard biclusters.
 

@@ -53,6 +53,7 @@ by showing the number of samples in each predicted probability bin.
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_compare_calibration_001.png
    :target: ../auto_examples/calibration/plot_compare_calibration.html
    :align: center
+   :alt:
 
 .. currentmodule:: sklearn.linear_model
 
