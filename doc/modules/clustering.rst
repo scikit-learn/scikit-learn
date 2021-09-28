@@ -491,15 +491,15 @@ computed using a function of a gradient of the image.
 
 .. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 65
+    :scale: 35
 
 .. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 65
+    :scale: 35
 
 .. |coin_cluster_qr| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_003.png
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 65
+    :scale: 35
 
 Different label assignment strategies
 -------------------------------------
@@ -517,7 +517,7 @@ to create the visually best partitioning.
 ================================  ================================  ================================
  ``assign_labels="kmeans"``        ``assign_labels="discretize"``    ``assign_labels="cluster_qr"``
 ================================  ================================  ================================
-|coin_kmeans|                          |coin_discretize|                 |coin_cluster_qr|
+|coin_kmeans|                          |coin_discretize|                  |coin_cluster_qr|
 ================================  ================================  ================================
 
 Spectral Clustering Graphs
