@@ -23,7 +23,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultiTaskLassoCV",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
-    "PLSCanonical",
     "PLSRegression",
     "PLSSVD",
     "PassiveAggressiveClassifier",

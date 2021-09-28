@@ -680,7 +680,7 @@ class PLSCanonical(_PLS):
         will compute the whole SVD.
 
     max_iter : int, default=500
-        the maximum number of iterations of the power method when
+        The maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
 
     tol : float, default=1e-06
@@ -748,6 +748,11 @@ class PLSCanonical(_PLS):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    CCA : Canonical Correlation Analysis.
+    PLSSVD : Partial Least Square SVD.
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import PLSCanonical
@@ -757,11 +762,6 @@ class PLSCanonical(_PLS):
     >>> plsca.fit(X, Y)
     PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
-
-    See Also
-    --------
-    CCA
-    PLSSVD
     """
 
     # This implementation provides the same results that the "plspm" package
