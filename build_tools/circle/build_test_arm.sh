@@ -30,6 +30,7 @@ wget $MINICONDA_URL -O mambaforge.sh
 MINICONDA_PATH=$HOME/miniconda
 chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MINICONDA_PATH
 export PATH=$MINICONDA_PATH/bin:$PATH
+mamba init --all --verbose
 mamba update --yes conda
 
 # Create environment and install dependencies
