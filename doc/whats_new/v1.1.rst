@@ -52,7 +52,7 @@ Changelog
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
   Using :class:`neighbors.DistanceMetric` for imports is still valid for
   backward compatibility, but this interface will be removed in 1.2.
- :pr:`21177` by :user:`Julien Jerphanion <jjerphan>`.
+  :pr:`21177` by :user:`Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.utils`
 ....................
