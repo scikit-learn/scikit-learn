@@ -267,6 +267,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         """
         check_classification_targets(y)
         X, y = indexable(X, y)
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
@@ -303,15 +305,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             # sample_weight checks
             fit_parameters = signature(base_estimator.fit).parameters
             supports_sw = "sample_weight" in fit_parameters
-            if sample_weight is not None:
-                sample_weight = _check_sample_weight(sample_weight, X)
-                if not supports_sw:
-                    estimator_name = type(base_estimator).__name__
-                    warnings.warn(
-                        f"Since {estimator_name} does not support "
-                        "sample_weights, sample weights will only be"
-                        " used for the calibration itself."
-                    )
+            if sample_weight is not None and not supports_sw:
+                estimator_name = type(base_estimator).__name__
+                warnings.warn(
+                    f"Since {estimator_name} does not support "
+                    "sample_weights, sample weights will only be"
+                    " used for the calibration itself."
+                )
 
             # Check that each cross-validation fold can have at least one
             # example per class

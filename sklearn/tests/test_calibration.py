@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 from scipy import sparse
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import LeaveOneOut, train_test_split
 
@@ -784,3 +784,47 @@ def test_calibration_display_ref_line(pyplot, iris_data_binary):
 
     labels = viz2.ax_.get_legend_handles_labels()[1]
     assert labels.count("Perfectly calibrated") == 1
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("ensemble", [True, False])
+def test_calibrated_classifier_cv_sample_weights_equivalence(data, method, ensemble):
+    from sklearn.datasets import load_iris
+
+    X, y = load_iris(return_X_y=True)
+    X, y = X[:100], y[:100]
+    sample_weight = np.ones_like(y) * 2
+
+    X_twice = np.zeros((X.shape[0] * 2, X.shape[1]), dtype=X.dtype)
+    X_twice[::2, :] = X
+    X_twice[1::2, :] = X
+    y_twice = np.zeros(y.shape[0] * 2, dtype=y.dtype)
+    y_twice[::2] = y
+    y_twice[1::2] = y
+
+    base_estimator = LogisticRegression()
+    calibrated_clf_without_weights = CalibratedClassifierCV(
+        base_estimator,
+        method=method,
+        ensemble=ensemble,
+        cv=2,
+    )
+    calibrated_clf_with_weights = clone(calibrated_clf_without_weights)
+
+    calibrated_clf_with_weights.fit(X, y, sample_weight=sample_weight)
+    calibrated_clf_without_weights.fit(X_twice, y_twice)
+
+    # Check that the underlying fitted estimators have the same coefficients
+    for est_with_weights, est_without_weights in zip(
+        calibrated_clf_with_weights.calibrated_classifiers_,
+        calibrated_clf_without_weights.calibrated_classifiers_,
+    ):
+        assert_allclose(
+            est_with_weights.base_estimator.coef_,
+            est_without_weights.base_estimator.coef_,
+        )
+
+    y_pred_with_weights = calibrated_clf_with_weights.predict_proba(X)
+    y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
+
+    assert_allclose(y_pred_with_weights, y_pred_without_weights)
