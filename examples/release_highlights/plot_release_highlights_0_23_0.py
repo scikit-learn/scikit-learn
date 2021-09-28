@@ -110,7 +110,7 @@ print(completeness_score(kmeans.predict(X_test), y_test))
 # Various improvements were made to
 # :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. On top of the
-# Poisson loss mentionned above, these estimators now support :ref:`sample
+# Poisson loss mentioned above, these estimators now support :ref:`sample
 # weights <sw_hgbdt>`. Also, an automatic early-stopping criterion was added:
 # early-stopping is enabled by default when the number of samples exceeds 10k.
 # Finally, users can now define :ref:`monotonic constraints

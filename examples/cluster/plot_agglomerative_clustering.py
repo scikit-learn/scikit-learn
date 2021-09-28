@@ -6,8 +6,8 @@ This example shows the effect of imposing a connectivity graph to capture
 local structure in the data. The graph is simply the graph of 20 nearest
 neighbors.
 
-Two consequences of imposing a connectivity can be seen. First clustering
-with a connectivity matrix is much faster.
+Two consequences of imposing a connectivity can be seen. First, clustering
+without a connectivity matrix is much faster.
 
 Second, when using a connectivity matrix, single, average and complete
 linkage are unstable and tend to create a few clusters that grow very

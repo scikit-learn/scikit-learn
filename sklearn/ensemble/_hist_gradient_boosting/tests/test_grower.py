@@ -102,7 +102,7 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
         **stopping_param,
     )
 
-    # The root node is not yet splitted, but the best possible split has
+    # The root node is not yet split, but the best possible split has
     # already been evaluated:
     assert grower.root.left_child is None
     assert grower.root.right_child is None
@@ -116,7 +116,7 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     # for each of the two newly introduced children nodes.
     left_node, right_node = grower.split_next()
 
-    # All training samples have ben splitted in the two nodes, approximately
+    # All training samples have ben split in the two nodes, approximately
     # 50%/50%
     _check_children_consistency(grower.root, left_node, right_node)
     assert len(left_node.sample_indices) > 0.4 * n_samples
@@ -127,7 +127,7 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
         assert left_node.split_info.gain < grower.min_gain_to_split
         assert left_node in grower.finalized_leaves
 
-    # The right node can still be splitted further, this time on feature #1
+    # The right node can still be split further, this time on feature #1
     split_info = right_node.split_info
     assert split_info.gain > 1.0
     assert split_info.feature_idx == 1

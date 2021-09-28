@@ -1562,7 +1562,7 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     n_quantiles = 100
     qt = QuantileTransformer(n_quantiles=n_quantiles).fit(X)
 
-    # Check that the estimated quantile threasholds are monotically
+    # Check that the estimated quantile thresholds are monotically
     # increasing:
     quantiles = qt.quantiles_[:, 0]
     assert len(quantiles) == 100
@@ -2621,7 +2621,7 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
 
 @pytest.mark.parametrize("feature_range", [(0, 1), (-10, 10)])
 def test_minmax_scaler_clip(feature_range):
-    # test behaviour of the paramter 'clip' in MinMaxScaler
+    # test behaviour of the parameter 'clip' in MinMaxScaler
     X = iris.data
     scaler = MinMaxScaler(feature_range=feature_range, clip=True).fit(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
