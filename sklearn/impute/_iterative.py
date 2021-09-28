@@ -773,6 +773,3 @@ class IterativeImputer(_BaseImputer):
         """
         self.fit_transform(X)
         return self
-
-    def _more_tags(self):
-        return {"allow_nan": is_scalar_nan(self.missing_values)}

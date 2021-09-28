@@ -117,6 +117,9 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
 
         return hstack((X_imputed, X_indicator))
 
+    def _more_tags(self):
+        return {"allow_nan": is_scalar_nan(self.missing_values)}
+
 
 class SimpleImputer(_BaseImputer):
     """Imputation transformer for completing missing values.
@@ -129,11 +132,11 @@ class SimpleImputer(_BaseImputer):
 
     Parameters
     ----------
-    missing_values : int, float, str, np.nan or None, default=np.nan
+    missing_values : int, float, str, np.nan, None or pandas.NA, default=np.nan
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For pandas' dataframes with
         nullable integer dtypes with missing values, `missing_values`
-        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
+        can be set to either `np.nan` or `pd.NA`.
 
     strategy : str, default='mean'
         The imputation strategy.

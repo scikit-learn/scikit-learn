@@ -1510,6 +1510,10 @@ def test_impute_pd_na():
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-1)
     assert_array_equal(imputer.fit_transform(df), [[1], [-1], [3]])
 
+    # Use `np.nan` also works.
+    imputer = SimpleImputer(missing_values=np.nan, strategy="constant", fill_value=-1)
+    assert_array_equal(imputer.fit_transform(df), [[1], [-1], [3]])
+
     # Impute pandas array of float types.
     df = pd.DataFrame({"feature": pd.Series([0.1, None, 0.3], dtype="Float32")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-2.0)

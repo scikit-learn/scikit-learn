@@ -327,6 +327,3 @@ class KNNImputer(_BaseImputer):
             pass
 
         return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
-
-    def _more_tags(self):
-        return {"allow_nan": is_scalar_nan(self.missing_values)}
