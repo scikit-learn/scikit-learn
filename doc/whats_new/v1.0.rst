@@ -2,6 +2,27 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_0_1:
+
+Version 1.0.1
+==============
+
+**In Development**
+
+Changelog
+---------
+
+Fixed models
+------------
+
+- |Fix| Non-fit methods in the following classes do not raise a UserWarning
+  when fitted on DataFrames with valid feature names:
+  :class:`covariance.EllipticEnvelope`, :class:`ensemble.IsolationForest`,
+  :class:`ensemble.AdaBoostClassifier`, :class:`neighbors.KNeighborsClassifier`,
+  :class:`ensemble.RadiusNeighborsClassifier`,
+  :class:`ensemble.KNeighborsRegressor`,
+  :class:`ensemble.RadiusNeighborsRegressor`. :pr:`xxxxx` by `Thomas Fan`_.
+
 .. _changes_1_0:
 
 Version 1.0.0

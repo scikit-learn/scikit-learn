@@ -3779,7 +3779,14 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         check_methods.append((method, callable_method))
 
     for _, method in check_methods:
-        method(X)  # works
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "error",
+                message="X does not have valid feature names",
+                category=UserWarning,
+                module="sklearn",
+            )
+            method(X)  # works without UserWarning for valid features
 
     invalid_names = [
         (names[::-1], "Feature names must be in the same order as they were in fit."),
