@@ -234,6 +234,25 @@ cdef class PairwiseDistancesReduction:
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
+        """Return True if the PairwiseDistancesReduction for the given parameters.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_X, d)
+            Input data.
+
+        Y : {ndarray, sparse matrix} of shape (n_Y, d)
+            Input data.
+
+        metric : str, default='euclidean'
+            The distance metric to use.
+            For a list of available metrics, see the documentation of
+            :class:`~sklearn.metrics.DistanceMetric`.
+
+        Returns
+        -------
+        True if the PairwiseDistancesReduction can be used, else False.
+        """
         # Coercing to np.array to get the dtype
         # TODO: what is the best way to get lists' dtype?
         X = np.asarray(X) if isinstance(X, (tuple, list)) else X
@@ -420,7 +439,8 @@ cdef class PairwiseDistancesReduction:
     ) nogil:
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
-        This is the core critical region of PairwiseDistanceReductions' computations.
+        This is the core critical region of PairwiseDistanceReductions' computations
+        which must be implemented in subclasses.
         """
         return
 
@@ -557,7 +577,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
 
-        chunk_size: int, default=None,
+        chunk_size : int, default=None,
             The number of vectors per chunk. If None (default) looks-up in
             scikit-learn configuration for `pairwise_dist_chunk_size`,
             and use 256 if it is not set.
@@ -565,7 +585,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
 
-        n_threads: int, default=None
+        n_threads : int, default=None
             The number of OpenMP threads to use for the reduction.
             Parallelism is done on chunks and the sharding of chunks
             depends on the `strategy` set on
@@ -1113,7 +1133,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
 
-        chunk_size: int, default=None,
+        chunk_size : int, default=None,
             The number of vectors per chunk. If None (default) looks-up in
             scikit-learn configuration for `pairwise_dist_chunk_size`,
             and use 256 if it is not set.
@@ -1192,7 +1212,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
         if self.neigh_distances is not NULL:
             del self.neigh_distances
-
 
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
