@@ -60,7 +60,7 @@ if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
 fi
 
 python --version
-conda list
+mamba list
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
