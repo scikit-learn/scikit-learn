@@ -130,16 +130,13 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: linux-arm64-{{ .Branch }}
       - run: ./build_tools/circle/build_test_arm.sh
       - save_cache:
-          key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
+          key: linux-arm64-{{ .Branch }}
           paths:
             - ~/.ccache
             - ~/.cache/pip
-      - save_cache:
-          key: v1-datasets-{{ .Branch }}
-          paths:
             - ~/scikit_learn_data
 
   deploy:
