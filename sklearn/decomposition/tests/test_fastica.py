@@ -45,9 +45,9 @@ def test_gs():
     assert (tmp[:5] ** 2).sum() < 1.0e-10
 
 
-# FIXME remove filter in 1.1
+# FIXME remove filter in 1.3
 @pytest.mark.filterwarnings(
-    "ignore:From version 1.1 whiten='unit-variance' will be used by default."
+    "ignore:From version 1.3 whiten='unit-variance' will be used by default."
 )
 @pytest.mark.parametrize("add_noise", [True, False])
 @pytest.mark.parametrize("seed", range(1))
@@ -179,9 +179,9 @@ def test_fastica_convergence_fail():
         ica.fit(m.T)
 
 
-# FIXME remove filter in 1.1
+# FIXME remove filter in 1.3
 @pytest.mark.filterwarnings(
-    "ignore:From version 1.1 whiten='unit-variance' will be used by default."
+    "ignore:From version 1.3 whiten='unit-variance' will be used by default."
 )
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_non_square_fastica(add_noise):
@@ -282,9 +282,9 @@ def test_inverse_transform():
                 assert_array_almost_equal(X, X2)
 
 
-# FIXME remove filter in 1.1
+# FIXME remove filter in 1.3
 @pytest.mark.filterwarnings(
-    "ignore:From version 1.1 whiten='unit-variance' will be used by default."
+    "ignore:From version 1.3 whiten='unit-variance' will be used by default."
 )
 def test_fastica_errors():
     n_features = 3
@@ -328,7 +328,7 @@ def test_fastica_whiten_default_value_deprecation():
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
     for ica in [FastICA(), FastICA(whiten=True)]:
-        with pytest.warns(FutureWarning, match=r"From version 1.1 whiten="):
+        with pytest.warns(FutureWarning, match=r"From version 1.3 whiten="):
             ica.fit(X)
             assert ica.whiten_ == "arbitrary-variance"
 

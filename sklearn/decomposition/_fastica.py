@@ -190,9 +190,9 @@ def fastica(
         whitening is performed.
         If None (default), 'arbitrary-variance' is used.
 
-        .. deprecated:: 1.0
-            From version 1.1 whiten='unit-variance' will be used by default.
-            `whiten=True` is deprecated from 1.0 and will be removed in 1.1.
+        .. deprecated:: 1.1
+            From version 1.3 whiten='unit-variance' will be used by default.
+            `whiten=True` is deprecated from 1.1 and will be removed in 1.3.
             Use `whiten=arbitrary-variance` instead.
 
     fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
@@ -338,9 +338,9 @@ class FastICA(TransformerMixin, BaseEstimator):
         whitening is performed.
         If None (default), 'arbitrary-variance' is used.
 
-        .. deprecated:: 1.0
-            From version 1.1 whiten='unit-variance' will be used by default.
-            `whiten=True` is deprecated from 1.0 and will be removed in 1.1.
+        .. deprecated:: 1.1
+            From version 1.3 whiten='unit-variance' will be used by default.
+            `whiten=True` is deprecated from 1.1 and will be removed in 1.3.
             Use `whiten=arbitrary-variance` instead.
 
     fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
@@ -489,16 +489,16 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         if self.whiten_ is None:
             warnings.warn(
-                "From version 1.1 whiten='unit-variance' will be used by default.",
+                "From version 1.3 whiten='unit-variance' will be used by default.",
                 FutureWarning,
             )
             self.whiten_ = "arbitrary-variance"
 
         if self.whiten_ is True:
             warnings.warn(
-                "From version 1.1 whiten=True should be specified as "
+                "From version 1.3 whiten=True should be specified as "
                 "whiten='arbitrary-variance' (its current behaviour). This "
-                "behavior is deprecated in 1.0 and will be removed in 1.1.",
+                "behavior is deprecated in 1.1 and will be removed in 1.3.",
                 FutureWarning,
                 stacklevel=2,
             )
