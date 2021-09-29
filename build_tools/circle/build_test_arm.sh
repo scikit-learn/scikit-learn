@@ -66,7 +66,10 @@ conda list
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
 
-pip install --verbose --editable .
+pip install --verbose .
+# Changing directory not to have module resolution use scikit-learn source
+# directory but to the installed package.
+cd /tmp
 ccache -s
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
