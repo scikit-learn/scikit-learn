@@ -172,8 +172,8 @@ def fastica(
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     n_components : int, default=None
         Number of components to extract. If None no dimension reduction
@@ -473,8 +473,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         compute_sources : bool, default=False
             If False, sources are not computes but only the rotation matrix.
@@ -634,8 +634,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -654,8 +654,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -674,8 +674,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Data to transform, where n_samples is the number of samples
-            and n_features is the number of features.
+            Data to transform, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         copy : bool, default=True
             If False, data passed to fit can be overwritten. Defaults to True.
@@ -702,8 +702,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_components)
-            Sources, where n_samples is the number of samples
-            and n_components is the number of components.
+            Sources, where `n_samples` is the number of samples
+            and `n_components` is the number of components.
         copy : bool, default=True
             If False, data passed to fit are overwritten. Defaults to True.
 

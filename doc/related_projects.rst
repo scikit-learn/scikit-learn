@@ -123,6 +123,11 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn-porter <https://github.com/nok/sklearn-porter>`_
   Transpile trained scikit-learn models to C, Java, Javascript and others.
 
+- `m2cgen <https://github.com/BayesWitnesses/m2cgen>`_
+  A lightweight library which allows to transpile trained machine learning
+  models including many scikit-learn estimators into a native code of C, Java,
+  Go, R, PHP, Dart, Haskell, Rust and many other programming languages.
+
 - `treelite <https://treelite.readthedocs.io>`_
   Compiles tree-based ensemble models into C code for minimizing prediction
   latency.

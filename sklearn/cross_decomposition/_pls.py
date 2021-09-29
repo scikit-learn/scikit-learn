@@ -345,7 +345,7 @@ class _PLS(
         # Xi . Gamma.T is a sum of n_components rank-1 matrices. X_(R+1) is
         # whatever is left to fully reconstruct X, and can be 0 if X is of rank
         # n_components.
-        # Similiarly, Y was approximated as Omega . Delta.T + Y_(R+1)
+        # Similarly, Y was approximated as Omega . Delta.T + Y_(R+1)
 
         # Compute transformation matrices (rotations_). See User Guide.
         self.x_rotations_ = np.dot(
@@ -462,12 +462,12 @@ class _PLS(
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of predictors.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
 
         y : array-like of shape (n_samples, n_targets), default=None
-            Target vectors, where n_samples is the number of samples and
-            n_targets is the number of response variables.
+            Target vectors, where `n_samples` is the number of samples and
+            `n_targets` is the number of response variables.
 
         Returns
         -------
@@ -680,7 +680,7 @@ class PLSCanonical(_PLS):
         will compute the whole SVD.
 
     max_iter : int, default=500
-        the maximum number of iterations of the power method when
+        The maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
 
     tol : float, default=1e-06
@@ -748,6 +748,11 @@ class PLSCanonical(_PLS):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    CCA : Canonical Correlation Analysis.
+    PLSSVD : Partial Least Square SVD.
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import PLSCanonical
@@ -757,11 +762,6 @@ class PLSCanonical(_PLS):
     >>> plsca.fit(X, Y)
     PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
-
-    See Also
-    --------
-    CCA
-    PLSSVD
     """
 
     # This implementation provides the same results that the "plspm" package

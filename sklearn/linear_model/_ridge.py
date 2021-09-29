@@ -1546,7 +1546,7 @@ class _RidgeGCV(LinearModel):
 
     def _sparse_multidot_diag(self, X, A, X_mean, sqrt_sw):
         """Compute the diagonal of (X - X_mean).dot(A).dot((X - X_mean).T)
-        without explicitely centering X nor computing X.dot(A)
+        without explicitly centering X nor computing X.dot(A)
         when X is sparse.
 
         Parameters
@@ -2303,8 +2303,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features. When using GCV,
+            Training vectors, where `n_samples` is the number of samples
+            and `n_features` is the number of features. When using GCV,
             will be cast to float64 if necessary.
 
         y : ndarray of shape (n_samples,)

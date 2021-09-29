@@ -332,7 +332,7 @@ chosen 1) greater than the minimum number of objects a cluster has to contain,
 so that other objects can be local outliers relative to this cluster, and 2)
 smaller than the maximum number of close by objects that can potentially be
 local outliers.
-In practice, such informations are generally not available, and taking
+In practice, such information is generally not available, and taking
 n_neighbors=20 appears to work well in general.
 When the proportion of outliers is high (i.e. greater than 10 \%, as in the
 example below), n_neighbors should be greater (n_neighbors=35 in the example

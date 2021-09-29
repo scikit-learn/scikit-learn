@@ -565,8 +565,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
-        self._check_feature_names(X, reset=False)
-        return self.estimators_[0]._validate_X_predict(X, check_input=True)
+        X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+        if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
+            raise ValueError("No support for np.int64 index based sparse matrices")
+        return X
 
     @property
     def feature_importances_(self):
@@ -2452,11 +2454,11 @@ class RandomTreesEmbedding(BaseForest):
 
     Attributes
     ----------
-    base_estimator_ : DecisionTreeClassifier instance
+    base_estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier` instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of DecisionTreeClassifier instances
+    estimators_ : list of :class:`~sklearn.tree.ExtraTreeClassifier` instances
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)

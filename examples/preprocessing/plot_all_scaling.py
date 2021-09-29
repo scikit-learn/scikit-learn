@@ -6,7 +6,7 @@
 Compare the effect of different scalers on data with outliers
 =============================================================
 
-Feature 0 (median income in a block) and feature 5 (number of households) of
+Feature 0 (median income in a block) and feature 5 (average house occupancy) of
 the :ref:`california_housing_dataset` have very
 different scales and contain some very large outliers. These two
 characteristics lead to difficulties to visualize the data and, more
@@ -69,13 +69,25 @@ print(__doc__)
 
 dataset = fetch_california_housing()
 X_full, y_full = dataset.data, dataset.target
+feature_names = dataset.feature_names
+
+feature_mapping = {
+    'MedInc': 'Median income in block',
+    'HousAge': 'Median house age in block',
+    'AveRooms': 'Average number of rooms',
+    'AveBedrms': 'Average number of bedrooms',
+    'Population': 'Block population',
+    'AveOccup': 'Average house occupancy',
+    'Latitude': 'House block latitude',
+    'Longitude': 'House block longitude'
+}
 
 # Take only 2 features to make visualization easier
-# Feature of 0 has a long tail distribution.
-# Feature 5 has a few but very large outliers.
-
-X = X_full[:, [0, 5]]
-
+# Feature MedInc has a long tail distribution.
+# Feature AveOccup has a few but very large outliers.
+features = ['MedInc', 'AveOccup']
+features_idx = [feature_names.index(feature) for feature in features]
+X = X_full[:, features_idx]
 distributions = [
     ('Unscaled data', X),
     ('Data after standard scaling',
@@ -194,8 +206,8 @@ def make_plot(item_idx):
     ax_zoom_out, ax_zoom_in, ax_colorbar = create_axes(title)
     axarr = (ax_zoom_out, ax_zoom_in)
     plot_distribution(axarr[0], X, y, hist_nbins=200,
-                      x0_label="Median Income",
-                      x1_label="Number of households",
+                      x0_label=feature_mapping[features[0]],
+                      x1_label=feature_mapping[features[1]],
                       title="Full data")
 
     # zoom-in
@@ -208,8 +220,8 @@ def make_plot(item_idx):
         np.all(X < [cutoffs_X0[1], cutoffs_X1[1]], axis=1))
     plot_distribution(axarr[1], X[non_outliers_mask], y[non_outliers_mask],
                       hist_nbins=50,
-                      x0_label="Median Income",
-                      x1_label="Number of households",
+                      x0_label=feature_mapping[features[0]],
+                      x1_label=feature_mapping[features[1]],
                       title="Zoom-in")
 
     norm = mpl.colors.Normalize(y_full.min(), y_full.max())
@@ -228,11 +240,11 @@ def make_plot(item_idx):
 # left plot showing the entire dataset, and the right zoomed-in to show the
 # dataset without the marginal outliers. A large majority of the samples are
 # compacted to a specific range, [0, 10] for the median income and [0, 6] for
-# the number of households. Note that there are some marginal outliers (some
-# blocks have more than 1200 households). Therefore, a specific pre-processing
-# can be very beneficial depending of the application. In the following, we
-# present some insights and behaviors of those pre-processing methods in the
-# presence of marginal outliers.
+# the average house occupancy. Note that there are some marginal outliers (some
+# blocks have average occupancy of more than 1200). Therefore, a specific
+# pre-processing can be very beneficial depending of the application. In the
+# following, we present some insights and behaviors of those pre-processing
+# methods in the presence of marginal outliers.
 
 make_plot(0)
 
@@ -248,7 +260,7 @@ make_plot(0)
 # feature have different magnitudes, the spread of the transformed data on
 # each feature is very different: most of the data lie in the [-2, 4] range for
 # the transformed median income feature while the same data is squeezed in the
-# smaller [-0.2, 0.2] range for the transformed number of households.
+# smaller [-0.2, 0.2] range for the transformed average house occupancy.
 #
 # :class:`~sklearn.preprocessing.StandardScaler` therefore cannot guarantee
 # balanced feature scales in the
@@ -264,7 +276,7 @@ make_plot(1)
 # all feature values are in
 # the range [0, 1] as shown in the right panel below. However, this scaling
 # compresses all inliers into the narrow range [0, 0.005] for the transformed
-# number of households.
+# average house occupancy.
 #
 # Both :class:`~sklearn.preprocessing.StandardScaler` and
 # :class:`~sklearn.preprocessing.MinMaxScaler` are very sensitive to the
@@ -313,9 +325,9 @@ make_plot(4)
 # scaling factor is determined via maximum likelihood estimation in both
 # methods. By default, :class:`~sklearn.preprocessing.PowerTransformer` applies
 # zero-mean, unit variance normalization. Note that
-# Box-Cox can only be applied to strictly positive data. Income and number of
-# households happen to be strictly positive, but if negative values are present
-# the Yeo-Johnson transformed is preferred.
+# Box-Cox can only be applied to strictly positive data. Income and average
+# house occupancy happen to be strictly positive, but if negative values are
+# present the Yeo-Johnson transformed is preferred.
 
 make_plot(5)
 make_plot(6)

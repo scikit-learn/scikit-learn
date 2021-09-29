@@ -213,8 +213,8 @@ class EmpiricalCovariance(BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-          Training data, where n_samples is the number of samples and
-          n_features is the number of features.
+          Training data, where `n_samples` is the number of samples and
+          `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -235,14 +235,17 @@ class EmpiricalCovariance(BaseEstimator):
         return self
 
     def score(self, X_test, y=None):
-        """Compute the log-likelihood of a Gaussian data set with `self.covariance_`.
+        """Compute the log-likelihood of `X_test` under the estimated Gaussian model.
+
+        The Gaussian model is defined by its mean and covariance matrix which are
+        represented respectively by `self.location_` and `self.covariance_`.
 
         Parameters
         ----------
         X_test : array-like of shape (n_samples, n_features)
-            Test data of which we compute the likelihood, where n_samples is
-            the number of samples and n_features is the number of features.
-            X_test is assumed to be drawn from the same distribution than
+            Test data of which we compute the likelihood, where `n_samples` is
+            the number of samples and `n_features` is the number of features.
+            `X_test` is assumed to be drawn from the same distribution than
             the data used in fit (including centering).
 
         y : Ignored
@@ -251,8 +254,8 @@ class EmpiricalCovariance(BaseEstimator):
         Returns
         -------
         res : float
-            The likelihood of the data set with `self.covariance_` as an
-            estimator of its covariance matrix.
+            The log-likelihood of `X_test` with `self.location_` and `self.covariance_`
+            as estimators of the Gaussian model mean and covariance matrix respectively.
         """
         X_test = self._validate_data(X_test, reset=False)
         # compute empirical covariance of the test set

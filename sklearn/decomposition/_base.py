@@ -85,8 +85,8 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -103,14 +103,14 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            New data, where n_samples is the number of samples
-            and n_features is the number of features.
+            New data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
         X_new : array-like of shape (n_samples, n_components)
-            Projection of X in the first principal components, where n_samples
-            is the number of samples and n_components is the number of the components.
+            Projection of X in the first principal components, where `n_samples`
+            is the number of samples and `n_components` is the number of the components.
         """
         check_is_fitted(self)
 
@@ -130,14 +130,14 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_components)
-            New data, where n_samples is the number of samples
-            and n_components is the number of components.
+            New data, where `n_samples` is the number of samples
+            and `n_components` is the number of components.
 
         Returns
         -------
         X_original array-like of shape (n_samples, n_features)
-            Original data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Original data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Notes
         -----

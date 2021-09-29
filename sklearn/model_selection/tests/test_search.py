@@ -390,10 +390,10 @@ def test_no_refit():
             "inverse_transform",
         ):
             error_msg = (
-                f"refit=False. {fn_name} is available only after "
+                f"`refit=False`. {fn_name} is available only after "
                 "refitting on the best parameters"
             )
-            with pytest.raises(NotFittedError, match=error_msg):
+            with pytest.raises(AttributeError, match=error_msg):
                 getattr(grid_search, fn_name)(X)
 
     # Test that an invalid refit param raises appropriate error messages
@@ -2356,7 +2356,7 @@ def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
 @pytest.mark.parametrize("return_train_score", [True, False])
 def test_search_cv_verbose_3(capsys, return_train_score):
     """Check that search cv with verbose>2 shows the score for single
-    metrics. non-regression test fo #19658."""
+    metrics. non-regression test for #19658."""
     X, y = make_classification(n_samples=100, n_classes=2, flip_y=0.2, random_state=0)
     clf = LinearSVC(random_state=0)
     grid = {"C": [0.1]}
