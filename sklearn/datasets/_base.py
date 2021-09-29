@@ -1133,7 +1133,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         target = raw_df.values[1::2, 2]
 
     Alternative datasets include the California housing dataset (i.e.
-    func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
+    :func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
     dataset. You can load the datasets as follows:
 
         from sklearn.datasets import fetch_california_housing
