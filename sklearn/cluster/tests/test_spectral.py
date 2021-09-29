@@ -49,7 +49,7 @@ def test_spectral_clustering(eigen_solver, assign_labels):
             n_clusters=2,
             affinity="precomputed",
             eigen_solver=eigen_solver,
-            assign_labels=assign_labels,
+            assign_labels=assign_labels
         ).fit(mat)
         labels = model.labels_
         if labels[0] == 0:
@@ -116,7 +116,7 @@ def test_spectral_clustering_sparse():
             random_state=0,
             n_clusters=2,
             affinity="precomputed",
-            assign_labels=assign_labels,
+            assign_labels=assign_labels
         )
         .fit(S)
         .labels_
