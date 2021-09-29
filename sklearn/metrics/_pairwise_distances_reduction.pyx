@@ -331,7 +331,7 @@ cdef class PairwiseDistancesReduction:
                     else:
                         Y_end = Y_start + self.Y_n_samples_chunk
 
-                    self._reduce_on_chunks(
+                    self._compute_and_reduce_distances_on_chunks(
                         X_start, X_end,
                         Y_start, Y_end,
                         thread_num,
@@ -392,7 +392,7 @@ cdef class PairwiseDistancesReduction:
                     else:
                         Y_end = Y_start + self.Y_n_samples_chunk
 
-                    self._reduce_on_chunks(
+                    self._compute_and_reduce_distances_on_chunks(
                         X_start, X_end,
                         Y_start, Y_end,
                         thread_num,
@@ -410,7 +410,7 @@ cdef class PairwiseDistancesReduction:
 
     # Placeholder methods which have to be implemented
 
-    cdef void _reduce_on_chunks(
+    cdef void _compute_and_reduce_distances_on_chunks(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -418,7 +418,10 @@ cdef class PairwiseDistancesReduction:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        """Implemented the reduction on a pair of chunks."""
+        """Compute the pairwise distances on two chunks of X and Y and reduce them.
+
+        This is the core critical region of PairwiseDistanceReductions' computations.
+        """
         return
 
     # Placeholder methods which can be implemented
@@ -621,7 +624,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         if self.heaps_r_distances_chunks is not NULL:
             free(self.heaps_r_distances_chunks)
 
-    cdef void _reduce_on_chunks(
+    cdef void _compute_and_reduce_distances_on_chunks(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -954,7 +957,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             free(self.dist_middle_terms_chunks[thread_num])
 
     @final
-    cdef void _reduce_on_chunks(
+    cdef void _compute_and_reduce_distances_on_chunks(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -1179,7 +1182,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         if self.neigh_indices_chunks is not NULL:
             free(self.neigh_indices_chunks)
 
-    cdef void _reduce_on_chunks(
+    cdef void _compute_and_reduce_distances_on_chunks(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -1538,7 +1541,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
             free(self.dist_middle_terms_chunks[thread_num])
 
     @final
-    cdef void _reduce_on_chunks(
+    cdef void _compute_and_reduce_distances_on_chunks(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
