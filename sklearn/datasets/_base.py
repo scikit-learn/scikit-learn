@@ -1177,7 +1177,7 @@ def load_boston(*, return_X_y=False):
         this dataset unless the purpose of the code is to study and educate
         about ethical issues in data science and machine learning.
 
-        In this case special case, you can fetch the dataset from the original
+        In this special case, you can fetch the dataset from the original
         source::
 
             import pandas as pd  # doctest: +SKIP
