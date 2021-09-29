@@ -1175,12 +1175,24 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
             sizeof(self.neigh_indices) * self.effective_omp_n_thread
         )
 
+        # Temporary datastructures which will be coerced to numpy arrays on before
+        # PairwiseDistancesRadiusNeighborhood.compute "return" and will be then freed.
+        self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
+        self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
+
     def __dealloc__(self):
         if self.neigh_distances_chunks is not NULL:
             free(self.neigh_distances_chunks)
 
         if self.neigh_indices_chunks is not NULL:
             free(self.neigh_indices_chunks)
+
+        if self.neigh_indices is not NULL:
+            del self.neigh_indices
+
+        if self.neigh_distances is not NULL:
+            del self.neigh_distances
+
 
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
@@ -1383,11 +1395,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
             raise ValueError("return_distance must be True "
                              "if sort_results is True.")
 
-        # Temporary datastructures which will be coerced to
-        # numpy arrays on return and then freed.
-        self.neigh_indices = new vector[vector[ITYPE_t]](self.n_X)
-        self.neigh_distances = new vector[vector[DTYPE_t]](self.n_X)
-
         self.sort_results = sort_results
 
         if strategy is None:
@@ -1419,9 +1426,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
             )
         else:
             res = coerce_vectors_to_nd_arrays(self.neigh_indices)
-
-        del self.neigh_distances
-        del self.neigh_indices
 
         return res
 
