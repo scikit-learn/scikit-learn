@@ -195,7 +195,7 @@ def test_sanity(seed, direction, n_features_to_select, expected_selected_feature
     assert_array_equal(sfs.get_support(indices=True), expected_selected_features)
 
 
-# TODO: Remove test for n_features_to_select=None in 1.2
+# TODO: Remove test for n_features_to_select=None in 1.3
 @pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 @pytest.mark.parametrize("n_features_to_select", ["auto", None])
 def test_sparse_support(n_features_to_select):
@@ -253,7 +253,7 @@ def test_pipeline_support():
     pipe.transform(X)
 
 
-# FIXME : to be removed in 1.2
+# FIXME : to be removed in 1.3
 def test_raise_deprecation_warning():
     """Check that we raise a FutureWarning with `n_features_to_select`."""
     n_samples, n_features = 50, 3

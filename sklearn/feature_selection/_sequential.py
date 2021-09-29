@@ -41,15 +41,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         If integer, the parameter is the absolute number of features to select.
         If float between 0 and 1, it is the fraction of features to select.
 
-        .. versionadded:: 1.0
-           The option `"auto"` was added in version 1.0.
+        .. versionadded:: 1.1
+           The option `"auto"` was added in version 1.1.
 
-        .. deprecated:: 1.0
-           The default changed from `None` to `"warn"` in 1.0 and will become
-           `"auto"` in 1.2. `None` has been disabled. `"warn"` is deprecated
-           in 1.0 and will be disabled in 1.2. To keep the same behaviour
-           as with `None`, you should manually set `n_features_to_select="auto"`
-           and set `tol=None`.
+        .. deprecated:: 1.1
+           The default changed from `None` to `"warn"` in 1.1 and will become
+           `"auto"` in 1.3. `None` and `'warn'` will be removed in 1.3.
+           To keep the same behaviour as `None`, set 
+           `n_features_to_select="auto" and `tol=None`.
 
     tol : float, default=None
         If the score is not incremented by at least `tol` between two
@@ -57,7 +56,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         if `n_features_to_select` has not been reached. `tol` is enabled only
         when `n_features_to_select` is `"auto"`.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
@@ -210,6 +209,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             self.n_features_to_select_ = n_features // 2
         elif self.n_features_to_select == "auto":
             if self.tol is not None:
+                # With auto feature selection, `n_features_to_select_` will be updated
+                # to `support_.sum()` after features are selected.
                 self.n_features_to_select_ = n_features - 1
             else:
                 self.n_features_to_select_ = n_features // 2
