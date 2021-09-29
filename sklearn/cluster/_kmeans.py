@@ -1175,7 +1175,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         else:
             kmeans_single = _kmeans_single_elkan
 
-        best_inertia = None
+        best_inertia, best_labels = None, None
 
         for i in range(self._n_init):
             # Initialize centers
