@@ -140,7 +140,7 @@ def test_precomputed_nearest_neighbors_filtering():
                 random_state=0,
                 n_clusters=2,
                 affinity="precomputed_nearest_neighbors",
-                n_neighbors=n_neighbors,
+                n_neighbors=n_neighbors
             )
             .fit(graph)
             .labels_
