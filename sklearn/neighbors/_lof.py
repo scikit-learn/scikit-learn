@@ -172,7 +172,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
     See also
     ----------
-    sklearn.svm.OneClassSVM: Unsupervised Outlier Detection.
+    sklearn.svm.OneClassSVM: Unsupervised Outlier Detection using
+        Support Vector Machine.
 
     References
     ----------
