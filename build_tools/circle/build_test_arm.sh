@@ -9,10 +9,11 @@ setup_ccache() {
     echo "Setting up ccache"
     mkdir /tmp/ccache/
     which ccache
+    export PATH="/tmp/ccache/:${PATH}"
     for name in gcc g++ cc c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++; do
       ln -s $(which ccache) "/tmp/ccache/${name}"
+      which ${name}
     done
-    export PATH="/tmp/ccache/:${PATH}"
     ccache -M 256M
 }
 
@@ -70,7 +71,7 @@ pip install --verbose .
 # Changing directory not to have module resolution use scikit-learn source
 # directory but to the installed package.
 cd /tmp
-ccache -s
+ccache -s --verbose
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
 pytest --pyargs sklearn
