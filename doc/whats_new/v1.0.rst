@@ -21,7 +21,7 @@ Fixed models
   :class:`ensemble.AdaBoostClassifier`, :class:`neighbors.KNeighborsClassifier`,
   :class:`ensemble.RadiusNeighborsClassifier`,
   :class:`ensemble.KNeighborsRegressor`,
-  :class:`ensemble.RadiusNeighborsRegressor`. :pr:`xxxxx` by `Thomas Fan`_.
+  :class:`ensemble.RadiusNeighborsRegressor`. :pr:`21199` by `Thomas Fan`_.
 
 .. _changes_1_0:
 
