@@ -2005,6 +2005,11 @@ class TfidfVectorizer(CountVectorizer):
         """
         return self._tfidf.idf_
 
+    @property
+    def token2idf_(self):
+        """TODO"""
+        return {token: self.idf_[idx] for token, idx in self.vocabulary_.items()}
+
     @idf_.setter
     def idf_(self, value):
         self._validate_vocabulary()
