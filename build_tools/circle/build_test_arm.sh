@@ -4,6 +4,10 @@ set -e
 set -x
 
 UNAMESTR=`uname`
+N_CORES=`nproc --all`
+
+echo "OS: $UNAMESTR"
+echo "Number of cores: $N_CORES cores"
 
 setup_ccache() {
     echo "Setting up ccache"
@@ -63,15 +67,16 @@ fi
 python --version
 mamba list
 
-# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-# workers with 2 cores when building the compiled extensions of scikit-learn.
-export SKLEARN_BUILD_PARALLEL=3
-
+# Set parallelism to $N_CORES + 1 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with $N_CORES cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=$(($N_CORES + 1))
 pip install --verbose .
+
 # Changing directory not to have module resolution use scikit-learn source
 # directory but to the installed package.
 cd /tmp
 ccache -s --verbose
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
-pytest --pyargs sklearn
+# Test using as many workers as available cores
+pytest --pyargs -n $N_CORES sklearn
