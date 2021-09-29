@@ -116,7 +116,8 @@ def test_spectral_clustering_sparse():
             random_state=0,
             n_clusters=2,
             affinity="precomputed",
-            assign_labels=assign_labels)
+            assign_labels=assign_labels,
+        )
         .fit(S)
         .labels_
     )
