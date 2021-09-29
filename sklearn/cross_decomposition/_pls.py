@@ -968,6 +968,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    PLSCanonical : Partial Least Squares transformer and regressor.
+    CCA : Canonical Correlation Analysis.
+
     Examples
     --------
     >>> import numpy as np
@@ -984,11 +989,6 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     >>> X_c, Y_c = pls.transform(X, Y)
     >>> X_c.shape, Y_c.shape
     ((4, 2), (4, 2))
-
-    See Also
-    --------
-    PLSCanonical
-    CCA
     """
 
     def __init__(self, n_components=2, *, scale=True, copy=True):
@@ -1006,6 +1006,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Targets.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         check_consistent_length(X, Y)
         X = self._validate_data(
