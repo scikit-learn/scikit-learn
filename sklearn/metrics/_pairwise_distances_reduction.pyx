@@ -10,7 +10,7 @@
 #    Author: Julien Jerphanion <git@jjerphan.xyz>
 #
 #
-# The routines defined here are used in various algorithms realising
+# The routines defined here are used in various algorithms performing
 # the same structure of operations on distances between vectors
 # of a datasets pair (X, Y).
 
