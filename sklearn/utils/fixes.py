@@ -13,6 +13,8 @@ at which the fix is no longer needed.
 from functools import update_wrapper
 import functools
 
+import sklearn
+
 import numpy as np
 import scipy.sparse as sp
 import scipy
@@ -273,11 +275,18 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
             axis=axis,
         )
 
+ 
+# if hasattr(threadpoolctl, "ThreadpoolController"):
+#     _sklearn_threadpool_controller = threadpoolctl.ThreadpoolController()
+# else:
+#     _sklearn_threadpool_controller = None
 
-if parse_version(threadpoolctl.__version__) >= parse_version("3.0.0"):
-    from threadpoolctl import ThreadpoolController
-    print("once")
-    _sklearn_threadpool_controller = ThreadpoolController()
-else:
-    print("twice")
-    _sklearn_threadpool_controller = None
+
+# def threadpool_limits(limits=None, user_api=None):
+#     from ..import _sklearn_threadpool_controller
+#     if _sklearn_threadpool_controller is None:
+#         return threadpoolctl.threadpool_limits(limits=limits, user_api=user_api)
+#     else:
+#         return _sklearn_threadpool_controller.limit(limits=limits, user_api=user_api)
+
+# if hasattr(threadpoolctl, "ThreadpoolController"):
