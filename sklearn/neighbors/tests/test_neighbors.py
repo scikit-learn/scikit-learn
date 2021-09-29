@@ -249,10 +249,10 @@ def test_neighs_predictions_fast_euclidean_correctness(
         n_neighbors if issubclass(NeighborsMixinSubclass, KNeighborsMixin) else radius
     )
 
-    fast_euclidean_clf = NeighborsMixinSubclass(
+    euclidean_clf = NeighborsMixinSubclass(
         parameter, algorithm="brute", metric="euclidean"
     ).fit(X, y)
-    euclidean_pred = fast_euclidean_clf.predict(X)
+    euclidean_pred = euclidean_clf.predict(X)
 
     fast_euclidean_clf = NeighborsMixinSubclass(
         parameter, algorithm="brute", metric="fast_euclidean"
@@ -260,6 +260,56 @@ def test_neighs_predictions_fast_euclidean_correctness(
     fast_euclidean_pred = fast_euclidean_clf.predict(X)
 
     assert_allclose(euclidean_pred, fast_euclidean_pred)
+
+
+@pytest.mark.parametrize(
+    "KNeighborsEstimator",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+    ],
+)
+@pytest.mark.parametrize(
+    "weights, expected_kneighbors_metric",
+    [
+        ("uniform", "fast_sqeuclidean"),
+        ("distance", "fast_euclidean"),
+        (lambda x: x, "fast_euclidean"),
+    ],
+)
+def test_knn_prediction_fast_euclidean_overriding(
+    KNeighborsEstimator,
+    weights,
+    expected_kneighbors_metric,
+    n_samples=1000,
+    n_features=100,
+    dtype=np.float64,
+):
+    # The fast squared euclidean metric must be used over the fast euclidean
+    # metric solely when using the uniform sample-weighting.
+    class MockedKNeighborsEstimator(KNeighborsEstimator):
+        def kneighbors(self, *args, **kwargs):
+            self.kneighbors_metric_ = self.effective_metric_
+            return super().kneighbors(*args, **kwargs)
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(n_samples, n_features).astype(dtype)
+    y = rng.randint(3, size=n_samples)
+
+    parameter = 10
+
+    fast_euclidean_clf = MockedKNeighborsEstimator(
+        parameter,
+        algorithm="brute",
+        metric="fast_euclidean",
+        weights=weights,
+    ).fit(X, y)
+
+    # effective_metric_ must not be changed
+    assert fast_euclidean_clf.effective_metric_ == "fast_euclidean"
+    fast_euclidean_clf.predict(X)
+    assert fast_euclidean_clf.kneighbors_metric_ == expected_kneighbors_metric
+    assert fast_euclidean_clf.effective_metric_ == "fast_euclidean"
 
 
 @pytest.mark.parametrize(
