@@ -308,9 +308,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if sample_weight is not None and not supports_sw:
                 estimator_name = type(base_estimator).__name__
                 warnings.warn(
-                    f"Since {estimator_name} does not support "
-                    "sample_weights, sample weights will only be"
-                    " used for the calibration itself."
+                    f"Since {estimator_name} does not appear to accept sample_weight, "
+                    "sample weights will only be used for the calibration itself. This "
+                    "can be caused by a limitation of the current scikit-learn API. "
+                    "See the following issue for more details: "
+                    "https://github.com/scikit-learn/scikit-learn/issues/21134. Be "
+                    "warn that the result of the calibration is likely to be incorrect."
                 )
 
             # Check that each cross-validation fold can have at least one
