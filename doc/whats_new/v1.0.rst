@@ -2,6 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_0_1:
+
+Version 1.0.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans`, ensuring reproducibility and equivalence
+  between sparse and dense input. :pr:`21195`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 .. _changes_1_0:
 
 Version 1.0.0
