@@ -1133,13 +1133,13 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         target = raw_df.values[1::2, 2]
 
     Alternative datasets include the California housing dataset (i.e.
-    func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
-    dataset. You can load the datasets as follows:
+    :func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
+    dataset. You can load the datasets as follows::
 
         from sklearn.datasets import fetch_california_housing
         housing = fetch_california_housing()
 
-    for the California housing dataset and:
+    for the California housing dataset and::
 
         from sklearn.datasets import fetch_openml
         housing = fetch_openml(name="house_prices", as_frame=True)
@@ -1190,7 +1190,7 @@ def load_boston(*, return_X_y=False):
             target = raw_df.values[1::2, 2]
 
         Alternative datasets include the California housing dataset [3]_
-        (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
+        (i.e. :func:`~sklearn.datasets.fetch_california_housing`) and Ames
         housing dataset [4]_. You can load the datasets as follows::
 
             from sklearn.datasets import fetch_california_housing
