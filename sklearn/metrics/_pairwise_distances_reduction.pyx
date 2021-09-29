@@ -535,7 +535,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         ITYPE_t k,
         str metric="fast_euclidean",
         chunk_size=None,
-        dict metric_kwargs=dict(),
+        dict metric_kwargs=None,
         n_threads=None,
     ) -> PairwiseDistancesArgKmin:
         """Return the PairwiseDistancesArgKmin implementation for the given arguments.
