@@ -306,6 +306,66 @@ cdef class PairwiseDistancesReduction:
             self.n_X != (X_n_full_chunks * self.X_n_samples_chunk)
         )
 
+    def compute(
+        self,
+        str strategy=None,
+        bint return_distance=False,
+    ):
+        """Computes the reduction of vectors (rows) of X on Y.
+
+        Parameters
+        ----------
+        strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
+            The chunking strategy defining which dataset parallelization are made on.
+
+            Strategies differs on the dispatching they use for chunks on threads:
+              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
+              Each thread then iterates on all the chunks of Y. This strategy is
+              embarrassingly parallel and comes with no datastructures synchronisation
+              but is less used in practice (because X is smaller than Y generally).
+              - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
+              Each thread then iterates on all the chunks of X. This strategy is
+              embarrassingly parallel but uses intermediate datastructures
+              synchronisation. However it is more useful in practice (because Y is
+              larger than X generally).
+              - 'auto' relies on a simple heuristic to choose between
+              'parallel_on_X' and 'parallel_on_Y'.
+              - None (default) looks-up in scikit-learn configuration for
+              `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
+
+        return_distance : boolean, default=False
+            Return distances between each X vector and its
+            argkmin if set to True.
+
+        Returns
+        -------
+        Results for the PairwiseDistancesReduction, usually an array of indices
+        and optionally an array of associated distances if return_distance is True.
+        """
+
+        if strategy is None:
+            strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
+
+        if strategy == 'auto':
+            # This is a simple heuristic whose constant for the
+            # comparison has been chosen based on experiments.
+            if 4 * self.chunk_size * self.effective_omp_n_thread < self.n_X:
+                strategy = 'parallel_on_X'
+            else:
+                strategy = 'parallel_on_Y'
+
+        # Limit the number of threads in second level of nested parallelism for BLAS
+        # to avoid threads over-subscription (in GEMM for instance).
+        with threadpool_limits(limits=1, user_api="blas"):
+            if strategy == 'parallel_on_Y':
+                self._parallel_on_Y()
+            elif strategy == 'parallel_on_X':
+                self._parallel_on_X()
+            else:
+                raise RuntimeError(f"strategy '{strategy}' not supported.")
+
+        return self._finalize_results(return_distance)
+
     @final
     cdef void _parallel_on_X(self) nogil:
         """Computes the reduction of each vector (row) of X on Y
@@ -443,6 +503,13 @@ cdef class PairwiseDistancesReduction:
         which must be implemented in subclasses.
         """
         return
+
+    def _finalize_results(self, bint return_distance):
+        """Call-back adapting datastructures before returning results.
+
+        This must be implemented in subclasses.
+        """
+        return None
 
     # Placeholder methods which can be implemented
 
@@ -637,6 +704,10 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             sizeof(ITYPE_t *) * self.effective_omp_n_thread
         )
 
+        # Main heaps used by PairwiseDistancesArgKmin.compute to return results.
+        self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
+        self.argkmin_distances = np.full((self.n_X, self.k), DBL_MAX, dtype=DTYPE)
+
     def __dealloc__(self):
         if self.heaps_indices_chunks is not NULL:
             free(self.heaps_indices_chunks)
@@ -792,73 +863,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                     distances[i, j] if distances[i, j] > 0. else 0.
                 )
 
-    @final
-    def compute(
-        self,
-        str strategy=None,
-        bint return_distance=False,
-    ):
-        """Computes the reduction of vectors (rows) of X on Y.
-
-        Parameters
-        ----------
-        strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
-            The chunking strategy defining which dataset parallelization are made on.
-
-            Strategies differs on the dispatching they use for chunks on threads:
-                 - 'parallel_on_X' dispatches chunks of X uniformly on threads.
-                 Each thread then iterates on all the chunks of Y. This strategy is
-                 embarrassingly parallel and comes with no datastructures synchronisation
-                 but is less used in practice (because X is smaller than Y generally).
-                 - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
-                 Each thread then iterates on all the chunks of X. This strategy is
-                 embarrassingly parallel but uses intermediate datastructures
-                 synchronisation. However it is more useful in practice (because Y is
-                 larger than X generally).
-                 - 'auto' relies on a simple heuristic to choose between
-                 'parallel_on_X' and 'parallel_on_Y'.
-                 - None (default) looks-up in scikit-learn configuration for
-                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
-
-        return_distance: boolean, default=False
-            Return distances between each X vector and its
-            argkmin if set to True.
-
-        Returns
-        -------
-        distances: ndarray of shape (n, k)
-            Distances between each X vector and its argkmin
-            in Y. Only returned if ``return_distance=True``.
-
-        indices: ndarray of shape (n, k)
-            Indices of argkmin of vectors of X in Y.
-        """
-
-        # Results returned by PairwiseDistancesArgKmin.compute used as the main heaps.
-        self.argkmin_indices = np.full((self.n_X, self.k), 0, dtype=ITYPE)
-        self.argkmin_distances = np.full((self.n_X, self.k), DBL_MAX, dtype=DTYPE)
-
-        if strategy is None:
-            strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
-
-        if strategy == 'auto':
-            # This is a simple heuristic whose constant for the
-            # comparison has been chosen based on experiments.
-            if 4 * self.chunk_size * self.effective_omp_n_thread < self.n_X:
-                strategy = 'parallel_on_X'
-            else:
-                strategy = 'parallel_on_Y'
-
-        # Limit the number of threads in second level of nested parallelism for BLAS
-        # to avoid threads over-subscription (in GEMM for instance).
-        with threadpool_limits(limits=1, user_api="blas"):
-            if strategy == 'parallel_on_Y':
-                self._parallel_on_Y()
-            elif strategy == 'parallel_on_X':
-                self._parallel_on_X()
-            else:
-                raise RuntimeError(f"strategy '{strategy}' not supported.")
-
+    def _finalize_results(self, bint return_distance=False):
         if return_distance:
             # We eventually need to recompute distances because we relied on proxies.
             self.compute_exact_distances()
@@ -1113,6 +1118,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         chunk_size=None,
         dict metric_kwargs=None,
         n_threads=None,
+        bint sort_results=False,
     ) -> PairwiseDistancesRadiusNeighborhood:
         """Return the PairwiseDistancesRadiusNeighborhood implementation for the given arguments.
 
@@ -1149,6 +1155,10 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
             None and -1 means using all processors.
 
+        sort_results : boolean, default=False
+            Sort results with respect to distances between each X vector and its
+            neighbors if set to True.
+
         Returns
         -------
         radius_neighborhood: PairwiseDistancesRadiusNeighborhood
@@ -1160,13 +1170,15 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
             return FastEuclideanPairwiseDistancesRadiusNeighborhood(
                 X=X, Y=Y, radius=radius,
                 use_squared_distances=use_squared_distances,
-                chunk_size=chunk_size
+                chunk_size=chunk_size,
+                sort_results=sort_results,
             )
 
         return PairwiseDistancesRadiusNeighborhood(
             datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
             radius=radius,
             chunk_size=chunk_size,
+            sort_results=sort_results,
         )
 
     def __init__(
@@ -1175,13 +1187,14 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         DTYPE_t radius,
         chunk_size=None,
         n_threads=None,
+        sort_results=False
     ):
         super().__init__(datasets_pair, chunk_size, n_threads)
 
         check_scalar(radius, "radius", Real, min_val=0)
         self.radius = radius
         self.r_radius = self._datasets_pair.distance_metric._dist_to_rdist(radius)
-        self.sort_results = False
+        self.sort_results = sort_results
 
         # Allocating pointers to datastructures but not the datastructures themselves.
         # There as many pointers as available threads.
@@ -1231,6 +1244,16 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
                 if r_dist_i_j <= self.r_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i].push_back(r_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
+
+    def _finalize_results(self, bint return_distance=False):
+        if return_distance:
+            self.compute_exact_distances()
+            return (
+                coerce_vectors_to_nd_arrays(self.neigh_distances),
+                coerce_vectors_to_nd_arrays(self.neigh_indices),
+            )
+
+        return coerce_vectors_to_nd_arrays(self.neigh_indices)
 
     @final
     cdef void _on_X_prange_iter_init(
@@ -1366,87 +1389,12 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
     def compute(
         self,
         str strategy=None,
-        bint return_distance = False,
-        bint sort_results = False
+        bint return_distance=False,
     ):
-        """Computes the reduction of vectors (rows) of X on Y.
+        if self.sort_results and not return_distance:
+            raise ValueError("return_distance must be True if sort_results is True.")
 
-        Parameters
-        ----------
-        strategy: str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
-            The chunking strategy defining which dataset parallelization are made on.
-
-            Strategies differs on the dispatching they use for chunks on threads:
-                 - 'parallel_on_X' dispatches chunks of X uniformly on threads.
-                 Each thread then iterates on all the chunks of Y. This strategy is
-                 embarrassingly parallel and comes with no datastructures synchronisation
-                 but is less used in practice (because X is smaller than Y generally).
-                 - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
-                 Each thread then iterates on all the chunks of X. This strategy is
-                 embarrassingly parallel but uses intermediate datastructures
-                 synchronisation. However it is more useful in practice (because Y is
-                 larger than X generally).
-                 - 'auto' relies on a simple heuristic to choose between
-                 'parallel_on_X' and 'parallel_on_Y'.
-                 - None (default) looks-up in scikit-learn configuration for
-                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
-
-        return_distance: boolean, default=False
-            Return distances between each X vector and its
-            neighbors if set to True.
-
-        sort_results: boolean, default=False
-            Sort results with respect to distances between each X vector and its
-            neighbors if set to True.
-
-            return_distance must be True if sort_results is set to True.
-
-        Returns
-        -------
-        distances: ndarray of shape (n, k)
-            Distances between each X vector and its neighbors
-            in Y. Only returned if ``return_distance=True``.
-
-        indices: ndarray of shape (n, k)
-            Indices of each neighbor of vectors of X in Y.
-        """
-        if sort_results and not return_distance:
-            raise ValueError("return_distance must be True "
-                             "if sort_results is True.")
-
-        self.sort_results = sort_results
-
-        if strategy is None:
-            strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
-
-        if strategy == 'auto':
-            # This is a simple heuristic whose constant for the
-            # comparison has been chosen based on experiments.
-            if 4 * self.chunk_size * self.effective_omp_n_thread < self.n_X:
-                strategy = 'parallel_on_X'
-            else:
-                strategy = 'parallel_on_Y'
-
-        # Limit the number of threads in second level of nested parallelism for BLAS
-        # to avoid threads over-subscription (in GEMM for instance).
-        with threadpool_limits(limits=1, user_api="blas"):
-            if strategy == 'parallel_on_Y':
-                self._parallel_on_Y()
-            elif strategy == 'parallel_on_X':
-                self._parallel_on_X()
-            else:
-                raise RuntimeError(f"strategy '{strategy}' not supported.")
-
-        if return_distance:
-            self.compute_exact_distances()
-            res = (
-                coerce_vectors_to_nd_arrays(self.neigh_distances),
-                coerce_vectors_to_nd_arrays(self.neigh_indices),
-            )
-        else:
-            res = coerce_vectors_to_nd_arrays(self.neigh_indices)
-
-        return res
+        return super().compute(strategy=strategy, return_distance=return_distance)
 
 
 cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRadiusNeighborhood):
@@ -1484,12 +1432,14 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         DTYPE_t radius,
         bint use_squared_distances=False,
         chunk_size=None,
+        sort_results=False,
     ):
         super().__init__(
             # The datasets pair here is used for exact distances computations
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             radius=radius,
             chunk_size=chunk_size,
+            sort_results=sort_results,
         )
         # X and Y are checked by the DatasetsPair implemented as a DenseDenseDatasetsPair
         cdef:
