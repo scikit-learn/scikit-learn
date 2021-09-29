@@ -73,4 +73,4 @@ cd /tmp
 ccache -s
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
-python -m pytest sklearn
+pytest --pyargs sklearn
