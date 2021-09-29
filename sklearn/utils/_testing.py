@@ -255,6 +255,8 @@ def ignore_warnings(obj=None, category=Warning):
 
     Examples
     --------
+    >>> import warnings
+    >>> from sklearn.utils._testing import ignore_warnings
     >>> with ignore_warnings():
     ...     warnings.warn('buhuhuhu')
 
