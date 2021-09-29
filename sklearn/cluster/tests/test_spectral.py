@@ -101,6 +101,7 @@ def test_spectral_unknown_assign_labels():
         spectral_clustering(S, n_clusters=2, random_state=0, assign_labels="<unknown>")
 
 
+@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
 def test_spectral_clustering_sparse():
     X, y = make_blobs(
         n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
@@ -111,7 +112,11 @@ def test_spectral_clustering_sparse():
     S = sparse.coo_matrix(S)
 
     labels = (
-        SpectralClustering(random_state=0, n_clusters=2, affinity="precomputed")
+        SpectralClustering(
+            random_state=0,
+            n_clusters=2,
+            affinity="precomputed",
+            assign_labels=assign_labels)
         .fit(S)
         .labels_
     )
