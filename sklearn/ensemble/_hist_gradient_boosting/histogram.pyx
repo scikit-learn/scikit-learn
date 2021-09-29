@@ -53,7 +53,7 @@ cdef class HistogramBuilder:
 
     There are different ways to build a histogram:
     - by subtraction: hist(child) = hist(parent) - hist(sibling)
-    - from scratch. In this case we have rountines that update the hessians
+    - from scratch. In this case we have routines that update the hessians
       or not (not useful when hessians are constant for some losses e.g.
       least squares). Also, there's a special case for the root which
       contains all the samples, leading to some possible optimizations.

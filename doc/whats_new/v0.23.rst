@@ -341,7 +341,7 @@ Changelog
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
 - |API| The `StreamHandler` was removed from `sklearn.logger` to avoid
-  double logging of messages in common cases where a hander is attached
+  double logging of messages in common cases where a handler is attached
   to the root logger, and to follow the Python logging documentation
   recommendation for libraries to leave the log message handling to
   users and application code. :pr:`16451` by :user:`Christoph Deil <cdeil>`.

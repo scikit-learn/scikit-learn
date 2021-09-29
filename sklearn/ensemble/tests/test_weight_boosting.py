@@ -311,6 +311,13 @@ def test_base_estimator():
         clf.fit(X_fail, y_fail)
 
 
+def test_sample_weights_infinite():
+    msg = "Sample weights have reached infinite values"
+    clf = AdaBoostClassifier(n_estimators=30, learning_rate=5.0, algorithm="SAMME")
+    with pytest.warns(UserWarning, match=msg):
+        clf.fit(iris.data, iris.target)
+
+
 def test_sparse_classification():
     # Check classification with sparse input.
 
@@ -569,6 +576,6 @@ def test_adaboost_negative_weight_error(model, X, y):
     sample_weight = np.ones_like(y)
     sample_weight[-1] = -10
 
-    err_msg = "sample_weight cannot contain negative weight"
+    err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y, sample_weight=sample_weight)

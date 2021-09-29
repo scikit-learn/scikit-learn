@@ -6,10 +6,12 @@ from numpy.testing import assert_array_equal
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.datasets import make_regression
+from sklearn.datasets import make_regression, make_blobs
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import cross_val_score
+from sklearn.cluster import KMeans
+
 
 
 @pytest.mark.parametrize("n_features_to_select", (0, 5, 0.0, -1, 1.1))
@@ -253,6 +255,7 @@ def test_pipeline_support():
     pipe.transform(X)
 
 
+
 # FIXME : to be removed in 1.3
 def test_raise_deprecation_warning():
     """Check that we raise a FutureWarning with `n_features_to_select`."""
@@ -262,3 +265,31 @@ def test_raise_deprecation_warning():
     warn_msg = "Leaving `n_features_to_select` to None is deprecated"
     with pytest.warns(FutureWarning, match=warn_msg):
         SequentialFeatureSelector(LinearRegression()).fit(X, y)
+
+@pytest.mark.parametrize("n_features_to_select", (2, 3, 4))
+def test_unsupervised_model_fit(n_features_to_select):
+    # Make sure that models without classification labels are not being
+    # validated
+
+    X, y = make_blobs(n_features=6)
+    sfs = SequentialFeatureSelector(
+        KMeans(),
+        n_features_to_select=n_features_to_select,
+    )
+    sfs.fit(X)
+    assert sfs.transform(X).shape[1] == n_features_to_select
+
+
+@pytest.mark.parametrize("y", ("no_validation", 1j, 99.9, np.nan, 3))
+def test_no_y_validation_model_fit(y):
+    # Make sure that other non-conventional y labels are not accepted
+
+    X, clusters = make_blobs(n_features=6)
+    sfs = SequentialFeatureSelector(
+        KMeans(),
+        n_features_to_select=3,
+    )
+
+    with pytest.raises((TypeError, ValueError)):
+        sfs.fit(X, y)
+

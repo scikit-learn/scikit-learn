@@ -20,7 +20,7 @@ set 1) greater than the minimum number of samples a cluster has to contain,
 so that other samples can be local outliers relative to this cluster, and 2)
 smaller than the maximum number of close by samples that can potentially be
 local outliers.
-In practice, such informations are generally not available, and taking
+In practice, such information is generally not available, and taking
 n_neighbors=20 appears to work well in general.
 """
 

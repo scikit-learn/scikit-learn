@@ -89,7 +89,7 @@ print("Done in {:.2f}s. V-measure: {:.4f}".format(
     time() - start_time,
     v_measure_score(y_kmeans, y_true)))
 
-feature_names = vectorizer.get_feature_names()
+feature_names = vectorizer.get_feature_names_out()
 document_names = list(newsgroups.target_names[i] for i in newsgroups.target)
 
 

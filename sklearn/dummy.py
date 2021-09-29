@@ -10,6 +10,7 @@ import scipy.sparse as sp
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .base import MultiOutputMixin
 from .utils import check_random_state
+from .utils import deprecated
 from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
@@ -75,14 +76,20 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     n_outputs_ : int
         Number of outputs.
 
-    n_features_in_ : int
-        Number of features seen during :term:`fit`.
+    n_features_in_ : `None`
+        Always set to `None`.
 
         .. versionadded:: 0.24
+        .. deprecated:: 1.0
+            Will be removed in 1.0
 
     sparse_output_ : bool
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
+
+    See Also
+    --------
+    DummyRegressor : Regressor that makes predictions using simple rules.
 
     Examples
     --------
@@ -121,6 +128,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         allowed_strategies = (
             "most_frequent",
@@ -158,8 +166,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
-
-        self.n_features_in_ = None  # No input validation is done for X
 
         check_consistent_length(X, y)
 
@@ -362,7 +368,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+            Training data.
 
         Returns
         -------
@@ -411,11 +417,20 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         -------
         score : float
             Mean accuracy of self.predict(X) wrt. y.
-
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "`n_features_in_` is deprecated in 1.0 and will be removed in 1.2."
+    )
+    @property
+    def n_features_in_(self):
+        check_is_fitted(self)
+        return None
 
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -455,10 +470,12 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
-    n_features_in_ : int
-        Number of features seen during :term:`fit`.
+    n_features_in_ : `None`
+        Always set to `None`.
 
         .. versionadded:: 0.24
+        .. deprecated:: 1.0
+            Will be removed in 1.0
 
     n_outputs_ : int
         Number of outputs.
@@ -514,7 +531,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             )
 
         y = check_array(y, ensure_2d=False)
-        self.n_features_in_ = None  # No input validation is done for X
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
@@ -652,3 +668,13 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "`n_features_in_` is deprecated in 1.0 and will be removed in 1.2."
+    )
+    @property
+    def n_features_in_(self):
+        check_is_fitted(self)
+        return None
