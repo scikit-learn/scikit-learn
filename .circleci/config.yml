@@ -135,7 +135,7 @@ jobs:
       - save_cache:
           key: linux-arm64-{{ .Branch }}
           paths:
-            - ~/.ccache
+            - ~/.cache/ccache
             - ~/.cache/pip
             - ~/scikit_learn_data
 
