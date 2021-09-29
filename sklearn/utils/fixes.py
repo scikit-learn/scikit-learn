@@ -18,6 +18,7 @@ import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
+import threadpoolctl
 from .._config import config_context, get_config
 from ..externals._packaging.version import parse as parse_version
 
@@ -271,3 +272,12 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
             dtype=dtype,
             axis=axis,
         )
+
+
+if parse_version(threadpoolctl.__version__) >= parse_version("3.0.0"):
+    from threadpoolctl import ThreadpoolController
+    print("once")
+    _sklearn_threadpool_controller = ThreadpoolController()
+else:
+    print("twice")
+    _sklearn_threadpool_controller = None
