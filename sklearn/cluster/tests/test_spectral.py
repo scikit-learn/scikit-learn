@@ -102,7 +102,7 @@ def test_spectral_unknown_assign_labels():
 
 
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
-def test_spectral_clustering_sparse():
+def test_spectral_clustering_sparse(assign_labels):
     X, y = make_blobs(
         n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
