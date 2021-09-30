@@ -344,8 +344,8 @@ def test_knn_prediction_fast_alternatives_fall_back_on_tree(
     with pytest.warns(
         UserWarning,
         match=(
-            f"'{specified_metric}' is only available for algorithm='brute' \(currently "  # noqa
-            f"algorithm='{algorithm}'\). Falling "  # noqa
+            f"'{specified_metric}' is only available for algorithm='brute' but "
+            f"algorithm='{algorithm}' is used. Falling "
             f"back on metric='{fall_back_metric}'."
         ),
     ):

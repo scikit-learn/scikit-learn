@@ -373,8 +373,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         ):
             alternative = self.metric.replace("fast_", "")
             warnings.warn(
-                f"'{self.metric}' is only available for algorithm='brute' (currently"
-                f" algorithm='{self.algorithm}'). Falling back on"
+                f"'{self.metric}' is only available for algorithm='brute' but"
+                f" algorithm='{self.algorithm}' is used. Falling back on"
                 f" metric='{alternative}'.",
                 UserWarning,
                 stacklevel=3,
