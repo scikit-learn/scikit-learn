@@ -575,6 +575,10 @@ def _argmin_min_reduce(dist, start):
     return indices, values
 
 
+def _argmin_reduce(dist, start):
+    return dist.argmin(axis=1)
+
+
 def pairwise_distances_argmin_min(
     X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
 ):
@@ -662,10 +666,10 @@ def pairwise_distances_argmin_min(
     else:
         # TODO: once ArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
-        # When ArgKmin is not supported and when the user asked for
-        # a fast alternative, we need to revert to the standard one.
-        if metric in ("fast_sqeuclidean", "fast_euclidean"):
-            metric = metric.replace("fast_", "")
+        # When PairwiseDistancesArgKmin is not supported and when the user
+        # asked for a fast alternative, we need to revert to the standard one.
+        if metric == "fast_euclidean":
+            metric = "euclidean"
 
         indices, values = zip(
             *pairwise_distances_chunked(
@@ -745,9 +749,38 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    return pairwise_distances_argmin_min(
-        X, Y, axis=axis, metric=metric, metric_kwargs=metric_kwargs
-    )[0]
+    X, Y = check_pairwise_arrays(X, Y)
+
+    if axis == 0:
+        X, Y = Y, X
+
+    if metric_kwargs is None:
+        metric_kwargs = {}
+
+    if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
+        indices = PairwiseDistancesArgKmin.get_for(
+            X=X, Y=Y, k=1, metric=metric, metric_kwargs=metric_kwargs
+        ).compute(strategy="auto", return_distance=False)
+        indices = indices.flatten()
+    else:
+        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
+        # we won't need to fallback to pairwise_distances_chunked anymore.
+        # When PairwiseDistancesArgKmin is not supported and when the user
+        # asked for a fast alternative, we need to revert to the standard one.
+        if metric == "fast_euclidean":
+            metric = "euclidean"
+
+        indices = np.concatenate(
+            list(
+                # This returns a np.ndarray generator whose arrays we need
+                # to flatten into one.
+                pairwise_distances_chunked(
+                    X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
+                )
+            )
+        )
+
+    return indices
 
 
 def haversine_distances(X, Y=None):

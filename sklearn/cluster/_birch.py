@@ -656,7 +656,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         with config_context(assume_finite=True):
             argmin = pairwise_distances_argmin(
-                X, self.subcluster_centers_, metric="fast_sqeuclidean"
+                X, self.subcluster_centers_, metric="fast_euclidean"
             )
         return self.subcluster_labels_[argmin]
 

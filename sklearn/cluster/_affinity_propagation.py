@@ -524,7 +524,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         if self.cluster_centers_.shape[0] > 0:
             with config_context(assume_finite=True):
                 return pairwise_distances_argmin(
-                    X, self.cluster_centers_, metric="fast_sqeuclidean"
+                    X, self.cluster_centers_, metric="fast_euclidean"
                 )
         else:
             warnings.warn(
