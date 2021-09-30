@@ -313,7 +313,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "can be caused by a limitation of the current scikit-learn API. "
                     "See the following issue for more details: "
                     "https://github.com/scikit-learn/scikit-learn/issues/21134. Be "
-                    "warned that the result of the calibration is likely to be incorrect."
+                    "warned that the result of the calibration is likely to be "
+                    "incorrect."
                 )
 
             # Check that each cross-validation fold can have at least one
