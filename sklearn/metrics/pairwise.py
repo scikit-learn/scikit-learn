@@ -664,8 +664,8 @@ def pairwise_distances_argmin_min(
         # we won't need to fallback to pairwise_distances_chunked anymore.
         # When ArgKmin is not supported and when the user asked for
         # a fast alternative, we need to revert to the standard one.
-        if metric in {"fast_sqeuclidean", "fast_euclidean"}:
-            metric = "euclidean"
+        if metric in ("fast_sqeuclidean", "fast_euclidean"):
+            metric = metric.replace("fast_", "")
 
         indices, values = zip(
             *pairwise_distances_chunked(

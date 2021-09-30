@@ -666,7 +666,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             The suited PairwiseDistancesArgKmin implementation.
         """
         # This factory comes to handle specialisations.
-        if metric in {"fast_euclidean", "fast_sqeuclidean"} and not issparse(X) and not issparse(Y):
+        if metric in ("fast_euclidean", "fast_sqeuclidean") and not issparse(X) and not issparse(Y):
             use_squared_distances = metric == "fast_sqeuclidean"
             return FastEuclideanPairwiseDistancesArgKmin(
                 X=X, Y=Y, k=k,
@@ -1165,7 +1165,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
             The suited PairwiseDistancesRadiusNeighborhood implementation.
         """
         # This factory comes to handle specialisations.
-        if metric in {"fast_euclidean", "fast_sqeuclidean"} and not issparse(X) and not issparse(Y):
+        if metric in ("fast_euclidean", "fast_sqeuclidean") and not issparse(X) and not issparse(Y):
             use_squared_distances = metric == "fast_sqeuclidean"
             return FastEuclideanPairwiseDistancesRadiusNeighborhood(
                 X=X, Y=Y, radius=radius,
