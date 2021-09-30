@@ -1,7 +1,7 @@
 """Compatibility fixes for older version of threadpoolctl
 
-This module is separated from utils.fixes because it need to not be imported too soon
-when importing sklearn but utils.fixes is.
+This module is separated from utils.fixes because it needs to not be imported too soon
+when importing sklearn and it happens that utils.fixes is.
 """
 
 import threadpoolctl
