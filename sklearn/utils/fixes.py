@@ -20,7 +20,6 @@ import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
-import threadpoolctl
 from .._config import config_context, get_config
 from ..externals._packaging.version import parse as parse_version
 
@@ -274,19 +273,3 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
             dtype=dtype,
             axis=axis,
         )
-
- 
-# if hasattr(threadpoolctl, "ThreadpoolController"):
-#     _sklearn_threadpool_controller = threadpoolctl.ThreadpoolController()
-# else:
-#     _sklearn_threadpool_controller = None
-
-
-# def threadpool_limits(limits=None, user_api=None):
-#     from ..import _sklearn_threadpool_controller
-#     if _sklearn_threadpool_controller is None:
-#         return threadpoolctl.threadpool_limits(limits=limits, user_api=user_api)
-#     else:
-#         return _sklearn_threadpool_controller.limit(limits=limits, user_api=user_api)
-
-# if hasattr(threadpoolctl, "ThreadpoolController"):
