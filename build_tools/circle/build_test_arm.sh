@@ -76,6 +76,7 @@ pip install --verbose .
 # directory but to the installed package.
 cd /tmp
 ccache -s --verbose
+ls -R /home/circleci/.cache/ccache
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
 # Test using as many workers as available cores
