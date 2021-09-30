@@ -1588,7 +1588,7 @@ Additionally DET curves can be consulted for threshold analysis and operating
 point selection.
 This is particularly helpful if a comparison of error types is required.
 
-One the other hand DET curves do not provide their metric as a single number.
+On the other hand DET curves do not provide their metric as a single number.
 Therefore for either automated evaluation or comparison to other
 classification tasks metrics like the derived area under ROC curve might be
 better suited.
