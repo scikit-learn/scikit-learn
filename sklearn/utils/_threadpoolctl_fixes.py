@@ -4,8 +4,6 @@ This module is separated from utils.fixes because it need to not be imported too
 when importing sklearn but utils.fixes is.
 """
 
-"""Compatibility fixes for older version of threadpoolctl"""
-
 import threadpoolctl
 
 
