@@ -12,7 +12,6 @@ DOCSTRING_IGNORE_LIST = [
     "KNNImputer",
     "LabelPropagation",
     "LabelSpreading",
-    "LocalOutlierFactor",
     "LocallyLinearEmbedding",
     "MultiLabelBinarizer",
     "MultiTaskElasticNet",
