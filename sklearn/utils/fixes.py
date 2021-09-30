@@ -13,8 +13,6 @@ at which the fix is no longer needed.
 from functools import update_wrapper
 import functools
 
-import sklearn
-
 import numpy as np
 import scipy.sparse as sp
 import scipy
