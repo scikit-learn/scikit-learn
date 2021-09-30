@@ -14,7 +14,6 @@ DOCSTRING_IGNORE_LIST = [
     "LabelSpreading",
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
-    "MiniBatchKMeans",
     "MultiLabelBinarizer",
     "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
