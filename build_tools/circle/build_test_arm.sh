@@ -18,7 +18,9 @@ setup_ccache() {
       ln -s $(which ccache) "/tmp/ccache/${name}"
       which ${name}
     done
-    ccache -M 256M
+    # Unset ccache limits
+    ccache -F 0
+    ccache -M 0
 }
 
 # imports get_dep
