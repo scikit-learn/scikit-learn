@@ -10,6 +10,8 @@ import threadpoolctl
 if hasattr(threadpoolctl, "ThreadpoolController"):
     _sklearn_threadpool_controller = threadpoolctl.ThreadpoolController()
     threadpool_limits = _sklearn_threadpool_controller.limit
+    threadpool_info = _sklearn_threadpool_controller.info
 else:
     _sklearn_threadpool_controller = None
     threadpool_limits = threadpoolctl.threadpool_limits
+    threadpool_info = threadpoolctl.threadpool_info
