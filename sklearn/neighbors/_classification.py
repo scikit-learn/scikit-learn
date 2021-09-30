@@ -267,7 +267,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         if weights is None:
             weights = np.ones_like(neigh_ind)
 
-        all_rows = np.arange(X.shape[0])
+        all_rows = np.arange(n_queries)
         probabilities = []
         for k, classes_k in enumerate(classes_):
             pred_labels = _y[:, k][neigh_ind]
