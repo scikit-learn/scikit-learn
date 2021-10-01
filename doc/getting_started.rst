@@ -230,6 +230,3 @@ illustrate the use of ``scikit-learn`` in many different contexts.
 
 The :ref:`tutorials <tutorial_menu>` also contain additional learning
 resources.
-
-In order to pass around sample aligned data such as ``sample_weight``, refer to
-:ref:`Metadata Routing <metadata_routing>`
