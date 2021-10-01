@@ -18,9 +18,9 @@ Fixed models
   when fitted on DataFrames with valid feature names:
   :class:`covariance.EllipticEnvelope`, :class:`ensemble.IsolationForest`,
   :class:`ensemble.AdaBoostClassifier`, :class:`neighbors.KNeighborsClassifier`,
-  :class:`ensemble.RadiusNeighborsClassifier`,
-  :class:`ensemble.KNeighborsRegressor`,
-  :class:`ensemble.RadiusNeighborsRegressor`. :pr:`21199` by `Thomas Fan`_.
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsRegressor`. :pr:`21199` by `Thomas Fan`_.
 
 :mod:`sklearn.calibration`
 ..........................
