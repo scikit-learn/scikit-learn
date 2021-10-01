@@ -48,7 +48,7 @@ columns:
    :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_coclustering_003.png
    :align: center
    :scale: 50
-   :alt:
+   :alt: The graph is a square heat map, 5x5, with axes from 0 to 250.  The darkest 5 squares of heat map run diagonally from top left to bottom right.
 
    An example of biclusters formed by partitioning rows and columns.
 
