@@ -1011,6 +1011,11 @@ def is_scalar_nan(x):
     This function is meant to overcome the issue that np.isnan does not allow
     non-numerical types as input, and that np.nan is not float('nan').
 
+    We intentionally do not use `_is_pandas_na` to return `True` when `x` is
+    `pd.NA` because estimators that support `pd.NA` are the exception rather
+    than the rule at the moment. When `pd.NA` is more universally supported, we
+    may reconsider this decision.
+
     Parameters
     ----------
     x : any type
