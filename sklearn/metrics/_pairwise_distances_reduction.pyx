@@ -23,6 +23,7 @@ np.import_array()
 
 from libc.stdlib cimport free, malloc
 from libc.float cimport DBL_MAX
+from libc.math cimport exp
 from libcpp.vector cimport vector
 from cython cimport final
 from cpython.object cimport PyObject
@@ -1574,3 +1575,274 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
                 if squared_dist_i_j <= self.r_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i + X_start].push_back(squared_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i + X_start].push_back(j + Y_start)
+
+
+cdef class Kernel(PairwiseDistancesReduction):
+
+    cdef:
+        DTYPE_t[:, ::1] K
+
+    @classmethod
+    def get_for(
+        cls,
+        X,
+        Y,
+        str kernel="rbf",
+        chunk_size=None,
+        dict kernel_kwargs=None,
+        n_threads=None,
+    ) -> PairwiseDistancesArgKmin:
+        """Return the Kernel implementation for the given arguments.
+
+        Parameters
+        ----------
+        kernel : str, default='rbf'
+            The kernel to use.
+
+        chunk_size : int, default=None,
+            The number of vectors per chunk. If None (default) looks-up in
+            scikit-learn configuration for `pairwise_dist_chunk_size`,
+            and use 256 if it is not set.
+
+        kernel_kwargs : dict, default=None
+            Keyword arguments to pass to specified kernel.
+
+        n_threads : int, default=None
+            The number of OpenMP threads to use for the reduction.
+            Parallelism is done on chunks and the sharding of chunks
+            depends on the `strategy` set on
+            :method:`~Kernel.compute`.
+
+            None and -1 means using all processors.
+
+        Returns
+        -------
+        argkmin: PairwiseDistancesArgKmin
+            The suited PairwiseDistancesArgKmin implementation.
+        """
+        # This factory comes to handle specialisations.
+        if kernel == "rbf":
+            return RBFKernel(X, Y, chunk_size=chunk_size, gamma=1.0)
+        else:
+            raise ValueError(f"Unsupported kernel: {kernel}")
+
+    def __init__(
+        self,
+        DatasetsPair datasets_pair,
+        chunk_size=None,
+        n_threads=None,
+    ):
+        super().__init__(datasets_pair, chunk_size, n_threads)
+
+        # The Gram matrix: K[i,j] = K(x_i, y_j)
+        self.K = np.empty((self.n_X, self.n_Y), dtype=DTYPE)
+
+    def compute(
+        self,
+        str strategy=None,
+    ):
+        """Computes the kernel between vectors of X and Y.
+
+        Parameters
+        ----------
+        strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
+            The chunking strategy defining which dataset parallelization are made on.
+
+            Strategies differs on the dispatching they use for chunks on threads:
+              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
+              Each thread then iterates on all the chunks of Y. This strategy is
+              embarrassingly parallel and comes with no datastructures synchronisation.
+              - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
+              Each thread then iterates on all the chunks of X. This strategy is
+              embarrassingly parallel and comes with no datastructures synchronisation.
+              - 'auto' relies on a simple heuristic to choose between
+              'parallel_on_X' and 'parallel_on_Y'.
+              - None (default) looks-up in scikit-learn configuration for
+              `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
+
+        Returns
+        -------
+        K : ndarray of shape (n_X, n_Y)
+            A kernel matrix K such that K_{i, j} is the kernel between the
+            ith and jth vectors of the given matrix X and Y.
+        """
+
+        if strategy is None:
+            strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
+
+        if strategy == 'auto':
+            # This is a simple heuristic whose constant for the
+            # comparison has been chosen based on experiments.
+            if 4 * self.chunk_size * self.effective_omp_n_thread < self.n_X:
+                strategy = 'parallel_on_X'
+            else:
+                strategy = 'parallel_on_Y'
+
+        # Limit the number of threads in second level of nested parallelism for BLAS
+        # to avoid threads over-subscription (in GEMM for instance).
+        with threadpool_limits(limits=1, user_api="blas"):
+            if strategy == 'parallel_on_Y':
+                self._parallel_on_Y()
+            elif strategy == 'parallel_on_X':
+                self._parallel_on_X()
+            else:
+                raise RuntimeError(f"strategy '{strategy}' not supported.")
+
+        return self.K
+
+cdef class RBFKernel(Kernel):
+
+    cdef:
+        const DTYPE_t[:, ::1] X
+        const DTYPE_t[:, ::1] Y
+        const DTYPE_t[::1] X_sq_norms
+        const DTYPE_t[::1] Y_sq_norms
+
+        # Buffers for GEMM
+        DTYPE_t ** dist_middle_terms_chunks
+        bint use_squared_distances
+
+        DTYPE_t gamma
+
+    def __init__(
+        self,
+        X,
+        Y,
+        gamma=0.1,
+        chunk_size=None,
+        n_threads=None,
+    ):
+        super().__init__(
+            # The datasets pair here is used for exact distances computations
+            datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
+            chunk_size=chunk_size,
+            n_threads=n_threads
+        )
+        # X and Y are checked by the DatasetsPair implemented as a DenseDenseDatasetsPair
+        cdef:
+            DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
+        self.X, self.Y = datasets_pair.X, datasets_pair.Y
+        self.X_sq_norms = _sqeuclidean_row_norms(self.X, self.effective_omp_n_thread)
+        self.Y_sq_norms = _sqeuclidean_row_norms(self.Y, self.effective_omp_n_thread)
+
+        # Temporary datastructures used in threads
+        self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
+            sizeof(DTYPE_t *) * self.effective_omp_n_thread
+        )
+
+        self.gamma = gamma
+
+
+    def __dealloc__(self):
+        if self.dist_middle_terms_chunks is not NULL:
+            free(self.dist_middle_terms_chunks)
+
+    @classmethod
+    def is_usable_for(cls, X, Y, metric) -> bool:
+        return (super().is_usable_for(X, Y, metric)
+                and not _in_unstable_openblas_configuration())
+
+    @final
+    cdef void _on_X_parallel_init(
+        self,
+        ITYPE_t thread_num,
+    ) nogil:
+        Kernel._on_X_parallel_init(self, thread_num)
+
+        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
+            self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t)
+        )
+
+    @final
+    cdef void _on_X_parallel_finalize(
+        self,
+        ITYPE_t thread_num
+    ) nogil:
+        Kernel._on_X_parallel_finalize(self, thread_num)
+        free(self.dist_middle_terms_chunks[thread_num])
+
+    @final
+    cdef void _on_Y_init(
+        self,
+        ITYPE_t num_threads,
+    ) nogil:
+        cdef ITYPE_t thread_num
+        Kernel._on_Y_init(self, num_threads)
+
+        for thread_num in range(num_threads):
+            # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+            self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
+                self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t)
+            )
+
+    @final
+    cdef void _on_Y_finalize(
+        self,
+        ITYPE_t num_threads,
+    ) nogil:
+        cdef ITYPE_t thread_num
+        Kernel._on_Y_finalize(self, num_threads)
+
+        for thread_num in range(num_threads):
+            free(self.dist_middle_terms_chunks[thread_num])
+
+    @final
+    cdef void _compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil:
+        cdef:
+            ITYPE_t i, j
+            DTYPE_t squared_dist_i_j
+
+            const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
+            const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
+            DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
+
+            # We compute the full pairwise squared distances matrix as follows
+            #
+            #      exp(- gamma ||X_c - Y_c||²) = exp(- gamma( ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²) )
+            #
+            # The middle term gets computed efficiently bellow using BLAS Level 3 GEMM.
+            #
+            # Careful: LDA, LDB and LDC are given for F-ordered arrays
+            # in BLAS documentations, for instance:
+            # https://www.netlib.org/lapack/explore-html/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html #noqa
+            #
+            # Here, we use their counterpart values to work with C-ordered arrays.
+            BLAS_Order order = RowMajor
+            BLAS_Trans ta = NoTrans
+            BLAS_Trans tb = Trans
+            ITYPE_t m = X_c.shape[0]
+            ITYPE_t n = Y_c.shape[0]
+            ITYPE_t K = X_c.shape[1]
+            DTYPE_t alpha = - 2.
+            # Casting for A and B to remove the const is needed because APIs exposed via
+            # scipy.linalg.cython_blas aren't reflecting the arguments' const qualifier.
+            DTYPE_t * A = <DTYPE_t*> & X_c[0, 0]
+            ITYPE_t lda = X_c.shape[1]
+            DTYPE_t * B = <DTYPE_t*> & Y_c[0, 0]
+            ITYPE_t ldb = X_c.shape[1]
+            DTYPE_t beta = 0.
+            DTYPE_t * C = dist_middle_terms
+            ITYPE_t ldc = Y_c.shape[0]
+
+        # dist_middle_terms = -2 * X_c.dot(Y_c.T)
+        _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, C, ldc)
+
+        # Pushing the distance and their associated indices in vectors.
+        for i in range(X_c.shape[0]):
+            for j in range(Y_c.shape[0]):
+                # Using the squared euclidean distance as the ranking-preserving distance:
+                # |X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                squared_dist_i_j = (
+                    self.X_sq_norms[i + X_start]
+                    + dist_middle_terms[i * Y_c.shape[0] + j]
+                    + self.Y_sq_norms[j + Y_start]
+                )
+                self.K[i + X_start, j + Y_start] = exp(-self.gamma * squared_dist_i_j)
