@@ -1262,19 +1262,17 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         super()._validate_params()
 
         if self.max_features is not None:
-            check_scalar(self.max_features, "max_features", int, min_val=0)
+            check_scalar(self.max_features, "max_features", numbers.Integral, min_val=0)
 
-        if self.min_df is not None:
-            try:
-                check_scalar(self.min_df, "min_df", int, min_val=0)
-            except TypeError:
-                check_scalar(self.min_df, "min_df", float, min_val=0.0, max_val=1.0)
+        if isinstance(self.min_df, numbers.Integral):
+            check_scalar(self.min_df, "min_df", numbers.Integral, min_val=0)
+        else:
+            check_scalar(self.min_df, "min_df", numbers.Real, min_val=0.0, max_val=1.0)
 
-        if self.max_df is not None:
-            try:
-                check_scalar(self.max_df, "max_df", int, min_val=0)
-            except TypeError:
-                check_scalar(self.max_df, "max_df", float, min_val=0.0, max_val=1.0)
+        if isinstance(self.max_df, numbers.Integral):
+            check_scalar(self.max_df, "max_df", numbers.Integral, min_val=0)
+        else:
+            check_scalar(self.max_df, "max_df", numbers.Real, min_val=0.0, max_val=1.0)
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
