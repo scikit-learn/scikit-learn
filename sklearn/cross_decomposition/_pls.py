@@ -577,9 +577,9 @@ class PLSRegression(_PLS):
         than `tol`, where `u` corresponds to the left singular vector.
 
     copy : bool, default=True
-        Whether to copy `X` and `Y` in fit before applying centering, and
-        potentially scaling. If False, these operations will be done inplace,
-        modifying both arrays.
+        Whether to copy `X` and `Y` in :term:`fit` before applying centering,
+        and potentially scaling. If `False`, these operations will be done
+        inplace, modifying both arrays.
 
     Attributes
     ----------
