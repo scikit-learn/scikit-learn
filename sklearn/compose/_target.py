@@ -311,7 +311,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     def get_metadata_request(self):
         """Get requested data properties.
 
-        This method mirrors the given regressor's ``fit`` metadata request.
+        This method mirrors the given regressor's metadata request.
 
         .. versionadded:: 1.1
 
