@@ -664,7 +664,8 @@ def test_validate():
 def test_method_metadata_request():
     mmr = MethodMetadataRequest(name="fit")
     with pytest.raises(
-        ValueError, match="overwrite can only be one of {True, False, 'on-default'}."
+        ValueError,
+        match="overwrite can only be one of {True, False, 'smart', 'ignore'}.",
     ):
         mmr.add_request(prop="test", alias=None, overwrite="test")
 
@@ -683,7 +684,7 @@ def test_method_metadata_request():
         mmr.add_request(prop="foo", alias=True)
     with pytest.raises(ValueError, match="foo is already requested"):
         mmr.add_request(prop="foo", alias=True)
-    mmr.add_request(prop="foo", alias=True, overwrite="not-requested")
+    mmr.add_request(prop="foo", alias=True, overwrite="smart")
     assert mmr.requests == {"foo": RequestType.REQUESTED}
 
     with pytest.raises(ValueError, match="Can only add another MethodMetadataRequest"):

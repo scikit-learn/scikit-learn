@@ -107,15 +107,17 @@ class MethodMetadataRequest:
         allow_aliasing : bool, default=True
             If False, alias should be the same as prop if it's a string.
 
-        overwrite : bool, list, or str, default=False
+        overwrite : bool or str, default=False
 
             - True: ``alias`` replaces the existing routing.
 
             - False: a ``ValueError`` is raised if the given value conflicts
               with an existing one.
 
-            - "not-requested": only overwrite the alias if it is
-              ``RequestType.ERROR_IF_PASSED`` or ``RequestType.UNREQUESTED``
+            - "smart": overwrite in this order:
+              ``RequestType.REQUESTED`` over ``RequestType.UNREQUESTED`` over
+              ``RequestType.ERROR_IF_PASSED``, and error if existing value is
+              a string.
 
             - "ignore": ignore the requested metadata if it already exists.
 
@@ -123,9 +125,10 @@ class MethodMetadataRequest:
             If provided, all props should be the same as this value. It used to
             handle default values.
         """
-        if overwrite not in {True, False, "not-requested", "ignore"}:
+        if overwrite not in {True, False, "smart", "ignore"}:
             raise ValueError(
-                "overwrite can only be one of {True, False, 'not-requested', 'ignore'}."
+                "overwrite can only be one of {True, False, 'smart', 'ignore'}; "
+                f"but f{overwrite} is given."
             )
         if expected_metadata is not None and expected_metadata != prop:
             raise ValueError(
@@ -156,17 +159,30 @@ class MethodMetadataRequest:
             self.requests[prop] = alias
         elif prop in self.requests and overwrite == "ignore":
             pass
-        elif (
-            overwrite == "not-requested"
-            and not isinstance(self.requests[prop], str)
-            and RequestType(self.requests[prop])
-            in {RequestType.ERROR_IF_PASSED, RequestType.UNREQUESTED}
-        ):
-            self.requests[prop] = alias
+        elif overwrite == "smart":
+            current = self.requests[prop]
+            if isinstance(current, str):
+                raise ValueError(
+                    "Cannot overwrite f{current} with f{alias} when overwrite=smart."
+                )
+            current = RequestType(current)
+
+            # REQUESTED > UNREQUESTED > ERROR_IF_PASSED
+            if alias == RequestType.REQUESTED and current in {
+                RequestType.ERROR_IF_PASSED,
+                RequestType.UNREQUESTED,
+            }:
+                self.requests[prop] = alias
+            elif (
+                alias == RequestType.UNREQUESTED
+                and current == RequestType.ERROR_IF_PASSED
+            ):
+                self.requests[prop] = alias
         elif self.requests[prop] != alias:
             raise ValueError(
                 f"{prop} is already requested as {self.requests[prop]}, "
-                f"which is not the same as the one given: {alias}."
+                f"which is not the same as the one given: {alias}. Cannot "
+                "overwrite when overwrite=False."
             )
 
     def merge_method_request(self, other, overwrite=False, expected_metadata=None):
@@ -188,8 +204,10 @@ class MethodMetadataRequest:
             - False: a ``ValueError`` is raised if the given value conflicts
               with an existing one.
 
-            - "not-requested": only overwrite the alias if it is
-              ``RequestType.ERROR_IF_PASSED`` or ``RequestType.UNREQUESTED``
+            - "smart": overwrite in this order:
+              ``RequestType.REQUESTED`` over ``RequestType.UNREQUESTED`` over
+              ``RequestType.ERROR_IF_PASSED``, and error if existing value is
+              a string.
 
             - "ignore": ignore the requested metadata if it already exists.
 
@@ -456,8 +474,10 @@ class MetadataRequest:
             - False: a ``ValueError`` is raised if the given value conflicts
               with an existing one.
 
-            - "not-requested": only overwrite the alias if it is
-              ``RequestType.ERROR_IF_PASSED`` or ``RequestType.UNREQUESTED``
+            - "smart": overwrite in this order:
+              ``RequestType.REQUESTED`` over ``RequestType.UNREQUESTED`` over
+              ``RequestType.ERROR_IF_PASSED``, and error if existing value is
+              a string.
 
             - "ignore": ignore the requested metadata if it already exists.
 
@@ -573,8 +593,10 @@ class MetadataRouter:
             - False: a ``ValueError`` is raised if the given value conflicts
               with an existing one.
 
-            - "not-requested": only overwrite the alias if it is
-              ``RequestType.ERROR_IF_PASSED`` or ``RequestType.UNREQUESTED``
+            - "smart": overwrite in this order:
+              ``RequestType.REQUESTED`` over ``RequestType.UNREQUESTED`` over
+              ``RequestType.ERROR_IF_PASSED``, and error if existing value is
+              a string.
 
             - "ignore": ignore the requested metadata if it already exists.
 

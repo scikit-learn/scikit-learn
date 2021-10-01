@@ -311,9 +311,7 @@ class Pipeline(_BaseComposition):
         _, estimators = zip(*self.steps)
         return (
             MetadataRouter()
-            .add(
-                *estimators, mapping="one-to-one", overwrite="not-requested", mask=True
-            )
+            .add(*estimators, mapping="one-to-one", overwrite="smart", mask=True)
             .get_metadata_request()
         )
 
