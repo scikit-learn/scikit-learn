@@ -126,10 +126,25 @@ def test_RFE_fit_score_params():
             return self.svc_.score(X, y)
 
     X, y = load_iris(return_X_y=True)
-    with pytest.raises(ValueError, match="fit: prop cannot be None"):
-        RFE(estimator=TestEstimator()).fit(X, y)
-    with pytest.raises(ValueError, match="score: prop cannot be None"):
-        RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y)
+    with pytest.raises(
+        ValueError,
+        match=(
+            "prop is passed but is not explicitly set as requested or not. In"
+            " method: fit"
+        ),
+    ):
+        RFE(estimator=TestEstimator()).fit(X, y, prop="foo")
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "prop is passed but is not explicitly set as requested or not. In method:"
+            " score"
+        ),
+    ):
+        RFE(estimator=TestEstimator().fit_requests(prop=True)).fit(
+            X, y, prop="foo"
+        ).score(X, y, prop="bar")
 
     RFE(
         estimator=TestEstimator().fit_requests(prop=True).score_requests(prop=True)

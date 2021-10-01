@@ -272,9 +272,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if step_score:
             self.scores_ = []
 
-        metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, kwargs=fit_params
-        )
+        # since ignore_extras=False, validation is done as well
+        estimator_fit_params = metadata_request_factory(
+            self.estimator
+        ).fit.get_method_input(ignore_extras=False, kwargs=fit_params)
         # Elimination
         while np.sum(support_) > n_features_to_select:
             # Remaining features
@@ -285,7 +286,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
-            estimator.fit(X[:, features], y, **fit_params)
+            estimator.fit(X[:, features], y, **estimator_fit_params)
 
             # Get importance and rank them
             importances = _get_feature_importances(
@@ -312,7 +313,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # Set final attributes
         features = np.arange(n_features)[support_]
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X[:, features], y, **fit_params)
+        self.estimator_.fit(X[:, features], y, **estimator_fit_params)
 
         # Compute step score when only n_features_to_select features left
         if step_score:
@@ -341,7 +342,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict(self.transform(X))
 
     @if_delegate_has_method(delegate="estimator")
-    def score(self, X, y, **fit_params):
+    def score(self, X, y, **score_params):
         """Reduce X to the selected features and return the score of the underlying estimator.
 
         Parameters
@@ -352,7 +353,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         y : array of shape [n_samples]
             The target values.
 
-        **fit_params : dict
+        **score_params : dict
             Parameters to pass to the `score` method of the underlying
             estimator.
 
@@ -365,7 +366,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             features returned by `rfe.transform(X)` and `y`.
         """
         check_is_fitted(self)
-        return self.estimator_.score(self.transform(X), y, **fit_params)
+        # since ignore_extras=False, validation is done as well
+        score_params = metadata_request_factory(self.estimator).score.get_method_input(
+            ignore_extras=False, kwargs=score_params
+        )
+        return self.estimator_.score(self.transform(X), y, **score_params)
 
     def _get_support_mask(self):
         check_is_fitted(self)
