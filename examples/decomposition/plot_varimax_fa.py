@@ -52,9 +52,11 @@ plt.tight_layout()
 # Run factor analysis with Varimax rotation
 n_comps = 2
 
-methods = [('PCA', PCA()),
-           ('Unrotated FA', FactorAnalysis()),
-           ('Varimax FA', FactorAnalysis(rotation='varimax'))]
+methods = [
+    ("PCA", PCA()),
+    ("Unrotated FA", FactorAnalysis()),
+    ("Varimax FA", FactorAnalysis(rotation="varimax")),
+]
 fig, axes = plt.subplots(ncols=len(methods), figsize=(10, 8))
 
 for ax, (method, fa) in zip(axes, methods):

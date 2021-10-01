@@ -43,7 +43,7 @@ or with conda::
 # Read more in the :ref:`User Guide <successive_halving_user_guide>` (note:
 # the Successive Halving estimators are still :term:`experimental
 # <experimental>`).
-# 
+#
 # .. figure:: ../model_selection/images/sphx_glr_plot_successive_halving_iterations_001.png
 #   :target: ../model_selection/plot_successive_halving_iterations.html
 #   :align: center
@@ -61,14 +61,17 @@ X, y = make_classification(n_samples=700, random_state=rng)
 
 clf = RandomForestClassifier(n_estimators=10, random_state=rng)
 
-param_dist = {"max_depth": [3, None],
-              "max_features": randint(1, 11),
-              "min_samples_split": randint(2, 11),
-              "bootstrap": [True, False],
-              "criterion": ["gini", "entropy"]}
+param_dist = {
+    "max_depth": [3, None],
+    "max_features": randint(1, 11),
+    "min_samples_split": randint(2, 11),
+    "bootstrap": [True, False],
+    "criterion": ["gini", "entropy"],
+}
 
-rsh = HalvingRandomSearchCV(estimator=clf, param_distributions=param_dist,
-                            factor=2, random_state=rng)
+rsh = HalvingRandomSearchCV(
+    estimator=clf, param_distributions=param_dist, factor=2, random_state=rng
+)
 rsh.fit(X, y)
 rsh.best_params_
 
@@ -145,8 +148,10 @@ feature_names = X.columns
 knn = KNeighborsClassifier(n_neighbors=3)
 sfs = SequentialFeatureSelector(knn, n_features_to_select=2)
 sfs.fit(X, y)
-print("Features selected by forward sequential selection: "
-      f"{feature_names[sfs.get_support()].tolist()}")
+print(
+    "Features selected by forward sequential selection: "
+    f"{feature_names[sfs.get_support()].tolist()}"
+)
 
 ##############################################################################
 # New PolynomialCountSketch kernel approximation function
@@ -164,19 +169,20 @@ from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.linear_model import LogisticRegression
 
 X, y = fetch_covtype(return_X_y=True)
-pipe = make_pipeline(MinMaxScaler(),
-                     PolynomialCountSketch(degree=2, n_components=300),
-                     LogisticRegression(max_iter=1000))
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5000,
-                                                    test_size=10000,
-                                                    random_state=42)
+pipe = make_pipeline(
+    MinMaxScaler(),
+    PolynomialCountSketch(degree=2, n_components=300),
+    LogisticRegression(max_iter=1000),
+)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, train_size=5000, test_size=10000, random_state=42
+)
 pipe.fit(X_train, y_train).score(X_test, y_test)
 
 ##############################################################################
 # For comparison, here is the score of a linear baseline for the same data:
 
-linear_baseline = make_pipeline(MinMaxScaler(),
-                                LogisticRegression(max_iter=1000))
+linear_baseline = make_pipeline(MinMaxScaler(), LogisticRegression(max_iter=1000))
 linear_baseline.fit(X_train, y_train).score(X_test, y_test)
 
 ##############################################################################
@@ -192,16 +198,22 @@ from sklearn.datasets import fetch_california_housing
 from sklearn.inspection import plot_partial_dependence
 
 X, y = fetch_california_housing(return_X_y=True, as_frame=True)
-features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
+features = ["MedInc", "AveOccup", "HouseAge", "AveRooms"]
 est = RandomForestRegressor(n_estimators=10)
 est.fit(X, y)
 display = plot_partial_dependence(
-       est, X, features, kind="individual", subsample=50,
-       n_jobs=3, grid_resolution=20, random_state=0
+    est,
+    X,
+    features,
+    kind="individual",
+    subsample=50,
+    n_jobs=3,
+    grid_resolution=20,
+    random_state=0,
 )
 display.figure_.suptitle(
-    'Partial dependence of house value on non-location features\n'
-    'for the California housing dataset, with BayesianRidge'
+    "Partial dependence of house value on non-location features\n"
+    "for the California housing dataset, with BayesianRidge"
 )
 display.figure_.subplots_adjust(hspace=0.3)
 
@@ -223,7 +235,7 @@ X = rng.randn(n_samples, n_features)
 # positive integer target correlated with X[:, 5] with many zeros:
 y = rng.poisson(lam=np.exp(X[:, 5]) / 2)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
-regressor = DecisionTreeRegressor(criterion='poisson', random_state=0)
+regressor = DecisionTreeRegressor(criterion="poisson", random_state=0)
 regressor.fit(X_train, y_train)
 
 ##############################################################################
