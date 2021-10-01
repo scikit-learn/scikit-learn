@@ -46,6 +46,13 @@ Changelog
   error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
   :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
+  message when the solver does not support sparse matrices with int64 indices.
+  :pr:`21093` by `Tom Dupre la Tour`_.
+
 :mod:`sklearn.utils`
 ....................
 

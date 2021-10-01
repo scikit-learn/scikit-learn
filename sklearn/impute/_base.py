@@ -610,7 +610,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    missing_values : int, float, string, np.nan or None, default=np.nan
+    missing_values : int, float, str, np.nan or None, default=np.nan
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For pandas' dataframes with
         nullable integer dtypes with missing values, `missing_values`
@@ -620,29 +620,29 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         Whether the imputer mask should represent all or a subset of
         features.
 
-        - If 'missing-only' (default), the imputer mask will only represent
+        - If `'missing-only'` (default), the imputer mask will only represent
           features containing missing values during fit time.
-        - If 'all', the imputer mask will represent all features.
+        - If `'all'`, the imputer mask will represent all features.
 
     sparse : bool or 'auto', default='auto'
         Whether the imputer mask format should be sparse or dense.
 
-        - If 'auto' (default), the imputer mask will be of same type as
+        - If `'auto'` (default), the imputer mask will be of same type as
           input.
-        - If True, the imputer mask will be a sparse matrix.
-        - If False, the imputer mask will be a numpy array.
+        - If `True`, the imputer mask will be a sparse matrix.
+        - If `False`, the imputer mask will be a numpy array.
 
     error_on_new : bool, default=True
-        If True, transform will raise an error when there are features with
-        missing values in transform that have no missing values in fit. This is
-        applicable only when `features='missing-only'`.
+        If `True`, :meth:`transform` will raise an error when there are
+        features with missing values that have no missing values in
+        :meth:`fit`. This is applicable only when `features='missing-only'`.
 
     Attributes
     ----------
-    features_ : ndarray, shape (n_missing_features,) or (n_features,)
-        The features indices which will be returned when calling ``transform``.
-        They are computed during ``fit``. For ``features='all'``, it is
-        to ``range(n_features)``.
+    features_ : ndarray of shape (n_missing_features,) or (n_features,)
+        The features indices which will be returned when calling
+        :meth:`transform`. They are computed during :meth:`fit`. If
+        `features='all'`, `features_` is equal to `range(n_features)`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -654,6 +654,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    See Also
+    --------
+    SimpleImputer : Univariate imputation of missing values.
+    IterativeImputer : Multivariate imputation of missing values.
 
     Examples
     --------
@@ -673,7 +678,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     array([[False,  True],
            [ True, False],
            [False, False]])
-
     """
 
     def __init__(
@@ -695,19 +699,19 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {ndarray or sparse matrix}, shape (n_samples, n_features)
-            The input data with missing values. Note that ``X`` has been
-            checked in ``fit`` and ``transform`` before to call this function.
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input data with missing values. Note that `X` has been
+            checked in :meth:`fit` and :meth:`transform` before to call this
+            function.
 
         Returns
         -------
-        imputer_mask : {ndarray or sparse matrix}, shape \
+        imputer_mask : {ndarray, sparse matrix} of shape \
         (n_samples, n_features)
             The imputer mask of the original data.
 
-        features_with_missing : ndarray, shape (n_features_with_missing)
+        features_with_missing : ndarray of shape (n_features_with_missing)
             The features containing missing values.
-
         """
         if not self._precomputed:
             imputer_mask = _get_mask(X, self.missing_values)
@@ -778,25 +782,23 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         return X
 
     def _fit(self, X, y=None, precomputed=False):
-        """Fit the transformer on X.
+        """Fit the transformer on `X`.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Input data, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
-            If `precomputed` is True, then `X` is a mask of the
-            input data.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+            If `precomputed=True`, then `X` is a mask of the input data.
 
         precomputed : bool
             Whether the input data is a mask.
 
         Returns
         -------
-        imputer_mask : {ndarray or sparse matrix}, shape (n_samples, \
+        imputer_mask : {ndarray, sparse matrix} of shape (n_samples, \
         n_features)
             The imputer mask of the original data.
-
         """
         if precomputed:
             if not (hasattr(X, "dtype") and X.dtype.kind == "b"):
@@ -834,38 +836,40 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         return missing_features_info[0]
 
     def fit(self, X, y=None):
-        """Fit the transformer on X.
+        """Fit the transformer on `X`.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Input data, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         self : object
-            Returns self.
+            Fitted estimator.
         """
         self._fit(X, y)
 
         return self
 
     def transform(self, X):
-        """Generate missing values indicator for X.
+        """Generate missing values indicator for `X`.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data to complete.
 
         Returns
         -------
-        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features) \
+        Xt : {ndarray, sparse matrix} of shape (n_samples, n_features) \
         or (n_samples, n_features_with_missing)
-            The missing indicator for input data. The data type of ``Xt``
+            The missing indicator for input data. The data type of `Xt`
             will be boolean.
-
         """
         check_is_fitted(self)
 
@@ -894,20 +898,22 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         return imputer_mask
 
     def fit_transform(self, X, y=None):
-        """Generate missing values indicator for X.
+        """Generate missing values indicator for `X`.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data to complete.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
-        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features) \
+        Xt : {ndarray, sparse matrix} of shape (n_samples, n_features) \
         or (n_samples, n_features_with_missing)
-            The missing indicator for input data. The data type of ``Xt``
+            The missing indicator for input data. The data type of `Xt`
             will be boolean.
-
         """
         imputer_mask = self._fit(X, y)
 
