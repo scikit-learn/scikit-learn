@@ -87,7 +87,9 @@ def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
     return _inner_deprecate_positional_args
 
 
-def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
+def _assert_all_finite(
+    X, allow_nan=False, msg_dtype=None, estimator_name=None, data_name=""
+):
     """Like assert_all_finite, but only for ndarray."""
     # validation is also imported in extmath
     from .extmath import _safe_accumulator_op
@@ -103,7 +105,6 @@ def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
     if is_float and (np.isfinite(_safe_accumulator_op(np.sum, X))):
         pass
     elif is_float:
-        msg_err = "Input contains {} or a value too large for {!r}."
         if (
             allow_nan
             and np.isinf(X).any()
@@ -111,18 +112,43 @@ def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
             and not np.isfinite(X).all()
         ):
             type_err = "infinity" if allow_nan else "NaN, infinity"
-            raise ValueError(
-                msg_err.format(
-                    type_err, msg_dtype if msg_dtype is not None else X.dtype
-                )
+            msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
+            if data_name:
+                data_name += " "
+            msg_err = (
+                f"Input {data_name}contains {type_err} or a value too large for"
+                f" {msg_dtype!r}."
             )
+            if (
+                not allow_nan
+                and estimator_name
+                and data_name == "X"
+                and np.isnan(X).any()
+            ):
+                # Improve the error message on how to handle missing values in
+                # scikit-learn.
+                msg_err += (
+                    f"\nEstimator {estimator_name} does not accept missing values"
+                    " encoded as NaN natively. Please make sure to to proprocess the"
+                    " data, for instance by using an imputer transformer in a pipeline"
+                    " or drop samples with missing values. See"
+                    " https://scikit-learn.org/stable/modules/impute.html"
+                )
+            raise ValueError(msg_err)
+
     # for object dtype data, we only check for NaNs (GH-13254)
     elif X.dtype == np.dtype("object") and not allow_nan:
         if _object_dtype_isnan(X).any():
             raise ValueError("Input contains NaN")
 
 
-def assert_all_finite(X, *, allow_nan=False):
+def assert_all_finite(
+    X,
+    *,
+    allow_nan=False,
+    estimator_name=None,
+    data_name="",
+):
     """Throw a ValueError if X contains NaN or infinity.
 
     Parameters
@@ -130,8 +156,22 @@ def assert_all_finite(X, *, allow_nan=False):
     X : {ndarray, sparse matrix}
 
     allow_nan : bool, default=False
+
+    estimator_name : str, default=None
+        The estimator name, used to construct the error message.
+
+    data_name : str, default=""
+        The data name used to construct the error message. In particular
+        if `data_name` is "X" and the data has NaN values and
+        allow_nane is False, the error message will link to the imputer
+        documentation.
     """
-    _assert_all_finite(X.data if sp.issparse(X) else X, allow_nan)
+    _assert_all_finite(
+        X.data if sp.issparse(X) else X,
+        allow_nan=allow_nan,
+        estimator_name=estimator_name,
+        data_name=data_name,
+    )
 
 
 def as_float_array(X, *, copy=True, force_all_finite=True):
@@ -372,7 +412,14 @@ def indexable(*iterables):
 
 
 def _ensure_sparse_format(
-    spmatrix, accept_sparse, dtype, copy, force_all_finite, accept_large_sparse
+    spmatrix,
+    accept_sparse,
+    dtype,
+    copy,
+    force_all_finite,
+    accept_large_sparse,
+    estimator_name=None,
+    data_name="",
 ):
     """Convert a sparse matrix to a given format.
 
@@ -411,6 +458,16 @@ def _ensure_sparse_format(
 
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
+
+
+    estimator_name : str, default=None
+        The estimator name, used to construct the error message.
+
+    data_name : str, default=""
+        The data name used to construct the error message. In particular
+        if `data_name` is "X" and the data has NaN values and
+        allow_nane is False, the error message will link to the imputer
+        documentation.
 
     Returns
     -------
@@ -468,7 +525,12 @@ def _ensure_sparse_format(
                 stacklevel=2,
             )
         else:
-            _assert_all_finite(spmatrix.data, allow_nan=force_all_finite == "allow-nan")
+            _assert_all_finite(
+                spmatrix.data,
+                allow_nan=force_all_finite == "allow-nan",
+                estimator_name=estimator_name,
+                data_name=data_name,
+            )
 
     return spmatrix
 
@@ -497,6 +559,7 @@ def check_array(
     ensure_min_samples=1,
     ensure_min_features=1,
     estimator=None,
+    data_name="",
 ):
 
     """Input validation on an array, list, sparse matrix or similar.
@@ -575,6 +638,12 @@ def check_array(
 
     estimator : str or estimator instance, default=None
         If passed, include the name of the estimator in warning messages.
+
+    data_name : str, default=""
+        The data name used to construct the error message. In particular
+        if `data_name` is "X" and the data has NaN values and
+        allow_nane is False, the error message will link to the imputer
+        documentation.
 
     Returns
     -------
@@ -716,6 +785,8 @@ def check_array(
             copy=copy,
             force_all_finite=force_all_finite,
             accept_large_sparse=accept_large_sparse,
+            estimator_name=estimator_name,
+            data_name=data_name,
         )
     else:
         # If np.array(..) gives ComplexWarning, then we convert the warning
@@ -732,7 +803,13 @@ def check_array(
                     # then conversion float -> int would be disallowed.
                     array = np.asarray(array, order=order)
                     if array.dtype.kind == "f":
-                        _assert_all_finite(array, allow_nan=False, msg_dtype=dtype)
+                        _assert_all_finite(
+                            array,
+                            allow_nan=False,
+                            msg_dtype=dtype,
+                            estimator_name=estimator_name,
+                            data_name=data_name,
+                        )
                     array = array.astype(dtype, casting="unsafe", copy=False)
                 else:
                     array = np.asarray(array, order=order, dtype=dtype)
@@ -966,6 +1043,7 @@ def check_X_y(
         ensure_min_samples=ensure_min_samples,
         ensure_min_features=ensure_min_features,
         estimator=estimator,
+        data_name="X",
     )
 
     y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric)
@@ -979,7 +1057,12 @@ def _check_y(y, multi_output=False, y_numeric=False):
     """Isolated part of check_X_y dedicated to y validation"""
     if multi_output:
         y = check_array(
-            y, accept_sparse="csr", force_all_finite=True, ensure_2d=False, dtype=None
+            y,
+            accept_sparse="csr",
+            force_all_finite=True,
+            ensure_2d=False,
+            dtype=None,
+            data_name="y",
         )
     else:
         y = column_or_1d(y, warn=True)
@@ -1551,6 +1634,7 @@ def _check_sample_weight(
             dtype=dtype,
             order="C",
             copy=copy,
+            data_name="sample_weight",
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")
