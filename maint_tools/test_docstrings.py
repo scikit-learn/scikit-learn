@@ -9,13 +9,10 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 # List of modules ignored when checking for numpydoc validation.
 DOCSTRING_IGNORE_LIST = [
-    "IterativeImputer",
     "KNNImputer",
     "LabelPropagation",
     "LabelSpreading",
-    "LocalOutlierFactor",
     "LocallyLinearEmbedding",
-    "MiniBatchKMeans",
     "MultiLabelBinarizer",
     "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
@@ -23,9 +20,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultiTaskLassoCV",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
-    "PLSCanonical",
-    "PLSRegression",
-    "PLSSVD",
     "PassiveAggressiveClassifier",
     "PassiveAggressiveRegressor",
     "PatchExtractor",
