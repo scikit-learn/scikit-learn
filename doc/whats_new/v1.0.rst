@@ -18,8 +18,8 @@ Fixed models
   when fitted on DataFrames with valid feature names:
   :class:`covariance.EllipticEnvelope`, :class:`ensemble.IsolationForest`,
   :class:`ensemble.AdaBoostClassifier`, :class:`neighbors.KNeighborsClassifier`,
-  :class:`neighbors.RadiusNeighborsClassifier`,
   :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
   :class:`neighbors.RadiusNeighborsRegressor`. :pr:`21199` by `Thomas Fan`_.
 
 :mod:`sklearn.calibration`
@@ -34,6 +34,17 @@ Fixed models
   `method="sigmoid"` that was ignoring the `sample_weight` when computing the
   the Bayesian priors.
   :pr:`21179` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor` with `metric="precomputed"` raises
+  an error for `bsr` and `dok` sparse matrices in methods: `fit`, `kneighbors`
+  and `radius_neighbors`, due to handling of explicit zeros in `bsr` and `dok`
+  :term:`sparse graph` formats. :pr:`21199` by `Thomas Fan`_.
 
 .. _changes_1_0:
 
