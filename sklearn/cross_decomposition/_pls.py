@@ -549,7 +549,7 @@ class _PLS(
 
 
 class PLSRegression(_PLS):
-    """PLS regression
+    """PLS regression.
 
     PLSRegression is also known as PLS2 or PLS1, depending on the number of
     targets.
@@ -577,9 +577,9 @@ class PLSRegression(_PLS):
         than `tol`, where `u` corresponds to the left singular vector.
 
     copy : bool, default=True
-        Whether to copy `X` and `Y` in fit before applying centering, and
-        potentially scaling. If False, these operations will be done inplace,
-        modifying both arrays.
+        Whether to copy `X` and `Y` in :term:`fit` before applying centering,
+        and potentially scaling. If `False`, these operations will be done
+        inplace, modifying both arrays.
 
     Attributes
     ----------
@@ -625,6 +625,10 @@ class PLSRegression(_PLS):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    See Also
+    --------
+    PLSCanonical : Partial Least Squares transformer and regressor.
 
     Examples
     --------
