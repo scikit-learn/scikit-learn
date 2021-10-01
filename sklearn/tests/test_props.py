@@ -205,7 +205,7 @@ def test_pipeline():
         clf.fit(X, y, brand=brand)
     assert not record.list
 
-    scorer = make_scorer(my_metric, score_params="new_param")
+    scorer = make_scorer(my_metric).score_requests(new_param=True)
 
     param_grid = {"myest__C": [0.1, 1]}
 
@@ -222,7 +222,7 @@ def test_slep_caseA():
     # LogisticRegressionCV. Both of these consumers understand the meaning
     # of the key "sample_weight".
 
-    weighted_acc = make_scorer(accuracy_score, score_params=["sample_weight"])
+    weighted_acc = make_scorer(accuracy_score).score_requests(sample_weight=True)
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
         scoring=weighted_acc,
@@ -248,7 +248,7 @@ def test_slep_caseB():
     # Since LogisticRegressionCV requires that weights explicitly be requested,
     # removing that request means the fitting is unweighted.
 
-    weighted_acc = make_scorer(accuracy_score, score_params=["sample_weight"])
+    weighted_acc = make_scorer(accuracy_score).score_requests(sample_weight=True)
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
         scoring=weighted_acc,
@@ -283,7 +283,7 @@ def test_slep_caseC():
     # Like LogisticRegressionCV, SelectKBest needs to request weights
     # explicitly. Here it does not request them.
 
-    weighted_acc = make_scorer(accuracy_score, score_params=["sample_weight"])
+    weighted_acc = make_scorer(accuracy_score).score_requests(sample_weight=True)
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
         scoring=weighted_acc,
@@ -307,9 +307,8 @@ def test_slep_caseD():
     # sample_weight, we can use aliases to pass different weights to different
     # consumers.
 
-    weighted_acc = make_scorer(
-        accuracy_score, score_params={"sample_weight": "scoring_weight"}
-    )
+    weighted_acc = make_scorer(accuracy_score).score_requests(sample_weight=True)
+
     lr = LogisticRegressionCV(
         cv=GroupKFold(),
         scoring=weighted_acc,
@@ -366,7 +365,7 @@ def test_nongroup_splitter_metadata_requests(Klass):
 
 def test_invalid_arg_given():
     # tests that passing an invalid argument would raise an error
-    weighted_acc = make_scorer(accuracy_score, score_params=["sample_weight"])
+    weighted_acc = make_scorer(accuracy_score).score_requests(sample_weight=True)
     model = LogisticRegression().fit_requests(sample_weight=True)
     param_grid = {"C": [0.1, 1]}
     gs = GridSearchCV(

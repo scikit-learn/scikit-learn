@@ -654,7 +654,6 @@ def make_scorer(
     greater_is_better=True,
     needs_proba=False,
     needs_threshold=False,
-    score_params=None,
     **kwargs,
 ):
     """Make a scorer from a performance metric or loss function.
@@ -704,12 +703,6 @@ def make_scorer(
         For example ``average_precision`` or the area under the roc curve
         can not be computed using discrete predictions alone.
 
-    score_params : list of strings, or dict of {str: str}, default=None
-        A list of required properties, or a mapping of the form
-        ``{"required_metadata": "provided_metadata"}``, or None.
-
-        .. versionadded:: 1.1
-
     **kwargs : additional arguments
         Additional parameters to be passed to score_func.
 
@@ -740,6 +733,8 @@ def make_scorer(
     output of :term:`decision_function` or :term:`predict_proba` when
     :term:`decision_function` is not present.
     """
+    if "score_params" in kwargs:
+        raise Exception("aaaaaaagh")
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
         raise ValueError(
@@ -752,9 +747,6 @@ def make_scorer(
     else:
         cls = _PredictScorer
     res = cls(score_func, sign, kwargs)
-    res._metadata_request = MetadataRequest(
-        {"score": score_params}, default=True
-    ).to_dict()
     return res
 
 

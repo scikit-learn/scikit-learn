@@ -9,10 +9,10 @@ and passed along to estimators, scorers, and CV splitters through
 meta-estimators such as ``Pipeline`` and ``GridSearchCV``. In order to pass
 metadata to a method such as ``fit`` or ``score``, the object accepting the
 metadata, must *request* it. For estimators and splitters this is done via
-``*_requests`` methods, e.g. ``fit_requests(...)``, and for scorers
-this is done via passing ``score_params`` to ``make_scorer``. For grouped
-splitters such as ``GroupKFold`` a ``groups`` parameter is requested by
-default. This is best demonstrated by the following examples.
+``*_requests`` methods, e.g. ``fit_requests(...)``, and for scorers this is
+done via ``score_requests`` method of a scorer. For grouped splitters such as
+``GroupKFold`` a ``groups`` parameter is requested by default. This is best
+demonstrated by the following examples.
 
 Usage Examples
 **************
@@ -43,8 +43,9 @@ explicitly request weights in ``make_scorer`` and for ``LogisticRegressionCV``.
 Both of these *consumers* understand the meaning of the key
 ``"sample_weight"``::
 
-  >>> weighted_acc = make_scorer(accuracy_score,
-  ...                            score_params=["sample_weight"])
+  >>> weighted_acc = make_scorer(accuracy_score).score_requests(
+  ...     sample_weight=True
+  ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
   ... ).fit_requests(sample_weight=True)
@@ -69,8 +70,9 @@ weights explicitly be requested, we need to explicitly say that
 ``sample_weight`` is not used for it, so that ``cross_validate`` doesn't pass
 it along.
 
-  >>> weighted_acc = make_scorer(accuracy_score,
-  ...                            score_params=["sample_weight"])
+  >>> weighted_acc = make_scorer(accuracy_score).score_requests(
+  ...     sample_weight=True
+  ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
   ... ).fit_requests(sample_weight=False)
@@ -89,8 +91,9 @@ Unweighted feature selection
 Unlike ``LogisticRegressionCV``, ``SelectKBest`` doesn't accept weights and
 therefore `"sample_weight"` is not routed to it::
 
-  >>> weighted_acc = make_scorer(accuracy_score,
-  ...                            score_params=["sample_weight"])
+  >>> weighted_acc = make_scorer(accuracy_score).score_requests(
+  ...     sample_weight=True
+  ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
   ... ).fit_requests(sample_weight=True)
@@ -113,8 +116,8 @@ Despite ``make_scorer`` and ``LogisticRegressionCV`` both expecting a key
 consumers. In this example, we pass ``scoring_weight`` to the scorer, and
 ``fitting_weight`` to ``LogisticRegressionCV``::
 
-  >>> weighted_acc = make_scorer(
-  ...     accuracy_score, score_params={"sample_weight": "scoring_weight"}
+  >>> weighted_acc = make_scorer(accuracy_score).score_requests(
+  ...    sample_weight="scoring_weight"
   ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
@@ -164,13 +167,7 @@ which accepts at least one metadata. For instance, if an estimator supports
   ``my_weights`` is done at the router level, and not by the object, e.g.
   estimator, itself.
 
-For the scorers, on the other hand, the user sets the routing via
-``make_scorer`` which accepts a ``score_params`` keyword argument, which is
-defined as::
-
-    score_params : list of strings, or dict of {str: str}, default=None
-        A list of required properties, or a mapping of the form
-        ``{"required_metadata": "provided_metadata"}``, or None.
+For the scorers, this is done the same way, using ``.score_requests`` method.
 
 If a metadata, e.g. ``sample_weight`` is passed by the user, the metadata
 request for all objects which potentially can accept ``sample_weight`` should
