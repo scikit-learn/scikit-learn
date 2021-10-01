@@ -1688,7 +1688,7 @@ cdef class Kernel(PairwiseDistancesReduction):
             else:
                 raise RuntimeError(f"strategy '{strategy}' not supported.")
 
-        return self.K
+        return self._finalize_results()
 
 cdef class RBFKernel(Kernel):
 
@@ -1845,4 +1845,8 @@ cdef class RBFKernel(Kernel):
                     + dist_middle_terms[i * Y_c.shape[0] + j]
                     + self.Y_sq_norms[j + Y_start]
                 )
-                self.K[i + X_start, j + Y_start] = exp(-self.gamma * squared_dist_i_j)
+                self.K[i + X_start, j + Y_start] = - self.gamma * squared_dist_i_j
+
+
+    def _finalize_results(self):
+        return np.exp(self.K)
