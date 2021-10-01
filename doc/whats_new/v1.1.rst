@@ -38,6 +38,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Feature| :class:`calibration.CalibrationDisplay` has a new method
+  :meth:`~calibration.CalibrationDisplay.from_cv_results` allowing to plot
+  calibration curves together with standard deviation uncertainty using
+  cross-validation results.
+  :pr:`21211` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
