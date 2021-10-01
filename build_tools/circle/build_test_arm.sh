@@ -13,7 +13,7 @@ setup_ccache() {
     echo "Setting up ccache"
     mkdir /tmp/ccache/
     which ccache
-    export PATH="/tmp/ccache/:${PATH}"
+    export PATH="/tmp/ccache:${PATH}"
     for name in gcc g++ cc c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++; do
       ln -s $(which ccache) "/tmp/ccache/${name}"
       which ${name}
