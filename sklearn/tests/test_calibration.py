@@ -20,7 +20,7 @@ from sklearn.utils.extmath import softmax
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs, load_iris
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import KFold, cross_val_predict
+from sklearn.model_selection import KFold, cross_validate, cross_val_predict
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import (
     RandomForestClassifier,
@@ -878,3 +878,12 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
     y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
 
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
+
+
+def test_xxx(pyplot):
+    # FIXME: write proper test to check from_cv_results
+    X, y = make_classification(random_state=0)
+    clf = LogisticRegression(random_state=0)
+    cv_results = cross_validate(clf, X, y, return_estimator=True, return_indices=True)
+
+    CalibrationDisplay.from_cv_results(cv_results, X, y)

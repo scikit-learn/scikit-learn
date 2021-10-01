@@ -8,8 +8,10 @@
 # License: BSD 3 clause
 
 import warnings
+from collections import Iterable
 from inspect import signature
 from functools import partial
+from numbers import Integral
 
 from math import log
 import numpy as np
@@ -29,6 +31,7 @@ from .base import (
 )
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
+    _safe_indexing,
     column_or_1d,
     deprecated,
     indexable,
@@ -39,7 +42,6 @@ from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight, _num_samples
-from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
@@ -866,7 +868,54 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="uniform"):
+def _compute_bins(y_prob, *, n_bins, strategy):
+    """Helper to determine the bin edges given the number of bins and strategy.
+
+    .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    y_prob : ndarray of shape (n_samples,)
+        The predicted probabilities of the positive class.
+
+    n_bins : int
+        The number of bins to discretize the [0, 1] interval.
+
+    strategy : {"uniform", "quantile"}
+        Strategy used to define the width of the bins.
+
+        - `"uniform"`: the bins have identical widths;
+        - `"quantile"`: the bins have the same number of samples and depends on
+          `y_prob`.
+
+    Returns
+    -------
+    bins : ndarray of shape (n_bins,)
+        The edges of the bins.
+    """
+    if strategy == "quantile":
+        quantiles = np.linspace(0, 1, n_bins + 1)
+        bins = np.percentile(y_prob, quantiles * 100)
+        bins[-1] = bins[-1] + 1e-8
+    elif strategy == "uniform":
+        bins = np.linspace(0.0, 1.0 + 1e-8, n_bins + 1)
+    else:
+        raise ValueError(
+            f"Invalid entry {strategy} to 'strategy' input. Strategy "
+            "must be either 'quantile' or 'uniform'."
+        )
+    return bins
+
+
+def calibration_curve(
+    y_true,
+    y_prob,
+    *,
+    normalize=False,
+    n_bins=5,
+    strategy="uniform",
+    drop_empty_bins=True,
+):
     """Compute true and predicted probabilities for a calibration curve.
 
     The method assumes the inputs come from a binary classifier, and
@@ -889,11 +938,15 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
         is not a proper probability. If True, the smallest value in y_prob
         is linearly mapped onto 0 and the largest one onto 1.
 
-    n_bins : int, default=5
+    n_bins : int or ndarray of shape (n_bins,), default=5
         Number of bins to discretize the [0, 1] interval. A bigger number
         requires more data. Bins with no samples (i.e. without
         corresponding values in `y_prob`) will not be returned, thus the
-        returned arrays may have less than `n_bins` values.
+        returned arrays may have less than `n_bins` values. If a NumPy array
+        is passed, it will correspond to the bin edges.
+
+        .. versionadded:: 1.1
+           Added support for passing a custom array of bin edges.
 
     strategy : {'uniform', 'quantile'}, default='uniform'
         Strategy used to define the widths of the bins.
@@ -903,13 +956,19 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
         quantile
             The bins have the same number of samples and depend on `y_prob`.
 
+    drop_empty_bins : bool, default=True
+        Drop bins if no samples fall within them. Otherwise, the bin will
+        contains `np.nan` values.
+
+        .. versionadded:: 1.1
+
     Returns
     -------
-    prob_true : ndarray of shape (n_bins,) or smaller
+    prob_true : ndarray of shape (n_bins + 1,) or smaller
         The proportion of samples whose class is the positive class, in each
         bin (fraction of positives).
 
-    prob_pred : ndarray of shape (n_bins,) or smaller
+    prob_pred : ndarray of shape (n_bins + 1,) or smaller
         The mean predicted probability in each bin.
 
     References
@@ -945,31 +1004,31 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
     labels = np.unique(y_true)
     if len(labels) > 2:
         raise ValueError(
-            "Only binary classification is supported. Provided labels %s." % labels
+            f"Only binary classification is supported. Provided labels {labels}."
         )
     y_true = label_binarize(y_true, classes=labels)[:, 0]
 
-    if strategy == "quantile":  # Determine bin edges by distribution of data
-        quantiles = np.linspace(0, 1, n_bins + 1)
-        bins = np.percentile(y_prob, quantiles * 100)
-        bins[-1] = bins[-1] + 1e-8
-    elif strategy == "uniform":
-        bins = np.linspace(0.0, 1.0 + 1e-8, n_bins + 1)
+    if isinstance(n_bins, Integral):
+        bins = _compute_bins(y_prob, n_bins=n_bins, strategy=strategy)
     else:
-        raise ValueError(
-            "Invalid entry to 'strategy' input. Strategy "
-            "must be either 'quantile' or 'uniform'."
-        )
+        bins = n_bins
 
     binids = np.digitize(y_prob, bins) - 1
 
-    bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
-    bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
-    bin_total = np.bincount(binids, minlength=len(bins))
+    bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins) - 1)
+    bin_true = np.bincount(binids, weights=y_true, minlength=len(bins) - 1)
+    bin_total = np.bincount(binids, minlength=len(bins) - 1)
 
     nonzero = bin_total != 0
-    prob_true = bin_true[nonzero] / bin_total[nonzero]
-    prob_pred = bin_sums[nonzero] / bin_total[nonzero]
+    if drop_empty_bins:
+        prob_true = bin_true[nonzero] / bin_total[nonzero]
+        prob_pred = bin_sums[nonzero] / bin_total[nonzero]
+    else:
+        # pre-allocate to have always (n_bins,) elements
+        prob_true = np.full_like(bin_true, fill_value=np.nan)
+        prob_pred = np.full_like(prob_true, fill_value=np.nan)
+        prob_true[nonzero] = bin_true[nonzero] / bin_total[nonzero]
+        prob_pred[nonzero] = bin_sums[nonzero] / bin_total[nonzero]
 
     return prob_true, prob_pred
 
@@ -989,14 +1048,14 @@ class CalibrationDisplay:
 
     Parameters
     -----------
-    prob_true : ndarray of shape (n_bins,)
+    prob_true : ndarray of shape (n_bins,) or list of such arrays
         The proportion of samples whose class is the positive class (fraction
         of positives), in each bin.
 
-    prob_pred : ndarray of shape (n_bins,)
+    prob_pred : ndarray of shape (n_bins,) or list of such arrays
         The mean predicted probability in each bin.
 
-    y_prob : ndarray of shape (n_samples,)
+    y_prob : ndarray of shape (n_samples,) or list of such arrays
         Probability estimates for the positive class, for each sample.
 
     estimator_name : str, default=None
@@ -1047,7 +1106,16 @@ class CalibrationDisplay:
         self.y_prob = y_prob
         self.estimator_name = estimator_name
 
-    def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
+    def plot(
+        self,
+        *,
+        ax=None,
+        name=None,
+        ref_line=True,
+        plot_uncertainty_style="errorbar",
+        uncertainty_kwargs=None,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Extra keyword arguments will be passed to
@@ -1066,6 +1134,22 @@ class CalibrationDisplay:
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
             calibrated classifier.
+
+        plot_uncertainty_style : {"errorbar", "fill_between", "lines"}, \
+                default="errorbar"
+            Style to plot the uncertainty information. Possibilities are:
+
+            - "errorbar": error bars representing one standard deviation;
+            - "fill_between": filled area representing one standard deviation;
+            - "lines": plot all calibration curves for each CV fold separately.
+
+            .. versionadded:: 1.1
+
+        **uncertainty_kwargs : dict
+            Keyword arguments to be passed to the uncertainty plotting
+            function.
+
+            .. versionadded:: 1.1
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1092,7 +1176,62 @@ class CalibrationDisplay:
         existing_ref_line = ref_line_label in ax.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
             ax.plot([0, 1], [0, 1], "k:", label=ref_line_label)
-        self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
+
+        if isinstance(self.prob_pred[0], Iterable):
+            prob_true_mean = np.nanmean(self.prob_true, axis=0)
+            prob_pred_mean = np.nanmean(self.prob_pred, axis=0)
+            if plot_uncertainty_style in ("errorbar", "fill_between"):
+                prob_true_std = np.nanstd(self.prob_true, axis=0)
+                if plot_uncertainty_style == "errorbar":
+                    errorbar_kwargs = {}
+                    if name is not None:
+                        errorbar_kwargs["label"] = name
+                    if uncertainty_kwargs is not None:
+                        errorbar_kwargs.update(**uncertainty_kwargs)
+
+                    self.line_ = ax.errorbar(
+                        x=prob_pred_mean,
+                        y=prob_true_mean,
+                        yerr=prob_true_std,
+                        **line_kwargs,
+                    )
+                else:
+                    fill_between_kwargs = {"alpha": 0.2}
+                    if uncertainty_kwargs is not None:
+                        fill_between_kwargs.update(**uncertainty_kwargs)
+
+                    self.line_ = ax.plot(prob_pred_mean, prob_true_mean, **line_kwargs)[
+                        0
+                    ]
+                    self.uncertainty_ = ax.fill_between(
+                        x=prob_pred_mean,
+                        y1=prob_true_mean - prob_true_std,
+                        y2=prob_true_mean + prob_true_std,
+                        **fill_between_kwargs,
+                    )
+            elif plot_uncertainty_style == "lines":
+                self.line_ = ax.plot(prob_pred_mean, prob_true_mean, **line_kwargs)[0]
+
+                uncertainty_lines_kwargs = {
+                    "alpha": 0.2,
+                    "color": self.line_.get_color(),
+                    "linestyle": "--",
+                }
+                if uncertainty_kwargs is not None:
+                    uncertainty_lines_kwargs.update(**uncertainty_kwargs)
+
+                self.uncertainty_ = []
+                for pred, truth in zip(self.prob_pred, self.prob_true):
+                    line = ax.plot(pred, truth, **uncertainty_lines_kwargs)
+                    self.uncertainty_.append(line[0])
+            else:
+                raise ValueError(
+                    "plot_uncertainty_style must be one of ('errorbar', "
+                    f"'fill_between', 'lines'). Got {plot_uncertainty_style} "
+                    "instead."
+                )
+        else:
+            self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
 
         if "label" in line_kwargs:
             ax.legend(loc="lower right")
@@ -1232,6 +1371,8 @@ class CalibrationDisplay:
         strategy="uniform",
         name=None,
         ref_line=True,
+        plot_uncertainty_style="errorbar",
+        uncertainty_kwargs=None,
         ax=None,
         **kwargs,
     ):
@@ -1252,10 +1393,10 @@ class CalibrationDisplay:
 
         Parameters
         ----------
-        y_true : array-like of shape (n_samples,)
+        y_true : array-like of shape (n_samples,) or list of such arrays
             True labels.
 
-        y_prob : array-like of shape (n_samples,)
+        y_prob : array-like of shape (n_samples,) or list of such arrays
             The predicted probabilities of the positive class.
 
         n_bins : int, default=5
@@ -1276,6 +1417,22 @@ class CalibrationDisplay:
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
             calibrated classifier.
+
+        plot_uncertainty_style : {"errorbar", "fill_between", "lines"}, \
+                default="errorbar"
+            Style to plot the uncertainty information. Possibilities are:
+
+            - "errorbar": error bars representing one standard deviation;
+            - "fill_between": filled area representing one standard deviation;
+            - "lines": plot all calibration curves for each CV fold separately.
+
+            .. versionadded:: 1.1
+
+        uncertainty_kwargs : dict, default=None
+            Dictionary with keyword arguments passed to the uncertainty
+            plotting function.
+
+            .. versionadded:: 1.1
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -1314,12 +1471,209 @@ class CalibrationDisplay:
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
 
-        prob_true, prob_pred = calibration_curve(
-            y_true, y_prob, n_bins=n_bins, strategy=strategy
+        if not isinstance(y_prob[0], Iterable):
+            y_true, y_prob = [y_true], [y_prob]
+            bins = n_bins
+        else:
+            # precompute the bin edges based on all predicted probabilities
+            bins = _compute_bins(np.hstack(y_prob), n_bins=n_bins, strategy=strategy)
+
+        prob_true, prob_pred = zip(
+            *[
+                calibration_curve(
+                    truth, proba, n_bins=bins, strategy=strategy, drop_empty_bins=False
+                )
+                for truth, proba in zip(y_true, y_prob)
+            ]
         )
+
+        if len(prob_true) == 1:
+            # single estimator => we can safely get the first element and drop empty
+            # bins
+            prob_true, prob_pred, y_prob = prob_true[0], prob_pred[0], y_prob[0]
+            mask_nan = np.isnan(prob_pred)
+            prob_true, prob_pred = prob_true[~mask_nan], prob_pred[~mask_nan]
+
         name = name if name is not None else "Classifier"
 
         disp = cls(
             prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob, estimator_name=name
         )
-        return disp.plot(ax=ax, ref_line=ref_line, **kwargs)
+        return disp.plot(
+            ax=ax,
+            ref_line=ref_line,
+            plot_uncertainty_style=plot_uncertainty_style,
+            uncertainty_kwargs=uncertainty_kwargs,
+            **kwargs,
+        )
+
+    @classmethod
+    def from_cv_results(
+        cls,
+        cv_results,
+        X,
+        y,
+        *,
+        n_bins=5,
+        strategy="uniform",
+        name=None,
+        ref_line=True,
+        plot_uncertainty_style="errorbar",
+        uncertainty_kwargs=None,
+        ax=None,
+        **kwargs,
+    ):
+        """Plot calibration curve using cross-validation results.
+
+        Calibration curve, also known as reliability diagram, uses inputs
+        from a binary classifier and plots the average predicted probability
+        for each bin against the fraction of positive classes, on the
+        y-axis.
+
+        Extra keyword arguments will be passed to
+        :func:`matplotlib.pyplot.plot`.
+
+        Read more about calibration in the :ref:`User Guide <calibration>` and
+        more about the scikit-learn visualization API in :ref:`visualizations`.
+
+        .. versionadded:: 1.1
+
+        Parameters
+        ----------
+        cv_results : dict
+            Dictionary returned by
+            :func:`~sklearn.model_selection.cross_validate`. You need to set
+            explicitely `return_estimator=True` and `return_indices=True`
+            required by this method.
+
+        X : array-like of shape (n_samples, n_features)
+            The dataset used during cross-validation.
+
+        y : array-like of shape (n_samples,)
+            The target used during cross-validation.
+
+        n_bins : int, default=5
+            Number of bins to discretize the [0, 1] interval into when
+            calculating the calibration curve. A bigger number requires more
+            data.
+
+        strategy : {'uniform', 'quantile'}, default='uniform'
+            Strategy used to define the widths of the bins.
+
+            - `'uniform'`: The bins have identical widths.
+            - `'quantile'`: The bins have the same number of samples and depend
+              on predicted probabilities.
+
+        name : str, default=None
+            Name for labeling curve.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
+
+        plot_uncertainty_style : {"errorbar", "fill_between", "lines"}, \
+                default="errorbar"
+            Style to plot the uncertainty information. Possibilities are:
+
+            - "errorbar": error bars representing one standard deviation;
+            - "fill_between": filled area representing one standard deviation;
+            - "lines": plot all calibration curves for each CV fold separately.
+
+        uncertainty_kwargs : dict, default=None
+            Dictionary with keyword arguments passed to the uncertainty
+            plotting function.
+
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
+
+        **kwargs : dict
+            Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
+
+        Returns
+        -------
+        display : :class:`~sklearn.calibration.CalibrationDisplay`.
+            Object that stores computed values.
+
+        See Also
+        --------
+        CalibrationDisplay.from_estimator : Plot calibration curve using an
+            estimator and data.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.model_selection import train_test_split
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.calibration import CalibrationDisplay
+        >>> X, y = make_classification(random_state=0)
+        >>> clf = LogisticRegression(random_state=0)
+        >>> cv_results = cross_validate(clf, X, y,
+        ...                             return_estimator=True,
+        ...                             return_indices=True)
+        >>> disp = CalibrationDisplay.from_cv_results(cv_results, X, y)
+        >>> plt.show()
+        """
+        method_name = f"{cls.__name__}.from_cv_results"
+        check_matplotlib_support(method_name)
+
+        required_keys = {"estimator", "indices"}
+        if not all(key in cv_results for key in required_keys):
+            raise ValueError(
+                "cv_results does not contain one of the following required keys: "
+                f"{required_keys}. Ensure to set explicitely the parameters "
+                "return_estimator=True and return_indices=True to the function "
+                "cross_validate"
+            )
+
+        train_size, test_size = (
+            len(cv_results["indices"]["train"][0]),
+            len(cv_results["indices"]["test"][0]),
+        )
+
+        if _num_samples(X) != train_size + test_size:
+            raise ValueError(
+                "X does not contain the correct number of samples. "
+                f"Expected {train_size + test_size}, got {_num_samples(X)}."
+            )
+
+        if not all(is_classifier(estimator) for estimator in cv_results["estimator"]):
+            raise ValueError(
+                "The estimators in cv_results['estimator'] must be fitted classifiers."
+            )
+
+        # FIXME: `pos_label` should not be set to None
+        # We should allow any int or string in `calibration_curve`.
+        y_prob = [
+            _get_response(
+                _safe_indexing(X, test_indices),
+                estimator,
+                response_method="predict_proba",
+                pos_label=None,
+            )[0]
+            for estimator, test_indices in zip(
+                cv_results["estimator"], cv_results["indices"]["test"]
+            )
+        ]
+        y_test = [
+            _safe_indexing(y, test_indices)
+            for test_indices in cv_results["indices"]["test"]
+        ]
+
+        name = (
+            name if name is not None else cv_results["estimator"][0].__class__.__name__
+        )
+
+        return cls.from_predictions(
+            y_test,
+            y_prob,
+            n_bins=n_bins,
+            strategy=strategy,
+            name=name,
+            ref_line=ref_line,
+            plot_uncertainty_style=plot_uncertainty_style,
+            uncertainty_kwargs=uncertainty_kwargs,
+            ax=ax,
+            **kwargs,
+        )
