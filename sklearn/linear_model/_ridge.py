@@ -1977,9 +1977,9 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and alpha_per_target=True are incompatible")
             parameters = {"alpha": self.alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
-            model = RidgeClassifier if is_classifier(self) else Ridge
-            model = (
-                model(
+            est = RidgeClassifier if is_classifier(self) else Ridge
+            est = (
+                est(
                     fit_intercept=self.fit_intercept,
                     normalize=self.normalize,
                     solver=solver,
@@ -1991,7 +1991,7 @@ class _BaseRidgeCV(LinearModel):
             # Do we want to "fix" the issue, or keep the old behavior?
 
             gs = GridSearchCV(
-                model,
+                est,
                 parameters,
                 cv=cv,
                 scoring=self.scoring,
