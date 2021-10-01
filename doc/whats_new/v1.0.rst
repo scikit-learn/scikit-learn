@@ -5,7 +5,6 @@
 .. _changes_1_0_1:
 
 Version 1.0.1
-==============
 
 **In Development**
 
@@ -22,6 +21,19 @@ Fixed models
   :class:`ensemble.RadiusNeighborsClassifier`,
   :class:`ensemble.KNeighborsRegressor`,
   :class:`ensemble.RadiusNeighborsRegressor`. :pr:`21199` by `Thomas Fan`_.
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Fixed :class:`calibration.CalibratedClassifierCV` to take into account
+  `sample_weight` when computing the base estimator prediction when
+  `ensemble=False`.
+  :pr:`20638` by :user:`Julien Bohné <JulienB-78>`.
+
+- |Fix| Fixed a bug in :class:`calibration.CalibratedClassifierCV` with
+  `method="sigmoid"` that was ignoring the `sample_weight` when computing the
+  the Bayesian priors.
+  :pr:`21179` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_0:
 
