@@ -922,7 +922,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # `sample_weight=True` if init is None.
             router.add(init, mapping={"fit": "fit"}, mask=True, overwrite="ignore")
         else:
-            router.add(init, mapping={"fit": "fit"}, mask=True, overwrite="on-default")
+            router.add(init, mapping={"fit": "fit"}, mask=True, overwrite="smart")
 
         return router.get_metadata_request()
 
