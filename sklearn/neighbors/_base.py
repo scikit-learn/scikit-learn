@@ -186,7 +186,7 @@ def _check_precomputed(X):
     else:
         graph = X
 
-    if graph.format not in ("csr", "csc", "coo", "lil", "bsr", "dok"):
+    if graph.format not in ("csr", "csc", "coo", "lil"):
         raise TypeError(
             "Sparse matrix in {!r} format is not supported due to "
             "its handling of explicit zeros".format(graph.format)
