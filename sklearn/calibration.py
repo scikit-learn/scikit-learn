@@ -267,6 +267,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         """
         check_classification_targets(y)
         X, y = indexable(X, y)
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
@@ -303,15 +305,17 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             # sample_weight checks
             fit_parameters = signature(base_estimator.fit).parameters
             supports_sw = "sample_weight" in fit_parameters
-            if sample_weight is not None:
-                sample_weight = _check_sample_weight(sample_weight, X)
-                if not supports_sw:
-                    estimator_name = type(base_estimator).__name__
-                    warnings.warn(
-                        f"Since {estimator_name} does not support "
-                        "sample_weights, sample weights will only be"
-                        " used for the calibration itself."
-                    )
+            if sample_weight is not None and not supports_sw:
+                estimator_name = type(base_estimator).__name__
+                warnings.warn(
+                    f"Since {estimator_name} does not appear to accept sample_weight, "
+                    "sample weights will only be used for the calibration itself. This "
+                    "can be caused by a limitation of the current scikit-learn API. "
+                    "See the following issue for more details: "
+                    "https://github.com/scikit-learn/scikit-learn/issues/21134. Be "
+                    "warned that the result of the calibration is likely to be "
+                    "incorrect."
+                )
 
             # Check that each cross-validation fold can have at least one
             # example per class
@@ -351,6 +355,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             else:
                 this_estimator = clone(base_estimator)
                 _, method_name = _get_prediction_method(this_estimator)
+                fit_params = (
+                    {"sample_weight": sample_weight}
+                    if sample_weight is not None and supports_sw
+                    else None
+                )
                 pred_method = partial(
                     cross_val_predict,
                     estimator=this_estimator,
@@ -359,6 +368,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     cv=cv,
                     method=method_name,
                     n_jobs=self.n_jobs,
+                    fit_params=fit_params,
                 )
                 predictions = _compute_predictions(
                     pred_method, method_name, X, n_classes
@@ -436,7 +446,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         return {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
+                    "Due to the cross-validation and sample ordering, removing a sample"
+                    " is not strictly equal to putting is weight to zero. Specific unit"
+                    " tests are added for CalibratedClassifierCV specifically."
                 ),
             }
         }
@@ -760,10 +772,17 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
 
     F = predictions  # F follows Platt's notations
 
-    # Bayesian priors (see Platt end of section 2.2)
-    prior0 = float(np.sum(y <= 0))
-    prior1 = y.shape[0] - prior0
-    T = np.zeros(y.shape)
+    # Bayesian priors (see Platt end of section 2.2):
+    # It corresponds to the number of samples, taking into account the
+    # `sample_weight`.
+    mask_negative_samples = y <= 0
+    if sample_weight is not None:
+        prior0 = (sample_weight[mask_negative_samples]).sum()
+        prior1 = (sample_weight[~mask_negative_samples]).sum()
+    else:
+        prior0 = float(np.sum(mask_negative_samples))
+        prior1 = y.shape[0] - prior0
+    T = np.zeros_like(y, dtype=np.float64)
     T[y > 0] = (prior1 + 1.0) / (prior1 + 2.0)
     T[y <= 0] = 1.0 / (prior0 + 2.0)
     T1 = 1.0 - T

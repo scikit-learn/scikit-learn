@@ -1134,7 +1134,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
             Fitted estimator.
         """
         X = self._validate_data(
@@ -1891,7 +1891,8 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        self
+        self : object
+            Fitted estimator.
         """
         X = self._validate_data(
             X,
@@ -2044,7 +2045,8 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        self
+        self : object
+            Return updated estimator.
         """
         has_centers = hasattr(self, "cluster_centers_")
 
