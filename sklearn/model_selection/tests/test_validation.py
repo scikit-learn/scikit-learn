@@ -2357,3 +2357,27 @@ def test_validation_pairwise():
     msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
     with pytest.warns(FutureWarning, match=msg):
         cross_validate(svm, linear_kernel, y, cv=2)
+
+
+def test_cross_validate_return_indices():
+    """Check the behaviour of `return_indices`."""
+    X, y = load_iris(return_X_y=True)
+    clf = SVC(gamma="auto")
+    grid = GridSearchCV(clf, param_grid={"C": [1, 10]})
+
+    cv = KFold(n_splits=3, shuffle=False)
+    cv_results = cross_validate(grid, X, y, cv=cv, n_jobs=2, return_indices=False)
+    assert "indices" not in cv_results
+
+    cv_results = cross_validate(grid, X, y, cv=cv, n_jobs=2, return_indices=True)
+    assert "indices" in cv_results
+    train_indices = cv_results["indices"]["train"]
+    test_indices = cv_results["indices"]["test"]
+    assert len(train_indices) == cv.n_splits
+    assert len(test_indices) == cv.n_splits
+
+    assert_array_equal([indices.size for indices in train_indices], 100)
+    assert_array_equal([indices.size for indices in test_indices], 50)
+
+    assert_array_equal(np.unique(np.concatenate(train_indices)), np.arange(y.size))
+    assert_array_equal(np.concatenate(test_indices), np.arange(y.size))

@@ -45,6 +45,13 @@ Changelog
   message when the solver does not support sparse matrices with int64 indices.
   :pr:`21093` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :func:`model_selection.cross_validate` accepts a new parameter
+  `return_indices` to return the train-test indices of each cv split.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.utils`
 ....................
 
