@@ -343,7 +343,7 @@ class SpectralCoclustering(BaseSpectral):
                 )
             )
         check_scalar(self.n_clusters, "n_clusters",
-                     target_type=(numbers.Integral),
+                     target_type=numbers.Integral,
                      min_val=1,
                      max_val=n_samples)
 
