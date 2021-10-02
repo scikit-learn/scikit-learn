@@ -387,6 +387,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     stack_method_ : list of str
         The method used by each base estimator.
 
+    See Also
+    --------
+    StackingRegressor : Stack of estimators with a final regressor.
+
     Notes
     -----
     When `predict_proba` is used by each estimator (i.e. most of the time for
@@ -424,7 +428,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     ... )
     >>> clf.fit(X_train, y_train).score(X_test, y_test)
     0.9...
-
     """
 
     def __init__(
@@ -477,6 +480,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Returns
         -------
         self : object
+            Returns a fitted instance of estimator.
         """
         check_classification_targets(y)
         self._le = LabelEncoder().fit(y)
@@ -509,8 +513,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     @if_delegate_has_method(delegate="final_estimator_")
     def predict_proba(self, X):
-        """Predict class probabilities for X using
-        `final_estimator_.predict_proba`.
+        """Predict class probabilities for `X` using the final estimator.
 
         Parameters
         ----------
@@ -529,8 +532,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     @if_delegate_has_method(delegate="final_estimator_")
     def decision_function(self, X):
-        """Predict decision function for samples in X using
-        `final_estimator_.decision_function`.
+        """Decision function for samples in `X` using the final estimator.
 
         Parameters
         ----------
