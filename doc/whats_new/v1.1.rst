@@ -45,6 +45,13 @@ Changelog
   message when the solver does not support sparse matrices with int64 indices.
   :pr:`21093` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Enhancement| Implemented the sample method of :class:`neighbors.KernelDensity`
+  for the linear and exponential kernels
+  :pr:`21225` by :user:`Lewis Ball  <lrjball>`
+
 :mod:`sklearn.utils`
 ....................
 
