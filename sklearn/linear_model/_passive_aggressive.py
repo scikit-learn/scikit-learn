@@ -13,7 +13,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     Parameters
     ----------
-
     C : float, default=1.0
         Maximum step size (regularization). Defaults to 1.0.
 
@@ -58,10 +57,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    verbose : integer, default=0
-        The verbosity level
+    verbose : int, default=0
+        The verbosity level.
 
-    loss : string, default="hinge"
+    loss : str, default="hinge"
         The loss function to be used:
         hinge: equivalent to PA-I in the reference paper.
         squared_hinge: equivalent to PA-II in the reference paper.
@@ -97,7 +96,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
         .. versionadded:: 0.17
            parameter *class_weight* to automatically weight samples.
@@ -109,7 +108,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         average. So average=10 will begin averaging after seeing 10 samples.
 
         .. versionadded:: 0.19
-           parameter *average* to use weights averaging in SGD
+           parameter *average* to use weights averaging in SGD.
 
     Attributes
     ----------
@@ -145,6 +144,17 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     loss_function_ : callable
         Loss function used by the algorithm.
 
+    See Also
+    --------
+    SGDClassifier : Incrementally trained logistic regression.
+    Perceptron : Linear perceptron classifier.
+
+    References
+    ----------
+    Online Passive-Aggressive Algorithms
+    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
+    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
+
     Examples
     --------
     >>> from sklearn.linear_model import PassiveAggressiveClassifier
@@ -161,18 +171,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     [1.84127814]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
-
-    See Also
-    --------
-    SGDClassifier
-    Perceptron
-
-    References
-    ----------
-    Online Passive-Aggressive Algorithms
-    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
-
     """
 
     def __init__(
@@ -221,10 +219,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Subset of the training data
+            Subset of the training data.
 
         y : numpy array of shape [n_samples]
-            Subset of the target values
+            Subset of the target values.
 
         classes : array, shape = [n_classes]
             Classes across all calls to partial_fit.
@@ -236,7 +234,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted estimator.
         """
         self._validate_params(for_partial_fit=True)
         if self.class_weight == "balanced":
@@ -272,10 +271,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : numpy array of shape [n_samples]
-            Target values
+            Target values.
 
         coef_init : array, shape = [n_classes,n_features]
             The initial coefficients to warm-start the optimization.
@@ -285,7 +284,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted estimator.
         """
         self._validate_params()
         lr = "pa1" if self.loss == "hinge" else "pa2"
@@ -354,9 +354,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         Whether or not the training data should be shuffled after each epoch.
 
     verbose : integer, default=0
-        The verbosity level
+        The verbosity level.
 
-    loss : string, default="epsilon_insensitive"
+    loss : str, default="epsilon_insensitive"
         The loss function to be used:
         epsilon_insensitive: equivalent to PA-I in the reference paper.
         squared_epsilon_insensitive: equivalent to PA-II in the reference
@@ -388,7 +388,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         average. So average=10 will begin averaging after seeing 10 samples.
 
         .. versionadded:: 0.19
-           parameter *average* to use weights averaging in SGD
+           parameter *average* to use weights averaging in SGD.
 
     Attributes
     ----------
@@ -436,13 +436,14 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     See Also
     --------
-    SGDRegressor
+    SGDRegressor : Linear model fitted by minimizing a regularized
+        empirical loss with SGD.
 
     References
     ----------
     Online Passive-Aggressive Algorithms
     <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
+    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006).
 
     """
 
@@ -490,14 +491,15 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Subset of training data
+            Subset of training data.
 
         y : numpy array of shape [n_samples]
-            Subset of target values
+            Subset of target values.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted estimator.
         """
         self._validate_params(for_partial_fit=True)
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
@@ -520,10 +522,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : numpy array of shape [n_samples]
-            Target values
+            Target values.
 
         coef_init : array, shape = [n_features]
             The initial coefficients to warm-start the optimization.
@@ -533,7 +535,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted estimator.
         """
         self._validate_params()
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
