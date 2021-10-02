@@ -271,7 +271,8 @@ class KernelDensity(BaseEstimator):
     def sample(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
 
-        Currently, this is implemented only for gaussian and tophat kernels.
+        Currently, this is implemented only for gaussian, tophat,
+        exponential and linear kernels.
 
         Parameters
         ----------
@@ -291,7 +292,7 @@ class KernelDensity(BaseEstimator):
         """
         check_is_fitted(self)
         # TODO: implement sampling for other valid kernel shapes
-        if self.kernel not in ["gaussian", "tophat"]:
+        if self.kernel not in ["gaussian", "tophat", "exponential", "linear"]:
             raise NotImplementedError()
 
         data = np.asarray(self.tree_.data)
@@ -304,22 +305,17 @@ class KernelDensity(BaseEstimator):
             cumsum_weight = np.cumsum(np.asarray(self.tree_.sample_weight))
             sum_weight = cumsum_weight[-1]
             i = np.searchsorted(cumsum_weight, u * sum_weight)
-        if self.kernel == "gaussian":
-            return np.atleast_2d(rng.normal(data[i], self.bandwidth))
 
+        size = data[i].shape
+        if self.kernel == "gaussian":
+            additional = rng.normal(0, self.bandwidth, size=size)
         elif self.kernel == "tophat":
-            # we first draw points from a d-dimensional normal distribution,
-            # then use an incomplete gamma function to map them to a uniform
-            # d-dimensional tophat distribution.
-            dim = data.shape[1]
-            X = rng.normal(size=(n_samples, dim))
-            s_sq = row_norms(X, squared=True)
-            correction = (
-                gammainc(0.5 * dim, 0.5 * s_sq) ** (1.0 / dim)
-                * self.bandwidth
-                / np.sqrt(s_sq)
-            )
-            return data[i] + X * correction[:, np.newaxis]
+            additional = rng.uniform(-self.bandwidth, self.bandwidth, size=size)
+        elif self.kernel == "exponential":
+            additional = rng.laplace(0, self.bandwidth, size=size)
+        elif self.kernel == "linear":
+            additional = rng.triangular(-self.bandwidth, 0, self.bandwidth, size=size)
+        return np.atleast_2d(data[i] + additional)
 
     def _more_tags(self):
         return {

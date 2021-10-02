@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import kstest
 
 import pytest
 
@@ -62,31 +63,64 @@ def test_kernel_density(kernel, bandwidth):
                 check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true)
 
 
-def test_kernel_density_sampling(n_samples=100, n_features=3):
+def test_kernel_density_sampling():
     rng = np.random.RandomState(0)
-    X = rng.randn(n_samples, n_features)
+    n_samples = 100
+    n_features = 3
+    X = rng.randn(n_samples + 10, n_features)
 
-    bandwidth = 0.2
+    bandwidth = 0.01
 
-    for kernel in ["gaussian", "tophat"]:
-        # draw a tophat sample
+    for kernel in ["gaussian", "tophat", "exponential", "linear"]:
         kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
-        samp = kde.sample(100)
-        assert X.shape == samp.shape
+        samp = kde.sample(n_samples, random_state=0)
+        assert samp.shape == (n_samples, n_features)
 
         # check that samples are in the right range
         nbrs = NearestNeighbors(n_neighbors=1).fit(X)
-        dist, ind = nbrs.kneighbors(X, return_distance=True)
+        dist, ind = nbrs.kneighbors(samp, return_distance=True)
 
-        if kernel == "tophat":
-            assert np.all(dist < bandwidth)
+        if kernel in ["tophat", "linear"]:
+            # each point in the sample must be within an n-dimensional
+            # cube of the nearest point
+            assert np.all(dist < (n_features ** 0.5 * bandwidth))
         elif kernel == "gaussian":
             # 5 standard deviations is safe for 100 samples, but there's a
             # very small chance this test could fail.
             assert np.all(dist < 5 * bandwidth)
+        elif kernel == "exponential":
+            assert np.all(dist < 8 * bandwidth)
+
+        kde.fit([[0, 0, 0]])
+        samp = kde.sample(n_samples)
+        assert len(np.unique(samp)) == (n_samples * n_features)
+        # unless n_samples * n_features if huge (default is fine),
+        # each value should be different, both across features and samples
+
+    # check the simple case - sampling from kde fit on a single point
+    # should create the expected distribution
+    X = np.array([[0]])
+    size = 1000
+    for kernel, expected in [
+        ("gaussian", rng.normal(0, bandwidth, size=size)),
+        ("tophat", rng.uniform(-bandwidth, bandwidth, size=size)),
+        ("linear", rng.triangular(-bandwidth, 0, bandwidth, size=size)),
+        ("exponential", rng.laplace(0, bandwidth, size=size)),
+    ]:
+        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
+        samp = kde.sample(size, random_state=0)
+        statistic, p_value = kstest(expected, samp.flatten())
+        assert p_value > 0.01
+
+    # check 5 points next to each other with tophat, should be same as 1 uniform
+    # distribution 5 times as wide
+    kde = KernelDensity(bandwidth=1, kernel="tophat").fit([[1], [3], [5], [7], [9]])
+    samp = kde.sample(size, random_state=0)
+    statistic, p_value = kstest(rng.uniform(0, 10, size=size), samp.flatten())
+    assert p_value > 0.01
 
     # check unsupported kernels
-    for kernel in ["epanechnikov", "exponential", "linear", "cosine"]:
+    for kernel in ["epanechnikov", "cosine"]:
         kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         with pytest.raises(NotImplementedError):
             kde.sample(100)
