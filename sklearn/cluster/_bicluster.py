@@ -335,13 +335,6 @@ class SpectralCoclustering(BaseSpectral):
 
     def _check_parameters(self, n_samples):
         super()._check_parameters()
-        legal_methods = ('randomized', 'arpack')
-        if self.svd_method not in legal_methods:
-            raise ValueError(
-                "Unknown method: '{0}'. method must be one of {1}.".format(
-                    self.svd_method, legal_methods
-                )
-            )
         check_scalar(self.n_clusters, "n_clusters",
                      target_type=numbers.Integral,
                      min_val=1,
