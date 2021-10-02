@@ -72,7 +72,8 @@ from ..exceptions import ConvergenceWarning
 
 
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
-    """Base class for label propagation module.
+    """
+    Base class for label propagation module.
 
      Parameters
      ----------
@@ -167,7 +168,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         )
 
     def predict(self, X):
-        """Performs inductive inference across the model.
+        """
+        Perform inductive inference across the model.
 
         Parameters
         ----------
@@ -183,7 +185,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         return self.classes_[np.argmax(probas, axis=1)].ravel()
 
     def predict_proba(self, X):
-        """Predict probability for each possible outcome.
+        """
+        Predict probability for each possible outcome.
 
         Compute the probability estimates for each single sample in X
         and each possible outcome seen during training (categorical
@@ -223,9 +226,10 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         return probabilities
 
     def fit(self, X, y):
-        """Fit a semi-supervised label propagation model based
+        """
+        Fit a semi-supervised label propagation model based on X and y.
 
-        All the input data is provided matrix X (labeled and unlabeled)
+        All the input data is provided in matrix X (labeled and unlabeled)
         and corresponding label matrix y with a dedicated marker value for
         unlabeled samples.
 
@@ -326,7 +330,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
 
 class LabelPropagation(BaseLabelPropagation):
-    """Label Propagation classifier
+    """
+    Label Propagation classifier.
 
     Read more in the :ref:`User Guide <label_propagation>`.
 
@@ -385,6 +390,16 @@ class LabelPropagation(BaseLabelPropagation):
     n_iter_ : int
         Number of iterations run.
 
+    See Also
+    --------
+    LabelSpreading : Alternate label propagation strategy more robust to noise.
+
+    References
+    ----------
+    Xiaojin Zhu and Zoubin Ghahramani. Learning from labeled and unlabeled data
+    with label propagation. Technical Report CMU-CALD-02-107, Carnegie Mellon
+    University, 2002 http://pages.cs.wisc.edu/~jerryzhu/pub/CMU-CALD-02-107.pdf
+
     Examples
     --------
     >>> import numpy as np
@@ -398,16 +413,6 @@ class LabelPropagation(BaseLabelPropagation):
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
     LabelPropagation(...)
-
-    References
-    ----------
-    Xiaojin Zhu and Zoubin Ghahramani. Learning from labeled and unlabeled data
-    with label propagation. Technical Report CMU-CALD-02-107, Carnegie Mellon
-    University, 2002 http://pages.cs.wisc.edu/~jerryzhu/pub/CMU-CALD-02-107.pdf
-
-    See Also
-    --------
-    LabelSpreading : Alternate label propagation strategy more robust to noise.
     """
 
     _variant = "propagation"
@@ -433,7 +438,8 @@ class LabelPropagation(BaseLabelPropagation):
         )
 
     def _build_graph(self):
-        """Matrix representing a fully connected graph between each sample
+        """
+        Matrix representing a fully connected graph between each sample.
 
         This basic implementation creates a non-stochastic affinity matrix, so
         class distributions will exceed 1 (normalization may be desired).
@@ -453,7 +459,8 @@ class LabelPropagation(BaseLabelPropagation):
 
 
 class LabelSpreading(BaseLabelPropagation):
-    """LabelSpreading model for semi-supervised learning
+    """
+    LabelSpreading model for semi-supervised learning.
 
     This model is similar to the basic Label Propagation algorithm,
     but uses affinity matrix based on the normalized graph Laplacian
@@ -574,7 +581,9 @@ class LabelSpreading(BaseLabelPropagation):
         )
 
     def _build_graph(self):
-        """Graph matrix for Label Spreading computes the graph laplacian"""
+        """
+        Graph matrix for Label Spreading computes the graph laplacian.
+        """
         # compute affinity matrix (or gram matrix)
         if self.kernel == "knn":
             self.nn_fit = None
