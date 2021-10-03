@@ -554,7 +554,7 @@ class BaseEstimator:
         if no_val_X and no_val_y:
             raise ValueError("Validation should be done on X, y or both.")
         elif not no_val_X and no_val_y:
-            X = check_array(X, estimator=self, data_name="X", **check_params)
+            X = check_array(X, data_name="X", **check_params)
             out = X
         elif no_val_X and not no_val_y:
             y = _check_y(y, **check_params)
@@ -566,10 +566,10 @@ class BaseEstimator:
                 # on X and y isn't equivalent to just calling check_X_y()
                 # :(
                 check_X_params, check_y_params = validate_separately
-                X = check_array(X, estimator=self, data_name="X", **check_X_params)
-                y = check_array(y, estimator=self, data_name="y", **check_y_params)
+                X = check_array(X, data_name="X", **check_X_params)
+                y = check_array(y, data_name="y", **check_y_params)
             else:
-                X, y = check_X_y(X, y, estimator=self, **check_params)
+                X, y = check_X_y(X, y, **check_params)
             out = X, y
 
         if not no_val_X and check_params.get("ensure_2d", True):

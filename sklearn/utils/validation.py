@@ -114,9 +114,11 @@ def _assert_all_finite(
             type_err = "infinity" if allow_nan else "NaN, infinity"
             msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
             if data_name:
-                data_name += " "
+                padded_data_name = data_name + " "
+            else:
+                padded_data_name = ""
             msg_err = (
-                f"Input {data_name}contains {type_err} or a value too large for"
+                f"Input {padded_data_name}contains {type_err} or a value too large for"
                 f" {msg_dtype!r}."
             )
             if (
@@ -866,7 +868,9 @@ def check_array(
             )
 
         if force_all_finite:
-            _assert_all_finite(array, allow_nan=force_all_finite == "allow-nan")
+            _assert_all_finite(
+                array, data_name=data_name, allow_nan=force_all_finite == "allow-nan"
+            )
 
     if ensure_min_samples > 0:
         n_samples = _num_samples(array)
