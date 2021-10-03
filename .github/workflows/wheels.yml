@@ -106,6 +106,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
 
+      # Comment out when numpy/scipy dependencies are on pypi
       - name: Set pypi index for python dev
         if: matrix.python == 310
         run: echo "CIBW_ENVIRONMENT=PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scipy-wheels-nightly/simple PIP_PRE=true" >> $GITHUB_ENV
