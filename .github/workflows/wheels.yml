@@ -86,9 +86,9 @@ jobs:
             bitness: 32
           # numpy on Python 3.10 requires manylinux2014
           - python: 310
-            bitness: manylinux1
+            manylinux_image: manylinux1
           - python: 310
-            bitness: manylinux2010
+            manylinux_image: manylinux2010
           # Include in build matrix once numpy/scipy supports osx and windows
           - python: 310
             os: macos-latest
