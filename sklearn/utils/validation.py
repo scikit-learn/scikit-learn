@@ -131,7 +131,7 @@ def _assert_all_finite(
                 # scikit-learn.
                 msg_err += (
                     f"\nEstimator {estimator_name} does not accept missing values"
-                    " encoded as NaN natively. Please make sure to to proprocess the"
+                    " encoded as NaN natively. Please make sure to preprocess the"
                     " data, for instance by using an imputer transformer in a pipeline"
                     " or drop samples with missing values. See"
                     " https://scikit-learn.org/stable/modules/impute.html"
@@ -869,7 +869,10 @@ def check_array(
 
         if force_all_finite:
             _assert_all_finite(
-                array, data_name=data_name, allow_nan=force_all_finite == "allow-nan"
+                array,
+                data_name=data_name,
+                estimator_name=estimator_name,
+                allow_nan=force_all_finite == "allow-nan",
             )
 
     if ensure_min_samples > 0:
