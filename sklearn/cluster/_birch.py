@@ -533,7 +533,6 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 "n_clusters",
                 target_type=numbers.Integral,
                 min_val=1,
-                max_val=_num_samples(X),
                 include_boundaries="both",
             )
 
