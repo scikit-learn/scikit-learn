@@ -119,10 +119,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
             return names
 
         indicator_names = self.indicator_.get_feature_names_out(input_features)
-        indicator_names_with_prefix = [
-            f"missingindicator_{name}" for name in indicator_names
-        ]
-        return np.concatenate([names, indicator_names_with_prefix])
+        return np.concatenate([names, indicator_names])
 
     def _more_tags(self):
         return {"allow_nan": is_scalar_nan(self.missing_values)}
@@ -977,7 +974,14 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         input_features = _check_feature_names_in(self, input_features)
-        return input_features[self.features_]
+        prefix = self.__class__.__name__.lower()
+        return np.asarray(
+            [
+                f"{prefix}_{feature_name}"
+                for feature_name in input_features[self.features_]
+            ],
+            dtype=object,
+        )
 
     def _more_tags(self):
         return {
