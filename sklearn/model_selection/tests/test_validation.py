@@ -11,7 +11,6 @@ import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 from sklearn.exceptions import FitFailedWarning
-from sklearn.exceptions import NotFittedError
 
 from sklearn.model_selection.tests.test_search import FailingClassifier
 
@@ -2190,7 +2189,7 @@ def test_cross_validate_all_failing_fits_error(error_score):
         flags=re.DOTALL,
     )
 
-    with pytest.raises(NotFittedError, match=error_message):
+    with pytest.raises(ValueError, match=error_message):
         cross_validate(*cross_validate_args, **cross_validate_kwargs)
 
 

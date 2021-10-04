@@ -30,7 +30,7 @@ from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
-from ..exceptions import FitFailedWarning, NotFittedError
+from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
 
@@ -365,7 +365,7 @@ def _warn_or_raise_about_fit_failures(results, error_score):
                 "You can try to debug the error by setting error_score='raise'.\n\n"
                 f"Below are more details about the failures:\n{fit_errors_summary}"
             )
-            raise NotFittedError(all_fits_failed_message)
+            raise ValueError(all_fits_failed_message)
 
         else:
             some_fits_failed_message = (

@@ -29,7 +29,6 @@ from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import is_classifier
-from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
@@ -1645,7 +1644,7 @@ def test_grid_search_classifier_all_fits_fail():
         " as required",
         flags=re.DOTALL,
     )
-    with pytest.raises(NotFittedError, match=warning_message):
+    with pytest.raises(ValueError, match=warning_message):
         gs.fit(X, y)
 
 
@@ -2175,7 +2174,7 @@ def test_callable_multimetric_clf_all_fits_fail():
         flags=re.DOTALL,
     )
 
-    with pytest.raises(NotFittedError, match=error_message):
+    with pytest.raises(ValueError, match=error_message):
         gs.fit(X, y)
 
 
