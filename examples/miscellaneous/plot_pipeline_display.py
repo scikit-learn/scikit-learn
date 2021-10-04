@@ -12,30 +12,6 @@ steps in the pipeline.
 """
 
 # %%
-# Displaying a Basic Pipeline with a Classifier
-################################################################################
-# This section constructs a basic :class:`~sklearn.pipeline.Pipeline` with one
-# classifer step, :class:`~sklearn.linear_model.LogisticRegression`, and
-# displays its text and visual representation.
-
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
-from sklearn import set_config
-
-steps = [("classifier", LogisticRegression())]
-pipe = Pipeline(steps)
-
-# %%
-# To view the text pipeline, the default is `display='text'`
-set_config(display="text")
-pipe
-
-# %%
-# To visualize the diagram, change to `display='diagram'`
-set_config(display="diagram")
-pipe  # click on the diagram below to see the details of each step
-
-# %%
 # Displaying a Pipeline with a Preprocessing Step and Classifier
 ################################################################################
 # This section constructs a :class:`~sklearn.pipeline.Pipeline` with a preprocessing
@@ -53,6 +29,11 @@ steps = [
     ("classifier", LogisticRegression()),
 ]
 pipe = Pipeline(steps)
+
+# %%
+# To view the text pipeline, the default is `display='text'`
+set_config(display="text")
+pipe
 
 # %%
 # To visualize the diagram, change `display='diagram'`
