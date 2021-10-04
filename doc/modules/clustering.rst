@@ -511,7 +511,7 @@ In particular, unless you control the ``random_state``, it may not be
 reproducible from run-to-run, as it depends on random initialization.
 The alternative ``"discretize"`` strategy is 100% reproducible, but tends
 to create parcels of fairly even and geometrical shape.
-The recently added option ``clusterQR`` is 100% also reproducible and tends
+The recently added option ``clusterQR`` is also 100% reproducible and tends
 to create the visually best partitioning.
 
 ================================  ================================  ================================
