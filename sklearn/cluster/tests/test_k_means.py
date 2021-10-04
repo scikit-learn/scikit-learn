@@ -4,13 +4,13 @@ import sys
 
 import numpy as np
 from scipy import sparse as sp
-from threadpoolctl import threadpool_limits
 
 import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import _astype_copy_false
+from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
