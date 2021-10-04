@@ -37,12 +37,17 @@ from .utils import (
 
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
-from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.validation import _check_sample_weight, _num_samples
+from .utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_consistent_length,
+    check_is_fitted,
+)
 from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
+from .metrics._base import _check_pos_label_consistency
 from .metrics._plot.base import _get_response
 
 
@@ -866,7 +871,9 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="uniform"):
+def calibration_curve(
+    y_true, y_prob, *, pos_label=None, normalize=False, n_bins=5, strategy="uniform"
+):
     """Compute true and predicted probabilities for a calibration curve.
 
     The method assumes the inputs come from a binary classifier, and
@@ -883,6 +890,11 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
 
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
+
+    pos_label : int or str, default=None
+        The label of the positive class.
+
+        .. versionadded:: 1.1
 
     normalize : bool, default=False
         Whether y_prob needs to be normalized into the [0, 1] interval, i.e.
@@ -934,6 +946,7 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     check_consistent_length(y_true, y_prob)
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
 
     if normalize:  # Normalize predicted values into interval [0, 1]
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
@@ -945,9 +958,9 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
     labels = np.unique(y_true)
     if len(labels) > 2:
         raise ValueError(
-            "Only binary classification is supported. Provided labels %s." % labels
+            f"Only binary classification is supported. Provided labels {labels}."
         )
-    y_true = label_binarize(y_true, classes=labels)[:, 0]
+    y_true = y_true == pos_label
 
     if strategy == "quantile":  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)

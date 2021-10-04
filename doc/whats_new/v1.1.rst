@@ -38,12 +38,21 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Enhancement| :func:`calibration.calibration_curve` accepts a parameter
+  `pos_label` to specify the positive class label.
+  :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
 - |Fix| :class:`linear_model.LogisticRegression` now raises a better error
   message when the solver does not support sparse matrices with int64 indices.
   :pr:`21093` by `Tom Dupre la Tour`_.
+
 
 :mod:`sklearn.utils`
 ....................
