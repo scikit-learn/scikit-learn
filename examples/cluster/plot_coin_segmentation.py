@@ -14,10 +14,10 @@ There are three options to assign labels:
 
 * with 'kmeans' spectral clustering will cluster samples in the embedding space
   using a kmeans algorithm
-* with 'cluster_qr' will cluster samples in the embedding space
-  using a cluster_qr algorithm,
+* with 'cluster_qr' spectral clustering will cluster samples in the embedding 
+  space using a cluster_qr algorithm,
 * whereas 'discrete' will iteratively search for the closest partition
-  space to the embedding space.
+  space to the embedding space of spectral clustering.
 
 """
 print(__doc__)
@@ -66,24 +66,26 @@ eps = 1e-6
 graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 
 # Apply spectral clustering (this step goes much faster if you have pyamg
-# installed)
+# installed and use eigen_solver = 'amg'). However, any valid solver can
+# be used (e.g., 'arpack', 'lobpcg', or 'amg').
+eigen_solver = 'arpack'
 
 # The actual number of regions in this example is 27: background and 26 coins
-N_REGIONS = 26
+n_regions = 26
 
 # %%
 # Compute and visualize the resulting regions
 
 # Any eigen_solver: 'arpack', 'lobpcg', 'amg' can be used. AMG is usually best
 # It often helps the spectral clustering to compute a few extra eigenvectors
-N_REGIONS_PLUS = 3
+n_regions_plus = 3
 
 for assign_labels in ('kmeans', 'discretize', 'cluster_qr'):
     t0 = time.time()
     labels = spectral_clustering(graph,
-                                 n_clusters=(N_REGIONS + N_REGIONS_PLUS),
+                                 n_clusters=(n_regions + n_regions_plus),
                                  assign_labels=assign_labels, random_state=42,
-                                 eigen_solver='arpack')
+                                 eigen_solver='eigen_solver')
     t1 = time.time()
     labels = labels.reshape(rescaled_coins.shape)
 
@@ -95,8 +97,11 @@ for assign_labels in ('kmeans', 'discretize', 'cluster_qr'):
     title = 'Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0))
     print(title)
     plt.title(title)
-    for l in range(N_REGIONS):
+    for l in range(n_regions):
         plt.contour(labels == l,
-                    colors=[plt.cm.nipy_spectral((l+3) / float(N_REGIONS+3))])
+                    colors=[plt.cm.nipy_spectral((l+3) / float(n_regions + 3))])
+        colors = plt.cm.nipy_spectral((l + n_regions_plus) /
+                              float(n_regions + n_regions_plus))
+        plt.contour(labels == l, colors=colors)
         plt.pause(0.5)
 plt.show()
