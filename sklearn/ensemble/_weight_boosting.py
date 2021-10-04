@@ -679,8 +679,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         y : ndarray of shape (n_samples,)
             The predicted classes.
         """
-        X = self._check_X(X)
-
         pred = self.decision_function(X)
 
         if self.n_classes_ == 2:
@@ -855,8 +853,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             outputs is the same of that of the :term:`classes_` attribute.
         """
         check_is_fitted(self)
-        X = self._check_X(X)
-
         n_classes = self.n_classes_
 
         if n_classes == 1:
@@ -889,7 +885,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        X = self._check_X(X)
 
         n_classes = self.n_classes_
 
@@ -915,7 +910,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        X = self._check_X(X)
         return np.log(self.predict_proba(X))
 
 
