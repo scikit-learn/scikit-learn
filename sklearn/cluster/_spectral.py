@@ -21,18 +21,25 @@ from ._kmeans import k_means
 def cluster_qr(vectors):
     """Search for a partition matrix (clustering) which is
     closest to the eigenvector embedding.
+
+    This implementation was proposed in [1]_.
+
     Parameters
     ----------
     vectors : array-like, shape: (n_samples, n_clusters)
         The embedding space of the samples.
+
     Returns
     -------
     labels : array of integers, shape: n_samples
         The labels of the clusters.
+
     References
     ----------
-    https://github.com/asdamle/QR-spectral-clustering
-    https://arxiv.org/abs/1708.07481
+    .. [1] `Simple, direct, and efficient multi-way spectral clustering, 2019
+        Anil Damle, Victor Minden, Lexing Ying
+        <https://doi.org/10.1093/imaiai/iay008>`_
+
     """
 
     from scipy.linalg import qr, svd
@@ -40,10 +47,8 @@ def cluster_qr(vectors):
     k = vectors.shape[1]
     piv = qr(vectors.T, pivoting=True)[2]
     piv = piv[0:k]
-    UtSV = svd(vectors[piv, :].T)
-    Ut = UtSV[0]
-    Vt = UtSV[2].T.conj()
-    vectors = abs(np.dot(vectors, np.dot(Ut, Vt.T)))
+    ut, _, v = svd(vectors[piv[:k], :].T)
+    vectors = abs(np.dot(vectors, np.dot(ut, v.conj())))
     return vectors.argmax(axis=1).T
 
 
@@ -264,7 +269,7 @@ def spectral_clustering(
         embedding.  k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another
         approach which is less sensitive to random initialization [3]_.
-        The newest cluster_qr method directly extract clusters from eigenvectors
+        The newest cluster_qr method [5]_ directly extract clusters from eigenvectors
         in spectral clustering. In contrast to k-means and discretization, cluster_qr
         has no tuning parametersand runs no iterations, yet may outperform
         k-means and discretization in terms of both quality and speed.
@@ -300,9 +305,13 @@ def spectral_clustering(
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
            <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
 
+    .. [5] `Simple, direct, and efficient multi-way spectral clustering, 2019
+           Anil Damle, Victor Minden, Lexing Ying
+           <https://doi.org/10.1093/imaiai/iay008>`_
+
     Notes
     -----
-    The graph should contain only one connect component, elsewhere
+    The graph should contain only one connected component, elsewhere
     the results make little sense.
 
     This algorithm solves the normalized cut for k=2: it is a
