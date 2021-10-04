@@ -14,7 +14,7 @@ from sklearn.impute import KNNImputer
 from sklearn.impute import SimpleImputer
 
 
-IMPUTERS = [IterativeImputer(), KNNImputer(), SimpleImputer()]
+IMPUTERS = [IterativeImputer(tol=0.1), KNNImputer(), SimpleImputer()]
 SPARSE_IMPUTERS = [SimpleImputer()]
 
 
@@ -124,8 +124,6 @@ def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
     assert_allclose(X_trans_expected, X_trans)
 
 
-# ConvergenceWarning will be raised by the IterativeImputer
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("imputer", IMPUTERS, ids=lambda x: x.__class__.__name__)
 @pytest.mark.parametrize("add_indicator", [True, False])
 def test_imputers_feature_names_out_pandas(imputer, add_indicator):
