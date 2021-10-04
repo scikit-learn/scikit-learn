@@ -117,7 +117,7 @@ jobs:
       - name: Set pypi index for python dev
         if: matrix.python == 310
         run: |
-          echo "CIBW_ENVIRONMENT=PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scipy-wheels-nightly/simple PIP_PRE=true" >> $GITHUB_ENV
+          echo "EXTRA_CIBW_ENVIRONMENT=PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scipy-wheels-nightly/simple PIP_PRE=true" >> $GITHUB_ENV
 
           # Do not use the dev version of pandas
           echo "PANDAS_VERSION_SPECIFIER=<1.4" >> $GITHUB_ENV
@@ -131,7 +131,7 @@ jobs:
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
                             MACOSX_DEPLOYMENT_TARGET=10.13
-                            ${{ env.CIBW_ENVIRONMENT }}
+                            ${{ env.EXTRA_CIBW_ENVIRONMENT }}
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
