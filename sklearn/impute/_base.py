@@ -119,7 +119,9 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
             return names
 
         indicator_names = self.indicator_.get_feature_names_out(input_features)
-        indicator_names_with_prefix = [f"indicator_{name}" for name in indicator_names]
+        indicator_names_with_prefix = [
+            f"missingindicator_{name}" for name in indicator_names
+        ]
         return np.concatenate([names, indicator_names_with_prefix])
 
     def _more_tags(self):

@@ -136,13 +136,13 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
 
     X = np.array(
         [
-            [marker, 1, 5, marker, 1],
-            [2, marker, 1, marker, 2],
-            [6, 3, marker, marker, 3],
-            [1, 2, 9, marker, 4],
+            [marker, 1, 5, 3, marker, 1],
+            [2, marker, 1, 4, marker, 2],
+            [6, 3, 7, marker, marker, 3],
+            [1, 2, 9, 8, marker, 4],
         ]
     )
-    X_df = pd.DataFrame(X, columns=["a", "b", "c", "d", "e"])
+    X_df = pd.DataFrame(X, columns=["a", "b", "c", "d", "e", "f"])
     imputer.fit(X_df)
 
     names = imputer.get_feature_names_out()
@@ -152,13 +152,14 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
             "a",
             "b",
             "c",
-            "e",
-            "indicator_a",
-            "indicator_b",
-            "indicator_c",
-            "indicator_d",
+            "d",
+            "f",
+            "missingindicator_a",
+            "missingindicator_b",
+            "missingindicator_d",
+            "missingindicator_e",
         ]
         assert_array_equal(expected_names, names)
     else:
-        expected_names = ["a", "b", "c", "e"]
+        expected_names = ["a", "b", "c", "d", "f"]
         assert_array_equal(expected_names, names)
