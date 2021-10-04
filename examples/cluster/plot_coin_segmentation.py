@@ -98,8 +98,6 @@ for assign_labels in ('kmeans', 'discretize', 'cluster_qr'):
     print(title)
     plt.title(title)
     for l in range(n_regions):
-        plt.contour(labels == l,
-                    colors=[plt.cm.nipy_spectral((l+3) / float(n_regions + 3))])
         colors = plt.cm.nipy_spectral((l + n_regions_plus) /
                                       float(n_regions + n_regions_plus))
         plt.contour(labels == l, colors=colors)
