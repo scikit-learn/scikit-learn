@@ -79,7 +79,7 @@ from sklearn.svm import SVC
 from sklearn.decomposition import PCA
 from sklearn import set_config
 
-steps = [("reduce_dim", PCA()), ("classifier", SVC())]
+steps = [("reduce_dim", PCA(n_components=4)), ("classifier", SVC(kernel="linear"))]
 pipe = Pipeline(steps)
 
 # %%
