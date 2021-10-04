@@ -113,8 +113,6 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             )
         check_scalar(self.n_init, "n_init", target_type=numbers.Integral, min_val=1)
-        if hasattr(self, 'n_jobs') and self.n_jobs is not None:
-            check_scalar(self.n_jobs, "n_jobs", numbers.Integral)
 
     def fit(self, X, y=None):
         """Create a biclustering for X.
