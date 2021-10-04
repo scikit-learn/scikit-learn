@@ -20,7 +20,7 @@ jobs:
         python-version: '3.8'
     - name: Install dependencies
       run: |
-        pip install -U wheelhouse_uploader
+        pip install -U wheelhouse_uploader pyyaml
     - name: Downloading wheels and sdist from staging
       env:
         SKLEARN_VERSION: ${{ github.event.inputs.version }}
