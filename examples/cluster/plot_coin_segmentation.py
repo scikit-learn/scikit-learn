@@ -14,7 +14,7 @@ There are three options to assign labels:
 
 * with 'kmeans' spectral clustering will cluster samples in the embedding space
   using a kmeans algorithm
-* with 'cluster_qr' spectral clustering will cluster samples in the embedding 
+* with 'cluster_qr' spectral clustering will cluster samples in the embedding
   space using a cluster_qr algorithm,
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space of spectral clustering.
