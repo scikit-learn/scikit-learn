@@ -195,7 +195,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                 "check_estimator_sparse_data": "does not fail gracefully",
                 "check_methods_subset_invariance": "empty array passed inside",
                 "check_dont_overwrite_parameters": "empty array passed inside",
-                "check_fit2d_predict1d": "emptry array passed inside",
+                "check_fit2d_predict1d": "empty array passed inside",
             }
         }
 

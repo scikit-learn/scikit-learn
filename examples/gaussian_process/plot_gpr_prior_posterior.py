@@ -57,9 +57,6 @@ def plot_gpr_samples(gpr_model, n_samples, ax):
     y_mean, y_std = gpr_model.predict(X, return_std=True)
     y_samples = gpr_model.sample_y(X, n_samples)
 
-    y_mean, y_std = gpr_model.predict(X, return_std=True)
-    y_samples = gpr_model.sample_y(X, n_samples)
-
     for idx, single_prior in enumerate(y_samples.T):
         ax.plot(
             x,

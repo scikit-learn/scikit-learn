@@ -608,7 +608,7 @@ def check_array(
     has_pd_integer_array = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
-        # array.sparse exists and sparsity will be perserved (later).
+        # array.sparse exists and sparsity will be preserved (later).
         with suppress(ImportError):
             from pandas.api.types import is_sparse
 
@@ -1068,6 +1068,7 @@ def has_fit_parameter(estimator, parameter):
     Examples
     --------
     >>> from sklearn.svm import SVC
+    >>> from sklearn.utils.validation import has_fit_parameter
     >>> has_fit_parameter(SVC(), "sample_weight")
     True
 
@@ -1372,6 +1373,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
 
     Examples
     --------
+    >>> from sklearn.utils.validation import _check_psd_eigenvalues
     >>> _check_psd_eigenvalues([1, 2])      # nominal case
     array([1, 2])
     >>> _check_psd_eigenvalues([5, 5j])     # significant imag part
