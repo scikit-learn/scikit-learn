@@ -7,9 +7,11 @@ on:
 jobs:
   one:
     runs-on: ubuntu-latest
+    # toJson(github.event.comment.body) allows newline to be detected
     if: >-
       (github.event.comment.body == 'take' ||
-       github.event.comment.body == 'Take')
+       github.event.comment.body == 'take ' ||
+       toJson(github.event.comment.body) == 'take\r\n' )
       && !github.event.issue.assignee
     steps:
       - run: |
