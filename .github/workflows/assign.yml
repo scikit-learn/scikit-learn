@@ -10,7 +10,8 @@ jobs:
     # toJson(github.event.comment.body) allows newline to be detected
     if: >-
       (github.event.comment.body == 'take' ||
-       github.event.comment.body == 'take ') && !github.event.issue.assignee
+       github.event.comment.body == 'take ' )
+       && !github.event.issue.assignee
     steps:
       - run: |
           echo "Assigning issue ${{ github.event.issue.number }} to ${{ github.event.comment.user.login }}"
