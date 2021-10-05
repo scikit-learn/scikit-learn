@@ -360,6 +360,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
 
+        # Validating the scalar parameters.
         check_scalar(
             self.eps,
             "eps",

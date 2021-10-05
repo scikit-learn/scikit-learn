@@ -513,6 +513,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             Fitted estimator.
         """
 
+        # Validating the scalar parameters.
         check_scalar(
             self.threshold,
             "threshold",
