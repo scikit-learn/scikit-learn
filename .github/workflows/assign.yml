@@ -8,7 +8,7 @@ jobs:
   one:
     runs-on: ubuntu-latest
     # Support common whitespace patterns after take. Note that string
-    # comparisons are case-insensitive.
+    # comparisons is not case sensitive.
     # toJson(github.event.comment.body) allows newline to be detected
     if: >-
       (github.event.comment.body == 'take' ||
