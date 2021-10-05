@@ -98,7 +98,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     See Also
     --------
     SplineTransformer : Transformer that generates univariate B-spline bases
-        for features
+        for features.
 
     Notes
     -----
@@ -181,6 +181,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     @property
     def powers_(self):
+        """Exponent for each of the inputs in the output."""
         check_is_fitted(self)
 
         combinations = self._combinations(
@@ -199,8 +200,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         "in 1.2. Please use get_feature_names_out instead."
     )
     def get_feature_names(self, input_features=None):
-        """
-        Return feature names for output features
+        """Return feature names for output features.
 
         Parameters
         ----------
@@ -211,6 +211,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         Returns
         -------
         output_feature_names : list of str of shape (n_output_features,)
+            Transformed feature names.
         """
         powers = self.powers_
         if input_features is None:
@@ -269,7 +270,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     def fit(self, X, y=None):
         """
         Compute number of output features.
-
 
         Parameters
         ----------
