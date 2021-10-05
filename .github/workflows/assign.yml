@@ -19,4 +19,4 @@ jobs:
           echo "${{ github.event.comment.body }}"
           echo "$HEHE"
         env:
-          HEHE: toJson(github.event.comment.body)
+          HEHE: ${{ toJson(github.event.comment.body) }}
