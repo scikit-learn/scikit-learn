@@ -270,56 +270,6 @@ def test_neighs_predictions_fast_euclidean_correctness(
         neighbors.KNeighborsRegressor,
     ],
 )
-@pytest.mark.parametrize(
-    "weights, expected_kneighbors_metric",
-    [
-        ("uniform", "fast_sqeuclidean"),
-        ("distance", "fast_euclidean"),
-        (lambda x: x, "fast_euclidean"),
-    ],
-)
-def test_knn_prediction_fast_euclidean_overriding(
-    KNeighborsEstimator,
-    weights,
-    expected_kneighbors_metric,
-    n_samples=1000,
-    n_features=100,
-    dtype=np.float64,
-):
-    # The fast squared euclidean metric must be used over the fast euclidean
-    # metric solely when using the uniform sample-weighting.
-    class MockedKNeighborsEstimator(KNeighborsEstimator):
-        def kneighbors(self, *args, **kwargs):
-            self.kneighbors_metric_ = self.effective_metric_
-            return super().kneighbors(*args, **kwargs)
-
-    rng = np.random.RandomState(0)
-    X = rng.rand(n_samples, n_features).astype(dtype)
-    y = rng.randint(3, size=n_samples)
-
-    parameter = 10
-
-    fast_euclidean_est = MockedKNeighborsEstimator(
-        parameter,
-        algorithm="brute",
-        metric="fast_euclidean",
-        weights=weights,
-    ).fit(X, y)
-
-    # effective_metric_ must not be changed
-    assert fast_euclidean_est.effective_metric_ == "fast_euclidean"
-    fast_euclidean_est.predict(X)
-    assert fast_euclidean_est.kneighbors_metric_ == expected_kneighbors_metric
-    assert fast_euclidean_est.effective_metric_ == "fast_euclidean"
-
-
-@pytest.mark.parametrize(
-    "KNeighborsEstimator",
-    [
-        neighbors.KNeighborsClassifier,
-        neighbors.KNeighborsRegressor,
-    ],
-)
 @pytest.mark.parametrize("algorithm", ["kd_tree", "ball_tree"])
 def test_knn_prediction_fast_alternatives_fall_back_on_tree(
     KNeighborsEstimator,

@@ -233,12 +233,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
 
-        if self.weights == "uniform" and self.effective_metric_ == "fast_euclidean":
-            # In that case, it is safe to use the fast alternative which
-            # does not use sqrt on distances as this can be costly.
-            self.effective_metric_ = "fast_sqeuclidean"
-            neigh_dist, neigh_ind = self.kneighbors(X)
-            self.effective_metric_ = "fast_euclidean"
+        if self.weights == "uniform":
+            # In that case, we do not need the distance so we do not compute them.
+            neigh_ind = self.kneighbors(X, return_distance=False)
+            neigh_dist = None
         else:
             neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -454,15 +452,10 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
 
-        if self.weights == "uniform" and self.effective_metric_ == "fast_euclidean":
-            # In that case, it is safe to use the fast alternative which
-            # does not use sqrt on distances as this can be costly.
-            original_radius = self.radius
-            self.effective_metric_ = "fast_sqeuclidean"
-            self.radius = original_radius * original_radius
-            neigh_dist, neigh_ind = self.radius_neighbors(X)
-            self.radius = original_radius
-            self.effective_metric_ = "fast_euclidean"
+        if self.weights == "uniform":
+            # In that case, we do not need the distance so we do not compute them.
+            neigh_ind = self.radius_neighbors(X, return_distance=False)
+            neigh_dist = None
         else:
             neigh_dist, neigh_ind = self.radius_neighbors(X)
 
