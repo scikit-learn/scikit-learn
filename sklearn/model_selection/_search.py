@@ -1420,7 +1420,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Parameters
     ----------
-    estimator : estimator object.
+    estimator : estimator object
         A object of that type is instantiated for each grid point.
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
@@ -1692,6 +1692,12 @@ class RandomizedSearchCV(BaseSearchCV):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    GridSearchCV : Does exhaustive search over a grid of parameters.
+    ParameterSampler : A generator over parameter settings, constructed from
+        param_distributions.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the held-out
@@ -1704,12 +1710,6 @@ class RandomizedSearchCV(BaseSearchCV):
     this case is to set `pre_dispatch`. Then, the memory is copied only
     `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
     n_jobs`.
-
-    See Also
-    --------
-    GridSearchCV : Does exhaustive search over a grid of parameters.
-    ParameterSampler : A generator over parameter settings, constructed from
-        param_distributions.
 
     Examples
     --------
