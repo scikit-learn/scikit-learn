@@ -16,6 +16,7 @@
 
 import numpy as np
 cimport numpy as np
+import scipy.sparse
 
 from .. import get_config
 
@@ -272,8 +273,8 @@ cdef class PairwiseDistancesReduction:
         """
         # Coercing to np.array to get the dtype
         # TODO: what is the best way to get lists' dtype?
-        X = np.asarray(X) if isinstance(X, (tuple, list)) else X
-        Y = np.asarray(Y) if isinstance(Y, (tuple, list)) else Y
+        X = np.asarray(X) if not isinstance(X, (np.ndarray, scipy.sparse.spmatrix)) else X
+        Y = np.asarray(Y) if not isinstance(Y, (np.ndarray, scipy.sparse.spmatrix)) else Y
         # TODO: support sparse arrays and 32 bits
         return (not issparse(X) and X.dtype == np.float64 and X.ndim == 2 and
                 not issparse(Y) and Y.dtype == np.float64 and Y.ndim == 2 and
