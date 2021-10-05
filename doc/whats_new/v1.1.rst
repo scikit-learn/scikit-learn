@@ -53,6 +53,19 @@ Changelog
   message when the solver does not support sparse matrices with int64 indices.
   :pr:`21093` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| raise an error during cross-validation when the fits for all the
+  splits failed. Similarly raise an error during grid-search when the fits for
+  all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
+  Setting a transformer to "passthrough" will pass the features unchanged.
+  :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
 :mod:`sklearn.utils`
 ....................
@@ -68,13 +81,6 @@ Changelog
   :func:`neighbors.KernelDensity`.
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
-
-:mod:`sklearn.pipeline`
-.......................
-
-- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
-  Setting a transformer to "passthrough" will pass the features unchanged.
-  :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
 Code and Documentation Contributors
 -----------------------------------
