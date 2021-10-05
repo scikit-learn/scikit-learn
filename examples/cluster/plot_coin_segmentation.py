@@ -70,7 +70,7 @@ graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 # be used (e.g., 'arpack', 'lobpcg', or 'amg').
 eigen_solver = 'arpack'
 
-# The actual number of regions in this example is 27: background and 26 coins
+# The number of regions
 n_regions = 26
 
 # %%
