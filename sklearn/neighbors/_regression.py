@@ -226,8 +226,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-
         if self.weights == "uniform":
             # In that case, we do not need the distance so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
@@ -441,8 +439,6 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
                 dtype=double
             Target values.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-
         if self.weights == "uniform":
             # In that case, we do not need the distance so we do not compute them.
             neigh_ind = self.radius_neighbors(X, return_distance=False)

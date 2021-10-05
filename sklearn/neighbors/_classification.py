@@ -211,8 +211,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-
         if self.weights == "uniform":
             # In that case, we do not need the distance so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
@@ -261,8 +259,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-
         if self.weights == "uniform":
             # In that case, we do not need the distance so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
@@ -282,7 +278,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         if weights is None:
             weights = np.ones_like(neigh_ind)
 
-        all_rows = np.arange(X.shape[0])
+        all_rows = np.arange(n_queries)
         probabilities = []
         for k, classes_k in enumerate(classes_):
             pred_labels = _y[:, k][neigh_ind]
@@ -624,7 +620,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+
         n_queries = _num_samples(X)
 
         if self.weights == "uniform":
