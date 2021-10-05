@@ -12,7 +12,7 @@ jobs:
     if: >-
       (github.event.comment.body == 'take' ||
        github.event.comment.body == 'take ' ||
-       github.event.comment.body == 'take\\\n' )
+       github.event.comment.body == 'take\nwow' )
        && !github.event.issue.assignee
     steps:
       - run: |
