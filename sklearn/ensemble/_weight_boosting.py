@@ -36,6 +36,7 @@ from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 from ..exceptions import ConvergenceWarning
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
+from ..dummy import DummyRegressor
 from ..utils import check_random_state, _safe_indexing
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
@@ -1180,7 +1181,21 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         elif iboost == self.n_estimators - 1:
             update_weight_method = "do_nothing"
         else:
-            if self.estimator_errors_[iboost - 1] < estimator_error:
+            if not hasattr(self, "baseline"):
+                if X.ndim == 2:
+                    baseline_estimator = DecisionTreeRegressor(max_depth=1)
+                else:
+                    baseline_estimator = DummyRegressor()
+                baseline_estimator.fit(X_, y_)
+                y_predict = baseline_estimator.predict(X)
+                error_vect = np.abs(y_predict - y)
+                baseline = error_vect.mean()
+                error_max = error_vect.max()
+                if error_max != 0:
+                    baseline /= error_max
+                self.baseline = baseline
+
+            if self.baseline < estimator_error:
                 if self.no_improvement == "reset_weights":
                     update_weight_method = "reset"
                 elif self.no_improvement == "stop":
@@ -1188,7 +1203,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
                 elif self.no_improvement == "warn":
                     update_weight_method = "update"
                     warnings.warn(
-                        "The estimator training error has increased. "
+                        "The base estimator is too weak. "
                         "Please consider hyper-parameter tuning for "
                         "the base estimators.",
                         ConvergenceWarning,
