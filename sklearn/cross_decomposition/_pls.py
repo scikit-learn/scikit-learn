@@ -549,7 +549,7 @@ class _PLS(
 
 
 class PLSRegression(_PLS):
-    """PLS regression
+    """PLS regression.
 
     PLSRegression is also known as PLS2 or PLS1, depending on the number of
     targets.
@@ -577,9 +577,9 @@ class PLSRegression(_PLS):
         than `tol`, where `u` corresponds to the left singular vector.
 
     copy : bool, default=True
-        Whether to copy `X` and `Y` in fit before applying centering, and
-        potentially scaling. If False, these operations will be done inplace,
-        modifying both arrays.
+        Whether to copy `X` and `Y` in :term:`fit` before applying centering,
+        and potentially scaling. If `False`, these operations will be done
+        inplace, modifying both arrays.
 
     Attributes
     ----------
@@ -625,6 +625,10 @@ class PLSRegression(_PLS):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    See Also
+    --------
+    PLSCanonical : Partial Least Squares transformer and regressor.
 
     Examples
     --------
@@ -680,7 +684,7 @@ class PLSCanonical(_PLS):
         will compute the whole SVD.
 
     max_iter : int, default=500
-        the maximum number of iterations of the power method when
+        The maximum number of iterations of the power method when
         `algorithm='nipals'`. Ignored otherwise.
 
     tol : float, default=1e-06
@@ -748,6 +752,11 @@ class PLSCanonical(_PLS):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    CCA : Canonical Correlation Analysis.
+    PLSSVD : Partial Least Square SVD.
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import PLSCanonical
@@ -757,11 +766,6 @@ class PLSCanonical(_PLS):
     >>> plsca.fit(X, Y)
     PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
-
-    See Also
-    --------
-    CCA
-    PLSSVD
     """
 
     # This implementation provides the same results that the "plspm" package
@@ -910,10 +914,10 @@ class CCA(_PLS):
 class PLSSVD(TransformerMixin, BaseEstimator):
     """Partial Least Square SVD.
 
-    This transformer simply performs a SVD on the crosscovariance matrix X'Y.
-    It is able to project both the training data `X` and the targets `Y`. The
-    training data X is projected on the left singular vectors, while the
-    targets are projected on the right singular vectors.
+    This transformer simply performs a SVD on the cross-covariance matrix
+    `X'Y`. It is able to project both the training data `X` and the targets
+    `Y`. The training data `X` is projected on the left singular vectors, while
+    the targets are projected on the right singular vectors.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
@@ -930,18 +934,18 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     copy : bool, default=True
         Whether to copy `X` and `Y` in fit before applying centering, and
-        potentially scaling. If False, these operations will be done inplace,
+        potentially scaling. If `False`, these operations will be done inplace,
         modifying both arrays.
 
     Attributes
     ----------
     x_weights_ : ndarray of shape (n_features, n_components)
         The left singular vectors of the SVD of the cross-covariance matrix.
-        Used to project `X` in `transform`.
+        Used to project `X` in :meth:`transform`.
 
     y_weights_ : ndarray of (n_targets, n_components)
         The right singular vectors of the SVD of the cross-covariance matrix.
-        Used to project `X` in `transform`.
+        Used to project `X` in :meth:`transform`.
 
     x_scores_ : ndarray of shape (n_samples, n_components)
         The transformed training samples.
@@ -968,6 +972,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    PLSCanonical : Partial Least Squares transformer and regressor.
+    CCA : Canonical Correlation Analysis.
+
     Examples
     --------
     >>> import numpy as np
@@ -984,11 +993,6 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     >>> X_c, Y_c = pls.transform(X, Y)
     >>> X_c.shape, Y_c.shape
     ((4, 2), (4, 2))
-
-    See Also
-    --------
-    PLSCanonical
-    CCA
     """
 
     def __init__(self, n_components=2, *, scale=True, copy=True):
@@ -1006,6 +1010,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Targets.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         check_consistent_length(X, Y)
         X = self._validate_data(
@@ -1118,7 +1127,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Returns
         -------
         x_scores : array-like or tuple of array-like
-            The transformed data `X_tranformed` if `Y` is not None,
+            The transformed data `X_tranformed` if `Y is not None`,
             `(X_transformed, Y_transformed)` otherwise.
         """
         check_is_fitted(self)
@@ -1149,7 +1158,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Returns
         -------
         out : array-like or tuple of array-like
-            The transformed data `X_tranformed` if `Y` is not None,
+            The transformed data `X_tranformed` if `Y is not None`,
             `(X_transformed, Y_transformed)` otherwise.
         """
         return self.fit(X, y).transform(X, y)

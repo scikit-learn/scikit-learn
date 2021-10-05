@@ -21,8 +21,9 @@ from ._kmeans import k_means
 def discretize(
     vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20, random_state=None
 ):
-    """Search for a partition matrix (clustering) which is closest to the
-    eigenvector embedding.
+    """Search for a partition matrix which is closest to the eigenvector embedding.
+
+    This implementation was proposed in [1]_.
 
     Parameters
     ----------
@@ -52,9 +53,9 @@ def discretize(
     References
     ----------
 
-    - Multiclass spectral clustering, 2003
-      Stella X. Yu, Jianbo Shi
-      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+    .. [1] `Multiclass spectral clustering, 2003
+           Stella X. Yu, Jianbo Shi
+           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
     Notes
     -----
@@ -177,7 +178,7 @@ def spectral_clustering(
     nested circles on the 2D plane.
 
     If affinity is the adjacency matrix of a graph, this method can be
-    used to find normalized graph cuts.
+    used to find normalized graph cuts [1]_, [2]_.
 
     Read more in the :ref:`User Guide <spectral_clustering>`.
 
@@ -202,7 +203,7 @@ def spectral_clustering(
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities. If None, then ``'arpack'`` is
-        used.
+        used. See [4]_ for more details regarding `'lobpcg'`.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization
@@ -233,9 +234,7 @@ def spectral_clustering(
         space.  There are two ways to assign labels after the Laplacian
         embedding.  k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another
-        approach which is less sensitive to random initialization. See
-        the 'Multiclass spectral clustering' paper referenced below for
-        more details on the discretization approach.
+        approach which is less sensitive to random initialization [3]_.
 
     verbose : bool, default=False
         Verbosity mode.
@@ -250,17 +249,23 @@ def spectral_clustering(
     References
     ----------
 
-    - Normalized cuts and image segmentation, 2000
-      Jianbo Shi, Jitendra Malik
-      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+    .. [1] `Normalized cuts and image segmentation, 2000
+           Jianbo Shi, Jitendra Malik
+           <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
 
-    - A Tutorial on Spectral Clustering, 2007
-      Ulrike von Luxburg
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
+    .. [2] `A Tutorial on Spectral Clustering, 2007
+           Ulrike von Luxburg
+           <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
 
-    - Multiclass spectral clustering, 2003
-      Stella X. Yu, Jianbo Shi
-      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+    .. [3] `Multiclass spectral clustering, 2003
+           Stella X. Yu, Jianbo Shi
+           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+
+    .. [4] `Toward the Optimal Preconditioned Eigensolver:
+           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+           A. V. Knyazev
+           SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
+           <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
 
     Notes
     -----
@@ -323,7 +328,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     nested circles on the 2D plane.
 
     If the affinity matrix is the adjacency matrix of a graph, this method
-    can be used to find normalized graph cuts.
+    can be used to find normalized graph cuts [1]_, [2]_.
 
     When calling ``fit``, an affinity matrix is constructed using either
     a kernel function such the Gaussian (aka RBF) kernel with Euclidean
@@ -347,10 +352,10 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities. If None, then ``'arpack'`` is
-        used.
+        used. See [4]_ for more details regarding `'lobpcg'`.
 
     n_components : int, default=n_clusters
-        Number of eigenvectors to use for the spectral embedding
+        Number of eigenvectors to use for the spectral embedding.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization
@@ -407,7 +412,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         ways to assign labels after the Laplacian embedding. k-means is a
         popular choice, but it can be sensitive to initialization.
         Discretization is another approach which is less sensitive to random
-        initialization.
+        initialization [3]_.
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
@@ -453,20 +458,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.cluster import SpectralClustering
-    >>> import numpy as np
-    >>> X = np.array([[1, 1], [2, 1], [1, 0],
-    ...               [4, 7], [3, 5], [3, 6]])
-    >>> clustering = SpectralClustering(n_clusters=2,
-    ...         assign_labels='discretize',
-    ...         random_state=0).fit(X)
-    >>> clustering.labels_
-    array([1, 1, 1, 0, 0, 0])
-    >>> clustering
-    SpectralClustering(assign_labels='discretize', n_clusters=2,
-        random_state=0)
+    sklearn.cluster.KMeans : K-Means clustering.
+    sklearn.cluster.DBSCAN : Density-Based Spatial Clustering of
+        Applications with Noise.
 
     Notes
     -----
@@ -488,18 +484,38 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     References
     ----------
+    .. [1] `Normalized cuts and image segmentation, 2000
+           Jianbo Shi, Jitendra Malik
+           <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
 
-    - Normalized cuts and image segmentation, 2000
-      Jianbo Shi, Jitendra Malik
-      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+    .. [2] `A Tutorial on Spectral Clustering, 2007
+           Ulrike von Luxburg
+           <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
 
-    - A Tutorial on Spectral Clustering, 2007
-      Ulrike von Luxburg
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
+    .. [3] `Multiclass spectral clustering, 2003
+           Stella X. Yu, Jianbo Shi
+           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
-    - Multiclass spectral clustering, 2003
-      Stella X. Yu, Jianbo Shi
-      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+    .. [4] `Toward the Optimal Preconditioned Eigensolver:
+           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+           A. V. Knyazev
+           SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
+           <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
+
+    Examples
+    --------
+    >>> from sklearn.cluster import SpectralClustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = SpectralClustering(n_clusters=2,
+    ...         assign_labels='discretize',
+    ...         random_state=0).fit(X)
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+    >>> clustering
+    SpectralClustering(assign_labels='discretize', n_clusters=2,
+        random_state=0)
     """
 
     def __init__(
@@ -556,8 +572,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        self
-
+        self : object
+            A fitted instance of the estimator.
         """
         X = self._validate_data(
             X,
@@ -617,8 +633,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         return self
 
     def fit_predict(self, X, y=None):
-        """Perform spectral clustering from features, or affinity matrix,
-        and return cluster labels.
+        """Perform spectral clustering on `X` and return cluster labels.
 
         Parameters
         ----------
