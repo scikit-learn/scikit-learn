@@ -36,6 +36,13 @@ Fixed models
   the Bayesian priors.
   :pr:`21179` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans`, ensuring reproducibility and equivalence
+  between sparse and dense input. :pr:`21195`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
