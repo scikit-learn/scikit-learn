@@ -15,12 +15,10 @@ jobs:
     #    github.event.comment.body == 'take\nwow' )
     #    && !github.event.issue.assignee
     steps:
+      - run: echo "0"
+        if: github.event.comment.body == 'take'
       - run: echo "1"
         if: github.event.comment.body == 'take\n'
-      - run: echo "1wo"
-        if: |
-          github.event.comment.body == 'take
-          '
       - run: echo "2"
         if: github.event.comment.body == 'take\\n'
       - run: echo "3"
