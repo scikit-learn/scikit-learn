@@ -15,4 +15,4 @@ jobs:
     #    && !github.event.issue.assignee
     steps:
       - run: |
-          echo "${{ github.event.comment.body }}""
+          echo "${{ github.event.comment.body }}"
