@@ -448,8 +448,7 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero():
             " 'float'>.",
         ),
         ({"leaf_size": -3}, ValueError, "leaf_size == -3, must be >= 1."),
-        ({"p": 0}, ValueError, "p == 0, must be >= 1.0."),
-        ({"p": -2}, ValueError, "p == -2, must be >= 1.0."),
+        ({"p": -2}, ValueError, "p == -2, must be >= 0.0."),
         (
             {"n_jobs": 2.5},
             TypeError,
