@@ -9,11 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     # Support m
     # toJson(github.event.comment.body) allows newline to be detected
-    if: >-
-      (github.event.comment.body == 'take' ||
-       github.event.comment.body == 'take ' ||
-       github.event.comment.body == 'take\nwow' )
-       && !github.event.issue.assignee
+    # if: >-
+    #   (github.event.comment.body == 'take' ||
+    #    github.event.comment.body == 'take ' ||
+    #    github.event.comment.body == 'take\nwow' )
+    #    && !github.event.issue.assignee
     steps:
       - run: |
           echo -e "${{ github.event.comment.body }}"
