@@ -23,3 +23,21 @@ jobs:
         if: github.event.comment.body == 'take\\\n'
       - run: echo "4"
         if: github.event.comment.body == 'take\\\n'
+      - run: echo "5"
+        if: github.event.comment.body == 'take\\\\n'
+      - run: echo "6"
+        if: github.event.comment.body == 'take\r'
+      - run: echo "7"
+        if: github.event.comment.body == 'take\\r'
+      - run: echo "8"
+        if: github.event.comment.body == 'take\\\r'
+      - run: echo "9"
+        if: github.event.comment.body == 'take\\\\r'
+      - run: echo "10"
+        if: github.event.comment.body == 'take\r\n'
+      - run: echo "11"
+        if: github.event.comment.body == 'take\\r\\n'
+      - run: echo "12"
+        if: github.event.comment.body == 'take\\\r\\\n'
+      - run: echo "13"
+        if: github.event.comment.body == 'take\\\\r\\\\n'
