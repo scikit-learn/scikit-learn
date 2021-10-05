@@ -15,8 +15,11 @@ jobs:
     #    github.event.comment.body == 'take\nwow' )
     #    && !github.event.issue.assignee
     steps:
-      - run: |
-          echo "${{ github.event.comment.body }}"
-          echo "$HEHE"
-        env:
-          HEHE: ${{ toJson(github.event.comment.body) }}
+      - run: echo "1"
+        if: github.event.comment.body == 'take\n'
+      - run: echo "2"
+        if: github.event.comment.body == 'take\\n'
+      - run: echo "3"
+        if: github.event.comment.body == 'take\\\n'
+      - run: echo "4"
+        if: github.event.comment.body == 'take\\\n'
