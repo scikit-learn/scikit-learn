@@ -17,27 +17,29 @@ jobs:
     steps:
       - run: echo "1"
         if: github.event.comment.body == 'take\n'
+      - run: echo "1wo"
+        if: |
+          github.event.comment.body == 'take
+          '
       - run: echo "2"
         if: github.event.comment.body == 'take\\n'
       - run: echo "3"
         if: github.event.comment.body == 'take\\\n'
       - run: echo "4"
-        if: github.event.comment.body == 'take\\\n'
-      - run: echo "5"
         if: github.event.comment.body == 'take\\\\n'
-      - run: echo "6"
+      - run: echo "5"
         if: github.event.comment.body == 'take\r'
-      - run: echo "7"
+      - run: echo "6"
         if: github.event.comment.body == 'take\\r'
-      - run: echo "8"
+      - run: echo "7"
         if: github.event.comment.body == 'take\\\r'
-      - run: echo "9"
+      - run: echo "8"
         if: github.event.comment.body == 'take\\\\r'
-      - run: echo "10"
+      - run: echo "9"
         if: github.event.comment.body == 'take\r\n'
-      - run: echo "11"
+      - run: echo "10"
         if: github.event.comment.body == 'take\\r\\n'
-      - run: echo "12"
+      - run: echo "11"
         if: github.event.comment.body == 'take\\\r\\\n'
-      - run: echo "13"
+      - run: echo "12"
         if: github.event.comment.body == 'take\\\\r\\\\n'
