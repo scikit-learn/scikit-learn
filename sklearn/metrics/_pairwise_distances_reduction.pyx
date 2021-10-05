@@ -1622,7 +1622,7 @@ cdef class Kernel(PairwiseDistancesReduction):
         """
         # This factory comes to handle specialisations.
         if kernel == "rbf":
-            return RBFKernel(X, Y, chunk_size=chunk_size, gamma=1.0)
+            return RBFKernel(X, Y, chunk_size=chunk_size)
         else:
             raise ValueError(f"Unsupported kernel: {kernel}")
 
@@ -1708,7 +1708,7 @@ cdef class RBFKernel(Kernel):
         self,
         X,
         Y,
-        gamma=0.1,
+        gamma=None,
         chunk_size=None,
         n_threads=None,
     ):
@@ -1730,7 +1730,7 @@ cdef class RBFKernel(Kernel):
             sizeof(DTYPE_t *) * self.effective_omp_n_thread
         )
 
-        self.gamma = gamma
+        self.gamma = 1.0 / X.shape[1] if gamma is None else gamma
 
 
     def __dealloc__(self):
