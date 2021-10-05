@@ -93,13 +93,13 @@ cdef class DistanceMetric:
 cdef class DatasetsPair:
     cdef DistanceMetric distance_metric
 
-    cdef ITYPE_t n_X(self) nogil
+    cdef ITYPE_t n_samples_X(self) nogil
 
-    cdef ITYPE_t n_Y(self) nogil
+    cdef ITYPE_t n_samples_Y(self) nogil
 
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil
 
-    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil
+    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil
 
 
 cdef class DenseDenseDatasetsPair(DatasetsPair):

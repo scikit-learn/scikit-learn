@@ -1198,8 +1198,17 @@ cdef inline double fmax(double a, double b) nogil:
 cdef class DatasetsPair:
     """Abstract class which wraps a pair of datasets (X, Y).
 
-    This class allows computing distances between two vectors (X_i, Y_j)
-    (rows of X and Y) at a time given the pair of their indices (i, j).
+    This class allows computing distances between a single pair of rows of
+    of X and Y at a time given the pair of their indices (i, j). This class is
+    specialized for each metric thanks to the :func:`get_for` factory classmethod.
+
+    The handling of chunking and parallelization to compute the distances
+    and aggregation for several rows at a time is handled in dedicated
+    subclasses of PairwiseDistancesReduction that in-turn rely on
+    subclasses of DatasetsPair for each pair of rows in the data. The goal
+    is to make it possible to decouple the generic parallelization and
+    aggregation logic from metric-specific computation as much as
+    possible.
 
     X and Y can be stored as np.ndarrays or CSR matrices in subclasses.
 
@@ -1227,12 +1236,12 @@ cdef class DatasetsPair:
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of shape (n_X, d)
+        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
             Input data.
             If provided as a ndarray, it must be C-contiguous.
             If provided as a sparse matrix, it must be in CSR format.
 
-        Y : {ndarray, sparse matrix} of shape (n_Y, d)
+        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
             Input data.
             If provided as a ndarray, it must be C-contiguous.
             If provided as a sparse matrix, it must be in CSR format.
@@ -1283,15 +1292,15 @@ cdef class DatasetsPair:
     def __init__(self, DistanceMetric distance_metric):
         self.distance_metric = distance_metric
 
-    cdef ITYPE_t n_X(self) nogil:
+    cdef ITYPE_t n_samples_X(self) nogil:
         """Number of samples in X."""
         return -999
 
-    cdef ITYPE_t n_Y(self) nogil:
+    cdef ITYPE_t n_samples_Y(self) nogil:
         """Number of samples in Y."""
         return -999
 
-    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.dist(i, j)
 
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
@@ -1303,10 +1312,10 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
 
     Parameters
     ----------
-    X: ndarray of shape (n_X, d)
+    X: ndarray of shape (n_samples_X, n_features)
         Rows represent vectors. Must be C-contiguous.
 
-    Y: ndarray of shape (n_Y, d)
+    Y: ndarray of shape (n_samples_Y, n_features)
         Rows represent vectors. Must be C-contiguous.
 
     distance_metric: DistanceMetric
@@ -1322,15 +1331,15 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         self.d = X.shape[1]
 
     @final
-    cdef ITYPE_t n_X(self) nogil:
+    cdef ITYPE_t n_samples_X(self) nogil:
         return self.X.shape[0]
 
     @final
-    cdef ITYPE_t n_Y(self) nogil:
+    cdef ITYPE_t n_samples_Y(self) nogil:
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.distance_metric.rdist(&self.X[i, 0],
                                           &self.Y[j, 0],
                                           self.d)
@@ -1347,10 +1356,10 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
 
     Parameters
     ----------
-    X: sparse matrix of shape (n_X, d)
+    X: sparse matrix of shape (n_samples_X, n_features)
         Rows represent vectors. Must be in CSR format.
 
-    Y: sparse matrix of shape (n_X, d)
+    Y: sparse matrix of shape (n_samples_Y, n_features)
         Rows represent vectors. Must be in CSR format.
 
     distance_metric: DistanceMetric
@@ -1374,15 +1383,15 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
         self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr_matrix(Y)
 
     @final
-    cdef ITYPE_t n_X(self) nogil:
+    cdef ITYPE_t n_samples_X(self) nogil:
         return self.X_indptr.shape[0] - 1
 
     @final
-    cdef ITYPE_t n_Y(self) nogil:
+    cdef ITYPE_t n_samples_Y(self) nogil:
         return self.Y_indptr.shape[0] -1
 
     @final
-    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         cdef:
             ITYPE_t xi_start = self.X_indptr[i]
             ITYPE_t xi_end = self.X_indptr[i + 1]
@@ -1417,10 +1426,10 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
 
     Parameters
     ----------
-    X: sparse matrix of shape (n_X, d)
+    X: sparse matrix of shape (n_samples_X, n_features)
         Rows represent vectors. Must be in CSR format.
 
-    Y: ndarray of shape (n_Y, d)
+    Y: ndarray of shape (n_samples_Y, n_features)
         Rows represent vectors. Must be C-contiguous.
 
     distance_metric: DistanceMetric
@@ -1432,7 +1441,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         const ITYPE_t[:] X_indices,
         const ITYPE_t[:] X_indptr,
 
-        const DTYPE_t[:, ::1] Y  # shape: (n_Y, d)
+        const DTYPE_t[:, ::1] Y
         const ITYPE_t[:] Y_indices
 
     def __init__(self, X, Y, DistanceMetric distance_metric):
@@ -1445,15 +1454,15 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         self.Y_indices = np.arange(self.Y.shape[1], dtype=ITYPE)
 
     @final
-    cdef ITYPE_t n_X(self) nogil:
+    cdef ITYPE_t n_samples_X(self) nogil:
         return self.X_indptr.shape[0] - 1
 
     @final
-    cdef ITYPE_t n_Y(self) nogil:
+    cdef ITYPE_t n_samples_Y(self) nogil:
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         cdef:
             ITYPE_t xi_start = self.X_indptr[i]
             ITYPE_t xi_end = self.X_indptr[i + 1]
@@ -1489,10 +1498,10 @@ cdef class DenseSparseDatasetsPair(DatasetsPair):
 
     Parameters
     ----------
-    X: ndarray of shape (n_X, d)
+    X: ndarray of shape (n_samples_X, n_features)
         Rows represent vectors. Must be C-contiguous.
 
-    Y: sparse matrix of shape (n_Y, d)
+    Y: sparse matrix of shape (n_samples_Y, n_features)
         Rows represent vectors. Must be in CSR format.
 
     distance_metric: DistanceMetric
@@ -1510,19 +1519,19 @@ cdef class DenseSparseDatasetsPair(DatasetsPair):
         self.datasets_pair = SparseDenseDatasetsPair(Y, X, distance_metric)
 
     @final
-    cdef ITYPE_t n_X(self) nogil:
+    cdef ITYPE_t n_samples_X(self) nogil:
         # Swapping interface
-        return self.datasets_pair.n_Y()
+        return self.datasets_pair.n_samples_Y()
 
     @final
-    cdef ITYPE_t n_Y(self) nogil:
+    cdef ITYPE_t n_samples_Y(self) nogil:
         # Swapping interface
-        return self.datasets_pair.n_X()
+        return self.datasets_pair.n_samples_X()
 
     @final
-    cdef DTYPE_t ranking_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         # Swapping arguments on the same interface
-        return self.datasets_pair.ranking_preserving_dist(j, i)
+        return self.datasets_pair.rank_preserving_dist(j, i)
 
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
