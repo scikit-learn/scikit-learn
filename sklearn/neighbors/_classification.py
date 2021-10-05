@@ -11,7 +11,7 @@
 import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
-from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
+from ..utils.validation import _is_arraylike, _num_samples
 
 import warnings
 from ._base import _check_weights, _get_weights
@@ -211,10 +211,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
-        # Duplicated because of the check on self.effective_metric_'s value
-        # TODO: remove check_is_fitted duplication
-        check_is_fitted(self)
-
         X = self._validate_data(X, accept_sparse="csr", reset=False)
 
         if self.weights == "uniform":
@@ -265,10 +261,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        # Duplicated because of the check on self.effective_metric_'s value
-        # TODO: remove check_is_fitted duplication
-        check_is_fitted(self)
-
         X = self._validate_data(X, accept_sparse="csr", reset=False)
 
         if self.weights == "uniform":
@@ -632,10 +624,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        # Duplicated because of the check on self.effective_metric_'s value
-        # TODO: remove check_is_fitted duplication
-        check_is_fitted(self)
-
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         n_queries = _num_samples(X)
 
