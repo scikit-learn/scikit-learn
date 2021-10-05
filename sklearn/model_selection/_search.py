@@ -31,7 +31,7 @@ from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ._validation import _insert_error_scores
 from ._validation import _normalize_score_results
-from ._validation import _warn_about_fit_failures
+from ._validation import _warn_or_raise_about_fit_failures
 from ..exceptions import NotFittedError
 from joblib import Parallel
 from ..utils import check_random_state
@@ -865,7 +865,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         "splits, got {}".format(n_splits, len(out) // n_candidates)
                     )
 
-                _warn_about_fit_failures(out, self.error_score)
+                _warn_or_raise_about_fit_failures(out, self.error_score)
 
                 # For callable self.scoring, the return type is only know after
                 # calling. If the return type is a dictionary, the error scores
