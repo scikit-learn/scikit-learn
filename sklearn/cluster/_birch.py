@@ -14,7 +14,7 @@ from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils.extmath import row_norms
 from ..utils import check_scalar, deprecated
-from ..utils.validation import _num_samples, check_is_fitted
+from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
 from .._config import config_context
