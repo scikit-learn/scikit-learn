@@ -16,4 +16,7 @@ jobs:
     #    && !github.event.issue.assignee
     steps:
       - run: |
-          echo -e "${{ github.event.comment.body }}"
+          echo "${{ github.event.comment.body }}"
+          echo "$HEHE"
+        env:
+          HEHE: toJson(github.event.comment.body)
