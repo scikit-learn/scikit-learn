@@ -38,13 +38,20 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-
 :mod:`sklearn.calibration`
 ..........................
 
 - |Enhancement| :func:`calibration.calibration_curve` accepts a parameter
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.ensemble`
+...........................
+
+- |Fix| Fixed a bug that could produce a segfault in rare cases for
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`.
+  :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.linear_model`
 ...........................
