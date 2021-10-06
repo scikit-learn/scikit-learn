@@ -100,6 +100,8 @@ class BisectKMeans(KMeans):
 
     Read more in the :ref:`User Guide <bisect_k_means>`.
 
+    .. versionadded:: 1.1
+
     Parameters
     ----------
     n_clusters : int, default=8

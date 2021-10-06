@@ -53,6 +53,12 @@ Changelog
   message when the solver does not support sparse matrices with int64 indices.
   :pr:`21093` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.cluster`
+......................
+- |Feature| :class:`BisectKMeans` introducing Bisecting K-Means algorithm
+  :pr:`20031` by :user:`Michal Krawczyk <michalkrawczyk>`
+  and :user:`Tom Dupre la Tour <TomDLT>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
