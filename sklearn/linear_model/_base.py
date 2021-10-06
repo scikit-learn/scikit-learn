@@ -535,8 +535,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         If True, X will be copied; else, it may be overwritten.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This will only provide
-        speedup for n_targets > 1 and sufficient large problems.
+        The number of jobs to use for the computation.
+        This will only provide speedup in case of sufficient large problems
+        if `X` is sparse or `positive` is set to `True` and n_targets > 1.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
