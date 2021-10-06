@@ -7,14 +7,10 @@ on:
 jobs:
   one:
     runs-on: ubuntu-latest
-    # Support common whitespace patterns after take. Note that string
-    # comparisons is not case sensitive.
-    # toJson(github.event.comment.body) allows newline to be detected
+    # Note that string comparisons is not case sensitive.
     if: >-
-      (github.event.comment.body == 'take' ||
-       github.event.comment.body == 'take ' ||
-       toJson(github.event.comment.body) == 'take\r\n' )
-      && !github.event.issue.assignee
+       startsWith(github.event.comment.body, '/take')
+       && !github.event.issue.assignee
     steps:
       - run: |
           echo "Assigning issue ${{ github.event.issue.number }} to ${{ github.event.comment.user.login }}"
