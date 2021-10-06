@@ -30,7 +30,6 @@ DOCSTRING_IGNORE_LIST = [
     "SpectralEmbedding",
     "SplineTransformer",
     "StackingRegressor",
-    "TransformedTargetRegressor",
 ]
 
 
