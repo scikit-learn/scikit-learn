@@ -310,7 +310,7 @@ def test_random_search_discrete_distributions(
     # depends whether the distributions are 'all lists' or not (see
     # ParameterSampler for details). This is somewhat redundant with the checks
     # in ParameterSampler but interaction bugs were discovered during
-    # developement of SH
+    # development of SH
 
     n_samples = 1024
     X, y = make_classification(n_samples=n_samples, random_state=0)

@@ -440,7 +440,7 @@ plt.tight_layout()
 # well calibrated (to estimate the mean frequency of the entire population).
 #
 # The ``Ridge`` regression model can predict very low expected frequencies that
-# do not match the data. It can therefore severly under-estimate the risk for
+# do not match the data. It can therefore severely under-estimate the risk for
 # some policyholders.
 #
 # ``PoissonRegressor`` and ``HistGradientBoostingRegressor`` show better
