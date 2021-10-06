@@ -1088,7 +1088,12 @@ def test_kneighbors_regressor_sparse(
             assert np.mean(knn.predict(X2).round() == y) > 0.95
 
             X2_pre = sparsev(pairwise_distances(X, metric="euclidean"))
-            assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
+            if sparsev in {dok_matrix, bsr_matrix}:
+                msg = "not supported due to its handling of explicit zeros"
+                with pytest.raises(TypeError, match=msg):
+                    knn_pre.predict(X2_pre)
+            else:
+                assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
 
 
 def test_neighbors_iris():

@@ -42,27 +42,27 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     ----------
     degree : int or tuple (min_degree, max_degree), default=2
         If a single int is given, it specifies the maximal degree of the
-        polynomial features. If a tuple ``(min_degree, max_degree)`` is
-        passed, then ``min_degree`` is the minimum and ``max_degree`` is the
-        maximum polynomial degree of the generated features. Note that
-        min_degree=0 and 1 are equivalent as outputting the degree zero term
-        is determined by ``include_bias``.
+        polynomial features. If a tuple `(min_degree, max_degree)` is passed,
+        then `min_degree` is the minimum and `max_degree` is the maximum
+        polynomial degree of the generated features. Note that `min_degree=0`
+        and `min_degree=1` are equivalent as outputting the degree zero term is
+        determined by `include_bias`.
 
     interaction_only : bool, default=False
-        If true, only interaction features are produced: features that are
-        products of at most ``degree`` *distinct* input features, i.e. terms
-        with power of 2 or higher of the same input feature are excluded:
+        If `True`, only interaction features are produced: features that are
+        products of at most `degree` *distinct* input features, i.e. terms with
+        power of 2 or higher of the same input feature are excluded:
 
-            - included: ``x[0]``, `x[1]`, ``x[0] * x[1]``, etc.
-            - excluded: ``x[0] ** 2``, ``x[0] ** 2 * x[1]``, etc.
+            - included: `x[0]`, `x[1]`, `x[0] * x[1]`, etc.
+            - excluded: `x[0] ** 2`, `x[0] ** 2 * x[1]`, etc.
 
     include_bias : bool, default=True
-        If True (default), then include a bias column, the feature in which
+        If `True` (default), then include a bias column, the feature in which
         all polynomial powers are zero (i.e. a column of ones - acts as an
         intercept term in a linear model).
 
     order : {'C', 'F'}, default='C'
-        Order of output array in the dense case. 'F' order is faster to
+        Order of output array in the dense case. `'F'` order is faster to
         compute, but may slow down subsequent estimators.
 
         .. versionadded:: 0.21
@@ -70,7 +70,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     powers_ : ndarray of shape (`n_output_features_`, `n_features_in_`)
-        powers_[i, j] is the exponent of the jth input in the ith output.
+        `powers_[i, j]` is the exponent of the jth input in the ith output.
 
     n_input_features_ : int
         The total number of input features.
@@ -98,7 +98,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     See Also
     --------
     SplineTransformer : Transformer that generates univariate B-spline bases
-        for features
+        for features.
 
     Notes
     -----
@@ -181,6 +181,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     @property
     def powers_(self):
+        """Exponent for each of the inputs in the output."""
         check_is_fitted(self)
 
         combinations = self._combinations(
@@ -199,8 +200,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         "in 1.2. Please use get_feature_names_out instead."
     )
     def get_feature_names(self, input_features=None):
-        """
-        Return feature names for output features
+        """Return feature names for output features.
 
         Parameters
         ----------
@@ -211,6 +211,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         Returns
         -------
         output_feature_names : list of str of shape (n_output_features,)
+            Transformed feature names.
         """
         powers = self.powers_
         if input_features is None:
@@ -238,7 +239,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         input_features : array-like of str or None, default=None
             Input features.
 
-            - If `input_features` is `None`, then `feature_names_in_` is
+            - If `input_features is None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
               then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
             - If `input_features` is an array-like, then `input_features` must
@@ -270,14 +271,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
         Compute number of output features.
 
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data.
 
-        y : None
-            Ignored.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -359,10 +359,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         Returns
         -------
         XP : {ndarray, sparse matrix} of shape (n_samples, NP)
-            The matrix of features, where NP is the number of polynomial
+            The matrix of features, where `NP` is the number of polynomial
             features generated from the combination of inputs. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csr_matrix``.
+            `csr_matrix`.
         """
         check_is_fitted(self)
 

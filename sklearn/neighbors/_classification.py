@@ -211,8 +211,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-
         neigh_dist, neigh_ind = self.kneighbors(X)
         classes_ = self.classes_
         _y = self._y
@@ -255,8 +253,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-
         neigh_dist, neigh_ind = self.kneighbors(X)
 
         classes_ = self.classes_
@@ -271,7 +267,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         if weights is None:
             weights = np.ones_like(neigh_ind)
 
-        all_rows = np.arange(X.shape[0])
+        all_rows = np.arange(n_queries)
         probabilities = []
         for k, classes_k in enumerate(classes_):
             pred_labels = _y[:, k][neigh_ind]
@@ -614,7 +610,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             by lexicographic order.
         """
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
         n_queries = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)

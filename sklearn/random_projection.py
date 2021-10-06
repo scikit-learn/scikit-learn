@@ -96,7 +96,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     Examples
     --------
-
+    >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
     >>> johnson_lindenstrauss_min_dim(1e6, eps=0.5)
     663
 
