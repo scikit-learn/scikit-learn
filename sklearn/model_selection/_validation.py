@@ -73,8 +73,7 @@ def cross_validate(
     X : array-like of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
         The target variable to try to predict in the case of
         supervised learning.
 
