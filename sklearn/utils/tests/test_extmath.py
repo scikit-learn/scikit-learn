@@ -579,7 +579,6 @@ def test_randomized_svd_lapack_driver(n, m, k, seed):
     X = rng.rand(n, m)
 
     # Number of components
-    k = 10
     u1, s1, vt1 = randomized_svd(X, k, lapack_svd_driver="gesdd", random_state=0)
     u2, s2, vt2 = randomized_svd(X, k, lapack_svd_driver="gesvd", random_state=0)
 
