@@ -22,8 +22,6 @@ DOCSTRING_IGNORE_LIST = [
     "OrthogonalMatchingPursuitCV",
     "PassiveAggressiveClassifier",
     "PassiveAggressiveRegressor",
-    "PatchExtractor",
-    "PolynomialFeatures",
     "QuadraticDiscriminantAnalysis",
     "SelfTrainingClassifier",
     "SparseRandomProjection",
