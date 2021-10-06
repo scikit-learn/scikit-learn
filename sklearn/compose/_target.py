@@ -95,6 +95,15 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    Notes
+    -----
+    Internally, the target ``y`` is always converted into a 2-dimensional array
+    to be used by scikit-learn transformers. At the time of prediction, the
+    output will be reshaped to a have the same number of dimensions as ``y``.
+
+    See :ref:`examples/compose/plot_transformed_target.py
+    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
+
     Examples
     --------
     >>> import numpy as np
@@ -110,16 +119,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     1.0
     >>> tt.regressor_.coef_
     array([2.])
-
-    Notes
-    -----
-    Internally, the target ``y`` is always converted into a 2-dimensional array
-    to be used by scikit-learn transformers. At the time of prediction, the
-    output will be reshaped to a have the same number of dimensions as ``y``.
-
-    See :ref:`examples/compose/plot_transformed_target.py
-    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
-
     """
 
     def __init__(
@@ -197,10 +196,10 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             Parameters passed to the ``fit`` method of the underlying
             regressor.
 
-
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         y = check_array(
             y,
@@ -264,7 +263,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         -------
         y_hat : ndarray of shape (n_samples,)
             Predicted values.
-
         """
         check_is_fitted(self)
         pred = self.regressor_.predict(X, **predict_params)
@@ -295,6 +293,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() returns False the estimator isn't fitted.
         try:
