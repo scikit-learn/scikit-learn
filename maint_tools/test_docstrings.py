@@ -17,7 +17,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
     "MultiTaskLasso",
-    "MultiTaskLassoCV",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "PassiveAggressiveClassifier",
