@@ -85,8 +85,8 @@ citations to the following paper:
 If you want to cite scikit-learn for its API or design, you may also want to consider the
 following paper:
 
-  API design for machine learning software: experiences from the scikit-learn
-  project, Buitinck *et al.*, 2013. :arxiv:`1309.0238`
+  :arxiv:`API design for machine learning software: experiences from the scikit-learn
+  project <1309.0238>`, Buitinck *et al.*, 2013.
 
   Bibtex entry::
 

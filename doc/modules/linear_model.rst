@@ -934,7 +934,7 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
     .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
 
-    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien: SAGA: A Fast Incremental Gradient Method With Support for Non-Strongly Convex Composite Objectives. :arxiv:`1407.0202`
+    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien: :arxiv:`SAGA: A Fast Incremental Gradient Method With Support for Non-Strongly Convex Composite Objectives. <1407.0202>`
 
     .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
 
