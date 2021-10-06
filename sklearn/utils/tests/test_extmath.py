@@ -567,14 +567,15 @@ def test_randomized_svd_sign_flip_with_transpose():
     assert not v_based
 
 
-def test_randomized_svd_lapack_driver():
+@pytest.mark.parametrize("n", [50, 100, 300])
+@pytest.mark.parametrize("m", [50, 100, 300])
+@pytest.mark.parametrize("k", [10, 20, 50])
+@pytest.mark.parametrize("seed", range(5))
+def test_randomized_svd_lapack_driver(n, m, k, seed):
     # Check that different SVD drivers provide consistent results
 
     # Matrix being compressed
-    n = 123
-    m = 456
-    k = 10
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(seed)
     X = rng.rand(n, m)
 
     # Number of components

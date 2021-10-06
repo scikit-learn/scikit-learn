@@ -292,7 +292,7 @@ def randomized_svd(
         more costly power iterations steps. When `n_components` is equal
         or greater to the effective matrix rank and the spectrum does not
         present a slow decay, `n_iter=0` or `1` should even work fine in theory
-        (see Halko et al paper, page 9).
+        (see Halko et al, page 9).
 
         .. versionchanged:: 0.18
 
