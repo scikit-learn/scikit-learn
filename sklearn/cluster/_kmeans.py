@@ -34,6 +34,7 @@ from ..exceptions import ConvergenceWarning
 from ._k_means_common import CHUNK_SIZE
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
+from ._k_means_common import _is_same_clustering
 from ._k_means_minibatch import _minibatch_update_dense
 from ._k_means_minibatch import _minibatch_update_sparse
 from ._k_means_lloyd import lloyd_iter_chunked_dense
@@ -1174,7 +1175,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         else:
             kmeans_single = _kmeans_single_elkan
 
-        best_inertia = None
+        best_inertia, best_labels = None, None
 
         for i in range(self._n_init):
             # Initialize centers
@@ -1197,9 +1198,14 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             )
 
             # determine if these results are the best so far
-            # allow small tolerance on the inertia to accommodate for
-            # non-deterministic rounding errors due to parallel computation
-            if best_inertia is None or inertia < best_inertia * (1 - 1e-6):
+            # we chose a new run if it has a better inertia and the clustering is
+            # different from the best so far (it's possible that the inertia is
+            # slightly better even if the clustering is the same with potentially
+            # permuted labels, due to rounding errors)
+            if best_inertia is None or (
+                inertia < best_inertia
+                and not _is_same_clustering(labels, best_labels, self.n_clusters)
+            ):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia

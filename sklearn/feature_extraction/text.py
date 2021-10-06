@@ -1557,7 +1557,6 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> from sklearn.feature_extraction.text import TfidfTransformer
     >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> from sklearn.pipeline import Pipeline
-    >>> import numpy as np
     >>> corpus = ['this is the first document',
     ...           'this document is the second document',
     ...           'and this is the third one',
