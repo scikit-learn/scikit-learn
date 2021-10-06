@@ -318,3 +318,13 @@ def test_spectral_clustering_np_matrix_raises():
     msg = r"spectral_clustering does not support passing in affinity as an np\.matrix"
     with pytest.raises(TypeError, match=msg):
         spectral_clustering(X)
+
+
+def test_spectral_embedding_lobpcg_tol_decrease():
+    """Check that spectral_embedding call of lobpcg does not fail due to toll
+    too small. Fixes #21147; see #21194"""
+    X = np.random.randn(100, 10)
+    A = X @ X.T
+    Q = np.random.randn(X.shape[0], 4)
+    eigenvalues, _ = lobpcg(A, Q, maxiter=20)
+    assert(np.max(eigenvalues) > 0)
