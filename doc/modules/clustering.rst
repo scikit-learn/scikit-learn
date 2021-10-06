@@ -544,10 +544,9 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
- * `"Preconditioned Spectral Clustering for Stochastic
+ * "Preconditioned Spectral Clustering for Stochastic
    Block Partition Streaming Graph Challenge"
-   <:arxiv:`1708.07481`>`_
-   David Zhuzhunashvili, Andrew Knyazev
+   David Zhuzhunashvili, Andrew Knyazev :arxiv:`1708.07481`
 
 .. _hierarchical_clustering:
 
@@ -1705,7 +1704,7 @@ cluster analysis.
  * Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
    Interpretation and Validation of Cluster Analysis". Computational
    and Applied Mathematics 20: 53–65.
-   `doi:10.1016/0377-0427(87)90125-7 <:doi:`10.1016/0377-0427(87)90125-7`>`_.
+   :doi:`10.1016/0377-0427(87)90125-7`
 
 
 Advantages
@@ -1805,7 +1804,7 @@ number of points in cluster :math:`q`.
    `"A Dendrite Method for Cluster Analysis"
    <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
    Communications in Statistics-theory and Methods 3: 1-27.
-   `doi:10.1080/03610927408827101 <:doi:`10.1080/03610927408827101`>`_.
+   :doi:`10.1080/03610927408827101`
 
 
 .. _davies-bouldin_index:
@@ -1882,12 +1881,12 @@ Then the Davies-Bouldin index is defined as:
    "A Cluster Separation Measure"
    IEEE Transactions on Pattern Analysis and Machine Intelligence.
    PAMI-1 (2): 224-227.
-   `doi:10.1109/TPAMI.1979.4766909 <:doi:`10.1109/TPAMI.1979.4766909`>`_.
+   :doi:`10.1109/TPAMI.1979.4766909`
 
  * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
    "On Clustering Validation Techniques"
    Journal of Intelligent Information Systems, 17(2-3), 107-145.
-   `doi:10.1023/A:1012801612483 <:doi:`10.1023/A:1012801612483`>`_.
+   :doi:`10.1023/A:1012801612483`
 
  * `Wikipedia entry for Davies-Bouldin index
    <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
