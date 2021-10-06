@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Author: Henry Lin <hlin117@gmail.com>
 #         Tom Dupré la Tour
 

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # scikit-learn documentation build configuration file, created by
 # sphinx-quickstart on Fri Jan  8 09:13:42 2010.
 #

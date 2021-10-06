@@ -1,4 +1,3 @@
-# -*- coding: utf8
 """Random Projection transformers.
 
 Random Projections are a simple and computationally efficient way to

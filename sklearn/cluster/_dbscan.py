@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 """

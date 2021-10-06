@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from collections.abc import Mapping
 import re
 

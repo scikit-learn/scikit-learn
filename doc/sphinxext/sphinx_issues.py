@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A Sphinx extension for linking to your project's issue tracker.
 
 Copyright 2014 Steven Loria

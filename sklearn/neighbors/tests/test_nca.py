@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Testing for Neighborhood Component Analysis module (sklearn.neighbors.nca)
 """
