@@ -729,18 +729,20 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         )
 
     def fit(self, X, y=None):
-        """Compute the embedding vectors for data X
+        """Compute the embedding vectors for data X.
 
         Parameters
         ----------
         X : array-like of shape [n_samples, n_features]
-            training set.
+            Training set.
 
-        y : Ignored
+        y : (ignored)
+            Ignored parameter.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            LocallyLinearEmbedding class instance.
         """
         self._fit_transform(X)
         return self
