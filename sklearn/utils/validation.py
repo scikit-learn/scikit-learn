@@ -88,7 +88,7 @@ def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
 
 
 def _assert_all_finite(
-    X, allow_nan=False, msg_dtype=None, estimator_name=None, data_name=""
+    X, allow_nan=False, msg_dtype=None, estimator_name=None, input_name=""
 ):
     """Like assert_all_finite, but only for ndarray."""
     # validation is also imported in extmath
@@ -113,18 +113,18 @@ def _assert_all_finite(
         ):
             type_err = "infinity" if allow_nan else "NaN, infinity"
             msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
-            if data_name:
-                padded_data_name = data_name + " "
+            if input_name:
+                padded_input_name = input_name + " "
             else:
-                padded_data_name = ""
+                padded_input_name = ""
             msg_err = (
-                f"Input {padded_data_name}contains {type_err} or a value too large for"
+                f"Input {padded_input_name}contains {type_err} or a value too large for"
                 f" {msg_dtype!r}."
             )
             if (
                 not allow_nan
                 and estimator_name
-                and data_name == "X"
+                and input_name == "X"
                 and np.isnan(X).any()
             ):
                 # Improve the error message on how to handle missing values in
@@ -149,7 +149,7 @@ def assert_all_finite(
     *,
     allow_nan=False,
     estimator_name=None,
-    data_name="",
+    input_name="",
 ):
     """Throw a ValueError if X contains NaN or infinity.
 
@@ -162,9 +162,9 @@ def assert_all_finite(
     estimator_name : str, default=None
         The estimator name, used to construct the error message.
 
-    data_name : str, default=""
+    input_name : str, default=""
         The data name used to construct the error message. In particular
-        if `data_name` is "X" and the data has NaN values and
+        if `input_name` is "X" and the data has NaN values and
         allow_nane is False, the error message will link to the imputer
         documentation.
     """
@@ -172,7 +172,7 @@ def assert_all_finite(
         X.data if sp.issparse(X) else X,
         allow_nan=allow_nan,
         estimator_name=estimator_name,
-        data_name=data_name,
+        input_name=input_name,
     )
 
 
@@ -421,7 +421,7 @@ def _ensure_sparse_format(
     force_all_finite,
     accept_large_sparse,
     estimator_name=None,
-    data_name="",
+    input_name="",
 ):
     """Convert a sparse matrix to a given format.
 
@@ -465,9 +465,9 @@ def _ensure_sparse_format(
     estimator_name : str, default=None
         The estimator name, used to construct the error message.
 
-    data_name : str, default=""
+    input_name : str, default=""
         The data name used to construct the error message. In particular
-        if `data_name` is "X" and the data has NaN values and
+        if `input_name` is "X" and the data has NaN values and
         allow_nane is False, the error message will link to the imputer
         documentation.
 
@@ -531,7 +531,7 @@ def _ensure_sparse_format(
                 spmatrix.data,
                 allow_nan=force_all_finite == "allow-nan",
                 estimator_name=estimator_name,
-                data_name=data_name,
+                input_name=input_name,
             )
 
     return spmatrix
@@ -561,7 +561,7 @@ def check_array(
     ensure_min_samples=1,
     ensure_min_features=1,
     estimator=None,
-    data_name="",
+    input_name="",
 ):
 
     """Input validation on an array, list, sparse matrix or similar.
@@ -641,9 +641,9 @@ def check_array(
     estimator : str or estimator instance, default=None
         If passed, include the name of the estimator in warning messages.
 
-    data_name : str, default=""
+    input_name : str, default=""
         The data name used to construct the error message. In particular
-        if `data_name` is "X" and the data has NaN values and
+        if `input_name` is "X" and the data has NaN values and
         allow_nane is False, the error message will link to the imputer
         documentation.
 
@@ -788,7 +788,7 @@ def check_array(
             force_all_finite=force_all_finite,
             accept_large_sparse=accept_large_sparse,
             estimator_name=estimator_name,
-            data_name=data_name,
+            input_name=input_name,
         )
     else:
         # If np.array(..) gives ComplexWarning, then we convert the warning
@@ -810,7 +810,7 @@ def check_array(
                             allow_nan=False,
                             msg_dtype=dtype,
                             estimator_name=estimator_name,
-                            data_name=data_name,
+                            input_name=input_name,
                         )
                     array = array.astype(dtype, casting="unsafe", copy=False)
                 else:
@@ -870,7 +870,7 @@ def check_array(
         if force_all_finite:
             _assert_all_finite(
                 array,
-                data_name=data_name,
+                input_name=input_name,
                 estimator_name=estimator_name,
                 allow_nan=force_all_finite == "allow-nan",
             )
@@ -1050,7 +1050,7 @@ def check_X_y(
         ensure_min_samples=ensure_min_samples,
         ensure_min_features=ensure_min_features,
         estimator=estimator,
-        data_name="X",
+        input_name="X",
     )
 
     y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric)
@@ -1069,7 +1069,7 @@ def _check_y(y, multi_output=False, y_numeric=False):
             force_all_finite=True,
             ensure_2d=False,
             dtype=None,
-            data_name="y",
+            input_name="y",
         )
     else:
         y = column_or_1d(y, warn=True)
@@ -1641,7 +1641,7 @@ def _check_sample_weight(
             dtype=dtype,
             order="C",
             copy=copy,
-            data_name="sample_weight",
+            input_name="sample_weight",
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")

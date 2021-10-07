@@ -175,7 +175,7 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
 
 
 @pytest.mark.parametrize(
-    "value, data_name, force_all_finite, match_msg",
+    "value, input_name, force_all_finite, match_msg",
     [
         (np.inf, "", True, "Input contains NaN, infinity"),
         (np.inf, "X", True, "Input X contains NaN, infinity"),
@@ -195,30 +195,30 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
 )
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
 def test_check_array_force_all_finiteinvalid(
-    value, data_name, force_all_finite, match_msg, retype
+    value, input_name, force_all_finite, match_msg, retype
 ):
     X = retype(np.arange(4).reshape(2, 2).astype(np.float64))
     X[0, 0] = value
     with pytest.raises(ValueError, match=match_msg):
         check_array(
             X,
-            data_name=data_name,
+            input_name=input_name,
             force_all_finite=force_all_finite,
             accept_sparse=True,
         )
 
 
-@pytest.mark.parametrize("data_name", ["X", "y", "sample_weight"])
+@pytest.mark.parametrize("input_name", ["X", "y", "sample_weight"])
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
-def test_check_array_links_to_imputer_doc_only_for_X(data_name, retype):
+def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
     data = retype(np.arange(4).reshape(2, 2).astype(np.float64))
     data[0, 0] = np.nan
     estimator = SVR()
-    with pytest.raises(ValueError, match=f"Input {data_name} contains NaN") as ctx:
+    with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
         check_array(
             data,
             estimator=estimator,
-            data_name=data_name,
+            input_name=input_name,
             accept_sparse=True,
         )
     extended_msg = (
@@ -228,7 +228,7 @@ def test_check_array_links_to_imputer_doc_only_for_X(data_name, retype):
         " or drop samples with missing values. See"
         " https://scikit-learn.org/stable/modules/impute.html"
     )
-    if data_name == "X":
+    if input_name == "X":
         assert extended_msg in ctx.value.args[0]
     else:
         assert extended_msg not in ctx.value.args[0]
