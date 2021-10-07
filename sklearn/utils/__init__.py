@@ -89,6 +89,7 @@ class Bunch(dict):
 
     Examples
     --------
+    >>> from sklearn.utils import Bunch
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
     2
@@ -493,6 +494,7 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
+      >>> import numpy as np
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
@@ -630,6 +632,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
+      >>> import numpy as np
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
@@ -999,6 +1002,8 @@ def is_scalar_nan(x):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.utils import is_scalar_nan
     >>> is_scalar_nan(np.nan)
     True
     >>> is_scalar_nan(float("nan"))

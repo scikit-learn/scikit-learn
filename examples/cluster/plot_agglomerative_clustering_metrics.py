@@ -54,17 +54,21 @@ def sqr(x):
 
 X = list()
 y = list()
-for i, (phi, a) in enumerate([(.5, .15), (.5, .6), (.3, .2)]):
+for i, (phi, a) in enumerate([(0.5, 0.15), (0.5, 0.6), (0.3, 0.2)]):
     for _ in range(30):
-        phase_noise = .01 * np.random.normal()
-        amplitude_noise = .04 * np.random.normal()
+        phase_noise = 0.01 * np.random.normal()
+        amplitude_noise = 0.04 * np.random.normal()
         additional_noise = 1 - 2 * np.random.rand(n_features)
         # Make the noise sparse
-        additional_noise[np.abs(additional_noise) < .997] = 0
+        additional_noise[np.abs(additional_noise) < 0.997] = 0
 
-        X.append(12 * ((a + amplitude_noise)
-                 * (sqr(6 * (t + phi + phase_noise)))
-                 + additional_noise))
+        X.append(
+            12
+            * (
+                (a + amplitude_noise) * (sqr(6 * (t + phi + phase_noise)))
+                + additional_noise
+            )
+        )
         y.append(i)
 
 X = np.array(X)
@@ -72,20 +76,19 @@ y = np.array(y)
 
 n_clusters = 3
 
-labels = ('Waveform 1', 'Waveform 2', 'Waveform 3')
+labels = ("Waveform 1", "Waveform 2", "Waveform 3")
 
 # Plot the ground-truth labelling
 plt.figure()
 plt.axes([0, 0, 1, 1])
-for l, c, n in zip(range(n_clusters), 'rgb',
-                   labels):
-    lines = plt.plot(X[y == l].T, c=c, alpha=.5)
+for l, c, n in zip(range(n_clusters), "rgb", labels):
+    lines = plt.plot(X[y == l].T, c=c, alpha=0.5)
     lines[0].set_label(n)
 
-plt.legend(loc='best')
+plt.legend(loc="best")
 
-plt.axis('tight')
-plt.axis('off')
+plt.axis("tight")
+plt.axis("off")
 plt.suptitle("Ground truth", size=20)
 
 
@@ -95,17 +98,21 @@ for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
     plt.figure(figsize=(5, 4.5))
     for i in range(n_clusters):
         for j in range(n_clusters):
-            avg_dist[i, j] = pairwise_distances(X[y == i], X[y == j],
-                                                metric=metric).mean()
+            avg_dist[i, j] = pairwise_distances(
+                X[y == i], X[y == j], metric=metric
+            ).mean()
     avg_dist /= avg_dist.max()
     for i in range(n_clusters):
         for j in range(n_clusters):
-            plt.text(i, j, '%5.3f' % avg_dist[i, j],
-                     verticalalignment='center',
-                     horizontalalignment='center')
+            plt.text(
+                i,
+                j,
+                "%5.3f" % avg_dist[i, j],
+                verticalalignment="center",
+                horizontalalignment="center",
+            )
 
-    plt.imshow(avg_dist, interpolation='nearest', cmap=plt.cm.gnuplot2,
-               vmin=0)
+    plt.imshow(avg_dist, interpolation="nearest", cmap=plt.cm.gnuplot2, vmin=0)
     plt.xticks(range(n_clusters), labels, rotation=45)
     plt.yticks(range(n_clusters), labels)
     plt.colorbar()
@@ -115,15 +122,16 @@ for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
 
 # Plot clustering results
 for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
-    model = AgglomerativeClustering(n_clusters=n_clusters,
-                                    linkage="average", affinity=metric)
+    model = AgglomerativeClustering(
+        n_clusters=n_clusters, linkage="average", affinity=metric
+    )
     model.fit(X)
     plt.figure()
     plt.axes([0, 0, 1, 1])
-    for l, c in zip(np.arange(model.n_clusters), 'rgbk'):
-        plt.plot(X[model.labels_ == l].T, c=c, alpha=.5)
-    plt.axis('tight')
-    plt.axis('off')
+    for l, c in zip(np.arange(model.n_clusters), "rgbk"):
+        plt.plot(X[model.labels_ == l].T, c=c, alpha=0.5)
+    plt.axis("tight")
+    plt.axis("off")
     plt.suptitle("AgglomerativeClustering(affinity=%s)" % metric, size=20)
 
 

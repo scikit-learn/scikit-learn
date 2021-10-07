@@ -17,18 +17,18 @@ __all__ = ["LocalOutlierFactor"]
 
 
 class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
-    """Unsupervised Outlier Detection using Local Outlier Factor (LOF)
+    """Unsupervised Outlier Detection using the Local Outlier Factor (LOF).
 
-    The anomaly score of each sample is called Local Outlier Factor.
-    It measures the local deviation of density of a given sample with
-    respect to its neighbors.
+    The anomaly score of each sample is called the Local Outlier Factor.
+    It measures the local deviation of the density of a given sample with respect
+    to its neighbors.
     It is local in that the anomaly score depends on how isolated the object
     is with respect to the surrounding neighborhood.
     More precisely, locality is given by k-nearest neighbors, whose distance
     is used to estimate the local density.
-    By comparing the local density of a sample to the local densities of
-    its neighbors, one can identify samples that have a substantially lower
-    density than their neighbors. These are considered outliers.
+    By comparing the local density of a sample to the local densities of its
+    neighbors, one can identify samples that have a substantially lower density
+    than their neighbors. These are considered outliers.
 
     .. versionadded:: 0.19
 
@@ -52,13 +52,13 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         this parameter, using brute force.
 
     leaf_size : int, default=30
-        Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
+        Leaf is size passed to :class:`BallTree` or :class:`KDTree`. This can
         affect the speed of the construction and query, as well as the memory
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        metric used for the distance computation. Any metric from scikit-learn
+        The metric is used for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
         If metric is "precomputed", X is assumed to be a distance matrix and
@@ -84,7 +84,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         See the documentation for scipy.spatial.distance for details on these
         metrics:
-        https://docs.scipy.org/doc/scipy/reference/spatial.distance.html
+        https://docs.scipy.org/doc/scipy/reference/spatial.distance.html.
 
     p : int, default=2
         Parameter for the Minkowski metric from
@@ -170,6 +170,16 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     n_samples_fit_ : int
         It is the number of samples in the fitted data.
 
+    See also
+    ----------
+    sklearn.svm.OneClassSVM: Unsupervised Outlier Detection using
+        Support Vector Machine.
+
+    References
+    ----------
+    .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
+           LOF: identifying density-based local outliers. In ACM sigmod record.
+
     Examples
     --------
     >>> import numpy as np
@@ -180,11 +190,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     array([ 1,  1, -1,  1])
     >>> clf.negative_outlier_factor_
     array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
-
-    References
-    ----------
-    .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
-           LOF: identifying density-based local outliers. In ACM sigmod record.
     """
 
     def __init__(
@@ -223,7 +228,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
     @available_if(_check_novelty_fit_predict)
     def fit_predict(self, X, y=None):
-        """Fits the model to the training set X and returns the labels.
+        """Fit the model to the training set X and return the labels.
 
         **Not available for novelty detection (when novelty is set to True).**
         Label is 1 for an inlier and -1 for an outlier according to the LOF
