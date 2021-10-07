@@ -543,23 +543,24 @@ def locally_linear_embedding(
 
 
 class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator):
-    """Locally Linear Embedding
+    """Locally Linear Embedding.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
 
     Parameters
     ----------
     n_neighbors : int, default=5
-        number of neighbors to consider for each point.
+        Number of neighbors to consider for each point.
 
     n_components : int, default=2
-        number of coordinates for the manifold
+        Number of coordinates for the manifold.
 
     reg : float, default=1e-3
-        regularization constant, multiplies the trace of the local covariance
+        Regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
     eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
+        Parameter description:
         auto : algorithm will attempt to choose the best method for input data
 
         arpack : use arnoldi iteration in shift-invert mode.
@@ -578,7 +579,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         Not used if eigen_solver=='dense'.
 
     max_iter : int, default=100
-        maximum number of iterations for the arpack solver.
+        Maximum number of iterations for the arpack solver.
         Not used if eigen_solver=='dense'.
 
     method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
@@ -594,16 +595,16 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
 
     hessian_tol : float, default=1e-4
         Tolerance for Hessian eigenmapping method.
-        Only used if ``method == 'hessian'``
+        Only used if ``method == 'hessian'``.
 
     modified_tol : float, default=1e-12
         Tolerance for modified LLE method.
-        Only used if ``method == 'modified'``
+        Only used if ``method == 'modified'``.
 
     neighbors_algorithm : {'auto', 'brute', 'kd_tree', 'ball_tree'}, \
                           default='auto'
-        algorithm to use for nearest neighbors search,
-        passed to neighbors.NearestNeighbors instance
+        Algorithm to use for nearest neighbors search,
+        passed to neighbors.NearestNeighbors instance.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator when
@@ -639,17 +640,11 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.manifold import LocallyLinearEmbedding
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> X.shape
-    (1797, 64)
-    >>> embedding = LocallyLinearEmbedding(n_components=2)
-    >>> X_transformed = embedding.fit_transform(X[:100])
-    >>> X_transformed.shape
-    (100, 2)
+    SpectralEmbedding : Spectral embedding for non-linear dimensionality
+        reduction.
+    TSNE : Distributed Stochastic Neighbor Embedding.
 
     References
     ----------
@@ -665,6 +660,18 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import LocallyLinearEmbedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = LocallyLinearEmbedding(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
     """
 
     def __init__(
