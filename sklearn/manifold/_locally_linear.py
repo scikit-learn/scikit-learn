@@ -777,6 +777,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         Returns
         -------
         X_new : array, shape = [n_samples, n_components]
+            Returns the instance itself.
 
         Notes
         -----
