@@ -413,8 +413,11 @@ class _PLS(
 
         Returns
         -------
-        X_reconstructed, Y_reconstructed : array-like or tuple of array-like
-            Return `X_reconstructed` if `Y` is not given, `(X_reconstructed, Y_reconstructed)` otherwise.
+        X_reconstructed : ndarray of shape (n_samples, n_features)
+            Return the reconstructed `X` data.
+            
+        Y_reconstructed : ndarray of shape (n_samples, n_targets)
+            Return the reconstructed `X` target. Only returned when `Y` is given.
 
         Notes
         -----
