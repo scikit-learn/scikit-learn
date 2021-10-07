@@ -736,8 +736,8 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         X : array-like of shape [n_samples, n_features]
             Training set.
 
-        y : (ignored)
-            Ignored parameter.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -755,8 +755,8 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         X : array-like of shape [n_samples, n_features]
             Training set.
 
-        y : (ignored)
-            Ignored parameter.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
