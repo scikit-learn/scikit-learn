@@ -18,7 +18,12 @@ There are three options to assign labels:
   space using a cluster_qr algorithm,
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space of spectral clustering.
-
+.. versionchanged:: 1.1
+   Added new labeling method 'cluster_qr'.
+   Changed the color scheme in plotting for better visibility.
+   Introduced a pause between plotting subsequent lables to visualize
+   individual labels when run manually.
+   Indtroduced an ablility to plot less lables than actually computed.
 """
 print(__doc__)
 
