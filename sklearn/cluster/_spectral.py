@@ -275,8 +275,8 @@ def spectral_clustering(
         has no tuning parametersand runs no iterations, yet may outperform
         k-means and discretization in terms of both quality and speed.
 
-    .. versionchanged:: 1.1
-       Added new labeling method 'cluster_qr'.
+        .. versionchanged:: 1.1
+           Added new labeling method 'cluster_qr'.
 
     verbose : bool, default=False
         Verbosity mode.
@@ -470,8 +470,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         has no tuning parametersand runs no iterations, yet may outperform
         k-means and discretization in terms of both quality and speed.
 
-    .. versionchanged:: 1.1
-       Added new labeling method 'cluster_qr'.
+        .. versionchanged:: 1.1
+           Added new labeling method 'cluster_qr'.
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
