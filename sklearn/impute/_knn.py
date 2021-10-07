@@ -185,8 +185,8 @@ class KNNImputer(_BaseImputer):
             Input data, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        y : (ignored)
-            Ignored parameter.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
