@@ -270,9 +270,9 @@ def spectral_clustering(
         embedding.  k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another
         approach which is less sensitive to random initialization [3]_.
-        The newest cluster_qr method [5]_ directly extract clusters from eigenvectors
+        The newest cluster_qr method [5]_ directly extracts clusters from eigenvectors
         in spectral clustering. In contrast to k-means and discretization, cluster_qr
-        has no tuning parametersand runs no iterations, yet may outperform
+        has no tuning parameters and runs no iterations, yet may outperform
         k-means and discretization in terms of both quality and speed.
 
         .. versionchanged:: 1.1
