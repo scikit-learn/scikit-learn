@@ -321,7 +321,7 @@ def spectral_clustering(
         raise ValueError(
             "The 'assign_labels' parameter should be "
             "'kmeans' or 'discretize', or 'cluster_qr', "
-            "but '%s' was given" % assign_labels
+            f"but {assign_labels!r} was given"
         )
     if isinstance(affinity, np.matrix):
         raise TypeError(
