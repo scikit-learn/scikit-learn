@@ -693,6 +693,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Returns
         -------
         output_feature_names : list of str of shape (n_output_features,)
+            Transformed feature names.
         """
         n_splines = self.bsplines_[0].c.shape[0]
         if input_features is None:

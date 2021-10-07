@@ -33,9 +33,7 @@ f_0 = rng.rand(n_samples)  # positive correlation with y
 f_1 = rng.rand(n_samples)  # negative correlation with y
 X = np.c_[f_0, f_1]
 noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
-y = (5 * f_0 + np.sin(10 * np.pi * f_0) -
-     5 * f_1 - np.cos(10 * np.pi * f_1) +
-     noise)
+y = 5 * f_0 + np.sin(10 * np.pi * f_0) - 5 * f_1 - np.cos(10 * np.pi * f_1) + noise
 
 fig, ax = plt.subplots()
 

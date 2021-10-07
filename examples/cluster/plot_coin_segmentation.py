@@ -39,8 +39,8 @@ from sklearn.cluster import spectral_clustering
 from sklearn.utils.fixes import parse_version
 
 # these were introduced in skimage-0.14
-if parse_version(skimage.__version__) >= parse_version('0.14'):
-    rescale_params = {'anti_aliasing': False, 'multichannel': False}
+if parse_version(skimage.__version__) >= parse_version("0.14"):
+    rescale_params = {"anti_aliasing": False, "multichannel": False}
 else:
     rescale_params = {}
 
@@ -51,8 +51,7 @@ orig_coins = coins()
 # Applying a Gaussian filter for smoothing prior to down-scaling
 # reduces aliasing artifacts.
 smoothened_coins = gaussian_filter(orig_coins, sigma=2)
-rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect",
-                         **rescale_params)
+rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect", **rescale_params)
 
 # Convert the image into a graph with the value of the gradient on the
 # edges.
@@ -86,15 +85,15 @@ for assign_labels in ('kmeans', 'discretize', 'cluster_qr'):
                                  n_clusters=(n_regions + n_regions_plus),
                                  assign_labels=assign_labels, random_state=42,
                                  eigen_solver=eigen_solver)
+
     t1 = time.time()
     labels = labels.reshape(rescaled_coins.shape)
-
     plt.figure(figsize=(5, 5))
-    plt.imshow(rescaled_coins, cmap=plt.get_cmap('gray'))
-
+    plt.imshow(rescaled_coins, cmap=plt.cm.gray)
+   
     plt.xticks(())
     plt.yticks(())
-    title = 'Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0))
+    title = "Spectral clustering: %s, %.2fs" % (assign_labels, (t1 - t0))
     print(title)
     plt.title(title)
     for l in range(n_regions):

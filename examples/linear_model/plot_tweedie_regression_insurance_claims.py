@@ -72,15 +72,15 @@ def load_mtpl2(n_samples=100000):
       678013 samples.
     """
     # freMTPL2freq dataset from https://www.openml.org/d/41214
-    df_freq = fetch_openml(data_id=41214, as_frame=True)['data']
-    df_freq['IDpol'] = df_freq['IDpol'].astype(int)
-    df_freq.set_index('IDpol', inplace=True)
+    df_freq = fetch_openml(data_id=41214, as_frame=True)["data"]
+    df_freq["IDpol"] = df_freq["IDpol"].astype(int)
+    df_freq.set_index("IDpol", inplace=True)
 
     # freMTPL2sev dataset from https://www.openml.org/d/41215
-    df_sev = fetch_openml(data_id=41215, as_frame=True)['data']
+    df_sev = fetch_openml(data_id=41215, as_frame=True)["data"]
 
     # sum ClaimAmount over identical IDs
-    df_sev = df_sev.groupby('IDpol').sum()
+    df_sev = df_sev.groupby("IDpol").sum()
 
     df = df_freq.join(df_sev, how="left")
     df["ClaimAmount"].fillna(0, inplace=True)
@@ -91,8 +91,17 @@ def load_mtpl2(n_samples=100000):
     return df.iloc[:n_samples]
 
 
-def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
-                  title=None, ax=None, fill_legend=False):
+def plot_obs_pred(
+    df,
+    feature,
+    weight,
+    observed,
+    predicted,
+    y_label=None,
+    title=None,
+    ax=None,
+    fill_legend=False,
+):
     """Plot observed and predicted - aggregated per feature level.
 
     Parameters
@@ -139,21 +148,30 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
 
 
 def score_estimator(
-    estimator, X_train, X_test, df_train, df_test, target, weights,
+    estimator,
+    X_train,
+    X_test,
+    df_train,
+    df_test,
+    target,
+    weights,
     tweedie_powers=None,
 ):
     """Evaluate an estimator on train and test sets with different metrics"""
 
     metrics = [
-        ("D² explained", None),   # Use default scorer if it exists
+        ("D² explained", None),  # Use default scorer if it exists
         ("mean abs. error", mean_absolute_error),
         ("mean squared error", mean_squared_error),
     ]
     if tweedie_powers:
-        metrics += [(
-            "mean Tweedie dev p={:.4f}".format(power),
-            partial(mean_tweedie_deviance, power=power)
-        ) for power in tweedie_powers]
+        metrics += [
+            (
+                "mean Tweedie dev p={:.4f}".format(power),
+                partial(mean_tweedie_deviance, power=power),
+            )
+            for power in tweedie_powers
+        ]
 
     res = []
     for subset_label, X, df in [
@@ -177,16 +195,14 @@ def score_estimator(
             else:
                 score = metric(y, y_pred, sample_weight=_weights)
 
-            res.append(
-                {"subset": subset_label, "metric": score_label, "score": score}
-            )
+            res.append({"subset": subset_label, "metric": score_label, "score": score})
 
     res = (
         pd.DataFrame(res)
         .set_index(["metric", "subset"])
         .score.unstack(-1)
         .round(4)
-        .loc[:, ['train', 'test']]
+        .loc[:, ["train", "test"]]
     )
     return res
 
@@ -213,20 +229,19 @@ df["Exposure"] = df["Exposure"].clip(upper=1)
 df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
 
 log_scale_transformer = make_pipeline(
-    FunctionTransformer(func=np.log),
-    StandardScaler()
+    FunctionTransformer(func=np.log), StandardScaler()
 )
 
 column_trans = ColumnTransformer(
     [
-        ("binned_numeric", KBinsDiscretizer(n_bins=10),
-            ["VehAge", "DrivAge"]),
-        ("onehot_categorical", OneHotEncoder(),
-            ["VehBrand", "VehPower", "VehGas", "Region", "Area"]),
-        ("passthrough_numeric", "passthrough",
-            ["BonusMalus"]),
-        ("log_scaled_numeric", log_scale_transformer,
-            ["Density"]),
+        ("binned_numeric", KBinsDiscretizer(n_bins=10), ["VehAge", "DrivAge"]),
+        (
+            "onehot_categorical",
+            OneHotEncoder(),
+            ["VehBrand", "VehPower", "VehGas", "Region", "Area"],
+        ),
+        ("passthrough_numeric", "passthrough", ["BonusMalus"]),
+        ("log_scaled_numeric", log_scale_transformer, ["Density"]),
     ],
     remainder="drop",
 )
@@ -263,8 +278,7 @@ df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 # on the training set via a quasi-Newton solver: l-BFGS. Some of the features
 # are collinear, we use a weak penalization to avoid numerical issues.
 glm_freq = PoissonRegressor(alpha=1e-3, max_iter=400)
-glm_freq.fit(X_train, df_train["Frequency"],
-             sample_weight=df_train["Exposure"])
+glm_freq.fit(X_train, df_train["Frequency"], sample_weight=df_train["Exposure"])
 
 scores = score_estimator(
     glm_freq,
@@ -306,7 +320,7 @@ plot_obs_pred(
     y_label="Claim Frequency",
     title="test data",
     ax=ax[0, 1],
-    fill_legend=True
+    fill_legend=True,
 )
 
 plot_obs_pred(
@@ -318,7 +332,7 @@ plot_obs_pred(
     y_label="Claim Frequency",
     title="test data",
     ax=ax[1, 0],
-    fill_legend=True
+    fill_legend=True,
 )
 
 plot_obs_pred(
@@ -330,7 +344,7 @@ plot_obs_pred(
     y_label="Claim Frequency",
     title="test data",
     ax=ax[1, 1],
-    fill_legend=True
+    fill_legend=True,
 )
 
 
@@ -356,7 +370,7 @@ plot_obs_pred(
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
 
-glm_sev = GammaRegressor(alpha=10., max_iter=10000)
+glm_sev = GammaRegressor(alpha=10.0, max_iter=10000)
 
 glm_sev.fit(
     X_train[mask_train.values],
@@ -385,12 +399,18 @@ print(scores)
 # such, it is conditional on having at least one claim, and cannot be used to
 # predict the average claim amount per policy in general.
 
-print("Mean AvgClaim Amount per policy:              %.2f "
-      % df_train["AvgClaimAmount"].mean())
-print("Mean AvgClaim Amount | NbClaim > 0:           %.2f"
-      % df_train["AvgClaimAmount"][df_train["AvgClaimAmount"] > 0].mean())
-print("Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
-      % glm_sev.predict(X_train).mean())
+print(
+    "Mean AvgClaim Amount per policy:              %.2f "
+    % df_train["AvgClaimAmount"].mean()
+)
+print(
+    "Mean AvgClaim Amount | NbClaim > 0:           %.2f"
+    % df_train["AvgClaimAmount"][df_train["AvgClaimAmount"] > 0].mean()
+)
+print(
+    "Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
+    % glm_sev.predict(X_train).mean()
+)
 
 
 # %%
@@ -419,7 +439,7 @@ plot_obs_pred(
     y_label="Average Claim Severity",
     title="test data",
     ax=ax[1],
-    fill_legend=True
+    fill_legend=True,
 )
 plt.tight_layout()
 
@@ -455,9 +475,10 @@ plt.tight_layout()
 # Ideally, we hope that one model will be consistently better than the other,
 # regardless of `power`.
 
-glm_pure_premium = TweedieRegressor(power=1.9, alpha=.1, max_iter=10000)
-glm_pure_premium.fit(X_train, df_train["PurePremium"],
-                     sample_weight=df_train["Exposure"])
+glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, max_iter=10000)
+glm_pure_premium.fit(
+    X_train, df_train["PurePremium"], sample_weight=df_train["Exposure"]
+)
 
 tweedie_powers = [1.5, 1.7, 1.8, 1.9, 1.99, 1.999, 1.9999]
 
@@ -480,15 +501,17 @@ scores_glm_pure_premium = score_estimator(
     df_test,
     target="PurePremium",
     weights="Exposure",
-    tweedie_powers=tweedie_powers
+    tweedie_powers=tweedie_powers,
 )
 
-scores = pd.concat([scores_product_model, scores_glm_pure_premium],
-                   axis=1, sort=True,
-                   keys=('Product Model', 'TweedieRegressor'))
-print("Evaluation of the Product Model and the Tweedie Regressor "
-      "on target PurePremium")
-with pd.option_context('display.expand_frame_repr', False):
+scores = pd.concat(
+    [scores_product_model, scores_glm_pure_premium],
+    axis=1,
+    sort=True,
+    keys=("Product Model", "TweedieRegressor"),
+)
+print("Evaluation of the Product Model and the Tweedie Regressor on target PurePremium")
+with pd.option_context("display.expand_frame_repr", False):
     print(scores)
 
 # %%
@@ -515,8 +538,7 @@ for subset_label, X, df in [
                 exposure * glm_freq.predict(X) * glm_sev.predict(X)
             ),
             "predicted, tweedie, power=%.2f"
-            % glm_pure_premium.power: np.sum(
-                exposure * glm_pure_premium.predict(X)),
+            % glm_pure_premium.power: np.sum(exposure * glm_pure_premium.predict(X)),
         }
     )
 
@@ -567,30 +589,31 @@ fig, ax = plt.subplots(figsize=(8, 8))
 y_pred_product = glm_freq.predict(X_test) * glm_sev.predict(X_test)
 y_pred_total = glm_pure_premium.predict(X_test)
 
-for label, y_pred in [("Frequency * Severity model", y_pred_product),
-                      ("Compound Poisson Gamma", y_pred_total)]:
+for label, y_pred in [
+    ("Frequency * Severity model", y_pred_product),
+    ("Compound Poisson Gamma", y_pred_total),
+]:
     ordered_samples, cum_claims = lorenz_curve(
-        df_test["PurePremium"], y_pred, df_test["Exposure"])
+        df_test["PurePremium"], y_pred, df_test["Exposure"]
+    )
     gini = 1 - 2 * auc(ordered_samples, cum_claims)
     label += " (Gini index: {:.3f})".format(gini)
     ax.plot(ordered_samples, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
 ordered_samples, cum_claims = lorenz_curve(
-    df_test["PurePremium"], df_test["PurePremium"], df_test["Exposure"])
+    df_test["PurePremium"], df_test["PurePremium"], df_test["Exposure"]
+)
 gini = 1 - 2 * auc(ordered_samples, cum_claims)
 label = "Oracle (Gini index: {:.3f})".format(gini)
-ax.plot(ordered_samples, cum_claims, linestyle="-.", color="gray",
-        label=label)
+ax.plot(ordered_samples, cum_claims, linestyle="-.", color="gray", label=label)
 
 # Random baseline
-ax.plot([0, 1], [0, 1], linestyle="--", color="black",
-        label="Random baseline")
+ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")
 ax.set(
     title="Lorenz Curves",
-    xlabel=('Fraction of policyholders\n'
-            '(ordered by model from safest to riskiest)'),
-    ylabel='Fraction of total claim amount'
+    xlabel="Fraction of policyholders\n(ordered by model from safest to riskiest)",
+    ylabel="Fraction of total claim amount",
 )
 ax.legend(loc="upper left")
 plt.plot()

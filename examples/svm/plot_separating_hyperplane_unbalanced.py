@@ -36,21 +36,24 @@ n_samples_1 = 1000
 n_samples_2 = 100
 centers = [[0.0, 0.0], [2.0, 2.0]]
 clusters_std = [1.5, 0.5]
-X, y = make_blobs(n_samples=[n_samples_1, n_samples_2],
-                  centers=centers,
-                  cluster_std=clusters_std,
-                  random_state=0, shuffle=False)
+X, y = make_blobs(
+    n_samples=[n_samples_1, n_samples_2],
+    centers=centers,
+    cluster_std=clusters_std,
+    random_state=0,
+    shuffle=False,
+)
 
 # fit the model and get the separating hyperplane
-clf = svm.SVC(kernel='linear', C=1.0)
+clf = svm.SVC(kernel="linear", C=1.0)
 clf.fit(X, y)
 
 # fit the model and get the separating hyperplane using weighted classes
-wclf = svm.SVC(kernel='linear', class_weight={1: 10})
+wclf = svm.SVC(kernel="linear", class_weight={1: 10})
 wclf.fit(X, y)
 
 # plot the samples
-plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, edgecolors='k')
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, edgecolors="k")
 
 # plot the decision functions for both classifiers
 ax = plt.gca()
@@ -67,14 +70,17 @@ xy = np.vstack([XX.ravel(), YY.ravel()]).T
 Z = clf.decision_function(xy).reshape(XX.shape)
 
 # plot decision boundary and margins
-a = ax.contour(XX, YY, Z, colors='k', levels=[0], alpha=0.5, linestyles=['-'])
+a = ax.contour(XX, YY, Z, colors="k", levels=[0], alpha=0.5, linestyles=["-"])
 
 # get the separating hyperplane for weighted classes
 Z = wclf.decision_function(xy).reshape(XX.shape)
 
 # plot decision boundary and margins for weighted classes
-b = ax.contour(XX, YY, Z, colors='r', levels=[0], alpha=0.5, linestyles=['-'])
+b = ax.contour(XX, YY, Z, colors="r", levels=[0], alpha=0.5, linestyles=["-"])
 
-plt.legend([a.collections[0], b.collections[0]], ["non weighted", "weighted"],
-           loc="upper right")
+plt.legend(
+    [a.collections[0], b.collections[0]],
+    ["non weighted", "weighted"],
+    loc="upper right",
+)
 plt.show()
