@@ -693,7 +693,8 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             return FastEuclideanPairwiseDistancesArgKmin(
                 X=X, Y=Y, k=k,
                 use_squared_distances=use_squared_distances,
-                chunk_size=chunk_size
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
             )
 
         return PairwiseDistancesArgKmin(
@@ -911,8 +912,8 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
     cdef:
         const DTYPE_t[:, ::1] X
         const DTYPE_t[:, ::1] Y
-        const DTYPE_t[::1] X_sq_norms
-        const DTYPE_t[::1] Y_sq_norms
+        const DTYPE_t[::1] X_norm_squared
+        const DTYPE_t[::1] Y_norm_squared
 
         # Buffers for GEMM
         DTYPE_t ** dist_middle_terms_chunks
@@ -930,6 +931,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         ITYPE_t k,
         bint use_squared_distances=False,
         chunk_size=None,
+        metric_kwargs=None,
     ):
         super().__init__(
             # The datasets pair here is used for exact distances computations
@@ -941,8 +943,15 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         cdef:
             DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
         self.X, self.Y = datasets_pair.X, datasets_pair.Y
-        self.X_sq_norms = _sqeuclidean_row_norms(self.X, self.effective_omp_n_thread)
-        self.Y_sq_norms = _sqeuclidean_row_norms(self.Y, self.effective_omp_n_thread)
+        if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
+            self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared", None)
+        else:
+            self.Y_norm_squared = _sqeuclidean_row_norms(self.Y, self.effective_omp_n_thread)
+        # Do not recompute norms if datasets are identical.
+        self.X_norm_squared = (
+            self.Y_norm_squared if X is Y else
+            _sqeuclidean_row_norms(self.X, self.effective_omp_n_thread)
+        )
         self.use_squared_distances = use_squared_distances
 
         # Temporary datastructures used in threads
@@ -1065,9 +1074,9 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
                     # Using the squared euclidean distance as the rank-preserving distance:
                     # ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                     (
-                        self.X_sq_norms[i + X_start] +
+                        self.X_norm_squared[i + X_start] +
                         dist_middle_terms[i * Y_c.shape[0] + j] +
-                        self.Y_sq_norms[j + Y_start]
+                        self.Y_norm_squared[j + Y_start]
                     ),
                     j + Y_start,
                 )
@@ -1195,6 +1204,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
                 sort_results=sort_results,
+                metric_kwargs=metric_kwargs,
             )
 
         return PairwiseDistancesRadiusNeighborhood(
@@ -1436,8 +1446,8 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
     cdef:
         const DTYPE_t[:, ::1] X
         const DTYPE_t[:, ::1] Y
-        const DTYPE_t[::1] X_sq_norms
-        const DTYPE_t[::1] Y_sq_norms
+        const DTYPE_t[::1] X_norm_squared
+        const DTYPE_t[::1] Y_norm_squared
 
         # Buffers for GEMM
         DTYPE_t ** dist_middle_terms_chunks
@@ -1456,6 +1466,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         bint use_squared_distances=False,
         chunk_size=None,
         sort_results=False,
+        metric_kwargs=None,
     ):
         super().__init__(
             # The datasets pair here is used for exact distances computations
@@ -1468,8 +1479,17 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         cdef:
             DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
         self.X, self.Y = datasets_pair.X, datasets_pair.Y
-        self.X_sq_norms = _sqeuclidean_row_norms(self.X, self.effective_omp_n_thread)
-        self.Y_sq_norms = _sqeuclidean_row_norms(self.Y, self.effective_omp_n_thread)
+
+        if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
+            self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared", None)
+        else:
+            self.Y_norm_squared = _sqeuclidean_row_norms(self.Y, self.effective_omp_n_thread)
+
+        # Do not recompute norms if datasets are identical.
+        self.X_norm_squared = (
+            self.Y_norm_squared if X is Y else
+            _sqeuclidean_row_norms(self.X, self.effective_omp_n_thread)
+        )
         self.use_squared_distances = use_squared_distances
 
         if use_squared_distances:
@@ -1590,9 +1610,9 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
                 # Using the squared euclidean distance as the rank-preserving distance:
                 # ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                 squared_dist_i_j = (
-                    self.X_sq_norms[i + X_start]
+                    self.X_norm_squared[i + X_start]
                     + dist_middle_terms[i * Y_c.shape[0] + j]
-                    + self.Y_sq_norms[j + Y_start]
+                    + self.Y_norm_squared[j + Y_start]
                 )
                 if squared_dist_i_j <= self.r_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i + X_start].push_back(squared_dist_i_j)
