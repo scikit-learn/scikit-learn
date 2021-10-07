@@ -28,9 +28,7 @@ warnings.filterwarnings("ignore", category=EfficiencyWarning)
 n_samples = 1000
 random_state = 0
 
-X, _ = make_moons(n_samples=n_samples,
-                  noise=0.4,
-                  random_state=random_state)
+X, _ = make_moons(n_samples=n_samples, noise=0.4, random_state=random_state)
 
 # Normalize dataset for easier parameter selection
 X = StandardScaler().fit_transform(X)
@@ -40,17 +38,18 @@ n_clusters_list = [2, 3, 4, 5]
 
 # Algorithms to compare
 clustering_algorithms = {
-    'Bisect K-Means':    BisectKMeans,
-    'K-Means':           KMeans,
+    "Bisect K-Means": BisectKMeans,
+    "K-Means": KMeans,
 }
 
 # Colors in RGB format
-colors = np.array(['#377eb8', '#ff7f00', '#4daf4a', '#f781bf', '#a65628'])
+colors = np.array(["#377eb8", "#ff7f00", "#4daf4a", "#f781bf", "#a65628"])
 
 # Make subplots for each variant
 # fig, axs = plt.subplots(len(n_clusters_list), len(clustering_algorithms))
-fig, axs = plt.subplots(len(clustering_algorithms), len(n_clusters_list),
-                        figsize=(12, 5))
+fig, axs = plt.subplots(
+    len(clustering_algorithms), len(n_clusters_list), figsize=(12, 5)
+)
 
 axs = axs.T
 
@@ -66,7 +65,7 @@ for i, (algorithm_name, algorithm) in enumerate(clustering_algorithms.items()):
         axs[j, i].scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
         axs[j, i].set_title(f"{algorithm_name} : {n_clusters} clusters")
 
-        axs[j, i].scatter(centers[:, 0], centers[:, 1], c='#000000', s=20)
+        axs[j, i].scatter(centers[:, 0], centers[:, 1], c="#000000", s=20)
 
 
 # Hide x labels and tick labels for top plots and y ticks for right plots.
