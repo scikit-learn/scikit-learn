@@ -185,9 +185,13 @@ class KNNImputer(_BaseImputer):
             Input data, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
+        y : (ignored)
+            Ignored parameter.
+
         Returns
         -------
         self : object
+            KNNImputer class instance.
         """
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
