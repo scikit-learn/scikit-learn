@@ -21,9 +21,9 @@ There are three options to assign labels:
 .. versionchanged:: 1.1
    Added new labeling method 'cluster_qr'.
    Changed the color scheme in plotting for better visibility.
-   Introduced a pause between plotting subsequent lables to visualize
+   Introduced a pause between plotting subsequent labels to visualize
    individual labels when run manually.
-   Indtroduced an ablility to plot less lables than actually computed.
+   Introduced an ablility to plot fewer labels than actually computed.
 """
 print(__doc__)
 
