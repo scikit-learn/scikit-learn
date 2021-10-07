@@ -72,7 +72,11 @@ mamba list
 # Set parallelism to $N_CORES + 1 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with $N_CORES cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=$(($N_CORES + 1))
-pip install --verbose .
+
+# Disable the build isolation and build in the tree so that the same folder can be
+# cached between CI runs.
+# TODO: remove the '--use-feature' flag when made obsolete in pip 21.3.
+pip install --verbose --no-build-isolation --use-feature=in-tree-build .
 
 # Changing directory not to have module resolution use scikit-learn source
 # directory but to the installed package.
