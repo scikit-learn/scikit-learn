@@ -753,13 +753,15 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         Parameters
         ----------
         X : array-like of shape [n_samples, n_features]
-            training set.
+            Training set.
 
-        y : Ignored
+        y : (ignored)
+            Ignored parameter.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            Returns the instance itself.
         """
         self._fit_transform(X)
         return self.embedding_
