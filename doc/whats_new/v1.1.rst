@@ -48,7 +48,8 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Enhancement| :func:`cluster._spectral` now includes the 'cluster_qr' method
+- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral` 
+  now includes the new 'cluster_qr' method from :func:`cluster.cluster_qr`
   that clusters samples in the embedding space as an alternative to the existing
   'kmeans' and 'discrete' methods. See `spectral_clustering`_ for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
