@@ -1492,12 +1492,12 @@ problem. The current implementation is based on
     <https://gib.people.uic.edu/RQ.pdf>`_
     Econometrica: journal of the Econometric Society, 33-50.
 
-  * Portnoy, S., & Koenker, R. (1997). The Gaussian hare and the Laplacian
+  * Portnoy, S., & Koenker, R. (1997). :doi:`The Gaussian hare and the Laplacian
     tortoise: computability of squared-error versus absolute-error estimators.
-    Statistical Science, 12, 279-300. https://doi.org/10.1214/ss/1030037960
+    Statistical Science, 12, 279-300 <10.1214/ss/1030037960>`.
 
-  * Koenker, R. (2005). Quantile Regression.
-    Cambridge University Press. https://doi.org/10.1017/CBO9780511754098
+  * Koenker, R. (2005). :doi:`Quantile Regression <10.1017/CBO9780511754098>`.
+    Cambridge University Press.
 
 
 .. _polynomial_regression:
