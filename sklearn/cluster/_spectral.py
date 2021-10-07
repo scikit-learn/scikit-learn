@@ -40,6 +40,7 @@ def cluster_qr(vectors):
         Anil Damle, Victor Minden, Lexing Ying
         <https://doi.org/10.1093/imaiai/iay008>`_
 
+    .. versionadded:: 1.1
     """
 
     from scipy.linalg import qr, svd
@@ -274,6 +275,9 @@ def spectral_clustering(
         has no tuning parametersand runs no iterations, yet may outperform
         k-means and discretization in terms of both quality and speed.
 
+    .. versionchanged:: 1.1
+       Added new labeling method 'cluster_qr'.
+
     verbose : bool, default=False
         Verbosity mode.
 
@@ -308,6 +312,9 @@ def spectral_clustering(
     .. [5] `Simple, direct, and efficient multi-way spectral clustering, 2019
            Anil Damle, Victor Minden, Lexing Ying
            <https://doi.org/10.1093/imaiai/iay008>`_
+
+    .. versionchanged:: 1.1
+       Added new reference for the new labeling method 'cluster_qr'.
 
     Notes
     -----
@@ -458,6 +465,13 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         popular choice, but it can be sensitive to initialization.
         Discretization is another approach which is less sensitive to random
         initialization [3]_.
+        The newest cluster_qr method [5]_ directly extract clusters from eigenvectors
+        in spectral clustering. In contrast to k-means and discretization, cluster_qr
+        has no tuning parametersand runs no iterations, yet may outperform
+        k-means and discretization in terms of both quality and speed.
+
+    .. versionchanged:: 1.1
+       Added new labeling method 'cluster_qr'.
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
@@ -546,6 +560,13 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
            A. V. Knyazev
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
            <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
+
+    .. [5] `Simple, direct, and efficient multi-way spectral clustering, 2019
+           Anil Damle, Victor Minden, Lexing Ying
+           <https://doi.org/10.1093/imaiai/iay008>`_
+
+    .. versionchanged:: 1.1
+       Added new reference for the new labeling method 'cluster_qr'.
 
     Examples
     --------
