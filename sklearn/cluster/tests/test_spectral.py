@@ -197,11 +197,11 @@ def test_affinities():
         sp.fit(X)
 
 
-@pytest.mark.parametrize("_dtype", ["single", "double"])
-def test_cluster_qr(_dtype):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_cluster_qr(dtype):
     # Test cluster_qr for fixed data different dtypes
     random_state = np.random.RandomState(seed=8)
-    data = random_state.randn(10, 5).astype(_dtype)
+    data = random_state.randn(10, 5).astype(dtype)
     labels = cluster_qr(data)
     assert np.array_equal(labels, np.array([2, 1, 3, 3, 2, 4, 1, 3, 4, 0]))
 
