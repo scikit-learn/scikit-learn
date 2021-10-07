@@ -44,8 +44,7 @@ y = y[mask]
 # A random forest classifier will be fitted to compute the feature importances.
 from sklearn.ensemble import RandomForestClassifier
 
-forest = RandomForestClassifier(
-    n_estimators=750, n_jobs=n_jobs, random_state=42)
+forest = RandomForestClassifier(n_estimators=750, n_jobs=n_jobs, random_state=42)
 
 forest.fit(X, y)
 
@@ -68,8 +67,7 @@ img_shape = data.images[0].shape
 importances = forest.feature_importances_
 elapsed_time = time.time() - start_time
 
-print(f"Elapsed time to compute the importances: "
-      f"{elapsed_time:.3f} seconds")
+print(f"Elapsed time to compute the importances: {elapsed_time:.3f} seconds")
 imp_reshaped = importances.reshape(img_shape)
 plt.matshow(imp_reshaped, cmap=plt.cm.hot)
 plt.title("Pixel importances using impurity values")

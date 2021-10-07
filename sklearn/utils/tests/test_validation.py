@@ -1414,8 +1414,8 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame(
         {
-            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1),
-            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2),
+            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
+            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
 
@@ -1456,8 +1456,8 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
     pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame(
         {
-            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1),
-            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2),
+            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
+            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
     arr = check_array(df, accept_sparse=["csr", "csc"])
