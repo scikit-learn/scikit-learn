@@ -138,7 +138,8 @@ jobs:
             - ~/.cache/ccache
             - ~/.cache/pip
             - ~/scikit_learn_data
-
+            # This is the source folder that we cache.
+            - ~/project
   deploy:
     docker:
       - image: circleci/python:3.7
