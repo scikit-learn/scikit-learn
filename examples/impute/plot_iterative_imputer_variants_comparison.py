@@ -71,10 +71,9 @@ n_samples, n_features = X_full.shape
 br_estimator = BayesianRidge()
 score_full_data = pd.DataFrame(
     cross_val_score(
-        br_estimator, X_full, y_full, scoring='neg_mean_squared_error',
-        cv=N_SPLITS
+        br_estimator, X_full, y_full, scoring="neg_mean_squared_error", cv=N_SPLITS
     ),
-    columns=['Full Data']
+    columns=["Full Data"],
 )
 
 # Add a single missing value to each row
@@ -86,39 +85,35 @@ X_missing[missing_samples, missing_features] = np.nan
 
 # Estimate the score after imputation (mean and median strategies)
 score_simple_imputer = pd.DataFrame()
-for strategy in ('mean', 'median'):
+for strategy in ("mean", "median"):
     estimator = make_pipeline(
-        SimpleImputer(missing_values=np.nan, strategy=strategy),
-        br_estimator
+        SimpleImputer(missing_values=np.nan, strategy=strategy), br_estimator
     )
     score_simple_imputer[strategy] = cross_val_score(
-        estimator, X_missing, y_missing, scoring='neg_mean_squared_error',
-        cv=N_SPLITS
+        estimator, X_missing, y_missing, scoring="neg_mean_squared_error", cv=N_SPLITS
     )
 
 # Estimate the score after iterative imputation of the missing values
 # with different estimators
 estimators = [
     BayesianRidge(),
-    DecisionTreeRegressor(max_features='sqrt', random_state=0),
+    DecisionTreeRegressor(max_features="sqrt", random_state=0),
     ExtraTreesRegressor(n_estimators=10, random_state=0),
-    KNeighborsRegressor(n_neighbors=15)
+    KNeighborsRegressor(n_neighbors=15),
 ]
 score_iterative_imputer = pd.DataFrame()
 for impute_estimator in estimators:
     estimator = make_pipeline(
-        IterativeImputer(random_state=0, estimator=impute_estimator),
-        br_estimator
+        IterativeImputer(random_state=0, estimator=impute_estimator), br_estimator
     )
-    score_iterative_imputer[impute_estimator.__class__.__name__] = \
-        cross_val_score(
-            estimator, X_missing, y_missing, scoring='neg_mean_squared_error',
-            cv=N_SPLITS
-        )
+    score_iterative_imputer[impute_estimator.__class__.__name__] = cross_val_score(
+        estimator, X_missing, y_missing, scoring="neg_mean_squared_error", cv=N_SPLITS
+    )
 
 scores = pd.concat(
     [score_full_data, score_simple_imputer, score_iterative_imputer],
-    keys=['Original', 'SimpleImputer', 'IterativeImputer'], axis=1
+    keys=["Original", "SimpleImputer", "IterativeImputer"],
+    axis=1,
 )
 
 # plot california housing results
@@ -126,8 +121,8 @@ fig, ax = plt.subplots(figsize=(13, 6))
 means = -scores.mean()
 errors = scores.std()
 means.plot.barh(xerr=errors, ax=ax)
-ax.set_title('California Housing Regression with Different Imputation Methods')
-ax.set_xlabel('MSE (smaller is better)')
+ax.set_title("California Housing Regression with Different Imputation Methods")
+ax.set_xlabel("MSE (smaller is better)")
 ax.set_yticks(np.arange(means.shape[0]))
 ax.set_yticklabels([" w/ ".join(label) for label in means.index.tolist()])
 plt.tight_layout(pad=1)

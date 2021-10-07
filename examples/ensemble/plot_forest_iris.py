@@ -47,8 +47,11 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 from sklearn.datasets import load_iris
-from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
-                              AdaBoostClassifier)
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    ExtraTreesClassifier,
+    AdaBoostClassifier,
+)
 from sklearn.tree import DecisionTreeClassifier
 
 # Parameters
@@ -64,11 +67,12 @@ iris = load_iris()
 
 plot_idx = 1
 
-models = [DecisionTreeClassifier(max_depth=None),
-          RandomForestClassifier(n_estimators=n_estimators),
-          ExtraTreesClassifier(n_estimators=n_estimators),
-          AdaBoostClassifier(DecisionTreeClassifier(max_depth=3),
-                             n_estimators=n_estimators)]
+models = [
+    DecisionTreeClassifier(max_depth=None),
+    RandomForestClassifier(n_estimators=n_estimators),
+    ExtraTreesClassifier(n_estimators=n_estimators),
+    AdaBoostClassifier(DecisionTreeClassifier(max_depth=3), n_estimators=n_estimators),
+]
 
 for pair in ([0, 1], [0, 2], [2, 3]):
     for model in models:
@@ -94,15 +98,12 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         scores = model.score(X, y)
         # Create a title for each column and the console by using str() and
         # slicing away useless parts of the string
-        model_title = str(type(model)).split(
-            ".")[-1][:-2][:-len("Classifier")]
+        model_title = str(type(model)).split(".")[-1][:-2][: -len("Classifier")]
 
         model_details = model_title
         if hasattr(model, "estimators_"):
-            model_details += " with {} estimators".format(
-                len(model.estimators_))
-        print(model_details + " with features", pair,
-              "has a score of", scores)
+            model_details += " with {} estimators".format(len(model.estimators_))
+        print(model_details + " with features", pair, "has a score of", scores)
 
         plt.subplot(3, 4, plot_idx)
         if plot_idx <= len(models):
@@ -113,8 +114,9 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         # filled contour plot
         x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
         y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-        xx, yy = np.meshgrid(np.arange(x_min, x_max, plot_step),
-                             np.arange(y_min, y_max, plot_step))
+        xx, yy = np.meshgrid(
+            np.arange(x_min, x_max, plot_step), np.arange(y_min, y_max, plot_step)
+        )
 
         # Plot either a single DecisionTreeClassifier or alpha blend the
         # decision surfaces of the ensemble of classifiers
@@ -139,19 +141,30 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         # black outline
         xx_coarser, yy_coarser = np.meshgrid(
             np.arange(x_min, x_max, plot_step_coarser),
-            np.arange(y_min, y_max, plot_step_coarser))
-        Z_points_coarser = model.predict(np.c_[xx_coarser.ravel(),
-                                         yy_coarser.ravel()]
-                                         ).reshape(xx_coarser.shape)
-        cs_points = plt.scatter(xx_coarser, yy_coarser, s=15,
-                                c=Z_points_coarser, cmap=cmap,
-                                edgecolors="none")
+            np.arange(y_min, y_max, plot_step_coarser),
+        )
+        Z_points_coarser = model.predict(
+            np.c_[xx_coarser.ravel(), yy_coarser.ravel()]
+        ).reshape(xx_coarser.shape)
+        cs_points = plt.scatter(
+            xx_coarser,
+            yy_coarser,
+            s=15,
+            c=Z_points_coarser,
+            cmap=cmap,
+            edgecolors="none",
+        )
 
         # Plot the training points, these are clustered together and have a
         # black outline
-        plt.scatter(X[:, 0], X[:, 1], c=y,
-                    cmap=ListedColormap(['r', 'y', 'b']),
-                    edgecolor='k', s=20)
+        plt.scatter(
+            X[:, 0],
+            X[:, 1],
+            c=y,
+            cmap=ListedColormap(["r", "y", "b"]),
+            edgecolor="k",
+            s=20,
+        )
         plot_idx += 1  # move on to the next plot in sequence
 
 plt.suptitle("Classifiers on feature subsets of the Iris dataset", fontsize=12)
