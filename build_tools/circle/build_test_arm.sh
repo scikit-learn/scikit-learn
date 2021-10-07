@@ -6,18 +6,15 @@ set -x
 UNAMESTR=`uname`
 N_CORES=`nproc --all`
 
-echo "OS: $UNAMESTR"
-echo "Number of cores: $N_CORES cores"
 
 setup_ccache() {
     echo "Setting up ccache"
     mkdir /tmp/ccache/
     which ccache
-    export PATH="/tmp/ccache:${PATH}"
     for name in gcc g++ cc c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++; do
       ln -s $(which ccache) "/tmp/ccache/${name}"
-      which ${name}
     done
+    export PATH="/tmp/ccache:${PATH}"
     # Unset ccache limits
     ccache -F 0
     ccache -M 0
