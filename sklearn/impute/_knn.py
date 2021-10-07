@@ -87,6 +87,12 @@ class KNNImputer(_BaseImputer):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    SimpleImputer : Imputation transformer for completing missing values.
+    IterativeImputer : Multivariate imputer that estimates each feature
+        from all the others.
+
     References
     ----------
     * Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
@@ -261,7 +267,7 @@ class KNNImputer(_BaseImputer):
         dist_idx_map[row_missing_idx] = np.arange(row_missing_idx.shape[0])
 
         def process_chunk(dist_chunk, start):
-            row_missing_chunk = row_missing_idx[start : start + len(dist_chunk)]
+            row_missing_chunk = row_missing_idx[start: start + len(dist_chunk)]
 
             # Find and impute missing by column
             for col in range(X.shape[1]):
