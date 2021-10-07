@@ -120,6 +120,7 @@ def show_with_diff(image, reference, title):
     plt.suptitle(title, size=16)
     plt.subplots_adjust(0.02, 0.02, 0.98, 0.79, 0.02, 0.2)
 
+
 show_with_diff(distorted, face, 'Distorted image')
 
 # #############################################################################

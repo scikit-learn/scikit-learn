@@ -894,6 +894,7 @@ Class APIs and Estimator Types
         * :term:`fit`
         * :term:`transform`
         * :term:`get_feature_names`
+        * :term:`get_feature_names_out`
 
     meta-estimator
     meta-estimators
@@ -923,7 +924,7 @@ Class APIs and Estimator Types
         possible to identify which methods are provided by the underlying
         estimator until the meta-estimator has been :term:`fitted` (see also
         :term:`duck typing`), for which
-        :func:`utils.metaestimators.if_delegate_has_method` may help.  It
+        :func:`utils.metaestimators.available_if` may help.  It
         should also provide (or modify) the :term:`estimator tags` and
         :term:`classes_` attribute provided by the base estimator.
 
@@ -1093,7 +1094,7 @@ Target Types
         For semi-supervised classification, :term:`unlabeled` samples should
         have the special label -1 in ``y``.
 
-        Within sckit-learn, all estimators supporting binary classification
+        Within scikit-learn, all estimators supporting binary classification
         also support multiclass classification, using One-vs-Rest by default.
 
         A :class:`preprocessing.LabelEncoder` helps to canonicalize multiclass
@@ -1261,6 +1262,17 @@ Methods
         strings and may take a list of strings as input, corresponding
         to the names of input columns from which output column names can
         be generated.  By default input features are named x0, x1, ....
+
+    ``get_feature_names_out``
+        Primarily for :term:`feature extractors`, but also used for other
+        transformers to provide string names for each column in the output of
+        the estimator's :term:`transform` method.  It outputs an array of
+        strings and may take an array-like of strings as input, corresponding
+        to the names of input columns from which output column names can
+        be generated.  If `input_features` is not passed in, then the
+        `feature_names_in_` attribute will be used. If the
+        `feature_names_in_` attribute is not defined, then the
+        input names are named `[x0, x1, ..., x(n_features_in_)]`.
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of

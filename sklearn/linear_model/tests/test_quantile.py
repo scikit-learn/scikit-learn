@@ -46,8 +46,10 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
 
 
 @pytest.mark.parametrize("solver", ("highs-ds", "highs-ipm", "highs"))
-@pytest.mark.skipif(sp_version >= parse_version('1.6.0'),
-                    reason="Solvers are available as of scipy 1.6.0")
+@pytest.mark.skipif(
+    sp_version >= parse_version("1.6.0"),
+    reason="Solvers are available as of scipy 1.6.0",
+)
 def test_too_new_solver_methods_raise_error(X_y_data, solver):
     """Test that highs solver raises for scipy<1.6.0."""
     X, y = X_y_data
@@ -85,16 +87,12 @@ def test_quantile_toy_example(quantile, alpha, intercept, coef):
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
-    X, y = make_regression(
-        n_samples=100, n_features=20, random_state=0, noise=1.0
-    )
+    X, y = make_regression(n_samples=100, n_features=20, random_state=0, noise=1.0)
     alpha = 1e-4
     huber = HuberRegressor(
         epsilon=1 + 1e-4, alpha=alpha, fit_intercept=fit_intercept
     ).fit(X, y)
-    quant = QuantileRegressor(alpha=alpha, fit_intercept=fit_intercept).fit(
-        X, y
-    )
+    quant = QuantileRegressor(alpha=alpha, fit_intercept=fit_intercept).fit(X, y)
     assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
     if fit_intercept:
         assert huber.intercept_ == approx(quant.intercept_, abs=1e-1)
@@ -105,9 +103,7 @@ def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
 @pytest.mark.parametrize("q", [0.5, 0.9, 0.05])
 def test_quantile_estimates_calibration(q):
     # Test that model estimates percentage of points below the prediction
-    X, y = make_regression(
-        n_samples=1000, n_features=20, random_state=0, noise=1.0
-    )
+    X, y = make_regression(n_samples=1000, n_features=20, random_state=0, noise=1.0)
     quant = QuantileRegressor(
         quantile=q,
         alpha=0,
@@ -119,18 +115,12 @@ def test_quantile_estimates_calibration(q):
 def test_quantile_sample_weight():
     # test that with unequal sample weights we still estimate weighted fraction
     n = 1000
-    X, y = make_regression(
-        n_samples=n, n_features=5, random_state=0, noise=10.0
-    )
+    X, y = make_regression(n_samples=n, n_features=5, random_state=0, noise=10.0)
     weight = np.ones(n)
     # when we increase weight of upper observations,
     # estimate of quantile should go up
     weight[y > y.mean()] = 100
-    quant = QuantileRegressor(
-        quantile=0.5,
-        alpha=1e-8,
-        solver_options={"lstsq": False}
-    )
+    quant = QuantileRegressor(quantile=0.5, alpha=1e-8, solver_options={"lstsq": False})
     quant.fit(X, y, sample_weight=weight)
     fraction_below = np.mean(y < quant.predict(X))
     assert fraction_below > 0.5

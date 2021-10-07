@@ -66,6 +66,7 @@ def make_ellipses(gmm, ax):
         ax.add_artist(ell)
         ax.set_aspect('equal', 'datalim')
 
+
 iris = datasets.load_iris()
 
 # Break up the dataset into non-overlapping training (75%) and testing

@@ -252,7 +252,7 @@ with pd.option_context("display.max_columns", 15):
 #
 # The number of claims (``ClaimNb``) is a positive integer (0 included).
 # Thus, this target can be modelled by a Poisson distribution.
-# It is then assumed to be the number of discrete events occuring with a
+# It is then assumed to be the number of discrete events occurring with a
 # constant rate in a given time interval (``Exposure``, in units of years).
 # Here we model the frequency ``y = ClaimNb / Exposure``, which is still a
 # (scaled) Poisson distribution, and use ``Exposure`` as `sample_weight`.

@@ -25,7 +25,7 @@ print(__doc__)
 # ------------------
 #
 # To illustrate the behaviour of quantile regression, we will generate two
-# synthetic datasets. The true generative random processess for both datasets
+# synthetic datasets. The true generative random processes for both datasets
 # will be composed by the same expected value with a linear relationship with a
 # single feature `x`.
 import numpy as np

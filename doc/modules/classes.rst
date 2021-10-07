@@ -994,6 +994,7 @@ details.
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
    metrics.mean_tweedie_deviance
+   metrics.d2_tweedie_score
    metrics.mean_pinball_loss
 
 Multilabel ranking metrics
@@ -1123,7 +1124,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
-
+   calibration.CalibrationDisplay
 
 .. _mixture_ref:
 
@@ -1602,9 +1603,9 @@ Plotting
    utils.gen_batches
    utils.gen_even_slices
    utils.graph.single_source_shortest_path_length
-   utils.graph_shortest_path.graph_shortest_path
    utils.indexable
    utils.metaestimators.if_delegate_has_method
+   utils.metaestimators.available_if
    utils.multiclass.type_of_target
    utils.multiclass.is_multilabel
    utils.multiclass.unique_labels
