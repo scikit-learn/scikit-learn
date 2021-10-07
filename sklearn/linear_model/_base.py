@@ -536,9 +536,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
-        speedup in case of sufficient large problems if `X` is sparse or
-        `positive` is set to `True` and n_targets > 1. ``None`` means 1 unless
-        in a :obj:`joblib.parallel_backend` context. ``-1`` means using all
+        speedup in case of sufficiently large problems, that is if firstly
+        `n_targets > 1` and secondly `X` is sparse or if `positive` is set
+        to `True`. ``None`` means 1 unless in a
+        :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
     positive : bool, default=False
