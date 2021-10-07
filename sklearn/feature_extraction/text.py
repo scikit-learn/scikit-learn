@@ -1504,7 +1504,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
           See :func:`preprocessing.normalize`.
 
     use_idf : bool, default=True
-        Enable inverse-document-frequency reweighting.
+        Enable inverse-document-frequency reweighting. If False, idf(t) = 1.
 
     smooth_idf : bool, default=True
         Smooth idf weights by adding one to document frequencies, as if an
@@ -1557,7 +1557,6 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> from sklearn.feature_extraction.text import TfidfTransformer
     >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> from sklearn.pipeline import Pipeline
-    >>> import numpy as np
     >>> corpus = ['this is the first document',
     ...           'this document is the second document',
     ...           'and this is the third one',
@@ -1843,7 +1842,7 @@ class TfidfVectorizer(CountVectorizer):
           See :func:`preprocessing.normalize`.
 
     use_idf : bool, default=True
-        Enable inverse-document-frequency reweighting.
+        Enable inverse-document-frequency reweighting. If False, idf(t) = 1.
 
     smooth_idf : bool, default=True
         Smooth idf weights by adding one to document frequencies, as if an

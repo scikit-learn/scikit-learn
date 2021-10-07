@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 from scipy import sparse
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import LeaveOneOut, train_test_split
 
@@ -784,3 +784,134 @@ def test_calibration_display_ref_line(pyplot, iris_data_binary):
 
     labels = viz2.ax_.get_legend_handles_labels()[1]
     assert labels.count("Perfectly calibrated") == 1
+
+
+@pytest.mark.parametrize("dtype_y_str", [str, object])
+def test_calibration_curve_pos_label_error_str(dtype_y_str):
+    """Check error message when a `pos_label` is not specified with `str` targets."""
+    rng = np.random.RandomState(42)
+    y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=dtype_y_str)
+    y2 = rng.randint(0, 2, size=y1.size)
+
+    err_msg = (
+        "y_true takes value in {'eggs', 'spam'} and pos_label is not "
+        "specified: either make y_true take value in {0, 1} or {-1, 1} or "
+        "pass pos_label explicitly"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        calibration_curve(y1, y2)
+
+
+@pytest.mark.parametrize("dtype_y_str", [str, object])
+def test_calibration_curve_pos_label(dtype_y_str):
+    """Check the behaviour when passing explicitly `pos_label`."""
+    y_true = np.array([0, 0, 0, 1, 1, 1, 1, 1, 1])
+    classes = np.array(["spam", "egg"], dtype=dtype_y_str)
+    y_true_str = classes[y_true]
+    y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.65, 0.7, 0.8, 0.9, 1.0])
+
+    # default case
+    prob_true, _ = calibration_curve(y_true, y_pred, n_bins=4)
+    assert_allclose(prob_true, [0, 0.5, 1, 1])
+    # if `y_true` contains `str`, then `pos_label` is required
+    prob_true, _ = calibration_curve(y_true_str, y_pred, n_bins=4, pos_label="egg")
+    assert_allclose(prob_true, [0, 0.5, 1, 1])
+
+    prob_true, _ = calibration_curve(y_true, 1 - y_pred, n_bins=4, pos_label=0)
+    assert_allclose(prob_true, [0, 0, 0.5, 1])
+    prob_true, _ = calibration_curve(y_true_str, 1 - y_pred, n_bins=4, pos_label="spam")
+    assert_allclose(prob_true, [0, 0, 0.5, 1])
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("ensemble", [True, False])
+def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ensemble):
+    """Check that passing repeating twice the dataset `X` is equivalent to
+    passing a `sample_weight` with a factor 2."""
+    X, y = load_iris(return_X_y=True)
+    # Scale the data to avoid any convergence issue
+    X = StandardScaler().fit_transform(X)
+    # Only use 2 classes
+    X, y = X[:100], y[:100]
+    sample_weight = np.ones_like(y) * 2
+
+    # Interlace the data such that a 2-fold cross-validation will be equivalent
+    # to using the original dataset with a sample weights of 2
+    X_twice = np.zeros((X.shape[0] * 2, X.shape[1]), dtype=X.dtype)
+    X_twice[::2, :] = X
+    X_twice[1::2, :] = X
+    y_twice = np.zeros(y.shape[0] * 2, dtype=y.dtype)
+    y_twice[::2] = y
+    y_twice[1::2] = y
+
+    base_estimator = LogisticRegression()
+    calibrated_clf_without_weights = CalibratedClassifierCV(
+        base_estimator,
+        method=method,
+        ensemble=ensemble,
+        cv=2,
+    )
+    calibrated_clf_with_weights = clone(calibrated_clf_without_weights)
+
+    calibrated_clf_with_weights.fit(X, y, sample_weight=sample_weight)
+    calibrated_clf_without_weights.fit(X_twice, y_twice)
+
+    # Check that the underlying fitted estimators have the same coefficients
+    for est_with_weights, est_without_weights in zip(
+        calibrated_clf_with_weights.calibrated_classifiers_,
+        calibrated_clf_without_weights.calibrated_classifiers_,
+    ):
+        assert_allclose(
+            est_with_weights.base_estimator.coef_,
+            est_without_weights.base_estimator.coef_,
+        )
+
+    # Check that the predictions are the same
+    y_pred_with_weights = calibrated_clf_with_weights.predict_proba(X)
+    y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
+
+    assert_allclose(y_pred_with_weights, y_pred_without_weights)
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("ensemble", [True, False])
+def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensemble):
+    """Check that passing removing some sample from the dataset `X` is
+    equivalent to passing a `sample_weight` with a factor 0."""
+    X, y = load_iris(return_X_y=True)
+    # Scale the data to avoid any convergence issue
+    X = StandardScaler().fit_transform(X)
+    # Only use 2 classes and select samples such that 2-fold cross-validation
+    # split will lead to an equivalence with a `sample_weight` of 0
+    X = np.vstack((X[:40], X[50:90]))
+    y = np.hstack((y[:40], y[50:90]))
+    sample_weight = np.zeros_like(y)
+    sample_weight[::2] = 1
+
+    base_estimator = LogisticRegression()
+    calibrated_clf_without_weights = CalibratedClassifierCV(
+        base_estimator,
+        method=method,
+        ensemble=ensemble,
+        cv=2,
+    )
+    calibrated_clf_with_weights = clone(calibrated_clf_without_weights)
+
+    calibrated_clf_with_weights.fit(X, y, sample_weight=sample_weight)
+    calibrated_clf_without_weights.fit(X[::2], y[::2])
+
+    # Check that the underlying fitted estimators have the same coefficients
+    for est_with_weights, est_without_weights in zip(
+        calibrated_clf_with_weights.calibrated_classifiers_,
+        calibrated_clf_without_weights.calibrated_classifiers_,
+    ):
+        assert_allclose(
+            est_with_weights.base_estimator.coef_,
+            est_without_weights.base_estimator.coef_,
+        )
+
+    # Check that the predictions are the same
+    y_pred_with_weights = calibrated_clf_with_weights.predict_proba(X)
+    y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
+
+    assert_allclose(y_pred_with_weights, y_pred_without_weights)

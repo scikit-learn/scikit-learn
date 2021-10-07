@@ -1352,7 +1352,7 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     Centering and scaling happen independently on each feature by
     computing the relevant statistics on the samples in the training
     set. Median and interquartile range are then stored to be used on
-    later data using the ``transform`` method.
+    later data using the :meth:`transform` method.
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators. Typically this is done by removing the mean
@@ -1367,31 +1367,33 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     Parameters
     ----------
     with_centering : bool, default=True
-        If True, center the data before scaling.
-        This will cause ``transform`` to raise an exception when attempted on
-        sparse matrices, because centering them entails building a dense
+        If `True`, center the data before scaling.
+        This will cause :meth:`transform` to raise an exception when attempted
+        on sparse matrices, because centering them entails building a dense
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
     with_scaling : bool, default=True
-        If True, scale the data to interquartile range.
+        If `True`, scale the data to interquartile range.
 
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0, \
-        default=(25.0, 75.0), == (1st quantile, 3rd quantile), == IQR
-        Quantile range used to calculate ``scale_``.
+        default=(25.0, 75.0)
+        Quantile range used to calculate `scale_`. By default this is equal to
+        the IQR, i.e., `q_min` is the first quantile and `q_max` is the third
+        quantile.
 
         .. versionadded:: 0.18
 
     copy : bool, default=True
-        If False, try to avoid a copy and do inplace scaling instead.
+        If `False`, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
         not a NumPy array or scipy.sparse CSR matrix, a copy may still be
         returned.
 
     unit_variance : bool, default=False
-        If True, scale data so that normally distributed features have a
+        If `True`, scale data so that normally distributed features have a
         variance of 1. In general, if the difference between the x-values of
-        ``q_max`` and ``q_min`` for a standard normal distribution is greater
+        `q_max` and `q_min` for a standard normal distribution is greater
         than 1, the dataset will be scaled down. If less than 1, the dataset
         will be scaled up.
 
@@ -1419,6 +1421,21 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    robust_scale : Equivalent function without the estimator API.
+    sklearn.decomposition.PCA : Further removes the linear correlation across
+        features with 'whiten=True'.
+
+    Notes
+    -----
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    https://en.wikipedia.org/wiki/Median
+    https://en.wikipedia.org/wiki/Interquartile_range
+
     Examples
     --------
     >>> from sklearn.preprocessing import RobustScaler
@@ -1432,23 +1449,6 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     array([[ 0. , -2. ,  0. ],
            [-1. ,  0. ,  0.4],
            [ 1. ,  0. , -1.6]])
-
-    See Also
-    --------
-    robust_scale : Equivalent function without the estimator API.
-
-    :class:`~sklearn.decomposition.PCA`
-        Further removes the linear correlation across features with
-        'whiten=True'.
-
-    Notes
-    -----
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
-    https://en.wikipedia.org/wiki/Median
-    https://en.wikipedia.org/wiki/Interquartile_range
     """
 
     def __init__(
@@ -1475,8 +1475,8 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             The data used to compute the median and quantiles
             used for later scaling along the features axis.
 
-        y : None
-            Ignored.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -1627,32 +1627,34 @@ def robust_scale(
         The data to center and scale.
 
     axis : int, default=0
-        axis used to compute the medians and IQR along. If 0,
+        Axis used to compute the medians and IQR along. If 0,
         independently scale each feature, otherwise (if 1) scale
         each sample.
 
     with_centering : bool, default=True
-        If True, center the data before scaling.
+        If `True`, center the data before scaling.
 
     with_scaling : bool, default=True
-        If True, scale the data to unit variance (or equivalently,
+        If `True`, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
-    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
-        default=(25.0, 75.0), == (1st quantile, 3rd quantile), == IQR
-        Quantile range used to calculate ``scale_``.
+    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0,\
+        default=(25.0, 75.0)
+        Quantile range used to calculate `scale_`. By default this is equal to
+        the IQR, i.e., `q_min` is the first quantile and `q_max` is the third
+        quantile.
 
         .. versionadded:: 0.18
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to `False` to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
     unit_variance : bool, default=False
-        If True, scale data so that normally distributed features have a
+        If `True`, scale data so that normally distributed features have a
         variance of 1. In general, if the difference between the x-values of
-        ``q_max`` and ``q_min`` for a standard normal distribution is greater
+        `q_max` and `q_min` for a standard normal distribution is greater
         than 1, the dataset will be scaled down. If less than 1, the dataset
         will be scaled up.
 

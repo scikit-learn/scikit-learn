@@ -50,7 +50,7 @@ _ = ax.set(
 # a hourly basis:
 df["count"].max()
 
-# %% [markdown]
+# %%
 #
 # Let us rescale the target variable (number of hourly bike rentals) to predict
 # a relative demand so that the mean absolute error is more easily interpreted
@@ -67,7 +67,7 @@ df["count"].max()
 #     intuitive than the (root) mean squared error. Note, however, that the
 #     best models for one metric are also the best for the other in this
 #     study.
-y = df["count"] / 1000
+y = df["count"] / df["count"].max()
 
 # %%
 fig, ax = plt.subplots(figsize=(12, 4))
@@ -671,7 +671,7 @@ evaluate(cyclic_spline_poly_pipeline, X, y, cv=ts_cv)
 # %%
 #
 # We observe that this model can almost rival the performance of the gradient
-# boosted trees with an average error around 6% of the maximum demand.
+# boosted trees with an average error around 5% of the maximum demand.
 #
 # Note that while the final step of this pipeline is a linear regression model,
 # the intermediate steps such as the spline feature extraction and the Nyström
