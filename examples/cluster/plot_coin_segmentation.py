@@ -67,7 +67,7 @@ graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 # Apply spectral clustering (this step goes much faster if you have pyamg
 # installed and use eigen_solver = 'amg'). However, any valid solver can
 # be used (e.g., 'arpack', 'lobpcg', or 'amg').
-eigen_solver = 'arpack'
+eigen_solver = "arpack"
 
 # The number of regions
 n_regions = 26
@@ -79,18 +79,21 @@ n_regions = 26
 # It often helps the spectral clustering to compute a few extra eigenvectors
 n_regions_plus = 3
 
-for assign_labels in ('kmeans', 'discretize', 'cluster_qr'):
+for assign_labels in ("kmeans", "discretize", "cluster_qr"):
     t0 = time.time()
-    labels = spectral_clustering(graph,
-                                 n_clusters=(n_regions + n_regions_plus),
-                                 assign_labels=assign_labels, random_state=42,
-                                 eigen_solver=eigen_solver)
+    labels = spectral_clustering(
+        graph,
+        n_clusters=(n_regions + n_regions_plus),
+        assign_labels=assign_labels,
+        random_state=42,
+        eigen_solver=eigen_solver,
+    )
 
     t1 = time.time()
     labels = labels.reshape(rescaled_coins.shape)
     plt.figure(figsize=(5, 5))
     plt.imshow(rescaled_coins, cmap=plt.cm.gray)
-   
+
     plt.xticks(())
     plt.yticks(())
     title = "Spectral clustering: %s, %.2fs" % (assign_labels, (t1 - t0))
