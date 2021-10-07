@@ -60,6 +60,13 @@ Changelog
   message when the solver does not support sparse matrices with int64 indices.
   :pr:`21093` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`metrics.roc_auc_score` now supports ``average=None``
+  in the multiclass case when ``multiclass='ovr'`` which will return the score
+  per class. :pr:`19158` by :user:`Nicki Skafte <SkafteNicki>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
