@@ -607,7 +607,8 @@ def explained_variance_score(
     pollute higher-level experiments such as a grid search cross-validation,
     by default these cases are replaced with 1.0 (perfect predictions) or 0.0
     (imperfect predictions) respectively. If ``fix_when_y_true_is_constant``
-    is set to ``False``, this score fallbacks on the original R² definition.
+    is set to ``False``, this score fallbacks on the original :math:`R^2`
+    definition.
 
     Note: when the prediction residuals have zero mean (perfectly unbiased
     model), the Explained Variance score is identical to the
@@ -742,13 +743,13 @@ def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average
     non-constant, a constant model that always predict the average y
     disregarding the input features would get a :math:`R^2` score of 0.0.
 
-    In the particular case when the true y is constant, the :math:`R^2` score is not
-    finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
-    predictions). To prevent such non-finite numbers to pollute higher-level
-    experiments such as a grid search cross-validation, by default these cases
-    are replaced with 1.0 (perfect predictions) or 0.0 (imperfect predictions)
-    respectively. You can set ``fix_when_y_true_is_constant`` to ``False`` to
-    prevent this fix to happen.
+    In the particular case when the true y is constant, the :math:`R^2` score
+    is not finite: it is either ``NaN`` (perfect predictions) or ``-Inf``
+    (imperfect predictions). To prevent such non-finite numbers to pollute
+    higher-level experiments such as a grid search cross-validation, by default
+    these cases are replaced with 1.0 (perfect predictions) or 0.0 (imperfect
+    predictions) respectively. You can set ``fix_when_y_true_is_constant`` to
+    ``False`` to prevent this fix to happen.
 
     Note: when the prediction residuals have zero mean (perfectly unbiased
     model), the :math:`R^2` score is identical to the
