@@ -16,8 +16,8 @@ from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import paired_distances
-from ..neighbors import DistanceMetric
-from ..neighbors._dist_metrics import METRIC_MAPPING
+from ..metrics import DistanceMetric
+from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
