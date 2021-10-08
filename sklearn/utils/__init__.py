@@ -40,6 +40,10 @@ from .validation import (
     check_scalar,
 )
 from .. import get_config
+from .metadata_requests import MetadataRequest
+from .metadata_requests import MethodMetadataRequest
+from .metadata_requests import metadata_request_factory
+from .metadata_requests import MetadataRouter
 
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
@@ -74,6 +78,10 @@ __all__ = [
     "all_estimators",
     "DataConversionWarning",
     "estimator_html_repr",
+    "MetadataRequest",
+    "metadata_request_factory",
+    "MetadataRouter",
+    "MethodMetadataRequest",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"

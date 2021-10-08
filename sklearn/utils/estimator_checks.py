@@ -2941,6 +2941,8 @@ def check_no_attributes_set_in_init(name, estimator_orig):
 
     # Test for no setting apart from parameters during init
     invalid_attr = set(vars(estimator)) - set(init_params) - set(parents_init_params)
+    # Ignore private attributes
+    invalid_attr = set([attr for attr in invalid_attr if not attr.startswith("_")])
     assert not invalid_attr, (
         "Estimator %s should not set any attribute apart"
         " from parameters during init. Found attributes %s."
@@ -3779,14 +3781,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         check_methods.append((method, callable_method))
 
     for _, method in check_methods:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "error",
-                message="X does not have valid feature names",
-                category=UserWarning,
-                module="sklearn",
-            )
-            method(X)  # works without UserWarning for valid features
+        method(X)  # works
 
     invalid_names = [
         (names[::-1], "Feature names must be in the same order as they were in fit."),

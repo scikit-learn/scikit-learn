@@ -651,6 +651,10 @@ def test_check_no_attributes_set_in_init():
         def __init__(self, you_should_set_this_=None):
             pass
 
+    class ConformantEstimatorClassAttribute(BaseEstimator):
+        # making sure our __metadata_request__* class attributes are okay!
+        __metadata_request__foo = {"fit": "foo"}
+
     msg = (
         "Estimator estimator_name should not set any"
         " attribute apart from parameters during init."
@@ -669,6 +673,14 @@ def test_check_no_attributes_set_in_init():
         check_no_attributes_set_in_init(
             "estimator_name", NonConformantEstimatorNoParamSet()
         )
+
+    # a private class attribute is okay!
+    check_no_attributes_set_in_init(
+        "estimator_name", ConformantEstimatorClassAttribute()
+    )
+    check_no_attributes_set_in_init(
+        "estimator_name", ConformantEstimatorClassAttribute().fit_requests(foo=True)
+    )
 
 
 def test_check_estimator_pairwise():

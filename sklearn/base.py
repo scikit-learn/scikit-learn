@@ -25,6 +25,7 @@ from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
 from .utils._estimator_html_repr import estimator_html_repr
+from .utils.metadata_requests import _MetadataRequester
 from .utils.validation import _get_feature_names
 
 
@@ -79,7 +80,13 @@ def clone(estimator, *, safe=True):
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
         new_object_params[name] = clone(param, safe=False)
+
     new_object = klass(**new_object_params)
+    try:
+        new_object._metadata_request = copy.deepcopy(estimator._metadata_request)
+    except AttributeError:
+        pass
+
     params_set = new_object.get_params(deep=False)
 
     # quick sanity check of the parameters of the clone
@@ -144,7 +151,7 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-class BaseEstimator:
+class BaseEstimator(_MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Notes
