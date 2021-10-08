@@ -31,12 +31,12 @@ steps = [
 pipe = Pipeline(steps)
 
 # %%
-# To view the text pipeline, the default is `display='text'`
+# To view the text pipeline, the default is `display='text'`.
 set_config(display="text")
 pipe
 
 # %%
-# To visualize the diagram, change `display='diagram'`
+# To visualize the diagram, change `display='diagram'`.
 set_config(display="diagram")
 pipe  # click on the diagram below to see the details of each step
 
@@ -83,7 +83,7 @@ steps = [("reduce_dim", PCA(n_components=4)), ("classifier", SVC(kernel="linear"
 pipe = Pipeline(steps)
 
 # %%
-# To visualize the diagram, change to `display='diagram'`
+# To visualize the diagram, change to `display='diagram'`.
 set_config(display="diagram")
 pipe  # click on the diagram below to see the details of each step
 
@@ -191,6 +191,6 @@ param_grid = {
 grid_search = GridSearchCV(pipe, param_grid=param_grid, n_jobs=1)
 
 # %%
-# To visualize the diagram, change to `display='diagram'`
+# To visualize the diagram, change to `display='diagram'`.
 set_config(display="diagram")
 grid_search  # click on the diagram below to see the details of each step
