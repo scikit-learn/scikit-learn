@@ -290,7 +290,7 @@ cdef class DistanceMetric:
 
     cdef DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                        ITYPE_t size) nogil except -1:
-        """Compute the ranking-preserving distance between vectors x1 and x2.
+        """Compute the rank-preserving surrogate distance between vectors x1 and x2.
 
         This can optionally be overridden in a base class.
 
@@ -329,7 +329,7 @@ cdef class DistanceMetric:
         return dist
 
     def rdist_to_dist(self, rdist):
-        """Convert the ranking-preserving surrogate distance to the distance.
+        """Convert the rank-preserving surrogate distance to the distance.
 
         The surrogate distance is any measure that yields the same rank as the
         distance, but is more efficient to compute. For example, for the
