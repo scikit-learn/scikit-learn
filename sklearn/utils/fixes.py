@@ -13,11 +13,13 @@ at which the fix is no longer needed.
 from functools import update_wrapper
 import functools
 
+import sklearn
 import numpy as np
 import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
+import threadpoolctl
 from .._config import config_context, get_config
 from ..externals._packaging.version import parse as parse_version
 
@@ -271,3 +273,33 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
             dtype=dtype,
             axis=axis,
         )
+
+
+# compatibility fix for threadpoolctl >= 3.0.0
+# since version 3 it's possible to setup a global threadpool controller to avoid
+# looping through all loaded shared libraries each time.
+# the global controller is created during the first call to threadpoolctl.
+def _get_threadpool_controller():
+    if not hasattr(threadpoolctl, "ThreadpoolController"):
+        return None
+
+    if not hasattr(sklearn, "_sklearn_threadpool_controller"):
+        sklearn._sklearn_threadpool_controller = threadpoolctl.ThreadpoolController()
+
+    return sklearn._sklearn_threadpool_controller
+
+
+def threadpool_limits(limits=None, user_api=None):
+    controller = _get_threadpool_controller()
+    if controller is not None:
+        return controller.limit(limits=limits, user_api=user_api)
+    else:
+        return threadpoolctl.threadpool_limits(limits=limits, user_api=user_api)
+
+
+def threadpool_info():
+    controller = _get_threadpool_controller()
+    if controller is not None:
+        return controller.info()
+    else:
+        return threadpoolctl.threadpool_info()
