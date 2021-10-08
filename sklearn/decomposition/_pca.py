@@ -20,7 +20,7 @@ from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
-from ..utils import check_random_state
+from ..utils import check_random_state, check_scalar
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
@@ -207,7 +207,7 @@ class PCA(_BasePCA):
         The percentage of features that need to be extract.
         Must be of range [0, infinity).
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.0.1
 
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
@@ -387,6 +387,13 @@ class PCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
+        check_scalar(
+            self.n_oversamples_rate,
+            'n_oversamples_rate',
+            min_val=0,
+            max_val=1,
+            target_type=numbers.Real
+        )
         self._fit(X)
         return self
 

@@ -1,6 +1,5 @@
 import numpy as np
 import scipy as sp
-import time
 from scipy.linalg import svd
 
 import pytest
@@ -661,39 +660,37 @@ def test_assess_dimesion_rank_one():
         assert _assess_dimension(s, rank, n_samples) == -np.inf
 
 
-def test_pca_svd_output():
-    np.random.seed(12345)
-    nfeat = 20  # try 10, 11, 12, 20, 100
+@pytest.mark.parametrize("nfeat", [10, 11, 12, 20, 100])
+@pytest.mark.parametrize("seed", range(5))
+def test_pca_svd_output(nfeat, seed):
+    # Test results consistency
+    rng = np.random.RandomState(seed)
+    X = rng.randn(10 ** 5, nfeat)
 
-    data = np.random.randn(10 ** 5, nfeat)
-    data = data - data.mean(axis=0)
-    print(np.shape(data))
-
-    # pca
-    pca = PCA(n_components=1, n_oversamples_rate=1)
-    t1 = time.perf_counter()
-    # vals0 = pca.fit_transform(data) # origin method
     # The result is the same as svd and svds
-    vals0 = pca.fit_transform(data).reshape(-1)
-    # The results are different
-    # vals0 = pca.fit_transform(data, n_oversamples_rate=0.7).reshape(-1)
-    t2 = time.perf_counter()
-    print("pca time cost：{}".format(t2 - t1))
-    print(np.shape(vals0))
+    pca = PCA(n_components=1, n_oversamples_rate=1)
+    X_tranformed = pca.fit_transform(X).reshape(-1)
 
     # sparse svd
-    vals1 = data[:, 0]
-    # if data.shape[1] > 1:
-    U1, s1, _ = svds(data, k=1, return_singular_vectors="u")
-    vals1 = U1[:, 0] * s1[0]
-    # else:
-    #     vals1 = data[:, 0]
+    U1, s1, _ = svds(X, k=1, return_singular_vectors="u")
+    X_tranformed1 = U1[:, 0] * s1[0]
 
     # dense svd
-    U2, s2, Vh2 = svd(data, full_matrices=False)
-    vals2 = U2[:, 0] * s2[0]
+    U2, s2, Vh2 = svd(X, full_matrices=False)
+    X_tranformed2 = U2[:, 0] * s2[0]
 
-    print("\nthe next three rows should be the same up to sign:")
-    print("PCA:", vals0[0:5])
-    print("sparse SVD:", vals1[0:5])
-    print("dense SVD:", vals2[0:5])
+    assert_allclose(X_tranformed, X_tranformed1)
+    assert_allclose(X_tranformed, X_tranformed2)
+
+
+@pytest.mark.parametrize(
+    "input, params, err_type, err_msg",
+    [
+        (X, {"damping": 0}, ValueError, "damping == 0, must be >= 0"),
+        (X, {"damping": 2}, ValueError, "damping == 2, must be < 1"),
+    ],
+)
+def test_pca_params_validation(input, params, err_type, err_msg):
+    """Check the parameters validation in `PCA`."""
+    with pytest.raises(err_type, match=err_msg):
+        PCA(**params).fit(input)
