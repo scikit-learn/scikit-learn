@@ -108,5 +108,5 @@ for assign_labels in ("kmeans", "discretize", "cluster_qr"):
         plt.pause(0.5)
 plt.show()
 
-# TODO: After #21194 is merged and lobpcg is faster than amg, as expected, 
+# TODO: After #21194 is merged and lobpcg is faster than amg, as expected,
 # we should probably use eigen_solver = 'lopbcg' explicitly in this example.
