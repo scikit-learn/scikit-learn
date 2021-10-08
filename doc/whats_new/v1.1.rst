@@ -91,7 +91,7 @@ Changelog
 
 - |Enhancement| :func:`utils.validation.check_array` returns a float
   ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
-  array with `pd.NA`. :pr:`21278` by `Thomas Fan_`.
+  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
