@@ -389,10 +389,10 @@ class PCA(_BasePCA):
         """
         check_scalar(
             self.n_oversamples_rate,
-            'n_oversamples_rate',
+            "n_oversamples_rate",
             min_val=0,
             max_val=1,
-            target_type=numbers.Real
+            target_type=numbers.Real,
         )
         self._fit(X)
         return self
