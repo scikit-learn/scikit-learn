@@ -66,7 +66,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
     default : bool,
         default normalize value used by the estimator
 
-    estimator_name : string,
+    estimator_name : str
         name of the linear estimator which calls this function.
         The name will be used for writing the deprecation warnings
 
