@@ -390,7 +390,9 @@ def test_check_array_dtype_numeric_errors(X):
         check_array(X, dtype="numeric")
 
 
-@pytest.mark.parametrize("pd_dtype", ["Int8", "Int16", "UInt8", "UInt16"])
+@pytest.mark.parametrize(
+    "pd_dtype", ["Int8", "Int16", "UInt8", "UInt16", "Float32", "Float64"]
+)
 @pytest.mark.parametrize(
     "dtype, expected_dtype",
     [

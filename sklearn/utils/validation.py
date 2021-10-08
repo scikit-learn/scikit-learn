@@ -483,6 +483,44 @@ def _ensure_no_complex_data(array):
         raise ValueError("Complex data not supported\n{}\n".format(array))
 
 
+def _is_pandas_numerical_extension_dtype(dtype):
+    """Check for pandas numerical extension dtypes."""
+    if dtype.name.startswith(("Int", "UInt")):
+        with suppress(ImportError):
+            from pandas import (
+                Int8Dtype,
+                Int16Dtype,
+                Int32Dtype,
+                Int64Dtype,
+                UInt8Dtype,
+                UInt16Dtype,
+                UInt32Dtype,
+                UInt64Dtype,
+            )
+
+            if isinstance(
+                dtype,
+                (
+                    Int8Dtype,
+                    Int16Dtype,
+                    Int32Dtype,
+                    Int64Dtype,
+                    UInt8Dtype,
+                    UInt16Dtype,
+                    UInt32Dtype,
+                    UInt64Dtype,
+                ),
+            ):
+                return True
+    elif dtype.name.startswith("Float"):
+        with suppress(ImportError):
+            from pandas import Float32Dtype, Float64Dtype
+
+            if isinstance(dtype, (Float32Dtype, Float64Dtype)):
+                return True
+    return False
+
+
 def check_array(
     array,
     accept_sparse=False,
@@ -605,7 +643,7 @@ def check_array(
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    has_pd_integer_array = False
+    has_pandas_numerical_extension_dtype = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
@@ -623,35 +661,8 @@ def check_array(
         for i, dtype_iter in enumerate(dtypes_orig):
             if dtype_iter.kind == "b":
                 dtypes_orig[i] = np.dtype(object)
-            elif dtype_iter.name.startswith(("Int", "UInt")):
-                # name looks like an Integer Extension Array, now check for
-                # the dtype
-                with suppress(ImportError):
-                    from pandas import (
-                        Int8Dtype,
-                        Int16Dtype,
-                        Int32Dtype,
-                        Int64Dtype,
-                        UInt8Dtype,
-                        UInt16Dtype,
-                        UInt32Dtype,
-                        UInt64Dtype,
-                    )
-
-                    if isinstance(
-                        dtype_iter,
-                        (
-                            Int8Dtype,
-                            Int16Dtype,
-                            Int32Dtype,
-                            Int64Dtype,
-                            UInt8Dtype,
-                            UInt16Dtype,
-                            UInt32Dtype,
-                            UInt64Dtype,
-                        ),
-                    ):
-                        has_pd_integer_array = True
+            elif _is_pandas_numerical_extension_dtype(dtype_iter):
+                has_pandas_numerical_extension_dtype = True
 
         if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
@@ -672,7 +683,7 @@ def check_array(
             # list of accepted types.
             dtype = dtype[0]
 
-    if has_pd_integer_array:
+    if has_pandas_numerical_extension_dtype:
         # If there are any pandas integer extension arrays,
         array = array.astype(dtype)
 
