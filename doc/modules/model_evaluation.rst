@@ -2056,9 +2056,8 @@ finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
 predictions). Such non-finite scores may prevent correct model optimization
 such as grid-search cross-validation to be performed correctly. For this reason
 the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
-predictions) or 0.0 (imperfect predictions). You can set the
-``fix_when_y_true_is_constant`` parameter to ``False`` to prevent this fix to
-happen and fallback on the original R².
+predictions) or 0.0 (imperfect predictions). If ``fix_when_y_true_is_constant``
+is set to ``False``, this score fallbacks on the original R² definition.
 
 Here is a small example of usage of the :func:`r2_score` function::
 
