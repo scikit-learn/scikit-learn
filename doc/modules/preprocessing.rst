@@ -981,7 +981,8 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
       Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
 
     * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
-      spline function procedures in R <10.1186/s12874-019-0666-3>`. BMC Med Res Methodol 19, 46 (2019).
+      spline function procedures in R <10.1186/s12874-019-0666-3>`. 
+      BMC Med Res Methodol 19, 46 (2019).
 
 .. _function_transformer:
 
