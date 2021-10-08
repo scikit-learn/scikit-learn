@@ -49,7 +49,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         .. deprecated:: 1.1
            The default changed from `None` to `"warn"` in 1.1 and will become
            `"auto"` in 1.3. `None` and `'warn'` will be removed in 1.3.
-           To keep the same behaviour as `None`, set 
+           To keep the same behaviour as `None`, set
            `n_features_to_select="auto" and `tol=None`.
 
     tol : float, default=None
@@ -183,7 +183,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
-        # FIXME: to be removed in 1.2
+        # FIXME: to be removed in 1.3
         if self.n_features_to_select in ("warn", None):
             # for backwards compability
             warnings.warn(
