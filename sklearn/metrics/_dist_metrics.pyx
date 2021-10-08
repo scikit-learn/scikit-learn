@@ -296,8 +296,7 @@ cdef class DistanceMetric:
 
         The rank-preserving surrogate distance is any measure that yields the same
         rank as the distance, but is more efficient to compute. For example, for the
-        Euclidean metric, the rank-preserving surrogate distance is the
-        squared-euclidean distance.
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
         """
         return self.dist(x1, x2, size)
 
@@ -322,25 +321,24 @@ cdef class DistanceMetric:
         return 0
 
     cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
-        """Convert the ranking-preserving distance to the distance"""
+        """Convert the rank-preserving surrogate distance to the distance"""
         return rdist
 
     cdef DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
-        """Convert the distance to the ranking-preserving distance"""
+        """Convert the distance to the rank-preserving surrogate distance"""
         return dist
 
     def rdist_to_dist(self, rdist):
-        """Convert the ranking-preserving distance to the true distance.
+        """Convert the ranking-preserving surrogate distance to the distance.
 
-        The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute. For example, for the
-        Euclidean metric, the rank-preserving surrogate distance is the
-        squared-euclidean distance.
+        The surrogate distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute. For example, for the
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
 
         Parameters
         ----------
         rdist : double
-            Ranking-preserving distance.
+            Surrogate distance.
 
         Returns
         -------
@@ -352,10 +350,9 @@ cdef class DistanceMetric:
     def dist_to_rdist(self, dist):
         """Convert the true distance to the rank-preserving surrogate distance.
 
-        The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute. For example, for the
-        Euclidean metric, the rank-preserving surrogate distance is the
-        squared-euclidean distance.
+        The surrogate distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute. For example, for the
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
 
         Parameters
         ----------
@@ -365,7 +362,7 @@ cdef class DistanceMetric:
         Returns
         -------
         double
-            Ranking-preserving distance.
+            Surrogate distance.
         """
         return dist
 
