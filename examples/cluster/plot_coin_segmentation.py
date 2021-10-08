@@ -72,7 +72,6 @@ graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 # Apply spectral clustering (this step goes much faster if you have pyamg
 # installed and use eigen_solver = 'amg'). However, any valid solver can
 # be used (e.g., 'arpack', 'lobpcg', or 'amg').
-eigen_solver = "arpack"
 
 # The number of regions
 n_regions = 26
@@ -91,7 +90,6 @@ for assign_labels in ("kmeans", "discretize", "cluster_qr"):
         n_clusters=(n_regions + n_regions_plus),
         assign_labels=assign_labels,
         random_state=42,
-        eigen_solver=eigen_solver,
     )
 
     t1 = time.time()
@@ -109,3 +107,6 @@ for assign_labels in ("kmeans", "discretize", "cluster_qr"):
         plt.contour(labels == l, colors=colors)
         plt.pause(0.5)
 plt.show()
+
+# TODO: After #21194 is merged and lobpcg is faster than amg, as expected, 
+# we should probably use eigen_solver = 'lopbcg' explicitly in this example.
