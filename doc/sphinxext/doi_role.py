@@ -19,6 +19,7 @@ from docutils import nodes, utils
 
 from sphinx.util.nodes import split_explicit_title
 
+
 def reference_role(typ, rawtext, text, lineno, inliner, options={}, content=[]):
     text = utils.unescape(text)
     has_explicit_title, title, part = split_explicit_title(text)
@@ -29,15 +30,14 @@ def reference_role(typ, rawtext, text, lineno, inliner, options={}, content=[]):
             title = "arXiv:" + part
         pnode = nodes.reference(title, title, internal=False, refuri=full_url)
         return [pnode], []
-    
+
     if typ in ["doi", "DOI"]:
         full_url = "https://doi.org/" + part
         if not has_explicit_title:
             title = "DOI:" + part
         pnode = nodes.reference(title, title, internal=False, refuri=full_url)
         return [pnode], []
-    
-    
+
 
 def setup_link_role(app):
     app.add_role("arxiv", reference_role, override=True)
