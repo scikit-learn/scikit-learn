@@ -413,8 +413,8 @@ def explained_variance_score(y_true, y_pred, *,
     ``-Inf`` (imperfect predictions). To prevent such non-finite numbers to
     pollute higher-level experiments such as a grid search cross-validation,
     by default these cases are replaced with 1.0 (perfect predictions) or 0.0
-    (imperfect predictions) respectively. You can set
-    ``fix_when_y_true_is_constant`` to ``False`` to prevent this fix to happen.
+    (imperfect predictions) respectively. If ``fix_when_y_true_is_constant``
+    is set to ``False``, this score fallbacks on the original R² definition.
 
     Note: when the prediction residuals have zero mean (perfectly unbiased
     model), Explained Variance score is identical to the
