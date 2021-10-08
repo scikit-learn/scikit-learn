@@ -109,6 +109,19 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         - 'all_labeled': all unlabeled samples were labeled before `max_iter`
           was reached.
 
+    See Also
+    --------
+    LabelPropagation : Label propagation classifier.
+    LabelSpreading : Label spreading model for semi-supervised learning.
+
+    References
+    ----------
+    David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
+    supervised methods. In Proceedings of the 33rd annual meeting on
+    Association for Computational Linguistics (ACL '95). Association for
+    Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
+    https://doi.org/10.3115/981658.981684
+
     Examples
     --------
     >>> import numpy as np
@@ -123,14 +136,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     >>> self_training_model = SelfTrainingClassifier(svc)
     >>> self_training_model.fit(iris.data, iris.target)
     SelfTrainingClassifier(...)
-
-    References
-    ----------
-    David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
-    supervised methods. In Proceedings of the 33rd annual meeting on
-    Association for Computational Linguistics (ACL '95). Association for
-    Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
-    https://doi.org/10.3115/981658.981684
     """
 
     _estimator_type = "classifier"
@@ -153,7 +158,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     def fit(self, X, y):
         """
-        Fits this ``SelfTrainingClassifier`` to a dataset.
+        Fit self-training classifier using `X`, `y` as training data.
 
         Parameters
         ----------
@@ -326,7 +331,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     @if_delegate_has_method(delegate="base_estimator")
     def decision_function(self, X):
-        """Calls decision function of the `base_estimator`.
+        """Call decision function of the `base_estimator`.
 
         Parameters
         ----------
@@ -372,7 +377,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     @if_delegate_has_method(delegate="base_estimator")
     def score(self, X, y):
-        """Calls score on the `base_estimator`.
+        """Call score on the `base_estimator`.
 
         Parameters
         ----------
