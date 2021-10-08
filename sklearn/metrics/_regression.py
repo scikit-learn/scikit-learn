@@ -454,7 +454,7 @@ def explained_variance_score(y_true, y_pred, *,
         perfect, ``0.0`` otherwise). Default is ``True``, a convenient settings
         for model optimization procedures (e.g. grid search cross-validation).
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.1.0
 
     Returns
     -------
