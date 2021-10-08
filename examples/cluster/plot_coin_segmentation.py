@@ -69,25 +69,31 @@ beta = 10
 eps = 1e-6
 graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 
-# Apply spectral clustering (this step goes much faster if you have pyamg
-# installed and use eigen_solver = 'amg'). However, any valid solver can
-# be used (e.g., 'arpack', 'lobpcg', or 'amg').
-
-# The number of regions
+# The number of segmented regions to display needs to be chosen manually.
+# The current version of 'spectral_clustering' does not support determining
+# the number of good quality clusters automatically.
 n_regions = 26
 
 # %%
 # Compute and visualize the resulting regions
 
-# Any eigen_solver: 'arpack', 'lobpcg', 'amg' can be used. AMG is usually best
-# It often helps the spectral clustering to compute a few extra eigenvectors
+# Computing a few extra eigenvectors may speed up the eigen_solver.
+# The spectral clustering quality may also benetif from requesting
+# extra regions for segmentation.
 n_regions_plus = 3
 
+# Apply spectral clustering using the default eigen_solver='arpack'.  
+# Any implemented solver can be used: eigen_solver='arpack', 'lobpcg', or 'amg'.
+# Choosing eigen_solver='amg' requires an extra package called 'pyamg'.
+# The quality of segmentation and the speed of calculations is mostly determined
+# by the choice of the solver and the value of the tolerance 'eigen_tol'.
+# TODO: varying eigen_tol seems to have no effect for 'lobpcg' and 'amg' #21243.
 for assign_labels in ("kmeans", "discretize", "cluster_qr"):
     t0 = time.time()
     labels = spectral_clustering(
         graph,
         n_clusters=(n_regions + n_regions_plus),
+        eigen_tol=1e-7,
         assign_labels=assign_labels,
         random_state=42,
     )
@@ -105,8 +111,9 @@ for assign_labels in ("kmeans", "discretize", "cluster_qr"):
     for l in range(n_regions):
         colors = [plt.cm.nipy_spectral((l + 4) / float(n_regions + 4))]
         plt.contour(labels == l, colors=colors)
-        plt.pause(0.5)
+        # To view individual segments as appear comment in plt.pause(0.5)
 plt.show()
 
-# TODO: After #21194 is merged and lobpcg is faster than amg, as expected,
-# we should probably use eigen_solver = 'lopbcg' explicitly in this example.
+# TODO: After #21194 is merged and #21243 is fixed, check which eigen_solver
+# is the best and set eigen_solver='arpack', 'lobpcg', or 'amg' and eigen_tol
+# explicitly in this example.
