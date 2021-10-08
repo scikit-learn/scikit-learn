@@ -483,9 +483,13 @@ def _ensure_no_complex_data(array):
         raise ValueError("Complex data not supported\n{}\n".format(array))
 
 
-def _is_pandas_numerical_extension_dtype(dtype):
-    """Check for pandas numerical extension dtypes."""
-    if dtype.name.startswith(("Int", "UInt")):
+def _convert_pandas_dtype_into_numpy_dtype(dtype):
+    """Maps pandas dtype into its corresponding numpy dtype."""
+    if dtype.name.startswith("bool"):
+        # pandas bool dtype __array__ interface coerces bools to objects
+        # here we map bool dtypes to floats
+        return np.float64
+    elif dtype.name.startswith(("Int", "UInt")):
         with suppress(ImportError):
             from pandas import (
                 Int8Dtype,
@@ -511,14 +515,20 @@ def _is_pandas_numerical_extension_dtype(dtype):
                     UInt64Dtype,
                 ),
             ):
-                return True
+                # These need to be mapped to a float because extension
+                # dtypes may contain nans
+                return np.float64
+
     elif dtype.name.startswith("Float"):
         with suppress(ImportError):
             from pandas import Float32Dtype, Float64Dtype
 
-            if isinstance(dtype, (Float32Dtype, Float64Dtype)):
-                return True
-    return False
+            if isinstance(dtype, Float32Dtype):
+                return np.float32
+            elif isinstance(dtype, Float64Dtype):
+                return np.float64
+
+    return None
 
 
 def check_array(
@@ -643,7 +653,7 @@ def check_array(
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    has_pandas_numerical_extension_dtype = False
+    pd_requires_converstion = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
@@ -657,14 +667,13 @@ def check_array(
                 )
 
         dtypes_orig = list(array.dtypes)
-        # pandas boolean dtype __array__ interface coerces bools to objects
-        for i, dtype_iter in enumerate(dtypes_orig):
-            if dtype_iter.kind == "b":
-                dtypes_orig[i] = np.dtype(object)
-            elif _is_pandas_numerical_extension_dtype(dtype_iter):
-                has_pandas_numerical_extension_dtype = True
+        for i, dtype_iter in enumerate(array.dtypes):
+            pd_dtype = _convert_pandas_dtype_into_numpy_dtype(dtype_iter)
+            if pd_dtype is not None:
+                dtypes_orig[i] = pd_dtype
+                pd_requires_converstion = True
 
-        if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
+        if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
     if dtype_numeric:
@@ -683,8 +692,8 @@ def check_array(
             # list of accepted types.
             dtype = dtype[0]
 
-    if has_pandas_numerical_extension_dtype:
-        # If there are any pandas integer extension arrays,
+    if pd_requires_converstion:
+        # pandas dataframe requires conversion earlier
         array = array.astype(dtype)
 
     if force_all_finite not in (True, False, "allow-nan"):
