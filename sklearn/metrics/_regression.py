@@ -417,7 +417,7 @@ def explained_variance_score(y_true, y_pred, *,
     is set to ``False``, this score fallbacks on the original R² definition.
 
     Note: when the prediction residuals have zero mean (perfectly unbiased
-    model), Explained Variance score is identical to the
+    model), the Explained Variance score is identical to the
     :func:`R^2 score <r2_score>`.
 
     Read more in the :ref:`User Guide <explained_variance_score>`.
