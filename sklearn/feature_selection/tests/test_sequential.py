@@ -13,7 +13,6 @@ from sklearn.model_selection import cross_val_score
 from sklearn.cluster import KMeans
 
 
-
 @pytest.mark.parametrize("n_features_to_select", (0, 5, 0.0, -1, 1.1))
 def test_bad_n_features_to_select(n_features_to_select):
     X, y = make_regression(n_features=5)
@@ -255,7 +254,6 @@ def test_pipeline_support():
     pipe.transform(X)
 
 
-
 # FIXME : to be removed in 1.3
 def test_raise_deprecation_warning():
     """Check that we raise a FutureWarning with `n_features_to_select`."""
@@ -265,6 +263,7 @@ def test_raise_deprecation_warning():
     warn_msg = "Leaving `n_features_to_select` to None is deprecated"
     with pytest.warns(FutureWarning, match=warn_msg):
         SequentialFeatureSelector(LinearRegression()).fit(X, y)
+
 
 @pytest.mark.parametrize("n_features_to_select", (2, 3, 4))
 def test_unsupervised_model_fit(n_features_to_select):
@@ -292,4 +291,3 @@ def test_no_y_validation_model_fit(y):
 
     with pytest.raises((TypeError, ValueError)):
         sfs.fit(X, y)
-
