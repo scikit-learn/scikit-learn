@@ -18,6 +18,7 @@ been leading the development.
 
 Governance
 ----------
+
 The decision making process and governance structure of scikit-learn is laid
 out in the :ref:`governance document <governance>`.
 
@@ -46,6 +47,15 @@ The following people are active contributors who also help with
 maintenance:
 
 .. include:: triage_team.rst
+
+Communication Team
+------------------
+
+The following people help with :ref:`communication around scikit-learn
+<communication_team>`.
+
+.. include:: communication_team.rst
+
 
 Emeritus Core Developers
 ------------------------
