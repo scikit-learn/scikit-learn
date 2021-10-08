@@ -7,8 +7,7 @@ from numpy.testing import assert_array_almost_equal
 import pytest
 
 from scipy.spatial.distance import cdist
-from sklearn.neighbors import DistanceMetric
-from sklearn.neighbors import BallTree
+from sklearn.metrics import DistanceMetric
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils.fixes import sp_version, parse_version
@@ -228,16 +227,6 @@ def test_pyfunc_metric():
 
     assert_array_almost_equal(D1, D2)
     assert_array_almost_equal(D1_pkl, D2_pkl)
-
-
-def test_bad_pyfunc_metric():
-    def wrong_distance(x, y):
-        return "1"
-
-    X = np.ones((5, 2))
-    msg = "Custom distance function must accept two vectors"
-    with pytest.raises(TypeError, match=msg):
-        BallTree(X, metric=wrong_distance)
 
 
 def test_input_data_size():

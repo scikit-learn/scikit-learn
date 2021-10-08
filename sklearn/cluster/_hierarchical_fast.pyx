@@ -13,7 +13,7 @@ ctypedef np.int8_t INT8
 
 np.import_array()
 
-from ..neighbors._dist_metrics cimport DistanceMetric
+from ..metrics._dist_metrics cimport DistanceMetric
 from ..utils._fast_dict cimport IntFloatDict
 
 # C++
@@ -236,8 +236,8 @@ def max_merge(IntFloatDict a, IntFloatDict b,
 def average_merge(IntFloatDict a, IntFloatDict b,
               np.ndarray[ITYPE_t, ndim=1] mask,
               ITYPE_t n_a, ITYPE_t n_b):
-    """Merge two IntFloatDicts with the average strategy: when the 
-    same key is present in the two dicts, the weighted average of the two 
+    """Merge two IntFloatDicts with the average strategy: when the
+    same key is present in the two dicts, the weighted average of the two
     values is used.
 
     Parameters
@@ -290,13 +290,13 @@ def average_merge(IntFloatDict a, IntFloatDict b,
 
 
 ###############################################################################
-# An edge object for fast comparisons 
+# An edge object for fast comparisons
 
 cdef class WeightedEdge:
     cdef public ITYPE_t a
     cdef public ITYPE_t b
     cdef public DTYPE_t weight
-    
+
     def __init__(self, DTYPE_t weight, ITYPE_t a, ITYPE_t b):
         self.weight = weight
         self.a = a
@@ -326,7 +326,7 @@ cdef class WeightedEdge:
             return self.weight > other.weight
         elif op == 5:
             return self.weight >= other.weight
-        
+
     def __repr__(self):
         return "%s(weight=%f, a=%i, b=%i)" % (self.__class__.__name__,
                                               self.weight,
@@ -475,7 +475,7 @@ def mst_linkage_core(
 
     dist_metric: DistanceMetric
         A DistanceMetric object conforming to the API from
-        ``sklearn.neighbors._dist_metrics.pxd`` that will be
+        ``sklearn.metrics._dist_metrics.pxd`` that will be
         used to compute distances.
 
     Returns
@@ -534,4 +534,3 @@ def mst_linkage_core(
         current_node = new_node
 
     return np.array(result)
-
