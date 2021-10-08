@@ -295,7 +295,7 @@ cdef class DistanceMetric:
         This can optionally be overridden in a base class.
 
         The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute. For exampke, for the
+        rank as the distance, but is more efficient to compute. For example, for the
         Euclidean metric, the rank-preserving surrogate distance is the
         squared-euclidean distance.
         """
@@ -333,7 +333,7 @@ cdef class DistanceMetric:
         """Convert the ranking-preserving distance to the true distance.
 
         The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute. For exampke, for the
+        rank as the distance, but is more efficient to compute. For example, for the
         Euclidean metric, the rank-preserving surrogate distance is the
         squared-euclidean distance.
 
@@ -353,7 +353,7 @@ cdef class DistanceMetric:
         """Convert the true distance to the rank-preserving surrogate distance.
 
         The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute. For exampke, for the
+        rank as the distance, but is more efficient to compute. For example, for the
         Euclidean metric, the rank-preserving surrogate distance is the
         squared-euclidean distance.
 
