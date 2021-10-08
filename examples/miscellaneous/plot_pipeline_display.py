@@ -55,8 +55,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn import set_config
 
 steps = [
-    ("polynomial", PolynomialFeatures(degree=3)),
     ("standard_scaler", StandardScaler()),
+    ("polynomial", PolynomialFeatures(degree=3)),
     ("classifier", LogisticRegression(C=2.0)),
 ]
 pipe = Pipeline(steps)
