@@ -682,7 +682,9 @@ def test_pca_svd_output(nfeat, seed):
     assert_allclose(X_tranformed, X_tranformed1)
     assert_allclose(X_tranformed, X_tranformed2)
 
-
+np.random.seed(12345)
+nfeat = 20
+X = np.random.randn(10 ** 5, nfeat)
 @pytest.mark.parametrize(
     "input, params, err_type, err_msg",
     [
