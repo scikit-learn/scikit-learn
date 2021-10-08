@@ -684,7 +684,7 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
         y_true, axis=0, weights=sample_weight)) ** 2).sum(axis=0,
                                                           dtype=np.float64)
     if not fix_when_y_true_is_constant:
-        # Standard R2 formula, that may lead to NaN or -Inf
+        # Standard R² formula, that may lead to NaN or -Inf
         output_scores = 1 - numerator / denominator
     else:
         nonzero_denominator = denominator != 0
