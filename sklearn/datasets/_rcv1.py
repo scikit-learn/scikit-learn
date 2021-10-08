@@ -11,7 +11,7 @@ The dataset page is available at
 import logging
 
 from os import remove, makedirs
-from os.path import dirname, exists, join
+from os.path import exists, join
 from gzip import GzipFile
 
 import numpy as np
@@ -22,10 +22,10 @@ from . import get_data_home
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ._svmlight_format_io import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
 
 
 # The original vectorized data can be found at:
@@ -39,46 +39,52 @@ from ..utils.validation import _deprecate_positional_args
 #    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/lyrl2004_rcv1v2_README.htm
 XY_METADATA = (
     RemoteFileMetadata(
-        url='https://ndownloader.figshare.com/files/5976069',
-        checksum=('ed40f7e418d10484091b059703eeb95a'
-                  'e3199fe042891dcec4be6696b9968374'),
-        filename='lyrl2004_vectors_test_pt0.dat.gz'),
+        url="https://ndownloader.figshare.com/files/5976069",
+        checksum="ed40f7e418d10484091b059703eeb95ae3199fe042891dcec4be6696b9968374",
+        filename="lyrl2004_vectors_test_pt0.dat.gz",
+    ),
     RemoteFileMetadata(
-        url='https://ndownloader.figshare.com/files/5976066',
-        checksum=('87700668ae45d45d5ca1ef6ae9bd81ab'
-                  '0f5ec88cc95dcef9ae7838f727a13aa6'),
-        filename='lyrl2004_vectors_test_pt1.dat.gz'),
+        url="https://ndownloader.figshare.com/files/5976066",
+        checksum="87700668ae45d45d5ca1ef6ae9bd81ab0f5ec88cc95dcef9ae7838f727a13aa6",
+        filename="lyrl2004_vectors_test_pt1.dat.gz",
+    ),
     RemoteFileMetadata(
-        url='https://ndownloader.figshare.com/files/5976063',
-        checksum=('48143ac703cbe33299f7ae9f4995db4'
-                  '9a258690f60e5debbff8995c34841c7f5'),
-        filename='lyrl2004_vectors_test_pt2.dat.gz'),
+        url="https://ndownloader.figshare.com/files/5976063",
+        checksum="48143ac703cbe33299f7ae9f4995db49a258690f60e5debbff8995c34841c7f5",
+        filename="lyrl2004_vectors_test_pt2.dat.gz",
+    ),
     RemoteFileMetadata(
-        url='https://ndownloader.figshare.com/files/5976060',
-        checksum=('dfcb0d658311481523c6e6ca0c3f5a3'
-                  'e1d3d12cde5d7a8ce629a9006ec7dbb39'),
-        filename='lyrl2004_vectors_test_pt3.dat.gz'),
+        url="https://ndownloader.figshare.com/files/5976060",
+        checksum="dfcb0d658311481523c6e6ca0c3f5a3e1d3d12cde5d7a8ce629a9006ec7dbb39",
+        filename="lyrl2004_vectors_test_pt3.dat.gz",
+    ),
     RemoteFileMetadata(
-        url='https://ndownloader.figshare.com/files/5976057',
-        checksum=('5468f656d0ba7a83afc7ad44841cf9a5'
-                  '3048a5c083eedc005dcdb5cc768924ae'),
-        filename='lyrl2004_vectors_train.dat.gz')
+        url="https://ndownloader.figshare.com/files/5976057",
+        checksum="5468f656d0ba7a83afc7ad44841cf9a53048a5c083eedc005dcdb5cc768924ae",
+        filename="lyrl2004_vectors_train.dat.gz",
+    ),
 )
 
 # The original data can be found at:
 # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a08-topic-qrels/rcv1-v2.topics.qrels.gz
 TOPICS_METADATA = RemoteFileMetadata(
-    url='https://ndownloader.figshare.com/files/5976048',
-    checksum=('2a98e5e5d8b770bded93afc8930d882'
-              '99474317fe14181aee1466cc754d0d1c1'),
-    filename='rcv1v2.topics.qrels.gz')
+    url="https://ndownloader.figshare.com/files/5976048",
+    checksum="2a98e5e5d8b770bded93afc8930d88299474317fe14181aee1466cc754d0d1c1",
+    filename="rcv1v2.topics.qrels.gz",
+)
 
 logger = logging.getLogger(__name__)
 
 
-@_deprecate_positional_args
-def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
-               random_state=None, shuffle=False, return_X_y=False):
+def fetch_rcv1(
+    *,
+    data_home=None,
+    subset="all",
+    download_if_missing=True,
+    random_state=None,
+    shuffle=False,
+    return_X_y=False,
+):
     """Load the RCV1 multilabel dataset (classification).
 
     Download it if necessary.
@@ -98,21 +104,21 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
 
     Parameters
     ----------
-    data_home : string, optional
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    subset : string, 'train', 'test', or 'all', default='all'
+    subset : {'train', 'test', 'all'}, default='all'
         Select the dataset to load: 'train' for the training set
         (23149 samples), 'test' for the test set (781265 samples),
         'all' for both, with the training samples first if shuffle is False.
         This follows the official LYRL2004 chronological split.
 
-    download_if_missing : boolean, default=True
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -120,7 +126,7 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
         object. See below for more information about the `dataset.data` and
         `dataset.target` object.
@@ -132,16 +138,16 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        data : scipy csr array, dtype np.float64, shape (804414, 47236)
-            The array has 0.16% of non zero values.
-        target : scipy csr array, dtype np.uint8, shape (804414, 103)
+        data : sparse matrix of shape (804414, 47236), dtype=np.float64
+            The array has 0.16% of non zero values. Will be of CSR format.
+        target : sparse matrix of shape (804414, 103), dtype=np.uint8
             Each sample has a value of 1 in its categories, and 0 in others.
-            The array has 3.15% of non zero values.
-        sample_id : numpy array, dtype np.uint32, shape (804414,)
+            The array has 3.15% of non zero values. Will be of CSR format.
+        sample_id : ndarray of shape (804414,), dtype=np.uint32,
             Identification number of each sample, as ordered in dataset.data.
-        target_names : numpy array, dtype object, length (103)
+        target_names : ndarray of shape (103,), dtype=object
             Names of each target (RCV1 topics), as ordered in dataset.target.
-        DESCR : string
+        DESCR : str
             Description of the RCV1 dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
@@ -165,8 +171,7 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     topics_path = _pkl_filepath(rcv1_dir, "topics_names.pkl")
 
     # load data (X) and sample_id
-    if download_if_missing and (not exists(samples_path) or
-                                not exists(sample_id_path)):
+    if download_if_missing and (not exists(samples_path) or not exists(sample_id_path)):
         files = []
         for each in XY_METADATA:
             logger.info("Downloading %s" % each.url)
@@ -192,11 +197,11 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
         sample_id = joblib.load(sample_id_path)
 
     # load target (y), categories, and sample_id_bis
-    if download_if_missing and (not exists(sample_topics_path) or
-                                not exists(topics_path)):
+    if download_if_missing and (
+        not exists(sample_topics_path) or not exists(topics_path)
+    ):
         logger.info("Downloading %s" % TOPICS_METADATA.url)
-        topics_archive_path = _fetch_remote(TOPICS_METADATA,
-                                            dirname=rcv1_dir)
+        topics_archive_path = _fetch_remote(TOPICS_METADATA, dirname=rcv1_dir)
 
         # parse the target file
         n_cat = -1
@@ -205,7 +210,7 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
         y = np.zeros((N_SAMPLES, N_CATEGORIES), dtype=np.uint8)
         sample_id_bis = np.zeros(N_SAMPLES, dtype=np.int32)
         category_names = {}
-        with GzipFile(filename=topics_archive_path, mode='rb') as f:
+        with GzipFile(filename=topics_archive_path, mode="rb") as f:
             for line in f:
                 line_components = line.decode("ascii").split(" ")
                 if len(line_components) == 3:
@@ -245,36 +250,37 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
         y = joblib.load(sample_topics_path)
         categories = joblib.load(topics_path)
 
-    if subset == 'all':
+    if subset == "all":
         pass
-    elif subset == 'train':
+    elif subset == "train":
         X = X[:N_TRAIN, :]
         y = y[:N_TRAIN, :]
         sample_id = sample_id[:N_TRAIN]
-    elif subset == 'test':
+    elif subset == "test":
         X = X[N_TRAIN:, :]
         y = y[N_TRAIN:, :]
         sample_id = sample_id[N_TRAIN:]
     else:
-        raise ValueError("Unknown subset parameter. Got '%s' instead of one"
-                         " of ('all', 'train', test')" % subset)
+        raise ValueError(
+            "Unknown subset parameter. Got '%s' instead of one"
+            " of ('all', 'train', test')" % subset
+        )
 
     if shuffle:
         X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
 
-    module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'rcv1.rst')) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("rcv1.rst")
 
     if return_X_y:
         return X, y
 
-    return Bunch(data=X, target=y, sample_id=sample_id,
-                 target_names=categories, DESCR=fdescr)
+    return Bunch(
+        data=X, target=y, sample_id=sample_id, target_names=categories, DESCR=fdescr
+    )
 
 
 def _inverse_permutation(p):
-    """inverse permutation p"""
+    """Inverse permutation p."""
     n = p.size
     s = np.zeros(n, dtype=np.int32)
     i = np.arange(n, dtype=np.int32)
@@ -283,7 +289,7 @@ def _inverse_permutation(p):
 
 
 def _find_permutation(a, b):
-    """find the permutation from a to b"""
+    """Find the permutation from a to b."""
     t = np.argsort(a)
     u = np.argsort(b)
     u_ = _inverse_permutation(u)

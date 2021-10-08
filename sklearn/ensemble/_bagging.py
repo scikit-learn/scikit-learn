@@ -10,23 +10,22 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 from warnings import warn
 
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_array, column_or_1d
+from ..utils import check_random_state, column_or_1d, deprecated
 from ..utils import indices_to_mask
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
-from ..utils.validation import has_fit_parameter, check_is_fitted, \
-    _check_sample_weight, _deprecate_positional_args
+from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
+from ..utils.fixes import delayed
 
 
-__all__ = ["BaggingClassifier",
-           "BaggingRegressor"]
+__all__ = ["BaggingClassifier", "BaggingRegressor"]
 
 MAX_INT = np.iinfo(np.int32).max
 
@@ -37,30 +36,40 @@ def _generate_indices(random_state, bootstrap, n_population, n_samples):
     if bootstrap:
         indices = random_state.randint(0, n_population, n_samples)
     else:
-        indices = sample_without_replacement(n_population, n_samples,
-                                             random_state=random_state)
+        indices = sample_without_replacement(
+            n_population, n_samples, random_state=random_state
+        )
 
     return indices
 
 
-def _generate_bagging_indices(random_state, bootstrap_features,
-                              bootstrap_samples, n_features, n_samples,
-                              max_features, max_samples):
+def _generate_bagging_indices(
+    random_state,
+    bootstrap_features,
+    bootstrap_samples,
+    n_features,
+    n_samples,
+    max_features,
+    max_samples,
+):
     """Randomly draw feature and sample indices."""
     # Get valid random state
     random_state = check_random_state(random_state)
 
     # Draw indices
-    feature_indices = _generate_indices(random_state, bootstrap_features,
-                                        n_features, max_features)
-    sample_indices = _generate_indices(random_state, bootstrap_samples,
-                                       n_samples, max_samples)
+    feature_indices = _generate_indices(
+        random_state, bootstrap_features, n_features, max_features
+    )
+    sample_indices = _generate_indices(
+        random_state, bootstrap_samples, n_samples, max_samples
+    )
 
     return feature_indices, sample_indices
 
 
-def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
-                               seeds, total_n_estimators, verbose):
+def _parallel_build_estimators(
+    n_estimators, ensemble, X, y, sample_weight, seeds, total_n_estimators, verbose
+):
     """Private function used to build a batch of estimators within a job."""
     # Retrieve settings
     n_samples, n_features = X.shape
@@ -68,8 +77,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
-    support_sample_weight = has_fit_parameter(ensemble.base_estimator_,
-                                              "sample_weight")
+    support_sample_weight = has_fit_parameter(ensemble.base_estimator_, "sample_weight")
     if not support_sample_weight and sample_weight is not None:
         raise ValueError("The base estimator doesn't support sample weight")
 
@@ -79,19 +87,24 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
     for i in range(n_estimators):
         if verbose > 1:
-            print("Building estimator %d of %d for this parallel run "
-                  "(total %d)..." % (i + 1, n_estimators, total_n_estimators))
+            print(
+                "Building estimator %d of %d for this parallel run (total %d)..."
+                % (i + 1, n_estimators, total_n_estimators)
+            )
 
         random_state = seeds[i]
-        estimator = ensemble._make_estimator(append=False,
-                                             random_state=random_state)
+        estimator = ensemble._make_estimator(append=False, random_state=random_state)
 
         # Draw random feature, sample indices
-        features, indices = _generate_bagging_indices(random_state,
-                                                      bootstrap_features,
-                                                      bootstrap, n_features,
-                                                      n_samples, max_features,
-                                                      max_samples)
+        features, indices = _generate_bagging_indices(
+            random_state,
+            bootstrap_features,
+            bootstrap,
+            n_features,
+            n_samples,
+            max_features,
+            max_samples,
+        )
 
         # Draw samples, using sample weights, and then fit
         if support_sample_weight:
@@ -131,8 +144,9 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
                 proba += proba_estimator
 
             else:
-                proba[:, estimator.classes_] += \
-                    proba_estimator[:, range(len(estimator.classes_))]
+                proba[:, estimator.classes_] += proba_estimator[
+                    :, range(len(estimator.classes_))
+                ]
 
         else:
             # Resort to voting
@@ -149,7 +163,7 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
     n_samples = X.shape[0]
     log_proba = np.empty((n_samples, n_classes))
     log_proba.fill(-np.inf)
-    all_classes = np.arange(n_classes, dtype=np.int)
+    all_classes = np.arange(n_classes, dtype=int)
 
     for estimator, features in zip(estimators, estimators_features):
         log_proba_estimator = estimator.predict_log_proba(X[:, features])
@@ -160,27 +174,29 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
         else:
             log_proba[:, estimator.classes_] = np.logaddexp(
                 log_proba[:, estimator.classes_],
-                log_proba_estimator[:, range(len(estimator.classes_))])
+                log_proba_estimator[:, range(len(estimator.classes_))],
+            )
 
             missing = np.setdiff1d(all_classes, estimator.classes_)
-            log_proba[:, missing] = np.logaddexp(log_proba[:, missing],
-                                                 -np.inf)
+            log_proba[:, missing] = np.logaddexp(log_proba[:, missing], -np.inf)
 
     return log_proba
 
 
 def _parallel_decision_function(estimators, estimators_features, X):
     """Private function used to compute decisions within a job."""
-    return sum(estimator.decision_function(X[:, features])
-               for estimator, features in zip(estimators,
-                                              estimators_features))
+    return sum(
+        estimator.decision_function(X[:, features])
+        for estimator, features in zip(estimators, estimators_features)
+    )
 
 
 def _parallel_predict_regression(estimators, estimators_features, X):
     """Private function used to compute predictions within a job."""
-    return sum(estimator.predict(X[:, features])
-               for estimator, features in zip(estimators,
-                                              estimators_features))
+    return sum(
+        estimator.predict(X[:, features])
+        for estimator, features in zip(estimators, estimators_features)
+    )
 
 
 class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
@@ -191,21 +207,22 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self,
-                 base_estimator=None,
-                 n_estimators=10, *,
-                 max_samples=1.0,
-                 max_features=1.0,
-                 bootstrap=True,
-                 bootstrap_features=False,
-                 oob_score=False,
-                 warm_start=False,
-                 n_jobs=None,
-                 random_state=None,
-                 verbose=0):
-        super().__init__(
-            base_estimator=base_estimator,
-            n_estimators=n_estimators)
+    def __init__(
+        self,
+        base_estimator=None,
+        n_estimators=10,
+        *,
+        max_samples=1.0,
+        max_features=1.0,
+        bootstrap=True,
+        bootstrap_features=False,
+        oob_score=False,
+        warm_start=False,
+        n_jobs=None,
+        random_state=None,
+        verbose=0,
+    ):
+        super().__init__(base_estimator=base_estimator, n_estimators=n_estimators)
 
         self.max_samples = max_samples
         self.max_features = max_features
@@ -218,8 +235,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """Build a Bagging ensemble of estimators from the training
-           set (X, y).
+        """Build a Bagging ensemble of estimators from the training set (X, y).
 
         Parameters
         ----------
@@ -239,6 +255,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
@@ -274,19 +291,24 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         random_state = check_random_state(self.random_state)
 
         # Convert data (X is required to be 2d and indexable)
         X, y = self._validate_data(
-            X, y, accept_sparse=['csr', 'csc'], dtype=None,
-            force_all_finite=False, multi_output=True
+            X,
+            y,
+            accept_sparse=["csr", "csc"],
+            dtype=None,
+            force_all_finite=False,
+            multi_output=True,
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
 
         # Remap output
-        n_samples, self.n_features_ = X.shape
+        n_samples = X.shape[0]
         self._n_samples = n_samples
         y = self._validate_y(y)
 
@@ -311,12 +333,12 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Validate max_features
         if isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
-        elif isinstance(self.max_features, np.float):
-            max_features = self.max_features * self.n_features_
+        elif isinstance(self.max_features, float):
+            max_features = self.max_features * self.n_features_in_
         else:
             raise ValueError("max_features must be int or float")
 
-        if not (0 < max_features <= self.n_features_):
+        if not (0 < max_features <= self.n_features_in_):
             raise ValueError("max_features must be in (0, n_features]")
 
         max_features = max(1, int(max_features))
@@ -326,17 +348,15 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         # Other checks
         if not self.bootstrap and self.oob_score:
-            raise ValueError("Out of bag estimation only available"
-                             " if bootstrap=True")
+            raise ValueError("Out of bag estimation only available if bootstrap=True")
 
         if self.warm_start and self.oob_score:
-            raise ValueError("Out of bag estimate only available"
-                             " if warm_start=False")
+            raise ValueError("Out of bag estimate only available if warm_start=False")
 
         if hasattr(self, "oob_score_") and self.warm_start:
             del self.oob_score_
 
-        if not self.warm_start or not hasattr(self, 'estimators_'):
+        if not self.warm_start or not hasattr(self, "estimators_"):
             # Free allocated memory, if any
             self.estimators_ = []
             self.estimators_features_ = []
@@ -344,18 +364,23 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         n_more_estimators = self.n_estimators - len(self.estimators_)
 
         if n_more_estimators < 0:
-            raise ValueError('n_estimators=%d must be larger or equal to '
-                             'len(estimators_)=%d when warm_start==True'
-                             % (self.n_estimators, len(self.estimators_)))
+            raise ValueError(
+                "n_estimators=%d must be larger or equal to "
+                "len(estimators_)=%d when warm_start==True"
+                % (self.n_estimators, len(self.estimators_))
+            )
 
         elif n_more_estimators == 0:
-            warn("Warm-start fitting without increasing n_estimators does not "
-                 "fit new trees.")
+            warn(
+                "Warm-start fitting without increasing n_estimators does not "
+                "fit new trees."
+            )
             return self
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(n_more_estimators,
-                                                             self.n_jobs)
+        n_jobs, n_estimators, starts = _partition_estimators(
+            n_more_estimators, self.n_jobs
+        )
         total_n_estimators = sum(n_estimators)
 
         # Advance random state to state after training
@@ -366,24 +391,29 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         seeds = random_state.randint(MAX_INT, size=n_more_estimators)
         self._seeds = seeds
 
-        all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                               **self._parallel_args())(
+        all_results = Parallel(
+            n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+        )(
             delayed(_parallel_build_estimators)(
                 n_estimators[i],
                 self,
                 X,
                 y,
                 sample_weight,
-                seeds[starts[i]:starts[i + 1]],
+                seeds[starts[i] : starts[i + 1]],
                 total_n_estimators,
-                verbose=self.verbose)
-            for i in range(n_jobs))
+                verbose=self.verbose,
+            )
+            for i in range(n_jobs)
+        )
 
         # Reduce
-        self.estimators_ += list(itertools.chain.from_iterable(
-            t[0] for t in all_results))
-        self.estimators_features_ += list(itertools.chain.from_iterable(
-            t[1] for t in all_results))
+        self.estimators_ += list(
+            itertools.chain.from_iterable(t[0] for t in all_results)
+        )
+        self.estimators_features_ += list(
+            itertools.chain.from_iterable(t[1] for t in all_results)
+        )
 
         if self.oob_score:
             self._set_oob_score(X, y)
@@ -406,9 +436,14 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_estimators()`
             feature_indices, sample_indices = _generate_bagging_indices(
-                seed, self.bootstrap_features, self.bootstrap,
-                self.n_features_, self._n_samples, self._max_features,
-                self._max_samples)
+                seed,
+                self.bootstrap_features,
+                self.bootstrap,
+                self.n_features_in_,
+                self._n_samples,
+                self._max_features,
+                self._max_samples,
+            )
 
             yield feature_indices, sample_indices
 
@@ -425,8 +460,17 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         to reduce the object memory footprint by not storing the sampling
         data. Thus fetching the property may be slower than expected.
         """
-        return [sample_indices
-                for _, sample_indices in self._get_estimators_indices()]
+        return [sample_indices for _, sample_indices in self._get_estimators_indices()]
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `n_features_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `n_features_in_` instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
 
 class BaggingClassifier(ClassifierMixin, BaseBagging):
@@ -457,7 +501,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     ----------
     base_estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
-        If None, then the base estimator is a decision tree.
+        If None, then the base estimator is a
+        :class:`~sklearn.tree.DecisionTreeClassifier`.
 
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
@@ -486,7 +531,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate
-        the generalization error.
+        the generalization error. Only available if bootstrap=True.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit
@@ -502,7 +547,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random resampling of the original dataset
         (sample wise and feature wise).
         If the base estimator accepts a `random_state` attribute, a different
@@ -520,6 +565,21 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     n_features_ : int
         The number of features when :meth:`fit` is performed.
+
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     estimators_ : list of estimators
         The collection of fitted base estimators.
@@ -548,18 +608,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.svm import SVC
-    >>> from sklearn.ensemble import BaggingClassifier
-    >>> from sklearn.datasets import make_classification
-    >>> X, y = make_classification(n_samples=100, n_features=4,
-    ...                            n_informative=2, n_redundant=0,
-    ...                            random_state=0, shuffle=False)
-    >>> clf = BaggingClassifier(base_estimator=SVC(),
-    ...                         n_estimators=10, random_state=0).fit(X, y)
-    >>> clf.predict([[0, 0, 0, 0]])
-    array([1])
+    BaggingRegressor : A Bagging regressor.
 
     References
     ----------
@@ -576,20 +627,36 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.ensemble import BaggingClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=100, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = BaggingClassifier(base_estimator=SVC(),
+    ...                         n_estimators=10, random_state=0).fit(X, y)
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
     """
-    @_deprecate_positional_args
-    def __init__(self,
-                 base_estimator=None,
-                 n_estimators=10, *,
-                 max_samples=1.0,
-                 max_features=1.0,
-                 bootstrap=True,
-                 bootstrap_features=False,
-                 oob_score=False,
-                 warm_start=False,
-                 n_jobs=None,
-                 random_state=None,
-                 verbose=0):
+
+    def __init__(
+        self,
+        base_estimator=None,
+        n_estimators=10,
+        *,
+        max_samples=1.0,
+        max_features=1.0,
+        bootstrap=True,
+        bootstrap_features=False,
+        oob_score=False,
+        warm_start=False,
+        n_jobs=None,
+        random_state=None,
+        verbose=0,
+    ):
 
         super().__init__(
             base_estimator,
@@ -602,12 +669,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             warm_start=warm_start,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+        )
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super()._validate_estimator(
-            default=DecisionTreeClassifier())
+        super()._validate_estimator(default=DecisionTreeClassifier())
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -615,15 +682,16 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         predictions = np.zeros((n_samples, n_classes_))
 
-        for estimator, samples, features in zip(self.estimators_,
-                                                self.estimators_samples_,
-                                                self.estimators_features_):
+        for estimator, samples, features in zip(
+            self.estimators_, self.estimators_samples_, self.estimators_features_
+        ):
             # Create mask for OOB samples
             mask = ~indices_to_mask(samples, n_samples)
 
             if hasattr(estimator, "predict_proba"):
                 predictions[mask, :] += estimator.predict_proba(
-                    (X[mask, :])[:, features])
+                    (X[mask, :])[:, features]
+                )
 
             else:
                 p = estimator.predict((X[mask, :])[:, features])
@@ -635,12 +703,13 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                         j += 1
 
         if (predictions.sum(axis=1) == 0).any():
-            warn("Some inputs do not have OOB scores. "
-                 "This probably means too few estimators were used "
-                 "to compute any reliable oob estimates.")
+            warn(
+                "Some inputs do not have OOB scores. "
+                "This probably means too few estimators were used "
+                "to compute any reliable oob estimates."
+            )
 
-        oob_decision_function = (predictions /
-                                 predictions.sum(axis=1)[:, np.newaxis])
+        oob_decision_function = predictions / predictions.sum(axis=1)[:, np.newaxis]
         oob_score = accuracy_score(y, np.argmax(predictions, axis=1))
 
         self.oob_decision_function_ = oob_decision_function
@@ -673,8 +742,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             The predicted classes.
         """
         predicted_probabilitiy = self.predict_proba(X)
-        return self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)),
-                                  axis=0)
+        return self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)), axis=0)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -700,29 +768,30 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         """
         check_is_fitted(self)
         # Check data
-        X = check_array(
-            X, accept_sparse=['csr', 'csc'], dtype=None,
-            force_all_finite=False
+        X = self._validate_data(
+            X,
+            accept_sparse=["csr", "csc"],
+            dtype=None,
+            force_all_finite=False,
+            reset=False,
         )
 
-        if self.n_features_ != X.shape[1]:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is {0} and "
-                             "input n_features is {1}."
-                             "".format(self.n_features_, X.shape[1]))
-
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
-                                                             self.n_jobs)
+        n_jobs, n_estimators, starts = _partition_estimators(
+            self.n_estimators, self.n_jobs
+        )
 
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                             **self._parallel_args())(
+        all_proba = Parallel(
+            n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+        )(
             delayed(_parallel_predict_proba)(
-                self.estimators_[starts[i]:starts[i + 1]],
-                self.estimators_features_[starts[i]:starts[i + 1]],
+                self.estimators_[starts[i] : starts[i + 1]],
+                self.estimators_features_[starts[i] : starts[i + 1]],
                 X,
-                self.n_classes_)
-            for i in range(n_jobs))
+                self.n_classes_,
+            )
+            for i in range(n_jobs)
+        )
 
         # Reduce
         proba = sum(all_proba) / self.n_estimators
@@ -751,28 +820,28 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         check_is_fitted(self)
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
-            X = check_array(
-                X, accept_sparse=['csr', 'csc'], dtype=None,
-                force_all_finite=False
+            X = self._validate_data(
+                X,
+                accept_sparse=["csr", "csc"],
+                dtype=None,
+                force_all_finite=False,
+                reset=False,
             )
-
-            if self.n_features_ != X.shape[1]:
-                raise ValueError("Number of features of the model must "
-                                 "match the input. Model n_features is {0} "
-                                 "and input n_features is {1} "
-                                 "".format(self.n_features_, X.shape[1]))
 
             # Parallel loop
             n_jobs, n_estimators, starts = _partition_estimators(
-                self.n_estimators, self.n_jobs)
+                self.n_estimators, self.n_jobs
+            )
 
             all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
                 delayed(_parallel_predict_log_proba)(
-                    self.estimators_[starts[i]:starts[i + 1]],
-                    self.estimators_features_[starts[i]:starts[i + 1]],
+                    self.estimators_[starts[i] : starts[i + 1]],
+                    self.estimators_features_[starts[i] : starts[i + 1]],
                     X,
-                    self.n_classes_)
-                for i in range(n_jobs))
+                    self.n_classes_,
+                )
+                for i in range(n_jobs)
+            )
 
             # Reduce
             log_proba = all_log_proba[0]
@@ -787,7 +856,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         else:
             return np.log(self.predict_proba(X))
 
-    @if_delegate_has_method(delegate='base_estimator')
+    @if_delegate_has_method(delegate="base_estimator")
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 
@@ -804,32 +873,31 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             to the classes in sorted order, as they appear in the attribute
             ``classes_``. Regression and binary classification are special
             cases with ``k == 1``, otherwise ``k==n_classes``.
-
         """
         check_is_fitted(self)
 
         # Check data
-        X = check_array(
-            X, accept_sparse=['csr', 'csc'], dtype=None,
-            force_all_finite=False
+        X = self._validate_data(
+            X,
+            accept_sparse=["csr", "csc"],
+            dtype=None,
+            force_all_finite=False,
+            reset=False,
         )
 
-        if self.n_features_ != X.shape[1]:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is {0} and "
-                             "input n_features is {1} "
-                             "".format(self.n_features_, X.shape[1]))
-
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
-                                                             self.n_jobs)
+        n_jobs, n_estimators, starts = _partition_estimators(
+            self.n_estimators, self.n_jobs
+        )
 
         all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_decision_function)(
-                self.estimators_[starts[i]:starts[i + 1]],
-                self.estimators_features_[starts[i]:starts[i + 1]],
-                X)
-            for i in range(n_jobs))
+                self.estimators_[starts[i] : starts[i + 1]],
+                self.estimators_features_[starts[i] : starts[i + 1]],
+                X,
+            )
+            for i in range(n_jobs)
+        )
 
         # Reduce
         decisions = sum(all_decisions) / self.n_estimators
@@ -865,7 +933,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     ----------
     base_estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
-        If None, then the base estimator is a decision tree.
+        If None, then the base estimator is a
+        :class:`~sklearn.tree.DecisionTreeRegressor`.
 
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
@@ -894,7 +963,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate
-        the generalization error.
+        the generalization error. Only available if bootstrap=True.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit
@@ -907,7 +976,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int or RandomState, default=None
+    random_state : int, RandomState instance or None, default=None
         Controls the random resampling of the original dataset
         (sample wise and feature wise).
         If the base estimator accepts a `random_state` attribute, a different
@@ -925,6 +994,21 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     n_features_ : int
         The number of features when :meth:`fit` is performed.
+
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     estimators_ : list of estimators
         The collection of fitted sub-estimators.
@@ -947,18 +1031,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         `oob_prediction_` might contain NaN. This attribute exists only
         when ``oob_score`` is True.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.svm import SVR
-    >>> from sklearn.ensemble import BaggingRegressor
-    >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(n_samples=100, n_features=4,
-    ...                        n_informative=2, n_targets=1,
-    ...                        random_state=0, shuffle=False)
-    >>> regr = BaggingRegressor(base_estimator=SVR(),
-    ...                         n_estimators=10, random_state=0).fit(X, y)
-    >>> regr.predict([[0, 0, 0, 0]])
-    array([-2.8720...])
+    BaggingClassifier : A Bagging classifier.
 
     References
     ----------
@@ -975,20 +1050,36 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVR
+    >>> from sklearn.ensemble import BaggingRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=100, n_features=4,
+    ...                        n_informative=2, n_targets=1,
+    ...                        random_state=0, shuffle=False)
+    >>> regr = BaggingRegressor(base_estimator=SVR(),
+    ...                         n_estimators=10, random_state=0).fit(X, y)
+    >>> regr.predict([[0, 0, 0, 0]])
+    array([-2.8720...])
     """
-    @_deprecate_positional_args
-    def __init__(self,
-                 base_estimator=None,
-                 n_estimators=10, *,
-                 max_samples=1.0,
-                 max_features=1.0,
-                 bootstrap=True,
-                 bootstrap_features=False,
-                 oob_score=False,
-                 warm_start=False,
-                 n_jobs=None,
-                 random_state=None,
-                 verbose=0):
+
+    def __init__(
+        self,
+        base_estimator=None,
+        n_estimators=10,
+        *,
+        max_samples=1.0,
+        max_features=1.0,
+        bootstrap=True,
+        bootstrap_features=False,
+        oob_score=False,
+        warm_start=False,
+        n_jobs=None,
+        random_state=None,
+        verbose=0,
+    ):
         super().__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -1000,7 +1091,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             warm_start=warm_start,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+        )
 
     def predict(self, X):
         """Predict regression target for X.
@@ -1021,21 +1113,27 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         """
         check_is_fitted(self)
         # Check data
-        X = check_array(
-            X, accept_sparse=['csr', 'csc'], dtype=None,
-            force_all_finite=False
+        X = self._validate_data(
+            X,
+            accept_sparse=["csr", "csc"],
+            dtype=None,
+            force_all_finite=False,
+            reset=False,
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
-                                                             self.n_jobs)
+        n_jobs, n_estimators, starts = _partition_estimators(
+            self.n_estimators, self.n_jobs
+        )
 
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(
-                self.estimators_[starts[i]:starts[i + 1]],
-                self.estimators_features_[starts[i]:starts[i + 1]],
-                X)
-            for i in range(n_jobs))
+                self.estimators_[starts[i] : starts[i + 1]],
+                self.estimators_features_[starts[i] : starts[i + 1]],
+                X,
+            )
+            for i in range(n_jobs)
+        )
 
         # Reduce
         y_hat = sum(all_y_hat) / self.n_estimators
@@ -1044,8 +1142,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super()._validate_estimator(
-            default=DecisionTreeRegressor())
+        super()._validate_estimator(default=DecisionTreeRegressor())
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -1053,9 +1150,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
 
-        for estimator, samples, features in zip(self.estimators_,
-                                                self.estimators_samples_,
-                                                self.estimators_features_):
+        for estimator, samples, features in zip(
+            self.estimators_, self.estimators_samples_, self.estimators_features_
+        ):
             # Create mask for OOB samples
             mask = ~indices_to_mask(samples, n_samples)
 
@@ -1063,9 +1160,11 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             n_predictions[mask] += 1
 
         if (n_predictions == 0).any():
-            warn("Some inputs do not have OOB scores. "
-                 "This probably means too few estimators were used "
-                 "to compute any reliable oob estimates.")
+            warn(
+                "Some inputs do not have OOB scores. "
+                "This probably means too few estimators were used "
+                "to compute any reliable oob estimates."
+            )
             n_predictions[n_predictions == 0] = 1
 
         predictions /= n_predictions
