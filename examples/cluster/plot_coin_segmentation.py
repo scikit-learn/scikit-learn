@@ -82,7 +82,7 @@ n_regions = 26
 # extra regions for segmentation.
 n_regions_plus = 3
 
-# Apply spectral clustering using the default eigen_solver='arpack'.  
+# Apply spectral clustering using the default eigen_solver='arpack'.
 # Any implemented solver can be used: eigen_solver='arpack', 'lobpcg', or 'amg'.
 # Choosing eigen_solver='amg' requires an extra package called 'pyamg'.
 # The quality of segmentation and the speed of calculations is mostly determined
