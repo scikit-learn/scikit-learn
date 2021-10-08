@@ -157,7 +157,9 @@ class TestMetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, y=None, **transform_params):
-        # not validating since the following would validate due to ignore_extras=False
+        metadata_request_factory(self).transform.validate_metadata(
+            ignore_extras=False, kwargs=transform_params
+        )
         transform_params_ = metadata_request_factory(
             self.transformer
         ).transform.get_method_input(ignore_extras=False, kwargs=transform_params)
@@ -324,14 +326,10 @@ def test_simple_metadata_routing():
         estimator=TestEstimatorFitMetadata().fit_requests(sample_weight=False),
         sample_weight_none=False,
     )
-    with pytest.raises(
-        ValueError,
-        match=(
-            "sample_weight is not requested by any estimator but is provided. In"
-            " method: fit"
-        ),
-    ):
-        cls.fit(X, y, sample_weight=my_weights)
+    # this doesn't raise since TestSimpleMetaEstimator itself is a consumer,
+    # and passing metadata to the consumer directly is fine regardless of its
+    # metadata_request values.
+    cls.fit(X, y, sample_weight=my_weights)
 
     # Requesting a metadata will make the meta-estimator forward it correctly
     cls = TestSimpleMetaEstimator(
@@ -366,8 +364,10 @@ def test_invalid_metadata():
     with pytest.raises(
         ValueError,
         match=(
-            "sample_weight is not requested by any estimator but is provided. In"
-            " method: transform"
+            re.escape(
+                "Metadata passed which is not understood: ['sample_weight']. In method:"
+                " transform"
+            )
         ),
     ):
         trs.fit(X, y).transform(X, sample_weight=my_weights)

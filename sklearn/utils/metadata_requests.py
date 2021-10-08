@@ -785,7 +785,7 @@ class _MetadataRequester:
             klass_defaults = {
                 attr: value
                 for attr, value in vars(klass).items()
-                if attr.startswith("__metadata_request__")
+                if "__metadata_request__" in attr
             }
             defaults.update(klass_defaults)
         defaults = dict(sorted(defaults.items()))
@@ -817,8 +817,12 @@ class _MetadataRequester:
         # __metadata_request__* attributes, which are provided in `requests` here.
 
         for attr, value in defaults.items():
+            # we don't check for attr.startswith() since python prefixes attrs
+            # starting with __ with the `_ClassName`.
+            substr = "__metadata_request__"
+            expected_metadata = attr[attr.index(substr) + len(substr) :]
             requests.add_requests(
-                value, overwrite=True, expected_metadata="__".join(attr.split("__")[1:])
+                value, overwrite=True, expected_metadata=expected_metadata
             )
         return requests
 
