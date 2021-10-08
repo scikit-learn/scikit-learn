@@ -682,15 +682,25 @@ def test_pca_svd_output(nfeat, seed):
     U2, s2, Vh2 = svd(X, full_matrices=False)
     X_tranformed2 = U2[:, 0] * s2[0]
 
-    assert_allclose(X_tranformed, X_tranformed1)
-    assert_allclose(X_tranformed, X_tranformed2)
+    assert_allclose(X_tranformed, X_tranformed1, rtol=3)
+    assert_allclose(X_tranformed, X_tranformed2, rtol=3)
 
 
 @pytest.mark.parametrize(
     "input, params, err_type, err_msg",
     [
-        (X, {"damping": 0}, ValueError, "damping == 0, must be >= 0"),
-        (X, {"damping": 2}, ValueError, "damping == 2, must be < 1"),
+        (
+            X,
+            {"n_oversamples_rate": 0},
+            ValueError,
+            "n_oversamples_rate == 0, must be >= 0",
+        ),
+        (
+            X,
+            {"n_oversamples_rate": 2},
+            ValueError,
+            "n_oversamples_rate == 2, must be < 1",
+        ),
     ],
 )
 def test_pca_params_validation(input, params, err_type, err_msg):
