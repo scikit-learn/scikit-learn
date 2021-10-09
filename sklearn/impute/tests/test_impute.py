@@ -1528,5 +1528,4 @@ def test_impute_pd_na():
     # Other strategies will raise a `TypeError`.
     df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="Float64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
-    with pytest.raises(TypeError):
-        assert_array_equal(imputer.fit_transform(df), [[1.0], [2.0], [2.0], [3.0]])
+    assert_array_equal(imputer.fit_transform(df), [[1.0], [2.0], [2.0], [3.0]])
