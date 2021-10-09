@@ -401,6 +401,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available if bootstrap=True")
 
+        if not self.bootstrap and self.max_samples:
+            raise ValueError("Sub-sample size only available if bootstrap=True")
+
         random_state = check_random_state(self.random_state)
 
         if not self.warm_start or not hasattr(self, "estimators_"):
