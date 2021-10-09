@@ -1823,3 +1823,15 @@ def test_pairwise_deprecated(NearestNeighbors):
     msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         nn._pairwise
+
+
+# TODO: Remove in 1.3
+def test_neighbors_distance_metric_deprecation():
+    from sklearn.neighbors import DistanceMetric
+    from sklearn.metrics import DistanceMetric as ActualDistanceMetric
+
+    msg = r"This import path will be removed in 1\.3"
+    with pytest.warns(FutureWarning, match=msg):
+        dist_metric = DistanceMetric.get_metric("euclidean")
+
+    assert isinstance(dist_metric, ActualDistanceMetric)

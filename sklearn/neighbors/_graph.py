@@ -65,10 +65,11 @@ def kneighbors_graph(
         between neighbors according to the given metric.
 
     metric : str, default='minkowski'
-        The distance metric used to calculate the k-Neighbors for each sample
-        point. The DistanceMetric class gives a list of available metrics.
-        The default distance is 'euclidean' ('minkowski' metric with the p
-        param equal to 2.)
+        The distance metric to use for the tree. The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric.
+        For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -157,10 +158,11 @@ def radius_neighbors_graph(
         between neighbors according to the given metric.
 
     metric : str, default='minkowski'
-        The distance metric used to calculate the neighbors within a
-        given radius for each sample point. The DistanceMetric class
-        gives a list of available metrics. The default distance is
-        'euclidean' ('minkowski' metric with the param equal to 2.)
+        The distance metric to use for the tree. The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric.
+        For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is

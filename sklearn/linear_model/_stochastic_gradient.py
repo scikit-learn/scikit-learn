@@ -392,7 +392,7 @@ def fit_binary(
     C : float
         Maximum step size for passive aggressive
 
-    learning_rate : string
+    learning_rate : str
         The learning rate. Accepted values are 'constant', 'optimal',
         'invscaling', 'pa1' and 'pa2'.
 
