@@ -50,9 +50,9 @@ y[y == 2] = 1  # We will try to separate class 2 from the other 6 classes.
 # To actually reproduce the results in the original Tensor Sketch paper,
 # select 100,000 for training.
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=5_000,
-                                                    test_size=10_000,
-                                                    random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, train_size=5_000, test_size=10_000, random_state=42
+)
 
 # %%
 # Now scale features to the range [0, 1] to match the format of the dataset in
@@ -104,11 +104,15 @@ for n_components in [250, 500, 1000, 2000]:
     ps_lsvm_score = 0
     for _ in range(n_runs):
 
-        pipeline = Pipeline(steps=[("kernel_approximator",
-                                    PolynomialCountSketch(
-                                        n_components=n_components,
-                                        degree=4)),
-                                   ("linear_classifier", LinearSVC())])
+        pipeline = Pipeline(
+            steps=[
+                (
+                    "kernel_approximator",
+                    PolynomialCountSketch(n_components=n_components, degree=4),
+                ),
+                ("linear_classifier", LinearSVC()),
+            ]
+        )
 
         start = time.time()
         pipeline.fit(X_train, y_train)
@@ -119,10 +123,13 @@ for n_components in [250, 500, 1000, 2000]:
     ps_lsvm_score /= n_runs
 
     results[f"LSVM + PS({n_components})"] = {
-        "time": ps_lsvm_time, "score": ps_lsvm_score
+        "time": ps_lsvm_time,
+        "score": ps_lsvm_score,
     }
-    print(f"Linear SVM score on {n_components} PolynomialCountSketch " +
-          f"features: {ps_lsvm_score:.2f}%")
+    print(
+        f"Linear SVM score on {n_components} PolynomialCountSketch "
+        + f"features: {ps_lsvm_score:.2f}%"
+    )
 
 # %%
 # Train a kernelized SVM to see how well :class:`PolynomialCountSketch`
@@ -132,7 +139,7 @@ for n_components in [250, 500, 1000, 2000]:
 
 from sklearn.svm import SVC
 
-ksvm = SVC(C=500., kernel="poly", degree=4, coef0=0, gamma=1.)
+ksvm = SVC(C=500.0, kernel="poly", degree=4, coef0=0, gamma=1.0)
 
 start = time.time()
 ksvm.fit(X_train, y_train)
@@ -151,23 +158,59 @@ print(f"Kernel-SVM score on raw featrues: {ksvm_score:.2f}%")
 N_COMPONENTS = [250, 500, 1000, 2000]
 
 fig, ax = plt.subplots(figsize=(7, 7))
-ax.scatter([results["LSVM"]["time"], ], [results["LSVM"]["score"], ],
-           label="Linear SVM", c="green", marker="^")
+ax.scatter(
+    [
+        results["LSVM"]["time"],
+    ],
+    [
+        results["LSVM"]["score"],
+    ],
+    label="Linear SVM",
+    c="green",
+    marker="^",
+)
 
-ax.scatter([results["LSVM + PS(250)"]["time"], ],
-           [results["LSVM + PS(250)"]["score"], ],
-           label="Linear SVM + PolynomialCountSketch", c="blue")
+ax.scatter(
+    [
+        results["LSVM + PS(250)"]["time"],
+    ],
+    [
+        results["LSVM + PS(250)"]["score"],
+    ],
+    label="Linear SVM + PolynomialCountSketch",
+    c="blue",
+)
 for n_components in N_COMPONENTS:
-    ax.scatter([results[f"LSVM + PS({n_components})"]["time"], ],
-               [results[f"LSVM + PS({n_components})"]["score"], ],
-               c="blue")
-    ax.annotate(f"n_comp.={n_components}",
-                (results[f"LSVM + PS({n_components})"]["time"],
-                 results[f"LSVM + PS({n_components})"]["score"]),
-                xytext=(-30, 10), textcoords="offset pixels")
+    ax.scatter(
+        [
+            results[f"LSVM + PS({n_components})"]["time"],
+        ],
+        [
+            results[f"LSVM + PS({n_components})"]["score"],
+        ],
+        c="blue",
+    )
+    ax.annotate(
+        f"n_comp.={n_components}",
+        (
+            results[f"LSVM + PS({n_components})"]["time"],
+            results[f"LSVM + PS({n_components})"]["score"],
+        ),
+        xytext=(-30, 10),
+        textcoords="offset pixels",
+    )
 
-ax.scatter([results["KSVM"]["time"], ], [results["KSVM"]["score"], ],
-           label="Kernel SVM", c="red", marker="x")
+ax.scatter(
+    [
+        results["KSVM"]["time"],
+    ],
+    [
+        results["KSVM"]["score"],
+    ],
+    label="Kernel SVM",
+    c="red",
+    marker="x",
+)
 
 ax.set_xlabel("Training time (s)")
 ax.set_ylabel("Accuracy (%)")

@@ -11,7 +11,8 @@ We also show that you can easily introspect part of the pipeline.
 
 print(__doc__)
 from sklearn import set_config
-set_config(display='diagram')
+
+set_config(display="diagram")
 
 # %%
 # We will start by generating a binary classification dataset. Subsequently, we
@@ -21,8 +22,13 @@ from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
 X, y = make_classification(
-    n_features=20, n_informative=3, n_redundant=0, n_classes=2,
-    n_clusters_per_class=2, random_state=42)
+    n_features=20,
+    n_informative=3,
+    n_redundant=0,
+    n_classes=2,
+    n_clusters_per_class=2,
+    random_state=42,
+)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
 # %%

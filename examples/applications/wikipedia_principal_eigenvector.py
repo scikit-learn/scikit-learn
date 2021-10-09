@@ -65,7 +65,7 @@ for url, filename in resources:
     if not os.path.exists(filename):
         print("Downloading data from '%s', please wait..." % url)
         opener = urlopen(url)
-        open(filename, 'wb').write(opener.read())
+        open(filename, "wb").write(opener.read())
         print()
 
 
@@ -163,7 +163,8 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
 
 # stop after 5M links to make it possible to work in RAM
 X, redirects, index_map = get_adjacency_matrix(
-    redirects_filename, page_links_filename, limit=5000000)
+    redirects_filename, page_links_filename, limit=5000000
+)
 names = {i: name for name, i in index_map.items()}
 
 print("Computing the principal singular vectors using randomized_svd")
@@ -195,16 +196,17 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
 
     print("Normalizing the graph")
     for i in incoming_counts.nonzero()[0]:
-        X.data[X.indptr[i]:X.indptr[i + 1]] *= 1.0 / incoming_counts[i]
-    dangle = np.asarray(np.where(np.isclose(X.sum(axis=1), 0),
-                                 1.0 / n, 0)).ravel()
+        X.data[X.indptr[i] : X.indptr[i + 1]] *= 1.0 / incoming_counts[i]
+    dangle = np.asarray(np.where(np.isclose(X.sum(axis=1), 0), 1.0 / n, 0)).ravel()
 
-    scores = np.full(n, 1. / n, dtype=np.float32)  # initial guess
+    scores = np.full(n, 1.0 / n, dtype=np.float32)  # initial guess
     for i in range(max_iter):
         print("power iteration #%d" % i)
         prev_scores = scores
-        scores = (alpha * (scores * X + np.dot(dangle, prev_scores))
-                  + (1 - alpha) * prev_scores.sum() / n)
+        scores = (
+            alpha * (scores * X + np.dot(dangle, prev_scores))
+            + (1 - alpha) * prev_scores.sum() / n
+        )
         # check convergence: normalized l_inf norm
         scores_max = np.abs(scores).max()
         if scores_max == 0.0:
