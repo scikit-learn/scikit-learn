@@ -827,8 +827,8 @@ Changelog
 ...............................
 
 - |Fix| Compute `y_std` properly with multi-target in
-  :class:`sklearn.gaussian_process.GaussianProcessRegressor`. It could not
-  predict when `return_std` and `normalize_y` where True, in multi-target scene.
+  :class:`sklearn.gaussian_process.GaussianProcessRegressor` allowing
+  proper normalization in multi-target scene.
   :pr:`20761` by :user:`Patrick de C. T. R. Ferreira <patrickctrf>`.
 
 Code and Documentation Contributors
