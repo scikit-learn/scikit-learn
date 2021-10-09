@@ -66,14 +66,13 @@ common_params = dict(
     min_samples_split=9,
 )
 for alpha in [0.05, 0.5, 0.95]:
-    gbr = GradientBoostingRegressor(loss='quantile', alpha=alpha,
-                                    **common_params)
+    gbr = GradientBoostingRegressor(loss="quantile", alpha=alpha, **common_params)
     all_models["q %1.2f" % alpha] = gbr.fit(X_train, y_train)
 
 # %%
 # For the sake of comparison, we also fit a baseline model trained with the
 # usual (mean) squared error (MSE).
-gbr_ls = GradientBoostingRegressor(loss='squared_error', **common_params)
+gbr_ls = GradientBoostingRegressor(loss="squared_error", **common_params)
 all_models["mse"] = gbr_ls.fit(X_train, y_train)
 
 # %%
@@ -88,24 +87,25 @@ xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 import matplotlib.pyplot as plt
 
 
-y_pred = all_models['mse'].predict(xx)
-y_lower = all_models['q 0.05'].predict(xx)
-y_upper = all_models['q 0.95'].predict(xx)
-y_med = all_models['q 0.50'].predict(xx)
+y_pred = all_models["mse"].predict(xx)
+y_lower = all_models["q 0.05"].predict(xx)
+y_upper = all_models["q 0.95"].predict(xx)
+y_med = all_models["q 0.50"].predict(xx)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), 'g:', linewidth=3, label=r'$f(x) = x\,\sin(x)$')
-plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
-plt.plot(xx, y_med, 'r-', label='Predicted median', color="orange")
-plt.plot(xx, y_pred, 'r-', label='Predicted mean')
-plt.plot(xx, y_upper, 'k-')
-plt.plot(xx, y_lower, 'k-')
-plt.fill_between(xx.ravel(), y_lower, y_upper, alpha=0.4,
-                 label='Predicted 90% interval')
-plt.xlabel('$x$')
-plt.ylabel('$f(x)$')
+plt.plot(xx, f(xx), "g:", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
+plt.plot(xx, y_med, "r-", label="Predicted median", color="orange")
+plt.plot(xx, y_pred, "r-", label="Predicted mean")
+plt.plot(xx, y_upper, "k-")
+plt.plot(xx, y_lower, "k-")
+plt.fill_between(
+    xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
+)
+plt.xlabel("$x$")
+plt.ylabel("$f(x)$")
 plt.ylim(-10, 25)
-plt.legend(loc='upper left')
+plt.legend(loc="upper left")
 plt.show()
 
 # %%
@@ -129,21 +129,19 @@ import pandas as pd
 
 def highlight_min(x):
     x_min = x.min()
-    return ['font-weight: bold' if v == x_min else ''
-            for v in x]
+    return ["font-weight: bold" if v == x_min else "" for v in x]
 
 
 results = []
 for name, gbr in sorted(all_models.items()):
-    metrics = {'model': name}
+    metrics = {"model": name}
     y_pred = gbr.predict(X_train)
     for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(
-            y_train, y_pred, alpha=alpha)
-    metrics['MSE'] = mean_squared_error(y_train, y_pred)
+        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(y_train, y_pred, alpha=alpha)
+    metrics["MSE"] = mean_squared_error(y_train, y_pred)
     results.append(metrics)
 
-pd.DataFrame(results).set_index('model').style.apply(highlight_min)
+pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 
 # %%
 # One column shows all models evaluated by the same metric. The minimum number
@@ -163,15 +161,14 @@ pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 # We then do the same on the test set.
 results = []
 for name, gbr in sorted(all_models.items()):
-    metrics = {'model': name}
+    metrics = {"model": name}
     y_pred = gbr.predict(X_test)
     for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(
-            y_test, y_pred, alpha=alpha)
-    metrics['MSE'] = mean_squared_error(y_test, y_pred)
+        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(y_test, y_pred, alpha=alpha)
+    metrics["MSE"] = mean_squared_error(y_test, y_pred)
     results.append(metrics)
 
-pd.DataFrame(results).set_index('model').style.apply(highlight_min)
+pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 
 
 # %%
@@ -199,16 +196,18 @@ def coverage_fraction(y, y_low, y_high):
     return np.mean(np.logical_and(y >= y_low, y <= y_high))
 
 
-coverage_fraction(y_train,
-                  all_models['q 0.05'].predict(X_train),
-                  all_models['q 0.95'].predict(X_train))
+coverage_fraction(
+    y_train,
+    all_models["q 0.05"].predict(X_train),
+    all_models["q 0.95"].predict(X_train),
+)
 
 # %%
 # On the training set the calibration is very close to the expected coverage
 # value for a 90% confidence interval.
-coverage_fraction(y_test,
-                  all_models['q 0.05'].predict(X_test),
-                  all_models['q 0.95'].predict(X_test))
+coverage_fraction(
+    y_test, all_models["q 0.05"].predict(X_test), all_models["q 0.95"].predict(X_test)
+)
 
 
 # %%
@@ -298,16 +297,17 @@ y_lower = search_05p.predict(xx)
 y_upper = search_95p.predict(xx)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), 'g:', linewidth=3, label=r'$f(x) = x\,\sin(x)$')
-plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
-plt.plot(xx, y_upper, 'k-')
-plt.plot(xx, y_lower, 'k-')
-plt.fill_between(xx.ravel(), y_lower, y_upper, alpha=0.4,
-                 label='Predicted 90% interval')
-plt.xlabel('$x$')
-plt.ylabel('$f(x)$')
+plt.plot(xx, f(xx), "g:", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
+plt.plot(xx, y_upper, "k-")
+plt.plot(xx, y_lower, "k-")
+plt.fill_between(
+    xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
+)
+plt.xlabel("$x$")
+plt.ylabel("$f(x)$")
 plt.ylim(-10, 25)
-plt.legend(loc='upper left')
+plt.legend(loc="upper left")
 plt.title("Prediction with tuned hyper-parameters")
 plt.show()
 
@@ -317,13 +317,9 @@ plt.show()
 #
 # We now quantitatively evaluate the joint-calibration of the pair of
 # estimators:
-coverage_fraction(y_train,
-                  search_05p.predict(X_train),
-                  search_95p.predict(X_train))
+coverage_fraction(y_train, search_05p.predict(X_train), search_95p.predict(X_train))
 # %%
-coverage_fraction(y_test,
-                  search_05p.predict(X_test),
-                  search_95p.predict(X_test))
+coverage_fraction(y_test, search_05p.predict(X_test), search_95p.predict(X_test))
 # %%
 # The calibration of the tuned pair is sadly not better on the test set: the
 # width of the estimated confidence interval is still too narrow.

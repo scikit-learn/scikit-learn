@@ -36,6 +36,8 @@ from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
 
+from ._dist_metrics import DistanceMetric
+
 from . import cluster
 from .cluster import adjusted_mutual_info_score
 from .cluster import adjusted_rand_score
@@ -115,6 +117,7 @@ __all__ = [
     "davies_bouldin_score",
     "DetCurveDisplay",
     "det_curve",
+    "DistanceMetric",
     "euclidean_distances",
     "explained_variance_score",
     "f1_score",

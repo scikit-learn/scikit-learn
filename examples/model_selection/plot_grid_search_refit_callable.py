@@ -46,10 +46,12 @@ def lower_bound(cv_results):
         Lower bound within 1 standard deviation of the
         best `mean_test_score`.
     """
-    best_score_idx = np.argmax(cv_results['mean_test_score'])
+    best_score_idx = np.argmax(cv_results["mean_test_score"])
 
-    return (cv_results['mean_test_score'][best_score_idx]
-            - cv_results['std_test_score'][best_score_idx])
+    return (
+        cv_results["mean_test_score"][best_score_idx]
+        - cv_results["std_test_score"][best_score_idx]
+    )
 
 
 def best_low_complexity(cv_results):
@@ -69,48 +71,56 @@ def best_low_complexity(cv_results):
         `mean_test_score`.
     """
     threshold = lower_bound(cv_results)
-    candidate_idx = np.flatnonzero(cv_results['mean_test_score'] >= threshold)
-    best_idx = candidate_idx[cv_results['param_reduce_dim__n_components']
-                             [candidate_idx].argmin()]
+    candidate_idx = np.flatnonzero(cv_results["mean_test_score"] >= threshold)
+    best_idx = candidate_idx[
+        cv_results["param_reduce_dim__n_components"][candidate_idx].argmin()
+    ]
     return best_idx
 
 
-pipe = Pipeline([
-        ('reduce_dim', PCA(random_state=42)),
-        ('classify', LinearSVC(random_state=42, C=0.01)),
-])
+pipe = Pipeline(
+    [
+        ("reduce_dim", PCA(random_state=42)),
+        ("classify", LinearSVC(random_state=42, C=0.01)),
+    ]
+)
 
-param_grid = {
-    'reduce_dim__n_components': [6, 8, 10, 12, 14]
-}
+param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
 
-grid = GridSearchCV(pipe, cv=10, n_jobs=1, param_grid=param_grid,
-                    scoring='accuracy', refit=best_low_complexity)
+grid = GridSearchCV(
+    pipe,
+    cv=10,
+    n_jobs=1,
+    param_grid=param_grid,
+    scoring="accuracy",
+    refit=best_low_complexity,
+)
 X, y = load_digits(return_X_y=True)
 grid.fit(X, y)
 
-n_components = grid.cv_results_['param_reduce_dim__n_components']
-test_scores = grid.cv_results_['mean_test_score']
+n_components = grid.cv_results_["param_reduce_dim__n_components"]
+test_scores = grid.cv_results_["mean_test_score"]
 
 plt.figure()
-plt.bar(n_components, test_scores, width=1.3, color='b')
+plt.bar(n_components, test_scores, width=1.3, color="b")
 
 lower = lower_bound(grid.cv_results_)
-plt.axhline(np.max(test_scores), linestyle='--', color='y',
-            label='Best score')
-plt.axhline(lower, linestyle='--', color='.5', label='Best score - 1 std')
+plt.axhline(np.max(test_scores), linestyle="--", color="y", label="Best score")
+plt.axhline(lower, linestyle="--", color=".5", label="Best score - 1 std")
 
 plt.title("Balance model complexity and cross-validated score")
-plt.xlabel('Number of PCA components used')
-plt.ylabel('Digit classification accuracy')
+plt.xlabel("Number of PCA components used")
+plt.ylabel("Digit classification accuracy")
 plt.xticks(n_components.tolist())
 plt.ylim((0, 1.0))
-plt.legend(loc='upper left')
+plt.legend(loc="upper left")
 
 best_index_ = grid.best_index_
 
 print("The best_index_ is %d" % best_index_)
 print("The n_components selected is %d" % n_components[best_index_])
-print("The corresponding accuracy score is %.2f"
-      % grid.cv_results_['mean_test_score'][best_index_])
+print(
+    "The corresponding accuracy score is %.2f"
+    % grid.cv_results_["mean_test_score"][best_index_]
+)
 plt.show()

@@ -38,9 +38,11 @@ clf3 = GaussianNB()
 X = np.array([[-1.0, -1.0], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
 y = np.array([1, 1, 2, 2])
 
-eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-                        voting='soft',
-                        weights=[1, 1, 5])
+eclf = VotingClassifier(
+    estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)],
+    voting="soft",
+    weights=[1, 1, 5],
+)
 
 # predict class probabilities for all classifiers
 probas = [c.fit(X, y).predict_proba(X) for c in (clf1, clf2, clf3, eclf)]
@@ -59,28 +61,36 @@ width = 0.35  # bar width
 fig, ax = plt.subplots()
 
 # bars for classifier 1-3
-p1 = ax.bar(ind, np.hstack(([class1_1[:-1], [0]])), width,
-            color='green', edgecolor='k')
-p2 = ax.bar(ind + width, np.hstack(([class2_1[:-1], [0]])), width,
-            color='lightgreen', edgecolor='k')
+p1 = ax.bar(ind, np.hstack(([class1_1[:-1], [0]])), width, color="green", edgecolor="k")
+p2 = ax.bar(
+    ind + width,
+    np.hstack(([class2_1[:-1], [0]])),
+    width,
+    color="lightgreen",
+    edgecolor="k",
+)
 
 # bars for VotingClassifier
-p3 = ax.bar(ind, [0, 0, 0, class1_1[-1]], width,
-            color='blue', edgecolor='k')
-p4 = ax.bar(ind + width, [0, 0, 0, class2_1[-1]], width,
-            color='steelblue', edgecolor='k')
+p3 = ax.bar(ind, [0, 0, 0, class1_1[-1]], width, color="blue", edgecolor="k")
+p4 = ax.bar(
+    ind + width, [0, 0, 0, class2_1[-1]], width, color="steelblue", edgecolor="k"
+)
 
 # plot annotations
-plt.axvline(2.8, color='k', linestyle='dashed')
+plt.axvline(2.8, color="k", linestyle="dashed")
 ax.set_xticks(ind + width)
-ax.set_xticklabels(['LogisticRegression\nweight 1',
-                    'GaussianNB\nweight 1',
-                    'RandomForestClassifier\nweight 5',
-                    'VotingClassifier\n(average probabilities)'],
-                   rotation=40,
-                   ha='right')
+ax.set_xticklabels(
+    [
+        "LogisticRegression\nweight 1",
+        "GaussianNB\nweight 1",
+        "RandomForestClassifier\nweight 5",
+        "VotingClassifier\n(average probabilities)",
+    ],
+    rotation=40,
+    ha="right",
+)
 plt.ylim([0, 1])
-plt.title('Class probabilities for sample 1 by different classifiers')
-plt.legend([p1[0], p2[0]], ['class 1', 'class 2'], loc='upper left')
+plt.title("Class probabilities for sample 1 by different classifiers")
+plt.legend([p1[0], p2[0]], ["class 1", "class 2"], loc="upper left")
 plt.tight_layout()
 plt.show()
