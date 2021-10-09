@@ -65,10 +65,11 @@ def kneighbors_graph(
         between neighbors according to the given metric.
 
     metric : str, default='minkowski'
-        The distance metric used to calculate the k-Neighbors for each sample
-        point. The DistanceMetric class gives a list of available metrics.
-        The default distance is 'euclidean' ('minkowski' metric with the p
-        param equal to 2.)
+        The distance metric to use for the tree. The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric.
+        For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -157,10 +158,11 @@ def radius_neighbors_graph(
         between neighbors according to the given metric.
 
     metric : str, default='minkowski'
-        The distance metric used to calculate the neighbors within a
-        given radius for each sample point. The DistanceMetric class
-        gives a list of available metrics. The default distance is
-        'euclidean' ('minkowski' metric with the param equal to 2.)
+        The distance metric to use for the tree. The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric.
+        For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -332,12 +334,15 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
 
     Examples
     --------
-    >>> from sklearn.manifold import Isomap
+    >>> from sklearn.datasets import load_wine
     >>> from sklearn.neighbors import KNeighborsTransformer
-    >>> from sklearn.pipeline import make_pipeline
-    >>> estimator = make_pipeline(
-    ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
-    ...     Isomap(neighbors_algorithm='precomputed'))
+    >>> X, _ = load_wine(return_X_y=True)
+    >>> X.shape
+    (178, 13)
+    >>> transformer = KNeighborsTransformer(n_neighbors=5, mode='distance')
+    >>> X_dist_graph = transformer.fit_transform(X)
+    >>> X_dist_graph.shape
+    (178, 178)
     """
 
     def __init__(
@@ -437,10 +442,10 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
 
 
 class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, NeighborsBase):
-    """Transform X into a (weighted) graph of neighbors nearer than a radius
+    """Transform X into a (weighted) graph of neighbors nearer than a radius.
 
     The transformed data is a sparse graph as returned by
-    radius_neighbors_graph.
+    `radius_neighbors_graph`.
 
     Read more in the :ref:`User Guide <neighbors_transformer>`.
 
@@ -453,7 +458,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    radius : float, default=1.
+    radius : float, default=1.0
         Radius of neighborhood in the transformed sparse graph.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
@@ -475,7 +480,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        metric to use for distance computation. Any metric from scikit-learn
+        Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
         If metric is a callable function, it is called on each
@@ -540,14 +545,28 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
+    See Also
+    --------
+    kneighbors_graph : Compute the weighted graph of k-neighbors for
+        points in X.
+    KNeighborsTransformer : Transform X into a weighted graph of k
+        nearest neighbors.
+
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_wine
     >>> from sklearn.cluster import DBSCAN
     >>> from sklearn.neighbors import RadiusNeighborsTransformer
     >>> from sklearn.pipeline import make_pipeline
+    >>> X, _ = load_wine(return_X_y=True)
     >>> estimator = make_pipeline(
     ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
-    ...     DBSCAN(min_samples=30, metric='precomputed'))
+    ...     DBSCAN(eps=25.0, metric='precomputed'))
+    >>> X_clustered = estimator.fit_predict(X)
+    >>> clusters, counts = np.unique(X_clustered, return_counts=True)
+    >>> print(counts)
+    [ 29  15 111  11  12]
     """
 
     def __init__(
@@ -583,6 +602,9 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
                 (n_samples, n_samples) if metric='precomputed'
             Training data.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         Returns
         -------
         self : RadiusNeighborsTransformer
@@ -591,12 +613,12 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
         return self._fit(X)
 
     def transform(self, X):
-        """Computes the (weighted) graph of Neighbors for points in X
+        """Compute the (weighted) graph of Neighbors for points in X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples_transform, n_features)
-            Sample data
+            Sample data.
 
         Returns
         -------
@@ -620,7 +642,8 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
         X : array-like of shape (n_samples, n_features)
             Training set.
 
-        y : ignored
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------

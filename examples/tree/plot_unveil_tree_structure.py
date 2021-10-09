@@ -92,22 +92,30 @@ while len(stack) > 0:
     else:
         is_leaves[node_id] = True
 
-print("The binary tree structure has {n} nodes and has "
-      "the following tree structure:\n".format(n=n_nodes))
+print(
+    "The binary tree structure has {n} nodes and has "
+    "the following tree structure:\n".format(n=n_nodes)
+)
 for i in range(n_nodes):
     if is_leaves[i]:
-        print("{space}node={node} is a leaf node.".format(
-            space=node_depth[i] * "\t", node=i))
+        print(
+            "{space}node={node} is a leaf node.".format(
+                space=node_depth[i] * "\t", node=i
+            )
+        )
     else:
-        print("{space}node={node} is a split node: "
-              "go to node {left} if X[:, {feature}] <= {threshold} "
-              "else to node {right}.".format(
-                  space=node_depth[i] * "\t",
-                  node=i,
-                  left=children_left[i],
-                  feature=feature[i],
-                  threshold=threshold[i],
-                  right=children_right[i]))
+        print(
+            "{space}node={node} is a split node: "
+            "go to node {left} if X[:, {feature}] <= {threshold} "
+            "else to node {right}.".format(
+                space=node_depth[i] * "\t",
+                node=i,
+                left=children_left[i],
+                feature=feature[i],
+                threshold=threshold[i],
+                right=children_right[i],
+            )
+        )
 
 ##############################################################################
 # We can compare the above output to the plot of the decision tree.
@@ -139,29 +147,33 @@ leaf_id = clf.apply(X_test)
 
 sample_id = 0
 # obtain ids of the nodes `sample_id` goes through, i.e., row `sample_id`
-node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
-                                    node_indicator.indptr[sample_id + 1]]
+node_index = node_indicator.indices[
+    node_indicator.indptr[sample_id] : node_indicator.indptr[sample_id + 1]
+]
 
-print('Rules used to predict sample {id}:\n'.format(id=sample_id))
+print("Rules used to predict sample {id}:\n".format(id=sample_id))
 for node_id in node_index:
     # continue to the next node if it is a leaf node
     if leaf_id[sample_id] == node_id:
         continue
 
     # check if value of the split feature for sample 0 is below threshold
-    if (X_test[sample_id, feature[node_id]] <= threshold[node_id]):
+    if X_test[sample_id, feature[node_id]] <= threshold[node_id]:
         threshold_sign = "<="
     else:
         threshold_sign = ">"
 
-    print("decision node {node} : (X_test[{sample}, {feature}] = {value}) "
-          "{inequality} {threshold})".format(
-              node=node_id,
-              sample=sample_id,
-              feature=feature[node_id],
-              value=X_test[sample_id, feature[node_id]],
-              inequality=threshold_sign,
-              threshold=threshold[node_id]))
+    print(
+        "decision node {node} : (X_test[{sample}, {feature}] = {value}) "
+        "{inequality} {threshold})".format(
+            node=node_id,
+            sample=sample_id,
+            feature=feature[node_id],
+            value=X_test[sample_id, feature[node_id]],
+            inequality=threshold_sign,
+            threshold=threshold[node_id],
+        )
+    )
 
 ##############################################################################
 # For a group of samples, we can determine the common nodes the samples go
@@ -169,12 +181,13 @@ for node_id in node_index:
 
 sample_ids = [0, 1]
 # boolean array indicating the nodes both samples go through
-common_nodes = (node_indicator.toarray()[sample_ids].sum(axis=0) ==
-                len(sample_ids))
+common_nodes = node_indicator.toarray()[sample_ids].sum(axis=0) == len(sample_ids)
 # obtain node ids using position in array
 common_node_id = np.arange(n_nodes)[common_nodes]
 
-print("\nThe following samples {samples} share the node(s) {nodes} in the "
-      "tree.".format(samples=sample_ids, nodes=common_node_id))
-print("This is {prop}% of all nodes.".format(
-    prop=100 * len(common_node_id) / n_nodes))
+print(
+    "\nThe following samples {samples} share the node(s) {nodes} in the tree.".format(
+        samples=sample_ids, nodes=common_node_id
+    )
+)
+print("This is {prop}% of all nodes.".format(prop=100 * len(common_node_id) / n_nodes))

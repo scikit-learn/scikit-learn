@@ -272,7 +272,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     damping : float, default=0.5
-        Damping factor (between 0.5 and 1) is the extent to
+        Damping factor in the range `[0.5, 1.0)` is the extent to
         which the current value is maintained relative to
         incoming values (weighted 1 - damping). This in order
         to avoid numerical oscillations when updating these
@@ -469,7 +469,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             target_type=numbers.Real,
             min_val=0.5,
             max_val=1,
-            closed="right",
+            include_boundaries="left",
         )
         check_scalar(self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1)
         check_scalar(

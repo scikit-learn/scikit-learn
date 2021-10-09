@@ -523,6 +523,7 @@ def roc_auc_score(
 
     Multilabel case:
 
+    >>> import numpy as np
     >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
     >>> X, y = make_multilabel_classification(random_state=0)
@@ -1429,6 +1430,7 @@ def dcg_score(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import dcg_score
     >>> # we have groud-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
@@ -1578,6 +1580,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import ndcg_score
     >>> # we have groud-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])

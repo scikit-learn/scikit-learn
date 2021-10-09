@@ -644,9 +644,8 @@ General Concepts
 
         Note that for most distance metrics, we rely on implementations from
         :mod:`scipy.spatial.distance`, but may reimplement for efficiency in
-        our context.  The :mod:`neighbors` module also duplicates some metric
-        implementations for integration with efficient binary tree search data
-        structures.
+        our context. The :class:`metrics.DistanceMetric` interface is used to implement
+        distance metrics for integration with efficient neighbors search.
 
     pd
         A shorthand for `Pandas <https://pandas.pydata.org>`_ due to the
@@ -894,6 +893,7 @@ Class APIs and Estimator Types
         * :term:`fit`
         * :term:`transform`
         * :term:`get_feature_names`
+        * :term:`get_feature_names_out`
 
     meta-estimator
     meta-estimators
@@ -1022,7 +1022,7 @@ such as:
 
 Further examples:
 
-* :class:`neighbors.DistanceMetric`
+* :class:`metrics.DistanceMetric`
 * :class:`gaussian_process.kernels.Kernel`
 * ``tree.Criterion``
 
@@ -1261,6 +1261,17 @@ Methods
         strings and may take a list of strings as input, corresponding
         to the names of input columns from which output column names can
         be generated.  By default input features are named x0, x1, ....
+
+    ``get_feature_names_out``
+        Primarily for :term:`feature extractors`, but also used for other
+        transformers to provide string names for each column in the output of
+        the estimator's :term:`transform` method.  It outputs an array of
+        strings and may take an array-like of strings as input, corresponding
+        to the names of input columns from which output column names can
+        be generated.  If `input_features` is not passed in, then the
+        `feature_names_in_` attribute will be used. If the
+        `feature_names_in_` attribute is not defined, then the
+        input names are named `[x0, x1, ..., x(n_features_in_)]`.
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of

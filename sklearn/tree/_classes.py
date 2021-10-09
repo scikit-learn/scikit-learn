@@ -391,7 +391,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             self.tree_ = Tree(
                 self.n_features_in_,
-                # TODO: tree should't need this in this case
+                # TODO: tree shouldn't need this in this case
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
             )

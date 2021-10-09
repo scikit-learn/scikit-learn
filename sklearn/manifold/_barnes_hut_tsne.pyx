@@ -273,7 +273,7 @@ def gradient(float[:] val_P,
              bint compute_error=1,
              int num_threads=1):
     # This function is designed to be called from external Python
-    # it passes the 'forces' array by reference and fills thats array
+    # it passes the 'forces' array by reference and fills that's array
     # up in-place
     cdef float C
     cdef int n
