@@ -53,6 +53,11 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor`.
   :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Enhancement| :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` can now be evaluated with `.predict` and `.staged_predict` before all the estimators are present.
+  This allows for more custom progress monitoring in the `monitor` function.
+  :pr:`21292` by :user:`Marcin Konowalczyk <MarcinKonowalczyk>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
