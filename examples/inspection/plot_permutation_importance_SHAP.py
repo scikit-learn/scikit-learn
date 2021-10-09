@@ -207,7 +207,7 @@ explainer.expected_value
 reg.predict(med)
 
 # %%
-# Next we will calculate Shapley values using the testing subset This is the
+# Next we will calculate Shapley values using the testing subset. This is the
 # computationally expensive step.
 
 shap_values = explainer.shap_values(X_test, l1_reg='aic')
