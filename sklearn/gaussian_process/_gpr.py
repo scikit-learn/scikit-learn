@@ -416,7 +416,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
                 # if y_var has shape (n_samples, 1), reshape to (n_samples,)
                 if y_var.shape[0] == y_var.size:
-                    y_var = y_var.reshape(-1)
+                    y_var = np.ravel(y_var)
 
                 return y_mean, np.sqrt(y_var)
             else:
