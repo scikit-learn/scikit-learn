@@ -100,7 +100,7 @@ plt.show()
 
 # %%
 # The plot shows that ``MedInc`` (median income) causes by far the biggest
-# drop in R^2 score whereas ``AveBedrms`` and ``Population`` seem to have
+# drop in R² score whereas ``AveBedrms`` and ``Population`` seem to have
 # almost no effect.
 #
 # **Considerations**
