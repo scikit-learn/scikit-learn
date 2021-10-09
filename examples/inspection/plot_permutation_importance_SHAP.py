@@ -49,9 +49,7 @@ from sklearn.model_selection import train_test_split
 
 cal_housing = fetch_california_housing()
 y = cal_housing.target[::10]
-X = pd.DataFrame(
-    data=cal_housing.data[::10, :], columns=cal_housing.feature_names
-)
+X = pd.DataFrame(data=cal_housing.data[::10, :], columns=cal_housing.feature_names)
 X.head()
 
 # %%
@@ -85,14 +83,16 @@ import matplotlib.pyplot as plt
 
 from sklearn.inspection import permutation_importance
 
-perm_import = permutation_importance(reg, X_test, y_test, n_repeats=10,
-                                     random_state=42, n_jobs=2)
+perm_import = permutation_importance(
+    reg, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
+)
 sorted_idx = perm_import.importances_mean.argsort()
 
 fig, ax = plt.subplots()
 ax.boxplot(
-    perm_import.importances[sorted_idx].T, vert=False,
-    labels=X_train.columns[sorted_idx]
+    perm_import.importances[sorted_idx].T,
+    vert=False,
+    labels=X_train.columns[sorted_idx],
 )
 ax.set_title("Permutation Importances")
 fig.tight_layout()
@@ -210,7 +210,7 @@ reg.predict(med)
 # Next we will calculate Shapley values using the testing subset. This is the
 # computationally expensive step.
 
-shap_values = explainer.shap_values(X_test, l1_reg='aic')
+shap_values = explainer.shap_values(X_test, l1_reg="aic")
 
 # %%
 # Let's look at the Shapley values of one sample. There are 8 Shapley values,
@@ -225,10 +225,12 @@ shap_values[0, :]
 # prediction output by our our model ``reg`` and  the ``expected_value`
 # (depending on how well the linear model was able to be fit).
 
-print(f'The sum of Shapley values: {shap_values[0, :].sum()}')
+print(f"The sum of Shapley values: {shap_values[0, :].sum()}")
 prediction = reg.predict(X_test.iloc[0, :].values.reshape(1, -1))[0]
-print(f'Difference between prediction and expected value: '
-      f'{prediction - explainer.expected_value}')
+print(
+    "Difference between prediction and expected value: "
+    f"{prediction - explainer.expected_value}"
+)
 
 # %%
 # We can also plot the Shapley values:
