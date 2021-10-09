@@ -654,7 +654,8 @@ def test_gpr_predict_error():
 
 
 def test_y_std_with_multitarget_normalized():
-    """Check that `y_std` is properly computed when `normalize_y=True`.
+    """Check the proper normalization of `y_std` in multi-target scene.
+
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/17394
     https://github.com/scikit-learn/scikit-learn/issues/18065
