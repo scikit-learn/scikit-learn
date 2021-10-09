@@ -534,7 +534,6 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 "n_clusters",
                 target_type=numbers.Integral,
                 min_val=1,
-                include_boundaries="both",
             )
 
         # TODO: Remove deprected flags in 1.2
