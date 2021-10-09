@@ -1524,6 +1524,7 @@ def test_impute_pd_na():
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-2.0)
     assert_array_almost_equal(imputer.fit_transform(df), [[0.1], [-2.0], [0.3]])
 
+
 # TODO: currently for float type arrays, only `constant` imputing strategy works.
 # Other strategies will raise a `TypeError`.
 @pytest.mark.xfail
