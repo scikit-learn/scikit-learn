@@ -316,23 +316,21 @@ plt.tight_layout()
 #
 # .. topic:: References:
 #
-#   .. [1] Lundberg, Scott M., and Su-In Lee. `"A unified approach to
+#   .. [1] Lundberg, Scott M., and Su-In Lee. :arxiv:`"A unified approach to
 #          interpreting model predictions."
-#          <https://arxiv.org/pdf/1903.10464.pdf>`_ Advances in Neural
+#          <1903.10464>` Advances in Neural
 #          Information Processing Systems. 2017.
-#   .. [2] Lundberg, Scott M., Gabriel G. Erion, and Su-In Lee. `"Consistent
-#          individualized feature attribution for tree ensembles."
-#          <https://arxiv.org/pdf/1802.03888.pdf>`_ arXiv
+#   .. [2] Lundberg, Scott M., Gabriel G. Erion, and Su-In Lee.
+#          :arxiv:`"Consistent individualized feature attribution for tree
+#          ensembles." <1802.03888>` arXiv
 #          preprint arXiv:1802.03888 (2018).
-#   .. [3] Sundararajan, Mukund, and Amir Najmi. `"The many Shapley values
-#          for model explanation."
-#          <https://arxiv.org/pdf/1908.08474.pdf>`_ arXiv preprint
-#          arXiv:1908.08474 (2019).
-#   .. [4] Aas, Kjersti, Martin Jullum, and Anders Løland. `"Explaining
+#   .. [3] Sundararajan, Mukund, and Amir Najmi. :arxiv:`"The many Shapley
+#          values for model explanation."
+#          <1908.08474>` arXiv:1908.08474 (2019).
+#   .. [4] Aas, Kjersti, Martin Jullum, and Anders Løland. :arxiv:`"Explaining
 #          individual predictions when features are dependent: More accurate
 #          approximations to Shapley values."
-#          <https://arxiv.org/pdf/1903.10464.pdf>`_ arXiv preprint
-#          arXiv:1903.10464 (2019).
+#          <1903.10464>` arXiv:1903.10464 (2019).
 #   .. [5] Molnar, Christoph. "Interpretable machine learning. A Guide for
 #          Making Black Box Models Explainable", 2019.
 #          https://christophm.github.io/interpretable-ml-book/
