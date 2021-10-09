@@ -279,9 +279,9 @@ plt.tight_layout()
 # subsets with and without the feature of interest is used to estimate
 # Shapley values.
 #
-# The major advantage of TreeSHAP is it's speed. Compared to KernelSHAP,
-# which computes Shapley values in exponential time, TreeSHAP does this
-# in polynomial time [2]_.
+# The major advantage of TreeSHAP is its time complexity.
+# Compared to KernelSHAP, which computes Shapley values
+# in exponential time, TreeSHAP does this in polynomial time [2]_.
 #
 # Below we calculate Shapley values using ``TreeExplainer``. We do not have
 # to provide a 'background' dataset as the model can use the number of
