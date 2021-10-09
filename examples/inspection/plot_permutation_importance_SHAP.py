@@ -77,7 +77,7 @@ reg.fit(X_train, y_train)
 #
 # First, we will calculate permutation importances on the test subset
 # using the default score metric of
-# :class:`~sklearn.ensemble.RandomForestRegressor`: :ref:`R^2 <r2_score>`.
+# :class:`~sklearn.ensemble.RandomForestRegressor`: :ref:`R² <r2_score>`.
 # The values of each feature will be permuted ``n_repeats=10`` times and the
 # decrease in R^2 value for each permutation is shown below with boxplots.
 
@@ -100,7 +100,7 @@ plt.show()
 
 # %%
 # The plot shows that ``MedInc`` (median income) causes by far the biggest
-# drop in R^2 score whereas ``AveBedrms`` and ``Population`` seem to have
+# drop in R² score whereas ``AveBedrms`` and ``Population`` seem to have
 # almost no effect.
 #
 # **Considerations**
@@ -279,9 +279,9 @@ plt.tight_layout()
 # subsets with and without the feature of interest is used to estimate
 # Shapley values.
 #
-# The major advantage of TreeSHAP is it's speed. Compared to KernelSHAP,
-# which computes Shapley values in exponential time, TreeSHAP does this
-# in polynomial time [2]_.
+# The major advantage of TreeSHAP is its time complexity.
+# Compared to KernelSHAP, which computes Shapley values
+# in exponential time, TreeSHAP does this in polynomial time [2]_.
 #
 # Below we calculate Shapley values using ``TreeExplainer``. We do not have
 # to provide a 'background' dataset as the model can use the number of
