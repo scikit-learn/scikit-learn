@@ -733,7 +733,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _raw_predict(self, X):
         """Return the sum of the trees raw predictions (+ init estimator)."""
         raw_predictions = self._raw_predict_init(X)
-        predict_stages(self.estimators_, X, self.learning_rate, raw_predictions)
+        valid_estimators = np.array([e for e in self.estimators_ if np.all(e)])
+        predict_stages(valid_estimators, X, self.learning_rate, raw_predictions)
         return raw_predictions
 
     def _staged_raw_predict(self, X):
@@ -762,8 +763,18 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
-            predict_stage(self.estimators_, i, X, self.learning_rate, raw_predictions)
-            yield raw_predictions.copy()
+            # Note: cannot pre-calculate valid_estimators like in _raw_predict since
+            # these may change while the generator is suspended. Hence need to index
+            # into self.estimators_ afresh
+            if np.all(self.estimators_[i]):
+                predict_stage(
+                    self.estimators_[: (i + 1)],
+                    i,
+                    X,
+                    self.learning_rate,
+                    raw_predictions,
+                )
+                yield raw_predictions.copy()
 
     @property
     def feature_importances_(self):

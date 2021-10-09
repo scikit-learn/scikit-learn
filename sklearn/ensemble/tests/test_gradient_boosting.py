@@ -1458,3 +1458,40 @@ def test_loss_deprecated(old_loss, new_loss):
     est2 = GradientBoostingRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
+
+
+def partial_evaluation_monitor(i, est, locals):
+    """Check that model can make predicitons even while its incomplete"""
+    n_valid_estimators = len([e for e in est.estimators_ if e])
+    assert n_valid_estimators == i + 1
+
+    X, _ = datasets.make_hastie_10_2(n_samples=10, random_state=2)
+
+    yp = est.predict(X)
+    assert yp.shape[0] == X.shape[0]
+
+
+def staged_partial_evaluation_monitor(i, est, locals):
+    """Check that model can make staged predicitons even while its incomplete"""
+    n_valid_estimators = len([e for e in est.estimators_ if e])
+    assert n_valid_estimators == i + 1
+
+    X, _ = datasets.make_hastie_10_2(n_samples=10, random_state=3)
+
+    for n_stages, yp in enumerate(est.staged_predict(X)):
+        assert yp.shape[0] == X.shape[0]
+    assert n_valid_estimators == n_stages + 1
+
+
+@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
+def test_partial_evaluation(Cls):
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    n_ests = 20
+
+    est = Cls(n_estimators=n_ests, max_depth=1, random_state=1)
+
+    est.fit(X, y, monitor=partial_evaluation_monitor)
+    assert len([e for e in est.estimators_ if e]) == n_ests
+
+    est.fit(X, y, monitor=staged_partial_evaluation_monitor)
+    assert len([e for e in est.estimators_ if e]) == n_ests
