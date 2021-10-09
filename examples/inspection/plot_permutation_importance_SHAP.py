@@ -77,7 +77,7 @@ reg.fit(X_train, y_train)
 #
 # First, we will calculate permutation importances on the test subset
 # using the default score metric of
-# :class:`~sklearn.ensemble.RandomForestRegressor`: :ref:`R^2 <r2_score>`.
+# :class:`~sklearn.ensemble.RandomForestRegressor`: :ref:`R² <r2_score>`.
 # The values of each feature will be permuted ``n_repeats=10`` times and the
 # decrease in R^2 value for each permutation is shown below with boxplots.
 
