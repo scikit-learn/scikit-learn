@@ -415,7 +415,7 @@ class _PLS(
         -------
         X_reconstructed : ndarray of shape (n_samples, n_features)
             Return the reconstructed `X` data.
-            
+
         Y_reconstructed : ndarray of shape (n_samples, n_targets)
             Return the reconstructed `X` target. Only returned when `Y` is given.
 
@@ -430,7 +430,7 @@ class _PLS(
         # Denormalize
         X_reconstructed *= self._x_std
         X_reconstructed += self._x_mean
-    
+
         if Y is not None:
             Y = check_array(Y, dtype=FLOAT_DTYPES)
             # From pls space to original space
@@ -439,7 +439,7 @@ class _PLS(
             Y_reconstructed *= self._y_std
             Y_reconstructed += self._y_mean
             return X_reconstructed, Y_reconstructed
-        
+
         return X_reconstructed
 
     def predict(self, X, copy=True):
