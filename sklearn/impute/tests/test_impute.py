@@ -1495,7 +1495,7 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     )
 
 
-def test_impute_pd_na():
+def test_simple_impute_pd_na():
     pd = pytest.importorskip("pandas", minversion="1.0")
 
     # Impute pandas array of string types.
@@ -1525,10 +1525,10 @@ def test_impute_pd_na():
     assert_array_almost_equal(imputer.fit_transform(df), [[0.1], [-2.0], [0.3]])
 
 
-# TODO: currently for float type arrays, only `constant` imputing strategy works.
-# Other strategies will raise a `TypeError`.
+# Currently for float type arrays, `SimpleImputer` only supports 'constant'
+# imputing strategy. Other strategies will raise a `TypeError`.
 @pytest.mark.xfail
-def test_impute_pd_na_float_median():
+def test_simple_impute_pd_na_float_median():
     pd = pytest.importorskip("pandas", minversion="1.0")
     df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="Float64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
