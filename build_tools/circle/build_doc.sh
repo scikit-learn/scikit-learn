@@ -187,6 +187,10 @@ pip install "$(get_dep sphinxext-opengraph $SPHINXEXT_OPENGRAPH_VERSION)"
 export SKLEARN_BUILD_PARALLEL=3
 python setup.py develop
 
+# Install after scikit-learn to avoid circular import
+# SHAP is needed for the `plot_permutation_importance_SHAP` example.
+pip install "$(get_dep shap $SHAP_VERSION)"
+
 export OMP_NUM_THREADS=1
 
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]

@@ -40,6 +40,7 @@
 .. |PandasMinVersion| replace:: 0.25.0
 .. |SeabornMinVersion| replace:: 0.9.0
 .. |PytestMinVersion| replace:: 5.0.1
+.. |SHAPMinVersion| replace::0.35.0
 
 .. image:: doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
@@ -81,7 +82,7 @@ classes end with "Display") require Matplotlib (>= |MatplotlibMinVersion|).
 For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
-|SeabornMinVersion|.
+|SeabornMinVersion| and one example requires SHAP >= |SHAPMinVersion|.
 
 User installation
 ~~~~~~~~~~~~~~~~~
