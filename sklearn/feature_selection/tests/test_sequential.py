@@ -144,6 +144,8 @@ def test_n_features_to_select_stopping_criterion(direction):
         assert (removed_cv_score - sfs_cv_score) <= tol
 
 
+# TODO: Remove test for n_features_to_select=None in 1.3
+@pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 @pytest.mark.parametrize(
     "n_features_to_select, expected",
