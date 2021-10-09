@@ -105,7 +105,6 @@ def discretize(
     # If there is an exception we try to randomize and rerun SVD again
     # do this max_svd_restarts times.
     while (svd_restarts < max_svd_restarts) and not has_converged:
-        svd_restarts += 1
 
         # Initialize first column of rotation matrix with a row of the
         # eigenvectors
@@ -139,6 +138,7 @@ def discretize(
             t_svd = vectors_discrete.T * vectors
 
             try:
+                svd_restarts += 1
                 U, S, Vh = np.linalg.svd(t_svd)
             except LinAlgError:
                 print("SVD did not converge, randomizing and trying again")
