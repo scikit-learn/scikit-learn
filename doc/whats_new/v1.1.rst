@@ -57,7 +57,7 @@ Changelog
 .......................
 
 - |Enhancement| Added support for `pd.NA` in :class:`SimpleImputer`.
-  :pr:`21114` by :user:`Ying Xiong <yxiong>`.
+  :pr:`21293` by :user:`Ying Xiong <yxiong>`.
 
 :mod:`sklearn.linear_model`
 ...........................
