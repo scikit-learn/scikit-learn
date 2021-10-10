@@ -63,18 +63,24 @@ def _write_label_html(
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
+    show_arrow=False,
 ):
     """Write labeled html with or without a dropdown with named details"""
     out.write(f'<div class="{outer_class}"><div class="{inner_class} sk-toggleable">')
     name = html.escape(name)
 
     if name_details is not None:
+        if show_arrow:
+            label_class = "sk-toggleable__label sk-toggleable__label-arrow"
+        else:
+            label_class = "sk-toggleable__label"
+
         checked_str = "checked" if checked else ""
         est_id = uuid.uuid4()
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id="{est_id}" type="checkbox" {checked_str}>'
-            f'<label class="sk-toggleable__label" for="{est_id}">'
+            f'<label class="{label_class}" for="{est_id}">'
             f"{name}</label>"
             f'<div class="sk-toggleable__content"><pre>{name_details}'
             "</pre></div>"
@@ -130,7 +136,9 @@ def _write_estimator_html(
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
-            _write_label_html(out, estimator_label, estimator_label_details)
+            _write_label_html(
+                out, estimator_label, estimator_label_details, show_arrow=first_call
+            )
 
         kind = est_block.kind
         out.write(f'<div class="sk-{kind}">')
@@ -155,6 +163,7 @@ def _write_estimator_html(
             outer_class="sk-item",
             inner_class="sk-estimator",
             checked=first_call,
+            show_arrow=first_call,
         )
 
 
@@ -178,6 +187,9 @@ _STYLE = """
   box-sizing: border-box;
   text-align: center;
 }
+#$id label.sk-toggleable__label-arrow:before {
+  content: "▶ ";
+}
 #$id div.sk-toggleable__content {
   max-height: 0;
   max-width: 0;
@@ -195,6 +207,9 @@ _STYLE = """
   max-height: 200px;
   max-width: 100%;
   overflow: auto;
+}
+#$id input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
+  content: "▼ ";
 }
 #$id div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
   background-color: #d4ebff;
