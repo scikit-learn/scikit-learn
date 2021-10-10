@@ -1530,6 +1530,6 @@ def test_simple_impute_pd_na():
 @pytest.mark.xfail
 def test_simple_impute_pd_na_float_median():
     pd = pytest.importorskip("pandas", minversion="1.0")
-    df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="Float64")})
+    df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="Float32")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
     assert_array_equal(imputer.fit_transform(df), [[1.0], [2.0], [2.0], [3.0]])
