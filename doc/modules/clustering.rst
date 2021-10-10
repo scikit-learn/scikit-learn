@@ -275,7 +275,10 @@ small, as shown in the example and cited reference.
    :target: ../auto_examples/cluster/plot_mini_batch_kmeans.html
    :align: center
    :scale: 100
-   :alt:
+   :alt: A figure of three panels with scatter plots for KMeans, MiniBatchKMeans,
+        and their difference.  Both methods have very similar results, the left and
+        middle panels show the three identified clusters.  The difference
+        panel highlights the <20 points that differ out of the 3000 points. 
 
 
 .. topic:: Examples:
@@ -314,7 +317,7 @@ is given.
    :target: ../auto_examples/cluster/plot_affinity_propagation.html
    :align: center
    :scale: 50
-   :alt:
+   :alt: Three distinct clusters created using affinity propagation.
 
 
 Affinity Propagation can be interesting as it chooses the number of
@@ -467,12 +470,12 @@ computed using a function of a gradient of the image.
 .. |noisy_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_001.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
-    :alt:
+    :alt: An image of connected nearly equally sized circles. The circles are in shades of green, blue, and yellow. The entire image is pixelated, blurry.
 
 .. |segmented_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_002.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
-    :alt:
+    :alt: An image of connected nearly equally sized circles. Each circle has a distinct color: dark green, light green, blue, and yellow. The clarity of the image is much better compared to the previous one.
 
 .. centered:: |noisy_img| |segmented_img|
 
@@ -653,12 +656,20 @@ the roll.
 .. |unstructured| image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_001.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
         :scale: 49
-        :alt:
+        :alt: A 3D scatter plot of 1500 data points. Points are located along a swirl
+             or swiss roll. The six clusters are highlighted in different colours. 
+             The hierarchical clustering is performed without connectivity
+             constraints on the structure and is solely based on distance therefore
+             clusters extend to multiple layers of the roll.
 
 .. |structured| image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_002.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
         :scale: 49
-        :alt:
+        :alt: A 3D scatter plot of 1500 data points. Points are located along a swirl
+              or swiss roll. The six clusters are highlighted in different colours.
+              The hierarchical clustering is performed with connectivity constraints
+              that respect the structure of the roll therefore the clusters form a nice
+              parcellation along the roll.
 
 .. centered:: |unstructured| |structured|
 
@@ -819,7 +830,7 @@ by black points below.
 .. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_001.png
         :target: ../auto_examples/cluster/plot_dbscan.html
         :scale: 50
-        :alt:
+        :alt: A bubble chart that maps three clusters, with the x-axis from -2.5 to 2 and the y-axis from -2 to 2.5. Outliers are indicated separately and are evenly spaced around the clusters.
 
 .. centered:: |dbscan_results|
 

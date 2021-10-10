@@ -179,7 +179,8 @@ object to the same sample.
    :target: ../auto_examples/covariance/plot_lw_vs_oas.html
    :align: center
    :scale: 75%
-   :alt:
+   :alt: Two figures. One of them plots the Mean Squared Error difference between a LedoitWolf and an OAS estimator of the covariance with the y-axis from 0 to 60.  The other one compares the Shrinkage covariance estimation between the  LedoitWolf  and OAS, with the  y-axis from 0 to 1. In iboth figures the x-axis is the number of samples from 5 to 30.
+   
 
 
 .. _sparse_inverse_covariance:
@@ -212,7 +213,8 @@ cross-validation to automatically set the ``alpha`` parameter.
    :target: ../auto_examples/covariance/plot_sparse_cov.html
    :align: center
    :scale: 60%
-   :alt:
+   :alt: Various matrix using different estimators: Empircal covariance, Empircal precision, Ledoit-Wolf covariance, Ledoit-Wolf precision, GraphicaLassoCV covariance, GraphicaLassoCV precision, True covariance and True Precision.
+
 
    *A comparison of maximum likelihood, shrinkage and sparse estimates of
    the covariance and precision matrix in the very small samples
@@ -336,7 +338,7 @@ attributes of a :class:`MinCovDet` robust covariance estimator object.
 .. |robust_vs_emp| image:: ../auto_examples/covariance/images/sphx_glr_plot_robust_vs_empirical_covariance_001.png
    :target: ../auto_examples/covariance/plot_robust_vs_empirical_covariance.html
    :scale: 49%
-   :alt:
+   :alt: Two line charts comparing estimation errors that are made when using various types of location and covariance estimates on contaminated Gaussian distributed data sets.
 
 .. |mahalanobis| image:: ../auto_examples/covariance/images/sphx_glr_plot_mahalanobis_distances_001.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html

@@ -61,7 +61,7 @@ small:
    :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_biclustering_003.png
    :align: center
    :scale: 50
-   :alt:
+   :alt: The graph is a square heat map, 5x5, with axes from 0 to 250. The variance of the values within each bicluster is small, causing a checkerboard effect.
 
    An example of checkerboard biclusters.
 
