@@ -40,7 +40,7 @@ def test_write_label_html(checked):
     with closing(StringIO()) as out:
         _write_label_html(out, name, tool_tip, checked=checked)
         html_label = out.getvalue()
-        assert "LogisticRegression</label>" in html_label
+        assert "LogisticRegression</div></label>" in html_label
         assert html_label.startswith('<div class="sk-label-container">')
         assert "<pre>hello-world</pre>" in html_label
         if checked:
@@ -174,7 +174,7 @@ def test_estimator_html_repr_pipeline():
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
         assert str(num_trans["pass"]) in html_output
-        assert "passthrough</label>" in html_output
+        assert "passthrough</div></label>" in html_output
         assert str(num_trans["imputer"]) in html_output
 
         for _, _, cols in preprocess.transformers:
@@ -226,9 +226,9 @@ def test_stacking_regressor(final_estimator):
     html_output = estimator_html_repr(reg)
 
     assert str(reg.estimators[0][0]) in html_output
-    assert "LinearSVR</label>" in html_output
+    assert "LinearSVR</div></label>" in html_output
     if final_estimator is None:
-        assert "RidgeCV</label>" in html_output
+        assert "RidgeCV</div></label>" in html_output
     else:
         assert final_estimator.__class__.__name__ in html_output
 
@@ -241,7 +241,7 @@ def test_birch_duck_typing_meta():
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
         assert f"<pre>{str(birch.n_clusters)}" in html_output
-        assert "AgglomerativeClustering</label>" in html_output
+        assert "AgglomerativeClustering</div></label>" in html_output
 
     # outer estimator contains all changes
     assert f"<pre>{str(birch)}" in html_output
@@ -255,7 +255,7 @@ def test_ovo_classifier_duck_typing_meta():
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
         assert f"<pre>{str(ovo.estimator)}" in html_output
-        assert "LinearSVC</label>" in html_output
+        assert "LinearSVC</div></label>" in html_output
 
     # outer estimator
     assert f"<pre>{str(ovo)}" in html_output
@@ -287,5 +287,7 @@ def test_show_arrow_pipeline():
 
     html_output = estimator_html_repr(pipe)
     assert (
-        '<label class="sk-toggleable__label sk-toggleable__label-arrow"' in html_output
+        'class="sk-toggleable__label sk-toggleable__label-arrow"><div'
+        ' class="sk-toggleable__name">Pipeline</div>'
+        in html_output
     )
