@@ -23,7 +23,6 @@ DOCSTRING_IGNORE_LIST = [
     "PassiveAggressiveClassifier",
     "PassiveAggressiveRegressor",
     "QuadraticDiscriminantAnalysis",
-    "SparseRandomProjection",
     "SpectralBiclustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
