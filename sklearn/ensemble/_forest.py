@@ -374,6 +374,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             else:
                 sample_weight = expanded_class_weight
 
+        if not self.bootstrap and self.max_samples:
+            raise ValueError("Sub-sample size only available if bootstrap=True")
+
         # Get bootstrap sample size
         n_samples_bootstrap = _get_n_samples_bootstrap(
             n_samples=X.shape[0], max_samples=self.max_samples
@@ -400,9 +403,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available if bootstrap=True")
-
-        if not self.bootstrap and self.max_samples:
-            raise ValueError("Sub-sample size only available if bootstrap=True")
 
         random_state = check_random_state(self.random_state)
 
