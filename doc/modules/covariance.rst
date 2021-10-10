@@ -154,7 +154,9 @@ object to the same sample.
    :target: ../auto_examples/covariance/plot_covariance_estimation.html
    :align: center
    :scale: 65%
-   :alt:
+   :alt: A plot comparing shrinkage coefficients by regularization parameter: 
+   shrinkage coefficient on the x-axis and error: negative log-likelihood on test data 
+   on the y-axis.
 
    Bias-variance trade-off when setting the shrinkage: comparing the
    choices of Ledoit-Wolf and OAS estimators
@@ -343,7 +345,7 @@ attributes of a :class:`MinCovDet` robust covariance estimator object.
 .. |mahalanobis| image:: ../auto_examples/covariance/images/sphx_glr_plot_mahalanobis_distances_001.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
    :scale: 49%
-   :alt:
+   :alt: Scatterplot with plotted Mahalanobis distances.
 
 
 
