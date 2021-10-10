@@ -156,14 +156,14 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "%s is not a valid kernel. Only rbf and knn"
                 " or an explicit function "
-                " are supported at this time." % self.kernel
+                " are supported at this time."
+                % self.kernel
             )
 
     @abstractmethod
     def _build_graph(self):
         raise NotImplementedError(
-            "Graph construction must be implemented"
-            " to fit a label propagation model."
+            "Graph construction must be implemented to fit a label propagation model."
         )
 
     def predict(self, X):
@@ -262,8 +262,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             alpha is None or alpha <= 0.0 or alpha >= 1.0
         ):
             raise ValueError(
-                "alpha=%s is invalid: it must be inside "
-                "the open interval (0, 1)" % alpha
+                "alpha=%s is invalid: it must be inside the open interval (0, 1)"
+                % alpha
             )
         y = np.asarray(y)
         unlabeled = y == -1
@@ -375,6 +375,12 @@ class LabelPropagation(BaseLabelPropagation):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_iter_ : int
         Number of iterations run.
@@ -507,6 +513,12 @@ class LabelSpreading(BaseLabelPropagation):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_iter_ : int
         Number of iterations run.

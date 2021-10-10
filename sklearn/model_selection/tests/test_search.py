@@ -29,7 +29,6 @@ from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import is_classifier
-from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
@@ -390,15 +389,15 @@ def test_no_refit():
             "inverse_transform",
         ):
             error_msg = (
-                f"refit=False. {fn_name} is available only after "
-                f"refitting on the best parameters"
+                f"`refit=False`. {fn_name} is available only after "
+                "refitting on the best parameters"
             )
-            with pytest.raises(NotFittedError, match=error_msg):
+            with pytest.raises(AttributeError, match=error_msg):
                 getattr(grid_search, fn_name)(X)
 
     # Test that an invalid refit param raises appropriate error messages
     error_msg = (
-        "For multi-metric scoring, the parameter refit must be set to" " a scorer key"
+        "For multi-metric scoring, the parameter refit must be set to a scorer key"
     )
     for refit in ["", 5, True, "recall", "accuracy"]:
         with pytest.raises(ValueError, match=error_msg):
@@ -1258,7 +1257,7 @@ def test_search_cv_score_samples_error(search_cv):
 
     # Make sure to error out when underlying estimator does not implement
     # the method `score_samples`
-    err_msg = "'DecisionTreeClassifier' object has no attribute " "'score_samples'"
+    err_msg = "'DecisionTreeClassifier' object has no attribute 'score_samples'"
 
     with pytest.raises(AttributeError, match=err_msg):
         search_cv.score_samples(X)
@@ -1565,9 +1564,13 @@ def test_grid_search_failing_classifier():
         refit=False,
         error_score=0.0,
     )
-    warning_message = (
-        "Estimator fit failed. The score on this train-test partition "
-        "for these parameters will be set to 0.0.*."
+
+    warning_message = re.compile(
+        "5 fits failed.+total of 15.+The score on these"
+        r" train-test partitions for these parameters will be set to 0\.0.+"
+        "5 fits failed with the following error.+ValueError.+Failing classifier failed"
+        " as required",
+        flags=re.DOTALL,
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
         gs.fit(X, y)
@@ -1598,9 +1601,12 @@ def test_grid_search_failing_classifier():
         refit=False,
         error_score=float("nan"),
     )
-    warning_message = (
-        "Estimator fit failed. The score on this train-test partition "
-        "for these parameters will be set to nan."
+    warning_message = re.compile(
+        "5 fits failed.+total of 15.+The score on these"
+        r" train-test partitions for these parameters will be set to nan.+"
+        "5 fits failed with the following error.+ValueError.+Failing classifier failed"
+        " as required",
+        flags=re.DOTALL,
     )
     with pytest.warns(FitFailedWarning, match=warning_message):
         gs.fit(X, y)
@@ -1619,6 +1625,27 @@ def test_grid_search_failing_classifier():
     # Check that failed estimator has the highest rank
     assert ranks[clf.FAILING_PARAMETER] == 3
     assert gs.best_index_ != clf.FAILING_PARAMETER
+
+
+def test_grid_search_classifier_all_fits_fail():
+    X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+    clf = FailingClassifier()
+
+    gs = GridSearchCV(
+        clf,
+        [{"parameter": [FailingClassifier.FAILING_PARAMETER] * 3}],
+        error_score=0.0,
+    )
+
+    warning_message = re.compile(
+        "All the 15 fits failed.+"
+        "15 fits failed with the following error.+ValueError.+Failing classifier failed"
+        " as required",
+        flags=re.DOTALL,
+    )
+    with pytest.raises(ValueError, match=warning_message):
+        gs.fit(X, y)
 
 
 def test_grid_search_failing_classifier_raise():
@@ -1914,9 +1941,11 @@ def test_empty_cv_iterator_error():
     # assert that this raises an error
     with pytest.raises(
         ValueError,
-        match="No fits were performed. "
-        "Was the CV iterator empty\\? "
-        "Were there no candidates\\?",
+        match=(
+            "No fits were performed. "
+            "Was the CV iterator empty\\? "
+            "Were there no candidates\\?"
+        ),
     ):
         ridge.fit(X[:train_size], y[:train_size])
 
@@ -1937,9 +1966,11 @@ def test_random_search_bad_cv():
     # assert that this raises an error
     with pytest.raises(
         ValueError,
-        match="cv.split and cv.get_n_splits returned "
-        "inconsistent results. Expected \\d+ "
-        "splits, got \\d+",
+        match=(
+            "cv.split and cv.get_n_splits returned "
+            "inconsistent results. Expected \\d+ "
+            "splits, got \\d+"
+        ),
     ):
         ridge.fit(X[:train_size], y[:train_size])
 
@@ -2108,13 +2139,18 @@ def test_callable_multimetric_error_failing_clf():
         error_score=0.1,
     )
 
-    with pytest.warns(FitFailedWarning, match="Estimator fit failed"):
+    warning_message = re.compile(
+        "5 fits failed.+total of 15.+The score on these"
+        r" train-test partitions for these parameters will be set to 0\.1",
+        flags=re.DOTALL,
+    )
+    with pytest.warns(FitFailedWarning, match=warning_message):
         gs.fit(X, y)
 
     assert_allclose(gs.cv_results_["mean_test_acc"], [1, 1, 0.1])
 
 
-def test_callable_multimetric_clf_all_fails():
+def test_callable_multimetric_clf_all_fits_fail():
     # Warns and raises when all estimator fails to fit.
     def custom_scorer(est, X, y):
         return {"acc": 1}
@@ -2125,15 +2161,20 @@ def test_callable_multimetric_clf_all_fails():
 
     gs = GridSearchCV(
         clf,
-        [{"parameter": [2, 2, 2]}],
+        [{"parameter": [FailingClassifier.FAILING_PARAMETER] * 3}],
         scoring=custom_scorer,
         refit=False,
         error_score=0.1,
     )
 
-    with pytest.warns(FitFailedWarning, match="Estimator fit failed"), pytest.raises(
-        NotFittedError, match="All estimators failed to fit"
-    ):
+    individual_fit_error_message = "ValueError: Failing classifier failed as required"
+    error_message = re.compile(
+        "All the 15 fits failed.+your model is misconfigured.+"
+        f"{individual_fit_error_message}",
+        flags=re.DOTALL,
+    )
+
+    with pytest.raises(ValueError, match=error_message):
         gs.fit(X, y)
 
 
@@ -2339,7 +2380,7 @@ def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
 @pytest.mark.parametrize("return_train_score", [True, False])
 def test_search_cv_verbose_3(capsys, return_train_score):
     """Check that search cv with verbose>2 shows the score for single
-    metrics. non-regression test fo #19658."""
+    metrics. non-regression test for #19658."""
     X, y = make_classification(n_samples=100, n_classes=2, flip_y=0.2, random_state=0)
     clf = LinearSVC(random_state=0)
     grid = {"C": [0.1]}

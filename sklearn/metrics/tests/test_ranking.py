@@ -17,7 +17,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import auc
@@ -285,15 +284,23 @@ def test_roc_curve_one_label():
     y_true = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     y_pred = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     # assert there are warnings
-    w = UndefinedMetricWarning
-    fpr, tpr, thresholds = assert_warns(w, roc_curve, y_true, y_pred)
+    expected_message = (
+        "No negative samples in y_true, false positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        fpr, tpr, thresholds = roc_curve(y_true, y_pred)
+
     # all true labels, all fpr should be nan
     assert_array_equal(fpr, np.full(len(thresholds), np.nan))
     assert fpr.shape == tpr.shape
     assert fpr.shape == thresholds.shape
 
     # assert there are warnings
-    fpr, tpr, thresholds = assert_warns(w, roc_curve, [1 - x for x in y_true], y_pred)
+    expected_message = (
+        "No positive samples in y_true, true positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        fpr, tpr, thresholds = roc_curve([1 - x for x in y_true], y_pred)
     # all negative labels, all tpr should be nan
     assert_array_equal(tpr, np.full(len(thresholds), np.nan))
     assert fpr.shape == tpr.shape
@@ -345,7 +352,12 @@ def test_roc_curve_toydata():
     y_true = [0, 0]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no positive sample in y_true
-    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
+    expected_message = (
+        "No positive samples in y_true, true positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        tpr, fpr, _ = roc_curve(y_true, y_score)
+
     with pytest.raises(ValueError):
         roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
@@ -354,7 +366,12 @@ def test_roc_curve_toydata():
     y_true = [1, 1]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no negative sample in y_true
-    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
+    expected_message = (
+        "No negative samples in y_true, false positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        tpr, fpr, _ = roc_curve(y_true, y_score)
+
     with pytest.raises(ValueError):
         roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
@@ -451,7 +468,7 @@ def test_auc_errors():
     # x is not in order
     x = [2, 1, 3, 4]
     y = [5, 6, 7, 8]
-    error_message = "x is neither increasing nor decreasing : " "{}".format(np.array(x))
+    error_message = "x is neither increasing nor decreasing : {}".format(np.array(x))
     with pytest.raises(ValueError, match=re.escape(error_message)):
         auc(x, y)
 
@@ -1462,7 +1479,7 @@ def test_coverage_error():
     assert_almost_equal(coverage_error([[1, 1, 0]], [[0.5, 0.75, 0.25]]), 2)
     assert_almost_equal(coverage_error([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
 
-    # Non trival case
+    # Non trivial case
     assert_almost_equal(
         coverage_error([[0, 1, 0], [1, 1, 0]], [[0.1, 10.0, -3], [0, 1, 3]]),
         (1 + 3) / 2.0,
@@ -1521,7 +1538,7 @@ def test_label_ranking_loss():
     assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.25, 0.5, 0.5]]), 0)
     assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 0)
 
-    # Non trival case
+    # Non trivial case
     assert_almost_equal(
         label_ranking_loss([[0, 1, 0], [1, 1, 0]], [[0.1, 10.0, -3], [0, 1, 3]]),
         (0 + 2 / 2) / 2.0,
@@ -1853,8 +1870,12 @@ def test_top_k_accuracy_score_warning(y_true, k):
             [0.3, 0.2, 0.1, 0.4],
         ]
     )
-    w = UndefinedMetricWarning
-    score = assert_warns(w, top_k_accuracy_score, y_true, y_score, k=k)
+    expected_message = (
+        r"'k' \(\d+\) greater than or equal to 'n_classes' \(\d+\) will result in a "
+        "perfect score and is therefore meaningless."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        score = top_k_accuracy_score(y_true, y_score, k=k)
     assert score == 1
 
 

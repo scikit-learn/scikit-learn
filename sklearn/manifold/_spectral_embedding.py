@@ -238,7 +238,7 @@ def spectral_embedding(
     except ImportError as e:
         if eigen_solver == "amg":
             raise ValueError(
-                "The eigen_solver was set to 'amg', but pyamg is " "not available."
+                "The eigen_solver was set to 'amg', but pyamg is not available."
             ) from e
 
     if eigen_solver is None:
@@ -258,8 +258,7 @@ def spectral_embedding(
 
     if not _graph_is_connected(adjacency):
         warnings.warn(
-            "Graph is not fully connected, spectral embedding"
-            " may not work as expected."
+            "Graph is not fully connected, spectral embedding may not work as expected."
         )
 
     laplacian, dd = csgraph_laplacian(
@@ -368,7 +367,7 @@ def spectral_embedding(
             X = random_state.rand(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
             _, diffusion_map = lobpcg(
-                laplacian, X, tol=1e-15, largest=False, maxiter=2000
+                laplacian, X, tol=1e-5, largest=False, maxiter=2000
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
@@ -463,6 +462,12 @@ class SpectralEmbedding(BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_neighbors_ : int
         Number of nearest neighbors effectively used.
 
@@ -522,7 +527,7 @@ class SpectralEmbedding(BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -534,8 +539,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : array-like of shape (n_samples, n_samples),
@@ -593,8 +598,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : {array-like, sparse matrix}, shape (n_samples, n_samples),
@@ -622,19 +627,14 @@ class SpectralEmbedding(BaseEstimator):
                 "precomputed_nearest_neighbors",
             }:
                 raise ValueError(
-                    (
-                        "%s is not a valid affinity. Expected "
-                        "'precomputed', 'rbf', 'nearest_neighbors' "
-                        "or a callable."
-                    )
+                    "%s is not a valid affinity. Expected "
+                    "'precomputed', 'rbf', 'nearest_neighbors' "
+                    "or a callable."
                     % self.affinity
                 )
         elif not callable(self.affinity):
             raise ValueError(
-                (
-                    "'affinity' is expected to be an affinity "
-                    "name or a callable. Got: %s"
-                )
+                "'affinity' is expected to be an affinity name or a callable. Got: %s"
                 % self.affinity
             )
 
@@ -653,8 +653,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : {array-like, sparse matrix} of shape (n_samples, n_samples),

@@ -63,8 +63,8 @@ class BaseCrossValidator(metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
@@ -171,8 +171,8 @@ class LeaveOneOut(BaseCrossValidator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : object
             Always ignored, exists for compatibility.
@@ -243,8 +243,9 @@ class LeavePOut(BaseCrossValidator):
         n_samples = _num_samples(X)
         if n_samples <= self.p:
             raise ValueError(
-                "p={} must be strictly less than the number of "
-                "samples={}".format(self.p, n_samples)
+                "p={} must be strictly less than the number of samples={}".format(
+                    self.p, n_samples
+                )
             )
         for combination in combinations(range(n_samples), self.p):
             yield np.array(combination)
@@ -255,8 +256,8 @@ class LeavePOut(BaseCrossValidator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : object
             Always ignored, exists for compatibility.
@@ -289,7 +290,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             )
 
         if not isinstance(shuffle, bool):
-            raise TypeError("shuffle must be True or False;" " got {0}".format(shuffle))
+            raise TypeError("shuffle must be True or False; got {0}".format(shuffle))
 
         if not shuffle and random_state is not None:  # None is the default
             raise ValueError(
@@ -308,8 +309,8 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
@@ -548,8 +549,8 @@ class GroupKFold(_BaseKFold):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
@@ -673,11 +674,9 @@ class StratifiedKFold(_BaseKFold):
             )
         if self.n_splits > min_groups:
             warnings.warn(
-                (
-                    "The least populated class in y has only %d"
-                    " members, which is less than n_splits=%d."
-                    % (min_groups, self.n_splits)
-                ),
+                "The least populated class in y has only %d"
+                " members, which is less than n_splits=%d."
+                % (min_groups, self.n_splits),
                 UserWarning,
             )
 
@@ -717,8 +716,8 @@ class StratifiedKFold(_BaseKFold):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             Note that providing ``y`` is sufficient to generate the splits and
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
@@ -875,11 +874,9 @@ class StratifiedGroupKFold(_BaseKFold):
         n_smallest_class = np.min(y_cnt)
         if self.n_splits > n_smallest_class:
             warnings.warn(
-                (
-                    "The least populated class in y has only %d"
-                    " members, which is less than n_splits=%d."
-                    % (n_smallest_class, self.n_splits)
-                ),
+                "The least populated class in y has only %d"
+                " members, which is less than n_splits=%d."
+                % (n_smallest_class, self.n_splits),
                 UserWarning,
             )
         n_classes = len(y_cnt)
@@ -1046,8 +1043,8 @@ class TimeSeriesSplit(_BaseKFold):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Always ignored, exists for compatibility.
@@ -1075,17 +1072,13 @@ class TimeSeriesSplit(_BaseKFold):
         # Make sure we have enough samples for the given split parameters
         if n_folds > n_samples:
             raise ValueError(
-                (
-                    f"Cannot have number of folds={n_folds} greater"
-                    f" than the number of samples={n_samples}."
-                )
+                f"Cannot have number of folds={n_folds} greater"
+                f" than the number of samples={n_samples}."
             )
         if n_samples - gap - (test_size * n_splits) <= 0:
             raise ValueError(
-                (
-                    f"Too many splits={n_splits} for number of samples"
-                    f"={n_samples} with test_size={test_size} and gap={gap}."
-                )
+                f"Too many splits={n_splits} for number of samples"
+                f"={n_samples} with test_size={test_size} and gap={gap}."
             )
 
         indices = np.arange(n_samples)
@@ -1194,8 +1187,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
@@ -1326,8 +1319,8 @@ class LeavePGroupsOut(BaseCrossValidator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
@@ -1392,8 +1385,8 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
@@ -1579,8 +1572,8 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
@@ -1826,8 +1819,8 @@ class GroupShuffleSplit(ShuffleSplit):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
@@ -1998,8 +1991,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             Note that providing ``y`` is sufficient to generate the splits and
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
@@ -2433,7 +2426,7 @@ def train_test_split(
     if shuffle is False:
         if stratify is not None:
             raise ValueError(
-                "Stratified train/test split is not implemented for " "shuffle=False"
+                "Stratified train/test split is not implemented for shuffle=False"
             )
 
         train = np.arange(n_train)

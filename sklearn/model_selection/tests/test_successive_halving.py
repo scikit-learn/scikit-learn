@@ -45,16 +45,14 @@ class FastClassifier(DummyClassifier):
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
-    (
-        "aggressive_elimination,"
-        "max_resources,"
-        "expected_n_iterations,"
-        "expected_n_required_iterations,"
-        "expected_n_possible_iterations,"
-        "expected_n_remaining_candidates,"
-        "expected_n_candidates,"
-        "expected_n_resources,"
-    ),
+    "aggressive_elimination,"
+    "max_resources,"
+    "expected_n_iterations,"
+    "expected_n_required_iterations,"
+    "expected_n_possible_iterations,"
+    "expected_n_remaining_candidates,"
+    "expected_n_candidates,"
+    "expected_n_resources,",
     [
         # notice how it loops at the beginning
         # also, the number of candidates evaluated at the last iteration is
@@ -120,13 +118,11 @@ def test_aggressive_elimination(
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
-    (
-        "min_resources,"
-        "max_resources,"
-        "expected_n_iterations,"
-        "expected_n_possible_iterations,"
-        "expected_n_resources,"
-    ),
+    "min_resources,"
+    "max_resources,"
+    "expected_n_iterations,"
+    "expected_n_possible_iterations,"
+    "expected_n_resources,",
     [
         # with enough resources
         ("smallest", "auto", 2, 4, [20, 60]),
@@ -252,8 +248,10 @@ def test_resource_parameter(Est):
 
     with pytest.raises(
         ValueError,
-        match="Cannot use parameter c as the resource since it is part "
-        "of the searched parameters.",
+        match=(
+            "Cannot use parameter c as the resource since it is part "
+            "of the searched parameters."
+        ),
     ):
         param_grid = {"a": [1, 2], "b": [1, 2], "c": [1, 3]}
         sh = HalvingGridSearchCV(
@@ -312,7 +310,7 @@ def test_random_search_discrete_distributions(
     # depends whether the distributions are 'all lists' or not (see
     # ParameterSampler for details). This is somewhat redundant with the checks
     # in ParameterSampler but interaction bugs were discovered during
-    # developement of SH
+    # development of SH
 
     n_samples = 1024
     X, y = make_classification(n_samples=n_samples, random_state=0)

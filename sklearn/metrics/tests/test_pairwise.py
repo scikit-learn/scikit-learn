@@ -262,8 +262,7 @@ def callable_rbf_kernel(x, y, **kwds):
             _minkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version < parse_version("1.0"),
-                reason="minkowski does not accept the w "
-                "parameter prior to scipy 1.0.",
+                reason="minkowski does not accept the w parameter prior to scipy 1.0.",
             ),
         ),
         pytest.param(
@@ -272,8 +271,7 @@ def callable_rbf_kernel(x, y, **kwds):
             _minkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version < parse_version("1.0"),
-                reason="minkowski does not accept the w "
-                "parameter prior to scipy 1.0.",
+                reason="minkowski does not accept the w parameter prior to scipy 1.0.",
             ),
         ),
         pytest.param(
@@ -282,7 +280,7 @@ def callable_rbf_kernel(x, y, **kwds):
             _wminkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski " "and it has been already tested.",
+                reason="wminkowski is now minkowski and it has been already tested.",
             ),
         ),
         pytest.param(
@@ -291,7 +289,7 @@ def callable_rbf_kernel(x, y, **kwds):
             _wminkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski " "and it has been already tested.",
+                reason="wminkowski is now minkowski and it has been already tested.",
             ),
         ),
         (pairwise_kernels, "polynomial", {"degree": 1}),
@@ -895,7 +893,7 @@ def test_nan_euclidean_distances_infinite_values(X, Y):
     with pytest.raises(ValueError) as excinfo:
         nan_euclidean_distances(X, Y=Y)
 
-    exp_msg = "Input contains infinity or a value too large for " "dtype('float64')."
+    exp_msg = "Input contains infinity or a value too large for dtype('float64')."
     assert exp_msg == str(excinfo.value)
 
 

@@ -11,7 +11,7 @@ from scipy import sparse
 import pytest
 
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.metaestimators import available_if, if_delegate_has_method
 from sklearn.utils._testing import (
     assert_raises,
     assert_warns,
@@ -107,7 +107,7 @@ def test_assert_raise_message():
 
 
 def test_ignore_warning():
-    # This check that ignore_warning decorateur and context manager are working
+    # This check that ignore_warning decorator and context manager are working
     # as expected
     def _warning_function():
         warnings.warn("deprecation warning", DeprecationWarning)
@@ -119,16 +119,12 @@ def test_ignore_warning():
     # Check the function directly
     assert_no_warnings(ignore_warnings(_warning_function))
     assert_no_warnings(ignore_warnings(_warning_function, category=DeprecationWarning))
-    assert_warns(
-        DeprecationWarning, ignore_warnings(_warning_function, category=UserWarning)
-    )
-    assert_warns(
-        UserWarning, ignore_warnings(_multiple_warning_function, category=FutureWarning)
-    )
-    assert_warns(
-        DeprecationWarning,
-        ignore_warnings(_multiple_warning_function, category=UserWarning),
-    )
+    with pytest.warns(DeprecationWarning):
+        ignore_warnings(_warning_function, category=UserWarning)()
+    with pytest.warns(UserWarning):
+        ignore_warnings(_multiple_warning_function, category=FutureWarning)()
+    with pytest.warns(DeprecationWarning):
+        ignore_warnings(_multiple_warning_function, category=UserWarning)()
     assert_no_warnings(
         ignore_warnings(_warning_function, category=(DeprecationWarning, UserWarning))
     )
@@ -162,9 +158,12 @@ def test_ignore_warning():
     assert_no_warnings(decorator_no_warning)
     assert_no_warnings(decorator_no_warning_multiple)
     assert_no_warnings(decorator_no_deprecation_warning)
-    assert_warns(DeprecationWarning, decorator_no_user_warning)
-    assert_warns(UserWarning, decorator_no_deprecation_multiple_warning)
-    assert_warns(DeprecationWarning, decorator_no_user_multiple_warning)
+    with pytest.warns(DeprecationWarning):
+        decorator_no_user_warning()
+    with pytest.warns(UserWarning):
+        decorator_no_deprecation_multiple_warning()
+    with pytest.warns(DeprecationWarning):
+        decorator_no_user_multiple_warning()
 
     # Check the context manager
     def context_manager_no_warning():
@@ -194,9 +193,12 @@ def test_ignore_warning():
     assert_no_warnings(context_manager_no_warning)
     assert_no_warnings(context_manager_no_warning_multiple)
     assert_no_warnings(context_manager_no_deprecation_warning)
-    assert_warns(DeprecationWarning, context_manager_no_user_warning)
-    assert_warns(UserWarning, context_manager_no_deprecation_multiple_warning)
-    assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
+    with pytest.warns(DeprecationWarning):
+        context_manager_no_user_warning()
+    with pytest.warns(UserWarning):
+        context_manager_no_deprecation_multiple_warning()
+    with pytest.warns(DeprecationWarning):
+        context_manager_no_user_multiple_warning()
 
     # Check that passing warning class as first positional argument
     warning_class = UserWarning
@@ -222,7 +224,11 @@ class TestWarns(unittest.TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             filters_orig = warnings.filters[:]
-            assert assert_warns(UserWarning, f) == 3
+
+            # TODO: remove in 1.2
+            with pytest.warns(FutureWarning):
+                assert assert_warns(UserWarning, f) == 3
+
             # test that assert_warns doesn't have side effects on warnings
             # filters
             assert warnings.filters == filters_orig
@@ -230,6 +236,8 @@ class TestWarns(unittest.TestCase):
             assert_no_warnings(f)
         assert assert_no_warnings(lambda x: x, 1) == 1
 
+    # TODO: remove in 1.2
+    @ignore_warnings(category=FutureWarning)
     def test_warn_wrong_warning(self):
         def f():
             warnings.warn("yo", FutureWarning)
@@ -420,7 +428,7 @@ class MockMetaEstimator:
         """
         self.delegate = delegate
 
-    @if_delegate_has_method(delegate=("delegate"))
+    @available_if(lambda self: hasattr(self.delegate, "predict"))
     def predict(self, X):
         """This is available only if delegate has predict.
 
@@ -431,7 +439,7 @@ class MockMetaEstimator:
         """
         return self.delegate.predict(X)
 
-    @if_delegate_has_method(delegate=("delegate"))
+    @available_if(lambda self: hasattr(self.delegate, "score"))
     @deprecated("Testing a deprecated delegated method")
     def score(self, X):
         """This is available only if delegate has score.
@@ -442,7 +450,7 @@ class MockMetaEstimator:
             Parameter y
         """
 
-    @if_delegate_has_method(delegate=("delegate"))
+    @available_if(lambda self: hasattr(self.delegate, "predict_proba"))
     def predict_proba(self, X):
         """This is available only if delegate has predict_proba.
 
@@ -458,7 +466,63 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
-def test_check_docstring_parameters():
+class MockMetaEstimatorDeprecatedDelegation:
+    def __init__(self, delegate):
+        """MetaEstimator to check if doctest on delegated methods work.
+
+        Parameters
+        ---------
+        delegate : estimator
+            Delegated estimator.
+        """
+        self.delegate = delegate
+
+    @if_delegate_has_method(delegate="delegate")
+    def predict(self, X):
+        """This is available only if delegate has predict.
+
+        Parameters
+        ----------
+        y : ndarray
+            Parameter y
+        """
+        return self.delegate.predict(X)
+
+    @if_delegate_has_method(delegate="delegate")
+    @deprecated("Testing a deprecated delegated method")
+    def score(self, X):
+        """This is available only if delegate has score.
+
+        Parameters
+        ---------
+        y : ndarray
+            Parameter y
+        """
+
+    @if_delegate_has_method(delegate="delegate")
+    def predict_proba(self, X):
+        """This is available only if delegate has predict_proba.
+
+        Parameters
+        ---------
+        X : ndarray
+            Parameter X
+        """
+        return X
+
+    @deprecated("Testing deprecated function with wrong params")
+    def fit(self, X, y):
+        """Incorrect docstring but should not be tested"""
+
+
+@pytest.mark.parametrize(
+    "mock_meta",
+    [
+        MockMetaEstimator(delegate=MockEst()),
+        MockMetaEstimatorDeprecatedDelegation(delegate=MockEst()),
+    ],
+)
+def test_check_docstring_parameters(mock_meta):
     pytest.importorskip(
         "numpydoc", reason="numpydoc is required to test the docstrings"
     )
@@ -475,6 +539,7 @@ def test_check_docstring_parameters():
         check_docstring_parameters(Klass.f_bad_sections)
 
     incorrect = check_docstring_parameters(f_check_param_definition)
+    mock_meta_name = mock_meta.__class__.__name__
     assert incorrect == [
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('a: int')",
@@ -523,7 +588,7 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + "sklearn.utils.tests.test_testing.MockMetaEstimator.predict",
+            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
             "There's a parameter name mismatch in function docstring w.r.t."
             " function signature, at index 0 diff: 'X' != 'y'",
             "Full diff:",
@@ -534,7 +599,7 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + "sklearn.utils.tests.test_testing.MockMetaEstimator."
+            + f"sklearn.utils.tests.test_testing.{mock_meta_name}."
             + "predict_proba",
             "Parameters in function docstring have less items w.r.t. function"
             " signature, first missing item: X",
@@ -544,7 +609,7 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + "sklearn.utils.tests.test_testing.MockMetaEstimator.score",
+            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.score",
             "Parameters in function docstring have less items w.r.t. function"
             " signature, first missing item: X",
             "Full diff:",
@@ -552,7 +617,7 @@ def test_check_docstring_parameters():
             "+ []",
         ],
         [
-            "In function: " + "sklearn.utils.tests.test_testing.MockMetaEstimator.fit",
+            "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
             "Parameters in function docstring have less items w.r.t. function"
             " signature, first missing item: X",
             "Full diff:",
@@ -560,8 +625,6 @@ def test_check_docstring_parameters():
             "+ []",
         ],
     ]
-
-    mock_meta = MockMetaEstimator(delegate=MockEst())
 
     for msg, f in zip(
         messages,

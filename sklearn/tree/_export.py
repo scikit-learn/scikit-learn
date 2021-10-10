@@ -433,8 +433,9 @@ class _DOTTreeExporter(_BaseTreeExporter):
                 )
         else:
             raise ValueError(
-                "'precision' should be an integer. Got {}"
-                " instead.".format(type(precision))
+                "'precision' should be an integer. Got {} instead.".format(
+                    type(precision)
+                )
             )
 
         # The depth of each node for plotting with 'leaf' option
@@ -449,8 +450,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         if self.feature_names is not None:
             if len(self.feature_names) != decision_tree.n_features_in_:
                 raise ValueError(
-                    "Length of feature_names, %d "
-                    "does not match number of features, %d"
+                    "Length of feature_names, %d does not match number of features, %d"
                     % (len(self.feature_names), decision_tree.n_features_in_)
                 )
         # each part writes to out_file
@@ -609,8 +609,9 @@ class _MPLTreeExporter(_BaseTreeExporter):
                 )
         else:
             raise ValueError(
-                "'precision' should be an integer. Got {}"
-                " instead.".format(type(precision))
+                "'precision' should be an integer. Got {} instead.".format(
+                    type(precision)
+                )
             )
 
         # The depth of each node for plotting with 'leaf' option
@@ -838,7 +839,7 @@ def export_graphviz(
 
     Returns
     -------
-    dot_data : string
+    dot_data : str
         String representation of the input tree in GraphViz dot format.
         Only returned if ``out_file`` is None.
 
@@ -960,7 +961,7 @@ def export_text(
 
     Returns
     -------
-    report : string
+    report : str
         Text summary of all the rules in the decision tree.
 
     Examples
@@ -997,8 +998,8 @@ def export_text(
 
     if feature_names is not None and len(feature_names) != tree_.n_features:
         raise ValueError(
-            "feature_names must contain "
-            "%d elements, got %d" % (tree_.n_features, len(feature_names))
+            "feature_names must contain %d elements, got %d"
+            % (tree_.n_features, len(feature_names))
         )
 
     if spacing <= 0:

@@ -48,7 +48,7 @@ def test_write_label_html(checked):
 
 @pytest.mark.parametrize("est", ["passthrough", "drop", None])
 def test_get_visual_block_single_str_none(est):
-    # Test estimators that are represnted by strings
+    # Test estimators that are represented by strings
     est_html_info = _get_visual_block(est)
     assert est_html_info.kind == "single"
     assert est_html_info.estimators == est
@@ -168,9 +168,7 @@ def test_estimator_html_repr_pipeline():
     # top level estimators show estimator with changes
     assert str(pipe) in html_output
     for _, est in pipe.steps:
-        assert (
-            f'<div class="sk-toggleable__content">' f"<pre>{str(est)}"
-        ) in html_output
+        assert f'<div class="sk-toggleable__content"><pre>{str(est)}' in html_output
 
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
@@ -194,7 +192,7 @@ def test_estimator_html_repr_pipeline():
         assert f"<pre>{str(first)}</pre>" in html_output
         assert f"<pre>{str(select)}</pre>" in html_output
 
-        # voting classifer
+        # voting classifier
         for name, est in clf.estimators:
             assert f"<label>{name}</label>" in html_output
             assert f"<pre>{str(est)}</pre>" in html_output
@@ -258,7 +256,7 @@ def test_ovo_classifier_duck_typing_meta():
         assert f"<pre>{str(ovo.estimator)}" in html_output
         assert "LinearSVC</label>" in html_output
 
-    # outter estimator
+    # outer estimator
     assert f"<pre>{str(ovo)}" in html_output
 
 

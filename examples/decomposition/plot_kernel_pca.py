@@ -87,8 +87,6 @@ axs[2].set_ylabel("Principal component #1")
 axs[2].set_xlabel("Principal component #0")
 axs[2].set_title("Projection of testing data\n using KernelPCA")
 
-fig.subplots_adjust(wspace=0.3)
-
 # %%
 # We recall that PCA projects the data linearly. Intuitively, it means that
 # the coordinate system will be rotated after centering and rescaling on each

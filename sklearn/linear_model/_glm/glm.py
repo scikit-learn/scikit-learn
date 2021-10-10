@@ -165,7 +165,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted model.
         """
         if isinstance(self.family, ExponentialDispersionModel):
             self._family_instance = self.family
@@ -210,13 +211,15 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
             raise ValueError(
-                "Penalty term must be a non-negative number;"
-                " got (alpha={0})".format(self.alpha)
+                "Penalty term must be a non-negative number; got (alpha={0})".format(
+                    self.alpha
+                )
             )
         if not isinstance(self.fit_intercept, bool):
             raise ValueError(
-                "The argument fit_intercept must be bool;"
-                " got {0}".format(self.fit_intercept)
+                "The argument fit_intercept must be bool; got {0}".format(
+                    self.fit_intercept
+                )
             )
         if self.solver not in ["lbfgs"]:
             raise ValueError(
@@ -237,8 +240,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
         if not isinstance(self.warm_start, bool):
             raise ValueError(
-                "The argument warm_start must be bool;"
-                " got {0}".format(self.warm_start)
+                "The argument warm_start must be bool; got {0}".format(self.warm_start)
             )
 
         family = self._family_instance
@@ -259,8 +261,9 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         if not np.all(family.in_y_range(y)):
             raise ValueError(
-                "Some value(s) of y are out of the valid "
-                "range for family {0}".format(family.__class__.__name__)
+                "Some value(s) of y are out of the valid range for family {0}".format(
+                    family.__class__.__name__
+                )
             )
         # TODO: if alpha=0 check that X is not rank deficient
 
@@ -477,6 +480,12 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Actual number of iterations used in the solver.
 
@@ -496,6 +505,11 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     2.088...
     >>> clf.predict([[1, 1], [3, 4]])
     array([10.676..., 21.875...])
+
+    See Also
+    ----------
+    GeneralizedLinearRegressor : Generalized Linear Model with a Poisson
+        distribution.
     """
 
     def __init__(
@@ -522,6 +536,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        """Return the string `'poisson'`."""
         # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
         return "poisson"
 
@@ -585,6 +600,17 @@ class GammaRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    PoissonRegressor : Generalized Linear Model with a Poisson distribution.
+    TweedieRegressor : Generalized Linear Model with a Tweedie distribution.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -627,6 +653,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        """Return the family of the regressor."""
         # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
         return "gamma"
 
@@ -719,6 +746,17 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    PoissonRegressor : Generalized Linear Model with a Poisson distribution.
+    GammaRegressor : Generalized Linear Model with a Gamma distribution.
+
     Examples
     ----------
     >>> from sklearn import linear_model
@@ -763,6 +801,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        """Return the family of the regressor."""
         # We use a property with a setter to make sure that the family is
         # always a Tweedie distribution, and that self.power and
         # self.family.power are identical by construction.
@@ -776,5 +815,5 @@ class TweedieRegressor(GeneralizedLinearRegressor):
             self.power = value.power
         else:
             raise TypeError(
-                "TweedieRegressor.family must be of type " "TweedieDistribution!"
+                "TweedieRegressor.family must be of type TweedieDistribution!"
             )

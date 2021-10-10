@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
 from itertools import islice
+import math
 import numbers
 import platform
 import struct
@@ -88,6 +89,7 @@ class Bunch(dict):
 
     Examples
     --------
+    >>> from sklearn.utils import Bunch
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
     2
@@ -209,9 +211,15 @@ def _pandas_indexing(X, key, key_dtype, axis):
         key = key if key.flags.writeable else key.copy()
     elif isinstance(key, tuple):
         key = list(key)
-    # check whether we should index with loc or iloc
-    indexer = X.iloc if key_dtype == "int" else X.loc
-    return indexer[:, key] if axis else indexer[key]
+
+    if key_dtype == "int" and not (isinstance(key, slice) or np.isscalar(key)):
+        # using take() instead of iloc[] ensures the return value is a "proper"
+        # copy that will not raise SettingWithCopyWarning
+        return X.take(key, axis=axis)
+    else:
+        # check whether we should index with loc or iloc
+        indexer = X.iloc if key_dtype == "int" else X.loc
+        return indexer[:, key] if axis else indexer[key]
 
 
 def _list_indexing(X, key, key_dtype):
@@ -268,7 +276,7 @@ def _determine_key_type(key, accept_slice=True):
     if isinstance(key, slice):
         if not accept_slice:
             raise TypeError(
-                "Only array-like or scalar are supported. " "A Python slice was given."
+                "Only array-like or scalar are supported. A Python slice was given."
             )
         if key.start is None and key.stop is None:
             return None
@@ -425,7 +433,7 @@ def _get_column_indices(X, key):
                 col_idx = all_columns.get_loc(col)
                 if not isinstance(col_idx, numbers.Integral):
                     raise ValueError(
-                        f"Selected columns, {columns}, are not " "unique in dataframe"
+                        f"Selected columns, {columns}, are not unique in dataframe"
                     )
                 column_indices.append(col_idx)
 
@@ -486,6 +494,7 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
+      >>> import numpy as np
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
@@ -538,8 +547,8 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         max_n_samples = n_samples
     elif (max_n_samples > n_samples) and (not replace):
         raise ValueError(
-            "Cannot sample %d out of arrays with dim %d "
-            "when replace is False" % (max_n_samples, n_samples)
+            "Cannot sample %d out of arrays with dim %d when replace is False"
+            % (max_n_samples, n_samples)
         )
 
     check_consistent_length(*arrays)
@@ -623,6 +632,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
+      >>> import numpy as np
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
@@ -737,12 +747,10 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     """
     if not isinstance(batch_size, numbers.Integral):
         raise TypeError(
-            "gen_batches got batch_size=%s, must be an" " integer" % batch_size
+            "gen_batches got batch_size=%s, must be an integer" % batch_size
         )
     if batch_size <= 0:
-        raise ValueError(
-            "gen_batches got batch_size=%s, must be" " positive" % batch_size
-        )
+        raise ValueError("gen_batches got batch_size=%s, must be positive" % batch_size)
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
@@ -994,6 +1002,8 @@ def is_scalar_nan(x):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.utils import is_scalar_nan
     >>> is_scalar_nan(np.nan)
     True
     >>> is_scalar_nan(float("nan"))
@@ -1005,9 +1015,7 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    # convert from numpy.bool_ to python bool to ensure that testing
-    # is_scalar_nan(x) is True does not fail.
-    return bool(isinstance(x, numbers.Real) and np.isnan(x))
+    return isinstance(x, numbers.Real) and math.isnan(x)
 
 
 def _approximate_mode(class_counts, n_draws, rng):
@@ -1053,7 +1061,7 @@ def _approximate_mode(class_counts, n_draws, rng):
     rng = check_random_state(rng)
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
-    continuous = n_draws * class_counts / class_counts.sum()
+    continuous = class_counts / class_counts.sum() * n_draws
     # floored means we don't overshoot n_samples, but probably undershoot
     floored = np.floor(continuous)
     # we add samples according to how much "left over" probability
@@ -1082,7 +1090,7 @@ def _approximate_mode(class_counts, n_draws, rng):
 def check_matplotlib_support(caller_name):
     """Raise ImportError with detailed error message if mpl is not installed.
 
-    Plot utilities like :func:`plot_partial_dependence` should lazily import
+    Plot utilities like any of the Display's plotting functions should lazily import
     matplotlib and call this helper before any computation.
 
     Parameters
@@ -1140,7 +1148,7 @@ def all_estimators(type_filter=None):
     -------
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actuall type of the class.
+        and ``class`` is the actual type of the class.
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings
@@ -1160,7 +1168,13 @@ def all_estimators(type_filter=None):
         return True
 
     all_classes = []
-    modules_to_ignore = {"tests", "externals", "setup", "conftest"}
+    modules_to_ignore = {
+        "tests",
+        "externals",
+        "setup",
+        "conftest",
+        "enable_hist_gradient_boosting",
+    }
     root = str(Path(__file__).parent.parent)  # sklearn package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
@@ -1222,7 +1236,8 @@ def all_estimators(type_filter=None):
                 "Parameter type_filter must be 'classifier', "
                 "'regressor', 'transformer', 'cluster' or "
                 "None, got"
-                " %s." % repr(type_filter)
+                " %s."
+                % repr(type_filter)
             )
 
     # drop duplicates, sort for reproducibility

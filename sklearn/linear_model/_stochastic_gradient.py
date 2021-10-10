@@ -18,6 +18,7 @@ from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..utils import check_random_state
+from ..utils.metaestimators import available_if
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -120,26 +121,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.average = average
         self.max_iter = max_iter
         self.tol = tol
-        # current tests expect init to do parameter validation
-        # but we are not allowed to set attributes
-        self._validate_params()
-
-    def set_params(self, **kwargs):
-        """Set and validate the parameters of estimator.
-
-        Parameters
-        ----------
-        **kwargs : dict
-            Estimator parameters.
-
-        Returns
-        -------
-        self : object
-            Estimator instance.
-        """
-        super().set_params(**kwargs)
-        self._validate_params()
-        return self
 
     @abstractmethod
     def fit(self, X, y):
@@ -204,7 +185,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             return LEARNING_RATE_TYPES[learning_rate]
         except KeyError as e:
             raise ValueError(
-                "learning rate %s " "is not supported. " % learning_rate
+                "learning rate %s is not supported. " % learning_rate
             ) from e
 
     def _get_penalty_type(self, penalty):
@@ -223,7 +204,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             if coef_init is not None:
                 coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
-                    raise ValueError("Provided ``coef_`` does not match " "dataset. ")
+                    raise ValueError("Provided ``coef_`` does not match dataset. ")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros(
@@ -234,9 +215,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             if intercept_init is not None:
                 intercept_init = np.asarray(intercept_init, order="C")
                 if intercept_init.shape != (n_classes,):
-                    raise ValueError(
-                        "Provided intercept_init " "does not match dataset."
-                    )
+                    raise ValueError("Provided intercept_init does not match dataset.")
                 self.intercept_ = intercept_init
             else:
                 self.intercept_ = np.zeros(n_classes, dtype=np.float64, order="C")
@@ -246,7 +225,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 coef_init = np.asarray(coef_init, dtype=np.float64, order="C")
                 coef_init = coef_init.ravel()
                 if coef_init.shape != (n_features,):
-                    raise ValueError("Provided coef_init does not " "match dataset.")
+                    raise ValueError("Provided coef_init does not match dataset.")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
@@ -255,9 +234,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             if intercept_init is not None:
                 intercept_init = np.asarray(intercept_init, dtype=np.float64)
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
-                    raise ValueError(
-                        "Provided intercept_init " "does not match dataset."
-                    )
+                    raise ValueError("Provided intercept_init does not match dataset.")
                 if one_class:
                     self.offset_ = intercept_init.reshape(
                         1,
@@ -415,7 +392,7 @@ def fit_binary(
     C : float
         Maximum step size for passive aggressive
 
-    learning_rate : string
+    learning_rate : str
         The learning rate. Accepted values are 'constant', 'optimal',
         'invscaling', 'pa1' and 'pa2'.
 
@@ -620,8 +597,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             )
         elif n_features != self.coef_.shape[-1]:
             raise ValueError(
-                "Number of features %d does not match previous "
-                "data %d." % (n_features, self.coef_.shape[-1])
+                "Number of features %d does not match previous data %d."
+                % (n_features, self.coef_.shape[-1])
             )
 
         self.loss_function_ = self._get_loss_function(loss)
@@ -651,8 +628,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             )
         else:
             raise ValueError(
-                "The number of classes has to be greater than one;"
-                " got %d class" % n_classes
+                "The number of classes has to be greater than one; got %d class"
+                % n_classes
             )
 
         return self
@@ -827,8 +804,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         Internally, this method uses ``max_iter = 1``. Therefore, it is not
         guaranteed that a minimum of the cost function is reached after calling
-        it once. Matters such as objective convergence and early stopping
-        should be handled by the user.
+        it once. Matters such as objective convergence, early stopping, and
+        learning rate adjustments should be handled by the user.
 
         Parameters
         ----------
@@ -852,7 +829,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         Returns
         -------
-        self :
+        self : object
             Returns an instance of self.
         """
         self._validate_params(for_partial_fit=True)
@@ -907,7 +884,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         Returns
         -------
-        self :
+        self : object
             Returns an instance of self.
         """
         return self._fit(
@@ -1111,7 +1088,7 @@ class SGDClassifier(BaseSGDClassifier):
         existing counter.
 
     average : bool or int, default=False
-        When set to True, computes the averaged SGD weights accross all
+        When set to True, computes the averaged SGD weights across all
         updates and stores the result in the ``coef_`` attribute. If set to
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
@@ -1142,6 +1119,12 @@ class SGDClassifier(BaseSGDClassifier):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1221,11 +1204,12 @@ class SGDClassifier(BaseSGDClassifier):
     def _check_proba(self):
         if self.loss not in ("log", "modified_huber"):
             raise AttributeError(
-                "probability estimates are not available for" " loss=%r" % self.loss
+                "probability estimates are not available for loss=%r" % self.loss
             )
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_proba)
+    def predict_proba(self, X):
         """Probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -1261,10 +1245,6 @@ class SGDClassifier(BaseSGDClassifier):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
-        self._check_proba()
-        return self._predict_proba
-
-    def _predict_proba(self, X):
         check_is_fitted(self)
 
         if self.loss == "log":
@@ -1306,11 +1286,12 @@ class SGDClassifier(BaseSGDClassifier):
             raise NotImplementedError(
                 "predict_(log_)proba only supported when"
                 " loss='log' or loss='modified_huber' "
-                "(%r given)" % self.loss
+                "(%r given)"
+                % self.loss
             )
 
-    @property
-    def predict_log_proba(self):
+    @available_if(_check_proba)
+    def predict_log_proba(self, X):
         """Log of probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -1332,10 +1313,6 @@ class SGDClassifier(BaseSGDClassifier):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
-        self._check_proba()
-        return self._predict_log_proba
-
-    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
     def _more_tags(self):
@@ -1459,10 +1436,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Subset of training data
+            Subset of training data.
 
         y : numpy array of shape (n_samples,)
-            Subset of target values
+            Subset of target values.
 
         sample_weight : array-like, shape (n_samples,), default=None
             Weights applied to individual samples.
@@ -1470,7 +1447,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns an instance of self.
         """
         self._validate_params(for_partial_fit=True)
         return self._partial_fit(
@@ -1544,10 +1522,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : ndarray of shape (n_samples,)
-            Target values
+            Target values.
 
         coef_init : ndarray of shape (n_features,), default=None
             The initial coefficients to warm-start the optimization.
@@ -1560,7 +1538,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted `SGDRegressor` estimator.
         """
         return self._fit(
             X,
@@ -1594,11 +1573,12 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         return scores.ravel()
 
     def predict(self, X):
-        """Predict using the linear model
+        """Predict using the linear model.
 
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
@@ -1693,7 +1673,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
 
 class SGDRegressor(BaseSGDRegressor):
-    """Linear model fitted by minimizing a regularized empirical loss with SGD
+    """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with
@@ -1788,7 +1768,7 @@ class SGDRegressor(BaseSGDRegressor):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    learning_rate : string, default='invscaling'
+    learning_rate : str, default='invscaling'
         The learning rate schedule:
 
         - 'constant': `eta = eta0`
@@ -1852,7 +1832,7 @@ class SGDRegressor(BaseSGDRegressor):
         existing counter.
 
     average : bool or int, default=False
-        When set to True, computes the averaged SGD weights accross all
+        When set to True, computes the averaged SGD weights across all
         updates and stores the result in the ``coef_`` attribute. If set to
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
@@ -1878,6 +1858,22 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    HuberRegressor : Linear regression model that is robust to outliers.
+    Lars : Least Angle Regression model.
+    Lasso : Linear Model trained with L1 prior as regularizer.
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    Ridge : Linear least squares with l2 regularization.
+    sklearn.svm.SVR : Epsilon-Support Vector Regression.
+    TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
+
     Examples
     --------
     >>> import numpy as np
@@ -1894,11 +1890,6 @@ class SGDRegressor(BaseSGDRegressor):
     >>> reg.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdregressor', SGDRegressor())])
-
-    See Also
-    --------
-    Ridge, ElasticNet, Lasso, sklearn.svm.SVR
-
     """
 
     def __init__(
@@ -1992,8 +1983,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, optional
-        The verbosity level
+    verbose : int, optional
+        The verbosity level.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -2002,8 +1993,9 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    learning_rate : string, optional
-        The learning rate schedule:
+    learning_rate : str, optional
+        The learning rate schedule to use with `fit`. (If using `partial_fit`,
+        learning rate must be controlled directly).
 
         'constant':
             eta = eta0
@@ -2069,6 +2061,23 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
+
+    Notes
+    -----
+    This estimator has a linear complexity in the number of training samples
+    and is thus better suited than the `sklearn.svm.OneClassSVM`
+    implementation for datasets with a large number of training samples (say
+    > 10,000).
+
     Examples
     --------
     >>> import numpy as np
@@ -2080,17 +2089,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     >>> print(clf.predict([[4, 4]]))
     [1]
-
-    See also
-    --------
-    sklearn.svm.OneClassSVM
-
-    Notes
-    -----
-    This estimator has a linear complexity in the number of training samples
-    and is thus better suited than the `sklearn.svm.OneClassSVM`
-    implementation for datasets with a large number of training samples (say
-    > 10,000).
     """
 
     loss_functions = {"hinge": (Hinge, 1.0)}
@@ -2274,8 +2272,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             self._allocate_parameter_mem(1, n_features, coef_init, offset_init, 1)
         elif n_features != self.coef_.shape[-1]:
             raise ValueError(
-                "Number of features %d does not match previous "
-                "data %d." % (n_features, self.coef_.shape[-1])
+                "Number of features %d does not match previous data %d."
+                % (n_features, self.coef_.shape[-1])
             )
 
         if self.average and getattr(self, "_average_coef", None) is None:
@@ -2305,6 +2303,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Subset of the training data.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
@@ -2312,7 +2312,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns a fitted instance of self.
         """
 
         alpha = self.nu / 2
@@ -2393,6 +2394,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         coef_init : array, shape (n_classes, n_features)
             The initial coefficients to warm-start the optimization.
@@ -2408,7 +2411,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns a fitted instance of self.
         """
 
         alpha = self.nu / 2

@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.abspath("sphinxext"))
 
 from github_link import make_linkcode_resolve
 import sphinx_gallery
+import matplotlib as mpl
 
 # -- General configuration ---------------------------------------------------
 
@@ -46,7 +47,23 @@ extensions = [
     "sphinx_issues",
     "add_toctree_functions",
     "sphinx-prompt",
+    "sphinxext.opengraph",
 ]
+
+# Support for `plot::` directives in sphinx 3.2 requires matplotlib 3.1.0 or newer
+if parse(mpl.__version__) >= parse("3.1.0"):
+    extensions.append("matplotlib.sphinxext.plot_directive")
+
+    # Produce `plot::` directives for examples that contain `import matplotlib` or
+    # `from matplotlib import`.
+    numpydoc_use_plots = True
+
+    # Options for the `::plot` directive:
+    # https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html
+    plot_formats = ["png"]
+    plot_include_source = True
+    plot_html_show_formats = False
+    plot_html_show_source_link = False
 
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69
@@ -61,7 +78,7 @@ if os.environ.get("NO_MATHJAX"):
     mathjax_path = ""
 else:
     extensions.append("sphinx.ext.mathjax")
-    mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/" "tex-chtml.js"
+    mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
 
 autodoc_default_options = {"members": True, "inherited-members": True}
 
@@ -181,10 +198,7 @@ html_static_path = ["images"]
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {
-    "index": "index.html",
-    "documentation": "documentation.html",
-}  # redirects to index
+html_additional_pages = {"index": "index.html"}
 
 # If false, no module index is generated.
 html_domain_indices = False
@@ -226,10 +240,23 @@ html_context[
     "release_highlights"
 ] = f"auto_examples/release_highlights/{latest_highlights}"
 
-# get version from higlight name assuming highlights have the form
+# get version from highlight name assuming highlights have the form
 # plot_release_highlights_0_22_0
 highlight_version = ".".join(latest_highlights.split("_")[-3:-1])
 html_context["release_highlights_version"] = highlight_version
+
+
+# redirects dictionary maps from old links to new links
+redirects = {
+    "documentation": "index",
+    "auto_examples/feature_selection/plot_permutation_test_for_classification": (
+        "auto_examples/model_selection/plot_permutation_tests_for_classification"
+    ),
+}
+html_context["redirects"] = redirects
+for old_link in redirects:
+    html_additional_pages[old_link] = "redirects.html"
+
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -285,7 +312,7 @@ intersphinx_mapping = {
 v = parse(release)
 if v.release is None:
     raise ValueError(
-        "Ill-formed version: {!r}. Version should follow " "PEP440".format(version)
+        "Ill-formed version: {!r}. Version should follow PEP440".format(version)
     )
 
 if v.is_devrelease:
@@ -435,9 +462,7 @@ def generate_min_dependency_table(app):
 
     for package, (version, tags) in dependent_packages.items():
         output.write(
-            f"{package:<{package_header_len}} "
-            f"{version:<{version_header_len}} "
-            f"{tags}\n"
+            f"{package:<{package_header_len}} {version:<{version_header_len}} {tags}\n"
         )
 
     output.write(
@@ -494,8 +519,10 @@ linkcode_resolve = make_linkcode_resolve(
 warnings.filterwarnings(
     "ignore",
     category=UserWarning,
-    message="Matplotlib is currently using agg, which is a"
-    " non-GUI backend, so cannot show the figure.",
+    message=(
+        "Matplotlib is currently using agg, which is a"
+        " non-GUI backend, so cannot show the figure."
+    ),
 )
 
 
@@ -506,3 +533,11 @@ autosummary_filename_map = {
     "sklearn.covariance.oas": "oas-function",
     "sklearn.decomposition.fastica": "fastica-function",
 }
+
+
+# Config for sphinxext.opengraph
+
+ogp_site_url = "https://scikit-learn/stable/"
+ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
+ogp_use_first_image = True
+ogp_site_name = "scikit-learn"

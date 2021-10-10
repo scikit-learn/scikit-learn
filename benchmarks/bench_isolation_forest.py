@@ -143,7 +143,7 @@ for dat in datasets:
     predict_time = time() - tstart
     fpr, tpr, thresholds = roc_curve(y_test, scoring)
     auc_score = auc(fpr, tpr)
-    label = "%s (AUC: %0.3f, train_time= %0.2fs, " "test_time= %0.2fs)" % (
+    label = "%s (AUC: %0.3f, train_time= %0.2fs, test_time= %0.2fs)" % (
         dat,
         auc_score,
         fit_time,

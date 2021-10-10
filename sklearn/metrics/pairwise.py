@@ -216,8 +216,8 @@ def check_paired_arrays(X, Y):
     X, Y = check_pairwise_arrays(X, Y)
     if X.shape != Y.shape:
         raise ValueError(
-            "X and Y should be of same shape. They were "
-            "respectively %r and %r long." % (X.shape, Y.shape)
+            "X and Y should be of same shape. They were respectively %r and %r long."
+            % (X.shape, Y.shape)
         )
     return X, Y
 
@@ -253,6 +253,7 @@ def euclidean_distances(
 
     Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), \
             default=None
+        If `None`, uses `Y=X`.
 
     Y_norm_squared : array-like of shape (n_samples_Y,) or (n_samples_Y, 1) \
             or (1, n_samples_Y), default=None
@@ -779,7 +780,7 @@ def haversine_distances(X, Y=None):
     array([[    0.        , 11099.54035582],
            [11099.54035582,     0.        ]])
     """
-    from ..neighbors import DistanceMetric
+    from ..metrics import DistanceMetric
 
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
@@ -797,6 +798,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     X : array-like of shape (n_samples_X, n_features)
 
     Y : array-like of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     sum_over_features : bool, default=True
         If True the function returns the pairwise distance matrix
@@ -844,8 +846,8 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     if issparse(X) or issparse(Y):
         if not sum_over_features:
             raise TypeError(
-                "sum_over_features=%r not supported"
-                " for sparse matrices" % sum_over_features
+                "sum_over_features=%r not supported for sparse matrices"
+                % sum_over_features
             )
 
         X = csr_matrix(X, copy=False)
@@ -1050,6 +1052,7 @@ def linear_kernel(X, Y=None, dense_output=True):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     dense_output : bool, default=True
         Whether to return dense output even when the input is sparse. If
@@ -1114,6 +1117,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1150,6 +1154,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1185,6 +1190,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1277,6 +1283,7 @@ def additive_chi2_kernel(X, Y=None):
     X : array-like of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     Returns
     -------
@@ -1506,8 +1513,7 @@ def _check_chunk_size(reduced, chunk_size):
         reduced = (reduced,)
     if any(isinstance(r, tuple) or not hasattr(r, "__iter__") for r in reduced):
         raise TypeError(
-            "reduce_func returned %r. "
-            "Expected sequence(s) of length %d."
+            "reduce_func returned %r. Expected sequence(s) of length %d."
             % (reduced if is_tuple else reduced[0], chunk_size)
         )
     if any(_num_samples(r) != chunk_size for r in reduced):
@@ -1832,9 +1838,8 @@ def pairwise_distances(
         and metric != "precomputed"
     ):
         raise ValueError(
-            "Unknown metric %s. "
-            "Valid metrics are %s, or 'precomputed', or a "
-            "callable" % (metric, _VALID_METRICS)
+            "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
+            % (metric, _VALID_METRICS)
         )
 
     if metric == "precomputed":
@@ -1856,7 +1861,7 @@ def pairwise_distances(
         )
     else:
         if issparse(X) or issparse(Y):
-            raise TypeError("scipy distance metrics do not" " support sparse matrices.")
+            raise TypeError("scipy distance metrics do not support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 

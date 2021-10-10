@@ -114,8 +114,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         else:
             if not hasattr(estimator, method):
                 raise ValueError(
-                    "Underlying estimator {} does not implement "
-                    "the method {}.".format(name, method)
+                    "Underlying estimator {} does not implement the method {}.".format(
+                        name, method
+                    )
                 )
             return method
 
@@ -164,8 +165,11 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         est_fitted_idx = 0
         for name_est, org_est in zip(names, all_estimators):
             if org_est != "drop":
-                self.named_estimators_[name_est] = self.estimators_[est_fitted_idx]
+                current_estimator = self.estimators_[est_fitted_idx]
+                self.named_estimators_[name_est] = current_estimator
                 est_fitted_idx += 1
+                if hasattr(current_estimator, "feature_names_in_"):
+                    self.feature_names_in_ = current_estimator.feature_names_in_
             else:
                 self.named_estimators_[name_est] = "drop"
 
@@ -223,7 +227,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                f"{self.__class__.__name__} object has no attribute " f"n_features_in_"
+                f"{self.__class__.__name__} object has no attribute n_features_in_"
             ) from nfe
         return self.estimators_[0].n_features_in_
 
@@ -244,8 +248,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         **predict_params : dict of str -> obj
             Parameters to the `predict` called by the `final_estimator`. Note
@@ -372,11 +376,20 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
+
     final_estimator_ : estimator
         The classifier which predicts given the output of `estimators_`.
 
     stack_method_ : list of str
         The method used by each base estimator.
+
+    See Also
+    --------
+    StackingRegressor : Stack of estimators with a final regressor.
 
     Notes
     -----
@@ -415,7 +428,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     ... )
     >>> clf.fit(X_train, y_train).score(X_test, y_test)
     0.9...
-
     """
 
     def __init__(
@@ -468,6 +480,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Returns
         -------
         self : object
+            Returns a fitted instance of estimator.
         """
         check_classification_targets(y)
         self._le = LabelEncoder().fit(y)
@@ -481,8 +494,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         **predict_params : dict of str -> obj
             Parameters to the `predict` called by the `final_estimator`. Note
@@ -500,14 +513,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     @if_delegate_has_method(delegate="final_estimator_")
     def predict_proba(self, X):
-        """Predict class probabilities for X using
-        `final_estimator_.predict_proba`.
+        """Predict class probabilities for `X` using the final estimator.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -520,14 +532,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     @if_delegate_has_method(delegate="final_estimator_")
     def decision_function(self, X):
-        """Predict decision function for samples in X using
-        `final_estimator_.decision_function`.
+        """Decision function for samples in `X` using the final estimator.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -648,6 +659,11 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
+
     final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.
 
@@ -720,8 +736,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.

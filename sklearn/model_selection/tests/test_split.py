@@ -91,10 +91,10 @@ def test_cross_validator_with_default_params():
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = (
-        "ShuffleSplit(n_splits=10, random_state=0, " "test_size=None, train_size=None)"
+        "ShuffleSplit(n_splits=10, random_state=0, test_size=None, train_size=None)"
     )
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
-    sgkf_repr = "StratifiedGroupKFold(n_splits=2, random_state=None, " "shuffle=False)"
+    sgkf_repr = "StratifiedGroupKFold(n_splits=2, random_state=None, shuffle=False)"
 
     n_splits_expected = [
         n_samples,
@@ -261,7 +261,7 @@ def test_kfold_valueerrors():
         KFold(0)
     with pytest.raises(ValueError):
         KFold(1)
-    error_string = "k-fold cross-validation requires at least one" " train/test split"
+    error_string = "k-fold cross-validation requires at least one train/test split"
     with pytest.raises(ValueError, match=error_string):
         StratifiedKFold(0)
     with pytest.raises(ValueError, match=error_string):
@@ -1050,27 +1050,27 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     X = y = groups = np.ones(1)
     msg = re.escape(
         f"The groups parameter contains fewer than 2 unique groups ({groups})."
-        f" LeaveOneGroupOut expects at least 2."
+        " LeaveOneGroupOut expects at least 2."
     )
     with pytest.raises(ValueError, match=msg):
         next(LeaveOneGroupOut().split(X, y, groups))
 
     X = y = groups = np.ones(1)
     msg = re.escape(
-        f"The groups parameter contains fewer than (or equal to) n_groups "
+        "The groups parameter contains fewer than (or equal to) n_groups "
         f"(3) numbers of unique groups ({groups}). LeavePGroupsOut expects "
-        f"that at least n_groups + 1 (4) unique groups "
-        f"be present"
+        "that at least n_groups + 1 (4) unique groups "
+        "be present"
     )
     with pytest.raises(ValueError, match=msg):
         next(LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
     X = y = groups = np.arange(3)
     msg = re.escape(
-        f"The groups parameter contains fewer than (or equal to) n_groups "
+        "The groups parameter contains fewer than (or equal to) n_groups "
         f"(3) numbers of unique groups ({groups}). LeavePGroupsOut expects "
-        f"that at least n_groups + 1 (4) unique groups "
-        f"be present"
+        "that at least n_groups + 1 (4) unique groups "
+        "be present"
     )
     with pytest.raises(ValueError, match=msg):
         next(LeavePGroupsOut(n_groups=3).split(X, y, groups))
@@ -1283,6 +1283,29 @@ def test_train_test_split():
         train, test = train_test_split(y, shuffle=False, test_size=test_size)
         assert_array_equal(test, [8, 9])
         assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
+
+
+def test_train_test_split_32bit_overflow():
+    """Check for integer overflow on 32-bit platforms.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20774
+    """
+
+    # A number 'n' big enough for expression 'n * n * train_size' to cause
+    # an overflow for signed 32-bit integer
+    big_number = 100000
+
+    # Definition of 'y' is a part of reproduction - population for at least
+    # one class should be in the same order of magnitude as size of X
+    X = np.arange(big_number)
+    y = X > (0.99 * big_number)
+
+    split = train_test_split(X, y, stratify=y, train_size=0.25)
+    X_train, X_test, y_train, y_test = split
+
+    assert X_train.size + X_test.size == big_number
+    assert y_train.size + y_test.size == big_number
 
 
 @ignore_warnings
@@ -1751,7 +1774,7 @@ def test_nested_cv():
         LeaveOneOut(),
         GroupKFold(n_splits=3),
         StratifiedKFold(),
-        StratifiedGroupKFold(),
+        StratifiedGroupKFold(n_splits=3),
         StratifiedShuffleSplit(n_splits=3, random_state=0),
     ]
 
@@ -1785,8 +1808,10 @@ def test_shuffle_split_empty_trainset(CVSplitter):
     X, y = [[1]], [0]  # 1 sample
     with pytest.raises(
         ValueError,
-        match="With n_samples=1, test_size=0.99 and train_size=None, "
-        "the resulting train set will be empty",
+        match=(
+            "With n_samples=1, test_size=0.99 and train_size=None, "
+            "the resulting train set will be empty"
+        ),
     ):
         next(cv.split(X, y, groups=[1]))
 
@@ -1795,16 +1820,20 @@ def test_train_test_split_empty_trainset():
     (X,) = [[1]]  # 1 sample
     with pytest.raises(
         ValueError,
-        match="With n_samples=1, test_size=0.99 and train_size=None, "
-        "the resulting train set will be empty",
+        match=(
+            "With n_samples=1, test_size=0.99 and train_size=None, "
+            "the resulting train set will be empty"
+        ),
     ):
         train_test_split(X, test_size=0.99)
 
     X = [[1], [1], [1]]  # 3 samples, ask for more than 2 thirds
     with pytest.raises(
         ValueError,
-        match="With n_samples=3, test_size=0.67 and train_size=None, "
-        "the resulting train set will be empty",
+        match=(
+            "With n_samples=3, test_size=0.67 and train_size=None, "
+            "the resulting train set will be empty"
+        ),
     ):
         train_test_split(X, test_size=0.67)
 

@@ -32,7 +32,7 @@ Python. It was created in the Connectionist Artificial Intelligence Laboratory
 
 ARFF (Attribute-Relation File Format) is an file format specially created for
 describe datasets which are commonly used for machine learning experiments and
-softwares. This file format was created to be used in Weka, the best
+software. This file format was created to be used in Weka, the best
 representative software for machine learning automated experiments.
 
 An ARFF file can be divided into two sections: header and data. The Header

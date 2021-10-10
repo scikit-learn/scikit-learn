@@ -7,7 +7,6 @@ from sklearn.base import clone
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.stats import _weighted_percentile
 
@@ -586,9 +585,8 @@ def test_uniform_strategy_sparse_target_warning():
     y = sp.csc_matrix(np.array([[2, 1], [2, 2], [1, 4], [4, 2], [1, 1]]))
 
     clf = DummyClassifier(strategy="uniform", random_state=0)
-    assert_warns_message(
-        UserWarning, "the uniform strategy would not save memory", clf.fit, X, y
-    )
+    with pytest.warns(UserWarning, match="the uniform strategy would not save memory"):
+        clf.fit(X, y)
 
     X = [[0]] * 500
     y_pred = clf.predict(X)
@@ -728,6 +726,8 @@ def test_dtype_of_classifier_probas(strategy):
     assert probas.dtype == np.float64
 
 
+# TODO: remove in 1.2
+@pytest.mark.filterwarnings("ignore:`n_features_in_` is deprecated")
 @pytest.mark.parametrize("Dummy", (DummyRegressor, DummyClassifier))
 def test_n_features_in_(Dummy):
     X = [[1, 2]]
@@ -735,4 +735,7 @@ def test_n_features_in_(Dummy):
     d = Dummy()
     assert not hasattr(d, "n_features_in_")
     d.fit(X, y)
-    assert d.n_features_in_ is None
+
+    with pytest.warns(FutureWarning, match="`n_features_in_` is deprecated"):
+        n_features_in = d.n_features_in_
+    assert n_features_in is None

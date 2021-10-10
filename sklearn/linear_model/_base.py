@@ -66,7 +66,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
     default : bool,
         default normalize value used by the estimator
 
-    estimator_name : string,
+    estimator_name : str
         name of the linear estimator which calls this function.
         The name will be used for writing the deprecation warnings
 
@@ -92,7 +92,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
 
     if normalize not in [True, False, "deprecated"]:
         raise ValueError(
-            "Leave 'normalize' to its default value or set it " "to True or False"
+            "Leave 'normalize' to its default value or set it to True or False"
         )
 
     if normalize == "deprecated":
@@ -132,13 +132,16 @@ def _deprecate_normalize(normalize, default, estimator_name):
     if default and normalize == "deprecated":
         warnings.warn(
             "The default of 'normalize' will be set to False in version 1.2 "
-            "and deprecated in version 1.4.\n" + pipeline_msg + alpha_msg,
+            "and deprecated in version 1.4.\n"
+            + pipeline_msg
+            + alpha_msg,
             FutureWarning,
         )
     elif normalize != "deprecated" and normalize and not default:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0 and will be "
-            "removed in 1.2.\n" + pipeline_msg + alpha_msg,
+            "'normalize' was deprecated in version 1.0 and will be removed in 1.2.\n"
+            + pipeline_msg
+            + alpha_msg,
             FutureWarning,
         )
     elif not normalize and not default:
@@ -567,6 +570,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     Ridge : Ridge regression addresses some of the
@@ -624,20 +633,21 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to X's dtype if necessary.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Individual weights for each sample
+            Individual weights for each sample.
 
             .. versionadded:: 0.17
                parameter *sample_weight* support to LinearRegression.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted Estimator.
         """
 
         _normalize = _deprecate_normalize(
@@ -653,7 +663,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, only_non_negative=True
+            )
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X,

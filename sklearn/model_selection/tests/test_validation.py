@@ -354,7 +354,7 @@ def test_cross_validate_invalid_scoring_param():
         cross_validate(estimator, X, y, scoring=[[make_scorer(precision_score)]])
 
     error_message_regexp = (
-        ".*scoring is invalid.*Refer to the scoring " "glossary for details:.*"
+        ".*scoring is invalid.*Refer to the scoring glossary for details:.*"
     )
 
     # Empty dict should raise invalid scoring error
@@ -372,7 +372,8 @@ def test_cross_validate_invalid_scoring_param():
     warning_message = (
         "Scoring failed. The score on this train-test "
         "partition for these parameters will be set to %f. "
-        "Details: \n" % np.nan
+        "Details: \n"
+        % np.nan
     )
 
     with pytest.warns(UserWarning, match=warning_message):
@@ -606,7 +607,7 @@ def test_cross_val_score_pandas():
         pass
     for TargetType, InputFeatureType in types:
         # X dataframe, y series
-        # 3 fold cross val is used so we need atleast 3 samples per class
+        # 3 fold cross val is used so we need at least 3 samples per class
         X_df, y_ser = InputFeatureType(X), TargetType(y2)
         check_df = lambda x: isinstance(x, InputFeatureType)
         check_series = lambda x: isinstance(x, TargetType)
@@ -1048,7 +1049,7 @@ def test_cross_val_predict_input_types():
     multioutput_y = np.column_stack([y, y[::-1]])
 
     clf = Ridge(fit_intercept=False, random_state=0)
-    # 3 fold cv is used --> atleast 3 samples per class
+    # 3 fold cv is used --> at least 3 samples per class
     # Smoke test
     predictions = cross_val_predict(clf, X, y)
     assert predictions.shape == (150,)
@@ -2081,37 +2082,6 @@ def test_fit_and_score_failing():
     y = np.ones(9)
     fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0, None, None]
     # passing error score to trigger the warning message
-    fit_and_score_kwargs = {"error_score": 0}
-    # check if the warning message type is as expected
-    warning_message = (
-        "Estimator fit failed. The score on this train-test partition for "
-        "these parameters will be set to %f." % (fit_and_score_kwargs["error_score"])
-    )
-    with pytest.warns(FitFailedWarning, match=warning_message):
-        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
-    # since we're using FailingClassfier, our error will be the following
-    error_message = "ValueError: Failing classifier failed as required"
-    # the warning message we're expecting to see
-    warning_message = (
-        "Estimator fit failed. The score on this train-test "
-        "partition for these parameters will be set to %f. "
-        "Details: \n%s" % (fit_and_score_kwargs["error_score"], error_message)
-    )
-
-    def test_warn_trace(msg):
-        assert "Traceback (most recent call last):\n" in msg
-        split = msg.splitlines()  # note: handles more than '\n'
-        mtb = split[0] + "\n" + split[-1]
-        return warning_message in mtb
-
-    # check traceback is included
-    warning_message = (
-        "Estimator fit failed. The score on this train-test partition for "
-        "these parameters will be set to %f." % (fit_and_score_kwargs["error_score"])
-    )
-    with pytest.warns(FitFailedWarning, match=warning_message):
-        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
-
     fit_and_score_kwargs = {"error_score": "raise"}
     # check if exception was raised, with default error_score='raise'
     with pytest.raises(ValueError, match="Failing classifier failed as required"):
@@ -2160,6 +2130,69 @@ def test_fit_and_score_working():
     assert result["parameters"] == fit_and_score_kwargs["parameters"]
 
 
+class DataDependentFailingClassifier(BaseEstimator):
+    def __init__(self, max_x_value=None):
+        self.max_x_value = max_x_value
+
+    def fit(self, X, y=None):
+        num_values_too_high = (X > self.max_x_value).sum()
+        if num_values_too_high:
+            raise ValueError(
+                f"Classifier fit failed with {num_values_too_high} values too high"
+            )
+
+    def score(self, X=None, Y=None):
+        return 0.0
+
+
+@pytest.mark.parametrize("error_score", [np.nan, 0])
+def test_cross_validate_some_failing_fits_warning(error_score):
+    # Create a failing classifier to deliberately fail
+    failing_clf = DataDependentFailingClassifier(max_x_value=8)
+    # dummy X data
+    X = np.arange(1, 10)
+    y = np.ones(9)
+    # passing error score to trigger the warning message
+    cross_validate_args = [failing_clf, X, y]
+    cross_validate_kwargs = {"cv": 3, "error_score": error_score}
+    # check if the warning message type is as expected
+
+    individual_fit_error_message = (
+        "ValueError: Classifier fit failed with 1 values too high"
+    )
+    warning_message = re.compile(
+        "2 fits failed.+total of 3.+The score on these"
+        " train-test partitions for these parameters will be set to"
+        f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}",
+        flags=re.DOTALL,
+    )
+
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        cross_validate(*cross_validate_args, **cross_validate_kwargs)
+
+
+@pytest.mark.parametrize("error_score", [np.nan, 0])
+def test_cross_validate_all_failing_fits_error(error_score):
+    # Create a failing classifier to deliberately fail
+    failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
+    # dummy X data
+    X = np.arange(1, 10)
+    y = np.ones(9)
+
+    cross_validate_args = [failing_clf, X, y]
+    cross_validate_kwargs = {"cv": 7, "error_score": error_score}
+
+    individual_fit_error_message = "ValueError: Failing classifier failed as required"
+    error_message = re.compile(
+        "All the 7 fits failed.+your model is misconfigured.+"
+        f"{individual_fit_error_message}",
+        flags=re.DOTALL,
+    )
+
+    with pytest.raises(ValueError, match=error_message):
+        cross_validate(*cross_validate_args, **cross_validate_kwargs)
+
+
 def _failing_scorer(estimator, X, y, error_msg):
     raise ValueError(error_msg)
 
@@ -2182,7 +2215,7 @@ def test_cross_val_score_failing_scorer(error_score):
             )
     else:
         warning_msg = (
-            f"Scoring failed. The score on this train-test partition for "
+            "Scoring failed. The score on this train-test partition for "
             f"these parameters will be set to {error_score}"
         )
         with pytest.warns(UserWarning, match=warning_msg):
@@ -2224,7 +2257,7 @@ def test_cross_validate_failing_scorer(
             )
     else:
         warning_msg = (
-            f"Scoring failed. The score on this train-test partition for "
+            "Scoring failed. The score on this train-test partition for "
             f"these parameters will be set to {error_score}"
         )
         with pytest.warns(UserWarning, match=warning_msg):

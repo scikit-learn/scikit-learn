@@ -29,6 +29,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
+from sklearn.metrics import d2_tweedie_score
 from sklearn.metrics import det_curve
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
@@ -78,7 +79,7 @@ from sklearn.metrics._base import _average_binary_score
 # all metrics that have the same behavior.
 #
 # Two types of datastructures are used in order to implement this system:
-# dictionaries of metrics and lists of metrics wit common properties.
+# dictionaries of metrics and lists of metrics with common properties.
 #
 # Dictionaries of metrics
 # ------------------------
@@ -110,6 +111,7 @@ REGRESSION_METRICS = {
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
     "mean_compound_poisson_deviance": partial(mean_tweedie_deviance, power=1.4),
+    "d2_tweedie_score": partial(d2_tweedie_score, power=1.4),
 }
 
 CLASSIFICATION_METRICS = {
@@ -510,6 +512,7 @@ NOT_SYMMETRIC_METRICS = {
     "mean_gamma_deviance",
     "mean_poisson_deviance",
     "mean_compound_poisson_deviance",
+    "d2_tweedie_score",
     "mean_absolute_percentage_error",
 }
 
@@ -526,6 +529,7 @@ METRICS_REQUIRE_POSITIVE_Y = {
     "mean_poisson_deviance",
     "mean_gamma_deviance",
     "mean_compound_poisson_deviance",
+    "d2_tweedie_score",
 }
 
 
@@ -694,62 +698,72 @@ def test_format_invariance_with_1d_vectors(name):
         assert_allclose(
             metric(y1_list, y2_list),
             measure,
-            err_msg="%s is not representation invariant with list" "" % name,
+            err_msg="%s is not representation invariant with list" % name,
         )
 
         assert_allclose(
             metric(y1_1d, y2_1d),
             measure,
-            err_msg="%s is not representation invariant with " "np-array-1d" % name,
+            err_msg="%s is not representation invariant with np-array-1d" % name,
         )
 
         assert_allclose(
             metric(y1_column, y2_column),
             measure,
-            err_msg="%s is not representation invariant with " "np-array-column" % name,
+            err_msg="%s is not representation invariant with np-array-column" % name,
         )
 
         # Mix format support
         assert_allclose(
             metric(y1_1d, y2_list),
             measure,
-            err_msg="%s is not representation invariant with mix "
-            "np-array-1d and list" % name,
+            err_msg="%s is not representation invariant with mix np-array-1d and list"
+            % name,
         )
 
         assert_allclose(
             metric(y1_list, y2_1d),
             measure,
-            err_msg="%s is not representation invariant with mix "
-            "np-array-1d and list" % name,
+            err_msg="%s is not representation invariant with mix np-array-1d and list"
+            % name,
         )
 
         assert_allclose(
             metric(y1_1d, y2_column),
             measure,
-            err_msg="%s is not representation invariant with mix "
-            "np-array-1d and np-array-column" % name,
+            err_msg=(
+                "%s is not representation invariant with mix "
+                "np-array-1d and np-array-column"
+            )
+            % name,
         )
 
         assert_allclose(
             metric(y1_column, y2_1d),
             measure,
-            err_msg="%s is not representation invariant with mix "
-            "np-array-1d and np-array-column" % name,
+            err_msg=(
+                "%s is not representation invariant with mix "
+                "np-array-1d and np-array-column"
+            )
+            % name,
         )
 
         assert_allclose(
             metric(y1_list, y2_column),
             measure,
-            err_msg="%s is not representation invariant with mix "
-            "list and np-array-column" % name,
+            err_msg=(
+                "%s is not representation invariant with mix list and np-array-column"
+            )
+            % name,
         )
 
         assert_allclose(
             metric(y1_column, y2_list),
             measure,
-            err_msg="%s is not representation invariant with mix "
-            "list and np-array-column" % name,
+            err_msg=(
+                "%s is not representation invariant with mix list and np-array-column"
+            )
+            % name,
         )
 
         # These mix representations aren't allowed
@@ -804,15 +818,14 @@ def test_classification_invariance_string_vs_numbers_labels(name):
         assert_array_equal(
             measure_with_number,
             measure_with_str,
-            err_msg="{0} failed string vs number invariance " "test".format(name),
+            err_msg="{0} failed string vs number invariance test".format(name),
         )
 
         measure_with_strobj = metric_str(y1_str.astype("O"), y2_str.astype("O"))
         assert_array_equal(
             measure_with_number,
             measure_with_strobj,
-            err_msg="{0} failed string object vs number "
-            "invariance test".format(name),
+            err_msg="{0} failed string object vs number invariance test".format(name),
         )
 
         if name in METRICS_WITH_LABELS:
@@ -821,14 +834,14 @@ def test_classification_invariance_string_vs_numbers_labels(name):
             assert_array_equal(
                 measure_with_number,
                 measure_with_str,
-                err_msg="{0} failed string vs number  " "invariance test".format(name),
+                err_msg="{0} failed string vs number  invariance test".format(name),
             )
 
             measure_with_strobj = metric_str(y1_str.astype("O"), y2_str.astype("O"))
             assert_array_equal(
                 measure_with_number,
                 measure_with_strobj,
-                err_msg="{0} failed string vs number  " "invariance test".format(name),
+                err_msg="{0} failed string vs number  invariance test".format(name),
             )
 
 
@@ -856,15 +869,16 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
             assert_array_equal(
                 measure_with_number,
                 measure_with_str,
-                err_msg="{0} failed string vs number " "invariance test".format(name),
+                err_msg="{0} failed string vs number invariance test".format(name),
             )
 
             measure_with_strobj = metric_str(y1_str.astype("O"), y2)
             assert_array_equal(
                 measure_with_number,
                 measure_with_strobj,
-                err_msg="{0} failed string object vs number "
-                "invariance test".format(name),
+                err_msg="{0} failed string object vs number invariance test".format(
+                    name
+                ),
             )
         else:
             # TODO those metrics doesn't support string label yet
@@ -915,7 +929,7 @@ def test_classification_binary_continuous_input(metric):
     with continuous/binary target vectors."""
     y_true, y_score = ["a", "b", "a"], [0.1, 0.2, 0.3]
     err_msg = (
-        "Classification metrics can't handle a mix of binary and continuous " "targets"
+        "Classification metrics can't handle a mix of binary and continuous targets"
     )
     with pytest.raises(ValueError, match=err_msg):
         metric(y_true, y_score)
@@ -1041,22 +1055,31 @@ def test_multilabel_representation_invariance():
         assert_allclose(
             metric(y1_sparse_indicator, y2_sparse_indicator),
             measure,
-            err_msg="%s failed representation invariance between "
-            "dense and sparse indicator formats." % name,
+            err_msg=(
+                "%s failed representation invariance between "
+                "dense and sparse indicator formats."
+            )
+            % name,
         )
         assert_almost_equal(
             metric(y1_list_list_indicator, y2_list_list_indicator),
             measure,
-            err_msg="%s failed representation invariance  "
-            "between dense array and list of list "
-            "indicator formats." % name,
+            err_msg=(
+                "%s failed representation invariance  "
+                "between dense array and list of list "
+                "indicator formats."
+            )
+            % name,
         )
         assert_almost_equal(
             metric(y1_list_array_indicator, y2_list_array_indicator),
             measure,
-            err_msg="%s failed representation invariance  "
-            "between dense and list of array "
-            "indicator formats." % name,
+            err_msg=(
+                "%s failed representation invariance  "
+                "between dense and list of array "
+                "indicator formats."
+            )
+            % name,
         )
 
 
@@ -1096,7 +1119,7 @@ def test_normalize_option_binary_classification(name):
     assert_array_less(
         -1.0 * measure_normalized,
         0,
-        err_msg="We failed to test correctly the normalize " "option",
+        err_msg="We failed to test correctly the normalize option",
     )
 
     assert_allclose(
@@ -1125,7 +1148,7 @@ def test_normalize_option_multiclass_classification(name):
     assert_array_less(
         -1.0 * measure_normalized,
         0,
-        err_msg="We failed to test correctly the normalize " "option",
+        err_msg="We failed to test correctly the normalize option",
     )
 
     assert_allclose(
@@ -1175,7 +1198,7 @@ def test_normalize_option_multilabel_classification(name):
     assert_array_less(
         -1.0 * measure_normalized,
         0,
-        err_msg="We failed to test correctly the normalize " "option",
+        err_msg="We failed to test correctly the normalize option",
     )
 
     assert_allclose(
@@ -1349,8 +1372,8 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     assert_allclose(
         unweighted_score,
         metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
-        err_msg="For %s sample_weight=None is not equivalent to "
-        "sample_weight=ones" % name,
+        err_msg="For %s sample_weight=None is not equivalent to sample_weight=ones"
+        % name,
     )
 
     # check that the weighted and unweighted scores are unequal
@@ -1406,8 +1429,8 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         err_msg=(
             "Zeroing weights does not give the same result as "
             "removing the corresponding samples (%s != %s) for %s"
-            % (weighted_score_zeroed, weighted_score_subset, name)
-        ),
+        )
+        % (weighted_score_zeroed, weighted_score_subset, name),
     )
 
     if not name.startswith("unnormalized"):
@@ -1417,7 +1440,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
             assert_allclose(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
-                err_msg="%s sample_weight is not invariant " "under scaling" % name,
+                err_msg="%s sample_weight is not invariant under scaling" % name,
             )
 
     # Check that if number of samples in y_true and sample_weight are not

@@ -165,13 +165,15 @@ def fastica(
 ):
     """Perform Fast Independent Component Analysis.
 
+    The implementation is based on [1]_.
+
     Read more in the :ref:`User Guide <ICA>`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     n_components : int, default=None
         Number of components to extract. If None no dimension reduction
@@ -257,7 +259,6 @@ def fastica(
 
     Notes
     -----
-
     The data matrix X is considered to be a linear combination of
     non-Gaussian (independent) components i.e. X = AS where columns of S
     contain the independent components and A is a linear mixing
@@ -273,11 +274,11 @@ def fastica(
     before the algorithm is applied. This makes it slightly
     faster for Fortran-ordered input.
 
-    Implemented using FastICA:
-    *A. Hyvarinen and E. Oja, Independent Component Analysis:
-    Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430*
-
+    References
+    ----------
+    .. [1] A. Hyvarinen and E. Oja, "Fast Independent Component Analysis",
+           Algorithms and Applications, Neural Networks, 13(4-5), 2000,
+           pp. 411-430.
     """
 
     est = FastICA(
@@ -320,6 +321,8 @@ def fastica(
 
 class FastICA(TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
+
+    The implementation is based on [1]_.
 
     Read more in the :ref:`User Guide <ICA>`.
 
@@ -386,6 +389,12 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         If the algorithm is "deflation", n_iter is the
         maximum number of iterations run across all components. Else
@@ -394,6 +403,20 @@ class FastICA(TransformerMixin, BaseEstimator):
     whitening_ : ndarray of shape (n_components, n_features)
         Only set if whiten is 'True'. This is the pre-whitening matrix
         that projects data onto the first `n_components` principal components.
+
+    See Also
+    --------
+    PCA : Principal component analysis (PCA).
+    IncrementalPCA : Incremental principal components analysis (IPCA).
+    KernelPCA : Kernel Principal component analysis (KPCA).
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    SparsePCA : Sparse Principal Components Analysis (SparsePCA).
+
+    References
+    ----------
+    .. [1] A. Hyvarinen and E. Oja, Independent Component Analysis:
+           Algorithms and Applications, Neural Networks, 13(4-5), 2000,
+           pp. 411-430.
 
     Examples
     --------
@@ -405,14 +428,6 @@ class FastICA(TransformerMixin, BaseEstimator):
     >>> X_transformed = transformer.fit_transform(X)
     >>> X_transformed.shape
     (1797, 7)
-
-    Notes
-    -----
-    Implementation based on
-    *A. Hyvarinen and E. Oja, Independent Component Analysis:
-    Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430*
-
     """
 
     def __init__(
@@ -431,8 +446,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         super().__init__()
         if max_iter < 1:
             raise ValueError(
-                "max_iter should be greater than 1, got "
-                "(max_iter={})".format(max_iter)
+                "max_iter should be greater than 1, got (max_iter={})".format(max_iter)
             )
         self.n_components = n_components
         self.algorithm = algorithm
@@ -450,8 +464,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         compute_sources : bool, default=False
             If False, sources are not computes but only the rotation matrix.
@@ -459,7 +473,8 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-            X_new : ndarray of shape (n_samples, n_components)
+        S : ndarray of shape (n_samples, n_components) or None
+            Sources matrix. `None` if `compute_sources` is `False`.
         """
         XT = self._validate_data(
             X, copy=self.whiten, dtype=FLOAT_DTYPES, ensure_min_samples=2
@@ -486,7 +501,8 @@ class FastICA(TransformerMixin, BaseEstimator):
             exc = ValueError if isinstance(self.fun, str) else TypeError
             raise exc(
                 "Unknown function %r;"
-                " should be one of 'logcosh', 'exp', 'cube' or callable" % self.fun
+                " should be one of 'logcosh', 'exp', 'cube' or callable"
+                % self.fun
             )
 
         n_features, n_samples = XT.shape
@@ -552,7 +568,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             W, n_iter = _ica_def(X1, **kwargs)
         else:
             raise ValueError(
-                "Invalid algorithm: must be either `parallel` or" " `deflation`."
+                "Invalid algorithm: must be either `parallel` or `deflation`."
             )
         del X1
 
@@ -584,14 +600,17 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
+            Estimated sources obtained by transforming the data with the
+            estimated unmixing matrix.
         """
         return self._fit(X, compute_sources=True)
 
@@ -601,14 +620,16 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
-        self
+        self : object
+            Returns the instance itself.
         """
         self._fit(X, compute_sources=False)
         return self
@@ -619,8 +640,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Data to transform, where n_samples is the number of samples
-            and n_features is the number of features.
+            Data to transform, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         copy : bool, default=True
             If False, data passed to fit can be overwritten. Defaults to True.
@@ -628,6 +649,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
+            Estimated sources obtained by transforming the data with the
+            estimated unmixing matrix.
         """
         check_is_fitted(self)
 
@@ -645,14 +668,15 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_components)
-            Sources, where n_samples is the number of samples
-            and n_components is the number of components.
+            Sources, where `n_samples` is the number of samples
+            and `n_components` is the number of components.
         copy : bool, default=True
             If False, data passed to fit are overwritten. Defaults to True.
 
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_features)
+            Reconstructed data obtained with the mixing matrix.
         """
         check_is_fitted(self)
 

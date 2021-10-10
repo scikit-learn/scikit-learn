@@ -638,8 +638,7 @@ def _download_data_to_bunch(
                 )
             elif any(is_classification):
                 raise ValueError(
-                    "Mix of nominal and non-nominal targets is "
-                    "not currently supported"
+                    "Mix of nominal and non-nominal targets is not currently supported"
                 )
 
             # reshape y back to 1-D array, if there is only 1 target column;
@@ -674,9 +673,7 @@ def _verify_target_data_type(features_dict, target_columns):
     # verifies the data type of the y array in case there are multiple targets
     # (throws an error if these targets do not comply with sklearn support)
     if not isinstance(target_columns, list):
-        raise ValueError(
-            "target_column should be list, " "got: %s" % type(target_columns)
-        )
+        raise ValueError("target_column should be list, got: %s" % type(target_columns))
     found_types = set()
     for target_column in target_columns:
         if target_column not in features_dict:
@@ -871,7 +868,7 @@ def fetch_openml(
             )
     else:
         raise ValueError(
-            "Neither name nor data_id are provided. Please provide name or " "data_id."
+            "Neither name nor data_id are provided. Please provide name or data_id."
         )
 
     data_description = _get_data_description_by_id(data_id, data_home)

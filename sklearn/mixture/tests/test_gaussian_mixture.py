@@ -174,8 +174,7 @@ def test_gaussian_mixture_attributes():
     n_init_bad = 0
     gmm = GaussianMixture(n_init=n_init_bad)
     msg = (
-        f"Invalid value for 'n_init': {n_init_bad} "
-        "Estimation requires at least one run"
+        f"Invalid value for 'n_init': {n_init_bad} Estimation requires at least one run"
     )
     with pytest.raises(ValueError, match=msg):
         gmm.fit(X)
@@ -320,15 +319,13 @@ def test_check_precisions():
 
         # Check precisions with bad shapes
         g.precisions_init = precisions_bad_shape[covar_type]
-        msg = f"The parameter '{covar_type} precision' should have " "the shape of"
+        msg = f"The parameter '{covar_type} precision' should have the shape of"
         with pytest.raises(ValueError, match=msg):
             g.fit(X)
 
         # Check not positive precisions
         g.precisions_init = precisions_not_positive[covar_type]
-        msg = (
-            f"'{covar_type} precision' should be " f"{not_positive_errors[covar_type]}"
-        )
+        msg = f"'{covar_type} precision' should be {not_positive_errors[covar_type]}"
         with pytest.raises(ValueError, match=msg):
             g.fit(X)
 

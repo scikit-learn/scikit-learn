@@ -283,7 +283,7 @@ def test_fastica_errors():
     ):
         fastica(X, w_init=w_init)
     with pytest.raises(
-        ValueError, match="Invalid algorithm.+must " "be.+parallel.+or.+deflation"
+        ValueError, match="Invalid algorithm.+must be.+parallel.+or.+deflation"
     ):
         fastica(X, algorithm="pizza")
 

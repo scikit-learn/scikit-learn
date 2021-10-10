@@ -75,374 +75,29 @@ SPARSE_TREES = [
 
 X_small = np.array(
     [
-        [
-            0,
-            0,
-            4,
-            0,
-            0,
-            0,
-            1,
-            -14,
-            0,
-            -4,
-            0,
-            0,
-            0,
-            0,
-        ],
-        [
-            0,
-            0,
-            5,
-            3,
-            0,
-            -4,
-            0,
-            0,
-            1,
-            -5,
-            0.2,
-            0,
-            4,
-            1,
-        ],
-        [
-            -1,
-            -1,
-            0,
-            0,
-            -4.5,
-            0,
-            0,
-            2.1,
-            1,
-            0,
-            0,
-            -4.5,
-            0,
-            1,
-        ],
-        [
-            -1,
-            -1,
-            0,
-            -1.2,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0.2,
-            0,
-            0,
-            1,
-        ],
-        [
-            -1,
-            -1,
-            0,
-            0,
-            0,
-            0,
-            0,
-            3,
-            0,
-            0,
-            0,
-            0,
-            0,
-            1,
-        ],
-        [
-            -1,
-            -2,
-            0,
-            4,
-            -3,
-            10,
-            4,
-            0,
-            -3.2,
-            0,
-            4,
-            3,
-            -4,
-            1,
-        ],
-        [
-            2.11,
-            0,
-            -6,
-            -0.5,
-            0,
-            11,
-            0,
-            0,
-            -3.2,
-            6,
-            0.5,
-            0,
-            -3,
-            1,
-        ],
-        [
-            2.11,
-            0,
-            -6,
-            -0.5,
-            0,
-            11,
-            0,
-            0,
-            -3.2,
-            6,
-            0,
-            0,
-            -2,
-            1,
-        ],
-        [
-            2.11,
-            8,
-            -6,
-            -0.5,
-            0,
-            11,
-            0,
-            0,
-            -3.2,
-            6,
-            0,
-            0,
-            -2,
-            1,
-        ],
-        [
-            2.11,
-            8,
-            -6,
-            -0.5,
-            0,
-            11,
-            0,
-            0,
-            -3.2,
-            6,
-            0.5,
-            0,
-            -1,
-            0,
-        ],
-        [
-            2,
-            8,
-            5,
-            1,
-            0.5,
-            -4,
-            10,
-            0,
-            1,
-            -5,
-            3,
-            0,
-            2,
-            0,
-        ],
-        [
-            2,
-            0,
-            1,
-            1,
-            1,
-            -1,
-            1,
-            0,
-            0,
-            -2,
-            3,
-            0,
-            1,
-            0,
-        ],
-        [
-            2,
-            0,
-            1,
-            2,
-            3,
-            -1,
-            10,
-            2,
-            0,
-            -1,
-            1,
-            2,
-            2,
-            0,
-        ],
-        [
-            1,
-            1,
-            0,
-            2,
-            2,
-            -1,
-            1,
-            2,
-            0,
-            -5,
-            1,
-            2,
-            3,
-            0,
-        ],
-        [
-            3,
-            1,
-            0,
-            3,
-            0,
-            -4,
-            10,
-            0,
-            1,
-            -5,
-            3,
-            0,
-            3,
-            1,
-        ],
-        [
-            2.11,
-            8,
-            -6,
-            -0.5,
-            0,
-            1,
-            0,
-            0,
-            -3.2,
-            6,
-            0.5,
-            0,
-            -3,
-            1,
-        ],
-        [
-            2.11,
-            8,
-            -6,
-            -0.5,
-            0,
-            1,
-            0,
-            0,
-            -3.2,
-            6,
-            1.5,
-            1,
-            -1,
-            -1,
-        ],
-        [
-            2.11,
-            8,
-            -6,
-            -0.5,
-            0,
-            10,
-            0,
-            0,
-            -3.2,
-            6,
-            0.5,
-            0,
-            -1,
-            -1,
-        ],
-        [
-            2,
-            0,
-            5,
-            1,
-            0.5,
-            -2,
-            10,
-            0,
-            1,
-            -5,
-            3,
-            1,
-            0,
-            -1,
-        ],
-        [
-            2,
-            0,
-            1,
-            1,
-            1,
-            -2,
-            1,
-            0,
-            0,
-            -2,
-            0,
-            0,
-            0,
-            1,
-        ],
-        [
-            2,
-            1,
-            1,
-            1,
-            2,
-            -1,
-            10,
-            2,
-            0,
-            -1,
-            0,
-            2,
-            1,
-            1,
-        ],
-        [
-            1,
-            1,
-            0,
-            0,
-            1,
-            -3,
-            1,
-            2,
-            0,
-            -5,
-            1,
-            2,
-            1,
-            1,
-        ],
-        [
-            3,
-            1,
-            0,
-            1,
-            0,
-            -4,
-            1,
-            0,
-            1,
-            -2,
-            0,
-            0,
-            1,
-            0,
-        ],
+        [0, 0, 4, 0, 0, 0, 1, -14, 0, -4, 0, 0, 0, 0],
+        [0, 0, 5, 3, 0, -4, 0, 0, 1, -5, 0.2, 0, 4, 1],
+        [-1, -1, 0, 0, -4.5, 0, 0, 2.1, 1, 0, 0, -4.5, 0, 1],
+        [-1, -1, 0, -1.2, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 1],
+        [-1, -1, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1],
+        [-1, -2, 0, 4, -3, 10, 4, 0, -3.2, 0, 4, 3, -4, 1],
+        [2.11, 0, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0.5, 0, -3, 1],
+        [2.11, 0, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0, 0, -2, 1],
+        [2.11, 8, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0, 0, -2, 1],
+        [2.11, 8, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0.5, 0, -1, 0],
+        [2, 8, 5, 1, 0.5, -4, 10, 0, 1, -5, 3, 0, 2, 0],
+        [2, 0, 1, 1, 1, -1, 1, 0, 0, -2, 3, 0, 1, 0],
+        [2, 0, 1, 2, 3, -1, 10, 2, 0, -1, 1, 2, 2, 0],
+        [1, 1, 0, 2, 2, -1, 1, 2, 0, -5, 1, 2, 3, 0],
+        [3, 1, 0, 3, 0, -4, 10, 0, 1, -5, 3, 0, 3, 1],
+        [2.11, 8, -6, -0.5, 0, 1, 0, 0, -3.2, 6, 0.5, 0, -3, 1],
+        [2.11, 8, -6, -0.5, 0, 1, 0, 0, -3.2, 6, 1.5, 1, -1, -1],
+        [2.11, 8, -6, -0.5, 0, 10, 0, 0, -3.2, 6, 0.5, 0, -1, -1],
+        [2, 0, 5, 1, 0.5, -2, 10, 0, 1, -5, 3, 1, 0, -1],
+        [2, 0, 1, 1, 1, -2, 1, 0, 0, -2, 0, 0, 0, 1],
+        [2, 1, 1, 1, 2, -1, 10, 2, 0, -1, 0, 2, 1, 1],
+        [1, 1, 0, 0, 1, -3, 1, 2, 0, -5, 1, 2, 1, 1],
+        [3, 1, 0, 1, 0, -4, 1, 0, 1, -2, 0, 0, 1, 0],
     ]
 )
 
@@ -532,7 +187,7 @@ for name in DATASETS:
 def assert_tree_equal(d, s, message):
     assert (
         s.node_count == d.node_count
-    ), "{0}: inequal number of node ({1} != {2})" "".format(
+    ), "{0}: inequal number of node ({1} != {2})".format(
         message, s.node_count, d.node_count
     )
 
@@ -642,18 +297,14 @@ def test_iris():
         clf = Tree(criterion=criterion, random_state=0)
         clf.fit(iris.data, iris.target)
         score = accuracy_score(clf.predict(iris.data), iris.target)
-        assert (
-            score > 0.9
-        ), "Failed with {0}, criterion = {1} and score = {2}" "".format(
+        assert score > 0.9, "Failed with {0}, criterion = {1} and score = {2}".format(
             name, criterion, score
         )
 
         clf = Tree(criterion=criterion, max_features=2, random_state=0)
         clf.fit(iris.data, iris.target)
         score = accuracy_score(clf.predict(iris.data), iris.target)
-        assert (
-            score > 0.5
-        ), "Failed with {0}, criterion = {1} and score = {2}" "".format(
+        assert score > 0.5, "Failed with {0}, criterion = {1} and score = {2}".format(
             name, criterion, score
         )
 
@@ -1165,11 +816,8 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets, sparse=
         leaf_weights = node_weights[node_weights != 0]
         assert np.min(leaf_weights) >= max(
             (total_weight * est.min_weight_fraction_leaf), 5
-        ), (
-            "Failed with {0} min_weight_fraction_leaf={1}, "
-            "min_samples_leaf={2}".format(
-                name, est.min_weight_fraction_leaf, est.min_samples_leaf
-            )
+        ), "Failed with {0} min_weight_fraction_leaf={1}, min_samples_leaf={2}".format(
+            name, est.min_weight_fraction_leaf, est.min_samples_leaf
         )
     for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 3)):
         # test float min_samples_leaf
@@ -1192,11 +840,8 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets, sparse=
         assert np.min(leaf_weights) >= max(
             (total_weight * est.min_weight_fraction_leaf),
             (total_weight * est.min_samples_leaf),
-        ), (
-            "Failed with {0} min_weight_fraction_leaf={1}, "
-            "min_samples_leaf={2}".format(
-                name, est.min_weight_fraction_leaf, est.min_samples_leaf
-            )
+        ), "Failed with {0} min_weight_fraction_leaf={1}, min_samples_leaf={2}".format(
+            name, est.min_weight_fraction_leaf, est.min_samples_leaf
         )
 
 
@@ -1212,7 +857,7 @@ def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(name):
 
 def test_min_impurity_decrease():
     # test if min_impurity_decrease ensure that a split is made only if
-    # if the impurity decrease is atleast that value
+    # if the impurity decrease is at least that value
     X, y = datasets.make_classification(n_samples=10000, random_state=42)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -1300,12 +945,13 @@ def test_min_impurity_decrease():
         score2 = est2.score(X, y)
         assert (
             score == score2
-        ), "Failed to generate same score  after pickling " "with {0}".format(name)
+        ), "Failed to generate same score  after pickling with {0}".format(name)
 
         for attribute in fitted_attribute:
-            assert getattr(est2.tree_, attribute) == fitted_attribute[attribute], (
-                "Failed to generate same attribute {0} after "
-                "pickling with {1}".format(attribute, name)
+            assert (
+                getattr(est2.tree_, attribute) == fitted_attribute[attribute]
+            ), "Failed to generate same attribute {0} after pickling with {1}".format(
+                attribute, name
             )
 
 
@@ -1743,7 +1389,7 @@ def check_sparse_input(tree, dataset, max_depth=None):
         assert_tree_equal(
             d.tree_,
             s.tree_,
-            "{0} with dense and sparse format gave different " "trees".format(tree),
+            "{0} with dense and sparse format gave different trees".format(tree),
         )
 
         y_pred = d.predict(X)
@@ -1802,7 +1448,7 @@ def check_sparse_parameters(tree, dataset):
     assert_tree_equal(
         d.tree_,
         s.tree_,
-        "{0} with dense and sparse format gave different " "trees".format(tree),
+        "{0} with dense and sparse format gave different trees".format(tree),
     )
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
@@ -1814,7 +1460,7 @@ def check_sparse_parameters(tree, dataset):
     assert_tree_equal(
         d.tree_,
         s.tree_,
-        "{0} with dense and sparse format gave different " "trees".format(tree),
+        "{0} with dense and sparse format gave different trees".format(tree),
     )
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
@@ -1826,7 +1472,7 @@ def check_sparse_parameters(tree, dataset):
     assert_tree_equal(
         d.tree_,
         s.tree_,
-        "{0} with dense and sparse format gave different " "trees".format(tree),
+        "{0} with dense and sparse format gave different trees".format(tree),
     )
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
@@ -1836,7 +1482,7 @@ def check_sparse_parameters(tree, dataset):
     assert_tree_equal(
         d.tree_,
         s.tree_,
-        "{0} with dense and sparse format gave different " "trees".format(tree),
+        "{0} with dense and sparse format gave different trees".format(tree),
     )
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
@@ -1858,7 +1504,7 @@ def check_sparse_criterion(tree, dataset):
         assert_tree_equal(
             d.tree_,
             s.tree_,
-            "{0} with dense and sparse format gave different " "trees".format(tree),
+            "{0} with dense and sparse format gave different trees".format(tree),
         )
         assert_array_almost_equal(s.predict(X), d.predict(X))
 
@@ -1915,7 +1561,7 @@ def check_explicit_sparse_zeros(tree, max_depth=3, n_features=10):
     assert_tree_equal(
         d.tree_,
         s.tree_,
-        "{0} with dense and sparse format gave different " "trees".format(tree),
+        "{0} with dense and sparse format gave different trees".format(tree),
     )
 
     Xs = (X_test, X_sparse_test)
@@ -2527,8 +2173,8 @@ def test_n_features_deprecated(Tree):
     # check that we raise a deprecation warning when accessing `n_features_`.
     # FIXME: remove in 1.2
     depr_msg = (
-        "The attribute 'n_features_' is deprecated in 1.0 and will be "
-        "removed in 1.2. Use 'n_features_in_' instead."
+        "The attribute `n_features_` is deprecated in 1.0 and will be "
+        "removed in 1.2. Use `n_features_in_` instead."
     )
 
     with pytest.warns(FutureWarning, match=depr_msg):

@@ -93,7 +93,7 @@ def unique_labels(*ys):
         > 1
     ):
         raise ValueError(
-            "Multi-label binary indicator input with " "different numbers of labels"
+            "Multi-label binary indicator input with different numbers of labels"
         )
 
     # Get the unique set of labels
@@ -238,6 +238,7 @@ def type_of_target(y):
 
     Examples
     --------
+    >>> from sklearn.utils.multiclass import type_of_target
     >>> import numpy as np
     >>> type_of_target([0.1, 0.6])
     'continuous'
@@ -268,7 +269,7 @@ def type_of_target(y):
 
     if not valid:
         raise ValueError(
-            "Expected array-like (array or non-string sequence), " "got %r" % y
+            "Expected array-like (array or non-string sequence), got %r" % y
         )
 
     sparse_pandas = y.__class__.__name__ in ["SparseSeries", "SparseArray"]
@@ -345,7 +346,7 @@ def _check_partial_fit_first_call(clf, classes=None):
 
     """
     if getattr(clf, "classes_", None) is None and classes is None:
-        raise ValueError("classes must be passed on the first call " "to partial_fit.")
+        raise ValueError("classes must be passed on the first call to partial_fit.")
 
     elif classes is not None:
         if getattr(clf, "classes_", None) is not None:

@@ -386,7 +386,7 @@ def orthogonal_mp(
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError(
-            "The number of atoms cannot be more than the number " "of features"
+            "The number of atoms cannot be more than the number of features"
         )
     if precompute == "auto":
         precompute = X.shape[0] > X.shape[1]
@@ -550,7 +550,7 @@ def orthogonal_mp_gram(
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > len(Gram):
         raise ValueError(
-            "The number of atoms cannot be more than the number " "of features"
+            "The number of atoms cannot be more than the number of features"
         )
 
     if return_path:
@@ -646,6 +646,12 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -938,6 +944,12 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------

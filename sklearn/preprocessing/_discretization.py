@@ -15,6 +15,7 @@ from . import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_feature_names_in
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -77,6 +78,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     Binarizer : Class used to bin values as ``0`` or
@@ -100,6 +107,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Examples
     --------
+    >>> from sklearn.preprocessing import KBinsDiscretizer
     >>> X = [[-2, 1, -4,   -1],
     ...      [-1, 2, -3, -0.5],
     ...      [ 0, 3, -2,  0.5],
@@ -126,7 +134,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [-0.5,  2.5, -2.5, -0.5],
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
-
     """
 
     def __init__(self, n_bins=5, *, encode="onehot", strategy="quantile", dtype=None):
@@ -150,7 +157,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X, dtype="numeric")
 
@@ -161,16 +169,17 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             output_dtype = X.dtype
         else:
             raise ValueError(
-                f"Valid options for 'dtype' are "
+                "Valid options for 'dtype' are "
                 f"{supported_dtype + (None,)}. Got dtype={self.dtype} "
-                f" instead."
+                " instead."
             )
 
         valid_encode = ("onehot", "onehot-dense", "ordinal")
         if self.encode not in valid_encode:
             raise ValueError(
-                "Valid options for 'encode' are {}. "
-                "Got encode={!r} instead.".format(valid_encode, self.encode)
+                "Valid options for 'encode' are {}. Got encode={!r} instead.".format(
+                    valid_encode, self.encode
+                )
             )
         valid_strategy = ("uniform", "quantile", "kmeans")
         if self.strategy not in valid_strategy:
@@ -189,7 +198,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             if col_min == col_max:
                 warnings.warn(
-                    "Feature %d is constant and will be " "replaced with 0." % jj
+                    "Feature %d is constant and will be replaced with 0." % jj
                 )
                 n_bins[jj] = 1
                 bin_edges[jj] = np.array([-np.inf, np.inf])
@@ -269,9 +278,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_bins = check_array(orig_bins, dtype=int, copy=True, ensure_2d=False)
 
         if n_bins.ndim > 1 or n_bins.shape[0] != n_features:
-            raise ValueError(
-                "n_bins must be a scalar or array " "of shape (n_features,)."
-            )
+            raise ValueError("n_bins must be a scalar or array of shape (n_features,).")
 
         bad_nbins_value = (n_bins < 2) | (n_bins != orig_bins)
 
@@ -360,8 +367,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_features = self.n_bins_.shape[0]
         if Xinv.shape[1] != n_features:
             raise ValueError(
-                "Incorrect number of features. Expecting {}, "
-                "received {}.".format(n_features, Xinv.shape[1])
+                "Incorrect number of features. Expecting {}, received {}.".format(
+                    n_features, Xinv.shape[1]
+                )
             )
 
         for jj in range(n_features):
@@ -370,3 +378,25 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Xinv[:, jj] = bin_centers[np.int_(Xinv[:, jj])]
 
         return Xinv
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(self, input_features)
+        return self._encoder.get_feature_names_out(input_features)

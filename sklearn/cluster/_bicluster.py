@@ -108,8 +108,9 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         legal_svd_methods = ("randomized", "arpack")
         if self.svd_method not in legal_svd_methods:
             raise ValueError(
-                "Unknown SVD method: '{0}'. svd_method must be"
-                " one of {1}.".format(self.svd_method, legal_svd_methods)
+                "Unknown SVD method: '{0}'. svd_method must be one of {1}.".format(
+                    self.svd_method, legal_svd_methods
+                )
             )
 
     def fit(self, X, y=None):
@@ -194,7 +195,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                 "check_estimator_sparse_data": "does not fail gracefully",
                 "check_methods_subset_invariance": "empty array passed inside",
                 "check_dont_overwrite_parameters": "empty array passed inside",
-                "check_fit2d_predict1d": "emptry array passed inside",
+                "check_fit2d_predict1d": "empty array passed inside",
             }
         }
 
@@ -276,6 +277,12 @@ class SpectralCoclustering(BaseSpectral):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     Examples
     --------
@@ -426,6 +433,12 @@ class SpectralBiclustering(BaseSpectral):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralBiclustering
@@ -475,8 +488,9 @@ class SpectralBiclustering(BaseSpectral):
         legal_methods = ("bistochastic", "scale", "log")
         if self.method not in legal_methods:
             raise ValueError(
-                "Unknown method: '{0}'. method must be"
-                " one of {1}.".format(self.method, legal_methods)
+                "Unknown method: '{0}'. method must be one of {1}.".format(
+                    self.method, legal_methods
+                )
             )
         try:
             int(self.n_clusters)
@@ -499,14 +513,15 @@ class SpectralBiclustering(BaseSpectral):
             )
         if self.n_best < 1:
             raise ValueError(
-                "Parameter n_best must be greater than 0,"
-                " but its value is {}".format(self.n_best)
+                "Parameter n_best must be greater than 0, but its value is {}".format(
+                    self.n_best
+                )
             )
         if self.n_best > self.n_components:
             raise ValueError(
-                "n_best cannot be larger than"
-                " n_components, but {} >  {}"
-                "".format(self.n_best, self.n_components)
+                "n_best cannot be larger than n_components, but {} >  {}".format(
+                    self.n_best, self.n_components
+                )
             )
 
     def _fit(self, X):

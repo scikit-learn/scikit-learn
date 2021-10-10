@@ -36,8 +36,8 @@ def _modified_weiszfeld_step(X, x_old):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     x_old : ndarray of shape = (n_features,)
         Current start vector.
@@ -88,8 +88,8 @@ def _spatial_median(X, max_iter=300, tol=1.0e-3):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     max_iter : int, default=300
         Maximum number of iterations.
@@ -170,11 +170,11 @@ def _lstsq(X, y, indices, fit_intercept):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Design matrix, where n_samples is the number of samples and
-        n_features is the number of features.
+        Design matrix, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : ndarray of shape (n_samples,)
-        Target vector, where n_samples is the number of samples.
+        Target vector, where `n_samples` is the number of samples.
 
     indices : ndarray of shape (n_subpopulation, n_subsamples)
         Indices of all subsamples with respect to the chosen subpopulation.
@@ -255,7 +255,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         A random number generator instance to define the state of the random
         permutations generator. Pass an int for reproducible output across
         multiple function calls.
-        See :term:`Glossary <random_state>`
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int, default=None
         Number of CPUs to use during the cross validation.
@@ -289,6 +289,24 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    HuberRegressor : Linear regression model that is robust to outliers.
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
+
+    References
+    ----------
+    - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
+      Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
+      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
+
     Examples
     --------
     >>> from sklearn.linear_model import TheilSenRegressor
@@ -300,12 +318,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     0.9884...
     >>> reg.predict(X[:1,])
     array([-31.5871...])
-
-    References
-    ----------
-    - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
-      Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
-      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
 
     def __init__(
@@ -365,8 +377,9 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         if self.max_subpopulation <= 0:
             raise ValueError(
-                "Subpopulation must be strictly positive "
-                "({0} <= 0).".format(self.max_subpopulation)
+                "Subpopulation must be strictly positive ({0} <= 0).".format(
+                    self.max_subpopulation
+                )
             )
 
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))
@@ -387,6 +400,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         Returns
         -------
         self : returns an instance of self.
+            Fitted `TheilSenRegressor` estimator.
         """
         random_state = check_random_state(self.random_state)
         X, y = self._validate_data(X, y, y_numeric=True)

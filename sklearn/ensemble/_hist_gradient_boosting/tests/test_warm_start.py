@@ -43,7 +43,7 @@ def test_max_iter_with_warm_start_validation(GradientBoosting, X, y):
     estimator.fit(X, y)
     estimator.set_params(max_iter=5)
     err_msg = (
-        "max_iter=5 must be larger than or equal to n_iter_=10 " "when warm_start==True"
+        "max_iter=5 must be larger than or equal to n_iter_=10 when warm_start==True"
     )
     with pytest.raises(ValueError, match=err_msg):
         estimator.fit(X, y)

@@ -61,8 +61,8 @@ def load_svmlight_file(
     This format is used as the default format for both svmlight and the
     libsvm command line programs.
 
-    Parsing a text based source can be expensive. When working on
-    repeatedly on the same dataset, it is recommended to wrap this
+    Parsing a text based source can be expensive. When repeatedly
+    working on the same dataset, it is recommended to wrap this
     loader with joblib.Memory.cache to store a memmapped backup of the
     CSR results of the first call and benefit from the near instantaneous
     loading of memmapped structures for the subsequent calls.
@@ -346,8 +346,9 @@ def load_svmlight_files(
         n_features = n_f
     elif n_features < n_f:
         raise ValueError(
-            "n_features was set to {},"
-            " but input file contains {} features".format(n_features, n_f)
+            "n_features was set to {}, but input file contains {} features".format(
+                n_features, n_f
+            )
         )
 
     result = []
@@ -437,15 +438,15 @@ def dump_svmlight_file(
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training vectors, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vectors, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : {array-like, sparse matrix}, shape = [n_samples (, n_labels)]
         Target values. Class labels must be an
         integer or float, or array-like objects of integer or float for
         multilabel classifications.
 
-    f : string or file-like in binary mode
+    f : str or file-like in binary mode
         If string, specifies the path that will contain the data.
         If file-like, data will be written to f. f should be opened in binary
         mode.
@@ -454,7 +455,7 @@ def dump_svmlight_file(
         Whether column indices should be written zero-based (True) or one-based
         (False).
 
-    comment : string, default=None
+    comment : str, default=None
         Comment to insert at the top of the file. This should be either a
         Unicode string, which will be encoded as UTF-8, or an ASCII byte
         string.
@@ -477,7 +478,6 @@ def dump_svmlight_file(
         # Convert comment string to list of lines in UTF-8.
         # If a byte string is passed, then check whether it's ASCII;
         # if a user wants to get fancy, they'll have to decode themselves.
-        # Avoid mention of str and unicode types for Python 3.x compat.
         if isinstance(comment, bytes):
             comment.decode("ascii")  # just for the exception
         else:
@@ -489,7 +489,7 @@ def dump_svmlight_file(
     if sp.issparse(yval):
         if yval.shape[1] != 1 and not multilabel:
             raise ValueError(
-                "expected y of shape (n_samples, 1)," " got %r" % (yval.shape,)
+                "expected y of shape (n_samples, 1), got %r" % (yval.shape,)
             )
     else:
         if yval.ndim != 1 and not multilabel:
@@ -498,8 +498,8 @@ def dump_svmlight_file(
     Xval = check_array(X, accept_sparse="csr")
     if Xval.shape[0] != yval.shape[0]:
         raise ValueError(
-            "X.shape[0] and y.shape[0] should be the same, got"
-            " %r and %r instead." % (Xval.shape[0], yval.shape[0])
+            "X.shape[0] and y.shape[0] should be the same, got %r and %r instead."
+            % (Xval.shape[0], yval.shape[0])
         )
 
     # We had some issues with CSR matrices with unsorted indices (e.g. #1501),

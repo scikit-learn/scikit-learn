@@ -325,9 +325,7 @@ def test_sample_weight():
     eclf3 = VotingClassifier(
         estimators=[("lr", clf1), ("svc", clf3), ("knn", clf4)], voting="soft"
     )
-    msg = (
-        "Underlying estimator KNeighborsClassifier does not support " "sample weights."
-    )
+    msg = "Underlying estimator KNeighborsClassifier does not support sample weights."
     with pytest.raises(TypeError, match=msg):
         eclf3.fit(X, y, sample_weight)
 

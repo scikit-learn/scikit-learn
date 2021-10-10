@@ -519,7 +519,7 @@ def test_ovr_deprecated_coef_intercept():
     ovr = ovr.fit(iris.data, iris.target)
 
     msg = (
-        r"Attribute {0} was deprecated in version 0.24 "
+        r"Attribute `{0}` was deprecated in version 0.24 "
         r"and will be removed in 1.1 \(renaming of 0.26\). If you observe "
         r"this warning while using RFE or SelectFromModel, "
         r"use the importance_getter parameter instead."
@@ -601,8 +601,9 @@ def test_ovo_partial_fit_predict():
     ovo = OneVsOneClassifier(MultinomialNB())
     error_y = [0, 1, 2, 3, 4, 5, 2]
     message_re = escape(
-        "Mini-batch contains {0} while "
-        "it must be subset of {1}".format(np.unique(error_y), np.unique(y))
+        "Mini-batch contains {0} while it must be subset of {1}".format(
+            np.unique(error_y), np.unique(y)
+        )
     )
     with pytest.raises(ValueError, match=message_re):
         ovo.partial_fit(X[:7], error_y, np.unique(y))
@@ -823,6 +824,75 @@ def test_pairwise_indices():
         )
 
 
+def test_pairwise_n_features_in():
+    """Check the n_features_in_ attributes of the meta and base estimators
+
+    When the training data is a regular design matrix, everything is intuitive.
+    However, when the training data is a precomputed kernel matrix, the
+    multiclass strategy can resample the kernel matrix of the underlying base
+    estimator both row-wise and column-wise and this has a non-trivial impact
+    on the expected value for the n_features_in_ of both the meta and the base
+    estimators.
+    """
+    X, y = iris.data, iris.target
+
+    # Remove the last sample to make the classes not exactly balanced and make
+    # the test more interesting.
+    assert y[-1] == 0
+    X = X[:-1]
+    y = y[:-1]
+
+    # Fitting directly on the design matrix:
+    assert X.shape == (149, 4)
+
+    clf_notprecomputed = svm.SVC(kernel="linear").fit(X, y)
+    assert clf_notprecomputed.n_features_in_ == 4
+
+    ovr_notprecomputed = OneVsRestClassifier(clf_notprecomputed).fit(X, y)
+    assert ovr_notprecomputed.n_features_in_ == 4
+    for est in ovr_notprecomputed.estimators_:
+        assert est.n_features_in_ == 4
+
+    ovo_notprecomputed = OneVsOneClassifier(clf_notprecomputed).fit(X, y)
+    assert ovo_notprecomputed.n_features_in_ == 4
+    assert ovo_notprecomputed.n_classes_ == 3
+    assert len(ovo_notprecomputed.estimators_) == 3
+    for est in ovo_notprecomputed.estimators_:
+        assert est.n_features_in_ == 4
+
+    # When working with precomputed kernels we have one "feature" per training
+    # sample:
+    K = X @ X.T
+    assert K.shape == (149, 149)
+
+    clf_precomputed = svm.SVC(kernel="precomputed").fit(K, y)
+    assert clf_precomputed.n_features_in_ == 149
+
+    ovr_precomputed = OneVsRestClassifier(clf_precomputed).fit(K, y)
+    assert ovr_precomputed.n_features_in_ == 149
+    assert ovr_precomputed.n_classes_ == 3
+    assert len(ovr_precomputed.estimators_) == 3
+    for est in ovr_precomputed.estimators_:
+        assert est.n_features_in_ == 149
+
+    # This becomes really interesting with OvO and precomputed kernel together:
+    # internally, OvO will drop the samples of the classes not part of the pair
+    # of classes under consideration for a given binary classifier. Since we
+    # use a precomputed kernel, it will also drop the matching columns of the
+    # kernel matrix, and therefore we have fewer "features" as result.
+    #
+    # Since class 0 has 49 samples, and class 1 and 2 have 50 samples each, a
+    # single OvO binary classifier works with a sub-kernel matrix of shape
+    # either (99, 99) or (100, 100).
+    ovo_precomputed = OneVsOneClassifier(clf_precomputed).fit(K, y)
+    assert ovo_precomputed.n_features_in_ == 149
+    assert ovr_precomputed.n_classes_ == 3
+    assert len(ovr_precomputed.estimators_) == 3
+    assert ovo_precomputed.estimators_[0].n_features_in_ == 99  # class 0 vs class 1
+    assert ovo_precomputed.estimators_[1].n_features_in_ == 99  # class 0 vs class 2
+    assert ovo_precomputed.estimators_[2].n_features_in_ == 100  # class 1 vs class 2
+
+
 @ignore_warnings(category=FutureWarning)
 def test_pairwise_attribute():
     clf_precomputed = svm.SVC(kernel="precomputed")
@@ -857,25 +927,31 @@ def test_pairwise_tag(MultiClassClassifier):
 def test_pairwise_deprecated(MultiClassClassifier):
     clf_precomputed = svm.SVC(kernel="precomputed")
     ov_clf = MultiClassClassifier(clf_precomputed)
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
+    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         ov_clf._pairwise
 
 
-def test_pairwise_cross_val_score():
+@pytest.mark.parametrize(
+    "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
+)
+def test_pairwise_cross_val_score(MultiClassClassifier):
     clf_precomputed = svm.SVC(kernel="precomputed")
     clf_notprecomputed = svm.SVC(kernel="linear")
 
     X, y = iris.data, iris.target
 
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovr_false = MultiClassClassifier(clf_notprecomputed)
-        ovr_true = MultiClassClassifier(clf_precomputed)
+    multiclass_clf_notprecomputed = MultiClassClassifier(clf_notprecomputed)
+    multiclass_clf_precomputed = MultiClassClassifier(clf_precomputed)
 
-        linear_kernel = np.dot(X, X.T)
-        score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
-        score_linear = cross_val_score(ovr_false, X, y)
-        assert_array_equal(score_precomputed, score_linear)
+    linear_kernel = np.dot(X, X.T)
+    score_not_precomputed = cross_val_score(
+        multiclass_clf_notprecomputed, X, y, error_score="raise"
+    )
+    score_precomputed = cross_val_score(
+        multiclass_clf_precomputed, linear_kernel, y, error_score="raise"
+    )
+    assert_array_equal(score_precomputed, score_not_precomputed)
 
 
 @pytest.mark.parametrize(

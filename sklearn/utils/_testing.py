@@ -48,7 +48,7 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.utils import IS_PYPY, _IS_32BIT
+from sklearn.utils import IS_PYPY, _IS_32BIT, deprecated
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -82,8 +82,17 @@ assert_raises_regex = _dummy.assertRaisesRegex
 assert_raises_regexp = assert_raises_regex
 
 
+# TODO: Remove in 1.2
+@deprecated(  # type: ignore
+    "`assert_warns` is deprecated in 1.0 and will be removed in 1.2."
+    "Use `pytest.warns` instead."
+)
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
+
+    .. deprecated:: 1.0
+        `assert_warns` is deprecated in 1.0 and will be removed in 1.2.
+        Use `pytest.warns` instead.
 
     Parameters
     ----------
@@ -124,9 +133,18 @@ def assert_warns(warning_class, func, *args, **kw):
     return result
 
 
+# TODO: Remove in 1.2
+@deprecated(  # type: ignore
+    "`assert_warns_message` is deprecated in 1.0 and will be removed in 1.2."
+    "Use `pytest.warns` instead."
+)
 def assert_warns_message(warning_class, message, func, *args, **kw):
     # very important to avoid uncontrolled state propagation
     """Test that a certain warning occurs and with a certain message.
+
+    .. deprecated:: 1.0
+        `assert_warns_message` is deprecated in 1.0 and will be removed in 1.2.
+        Use `pytest.warns` instead.
 
     Parameters
     ----------
@@ -165,8 +183,8 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
         found = [issubclass(warning.category, warning_class) for warning in w]
         if not any(found):
             raise AssertionError(
-                "No warning raised for %s with class "
-                "%s" % (func.__name__, warning_class)
+                "No warning raised for %s with class %s"
+                % (func.__name__, warning_class)
             )
 
         message_found = False
@@ -188,8 +206,8 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
         if not message_found:
             raise AssertionError(
-                "Did not receive the message you expected "
-                "('%s') for <%s>, got: '%s'" % (message, func.__name__, msg)
+                "Did not receive the message you expected ('%s') for <%s>, got: '%s'"
+                % (message, func.__name__, msg)
             )
 
     return result
@@ -237,6 +255,8 @@ def ignore_warnings(obj=None, category=Warning):
 
     Examples
     --------
+    >>> import warnings
+    >>> from sklearn.utils._testing import ignore_warnings
     >>> with ignore_warnings():
     ...     warnings.warn('buhuhuhu')
 
@@ -400,7 +420,7 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=""):
         assert_allclose(x, y, rtol=rtol, atol=atol, err_msg=err_msg)
     else:
         raise ValueError(
-            "Can only compare two sparse matrices," " not a sparse matrix and an array."
+            "Can only compare two sparse matrices, not a sparse matrix and an array."
         )
 
 
@@ -633,13 +653,14 @@ def check_docstring_parameters(func, doc=None, ignore=None):
         if not type_definition.strip():
             if ":" in name and name[: name.index(":")][-1:].strip():
                 incorrect += [
-                    func_name + " There was no space between the param name and "
-                    "colon (%r)" % name
+                    func_name
+                    + " There was no space between the param name and colon (%r)" % name
                 ]
             elif name.rstrip().endswith(":"):
                 incorrect += [
-                    func_name + " Parameter %r has an empty type spec. "
-                    "Remove the colon" % (name.lstrip())
+                    func_name
+                    + " Parameter %r has an empty type spec. Remove the colon"
+                    % (name.lstrip())
                 ]
 
         # Create a list of parameters to compare with the parameters gotten

@@ -41,14 +41,27 @@ jobs:
               else
                 echo "Changelog and milestone do not correspond."
                 echo "If you see this error make sure that the tagged milestone for the PR"
-                echo "and the changelog name properly match."
+                echo "and the edited changelog filename properly match."
                 exit 1
               fi
             fi
           else
-            echo "Changelog entry is missing."
-            echo "If you see this error and there is already a changelog entry then make sure that"
-            echo "the PR number is correct. If no changelog entry is required for this PR,"
-            echo "label the PR with 'No Changelog Needed' to bypass this check."
+            echo "A Changelog entry is missing."
+            echo ""
+            echo "Please add an entry to the changelog at 'doc/whats_new/v*.rst'"
+            echo "to document your change assuming that the PR will be merged"
+            echo "in time for the next release of scikit-learn."
+            echo ""
+            echo "Look at other entries in that file for inspiration and please"
+            echo "reference this pull request using the ':pr:' directive and"
+            echo "credit yourself (and other contributors if applicable) with"
+            echo "the ':user:' directive."
+            echo ""
+            echo "If you see this error and there is already a changelog entry,"
+            echo "check that the PR number is correct."
+            echo ""
+            echo" If you believe that this PR does no warrant a changelog"
+            echo "entry, say so in a comment so that a maintainer will label "
+            echo "the PR with 'No Changelog Needed' to bypass this check."
             exit 1
           fi

@@ -222,7 +222,7 @@ latest up-to-date workflow.
   `Video <https://youtu.be/dyxS9KKCNzA>`__,
   `Transcript
   <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
-  
+
 .. note::
   In January 2021, the default branch name changed from ``master`` to ``main``
   for the scikit-learn GitHub repository to use more inclusive terms.
@@ -547,7 +547,7 @@ Continuous Integration (CI)
 * Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
   with different dependencies and settings.
 * CircleCI is used to build the docs for viewing, for linting with flake8, and
-  for testing with PyPy on Linux
+  for testing with PyPy and ARM64 / aarch64 on Linux
 
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
@@ -560,7 +560,6 @@ message, the following actions are taken.
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [icc-build]            Add a Travis build with the Intel C compiler (ICC)
-    [arm64]                Add a Travis build for the ARM64 / aarch64 little endian architecture
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots (very long)
@@ -703,7 +702,8 @@ Building the documentation requires installing some additional packages:
 .. prompt:: bash $
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
-                scikit-image packaging seaborn sphinx-prompt
+                scikit-image packaging seaborn sphinx-prompt \
+                sphinxext-opengraph
 
 To build the documentation, you need to be in the ``doc`` folder:
 
@@ -1004,7 +1004,7 @@ installed in your current Python environment:
 
   asv run --python=same
 
-It's particulary useful when you installed scikit-learn in editable mode to
+It's particularly useful when you installed scikit-learn in editable mode to
 avoid creating a new environment each time you run the benchmarks. By default
 the results are not saved when using an existing installation. To save the
 results you must specify a commit hash:
@@ -1115,8 +1115,8 @@ use the decorator ``deprecated`` on a property. Please note that the
 decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
-    @deprecated("Attribute labels_ was deprecated in version 0.13 and "
-                "will be removed in 0.15. Use 'classes_' instead")
+    @deprecated("Attribute `labels_` was deprecated in version 0.13 and "
+                "will be removed in 0.15. Use `classes_` instead")
     @property
     def labels_(self):
         return self.classes_

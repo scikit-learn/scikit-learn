@@ -1,6 +1,7 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import re
 import numpy as np
 import scipy.sparse as sp
 import pytest
@@ -8,7 +9,6 @@ import pytest
 import sklearn
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier, _is_pairwise
@@ -395,7 +395,8 @@ def test_pickle_version_warning_is_issued_upon_different_version():
         old_version="something",
         current_version=sklearn.__version__,
     )
-    assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_other)
+    with pytest.warns(UserWarning, match=message):
+        pickle.loads(tree_pickle_other)
 
 
 class TreeNoVersion(DecisionTreeClassifier):
@@ -416,7 +417,8 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         current_version=sklearn.__version__,
     )
     # check we got the warning about using pre-0.18 pickle
-    assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_noversion)
+    with pytest.warns(UserWarning, match=message):
+        pickle.loads(tree_pickle_noversion)
 
 
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
@@ -599,7 +601,7 @@ def test_n_features_in_validation():
 
     assert est.n_features_in_ == 3
 
-    msg = "X does not contain any features, but MyEstimator is expecting " "3 features"
+    msg = "X does not contain any features, but MyEstimator is expecting 3 features"
     with pytest.raises(ValueError, match=msg):
         est._check_n_features("invalid X", reset=False)
 
@@ -614,3 +616,73 @@ def test_n_features_in_no_validation():
 
     # does not raise
     est._check_n_features("invalid X", reset=False)
+
+
+def test_feature_names_in():
+    """Check that feature_name_in are recorded by `_validate_data`"""
+    pd = pytest.importorskip("pandas")
+    iris = datasets.load_iris()
+    X_np = iris.data
+    df = pd.DataFrame(X_np, columns=iris.feature_names)
+
+    class NoOpTransformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None):
+            self._validate_data(X)
+            return self
+
+        def transform(self, X):
+            self._validate_data(X, reset=False)
+            return X
+
+    # fit on dataframe saves the feature names
+    trans = NoOpTransformer().fit(df)
+    assert_array_equal(trans.feature_names_in_, df.columns)
+
+    msg = "The feature names should match those that were passed"
+    df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
+    with pytest.warns(FutureWarning, match=msg):
+        trans.transform(df_bad)
+
+    # warns when fitted on dataframe and transforming a ndarray
+    msg = (
+        "X does not have valid feature names, but NoOpTransformer was "
+        "fitted with feature names"
+    )
+    with pytest.warns(UserWarning, match=msg):
+        trans.transform(X_np)
+
+    # warns when fitted on a ndarray and transforming dataframe
+    msg = "X has feature names, but NoOpTransformer was fitted without feature names"
+    trans = NoOpTransformer().fit(X_np)
+    with pytest.warns(UserWarning, match=msg):
+        trans.transform(df)
+
+    # fit on dataframe with all integer feature names works without warning
+    df_int_names = pd.DataFrame(X_np)
+    trans = NoOpTransformer()
+    with pytest.warns(None) as record:
+        trans.fit(df_int_names)
+    assert not record
+
+    # fit on dataframe with no feature names or all integer feature names
+    # -> do not warn on trainsform
+    Xs = [X_np, df_int_names]
+    for X in Xs:
+        with pytest.warns(None) as record:
+            trans.transform(X)
+        assert not record
+
+    # TODO: Convert to a error in 1.2
+    # fit on dataframe with feature names that are mixed warns:
+    df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
+    trans = NoOpTransformer()
+    msg = re.escape(
+        "Feature names only support names that are all strings. "
+        "Got feature names with dtypes: ['int', 'str']"
+    )
+    with pytest.warns(FutureWarning, match=msg) as record:
+        trans.fit(df_mixed)
+
+    # transform on feature names that are mixed also warns:
+    with pytest.warns(FutureWarning, match=msg) as record:
+        trans.transform(df_mixed)

@@ -154,7 +154,7 @@ def null_space(
     random_state : int, RandomState instance, default=None
         Determines the random number generator when ``solver`` == 'arpack'.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
     """
     if eigen_solver == "auto":
         if M.shape[0] > 200 and k + k_skip < 10:
@@ -268,7 +268,7 @@ def locally_linear_embedding(
     random_state : int, RandomState instance, default=None
         Determines the random number generator when ``solver`` == 'arpack'.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, default=None
         The number of parallel jobs to run for neighbors search.
@@ -314,12 +314,12 @@ def locally_linear_embedding(
 
     if n_components > d_in:
         raise ValueError(
-            "output dimension must be less than or equal " "to input dimension"
+            "output dimension must be less than or equal to input dimension"
         )
     if n_neighbors >= N:
         raise ValueError(
-            "Expected n_neighbors <= n_samples, "
-            " but n_samples = %d, n_neighbors = %d" % (N, n_neighbors)
+            "Expected n_neighbors <= n_samples,  but n_samples = %d, n_neighbors = %d"
+            % (N, n_neighbors)
         )
 
     if n_neighbors <= 0:
@@ -397,7 +397,7 @@ def locally_linear_embedding(
 
     elif method == "modified":
         if n_neighbors < n_components:
-            raise ValueError("modified LLE requires " "n_neighbors >= n_components")
+            raise ValueError("modified LLE requires n_neighbors >= n_components")
 
         neighbors = nbrs.kneighbors(
             X, n_neighbors=n_neighbors + 1, return_distance=False
@@ -608,7 +608,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
     random_state : int, RandomState instance, default=None
         Determines the random number generator when
         ``eigen_solver`` == 'arpack'. Pass an int for reproducible results
-        across multiple function calls. See :term: `Glossary <random_state>`.
+        across multiple function calls. See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, default=None
         The number of parallel jobs to run.
@@ -628,6 +628,12 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     nbrs_ : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
@@ -768,7 +774,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         """
         check_is_fitted(self)
 
-        X = check_array(X)
+        X = self._validate_data(X, reset=False)
         ind = self.nbrs_.kneighbors(
             X, n_neighbors=self.n_neighbors, return_distance=False
         )

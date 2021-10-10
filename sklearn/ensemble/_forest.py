@@ -51,7 +51,7 @@ from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
 from ..base import is_classifier
-from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
+from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (
@@ -276,7 +276,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_nodes_ptr : ndarray of shape (n_estimators + 1,)
             The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
             gives the indicator value for the i-th estimator.
-
         """
         X = self._validate_X_predict(X)
         indicators = Parallel(
@@ -319,6 +318,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         # Validate or convert input data
         if issparse(y):
@@ -399,9 +399,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 )
 
         if not self.bootstrap and self.oob_score:
-            raise ValueError(
-                "Out of bag estimation only available" " if bootstrap=True"
-            )
+            raise ValueError("Out of bag estimation only available if bootstrap=True")
 
         random_state = check_random_state(self.random_state)
 
@@ -471,10 +469,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 # oob_score) allowing our user to pass a callable defining the
                 # scoring strategy on OOB sample.
                 raise ValueError(
-                    f"The type of target cannot be used to compute OOB "
+                    "The type of target cannot be used to compute OOB "
                     f"estimates. Got {y_type} while only the following are "
-                    f"supported: continuous, continuous-multioutput, binary, "
-                    f"multiclass, multilabel-indicator."
+                    "supported: continuous, continuous-multioutput, binary, "
+                    "multiclass, multilabel-indicator."
                 )
             self._set_oob_score_and_attributes(X, y)
 
@@ -567,8 +565,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
-
-        return self.estimators_[0]._validate_X_predict(X, check_input=True)
+        X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+        if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
+            raise ValueError("No support for np.int64 index based sparse matrices")
+        return X
 
     @property
     def feature_importances_(self):
@@ -610,11 +610,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute n_features_ was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use 'n_features_in_' instead."
+        "Attribute `n_features_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `n_features_in_` instead."
     )
     @property
     def n_features_(self):
+        """Number of features when fitting the estimator."""
         return self.n_features_in_
 
 
@@ -746,7 +747,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                     raise ValueError(
                         "Valid presets for class_weight include "
                         '"balanced" and "balanced_subsample".'
-                        'Given "%s".' % self.class_weight
+                        'Given "%s".'
+                        % self.class_weight
                     )
                 if self.warm_start:
                     warn(
@@ -893,6 +895,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                 proba[k] = np.log(proba[k])
 
             return proba
+
+    def _more_tags(self):
+        return {"multilabel": True}
 
 
 class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
@@ -1051,6 +1056,9 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         averaged_predictions /= len(self.estimators_)
 
         return averaged_predictions
+
+    def _more_tags(self):
+        return {"multilabel": True}
 
 
 class RandomForestClassifier(ForestClassifier):
@@ -1259,6 +1267,11 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1287,7 +1300,9 @@ class RandomForestClassifier(ForestClassifier):
 
     See Also
     --------
-    DecisionTreeClassifier, ExtraTreesClassifier
+    sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
+    sklearn.ensemble.ExtraTreesClassifier : Ensemble of extremely randomized
+        tree classifiers.
 
     Notes
     -----
@@ -1582,6 +1597,11 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1595,7 +1615,9 @@ class RandomForestRegressor(ForestRegressor):
 
     See Also
     --------
-    DecisionTreeRegressor, ExtraTreesRegressor
+    sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
+    sklearn.ensemble.ExtraTreesRegressor : Ensemble of extremely randomized
+        tree regressors.
 
     Notes
     -----
@@ -1910,6 +1932,11 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1927,9 +1954,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     See Also
     --------
-    sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
-    RandomForestClassifier : Ensemble Classifier based on trees with optimal
-        splits.
+    ExtraTreesRegressor : An extra-trees regressor with random splits.
+    RandomForestClassifier : A random forest classifier with optimal splits.
+    RandomForestRegressor : Ensemble regressor using trees with optimal splits.
 
     Notes
     -----
@@ -2212,6 +2239,11 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs.
 
@@ -2225,7 +2257,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
     See Also
     --------
-    sklearn.tree.ExtraTreeRegressor : Base estimator for this ensemble.
+    ExtraTreesClassifier : An extra-trees classifier with random splits.
+    RandomForestClassifier : A random forest classifier with optimal splits.
     RandomForestRegressor : Ensemble regressor using trees with optimal splits.
 
     Notes
@@ -2421,11 +2454,11 @@ class RandomTreesEmbedding(BaseForest):
 
     Attributes
     ----------
-    base_estimator_ : DecisionTreeClassifier instance
+    base_estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier` instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of DecisionTreeClassifier instances
+    estimators_ : list of :class:`~sklearn.tree.ExtraTreeClassifier` instances
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
@@ -2443,11 +2476,27 @@ class RandomTreesEmbedding(BaseForest):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
     one_hot_encoder_ : OneHotEncoder instance
         One-hot encoder used to create the sparse embedding.
+
+    See Also
+    --------
+    ExtraTreesClassifier : An extra-trees classifier.
+    ExtraTreesRegressor : An extra-trees regressor.
+    RandomForestClassifier : A random forest classifier.
+    RandomForestRegressor : A random forest regressor.
+    sklearn.tree.ExtraTreeClassifier: An extremely randomized
+        tree classifier.
+    sklearn.tree.ExtraTreeRegressor : An extremely randomized
+        tree regressor.
 
     References
     ----------
@@ -2549,7 +2598,7 @@ class RandomTreesEmbedding(BaseForest):
         Returns
         -------
         self : object
-
+            Returns the instance itself.
         """
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self

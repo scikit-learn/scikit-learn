@@ -85,7 +85,7 @@ def empirical_covariance(X, *, assume_centered=False):
 
     if X.shape[0] == 1:
         warnings.warn(
-            "Only one sample available. " "You may want to reshape your data array"
+            "Only one sample available. You may want to reshape your data array"
         )
 
     if assume_centered:
@@ -99,7 +99,7 @@ def empirical_covariance(X, *, assume_centered=False):
 
 
 class EmpiricalCovariance(BaseEstimator):
-    """Maximum likelihood covariance estimator
+    """Maximum likelihood covariance estimator.
 
     Read more in the :ref:`User Guide <covariance>`.
 
@@ -131,6 +131,24 @@ class EmpiricalCovariance(BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    EllipticEnvelope : An object for detecting outliers in
+        a Gaussian distributed dataset.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    LedoitWolf : LedoitWolf Estimator.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    OAS : Oracle Approximating Shrinkage Estimator.
+    ShrunkCovariance : Covariance estimator with shrinkage.
+
     Examples
     --------
     >>> import numpy as np
@@ -148,7 +166,6 @@ class EmpiricalCovariance(BaseEstimator):
            [0.2818..., 0.3928...]])
     >>> cov.location_
     array([0.0622..., 0.0193...])
-
     """
 
     def __init__(self, *, store_precision=True, assume_centered=False):
@@ -191,14 +208,13 @@ class EmpiricalCovariance(BaseEstimator):
         return precision
 
     def fit(self, X, y=None):
-        """Fits the Maximum Likelihood Estimator covariance model
-        according to the given training data and parameters.
+        """Fit the maximum liklihood covariance estimator to X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-          Training data, where n_samples is the number of samples and
-          n_features is the number of features.
+          Training data, where `n_samples` is the number of samples and
+          `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -206,6 +222,7 @@ class EmpiricalCovariance(BaseEstimator):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X)
         if self.assume_centered:
@@ -218,15 +235,17 @@ class EmpiricalCovariance(BaseEstimator):
         return self
 
     def score(self, X_test, y=None):
-        """Computes the log-likelihood of a Gaussian data set with
-        `self.covariance_` as an estimator of its covariance matrix.
+        """Compute the log-likelihood of `X_test` under the estimated Gaussian model.
+
+        The Gaussian model is defined by its mean and covariance matrix which are
+        represented respectively by `self.location_` and `self.covariance_`.
 
         Parameters
         ----------
         X_test : array-like of shape (n_samples, n_features)
-            Test data of which we compute the likelihood, where n_samples is
-            the number of samples and n_features is the number of features.
-            X_test is assumed to be drawn from the same distribution than
+            Test data of which we compute the likelihood, where `n_samples` is
+            the number of samples and `n_features` is the number of features.
+            `X_test` is assumed to be drawn from the same distribution than
             the data used in fit (including centering).
 
         y : Ignored
@@ -235,8 +254,8 @@ class EmpiricalCovariance(BaseEstimator):
         Returns
         -------
         res : float
-            The likelihood of the data set with `self.covariance_` as an
-            estimator of its covariance matrix.
+            The log-likelihood of `X_test` with `self.location_` and `self.covariance_`
+            as estimators of the Gaussian model mean and covariance matrix respectively.
         """
         X_test = self._validate_data(X_test, reset=False)
         # compute empirical covariance of the test set
@@ -247,8 +266,7 @@ class EmpiricalCovariance(BaseEstimator):
         return res
 
     def error_norm(self, comp_cov, norm="frobenius", scaling=True, squared=True):
-        """Computes the Mean Squared Error between two covariance estimators.
-        (In the sense of the Frobenius norm).
+        """Compute the Mean Squared Error between two covariance estimators.
 
         Parameters
         ----------
@@ -299,7 +317,7 @@ class EmpiricalCovariance(BaseEstimator):
         return result
 
     def mahalanobis(self, X):
-        """Computes the squared Mahalanobis distances of given observations.
+        """Compute the squared Mahalanobis distances of given observations.
 
         Parameters
         ----------

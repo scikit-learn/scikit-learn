@@ -46,8 +46,8 @@ def _check_weights(weights, n_components):
     # check normalization
     if not np.allclose(np.abs(1.0 - np.sum(weights)), 0.0):
         raise ValueError(
-            "The parameter 'weights' should be normalized, "
-            "but got sum(weights) = %.5f" % np.sum(weights)
+            "The parameter 'weights' should be normalized, but got sum(weights) = %.5f"
+            % np.sum(weights)
         )
     return weights
 
@@ -78,7 +78,7 @@ def _check_means(means, n_components, n_features):
 def _check_precision_positivity(precision, covariance_type):
     """Check a precision vector is positive-definite."""
     if np.any(np.less_equal(precision, 0.0)):
-        raise ValueError("'%s precision' should be " "positive" % covariance_type)
+        raise ValueError("'%s precision' should be positive" % covariance_type)
 
 
 def _check_precision_matrix(precision, covariance_type):
@@ -87,7 +87,7 @@ def _check_precision_matrix(precision, covariance_type):
         np.allclose(precision, precision.T) and np.all(linalg.eigvalsh(precision) > 0.0)
     ):
         raise ValueError(
-            "'%s precision' should be symmetric, " "positive-definite" % covariance_type
+            "'%s precision' should be symmetric, positive-definite" % covariance_type
         )
 
 
@@ -108,7 +108,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
         'diag' : shape of (n_components, n_features)
         'spherical' : shape of (n_components,)
 
-    covariance_type : string
+    covariance_type : str
 
     n_components : int
         Number of components.
@@ -604,6 +604,17 @@ class GaussianMixture(BaseMixture):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    BayesianGaussianMixture : Gaussian mixture model fit with a variational
+        inference.
+
     Examples
     --------
     >>> import numpy as np
@@ -615,11 +626,6 @@ class GaussianMixture(BaseMixture):
            [ 1.,  2.]])
     >>> gm.predict([[0, 0], [12, 3]])
     array([1, 0])
-
-    See Also
-    --------
-    BayesianGaussianMixture : Gaussian mixture model fit with a variational
-        inference.
     """
 
     def __init__(
@@ -665,7 +671,8 @@ class GaussianMixture(BaseMixture):
             raise ValueError(
                 "Invalid value for 'covariance_type': %s "
                 "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']" % self.covariance_type
+                "['spherical', 'tied', 'diag', 'full']"
+                % self.covariance_type
             )
 
         if self.weights_init is not None:
@@ -804,6 +811,7 @@ class GaussianMixture(BaseMixture):
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
+            The input samples.
 
         Returns
         -------
@@ -820,6 +828,7 @@ class GaussianMixture(BaseMixture):
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
+            The input samples.
 
         Returns
         -------

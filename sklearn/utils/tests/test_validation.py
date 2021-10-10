@@ -1,5 +1,6 @@
 """Tests for input validation functions"""
 
+import numbers
 import warnings
 import os
 import re
@@ -49,9 +50,11 @@ from sklearn.utils.validation import (
     _allclose_dense_sparse,
     _num_features,
     FLOAT_DTYPES,
+    _get_feature_names,
+    _check_feature_names_in,
+    _check_fit_params,
 )
-from sklearn.utils.validation import _check_fit_params
-
+from sklearn.base import BaseEstimator
 import sklearn
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
@@ -245,13 +248,11 @@ def test_check_array():
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert X_array.ndim == 1
     # ensure_2d=True with 1d array
-    with pytest.raises(ValueError, match="Expected 2D array," " got 1D array instead"):
+    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
         check_array([0, 1, 2], ensure_2d=True)
 
     # ensure_2d=True with scalar array
-    with pytest.raises(
-        ValueError, match="Expected 2D array," " got scalar array instead"
-    ):
+    with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         check_array(10, ensure_2d=True)
 
     # don't allow ndim > 3
@@ -752,6 +753,20 @@ def test_check_symmetric():
             assert_array_equal(output, arr_sym)
 
 
+def test_check_is_fitted_with_is_fitted():
+    class Estimator(BaseEstimator):
+        def fit(self, **kwargs):
+            self._is_fitted = True
+            return self
+
+        def __sklearn_is_fitted__(self):
+            return hasattr(self, "_is_fitted") and self._is_fitted
+
+    with pytest.raises(NotFittedError):
+        check_is_fitted(Estimator())
+    check_is_fitted(Estimator().fit())
+
+
 def test_check_is_fitted():
     # Check is TypeError raised when non estimator instance passed
     with pytest.raises(TypeError):
@@ -1006,21 +1021,25 @@ def test_retrieve_samples_from_non_standard_shape():
         _num_samples(TestNoLenWeirdShape())
 
 
-@pytest.mark.parametrize(
-    "x, target_type, min_val, max_val", [(3, int, 2, 5), (2.5, float, 2, 5)]
-)
-def test_check_scalar_valid(x, target_type, min_val, max_val):
+@pytest.mark.parametrize("x", [2, 3, 2.5, 5])
+def test_check_scalar_valid(x):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
     with pytest.warns(None) as record:
-        check_scalar(
-            x, "test_name", target_type=target_type, min_val=min_val, max_val=max_val
+        scalar = check_scalar(
+            x,
+            "test_name",
+            target_type=numbers.Real,
+            min_val=2,
+            max_val=5,
+            include_boundaries="both",
         )
     assert len(record) == 0
+    assert scalar == x
 
 
 @pytest.mark.parametrize(
-    "x, target_name, target_type, min_val, max_val, " "err_msg",
+    "x, target_name, target_type, min_val, max_val, include_boundaries, err_msg",
     [
         (
             1,
@@ -1028,21 +1047,74 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
             float,
             2,
             4,
+            "neither",
             TypeError(
-                "`test_name1` must be an instance of "
-                "<class 'float'>, not <class 'int'>."
+                "test_name1 must be an instance of <class 'float'>, not <class 'int'>."
             ),
         ),
-        (1, "test_name2", int, 2, 4, ValueError("`test_name2`= 1, must be >= 2.")),
-        (5, "test_name3", int, 2, 4, ValueError("`test_name3`= 5, must be <= 4.")),
+        (
+            1,
+            "test_name2",
+            int,
+            2,
+            4,
+            "neither",
+            ValueError("test_name2 == 1, must be > 2."),
+        ),
+        (
+            5,
+            "test_name3",
+            int,
+            2,
+            4,
+            "neither",
+            ValueError("test_name3 == 5, must be < 4."),
+        ),
+        (
+            2,
+            "test_name4",
+            int,
+            2,
+            4,
+            "right",
+            ValueError("test_name4 == 2, must be > 2."),
+        ),
+        (
+            4,
+            "test_name5",
+            int,
+            2,
+            4,
+            "left",
+            ValueError("test_name5 == 4, must be < 4."),
+        ),
+        (
+            4,
+            "test_name6",
+            int,
+            2,
+            4,
+            "bad parameter value",
+            ValueError(
+                "Unknown value for `include_boundaries`: 'bad parameter value'. "
+                "Possible values are: ('left', 'right', 'both', 'neither')."
+            ),
+        ),
     ],
 )
-def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val, err_msg):
+def test_check_scalar_invalid(
+    x, target_name, target_type, min_val, max_val, include_boundaries, err_msg
+):
     """Test that check_scalar returns the right error if a wrong input is
     given"""
     with pytest.raises(Exception) as raised_error:
         check_scalar(
-            x, target_name, target_type=target_type, min_val=min_val, max_val=max_val
+            x,
+            target_name,
+            target_type=target_type,
+            min_val=min_val,
+            max_val=max_val,
+            include_boundaries=include_boundaries,
         )
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
@@ -1055,27 +1127,26 @@ _psd_cases_valid = {
         (5, 5e-5j),
         np.array([5, 0]),
         PositiveSpectrumWarning,
-        "There are imaginary parts in eigenvalues "
-        "\\(1e\\-05 of the maximum real part",
+        "There are imaginary parts in eigenvalues \\(1e\\-05 of the maximum real part",
     ),
     "insignificant neg": ((5, -5e-5), np.array([5, 0]), PositiveSpectrumWarning, ""),
     "insignificant neg float32": (
         np.array([1, -1e-6], dtype=np.float32),
         np.array([1, 0], dtype=np.float32),
         PositiveSpectrumWarning,
-        "There are negative eigenvalues \\(1e\\-06 " "of the maximum positive",
+        "There are negative eigenvalues \\(1e\\-06 of the maximum positive",
     ),
     "insignificant neg float64": (
         np.array([1, -1e-10], dtype=np.float64),
         np.array([1, 0], dtype=np.float64),
         PositiveSpectrumWarning,
-        "There are negative eigenvalues \\(1e\\-10 " "of the maximum positive",
+        "There are negative eigenvalues \\(1e\\-10 of the maximum positive",
     ),
     "insignificant pos": (
         (5, 4e-12),
         np.array([5, 0]),
         PositiveSpectrumWarning,
-        "the largest eigenvalue is more than 1e\\+12 " "times the smallest",
+        "the largest eigenvalue is more than 1e\\+12 times the smallest",
     ),
 }
 
@@ -1182,6 +1253,14 @@ def test_check_sample_weight():
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
+    # check negative weight when only_non_negative=True
+    X = np.ones((5, 2))
+    sample_weight = np.ones(_num_samples(X))
+    sample_weight[-1] = -10
+    err_msg = "Negative values in data passed to `sample_weight`"
+    with pytest.raises(ValueError, match=err_msg):
+        _check_sample_weight(sample_weight, X, only_non_negative=True)
+
 
 @pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])
 def test_allclose_dense_sparse_equals(toarray):
@@ -1202,7 +1281,7 @@ def test_allclose_dense_sparse_raise(toarray):
     x = np.arange(9).reshape(3, 3)
     y = toarray(x + 1)
 
-    msg = "Can only compare two sparse matrices, not a sparse matrix " "and an array"
+    msg = "Can only compare two sparse matrices, not a sparse matrix and an array"
     with pytest.raises(ValueError, match=msg):
         _allclose_dense_sparse(x, y)
 
@@ -1335,8 +1414,8 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame(
         {
-            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1),
-            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2),
+            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
+            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
 
@@ -1377,8 +1456,8 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
     pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame(
         {
-            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1),
-            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2),
+            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
+            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
     arr = check_array(df, accept_sparse=["csr", "csc"])
@@ -1417,7 +1496,7 @@ def test_num_features_errors_1d_containers(X, constructor_name):
     else:
         expected_type_name = constructor_name
     message = (
-        "Unable to find the number of features from X of type " f"{expected_type_name}"
+        f"Unable to find the number of features from X of type {expected_type_name}"
     )
     if hasattr(X, "shape"):
         message += " with shape (3,)"
@@ -1431,10 +1510,7 @@ def test_num_features_errors_1d_containers(X, constructor_name):
 
 @pytest.mark.parametrize("X", [1, "b", False, 3.0], ids=["int", "str", "bool", "float"])
 def test_num_features_errors_scalars(X):
-    msg = (
-        "Unable to find the number of features from X of type "
-        f"{type(X).__qualname__}"
-    )
+    msg = f"Unable to find the number of features from X of type {type(X).__qualname__}"
     with pytest.raises(TypeError, match=msg):
         _num_features(X)
 
@@ -1451,3 +1527,103 @@ def test_check_array_deprecated_matrix():
     )
     with pytest.warns(FutureWarning, match=msg):
         check_array(X)
+
+
+@pytest.mark.parametrize(
+    "names",
+    [list(range(2)), range(2), None],
+    ids=["list-int", "range", "default"],
+)
+def test_get_feature_names_pandas_with_ints_no_warning(names):
+    """Get feature names with pandas dataframes with ints without warning"""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
+
+    with pytest.warns(None) as record:
+        names = _get_feature_names(X)
+    assert not record
+    assert names is None
+
+
+def test_get_feature_names_pandas():
+    """Get feature names with pandas dataframes."""
+    pd = pytest.importorskip("pandas")
+    columns = [f"col_{i}" for i in range(3)]
+    X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
+    feature_names = _get_feature_names(X)
+
+    assert_array_equal(feature_names, columns)
+
+
+def test_get_feature_names_numpy():
+    """Get feature names return None for numpy arrays."""
+    X = np.array([[1, 2, 3], [4, 5, 6]])
+    names = _get_feature_names(X)
+    assert names is None
+
+
+# TODO: Convert to a error in 1.2
+@pytest.mark.parametrize(
+    "names, dtypes",
+    [
+        ([["a", "b"], ["c", "d"]], "['tuple']"),
+        (["a", 1], "['int', 'str']"),
+    ],
+    ids=["multi-index", "mixed"],
+)
+def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
+    """Get feature names warns when the feature names have mixed dtypes"""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
+
+    msg = re.escape(
+        "Feature names only support names that are all strings. "
+        f"Got feature names with dtypes: {dtypes}. An error will be raised"
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        names = _get_feature_names(X)
+    assert names is None
+
+
+class PassthroughTransformer(BaseEstimator):
+    def fit(self, X, y=None):
+        self._validate_data(X, reset=True)
+        return self
+
+    def transform(self, X):
+        return X
+
+    def get_feature_names_out(self, input_features=None):
+        return _check_feature_names_in(self, input_features)
+
+
+def test_check_feature_names_in():
+    """Check behavior of check_feature_names_in for arrays."""
+    X = np.array([[0.0, 1.0, 2.0]])
+    est = PassthroughTransformer().fit(X)
+
+    names = est.get_feature_names_out()
+    assert_array_equal(names, ["x0", "x1", "x2"])
+
+    incorrect_len_names = ["x10", "x1"]
+    with pytest.raises(ValueError, match="input_features should have length equal to"):
+        est.get_feature_names_out(incorrect_len_names)
+
+    # remove n_feature_in_
+    del est.n_features_in_
+    with pytest.raises(ValueError, match="Unable to generate feature names"):
+        est.get_feature_names_out()
+
+
+def test_check_feature_names_in_pandas():
+    """Check behavior of check_feature_names_in for pandas dataframes."""
+    pd = pytest.importorskip("pandas")
+    names = ["a", "b", "c"]
+    df = pd.DataFrame([[0.0, 1.0, 2.0]], columns=names)
+    est = PassthroughTransformer().fit(df)
+
+    names = est.get_feature_names_out()
+    assert_array_equal(names, ["a", "b", "c"])
+
+    with pytest.raises(ValueError, match="input_features is not equal to"):
+        est.get_feature_names_out(["x1", "x2", "x3"])

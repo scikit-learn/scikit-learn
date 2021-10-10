@@ -9,7 +9,9 @@ import numbers
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, is_scalar_nan
+from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique
@@ -70,9 +72,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown="error", force_all_finite=True):
+        self._check_n_features(X, reset=True)
+        self._check_feature_names(X, reset=True)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
+        self.n_features_in_ = n_features
 
         if self.categories != "auto":
             if len(self.categories) != n_features:
@@ -92,8 +97,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
-                        "Unsorted categories are not "
-                        "supported for numerical categories"
+                        "Unsorted categories are not supported for numerical categories"
                     )
                     # if there are nans, nan should be the last element
                     stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
@@ -115,24 +119,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _transform(
         self, X, handle_unknown="error", force_all_finite=True, warn_on_unknown=False
     ):
+        self._check_feature_names(X, reset=False)
+        self._check_n_features(X, reset=False)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
 
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
-
-        if n_features != len(self.categories_):
-            raise ValueError(
-                "The number of features in X is different to the number of "
-                "features of the fitted data. The fitted data had {} features "
-                "and the X has {} features.".format(
-                    len(
-                        self.categories_,
-                    ),
-                    n_features,
-                )
-            )
 
         columns_with_unknown = []
         for i in range(n_features):
@@ -284,6 +278,17 @@ class OneHotEncoder(_BaseEncoder):
         .. versionchanged:: 0.23
            Added the possibility to contain `None` values.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 1.0
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     OrdinalEncoder : Performs an ordinal (integer)
@@ -319,9 +324,8 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
-    >>> enc.get_feature_names(['gender', 'group'])
-    array(['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3'],
-      dtype=object)
+    >>> enc.get_feature_names_out(['gender', 'group'])
+    array(['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3'], ...)
 
     One can always drop the first column for each feature:
 
@@ -358,8 +362,9 @@ class OneHotEncoder(_BaseEncoder):
     def _validate_keywords(self):
         if self.handle_unknown not in ("error", "ignore"):
             msg = (
-                "handle_unknown should be either 'error' or 'ignore', "
-                "got {0}.".format(self.handle_unknown)
+                "handle_unknown should be either 'error' or 'ignore', got {0}.".format(
+                    self.handle_unknown
+                )
             )
             raise ValueError(msg)
 
@@ -450,6 +455,7 @@ class OneHotEncoder(_BaseEncoder):
         Returns
         -------
         self
+            Fitted encoder.
         """
         self._validate_keywords()
         self._fit(X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan")
@@ -587,8 +593,7 @@ class OneHotEncoder(_BaseEncoder):
 
         # validate shape of passed X
         msg = (
-            "Shape of the passed X data is not correct. Expected {0} "
-            "columns, got {1}."
+            "Shape of the passed X data is not correct. Expected {0} columns, got {1}."
         )
         if X.shape[1] != n_transformed_features:
             raise ValueError(msg.format(n_transformed_features, X.shape[1]))
@@ -655,9 +660,12 @@ class OneHotEncoder(_BaseEncoder):
 
         return X_tr
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self, input_features=None):
-        """
-        Return feature names for output features.
+        """Return feature names for output features.
 
         Parameters
         ----------
@@ -690,6 +698,40 @@ class OneHotEncoder(_BaseEncoder):
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Returns `input_features` as this transformation doesn't add or drop
+        features.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        check_is_fitted(self)
+        cats = self.categories_
+        input_features = _check_feature_names_in(self, input_features)
+
+        feature_names = []
+        for i in range(len(cats)):
+            names = [input_features[i] + "_" + str(t) for t in cats[i]]
+            if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
+                names.pop(self.drop_idx_[i])
+            feature_names.extend(names)
+        return np.asarray(feature_names, dtype=object)
 
 
 class OrdinalEncoder(_BaseEncoder):
@@ -744,6 +786,17 @@ class OrdinalEncoder(_BaseEncoder):
         The categories of each feature determined during ``fit`` (in order of
         the features in X and corresponding with the output of ``transform``).
         This does not include categories that weren't seen during ``fit``.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 1.0
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -800,12 +853,13 @@ class OrdinalEncoder(_BaseEncoder):
 
         Returns
         -------
-        self
+        self : object
+            Fitted encoder.
         """
         handle_unknown_strategies = ("error", "use_encoded_value")
         if self.handle_unknown not in handle_unknown_strategies:
             raise ValueError(
-                f"handle_unknown should be either 'error' or "
+                "handle_unknown should be either 'error' or "
                 f"'use_encoded_value', got {self.handle_unknown}."
             )
 
@@ -813,34 +867,35 @@ class OrdinalEncoder(_BaseEncoder):
             if is_scalar_nan(self.unknown_value):
                 if np.dtype(self.dtype).kind != "f":
                     raise ValueError(
-                        f"When unknown_value is np.nan, the dtype "
-                        f"parameter should be "
+                        "When unknown_value is np.nan, the dtype "
+                        "parameter should be "
                         f"a float dtype. Got {self.dtype}."
                     )
             elif not isinstance(self.unknown_value, numbers.Integral):
                 raise TypeError(
-                    f"unknown_value should be an integer or "
-                    f"np.nan when "
-                    f"handle_unknown is 'use_encoded_value', "
+                    "unknown_value should be an integer or "
+                    "np.nan when "
+                    "handle_unknown is 'use_encoded_value', "
                     f"got {self.unknown_value}."
                 )
         elif self.unknown_value is not None:
             raise TypeError(
-                f"unknown_value should only be set when "
-                f"handle_unknown is 'use_encoded_value', "
+                "unknown_value should only be set when "
+                "handle_unknown is 'use_encoded_value', "
                 f"got {self.unknown_value}."
             )
 
-        self._fit(X, force_all_finite="allow-nan")
+        # `_fit` will only raise an error when `self.handle_unknown="error"`
+        self._fit(X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan")
 
         if self.handle_unknown == "use_encoded_value":
             for feature_cats in self.categories_:
                 if 0 <= self.unknown_value < len(feature_cats):
                     raise ValueError(
-                        f"The used value for unknown_value "
+                        "The used value for unknown_value "
                         f"{self.unknown_value} is one of the "
-                        f"values already used for encoding the "
-                        f"seen categories."
+                        "values already used for encoding the "
+                        "seen categories."
                     )
 
         # stores the missing indices per category
@@ -911,8 +966,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         # validate shape of passed X
         msg = (
-            "Shape of the passed X data is not correct. Expected {0} "
-            "columns, got {1}."
+            "Shape of the passed X data is not correct. Expected {0} columns, got {1}."
         )
         if X.shape[1] != n_features:
             raise ValueError(msg.format(n_features, X.shape[1]))

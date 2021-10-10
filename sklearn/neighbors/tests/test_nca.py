@@ -139,7 +139,7 @@ def test_params_validation():
     )
     with pytest.raises(ValueError, match=re.escape(msg)):
         NCA(init=1).fit(X, y)
-    with pytest.raises(ValueError, match="`max_iter`= -1, must be >= 1."):
+    with pytest.raises(ValueError, match="max_iter == -1, must be >= 1."):
         NCA(max_iter=-1).fit(X, y)
     init = rng.rand(5, 3)
     msg = (
@@ -407,7 +407,7 @@ def test_verbose(init_name, capsys):
     assert lines[0] == "[NeighborhoodComponentsAnalysis]"
     header = "{:>10} {:>20} {:>10}".format("Iteration", "Objective Value", "Time(s)")
     assert lines[1] == "[NeighborhoodComponentsAnalysis] {}".format(header)
-    assert lines[2] == ("[NeighborhoodComponentsAnalysis] {}".format("-" * len(header)))
+    assert lines[2] == "[NeighborhoodComponentsAnalysis] {}".format("-" * len(header))
     for line in lines[3:-2]:
         # The following regex will match for instance:
         # '[NeighborhoodComponentsAnalysis]  0    6.988936e+01   0.01'
