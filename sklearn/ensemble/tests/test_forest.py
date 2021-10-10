@@ -1668,10 +1668,14 @@ def test_max_samples_boundary_regressors(name):
         X_reg, y_reg, train_size=0.7, test_size=0.3, random_state=0
     )
 
-    ms_1_model = FOREST_REGRESSORS[name](max_samples=1.0, random_state=0)
+    ms_1_model = FOREST_REGRESSORS[name](
+        bootstrap=True, max_samples=1.0, random_state=0
+    )
     ms_1_predict = ms_1_model.fit(X_train, y_train).predict(X_test)
 
-    ms_None_model = FOREST_REGRESSORS[name](max_samples=None, random_state=0)
+    ms_None_model = FOREST_REGRESSORS[name](
+        bootstrap=True, max_samples=None, random_state=0
+    )
     ms_None_predict = ms_None_model.fit(X_train, y_train).predict(X_test)
 
     ms_1_ms = mean_squared_error(ms_1_predict, y_test)
@@ -1686,10 +1690,14 @@ def test_max_samples_boundary_classifiers(name):
         X_large, y_large, random_state=0, stratify=y_large
     )
 
-    ms_1_model = FOREST_CLASSIFIERS[name](max_samples=1.0, random_state=0)
+    ms_1_model = FOREST_CLASSIFIERS[name](
+        bootstrap=True, max_samples=1.0, random_state=0
+    )
     ms_1_proba = ms_1_model.fit(X_train, y_train).predict_proba(X_test)
 
-    ms_None_model = FOREST_CLASSIFIERS[name](max_samples=None, random_state=0)
+    ms_None_model = FOREST_CLASSIFIERS[name](
+        bootstrap=True, max_samples=None, random_state=0
+    )
     ms_None_proba = ms_None_model.fit(X_train, y_train).predict_proba(X_test)
 
     np.testing.assert_allclose(ms_1_proba, ms_None_proba)
