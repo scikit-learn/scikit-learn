@@ -287,3 +287,16 @@ cdef void _center_shift(
     for j in range(n_clusters):
         center_shift[j] = _euclidean_dense_dense(
             &centers_new[j, 0], &centers_old[j, 0], n_features, False)
+
+
+def _is_same_clustering(int[::1] labels1, int[::1] labels2, n_clusters):
+    """Check if two arrays of labels are the same up to a permutation of the labels"""
+    cdef int[::1] mapping = np.full(fill_value=-1, shape=(n_clusters,), dtype=np.int32)
+    cdef int i
+
+    for i in range(labels1.shape[0]):
+        if mapping[labels1[i]] == -1:
+            mapping[labels1[i]] = labels2[i]
+        elif mapping[labels1[i]] != labels2[i]:
+            return False
+    return True
