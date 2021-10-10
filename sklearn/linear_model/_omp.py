@@ -656,14 +656,15 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     See Also
     --------
     orthogonal_mp : Solves n_targets Orthogonal Matching Pursuit problems.
-    orthogonal_mp_gram :  Solves n_targets Orthogonal Matching Pursuit problems using only 
-        the Gram matrix X.T * X and the product X.T * y.
+    orthogonal_mp_gram :  Solves n_targets Orthogonal Matching Pursuit
+        problems using only the Gram matrix X.T * X and the product X.T * y.
     lars_path : Compute Least Angle Regression or Lasso path using LARS algorithm.
     Lars : Least Angle Regression model a.k.a. LAR.
     LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
     sklearn.decomposition.sparse_encode : Generic sparse coding.
         Each column of the result is the solution to a Lasso problem.
-    OrthogonalMatchingPursuitCV : Cross-validated Orthogonal Matching Pursuit model (OMP).
+    OrthogonalMatchingPursuitCV : Cross-validated 
+        Orthogonal Matching Pursuit model (OMP).
 
     Notes
     -----
