@@ -1514,11 +1514,6 @@ def test_simple_impute_pd_na():
     imputer = SimpleImputer(missing_values=np.nan, strategy="constant", fill_value=-1)
     assert_array_equal(imputer.fit_transform(df), [[1], [-1], [3]])
 
-    # Impute pandas array of integer types with 'median' strategy.
-    df = pd.DataFrame({"feature": pd.Series([1, None, 2, 3], dtype="Int64")})
-    imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
-    assert_array_equal(imputer.fit_transform(df), [[1], [2], [2], [3]])
-
     # Impute pandas array of float types.
     df = pd.DataFrame({"feature": pd.Series([0.1, None, 0.3], dtype="Float32")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-2.0)
