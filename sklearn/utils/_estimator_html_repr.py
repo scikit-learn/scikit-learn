@@ -198,10 +198,9 @@ _STYLE = """
 #$id label.sk-toggleable__label-arrow:before {
   content: "▶";
   float: left;
-  margin-right: 0.5em;
+  margin-right: 0.25em;
 }
 #$id div.sk-toggleable__name {
-  margin: 0 auto;
   display: inline;
 }
 #$id div.sk-toggleable__content {
