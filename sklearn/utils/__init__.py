@@ -998,10 +998,12 @@ def _is_pandas_na(x):
     -------
     boolean
     """
-    with suppress(ImportError):
-        from pandas import NA
+    with suppress(ImportError, AttributeError):
+        # We also suppress `AttributeError` because older versions of pandas do
+        # not have `NA`.
+        import pandas
 
-        return x is NA
+        return x is pandas.NA
 
     return False
 
