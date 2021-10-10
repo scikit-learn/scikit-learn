@@ -1614,6 +1614,16 @@ def test_forest_degenerate_feature_importances():
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_max_samples_bootstrap(name):
+    # Check invalid `max_samples` values
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=False, max_samples=0.5)
+    with pytest.raises(
+        ValueError, match=r"Sub-sample size only available if bootstrap=True"
+    ):
+        est.fit(X, y)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 @pytest.mark.parametrize(
     "max_samples, exc_type, exc_msg",
     [
