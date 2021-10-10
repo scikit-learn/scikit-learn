@@ -663,7 +663,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
     sklearn.decomposition.sparse_encode : Generic sparse coding.
         Each column of the result is the solution to a Lasso problem.
-    OrthogonalMatchingPursuitCV : Cross-validated 
+    OrthogonalMatchingPursuitCV : Cross-validated
         Orthogonal Matching Pursuit model (OMP).
 
     Notes
