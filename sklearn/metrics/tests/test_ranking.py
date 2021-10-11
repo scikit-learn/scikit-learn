@@ -28,6 +28,7 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
+from sklearn.metrics import lift_curve
 from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores
 from sklearn.metrics import ndcg_score, dcg_score
 from sklearn.metrics import top_k_accuracy_score
@@ -44,6 +45,7 @@ CURVE_FUNCS = [
     det_curve,
     precision_recall_curve,
     roc_curve,
+    lift_curve,
 ]
 
 
@@ -435,6 +437,86 @@ def test_roc_curve_fpr_tpr_increasing():
     fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
     assert (np.diff(fpr) < 0).sum() == 0
     assert (np.diff(tpr) < 0).sum() == 0
+
+
+def test_lift_curve():
+    # Test lift curve function
+    y_true, _, y_score = make_prediction(binary=True)
+    lift, percentages, thresholds = lift_curve(y_true, y_score)
+    assert_almost_equal(np.max(percentages), 100)
+    assert_almost_equal(np.min(percentages), 0)
+    assert_almost_equal(np.min(lift), 1)
+    assert_almost_equal(percentages[0], 0)
+    assert_almost_equal(thresholds[0], np.max(y_score) + 1)
+    assert lift.shape == percentages.shape
+    assert percentages.shape == thresholds.shape
+    assert np.all(np.diff(percentages, 1) >= 0)
+    assert np.all(np.diff(thresholds, 1) <= 0)
+
+
+def test_lift_curve_toydata():
+    # Binary classification
+    y_true = [0, 1]
+    y_score = [0, 1]
+    lift, percentages, thresholds = lift_curve(y_true, y_score)
+    assert_array_almost_equal(lift, [2, 2, 1])
+    assert_array_almost_equal(percentages, [0, 50, 100])
+    assert_array_almost_equal(thresholds, [2, 1, 0])
+
+    y_true = [0, 1]
+    y_score = [1, 0]
+    lift, percentages, thresholds = lift_curve(y_true, y_score)
+    assert_array_almost_equal(lift, [0, 0, 1])
+    assert_array_almost_equal(percentages, [0, 50, 100])
+    assert_array_almost_equal(thresholds, [2, 1, 0])
+
+    y_true = [1, 0]
+    y_score = [1, 1]
+    lift, percentages, thresholds = lift_curve(y_true, y_score)
+    assert_array_almost_equal(lift, [1, 1])
+    assert_array_almost_equal(percentages, [0, 100])
+    assert_array_almost_equal(thresholds, [2, 1])
+
+    y_true = [1, 0]
+    y_score = [1, 0]
+    lift, percentages, thresholds = lift_curve(y_true, y_score)
+    assert_array_almost_equal(lift, [2, 2, 1])
+    assert_array_almost_equal(percentages, [0, 50, 100])
+    assert_array_almost_equal(thresholds, [2, 1, 0])
+
+    y_true = [1, 0]
+    y_score = [0.5, 0.5]
+    lift, percentages, thresholds = lift_curve(y_true, y_score)
+    assert_array_almost_equal(lift, [1, 1])
+    assert_array_almost_equal(percentages, [0, 100])
+    assert_array_almost_equal(thresholds, [1.5, 0.5])
+
+    y_true = [0, 0]
+    y_score = [0.25, 0.75]
+    # assert UndefinedMetricWarning because of no positive sample in y_true
+    expected_message = (
+        "No positive samples in y_true, true positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        _, _, _ = roc_curve(y_true, y_score)
+
+
+def test_lift_curve_sample_weight():
+    # With weights
+    y_true = [0, 1, 0, 1, 1, 0, 1, 1]
+    y_score = [0, 1, 0.5, 0.6, 0.4, 0.1, 0.7, 0.4]
+    weights = [1, 1, 2, 2, 2, 0, 0, 4]
+    lift1, percentages1, thresholds1 = lift_curve(y_true, y_score,
+        sample_weight=weights)
+
+    # With repeats
+    y_true = [0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
+    y_score = [0, 1, 0.5, 0.5, 0.6, 0.6, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]
+    lift2, percentages2, thresholds2 = lift_curve(y_true, y_score)
+
+    assert_array_almost_equal(lift1, lift2)
+    assert_array_almost_equal(percentages1, percentages2)
+    assert_array_almost_equal(thresholds1, thresholds2)
 
 
 def test_auc():
