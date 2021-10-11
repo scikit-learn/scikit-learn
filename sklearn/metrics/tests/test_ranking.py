@@ -454,6 +454,24 @@ def test_lift_curve():
     assert np.all(np.diff(thresholds, 1) <= 0)
 
 
+def test_lift_curve_pos_label():
+    # Binary classification
+    y_true = np.array([1, 2, 1, 2])
+    y_score = np.array([0.1, 0.4, 0.3, 0.8])
+    lift, percentages, thresholds = lift_curve(y_true, y_score, pos_label=2)
+    assert_array_almost_equal(lift, [2, 2, 2, 1.333333, 1])
+    assert_array_almost_equal(percentages, [0, 25, 50, 75, 100])
+    assert_array_almost_equal(thresholds, [1.8, 0.8, 0.4, 0.3, 0.1])
+
+    # Binary classification
+    y_true = np.array([1, 2, 1, 2])
+    y_score = np.array([0.1, 0.4, 0.3, 0.8])
+    lift, percentages, thresholds = lift_curve(y_true, y_score, pos_label=1)
+    assert_array_almost_equal(lift, [0, 0, 0, 0.666666, 1])
+    assert_array_almost_equal(percentages, [0, 25, 50, 75, 100])
+    assert_array_almost_equal(thresholds, [1.8, 0.8, 0.4, 0.3, 0.1])
+
+
 def test_lift_curve_toydata():
     # Binary classification
     y_true = np.array([1, 2, 1, 2])
