@@ -60,6 +60,15 @@ Changelog
   message when the solver does not support sparse matrices with int64 indices.
   :pr:`21093` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.metrics`
+......................
+
+- |API| :class:`metrics.DistanceMetric` has been moved from
+  :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
+  Using `neighbors.DistanceMetric` for imports is still valid for
+  backward compatibility, but this alias will be removed in 1.3.
+  :pr:`21177` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
