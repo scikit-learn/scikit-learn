@@ -612,7 +612,7 @@ def explained_variance_score(
     pollute higher-level experiments such as a grid search cross-validation,
     by default these cases are replaced with 1.0 (perfect predictions) or 0.0
     (imperfect predictions) respectively. If ``force_finite``
-    is set to ``False``, this score fallbacks on the original :math:`R^2`
+    is set to ``False``, this score falls back on the original :math:`R^2`
     definition.
 
     Note: when the prediction residuals have zero mean (perfectly unbiased
@@ -650,7 +650,7 @@ def explained_variance_score(
     force_finite : boolean, optional
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
         data should be replaced with real numbers (``1.0`` if prediction is
-        perfect, ``0.0`` otherwise). Default is ``True``, a convenient settings
+        perfect, ``0.0`` otherwise). Default is ``True``, a convenient setting
         for model optimization procedures (e.g. grid search cross-validation).
 
         .. versionadded:: 1.1.0
@@ -888,6 +888,7 @@ def _assemble_r2_explained_variance(
         # Non-zero Numerator and Zero Denominator:
         # arbitrary set to 0.0 to avoid -inf scores
         output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
+
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             # return scores individually
