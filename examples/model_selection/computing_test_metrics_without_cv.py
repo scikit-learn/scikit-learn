@@ -115,7 +115,7 @@ scores = cross_validate(
 
 # Now calculate the optimism as the average of the AUC over
 # the bootstrap samples.
-optimism = np.sum(scores['train_score'] - scores['test_score']) / n_splits
+optimism = np.mean(scores['train_score'] - scores['test_score'])
 print(f'Optimism is {optimism}')
 
 # Now calculate the optimism adjusted AUC metric.
