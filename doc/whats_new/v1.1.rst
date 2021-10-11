@@ -38,6 +38,42 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Enhancement| :func:`calibration.calibration_curve` accepts a parameter
+  `pos_label` to specify the positive class label.
+  :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.ensemble`
+...........................
+
+- |Fix| Fixed a bug that could produce a segfault in rare cases for
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`.
+  :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
+  message when the solver does not support sparse matrices with int64 indices.
+  :pr:`21093` by `Tom Dupre la Tour`_.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| raise an error during cross-validation when the fits for all the
+  splits failed. Similarly raise an error during grid-search when the fits for
+  all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
+  Setting a transformer to "passthrough" will pass the features unchanged.
+  :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
+
 :mod:`sklearn.utils`
 ....................
 
@@ -52,13 +88,6 @@ Changelog
   :func:`neighbors.KernelDensity`.
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
-
-:mod:`sklearn.pipeline`
-.......................
-
-- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
-  Setting a transformer to "passthrough" will pass the features unchanged.
-  :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
 Code and Documentation Contributors
 -----------------------------------

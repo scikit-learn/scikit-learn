@@ -2,6 +2,58 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_0_1:
+
+Version 1.0.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+Fixed models
+------------
+
+- |Fix| Non-fit methods in the following classes do not raise a UserWarning
+  when fitted on DataFrames with valid feature names:
+  :class:`covariance.EllipticEnvelope`, :class:`ensemble.IsolationForest`,
+  :class:`ensemble.AdaBoostClassifier`, :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`. :pr:`21199` by `Thomas Fan`_.
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Fixed :class:`calibration.CalibratedClassifierCV` to take into account
+  `sample_weight` when computing the base estimator prediction when
+  `ensemble=False`.
+  :pr:`20638` by :user:`Julien Bohné <JulienB-78>`.
+
+- |Fix| Fixed a bug in :class:`calibration.CalibratedClassifierCV` with
+  `method="sigmoid"` that was ignoring the `sample_weight` when computing the
+  the Bayesian priors.
+  :pr:`21179` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans`, ensuring reproducibility and equivalence
+  between sparse and dense input. :pr:`21195`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor` with `metric="precomputed"` raises
+  an error for `bsr` and `dok` sparse matrices in methods: `fit`, `kneighbors`
+  and `radius_neighbors`, due to handling of explicit zeros in `bsr` and `dok`
+  :term:`sparse graph` formats. :pr:`21199` by `Thomas Fan`_.
+
 .. _changes_1_0:
 
 Version 1.0.0
@@ -9,6 +61,9 @@ Version 1.0.0
 
 **September 2021**
 
+For a short description of the main highlights of the release, please
+refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
 
 .. include:: changelog_legend.inc
 
@@ -251,9 +306,9 @@ Changelog
   an adequate transformer.
   :pr:`18898` by :user:`Oras Phongpanagnam <panangam>`.
 
-- |API| Adds `prefix_feature_names_out` to :class:`compose.ColumnTransformer`.
+- |API| Adds `verbose_feature_names_out` to :class:`compose.ColumnTransformer`.
   This flag controls the prefixing of feature names out in
-  :term:`get_feature_names_out`. :pr:`18444` by `Thomas Fan`_.
+  :term:`get_feature_names_out`. :pr:`18444` and :pr:`21080` by `Thomas Fan`_.
 
 :mod:`sklearn.covariance`
 .........................
@@ -947,47 +1002,48 @@ Raghunathan, bmalezieux, Brian Rice, Brian Sun, Bruno Charron, Bryan Chen,
 bumblebee, caherrera-meli, Carsten Allefeld, CeeThinwa, Chiara Marmo,
 chrissobel, Christian Lorentzen, Christopher Yeh, Chuliang Xiao, Clément
 Fauchereau, cliffordEmmanuel, Conner Shen, Connor Tann, David Dale, David Katz,
-David Poznik, Divyanshu Deoli, dmallia17, Dmitry Kobak, DS_anas, Eduardo
-Jardim, EdwinWenink, EL-ATEIF Sara, Eleni Markou, Eric Fiegel, Erich Schubert,
-Ezri-Mudde, Fatos Morina, Felipe Rodrigues, Felix Hafner, Fenil Suchak,
-flyingdutchman23, Flynn, Fortune Uwha, Francois Berenger, Frankie Robertson,
-Frans Larsson, Frederick Robinson, Gabriel S Vicente, Gael Varoquaux, genvalen,
-Geoffrey Thomas, geroldcsendes, Gleb Levitskiy, Glen, Glòria Macià Muñoz,
-gregorystrubel, groceryheist, Guillaume Lemaitre, guiweber, Haidar Almubarak,
-Hans Moritz Günther, Haoyin Xu, Harris Mirza, Harry Wei, Harutaka Kawamura,
-Hassan Alsawadi, Helder Geovane Gomes de Lima, Hugo DEFOIS, Igor Ilic, Ikko
-Ashimine, Isaack Mungui, Ishaan Bhat, Ishan Mishra, Iván Pulido, iwhalvic,
+David Poznik, Dimitri Papadopoulos Orfanos, Divyanshu Deoli, dmallia17,
+Dmitry Kobak, DS_anas, Eduardo Jardim, EdwinWenink, EL-ATEIF Sara, Eleni
+Markou, EricEllwanger, Eric Fiegel, Erich Schubert, Ezri-Mudde, Fatos Morina,
+Felipe Rodrigues, Felix Hafner, Fenil Suchak, flyingdutchman23, Flynn, Fortune
+Uwha, Francois Berenger, Frankie Robertson, Frans Larsson, Frederick Robinson,
+frellwan, Gabriel S Vicente, Gael Varoquaux, genvalen, Geoffrey Thomas,
+geroldcsendes, Gleb Levitskiy, Glen, Glòria Macià Muñoz, gregorystrubel,
+groceryheist, Guillaume Lemaitre, guiweber, Haidar Almubarak, Hans Moritz
+Günther, Haoyin Xu, Harris Mirza, Harry Wei, Harutaka Kawamura, Hassan
+Alsawadi, Helder Geovane Gomes de Lima, Hugo DEFOIS, Igor Ilic, Ikko Ashimine,
+Isaack Mungui, Ishaan Bhat, Ishan Mishra, Iván Pulido, iwhalvic, J Alexander,
 Jack Liu, James Alan Preiss, James Budarz, James Lamb, Jannik, Jeff Zhao,
-Jennifer Maldonado, Jérémie du Boisberranger, Jesse Lima, Jianzhu Guo,
-jnboehm, Joel Nothman, JohanWork, John Paton, Jonathan Schneider, Jon Crall,
-Jon Haitz Legarreta Gorroño, Joris Van den Bossche, José Manuel Nápoles
-Duarte, Juan Carlos Alfaro Jiménez, Juan Martin Loyola, Julien Jerphanion,
-Julio Batista Silva, julyrashchenko, JVM, Kadatatlu Kishore, Karen Palacio, Kei
-Ishikawa, kmatt10, kobaski, Kot271828, Kunj, KurumeYuta, kxytim, lacrosse91,
-LalliAcqua, Laveen Bagai, Leonardo Rocco, Leonardo Uieda, Leopoldo Corona, Loic
-Esteve, LSturtew, Luca Bittarello, Luccas Quadros, Lucy Jiménez, Lucy Liu,
-ly648499246, Mabu Manaileng, makoeppel, Marco Gorelli, Maren Westermann,
+Jennifer Maldonado, Jérémie du Boisberranger, Jesse Lima, Jianzhu Guo, jnboehm,
+Joel Nothman, JohanWork, John Paton, Jonathan Schneider, Jon Crall, Jon Haitz
+Legarreta Gorroño, Joris Van den Bossche, José Manuel Nápoles Duarte, Juan
+Carlos Alfaro Jiménez, Juan Martin Loyola, Julien Jerphanion, Julio Batista
+Silva, julyrashchenko, JVM, Kadatatlu Kishore, Karen Palacio, Kei Ishikawa,
+kmatt10, kobaski, Kot271828, Kunj, KurumeYuta, kxytim, lacrosse91, LalliAcqua,
+Laveen Bagai, Leonardo Rocco, Leonardo Uieda, Leopoldo Corona, Loic Esteve,
+LSturtew, Luca Bittarello, Luccas Quadros, Lucy Jiménez, Lucy Liu, ly648499246,
+Mabu Manaileng, Manimaran, makoeppel, Marco Gorelli, Maren Westermann,
 Mariangela, Maria Telenczuk, marielaraj, Martin Hirzel, Mateo Noreña, Mathieu
 Blondel, Mathis Batoul, mathurinm, Matthew Calcote, Maxime Prieur, Maxwell,
 Mehdi Hamoumi, Mehmet Ali Özer, Miao Cai, Michal Karbownik, michalkrawczyk,
 Mitzi, mlondschien, Mohamed Haseeb, Mohamed Khoualed, Muhammad Jarir Kanji,
 murata-yu, Nadim Kawwa, Nanshan Li, naozin555, Nate Parsons, Neal Fultz, Nic
-Annau, Nicolas Hug, Nicolas Miller, Nico Stefani, Nigel Bosch, Nodar
-Okroshiashvili, Norbert Preining, novaya, Ogbonna Chibuike Stephen, OGordon100,
-Oliver Pfaffel, Olivier Grisel, Oras Phongpanangam, Pablo Duque, Pablo
-Ibieta-Jimenez, Patric Lacouth, Paulo S. Costa, Paweł Olszewski, Peter Dye,
-PierreAttard, Pierre-Yves Le Borgne, PranayAnchuri, Prince Canuma, putschblos,
-qdeffense, RamyaNP, ranjanikrishnan, Ray Bell, Rene Jean Corneille, Reshama
-Shaikh, ricardojnf, RichardScottOZ, Rodion Martynov, Rohan Paul, Roman Lutz,
-Roman Yurchak, Samuel Brice, Sandy Khosasi, Sean Benhur J, Sebastian Flores,
-Sebastian Pölsterl, Shao Yang Hong, shinehide, shinnar, shivamgargsya,
+Annau, Nicolas Hug, Nicolas Miller, Nico Stefani, Nigel Bosch, Nikita Titov,
+Nodar Okroshiashvili, Norbert Preining, novaya, Ogbonna Chibuike Stephen,
+OGordon100, Oliver Pfaffel, Olivier Grisel, Oras Phongpanangam, Pablo Duque,
+Pablo Ibieta-Jimenez, Patric Lacouth, Paulo S. Costa, Paweł Olszewski, Peter
+Dye, PierreAttard, Pierre-Yves Le Borgne, PranayAnchuri, Prince Canuma,
+putschblos, qdeffense, RamyaNP, ranjanikrishnan, Ray Bell, Rene Jean Corneille,
+Reshama Shaikh, ricardojnf, RichardScottOZ, Rodion Martynov, Rohan Paul, Roman
+Lutz, Roman Yurchak, Samuel Brice, Sandy Khosasi, Sean Benhur J, Sebastian
+Flores, Sebastian Pölsterl, Shao Yang Hong, shinehide, shinnar, shivamgargsya,
 Shooter23, Shuhei Kayawari, Shyam Desai, simonamaggio, Sina Tootoonian,
 solosilence, Steven Kolawole, Steve Stagg, Surya Prakash, swpease, Sylvain
 Marié, Takeshi Oura, Terence Honles, TFiFiE, Thomas A Caswell, Thomas J. Fan,
 Tim Gates, TimotheeMathieu, Timothy Wolodzko, Tim Vink, t-jakubek, t-kusanagi,
 tliu68, Tobias Uhmann, tom1092, Tomás Moreyra, Tomás Ronald Hughes, Tom
-Dupré la Tour, Tommaso Di Noto, Tomohiro Endo, Toshihiro NAKAE, tsuga, Uttam
-kumar, vadim-ushtanit, Vangelis Gkiastas, Venkatachalam N, Vilém Zouhar,
-Vinicius Rios Fuck, Vlasovets, waijean, Whidou, xavier dupré, xiaoyuchai,
-Yasmeen Alsaedy, yoch, Yosuke KOBAYASHI, Yu Feng, YusukeNagasaka, yzhenman,
-Zero, ZeyuSun, ZhaoweiWang, Zito, Zito Relova
+Dupré la Tour, Tommaso Di Noto, Tomohiro Endo, TONY GEORGE, Toshihiro NAKAE,
+tsuga, Uttam kumar, vadim-ushtanit, Vangelis Gkiastas, Venkatachalam N, Vilém
+Zouhar, Vinicius Rios Fuck, Vlasovets, waijean, Whidou, xavier dupré,
+xiaoyuchai, Yasmeen Alsaedy, yoch, Yosuke KOBAYASHI, Yu Feng, YusukeNagasaka,
+yzhenman, Zero, ZeyuSun, ZhaoweiWang, Zito, Zito Relova

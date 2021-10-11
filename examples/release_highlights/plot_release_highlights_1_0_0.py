@@ -152,12 +152,12 @@ scalar = StandardScaler().fit(X)
 scalar.feature_names_in_
 
 # %%
-# The support of :term:`get_feature_names_out` is avaliable for transformers
+# The support of :term:`get_feature_names_out` is available for transformers
 # that already had :term:`get_feature_names` and transformers with a one-to-one
 # correspondence between input and output such as
-# :class:`~preprocessing.StandardScalar`. :term:`get_feature_names_out` support
+# :class:`~preprocessing.StandardScaler`. :term:`get_feature_names_out` support
 # will be added to all other transformers in future releases. Additionally,
-# :meth:`compose.ColumnTransformer.get_feature_names_out` is avaliable to
+# :meth:`compose.ColumnTransformer.get_feature_names_out` is available to
 # combine feature names of its transformers:
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
@@ -169,7 +169,7 @@ preprocessor = ColumnTransformer(
         ("numerical", StandardScaler(), ["age"]),
         ("categorical", OneHotEncoder(), ["pet"]),
     ],
-    prefix_feature_names_out=False,
+    verbose_feature_names_out=False,
 ).fit(X)
 
 preprocessor.get_feature_names_out()
@@ -194,7 +194,7 @@ pipe[:-1].get_feature_names_out()
 # :class:`metrics.PrecisionRecallDisplay`, :class:`metrics.DetCurveDisplay`,
 # and :class:`inspection.PartialDependenceDisplay` now expose two class
 # methods: `from_estimator` and `from_predictions` which allow users to create
-# a plot given the predictions or an estimator. This means the corresponsing
+# a plot given the predictions or an estimator. This means the corresponding
 # `plot_*` functions are deprecated. Please check :ref:`example one
 # <sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py>` and
 # :ref:`example two
