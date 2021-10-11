@@ -1096,62 +1096,6 @@ def lift_curve(
     thresholds = np.insert(thresholds, 0, [thresholds.max() + 1])
 
     return lift, percentages, thresholds
-    # Check to make sure y_true is valid
-    y_type = type_of_target(y_true)
-    if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
-        raise ValueError("{0} format is not supported".format(y_type))
-
-    # Make sure the arrays are of the same length
-    check_consistent_length(y_true, y_score)
-    y_true = column_or_1d(y_true)
-    y_score = column_or_1d(y_score)
-    assert_all_finite(y_true)
-    assert_all_finite(y_score)
-
-    pos_label = _check_pos_label_consistency(pos_label, y_true)
-
-    # Filter out zero-weighted samples, as they should not impact the result
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        sample_weight = _check_sample_weight(sample_weight, y_true)
-        nonzero_weight_mask = sample_weight != 0
-        y_true = y_true[nonzero_weight_mask]
-        y_score = y_score[nonzero_weight_mask]
-        sample_weight = sample_weight[nonzero_weight_mask]
-
-    # make y_true a boolean vector
-    y_true = y_true == pos_label
-    
-    # sort scores and corresponding truth values
-    desc_score_indices = np.argsort(y_score, kind="mergesort")[::-1]
-    y_score = y_score[desc_score_indices]
-    y_true = y_true[desc_score_indices]
-    if sample_weight is not None:
-        weight = sample_weight[desc_score_indices]
-        weight = weight / weight.sum()
-    else:
-        weight = 1.0
-    
-    # Thresholds
-    thresholds = np.insert(y_score, 0, [y_score.max() + 1])
-    
-    # Percentages
-    percentages = np.arange(start=1, stop=len(y_true) + 1)
-    percentages = 100 * percentages * weight / float(len(y_true))
-    percentages = np.insert(percentages, 0, [0])
-    
-    # Lift
-    gain = stable_cumsum(y_true * weight) / np.arange(1, len(y_true) + 1)
-    lift = gain / (y_true * weight).mean()
-    lift = np.insert(lift, 0, [lift[0]])
-
-    if np.any(lift <= 0):
-    	warnings.warn(
-            "No positive samples in y_true, lift is meaningless",
-            UndefinedMetricWarning,
-        )
-    
-    return lift, percentages, thresholds
 
 
 def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None):
