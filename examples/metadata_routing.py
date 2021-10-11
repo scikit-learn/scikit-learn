@@ -389,7 +389,9 @@ est.get_metadata_request()["fit"]
 est.fit(X, y, foo=my_weights, first_aliased_foo=my_other_weights)
 
 # %%
-# Alias only on the sub-estimator
+# Alias only on the sub-estimator. This is useful if we don't want the
+# meta-estimator to use the metadata, and we only want the metadata to be used
+# by the sub-estimator.
 est = RouterConsumerClassifier(
     estimator=ExampleClassifier().fit_requests(foo="aliased_foo")
 ).fit_requests(foo=True)
