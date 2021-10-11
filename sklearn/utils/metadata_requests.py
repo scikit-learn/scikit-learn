@@ -33,6 +33,9 @@ METHODS = [
 
 REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
 
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
         Parameters
         ----------
 """
@@ -631,6 +634,9 @@ class MetadataRouter:
     def get_metadata_request(self):
         """Get requested data properties.
 
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
         Returns
         -------
         request : dict
@@ -828,6 +834,9 @@ class _MetadataRequester:
 
     def get_metadata_request(self):
         """Get requested data properties.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
 
         Returns
         -------
