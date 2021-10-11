@@ -26,23 +26,17 @@ def reference_role(typ, rawtext, text, lineno, inliner, options={}, content=[]):
 
     typ = typ.lower()
 
-    full_url_prefixes = {
-    	"arxiv": "https://arxiv.org/abs/",
-    	"doi": "https://doi.org/",
-    }
+    full_url_prefixes = {"arxiv": "https://arxiv.org/abs/", "doi": "https://doi.org/"}
 
-    title_prefixes = {
-    	"arxiv": "arXiv:",
-    	"doi": "DOI:",
-    }
+    title_prefixes = {"arxiv": "arXiv:", "doi": "DOI:"}
 
     full_url = f"{full_url_prefixes[typ]}{part}"
 
     if not has_explicit_title:
-    	title = f"{title_prefixes[typ]}{part}"
-        
+        title = f"{title_prefixes[typ]}{part}"
+
     pnode = nodes.reference(title, title, internal=False, refuri=full_url)
-    
+
     return [pnode], []
 
 
