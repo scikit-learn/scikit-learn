@@ -1518,14 +1518,8 @@ def test_ridge_sag_with_X_fortran():
 def test_ridge_alpha_boundary_warning():
     ridge = RidgeCV(alphas=[0.1, 1])
     X, y = X_diabetes, y_diabetes
-    msg = ('The optimal value for the regularization '
-           'parameter ''alpha'' was %g which '
-           'lies at a boundary of the explored range '
-           '(between %g and %g). Consider setting '
-           'the ''alphas'' parameter to explore a '
-           'wider range.'
-           % (0.1, 0.1, 1))
-    with pytest.warns(UserWarning, match=msg):
+    with pytest.warns(ConvergenceWarning, 
+                      match="lies at a boundary of the explored range"):
         ridge.fit(X, y)
 
 
