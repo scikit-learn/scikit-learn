@@ -27,7 +27,7 @@ from sklearn.utils import shuffle
 from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn import datasets
 from sklearn.datasets import fetch_california_housing
-from sklearn.metrics import mean_absolute_error
+from sklearn.model_selection import cross_val_score
 
 
 # Common random state
@@ -587,30 +587,33 @@ def test_adaboost_regressor_reset_weights():
 
     # Please refer to https://github.com/scikit-learn/scikit-learn/issues/20443
 
+    np.random.seed(0)
     data, target = fetch_california_housing(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(data, target, random_state=0)
+    idx = np.random.choice(len(data), 1000, replace=False)
+    data, target = data[idx], target[idx]
     adaboost_10 = AdaBoostRegressor(
         learning_rate=1.0,
-        base_estimator=DecisionTreeRegressor(max_leaf_nodes=50),
+        base_estimator=DecisionTreeRegressor(max_depth=3),
         n_estimators=10,
         no_improvement="continue",
         random_state=0,
     )
     adaboost_500 = AdaBoostRegressor(
         learning_rate=1.0,
-        base_estimator=DecisionTreeRegressor(max_leaf_nodes=50),
+        base_estimator=DecisionTreeRegressor(max_depth=3),
         n_estimators=500,
         no_improvement="continue",
         random_state=0,
     )
 
-    # We usually assume large n_estimators should be better than the small ones.
-    adaboost_10.fit(X_train, y_train)
-    adaboost_500.fit(X_train, y_train)
-    predict_10 = adaboost_10.predict(X_test)
-    predict_500 = adaboost_500.predict(X_test)
-    mae_10 = mean_absolute_error(y_test, predict_10)
-    mae_500 = mean_absolute_error(y_test, predict_500)
+    # We usually assume a model with large n_estimators should be
+    # better than the small ones.
+    mae_10 = -cross_val_score(
+        adaboost_10, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
+    mae_500 = -cross_val_score(
+        adaboost_500, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
 
     # But we saw an unexpected result.
     assert mae_10 < mae_500
@@ -620,29 +623,12 @@ def test_adaboost_regressor_reset_weights():
     adaboost_10.set_params(no_improvement="reset_weights")
     adaboost_500.set_params(no_improvement="reset_weights")
 
-    adaboost_10.fit(X_train, y_train)
-    adaboost_500.fit(X_train, y_train)
-    predict_10 = adaboost_10.predict(X_test)
-    predict_500 = adaboost_500.predict(X_test)
-    mae_10 = mean_absolute_error(y_test, predict_10)
-    mae_500 = mean_absolute_error(y_test, predict_500)
+    mae_10 = -cross_val_score(
+        adaboost_10, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
+    mae_500 = -cross_val_score(
+        adaboost_500, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
 
     # We got an expected result.
     assert mae_10 > mae_500
-
-    # Some options available.
-    adaboost_500.set_params(no_improvement="stop")
-    adaboost_500.fit(X_train, y_train)
-    mae_stop = mean_absolute_error(y_test, adaboost_500.predict(X_test))
-    adaboost_500.set_params(no_improvement="continues")
-    adaboost_500.fit(X_train, y_train)
-    mae_cont = mean_absolute_error(y_test, adaboost_500.predict(X_test))
-    adaboost_500.set_params(no_improvement="any_other_words")
-    adaboost_500.fit(X_train, y_train)
-    mae_any = mean_absolute_error(y_test, adaboost_500.predict(X_test))
-    assert mae_stop != mae_cont
-    assert mae_cont == mae_any
-
-    adaboost_500.set_params(no_improvement="warn")
-    with pytest.warns(UserWarning, match="The base estimator is too weak."):
-        adaboost_500.fit(X_train, y_train)
