@@ -697,41 +697,11 @@ def explained_variance_score(
     y_true_avg = np.average(y_true, weights=sample_weight, axis=0)
     denominator = np.average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
 
-    if not force_finite:
-        # Standard formula, that may lead to NaN or -Inf
-        output_scores = 1 - (numerator / denominator)
-    else:
-        nonzero_denominator = denominator != 0
-        nonzero_numerator = numerator != 0
-        # Default = Zero Numerator = perfect predictions. Set to 1.0
-        output_scores = np.ones([y_true.shape[1]])
-        # Non-zero Numerator and Non-zero Denominator: use the formula
-        valid_score = nonzero_denominator & nonzero_numerator
-        output_scores[valid_score] = 1 - (numerator[valid_score] /
-                                          denominator[valid_score])
-        # Non-zero Numerator and Zero Denominator:
-        # arbitrary set to 0.0 to avoid -inf scores
-        output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            # return scores individually
-            return output_scores
-        elif multioutput == "uniform_average":
-            # passing to np.average() None as weights results is uniform mean
-            avg_weights = None
-        elif multioutput == "variance_weighted":
-            avg_weights = denominator
-            if force_finite:
-                # avoid fail on constant y or one-element arrays
-                if not np.any(nonzero_denominator):
-                    if not np.any(nonzero_numerator):
-                        return 1.0
-                    else:
-                        return 0.0
-    else:
-        avg_weights = multioutput
-
-    return np.average(output_scores, weights=avg_weights)
+    return _assemble_r2_explained_variance(
+        numerator=numerator, denominator=denominator,
+        nb_outputs=y_true.shape[1],
+        multioutput=multioutput, force_finite=force_finite
+    )
 
 
 def r2_score(
@@ -876,14 +846,27 @@ def r2_score(
     denominator = (
         weight * (y_true - np.average(y_true, axis=0, weights=sample_weight)) ** 2
     ).sum(axis=0, dtype=np.float64)
+
+    return _assemble_r2_explained_variance(
+        numerator=numerator, denominator=denominator, nb_outputs=y_true.shape[1],
+        multioutput=multioutput, force_finite=force_finite
+    )
+
+
+def _assemble_r2_explained_variance(
+    numerator, denominator, nb_outputs, multioutput, force_finite
+):
+    """Common part used by explained variance score and :math:`R^2` score"""
+
     if not force_finite:
-        # Standard R² formula, that may lead to NaN or -Inf
-        output_scores = 1 - numerator / denominator
+        # Standard formula, that may lead to NaN or -Inf
+        output_scores = 1 - (numerator / denominator)
     else:
         nonzero_denominator = denominator != 0
         nonzero_numerator = numerator != 0
         # Default = Zero Numerator = perfect predictions. Set to 1.0
-        output_scores = np.ones([y_true.shape[1]])
+        # (note: even if denominator is zero, thus avoiding NaN scores)
+        output_scores = np.ones([nb_outputs])
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
         output_scores[valid_score] = 1 - (numerator[valid_score] /
@@ -896,7 +879,7 @@ def r2_score(
             # return scores individually
             return output_scores
         elif multioutput == "uniform_average":
-            # passing None as weights results is uniform mean
+            # passing to np.average() None as weights results is uniform mean
             avg_weights = None
         elif multioutput == "variance_weighted":
             avg_weights = denominator
