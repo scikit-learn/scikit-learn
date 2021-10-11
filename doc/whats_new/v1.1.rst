@@ -38,13 +38,6 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.model_selection`
-..............................
-
-- |Enhancement| Added new example showing how to compute an estimate of AUC on
-  a test set without using cross-validation, by using bootstrap sampling.
-  :pr:`21157` by `Adam Li <adam2392>`_
-
 :mod:`sklearn.calibration`
 ..........................
 

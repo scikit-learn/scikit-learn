@@ -32,18 +32,22 @@ necessarily AUC.
 
 .. topic:: References:
 
-   [1] Gordon C. S. Smith, Shaun R. Seaman, Angela M. Wood, Patrick Royston, Ian R. White, Correcting for Optimistic Prediction in Small Data Sets, American Journal of Epidemiology, Volume 180, Issue 3, 1 August 2014, Pages 318–324, https://doi.org/10.1093/aje/kwu140
-   [2] B. Efron "Bootstrap Methods: Another Look at the Jackknife," The Annals of Statistics, Ann. Statist. 7(1), 1-26, (January, 1979)
+   [1] Gordon C. S. Smith, Shaun R. Seaman, Angela M. Wood, Patrick Royston,
+    Ian R. White, Correcting for Optimistic Prediction in Small Data Sets,
+    American Journal of Epidemiology, Volume 180, Issue 3, 1 August 2014,
+    Pages 318–324, https://doi.org/10.1093/aje/kwu140
+   [2] B. Efron "Bootstrap Methods: Another Look at the Jackknife," The
+   Annals of Statistics, Ann. Statist. 7(1), 1-26, (January, 1979)
 """
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.model_selection import cross_validate, StratifiedKFold
+from sklearn.model_selection import cross_validate, StratifiedShuffleSplit
 from sklearn.metrics import roc_auc_score
 from sklearn import svm, datasets
 import numpy as np
+
 print(__doc__)
 
 
-# %%
 # Data IO and generation
 # ----------------------
 #
@@ -56,7 +60,7 @@ n_samples, n_features = X.shape
 n_classes = 2
 
 # Add noisy features to make the problem harder
-random_state = np.random.RandomState()
+random_state = np.random.RandomState(12345)
 n_samples, n_features = X.shape
 X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 
@@ -64,13 +68,14 @@ X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 # Classification and ROC analysis
 
 # Learn to predict each class against the other
-classifier = OneVsRestClassifier(svm.SVC(kernel='linear', probability=True,
-                                 random_state=random_state))
+classifier = OneVsRestClassifier(
+    svm.SVC(kernel="linear", probability=True, random_state=random_state)
+)
 y_score = classifier.fit(X, y).decision_function(X)
 
 # Get the original estimate of the AUC
 auc_est = roc_auc_score(y, y_score)
-print(f'Original over-optimistic AUC is {auc_est}')
+print(f"Original over-optimistic AUC is {auc_est}")
 
 # %%
 # Estimating the held-out test dataset AUC using bootstrap
@@ -80,7 +85,7 @@ print(f'Original over-optimistic AUC is {auc_est}')
 # while the test indices are the original dataset.
 
 
-class BootstrapSplit():
+class BootstrapSplit:
     """A custom cross validator.
 
     This class is used to sample bootstraps of the
@@ -126,33 +131,37 @@ scores = cross_validate(
     estimator=classifier,
     X=X,
     y=y,
-    scoring='roc_auc',
+    scoring="roc_auc",
     cv=cv,
     n_jobs=-1,
-    return_train_score=True
+    return_train_score=True,
 )
 
 # Now calculate the optimism as the average of the AUC over
 # the bootstrap samples.
-optimism = np.mean(scores['train_score'] - scores['test_score'])
-print(f'Optimism is {optimism}')
+mean_optimism = np.mean(scores["train_score"] - scores["test_score"])
+std_optimism = np.std(scores["train_score"] - scores["test_score"])
+print(f"Optimism is {mean_optimism} +/- {std_optimism}")
 
 # Now calculate the optimism adjusted AUC metric.
-adjusted_auc = auc_est - optimism
-print(f'The AUC computed by bootstrapping and adjusting for optimism: {adjusted_auc}')
+adjusted_auc = auc_est - mean_optimism
+print(f"The AUC computed by bootstrapping and adjusting for optimism: {adjusted_auc}")
 
 # %%
 # Now compare this with the answer using cross-validation.
 # The number of splits used here splits the data into non-overlapping sets.
-# Hence, these are usually some low-number like 5, or 10.
-cv = StratifiedKFold(n_splits=5)
+# This also is different from the bootstrap cross validator because
+# it will require a separate training and testing dataset at each
+# fold. The bootstrap cross validator is thus desirable when there
+# are lower sample sizes.
+cv = StratifiedShuffleSplit(n_splits=n_splits)
 cv_scores = cross_validate(
     estimator=classifier,
     X=X,
     y=y,
-    scoring='roc_auc',
+    scoring="roc_auc",
     cv=cv,
     n_jobs=-1,
 )
-cv_auc = np.mean(scores['test_score'])
-print(f'The AUC computed by cross-validation: {cv_auc}')
+cv_auc = np.mean(scores["test_score"])
+print(f"The AUC computed by cross-validation: {cv_auc}")
