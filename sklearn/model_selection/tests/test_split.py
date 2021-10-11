@@ -1774,7 +1774,7 @@ def test_nested_cv():
         LeaveOneOut(),
         GroupKFold(n_splits=3),
         StratifiedKFold(),
-        StratifiedGroupKFold(),
+        StratifiedGroupKFold(n_splits=3),
         StratifiedShuffleSplit(n_splits=3, random_state=0),
     ]
 
