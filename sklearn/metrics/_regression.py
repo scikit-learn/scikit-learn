@@ -596,7 +596,7 @@ def median_absolute_error(
 
 def explained_variance_score(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average",
-    fix_when_y_true_is_constant=True
+    force_finite=True
 ):
     """Explained variance regression score function.
 
@@ -607,7 +607,7 @@ def explained_variance_score(
     ``-Inf`` (imperfect predictions). To prevent such non-finite numbers to
     pollute higher-level experiments such as a grid search cross-validation,
     by default these cases are replaced with 1.0 (perfect predictions) or 0.0
-    (imperfect predictions) respectively. If ``fix_when_y_true_is_constant``
+    (imperfect predictions) respectively. If ``force_finite``
     is set to ``False``, this score fallbacks on the original :math:`R^2`
     definition.
 
@@ -643,7 +643,7 @@ def explained_variance_score(
             Scores of all outputs are averaged, weighted by the variances
             of each individual output.
 
-    fix_when_y_true_is_constant : boolean, optional
+    force_finite : boolean, optional
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
         data should be replaced with real numbers (``1.0`` if prediction is
         perfect, ``0.0`` otherwise). Default is ``True``, a convenient settings
@@ -675,15 +675,13 @@ def explained_variance_score(
     >>> y_pred = [-2, -2, -2]
     >>> explained_variance_score(y_true, y_pred)
     1.0
-    >>> explained_variance_score(y_true, y_pred,
-    ...                          fix_when_y_true_is_constant=False)
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
     nan
     >>> y_true = [-2, -2, -2]
     >>> y_pred = [-2, -2, -2 + 1e-8]
     >>> explained_variance_score(y_true, y_pred)
     0.0
-    >>> explained_variance_score(y_true, y_pred,
-    ...                          fix_when_y_true_is_constant=False)
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
     -inf
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
@@ -699,7 +697,7 @@ def explained_variance_score(
     y_true_avg = np.average(y_true, weights=sample_weight, axis=0)
     denominator = np.average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
 
-    if not fix_when_y_true_is_constant:
+    if not force_finite:
         # Standard formula, that may lead to NaN or -Inf
         output_scores = 1 - (numerator / denominator)
     else:
@@ -723,7 +721,7 @@ def explained_variance_score(
             avg_weights = None
         elif multioutput == "variance_weighted":
             avg_weights = denominator
-            if fix_when_y_true_is_constant:
+            if force_finite:
                 # avoid fail on constant y or one-element arrays
                 if not np.any(nonzero_denominator):
                     if not np.any(nonzero_numerator):
@@ -738,7 +736,7 @@ def explained_variance_score(
 
 def r2_score(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average",
-    fix_when_y_true_is_constant=True
+    force_finite=True
 ):
     """:math:`R^2` (coefficient of determination) regression score function.
 
@@ -752,7 +750,7 @@ def r2_score(
     (imperfect predictions). To prevent such non-finite numbers to pollute
     higher-level experiments such as a grid search cross-validation, by default
     these cases are replaced with 1.0 (perfect predictions) or 0.0 (imperfect
-    predictions) respectively. You can set ``fix_when_y_true_is_constant`` to
+    predictions) respectively. You can set ``force_finite`` to
     ``False`` to prevent this fix to happen.
 
     Note: when the prediction residuals have zero mean (perfectly unbiased
@@ -792,7 +790,7 @@ def r2_score(
         .. versionchanged:: 0.19
             Default value of multioutput is 'uniform_average'.
 
-    fix_when_y_true_is_constant : boolean, optional
+    force_finite : boolean, optional
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
         data should be replaced with real numbers (``1.0`` if prediction is
         perfect, ``0.0`` otherwise). Default is ``True``, a convenient settings
@@ -849,13 +847,13 @@ def r2_score(
     >>> y_pred = [-2, -2, -2]
     >>> r2_score(y_true, y_pred)
     1.0
-    >>> r2_score(y_true, y_pred, fix_when_y_true_is_constant=False)
+    >>> r2_score(y_true, y_pred, force_finite=False)
     nan
     >>> y_true = [-2, -2, -2]
     >>> y_pred = [-2, -2, -2 + 1e-8]
     >>> r2_score(y_true, y_pred)
     0.0
-    >>> r2_score(y_true, y_pred, fix_when_y_true_is_constant=False)
+    >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
@@ -878,7 +876,7 @@ def r2_score(
     denominator = (
         weight * (y_true - np.average(y_true, axis=0, weights=sample_weight)) ** 2
     ).sum(axis=0, dtype=np.float64)
-    if not fix_when_y_true_is_constant:
+    if not force_finite:
         # Standard R² formula, that may lead to NaN or -Inf
         output_scores = 1 - numerator / denominator
     else:
@@ -902,7 +900,7 @@ def r2_score(
             avg_weights = None
         elif multioutput == "variance_weighted":
             avg_weights = denominator
-            if fix_when_y_true_is_constant:
+            if force_finite:
                 # avoid fail on constant y or one-element arrays
                 if not np.any(nonzero_denominator):
                     if not np.any(nonzero_numerator):
