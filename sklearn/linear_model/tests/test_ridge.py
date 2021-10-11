@@ -1518,7 +1518,7 @@ def test_ridge_sag_with_X_fortran():
 def test_ridge_alpha_boundary_warning():
     ridge = RidgeCV(alphas=[0.1, 1])
     X, y = X_diabetes, y_diabetes
-    with pytest.warns(ConvergenceWarning, 
+    with pytest.warns(ConvergenceWarning,
                       match="lies at a boundary of the explored range"):
         ridge.fit(X, y)
 
