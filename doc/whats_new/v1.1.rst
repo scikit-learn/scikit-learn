@@ -98,6 +98,10 @@ Changelog
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
 
+- |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
+  left corner of the HTML representation to show that the elements are
+  clickable. :pr:`21298` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
