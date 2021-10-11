@@ -1,14 +1,12 @@
-#!python
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: cdivision=True
+# cython: boundscheck=False
+# cython: cdivision=True
+# cython: initializedcheck=False
+# cython: wraparound=False
 
-cimport cython
 cimport numpy as np
-from libc.math cimport fabs, sqrt, exp, cos, pow
+from libc.math cimport sqrt, exp
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from ._typedefs import DTYPE, ITYPE
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 
 ######################################################################
 # Inline distance functions
@@ -60,7 +58,7 @@ cdef class DistanceMetric:
     cdef DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                       ITYPE_t size) nogil except -1
 
-    cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+    cdef DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                        ITYPE_t size) nogil except -1
 
     cdef int pdist(self, const DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1

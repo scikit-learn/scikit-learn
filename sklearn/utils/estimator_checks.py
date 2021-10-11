@@ -472,6 +472,10 @@ def parametrize_with_checks(estimators):
     -------
     decorator : `pytest.mark.parametrize`
 
+    See Also
+    --------
+    check_estimator : Check if estimator adheres to scikit-learn conventions.
+
     Examples
     --------
     >>> from sklearn.utils.estimator_checks import parametrize_with_checks
@@ -547,6 +551,11 @@ def check_estimator(Estimator, generate_only=False):
     checks_generator : generator
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
+
+    See Also
+    --------
+    parametrize_with_checks : Pytest specific decorator for parametrizing estimator
+        checks.
     """
     if isinstance(Estimator, type):
         msg = (

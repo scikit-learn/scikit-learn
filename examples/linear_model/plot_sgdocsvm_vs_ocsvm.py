@@ -27,10 +27,9 @@ from sklearn.linear_model import SGDOneClassSVM
 from sklearn.kernel_approximation import Nystroem
 from sklearn.pipeline import make_pipeline
 
-font = {'weight': 'normal',
-        'size': 15}
+font = {"weight": "normal", "size": 15}
 
-matplotlib.rc('font', **font)
+matplotlib.rc("font", **font)
 
 random_state = 42
 rng = np.random.RandomState(random_state)
@@ -48,10 +47,10 @@ xx, yy = np.meshgrid(np.linspace(-4.5, 4.5, 50), np.linspace(-4.5, 4.5, 50))
 
 # OCSVM hyperparameters
 nu = 0.05
-gamma = 2.
+gamma = 2.0
 
 # Fit the One-Class SVM
-clf = OneClassSVM(gamma=gamma, kernel='rbf', nu=nu)
+clf = OneClassSVM(gamma=gamma, kernel="rbf", nu=nu)
 clf.fit(X_train)
 y_pred_train = clf.predict(X_train)
 y_pred_test = clf.predict(X_test)
@@ -66,8 +65,9 @@ Z = Z.reshape(xx.shape)
 
 # Fit the One-Class SVM using a kernel approximation and SGD
 transform = Nystroem(gamma=gamma, random_state=random_state)
-clf_sgd = SGDOneClassSVM(nu=nu, shuffle=True, fit_intercept=True,
-                         random_state=random_state, tol=1e-4)
+clf_sgd = SGDOneClassSVM(
+    nu=nu, shuffle=True, fit_intercept=True, random_state=random_state, tol=1e-4
+)
 pipe_sgd = make_pipeline(transform, clf_sgd)
 pipe_sgd.fit(X_train)
 y_pred_train_sgd = pipe_sgd.predict(X_train)
@@ -82,54 +82,73 @@ Z_sgd = Z_sgd.reshape(xx.shape)
 
 # plot the level sets of the decision function
 plt.figure(figsize=(9, 6))
-plt.title('One Class SVM')
+plt.title("One Class SVM")
 plt.contourf(xx, yy, Z, levels=np.linspace(Z.min(), 0, 7), cmap=plt.cm.PuBu)
-a = plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors='darkred')
-plt.contourf(xx, yy, Z, levels=[0, Z.max()], colors='palevioletred')
+a = plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors="darkred")
+plt.contourf(xx, yy, Z, levels=[0, Z.max()], colors="palevioletred")
 
 s = 20
-b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c='white', s=s, edgecolors='k')
-b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c='blueviolet', s=s,
-                 edgecolors='k')
-c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c='gold', s=s,
-                edgecolors='k')
-plt.axis('tight')
+b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c="white", s=s, edgecolors="k")
+b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c="blueviolet", s=s, edgecolors="k")
+c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c="gold", s=s, edgecolors="k")
+plt.axis("tight")
 plt.xlim((-4.5, 4.5))
 plt.ylim((-4.5, 4.5))
-plt.legend([a.collections[0], b1, b2, c],
-           ["learned frontier", "training observations",
-            "new regular observations", "new abnormal observations"],
-           loc="upper left")
+plt.legend(
+    [a.collections[0], b1, b2, c],
+    [
+        "learned frontier",
+        "training observations",
+        "new regular observations",
+        "new abnormal observations",
+    ],
+    loc="upper left",
+)
 plt.xlabel(
-    "error train: %d/%d; errors novel regular: %d/%d; "
-    "errors novel abnormal: %d/%d"
-    % (n_error_train, X_train.shape[0], n_error_test, X_test.shape[0],
-       n_error_outliers, X_outliers.shape[0]))
+    "error train: %d/%d; errors novel regular: %d/%d; errors novel abnormal: %d/%d"
+    % (
+        n_error_train,
+        X_train.shape[0],
+        n_error_test,
+        X_test.shape[0],
+        n_error_outliers,
+        X_outliers.shape[0],
+    )
+)
 plt.show()
 
 plt.figure(figsize=(9, 6))
-plt.title('Online One-Class SVM')
-plt.contourf(xx, yy, Z_sgd, levels=np.linspace(Z_sgd.min(), 0, 7),
-             cmap=plt.cm.PuBu)
-a = plt.contour(xx, yy, Z_sgd, levels=[0], linewidths=2, colors='darkred')
-plt.contourf(xx, yy, Z_sgd, levels=[0, Z_sgd.max()], colors='palevioletred')
+plt.title("Online One-Class SVM")
+plt.contourf(xx, yy, Z_sgd, levels=np.linspace(Z_sgd.min(), 0, 7), cmap=plt.cm.PuBu)
+a = plt.contour(xx, yy, Z_sgd, levels=[0], linewidths=2, colors="darkred")
+plt.contourf(xx, yy, Z_sgd, levels=[0, Z_sgd.max()], colors="palevioletred")
 
 s = 20
-b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c='white', s=s, edgecolors='k')
-b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c='blueviolet', s=s,
-                 edgecolors='k')
-c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c='gold', s=s,
-                edgecolors='k')
-plt.axis('tight')
+b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c="white", s=s, edgecolors="k")
+b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c="blueviolet", s=s, edgecolors="k")
+c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c="gold", s=s, edgecolors="k")
+plt.axis("tight")
 plt.xlim((-4.5, 4.5))
 plt.ylim((-4.5, 4.5))
-plt.legend([a.collections[0], b1, b2, c],
-           ["learned frontier", "training observations",
-            "new regular observations", "new abnormal observations"],
-           loc="upper left")
+plt.legend(
+    [a.collections[0], b1, b2, c],
+    [
+        "learned frontier",
+        "training observations",
+        "new regular observations",
+        "new abnormal observations",
+    ],
+    loc="upper left",
+)
 plt.xlabel(
-    "error train: %d/%d; errors novel regular: %d/%d; "
-    "errors novel abnormal: %d/%d"
-    % (n_error_train_sgd, X_train.shape[0], n_error_test_sgd, X_test.shape[0],
-       n_error_outliers_sgd, X_outliers.shape[0]))
+    "error train: %d/%d; errors novel regular: %d/%d; errors novel abnormal: %d/%d"
+    % (
+        n_error_train_sgd,
+        X_train.shape[0],
+        n_error_test_sgd,
+        X_test.shape[0],
+        n_error_outliers_sgd,
+        X_outliers.shape[0],
+    )
+)
 plt.show()

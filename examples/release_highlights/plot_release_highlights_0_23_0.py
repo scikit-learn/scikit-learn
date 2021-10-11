@@ -45,7 +45,7 @@ X = rng.randn(n_samples, n_features)
 y = rng.poisson(lam=np.exp(X[:, 5]) / 2)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 glm = PoissonRegressor()
-gbdt = HistGradientBoostingRegressor(loss='poisson', learning_rate=.01)
+gbdt = HistGradientBoostingRegressor(loss="poisson", learning_rate=0.01)
 glm.fit(X_train, y_train)
 gbdt.fit(X_train, y_train)
 print(glm.score(X_test, y_test))
@@ -67,16 +67,19 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.compose import make_column_transformer
 from sklearn.linear_model import LogisticRegression
-set_config(display='diagram')
 
-num_proc = make_pipeline(SimpleImputer(strategy='median'), StandardScaler())
+set_config(display="diagram")
+
+num_proc = make_pipeline(SimpleImputer(strategy="median"), StandardScaler())
 
 cat_proc = make_pipeline(
-    SimpleImputer(strategy='constant', fill_value='missing'),
-    OneHotEncoder(handle_unknown='ignore'))
+    SimpleImputer(strategy="constant", fill_value="missing"),
+    OneHotEncoder(handle_unknown="ignore"),
+)
 
-preprocessor = make_column_transformer((num_proc, ('feat1', 'feat3')),
-                                       (cat_proc, ('feat0', 'feat2')))
+preprocessor = make_column_transformer(
+    (num_proc, ("feat1", "feat3")), (cat_proc, ("feat0", "feat2"))
+)
 
 clf = make_pipeline(preprocessor, LogisticRegression())
 clf
@@ -101,7 +104,7 @@ rng = np.random.RandomState(0)
 X, y = make_blobs(random_state=rng)
 X = scipy.sparse.csr_matrix(X)
 X_train, X_test, _, y_test = train_test_split(X, y, random_state=rng)
-kmeans = KMeans(algorithm='elkan').fit(X_train)
+kmeans = KMeans(algorithm="elkan").fit(X_train)
 print(completeness_score(kmeans.predict(X_test), y_test))
 
 ##############################################################################
@@ -129,21 +132,30 @@ n_samples = 500
 rng = np.random.RandomState(0)
 X = rng.randn(n_samples, 2)
 noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
-y = (5 * X[:, 0] + np.sin(10 * np.pi * X[:, 0]) - noise)
+y = 5 * X[:, 0] + np.sin(10 * np.pi * X[:, 0]) - noise
 
 gbdt_no_cst = HistGradientBoostingRegressor().fit(X, y)
 gbdt_cst = HistGradientBoostingRegressor(monotonic_cst=[1, 0]).fit(X, y)
 
 disp = plot_partial_dependence(
-    gbdt_no_cst, X, features=[0], feature_names=['feature 0'],
-    line_kw={'linewidth': 4, 'label': 'unconstrained', "color": "tab:blue"})
-plot_partial_dependence(gbdt_cst, X, features=[0],
-    line_kw={'linewidth': 4, 'label': 'constrained', "color": "tab:orange"},
-    ax=disp.axes_)
-disp.axes_[0, 0].plot(
-    X[:, 0], y, 'o', alpha=.5, zorder=-1, label='samples', color="tab:green"
+    gbdt_no_cst,
+    X,
+    features=[0],
+    feature_names=["feature 0"],
+    line_kw={"linewidth": 4, "label": "unconstrained", "color": "tab:blue"},
 )
-disp.axes_[0, 0].set_ylim(-3, 3); disp.axes_[0, 0].set_xlim(-1, 1)
+plot_partial_dependence(
+    gbdt_cst,
+    X,
+    features=[0],
+    line_kw={"linewidth": 4, "label": "constrained", "color": "tab:orange"},
+    ax=disp.axes_,
+)
+disp.axes_[0, 0].plot(
+    X[:, 0], y, "o", alpha=0.5, zorder=-1, label="samples", color="tab:green"
+)
+disp.axes_[0, 0].set_ylim(-3, 3)
+disp.axes_[0, 0].set_xlim(-1, 1)
 plt.legend()
 plt.show()
 
@@ -163,7 +175,8 @@ rng = np.random.RandomState(0)
 X, y = make_regression(n_samples, n_features, random_state=rng)
 sample_weight = rng.rand(n_samples)
 X_train, X_test, y_train, y_test, sw_train, sw_test = train_test_split(
-    X, y, sample_weight, random_state=rng)
+    X, y, sample_weight, random_state=rng
+)
 reg = Lasso()
 reg.fit(X_train, y_train, sample_weight=sw_train)
 print(reg.score(X_test, y_test, sw_test))

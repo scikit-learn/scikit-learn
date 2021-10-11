@@ -41,9 +41,7 @@ y_true_mean = 10 + 0.5 * x
 #
 # - in the first case, a heteroscedastic Normal noise is added;
 # - in the second case, an asymmetric Pareto noise is added.
-y_normal = y_true_mean + rng.normal(
-    loc=0, scale=0.5 + 0.5 * x, size=x.shape[0]
-)
+y_normal = y_true_mean + rng.normal(loc=0, scale=0.5 + 0.5 * x, size=x.shape[0])
 a = 5
 y_pareto = y_true_mean + 10 * (rng.pareto(a, size=x.shape[0]) - 1 / (a - 1))
 
@@ -52,21 +50,15 @@ y_pareto = y_true_mean + 10 * (rng.pareto(a, size=x.shape[0]) - 1 / (a - 1))
 # residuals `y - mean(y)`.
 import matplotlib.pyplot as plt
 
-_, axs = plt.subplots(
-    nrows=2, ncols=2, figsize=(15, 11), sharex="row", sharey="row"
-)
+_, axs = plt.subplots(nrows=2, ncols=2, figsize=(15, 11), sharex="row", sharey="row")
 
 axs[0, 0].plot(x, y_true_mean, label="True mean")
-axs[0, 0].scatter(
-    x, y_normal, color="black", alpha=0.5, label="Observations"
-)
+axs[0, 0].scatter(x, y_normal, color="black", alpha=0.5, label="Observations")
 axs[1, 0].hist(y_true_mean - y_normal, edgecolor="black")
 
 
 axs[0, 1].plot(x, y_true_mean, label="True mean")
-axs[0, 1].scatter(
-    x, y_pareto, color="black", alpha=0.5, label="Observations"
-)
+axs[0, 1].scatter(x, y_pareto, color="black", alpha=0.5, label="Observations")
 axs[1, 1].hist(y_true_mean - y_pareto, edgecolor="black")
 
 axs[0, 0].set_title("Dataset with heteroscedastic Normal distributed targets")
@@ -74,9 +66,7 @@ axs[0, 1].set_title("Dataset with asymmetric Pareto distributed target")
 axs[1, 0].set_title(
     "Residuals distribution for heteroscedastic Normal distributed targets"
 )
-axs[1, 1].set_title(
-    "Residuals distribution for asymmetric Pareto distributed target"
-)
+axs[1, 1].set_title("Residuals distribution for asymmetric Pareto distributed target")
 axs[0, 0].legend()
 axs[0, 1].legend()
 axs[0, 0].set_ylabel("y")
