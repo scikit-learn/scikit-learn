@@ -466,12 +466,15 @@ computed using a function of a gradient of the image.
 .. |noisy_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_001.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
-    :alt: An image of connected nearly equally sized circles. The circles are in shades of green, blue, and yellow. The entire image is pixelated, blurry.
+    :alt: An image of connected nearly equally sized circles. The circles are in 
+    shades of green, blue, and yellow. The entire image is pixelated, blurry.
 
 .. |segmented_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_002.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
-    :alt: An image of connected nearly equally sized circles. Each circle has a distinct color: dark green, light green, blue, and yellow. The clarity of the image is much better compared to the previous one.
+    :alt: An image of connected nearly equally sized circles. Each circle has a 
+    distinct color: dark green, light green, blue, and yellow. The clarity of the image
+     is much better compared to the previous one.
 
 .. centered:: |noisy_img| |segmented_img|
 
@@ -815,7 +818,9 @@ by black points below.
 .. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_001.png
         :target: ../auto_examples/cluster/plot_dbscan.html
         :scale: 50
-        :alt: A bubble chart that maps three clusters, with the x-axis from -2.5 to 2 and the y-axis from -2 to 2.5. Outliers are indicated separately and are evenly spaced around the clusters.
+        :alt: A bubble chart that maps three clusters, with the x-axis from -2.5 to 2 
+        and the y-axis from -2 to 2.5. Outliers are indicated separately and are 
+        evenly spaced around the clusters.
 
 .. centered:: |dbscan_results|
 
