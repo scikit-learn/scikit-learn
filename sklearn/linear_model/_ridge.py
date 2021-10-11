@@ -1993,8 +1993,8 @@ class _BaseRidgeCV(LinearModel):
             self.alpha_ = gs.best_estimator_.alpha
             self.best_score_ = gs.best_score_
 
-        min_alpha = min(self.alphas)
-        max_alpha = max(self.alphas)
+        min_alpha = np.min(self.alphas)
+        max_alpha = np.max(self.alphas)
         alphas = self.alpha_ if self.alpha_per_target else [self.alpha_]
         if any(alpha in [min_alpha, max_alpha] for alpha in alphas):
             if self.alpha_per_target:
