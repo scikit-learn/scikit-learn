@@ -4,13 +4,13 @@ import sys
 
 import numpy as np
 from scipy import sparse as sp
-from threadpoolctl import threadpool_limits
 
 import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import _astype_copy_false
+from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
@@ -28,6 +28,7 @@ from sklearn.cluster._k_means_common import _euclidean_dense_dense_wrapper
 from sklearn.cluster._k_means_common import _euclidean_sparse_dense_wrapper
 from sklearn.cluster._k_means_common import _inertia_dense
 from sklearn.cluster._k_means_common import _inertia_sparse
+from sklearn.cluster._k_means_common import _is_same_clustering
 from sklearn.datasets import make_blobs
 from io import StringIO
 
@@ -339,19 +340,6 @@ def test_fortran_aligned_data(Estimator):
 )
 def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     # check that fit.predict gives same result as fit_predict
-    # There's a very small chance of failure with elkan on unstructured dataset
-    # because predict method uses fast euclidean distances computation which
-    # may cause small numerical instabilities.
-    # NB: This test is largely redundant with respect to test_predict and
-    #     test_predict_equal_labels.  This test has the added effect of
-    #     testing idempotence of the fittng procesdure which appears to
-    #     be where it fails on some MacOS setups.
-    if sys.platform == "darwin":
-        pytest.xfail(
-            "Known failures on MacOS, See "
-            "https://github.com/scikit-learn/scikit-learn/issues/12644"
-        )
-
     rng = np.random.RandomState(seed)
 
     X = make_blobs(n_samples=1000, n_features=10, centers=10, random_state=rng)[
@@ -365,12 +353,7 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
 
     labels_1 = kmeans.fit(X).predict(X)
     labels_2 = kmeans.fit_predict(X)
-
-    # Due to randomness in the order in which chunks of data are processed when
-    # using more than one thread, the absolute values of the labels can be
-    # different between the 2 strategies but they should correspond to the same
-    # clustering.
-    assert v_measure_score(labels_1, labels_2) == pytest.approx(1, abs=1e-15)
+    assert_array_equal(labels_1, labels_2)
 
 
 def test_minibatch_kmeans_verbose():
@@ -633,21 +616,10 @@ def test_score_max_iter(Estimator):
 def test_predict(Estimator, algorithm, init, dtype, array_constr):
     # Check the predict method and the equivalence between fit.predict and
     # fit_predict.
-
-    # There's a very small chance of failure with elkan on unstructured dataset
-    # because predict method uses fast euclidean distances computation which
-    # may cause small numerical instabilities.
-    if sys.platform == "darwin":
-        pytest.xfail(
-            "Known failures on MacOS, See "
-            "https://github.com/scikit-learn/scikit-learn/issues/12644"
-        )
-
     X, _ = make_blobs(n_samples=500, n_features=10, centers=10, random_state=0)
     X = array_constr(X)
 
-    # With n_init = 1
-    km = Estimator(n_clusters=10, init=init, n_init=1, random_state=0)
+    km = Estimator(n_clusters=10, init=init, n_init=10, random_state=0)
     if algorithm is not None:
         km.set_params(algorithm=algorithm)
     km.fit(X)
@@ -664,31 +636,6 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
     # predict centroid labels
     pred = km.predict(km.cluster_centers_)
     assert_array_equal(pred, np.arange(10))
-
-    # With n_init > 1
-    # Due to randomness in the order in which chunks of data are processed when
-    # using more than one thread, there might be different rounding errors for
-    # the computation of the inertia between 2 runs. This might result in a
-    # different ranking of 2 inits, hence a different labeling, even if they
-    # give the same clustering. We only check the labels up to a permutation.
-
-    km = Estimator(n_clusters=10, init=init, n_init=10, random_state=0)
-    if algorithm is not None:
-        km.set_params(algorithm=algorithm)
-    km.fit(X)
-    labels = km.labels_
-
-    # re-predict labels for training set using predict
-    pred = km.predict(X)
-    assert_allclose(v_measure_score(pred, labels), 1)
-
-    # re-predict labels for training set using fit_predict
-    pred = km.fit_predict(X)
-    assert_allclose(v_measure_score(pred, labels), 1)
-
-    # predict centroid labels
-    pred = km.predict(km.cluster_centers_)
-    assert_allclose(v_measure_score(pred, np.arange(10)), 1)
 
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
@@ -745,7 +692,7 @@ def test_integer_input(Estimator, array_constr, dtype, init):
     assert km.cluster_centers_.dtype == np.float64
 
     expected_labels = [0, 1, 1, 0, 0, 1]
-    assert_allclose(v_measure_score(km.labels_, expected_labels), 1)
+    assert_array_equal(km.labels_, expected_labels)
 
     # Same with partial_fit (#14314)
     if Estimator is MiniBatchKMeans:
@@ -1227,3 +1174,19 @@ def test_kmeans_plusplus_dataorder():
     centers_fortran, _ = kmeans_plusplus(X_fortran, n_clusters, random_state=0)
 
     assert_allclose(centers_c, centers_fortran)
+
+
+def test_is_same_clustering():
+    # Sanity check for the _is_same_clustering utility function
+    labels1 = np.array([1, 0, 0, 1, 2, 0, 2, 1], dtype=np.int32)
+    assert _is_same_clustering(labels1, labels1, 3)
+
+    # these other labels represent the same clustering since we can retrive the first
+    # labels by simply renaming the labels: 0 -> 1, 1 -> 2, 2 -> 0.
+    labels2 = np.array([0, 2, 2, 0, 1, 2, 1, 0], dtype=np.int32)
+    assert _is_same_clustering(labels1, labels2, 3)
+
+    # these other labels do not represent the same clustering since not all ones are
+    # mapped to a same value
+    labels3 = np.array([1, 0, 0, 2, 2, 0, 2, 1], dtype=np.int32)
+    assert not _is_same_clustering(labels1, labels3, 3)

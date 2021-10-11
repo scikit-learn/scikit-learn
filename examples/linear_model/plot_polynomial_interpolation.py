@@ -54,6 +54,7 @@ from sklearn.pipeline import make_pipeline
 # We start by defining a function that we intent to approximate and prepare
 # plotting it.
 
+
 def f(x):
     """Function to be approximated by polynomial interpolation."""
     return x * np.sin(x)
@@ -81,9 +82,9 @@ X_plot = x_plot[:, np.newaxis]
 # plot function
 lw = 2
 fig, ax = plt.subplots()
-ax.set_prop_cycle(color=[
-    "black", "teal", "yellowgreen", "gold", "darkorange", "tomato"
-])
+ax.set_prop_cycle(
+    color=["black", "teal", "yellowgreen", "gold", "darkorange", "tomato"]
+)
 ax.plot(x_plot, f(x_plot), linewidth=lw, label="ground truth")
 
 # plot training points
@@ -97,13 +98,12 @@ for degree in [3, 4, 5]:
     ax.plot(x_plot, y_plot, label=f"degree {degree}")
 
 # B-spline with 4 + 3 - 1 = 6 basis functions
-model = make_pipeline(SplineTransformer(n_knots=4, degree=3),
-                      Ridge(alpha=1e-3))
+model = make_pipeline(SplineTransformer(n_knots=4, degree=3), Ridge(alpha=1e-3))
 model.fit(X_train, y_train)
 
 y_plot = model.predict(X_plot)
 ax.plot(x_plot, y_plot, label="B-spline")
-ax.legend(loc='lower center')
+ax.legend(loc="lower center")
 ax.set_ylim(-20, 10)
 plt.show()
 
@@ -133,7 +133,7 @@ axes[1].set_title("SplineTransformer")
 
 # plot knots of spline
 knots = splt.bsplines_[0].t
-axes[1].vlines(knots[3:-3], ymin=0, ymax=0.8, linestyles='dashed')
+axes[1].vlines(knots[3:-3], ymin=0, ymax=0.8, linestyles="dashed")
 plt.show()
 
 # %%
@@ -187,12 +187,15 @@ ax.plot(x_plot_ext, g(x_plot_ext), linewidth=lw, label="ground truth")
 ax.scatter(x_train, y_train, label="training points")
 
 for transformer, label in [
-  (SplineTransformer(degree=3, n_knots=10), "spline"),
-  (SplineTransformer(
-      degree=3,
-      knots=np.linspace(0, 2 * np.pi, 10)[:, None],
-      extrapolation="periodic"
-  ), "periodic spline")
+    (SplineTransformer(degree=3, n_knots=10), "spline"),
+    (
+        SplineTransformer(
+            degree=3,
+            knots=np.linspace(0, 2 * np.pi, 10)[:, None],
+            extrapolation="periodic",
+        ),
+        "periodic spline",
+    ),
 ]:
     model = make_pipeline(transformer, Ridge(alpha=1e-3))
     model.fit(X_train, y_train)
@@ -205,11 +208,9 @@ fig.show()
 # %% We again plot the underlying splines.
 fig, ax = plt.subplots()
 knots = np.linspace(0, 2 * np.pi, 4)
-splt = SplineTransformer(
-  knots=knots[:, None],
-  degree=3,
-  extrapolation="periodic"
-).fit(X_train)
+splt = SplineTransformer(knots=knots[:, None], degree=3, extrapolation="periodic").fit(
+    X_train
+)
 ax.plot(x_plot_ext, splt.transform(X_plot_ext))
 ax.legend(ax.lines, [f"spline {n}" for n in range(3)])
 plt.show()

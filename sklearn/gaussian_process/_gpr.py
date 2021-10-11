@@ -82,7 +82,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Per default, the L-BFGS-B algorithm from `scipy.optimize.minimize`
         is used. If None is passed, the kernel's parameters are kept fixed.
-        Available internal optimizers are: `{'fmin_l_bfgs_b'}`
+        Available internal optimizers are: `{'fmin_l_bfgs_b'}`.
 
     n_restarts_optimizer : int, default=0
         The number of restarts of the optimizer for finding the kernel's
@@ -146,6 +146,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    GaussianProcessClassifier : Gaussian process classification (GPC)
+        based on Laplace approximation.
+
     References
     ----------
     .. [1] `Rasmussen, Carl Edward.
@@ -200,7 +205,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            GaussianProcessRegressor class instance.
         """
         if self.kernel is None:  # Use an RBF kernel as default
             self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
@@ -318,7 +324,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
-        """Predict using the Gaussian process regression model
+        """Predict using the Gaussian process regression model.
 
         We can also predict based on an unfitted model by using the GP prior.
         In addition to the mean of the predictive distribution, optionally also
@@ -433,7 +439,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Query points where the GP is evaluated.
 
         n_samples : int, default=1
-            Number of samples drawn from the Gaussian process per query point
+            Number of samples drawn from the Gaussian process per query point.
 
         random_state : int, RandomState instance or None, default=0
             Determines random number generation to randomly draw samples.
@@ -464,7 +470,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def log_marginal_likelihood(
         self, theta=None, eval_gradient=False, clone_kernel=True
     ):
-        """Returns log-marginal likelihood of theta for training data.
+        """Return log-marginal likelihood of theta for training data.
 
         Parameters
         ----------

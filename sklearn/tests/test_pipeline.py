@@ -1004,6 +1004,60 @@ def test_set_feature_union_step_drop(get_names):
     assert not record
 
 
+def test_set_feature_union_passthrough():
+    """Check the behaviour of setting a transformer to `"passthrough"`."""
+    mult2 = Mult(2)
+    mult3 = Mult(3)
+    X = np.asarray([[1]])
+
+    ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
+    assert_array_equal([[2, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[2, 3]], ft.fit_transform(X))
+
+    ft.set_params(m2="passthrough")
+    assert_array_equal([[1, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[1, 3]], ft.fit_transform(X))
+
+    ft.set_params(m3="passthrough")
+    assert_array_equal([[1, 1]], ft.fit(X).transform(X))
+    assert_array_equal([[1, 1]], ft.fit_transform(X))
+
+    # check we can change back
+    ft.set_params(m3=mult3)
+    assert_array_equal([[1, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[1, 3]], ft.fit_transform(X))
+
+    # Check 'passthrough' step at construction time
+    ft = FeatureUnion([("m2", "passthrough"), ("m3", mult3)])
+    assert_array_equal([[1, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[1, 3]], ft.fit_transform(X))
+
+    X = iris.data
+    columns = X.shape[1]
+    pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
+
+    ft = FeatureUnion([("passthrough", "passthrough"), ("pca", pca)])
+    assert_array_equal(X, ft.fit(X).transform(X)[:, :columns])
+    assert_array_equal(X, ft.fit_transform(X)[:, :columns])
+
+    ft.set_params(pca="passthrough")
+    X_ft = ft.fit(X).transform(X)
+    assert_array_equal(X_ft, np.hstack([X, X]))
+    X_ft = ft.fit_transform(X)
+    assert_array_equal(X_ft, np.hstack([X, X]))
+
+    ft.set_params(passthrough=pca)
+    assert_array_equal(X, ft.fit(X).transform(X)[:, -columns:])
+    assert_array_equal(X, ft.fit_transform(X)[:, -columns:])
+
+    ft = FeatureUnion(
+        [("passthrough", "passthrough"), ("pca", pca)],
+        transformer_weights={"passthrough": 2},
+    )
+    assert_array_equal(X * 2, ft.fit(X).transform(X)[:, :columns])
+    assert_array_equal(X * 2, ft.fit_transform(X)[:, :columns])
+
+
 def test_step_name_validation():
     error_message_1 = r"Estimator names must not contain __: got \['a__q'\]"
     error_message_2 = r"Names provided are not unique: \['a', 'a'\]"

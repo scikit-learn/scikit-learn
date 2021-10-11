@@ -79,7 +79,7 @@ from sklearn.metrics._base import _average_binary_score
 # all metrics that have the same behavior.
 #
 # Two types of datastructures are used in order to implement this system:
-# dictionaries of metrics and lists of metrics wit common properties.
+# dictionaries of metrics and lists of metrics with common properties.
 #
 # Dictionaries of metrics
 # ------------------------

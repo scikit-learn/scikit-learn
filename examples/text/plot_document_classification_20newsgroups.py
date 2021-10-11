@@ -45,40 +45,60 @@ from sklearn import metrics
 
 
 # Display progress logs on stdout
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(levelname)s %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 op = OptionParser()
-op.add_option("--report",
-              action="store_true", dest="print_report",
-              help="Print a detailed classification report.")
-op.add_option("--chi2_select",
-              action="store", type="int", dest="select_chi2",
-              help="Select some number of features using a chi-squared test")
-op.add_option("--confusion_matrix",
-              action="store_true", dest="print_cm",
-              help="Print the confusion matrix.")
-op.add_option("--top10",
-              action="store_true", dest="print_top10",
-              help="Print ten most discriminative terms per class"
-                   " for every classifier.")
-op.add_option("--all_categories",
-              action="store_true", dest="all_categories",
-              help="Whether to use all categories or not.")
-op.add_option("--use_hashing",
-              action="store_true",
-              help="Use a hashing vectorizer.")
-op.add_option("--n_features",
-              action="store", type=int, default=2 ** 16,
-              help="n_features when using the hashing vectorizer.")
-op.add_option("--filtered",
-              action="store_true",
-              help="Remove newsgroup information that is easily overfit: "
-                   "headers, signatures, and quoting.")
+op.add_option(
+    "--report",
+    action="store_true",
+    dest="print_report",
+    help="Print a detailed classification report.",
+)
+op.add_option(
+    "--chi2_select",
+    action="store",
+    type="int",
+    dest="select_chi2",
+    help="Select some number of features using a chi-squared test",
+)
+op.add_option(
+    "--confusion_matrix",
+    action="store_true",
+    dest="print_cm",
+    help="Print the confusion matrix.",
+)
+op.add_option(
+    "--top10",
+    action="store_true",
+    dest="print_top10",
+    help="Print ten most discriminative terms per class for every classifier.",
+)
+op.add_option(
+    "--all_categories",
+    action="store_true",
+    dest="all_categories",
+    help="Whether to use all categories or not.",
+)
+op.add_option("--use_hashing", action="store_true", help="Use a hashing vectorizer.")
+op.add_option(
+    "--n_features",
+    action="store",
+    type=int,
+    default=2 ** 16,
+    help="n_features when using the hashing vectorizer.",
+)
+op.add_option(
+    "--filtered",
+    action="store_true",
+    help=(
+        "Remove newsgroup information that is easily overfit: "
+        "headers, signatures, and quoting."
+    ),
+)
 
 
 def is_interactive():
-    return not hasattr(sys.modules['__main__'], '__file__')
+    return not hasattr(sys.modules["__main__"], "__file__")
 
 
 # work-around for Jupyter notebook and IPython console
@@ -103,44 +123,44 @@ if opts.all_categories:
     categories = None
 else:
     categories = [
-        'alt.atheism',
-        'talk.religion.misc',
-        'comp.graphics',
-        'sci.space',
+        "alt.atheism",
+        "talk.religion.misc",
+        "comp.graphics",
+        "sci.space",
     ]
 
 if opts.filtered:
-    remove = ('headers', 'footers', 'quotes')
+    remove = ("headers", "footers", "quotes")
 else:
     remove = ()
 
 print("Loading 20 newsgroups dataset for categories:")
 print(categories if categories else "all")
 
-data_train = fetch_20newsgroups(subset='train', categories=categories,
-                                shuffle=True, random_state=42,
-                                remove=remove)
+data_train = fetch_20newsgroups(
+    subset="train", categories=categories, shuffle=True, random_state=42, remove=remove
+)
 
-data_test = fetch_20newsgroups(subset='test', categories=categories,
-                               shuffle=True, random_state=42,
-                               remove=remove)
-print('data loaded')
+data_test = fetch_20newsgroups(
+    subset="test", categories=categories, shuffle=True, random_state=42, remove=remove
+)
+print("data loaded")
 
 # order of labels in `target_names` can be different from `categories`
 target_names = data_train.target_names
 
 
 def size_mb(docs):
-    return sum(len(s.encode('utf-8')) for s in docs) / 1e6
+    return sum(len(s.encode("utf-8")) for s in docs) / 1e6
 
 
 data_train_size_mb = size_mb(data_train.data)
 data_test_size_mb = size_mb(data_test.data)
 
-print("%d documents - %0.3fMB (training set)" % (
-    len(data_train.data), data_train_size_mb))
-print("%d documents - %0.3fMB (test set)" % (
-    len(data_test.data), data_test_size_mb))
+print(
+    "%d documents - %0.3fMB (training set)" % (len(data_train.data), data_train_size_mb)
+)
+print("%d documents - %0.3fMB (test set)" % (len(data_test.data), data_test_size_mb))
 print("%d categories" % len(target_names))
 print()
 
@@ -150,12 +170,12 @@ y_train, y_test = data_train.target, data_test.target
 print("Extracting features from the training data using a sparse vectorizer")
 t0 = time()
 if opts.use_hashing:
-    vectorizer = HashingVectorizer(stop_words='english', alternate_sign=False,
-                                   n_features=opts.n_features)
+    vectorizer = HashingVectorizer(
+        stop_words="english", alternate_sign=False, n_features=opts.n_features
+    )
     X_train = vectorizer.transform(data_train.data)
 else:
-    vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
-                                 stop_words='english')
+    vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words="english")
     X_train = vectorizer.fit_transform(data_train.data)
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_train_size_mb / duration))
@@ -177,8 +197,7 @@ else:
     feature_names = vectorizer.get_feature_names_out()
 
 if opts.select_chi2:
-    print("Extracting %d best features by a chi-squared test" %
-          opts.select_chi2)
+    print("Extracting %d best features by a chi-squared test" % opts.select_chi2)
     t0 = time()
     ch2 = SelectKBest(chi2, k=opts.select_chi2)
     X_train = ch2.fit_transform(X_train, y_train)
@@ -201,7 +220,7 @@ def trim(s):
 # We train and test the datasets with 15 different classification models
 # and get performance results for each model.
 def benchmark(clf):
-    print('_' * 80)
+    print("_" * 80)
     print("Training: ")
     print(clf)
     t0 = time()
@@ -217,7 +236,7 @@ def benchmark(clf):
     score = metrics.accuracy_score(y_test, pred)
     print("accuracy:   %0.3f" % score)
 
-    if hasattr(clf, 'coef_'):
+    if hasattr(clf, "coef_"):
         print("dimensionality: %d" % clf.coef_.shape[1])
         print("density: %f" % density(clf.coef_))
 
@@ -230,67 +249,74 @@ def benchmark(clf):
 
     if opts.print_report:
         print("classification report:")
-        print(metrics.classification_report(y_test, pred,
-                                            target_names=target_names))
+        print(metrics.classification_report(y_test, pred, target_names=target_names))
 
     if opts.print_cm:
         print("confusion matrix:")
         print(metrics.confusion_matrix(y_test, pred))
 
     print()
-    clf_descr = str(clf).split('(')[0]
+    clf_descr = str(clf).split("(")[0]
     return clf_descr, score, train_time, test_time
 
 
 results = []
 for clf, name in (
-        (RidgeClassifier(tol=1e-2, solver="sag"), "Ridge Classifier"),
-        (Perceptron(max_iter=50), "Perceptron"),
-        (PassiveAggressiveClassifier(max_iter=50),
-         "Passive-Aggressive"),
-        (KNeighborsClassifier(n_neighbors=10), "kNN"),
-        (RandomForestClassifier(), "Random forest")):
-    print('=' * 80)
+    (RidgeClassifier(tol=1e-2, solver="sag"), "Ridge Classifier"),
+    (Perceptron(max_iter=50), "Perceptron"),
+    (PassiveAggressiveClassifier(max_iter=50), "Passive-Aggressive"),
+    (KNeighborsClassifier(n_neighbors=10), "kNN"),
+    (RandomForestClassifier(), "Random forest"),
+):
+    print("=" * 80)
     print(name)
     results.append(benchmark(clf))
 
 for penalty in ["l2", "l1"]:
-    print('=' * 80)
+    print("=" * 80)
     print("%s penalty" % penalty.upper())
     # Train Liblinear model
-    results.append(benchmark(LinearSVC(penalty=penalty, dual=False,
-                                       tol=1e-3)))
+    results.append(benchmark(LinearSVC(penalty=penalty, dual=False, tol=1e-3)))
 
     # Train SGD model
-    results.append(benchmark(SGDClassifier(alpha=.0001, max_iter=50,
-                                           penalty=penalty)))
+    results.append(benchmark(SGDClassifier(alpha=0.0001, max_iter=50, penalty=penalty)))
 
 # Train SGD with Elastic Net penalty
-print('=' * 80)
+print("=" * 80)
 print("Elastic-Net penalty")
-results.append(benchmark(SGDClassifier(alpha=.0001, max_iter=50,
-                                       penalty="elasticnet")))
+results.append(
+    benchmark(SGDClassifier(alpha=0.0001, max_iter=50, penalty="elasticnet"))
+)
 
 # Train NearestCentroid without threshold
-print('=' * 80)
+print("=" * 80)
 print("NearestCentroid (aka Rocchio classifier)")
 results.append(benchmark(NearestCentroid()))
 
 # Train sparse Naive Bayes classifiers
-print('=' * 80)
+print("=" * 80)
 print("Naive Bayes")
-results.append(benchmark(MultinomialNB(alpha=.01)))
-results.append(benchmark(BernoulliNB(alpha=.01)))
-results.append(benchmark(ComplementNB(alpha=.1)))
+results.append(benchmark(MultinomialNB(alpha=0.01)))
+results.append(benchmark(BernoulliNB(alpha=0.01)))
+results.append(benchmark(ComplementNB(alpha=0.1)))
 
-print('=' * 80)
+print("=" * 80)
 print("LinearSVC with L1-based feature selection")
 # The smaller C, the stronger the regularization.
 # The more regularization, the more sparsity.
-results.append(benchmark(Pipeline([
-  ('feature_selection', SelectFromModel(LinearSVC(penalty="l1", dual=False,
-                                                  tol=1e-3))),
-  ('classification', LinearSVC(penalty="l2"))])))
+results.append(
+    benchmark(
+        Pipeline(
+            [
+                (
+                    "feature_selection",
+                    SelectFromModel(LinearSVC(penalty="l1", dual=False, tol=1e-3)),
+                ),
+                ("classification", LinearSVC(penalty="l2")),
+            ]
+        )
+    )
+)
 
 
 # %%
@@ -308,17 +334,16 @@ test_time = np.array(test_time) / np.max(test_time)
 
 plt.figure(figsize=(12, 8))
 plt.title("Score")
-plt.barh(indices, score, .2, label="score", color='navy')
-plt.barh(indices + .3, training_time, .2, label="training time",
-         color='c')
-plt.barh(indices + .6, test_time, .2, label="test time", color='darkorange')
+plt.barh(indices, score, 0.2, label="score", color="navy")
+plt.barh(indices + 0.3, training_time, 0.2, label="training time", color="c")
+plt.barh(indices + 0.6, test_time, 0.2, label="test time", color="darkorange")
 plt.yticks(())
-plt.legend(loc='best')
-plt.subplots_adjust(left=.25)
-plt.subplots_adjust(top=.95)
-plt.subplots_adjust(bottom=.05)
+plt.legend(loc="best")
+plt.subplots_adjust(left=0.25)
+plt.subplots_adjust(top=0.95)
+plt.subplots_adjust(bottom=0.05)
 
 for i, c in zip(indices, clf_names):
-    plt.text(-.3, i, c)
+    plt.text(-0.3, i, c)
 
 plt.show()

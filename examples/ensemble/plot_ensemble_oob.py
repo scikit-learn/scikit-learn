@@ -36,26 +36,45 @@ print(__doc__)
 RANDOM_STATE = 123
 
 # Generate a binary classification dataset.
-X, y = make_classification(n_samples=500, n_features=25,
-                           n_clusters_per_class=1, n_informative=15,
-                           random_state=RANDOM_STATE)
+X, y = make_classification(
+    n_samples=500,
+    n_features=25,
+    n_clusters_per_class=1,
+    n_informative=15,
+    random_state=RANDOM_STATE,
+)
 
 # NOTE: Setting the `warm_start` construction parameter to `True` disables
 # support for parallelized ensembles but is necessary for tracking the OOB
 # error trajectory during training.
 ensemble_clfs = [
-    ("RandomForestClassifier, max_features='sqrt'",
-        RandomForestClassifier(warm_start=True, oob_score=True,
-                               max_features="sqrt",
-                               random_state=RANDOM_STATE)),
-    ("RandomForestClassifier, max_features='log2'",
-        RandomForestClassifier(warm_start=True, max_features='log2',
-                               oob_score=True,
-                               random_state=RANDOM_STATE)),
-    ("RandomForestClassifier, max_features=None",
-        RandomForestClassifier(warm_start=True, max_features=None,
-                               oob_score=True,
-                               random_state=RANDOM_STATE))
+    (
+        "RandomForestClassifier, max_features='sqrt'",
+        RandomForestClassifier(
+            warm_start=True,
+            oob_score=True,
+            max_features="sqrt",
+            random_state=RANDOM_STATE,
+        ),
+    ),
+    (
+        "RandomForestClassifier, max_features='log2'",
+        RandomForestClassifier(
+            warm_start=True,
+            max_features="log2",
+            oob_score=True,
+            random_state=RANDOM_STATE,
+        ),
+    ),
+    (
+        "RandomForestClassifier, max_features=None",
+        RandomForestClassifier(
+            warm_start=True,
+            max_features=None,
+            oob_score=True,
+            random_state=RANDOM_STATE,
+        ),
+    ),
 ]
 
 # Map a classifier name to a list of (<n_estimators>, <error rate>) pairs.

@@ -31,7 +31,7 @@ cdef struct Cell:
 
     # Tree structure
     SIZE_t parent              # Parent cell of this cell
-    SIZE_t[8] children         # Array pointing to childrens of this cell
+    SIZE_t[8] children         # Array pointing to children of this cell
 
     # Cell description
     SIZE_t cell_id             # Id of the cell in the cells array in the Tree
