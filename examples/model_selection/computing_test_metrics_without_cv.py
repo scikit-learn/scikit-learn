@@ -45,6 +45,7 @@ print(__doc__)
 
 # %%
 # Data IO and generation
+# ----------------------
 
 # Import some data to play with
 iris = datasets.load_iris()
