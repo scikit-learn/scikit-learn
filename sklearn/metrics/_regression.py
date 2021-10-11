@@ -595,8 +595,12 @@ def median_absolute_error(
 
 
 def explained_variance_score(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average",
-    force_finite=True
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    force_finite=True,
 ):
     """Explained variance regression score function.
 
@@ -698,15 +702,21 @@ def explained_variance_score(
     denominator = np.average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
 
     return _assemble_r2_explained_variance(
-        numerator=numerator, denominator=denominator,
+        numerator=numerator,
+        denominator=denominator,
         nb_outputs=y_true.shape[1],
-        multioutput=multioutput, force_finite=force_finite
+        multioutput=multioutput,
+        force_finite=force_finite,
     )
 
 
 def r2_score(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average",
-    force_finite=True
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    force_finite=True,
 ):
     """:math:`R^2` (coefficient of determination) regression score function.
 
@@ -848,8 +858,11 @@ def r2_score(
     ).sum(axis=0, dtype=np.float64)
 
     return _assemble_r2_explained_variance(
-        numerator=numerator, denominator=denominator, nb_outputs=y_true.shape[1],
-        multioutput=multioutput, force_finite=force_finite
+        numerator=numerator,
+        denominator=denominator,
+        nb_outputs=y_true.shape[1],
+        multioutput=multioutput,
+        force_finite=force_finite,
     )
 
 
@@ -869,8 +882,9 @@ def _assemble_r2_explained_variance(
         output_scores = np.ones([nb_outputs])
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
-        output_scores[valid_score] = 1 - (numerator[valid_score] /
-                                          denominator[valid_score])
+        output_scores[valid_score] = 1 - (
+            numerator[valid_score] / denominator[valid_score]
+        )
         # Non-zero Numerator and Zero Denominator:
         # arbitrary set to 0.0 to avoid -inf scores
         output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
