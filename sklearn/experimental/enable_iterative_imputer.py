@@ -3,7 +3,7 @@
 The API and results of this estimator might change without any deprecation
 cycle.
 
-Importing this file dynamically sets :class:`sklearn.impute.IterativeImputer`
+Importing this file dynamically sets :class:`~sklearn.impute.IterativeImputer`
 as an attribute of the impute module::
 
     >>> # explicitly require this experimental feature
@@ -15,5 +15,6 @@ as an attribute of the impute module::
 from ..impute._iterative import IterativeImputer
 from .. import impute
 
-impute.IterativeImputer = IterativeImputer
-impute.__all__ += ['IterativeImputer']
+# use settattr to avoid mypy errors when monkeypatching
+setattr(impute, "IterativeImputer", IterativeImputer)
+impute.__all__ += ["IterativeImputer"]

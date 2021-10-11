@@ -8,7 +8,7 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ._base import _BasePCA
-from ..utils import check_array, gen_batches
+from ..utils import gen_batches
 from ..utils.extmath import svd_flip, _incremental_mean_and_var
 
 
@@ -41,11 +41,11 @@ class IncrementalPCA(_BasePCA):
 
     Parameters
     ----------
-    n_components : int or None, (default=None)
-        Number of components to keep. If ``n_components `` is ``None``,
+    n_components : int, default=None
+        Number of components to keep. If ``n_components`` is ``None``,
         then ``n_components`` is set to ``min(n_samples, n_features)``.
 
-    whiten : bool, optional
+    whiten : bool, default=False
         When True (False by default) the ``components_`` vectors are divided
         by ``n_samples`` times ``components_`` to ensure uncorrelated outputs
         with unit component-wise variances.
@@ -55,11 +55,11 @@ class IncrementalPCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making data respect some hard-wired assumptions.
 
-    copy : bool, (default=True)
+    copy : bool, default=True
         If False, X will be overwritten. ``copy=False`` can be used to
         save memory but is unsafe for general use.
 
-    batch_size : int or None, (default=None)
+    batch_size : int, default=None
         The number of samples to use for each batch. Only used when calling
         ``fit``. If ``batch_size`` is ``None``, then ``batch_size``
         is inferred from the data and set to ``5 * n_features``, to provide a
@@ -67,26 +67,29 @@ class IncrementalPCA(_BasePCA):
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
-        Components with maximum variance.
+    components_ : ndarray of shape (n_components, n_features)
+        Principal axes in feature space, representing the directions of
+        maximum variance in the data. Equivalently, the right singular
+        vectors of the centered input data, parallel to its eigenvectors.
+        The components are sorted by ``explained_variance_``.
 
-    explained_variance_ : array, shape (n_components,)
+    explained_variance_ : ndarray of shape (n_components,)
         Variance explained by each of the selected components.
 
-    explained_variance_ratio_ : array, shape (n_components,)
+    explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
         If all components are stored, the sum of explained variances is equal
         to 1.0.
 
-    singular_values_ : array, shape (n_components,)
+    singular_values_ : ndarray of shape (n_components,)
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
 
-    mean_ : array, shape (n_features,)
+    mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, aggregate over calls to ``partial_fit``.
 
-    var_ : array, shape (n_features,)
+    var_ : ndarray of shape (n_features,)
         Per-feature empirical variance, aggregate over calls to
         ``partial_fit``.
 
@@ -104,21 +107,26 @@ class IncrementalPCA(_BasePCA):
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
 
-    Examples
+    batch_size_ : int
+        Inferred batch size from ``batch_size``.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.decomposition import IncrementalPCA
-    >>> from scipy import sparse
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
-    >>> # either partially fit on smaller batches of data
-    >>> transformer.partial_fit(X[:100, :])
-    IncrementalPCA(batch_size=200, n_components=7)
-    >>> # or let the fit function itself divide the data into batches
-    >>> X_sparse = sparse.csr_matrix(X)
-    >>> X_transformed = transformer.fit_transform(X_sparse)
-    >>> X_transformed.shape
-    (1797, 7)
+    PCA : Principal component analysis (PCA).
+    KernelPCA : Kernel Principal component analysis (KPCA).
+    SparsePCA : Sparse Principal Components Analysis (SparsePCA).
+    TruncatedSVD : Dimensionality reduction using truncated SVD.
 
     Notes
     -----
@@ -153,16 +161,24 @@ class IncrementalPCA(_BasePCA):
     G. Golub and C. Van Loan. Matrix Computations, Third Edition, Chapter 5,
     Section 5.4.4, pp. 252-253.
 
-    See also
+    Examples
     --------
-    PCA
-    KernelPCA
-    SparsePCA
-    TruncatedSVD
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import IncrementalPCA
+    >>> from scipy import sparse
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
+    >>> # either partially fit on smaller batches of data
+    >>> transformer.partial_fit(X[:100, :])
+    IncrementalPCA(batch_size=200, n_components=7)
+    >>> # or let the fit function itself divide the data into batches
+    >>> X_sparse = sparse.csr_matrix(X)
+    >>> X_transformed = transformer.fit_transform(X_sparse)
+    >>> X_transformed.shape
+    (1797, 7)
     """
 
-    def __init__(self, n_components=None, whiten=False, copy=True,
-                 batch_size=None):
+    def __init__(self, n_components=None, *, whiten=False, copy=True, batch_size=None):
         self.n_components = n_components
         self.whiten = whiten
         self.copy = copy
@@ -173,11 +189,12 @@ class IncrementalPCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -186,16 +203,19 @@ class IncrementalPCA(_BasePCA):
         """
         self.components_ = None
         self.n_samples_seen_ = 0
-        self.mean_ = .0
-        self.var_ = .0
+        self.mean_ = 0.0
+        self.var_ = 0.0
         self.singular_values_ = None
         self.explained_variance_ = None
         self.explained_variance_ratio_ = None
-        self.singular_values_ = None
         self.noise_variance_ = None
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'lil'],
-                        copy=self.copy, dtype=[np.float64, np.float32])
+        X = self._validate_data(
+            X,
+            accept_sparse=["csr", "csc", "lil"],
+            copy=self.copy,
+            dtype=[np.float64, np.float32],
+        )
         n_samples, n_features = X.shape
 
         if self.batch_size is None:
@@ -203,8 +223,9 @@ class IncrementalPCA(_BasePCA):
         else:
             self.batch_size_ = self.batch_size
 
-        for batch in gen_batches(n_samples, self.batch_size_,
-                                 min_batch_size=self.n_components or 0):
+        for batch in gen_batches(
+            n_samples, self.batch_size_, min_batch_size=self.n_components or 0
+        ):
             X_batch = X[batch]
             if sparse.issparse(X_batch):
                 X_batch = X_batch.toarray()
@@ -217,28 +238,34 @@ class IncrementalPCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
-        check_input : bool
-            Run check_array on X.
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
+
+        check_input : bool, default=True
+            Run check_array on X.
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
+        first_pass = not hasattr(self, "components_")
         if check_input:
             if sparse.issparse(X):
                 raise TypeError(
                     "IncrementalPCA.partial_fit does not support "
                     "sparse input. Either convert data to dense "
-                    "or use IncrementalPCA.fit to do so in batches.")
-            X = check_array(X, copy=self.copy, dtype=[np.float64, np.float32])
+                    "or use IncrementalPCA.fit to do so in batches."
+                )
+            X = self._validate_data(
+                X, copy=self.copy, dtype=[np.float64, np.float32], reset=first_pass
+            )
         n_samples, n_features = X.shape
-        if not hasattr(self, 'components_'):
+        if first_pass:
             self.components_ = None
 
         if self.n_components is None:
@@ -247,34 +274,43 @@ class IncrementalPCA(_BasePCA):
             else:
                 self.n_components_ = self.components_.shape[0]
         elif not 1 <= self.n_components <= n_features:
-            raise ValueError("n_components=%r invalid for n_features=%d, need "
-                             "more rows than columns for IncrementalPCA "
-                             "processing" % (self.n_components, n_features))
+            raise ValueError(
+                "n_components=%r invalid for n_features=%d, need "
+                "more rows than columns for IncrementalPCA "
+                "processing" % (self.n_components, n_features)
+            )
         elif not self.n_components <= n_samples:
-            raise ValueError("n_components=%r must be less or equal to "
-                             "the batch number of samples "
-                             "%d." % (self.n_components, n_samples))
+            raise ValueError(
+                "n_components=%r must be less or equal to "
+                "the batch number of samples "
+                "%d." % (self.n_components, n_samples)
+            )
         else:
             self.n_components_ = self.n_components
 
-        if (self.components_ is not None) and (self.components_.shape[0] !=
-                                               self.n_components_):
-            raise ValueError("Number of input features has changed from %i "
-                             "to %i between calls to partial_fit! Try "
-                             "setting n_components to a fixed value." %
-                             (self.components_.shape[0], self.n_components_))
+        if (self.components_ is not None) and (
+            self.components_.shape[0] != self.n_components_
+        ):
+            raise ValueError(
+                "Number of input features has changed from %i "
+                "to %i between calls to partial_fit! Try "
+                "setting n_components to a fixed value."
+                % (self.components_.shape[0], self.n_components_)
+            )
 
         # This is the first partial_fit
-        if not hasattr(self, 'n_samples_seen_'):
+        if not hasattr(self, "n_samples_seen_"):
             self.n_samples_seen_ = 0
-            self.mean_ = .0
-            self.var_ = .0
+            self.mean_ = 0.0
+            self.var_ = 0.0
 
         # Update stats - they are 0 if this is the first step
-        col_mean, col_var, n_total_samples = \
-            _incremental_mean_and_var(
-                X, last_mean=self.mean_, last_variance=self.var_,
-                last_sample_count=np.repeat(self.n_samples_seen_, X.shape[1]))
+        col_mean, col_var, n_total_samples = _incremental_mean_and_var(
+            X,
+            last_mean=self.mean_,
+            last_variance=self.var_,
+            last_sample_count=np.repeat(self.n_samples_seen_, X.shape[1]),
+        )
         n_total_samples = n_total_samples[0]
 
         # Whitening
@@ -285,30 +321,33 @@ class IncrementalPCA(_BasePCA):
             col_batch_mean = np.mean(X, axis=0)
             X -= col_batch_mean
             # Build matrix of combined previous basis and new data
-            mean_correction = \
-                np.sqrt((self.n_samples_seen_ * n_samples) /
-                        n_total_samples) * (self.mean_ - col_batch_mean)
-            X = np.vstack((self.singular_values_.reshape((-1, 1)) *
-                           self.components_, X, mean_correction))
+            mean_correction = np.sqrt(
+                (self.n_samples_seen_ / n_total_samples) * n_samples
+            ) * (self.mean_ - col_batch_mean)
+            X = np.vstack(
+                (
+                    self.singular_values_.reshape((-1, 1)) * self.components_,
+                    X,
+                    mean_correction,
+                )
+            )
 
-        U, S, V = linalg.svd(X, full_matrices=False)
-        U, V = svd_flip(U, V, u_based_decision=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
+        U, Vt = svd_flip(U, Vt, u_based_decision=False)
         explained_variance = S ** 2 / (n_total_samples - 1)
         explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)
 
         self.n_samples_seen_ = n_total_samples
-        self.components_ = V[:self.n_components_]
-        self.singular_values_ = S[:self.n_components_]
+        self.components_ = Vt[: self.n_components_]
+        self.singular_values_ = S[: self.n_components_]
         self.mean_ = col_mean
         self.var_ = col_var
-        self.explained_variance_ = explained_variance[:self.n_components_]
-        self.explained_variance_ratio_ = \
-            explained_variance_ratio[:self.n_components_]
+        self.explained_variance_ = explained_variance[: self.n_components_]
+        self.explained_variance_ratio_ = explained_variance_ratio[: self.n_components_]
         if self.n_components_ < n_features:
-            self.noise_variance_ = \
-                explained_variance[self.n_components_:].mean()
+            self.noise_variance_ = explained_variance[self.n_components_ :].mean()
         else:
-            self.noise_variance_ = 0.
+            self.noise_variance_ = 0.0
         return self
 
     def transform(self, X):
@@ -320,13 +359,14 @@ class IncrementalPCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            New data, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
+            Projection of X in the first principal components.
 
         Examples
         --------
@@ -343,8 +383,9 @@ class IncrementalPCA(_BasePCA):
         if sparse.issparse(X):
             n_samples = X.shape[0]
             output = []
-            for batch in gen_batches(n_samples, self.batch_size_,
-                                     min_batch_size=self.n_components or 0):
+            for batch in gen_batches(
+                n_samples, self.batch_size_, min_batch_size=self.n_components or 0
+            ):
                 output.append(super().transform(X[batch].toarray()))
             return np.vstack(output)
         else:
