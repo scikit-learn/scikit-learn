@@ -11,7 +11,8 @@ which measures the true positive rate vs false positive rate. Typically,
 the larger the AUC the better. One typically would like to estimate the AUC
 metric for any held-out test dataset. An option is to compute this using
 cross-validation, but if one has limited data, then one can still compute
-it using bootstrap.
+it using bootstrap [1]. For more information on the general bootstrapping
+procedure [2].
 
 This example shows how to compute an estimate of the AUC metric of held-out
 test data using bootstrap sampling. We first compute an overly optimistic
@@ -29,6 +30,10 @@ necessarily AUC.
              :func:`sklearn.model_selection.cross_validate`,
              :ref:`sphx_glr_auto_examples_model_selection_plot_roc.py`,
 
+.. topic:: References:
+
+   [1] Gordon C. S. Smith, Shaun R. Seaman, Angela M. Wood, Patrick Royston, Ian R. White, Correcting for Optimistic Prediction in Small Data Sets, American Journal of Epidemiology, Volume 180, Issue 3, 1 August 2014, Pages 318–324, https://doi.org/10.1093/aje/kwu140
+   [2] B. Efron "Bootstrap Methods: Another Look at the Jackknife," The Annals of Statistics, Ann. Statist. 7(1), 1-26, (January, 1979)
 """
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.model_selection import cross_validate, StratifiedKFold
@@ -38,7 +43,7 @@ import numpy as np
 print(__doc__)
 
 
-# #############################################################################
+# %%
 # Data IO and generation
 
 # Import some data to play with
@@ -54,7 +59,7 @@ random_state = np.random.RandomState()
 n_samples, n_features = X.shape
 X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 
-# #############################################################################
+# %%
 # Classification and ROC analysis
 
 # Learn to predict each class against the other
@@ -66,8 +71,8 @@ y_score = classifier.fit(X, y).decision_function(X)
 auc_est = roc_auc_score(y, y_score)
 print(f'Original over-optimistic AUC is {auc_est}')
 
-# #############################################################################
-# Computing the AUC with confidence intervals
+# %%
+# Estimating the held-out test dataset AUC using bootstrap
 
 # Define the boostrap 'cv' class and object.
 # Here, the train indices are bootstrap samples of the dataset,
@@ -75,6 +80,15 @@ print(f'Original over-optimistic AUC is {auc_est}')
 
 
 class BootstrapSplit():
+    """A custom cross validator.
+
+    This class is used to sample bootstraps of the
+    dataset, which are just overlapping copies of
+    X and y. All custom cross validators need
+    to implement the ``get_n_splits`` and ``splits``
+    function.
+    """
+
     def __init__(self, n_splits, random_state):
         self.n_splits = n_splits
         self.random_state = random_state
@@ -99,9 +113,13 @@ class BootstrapSplit():
             i += 1
 
 
-n_splits = 100  # the number of bootstrap samples
+# The number of bootstrap samples, which will then sample
+# with overlap the dataset. This will then create 100 bootstrap
+# copies of the dataset.
+n_splits = 100
 cv = BootstrapSplit(n_splits=n_splits, random_state=random_state)
 
+# %%
 # Run classifier with bootstrap
 scores = cross_validate(
     estimator=classifier,
@@ -122,8 +140,11 @@ print(f'Optimism is {optimism}')
 adjusted_auc = auc_est - optimism
 print(f'The AUC computed by bootstrapping and adjusting for optimism: {adjusted_auc}')
 
-# Now compare this with the answer using cross-validation
-cv = StratifiedKFold(n_splits=6)
+# %%
+# Now compare this with the answer using cross-validation.
+# The number of splits used here splits the data into non-overlapping sets.
+# Hence, these are usually some low-number like 5, or 10.
+cv = StratifiedKFold(n_splits=5)
 cv_scores = cross_validate(
     estimator=classifier,
     X=X,
