@@ -1995,7 +1995,7 @@ class _BaseRidgeCV(LinearModel):
 
         min_alpha = np.min(self.alphas)
         max_alpha = np.max(self.alphas)
-        alphas = self.alpha_ if self.alpha_per_target else [self.alpha_]
+        alphas = self.alpha_ if hasattr(self.alpha_, "__len__") else [self.alpha_]
         if any(alpha in [min_alpha, max_alpha] for alpha in alphas):
             if self.alpha_per_target:
                 msg = (
