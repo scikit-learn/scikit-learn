@@ -33,7 +33,6 @@ Overview of clustering methods
    :target: ../auto_examples/cluster/plot_cluster_comparison.html
    :align: center
    :scale: 50
-   :alt:
 
    A comparison of the clustering algorithms in scikit-learn
 
@@ -167,7 +166,6 @@ It suffers from various drawbacks:
    :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
    :align: center
    :scale: 50
-   :alt:
 
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
@@ -184,7 +182,6 @@ until the centroids do not move significantly.
    :target: ../auto_examples/cluster/plot_kmeans_digits.html
    :align: right
    :scale: 35
-   :alt:
 
 K-means is equivalent to the expectation-maximization algorithm
 with a small, all-equal, diagonal covariance matrix.
@@ -427,7 +424,6 @@ given sample.
    :target: ../auto_examples/cluster/plot_mean_shift.html
    :align: center
    :scale: 50
-   :alt:
 
 
 .. topic:: Examples:
@@ -503,12 +499,10 @@ computed using a function of a gradient of the image.
 .. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
     :scale: 65
-    :alt:
 
 .. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
     :scale: 65
-    :alt:
 
 Different label assignment strategies
 -------------------------------------
@@ -611,7 +605,6 @@ linkage strategies.
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_linkage_comparison_001.png
     :target: ../auto_examples/cluster/plot_linkage_comparison.html
     :scale: 43
-    :alt:
 
 Agglomerative cluster has a "rich get richer" behavior that leads to
 uneven cluster sizes. In this regard, single linkage is the worst
@@ -637,7 +630,6 @@ of the data, though more so in the case of small sample sizes.
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_dendrogram_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_dendrogram.html
     :scale: 42
-    :alt:
 
 
 
@@ -719,22 +711,18 @@ enable only merging of neighboring pixels on an image, as in the
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
-    :alt:
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_002.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
-    :alt:
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_003.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
-    :alt:
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_004.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
-    :alt:
 
 
 Varying the metric
@@ -759,17 +747,14 @@ each class.
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_005.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
-    :alt:
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_006.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
-    :alt:
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_007.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
-    :alt:
 
 .. topic:: Examples:
 
@@ -916,7 +901,6 @@ potential reachable points.
 .. |optics_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_optics_001.png
         :target: ../auto_examples/cluster/plot_optics.html
         :scale: 50
-        :alt:
 
 .. centered:: |optics_results|
 
@@ -1059,7 +1043,6 @@ the user is advised
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
-    :alt:
 
 .. topic:: References:
 
@@ -1551,7 +1534,6 @@ Drawbacks
    :target: ../auto_examples/cluster/plot_adjusted_for_chance_measures.html
    :align: center
    :scale: 100
-   :alt:
 
 - These metrics **require the knowledge of the ground truth classes** while
   almost never available in practice or requires manual assignment by
