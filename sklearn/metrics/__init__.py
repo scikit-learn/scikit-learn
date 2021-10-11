@@ -15,6 +15,7 @@ from ._ranking import ndcg_score
 from ._ranking import precision_recall_curve
 from ._ranking import roc_auc_score
 from ._ranking import roc_curve
+from ._ranking import lift_curve
 from ._ranking import top_k_accuracy_score
 
 from ._classification import accuracy_score
@@ -131,6 +132,7 @@ __all__ = [
     "jaccard_score",
     "label_ranking_average_precision_score",
     "label_ranking_loss",
+    "lift_curve",
     "log_loss",
     "make_scorer",
     "nan_euclidean_distances",
