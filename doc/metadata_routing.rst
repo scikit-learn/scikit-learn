@@ -19,7 +19,6 @@ Usage Examples
 Here we present a few examples to show different common use-cases. The examples
 in this section require the following imports and data::
 
-.. TODO: add once implemented
   >>> import numpy as np
   >>> from sklearn.metrics import make_scorer, accuracy_score
   >>> from sklearn.linear_model import LogisticRegressionCV
@@ -44,7 +43,6 @@ explicitly request weights in ``make_scorer`` and for ``LogisticRegressionCV``.
 Both of these *consumers* understand the meaning of the key
 ``"sample_weight"``::
 
-.. TODO: add once implemented
   >>> weighted_acc = make_scorer(accuracy_score).score_requests(
   ...     sample_weight=True
   ... )
@@ -72,7 +70,6 @@ weights explicitly be requested, we need to explicitly say that
 ``sample_weight`` is not used for it, so that ``cross_validate`` doesn't pass
 it along.
 
-.. TODO: add once implemented
   >>> weighted_acc = make_scorer(accuracy_score).score_requests(
   ...     sample_weight=True
   ... )
@@ -94,7 +91,6 @@ Unweighted feature selection
 Unlike ``LogisticRegressionCV``, ``SelectKBest`` doesn't accept weights and
 therefore `"sample_weight"` is not routed to it::
 
-.. TODO: add once implemented
   >>> weighted_acc = make_scorer(accuracy_score).score_requests(
   ...     sample_weight=True
   ... )
@@ -120,7 +116,6 @@ Despite ``make_scorer`` and ``LogisticRegressionCV`` both expecting a key
 consumers. In this example, we pass ``scoring_weight`` to the scorer, and
 ``fitting_weight`` to ``LogisticRegressionCV``::
 
-.. TODO: add once implemented
   >>> weighted_acc = make_scorer(accuracy_score).score_requests(
   ...    sample_weight="scoring_weight"
   ... )
@@ -180,7 +175,6 @@ be set by the user, otherwise an error is raised by the router object. For
 example, the following code would raise, since it hasn't been explicitly set
 whether ``sample_weight`` should be passed to the estimator's scorer or not::
 
-.. TODO: add once implemented
     >>> param_grid = {"C": [0.1, 1]}
     >>> lr = LogisticRegression().fit_requests(sample_weight=True)
     >>> try:
