@@ -1068,11 +1068,11 @@ def lift_curve(
     >>> scores = np.array([0.1, 0.4, 0.3, 0.8])
     >>> lift, percentages, threshs = metrics.lift_curve(y, scores, pos_label=2)
     >>> lift
-    array([0. , 2. , 2. , 1.33333333, 1.])
+    array([2. , 2. , 2. , 1.33333333, 1.])
     >>> percentages
     array([0., 25., 50., 75., 100.])
     >>> threshs
-    array([1., 0.8, 0.4, 0.3, 0.1])
+    array([1.8, 0.8, 0.4, 0.3, 0.1]
     """
 
     fps, tps, thresholds = _binary_clf_curve(
