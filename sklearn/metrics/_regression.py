@@ -595,7 +595,8 @@ def median_absolute_error(
 
 
 def explained_variance_score(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", fix_when_y_true_is_constant=True
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average",
+    fix_when_y_true_is_constant=True
 ):
     """Explained variance regression score function.
 
@@ -735,7 +736,10 @@ def explained_variance_score(
     return np.average(output_scores, weights=avg_weights)
 
 
-def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", fix_when_y_true_is_constant=True):
+def r2_score(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average",
+    fix_when_y_true_is_constant=True
+):
     """:math:`R^2` (coefficient of determination) regression score function.
 
     Best possible score is 1.0 and it can be negative (because the
