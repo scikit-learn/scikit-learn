@@ -666,8 +666,11 @@ def pairwise_distances_argmin_min(
     else:
         # TODO: once ArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
+        #
         # When PairwiseDistancesArgKmin is not supported and when the user
-        # asked for a fast alternative, we need to revert to the standard one.
+        # asked for a fast alternative, we need to revert to the standard
+        # "euclidean" strategy to match the API.
+        # Internally, the "euclidean" strategy still uses the GEMM trick.
         if metric == "fast_euclidean":
             metric = "euclidean"
 

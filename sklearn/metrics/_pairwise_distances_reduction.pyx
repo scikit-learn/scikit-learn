@@ -899,11 +899,18 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
     """Fast specialized alternative for PairwiseDistancesArgKmin on EuclideanDistance.
 
+    The full pairwise squared distances matrix is computed as follows:
+
+              ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²
+
+    The middle term gets computed efficiently bellow using BLAS Level 3 GEMM.
+
     Notes
     -----
     This implementation has a superior arithmetic intensity and hence
     better running time when the alternative is IO bound, but it can suffer
-    from numerical instability.
+    from numerical instability caused by catastrophic cancellation potentially
+    introduced by the subtraction in the arithmetic expression above.
 
     PairwiseDistancesArgKmin with EuclideanDistance must be used when higher
     numerical precision is needed.
@@ -1032,12 +1039,6 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             DTYPE_t *heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
-            # We compute the full pairwise squared distances matrix as follows
-            #
-            #      ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²,
-            #
-            # The middle term gets computed efficiently bellow using BLAS Level 3 GEMM.
-            #
             # Careful: LDA, LDB and LDC are given for F-ordered arrays
             # in BLAS documentations, for instance:
             # https://www.netlib.org/lapack/explore-html/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html #noqa
@@ -1072,7 +1073,9 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
                     heaps_indices + i * k,
                     k,
                     # Using the squared euclidean distance as the rank-preserving distance:
-                    # ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                    #
+                    #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                    #
                     (
                         self.X_norm_squared[i + X_start] +
                         dist_middle_terms[i * Y_c.shape[0] + j] +
@@ -1433,13 +1436,20 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRadiusNeighborhood):
     """Fast specialized alternative for PairwiseDistancesRadiusNeighborhood on EuclideanDistance.
 
+    The full pairwise squared distances matrix is computed as follows:
+
+              ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²
+
+    The middle term gets computed efficiently bellow using BLAS Level 3 GEMM.
+
     Notes
     -----
     This implementation has a superior arithmetic intensity and hence
     better running time when the alternative is IO bound, but it can suffer
-    from numerical instability.
+    from numerical instability caused by catastrophic cancellation potentially
+    introduced by the subtraction in the arithmetic expression above.
 
-    RadiusNeighborhood with EuclideanDistance must be used when higher
+    PairwiseDistancesRadiusNeighborhood with EuclideanDistance must be used when higher
     numerical precision is needed.
     """
 
@@ -1573,12 +1583,6 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
             const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
 
-            # We compute the full pairwise squared distances matrix as follows
-            #
-            #      ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²,
-            #
-            # The middle term gets computed efficiently bellow using BLAS Level 3 GEMM.
-            #
             # Careful: LDA, LDB and LDC are given for F-ordered arrays
             # in BLAS documentations, for instance:
             # https://www.netlib.org/lapack/explore-html/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html #noqa
@@ -1608,7 +1612,9 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
                 # Using the squared euclidean distance as the rank-preserving distance:
-                # ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                #
+                #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                #
                 squared_dist_i_j = (
                     self.X_norm_squared[i + X_start]
                     + dist_middle_terms[i * Y_c.shape[0] + j]
