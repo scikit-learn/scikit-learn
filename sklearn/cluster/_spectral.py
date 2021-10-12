@@ -19,8 +19,7 @@ from ._kmeans import k_means
 
 
 def cluster_qr(vectors):
-    """Search for a partition matrix (clustering) which is
-    closest to the eigenvector embedding.
+    """Find the discrete partition closest to the eigenvector embedding.
 
     This implementation was proposed in [1]_.
 
@@ -49,7 +48,7 @@ def cluster_qr(vectors):
     piv = qr(vectors.T, pivoting=True)[2]
     ut, _, v = svd(vectors[piv[:k], :].T)
     vectors = abs(np.dot(vectors, np.dot(ut, v.conj())))
-    return vectors.argmax(axis=1).T
+    return vectors.argmax(axis=1)
 
 
 def discretize(
@@ -312,9 +311,6 @@ def spectral_clustering(
            Anil Damle, Victor Minden, Lexing Ying
            <https://doi.org/10.1093/imaiai/iay008>`_
 
-    .. versionchanged:: 1.1
-       Added new reference for the new labeling method 'cluster_qr'.
-
     Notes
     -----
     The graph should contain only one connected component, elsewhere
@@ -563,9 +559,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     .. [5] `Simple, direct, and efficient multi-way spectral clustering, 2019
            Anil Damle, Victor Minden, Lexing Ying
            <https://doi.org/10.1093/imaiai/iay008>`_
-
-    .. versionchanged:: 1.1
-       Added new reference for the new labeling method 'cluster_qr'.
 
     Examples
     --------
