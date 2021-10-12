@@ -31,8 +31,9 @@ cdef int simultaneous_sort(
     """
     # TODO: In order to support discrete distance metrics, we need to have a
     # simultaneous sort which breaks ties on indices when distances are identical.
-    # The best might be using a std::sort and a Comparator which might need
-    # AoS instead of SoA (currently used).
+    # The best might be using a std::stable_sort and a Comparator which might need
+    # an Array of Structures (AoS) instead of the Structure of Arrays (SoA)
+    # currently used.
     cdef:
         ITYPE_t pivot_idx, i, store_idx
         floating pivot_val
