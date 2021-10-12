@@ -1007,8 +1007,7 @@ def roc_curve(
     return fpr, tpr, thresholds
 
 
-def lift_curve(
-	y_true, y_score, *, pos_label=None, sample_weight=None):
+def lift_curve(y_true, y_score, *, pos_label=None, sample_weight=None):
     """Compute lift for each percent coverage of the sample.
 
     Lift is the ratio of positive treatment responses to treatments on a
@@ -1051,7 +1050,14 @@ def lift_curve(
         Decreasing thresholds on the decision function used to compute
         lift. `thresholds[0]` represents no instances being predicted
         and is arbitrarily set to `max(y_score) + 1`.
-    
+
+    See Also
+    --------
+    det_curve: Compute error rates for different probability thresholds.
+    roc_auc_score : Compute the area under the ROC curve.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    precision_recall_curve : Compute precision-recall curve.
+
     References
     ----------
     .. [1] `Wikipedia entry for the lift metric
