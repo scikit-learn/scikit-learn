@@ -375,7 +375,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 sample_weight = expanded_class_weight
 
         if not self.bootstrap and self.max_samples is not None:
-            raise ValueError("Sub-sample size only available if bootstrap=True")
+            raise ValueError(
+                "Sub-sample size only available if bootstrap=True. "
+                "Please leave max_samples to None."
+            )
 
         # Get bootstrap sample size
         n_samples_bootstrap = _get_n_samples_bootstrap(
