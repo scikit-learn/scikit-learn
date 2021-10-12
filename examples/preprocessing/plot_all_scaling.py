@@ -40,6 +40,7 @@ The following code is a bit verbose, feel free to jump directly to the analysis
 of the results_.
 
 """
+print(__doc__)
 
 # Author:  Raghav RV <rvraghav93@gmail.com>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
@@ -62,8 +63,6 @@ from sklearn.preprocessing import QuantileTransformer
 from sklearn.preprocessing import PowerTransformer
 
 from sklearn.datasets import fetch_california_housing
-
-print(__doc__)
 
 dataset = fetch_california_housing()
 X_full, y_full = dataset.data, dataset.target

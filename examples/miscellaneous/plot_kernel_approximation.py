@@ -28,6 +28,7 @@ stochastic gradient descent via :class:`~sklearn.linear_model.SGDClassifier`.
 This is not easily possible for the case of the kernelized SVM.
 
 """
+print(__doc__)
 
 # %%
 # Python package and dataset imports, load dataset
@@ -37,8 +38,6 @@ This is not easily possible for the case of the kernelized SVM.
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
-
-print(__doc__)
 
 # Standard scientific Python imports
 import matplotlib.pyplot as plt

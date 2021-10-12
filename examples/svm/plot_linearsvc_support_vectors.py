@@ -8,6 +8,7 @@ the support vectors. This example demonstrates how to obtain the support
 vectors in LinearSVC.
 
 """
+print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

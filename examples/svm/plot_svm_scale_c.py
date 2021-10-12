@@ -75,6 +75,7 @@ is not scaled.
     Two separate datasets are used for the two different plots. The reason
     behind this is the `l1` case works better on sparse data, while `l2`
     is better suited to the non-sparse case.
+
 """
 print(__doc__)
 

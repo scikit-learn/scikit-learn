@@ -29,6 +29,7 @@ What we can see that:
   but lessen their effect.
 
 """
+print(__doc__)
 
 from matplotlib import pyplot as plt
 import numpy as np

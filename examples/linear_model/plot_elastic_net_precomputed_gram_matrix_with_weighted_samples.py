@@ -16,7 +16,6 @@ is computed.
    :func:`linear_model.ElasticNet.fit`.
 
 """
-
 print(__doc__)
 
 # %%

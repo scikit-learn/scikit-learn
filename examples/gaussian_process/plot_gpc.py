@@ -19,6 +19,7 @@ internally by GPC.
 The second figure shows the log-marginal-likelihood for different choices of
 the kernel's hyperparameters, highlighting the two choices of the
 hyperparameters used in the first figure by black dots.
+
 """
 print(__doc__)
 

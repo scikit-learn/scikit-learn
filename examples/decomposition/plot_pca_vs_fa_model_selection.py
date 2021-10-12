@@ -23,6 +23,7 @@ Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
 by Thomas P. Minka is also compared.
 
 """
+print(__doc__)
 
 # Authors: Alexandre Gramfort
 #          Denis A. Engemann
@@ -36,8 +37,6 @@ from sklearn.decomposition import PCA, FactorAnalysis
 from sklearn.covariance import ShrunkCovariance, LedoitWolf
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GridSearchCV
-
-print(__doc__)
 
 # #############################################################################
 # Create the data

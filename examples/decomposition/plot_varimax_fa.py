@@ -13,7 +13,9 @@ structure; here, for example, the varimax rotation, which
 is found by maximizing the squared variances of the weights,
 finds a structure where the second component only loads
 positively on sepal width.
+
 """
+print(__doc__)
 
 # Authors: Jona Sassenhagen
 # License: BSD 3 clause
@@ -24,8 +26,6 @@ import numpy as np
 from sklearn.decomposition import FactorAnalysis, PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
-
-print(__doc__)
 
 # %%
 # Load Iris data

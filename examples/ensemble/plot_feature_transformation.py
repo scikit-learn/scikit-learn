@@ -17,13 +17,14 @@ leaves to 1 and the other feature values to 0.
 
 The resulting transformer has then learned a supervised, sparse,
 high-dimensional categorical embedding of the data.
+
 """
+print(__doc__)
+
 
 # Author: Tim Head <betatim@gmail.com>
 #
 # License: BSD 3 clause
-
-print(__doc__)
 
 from sklearn import set_config
 

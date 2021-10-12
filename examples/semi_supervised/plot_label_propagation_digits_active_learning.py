@@ -17,6 +17,7 @@ this active learning technique.
 A plot will appear showing the top 5 most uncertain digits for each iteration
 of training. These may or may not contain mistakes, but we will train the next
 model with their true labels.
+
 """
 print(__doc__)
 

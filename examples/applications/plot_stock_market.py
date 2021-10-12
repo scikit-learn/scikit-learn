@@ -58,7 +58,9 @@ visualization is crucial here to display the graph. One of the challenge
 is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
+
 """
+print(__doc__)
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
@@ -72,8 +74,6 @@ from matplotlib.collections import LineCollection
 import pandas as pd
 
 from sklearn import cluster, covariance, manifold
-
-print(__doc__)
 
 
 # #############################################################################

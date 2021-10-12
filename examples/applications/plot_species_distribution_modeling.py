@@ -33,7 +33,9 @@ References
    <http://rob.schapire.net/papers/ecolmod.pdf>`_
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
+
 """
+print(__doc__)
 
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
@@ -57,8 +59,6 @@ try:
     basemap = True
 except ImportError:
     basemap = False
-
-print(__doc__)
 
 
 def construct_grids(batch):

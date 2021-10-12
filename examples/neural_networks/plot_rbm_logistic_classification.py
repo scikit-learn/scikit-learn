@@ -23,6 +23,7 @@ of runtime constraints.
 Logistic regression on raw pixel values is presented for comparison. The
 example shows that the features extracted by the BernoulliRBM help improve the
 classification accuracy.
+
 """
 print(__doc__)
 

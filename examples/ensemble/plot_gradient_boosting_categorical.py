@@ -20,6 +20,7 @@ particular, we will evaluate:
 
 We will work with the Ames Lowa Housing dataset which consists of numerical
 and categorical features, where the houses' sales prices is the target.
+
 """
 print(__doc__)
 

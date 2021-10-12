@@ -12,7 +12,6 @@ give us much regarding `y` when compared to just feature 1
 """
 print(__doc__)
 
-
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause

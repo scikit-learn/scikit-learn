@@ -5,6 +5,7 @@ Kernel PCA
 
 This example shows that Kernel PCA is able to find a projection of the data
 that makes data linearly separable.
+
 """
 print(__doc__)
 

@@ -11,6 +11,7 @@ The two plots differ only in the area in the middle where the classes are
 tied. If ``break_ties=False``, all input in that area would be classified as
 one class, whereas if ``break_ties=True``, the tie-breaking mechanism will
 create a non-convex decision boundary in that area.
+
 """
 print(__doc__)
 

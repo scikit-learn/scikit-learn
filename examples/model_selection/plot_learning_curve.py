@@ -14,6 +14,7 @@ could be increased with more training samples. The plots in the second row
 show the times required by the models to train with various sizes of training
 dataset. The plots in the third row show how much time was required to train
 the models for each training sizes.
+
 """
 print(__doc__)
 

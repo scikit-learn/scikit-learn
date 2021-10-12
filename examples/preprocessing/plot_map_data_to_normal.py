@@ -31,7 +31,9 @@ than the parametric ones (Box-Cox and Yeo-Johnson).
 
 On "small" datasets (less than a few hundred points), the quantile transformer
 is prone to overfitting. The use of the power transform is then recommended.
+
 """
+print(__doc__)
 
 # Author: Eric Chang <ericchang2017@u.northwestern.edu>
 #         Nicolas Hug <contact@nicolas-hug.com>
@@ -43,8 +45,6 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import PowerTransformer
 from sklearn.preprocessing import QuantileTransformer
 from sklearn.model_selection import train_test_split
-
-print(__doc__)
 
 
 N_SAMPLES = 1000

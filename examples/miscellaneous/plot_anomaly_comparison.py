@@ -59,7 +59,9 @@ intuition might not apply to very high dimensional data.
 Finally, note that parameters of the models have been here handpicked but
 that in practice they need to be adjusted. In the absence of labelled data,
 the problem is completely unsupervised so model selection can be a challenge.
+
 """
+print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Albert Thomas <albert.thomas@telecom-paristech.fr>
@@ -79,8 +81,6 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.linear_model import SGDOneClassSVM
 from sklearn.kernel_approximation import Nystroem
 from sklearn.pipeline import make_pipeline
-
-print(__doc__)
 
 matplotlib.rcParams["contour.negative_linestyle"] = "solid"
 

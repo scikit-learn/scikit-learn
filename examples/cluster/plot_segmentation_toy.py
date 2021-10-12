@@ -23,6 +23,7 @@ a Voronoi partition of the graph.
 In addition, we use the mask of the objects to restrict the graph to the
 outline of the objects. In this example, we are interested in
 separating the objects one from the other, and not from the background.
+
 """
 print(__doc__)
 

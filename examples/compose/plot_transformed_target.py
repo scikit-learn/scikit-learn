@@ -10,6 +10,7 @@ to illustrate the benefit of transforming the targets before learning a linear
 regression model. The first example uses synthetic data while the second
 example is based on the Ames housing data set.
 """
+print(__doc__)
 
 # Author: Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
 # License: BSD 3 clause

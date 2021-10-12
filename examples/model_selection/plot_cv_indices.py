@@ -9,7 +9,9 @@ groups in test sets, etc.
 
 This example visualizes the behavior of several common scikit-learn objects
 for comparison.
+
 """
+print(__doc__)
 
 from sklearn.model_selection import (
     TimeSeriesSplit,

@@ -16,7 +16,6 @@ and finally the ground truth.
 """
 print(__doc__)
 
-
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause

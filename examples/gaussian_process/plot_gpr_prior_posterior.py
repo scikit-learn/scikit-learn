@@ -10,6 +10,7 @@ and posterior distributions.
 
 Here, we only give some illustration. To know more about kernels' formulation,
 refer to the :ref:`User Guide <gp_kernels>`.
+
 """
 print(__doc__)
 

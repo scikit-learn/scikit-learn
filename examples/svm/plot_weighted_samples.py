@@ -11,6 +11,7 @@ puts more emphasis on getting these points right. The effect might often be
 subtle.
 To emphasize the effect here, we particularly weight outliers, making the
 deformation of the decision boundary very visible.
+
 """
 print(__doc__)
 

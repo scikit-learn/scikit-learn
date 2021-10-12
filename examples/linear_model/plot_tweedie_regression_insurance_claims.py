@@ -43,6 +43,7 @@ print(__doc__)
 #          Roman Yurchak <rth.yurchak@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+
 from functools import partial
 
 import numpy as np

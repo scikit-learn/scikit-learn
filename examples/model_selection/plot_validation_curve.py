@@ -10,6 +10,7 @@ low. This is called underfitting. Medium values of gamma will result in high
 values for both scores, i.e. the classifier is performing fairly well. If gamma
 is too high, the classifier will overfit, which means that the training score
 is good but the validation score is poor.
+
 """
 print(__doc__)
 

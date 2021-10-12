@@ -7,6 +7,7 @@ A tutorial exercise using Cross-validation with an SVM on the Digits dataset.
 
 This exercise is used in the :ref:`cv_generators_tut` part of the
 :ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
+
 """
 print(__doc__)
 

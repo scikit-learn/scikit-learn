@@ -14,6 +14,7 @@ in a decision boundary plot that appears with lesser curvatures.
 Similarly, decreasing alpha may fix high bias (a sign of underfitting) by
 encouraging larger weights, potentially resulting in a more complicated
 decision boundary.
+
 """
 print(__doc__)
 

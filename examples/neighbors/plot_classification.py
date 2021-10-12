@@ -5,6 +5,7 @@ Nearest Neighbors Classification
 
 Sample usage of Nearest Neighbors classification.
 It will plot the decision boundaries for each class.
+
 """
 print(__doc__)
 

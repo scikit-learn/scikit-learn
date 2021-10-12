@@ -10,7 +10,10 @@ classes. Arrows point from the probability vectors predicted by an uncalibrated
 classifier to the probability vectors predicted by the same classifier after
 sigmoid calibration on a hold-out validation set. Colors indicate the true
 class of an instance (red: class 1, green: class 2, blue: class 3).
+
 """
+print(__doc__)
+
 
 # %%
 # Data

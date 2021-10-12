@@ -18,7 +18,9 @@ again the same transformers over and over.
 
 Note that the use of ``memory`` to enable caching becomes interesting when the
 fitting of a transformer is costly.
+
 """
+print(__doc__)
 
 # %%
 # Illustration of ``Pipeline`` and ``GridSearchCV``
@@ -34,8 +36,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.decomposition import PCA, NMF
 from sklearn.feature_selection import SelectKBest, chi2
-
-print(__doc__)
 
 pipe = Pipeline(
     [

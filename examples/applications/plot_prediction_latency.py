@@ -12,6 +12,7 @@ either in bulk or atomic (i.e. one by one) mode.
 The plots represent the distribution of the prediction latency as a boxplot.
 
 """
+print(__doc__)
 
 # Authors: Eustache Diemert <eustache@diemert.fr>
 # License: BSD 3 clause

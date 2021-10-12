@@ -13,6 +13,7 @@ therefore motivates learning the dictionary to best fit your type of signals.
 
 The richer dictionary on the right is not larger in size, heavier subsampling
 is performed in order to stay on the same order of magnitude.
+
 """
 print(__doc__)
 

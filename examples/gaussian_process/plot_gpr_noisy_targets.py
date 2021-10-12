@@ -17,6 +17,7 @@ confidence interval.
 
 Note that the parameter ``alpha`` is applied as a Tikhonov
 regularization of the assumed covariance between the training points.
+
 """
 print(__doc__)
 

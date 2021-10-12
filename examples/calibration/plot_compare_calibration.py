@@ -13,7 +13,9 @@ In this example we will compare the calibration of four different
 models: :ref:`Logistic_regression`, :ref:`gaussian_naive_bayes`,
 :ref:`Random Forest Classifier <forest>` and :ref:`Linear SVM
 <svm_classification>`.
+
 """
+print(__doc__)
 
 # %%
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>

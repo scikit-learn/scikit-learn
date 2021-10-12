@@ -25,7 +25,9 @@ Like LDA, it is a supervised method.
 
 One can see that NCA enforces a clustering of the data that is visually
 meaningful despite the large reduction in dimension.
+
 """
+print(__doc__)
 
 # License: BSD 3 clause
 
@@ -38,8 +40,6 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.neighbors import KNeighborsClassifier, NeighborhoodComponentsAnalysis
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
-print(__doc__)
 
 n_neighbors = 3
 random_state = 0

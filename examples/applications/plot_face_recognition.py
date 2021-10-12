@@ -27,6 +27,8 @@ Gerhard Schroeder       0.76      0.76      0.76        25
 ================== ============ ======= ========== =======
 
 """
+print(__doc__)
+
 from time import time
 import logging
 import matplotlib.pyplot as plt
@@ -39,8 +41,6 @@ from sklearn.metrics import confusion_matrix
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 
-
-print(__doc__)
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")

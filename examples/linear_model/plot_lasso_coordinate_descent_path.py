@@ -7,6 +7,7 @@ Lasso and elastic net (L1 and L2 penalisation) implemented using a
 coordinate descent.
 
 The coefficients can be forced to be positive.
+
 """
 print(__doc__)
 

@@ -7,6 +7,8 @@ In this example we see how to robustly fit a linear model to faulty data using
 the RANSAC algorithm.
 
 """
+print(__doc__)
+
 import numpy as np
 from matplotlib import pyplot as plt
 

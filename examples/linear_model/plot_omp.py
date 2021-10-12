@@ -5,6 +5,7 @@ Orthogonal Matching Pursuit
 
 Using orthogonal matching pursuit for recovering a sparse signal from a noisy
 measurement encoded with a dictionary
+
 """
 print(__doc__)
 

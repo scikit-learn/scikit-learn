@@ -8,6 +8,7 @@ kernel (RBF) and a non-stationary kernel (DotProduct). On this particular
 dataset, the DotProduct kernel obtains considerably better results because the
 class-boundaries are linear and coincide with the coordinate axes. In general,
 stationary kernels often obtain better results.
+
 """
 print(__doc__)
 

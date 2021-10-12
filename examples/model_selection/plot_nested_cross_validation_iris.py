@@ -43,13 +43,13 @@ between their scores.
      <http://jmlr.csail.mit.edu/papers/volume11/cawley10a/cawley10a.pdf>`_
 
 """
+print(__doc__)
+
 from sklearn.datasets import load_iris
 from matplotlib import pyplot as plt
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV, cross_val_score, KFold
 import numpy as np
-
-print(__doc__)
 
 # Number of random trials
 NUM_TRIALS = 30

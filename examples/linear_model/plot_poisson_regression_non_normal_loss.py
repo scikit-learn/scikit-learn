@@ -36,10 +36,12 @@ policyholders.
 
 """
 print(__doc__)
+
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd

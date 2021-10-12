@@ -27,6 +27,7 @@ beneficial effect for tree-based models, as these models can learn to split
 up the data anywhere.
 
 """
+print(__doc__)
 
 # Author: Andreas Müller
 #         Hanmin Qin <qinhanmin2005@sina.com>
@@ -38,8 +39,6 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeRegressor
-
-print(__doc__)
 
 # construct the dataset
 rnd = np.random.RandomState(42)

@@ -19,11 +19,7 @@ error stabilizes.
        Learning Ed. 2", p592-593, Springer, 2009.
 
 """
-import matplotlib.pyplot as plt
-
-from collections import OrderedDict
-from sklearn.datasets import make_classification
-from sklearn.ensemble import RandomForestClassifier
+print(__doc__)
 
 # Author: Kian Ho <hui.kian.ho@gmail.com>
 #         Gilles Louppe <g.louppe@gmail.com>
@@ -31,7 +27,11 @@ from sklearn.ensemble import RandomForestClassifier
 #
 # License: BSD 3 Clause
 
-print(__doc__)
+import matplotlib.pyplot as plt
+
+from collections import OrderedDict
+from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
 
 RANDOM_STATE = 123
 

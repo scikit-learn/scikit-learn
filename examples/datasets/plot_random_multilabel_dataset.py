@@ -32,14 +32,15 @@ generally the number of features would be much greater than the
 "document length", while here we have much larger documents than vocabulary.
 Similarly, with ``n_classes > n_features``, it is much less likely that a
 feature distinguishes a particular class.
+
 """
+print(__doc__)
+
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_multilabel_classification as make_ml_clf
-
-print(__doc__)
 
 COLORS = np.array(
     [

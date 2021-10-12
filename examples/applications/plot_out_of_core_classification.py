@@ -11,7 +11,9 @@ that the features space remains the same over time we leverage a
 HashingVectorizer that will project each example into the same feature space.
 This is especially useful in the case of text classification where new
 features (words) may appear in each batch.
+
 """
+print(__doc__)
 
 # Authors: Eustache Diemert <eustache@diemert.fr>
 #          @FedericoV <https://github.com/FedericoV/>

@@ -20,6 +20,7 @@ between ground truth clusters.
 
 The dataset used for evaluation is a 2D grid of isotropic Gaussian
 clusters widely spaced.
+
 """
 print(__doc__)
 

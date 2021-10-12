@@ -5,6 +5,7 @@ Nearest Centroid Classification
 
 Sample usage of Nearest Centroid classification.
 It will plot the decision boundaries for each class.
+
 """
 print(__doc__)
 

@@ -31,7 +31,6 @@ on both computational performance (latency) and predictive power (MSE or
 Hamming Loss).
 
 """
-
 print(__doc__)
 
 # Authors: Eustache Diemert <eustache@diemert.fr>

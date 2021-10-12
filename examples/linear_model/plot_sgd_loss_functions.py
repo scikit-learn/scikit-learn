@@ -5,6 +5,7 @@ SGD: convex loss functions
 
 A plot that compares the various convex loss functions supported by
 :class:`~sklearn.linear_model.SGDClassifier` .
+
 """
 print(__doc__)
 

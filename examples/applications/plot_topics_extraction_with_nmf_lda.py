@@ -20,6 +20,7 @@ complexity is polynomial in NMF. In LDA, the time complexity is
 proportional to (n_samples * iterations).
 
 """
+print(__doc__)
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #         Lars Buitinck

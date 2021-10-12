@@ -6,6 +6,7 @@ Scikit-learn defines a simple API for creating visualizations for machine
 learning. The key features of this API is to allow for quick plotting and
 visual adjustments without recalculation. In this example, we will demonstrate
 how to use the visualization API by comparing ROC curves.
+
 """
 print(__doc__)
 

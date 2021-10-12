@@ -16,6 +16,7 @@ There are two options to assign labels:
   using a kmeans algorithm
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space.
+
 """
 print(__doc__)
 

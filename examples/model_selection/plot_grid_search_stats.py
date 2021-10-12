@@ -5,7 +5,9 @@ Statistical comparison of models using grid search
 
 This example illustrates how to statistically compare the performance of models
 trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
+
 """
+print(__doc__)
 
 # %%
 # We will start by simulating moon shaped data (where the ideal separation
@@ -13,7 +15,6 @@ trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
 # Datapoints will belong to one of two possible classes to be predicted by two
 # features. We will simulate 50 samples for each class:
 
-print(__doc__)
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.datasets import make_moons

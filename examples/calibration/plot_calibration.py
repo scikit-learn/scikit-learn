@@ -20,6 +20,7 @@ able to provide a probability calibration that returns probabilities close
 to the expected 0.5 for most of the samples belonging to the middle
 cluster with heterogeneous labels. This results in a significantly improved
 Brier score.
+
 """
 print(__doc__)
 

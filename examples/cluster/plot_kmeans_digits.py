@@ -22,6 +22,7 @@ ARI          adjusted Rand index
 AMI          adjusted mutual information
 silhouette   silhouette coefficient
 =========== ========================================================
+
 """
 print(__doc__)
 
