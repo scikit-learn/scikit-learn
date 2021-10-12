@@ -26,7 +26,6 @@ exhibit big oscillations. In practise it is necessary to tune alpha
 in such a way that a balance is maintained between both.
 
 """
-print(__doc__)
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 # License: BSD 3 clause

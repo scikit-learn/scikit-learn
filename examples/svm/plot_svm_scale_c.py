@@ -77,13 +77,10 @@ is not scaled.
     is better suited to the non-sparse case.
 
 """
-print(__doc__)
-
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Jaques Grobler <jaques.grobler@inria.fr>
 # License: BSD 3 clause
-
 
 import numpy as np
 import matplotlib.pyplot as plt

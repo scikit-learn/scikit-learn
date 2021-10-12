@@ -9,7 +9,6 @@ representation of this metric compared to the original point
 space. Please refer to the :ref:`User Guide <nca>` for more information.
 
 """
-print(__doc__)
 
 # License: BSD 3 clause
 

@@ -30,7 +30,6 @@ or less of similar thickness and hence are of similar sizes as can be also
 verified from the labelled scatter plot on the right.
 
 """
-print(__doc__)
 
 from sklearn.datasets import make_blobs
 from sklearn.cluster import KMeans

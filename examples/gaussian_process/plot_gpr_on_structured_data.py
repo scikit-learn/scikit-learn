@@ -37,7 +37,6 @@ four correct classifications and fails on one.
        of California at Santa Cruz.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

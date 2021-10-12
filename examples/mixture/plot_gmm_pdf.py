@@ -8,7 +8,6 @@ generated from two Gaussians with different centers and covariance
 matrices.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

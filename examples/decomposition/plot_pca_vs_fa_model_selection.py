@@ -23,7 +23,6 @@ Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
 by Thomas P. Minka is also compared.
 
 """
-print(__doc__)
 
 # Authors: Alexandre Gramfort
 #          Denis A. Engemann

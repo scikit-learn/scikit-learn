@@ -24,7 +24,6 @@ usually gives a better estimate of the test loss
 but is computationally more demanding.
 
 """
-print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #

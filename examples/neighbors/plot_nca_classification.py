@@ -14,7 +14,6 @@ maximises the (stochastic) nearest neighbor classification accuracy on the
 training set.
 
 """
-print(__doc__)
 
 # License: BSD 3 clause
 

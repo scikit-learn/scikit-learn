@@ -28,7 +28,6 @@ semi-transparent. The lower right shows the classification accuracy on the test
 set.
 
 """
-print(__doc__)
 
 # Code source: Tom Dupré la Tour
 # Adapted from plot_classifier_comparison by Gaël Varoquaux and Andreas Müller

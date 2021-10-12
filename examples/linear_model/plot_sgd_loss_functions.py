@@ -7,7 +7,6 @@ A plot that compares the various convex loss functions supported by
 :class:`~sklearn.linear_model.SGDClassifier` .
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

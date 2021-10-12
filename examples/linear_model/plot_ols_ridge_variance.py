@@ -19,7 +19,6 @@ in the line itself is greatly reduced, in comparison to that
 of the standard linear regression
 
 """
-print(__doc__)
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler

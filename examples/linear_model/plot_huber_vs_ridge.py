@@ -12,7 +12,6 @@ As the parameter epsilon is increased for the Huber regressor, the decision
 function approaches that of the ridge.
 
 """
-print(__doc__)
 
 # Authors: Manoj Kumar mks542@nyu.edu
 # License: BSD 3 clause

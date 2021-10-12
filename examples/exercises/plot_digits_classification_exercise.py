@@ -11,7 +11,6 @@ This exercise is used in the :ref:`clf_tut` part of the
 :ref:`stat_learn_tut_index`.
 
 """
-print(__doc__)
 
 from sklearn import datasets, neighbors, linear_model
 

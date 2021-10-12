@@ -14,7 +14,6 @@ Note: For larger datasets (n_samples >= 10000), please refer to
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
 
 """
-print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Maria Telenczuk <https://github.com/maikia>

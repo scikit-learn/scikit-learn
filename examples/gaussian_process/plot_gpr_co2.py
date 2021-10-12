@@ -58,7 +58,6 @@ explained by the model. The figure shows also that the model makes very
 confident predictions until around 2015.
 
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #

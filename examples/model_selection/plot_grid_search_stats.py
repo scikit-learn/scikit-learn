@@ -7,7 +7,6 @@ This example illustrates how to statistically compare the performance of models
 trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
 
 """
-print(__doc__)
 
 # %%
 # We will start by simulating moon shaped data (where the ideal separation

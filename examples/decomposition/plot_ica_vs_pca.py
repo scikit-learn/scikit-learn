@@ -28,7 +28,6 @@ left). Running ICA corresponds to finding a rotation in this space to
 identify the directions of largest non-Gaussianity (lower right).
 
 """
-print(__doc__)
 
 # Authors: Alexandre Gramfort, Gael Varoquaux
 # License: BSD 3 clause

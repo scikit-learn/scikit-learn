@@ -10,7 +10,6 @@ new samples can be drawn.  These new samples reflect the underlying model
 of the data.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

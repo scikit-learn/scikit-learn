@@ -32,7 +32,6 @@ that the PLS transformation is supervised. Therefore, as we will see in this
 example, it does not suffer from the issue we just mentioned.
 
 """
-print(__doc__)
 
 # %%
 # The data

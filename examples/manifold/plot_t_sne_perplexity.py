@@ -23,7 +23,6 @@ effects of various parameters, as well as interactive plots to explore
 those effects.
 
 """
-print(__doc__)
 
 # Author: Narine Kokhlikyan <narine@slice.com>
 # License: BSD

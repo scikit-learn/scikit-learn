@@ -11,7 +11,6 @@ The code below also illustrates how the construction and the computation
 of the predictions can be parallelized within multiple jobs.
 
 """
-print(__doc__)
 
 # %%
 # Loading the data and model fitting

@@ -10,7 +10,6 @@ regression does the prediction.
 We use a GridSearchCV to set the dimensionality of the PCA
 
 """
-print(__doc__)
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler

@@ -15,7 +15,6 @@ clusters of OPTICS's Xi method can be recovered with different choices of
 thresholds in DBSCAN.
 
 """
-print(__doc__)
 
 # Authors: Shane Grigsby <refuge@rocktalus.com>
 #          Adrin Jalali <adrin.jalali@gmail.com>

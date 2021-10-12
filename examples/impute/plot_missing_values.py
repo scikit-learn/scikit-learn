@@ -27,7 +27,6 @@ is then compared the performance on the altered datasets with the artificially
 missing values imputed using different techniques.
 
 """
-print(__doc__)
 
 # Authors: Maria Telenczuk  <https://github.com/maikia>
 # License: BSD 3 clause

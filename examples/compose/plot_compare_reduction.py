@@ -20,7 +20,6 @@ Note that the use of ``memory`` to enable caching becomes interesting when the
 fitting of a transformer is costly.
 
 """
-print(__doc__)
 
 # %%
 # Illustration of ``Pipeline`` and ``GridSearchCV``

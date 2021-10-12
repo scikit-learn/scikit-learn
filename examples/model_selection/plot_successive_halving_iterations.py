@@ -9,7 +9,6 @@ iteratively chooses the best parameter combination out of
 multiple candidates.
 
 """
-print(__doc__)
 
 import pandas as pd
 from sklearn import datasets

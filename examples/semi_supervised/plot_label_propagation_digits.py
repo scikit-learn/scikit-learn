@@ -15,7 +15,6 @@ class will be very good.
 At the end, the top 10 most uncertain predictions will be shown.
 
 """
-print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
 # License: BSD

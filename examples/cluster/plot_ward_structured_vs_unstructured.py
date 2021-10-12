@@ -19,7 +19,6 @@ the manifolds. On the opposite, when opposing connectivity constraints,
 the clusters form a nice parcellation of the swiss roll.
 
 """
-print(__doc__)
 
 # Authors : Vincent Michel, 2010
 #           Alexandre Gramfort, 2010

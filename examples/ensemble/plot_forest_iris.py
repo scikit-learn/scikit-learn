@@ -41,7 +41,6 @@ on many cores as each tree is built independently of the others. AdaBoost's
 samples are built sequentially and so do not use multiple cores.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -24,7 +24,6 @@ In practice, such information is generally not available, and taking
 n_neighbors=20 appears to work well in general.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib

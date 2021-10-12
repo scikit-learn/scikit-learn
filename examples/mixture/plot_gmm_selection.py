@@ -15,7 +15,6 @@ In that case, the model with 2 components and full covariance
 (which corresponds to the true generative model) is selected.
 
 """
-print(__doc__)
 
 import numpy as np
 import itertools

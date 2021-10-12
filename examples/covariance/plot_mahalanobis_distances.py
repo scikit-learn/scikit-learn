@@ -61,7 +61,6 @@ observation ranking and clustering.
         of America, 17, 684-688.
 
 """  # noqa: E501
-print(__doc__)
 
 # %%
 # Generate data

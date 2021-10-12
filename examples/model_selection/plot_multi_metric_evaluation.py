@@ -15,8 +15,6 @@ The ``best_estimator_``, ``best_index_``, ``best_score_`` and ``best_params_``
 correspond to the scorer (key) that is set to the ``refit`` attribute.
 
 """
-print(__doc__)
-
 
 # Author: Raghav RV <rvraghav93@gmail.com>
 # License: BSD

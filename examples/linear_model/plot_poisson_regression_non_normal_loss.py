@@ -35,7 +35,6 @@ policyholders.
     <http://dx.doi.org/10.2139/ssrn.3164764>`_
 
 """
-print(__doc__)
 
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>

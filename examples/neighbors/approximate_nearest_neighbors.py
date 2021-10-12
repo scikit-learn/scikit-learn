@@ -36,7 +36,6 @@ Sample output::
     TSNE with internal NearestNeighbors: 64.984 sec
 
 """
-print(__doc__)
 
 # Author: Tom Dupre la Tour
 #

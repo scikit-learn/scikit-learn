@@ -22,7 +22,6 @@ cluster with heterogeneous labels. This results in a significantly improved
 Brier score.
 
 """
-print(__doc__)
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>

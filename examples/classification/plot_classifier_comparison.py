@@ -19,8 +19,6 @@ semi-transparent. The lower right shows the classification accuracy on the test
 set.
 
 """
-print(__doc__)
-
 
 # Code source: Gaël Varoquaux
 #              Andreas Müller

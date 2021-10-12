@@ -19,7 +19,6 @@ however, the correlation across datasets for different components is
 weak: the point cloud is very spherical.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

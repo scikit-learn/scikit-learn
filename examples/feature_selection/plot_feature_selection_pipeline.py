@@ -9,7 +9,6 @@ a machine learning pipeline.
 We also show that you can easily introspect part of the pipeline.
 
 """
-print(__doc__)
 
 from sklearn import set_config
 

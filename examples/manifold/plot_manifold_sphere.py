@@ -25,7 +25,6 @@ that of representing a flat map of the Earth, as with
 `map projection <https://en.wikipedia.org/wiki/Map_projection>`_
 
 """
-print(__doc__)
 
 # Author: Jaques Grobler <jaques.grobler@inria.fr>
 # License: BSD 3 clause

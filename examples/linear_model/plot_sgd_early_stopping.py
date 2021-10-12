@@ -36,7 +36,6 @@ stopping criteria even from early iterations because some of the training data
 is held out with the validation stopping criterion.
 
 """
-print(__doc__)
 
 # Authors: Tom Dupre la Tour
 #

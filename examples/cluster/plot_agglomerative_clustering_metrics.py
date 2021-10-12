@@ -33,7 +33,6 @@ Finally, the cosine distance does not separate at all waveform 1 and 2,
 thus the clustering puts them in the same cluster.
 
 """
-print(__doc__)
 
 # Author: Gael Varoquaux
 # License: BSD 3-Clause or CC-0

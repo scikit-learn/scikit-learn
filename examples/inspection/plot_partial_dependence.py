@@ -33,7 +33,6 @@ California housing dataset. The example is taken from [1]_.
        Graphical Statistics, 24(1): 44-65 (https://arxiv.org/abs/1309.6392)
 
 """
-print(__doc__)
 
 # %%
 # California Housing data preprocessing

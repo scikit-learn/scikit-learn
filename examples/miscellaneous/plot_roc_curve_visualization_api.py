@@ -8,7 +8,6 @@ visual adjustments without recalculation. In this example, we will demonstrate
 how to use the visualization API by comparing ROC curves.
 
 """
-print(__doc__)
 
 # %%
 # Load Data and Train a SVC

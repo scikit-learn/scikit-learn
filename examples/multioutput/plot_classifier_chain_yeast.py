@@ -32,7 +32,6 @@ the score of each chain in the ensemble (although this is not guaranteed
 with randomly ordered chains).
 
 """
-print(__doc__)
 
 # Author: Adam Kleczewski
 # License: BSD 3 clause

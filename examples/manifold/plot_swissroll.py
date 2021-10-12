@@ -7,7 +7,6 @@ An illustration of Swiss Roll reduction
 with locally linear embedding
 
 """
-print(__doc__)
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 # License: BSD 3 clause (C) INRIA 2011

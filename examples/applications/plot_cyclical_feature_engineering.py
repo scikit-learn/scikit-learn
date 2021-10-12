@@ -12,7 +12,6 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 `extrapolation="periodic"` option.
 
 """
-print(__doc__)
 
 # %%
 # Data exploration on the Bike Sharing Demand dataset

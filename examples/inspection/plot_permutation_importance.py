@@ -24,7 +24,6 @@ can mitigate those limitations.
        2001. https://doi.org/10.1023/A:1010933404324
 
 """
-print(__doc__)
 
 import matplotlib.pyplot as plt
 import numpy as np

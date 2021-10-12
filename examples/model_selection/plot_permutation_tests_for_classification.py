@@ -8,8 +8,6 @@ This example demonstrates the use of
 significance of a cross-validated score using permutations.
 
 """
-print(__doc__)
-
 
 # Authors:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #           Lucy Liu

@@ -27,7 +27,6 @@ Gerhard Schroeder       0.76      0.76      0.76        25
 ================== ============ ======= ========== =======
 
 """
-print(__doc__)
 
 from time import time
 import logging

@@ -19,7 +19,6 @@ error stabilizes.
        Learning Ed. 2", p592-593, Springer, 2009.
 
 """
-print(__doc__)
 
 # Author: Kian Ho <hui.kian.ho@gmail.com>
 #         Gilles Louppe <g.louppe@gmail.com>

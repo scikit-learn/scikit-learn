@@ -23,7 +23,6 @@ the graph, imposes a geometry that is close to that of single linkage,
 which is well known to have this percolation instability.
 
 """
-print(__doc__)
 
 # Authors: Gael Varoquaux, Nelle Varoquaux
 # License: BSD 3 clause

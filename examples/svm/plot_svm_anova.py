@@ -9,7 +9,6 @@ the iris dataset (4 features) and add 36 non-informative features. We can find
 that our model achieves best performance when we select around 10% of features.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

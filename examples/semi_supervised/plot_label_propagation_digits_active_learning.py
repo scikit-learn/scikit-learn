@@ -19,7 +19,6 @@ of training. These may or may not contain mistakes, but we will train the next
 model with their true labels.
 
 """
-print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
 # License: BSD

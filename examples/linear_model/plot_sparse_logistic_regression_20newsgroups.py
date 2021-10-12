@@ -19,7 +19,6 @@ input features would be to use univariate feature selection followed by a
 traditional (l2-penalised) logistic regression model.
 
 """
-print(__doc__)
 
 # Author: Arthur Mensch
 

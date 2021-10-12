@@ -12,7 +12,6 @@ space while controlling the distortion in the pairwise distances.
     Johnson%E2%80%93Lindenstrauss_lemma
 
 """
-print(__doc__)
 
 import sys
 from time import time

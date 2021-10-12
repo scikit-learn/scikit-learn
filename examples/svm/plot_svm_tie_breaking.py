@@ -13,12 +13,9 @@ one class, whereas if ``break_ties=True``, the tie-breaking mechanism will
 create a non-convex decision boundary in that area.
 
 """
-print(__doc__)
-
 
 # Code source: Andreas Mueller, Adrin Jalali
 # License: BSD 3 clause
-
 
 import numpy as np
 import matplotlib.pyplot as plt

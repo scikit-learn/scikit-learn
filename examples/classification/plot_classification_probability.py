@@ -16,7 +16,6 @@ the box. As a result it has more trouble in separating class 2 and 3 than the
 other estimators.
 
 """
-print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause

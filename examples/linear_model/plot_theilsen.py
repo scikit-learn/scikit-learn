@@ -34,7 +34,6 @@ problems with the drawback of losing some of its mathematical properties since
 it then works on a random subset.
 
 """
-print(__doc__)
 
 # Author: Florian Wilhelm -- <florian.wilhelm@gmail.com>
 # License: BSD 3 clause

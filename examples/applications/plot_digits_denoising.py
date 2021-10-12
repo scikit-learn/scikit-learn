@@ -20,7 +20,6 @@ We will use USPS digits dataset to reproduce presented in Sect. 4 of [1]_.
       <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
 
 """
-print(__doc__)
 
 # Authors: Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
 # Licence: BSD 3 clause

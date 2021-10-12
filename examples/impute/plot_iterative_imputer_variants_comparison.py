@@ -39,7 +39,6 @@ For this particular pattern of missing values we see that
 :class:`~linear_model.BayesianRidge` give the best results.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

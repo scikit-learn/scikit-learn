@@ -40,7 +40,6 @@ The following code is a bit verbose, feel free to jump directly to the analysis
 of the results_.
 
 """
-print(__doc__)
 
 # Author:  Raghav RV <rvraghav93@gmail.com>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>

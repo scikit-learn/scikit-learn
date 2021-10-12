@@ -15,7 +15,6 @@ models: :ref:`Logistic_regression`, :ref:`gaussian_naive_bayes`,
 <svm_classification>`.
 
 """
-print(__doc__)
 
 # %%
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>

@@ -16,7 +16,6 @@ below what can be reached by an l2-penalized linear model or a non-linear
 multi-layer perceptron model on this dataset.
 
 """
-print(__doc__)
 
 # Author: Arthur Mensch <arthur.mensch@m4x.org>
 # License: BSD 3 clause

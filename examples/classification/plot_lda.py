@@ -7,7 +7,6 @@ This example illustrates how the Ledoit-Wolf and Oracle Shrinkage
 Approximating (OAS) estimators of covariance can improve classification.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

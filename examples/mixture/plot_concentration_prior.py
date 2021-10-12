@@ -28,7 +28,6 @@ distribution prior will favor more uniformly weighted components and therefore
 tends to divide natural clusters into unnecessary sub-components.
 
 """
-print(__doc__)
 
 # Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause

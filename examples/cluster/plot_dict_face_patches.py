@@ -20,7 +20,6 @@ has become too low, and it is better to choose a random new
 cluster.
 
 """
-print(__doc__)
 
 import time
 

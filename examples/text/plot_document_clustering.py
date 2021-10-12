@@ -119,6 +119,7 @@ op.add_option(
 
 print(__doc__)
 op.print_help()
+print()
 
 
 def is_interactive():

@@ -11,7 +11,6 @@ curves, also known as reliability diagrams. Calibration of an uncalibrated
 classifier will also be demonstrated.
 
 """
-print(__doc__)
 
 # %%
 # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>

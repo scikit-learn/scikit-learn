@@ -31,11 +31,9 @@ solution. Note that the degree of sparsity and thus the prediction time depends
 on the parameters epsilon and C of the SVR.
 
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
-
 
 import time
 

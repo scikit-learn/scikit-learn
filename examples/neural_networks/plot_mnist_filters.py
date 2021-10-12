@@ -23,7 +23,6 @@ doesn't converge, in this case this is what we want because of CI's time
 constraints.
 
 """
-print(__doc__)
 
 import warnings
 

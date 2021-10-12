@@ -28,7 +28,6 @@ labels (as in semi-supervised learning) but that the samples simply do *not*
 have a label.
 
 """
-print(__doc__)
 
 # Authors: Vlad Niculae, Mathieu Blondel
 # License: BSD 3 clause

@@ -60,7 +60,6 @@ heuristic based on the direction of the nearest neighbor along each
 axis.
 
 """
-print(__doc__)
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause

@@ -33,7 +33,6 @@ On "small" datasets (less than a few hundred points), the quantile transformer
 is prone to overfitting. The use of the power transform is then recommended.
 
 """
-print(__doc__)
 
 # Author: Eric Chang <ericchang2017@u.northwestern.edu>
 #         Nicolas Hug <contact@nicolas-hug.com>

@@ -27,7 +27,6 @@ density estimation is easily and efficiently extensible to higher dimensions
 as well.
 
 """
-print(__doc__)
 
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 #

@@ -6,7 +6,6 @@ Manifold learning on handwritten digits: Locally Linear Embedding, Isomap...
 We illustrate various embedding techniques on the digits dataset.
 
 """
-print(__doc__)
 
 # Authors: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Olivier Grisel <olivier.grisel@ensta.org>

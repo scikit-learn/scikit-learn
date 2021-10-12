@@ -19,7 +19,6 @@ The resulting transformer has then learned a supervised, sparse,
 high-dimensional categorical embedding of the data.
 
 """
-print(__doc__)
 
 
 # Author: Tim Head <betatim@gmail.com>

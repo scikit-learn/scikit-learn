@@ -9,7 +9,6 @@ The anisotropic RBF kernel obtains slightly higher log-marginal-likelihood by
 assigning different length-scales to the two feature dimensions.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

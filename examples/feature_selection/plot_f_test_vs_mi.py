@@ -22,7 +22,6 @@ discriminative feature, which probably agrees better with our intuitive
 perception for this example. Both methods correctly marks x_3 as irrelevant.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

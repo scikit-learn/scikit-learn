@@ -10,7 +10,6 @@ undesirable clusters are produced as a result. In the last plot, k-means
 returns intuitive clusters despite unevenly sized blobs.
 
 """
-print(__doc__)
 
 # Author: Phil Roth <mr.phil.roth@gmail.com>
 # License: BSD 3 clause

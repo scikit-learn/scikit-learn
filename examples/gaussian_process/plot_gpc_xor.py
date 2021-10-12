@@ -10,7 +10,6 @@ class-boundaries are linear and coincide with the coordinate axes. In general,
 stationary kernels often obtain better results.
 
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #

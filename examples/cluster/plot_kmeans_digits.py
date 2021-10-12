@@ -24,7 +24,6 @@ silhouette   silhouette coefficient
 =========== ========================================================
 
 """
-print(__doc__)
 
 # %%
 # Load the dataset

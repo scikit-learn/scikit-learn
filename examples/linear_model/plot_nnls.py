@@ -8,7 +8,6 @@ regression coefficients and compare the estimated coefficients to a classic
 linear regression.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

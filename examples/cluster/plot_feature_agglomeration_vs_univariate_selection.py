@@ -13,7 +13,6 @@ Both methods are compared in a regression problem using
 a BayesianRidge as supervised estimator.
 
 """
-print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause

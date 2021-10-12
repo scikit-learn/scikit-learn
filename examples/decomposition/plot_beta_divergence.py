@@ -7,7 +7,6 @@ A plot that compares the various Beta-divergence loss functions supported by
 the Multiplicative-Update ('mu') solver in :class:`~sklearn.decomposition.NMF`.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

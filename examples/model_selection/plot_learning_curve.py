@@ -16,7 +16,6 @@ dataset. The plots in the third row show how much time was required to train
 the models for each training sizes.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

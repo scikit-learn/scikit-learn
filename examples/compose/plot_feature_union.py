@@ -15,7 +15,6 @@ The combination used in this example is not particularly helpful on this
 dataset and is only used to illustrate the usage of FeatureUnion.
 
 """
-print(__doc__)
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #

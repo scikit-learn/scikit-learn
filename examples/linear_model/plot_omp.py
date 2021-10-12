@@ -7,7 +7,6 @@ Using orthogonal matching pursuit for recovering a sparse signal from a noisy
 measurement encoded with a dictionary
 
 """
-print(__doc__)
 
 import matplotlib.pyplot as plt
 import numpy as np

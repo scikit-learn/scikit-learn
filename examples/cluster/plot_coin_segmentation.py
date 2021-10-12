@@ -18,7 +18,6 @@ There are two options to assign labels:
   space to the embedding space.
 
 """
-print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
 # License: BSD 3 clause

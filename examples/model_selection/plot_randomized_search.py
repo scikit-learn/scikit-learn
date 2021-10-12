@@ -19,7 +19,6 @@ Note that in practice, one would not search over this many different parameters
 simultaneously using grid search, but pick only the ones deemed most important.
 
 """
-print(__doc__)
 
 import numpy as np
 

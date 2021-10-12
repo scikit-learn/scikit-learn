@@ -16,8 +16,6 @@ encouraging larger weights, potentially resulting in a more complicated
 decision boundary.
 
 """
-print(__doc__)
-
 
 # Author: Issam H. Laradji
 # License: BSD 3 clause

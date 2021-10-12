@@ -8,7 +8,6 @@ clustering. The clustering is spatially constrained in order
 for each segmented region to be in one piece.
 
 """
-print(__doc__)
 
 # Author : Vincent Michel, 2010
 #          Alexandre Gramfort, 2011

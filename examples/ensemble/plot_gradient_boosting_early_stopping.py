@@ -31,7 +31,6 @@ using many fewer estimators. This can significantly reduce training time,
 memory usage and prediction latency.
 
 """
-print(__doc__)
 
 # Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
 #          Raghav RV <rvraghav93@gmail.com>

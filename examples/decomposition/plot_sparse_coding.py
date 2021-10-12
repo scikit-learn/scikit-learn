@@ -15,7 +15,6 @@ The richer dictionary on the right is not larger in size, heavier subsampling
 is performed in order to stay on the same order of magnitude.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

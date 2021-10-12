@@ -12,8 +12,6 @@ sigmoid calibration on a hold-out validation set. Colors indicate the true
 class of an instance (red: class 1, green: class 2, blue: class 3).
 
 """
-print(__doc__)
-
 
 # %%
 # Data

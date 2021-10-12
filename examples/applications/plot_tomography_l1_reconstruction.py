@@ -35,7 +35,6 @@ the circular artifact separating the pixels in the corners, that have
 contributed to fewer projections than the central disk.
 
 """
-print(__doc__)
 
 # Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
 # License: BSD 3 clause

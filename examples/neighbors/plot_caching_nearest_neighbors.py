@@ -17,7 +17,6 @@ dataset is small, but the gain can be more substantial when the dataset grows
 larger, or when the grid of parameter to search is large.
 
 """
-print(__doc__)
 
 # Author: Tom Dupre la Tour
 #

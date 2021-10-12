@@ -12,7 +12,6 @@ is too high, the classifier will overfit, which means that the training score
 is good but the validation score is poor.
 
 """
-print(__doc__)
 
 import matplotlib.pyplot as plt
 import numpy as np

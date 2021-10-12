@@ -7,7 +7,6 @@ This example compares the parameter search performed by
 :class:`~sklearn.model_selection.GridSearchCV`.
 
 """
-print(__doc__)
 
 from time import time
 

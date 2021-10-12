@@ -15,7 +15,6 @@ finds a structure where the second component only loads
 positively on sepal width.
 
 """
-print(__doc__)
 
 # Authors: Jona Sassenhagen
 # License: BSD 3 clause

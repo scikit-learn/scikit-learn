@@ -40,7 +40,6 @@ Here is a sample output of a run on a quad-core machine::
       vect__max_features: 50000
 
 """
-print(__doc__)
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>

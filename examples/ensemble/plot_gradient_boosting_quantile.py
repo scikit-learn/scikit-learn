@@ -7,7 +7,6 @@ This example shows how quantile regression can be used to create prediction
 intervals.
 
 """
-print(__doc__)
 
 # %%
 # Generate some data for a synthetic regression problem by applying the

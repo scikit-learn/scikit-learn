@@ -9,8 +9,6 @@ This exercise is used in the :ref:`using_kernels_tut` part of the
 :ref:`supervised_learning_tut` section of the :ref:`stat_learn_tut_index`.
 
 """
-print(__doc__)
-
 
 import numpy as np
 import matplotlib.pyplot as plt

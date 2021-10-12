@@ -14,7 +14,6 @@ this is advanced usage, and in general we recommend using their respective
 plot functions.
 
 """
-print(__doc__)
 
 # %%
 # Load Data and train model

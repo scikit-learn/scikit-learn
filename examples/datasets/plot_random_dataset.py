@@ -13,7 +13,6 @@ The final 2 plots use :func:`~sklearn.datasets.make_blobs` and
 :func:`~sklearn.datasets.make_gaussian_quantiles`.
 
 """
-print(__doc__)
 
 import matplotlib.pyplot as plt
 

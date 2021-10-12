@@ -23,7 +23,6 @@ using :class:`~pipeline.Pipeline`, together with a simple classification
 model.
 
 """
-print(__doc__)
 
 # Author: Pedro Morales <part.morales@gmail.com>
 #

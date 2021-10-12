@@ -10,7 +10,6 @@ You can adjust the number of categories by giving their names to the dataset
 loader or setting them to `None` to get all 20 of them.
 
 """
-print(__doc__)
 
 import os
 

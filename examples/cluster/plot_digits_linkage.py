@@ -18,7 +18,6 @@ of single linkage we get a single central cluster with all other clusters
 being drawn from noise points around the fringes.
 
 """
-print(__doc__)
 
 # Authors: Gael Varoquaux
 # License: BSD 3 clause (C) INRIA 2014

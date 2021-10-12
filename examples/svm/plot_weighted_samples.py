@@ -13,7 +13,6 @@ To emphasize the effect here, we particularly weight outliers, making the
 deformation of the decision boundary very visible.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -8,7 +8,6 @@ separable dataset using a linear Support Vector Machines classifier
 trained using SGD.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

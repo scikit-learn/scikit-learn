@@ -25,7 +25,6 @@ example shows that the features extracted by the BernoulliRBM help improve the
 classification accuracy.
 
 """
-print(__doc__)
 
 # Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve
 # License: BSD

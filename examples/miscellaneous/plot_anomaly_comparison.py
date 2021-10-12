@@ -61,7 +61,6 @@ that in practice they need to be adjusted. In the absence of labelled data,
 the problem is completely unsupervised so model selection can be a challenge.
 
 """
-print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Albert Thomas <albert.thomas@telecom-paristech.fr>

@@ -35,7 +35,6 @@ References
    190:231-259, 2006.
 
 """
-print(__doc__)
 
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>

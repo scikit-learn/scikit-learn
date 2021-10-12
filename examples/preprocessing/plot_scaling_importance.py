@@ -40,7 +40,6 @@ clear difference in prediction accuracies is observed wherein the dataset
 which is scaled before PCA vastly outperforms the unscaled version.
 
 """
-print(__doc__)
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler

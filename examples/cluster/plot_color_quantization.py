@@ -19,7 +19,6 @@ For comparison, a quantized image using a random codebook (colors picked up
 randomly) is also shown.
 
 """
-print(__doc__)
 
 # Authors: Robert Layton <robertlayton@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>

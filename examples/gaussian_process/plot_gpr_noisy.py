@@ -16,7 +16,6 @@ high-noise solution. It is thus important to repeat the optimization several
 times for different initializations.
 
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #

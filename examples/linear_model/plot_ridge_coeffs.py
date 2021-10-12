@@ -37,7 +37,6 @@ Please note that in this example the data is non-noisy, hence
 it is possible to extract the exact coefficients.
 
 """
-print(__doc__)
 
 # Author: Kornel Kielczewski -- <kornel.k@plusnet.pl>
 

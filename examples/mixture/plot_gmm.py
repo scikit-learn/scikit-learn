@@ -23,7 +23,6 @@ per cluster than there are dimensions in the data, due to
 regularization properties of the inference algorithm.
 
 """
-print(__doc__)
 
 import itertools
 

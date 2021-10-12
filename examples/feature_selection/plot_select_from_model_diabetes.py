@@ -18,8 +18,6 @@ Authors: `Manoj Kumar <mks542@nyu.edu>`_,
 License: BSD 3 clause
 
 """
-print(__doc__)
-
 
 # %%
 # Loading the data

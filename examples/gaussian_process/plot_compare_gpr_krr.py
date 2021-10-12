@@ -45,7 +45,6 @@ the variance of the predictive distribution of GPR takes considerable longer
 than just predicting the mean.
 
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause

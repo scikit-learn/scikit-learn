@@ -16,7 +16,6 @@ is computed.
    :func:`linear_model.ElasticNet.fit`.
 
 """
-print(__doc__)
 
 # %%
 # Let's start by loading the dataset and creating some sample weights.

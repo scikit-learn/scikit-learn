@@ -9,7 +9,6 @@ The reconstructed points using the metric MDS and non metric MDS are slightly
 shifted to avoid overlapping.
 
 """
-print(__doc__)
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD

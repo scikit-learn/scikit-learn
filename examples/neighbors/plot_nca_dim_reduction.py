@@ -27,7 +27,6 @@ One can see that NCA enforces a clustering of the data that is visually
 meaningful despite the large reduction in dimension.
 
 """
-print(__doc__)
 
 # License: BSD 3 clause
 

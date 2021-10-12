@@ -15,7 +15,6 @@ show how to retrieve:
 - the decision path shared by a group of samples.
 
 """
-print(__doc__)
 
 import numpy as np
 from matplotlib import pyplot as plt

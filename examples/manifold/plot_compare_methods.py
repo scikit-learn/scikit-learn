@@ -19,7 +19,6 @@ manifold-learning algorithms, it does not seeks an isotropic
 representation of the data in the low-dimensional space.
 
 """
-print(__doc__)
 
 # Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
 

@@ -17,7 +17,6 @@ Selection. The Elements of Statistical Learning (pp. 219-260). New York,
 NY, USA: Springer New York Inc..
 
 """
-print(__doc__)
 
 # Author: Wenhao Zhang <wenhaoz@ucla.edu>
 

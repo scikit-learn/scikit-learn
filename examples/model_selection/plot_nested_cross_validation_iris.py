@@ -43,7 +43,6 @@ between their scores.
      <http://jmlr.csail.mit.edu/papers/volume11/cawley10a/cawley10a.pdf>`_
 
 """
-print(__doc__)
 
 from sklearn.datasets import load_iris
 from matplotlib import pyplot as plt

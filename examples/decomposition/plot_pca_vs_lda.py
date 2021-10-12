@@ -17,7 +17,6 @@ account for the most variance *between classes*. In particular,
 LDA, in contrast to PCA, is a supervised method, using known class labels.
 
 """
-print(__doc__)
 
 import matplotlib.pyplot as plt
 

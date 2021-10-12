@@ -13,7 +13,6 @@ The right figure shows an example of an asymmetric error distribution,
 namely the Pareto distribution.
 
 """
-print(__doc__)
 
 # Authors: David Dale <dale.david@mail.ru>
 #          Christian Lorentzen <lorentzen.ch@gmail.com>
