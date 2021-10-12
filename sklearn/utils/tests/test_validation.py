@@ -223,7 +223,10 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
         )
     extended_msg = (
         f"\nEstimator {estimator.__class__.__name__} does not accept missing values"
-        " encoded as NaN natively. Please make sure to preprocess the"
+        " encoded as NaN natively. For supervised learning, you might want"
+        " to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor"
+        " who do accept missing values encoded as NaNs natively."
+        " Alternatively, it is possible to preprocess the"
         " data, for instance by using an imputer transformer in a pipeline"
         " or drop samples with missing values. See"
         " https://scikit-learn.org/stable/modules/impute.html"
