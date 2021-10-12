@@ -7,7 +7,7 @@ from ._stochastic_gradient import DEFAULT_EPSILON
 
 
 class PassiveAggressiveClassifier(BaseSGDClassifier):
-    """Passive Aggressive Classifier
+    """Passive Aggressive Classifier.
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
 
@@ -112,11 +112,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
-            n_features]
+    coef_ : ndarray of shape (1, n_features) if n_classes == 2 else \
+            (n_classes, n_features)
         Weights assigned to the features.
 
-    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
 
     n_features_in_ : int
@@ -134,7 +134,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
     t_ : int
@@ -159,7 +159,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     --------
     >>> from sklearn.linear_model import PassiveAggressiveClassifier
     >>> from sklearn.datasets import make_classification
-
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = PassiveAggressiveClassifier(max_iter=1000, random_state=0,
     ... tol=1e-3)
@@ -221,10 +220,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Subset of the training data.
 
-        y : numpy array of shape [n_samples]
+        y : array-like of shape (n_samples,)
             Subset of the target values.
 
-        classes : array, shape = [n_classes]
+        classes : ndarray of shape (n_classes,)
             Classes across all calls to partial_fit.
             Can be obtained by via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -273,13 +272,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
-        y : numpy array of shape [n_samples]
+        y : array-like of shape (n_samples,)
             Target values.
 
-        coef_init : array, shape = [n_classes,n_features]
+        coef_init : ndarray of shape (n_classes, n_features)
             The initial coefficients to warm-start the optimization.
 
-        intercept_init : array, shape = [n_classes]
+        intercept_init : ndarray of shape (n_classes,)
             The initial intercept to warm-start the optimization.
 
         Returns
