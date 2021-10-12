@@ -56,8 +56,7 @@ def test_linear_model_normalize_deprecation_message(
         model.fit(X, y)
     # Filter record in case other unrelated warnings are raised
     unwanted = [
-        r for r in record
-        if r.category not in [warning_category, ConvergenceWarning]
+        r for r in record if r.category not in [warning_category, ConvergenceWarning]
     ]
     if len(unwanted):
         msg = "unexpected warnings:\n"

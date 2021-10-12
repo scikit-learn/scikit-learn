@@ -1512,14 +1512,15 @@ def test_ridge_sag_with_X_fortran():
     X = np.asfortranarray(X)
     X = X[::2, :]
     y = y[::2]
-    Ridge(solver='sag').fit(X, y)
+    Ridge(solver="sag").fit(X, y)
 
 
 def test_ridge_alpha_boundary_warning():
     ridge = RidgeCV(alphas=[0.1, 1])
     X, y = X_diabetes, y_diabetes
-    with pytest.warns(ConvergenceWarning,
-                      match="lies at a boundary of the explored range"):
+    with pytest.warns(
+        ConvergenceWarning, match="lies at a boundary of the explored range"
+    ):
         ridge.fit(X, y)
 
 
