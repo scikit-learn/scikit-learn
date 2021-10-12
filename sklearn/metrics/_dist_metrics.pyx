@@ -1296,7 +1296,7 @@ cdef class DatasetsPair:
         """Number of samples in Y."""
         return -999
 
-    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.dist(i, j)
 
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
@@ -1335,7 +1335,7 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.distance_metric.rdist(&self.X[i, 0],
                                           &self.Y[j, 0],
                                           self.d)
@@ -1387,7 +1387,7 @@ cdef class SparseSparseDatasetsPair(DatasetsPair):
         return self.Y_indptr.shape[0] -1
 
     @final
-    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         cdef:
             ITYPE_t xi_start = self.X_indptr[i]
             ITYPE_t xi_end = self.X_indptr[i + 1]
@@ -1458,7 +1458,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         cdef:
             ITYPE_t xi_start = self.X_indptr[i]
             ITYPE_t xi_end = self.X_indptr[i + 1]
@@ -1525,9 +1525,9 @@ cdef class DenseSparseDatasetsPair(DatasetsPair):
         return self.datasets_pair.n_samples_X()
 
     @final
-    cdef DTYPE_t rank_preserving_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         # Swapping arguments on the same interface
-        return self.datasets_pair.rank_preserving_dist(j, i)
+        return self.datasets_pair.surrogate_dist(j, i)
 
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:

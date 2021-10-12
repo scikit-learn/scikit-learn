@@ -762,7 +762,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                     heaps_r_distances + i * self.k,
                     heaps_indices + i * self.k,
                     k,
-                    self._datasets_pair.rank_preserving_dist(X_start + i, Y_start + j),
+                    self._datasets_pair.surrogate_dist(X_start + i, Y_start + j),
                     Y_start + j,
                 )
 
@@ -888,8 +888,8 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
     def _finalize_results(self, bint return_distance=False):
         if return_distance:
-            # We eventually need to recompute distances because we relied on
-            # rank-preserving distances.
+            # We need to recompute distances because we relied on
+            # surrogate distances for the reduction.
             self.compute_exact_distances()
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
@@ -1273,7 +1273,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
-                r_dist_i_j = self._datasets_pair.rank_preserving_dist(i, j)
+                r_dist_i_j = self._datasets_pair.surrogate_dist(i, j)
                 if r_dist_i_j <= self.r_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i].push_back(r_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
