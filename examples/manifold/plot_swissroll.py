@@ -14,7 +14,6 @@ explore how they both deal with the addition of a hole in the data.
 # We start by generating the Swiss Roll dataset.
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from sklearn import manifold, datasets
 
 
