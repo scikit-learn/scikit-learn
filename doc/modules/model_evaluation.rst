@@ -2007,7 +2007,7 @@ The best possible score is 1.0, lower values are worse.
 Note: when the prediction residuals have zero mean (perfectly unbiased
 model), the Explained Variance score and the :ref:`r2_score` are identical.
 
-In the particular case when the true y is constant, the Explained Variance
+In the particular case where the true y is constant, the Explained Variance
 score is not finite: it is either ``NaN`` (perfect predictions) or ``-Inf``
 (imperfect predictions). Such non-finite scores may prevent correct model
 optimization such as grid-search cross-validation to be performed correctly.
