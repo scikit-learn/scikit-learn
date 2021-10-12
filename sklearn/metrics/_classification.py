@@ -1814,8 +1814,8 @@ def lift_score(
     Examples
     --------
     >>> from sklearn.metrics import lift_score
-    >>> y_true = [0, 2, 2, 0, 0, 2, 2]
-    >>> y_pred = [0, 2, 2, 0, 2, 0, 2]
+    >>> y_true = [0, 1, 1, 0, 0, 1, 1]
+    >>> y_pred = [0, 1, 1, 0, 1, 0, 1]
     >>> lift_score(y_true, y_pred)
     1.3125
     """

@@ -134,6 +134,7 @@ __all__ = [
     "label_ranking_average_precision_score",
     "label_ranking_loss",
     "lift_curve",
+    "lift_score",
     "log_loss",
     "make_scorer",
     "nan_euclidean_distances",
