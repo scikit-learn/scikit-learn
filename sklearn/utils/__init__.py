@@ -20,7 +20,6 @@ from pathlib import Path
 import warnings
 import numpy as np
 from scipy.sparse import issparse
-from threadpoolctl import threadpool_info
 
 from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
@@ -41,6 +40,7 @@ from .validation import (
     check_symmetric,
     check_scalar,
 )
+from ..utils.fixes import threadpool_info
 from .. import get_config
 
 
