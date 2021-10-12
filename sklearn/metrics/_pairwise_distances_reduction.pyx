@@ -975,7 +975,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
     ) nogil:
         PairwiseDistancesArgKmin._parallel_on_X_parallel_init(self, thread_num)
 
-        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+        # Temporary buffer for the `-2 * X_c @ Y_c.T` term
         self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
             self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t)
         )
@@ -997,7 +997,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         PairwiseDistancesArgKmin._parallel_on_Y_init(self, num_threads)
 
         for thread_num in range(num_threads):
-            # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+            # Temporary buffer for the `-2 * X_c @ Y_c.T` term
             self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
                 self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t)
             )
@@ -1060,7 +1060,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             DTYPE_t * C = dist_middle_terms
             ITYPE_t ldc = Y_c.shape[0]
 
-        # dist_middle_terms = -2 * X_c.dot(Y_c.T)
+        # dist_middle_terms = `-2 * X_c @ Y_c.T`
         _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, C, ldc)
 
         # Pushing the distance and their associated indices on heaps
@@ -1518,7 +1518,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
     ) nogil:
         PairwiseDistancesRadiusNeighborhood._parallel_on_X_parallel_init(self, thread_num)
 
-        # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+        # Temporary buffer for the `-2 * X_c @ Y_c.T` term
         self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
             self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t)
         )
@@ -1540,7 +1540,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         PairwiseDistancesRadiusNeighborhood._parallel_on_Y_init(self, num_threads)
 
         for thread_num in range(num_threads):
-            # Temporary buffer for the -2 * X_c.dot(Y_c.T) term
+            # Temporary buffer for the `-2 * X_c @ Y_c.T` term
             self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
                 self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t)
             )
@@ -1601,7 +1601,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
             DTYPE_t * C = dist_middle_terms
             ITYPE_t ldc = Y_c.shape[0]
 
-        # dist_middle_terms = -2 * X_c.dot(Y_c.T)
+        # dist_middle_terms = `-2 * X_c @ Y_c.T`
         _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, C, ldc)
 
         # Pushing the distance and their associated indices in vectors.
