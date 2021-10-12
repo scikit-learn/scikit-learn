@@ -309,6 +309,9 @@ _STYLE = """
   display: inline-block;
   position: relative;
 }
+#$id div.sk-text-repr-fallback {
+  display: none;
+}
 """.replace(
     "  ", ""
 ).replace(
@@ -335,16 +338,23 @@ def estimator_html_repr(estimator):
         container_id = "sk-" + str(uuid.uuid4())
         style_template = Template(_STYLE)
         style_with_id = style_template.substitute(id=container_id)
+
+        estimator_str = str(estimator)
+        rerun_msg = (
+            "Please rerun this cell to show the HTML repr or trust the notebook."
+        )
+        fallback_html = f"<pre>{html.escape(estimator_str)}</pre><b>{rerun_msg}</b>"
         out.write(
             f"<style>{style_with_id}</style>"
             f'<div id="{container_id}" class"sk-top-container">'
-            '<div class="sk-container">'
+            f'<div class="sk-text-repr-fallback">{fallback_html}</div>'
+            '<div class="sk-container" hidden>'
         )
         _write_estimator_html(
             out,
             estimator,
             estimator.__class__.__name__,
-            str(estimator),
+            estimator_str,
             first_call=True,
         )
         out.write("</div></div>")
