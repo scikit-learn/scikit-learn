@@ -30,8 +30,8 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.utils.fixes import parse_version
 
 # these were introduced in skimage-0.14
-if parse_version(skimage.__version__) >= parse_version('0.14'):
-    rescale_params = {'anti_aliasing': False, 'multichannel': False}
+if parse_version(skimage.__version__) >= parse_version("0.14"):
+    rescale_params = {"anti_aliasing": False, "multichannel": False}
 else:
     rescale_params = {}
 
@@ -43,8 +43,7 @@ orig_coins = coins()
 # Applying a Gaussian filter for smoothing prior to down-scaling
 # reduces aliasing artifacts.
 smoothened_coins = gaussian_filter(orig_coins, sigma=2)
-rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect",
-                         **rescale_params)
+rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect", **rescale_params)
 
 X = np.reshape(rescaled_coins, (-1, 1))
 
@@ -57,8 +56,9 @@ connectivity = grid_to_graph(*rescaled_coins.shape)
 print("Compute structured hierarchical clustering...")
 st = time.time()
 n_clusters = 27  # number of regions
-ward = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward',
-                               connectivity=connectivity)
+ward = AgglomerativeClustering(
+    n_clusters=n_clusters, linkage="ward", connectivity=connectivity
+)
 ward.fit(X)
 label = np.reshape(ward.labels_, rescaled_coins.shape)
 print("Elapsed time: ", time.time() - st)
@@ -70,8 +70,12 @@ print("Number of clusters: ", np.unique(label).size)
 plt.figure(figsize=(5, 5))
 plt.imshow(rescaled_coins, cmap=plt.cm.gray)
 for l in range(n_clusters):
-    plt.contour(label == l,
-                colors=[plt.cm.nipy_spectral(l / float(n_clusters)), ])
+    plt.contour(
+        label == l,
+        colors=[
+            plt.cm.nipy_spectral(l / float(n_clusters)),
+        ],
+    )
 plt.xticks(())
 plt.yticks(())
 plt.show()

@@ -36,7 +36,7 @@ import matplotlib.pyplot as plt
 from sklearn import linear_model
 
 # X is the 10x10 Hilbert matrix
-X = 1. / (np.arange(1, 11) + np.arange(0, 10)[:, np.newaxis])
+X = 1.0 / (np.arange(1, 11) + np.arange(0, 10)[:, np.newaxis])
 y = np.ones(10)
 
 # #############################################################################
@@ -57,10 +57,10 @@ for a in alphas:
 ax = plt.gca()
 
 ax.plot(alphas, coefs)
-ax.set_xscale('log')
+ax.set_xscale("log")
 ax.set_xlim(ax.get_xlim()[::-1])  # reverse axis
-plt.xlabel('alpha')
-plt.ylabel('weights')
-plt.title('Ridge coefficients as a function of the regularization')
-plt.axis('tight')
+plt.xlabel("alpha")
+plt.ylabel("weights")
+plt.title("Ridge coefficients as a function of the regularization")
+plt.axis("tight")
 plt.show()

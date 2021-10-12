@@ -47,17 +47,18 @@ from sklearn.datasets import load_wine
 
 # Define "classifiers" to be used
 classifiers = {
-    "Empirical Covariance": EllipticEnvelope(support_fraction=1.,
-                                             contamination=0.25),
-    "Robust Covariance (Minimum Covariance Determinant)":
-    EllipticEnvelope(contamination=0.25),
-    "OCSVM": OneClassSVM(nu=0.25, gamma=0.35)}
-colors = ['m', 'g', 'b']
+    "Empirical Covariance": EllipticEnvelope(support_fraction=1.0, contamination=0.25),
+    "Robust Covariance (Minimum Covariance Determinant)": EllipticEnvelope(
+        contamination=0.25
+    ),
+    "OCSVM": OneClassSVM(nu=0.25, gamma=0.35),
+}
+colors = ["m", "g", "b"]
 legend1 = {}
 legend2 = {}
 
 # Get data
-X1 = load_wine()['data'][:, [1, 2]]  # two clusters
+X1 = load_wine()["data"][:, [1, 2]]  # two clusters
 
 # Learn a frontier for outlier detection with several classifiers
 xx1, yy1 = np.meshgrid(np.linspace(0, 6, 500), np.linspace(1, 4.5, 500))
@@ -67,7 +68,8 @@ for i, (clf_name, clf) in enumerate(classifiers.items()):
     Z1 = clf.decision_function(np.c_[xx1.ravel(), yy1.ravel()])
     Z1 = Z1.reshape(xx1.shape)
     legend1[clf_name] = plt.contour(
-        xx1, yy1, Z1, levels=[0], linewidths=2, colors=colors[i])
+        xx1, yy1, Z1, levels=[0], linewidths=2, colors=colors[i]
+    )
 
 legend1_values_list = list(legend1.values())
 legend1_keys_list = list(legend1.keys())
@@ -75,20 +77,30 @@ legend1_keys_list = list(legend1.keys())
 # Plot the results (= shape of the data points cloud)
 plt.figure(1)  # two clusters
 plt.title("Outlier detection on a real data set (wine recognition)")
-plt.scatter(X1[:, 0], X1[:, 1], color='black')
+plt.scatter(X1[:, 0], X1[:, 1], color="black")
 bbox_args = dict(boxstyle="round", fc="0.8")
 arrow_args = dict(arrowstyle="->")
-plt.annotate("outlying points", xy=(4, 2),
-             xycoords="data", textcoords="data",
-             xytext=(3, 1.25), bbox=bbox_args, arrowprops=arrow_args)
+plt.annotate(
+    "outlying points",
+    xy=(4, 2),
+    xycoords="data",
+    textcoords="data",
+    xytext=(3, 1.25),
+    bbox=bbox_args,
+    arrowprops=arrow_args,
+)
 plt.xlim((xx1.min(), xx1.max()))
 plt.ylim((yy1.min(), yy1.max()))
-plt.legend((legend1_values_list[0].collections[0],
-            legend1_values_list[1].collections[0],
-            legend1_values_list[2].collections[0]),
-           (legend1_keys_list[0], legend1_keys_list[1], legend1_keys_list[2]),
-           loc="upper center",
-           prop=matplotlib.font_manager.FontProperties(size=11))
+plt.legend(
+    (
+        legend1_values_list[0].collections[0],
+        legend1_values_list[1].collections[0],
+        legend1_values_list[2].collections[0],
+    ),
+    (legend1_keys_list[0], legend1_keys_list[1], legend1_keys_list[2]),
+    loc="upper center",
+    prop=matplotlib.font_manager.FontProperties(size=11),
+)
 plt.ylabel("ash")
 plt.xlabel("malic_acid")
 
@@ -107,7 +119,7 @@ plt.show()
 # the data scatter matrix and the risk of over-fitting the data.
 
 # Get data
-X2 = load_wine()['data'][:, [6, 9]]  # "banana"-shaped
+X2 = load_wine()["data"][:, [6, 9]]  # "banana"-shaped
 
 # Learn a frontier for outlier detection with several classifiers
 xx2, yy2 = np.meshgrid(np.linspace(-1, 5.5, 500), np.linspace(-2.5, 19, 500))
@@ -117,7 +129,8 @@ for i, (clf_name, clf) in enumerate(classifiers.items()):
     Z2 = clf.decision_function(np.c_[xx2.ravel(), yy2.ravel()])
     Z2 = Z2.reshape(xx2.shape)
     legend2[clf_name] = plt.contour(
-        xx2, yy2, Z2, levels=[0], linewidths=2, colors=colors[i])
+        xx2, yy2, Z2, levels=[0], linewidths=2, colors=colors[i]
+    )
 
 legend2_values_list = list(legend2.values())
 legend2_keys_list = list(legend2.keys())
@@ -125,15 +138,19 @@ legend2_keys_list = list(legend2.keys())
 # Plot the results (= shape of the data points cloud)
 plt.figure(2)  # "banana" shape
 plt.title("Outlier detection on a real data set (wine recognition)")
-plt.scatter(X2[:, 0], X2[:, 1], color='black')
+plt.scatter(X2[:, 0], X2[:, 1], color="black")
 plt.xlim((xx2.min(), xx2.max()))
 plt.ylim((yy2.min(), yy2.max()))
-plt.legend((legend2_values_list[0].collections[0],
-            legend2_values_list[1].collections[0],
-            legend2_values_list[2].collections[0]),
-           (legend2_keys_list[0], legend2_keys_list[1], legend2_keys_list[2]),
-           loc="upper center",
-           prop=matplotlib.font_manager.FontProperties(size=11))
+plt.legend(
+    (
+        legend2_values_list[0].collections[0],
+        legend2_values_list[1].collections[0],
+        legend2_values_list[2].collections[0],
+    ),
+    (legend2_keys_list[0], legend2_keys_list[1], legend2_keys_list[2]),
+    loc="upper center",
+    prop=matplotlib.font_manager.FontProperties(size=11),
+)
 plt.ylabel("color_intensity")
 plt.xlabel("flavanoids")
 
