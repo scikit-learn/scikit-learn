@@ -722,7 +722,7 @@ def r2_score(
 
     Best possible score is 1.0 and it can be negative (because the
     model can be arbitrarily worse). In the general case when the true y is
-    non-constant, a constant model that always predict the average y
+    non-constant, a constant model that always predicts the average y
     disregarding the input features would get a :math:`R^2` score of 0.0.
 
     In the particular case when the true y is constant, the :math:`R^2` score
