@@ -156,7 +156,7 @@ def strip_accents_ascii(s):
 
     Parameters
     ----------
-    s : string
+    s : str
         The string to strip
 
     See Also
@@ -175,7 +175,7 @@ def strip_tags(s):
 
     Parameters
     ----------
-    s : string
+    s : str
         The string to strip
     """
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
@@ -204,7 +204,7 @@ class _VectorizerMixin:
 
         Parameters
         ----------
-        doc : str
+        doc : bytes or str
             The string to decode.
 
         Returns
@@ -620,7 +620,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         Remove accents and perform other character normalization
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
-        an direct ASCII mapping.
+        a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 

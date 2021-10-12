@@ -15,13 +15,13 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-from threadpoolctl import threadpool_limits
-from threadpoolctl import threadpool_info
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.fixes import threadpool_limits
+from ..utils.fixes import threadpool_info
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils import check_array
