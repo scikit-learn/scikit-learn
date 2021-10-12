@@ -692,6 +692,11 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         Otherwise it corresponds to the sorted set of classes found
         when fitting.
 
+    See Also
+    --------
+    OneHotEncoder : Encode categorical features using a one-hot aka one-of-K
+        scheme.
+
     Examples
     --------
     >>> from sklearn.preprocessing import MultiLabelBinarizer
@@ -724,11 +729,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     MultiLabelBinarizer()
     >>> mlb.classes_
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
-
-    See Also
-    --------
-    OneHotEncoder : Encode categorical features using a one-hot aka one-of-K
-        scheme.
     """
 
     def __init__(self, *, classes=None, sparse_output=False):
@@ -747,7 +747,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns this MultiLabelBinarizer instance
+        self : object
+            Returns this MultiLabelBinarizer instance.
         """
         self._cached_dict = None
         if self.classes is None:
