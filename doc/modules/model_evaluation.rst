@@ -68,6 +68,7 @@ Scoring                                Function                                 
 'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
 'f1_weighted'                          :func:`metrics.f1_score`                           weighted average
 'f1_samples'                           :func:`metrics.f1_score`                           by multilabel sample
+'lift'                                 :func:`metrics.lift_score`
 'neg_log_loss'                         :func:`metrics.log_loss`                           requires ``predict_proba`` support
 'precision' etc.                       :func:`metrics.precision_score`                    suffixes apply as with 'f1'
 'recall' etc.                          :func:`metrics.recall_score`                       suffixes apply as with 'f1'
@@ -308,6 +309,7 @@ Some of these are restricted to the binary classification case:
    precision_recall_curve
    roc_curve
    det_curve
+   lift_curve
 
 
 Others also work in the multiclass case:
@@ -334,6 +336,7 @@ Some also work in the multilabel case:
    hamming_loss
    jaccard_score
    log_loss
+   lift_score
    multilabel_confusion_matrix
    precision_recall_fscore_support
    precision_score
@@ -738,6 +741,36 @@ In the multilabel case with binary label indicators::
     loss, is always between zero and one, inclusive; and predicting a proper subset
     or superset of the true labels will give a Hamming loss between
     zero and one, exclusive.
+
+.. _lift_score:
+
+Lift
+----
+
+`Lift <https://en.wikipedia.org/wiki/Lift_(data_mining)>`_ can be understood in
+different ways. One way is as the ratio of the positive responses of a targeted
+treatment of a subset of the dataset relative to the ratio of positive responses
+in the dataset as a whole.
+
+Lift can also be understood as a kind of normalised precision of the positive class.
+
+.. math::
+
+   Lift = \frac{n \times tp}{(tp + fp) \times (tp + fn)},
+
+.. math::
+
+   Lift = \frac{Precision}{pr}
+
+where :math:`tp`, :math:`fp`, :math:`fn`, :math:`n` and :math:`pr` are the true positive count, false positive count, false negative count, dataset size and positive rate respectively.
+
+Here is an example showing how to calculate lift::
+
+  >>> from sklearn.metrics import lift_score
+  >>> y_pred = [1, 1, 1, 1, 1, 2, 2, 2]
+  >>> y_true = [1, 1, 1, 2, 2, 1, 2, 2]
+  >>> lift_score(y_true, y_pred)
+  1.2
 
 .. _precision_recall_f_measure_metrics:
 

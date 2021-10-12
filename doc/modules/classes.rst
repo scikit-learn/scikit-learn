@@ -960,6 +960,8 @@ details.
    metrics.hamming_loss
    metrics.hinge_loss
    metrics.jaccard_score
+   metrics.lift_curve
+   metrics.lift_score
    metrics.log_loss
    metrics.matthews_corrcoef
    metrics.multilabel_confusion_matrix
