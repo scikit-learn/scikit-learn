@@ -81,8 +81,8 @@ cdef int simultaneous_sort(
             simultaneous_sort(values, indices, pivot_idx)
         if pivot_idx + 2 < size:
             simultaneous_sort(values + pivot_idx + 1,
-                               indices + pivot_idx + 1,
-                               size - pivot_idx - 1)
+                              indices + pivot_idx + 1,
+                              size - pivot_idx - 1)
     return 0
 
 
