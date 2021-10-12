@@ -4,6 +4,8 @@ set -e
 set -x
 
 UNAMESTR=`uname`
+N_CORES=`nproc --all`
+
 
 setup_ccache() {
     echo "Setting up ccache"
@@ -12,8 +14,10 @@ setup_ccache() {
     for name in gcc g++ cc c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++; do
       ln -s $(which ccache) "/tmp/ccache/${name}"
     done
-    export PATH="/tmp/ccache/:${PATH}"
-    ccache -M 256M
+    export PATH="/tmp/ccache:${PATH}"
+    # Unset ccache limits
+    ccache -F 0
+    ccache -M 0
 }
 
 # imports get_dep
@@ -30,10 +34,11 @@ wget $MINICONDA_URL -O mambaforge.sh
 MINICONDA_PATH=$HOME/miniconda
 chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MINICONDA_PATH
 export PATH=$MINICONDA_PATH/bin:$PATH
+mamba init --all --verbose
 mamba update --yes conda
 
 # Create environment and install dependencies
-mamba create -n testenv --yes python=3.7
+mamba create -n testenv --yes $(get_dep python $PYTHON_VERSION)
 source activate testenv
 
 # Use the latest by default
@@ -61,12 +66,25 @@ fi
 python --version
 conda list
 
-# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-# workers with 2 cores when building the compiled extensions of scikit-learn.
-export SKLEARN_BUILD_PARALLEL=3
+# Set parallelism to $N_CORES + 1 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with $N_CORES cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=$(($N_CORES + 1))
 
-pip install --verbose --editable . --no-build-isolation
-ccache -s
+# Disable the build isolation and build in the tree so that the same folder can be
+# cached between CI runs.
+# TODO: remove the '--use-feature' flag when made obsolete in pip 21.3.
+pip install --verbose --no-build-isolation --use-feature=in-tree-build .
+
+# Report cache usage
+ccache -s --verbose
+
+mamba list
+
+# Changing directory not to have module resolution use scikit-learn source
+# directory but to the installed package.
+cd /tmp
+
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
-python -m pytest sklearn
+# Test using as many workers as available cores
+pytest --pyargs -n $N_CORES sklearn

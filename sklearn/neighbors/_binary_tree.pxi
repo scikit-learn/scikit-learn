@@ -151,7 +151,12 @@ from libc.string cimport memcpy
 import numpy as np
 import warnings
 
-from ..metrics._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist, euclidean_dist_to_rdist)
+from ..metrics._dist_metrics cimport (
+    DistanceMetric,
+    euclidean_dist,
+    euclidean_rdist,
+    euclidean_dist_to_rdist,
+)
 
 from ._partition_nodes cimport partition_node_indices
 

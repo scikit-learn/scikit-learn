@@ -1,4 +1,3 @@
-#!python
 # cython: boundscheck=False
 # cython: cdivision=True
 # cython: initializedcheck=False

@@ -141,10 +141,10 @@ def load_files(
 
     Parameters
     ----------
-    container_path : str or unicode
+    container_path : str
         Path to the main folder holding one subfolder per category
 
-    description : str or unicode, default=None
+    description : str, default=None
         A paragraph describing the characteristic of the dataset: its source,
         reference, etc.
 

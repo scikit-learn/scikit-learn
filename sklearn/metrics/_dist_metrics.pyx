@@ -3,7 +3,6 @@
 # cython: initializedcheck=False
 # cython: wraparound=False
 
-
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
 # License: BSD
@@ -35,7 +34,6 @@ from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
 from scipy.sparse import csr_matrix, issparse
-
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
 from ..utils._typedefs import DTYPE, ITYPE
 from ..utils import check_array
@@ -248,7 +246,7 @@ cdef class DistanceMetric:
 
         Parameters
         ----------
-        metric : string or class name
+        metric : str or class name
             The distance metric to use
         **kwargs
             additional arguments will be passed to the requested metric
@@ -377,17 +375,16 @@ cdef class DistanceMetric:
         return dist
 
     def rdist_to_dist(self, rdist):
-        """Convert the rank-preserving surrogate distance to the true distance.
+        """Convert the rank-preserving surrogate distance to the distance.
 
-        The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute.  For example, for the
-        Euclidean metric, the rank-preserving surrogate distance is the
-        squared-euclidean distance.
+        The surrogate distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute. For example, for the
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
 
         Parameters
         ----------
         rdist : double
-            Rank-preserving surrogate distance.
+            Surrogate distance.
 
         Returns
         -------
@@ -399,10 +396,9 @@ cdef class DistanceMetric:
     def dist_to_rdist(self, dist):
         """Convert the true distance to the rank-preserving surrogate distance.
 
-        The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute.  For example, for the
-        Euclidean metric, the rank-preserving surrogate distance is the
-        squared-euclidean distance.
+        The surrogate distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute. For example, for the
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
 
         Parameters
         ----------
@@ -412,7 +408,7 @@ cdef class DistanceMetric:
         Returns
         -------
         double
-            Rank-preserving surrogate distance.
+            Surrogate distance.
         """
         return dist
 
@@ -565,7 +561,7 @@ cdef class ChebyshevDistance(DistanceMetric):
 
     Examples
     --------
-    >>> from sklearn.metrics import DistanceMetric
+    >>> from sklearn.metrics.dist_metrics import DistanceMetric
     >>> dist = DistanceMetric.get_metric('chebyshev')
     >>> X = [[0, 1, 2],
     ...      [3, 4, 5]]
