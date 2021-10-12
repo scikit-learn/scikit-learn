@@ -511,8 +511,9 @@ In particular, unless you control the ``random_state``, it may not be
 reproducible from run-to-run, as it depends on random initialization.
 The alternative ``"discretize"`` strategy is 100% reproducible, but tends
 to create parcels of fairly even and geometrical shape.
-The recently added option ``clusterQR`` is also 100% reproducible and tends
-to create the visually best partitioning.
+The recently added ``"cluster_qr"`` option is a deterministic alternative that
+tends to create the visually best partitioning on the example application
+below.
 
 ================================  ================================  ================================
  ``assign_labels="kmeans"``        ``assign_labels="discretize"``    ``assign_labels="cluster_qr"``
