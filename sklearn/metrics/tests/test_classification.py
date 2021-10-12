@@ -34,6 +34,7 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_score
+from sklearn.metrics import lift_score
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
@@ -415,6 +416,59 @@ def test_precision_recall_f_unused_pos_label():
     with pytest.warns(UserWarning, match=msg):
         precision_recall_fscore_support(
             [1, 2, 1], [1, 2, 2], pos_label=2, average="macro"
+        )
+
+
+def test_lift_score():
+    y_true = [0, 2, 2, 0, 0, 2, 2]
+    y_pred = [0, 2, 2, 0, 2, 0, 2]
+    assert_almost_equal(1.3125, lift_score(y_true, y_pred, pos_label=2))
+
+    assert 0.0 == lift_score([], [])
+    assert 1.0 == lift_score([1, 1], [1, 1])
+    assert 0.0 == lift_score([1, 1], [0, 0])
+    assert 1.0 == lift_score([1, 1], [1, 0])
+    assert 1.0 == lift_score([1, 1], [0, 1])
+    assert 2.0 == lift_score([1, 0], [1, 0])
+    assert 0.0 == lift_score([1, 0], [0, 1])
+    assert 0.0 == lift_score([0, 0], [1, 1])
+
+    assert 1.0 == lift_score([1, 1], [1, 1], zero_division=1)
+    assert 1.0 == lift_score([1, 1], [0, 0], zero_division=1)
+    assert 1.0 == lift_score([1, 1], [1, 0], zero_division=1)
+    assert 1.0 == lift_score([1, 1], [0, 1], zero_division=1)
+    assert 2.0 == lift_score([1, 0], [1, 0], zero_division=1)
+    assert 0.0 == lift_score([1, 0], [0, 1], zero_division=1)
+    assert 1.0 == lift_score([0, 0], [1, 1], zero_division=1)
+
+    assert 0.0 == lift_score([1, 1], [1, 1], pos_label=0)
+    assert 0.0 == lift_score([1, 1], [0, 0], pos_label=0)
+    assert 0.0 == lift_score([1, 1], [1, 0], pos_label=0)
+    assert 0.0 == lift_score([1, 1], [0, 1], pos_label=0)
+    assert 2.0 == lift_score([1, 0], [1, 0], pos_label=0)
+    assert 0.0 == lift_score([1, 0], [0, 1], pos_label=0)
+    assert 0.0 == lift_score([0, 0], [1, 1], pos_label=0)
+
+
+def test_lift_score_sample_weight():
+    # With weights
+    y_true = [0, 1, 0, 1, 1, 0, 1, 1]
+    y_pred = [0, 1, 1, 1, 0, 0, 1, 1]
+    weights = [1, 1, 2, 2, 2, 0, 0, 4]
+    lift1 = lift_score(y_true, y_pred, sample_weight=weights)
+
+    # With repeats
+    y_true = [0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
+    y_pred = [0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1]
+    lift2 = lift_score(y_true, y_pred)
+
+    assert_array_almost_equal(lift1, lift2)
+
+
+def test_lift_score_warning():
+    with pytest.warns(UndefinedMetricWarning):
+        lift_score(
+            [1, 1, 1], [0, 0, 0], zero_division="warn"
         )
 
 
