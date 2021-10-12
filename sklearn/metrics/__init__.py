@@ -29,6 +29,7 @@ from ._classification import hamming_loss
 from ._classification import hinge_loss
 from ._classification import jaccard_score
 from ._classification import log_loss
+from ._classification import lift_score
 from ._classification import matthews_corrcoef
 from ._classification import precision_recall_fscore_support
 from ._classification import precision_score

@@ -1748,6 +1748,114 @@ def precision_score(
     return p
 
 
+def lift_score(
+    y_true,
+    y_pred,
+    *,
+    pos_label=1,
+    sample_weight=None,
+    zero_division="warn",
+):
+    """Compute the lift.
+
+    The lift is the ratio ``(n * tp) / ((tp + fp) * (tp + fn))`` where ``tp``
+    is the number of true positives, ``fp`` the number of false positives and
+    ``fn`` the number of false negatives. The lift is intuitively the relative
+    positive class precision imporvement over selecting a random subset and
+    labeling it positive.
+
+    Another way to think of lift is the ratio ``precision / pr`` where ``pr``
+    is the positive rate in the true set.
+
+    The worst value is 0 but lift does not have an upper bound.
+
+    Read more in the :ref:`User Guide <lift_score>`.
+
+    Parameters
+    ----------
+    y_true : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like, or label indicator array / sparse matrix
+        Estimated targets as returned by a classifier.
+
+    pos_label : str or int, default=1
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
+
+    Returns
+    -------
+    lift : float (if average is not None) or array of float of shape \
+                (n_unique_labels,)
+        lift of the positive class in binary classification or weighted
+        average of the lift of each class for the multiclass task.
+
+    See Also
+    --------
+    lift_curve, precision_recall_curve
+
+    Notes
+    -----
+    When ``true positive + false positive == 0``, lift returns 0 and
+    raises ``UndefinedMetricWarning``. This behavior can be
+    modified with ``zero_division``. which is passed to the precision
+    function.
+    Lift is only possible on binary data.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import lift_score
+    >>> y_true = [0, 2, 2, 0, 0, 2, 2]
+    >>> y_pred = [0, 2, 2, 0, 2, 0, 2]
+    >>> lift_score(y_true, y_pred)
+    1.3125
+    """
+    # Precision
+    p, _, _, _ = precision_recall_fscore_support(
+        y_true,
+        y_pred,
+        average="binary",
+        pos_label=pos_label,
+        warn_for=("precision",),
+        sample_weight=sample_weight,
+        zero_division=zero_division,
+    )
+
+    # True labels
+    y_true = column_or_1d(y_true)
+    y_true = y_true == pos_label
+
+    # Sample weights
+    if sample_weight is None:
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
+    else:
+        sample_weight = column_or_1d(sample_weight)
+        check_consistent_length(y_true, sample_weight)
+
+    # Positive rate and lift
+    pr = (y_true * sample_weight).sum() / sample_weight.sum()
+
+    # Lift
+    if pr == 0 or np.isnan(pr):
+        zero_division_value = np.float64(1.0)
+        if zero_division in ["warn", 0]:
+            zero_division_value = np.float64(0.0)
+        lift = zero_division_value
+    else:
+        lift = p / pr
+
+    return lift
+
+
 def recall_score(
     y_true,
     y_pred,
