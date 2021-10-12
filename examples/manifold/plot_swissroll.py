@@ -24,10 +24,10 @@ sr_points, sr_color = datasets.make_swiss_roll(n_samples=1500)
 # Now, let's take a look at our data:
 
 fig = plt.figure(figsize=(8, 6))
-ax = Axes3D(fig, auto_add_to_figure=False)
+ax = fig.add_subplot(111, projection="3d")
 fig.add_axes(ax)
 ax.scatter(
-    sr_points[:, 0], sr_points[:, 1], sr_points[:, 2], c=sr_color, s=60, alpha=0.8
+    sr_points[:, 0], sr_points[:, 1], sr_points[:, 2], c=sr_color, s=50, alpha=0.8
 )
 plt.title("Swiss Roll in Ambient Space")
 _ = ax.text2D(0.8, 0.05, s="n_samples=1500", transform=ax.transAxes)
@@ -72,10 +72,10 @@ _ = axs[1].set_title("TSNE Embedding of Swiss Roll")
 sh_points, sh_color = datasets.make_swiss_roll(n_samples=1500, hole=True)
 
 fig = plt.figure(figsize=(8, 6))
-ax = Axes3D(fig, auto_add_to_figure=False)
+ax = fig.add_subplot(111, projection="3d")
 fig.add_axes(ax)
 ax.scatter(
-    sh_points[:, 0], sh_points[:, 1], sh_points[:, 2], c=sh_color, s=60, alpha=0.8
+    sh_points[:, 0], sh_points[:, 1], sh_points[:, 2], c=sh_color, s=50, alpha=0.8
 )
 plt.title("Swiss-Hole in Ambient Space")
 _ = ax.text2D(0.8, 0.05, s="n_samples=1500", transform=ax.transAxes)
