@@ -4,7 +4,7 @@ Swiss Roll And Swiss-Hole Reduction
 ===================================
 
 This notebook seeks to compare two popular non-linear dimensionality
-techniques, t-SNE and LLE, on the classic Swiss Roll dataset. Then, we will 
+techniques, t-SNE and LLE, on the classic Swiss Roll dataset. Then, we will
 explore how they both deal with the addition of a hole in the data.
 """
 # %%
