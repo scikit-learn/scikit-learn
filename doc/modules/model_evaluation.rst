@@ -2013,7 +2013,7 @@ score is not finite: it is either ``NaN`` (perfect predictions) or ``-Inf``
 optimization such as grid-search cross-validation to be performed correctly.
 For this reason the default behaviour of :func:`explained_variance_score` is
 to replace them with 1.0 (perfect predictions) or 0.0 (imperfect predictions).
-You can set the ``fix_when_y_true_is_constant`` parameter to ``False`` to
+You can set the ``force_finite`` parameter to ``False`` to
 prevent this fix to happen and fallback on the original Explained Variance
 score.
 
@@ -2035,13 +2035,13 @@ function::
     >>> y_pred = [-2, -2, -2]
     >>> explained_variance_score(y_true, y_pred)
     1.0
-    >>> explained_variance_score(y_true, y_pred, fix_when_y_true_is_constant=False)
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
     nan
     >>> y_true = [-2, -2, -2]
     >>> y_pred = [-2, -2, -2 + 1e-8]
     >>> explained_variance_score(y_true, y_pred)
     0.0
-    >>> explained_variance_score(y_true, y_pred, fix_when_y_true_is_constant=False)
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
     -inf
 
 .. _max_error:
@@ -2289,7 +2289,7 @@ finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
 predictions). Such non-finite scores may prevent correct model optimization
 such as grid-search cross-validation to be performed correctly. For this reason
 the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
-predictions) or 0.0 (imperfect predictions). If ``fix_when_y_true_is_constant``
+predictions) or 0.0 (imperfect predictions). If ``force_finite``
 is set to ``False``, this score fallbacks on the original R² definition.
 
 Here is a small example of usage of the :func:`r2_score` function::
@@ -2315,13 +2315,13 @@ Here is a small example of usage of the :func:`r2_score` function::
   >>> y_pred = [-2, -2, -2]
   >>> r2_score(y_true, y_pred)
   1.0
-  >>> r2_score(y_true, y_pred, fix_when_y_true_is_constant=False)
+  >>> r2_score(y_true, y_pred, force_finite=False)
   nan
   >>> y_true = [-2, -2, -2]
   >>> y_pred = [-2, -2, -2 + 1e-8]
   >>> r2_score(y_true, y_pred)
   0.0
-  >>> r2_score(y_true, y_pred, fix_when_y_true_is_constant=False)
+  >>> r2_score(y_true, y_pred, force_finite=False)
   -inf
 
 .. topic:: Example:
