@@ -98,6 +98,9 @@ Changelog
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
 
+- |Fix| :func:`utils.estimator_html_repr` has an improved visualization for nested
+  meta-estimators. :pr:`21310` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
