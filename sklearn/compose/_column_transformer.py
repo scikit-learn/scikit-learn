@@ -589,7 +589,23 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return None
         return "(%d of %d) Processing %s" % (idx, total, name)
 
-    def _fit_transform(self, X, y, func, fitted=False, column_as_strings=False):
+    def _check_fit_params(self, **fit_params):
+        # fit_params_steps = {name: {} for name, _, _ in self.transformers if trans is not None}
+        fit_params_steps = {name: {} for name, _, _ in self.transformers}
+        for pname, pval in fit_params.items():
+            if "__" not in pname:
+                raise ValueError(
+                    "ColumnTransformer.fit does not accept the {} parameter. "
+                    "You can pass parameters to specific steps of your "
+                    "column transformer using the stepname__parameter format, e.g. "
+                    "`ColumnTransformer.fit(X, y, standardscaler__sample_weight"
+                    "=sample_weight)`.".format(pname)
+                )
+            step, param = pname.split("__", 1)
+            fit_params_steps[step][param] = pval
+        return fit_params_steps
+
+    def _fit_transform(self, X, y, func, fitted=False, column_as_strings=False, **fit_params_steps):
         """
         Private function to fit and/or transform on demand.
 
@@ -611,6 +627,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     weight=weight,
                     message_clsname="ColumnTransformer",
                     message=self._log_message(name, idx, len(transformers)),
+                    **fit_params_steps[name],
                 )
                 for idx, (name, trans, column, weight) in enumerate(transformers, 1)
             )
@@ -620,7 +637,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             else:
                 raise
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **fit_params):
         """Fit all transformers using X.
 
         Parameters
@@ -632,6 +649,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples,...), default=None
             Targets for supervised learning.
 
+        **fit_params : dict, default=None
+            Parameters to pass to the fit method of the estimator and transformers.
+
         Returns
         -------
         self : ColumnTransformer
@@ -639,10 +659,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         # we use fit_transform to make sure to set sparse_output_ (for which we
         # need the transformed data) to have consistent output type in predict
-        self.fit_transform(X, y=y)
+        self.fit_transform(X, y=y, **fit_params)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, **fit_params):
         """Fit all transformers, transform the data and concatenate results.
 
         Parameters
@@ -653,6 +673,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         y : array-like of shape (n_samples,), default=None
             Targets for supervised learning.
+
+        **fit_params : dict, default=None
+            Parameters to pass to the fit method of the estimator and transformers.
 
         Returns
         -------
@@ -671,8 +694,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
+        fit_params_steps = self._check_fit_params(**fit_params)
 
-        result = self._fit_transform(X, y, _fit_transform_one)
+        result = self._fit_transform(X, y, _fit_transform_one, **fit_params_steps)
 
         if not result:
             self._update_fitted_transformers([])
@@ -717,6 +741,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         check_is_fitted(self)
         X = _check_X(X)
+        fit_params_steps = {name: {} for name, _, _ in self.transformers}
 
         fit_dataframe_and_transform_dataframe = hasattr(
             self, "feature_names_in_"
@@ -751,6 +776,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             _transform_one,
             fitted=True,
             column_as_strings=fit_dataframe_and_transform_dataframe,
+            **fit_params_steps,
         )
         self._validate_output(Xs)
 
