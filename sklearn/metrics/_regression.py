@@ -894,7 +894,7 @@ def _assemble_r2_explained_variance(
             # return scores individually
             return output_scores
         elif multioutput == "uniform_average":
-            # passing to np.average() None as weights results is uniform mean
+            # Passing None as weights to np.average results is uniform mean
             avg_weights = None
         elif multioutput == "variance_weighted":
             avg_weights = denominator
