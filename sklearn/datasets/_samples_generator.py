@@ -1461,11 +1461,7 @@ def make_sparse_spd_matrix(
     return prec
 
 
-def make_swiss_roll(n_samples=100,
-                    *,
-                    noise=0.0,
-                    random_state=None,
-                    hole=False):
+def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     """Generate a swiss roll dataset.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -1511,12 +1507,13 @@ def make_swiss_roll(n_samples=100,
         t = 1.5 * np.pi * (1 + 2 * generator.rand(n_samples))
         y = 21 * generator.rand(n_samples)
     else:
-        corners = np.array([[np.pi * (1.5+i), j * 7] for i in range(3)
-                            for j in range(3)])
+        corners = np.array(
+            [[np.pi * (1.5 + i), j * 7] for i in range(3) for j in range(3)]
+        )
         corners = np.delete(corners, 4, axis=0)
         corner_index = generator.choice(8, n_samples)
-        parameters = generator.rand(2, n_samples)*np.array([[np.pi], [7]])
-        t, y = corners[corner_index].T+parameters
+        parameters = generator.rand(2, n_samples) * np.array([[np.pi], [7]])
+        t, y = corners[corner_index].T + parameters
 
     x = t * np.cos(t)
     z = t * np.sin(t)
