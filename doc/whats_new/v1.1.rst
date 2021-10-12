@@ -46,12 +46,20 @@ Changelog
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.ensemble`
-...........................
+.......................
 
 - |Fix| Fixed a bug that could produce a segfault in rare cases for
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`.
   :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
+  :class:`feature_extraction.TfidfVectorizer` by raising an
+  error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
+  :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
 :mod:`sklearn.linear_model`
 ...........................
