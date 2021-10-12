@@ -899,7 +899,7 @@ def _assemble_r2_explained_variance(
         elif multioutput == "variance_weighted":
             avg_weights = denominator
             if force_finite and not np.any(nonzero_denominator):
-                # Avoid failling on constant y or one-element arrays.
+                # Avoid failing on constant y or one-element arrays.
                 if not np.any(nonzero_numerator):
                     return 1.0
                 else:
