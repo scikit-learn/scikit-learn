@@ -495,13 +495,16 @@ def _pandas_dtype_needs_early_conversation(pd_dtype):
     except ImportError:
         return False
 
-    if is_sparse(pd_dtype):
+    if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
-        return False
-    elif is_extension_array_dtype(pd_dtype) and (
-        is_integer_dtype(pd_dtype) or is_float_dtype(pd_dtype)
-    ):
         # Only handle extension arrays for interger and floats
+        return False
+    elif is_float_dtype(pd_dtype):
+        # Float ndarrays can normally support nans. They need to be converted
+        # first to map pd.NA to np.nan
+        return True
+    elif is_integer_dtype(pd_dtype):
+        # XXX: Warn when converting from a high integer to a float
         return True
 
     return False
