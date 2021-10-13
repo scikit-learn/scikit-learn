@@ -125,8 +125,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = KernelRidge(alpha=1.0)
-    >>> clf.fit(X, y)
+    >>> krr = KernelRidge(alpha=1.0)
+    >>> krr.fit(X, y)
     KernelRidge(alpha=1.0)
     """
 
