@@ -303,8 +303,8 @@ def test_regression_multioutput_array():
 
     # Checking for the condition in which both numerator and denominator is
     # zero.
-    y_true = [[1, 3], [-1, 2]]
-    y_pred = [[1, 4], [-1, 1]]
+    y_true = [[1, 3], [1, 2]]
+    y_pred = [[1, 4], [1, 1]]
     r2 = r2_score(y_true, y_pred, multioutput="raw_values")
     assert_array_almost_equal(r2, [1.0, -3.0], decimal=2)
     assert np.mean(r2) == r2_score(y_true, y_pred, multioutput="uniform_average")
