@@ -30,6 +30,8 @@ def cluster_qr(vectors):
 
     This implementation was proposed in [1]_.
 
+.. versionadded:: 1.1
+
     Parameters
     ----------
     vectors : array-like, shape: (n_samples, n_clusters)
@@ -46,7 +48,6 @@ def cluster_qr(vectors):
         Anil Damle, Victor Minden, Lexing Ying
         <https://doi.org/10.1093/imaiai/iay008>`_
 
-    .. versionadded:: 1.1
     """
 
     k = vectors.shape[1]
@@ -239,7 +240,7 @@ def spectral_clustering(
         See [4]_ for more details regarding ``'lobpcg'``.
         Eigensolver ``'amg'`` runs ``'lobpcg'`` with optional
         Algebraic MultiGrid preconditioning and requires pyamg to be installed.
-        It can be faster on very large sparse problems, but may be instabile.
+        It can be faster on very large sparse problems, but may be unstable.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization
