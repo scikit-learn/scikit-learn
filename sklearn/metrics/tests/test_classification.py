@@ -467,9 +467,7 @@ def test_lift_score_sample_weight():
 
 def test_lift_score_warning():
     with pytest.warns(UndefinedMetricWarning):
-        lift_score(
-            [1, 1, 1], [0, 0, 0], zero_division="warn"
-        )
+        lift_score([1, 1, 1], [0, 0, 0], zero_division="warn")
 
 
 def test_confusion_matrix_binary():

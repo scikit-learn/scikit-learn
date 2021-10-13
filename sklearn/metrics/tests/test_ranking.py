@@ -531,8 +531,9 @@ def test_lift_curve_sample_weight():
     y_true = [0, 1, 0, 1, 1, 0, 1, 1]
     y_score = [0, 1, 0.5, 0.6, 0.4, 0.1, 0.7, 0.4]
     weights = [1, 1, 2, 2, 2, 0, 0, 4]
-    lift1, percentages1, thresholds1 = lift_curve(y_true, y_score,
-        sample_weight=weights)
+    lift1, percentages1, thresholds1 = lift_curve(
+        y_true, y_score, sample_weight=weights
+    )
 
     # With repeats
     y_true = [0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]

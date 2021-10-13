@@ -1082,16 +1082,14 @@ def lift_curve(y_true, y_score, *, pos_label=None, sample_weight=None):
     """
 
     fps, tps, thresholds = _binary_clf_curve(
-        y_true, y_score,
-        pos_label=pos_label,
-        sample_weight=sample_weight
+        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
     # False negatives
     fns = tps[-1] - tps
     # Sample counts
     n_samples = fps[-1] + tps[-1]
-    
+
     # Lift & percentages
     lift = n_samples * tps / ((fps + tps) * (fns + tps))
     percentages = 100 * (fps + tps) / n_samples
