@@ -396,7 +396,7 @@ def test_check_array_dtype_numeric_errors(X):
 @pytest.mark.parametrize(
     "dtype, expected_dtype",
     [
-        ([np.float32, np.float64], np.float32),
+        (np.float32, np.float32),
         (np.float64, np.float64),
         ("numeric", np.float64),
     ],
