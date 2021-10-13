@@ -9,6 +9,13 @@ import warnings
 
 import numpy as np
 
+# Required in cluster_qr
+from scipy.linalg import qr, svd
+
+# Required in discretize
+from scipy.sparse import csc_matrix
+from scipy.linalg import LinAlgError
+
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
 from ..utils.deprecation import deprecated
@@ -41,8 +48,6 @@ def cluster_qr(vectors):
 
     .. versionadded:: 1.1
     """
-
-    from scipy.linalg import qr, svd
 
     k = vectors.shape[1]
     piv = qr(vectors.T, pivoting=True)[2]
@@ -105,9 +110,6 @@ def discretize(
     initialization than k-means.
 
     """
-
-    from scipy.sparse import csc_matrix
-    from scipy.linalg import LinAlgError
 
     random_state = check_random_state(random_state)
 
