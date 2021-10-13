@@ -12,12 +12,12 @@ approximate solution for finding normalized graph cuts.
 
 There are three options to assign labels:
 
-* with 'kmeans' spectral clustering will cluster samples in the embedding space
+* 'kmeans' spectral clustering clusters samples in the embedding space
   using a kmeans algorithm
-* with 'cluster_qr' spectral clustering will cluster samples in the embedding
-  space using a cluster_qr algorithm,
-* whereas 'discrete' will iteratively search for the closest partition
+* 'discrete' iteratively searchs for the closest partition
   space to the embedding space of spectral clustering.
+* 'cluster_qr' assigns lables using the QR factorization with pivoting
+  that directly determines the partiion in the embedding space.
 """
 print(__doc__)
 
