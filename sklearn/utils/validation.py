@@ -493,24 +493,20 @@ def _convert_pandas_extension_array_into_numpy_dtype(pd_array):
             is_sparse,
         )
     except ImportError:
-        return
+        return False
+
+    pd_dtype = pd_array.dtype
 
     if is_sparse(pd_array):
         # Sparse arrays will be converted later in `check_array`
-        return
-
-    pd_dtype = pd_array.dtype
-    if not is_extension_array_dtype(pd_dtype):
+        return False
+    elif not is_extension_array_dtype(pd_dtype):
         # Only handle extension arrays for interger and floats
-        return
+        return False
+    elif is_integer_dtype(pd_dtype) or is_float_dtype(pd_dtype):
+        return True
 
-    elif is_integer_dtype(pd_dtype):
-        # Mapped to a float because extension array  may contain nans
-        return np.dtype("float64")
-
-    elif is_float_dtype(pd_dtype):
-        # Mapped to a float dtype since floats already support nans
-        return pd_dtype.numpy_dtype
+    return False
 
 
 def check_array(
@@ -650,23 +646,17 @@ def check_array(
 
         dtypes_orig = []
         for _, column in array.iteritems():
+            dtype_iter = column.dtype
             if column.dtype.kind == "b":
-                dtypes_orig.append(np.dtype(object))
-
-            new_dtype = _convert_pandas_extension_array_into_numpy_dtype(column)
-            if new_dtype is not None:
-                dtypes_orig.append(new_dtype)
+                # pandas boolean dtype __array__ interface coerces bools to objects
+                dtype_iter = np.dtype(object)
+            elif _convert_pandas_extension_array_into_numpy_dtype(column):
                 pd_requires_converstion = True
-            else:
-                dtypes_orig.append(column.dtype)
+
+            dtypes_orig.append(dtype_iter)
 
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
-
-    if pd_requires_converstion:
-        # pandas dataframe requires conversion earlier to handle extension
-        # dtypes with nans
-        array = array.astype(dtype_orig)
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
@@ -683,6 +673,13 @@ def check_array(
             # dtype conversion required. Let's select the first element of the
             # list of accepted types.
             dtype = dtype[0]
+
+    if pd_requires_converstion:
+        # pandas dataframe requires conversion earlier to handle extension dtypes with
+        # nans
+        array = array.astype(dtype)
+        # Since we converted here, we do not need to convert again later
+        dtype = None
 
     if force_all_finite not in (True, False, "allow-nan"):
         raise ValueError(
