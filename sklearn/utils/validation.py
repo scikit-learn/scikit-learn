@@ -512,8 +512,6 @@ def _convert_pandas_extension_array_into_numpy_dtype(pd_array):
         # Mapped to a float dtype since floats already support nans
         return pd_dtype.numpy_dtype
 
-    return
-
 
 def check_array(
     array,
