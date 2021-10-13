@@ -28,6 +28,7 @@ from sklearn.cluster._k_means_common import _euclidean_dense_dense_wrapper
 from sklearn.cluster._k_means_common import _euclidean_sparse_dense_wrapper
 from sklearn.cluster._k_means_common import _inertia_dense
 from sklearn.cluster._k_means_common import _inertia_sparse
+from sklearn.cluster._k_means_common import _is_same_clustering
 from sklearn.datasets import make_blobs
 from io import StringIO
 
@@ -1173,3 +1174,19 @@ def test_kmeans_plusplus_dataorder():
     centers_fortran, _ = kmeans_plusplus(X_fortran, n_clusters, random_state=0)
 
     assert_allclose(centers_c, centers_fortran)
+
+
+def test_is_same_clustering():
+    # Sanity check for the _is_same_clustering utility function
+    labels1 = np.array([1, 0, 0, 1, 2, 0, 2, 1], dtype=np.int32)
+    assert _is_same_clustering(labels1, labels1, 3)
+
+    # these other labels represent the same clustering since we can retrive the first
+    # labels by simply renaming the labels: 0 -> 1, 1 -> 2, 2 -> 0.
+    labels2 = np.array([0, 2, 2, 0, 1, 2, 1, 0], dtype=np.int32)
+    assert _is_same_clustering(labels1, labels2, 3)
+
+    # these other labels do not represent the same clustering since not all ones are
+    # mapped to a same value
+    labels3 = np.array([1, 0, 0, 2, 2, 0, 2, 1], dtype=np.int32)
+    assert not _is_same_clustering(labels1, labels3, 3)
