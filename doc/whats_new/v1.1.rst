@@ -46,7 +46,7 @@ Changelog
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.ensemble`
-...........................
+.......................
 
 - |Fix| Fixed a bug that could produce a segfault in rare cases for
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -59,6 +59,14 @@ Changelog
   and :class:`ensemble.RandomTreesEmbedding` now raise a ``ValueError`` when
   ``bootstrap=False`` and ``max_samples`` is not ``None``.
   :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
+  :class:`feature_extraction.TfidfVectorizer` by raising an
+  error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
+  :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -97,11 +105,11 @@ Changelog
   non-negativity check on the sample weights. It can be turned on
   using the only_non_negative bool parameter.
   Estimators that check for non-negative weights are updated:
-  :func:`linear_model.LinearRegression` (here the previous
+  :class:`linear_model.LinearRegression` (here the previous
   error message was misleading),
-  :func:`ensemble.AdaBoostClassifier`,
-  :func:`ensemble.AdaBoostRegressor`,
-  :func:`neighbors.KernelDensity`.
+  :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`,
+  :class:`neighbors.KernelDensity`.
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
 
