@@ -88,6 +88,8 @@ from ._scorer import get_scorer
 
 from ._plot.det_curve import plot_det_curve
 from ._plot.det_curve import DetCurveDisplay
+from ._plot.lift_curve import plot_lift_curve
+from ._plot.lift_curve import LiftCurveDisplay
 from ._plot.roc_curve import plot_roc_curve
 from ._plot.roc_curve import RocCurveDisplay
 from ._plot.precision_recall_curve import plot_precision_recall_curve
@@ -133,6 +135,7 @@ __all__ = [
     "jaccard_score",
     "label_ranking_average_precision_score",
     "label_ranking_loss",
+    "liftCurveDisplay",
     "lift_curve",
     "lift_score",
     "log_loss",
@@ -161,6 +164,7 @@ __all__ = [
     "pairwise_kernels",
     "plot_confusion_matrix",
     "plot_det_curve",
+    "plot_lift_curve",
     "plot_precision_recall_curve",
     "plot_roc_curve",
     "PrecisionRecallDisplay",

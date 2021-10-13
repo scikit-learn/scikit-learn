@@ -1,5 +1,3 @@
-import scipy as sp
-
 from .base import _get_response
 
 from .. import lift_curve
@@ -314,33 +312,26 @@ class LiftCurveDisplay:
             _, ax = plt.subplots()
 
         (self.line_,) = ax.plot(
-            sp.stats.norm.ppf(self.percentages),
-            sp.stats.norm.ppf(self.lift),
+            self.percentages,
+            self.lift,
             **line_kwargs,
         )
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
 
-        xlabel = "Percentage" + info_pos_label
+        xlabel = "Positive Rate" + info_pos_label
         ylabel = "Lift" + info_pos_label
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
             ax.legend(loc="lower right")
 
-        ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]
-        tick_locations = sp.stats.norm.ppf(ticks)
-        tick_labels = [
-            "{:.0%}".format(s) if (100 * s).is_integer() else "{:.1%}".format(s)
-            for s in ticks
-        ]
+        tick_locations = [0, 20, 40, 60, 80, 100]
+        tick_labels = ["{}%".format(s) for s in tick_locations]
         ax.set_xticks(tick_locations)
         ax.set_xticklabels(tick_labels)
-        ax.set_xlim(-3, 3)
-        ax.set_yticks(tick_locations)
-        ax.set_yticklabels(tick_labels)
-        ax.set_ylim(-3, 3)
+        ax.set_xlim(0, 100)
 
         self.ax_ = ax
         self.figure_ = ax.figure
@@ -439,7 +430,7 @@ def plot_lift_curve(
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.metrics import plot_lift_curve
     >>> from sklearn.model_selection import train_test_split
-    >>> from sklearn.linear_regression import LogisticRegression
+    >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(n_samples=1000, random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, test_size=0.4, random_state=0)
