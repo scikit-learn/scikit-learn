@@ -102,6 +102,7 @@ class KernelDensity(BaseEstimator):
     --------
     Compute a gaussian kernel density estimate with a fixed bandwidth.
 
+    >>> from sklearn.neighbors import KernelDensity
     >>> import numpy as np
     >>> rng = np.random.RandomState(42)
     >>> X = rng.random_sample((100, 3))
@@ -281,7 +282,7 @@ class KernelDensity(BaseEstimator):
             Determines random number generation used to generate
             random samples. Pass an int for reproducible results
             across multiple function calls.
-            See :term: `Glossary <random_state>`.
+            See :term:`Glossary <random_state>`.
 
         Returns
         -------

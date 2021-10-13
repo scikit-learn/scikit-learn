@@ -429,7 +429,7 @@ def plot_roc_curve(
     See Also
     --------
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    RocCurveDisplay.from_estimator : ROC Curve visualzation given an estimator
+    RocCurveDisplay.from_estimator : ROC Curve visualization given an estimator
         and some data.
     RocCurveDisplay.from_predictions : ROC Curve visualisation given the
         true and predicted values.

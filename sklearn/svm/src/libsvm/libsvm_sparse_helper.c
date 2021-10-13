@@ -242,7 +242,7 @@ npy_intp get_nonzero_SV (struct svm_csr_model *model) {
 
 
 /*
- * Predict using a model, where data is expected to be enconded into a csr matrix.
+ * Predict using a model, where data is expected to be encoded into a csr matrix.
  */
 int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
 		char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,

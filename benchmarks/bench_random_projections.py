@@ -43,10 +43,10 @@ def compute_time(t_start, delta):
     return delta.seconds + delta.microseconds / mu_second
 
 
-def bench_scikit_transformer(X, transfomer):
+def bench_scikit_transformer(X, transformer):
     gc.collect()
 
-    clf = clone(transfomer)
+    clf = clone(transformer)
 
     # start time
     t_start = datetime.now()
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     ###########################################################################
     n_nonzeros = int(opts.ratio_nonzeros * opts.n_features)
 
-    print("Dataset statics")
+    print("Dataset statistics")
     print("===========================")
     print("n_samples \t= %s" % opts.n_samples)
     print("n_features \t= %s" % opts.n_features)

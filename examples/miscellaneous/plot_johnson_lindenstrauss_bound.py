@@ -27,10 +27,10 @@ from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils.fixes import parse_version
 
 # `normed` is being deprecated in favor of `density` in histograms
-if parse_version(matplotlib.__version__) >= parse_version('2.1'):
-    density_param = {'density': True}
+if parse_version(matplotlib.__version__) >= parse_version("2.1"):
+    density_param = {"density": True}
 else:
-    density_param = {'normed': True}
+    density_param = {"normed": True}
 
 # %%
 # Theoretical bounds
@@ -119,7 +119,7 @@ plt.show()
 # digits dataset, pass the ``--use-digits-dataset`` command line argument to
 # this script.
 
-if '--use-digits-dataset' in sys.argv:
+if "--use-digits-dataset" in sys.argv:
     data = load_digits().data[:500]
 else:
     data = fetch_20newsgroups_vectorized().data[:500]
@@ -133,8 +133,10 @@ else:
 # - 1D histogram of the ratio of those distances (projected / original).
 
 n_samples, n_features = data.shape
-print("Embedding %d samples with dim %d using various random projections"
-      % (n_samples, n_features))
+print(
+    "Embedding %d samples with dim %d using various random projections"
+    % (n_samples, n_features)
+)
 
 n_components_range = np.array([300, 1000, 10000])
 dists = euclidean_distances(data, squared=True).ravel()
@@ -147,38 +149,41 @@ for n_components in n_components_range:
     t0 = time()
     rp = SparseRandomProjection(n_components=n_components)
     projected_data = rp.fit_transform(data)
-    print("Projected %d samples from %d to %d in %0.3fs"
-          % (n_samples, n_features, n_components, time() - t0))
-    if hasattr(rp, 'components_'):
+    print(
+        "Projected %d samples from %d to %d in %0.3fs"
+        % (n_samples, n_features, n_components, time() - t0)
+    )
+    if hasattr(rp, "components_"):
         n_bytes = rp.components_.data.nbytes
         n_bytes += rp.components_.indices.nbytes
         print("Random matrix with size: %0.3fMB" % (n_bytes / 1e6))
 
-    projected_dists = euclidean_distances(
-        projected_data, squared=True).ravel()[nonzero]
+    projected_dists = euclidean_distances(projected_data, squared=True).ravel()[nonzero]
 
     plt.figure()
     min_dist = min(projected_dists.min(), dists.min())
     max_dist = max(projected_dists.max(), dists.max())
-    plt.hexbin(dists, projected_dists, gridsize=100, cmap=plt.cm.PuBu,
-               extent=[min_dist, max_dist, min_dist, max_dist])
+    plt.hexbin(
+        dists,
+        projected_dists,
+        gridsize=100,
+        cmap=plt.cm.PuBu,
+        extent=[min_dist, max_dist, min_dist, max_dist],
+    )
     plt.xlabel("Pairwise squared distances in original space")
     plt.ylabel("Pairwise squared distances in projected space")
-    plt.title("Pairwise distances distribution for n_components=%d" %
-              n_components)
+    plt.title("Pairwise distances distribution for n_components=%d" % n_components)
     cb = plt.colorbar()
-    cb.set_label('Sample pairs counts')
+    cb.set_label("Sample pairs counts")
 
     rates = projected_dists / dists
-    print("Mean distances rate: %0.2f (%0.2f)"
-          % (np.mean(rates), np.std(rates)))
+    print("Mean distances rate: %0.2f (%0.2f)" % (np.mean(rates), np.std(rates)))
 
     plt.figure()
-    plt.hist(rates, bins=50, range=(0., 2.), edgecolor='k', **density_param)
+    plt.hist(rates, bins=50, range=(0.0, 2.0), edgecolor="k", **density_param)
     plt.xlabel("Squared distances rate: projected / original")
     plt.ylabel("Distribution of samples pairs")
-    plt.title("Histogram of pairwise distance rates for n_components=%d" %
-              n_components)
+    plt.title("Histogram of pairwise distance rates for n_components=%d" % n_components)
 
     # TODO: compute the expected value of eps and add them to the previous plot
     # as vertical lines / region

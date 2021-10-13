@@ -24,7 +24,7 @@ true_coef[true_coef < 0] = 0
 y = np.dot(X, true_coef)
 
 # Add some noise
-y += 5 * np.random.normal(size=(n_samples, ))
+y += 5 * np.random.normal(size=(n_samples,))
 
 # %%
 # Split the data in train set and test set
@@ -62,6 +62,6 @@ low_x, high_x = ax.get_xlim()
 low_y, high_y = ax.get_ylim()
 low = max(low_x, low_y)
 high = min(high_x, high_y)
-ax.plot([low, high], [low, high], ls="--", c=".3", alpha=.5)
+ax.plot([low, high], [low, high], ls="--", c=".3", alpha=0.5)
 ax.set_xlabel("OLS regression coefficients", fontweight="bold")
 ax.set_ylabel("NNLS regression coefficients", fontweight="bold")

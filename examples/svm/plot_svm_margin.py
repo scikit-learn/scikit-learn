@@ -36,9 +36,9 @@ Y = [0] * 20 + [1] * 20
 fignum = 1
 
 # fit the model
-for name, penalty in (('unreg', 1), ('reg', 0.05)):
+for name, penalty in (("unreg", 1), ("reg", 0.05)):
 
-    clf = svm.SVC(kernel='linear', C=penalty)
+    clf = svm.SVC(kernel="linear", C=penalty)
     clf.fit(X, Y)
 
     # get the separating hyperplane
@@ -58,17 +58,24 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
     # plot the line, the points, and the nearest vectors to the plane
     plt.figure(fignum, figsize=(4, 3))
     plt.clf()
-    plt.plot(xx, yy, 'k-')
-    plt.plot(xx, yy_down, 'k--')
-    plt.plot(xx, yy_up, 'k--')
+    plt.plot(xx, yy, "k-")
+    plt.plot(xx, yy_down, "k--")
+    plt.plot(xx, yy_up, "k--")
 
-    plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
-                facecolors='none', zorder=10, edgecolors='k',
-                cmap=cm.get_cmap('RdBu'))
-    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=cm.get_cmap('RdBu'),
-                edgecolors='k')
+    plt.scatter(
+        clf.support_vectors_[:, 0],
+        clf.support_vectors_[:, 1],
+        s=80,
+        facecolors="none",
+        zorder=10,
+        edgecolors="k",
+        cmap=cm.get_cmap("RdBu"),
+    )
+    plt.scatter(
+        X[:, 0], X[:, 1], c=Y, zorder=10, cmap=cm.get_cmap("RdBu"), edgecolors="k"
+    )
 
-    plt.axis('tight')
+    plt.axis("tight")
     x_min = -4.8
     x_max = 4.2
     y_min = -6
@@ -79,8 +86,7 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
     Z = clf.decision_function(xy).reshape(XX.shape)
 
     # Put the result into a contour plot
-    plt.contourf(XX, YY, Z, cmap=cm.get_cmap('RdBu'),
-                 alpha=0.5, linestyles=['-'])
+    plt.contourf(XX, YY, Z, cmap=cm.get_cmap("RdBu"), alpha=0.5, linestyles=["-"])
 
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)

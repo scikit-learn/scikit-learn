@@ -22,8 +22,7 @@ from matplotlib.colors import ListedColormap
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.neighbors import (KNeighborsClassifier,
-                               NeighborhoodComponentsAnalysis)
+from sklearn.neighbors import KNeighborsClassifier, NeighborhoodComponentsAnalysis
 from sklearn.pipeline import Pipeline
 
 
@@ -38,30 +37,37 @@ X, y = dataset.data, dataset.target
 # slicing by using a two-dim dataset
 X = X[:, [0, 2]]
 
-X_train, X_test, y_train, y_test = \
-    train_test_split(X, y, stratify=y, test_size=0.7, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, stratify=y, test_size=0.7, random_state=42
+)
 
-h = .01  # step size in the mesh
+h = 0.01  # step size in the mesh
 
 # Create color maps
-cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
-cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
+cmap_light = ListedColormap(["#FFAAAA", "#AAFFAA", "#AAAAFF"])
+cmap_bold = ListedColormap(["#FF0000", "#00FF00", "#0000FF"])
 
-names = ['KNN', 'NCA, KNN']
+names = ["KNN", "NCA, KNN"]
 
-classifiers = [Pipeline([('scaler', StandardScaler()),
-                         ('knn', KNeighborsClassifier(n_neighbors=n_neighbors))
-                         ]),
-               Pipeline([('scaler', StandardScaler()),
-                         ('nca', NeighborhoodComponentsAnalysis()),
-                         ('knn', KNeighborsClassifier(n_neighbors=n_neighbors))
-                         ])
-               ]
+classifiers = [
+    Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            ("knn", KNeighborsClassifier(n_neighbors=n_neighbors)),
+        ]
+    ),
+    Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            ("nca", NeighborhoodComponentsAnalysis()),
+            ("knn", KNeighborsClassifier(n_neighbors=n_neighbors)),
+        ]
+    ),
+]
 
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                     np.arange(y_min, y_max, h))
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
 for name, clf in zip(names, classifiers):
 
@@ -75,14 +81,21 @@ for name, clf in zip(names, classifiers):
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
     plt.figure()
-    plt.pcolormesh(xx, yy, Z, cmap=cmap_light, alpha=.8)
+    plt.pcolormesh(xx, yy, Z, cmap=cmap_light, alpha=0.8)
 
     # Plot also the training and testing points
-    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold, edgecolor='k', s=20)
+    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold, edgecolor="k", s=20)
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
     plt.title("{} (k = {})".format(name, n_neighbors))
-    plt.text(0.9, 0.1, '{:.2f}'.format(score), size=15,
-             ha='center', va='center', transform=plt.gca().transAxes)
+    plt.text(
+        0.9,
+        0.1,
+        "{:.2f}".format(score),
+        size=15,
+        ha="center",
+        va="center",
+        transform=plt.gca().transAxes,
+    )
 
 plt.show()

@@ -43,17 +43,21 @@ from sklearn.svm import LinearSVC
 # a specific date. We will only use posts from 2 categories to speed up running
 # time.
 
-categories = ['sci.med', 'sci.space']
-X_train, y_train = fetch_20newsgroups(random_state=1,
-                                      subset='train',
-                                      categories=categories,
-                                      remove=('footers', 'quotes'),
-                                      return_X_y=True)
-X_test, y_test = fetch_20newsgroups(random_state=1,
-                                    subset='test',
-                                    categories=categories,
-                                    remove=('footers', 'quotes'),
-                                    return_X_y=True)
+categories = ["sci.med", "sci.space"]
+X_train, y_train = fetch_20newsgroups(
+    random_state=1,
+    subset="train",
+    categories=categories,
+    remove=("footers", "quotes"),
+    return_X_y=True,
+)
+X_test, y_test = fetch_20newsgroups(
+    random_state=1,
+    subset="test",
+    categories=categories,
+    remove=("footers", "quotes"),
+    return_X_y=True,
+)
 
 ##############################################################################
 # Each feature comprises meta information about that post, such as the subject,
@@ -79,16 +83,16 @@ def subject_body_extractor(posts):
     features = np.empty(shape=(len(posts), 2), dtype=object)
     for i, text in enumerate(posts):
         # temporary variable `_` stores '\n\n'
-        headers, _, body = text.partition('\n\n')
+        headers, _, body = text.partition("\n\n")
         # store body text in second column
         features[i, 1] = body
 
-        prefix = 'Subject:'
-        sub = ''
+        prefix = "Subject:"
+        sub = ""
         # save text after 'Subject:' in first column
-        for line in headers.split('\n'):
+        for line in headers.split("\n"):
             if line.startswith(prefix):
-                sub = line[len(prefix):]
+                sub = line[len(prefix) :]
                 break
         features[i, 0] = sub
 
@@ -103,9 +107,7 @@ subject_body_transformer = FunctionTransformer(subject_body_extractor)
 
 
 def text_stats(posts):
-    return [{'length': len(text),
-             'num_sentences': text.count('.')}
-            for text in posts]
+    return [{"length": len(text), "num_sentences": text.count(".")} for text in posts]
 
 
 text_stats_transformer = FunctionTransformer(text_stats)
@@ -121,35 +123,59 @@ text_stats_transformer = FunctionTransformer(text_stats)
 # ``ColumnTransformer``. We combine them, with weights, then train a
 # classifier on the combined set of features.
 
-pipeline = Pipeline([
-    # Extract subject & body
-    ('subjectbody', subject_body_transformer),
-    # Use ColumnTransformer to combine the subject and body features
-    ('union', ColumnTransformer(
-        [
-            # bag-of-words for subject (col 0)
-            ('subject', TfidfVectorizer(min_df=50), 0),
-            # bag-of-words with decomposition for body (col 1)
-            ('body_bow', Pipeline([
-                ('tfidf', TfidfVectorizer()),
-                ('best', TruncatedSVD(n_components=50)),
-            ]), 1),
-            # Pipeline for pulling text stats from post's body
-            ('body_stats', Pipeline([
-                ('stats', text_stats_transformer),  # returns a list of dicts
-                ('vect', DictVectorizer()),  # list of dicts -> feature matrix
-            ]), 1),
-        ],
-        # weight above ColumnTransformer features
-        transformer_weights={
-            'subject': 0.8,
-            'body_bow': 0.5,
-            'body_stats': 1.0,
-        }
-    )),
-    # Use a SVC classifier on the combined features
-    ('svc', LinearSVC(dual=False)),
-], verbose=True)
+pipeline = Pipeline(
+    [
+        # Extract subject & body
+        ("subjectbody", subject_body_transformer),
+        # Use ColumnTransformer to combine the subject and body features
+        (
+            "union",
+            ColumnTransformer(
+                [
+                    # bag-of-words for subject (col 0)
+                    ("subject", TfidfVectorizer(min_df=50), 0),
+                    # bag-of-words with decomposition for body (col 1)
+                    (
+                        "body_bow",
+                        Pipeline(
+                            [
+                                ("tfidf", TfidfVectorizer()),
+                                ("best", TruncatedSVD(n_components=50)),
+                            ]
+                        ),
+                        1,
+                    ),
+                    # Pipeline for pulling text stats from post's body
+                    (
+                        "body_stats",
+                        Pipeline(
+                            [
+                                (
+                                    "stats",
+                                    text_stats_transformer,
+                                ),  # returns a list of dicts
+                                (
+                                    "vect",
+                                    DictVectorizer(),
+                                ),  # list of dicts -> feature matrix
+                            ]
+                        ),
+                        1,
+                    ),
+                ],
+                # weight above ColumnTransformer features
+                transformer_weights={
+                    "subject": 0.8,
+                    "body_bow": 0.5,
+                    "body_stats": 1.0,
+                },
+            ),
+        ),
+        # Use a SVC classifier on the combined features
+        ("svc", LinearSVC(dual=False)),
+    ],
+    verbose=True,
+)
 
 ##############################################################################
 # Finally, we fit our pipeline on the training data and use it to predict
@@ -157,6 +183,4 @@ pipeline = Pipeline([
 
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
-print('Classification report:\n\n{}'.format(
-    classification_report(y_test, y_pred))
-)
+print("Classification report:\n\n{}".format(classification_report(y_test, y_pred)))
