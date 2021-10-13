@@ -65,10 +65,10 @@ not requested by any of its children.
 Weighted scoring and unweighted fitting
 ---------------------------------------
 
-Since ``LogisticRegressionCV``, like all scikit-learn estimators, requires that
-weights explicitly be requested, we need to explicitly say that
-``sample_weight`` is not used for it, so that ``cross_validate`` doesn't pass
-it along.
+All scikit-learn estimators requires weights to be explicitly requested or not
+requested. To perform a unweighted fit, we need to configure
+:class:`~linear_model.LogisticRegressionCV` to not request sample weights, so
+that :func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).score_requests(
   ...     sample_weight=True
@@ -84,6 +84,11 @@ it along.
   ...     props={"sample_weight": my_weights, "groups": my_groups},
   ...     scoring=weighted_acc,
   ... )
+
+If :class:`~linear_model.LogisticRegressionCV` did not call ``fit_requests``,
+:func:`~model_selection.cross_validate` will raise an error because weights is
+passed in but :class:`~linear_model.LogisticRegressionCV` was not configured to
+recognize the weights.
 
 Unweighted feature selection
 ----------------------------
@@ -185,3 +190,9 @@ whether ``sample_weight`` should be passed to the estimator's scorer or not::
     ...     print(e)
     sample_weight is passed but is not explicitly set as requested or not. In
     method: score
+
+The issue can be fixed by explicitly setting the request value::
+
+    >>> lr = LogisticRegression().fit_requests(
+    ...     sample_weight=True
+    ... ).score_requests(sample_weight=False)
