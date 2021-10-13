@@ -144,9 +144,7 @@ def test_multioutput_regression():
         y_true, y_pred, multioutput="variance_weighted", force_finite=False
     )
     assert_almost_equal(error, np.nan)
-    error = r2_score(
-        y_true, y_pred, multioutput="uniform_average", force_finite=False
-    )
+    error = r2_score(y_true, y_pred, multioutput="uniform_average", force_finite=False)
     assert_almost_equal(error, np.nan)
 
     # Dropping the 4th output to check `force_finite=False` for nominal
@@ -158,9 +156,7 @@ def test_multioutput_regression():
     )
     assert_almost_equal(error, error2)
     error = r2_score(y_true, y_pred, multioutput="uniform_average")
-    error2 = r2_score(
-        y_true, y_pred, multioutput="uniform_average", force_finite=False
-    )
+    error2 = r2_score(y_true, y_pred, multioutput="uniform_average", force_finite=False)
     assert_almost_equal(error, error2)
 
 
@@ -345,8 +341,10 @@ def test_regression_multioutput_array():
     )
     assert_array_almost_equal(evs, [0, -1.25], decimal=2)
     evs2 = explained_variance_score(
-        [[0, -1], [0, 1]], [[2, 2], [1, 1]], multioutput="raw_values",
-        force_finite=False
+        [[0, -1], [0, 1]],
+        [[2, 2], [1, 1]],
+        multioutput="raw_values",
+        force_finite=False,
     )
     assert_array_almost_equal(evs2, [-np.inf, -1.25], decimal=2)
 
@@ -361,7 +359,7 @@ def test_regression_multioutput_array():
     assert_array_almost_equal(r22, [np.nan, -3.0], decimal=2)
     assert_almost_equal(
         np.mean(r22),
-        r2_score(y_true, y_pred, multioutput="uniform_average", force_finite=False)
+        r2_score(y_true, y_pred, multioutput="uniform_average", force_finite=False),
     )
 
     evs = explained_variance_score(y_true, y_pred, multioutput="raw_values")
@@ -372,8 +370,7 @@ def test_regression_multioutput_array():
     )
     assert_array_almost_equal(evs2, [np.nan, -3.0], decimal=2)
     assert_almost_equal(
-        np.mean(evs2),
-        explained_variance_score(y_true, y_pred, force_finite=False)
+        np.mean(evs2), explained_variance_score(y_true, y_pred, force_finite=False)
     )
 
     # Handling msle separately as it does not accept negative inputs.
