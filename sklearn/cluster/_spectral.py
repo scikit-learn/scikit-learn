@@ -28,25 +28,25 @@ from ._kmeans import k_means
 def cluster_qr(vectors):
     """Find the discrete partition closest to the eigenvector embedding.
 
-    This implementation was proposed in [1]_.
+        This implementation was proposed in [1]_.
 
-.. versionadded:: 1.1
+    .. versionadded:: 1.1
 
-    Parameters
-    ----------
-    vectors : array-like, shape: (n_samples, n_clusters)
-        The embedding space of the samples.
+        Parameters
+        ----------
+        vectors : array-like, shape: (n_samples, n_clusters)
+            The embedding space of the samples.
 
-    Returns
-    -------
-    labels : array of integers, shape: n_samples
-        The labels of the clusters.
+        Returns
+        -------
+        labels : array of integers, shape: n_samples
+            The labels of the clusters.
 
-    References
-    ----------
-    .. [1] `Simple, direct, and efficient multi-way spectral clustering, 2019
-        Anil Damle, Victor Minden, Lexing Ying
-        <https://doi.org/10.1093/imaiai/iay008>`_
+        References
+        ----------
+        .. [1] `Simple, direct, and efficient multi-way spectral clustering, 2019
+            Anil Damle, Victor Minden, Lexing Ying
+            <https://doi.org/10.1093/imaiai/iay008>`_
 
     """
 
