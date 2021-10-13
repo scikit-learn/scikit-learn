@@ -498,10 +498,10 @@ def _pandas_dtype_needs_early_conversation(pd_dtype):
     if is_sparse(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
         return False
-    elif not is_extension_array_dtype(pd_dtype):
+    elif is_extension_array_dtype(pd_dtype) and (
+        is_integer_dtype(pd_dtype) or is_float_dtype(pd_dtype)
+    ):
         # Only handle extension arrays for interger and floats
-        return False
-    elif is_integer_dtype(pd_dtype) or is_float_dtype(pd_dtype):
         return True
 
     return False
