@@ -483,8 +483,8 @@ def _ensure_no_complex_data(array):
         raise ValueError("Complex data not supported\n{}\n".format(array))
 
 
-def _convert_pandas_extension_array_into_numpy_dtype(pd_array):
-    """Maps pandas extension array into its corresponding numpy dtype."""
+def _pandas_dtype_needs_early_conversation(pd_dtype):
+    """Return True if pandas extension pd_dtype need to be converted early."""
     try:
         from pandas.api.types import (
             is_extension_array_dtype,
@@ -495,9 +495,7 @@ def _convert_pandas_extension_array_into_numpy_dtype(pd_array):
     except ImportError:
         return False
 
-    pd_dtype = pd_array.dtype
-
-    if is_sparse(pd_array):
+    if is_sparse(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
         return False
     elif not is_extension_array_dtype(pd_dtype):
@@ -631,7 +629,7 @@ def check_array(
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    pd_requires_converstion = False
+    pandas_requires_conversation = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
@@ -650,8 +648,8 @@ def check_array(
             if column.dtype.kind == "b":
                 # pandas boolean dtype __array__ interface coerces bools to objects
                 dtype_iter = np.dtype(object)
-            elif _convert_pandas_extension_array_into_numpy_dtype(column):
-                pd_requires_converstion = True
+            elif _pandas_dtype_needs_early_conversation(dtype_iter):
+                pandas_requires_conversation = True
 
             dtypes_orig.append(dtype_iter)
 
@@ -674,7 +672,7 @@ def check_array(
             # list of accepted types.
             dtype = dtype[0]
 
-    if pd_requires_converstion:
+    if pandas_requires_conversation:
         # pandas dataframe requires conversion earlier to handle extension dtypes with
         # nans
         array = array.astype(dtype)
