@@ -135,7 +135,7 @@ __all__ = [
     "jaccard_score",
     "label_ranking_average_precision_score",
     "label_ranking_loss",
-    "liftCurveDisplay",
+    "LiftCurveDisplay",
     "lift_curve",
     "lift_score",
     "log_loss",
