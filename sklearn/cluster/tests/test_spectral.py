@@ -212,7 +212,7 @@ def test_cluster_qr_permutation_invariance():
     n_samples, n_components = 100, 5
     data = random_state.randn(n_samples, n_components)
     perm = random_state.permutation(n_samples)
-    assert assert np.array_equal(
+    assert np.array_equal(
         cluster_qr(data)[perm],
         cluster_qr(data[perm]),
     )
