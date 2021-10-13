@@ -747,12 +747,12 @@ In the multilabel case with binary label indicators::
 Lift
 ----
 
-`Lift <https://en.wikipedia.org/wiki/Lift_(data_mining)>`_ can be understood in
-different ways. One way is as the ratio of the positive responses of a targeted
-treatment of a subset of the dataset relative to the ratio of positive responses
-in the dataset as a whole.
+Lift [WikipediaLift2021]_ can be understood in different ways. One way is as
+the ratio of the positive responses of a targeted treatment of a subset of the
+dataset relative to the ratio of positive responses in the dataset as a whole.
 
-Lift can also be understood as a kind of normalised precision of the positive class.
+Lift can also be understood as a kind of normalised precision of the positive
+class.
 
 .. math::
 
@@ -762,15 +762,39 @@ Lift can also be understood as a kind of normalised precision of the positive cl
 
    Lift = \frac{Precision}{pr}
 
-where :math:`tp`, :math:`fp`, :math:`fn`, :math:`n` and :math:`pr` are the true positive count, false positive count, false negative count, dataset size and positive rate respectively.
+where :math:`tp`, :math:`fp`, :math:`fn`, :math:`n` and :math:`pr` are the
+true positive count, false positive count, false negative count, dataset size
+and positive classification rate respectively.
 
-Here is an example showing how to calculate lift::
+:func:`lift_score` in scikit-learn is an implimentation of lift.
+
+Here is an example showing how to calculate::
 
   >>> from sklearn.metrics import lift_score
   >>> y_pred = [1, 1, 1, 1, 1, 2, 2, 2]
   >>> y_true = [1, 1, 1, 2, 2, 1, 2, 2]
   >>> lift_score(y_true, y_pred)
   1.2
+
+Related to the :func:`lift_score` is the :func:`lift_curve`. The lift curve
+shows the lift on the y-axis relative to the percentage of the population's
+positive classification rate (percentage of population classified as the
+positive class) on the x-axis.
+
+Intuitively, the lift curve shows what is the precision/effectivness of a
+treatment on a subset of the population as we increase the size of the subset,
+all relative to the effectiveness of a random treatment. it is related closely
+to the :func:`precision_recall_curve`.
+
+:class:`LiftCurveDisplay` can be used to visually represent a lift curve. See
+:class:`LiftCurveDisplay` and :func:`lift_curve` for examples and instructions.
+
+.. topic:: References:
+
+  .. [WikipediaLift2021] Wikipedia contributers. Lift (data mining). Wikipedia
+     October 13, 2021, 21:00 UTC. Available at:
+     https://en.wikipedia.org/wiki/Lift_(data_mining).
+     Accessed October 13, 2021.
 
 .. _precision_recall_f_measure_metrics:
 
