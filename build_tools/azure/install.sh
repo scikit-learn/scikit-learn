@@ -189,3 +189,5 @@ else
     python setup.py develop
 fi
 ccache -s
+
+python -c "import numpy; print(numpy.get_printoptions())"

@@ -827,6 +827,10 @@ class Nystroem(TransformerMixin, BaseEstimator):
     >>> data_transformed = feature_map_nystroem.fit_transform(data)
     >>> clf.fit(data_transformed, y)
     LinearSVC()
+    >>> import numpy; print(numpy.get_printoptions())
+    {'edgeitems': 3, 'threshold': 1000, 'floatmode': 'maxprec', 'precision': 8,
+    'suppress': False, 'linewidth': 75, 'nanstr': 'nan', 'infstr': 'inf', 'sign': '-',
+    'formatter': None, 'legacy': False}
     >>> clf.score(data_transformed, y)
     0.9987...
     """
