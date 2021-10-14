@@ -60,6 +60,10 @@ Changelog
   message when the solver does not support sparse matrices with int64 indices.
   :pr:`21093` by `Tom Dupre la Tour`_.
 
+- |Enhancement| :class:`linear_model.RidgeCV` now issues a warning if the optimal
+  value of `alpha` lies at the boundary of the explored range.
+  :pr:`21303` :user:`Divyaprabha M <divyaprabha123>` and :user:`Ben Reiniger <bmreiniger>`.
+
 :mod:`sklearn.metrics`
 ......................
 
