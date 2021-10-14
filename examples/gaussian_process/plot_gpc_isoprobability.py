@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =================================================================
 Iso-probability lines for Gaussian Processes classification (GPC)
