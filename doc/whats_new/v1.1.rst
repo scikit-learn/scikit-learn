@@ -54,6 +54,13 @@ Changelog
   'kmeans' and 'discrete' methods. See `spectral_clustering` for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Enhancement| :func:`cross_decomposition._PLS.inverse_transform` now allows
+  reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
+  :user:`Robin Thibaut <robinthibaut>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
