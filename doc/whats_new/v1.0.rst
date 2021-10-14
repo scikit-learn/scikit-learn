@@ -43,6 +43,14 @@ Fixed models
   between sparse and dense input. :pr:`21195`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Compute `y_std` properly with multi-target in
+  :class:`sklearn.gaussian_process.GaussianProcessRegressor` allowing
+  proper normalization in multi-target scene.
+  :pr:`20761` by :user:`Patrick de C. T. R. Ferreira <patrickctrf>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -677,7 +685,7 @@ Changelog
   Dupre la Tour`_.
 
 - |Fix| Decrease the numerical default tolerance in the lobpcg call
-  in :func:`manifold.spectral_embedding` to prevent numerical instability. 
+  in :func:`manifold.spectral_embedding` to prevent numerical instability.
   :pr:`21194` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.metrics`
@@ -979,13 +987,6 @@ Changelog
   :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
 
-:mod:`sklearn.gaussian_process`
-...............................
-
-- |Fix| Compute `y_std` properly with multi-target in
-  :class:`sklearn.gaussian_process.GaussianProcessRegressor` allowing
-  proper normalization in multi-target scene.
-  :pr:`20761` by :user:`Patrick de C. T. R. Ferreira <patrickctrf>`.
 - |API| :func:`utils._testing.assert_warns` and
   :func:`utils._testing.assert_warns_message` are deprecated in 1.0 and will
   be removed in 1.2. Used `pytest.warns` context manager instead. Note that
