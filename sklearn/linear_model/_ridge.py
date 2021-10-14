@@ -1999,22 +1999,18 @@ class _BaseRidgeCV(LinearModel):
         if any(alpha in [min_alpha, max_alpha] for alpha in alphas):
             if self.alpha_per_target:
                 msg = (
-                    "Some of the individual targets had "
-                    "an optimal value for the regularization parameter "
-                    "''alpha'' at the boundary of the explored range "
-                    f"(between {min_alpha} and {max_alpha}); "
-                    f"the found optimal values are: {self.alpha_}\n"
-                    "Consider setting the ''alphas'' parameter to explore a "
-                    "wider range."
+                    "Some of the individual targets had an optimal value for the "
+                    "regularization parameter ''alpha'' at the boundary of the "
+                    f"explored range (between {min_alpha} and {max_alpha}); "
+                    f"the found optimal values are: {self.alpha_}\nConsider"
+                    "setting the ''alphas'' parameter to explore a wider range."
                 )
             else:
                 msg = (
-                    "The optimal value for the regularization "
-                    f"parameter ''alpha'' was {self.alpha_} which "
-                    "lies at a boundary of the explored range "
-                    f"(between {min_alpha} and {max_alpha}). Consider setting "
-                    "the ''alphas'' parameter to explore a "
-                    "wider range."
+                    "The optimal value for the regularization parameter ''alpha''"
+                    f" was {self.alpha_} which lies at a boundary of the explored "
+                    f"range (between {min_alpha} and {max_alpha}). Consider "
+                    "setting the ''alphas'' parameter to explore a wider range."
                 )
             warnings.warn(msg, ConvergenceWarning)
 
