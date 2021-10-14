@@ -510,13 +510,6 @@ Changelog
   version 1.2.
   :pr:`20161` by :user:`Shuhei Kayawari <wowry>` and :user:`arka204`.
 
-- |Feature| Added auto mode to :class:`feature_selection.SequentialFeatureSelection`.
-  If the argument `n_features_to_select` is `'auto'`, select features until
-  the score improvement does not exceed the argument `tol`.
-  The default value of `n_features_to_select` changed from `None` to `‘warn’` in 1.1
-  and will become `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3.
-  :pr:`20145` by :user:`murata-yu`.
-
 :mod:`sklearn.inspection`
 .........................
 
@@ -684,7 +677,7 @@ Changelog
   Dupre la Tour`_.
 
 - |Fix| Decrease the numerical default tolerance in the lobpcg call
-  in :func:`manifold.spectral_embedding` to prevent numerical instability. 
+  in :func:`manifold.spectral_embedding` to prevent numerical instability.
   :pr:`21194` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.metrics`
