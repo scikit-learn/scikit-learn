@@ -96,6 +96,11 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    sklearn.preprocessing.FunctionTransformer : Constructs a transformer from an
+        arbitrary callable.
+
     Notes
     -----
     Internally, the target `y` is always converted into a 2-dimensional array
