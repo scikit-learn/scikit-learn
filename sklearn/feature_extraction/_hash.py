@@ -7,6 +7,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..utils import IS_PYPY
+from ..utils.validation import _generate_get_feature_names_out
 from ..base import BaseEstimator, TransformerMixin
 
 if not IS_PYPY:
@@ -188,3 +189,18 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"X_types": [self.input_type]}
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        return _generate_get_feature_names_out(self, self.n_features)

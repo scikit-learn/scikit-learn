@@ -6,6 +6,7 @@ import numpy as np
 
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _generate_get_feature_names_out
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from ._dict_learning import dict_learning, dict_learning_online
@@ -234,6 +235,23 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         )
 
         return U
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        return _generate_get_feature_names_out(
+            self, self.components_.shape[0], input_features
+        )
 
 
 class MiniBatchSparsePCA(SparsePCA):

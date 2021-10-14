@@ -10,7 +10,11 @@ from scipy.sparse.linalg import eigsh
 
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip, _randomized_eigsh
-from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
+from ..utils.validation import (
+    check_is_fitted,
+    _check_psd_eigenvalues,
+    _generate_get_feature_names_out,
+)
 from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
@@ -546,3 +550,20 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             "preserves_dtype": [np.float64, np.float32],
             "pairwise": self.kernel == "precomputed",
         }
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        return _generate_get_feature_names_out(
+            self, self.eigenvalues_.shape[0], input_features
+        )

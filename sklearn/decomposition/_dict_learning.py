@@ -19,6 +19,7 @@ from ..utils import deprecated
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _generate_get_feature_names_out
 from ..utils.fixes import delayed
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
@@ -1314,6 +1315,21 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """Number of features seen during `fit`."""
         return self.dictionary.shape[1]
 
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        return _generate_get_feature_names_out(self, self.n_components_, input_features)
+
 
 class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Dictionary learning.
@@ -1584,6 +1600,23 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.components_ = U
         self.error_ = E
         return self
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        return _generate_get_feature_names_out(
+            self, self.components_.shape[0], input_features
+        )
 
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -1924,3 +1957,20 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.inner_stats_ = (A, B)
         self.iter_offset_ = iter_offset + 1
         return self
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        return _generate_get_feature_names_out(
+            self, self.components_.shape[0], input_features
+        )

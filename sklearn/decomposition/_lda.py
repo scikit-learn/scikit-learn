@@ -20,6 +20,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _generate_get_feature_names_out
 from ..utils.fixes import delayed
 
 from ._online_lda_fast import (
@@ -903,3 +904,20 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
             Perplexity score.
         """
         return self._perplexity_precomp_distr(X, sub_sampling=sub_sampling)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        return _generate_get_feature_names_out(
+            self, self.components_.shape[0], input_features
+        )

@@ -15,7 +15,7 @@ from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _generate_get_feature_names_out
 
 
 __all__ = ["TruncatedSVD"]
@@ -273,3 +273,20 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"preserves_dtype": [np.float64, np.float32]}
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        return _generate_get_feature_names_out(
+            self, self.components_.shape[0], input_features
+        )

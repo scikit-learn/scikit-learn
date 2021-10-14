@@ -171,3 +171,11 @@ def test_hash_collisions():
         alternate_sign=False, n_features=1, input_type="string"
     ).fit_transform(X)
     assert Xt.data[0] == len(X[0])
+
+
+def test_feature_names_out():
+    """Check feature names out for FeatureHasher."""
+    hasher = FeatureHasher(n_features=16)
+
+    names = hasher.get_feature_names_out()
+    assert_array_equal([f"featurehasher{i}" for i in range(16)], names)
