@@ -98,7 +98,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     See Also
     --------
-    sklearn.preprocessing.FunctionTransformer : Constructs a transformer from an
+    sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
         arbitrary callable.
 
     Notes
