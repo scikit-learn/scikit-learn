@@ -482,6 +482,21 @@ def test_radius_neighbors_classifier(
             assert_array_equal(y_pred, y_str[:n_test_pts])
 
 
+# TODO: Remove in v1.2
+def test_radius_neighbors_classifier_kwargs_is_deprecated():
+    extra_kwargs = {
+        "unused_param": "",
+        "extra_param": None,
+    }
+    msg = (
+        "Passing additional keyword parameters has no effect and is deprecated "
+        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
+        f"keyword parameter(s) are: {extra_kwargs.keys()}."
+    )
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        neighbors.RadiusNeighborsClassifier(**extra_kwargs)
+
+
 def test_radius_neighbors_classifier_when_no_neighbors():
     # Test radius-based classifier when no neighbors found.
     # In this case it should rise an informative exception
@@ -1073,7 +1088,12 @@ def test_kneighbors_regressor_sparse(
             assert np.mean(knn.predict(X2).round() == y) > 0.95
 
             X2_pre = sparsev(pairwise_distances(X, metric="euclidean"))
-            assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
+            if sparsev in {dok_matrix, bsr_matrix}:
+                msg = "not supported due to its handling of explicit zeros"
+                with pytest.raises(TypeError, match=msg):
+                    knn_pre.predict(X2_pre)
+            else:
+                assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
 
 
 def test_neighbors_iris():
@@ -1803,3 +1823,15 @@ def test_pairwise_deprecated(NearestNeighbors):
     msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         nn._pairwise
+
+
+# TODO: Remove in 1.3
+def test_neighbors_distance_metric_deprecation():
+    from sklearn.neighbors import DistanceMetric
+    from sklearn.metrics import DistanceMetric as ActualDistanceMetric
+
+    msg = r"This import path will be removed in 1\.3"
+    with pytest.warns(FutureWarning, match=msg):
+        dist_metric = DistanceMetric.get_metric("euclidean")
+
+    assert isinstance(dist_metric, ActualDistanceMetric)

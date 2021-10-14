@@ -937,6 +937,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     RidgeClassifier : Ridge classifier.
@@ -1128,6 +1134,12 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     Ridge : Ridge regression.
@@ -1225,6 +1237,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     @property
     def classes_(self):
+        """Classes labels."""
         return self._label_binarizer.classes_
 
 
@@ -1533,7 +1546,7 @@ class _RidgeGCV(LinearModel):
 
     def _sparse_multidot_diag(self, X, A, X_mean, sqrt_sw):
         """Compute the diagonal of (X - X_mean).dot(A).dot((X - X_mean).T)
-        without explicitely centering X nor computing X.dot(A)
+        without explicitly centering X nor computing X.dot(A)
         when X is sparse.
 
         Parameters
@@ -1983,6 +1996,8 @@ class _BaseRidgeCV(LinearModel):
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
         self.n_features_in_ = estimator.n_features_in_
+        if hasattr(estimator, "feature_names_in_"):
+            self.feature_names_in_ = estimator.feature_names_in_
 
         return self
 
@@ -2108,6 +2123,12 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     Ridge : Ridge regression.
@@ -2163,7 +2184,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             ``normalize`` was deprecated in version 1.0 and
             will be removed in 1.2.
 
-    scoring : string, callable, default=None
+    scoring : str, callable, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
@@ -2186,7 +2207,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     store_cv_values : bool, default=False
         Flag indicating if the cross-validation values corresponding to
@@ -2227,14 +2248,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.linear_model import RidgeClassifierCV
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = RidgeClassifierCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
-    >>> clf.score(X, y)
-    0.9630...
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -2247,6 +2265,15 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     For multi-class classification, n_class classifiers are trained in
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.linear_model import RidgeClassifierCV
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> clf = RidgeClassifierCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
+    >>> clf.score(X, y)
+    0.9630...
     """
 
     def __init__(
@@ -2276,8 +2303,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features. When using GCV,
+            Training vectors, where `n_samples` is the number of samples
+            and `n_features` is the number of features. When using GCV,
             will be cast to float64 if necessary.
 
         y : ndarray of shape (n_samples,)
@@ -2290,6 +2317,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         X, y = self._validate_data(
             X,
@@ -2315,6 +2343,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     @property
     def classes_(self):
+        """Classes labels."""
         return self._label_binarizer.classes_
 
     def _more_tags(self):

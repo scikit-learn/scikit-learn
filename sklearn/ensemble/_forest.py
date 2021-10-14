@@ -565,8 +565,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
-
-        return self.estimators_[0]._validate_X_predict(X, check_input=True)
+        X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+        if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
+            raise ValueError("No support for np.int64 index based sparse matrices")
+        return X
 
     @property
     def feature_importances_(self):
@@ -1265,6 +1267,11 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1410,7 +1417,7 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "mse", "absolute_error", "poisson"}, \
+    criterion : {"squared_error", "absolute_error", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
@@ -1589,6 +1596,11 @@ class RandomForestRegressor(ForestRegressor):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1920,6 +1932,11 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -2222,6 +2239,11 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs.
 
@@ -2432,11 +2454,11 @@ class RandomTreesEmbedding(BaseForest):
 
     Attributes
     ----------
-    base_estimator_ : DecisionTreeClassifier instance
+    base_estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier` instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of DecisionTreeClassifier instances
+    estimators_ : list of :class:`~sklearn.tree.ExtraTreeClassifier` instances
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
@@ -2453,6 +2475,11 @@ class RandomTreesEmbedding(BaseForest):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+        .. versionadded:: 1.0
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.

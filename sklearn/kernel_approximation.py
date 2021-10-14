@@ -21,7 +21,7 @@ except ImportError:  # scipy < 1.4
 
 from .base import BaseEstimator
 from .base import TransformerMixin
-from .utils import check_random_state, as_float_array
+from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
@@ -83,6 +83,12 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
@@ -125,7 +131,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
@@ -160,7 +166,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like}, shape (n_samples, n_features)
-            New data, where `n_samples` in the number of samples
+            New data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         Returns
@@ -256,6 +262,12 @@ class RBFSampler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
@@ -303,7 +315,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
@@ -333,7 +345,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            New data, where `n_samples` in the number of samples
+            New data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         Returns
@@ -386,6 +398,12 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
@@ -431,7 +449,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
@@ -469,9 +487,9 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
             Returns the instance itself.
         """
         check_is_fitted(self)
-
-        X = as_float_array(X, copy=True)
-        X = self._validate_data(X, copy=False, reset=False)
+        X = self._validate_data(
+            X, copy=True, dtype=[np.float64, np.float32], reset=False
+        )
         if (X <= -self.skewedness).any():
             raise ValueError("X may not contain entries smaller than -skewedness.")
 
@@ -519,6 +537,12 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -605,7 +629,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         Returns
@@ -764,6 +788,12 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
@@ -832,7 +862,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
@@ -878,7 +908,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
-        self.component_indices_ = inds
+        self.component_indices_ = basis_inds
         return self
 
     def transform(self, X):

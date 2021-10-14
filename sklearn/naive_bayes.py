@@ -168,6 +168,12 @@ class GaussianNB(_BaseNB):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     sigma_ : ndarray of shape (n_classes, n_features)
         Variance of each feature per class.
 
@@ -218,8 +224,8 @@ class GaussianNB(_BaseNB):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -334,8 +340,8 @@ class GaussianNB(_BaseNB):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -366,8 +372,8 @@ class GaussianNB(_BaseNB):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -570,8 +576,8 @@ class _BaseDiscreteNB(_BaseNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -640,8 +646,8 @@ class _BaseDiscreteNB(_BaseNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -805,6 +811,12 @@ class MultinomialNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
@@ -946,6 +958,12 @@ class ComplementNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
@@ -1076,6 +1094,12 @@ class BernoulliNB(_BaseDiscreteNB):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1233,6 +1257,12 @@ class CategoricalNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_categories_ : ndarray of shape (n_features,), dtype=np.int64
         Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
@@ -1274,8 +1304,8 @@ class CategoricalNB(_BaseDiscreteNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features. Here, each feature of X is
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. Here, each feature of X is
             assumed to be from a different categorical distribution.
             It is further assumed that all categories of each feature are
             represented by the numbers 0, ..., n - 1, where n refers to the
@@ -1312,8 +1342,8 @@ class CategoricalNB(_BaseDiscreteNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features. Here, each feature of X is
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. Here, each feature of X is
             assumed to be from a different categorical distribution.
             It is further assumed that all categories of each feature are
             represented by the numbers 0, ..., n - 1, where n refers to the

@@ -21,14 +21,16 @@ print(__doc__)
 # License: BSD 3 clause
 
 import matplotlib
-matplotlib.use('TkAgg')
+
+matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 try:
     from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 except ImportError:
     # NavigationToolbar2TkAgg was deprecated in matplotlib 2.2
     from matplotlib.backends.backend_tkagg import (
-        NavigationToolbar2TkAgg as NavigationToolbar2Tk
+        NavigationToolbar2TkAgg as NavigationToolbar2Tk,
     )
 from matplotlib.figure import Figure
 from matplotlib.contour import ContourSet
@@ -58,12 +60,12 @@ class Model:
         self.surface_type = 0
 
     def changed(self, event):
-        """Notify the observers. """
+        """Notify the observers."""
         for observer in self.observers:
             observer.update(event, self)
 
     def add_observer(self, observer):
-        """Register an observer. """
+        """Register an observer."""
         self.observers.append(observer)
 
     def set_surface(self, surface):
@@ -96,14 +98,23 @@ class Controller:
         degree = int(self.degree.get())
         kernel_map = {0: "linear", 1: "rbf", 2: "poly"}
         if len(np.unique(y)) == 1:
-            clf = svm.OneClassSVM(kernel=kernel_map[self.kernel.get()],
-                                  gamma=gamma, coef0=coef0, degree=degree)
+            clf = svm.OneClassSVM(
+                kernel=kernel_map[self.kernel.get()],
+                gamma=gamma,
+                coef0=coef0,
+                degree=degree,
+            )
             clf.fit(X)
         else:
-            clf = svm.SVC(kernel=kernel_map[self.kernel.get()], C=C,
-                          gamma=gamma, coef0=coef0, degree=degree)
+            clf = svm.SVC(
+                kernel=kernel_map[self.kernel.get()],
+                C=C,
+                gamma=gamma,
+                coef0=coef0,
+                degree=degree,
+            )
             clf.fit(X, y)
-        if hasattr(clf, 'score'):
+        if hasattr(clf, "score"):
             print("Accuracy:", clf.score(X, y) * 100)
         X1, X2, Z = self.decision_surface(clf)
         self.model.clf = clf
@@ -134,13 +145,13 @@ class Controller:
         self.refit()
 
     def refit(self):
-        """Refit the model if already fitted. """
+        """Refit the model if already fitted."""
         if self.fitted:
             self.fit()
 
 
 class View:
-    """Test docstring. """
+    """Test docstring."""
 
     def __init__(self, root, controller):
         f = Figure()
@@ -157,7 +168,7 @@ class View:
             canvas.show()
         canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-        canvas.mpl_connect('button_press_event', self.onclick)
+        canvas.mpl_connect("button_press_event", self.onclick)
         toolbar = NavigationToolbar2Tk(canvas, root)
         toolbar.update()
         self.controllbar = ControllBar(root, controller)
@@ -184,9 +195,9 @@ class View:
     def update_example(self, model, idx):
         x, y, l = model.data[idx]
         if l == 1:
-            color = 'w'
+            color = "w"
         elif l == -1:
-            color = 'k'
+            color = "k"
         self.ax.plot([x], [y], "%so" % color, scalex=0.0, scaley=0.0)
 
     def update(self, event, model):
@@ -227,25 +238,33 @@ class View:
         """Plot the support vectors by placing circles over the
         corresponding data points and adds the circle collection
         to the contours list."""
-        cs = self.ax.scatter(support_vectors[:, 0], support_vectors[:, 1],
-                             s=80, edgecolors="k", facecolors="none")
+        cs = self.ax.scatter(
+            support_vectors[:, 0],
+            support_vectors[:, 1],
+            s=80,
+            edgecolors="k",
+            facecolors="none",
+        )
         self.contours.append(cs)
 
     def plot_decision_surface(self, surface, type):
         X1, X2, Z = surface
         if type == 0:
             levels = [-1.0, 0.0, 1.0]
-            linestyles = ['dashed', 'solid', 'dashed']
-            colors = 'k'
-            self.contours.append(self.ax.contour(X1, X2, Z, levels,
-                                                 colors=colors,
-                                                 linestyles=linestyles))
+            linestyles = ["dashed", "solid", "dashed"]
+            colors = "k"
+            self.contours.append(
+                self.ax.contour(X1, X2, Z, levels, colors=colors, linestyles=linestyles)
+            )
         elif type == 1:
-            self.contours.append(self.ax.contourf(X1, X2, Z, 10,
-                                                  cmap=matplotlib.cm.bone,
-                                                  origin='lower', alpha=0.85))
-            self.contours.append(self.ax.contour(X1, X2, Z, [0.0], colors='k',
-                                                 linestyles=['solid']))
+            self.contours.append(
+                self.ax.contourf(
+                    X1, X2, Z, 10, cmap=matplotlib.cm.bone, origin="lower", alpha=0.85
+                )
+            )
+            self.contours.append(
+                self.ax.contour(X1, X2, Z, [0.0], colors="k", linestyles=["solid"])
+            )
         else:
             raise ValueError("surface type unknown")
 
@@ -254,12 +273,27 @@ class ControllBar:
     def __init__(self, root, controller):
         fm = Tk.Frame(root)
         kernel_group = Tk.Frame(fm)
-        Tk.Radiobutton(kernel_group, text="Linear", variable=controller.kernel,
-                       value=0, command=controller.refit).pack(anchor=Tk.W)
-        Tk.Radiobutton(kernel_group, text="RBF", variable=controller.kernel,
-                       value=1, command=controller.refit).pack(anchor=Tk.W)
-        Tk.Radiobutton(kernel_group, text="Poly", variable=controller.kernel,
-                       value=2, command=controller.refit).pack(anchor=Tk.W)
+        Tk.Radiobutton(
+            kernel_group,
+            text="Linear",
+            variable=controller.kernel,
+            value=0,
+            command=controller.refit,
+        ).pack(anchor=Tk.W)
+        Tk.Radiobutton(
+            kernel_group,
+            text="RBF",
+            variable=controller.kernel,
+            value=1,
+            command=controller.refit,
+        ).pack(anchor=Tk.W)
+        Tk.Radiobutton(
+            kernel_group,
+            text="Poly",
+            variable=controller.kernel,
+            value=2,
+            command=controller.refit,
+        ).pack(anchor=Tk.W)
         kernel_group.pack(side=Tk.LEFT)
 
         valbox = Tk.Frame(fm)
@@ -267,8 +301,7 @@ class ControllBar:
         controller.complexity.set("1.0")
         c = Tk.Frame(valbox)
         Tk.Label(c, text="C:", anchor="e", width=7).pack(side=Tk.LEFT)
-        Tk.Entry(c, width=6, textvariable=controller.complexity).pack(
-            side=Tk.LEFT)
+        Tk.Entry(c, width=6, textvariable=controller.complexity).pack(side=Tk.LEFT)
         c.pack()
 
         controller.gamma = Tk.StringVar()
@@ -294,29 +327,42 @@ class ControllBar:
         valbox.pack(side=Tk.LEFT)
 
         cmap_group = Tk.Frame(fm)
-        Tk.Radiobutton(cmap_group, text="Hyperplanes",
-                       variable=controller.surface_type, value=0,
-                       command=controller.refit).pack(anchor=Tk.W)
-        Tk.Radiobutton(cmap_group, text="Surface",
-                       variable=controller.surface_type, value=1,
-                       command=controller.refit).pack(anchor=Tk.W)
+        Tk.Radiobutton(
+            cmap_group,
+            text="Hyperplanes",
+            variable=controller.surface_type,
+            value=0,
+            command=controller.refit,
+        ).pack(anchor=Tk.W)
+        Tk.Radiobutton(
+            cmap_group,
+            text="Surface",
+            variable=controller.surface_type,
+            value=1,
+            command=controller.refit,
+        ).pack(anchor=Tk.W)
 
         cmap_group.pack(side=Tk.LEFT)
 
-        train_button = Tk.Button(fm, text='Fit', width=5,
-                                 command=controller.fit)
+        train_button = Tk.Button(fm, text="Fit", width=5, command=controller.fit)
         train_button.pack()
         fm.pack(side=Tk.LEFT)
-        Tk.Button(fm, text='Clear', width=5,
-                  command=controller.clear_data).pack(side=Tk.LEFT)
+        Tk.Button(fm, text="Clear", width=5, command=controller.clear_data).pack(
+            side=Tk.LEFT
+        )
 
 
 def get_parser():
     from optparse import OptionParser
+
     op = OptionParser()
-    op.add_option("--output",
-                  action="store", type="str", dest="output",
-                  help="Path where to dump data.")
+    op.add_option(
+        "--output",
+        action="store",
+        type="str",
+        dest="output",
+        help="Path where to dump data.",
+    )
     return op
 
 

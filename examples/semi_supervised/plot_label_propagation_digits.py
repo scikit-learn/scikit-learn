@@ -52,15 +52,17 @@ y_train[unlabeled_set] = -1
 
 # #############################################################################
 # Learn with LabelSpreading
-lp_model = LabelSpreading(gamma=.25, max_iter=20)
+lp_model = LabelSpreading(gamma=0.25, max_iter=20)
 lp_model.fit(X, y_train)
 predicted_labels = lp_model.transduction_[unlabeled_set]
 true_labels = y[unlabeled_set]
 
 cm = confusion_matrix(true_labels, predicted_labels, labels=lp_model.classes_)
 
-print("Label Spreading model: %d labeled & %d unlabeled points (%d total)" %
-      (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples))
+print(
+    "Label Spreading model: %d labeled & %d unlabeled points (%d total)"
+    % (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
+)
 
 print(classification_report(true_labels, predicted_labels))
 
@@ -85,8 +87,9 @@ for index, image_index in enumerate(uncertainty_index):
     sub.imshow(image, cmap=plt.cm.gray_r)
     plt.xticks([])
     plt.yticks([])
-    sub.set_title('predict: %i\ntrue: %i' % (
-        lp_model.transduction_[image_index], y[image_index]))
+    sub.set_title(
+        "predict: %i\ntrue: %i" % (lp_model.transduction_[image_index], y[image_index])
+    )
 
-f.suptitle('Learning with small amount of labeled data')
+f.suptitle("Learning with small amount of labeled data")
 plt.show()

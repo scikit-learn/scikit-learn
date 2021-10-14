@@ -27,13 +27,13 @@ from sklearn.datasets import make_blobs
 X, y = make_blobs(random_state=27)
 
 fig, sub = plt.subplots(2, 1, figsize=(5, 8))
-titles = ("break_ties = False",
-          "break_ties = True")
+titles = ("break_ties = False", "break_ties = True")
 
 for break_ties, title, ax in zip((False, True), titles, sub.flatten()):
 
-    svm = SVC(kernel="linear", C=1, break_ties=break_ties,
-              decision_function_shape='ovr').fit(X, y)
+    svm = SVC(
+        kernel="linear", C=1, break_ties=break_ties, decision_function_shape="ovr"
+    ).fit(X, y)
 
     xlim = [X[:, 0].min(), X[:, 0].max()]
     ylim = [X[:, 1].min(), X[:, 1].max()]
@@ -49,8 +49,12 @@ for break_ties, title, ax in zip((False, True), titles, sub.flatten()):
     points = ax.scatter(X[:, 0], X[:, 1], c=y, cmap="Accent")
     classes = [(0, 1), (0, 2), (1, 2)]
     line = np.linspace(X[:, 1].min() - 5, X[:, 1].max() + 5)
-    ax.imshow(-pred.reshape(xx.shape), cmap="Accent", alpha=.2,
-              extent=(xlim[0], xlim[1], ylim[1], ylim[0]))
+    ax.imshow(
+        -pred.reshape(xx.shape),
+        cmap="Accent",
+        alpha=0.2,
+        extent=(xlim[0], xlim[1], ylim[1], ylim[0]),
+    )
 
     for coef, intercept, col in zip(svm.coef_, svm.intercept_, classes):
         line2 = -(line * coef[1] + intercept) / coef[0]

@@ -5,9 +5,19 @@ set -x
 
 UNAMESTR=`uname`
 
+if [[ "$DISTRIB" == "conda-mamba-pypy3" ]]; then
+    # condaforge/mambaforge-pypy3 needs compilers
+    apt-get -yq update
+    apt-get -yq install build-essential
+fi
+
 make_conda() {
     TO_INSTALL="$@"
-    conda create -n $VIRTUALENV --yes $TO_INSTALL
+    if [[ "$DISTRIB" == *"mamba"* ]]; then
+        mamba create -n $VIRTUALENV --yes $TO_INSTALL
+    else
+        conda create -n $VIRTUALENV --yes $TO_INSTALL
+    fi
     source activate $VIRTUALENV
 }
 
@@ -25,7 +35,7 @@ setup_ccache() {
 # imports get_dep
 source build_tools/shared.sh
 
-if [[ "$DISTRIB" == "conda" ]]; then
+if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
     if [[ "$CONDA_CHANNEL" != "" ]]; then
         TO_INSTALL="-c $CONDA_CHANNEL"
@@ -33,7 +43,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL=""
     fi
 
-    TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION ccache pip blas[build=$BLAS]"
+    if [[ "$DISTRIB" == *"pypy"* ]]; then
+        TO_INSTALL="$TO_INSTALL pypy"
+    else
+        TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
+    fi
+
+    TO_INSTALL="$TO_INSTALL ccache pip blas[build=$BLAS]"
 
     TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
@@ -97,9 +113,8 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     python -m pip install --only-binary :all: scikit-image || true
 
     python -m pip install pandas matplotlib pyamg
-    # do not install dependencies for lightgbm since it requires scikit-learn
-    # and install a version less than 3.0.0 until the issue #18316 is solved.
-    python -m pip install "lightgbm<3.0.0" --no-deps
+    # do not install dependencies for lightgbm since it requires scikit-learn.
+    python -m pip install "lightgbm>=3.0.0" --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     # FIXME: temporary fix to link against system libraries on linux
     export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
