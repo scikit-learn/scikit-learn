@@ -104,7 +104,7 @@ plt.show()
 
 
 # %%
-# Plot ROC curves for the multilabel problem
+# Plot ROC curves for the multiclass problem
 # ..........................................
 # Compute macro-average ROC curve and ROC area
 
@@ -158,7 +158,7 @@ plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
-plt.title("Some extension of Receiver operating characteristic to multi-class")
+plt.title("Some extension of Receiver operating characteristic to multiclass")
 plt.legend(loc="lower right")
 plt.show()
 
