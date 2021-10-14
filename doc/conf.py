@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.abspath("sphinxext"))
 
 from github_link import make_linkcode_resolve
 import sphinx_gallery
+import numpy as np
 import matplotlib as mpl
 
 # -- General configuration ---------------------------------------------------
@@ -541,3 +542,6 @@ ogp_site_url = "https://scikit-learn/stable/"
 ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
+
+# numpy switched to scientific formatting sometime in 1.21
+np.set_printoptions(suppress=True)
