@@ -646,9 +646,8 @@ def check_array(
                 )
 
         dtypes_orig = []
-        for _, column in array.iteritems():
-            dtype_iter = column.dtype
-            if column.dtype.kind == "b":
+        for dtype_iter in array.dtypes:
+            if dtype_iter.kind == "b":
                 # pandas boolean dtype __array__ interface coerces bools to objects
                 dtype_iter = np.dtype(object)
             elif _pandas_dtype_needs_early_conversation(dtype_iter):
