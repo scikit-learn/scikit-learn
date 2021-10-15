@@ -64,7 +64,6 @@ if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
 fi
 
 python --version
-conda list
 
 # Set parallelism to $N_CORES + 1 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with $N_CORES cores when building the compiled extensions of scikit-learn.
@@ -83,7 +82,6 @@ mamba list
 # Changing directory not to have module resolution use scikit-learn source
 # directory but to the installed package.
 cd /tmp
-
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
 # Test using as many workers as available cores
