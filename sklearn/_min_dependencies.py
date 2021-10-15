@@ -14,7 +14,7 @@ JOBLIB_MIN_VERSION = "0.11"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "5.0.1"
 CYTHON_MIN_VERSION = "0.28.5"
-
+SHAP_MIN_VERSION = "0.35.0"
 
 # 'build' and 'install' is included to have structured metadata for CI.
 # It will NOT be included in setup's extras_require
