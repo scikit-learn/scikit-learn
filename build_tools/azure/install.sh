@@ -128,7 +128,7 @@ elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
     echo "Installing pillow master"
-    pip install https://github.com/python-pillow/Pillow/archive/master.zip
+    pip install https://github.com/python-pillow/Pillow/archive/main.zip
 fi
 
 python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
