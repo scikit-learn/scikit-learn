@@ -20,7 +20,7 @@ jobs:
       - NUMPYDOC_VERSION: 'min'
       - SPHINX_PROMPT_VERSION: 'min'
       - SPHINXEXT_OPENGRAPH_VERSION: 'min'
-      - SHAP_VERSION: 'min'
+      - SHAP_VERSION: 0.35.0
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
