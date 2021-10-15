@@ -103,7 +103,9 @@ Changelog
 
 - |Fix| :class:`svm.SVC` and :class:`svm.SVR` checks for an inconsistency
   in it's internal representation and raises an error instead of segfaulting.
-  This fix also resolves `CVE-2020-28975 <https://nvd.nist.gov/vuln/detail/CVE-2020-28975>`__. :pr:``21336` by `Thomas Fan`_.
+  This fix also resolves
+  `CVE-2020-28975 <https://nvd.nist.gov/vuln/detail/CVE-2020-28975>`__.
+  :pr:`21336` by `Thomas Fan`_.
 
 :mod:`sklearn.utils`
 ....................
