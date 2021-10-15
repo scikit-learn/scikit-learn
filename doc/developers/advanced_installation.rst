@@ -103,7 +103,7 @@ runtime:
 
 .. note::
 
-   For running on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.2.0+
+   For running on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
    are required. For PyPy, only installation instructions with pip apply.
 
 Build dependencies
