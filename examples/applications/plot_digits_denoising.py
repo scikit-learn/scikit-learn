@@ -87,9 +87,9 @@ def plot_digits(X, title):
 # Let's first have a look to see the difference between noise-free and noisy
 # images. We will check the test set in this regard.
 plot_digits(X_test, "Uncorrupted test images")
-plot_digits(X_test_noisy,
-            f"Noisy test images\n"
-            f"MSE: {np.mean((X_test - X_test_noisy) ** 2):.2f}")
+plot_digits(
+    X_test_noisy, f"Noisy test images\nMSE: {np.mean((X_test - X_test_noisy) ** 2):.2f}"
+)
 
 # %%
 # Learn the `PCA` basis
@@ -100,8 +100,9 @@ plot_digits(X_test_noisy,
 from sklearn.decomposition import PCA, KernelPCA
 
 pca = PCA(n_components=32)
-kernel_pca = KernelPCA(n_components=400, kernel="rbf", gamma=1e-3,
-                       fit_inverse_transform=True, alpha=5e-3)
+kernel_pca = KernelPCA(
+    n_components=400, kernel="rbf", gamma=1e-3, fit_inverse_transform=True, alpha=5e-3
+)
 
 pca.fit(X_train_noisy)
 _ = kernel_pca.fit(X_train_noisy)
@@ -118,17 +119,21 @@ _ = kernel_pca.fit(X_train_noisy)
 # kernel to learn the PCA basis and a kernel ridge to learn the mapping
 # function.
 X_reconstructed_kernel_pca = kernel_pca.inverse_transform(
-    kernel_pca.transform(X_test_noisy))
+    kernel_pca.transform(X_test_noisy)
+)
 X_reconstructed_pca = pca.inverse_transform(pca.transform(X_test_noisy))
 
 # %%
 plot_digits(X_test, "Uncorrupted test images")
-plot_digits(X_reconstructed_pca,
-            f"PCA reconstruction\n"
-            f"MSE: {np.mean((X_test - X_reconstructed_pca) ** 2):.2f}")
-plot_digits(X_reconstructed_kernel_pca,
-            f"Kernel PCA reconstruction\n"
-            f"MSE: {np.mean((X_test - X_reconstructed_kernel_pca) ** 2):.2f}")
+plot_digits(
+    X_reconstructed_pca,
+    f"PCA reconstruction\nMSE: {np.mean((X_test - X_reconstructed_pca) ** 2):.2f}",
+)
+plot_digits(
+    X_reconstructed_kernel_pca,
+    "Kernel PCA reconstruction\n"
+    f"MSE: {np.mean((X_test - X_reconstructed_kernel_pca) ** 2):.2f}",
+)
 
 # %%
 # PCA has a lower MSE than kernel PCA. However, the qualitative analysis might

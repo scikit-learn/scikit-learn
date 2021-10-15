@@ -54,18 +54,17 @@ n_clusters = grid_size ** 2
 
 def make_data(random_state, n_samples_per_center, grid_size, scale):
     random_state = check_random_state(random_state)
-    centers = np.array([[i, j]
-                        for i in range(grid_size)
-                        for j in range(grid_size)])
+    centers = np.array([[i, j] for i in range(grid_size) for j in range(grid_size)])
     n_clusters_true, n_features = centers.shape
 
     noise = random_state.normal(
-        scale=scale, size=(n_samples_per_center, centers.shape[1]))
+        scale=scale, size=(n_samples_per_center, centers.shape[1])
+    )
 
     X = np.concatenate([c + noise for c in centers])
-    y = np.concatenate([[i] * n_samples_per_center
-                        for i in range(n_clusters_true)])
+    y = np.concatenate([[i] * n_samples_per_center for i in range(n_clusters_true)])
     return shuffle(X, y, random_state=random_state)
+
 
 # Part 1: Quantitative evaluation of various init methods
 
@@ -75,10 +74,10 @@ plots = []
 legends = []
 
 cases = [
-    (KMeans, 'k-means++', {}),
-    (KMeans, 'random', {}),
-    (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3}),
-    (MiniBatchKMeans, 'random', {'max_no_improvement': 3, 'init_size': 500}),
+    (KMeans, "k-means++", {}),
+    (KMeans, "random", {}),
+    (MiniBatchKMeans, "k-means++", {"max_no_improvement": 3}),
+    (MiniBatchKMeans, "random", {"max_no_improvement": 3, "init_size": 500}),
 ]
 
 for factory, init, params in cases:
@@ -88,33 +87,46 @@ for factory, init, params in cases:
     for run_id in range(n_runs):
         X, y = make_data(run_id, n_samples_per_center, grid_size, scale)
         for i, n_init in enumerate(n_init_range):
-            km = factory(n_clusters=n_clusters, init=init, random_state=run_id,
-                         n_init=n_init, **params).fit(X)
+            km = factory(
+                n_clusters=n_clusters,
+                init=init,
+                random_state=run_id,
+                n_init=n_init,
+                **params,
+            ).fit(X)
             inertia[i, run_id] = km.inertia_
     p = plt.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1))
     plots.append(p[0])
     legends.append("%s with %s init" % (factory.__name__, init))
 
-plt.xlabel('n_init')
-plt.ylabel('inertia')
+plt.xlabel("n_init")
+plt.ylabel("inertia")
 plt.legend(plots, legends)
 plt.title("Mean inertia for various k-means init across %d runs" % n_runs)
 
 # Part 2: Qualitative visual inspection of the convergence
 
 X, y = make_data(random_state, n_samples_per_center, grid_size, scale)
-km = MiniBatchKMeans(n_clusters=n_clusters, init='random', n_init=1,
-                     random_state=random_state).fit(X)
+km = MiniBatchKMeans(
+    n_clusters=n_clusters, init="random", n_init=1, random_state=random_state
+).fit(X)
 
 plt.figure()
 for k in range(n_clusters):
     my_members = km.labels_ == k
     color = cm.nipy_spectral(float(k) / n_clusters, 1)
-    plt.plot(X[my_members, 0], X[my_members, 1], 'o', marker='.', c=color)
+    plt.plot(X[my_members, 0], X[my_members, 1], "o", marker=".", c=color)
     cluster_center = km.cluster_centers_[k]
-    plt.plot(cluster_center[0], cluster_center[1], 'o',
-             markerfacecolor=color, markeredgecolor='k', markersize=6)
-    plt.title("Example cluster allocation with a single random init\n"
-              "with MiniBatchKMeans")
+    plt.plot(
+        cluster_center[0],
+        cluster_center[1],
+        "o",
+        markerfacecolor=color,
+        markeredgecolor="k",
+        markersize=6,
+    )
+    plt.title(
+        "Example cluster allocation with a single random init\nwith MiniBatchKMeans"
+    )
 
 plt.show()

@@ -36,6 +36,13 @@ Fixed models
   the Bayesian priors.
   :pr:`21179` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans`, ensuring reproducibility and equivalence
+  between sparse and dense input. :pr:`21195`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -668,6 +675,10 @@ Changelog
   of the neighbors graph along some minimum distance pairs, instead of changing
   every infinite distances to zero. :pr:`20531` by `Roman Yurchak`_ and `Tom
   Dupre la Tour`_.
+
+- |Fix| Decrease the numerical default tolerance in the lobpcg call
+  in :func:`manifold.spectral_embedding` to prevent numerical instability. 
+  :pr:`21194` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.metrics`
 ......................
