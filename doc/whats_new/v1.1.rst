@@ -23,6 +23,34 @@ Put the changes in their relevant module.
 Changed models
 --------------
 
+- |Efficiency| Low-level routines for reductions on pairwise distances
+  for dense float64 datasets have been refactored. The following functions
+  and estimators now benefit from improved performances, in particular on
+  multi-cores machines:
+    - :func:`sklearn.metrics.pairwise_distances_argmin`
+    - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+    - :class:`sklearn.cluster.Birch`
+    - :class:`sklearn.cluster.DBSCAN`
+    - :class:`sklearn.cluster.MeanShift`
+    - :class:`sklearn.cluster.OPTICS`
+    - :class:`sklearn.cluster.SpectralClustering`
+    - :func:`sklearn.feature_selection.mutual_info_regression`
+    - :class:`sklearn.neighbors.AffinityPropagation`
+    - :class:`sklearn.neighbors.KNeighborsClassifier`
+    - :class:`sklearn.neighbors.KNeighborsRegressor`
+    - :class:`sklearn.neighbors.LocalOutlierFactor`
+    - :class:`sklearn.neighbors.NearestNeighbors`
+    - :class:`sklearn.manifold.Isomap`
+    - :class:`sklearn.manifold.LocallyLinearEmbedding`
+    - :class:`sklearn.manifold.TSNE`
+    - :func:`sklearn.manifold.trustworthiness`
+    - :class:`sklearn.semi_supervised.LabelPropagation`
+    - :class:`sklearn.semi_supervised.LabelSpreading`
+
+  For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors`
+  known up to 20× speed-up.
+
+  :pr:`20254` by :user:`Julien Jerphanion <jjerphan>`.
 
 Changelog
 ---------
