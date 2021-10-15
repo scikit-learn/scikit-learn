@@ -13,6 +13,7 @@ from abc import ABCMeta, abstractmethod
 import warnings
 
 import numpy as np
+import numbers
 from scipy import linalg
 from scipy import sparse
 from scipy import optimize
@@ -26,6 +27,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_array
 from ..utils import check_consistent_length
+from ..utils import check_scalar
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import _check_sample_weight
@@ -564,8 +566,11 @@ def _ridge_regression(
             % (alpha.size, n_targets)
         )
 
-    if alpha.size == 1 and n_targets > 1:
-        alpha = np.repeat(alpha, n_targets)
+    if alpha.size == 1:
+        check_scalar(alpha, "alpha", target_type=numbers.Real,
+                     min_val=0.0, include_boundaries="left")
+        if n_targets > 1:
+            alpha = np.repeat(alpha, n_targets)
 
     n_iter = None
     if solver == "sparse_cg":
