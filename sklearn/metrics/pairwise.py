@@ -664,7 +664,7 @@ def pairwise_distances_argmin_min(
         values = values.flatten()
         indices = indices.flatten()
     else:
-        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
+        # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
         #
         # When PairwiseDistancesArgKmin is not supported and when the user
@@ -766,10 +766,13 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         ).compute(strategy="auto", return_distance=False)
         indices = indices.flatten()
     else:
-        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
+        # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
+        #
         # When PairwiseDistancesArgKmin is not supported and when the user
         # asked for a fast alternative, we need to revert to the standard one.
+        # "euclidean" strategy to match the API.
+        # Internally, the "euclidean" strategy still uses the GEMM trick.
         if metric == "fast_euclidean":
             metric = "euclidean"
 
