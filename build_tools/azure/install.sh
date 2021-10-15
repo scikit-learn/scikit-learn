@@ -16,7 +16,8 @@ make_conda() {
     if [[ "$DISTRIB" == *"mamba"* ]]; then
         mamba create -n $VIRTUALENV --yes $TO_INSTALL
     else
-        conda create -n $VIRTUALENV --yes $TO_INSTALL
+        conda config --show
+        conda create --override-channels -c conda-forge -n $VIRTUALENV --yes $TO_INSTALL
     fi
     source activate $VIRTUALENV
 }
