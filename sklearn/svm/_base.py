@@ -618,8 +618,10 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 )
         # Fixes https://nvd.nist.gov/vuln/detail/CVE-2020-28975
         # Check that _n_support is consistent with support_vectors
-        n_support_vectors = self._n_support.sum()
-        if n_support_vectors != self.support_vectors_.shape[0]:
+        sv = self.support_vectors_
+        if not self._sparse and (
+            sum(sv.shape) != 0 and self.n_support_.sum() != sv.shape[0]
+        ):
             raise ValueError(
                 f"The internal representation of {self.__class__.__name__} was altered"
             )
