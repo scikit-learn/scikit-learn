@@ -831,7 +831,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
     {'edgeitems': 3, 'threshold': 1000, 'floatmode': 'maxprec', 'precision': 8,
     'suppress': False, 'linewidth': 75, 'nanstr': 'nan', 'infstr': 'inf', 'sign': '-',
     'formatter': None, 'legacy': False}
-    >>> print(repr(float))  # DEBUG
+    >>> print(repr(clf.score(data_transformed, y)))  # DEBUG
     >>> clf.score(data_transformed, y)
     0.9987...
     """
