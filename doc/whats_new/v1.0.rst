@@ -54,6 +54,13 @@ Fixed models
   and `radius_neighbors`, due to handling of explicit zeros in `bsr` and `dok`
   :term:`sparse graph` formats. :pr:`21199` by `Thomas Fan`_.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Fix| :meth:`pipeline.Pipeline.get_feature_names_out` correctly passes feature
+  names out from one step of a pipeline to the next. :pr:`21351` by
+  `Thomas Fan`_.
+
 .. _changes_1_0:
 
 Version 1.0.0
@@ -677,7 +684,7 @@ Changelog
   Dupre la Tour`_.
 
 - |Fix| Decrease the numerical default tolerance in the lobpcg call
-  in :func:`manifold.spectral_embedding` to prevent numerical instability. 
+  in :func:`manifold.spectral_embedding` to prevent numerical instability.
   :pr:`21194` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.metrics`
