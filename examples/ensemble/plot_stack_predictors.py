@@ -23,7 +23,8 @@ stacking strategy. Stacking slightly improves the overall performance.
 print(__doc__)
 
 from sklearn import set_config
-set_config(display='diagram')
+
+set_config(display="diagram")
 
 # %%
 # Download the dataset
@@ -54,11 +55,28 @@ def load_ames_housing():
     X = df.data
     y = df.target
 
-    features = ['YrSold', 'HeatingQC', 'Street', 'YearRemodAdd', 'Heating',
-                'MasVnrType', 'BsmtUnfSF', 'Foundation', 'MasVnrArea',
-                'MSSubClass', 'ExterQual', 'Condition2', 'GarageCars',
-                'GarageType', 'OverallQual', 'TotalBsmtSF', 'BsmtFinSF1',
-                'HouseStyle', 'MiscFeature', 'MoSold']
+    features = [
+        "YrSold",
+        "HeatingQC",
+        "Street",
+        "YearRemodAdd",
+        "Heating",
+        "MasVnrType",
+        "BsmtUnfSF",
+        "Foundation",
+        "MasVnrArea",
+        "MSSubClass",
+        "ExterQual",
+        "Condition2",
+        "GarageCars",
+        "GarageType",
+        "OverallQual",
+        "TotalBsmtSF",
+        "BsmtFinSF1",
+        "HouseStyle",
+        "MiscFeature",
+        "MoSold",
+    ]
 
     X = X[features]
     X, y = shuffle(X, y, random_state=0)
@@ -105,11 +123,13 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
 
 cat_tree_processor = OrdinalEncoder(
-    handle_unknown="use_encoded_value", unknown_value=-1)
+    handle_unknown="use_encoded_value", unknown_value=-1
+)
 num_tree_processor = SimpleImputer(strategy="mean", add_indicator=True)
 
 tree_preprocessor = make_column_transformer(
-    (num_tree_processor, num_selector), (cat_tree_processor, cat_selector))
+    (num_tree_processor, num_selector), (cat_tree_processor, cat_selector)
+)
 tree_preprocessor
 
 # %%
@@ -121,10 +141,12 @@ from sklearn.preprocessing import StandardScaler
 
 cat_linear_processor = OneHotEncoder(handle_unknown="ignore")
 num_linear_processor = make_pipeline(
-    StandardScaler(), SimpleImputer(strategy="mean", add_indicator=True))
+    StandardScaler(), SimpleImputer(strategy="mean", add_indicator=True)
+)
 
 linear_preprocessor = make_column_transformer(
-    (num_linear_processor, num_selector), (cat_linear_processor, cat_selector))
+    (num_linear_processor, num_selector), (cat_linear_processor, cat_selector)
+)
 linear_preprocessor
 
 # %%
@@ -155,27 +177,28 @@ lasso_pipeline
 # %%
 from sklearn.ensemble import RandomForestRegressor
 
-rf_pipeline = make_pipeline(
-    tree_preprocessor, RandomForestRegressor(random_state=42))
+rf_pipeline = make_pipeline(tree_preprocessor, RandomForestRegressor(random_state=42))
 rf_pipeline
 
 # %%
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 gbdt_pipeline = make_pipeline(
-    tree_preprocessor, HistGradientBoostingRegressor(random_state=0))
+    tree_preprocessor, HistGradientBoostingRegressor(random_state=0)
+)
 gbdt_pipeline
 
 # %%
 from sklearn.ensemble import StackingRegressor
 from sklearn.linear_model import RidgeCV
 
-estimators = [('Random Forest', rf_pipeline),
-              ('Lasso', lasso_pipeline),
-              ('Gradient Boosting', gbdt_pipeline)]
+estimators = [
+    ("Random Forest", rf_pipeline),
+    ("Lasso", lasso_pipeline),
+    ("Gradient Boosting", gbdt_pipeline),
+]
 
-stacking_regressor = StackingRegressor(
-    estimators=estimators, final_estimator=RidgeCV())
+stacking_regressor = StackingRegressor(estimators=estimators, final_estimator=RidgeCV())
 stacking_regressor
 
 # %%
@@ -197,52 +220,58 @@ from sklearn.model_selection import cross_validate, cross_val_predict
 
 def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
     """Scatter plot of the predicted vs true targets."""
-    ax.plot([y_true.min(), y_true.max()],
-            [y_true.min(), y_true.max()],
-            '--r', linewidth=2)
+    ax.plot(
+        [y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "--r", linewidth=2
+    )
     ax.scatter(y_true, y_pred, alpha=0.2)
 
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
     ax.get_xaxis().tick_bottom()
     ax.get_yaxis().tick_left()
-    ax.spines['left'].set_position(('outward', 10))
-    ax.spines['bottom'].set_position(('outward', 10))
+    ax.spines["left"].set_position(("outward", 10))
+    ax.spines["bottom"].set_position(("outward", 10))
     ax.set_xlim([y_true.min(), y_true.max()])
     ax.set_ylim([y_true.min(), y_true.max()])
-    ax.set_xlabel('Measured')
-    ax.set_ylabel('Predicted')
-    extra = plt.Rectangle((0, 0), 0, 0, fc="w", fill=False,
-                          edgecolor='none', linewidth=0)
-    ax.legend([extra], [scores], loc='upper left')
-    title = title + '\n Evaluation in {:.2f} seconds'.format(elapsed_time)
+    ax.set_xlabel("Measured")
+    ax.set_ylabel("Predicted")
+    extra = plt.Rectangle(
+        (0, 0), 0, 0, fc="w", fill=False, edgecolor="none", linewidth=0
+    )
+    ax.legend([extra], [scores], loc="upper left")
+    title = title + "\n Evaluation in {:.2f} seconds".format(elapsed_time)
     ax.set_title(title)
 
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)
 
-for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
-                                               stacking_regressor)]):
+for ax, (name, est) in zip(
+    axs, estimators + [("Stacking Regressor", stacking_regressor)]
+):
     start_time = time.time()
-    score = cross_validate(est, X, y,
-                           scoring=['r2', 'neg_mean_absolute_error'],
-                           n_jobs=-1, verbose=0)
+    score = cross_validate(
+        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=-1, verbose=0
+    )
     elapsed_time = time.time() - start_time
 
     y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
 
     plot_regression_results(
-        ax, y, y_pred,
+        ax,
+        y,
+        y_pred,
         name,
-        (r'$R^2={:.2f} \pm {:.2f}$' + '\n' + r'$MAE={:.2f} \pm {:.2f}$')
-        .format(np.mean(score['test_r2']),
-                np.std(score['test_r2']),
-                -np.mean(score['test_neg_mean_absolute_error']),
-                np.std(score['test_neg_mean_absolute_error'])),
-        elapsed_time)
+        (r"$R^2={:.2f} \pm {:.2f}$" + "\n" + r"$MAE={:.2f} \pm {:.2f}$").format(
+            np.mean(score["test_r2"]),
+            np.std(score["test_r2"]),
+            -np.mean(score["test_neg_mean_absolute_error"]),
+            np.std(score["test_neg_mean_absolute_error"]),
+        ),
+        elapsed_time,
+    )
 
-plt.suptitle('Single predictors versus stacked predictors')
+plt.suptitle("Single predictors versus stacked predictors")
 plt.tight_layout()
 plt.subplots_adjust(top=0.9)
 plt.show()

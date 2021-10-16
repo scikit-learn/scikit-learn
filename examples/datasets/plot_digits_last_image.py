@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 The Digit Dataset
@@ -31,5 +29,5 @@ digits = datasets.load_digits()
 
 # Display the first digit
 plt.figure(1, figsize=(3, 3))
-plt.imshow(digits.images[-1], cmap=plt.cm.gray_r, interpolation='nearest')
+plt.imshow(digits.images[-1], cmap=plt.cm.gray_r, interpolation="nearest")
 plt.show()
