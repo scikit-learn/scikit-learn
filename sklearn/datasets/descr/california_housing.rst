@@ -38,7 +38,7 @@ columns may take surpinsingly large values for block groups with few households
 and many empty houses, such as vacation resorts.
 
 It can be downloaded/loaded using the
-:func:`sklearn.datasets.fetch_california_housing` function.
+:func:`~sklearn.datasets.fetch_california_housing` function.
 
 .. topic:: References
 
