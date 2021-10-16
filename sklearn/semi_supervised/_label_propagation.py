@@ -387,7 +387,6 @@ class LabelPropagation(BaseLabelPropagation):
 
     n_iter_ : int
         Number of iterations run.
-    LabelPropagation(...)
 
     See Also
     --------
@@ -412,6 +411,7 @@ class LabelPropagation(BaseLabelPropagation):
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
+    LabelPropagation(...)
     """
 
     _variant = "propagation"
