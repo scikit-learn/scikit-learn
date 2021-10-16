@@ -12,6 +12,10 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     source /opt/intel/oneapi/setvars.sh
 fi
 
+mkdir -p $TEST_DIR
+cp setup.cfg $TEST_DIR
+cd $TEST_DIR
+
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl -i sklearn
 
@@ -43,10 +47,6 @@ fi
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     TEST_CMD="$TEST_CMD -n2"
 fi
-
-mkdir -p $TEST_DIR
-cp setup.cfg $TEST_DIR
-cd $TEST_DIR
 
 set -x
 $TEST_CMD --pyargs sklearn
