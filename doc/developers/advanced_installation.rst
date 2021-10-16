@@ -66,10 +66,10 @@ feature, code or documentation improvement).
      conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython
      conda activate sklearn-env
 
-#. [Alternative] If you run Linux or similar, you can instead use your system's
-   Python provided it is recent enough (3.7 or higher at the time of writing).
-   In this case, we recommend to create a dedicated virtualenv_ and install
-   the scikit-learn build dependencies with pip:
+#. **Alternative to conda:** If you run Linux or similar, you can instead use
+   your system's Python provided it is recent enough (3.7 or higher
+   at the time of writing). In this case, we recommend to create a dedicated
+   virtualenv_ and install the scikit-learn build dependencies with pip:
 
    .. prompt:: bash $
 
