@@ -727,7 +727,8 @@ def _lars_path_solver(
             # orthogonal (QR) decomposition of X
             corr_eq_dir = np.dot(Gram[:n_active, n_active:].T, least_squares)
 
-        # Workaround for inconsistent rounding in openblas
+        # Explicit rounding can be necessary to avoid `np.argmax(Cov)` yielding
+        # unstable results because of rounding errors.
         np.around(corr_eq_dir, decimals=cov_precision, out=corr_eq_dir)
 
         g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny32))
