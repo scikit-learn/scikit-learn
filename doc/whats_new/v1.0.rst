@@ -2,6 +2,58 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_0_1:
+
+Version 1.0.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+Fixed models
+------------
+
+- |Fix| Non-fit methods in the following classes do not raise a UserWarning
+  when fitted on DataFrames with valid feature names:
+  :class:`covariance.EllipticEnvelope`, :class:`ensemble.IsolationForest`,
+  :class:`ensemble.AdaBoostClassifier`, :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`. :pr:`21199` by `Thomas Fan`_.
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Fixed :class:`calibration.CalibratedClassifierCV` to take into account
+  `sample_weight` when computing the base estimator prediction when
+  `ensemble=False`.
+  :pr:`20638` by :user:`Julien Bohné <JulienB-78>`.
+
+- |Fix| Fixed a bug in :class:`calibration.CalibratedClassifierCV` with
+  `method="sigmoid"` that was ignoring the `sample_weight` when computing the
+  the Bayesian priors.
+  :pr:`21179` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans`, ensuring reproducibility and equivalence
+  between sparse and dense input. :pr:`21195`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor` with `metric="precomputed"` raises
+  an error for `bsr` and `dok` sparse matrices in methods: `fit`, `kneighbors`
+  and `radius_neighbors`, due to handling of explicit zeros in `bsr` and `dok`
+  :term:`sparse graph` formats. :pr:`21199` by `Thomas Fan`_.
+
 .. _changes_1_0:
 
 Version 1.0.0
@@ -623,6 +675,10 @@ Changelog
   of the neighbors graph along some minimum distance pairs, instead of changing
   every infinite distances to zero. :pr:`20531` by `Roman Yurchak`_ and `Tom
   Dupre la Tour`_.
+
+- |Fix| Decrease the numerical default tolerance in the lobpcg call
+  in :func:`manifold.spectral_embedding` to prevent numerical instability. 
+  :pr:`21194` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.metrics`
 ......................
