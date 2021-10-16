@@ -17,7 +17,7 @@ make_conda() {
         mamba create -n $VIRTUALENV --yes $TO_INSTALL
     else
         conda config --show
-        conda create --override-channels -c conda-forge -n $VIRTUALENV --yes $TO_INSTALL
+        conda create -n $VIRTUALENV --yes $TO_INSTALL
     fi
     source activate $VIRTUALENV
 }
@@ -39,7 +39,7 @@ source build_tools/shared.sh
 if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
     if [[ "$CONDA_CHANNEL" != "" ]]; then
-        TO_INSTALL="-c $CONDA_CHANNEL"
+        TO_INSTALL="--override-channels -c $CONDA_CHANNEL"
     else
         TO_INSTALL=""
     fi
