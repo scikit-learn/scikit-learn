@@ -237,8 +237,9 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            `n_labeled_samples` (unlabeled points are marked as -1)
-            All unlabeled samples will be transductively assigned a label.
+            Target class values with unlabeled points marked as -1.
+            All unlabeled samples will be transductively assigned labels
+            internally.
 
         Returns
         -------
@@ -462,8 +463,9 @@ class LabelPropagation(BaseLabelPropagation):
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            `n_labeled_samples` (unlabeled points are marked as -1)
-            All unlabeled samples will be transductively assigned a label.
+            Target class values with unlabeled points marked as -1.
+            All unlabeled samples will be transductively assigned labels
+            internally.
 
         Returns
         -------
