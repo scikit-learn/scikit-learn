@@ -753,8 +753,8 @@ class Pipeline(_BaseComposition):
                     "Did you mean to call pipeline[:-1].get_feature_names_out"
                     "()?".format(name)
                 )
-            feature_names = transform.get_feature_names_out(input_features)
-        return feature_names
+            input_features = transform.get_feature_names_out(input_features)
+        return input_features
 
     @property
     def n_features_in_(self):
