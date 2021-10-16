@@ -1520,7 +1520,10 @@ def test_pipeline_check_if_fitted():
 
 
 def test_pipeline_get_feature_names_out_passes_names_through():
-    """Check that pipeline passes names through."""
+    """Check that pipeline passes names through.
+
+    Non-regresion test for #21349.
+    """
     X, y = iris.data, iris.target
 
     class AddPrefixStandardScalar(StandardScaler):
