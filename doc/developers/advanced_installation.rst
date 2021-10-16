@@ -54,9 +54,8 @@ feature, code or documentation improvement).
    instead.
 
 #. Install a recent version of Python (3.9 is recommended at the time of writing)
-   for instance using [Miniforge3](https://github.com/conda-forge/miniforge#miniforge3).
-   Miniforge provides a conda-based distribution of Python and the most
-   popular scientific libraries.
+   for instance using Miniforge3_. Miniforge provides a conda-based distribution
+   of Python and the most popular scientific libraries.
 
    If you installed Python with conda, we recommend to create a dedicated
    `conda environment`_ with all the build dependencies of scikit-learn
@@ -459,6 +458,7 @@ the base system and these steps will not be necessary.
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
 
 Alternative compilers
 =====================
