@@ -175,7 +175,7 @@ jobs:
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
         MATPLOTLIB_VERSION: 'min'
-        THREADPOOLCTL_VERSION: '2.0.0'
+        THREADPOOLCTL_VERSION: '2.2.0'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
@@ -210,7 +210,7 @@ jobs:
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
         PYTEST_VERSION: 'min'
-        THREADPOOLCTL_VERSION: 'min'
+        THREADPOOLCTL_VERSION: '2.2.0'
 
 - template: build_tools/azure/posix.yml
   parameters:
