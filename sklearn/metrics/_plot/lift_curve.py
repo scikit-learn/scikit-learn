@@ -356,7 +356,7 @@ def plot_lift_curve(
     pos_label=None,
     **kwargs,
 ):
-    """Plot lift curve.
+    """Plot the lift curve for binary classifiers.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
 
