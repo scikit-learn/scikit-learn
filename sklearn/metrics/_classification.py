@@ -1796,12 +1796,15 @@ def lift_score(
     -------
     lift : float (if average is not None) or array of float of shape \
                 (n_unique_labels,)
-        lift of the positive class in binary classification or weighted
+        Lift of the positive class in binary classification or weighted
         average of the lift of each class for the multiclass task.
 
     See Also
     --------
-    lift_curve, precision_recall_curve
+    lift_curve : Calculate the lift for different positive rates.
+
+    precision_recall_curve: Calculate precision and recall for different
+        classification thresholds.
 
     Notes
     -----

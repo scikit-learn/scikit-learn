@@ -358,15 +358,15 @@ def plot_lift_curve(
 ):
     """Plot lift curve.
 
-    Extra keyword arguments will be passed to matplotlib's `plot`.
-
-    Read more in the :ref:`User Guide <visualizations>`.
-
     .. deprecated:: 1.0
        `plot_lift_curve` is deprecated in 1.0 and will be removed in
        1.2. Use one of the following class methods:
        :func:`~sklearn.metrics.LiftCurveDisplay.from_predictions` or
        :func:`~sklearn.metrics.LiftCurveDisplay.from_estimator`.
+
+    Extra keyword arguments will be passed to matplotlib's `plot`.
+
+    Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
     ----------
@@ -414,7 +414,7 @@ def plot_lift_curve(
     --------
     lift_curve : Compute lift scores for different treatment percentages
         (percent of positively classified data points).
-    LiftCurveDisplay : lift curve visualization.
+    LiftCurveDisplay : Lift curve visualization.
     LiftCurveDisplay.from_estimator : Plot lift curve given an estimator and
         some data.
     LiftCurveDisplay.from_predictions : Plot lift curve given the true and
