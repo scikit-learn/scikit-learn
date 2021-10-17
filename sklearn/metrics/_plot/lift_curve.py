@@ -362,12 +362,6 @@ def plot_lift_curve(
 
     Read more in the :ref:`User Guide <visualizations>`.
 
-    .. deprecated:: 1.0
-       `plot_lift_curve` is deprecated in 1.0 and will be removed in
-       1.2. Use one of the following class methods:
-       :func:`~sklearn.metrics.LiftCurveDisplay.from_predictions` or
-       :func:`~sklearn.metrics.LiftCurveDisplay.from_estimator`.
-
     Parameters
     ----------
     estimator : estimator instance
