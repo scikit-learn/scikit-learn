@@ -337,7 +337,6 @@ class PrecisionRecallDisplay:
 
         name = name if name is not None else "Classifier"
 
-
         viz = PrecisionRecallDisplay(
             precision=precision,
             recall=recall,
