@@ -717,9 +717,17 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
         # Allocating pointers to datastructures but not the datastructures themselves.
         # There as many pointers as available threads.
-        # When reducing on small datasets, there can be more pointers than actual
-        # threads used for the reduction but there won't be allocated but unused
-        # datastructures.
+        # However, when reducing on small datasets, there can be more pointers than
+        # actual threads.
+        # In this case, some pointers will be dynamically allocated but there won't
+        # be allocated yet unused data-structures referenced by them.
+        #
+        # For the sake of explicitness:
+        #   - when parallelizing on X, those heaps pointers are referencing
+        #   (with proper offsets) addresses of the two main heaps (see bellow) 
+        #   - when parallelizing on Y, those heaps pointer heaps are referencing
+        #   small heaps which are thread-wise-allocated and whose content will be
+        #   merged with the main heaps'.
         self.heaps_r_distances_chunks = <DTYPE_t **> malloc(
             sizeof(DTYPE_t *) * self.effective_omp_n_thread
         )
