@@ -209,7 +209,7 @@ def test_sample_weight_invalid():
     data = np.reshape([1.0, 2.0, 3.0], (-1, 1))
 
     sample_weight = [0.1, -0.2, 0.3]
-    expected_err = "sample_weight must have positive values"
+    expected_err = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=expected_err):
         kde.fit(data, sample_weight=sample_weight)
 

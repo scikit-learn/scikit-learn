@@ -575,6 +575,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     estimators_ : list of estimators
         The collection of fitted base estimators.
 
@@ -997,6 +1003,12 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     estimators_ : list of estimators
         The collection of fitted sub-estimators.

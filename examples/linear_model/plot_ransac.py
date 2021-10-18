@@ -17,9 +17,14 @@ n_samples = 1000
 n_outliers = 50
 
 
-X, y, coef = datasets.make_regression(n_samples=n_samples, n_features=1,
-                                      n_informative=1, noise=10,
-                                      coef=True, random_state=0)
+X, y, coef = datasets.make_regression(
+    n_samples=n_samples,
+    n_features=1,
+    n_informative=1,
+    noise=10,
+    coef=True,
+    random_state=0,
+)
 
 # Add outlier data
 np.random.seed(0)
@@ -46,14 +51,21 @@ print("Estimated coefficients (true, linear regression, RANSAC):")
 print(coef, lr.coef_, ransac.estimator_.coef_)
 
 lw = 2
-plt.scatter(X[inlier_mask], y[inlier_mask], color='yellowgreen', marker='.',
-            label='Inliers')
-plt.scatter(X[outlier_mask], y[outlier_mask], color='gold', marker='.',
-            label='Outliers')
-plt.plot(line_X, line_y, color='navy', linewidth=lw, label='Linear regressor')
-plt.plot(line_X, line_y_ransac, color='cornflowerblue', linewidth=lw,
-         label='RANSAC regressor')
-plt.legend(loc='lower right')
+plt.scatter(
+    X[inlier_mask], y[inlier_mask], color="yellowgreen", marker=".", label="Inliers"
+)
+plt.scatter(
+    X[outlier_mask], y[outlier_mask], color="gold", marker=".", label="Outliers"
+)
+plt.plot(line_X, line_y, color="navy", linewidth=lw, label="Linear regressor")
+plt.plot(
+    line_X,
+    line_y_ransac,
+    color="cornflowerblue",
+    linewidth=lw,
+    label="RANSAC regressor",
+)
+plt.legend(loc="lower right")
 plt.xlabel("Input")
 plt.ylabel("Response")
 plt.show()

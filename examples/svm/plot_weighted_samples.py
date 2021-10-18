@@ -28,10 +28,17 @@ def plot_decision_function(classifier, sample_weight, axis, title):
 
     # plot the line, the points, and the nearest vectors to the plane
     axis.contourf(xx, yy, Z, alpha=0.75, cmap=plt.cm.bone)
-    axis.scatter(X[:, 0], X[:, 1], c=y, s=100 * sample_weight, alpha=0.9,
-                 cmap=plt.cm.bone, edgecolors='black')
+    axis.scatter(
+        X[:, 0],
+        X[:, 1],
+        c=y,
+        s=100 * sample_weight,
+        alpha=0.9,
+        cmap=plt.cm.bone,
+        edgecolors="black",
+    )
 
-    axis.axis('off')
+    axis.axis("off")
     axis.set_title(title)
 
 
@@ -55,9 +62,9 @@ clf_no_weights = svm.SVC(gamma=1)
 clf_no_weights.fit(X, y)
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-plot_decision_function(clf_no_weights, sample_weight_constant, axes[0],
-                       "Constant weights")
-plot_decision_function(clf_weights, sample_weight_last_ten, axes[1],
-                       "Modified weights")
+plot_decision_function(
+    clf_no_weights, sample_weight_constant, axes[0], "Constant weights"
+)
+plot_decision_function(clf_weights, sample_weight_last_ten, axes[1], "Modified weights")
 
 plt.show()

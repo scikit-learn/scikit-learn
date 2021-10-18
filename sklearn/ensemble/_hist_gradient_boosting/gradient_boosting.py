@@ -237,7 +237,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # computation
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
-            # TODO: remove when PDP suports sample weights
+            # TODO: remove when PDP supports sample weights
             self._fitted_with_sw = True
 
         rng = check_random_state(self.random_state)
@@ -1021,13 +1021,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'least_squares', 'absolute_error', \
-            'least_absolute_deviation', 'poisson'}, default='squared_error'
+    loss : {'squared_error', 'absolute_error', 'poisson'}, \
+            default='squared_error'
         The loss function to use in the boosting process. Note that the
-        "least squares" and "poisson" losses actually implement
+        "squared error" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
         computation of the gradient. Furthermore, "poisson" loss internally
-        uses a log-link and requires ``y >= 0``
+        uses a log-link and requires ``y >= 0``.
 
         .. versionchanged:: 0.23
            Added option 'poisson'.
@@ -1070,7 +1070,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int} of shape (n_features) \
-            or shape (n_categorical_features,), default=None.
+            or shape (n_categorical_features,), default=None
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1163,6 +1163,26 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    GradientBoostingRegressor : Exact gradient boosting method that does not
+        scale as good on datasets with a large number of samples.
+    sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
+    RandomForestRegressor : A meta-estimator that fits a number of decision
+        tree regressors on various sub-samples of the dataset and uses
+        averaging to improve the statistical performance and control
+        over-fitting.
+    AdaBoostRegressor : A meta-estimator that begins by fitting a regressor
+        on the original dataset and then fits additional copies of the
+        regressor on the same dataset but where the weights of instances are
+        adjusted according to the error of the current prediction. As such,
+        subsequent regressors focus more on difficult cases.
 
     Examples
     --------
@@ -1244,7 +1264,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return self._loss.inverse_link_function(self._raw_predict(X).ravel())
 
     def staged_predict(self, X):
-        """Predict regression target for each iteration
+        """Predict regression target for each iteration.
 
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
@@ -1458,12 +1478,17 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
     GradientBoostingClassifier : Exact gradient boosting method that does not
         scale as good on datasets with a large number of samples.
-    DecisionTreeClassifier : A decision tree classifier.
+    sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
     RandomForestClassifier : A meta-estimator that fits a number of decision
         tree classifiers on various sub-samples of the dataset and uses
         averaging to improve the predictive accuracy and control over-fitting.

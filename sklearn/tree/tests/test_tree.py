@@ -857,7 +857,7 @@ def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(name):
 
 def test_min_impurity_decrease():
     # test if min_impurity_decrease ensure that a split is made only if
-    # if the impurity decrease is atleast that value
+    # if the impurity decrease is at least that value
     X, y = datasets.make_classification(n_samples=10000, random_state=42)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
