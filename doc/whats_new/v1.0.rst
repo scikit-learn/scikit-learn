@@ -43,6 +43,12 @@ Fixed models
   between sparse and dense input. :pr:`21195`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Improves stability of :class:`linear_model.LassoLars` for different
+  versions of openblas. :pr:`21340` by `Thomas Fan`_.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -677,7 +683,7 @@ Changelog
   Dupre la Tour`_.
 
 - |Fix| Decrease the numerical default tolerance in the lobpcg call
-  in :func:`manifold.spectral_embedding` to prevent numerical instability. 
+  in :func:`manifold.spectral_embedding` to prevent numerical instability.
   :pr:`21194` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.metrics`
