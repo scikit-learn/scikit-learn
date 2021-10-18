@@ -2998,8 +2998,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     See Also
     --------
-    MultiTaskElasticNet : Multi-task ElasticNet model trained with L1/L2 mixed-norm \
-    as regularizer.
+    MultiTaskElasticNet : Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer.
     ElasticNetCV : Elastic net model with best model selection by cross-validation.
     MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in cross-validation.
     
