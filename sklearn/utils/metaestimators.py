@@ -29,7 +29,11 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         out = super().get_params(deep=deep)
         if not deep:
             return out
+
         estimators = getattr(self, attr)
+        if not isinstance(out, dict) or not isinstance(estimators, dict):
+            return out
+
         out.update(estimators)
         for name, estimator in estimators:
             if hasattr(estimator, "get_params"):
@@ -45,7 +49,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         # 2. Step replacement
         items = getattr(self, attr)
         names = []
-        if items:
+        if isinstance(items, list) and items:
             names, _ = zip(*items)
         for name in list(params.keys()):
             if "__" not in name and name in names:
