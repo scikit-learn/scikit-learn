@@ -27,7 +27,6 @@ DOCSTRING_IGNORE_LIST = [
     "SpectralCoclustering",
     "SpectralEmbedding",
     "StackingRegressor",
-    "TransformedTargetRegressor",
 ]
 
 
