@@ -1,15 +1,14 @@
-version: 2
+version: 2.1
 
 jobs:
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: circleci/python:3.7.7-buster
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
-      - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.6
+      - PYTHON_VERSION: 3.7
       - NUMPY_VERSION: 'min'
       - SCIPY_VERSION: 'min'
       - MATPLOTLIB_VERSION: 'min'
@@ -17,6 +16,10 @@ jobs:
       - SCIKIT_IMAGE_VERSION: 'min'
       - SPHINX_VERSION: 'min'
       - PANDAS_VERSION: 'min'
+      - SPHINX_GALLERY_VERSION: 'min'
+      - NUMPYDOC_VERSION: 'min'
+      - SPHINX_PROMPT_VERSION: 'min'
+      - SPHINXEXT_OPENGRAPH_VERSION: 'min'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -45,11 +48,10 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: circleci/python:3.7.7-buster
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
-      - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3
       - NUMPY_VERSION: 'latest'
@@ -59,6 +61,10 @@ jobs:
       - SCIKIT_IMAGE_VERSION: 'latest'
       - SPHINX_VERSION: 'min'
       - PANDAS_VERSION: 'latest'
+      - SPHINX_GALLERY_VERSION: 'latest'
+      - NUMPYDOC_VERSION: 'latest'
+      - SPHINX_PROMPT_VERSION: 'latest'
+      - SPHINXEXT_OPENGRAPH_VERSION: 'latest'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -92,7 +98,7 @@ jobs:
 
   lint:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -103,25 +109,40 @@ jobs:
           name: linting
           command: ./build_tools/circle/linting.sh
 
-  pypy3:
-    docker:
-      - image: pypy:3.6-7.2.0
+  linux-arm64:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
+    environment:
+      # Use the latest supported version of python
+      - PYTHON_VERSION: '3.9'
+      - OMP_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 2
+      - NUMPY_VERSION: 'latest'
+      - SCIPY_VERSION: 'latest'
+      - CYTHON_VERSION: 'latest'
+      - JOBLIB_VERSION: 'latest'
+      - THREADPOOLCTL_VERSION: 'latest'
+      - PYTEST_VERSION: 'latest'
+      - PYTEST_XDIST_VERSION: 'latest'
+      - TEST_DOCSTRINGS: 'true'
     steps:
-      - restore_cache:
-          keys:
-            - pypy3-ccache-{{ .Branch }}
-            - pypy3-ccache
       - checkout
-      - run: ./build_tools/circle/build_test_pypy.sh
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - restore_cache:
+          key: linux-arm64-{{ .Branch }}
+      - run: ./build_tools/circle/build_test_arm.sh
       - save_cache:
-          key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
+          key: linux-arm64-{{ .Branch }}
           paths:
-            - ~/.ccache
+            - ~/.cache/ccache
             - ~/.cache/pip
-
+            - ~/scikit_learn_data
+            # The source build folder.
+            - ~/project/build
   deploy:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -132,7 +153,7 @@ jobs:
       - run: ls -ltrh doc/_build/html/stable
       - deploy:
           command: |
-            if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
+            if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
             fi
 
@@ -147,21 +168,9 @@ workflows:
       - doc-min-dependencies:
           requires:
             - lint
-      - pypy3:
-          filters:
-            branches:
-              only:
-                - 0.20.X
       - deploy:
           requires:
             - doc
-  pypy:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
+  linux-arm64:
     jobs:
-      - pypy3
+      - linux-arm64

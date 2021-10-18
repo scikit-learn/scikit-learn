@@ -30,8 +30,10 @@ import matplotlib.pyplot as plt
 from time import time
 from sklearn import metrics
 
-def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
-                             fixed_n_classes=None, n_runs=5, seed=42):
+
+def uniform_labelings_scores(
+    score_func, n_samples, n_clusters_range, fixed_n_classes=None, n_runs=5, seed=42
+):
     """Compute score for 2 random uniform cluster labelings.
 
     Both random labelings have the same number of clusters for each value
@@ -58,6 +60,7 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
 def ami_score(U, V):
     return metrics.adjusted_mutual_info_score(U, V)
 
+
 score_funcs = [
     metrics.adjusted_rand_score,
     metrics.v_measure_score,
@@ -75,20 +78,24 @@ plt.figure(1)
 plots = []
 names = []
 for score_func in score_funcs:
-    print("Computing %s for %d values of n_clusters and n_samples=%d"
-          % (score_func.__name__, len(n_clusters_range), n_samples))
+    print(
+        "Computing %s for %d values of n_clusters and n_samples=%d"
+        % (score_func.__name__, len(n_clusters_range), n_samples)
+    )
 
     t0 = time()
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     print("done in %0.3fs" % (time() - t0))
-    plots.append(plt.errorbar(
-        n_clusters_range, np.median(scores, axis=1), scores.std(axis=1))[0])
+    plots.append(
+        plt.errorbar(n_clusters_range, np.median(scores, axis=1), scores.std(axis=1))[0]
+    )
     names.append(score_func.__name__)
 
-plt.title("Clustering measures for 2 random uniform labelings\n"
-          "with equal number of clusters")
-plt.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
-plt.ylabel('Score value')
+plt.title(
+    "Clustering measures for 2 random uniform labelings\nwith equal number of clusters"
+)
+plt.xlabel("Number of clusters (Number of samples is fixed to %d)" % n_samples)
+plt.ylabel("Score value")
 plt.legend(plots, names)
 plt.ylim(bottom=-0.05, top=1.05)
 
@@ -105,21 +112,27 @@ plt.figure(2)
 plots = []
 names = []
 for score_func in score_funcs:
-    print("Computing %s for %d values of n_clusters and n_samples=%d"
-          % (score_func.__name__, len(n_clusters_range), n_samples))
+    print(
+        "Computing %s for %d values of n_clusters and n_samples=%d"
+        % (score_func.__name__, len(n_clusters_range), n_samples)
+    )
 
     t0 = time()
-    scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range,
-                                      fixed_n_classes=n_classes)
+    scores = uniform_labelings_scores(
+        score_func, n_samples, n_clusters_range, fixed_n_classes=n_classes
+    )
     print("done in %0.3fs" % (time() - t0))
-    plots.append(plt.errorbar(
-        n_clusters_range, scores.mean(axis=1), scores.std(axis=1))[0])
+    plots.append(
+        plt.errorbar(n_clusters_range, scores.mean(axis=1), scores.std(axis=1))[0]
+    )
     names.append(score_func.__name__)
 
-plt.title("Clustering measures for random uniform labeling\n"
-          "against reference assignment with %d classes" % n_classes)
-plt.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
-plt.ylabel('Score value')
+plt.title(
+    "Clustering measures for random uniform labeling\n"
+    "against reference assignment with %d classes" % n_classes
+)
+plt.xlabel("Number of clusters (Number of samples is fixed to %d)" % n_samples)
+plt.ylabel("Score value")
 plt.ylim(bottom=-0.05, top=1.05)
 plt.legend(plots, names)
 plt.show()

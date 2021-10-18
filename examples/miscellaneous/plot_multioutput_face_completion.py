@@ -33,21 +33,22 @@ test = data[targets >= 30]  # Test on independent people
 # Test on a subset of people
 n_faces = 5
 rng = check_random_state(4)
-face_ids = rng.randint(test.shape[0], size=(n_faces, ))
+face_ids = rng.randint(test.shape[0], size=(n_faces,))
 test = test[face_ids, :]
 
 n_pixels = data.shape[1]
 # Upper half of the faces
-X_train = train[:, :(n_pixels + 1) // 2]
+X_train = train[:, : (n_pixels + 1) // 2]
 # Lower half of the faces
-y_train = train[:, n_pixels // 2:]
-X_test = test[:, :(n_pixels + 1) // 2]
-y_test = test[:, n_pixels // 2:]
+y_train = train[:, n_pixels // 2 :]
+X_test = test[:, : (n_pixels + 1) // 2]
+y_test = test[:, n_pixels // 2 :]
 
 # Fit estimators
 ESTIMATORS = {
-    "Extra trees": ExtraTreesRegressor(n_estimators=10, max_features=32,
-                                       random_state=0),
+    "Extra trees": ExtraTreesRegressor(
+        n_estimators=10, max_features=32, random_state=0
+    ),
     "K-nn": KNeighborsRegressor(),
     "Linear regression": LinearRegression(),
     "Ridge": RidgeCV(),
@@ -62,7 +63,7 @@ for name, estimator in ESTIMATORS.items():
 image_shape = (64, 64)
 
 n_cols = 1 + len(ESTIMATORS)
-plt.figure(figsize=(2. * n_cols, 2.26 * n_faces))
+plt.figure(figsize=(2.0 * n_cols, 2.26 * n_faces))
 plt.suptitle("Face completion with multi-output estimators", size=16)
 
 for i in range(n_faces):
@@ -71,13 +72,12 @@ for i in range(n_faces):
     if i:
         sub = plt.subplot(n_faces, n_cols, i * n_cols + 1)
     else:
-        sub = plt.subplot(n_faces, n_cols, i * n_cols + 1,
-                          title="true faces")
+        sub = plt.subplot(n_faces, n_cols, i * n_cols + 1, title="true faces")
 
     sub.axis("off")
-    sub.imshow(true_face.reshape(image_shape),
-               cmap=plt.cm.gray,
-               interpolation="nearest")
+    sub.imshow(
+        true_face.reshape(image_shape), cmap=plt.cm.gray, interpolation="nearest"
+    )
 
     for j, est in enumerate(sorted(ESTIMATORS)):
         completed_face = np.hstack((X_test[i], y_test_predict[est][i]))
@@ -86,12 +86,13 @@ for i in range(n_faces):
             sub = plt.subplot(n_faces, n_cols, i * n_cols + 2 + j)
 
         else:
-            sub = plt.subplot(n_faces, n_cols, i * n_cols + 2 + j,
-                              title=est)
+            sub = plt.subplot(n_faces, n_cols, i * n_cols + 2 + j, title=est)
 
         sub.axis("off")
-        sub.imshow(completed_face.reshape(image_shape),
-                   cmap=plt.cm.gray,
-                   interpolation="nearest")
+        sub.imshow(
+            completed_face.reshape(image_shape),
+            cmap=plt.cm.gray,
+            interpolation="nearest",
+        )
 
 plt.show()
