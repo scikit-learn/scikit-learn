@@ -338,16 +338,21 @@ def estimator_html_repr(estimator):
         container_id = "sk-" + str(uuid.uuid4())
         style_template = Template(_STYLE)
         style_with_id = style_template.substitute(id=container_id)
-
         estimator_str = str(estimator)
-        rerun_msg = (
+
+        # When the notebook is trusted, the CSS is loaded and
+        # div.sk-text-repr-fallback is set to display: none, hiding the fallback message
+        # If the notebook is not trusted, the CSS is not loaded, then fallback message
+        # is shown by default.
+        fallback_msg = (
             "Please rerun this cell to show the HTML repr or trust the notebook."
         )
-        fallback_html = f"<pre>{html.escape(estimator_str)}</pre><b>{rerun_msg}</b>"
         out.write(
             f"<style>{style_with_id}</style>"
             f'<div id="{container_id}" class"sk-top-container">'
-            f'<div class="sk-text-repr-fallback">{fallback_html}</div>'
+            '<div class="sk-text-repr-fallback">'
+            f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
+            "</div>"
             '<div class="sk-container" hidden>'
         )
         _write_estimator_html(
