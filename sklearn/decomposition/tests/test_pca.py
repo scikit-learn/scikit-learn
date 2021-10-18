@@ -661,26 +661,3 @@ def test_assess_dimesion_rank_one():
     assert np.isfinite(_assess_dimension(s, rank=1, n_samples=n_samples))
     for rank in range(2, n_features):
         assert _assess_dimension(s, rank, n_samples) == -np.inf
-
-
-@pytest.mark.parametrize("nfeat", [10, 11, 12, 20, 100])
-@pytest.mark.parametrize("seed", range(5))
-def test_pca_svd_output(nfeat, seed):
-    # Test results consistency
-    rng = np.random.RandomState(seed)
-    X = rng.randn(10 ** 5, nfeat)
-
-    # The result is the same as svd and svds
-    pca = PCA(n_components=1, n_oversamples_rate=1)
-    X_tranformed = pca.fit_transform(X).reshape(-1)
-
-    # sparse svd
-    U1, s1, _ = svds(X, k=1, return_singular_vectors="u")
-    X_tranformed1 = U1[:, 0] * s1[0]
-
-    # dense svd
-    U2, s2, Vh2 = svd(X, full_matrices=False)
-    X_tranformed2 = U2[:, 0] * s2[0]
-
-    assert any(X_tranformed - X_tranformed1)
-    assert any(X_tranformed - X_tranformed2)
