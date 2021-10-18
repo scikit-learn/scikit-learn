@@ -2013,9 +2013,8 @@ score is not finite: it is either ``NaN`` (perfect predictions) or ``-Inf``
 optimization such as grid-search cross-validation to be performed correctly.
 For this reason the default behaviour of :func:`explained_variance_score` is
 to replace them with 1.0 (perfect predictions) or 0.0 (imperfect predictions).
-You can set the ``force_finite`` parameter to ``False`` to
-prevent this fix to happen and fallback on the original Explained Variance
-score.
+You can set the ``force_finite`` parameter to ``False`` to prevent this
+fix from happening and fallback on the original Explained Variance score.
 
 Here is a small example of usage of the :func:`explained_variance_score`
 function::
