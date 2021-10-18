@@ -2283,8 +2283,8 @@ where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n}
 Note that :func:`r2_score` calculates unadjusted R² without correcting for
 bias in sample variance of y.
 
-In the particular case where the true y is constant, the R² score is not
-finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
+In the particular case where the true y is constant, the :math:`R^2` score is
+not finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
 predictions). Such non-finite scores may prevent correct model optimization
 such as grid-search cross-validation to be performed correctly. For this reason
 the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
