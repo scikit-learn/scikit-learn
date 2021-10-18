@@ -770,7 +770,7 @@ def r2_score(
         .. versionchanged:: 0.19
             Default value of multioutput is 'uniform_average'.
 
-    force_finite : boolean, optional
+    force_finite : bool, default=True
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
         data should be replaced with real numbers (``1.0`` if prediction is
         perfect, ``0.0`` otherwise). Default is ``True``, a convenient settings
