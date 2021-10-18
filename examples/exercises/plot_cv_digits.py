@@ -17,7 +17,7 @@ from sklearn import datasets, svm
 
 X, y = datasets.load_digits(return_X_y=True)
 
-svc = svm.SVC(kernel='linear')
+svc = svm.SVC(kernel="linear")
 C_s = np.logspace(-10, 0, 10)
 
 scores = list()
@@ -30,13 +30,14 @@ for C in C_s:
 
 # Do the plotting
 import matplotlib.pyplot as plt
+
 plt.figure()
 plt.semilogx(C_s, scores)
-plt.semilogx(C_s, np.array(scores) + np.array(scores_std), 'b--')
-plt.semilogx(C_s, np.array(scores) - np.array(scores_std), 'b--')
+plt.semilogx(C_s, np.array(scores) + np.array(scores_std), "b--")
+plt.semilogx(C_s, np.array(scores) - np.array(scores_std), "b--")
 locs, labels = plt.yticks()
 plt.yticks(locs, list(map(lambda x: "%g" % x, locs)))
-plt.ylabel('CV score')
-plt.xlabel('Parameter C')
+plt.ylabel("CV score")
+plt.xlabel("Parameter C")
 plt.ylim(0, 1.1)
 plt.show()

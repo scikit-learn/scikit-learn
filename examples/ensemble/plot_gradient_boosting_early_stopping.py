@@ -49,7 +49,7 @@ print(__doc__)
 data_list = [datasets.load_iris(), datasets.load_digits()]
 data_list = [(d.data, d.target) for d in data_list]
 data_list += [datasets.make_hastie_10_2()]
-names = ['Iris Data', 'Digits Data', 'Hastie Data']
+names = ["Iris Data", "Digits Data", "Hastie Data"]
 
 n_gb = []
 score_gb = []
@@ -61,17 +61,20 @@ time_gbes = []
 n_estimators = 500
 
 for X, y in data_list:
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
-                                                        random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=0
+    )
 
     # We specify that if the scores don't improve by at least 0.01 for the last
     # 10 stages, stop fitting additional stages
-    gbes = ensemble.GradientBoostingClassifier(n_estimators=n_estimators,
-                                               validation_fraction=0.2,
-                                               n_iter_no_change=5, tol=0.01,
-                                               random_state=0)
-    gb = ensemble.GradientBoostingClassifier(n_estimators=n_estimators,
-                                             random_state=0)
+    gbes = ensemble.GradientBoostingClassifier(
+        n_estimators=n_estimators,
+        validation_fraction=0.2,
+        n_iter_no_change=5,
+        tol=0.01,
+        random_state=0,
+    )
+    gb = ensemble.GradientBoostingClassifier(n_estimators=n_estimators, random_state=0)
     start = time.time()
     gb.fit(X_train, y_train)
     time_gb.append(time.time() - start)
@@ -97,10 +100,12 @@ index = index[0:n]
 
 plt.figure(figsize=(9, 5))
 
-bar1 = plt.bar(index, score_gb, bar_width, label='Without early stopping',
-               color='crimson')
-bar2 = plt.bar(index + bar_width, score_gbes, bar_width,
-               label='With early stopping', color='coral')
+bar1 = plt.bar(
+    index, score_gb, bar_width, label="Without early stopping", color="crimson"
+)
+bar2 = plt.bar(
+    index + bar_width, score_gbes, bar_width, label="With early stopping", color="coral"
+)
 
 plt.xticks(index + bar_width, names)
 plt.yticks(np.arange(0, 1.3, 0.1))
@@ -111,20 +116,24 @@ def autolabel(rects, n_estimators):
     Attach a text label above each bar displaying n_estimators of each model
     """
     for i, rect in enumerate(rects):
-        plt.text(rect.get_x() + rect.get_width() / 2.,
-                 1.05 * rect.get_height(), 'n_est=%d' % n_estimators[i],
-                 ha='center', va='bottom')
+        plt.text(
+            rect.get_x() + rect.get_width() / 2.0,
+            1.05 * rect.get_height(),
+            "n_est=%d" % n_estimators[i],
+            ha="center",
+            va="bottom",
+        )
 
 
 autolabel(bar1, n_gb)
 autolabel(bar2, n_gbes)
 
 plt.ylim([0, 1.3])
-plt.legend(loc='best')
+plt.legend(loc="best")
 plt.grid(True)
 
-plt.xlabel('Datasets')
-plt.ylabel('Test score')
+plt.xlabel("Datasets")
+plt.ylabel("Test score")
 
 plt.show()
 
@@ -135,10 +144,12 @@ plt.show()
 
 plt.figure(figsize=(9, 5))
 
-bar1 = plt.bar(index, time_gb, bar_width, label='Without early stopping',
-               color='crimson')
-bar2 = plt.bar(index + bar_width, time_gbes, bar_width,
-               label='With early stopping', color='coral')
+bar1 = plt.bar(
+    index, time_gb, bar_width, label="Without early stopping", color="crimson"
+)
+bar2 = plt.bar(
+    index + bar_width, time_gbes, bar_width, label="With early stopping", color="coral"
+)
 
 max_y = np.amax(np.maximum(time_gb, time_gbes))
 
@@ -149,10 +160,10 @@ autolabel(bar1, n_gb)
 autolabel(bar2, n_gbes)
 
 plt.ylim([0, 1.3 * max_y])
-plt.legend(loc='best')
+plt.legend(loc="best")
 plt.grid(True)
 
-plt.xlabel('Datasets')
-plt.ylabel('Fit Time')
+plt.xlabel("Datasets")
+plt.ylabel("Fit Time")
 
 plt.show()

@@ -26,7 +26,7 @@ pca = PCA(n_components=15, whiten=False)
 data = pca.fit_transform(digits.data)
 
 # use grid search cross-validation to optimize the bandwidth
-params = {'bandwidth': np.logspace(-1, 1, 20)}
+params = {"bandwidth": np.logspace(-1, 1, 20)}
 grid = GridSearchCV(KernelDensity(), params)
 grid.fit(data)
 
@@ -48,14 +48,16 @@ fig, ax = plt.subplots(9, 11, subplot_kw=dict(xticks=[], yticks=[]))
 for j in range(11):
     ax[4, j].set_visible(False)
     for i in range(4):
-        im = ax[i, j].imshow(real_data[i, j].reshape((8, 8)),
-                             cmap=plt.cm.binary, interpolation='nearest')
+        im = ax[i, j].imshow(
+            real_data[i, j].reshape((8, 8)), cmap=plt.cm.binary, interpolation="nearest"
+        )
         im.set_clim(0, 16)
-        im = ax[i + 5, j].imshow(new_data[i, j].reshape((8, 8)),
-                                 cmap=plt.cm.binary, interpolation='nearest')
+        im = ax[i + 5, j].imshow(
+            new_data[i, j].reshape((8, 8)), cmap=plt.cm.binary, interpolation="nearest"
+        )
         im.set_clim(0, 16)
 
-ax[0, 5].set_title('Selection from the input data')
+ax[0, 5].set_title("Selection from the input data")
 ax[5, 5].set_title('"New" digits drawn from the kernel density model')
 
 plt.show()

@@ -27,14 +27,18 @@ classifiers = [
     ("SGD", SGDClassifier(max_iter=100)),
     ("ASGD", SGDClassifier(average=True)),
     ("Perceptron", Perceptron()),
-    ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
-                                                         C=1.0, tol=1e-4)),
-    ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
-                                                          C=1.0, tol=1e-4)),
-    ("SAG", LogisticRegression(solver='sag', tol=1e-1, C=1.e4 / X.shape[0]))
+    (
+        "Passive-Aggressive I",
+        PassiveAggressiveClassifier(loss="hinge", C=1.0, tol=1e-4),
+    ),
+    (
+        "Passive-Aggressive II",
+        PassiveAggressiveClassifier(loss="squared_hinge", C=1.0, tol=1e-4),
+    ),
+    ("SAG", LogisticRegression(solver="sag", tol=1e-1, C=1.0e4 / X.shape[0])),
 ]
 
-xx = 1. - np.array(heldout)
+xx = 1.0 - np.array(heldout)
 
 for name, clf in classifiers:
     print("training %s" % name)
@@ -43,8 +47,9 @@ for name, clf in classifiers:
     for i in heldout:
         yy_ = []
         for r in range(rounds):
-            X_train, X_test, y_train, y_test = \
-                train_test_split(X, y, test_size=i, random_state=rng)
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=i, random_state=rng
+            )
             clf.fit(X_train, y_train)
             y_pred = clf.predict(X_test)
             yy_.append(1 - np.mean(y_pred == y_test))
