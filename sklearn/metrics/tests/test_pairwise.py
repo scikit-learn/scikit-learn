@@ -1465,34 +1465,3 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     # and fails due to rounding errors
     rtol = 1e-5 if dtype is np.float32 else 1e-7
     assert_allclose(dist, expected_dist, rtol=rtol)
-
-
-@pytest.mark.parametrize("X_translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
-@pytest.mark.parametrize("Y_translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
-@pytest.mark.parametrize("sign", [1, -1])
-def test_fast_euclidean_correctness(
-    X_translation, Y_translation, sign, n_samples=10000, n_features=10
-):
-    # This is the only failing test case, so we prefer xfailing.
-    numerical_edge_cases = {(1e6, 1e6, 1), (1e7, 1e7, 1)}
-    if (X_translation, Y_translation, sign) in numerical_edge_cases:
-        pytest.xfail(
-            "Numerical edge-case: (X_translation, Y_translation,"
-            f" sign)={(X_translation, Y_translation, sign)}"
-        )
-
-    # The fast squared euclidean strategy must return results
-    # that are close to the ones obtained with the euclidean distance
-    rng = np.random.RandomState(1)
-
-    spread = 100
-    X = X_translation + rng.rand(n_samples, n_features) * spread
-    Y = (Y_translation + rng.rand(n_samples, n_features) * spread) * sign
-
-    argmins, distances = pairwise_distances_argmin_min(X, Y, metric="euclidean")
-    fsq_argmins, fsq_distances = pairwise_distances_argmin_min(
-        X, Y, metric="fast_euclidean"
-    )
-
-    np.testing.assert_array_equal(argmins, fsq_argmins)
-    np.testing.assert_allclose(distances, fsq_distances, rtol=1e-5)

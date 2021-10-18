@@ -26,7 +26,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .fixes import np_version, parse_version
+from .fixes import np_version, parse_version, threadpool_info
 from ._estimator_html_repr import estimator_html_repr
 from .validation import (
     as_float_array,
@@ -40,7 +40,6 @@ from .validation import (
     check_symmetric,
     check_scalar,
 )
-from ..utils.fixes import threadpool_info
 from .. import get_config
 
 

@@ -84,9 +84,9 @@ def _weight_func(dist):
     return retval ** 2
 
 
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
-@pytest.mark.parametrize("n_features", [5, 10, 100])
-@pytest.mark.parametrize("n_query_pts", [1, 10, 100])
+@pytest.mark.parametrize("n_samples", [100, 1000])
+@pytest.mark.parametrize("n_features", [5, 100])
+@pytest.mark.parametrize("n_query_pts", [10, 100])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100])
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 def test_unsupervised_kneighbors(
@@ -151,9 +151,9 @@ def test_unsupervised_kneighbors(
         )
 
 
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
-@pytest.mark.parametrize("n_features", [5, 10, 100])
-@pytest.mark.parametrize("n_query_pts", [1, 10, 100])
+@pytest.mark.parametrize("n_samples", [100, 1000])
+@pytest.mark.parametrize("n_features", [5, 100])
+@pytest.mark.parametrize("n_query_pts", [10, 100])
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
 @pytest.mark.parametrize(
@@ -212,8 +212,7 @@ def test_neigh_predictions_algorithm_agnosticity(
         )
 
 
-@pytest.mark.parametrize("seed", range(10))
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
 @pytest.mark.parametrize(
@@ -226,7 +225,6 @@ def test_neigh_predictions_algorithm_agnosticity(
     ],
 )
 def test_neighs_predictions_fast_euclidean_correctness(
-    seed,
     n_samples,
     n_features,
     n_neighbors,
@@ -242,7 +240,7 @@ def test_neighs_predictions_fast_euclidean_correctness(
             allow_module_level=True,
         )
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(0)
     X = rng.rand(n_samples, n_features).astype(dtype)
     y = rng.randint(3, size=n_samples)
 

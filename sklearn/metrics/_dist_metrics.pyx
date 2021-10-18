@@ -307,8 +307,8 @@ cdef class DistanceMetric:
         This can optionally be overridden in a base class.
 
         The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute.  For example, for the
-        Euclidean metric, the rank-preserving surrogate distance is the
+        rank as the distance, but is more efficient to compute. For example, the
+        rank-preserving surrogate distance of the Euclidean metric is the
         squared-euclidean distance.
         """
         return self.dist(x1, x2, size)
@@ -320,8 +320,10 @@ cdef class DistanceMetric:
         const DTYPE_t[:] x2_data,
         const ITYPE_t[:] x2_indices,
     ) nogil except -1:
-        """Compute the rank-preserving surrogate distance between vectors x1 and x2
-        given non null coordinates and their corresponding indices.
+        """Compute the distance between vectors x1 and x2 of a CSR matrix.
+
+        The computations is made given non null coordinates and
+        corresponding indices of the vectors CSR matrix.
 
         This should be overridden in a base class.
         """
@@ -334,14 +336,16 @@ cdef class DistanceMetric:
         const DTYPE_t[:] x2_data,
         const ITYPE_t[:] x2_indices,
     ) nogil except -1:
-        """Compute the rank-preserving surrogate distance between vectors x1 and x2
-        given non null coordinates and their corresponding indices.
+        """Compute the rank-preserving surrogate distance between vectors x1 and x2 of a CSR matrix.
+
+        The computations is made given non null coordinates and
+        corresponding indices of the vectors CSR matrix.
 
         This can optionally be overridden in a base class.
 
         The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute.  For example, for the
-        Euclidean metric, the rank-preserving surrogate distance is the
+        rank as the distance, but is more efficient to compute. For example, the
+        rank-preserving surrogate distance of the Euclidean metric is the
         squared-euclidean distance.
         """
         return self.csr_dist(x1_data, x1_indices, x2_data, x2_indices)
@@ -378,8 +382,9 @@ cdef class DistanceMetric:
         """Convert the rank-preserving surrogate distance to the distance.
 
         The surrogate distance is any measure that yields the same rank as the
-        distance, but is more efficient to compute. For example, for the
-        Euclidean metric, the surrogate distance is the squared-euclidean distance.
+        distance, but is more efficient to compute. For example, the
+        rank-preserving surrogate distance of the Euclidean metric is the
+        squared-euclidean distance.
 
         Parameters
         ----------
@@ -397,8 +402,9 @@ cdef class DistanceMetric:
         """Convert the true distance to the rank-preserving surrogate distance.
 
         The surrogate distance is any measure that yields the same rank as the
-        distance, but is more efficient to compute. For example, for the
-        Euclidean metric, the surrogate distance is the squared-euclidean distance.
+        distance, but is more efficient to compute. For example, the
+        rank-preserving surrogate distance of the Euclidean metric is the
+        squared-euclidean distance.
 
         Parameters
         ----------
@@ -1506,7 +1512,7 @@ cdef class DenseSparseDatasetsPair(DatasetsPair):
     """
     cdef:
         # As distance metrics are symmetric functions, we can
-        # simply rely on the other DatasetsPair and swap arguments.
+        # simply rely on the SparseDenseDatasetsPair and swap arguments.
         DatasetsPair datasets_pair
 
     def __init__(self, X, Y, DistanceMetric distance_metric):

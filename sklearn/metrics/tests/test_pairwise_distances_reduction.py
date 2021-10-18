@@ -63,7 +63,7 @@ ASSERT_RESULT = {
 
 
 def test_pairwise_distances_reduction_is_usable_for():
-    rng = np.random.RandomState(1)
+    rng = np.random.RandomState(0)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
     metric = "euclidean"

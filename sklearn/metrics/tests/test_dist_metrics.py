@@ -52,7 +52,7 @@ METRICS_DEFAULT_PARAMS = {
 }
 
 
-# TODO: remove this test in 1.2
+# TODO: remove this test in 1.3
 def test_neighbors_distance_metric_deprecation():
     from sklearn.neighbors import DistanceMetric as DeprecatedDistanceMetric
 

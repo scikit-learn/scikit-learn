@@ -185,7 +185,7 @@ cdef class PairwiseDistancesReduction:
     """Abstract base class for pairwise distance computation & reduction
 
     Subclasses of this class compute pairwise distances between a set of
-    vectors (rows) X and another set of vectors (rows) of Y and apply a
+    vectors (rows) X and another set of vectors (rows) Y and apply a
     reduction on top. The reduction takes a matrix of pairwise distances
     between rows of X and Y as input and outputs an aggregate data-structure
     for each row of X. The aggregate values are typically smaller than the number
@@ -204,7 +204,7 @@ cdef class PairwiseDistancesReduction:
     The subclasses are specialized for reduction.
 
     The actual distance computation for a given pair of rows of X and Y are
-    delegated to metric-specific subclasses of the DatasetsPair companion base
+    delegated to format-specific subclasses of the DatasetsPair companion base
     class.
 
     Parameters
@@ -252,7 +252,7 @@ cdef class PairwiseDistancesReduction:
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        """Return True if the PairwiseDistancesReduction for the given parameters.
+        """Return True if the PairwiseDistancesReduction can be used for the given parameters.
 
         Parameters
         ----------
@@ -329,7 +329,7 @@ cdef class PairwiseDistancesReduction:
         str strategy=None,
         bint return_distance=False,
     ):
-        """Computes the reduction of vectors (rows) of X on Y.
+        """Compute the pairwise distances and the reduction of vectors (rows) of X on Y.
 
         Parameters
         ----------
@@ -337,17 +337,19 @@ cdef class PairwiseDistancesReduction:
             The chunking strategy defining which dataset parallelization are made on.
 
             Strategies differs on the dispatching they use for chunks on threads:
-              - 'parallel_on_samples_X' dispatches chunks of X uniformly on threads.
+
+              - 'parallel_on__X' dispatches chunks of X uniformly on threads.
               Each thread then iterates on all the chunks of Y. This strategy is
-              embarrassingly parallel and comes with no datastructures synchronisation
-              but is less used in practice (because X is smaller than Y generally).
+              embarrassingly parallel and comes with no datastructures synchronisation.
+
               - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
               Each thread then iterates on all the chunks of X. This strategy is
               embarrassingly parallel but uses intermediate datastructures
-              synchronisation. However it is more useful in practice (because Y is
-              larger than X generally).
+              synchronisation.
+
               - 'auto' relies on a simple heuristic to choose between
-              'parallel_on_samples_X' and 'parallel_on_Y'.
+              'parallel_on__X' and 'parallel_on_Y'.
+
               - None (default) looks-up in scikit-learn configuration for
               `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
 
@@ -357,8 +359,8 @@ cdef class PairwiseDistancesReduction:
 
         Returns
         -------
-        Results for the PairwiseDistancesReduction, usually an array of indices
-        and optionally an array of associated distances if return_distance is True.
+        If True, return the distances between each sample of X and
+        the samples of Y selected by the reduction function.
         """
 
         if strategy is None:
@@ -386,8 +388,8 @@ cdef class PairwiseDistancesReduction:
 
     @final
     cdef void _parallel_on_X(self) nogil:
-        """Computes the reduction of each vector (row) of X on Y
-        by parallelizing computation on chunks of X.
+        """Compute the pairwise distances of each vector (row) of X on Y
+        by parallelizing computation on chunks of X and reduce them.
 
         This strategy dispatches chunks of X uniformly on threads.
         Each thread then iterates on all the chunks of Y. This strategy is
@@ -447,8 +449,8 @@ cdef class PairwiseDistancesReduction:
 
     @final
     cdef void _parallel_on_Y(self) nogil:
-        """Computes the reduction of each vector (row) of X on Y
-        by parallelizing computation on chunks of Y.
+        """Compute the pairwise distances of each vector (row) of X on Y
+        by parallelizing computation on chunks of Y and reduce them.
 
         This strategy dispatches chunks of Y uniformly on threads.
         Each thread then iterates on all the chunks of X. This strategy is
@@ -602,8 +604,7 @@ cdef class PairwiseDistancesReduction:
         return
 
 cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
-    """Computes the argkmin of vectors (rows) of a set of
-    vectors (rows) of X on another set of vectors (rows) of Y.
+    """Compute the argkmin of vectors (rows) of X on the ones of Y.
 
     Parameters
     ----------
@@ -651,10 +652,10 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples_X, n_features)
+        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
             Input data.
 
-        Y : array-like of shape (n_samples_Y, n_features)
+        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
             Input data.
 
         k : int
@@ -716,7 +717,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         self.k = k
 
         # Allocating pointers to datastructures but not the datastructures themselves.
-        # There as many pointers as available threads.
+        # There are as many pointers as available threads.
         # However, when reducing on small datasets, there can be more pointers than
         # actual threads.
         # In this case, some pointers will be dynamically allocated but there won't
@@ -909,7 +910,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
 
     The full pairwise squared distances matrix is computed as follows:
 
-              ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²
+                  ||X - Y||² = ||X||² - 2 X.Y^T + ||Y||²
 
     The middle term gets computed efficiently bellow using BLAS Level 3 GEMM.
 
@@ -1140,7 +1141,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
         # Neighbors indices and distances are returned as np.ndarray of np.ndarray.
         #
-        # We want resizable buffers which we will to wrapped within numpy
+        # We want resizable buffers which we will wrap into numpy
         # arrays at the end. std::vector comes as a handy interface for
         # interacting efficiently with resizable buffers.
         #
@@ -1251,7 +1252,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         self.sort_results = sort_results
 
         # Allocating pointers to datastructures but not the datastructures themselves.
-        # There as many pointers as available threads.
+        # There are as many pointers as available threads.
         # When reducing on small datasets, there can be more pointers than actual
         # threads used for the reduction but there won't be allocated but unused
         # datastructures.
@@ -1456,7 +1457,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
 
     The full pairwise squared distances matrix is computed as follows:
 
-              ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²
+                  ||X - Y||² = ||X||² - 2 X.Y^T + ||Y||²
 
     The middle term gets computed efficiently bellow using BLAS Level 3 GEMM.
 
