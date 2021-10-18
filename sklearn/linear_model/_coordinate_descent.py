@@ -3005,6 +3005,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     Notes
     -----
     The algorithm used to fit the model is coordinate descent.
+    
     To avoid unnecessary memory duplication the X and y arguments of the fit
     method should be directly passed as Fortran-contiguous numpy arrays.
 
