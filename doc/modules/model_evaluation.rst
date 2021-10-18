@@ -2289,7 +2289,7 @@ predictions). Such non-finite scores may prevent correct model optimization
 such as grid-search cross-validation to be performed correctly. For this reason
 the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
 predictions) or 0.0 (imperfect predictions). If ``force_finite``
-is set to ``False``, this score fallbacks on the original R² definition.
+is set to ``False``, this score fallbacks on the original :math:`R^2` definition.
 
 Here is a small example of usage of the :func:`r2_score` function::
 
