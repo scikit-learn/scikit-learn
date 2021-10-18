@@ -730,8 +730,8 @@ def r2_score(
     (imperfect predictions). To prevent such non-finite numbers to pollute
     higher-level experiments such as a grid search cross-validation, by default
     these cases are replaced with 1.0 (perfect predictions) or 0.0 (imperfect
-    predictions) respectively. You can set ``force_finite`` to
-    ``False`` to prevent this fix to happen.
+    predictions) respectively. You can set ``force_finite`` to ``False`` to
+    prevent this fix from happening.
 
     Note: when the prediction residuals have zero mean (perfectly unbiased
     model), the :math:`R^2` score is identical to the
