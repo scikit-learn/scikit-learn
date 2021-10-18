@@ -682,28 +682,5 @@ def test_pca_svd_output(nfeat, seed):
     U2, s2, Vh2 = svd(X, full_matrices=False)
     X_tranformed2 = U2[:, 0] * s2[0]
 
-    assert not all(X_tranformed - X_tranformed1)
-    assert not all(X_tranformed - X_tranformed2)
-
-
-@pytest.mark.parametrize(
-    "input, params, err_type, err_msg",
-    [
-        (
-            X,
-            {"n_components": 1, "n_oversamples_rate": -1},
-            ValueError,
-            "n_oversamples_rate must be >= 0",
-        ),
-        (
-            X,
-            {"n_components": 1, "n_oversamples_rate": 2},
-            ValueError,
-            "n_oversamples_rate must be <= 1",
-        ),
-    ],
-)
-def test_pca_params_validation(input, params, err_type, err_msg):
-    """Check the parameters validation in `PCA`."""
-    with pytest.raises(err_type, match=err_msg):
-        PCA(**params).fit(input)
+    assert any(X_tranformed - X_tranformed1)
+    assert any(X_tranformed - X_tranformed2)
