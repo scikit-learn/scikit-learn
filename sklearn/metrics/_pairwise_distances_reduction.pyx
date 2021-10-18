@@ -724,7 +724,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         #
         # For the sake of explicitness:
         #   - when parallelizing on X, those heaps pointers are referencing
-        #   (with proper offsets) addresses of the two main heaps (see bellow) 
+        #   (with proper offsets) addresses of the two main heaps (see bellow)
         #   - when parallelizing on Y, those heaps pointer heaps are referencing
         #   small heaps which are thread-wise-allocated and whose content will be
         #   merged with the main heaps'.
@@ -1094,8 +1094,18 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
 
 
 cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
-    """Returns radius-based neighbors vectors' indices in a dataset Y of
-    of vectors in a dataset X.
+    """Compute radius-based neighbors for two sets of vectors.
+
+    For each row-vector X[i] of the queries X, find all the indices j of
+    row-vectors in Y such that:
+
+                        dist(X[i], Y[j]) < radius
+
+    The distance function `dist` depends on the values of the `metric`
+    and `metric_kwargs` parameters.
+
+    When this reduction is used within scikit-learn estimators
+    (X, Y) would generally be (X_test, X_train).
 
     Parameters
     ----------
