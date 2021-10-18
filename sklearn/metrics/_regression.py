@@ -647,7 +647,7 @@ def explained_variance_score(
             Scores of all outputs are averaged, weighted by the variances
             of each individual output.
 
-    force_finite : boolean, optional
+    force_finite : bool, default=True
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
         data should be replaced with real numbers (``1.0`` if prediction is
         perfect, ``0.0`` otherwise). Default is ``True``, a convenient setting
