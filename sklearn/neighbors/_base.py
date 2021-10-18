@@ -357,45 +357,47 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.algorithm not in ["auto", "brute", "kd_tree", "ball_tree"]:
             raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
 
+        self._metric = self.metric
+
         if self.algorithm == "auto":
-            if self.metric == "precomputed":
+            if self._metric == "precomputed":
                 alg_check = "brute"
-            elif callable(self.metric) or self.metric in VALID_METRICS["ball_tree"]:
+            elif callable(self._metric) or self._metric in VALID_METRICS["ball_tree"]:
                 alg_check = "ball_tree"
             else:
                 alg_check = "brute"
         else:
             alg_check = self.algorithm
 
-        if alg_check != "brute" and self.metric in (
+        if alg_check != "brute" and self._metric in (
             "fast_sqeuclidean",
             "fast_euclidean",
         ):
-            alternative = self.metric.replace("fast_", "")
+            alternative = self._metric.replace("fast_", "")
             warnings.warn(
-                f"'{self.metric}' is only available for algorithm='brute' but"
+                f"'{self._metric}' is only available for algorithm='brute' but"
                 f" algorithm='{self.algorithm}' is used. Falling back on"
                 f" metric='{alternative}'.",
                 UserWarning,
                 stacklevel=3,
             )
-            self.metric = alternative
+            self._metric = alternative
 
-        if callable(self.metric):
+        if callable(self._metric):
             if self.algorithm == "kd_tree":
                 # callable metric is only valid for brute force and ball_tree
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
                     "in very poor performance."
-                    % self.metric
+                    % self._metric
                 )
-        elif self.metric not in VALID_METRICS[alg_check]:
+        elif self._metric not in VALID_METRICS[alg_check]:
             raise ValueError(
                 "Metric '%s' not valid. Use "
                 "sorted(sklearn.neighbors.VALID_METRICS['%s']) "
                 "to get valid options. "
-                "Metric can also be a callable function." % (self.metric, alg_check)
+                "Metric can also be a callable function." % (self._metric, alg_check)
             )
 
         if self.metric_params is not None and "p" in self.metric_params:
@@ -411,7 +413,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             effective_p = self.p
 
-        if self.metric in ["wminkowski", "minkowski"] and effective_p < 1:
+        if self._metric in ["wminkowski", "minkowski"] and effective_p < 1:
             raise ValueError("p must be greater or equal to one for minkowski metric")
 
     def _fit(self, X, y=None):
@@ -463,12 +465,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.effective_metric_params_ = self.metric_params.copy()
 
         effective_p = self.effective_metric_params_.get("p", self.p)
-        if self.metric in ["wminkowski", "minkowski"]:
+        if self._metric in ["wminkowski", "minkowski"]:
             self.effective_metric_params_["p"] = effective_p
 
-        self.effective_metric_ = self.metric
+        self.effective_metric_ = self._metric
         # For minkowski distance, use more efficient methods where available
-        if self.metric == "minkowski":
+        if self._metric == "minkowski":
             p = self.effective_metric_params_.pop("p", 2)
             if p < 1:
                 raise ValueError(
@@ -504,7 +506,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.n_samples_fit_ = X.data.shape[0]
             return self
 
-        if self.metric == "precomputed":
+        if self._metric == "precomputed":
             X = _check_precomputed(X)
             # Precomputed matrix X must be squared
             if X.shape[0] != X.shape[1]:
@@ -522,7 +524,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.algorithm not in ("auto", "brute"):
                 warnings.warn("cannot use tree with sparse input: using brute force")
 
-            if self.metric in ("fast_sqeuclidean", "fast_euclidean"):
+            if self._metric in ("fast_sqeuclidean", "fast_euclidean"):
                 # The fast alternatives are only available for dense datasets.
                 self.effective_metric_ = self.effective_metric_.replace("fast_", "")
 
@@ -550,7 +552,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # A tree approach is better for small number of neighbors or small
             # number of features, with KDTree generally faster when available
             if (
-                self.metric == "precomputed"
+                self._metric == "precomputed"
                 or self._fit_X.shape[1] > 15
                 or (
                     self.n_neighbors is not None
@@ -588,7 +590,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         elif self._fit_method == "brute":
             if (
                 self.effective_metric_ in specialised_metrics
-                and self.metric not in specialised_metrics
+                and self._metric not in specialised_metrics
             ):
                 # In that case, the standard stabler metric has not been explicitly
                 # specified by the user, so we prefer its fast alternative.
@@ -748,7 +750,7 @@ class KNeighborsMixin:
 
         if X is not None:
             query_is_train = False
-            if self.metric == "precomputed":
+            if self._metric == "precomputed":
                 X = _check_precomputed(X)
             elif use_pairwise_distances_reductions:
                 # We force the C-contiguity even if it creates a copy for F-ordered
@@ -786,7 +788,9 @@ class KNeighborsMixin:
             )
 
         elif (
-            self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
+            self._fit_method == "brute"
+            and self._metric == "precomputed"
+            and issparse(X)
         ):
             results = _kneighbors_from_graph(
                 X, n_neighbors=n_neighbors, return_distance=return_distance
@@ -1096,7 +1100,7 @@ class RadiusNeighborsMixin:
 
         if X is not None:
             query_is_train = False
-            if self.metric == "precomputed":
+            if self._metric == "precomputed":
                 X = _check_precomputed(X)
             elif use_pairwise_distances_reductions:
                 # We force the C-contiguity even if it creates a copy for F-ordered
@@ -1126,7 +1130,9 @@ class RadiusNeighborsMixin:
             )
 
         elif (
-            self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
+            self._fit_method == "brute"
+            and self._metric == "precomputed"
+            and issparse(X)
         ):
             results = _radius_neighbors_from_graph(
                 X, radius=radius, return_distance=return_distance

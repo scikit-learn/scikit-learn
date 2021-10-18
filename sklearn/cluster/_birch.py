@@ -677,7 +677,6 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse="csr", reset=False)
 
-        # This allow not recomputing Y vectors' squared euclidean norms.
         fast_euclidean_kwargs = {"Y_norm_squared": self._subcluster_norms}
 
         with config_context(assume_finite=True):
@@ -731,8 +730,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 "n_clusters should be an instance of ClusterMixin or an int"
             )
 
-        # We compute it once here, so that we won't need to compute it again at
-        # each call of `Birch.predict`.
+        # We compute subcluster norms once here, so that we won't need to compute it
+        # again at each call of `Birch.predict`.
         self._subcluster_norms = row_norms(self.subcluster_centers_, squared=True)
 
         if clusterer is None or not_enough_centroids:

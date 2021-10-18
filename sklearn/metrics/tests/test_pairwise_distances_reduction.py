@@ -20,10 +20,29 @@ from sklearn.metrics._pairwise_distances_reduction import (
 )
 
 from sklearn.utils import _in_unstable_openblas_configuration
-from sklearn.utils._testing import (
-    fails_if_unstable_openblas,
-    get_dummy_metric_kwargs,
-)
+
+from sklearn.utils._testing import fails_if_unstable_openblas
+
+
+def _get_dummy_metric_kwargs(metric: str, n_features: int):
+    """Return dummy DistanceMetric kwargs for tests."""
+    rng = np.random.RandomState(1)
+    weights = rng.random_sample(n_features)
+    weights /= weights.sum()
+
+    V = rng.random_sample((n_features, n_features))
+
+    # VI is positive-semidefinite, preferred for precision matrix
+    VI = np.dot(V, V.T) + 3 * np.eye(n_features)
+
+    kwargs = {
+        "minkowski": dict(p=1.5),
+        "seuclidean": dict(V=weights),
+        "wminkowski": dict(p=1.5, w=weights),
+        "mahalanobis": dict(VI=VI),
+    }
+
+    return kwargs.get(metric, {})
 
 
 def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices):
@@ -220,7 +239,7 @@ def test_pairwise_distances_reduction_factory_method(
 
 @fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(5))
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
@@ -244,7 +263,7 @@ def test_chunk_size_agnosticism(
     parameter = (
         10
         if PairwiseDistancesReduction is PairwiseDistancesArgKmin
-        # Scaling the radius with the dimensions
+        # Scaling the radius slightly with the numbers of dimensions
         else 10 ** np.log(n_features)
     )
 
@@ -261,7 +280,7 @@ def test_chunk_size_agnosticism(
 
 @fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(5))
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
@@ -272,7 +291,6 @@ def test_n_threads_agnosticism(
     seed,
     n_samples,
     chunk_size,
-    metric="fast_euclidean",
     n_features=100,
     dtype=np.float64,
 ):
@@ -285,23 +303,23 @@ def test_n_threads_agnosticism(
     parameter = (
         10
         if PairwiseDistancesReduction is PairwiseDistancesArgKmin
-        # Scaling the radius with the dimensions
+        # Scaling the radius slightly with the numbers of dimensions
         else 10 ** np.log(n_features)
     )
 
     ref_dist, ref_indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, metric="euclidean"
+        X, Y, parameter, metric="fast_euclidean"
     ).compute(return_distance=True)
 
     dist, indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, metric=metric, n_threads=1
+        X, Y, parameter, metric="fast_euclidean", n_threads=1
     ).compute(return_distance=True)
 
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
 
 @pytest.mark.parametrize("seed", range(5))
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
@@ -337,7 +355,7 @@ def test_strategies_consistency(
     parameter = (
         10
         if PairwiseDistancesReduction is PairwiseDistancesArgKmin
-        # Scaling the radius with the dimensions
+        # Scaling the radius slightly with the numbers of dimensions
         else 10 ** np.log(n_features)
     )
 
@@ -346,7 +364,7 @@ def test_strategies_consistency(
         Y,
         parameter,
         metric=metric,
-        metric_kwargs=get_dummy_metric_kwargs(metric, n_features),
+        metric_kwargs=_get_dummy_metric_kwargs(metric, n_features),
         # To be sure to use parallelization
         chunk_size=n_samples // 4,
     )
@@ -366,7 +384,7 @@ def test_strategies_consistency(
 
 @fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(10))
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("k, radius", [(50, 100)])
 def test_fast_sqeuclidean_correctness(
@@ -412,44 +430,62 @@ def test_fast_sqeuclidean_correctness(
 
 
 @fails_if_unstable_openblas
-@pytest.mark.parametrize("seed", range(10))
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
-@pytest.mark.parametrize("n_features", [5, 10, 100])
-@pytest.mark.parametrize("k", [1, 10, 100])
-@pytest.mark.parametrize("translation", [10 ** i for i in [4]])
+@pytest.mark.parametrize("n_features", [50, 500])
+@pytest.mark.parametrize("translation", [10 ** i for i in [4, 8]])
+@pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
+@pytest.mark.parametrize(
+    "PairwiseDistancesReduction",
+    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+)
 def test_fast_sqeuclidean_translation_invariance(
-    seed,
-    n_samples,
     n_features,
-    k,
     translation,
+    metric,
+    PairwiseDistancesReduction,
+    n_samples=1000,
     dtype=np.float64,
 ):
-    # The fast squared euclidean strategy should be translation invariant.
-    if n_samples < k:
-        pytest.skip(
-            f"Skipping as n_samples (={n_samples}) < n_neighbors (={k})",
-            allow_module_level=True,
-        )
+    # The reduction must be translation invariant.
+    parameter = (
+        10
+        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
+        # Scaling the radius slightly with the numbers of dimensions
+        else 10 ** np.log(n_features)
+    )
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(0)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    reference_dist, reference_indices = PairwiseDistancesArgKmin.get_for(
-        X, Y, k, metric="fast_sqeuclidean"
+    # Haversine distance only accepts 2D data
+    if metric == "haversine":
+        X = np.ascontiguousarray(X[:, :2])
+        Y = np.ascontiguousarray(Y[:, :2])
+
+    reference_dist, reference_indices = PairwiseDistancesReduction.get_for(
+        X,
+        Y,
+        parameter,
+        metric=metric,
+        metric_kwargs=_get_dummy_metric_kwargs(metric, n_features),
     ).compute(return_distance=True)
 
-    dist, indices = PairwiseDistancesArgKmin.get_for(
-        X + translation, Y + translation, k, metric="fast_sqeuclidean"
+    dist, indices = PairwiseDistancesReduction.get_for(
+        X + 0,
+        Y + 0,
+        parameter,
+        metric=metric,
+        metric_kwargs=_get_dummy_metric_kwargs(metric, n_features),
     ).compute(return_distance=True)
 
-    assert_argkmin_results_equality(reference_dist, dist, reference_indices, indices)
+    ASSERT_RESULT[PairwiseDistancesReduction](
+        reference_dist, dist, reference_indices, indices
+    )
 
 
 @pytest.mark.parametrize("seed", range(10))
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3]])
+@pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("num_threads", [1, 2, 8])
 def test_sqeuclidean_row_norms(

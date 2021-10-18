@@ -14,14 +14,11 @@
 # the same structure of operations on distances between vectors
 # of a datasets pair (X, Y).
 
-import numpy as np
 cimport numpy as np
+import numpy as np
 import scipy.sparse
 
 from .. import get_config
-
-np.import_array()
-
 from libc.stdlib cimport free, malloc
 from libc.float cimport DBL_MAX
 from libcpp.vector cimport vector
@@ -55,10 +52,7 @@ from ..utils.fixes import threadpool_limits
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs import ITYPE, DTYPE
 
-# Those constants have been chosen for modern laptops' caches and architecture.
-DEF CHUNK_SIZE = 256  # number of vectors
-DEF MIN_CHUNK_SAMPLES = 20
-
+np.import_array()
 
 # TODO: change for `libcpp.algorithm.move` once Cython 3 is used
 # Introduction in Cython:
@@ -226,7 +220,7 @@ cdef class PairwiseDistancesReduction:
     """
 
     cdef:
-        DatasetsPair _datasets_pair
+        readonly DatasetsPair datasets_pair
 
         ITYPE_t n_threads
         ITYPE_t effective_omp_n_thread
@@ -280,10 +274,6 @@ cdef class PairwiseDistancesReduction:
                 not issparse(Y) and Y.dtype == np.float64 and Y.ndim == 2 and
                 metric in cls.valid_metrics())
 
-    @property
-    def datasets_pair(self) -> DatasetsPair:
-        return self._datasets_pair
-
     def __init__(
         self,
         DatasetsPair datasets_pair,
@@ -291,27 +281,26 @@ cdef class PairwiseDistancesReduction:
         n_threads=None,
      ):
         cdef:
-            ITYPE_t X_n_full_chunks, Y_n_full_chunks
+            ITYPE_t n_samples_chunk, X_n_full_chunks, Y_n_full_chunks
 
         if chunk_size is None:
-            chunk_size = get_config().get("pairwise_dist_chunk_size", CHUNK_SIZE)
+            chunk_size = get_config().get("pairwise_dist_chunk_size", 256)
 
-        check_scalar(chunk_size, "chunk_size", Integral, min_val=1)
-        self.chunk_size = chunk_size
+        self.chunk_size = check_scalar(chunk_size, "chunk_size", Integral, min_val=1)
 
         self.effective_omp_n_thread = _openmp_effective_n_threads(n_threads)
 
-        self.n_samples_chunk = max(MIN_CHUNK_SAMPLES, chunk_size)
+        n_samples_chunk = max(20, chunk_size)
 
-        self._datasets_pair = datasets_pair
+        self.datasets_pair = datasets_pair
 
         self.n_samples_Y = datasets_pair.n_samples_Y()
-        self.Y_n_samples_chunk = min(self.n_samples_Y, self.n_samples_chunk)
+        self.Y_n_samples_chunk = min(self.n_samples_Y, n_samples_chunk)
         Y_n_full_chunks = self.n_samples_Y // self.Y_n_samples_chunk
         self.Y_n_samples_remainder = self.n_samples_Y % self.Y_n_samples_chunk
 
         self.n_samples_X = datasets_pair.n_samples_X()
-        self.X_n_samples_chunk = min(self.n_samples_X, self.n_samples_chunk)
+        self.X_n_samples_chunk = min(self.n_samples_X, n_samples_chunk)
         X_n_full_chunks = self.n_samples_X // self.X_n_samples_chunk
         self.X_n_samples_remainder = self.n_samples_X % self.X_n_samples_chunk
 
@@ -420,7 +409,7 @@ cdef class PairwiseDistancesReduction:
                     X_end = X_start + self.X_n_samples_chunk
 
                 # Reinitializing thread datastructures for the new X chunk
-                self._parallel_on_X_threadwise_init_chunk(thread_num, X_start, X_end)
+                self._parallel_on_X_threadwise_init_chunk(thread_num, X_start)
 
                 for Y_chunk_idx in range(self.Y_n_chunks):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
@@ -552,7 +541,6 @@ cdef class PairwiseDistancesReduction:
         self,
         ITYPE_t thread_num,
         ITYPE_t X_start,
-        ITYPE_t X_end,
     ) nogil:
         """Initialise datastructures used in a thread given its number."""
         return
@@ -713,8 +701,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     ):
         super().__init__(datasets_pair, chunk_size, n_threads)
 
-        check_scalar(k, "k", Integral, min_val=1)
-        self.k = k
+        self.k = check_scalar(k, "k", Integral, min_val=1)
 
         # Allocating pointers to datastructures but not the datastructures themselves.
         # There are as many pointers as available threads.
@@ -771,7 +758,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                     heaps_r_distances + i * self.k,
                     heaps_indices + i * self.k,
                     k,
-                    self._datasets_pair.surrogate_dist(X_start + i, Y_start + j),
+                    self.datasets_pair.surrogate_dist(X_start + i, Y_start + j),
                     Y_start + j,
                 )
 
@@ -780,7 +767,6 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         self,
         ITYPE_t thread_num,
         ITYPE_t X_start,
-        ITYPE_t X_end,
     ) nogil:
         # As this strategy is embarrassingly parallel, we can set the
         # thread heaps pointers to the proper position on the main heaps
@@ -890,9 +876,9 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         for i in prange(self.n_samples_X, schedule='static', nogil=True,
                         num_threads=self.effective_omp_n_thread):
             for j in range(self.k):
-                distances[i, j] = self._datasets_pair.distance_metric._rdist_to_dist(
+                distances[i, j] = self.datasets_pair.distance_metric._rdist_to_dist(
                     # Guard against eventual -0., causing nan production.
-                    distances[i, j] if distances[i, j] > 0. else 0.
+                    max(distances[i, j], 0.)
                 )
 
     def _finalize_results(self, bint return_distance=False):
@@ -959,10 +945,12 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         cdef:
             DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
         self.X, self.Y = datasets_pair.X, datasets_pair.Y
+
         if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
             self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared", None)
         else:
             self.Y_norm_squared = _sqeuclidean_row_norms(self.Y, self.effective_omp_n_thread)
+
         # Do not recompute norms if datasets are identical.
         self.X_norm_squared = (
             self.Y_norm_squared if X is Y else
@@ -1246,9 +1234,8 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
     ):
         super().__init__(datasets_pair, chunk_size, n_threads)
 
-        check_scalar(radius, "radius", Real, min_val=0)
-        self.radius = radius
-        self.r_radius = self._datasets_pair.distance_metric._dist_to_rdist(radius)
+        self.radius = check_scalar(radius, "radius", Real, min_val=0)
+        self.r_radius = self.datasets_pair.distance_metric._dist_to_rdist(radius)
         self.sort_results = sort_results
 
         # Allocating pointers to datastructures but not the datastructures themselves.
@@ -1295,7 +1282,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
-                r_dist_i_j = self._datasets_pair.surrogate_dist(i, j)
+                r_dist_i_j = self.datasets_pair.surrogate_dist(i, j)
                 if r_dist_i_j <= self.r_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i].push_back(r_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
@@ -1315,7 +1302,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         self,
         ITYPE_t thread_num,
         ITYPE_t X_start,
-        ITYPE_t X_end,
     ) nogil:
 
         # As this strategy is embarrassingly parallel, we can set the
@@ -1432,11 +1418,9 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
                         num_threads=self.effective_omp_n_thread):
             for j in range(deref(self.neigh_indices)[i].size()):
                 deref(self.neigh_distances)[i][j] = (
-                        self._datasets_pair.distance_metric._rdist_to_dist(
+                        self.datasets_pair.distance_metric._rdist_to_dist(
                             # Guard against eventual -0., causing nan production.
-                            deref(self.neigh_distances)[i][j]
-                            if deref(self.neigh_distances)[i][j] > 0.
-                            else 0
+                            max(deref(self.neigh_distances)[i][j], 0.)
                         )
                 )
 

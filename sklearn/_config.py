@@ -9,6 +9,9 @@ _global_config = {
     "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
     "print_changed_only": True,
     "display": "text",
+    "pairwise_dist_chunk_size": int(
+        os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
+    ),
 }
 _threadlocal = threading.local()
 
@@ -40,7 +43,11 @@ def get_config():
 
 
 def set_config(
-    assume_finite=None, working_memory=None, print_changed_only=None, display=None
+    assume_finite=None,
+    working_memory=None,
+    print_changed_only=None,
+    display=None,
+    pairwise_dist_chunk_size=None,
 ):
     """Set global scikit-learn configuration
 
@@ -80,6 +87,12 @@ def set_config(
 
         .. versionadded:: 0.23
 
+    pairwise_dist_chunk_size : int, default=None
+        The number of vectors per chunk for PairwiseDistancesReduction.
+        Default is 256 (optimal for most of modern laptops' caches and architectures).
+
+        .. versionadded:: 1.1
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -95,6 +108,8 @@ def set_config(
         local_config["print_changed_only"] = print_changed_only
     if display is not None:
         local_config["display"] = display
+    if pairwise_dist_chunk_size is not None:
+        local_config["display"] = pairwise_dist_chunk_size
 
 
 @contextmanager
@@ -131,6 +146,12 @@ def config_context(**new_config):
         text. Default is 'text'.
 
         .. versionadded:: 0.23
+
+    pairwise_dist_chunk_size : int, default=None
+        The number of vectors per chunk for PairwiseDistancesReduction.
+        Default is 256 (optimal for most of modern laptops' caches and architectures).
+
+        .. versionadded:: 1.1
 
     Notes
     -----

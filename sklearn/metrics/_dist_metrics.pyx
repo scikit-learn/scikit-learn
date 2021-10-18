@@ -1471,8 +1471,8 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
 
         # TODO: the 2D to 1D memory-view conversion might make computation slower, see:
         # https://github.com/scikit-learn/scikit-learn/issues/17299
-        # Ideally, we could pass pointers and indices and access elements
-        # then in distance_metric.dist
+        # Alternatively, we could pass pointers and indices and access elements
+        # then in distance_metric.dist. This works but would complexify this API.
         return self.distance_metric.csr_rdist(
             self.X_data[xi_start:xi_end],
             self.X_indices[xi_start:xi_end],

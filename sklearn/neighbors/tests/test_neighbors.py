@@ -21,6 +21,9 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import EfficiencyWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.tests.test_pairwise_distances_reduction import (
+    _get_dummy_metric_kwargs,
+)
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import (
@@ -36,7 +39,6 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
-    get_dummy_metric_kwargs,
 )
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
@@ -299,7 +301,8 @@ def test_knn_prediction_fast_alternatives_fall_back_on_tree(
     ):
         est.fit(X, y)
 
-    assert est.metric == fall_back_metric
+    assert est.metric == specified_metric
+    assert est._metric == fall_back_metric
     assert est.effective_metric_ == fall_back_metric
 
 
@@ -1522,7 +1525,7 @@ def test_neighbors_metrics(
     test = rng.rand(n_query_pts, n_features)
 
     algorithms = ["brute", "ball_tree", "kd_tree"]
-    metric_params = get_dummy_metric_kwargs(metric, n_features)
+    metric_params = _get_dummy_metric_kwargs(metric, n_features)
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
@@ -1581,7 +1584,7 @@ def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=
     X = rng.rand(n_samples, n_features)
     Xcsr = csr_matrix(X)
 
-    metric_params = get_dummy_metric_kwargs(metric, n_features)
+    metric_params = _get_dummy_metric_kwargs(metric, n_features)
 
     if metric == "precomputed":
         X_precomputed = rng.random_sample((10, 4))
