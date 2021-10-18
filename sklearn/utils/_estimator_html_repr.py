@@ -340,10 +340,10 @@ def estimator_html_repr(estimator):
         style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
 
-        # When the notebook is trusted, the CSS is loaded and
-        # div.sk-text-repr-fallback is set to display: none, hiding the fallback message
-        # If the notebook is not trusted, the CSS is not loaded, then fallback message
-        # is shown by default.
+        # When the notebook is trusted, the CSS is loaded which sets
+        # div.sk-text-repr-fallback to display: none, hiding the fallback message.
+        # If the notebook is not trusted, then the CSS is not loaded and
+        # the fallback message is shown by default.
         fallback_msg = (
             "Please rerun this cell to show the HTML repr or trust the notebook."
         )
