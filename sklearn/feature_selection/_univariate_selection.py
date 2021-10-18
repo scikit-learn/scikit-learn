@@ -281,7 +281,8 @@ def r_regression(X, y, *, center=True):
         else:
             X_means = X.mean(axis=0)
         # Compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means ** 2)
+        X_norms = np.sqrt(np.abs(row_norms(X.T, squared=True)
+                                 - n_samples * X_means ** 2))
     else:
         X_norms = row_norms(X.T)
 
