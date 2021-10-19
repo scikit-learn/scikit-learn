@@ -568,9 +568,17 @@ def enet_path(
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
-        alphas = _alpha_grid(X, y, Xy=Xy, l1_ratio=l1_ratio,
-                             fit_intercept=False, eps=eps, n_alphas=n_alphas,
-                             normalize=False, copy_X=False)
+        alphas = _alpha_grid(
+            X,
+            y,
+            Xy=Xy,
+            l1_ratio=l1_ratio,
+            fit_intercept=False,
+            eps=eps,
+            n_alphas=n_alphas,
+            normalize=False,
+            copy_X=False,
+        )
     elif len(alphas) > 1:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 

@@ -408,17 +408,23 @@ class MiniBatchSparsePCA(SparsePCA):
 
         with warnings.catch_warnings():
             # return_n_iter is deprecated. Remove in 1.2
-            warnings.simplefilter('ignore', category=FutureWarning)
+            warnings.simplefilter("ignore", category=FutureWarning)
             Vt, _, self.n_iter_ = dict_learning_online(
-                X.T, n_components, alpha=self.alpha,
-                n_iter=self.n_iter, return_code=True,
-                dict_init=None, verbose=self.verbose,
+                X.T,
+                n_components,
+                alpha=self.alpha,
+                n_iter=self.n_iter,
+                return_code=True,
+                dict_init=None,
+                verbose=self.verbose,
                 callback=self.callback,
                 batch_size=self.batch_size,
                 shuffle=self.shuffle,
-                n_jobs=self.n_jobs, method=self.method,
+                n_jobs=self.n_jobs,
+                method=self.method,
                 random_state=random_state,
-                return_n_iter=True)
+                return_n_iter=True,
+            )
 
         self.components_ = Vt.T
 

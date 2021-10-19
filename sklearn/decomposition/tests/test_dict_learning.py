@@ -384,11 +384,13 @@ def test_dict_learning_online_verbosity():
     old_stdout = sys.stdout
     try:
         sys.stdout = StringIO()
-        dico = MiniBatchDictionaryLearning(n_components, max_iter=5, verbose=1,
-                                           random_state=0)
+        dico = MiniBatchDictionaryLearning(
+            n_components, max_iter=5, verbose=1, random_state=0
+        )
         dico.fit(X)
-        dico = MiniBatchDictionaryLearning(n_components, max_iter=5, verbose=2,
-                                           random_state=0)
+        dico = MiniBatchDictionaryLearning(
+            n_components, max_iter=5, verbose=2, random_state=0
+        )
         dico.fit(X)
         dict_learning_online(
             X, n_components=n_components, alpha=1, verbose=1, random_state=0
@@ -404,16 +406,14 @@ def test_dict_learning_online_verbosity():
 
 def test_dict_learning_online_estimator_shapes():
     n_components = 5
-    dico = MiniBatchDictionaryLearning(n_components, max_iter=5,
-                                       random_state=0)
+    dico = MiniBatchDictionaryLearning(n_components, max_iter=5, random_state=0)
     dico.fit(X)
     assert dico.components_.shape == (n_components, n_features)
 
 
 def test_dict_learning_online_overcomplete():
     n_components = 12
-    dico = MiniBatchDictionaryLearning(n_components, max_iter=5,
-                                       random_state=0).fit(X)
+    dico = MiniBatchDictionaryLearning(n_components, max_iter=5, random_state=0).fit(X)
     assert dico.components_.shape == (n_components, n_features)
 
 
@@ -421,8 +421,9 @@ def test_dict_learning_online_initialization():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)
-    dico = MiniBatchDictionaryLearning(n_components, max_iter=0,
-                                       dict_init=V, random_state=0).fit(X)
+    dico = MiniBatchDictionaryLearning(
+        n_components, max_iter=0, dict_init=V, random_state=0
+    ).fit(X)
     assert_array_equal(dico.components_, V)
 
 
@@ -431,8 +432,9 @@ def test_dict_learning_online_readonly_initialization():
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)
     V.setflags(write=False)
-    MiniBatchDictionaryLearning(n_components, max_iter=1, dict_init=V,
-                                random_state=0, shuffle=False).fit(X)
+    MiniBatchDictionaryLearning(
+        n_components, max_iter=1, dict_init=V, random_state=0, shuffle=False
+    ).fit(X)
 
 
 def test_dict_learning_online_partial_fit():
@@ -440,12 +442,20 @@ def test_dict_learning_online_partial_fit():
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-    dict1 = MiniBatchDictionaryLearning(n_components, max_iter=10,
-                                        batch_size=1, alpha=1, shuffle=False,
-                                        dict_init=V, max_no_improvement=None,
-                                        tol=0., random_state=0).fit(X)
-    dict2 = MiniBatchDictionaryLearning(n_components, alpha=1, dict_init=V,
-                                        random_state=0)
+    dict1 = MiniBatchDictionaryLearning(
+        n_components,
+        max_iter=10,
+        batch_size=1,
+        alpha=1,
+        shuffle=False,
+        dict_init=V,
+        max_no_improvement=None,
+        tol=0.0,
+        random_state=0,
+    ).fit(X)
+    dict2 = MiniBatchDictionaryLearning(
+        n_components, alpha=1, dict_init=V, random_state=0
+    )
     for i in range(10):
         for sample in X:
             dict2.partial_fit(sample[np.newaxis, :])
@@ -614,11 +624,15 @@ def test_sparse_coder_n_features_in():
     assert sc.n_features_in_ == d.shape[1]
 
 
-@pytest.mark.parametrize("param, match", [
-    ({"n_components": 0}, "n_components should be > 0"),
-    ({"fit_algorithm": "wrong"}, "Coding method not supported"),
-    ({"batch_size": 0}, "batch_size should be > 0"),
-    ({"n_iter": -1}, "n_iter should be >= 0")])
+@pytest.mark.parametrize(
+    "param, match",
+    [
+        ({"n_components": 0}, "n_components should be > 0"),
+        ({"fit_algorithm": "wrong"}, "Coding method not supported"),
+        ({"batch_size": 0}, "batch_size should be > 0"),
+        ({"n_iter": -1}, "n_iter should be >= 0"),
+    ],
+)
 def test_minibatch_dict_learning_wrong_params(param, match):
     # Check that error are raised with clear error message when wrong values
     # are passed for the parameters of MiniBatchDictionaryLearning
@@ -626,16 +640,15 @@ def test_minibatch_dict_learning_wrong_params(param, match):
         MiniBatchDictionaryLearning(**param).fit(X)
 
 
-@pytest.mark.parametrize(
-    "attr", ["iter_offset_", "inner_stats_", "random_state_"])
+@pytest.mark.parametrize("attr", ["iter_offset_", "inner_stats_", "random_state_"])
 def test_minibatch_dict_learning_deprecated_attributes(attr):
     # check that we raise a deprecation warning when accessing the deprecated
     # attributes of MiniBatchDictionaryLearning
     # FIXME: remove in 1.2
-    depr_msg = (f"The attribute '{attr}' is deprecated in 1.0 and will be "
-                f"removed in 1.2.")
-    est = MiniBatchDictionaryLearning(n_components=2, max_iter=1,
-                                      random_state=0)
+    depr_msg = (
+        f"The attribute '{attr}' is deprecated in 1.0 and will be removed in 1.2."
+    )
+    est = MiniBatchDictionaryLearning(n_components=2, max_iter=1, random_state=0)
     est.fit(X)
 
     with pytest.warns(FutureWarning, match=depr_msg):
@@ -645,8 +658,9 @@ def test_minibatch_dict_learning_deprecated_attributes(attr):
 def test_minibatch_dict_learning_partial_fit_iter_offset_deprecated():
     # check the deprecation warning of iter_offset in partial_fit
     # FIXME: remove in 1.2
-    depr_msg = ("'iter_offset' is deprecated in version 1.0 and "
-                "will be removed in version 1.2")
+    depr_msg = (
+        "'iter_offset' is deprecated in version 1.0 and will be removed in version 1.2"
+    )
     est = MiniBatchDictionaryLearning(n_components=2, random_state=0)
 
     with pytest.warns(FutureWarning, match=depr_msg):
@@ -656,30 +670,35 @@ def test_minibatch_dict_learning_partial_fit_iter_offset_deprecated():
 def test_minibatch_dict_learning_n_iter_deprecated():
     # check the deprecation warning of n_iter
     # FIXME: remove in 1.2
-    depr_msg = ("'n_iter' is deprecated in version 1.0 and "
-                "will be removed in version 1.2")
+    depr_msg = (
+        "'n_iter' is deprecated in version 1.0 and will be removed in version 1.2"
+    )
     est = MiniBatchDictionaryLearning(n_components=2, n_iter=5, random_state=0)
 
     with pytest.warns(FutureWarning, match=depr_msg):
         est.fit(X)
 
 
-@pytest.mark.parametrize("arg, val", [
-    ("iter_offset", 0),
-    ("inner_stats", None),
-    ("return_inner_stats", False),
-    ("return_n_iter", False),
-    ("n_iter", 5)])
+@pytest.mark.parametrize(
+    "arg, val",
+    [
+        ("iter_offset", 0),
+        ("inner_stats", None),
+        ("return_inner_stats", False),
+        ("return_n_iter", False),
+        ("n_iter", 5),
+    ],
+)
 def test_dict_learning_online_deprecated_args(arg, val):
     # check the deprecation warning for the deprecated args of
     # dict_learning_online
     # FIXME: remove in 1.2
-    depr_msg = (f"'{arg}' is deprecated in version 1.0 and will be "
-                f"removed in version 1.2.")
+    depr_msg = (
+        f"'{arg}' is deprecated in version 1.0 and will be removed in version 1.2."
+    )
 
     with pytest.warns(FutureWarning, match=depr_msg):
-        dict_learning_online(X, n_components=2, random_state=0,
-                             **{arg: val})
+        dict_learning_online(X, n_components=2, random_state=0, **{arg: val})
 
 
 def test_update_dict():

@@ -717,15 +717,31 @@ def dict_learning(
         return code, dictionary, errors
 
 
-def dict_learning_online(X, n_components=2, *, alpha=1, n_iter="deprecated",
-                         max_iter=None, return_code=True, dict_init=None,
-                         callback=None, batch_size=3, verbose=False,
-                         shuffle=True, n_jobs=None, method='lars',
-                         iter_offset="deprecated", random_state=None,
-                         return_inner_stats="deprecated",
-                         inner_stats="deprecated", return_n_iter="deprecated",
-                         positive_dict=False, positive_code=False,
-                         method_max_iter=1000, max_no_improvement=10):
+def dict_learning_online(
+    X,
+    n_components=2,
+    *,
+    alpha=1,
+    n_iter="deprecated",
+    max_iter=None,
+    return_code=True,
+    dict_init=None,
+    callback=None,
+    batch_size=3,
+    verbose=False,
+    shuffle=True,
+    n_jobs=None,
+    method="lars",
+    iter_offset="deprecated",
+    random_state=None,
+    return_inner_stats="deprecated",
+    inner_stats="deprecated",
+    return_n_iter="deprecated",
+    positive_dict=False,
+    positive_code=False,
+    method_max_iter=1000,
+    max_no_improvement=10,
+):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -893,30 +909,43 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter="deprecated",
     if max_iter is not None and not all(arg == "deprecated" for arg in deps):
         raise ValueError(
             "the following args are incompatible with 'max_iter': "
-            "return_n_iter, return_inner_stats, iter_offset, inner_stats")
+            "return_n_iter, return_inner_stats, iter_offset, inner_stats"
+        )
 
     if iter_offset != "deprecated":
-        warnings.warn("'iter_offset' is deprecated in version 1.0 and "
-                      "will be removed in version 1.2.", FutureWarning)
+        warnings.warn(
+            "'iter_offset' is deprecated in version 1.0 and "
+            "will be removed in version 1.2.",
+            FutureWarning,
+        )
     else:
         iter_offset = 0
 
     if return_inner_stats != "deprecated":
-        warnings.warn("'return_inner_stats' is deprecated in version 1.0 and "
-                      "will be removed in version 1.2.", FutureWarning)
+        warnings.warn(
+            "'return_inner_stats' is deprecated in version 1.0 and "
+            "will be removed in version 1.2.",
+            FutureWarning,
+        )
     else:
         return_inner_stats = False
 
     if inner_stats != "deprecated":
-        warnings.warn("'inner_stats' is deprecated in version 1.0 and "
-                      "will be removed in version 1.2.", FutureWarning)
+        warnings.warn(
+            "'inner_stats' is deprecated in version 1.0 and "
+            "will be removed in version 1.2.",
+            FutureWarning,
+        )
     else:
         inner_stats = None
 
     if return_n_iter != "deprecated":
-        warnings.warn("'return_n_iter' is deprecated in version 1.0 and "
-                      "will be removed in version 1.2. From version 1.2 n_iter"
-                      " will always be returned", FutureWarning)
+        warnings.warn(
+            "'return_n_iter' is deprecated in version 1.0 and "
+            "will be removed in version 1.2. From version 1.2 n_iter"
+            " will always be returned",
+            FutureWarning,
+        )
     else:
         return_n_iter = False
 
@@ -926,13 +955,24 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter="deprecated",
 
         # TODO: add split_sign & method_n_nonzero_coef ?
         est = MiniBatchDictionaryLearning(
-            n_components=n_components, alpha=alpha, n_iter=n_iter,
-            n_jobs=n_jobs, fit_algorithm=method, batch_size=batch_size,
-            shuffle=shuffle, dict_init=dict_init, random_state=random_state,
-            transform_algorithm=transform_algorithm, transform_alpha=alpha,
-            positive_code=positive_code, positive_dict=positive_dict,
-            transform_max_iter=method_max_iter, verbose=verbose,
-            callback=callback, max_no_improvement=max_no_improvement).fit(X)
+            n_components=n_components,
+            alpha=alpha,
+            n_iter=n_iter,
+            n_jobs=n_jobs,
+            fit_algorithm=method,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            dict_init=dict_init,
+            random_state=random_state,
+            transform_algorithm=transform_algorithm,
+            transform_alpha=alpha,
+            positive_code=positive_code,
+            positive_dict=positive_dict,
+            transform_max_iter=method_max_iter,
+            verbose=verbose,
+            callback=callback,
+            max_no_improvement=max_no_improvement,
+        ).fit(X)
 
         if not return_code:
             return est.components_, est.n_iter_, est.n_steps_
@@ -946,7 +986,9 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter="deprecated",
     if n_iter != "deprecated":
         warnings.warn(
             "'n_iter' is deprecated in version 1.0 and will be removed"
-            " in version 1.2. Use 'max_iter' instead.", FutureWarning)
+            " in version 1.2. Use 'max_iter' instead.",
+            FutureWarning,
+        )
     else:
         n_iter = 100
 
@@ -1911,14 +1953,32 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     0.07...
     """
-    def __init__(self, n_components=None, *, alpha=1, n_iter="deprecated",
-                 max_iter=None, fit_algorithm='lars', n_jobs=None,
-                 batch_size=3, shuffle=True, dict_init=None,
-                 transform_algorithm='omp', transform_n_nonzero_coefs=None,
-                 transform_alpha=None, verbose=False, split_sign=False,
-                 random_state=None, positive_code=False, positive_dict=False,
-                 transform_max_iter=1000, callback=None,  tol=1e-3,
-                 max_no_improvement=10):
+
+    def __init__(
+        self,
+        n_components=None,
+        *,
+        alpha=1,
+        n_iter="deprecated",
+        max_iter=None,
+        fit_algorithm="lars",
+        n_jobs=None,
+        batch_size=3,
+        shuffle=True,
+        dict_init=None,
+        transform_algorithm="omp",
+        transform_n_nonzero_coefs=None,
+        transform_alpha=None,
+        verbose=False,
+        split_sign=False,
+        random_state=None,
+        positive_code=False,
+        positive_dict=False,
+        transform_max_iter=1000,
+        callback=None,
+        tol=1e-3,
+        max_no_improvement=10,
+    ):
 
         super().__init__(
             transform_algorithm,
@@ -1945,20 +2005,26 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.max_no_improvement = max_no_improvement
         self.tol = tol
 
-    @deprecated("The attribute 'iter_offset_' is deprecated "  # type: ignore
-                "in 1.0 and will be removed in 1.2.")
+    @deprecated(
+        "The attribute 'iter_offset_' is deprecated "  # type: ignore
+        "in 1.0 and will be removed in 1.2."
+    )
     @property
     def iter_offset_(self):
         return self.n_iter_
 
-    @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
-                "in 1.0 and will be removed in 1.2.")
+    @deprecated(
+        "The attribute 'random_state_' is deprecated "  # type: ignore
+        "in 1.0 and will be removed in 1.2."
+    )
     @property
     def random_state_(self):
         return self._random_state
 
-    @deprecated("The attribute 'inner_stats_' is deprecated "  # type: ignore
-                "in 1.0 and will be removed in 1.2.")
+    @deprecated(
+        "The attribute 'inner_stats_' is deprecated "  # type: ignore
+        "in 1.0 and will be removed in 1.2."
+    )
     @property
     def inner_stats_(self):
         return self._inner_stats
@@ -1967,39 +2033,39 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         # n_components
         if self.n_components is not None and self.n_components <= 0:
             raise ValueError(
-                f"n_components should be > 0, got "
-                f"{self.n_components} instead.")
+                f"n_components should be > 0, got {self.n_components} instead."
+            )
         self._n_components = self.n_components
         if self._n_components is None:
             self._n_components = X.shape[1]
 
         # fit_algorithm
-        if self.fit_algorithm not in ('lars', 'cd'):
-            raise ValueError('Coding method not supported as a fit algorithm.')
+        if self.fit_algorithm not in ("lars", "cd"):
+            raise ValueError("Coding method not supported as a fit algorithm.")
         _check_positive_coding(self.fit_algorithm, self.positive_code)
-        self._fit_algorithm = 'lasso_' + self.fit_algorithm
+        self._fit_algorithm = "lasso_" + self.fit_algorithm
 
         # batch_size
         if self.batch_size <= 0:
             raise ValueError(
-                f"batch_size should be > 0, got {self.batch_size} instead.")
+                f"batch_size should be > 0, got {self.batch_size} instead."
+            )
         self._batch_size = min(self.batch_size, X.shape[0])
 
         # n_iter
         if self.n_iter != "deprecated" and self.n_iter < 0:
-            raise ValueError(
-                f"n_iter should be >= 0, got {self.n_iter} instead.")
+            raise ValueError(f"n_iter should be >= 0, got {self.n_iter} instead.")
 
         # max_iter
         if self.max_iter is not None and self.max_iter < 0:
-            raise ValueError(
-                f"max_iter should be >= 0, got {self.max_iter} instead.")
+            raise ValueError(f"max_iter should be >= 0, got {self.max_iter} instead.")
 
         # max_no_improvement
         if self.max_no_improvement is not None and self.max_no_improvement < 0:
             raise ValueError(
-                f"max_no_improvement should be >= 0, got "
-                f"{self.max_no_improvement} instead.")
+                "max_no_improvement should be >= 0, got "
+                f"{self.max_no_improvement} instead."
+            )
 
     def _initialize_dict(self, X, random_state):
         """Initialization of the dictionary"""
@@ -2007,20 +2073,20 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             dictionary = self.dict_init
         else:
             # Init V with SVD of X
-            _, S, dictionary = randomized_svd(X, self._n_components,
-                                              random_state=random_state)
+            _, S, dictionary = randomized_svd(
+                X, self._n_components, random_state=random_state
+            )
             dictionary = S[:, np.newaxis] * dictionary
         r = len(dictionary)
         if self._n_components <= r:
-            dictionary = dictionary[:self._n_components, :]
+            dictionary = dictionary[: self._n_components, :]
         else:
-            dictionary = np.r_[dictionary,
-                               np.zeros((self._n_components - r,
-                                         dictionary.shape[1]))]
+            dictionary = np.r_[
+                dictionary, np.zeros((self._n_components - r, dictionary.shape[1]))
+            ]
 
-        dictionary = check_array(dictionary, order='F', dtype=np.float64,
-                                 copy=False)
-        dictionary = np.require(dictionary, requirements='W')
+        dictionary = check_array(dictionary, order="F", dtype=np.float64, copy=False)
+        dictionary = np.require(dictionary, requirements="W")
 
         return dictionary
 
@@ -2030,21 +2096,37 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # Compute code for this batch
         code = sparse_encode(
-            X, dictionary, algorithm=self._fit_algorithm,
-            alpha=self.alpha, n_jobs=self.n_jobs, check_input=False,
-            positive=self.positive_code, max_iter=self.transform_max_iter,
-            verbose=self.verbose)
+            X,
+            dictionary,
+            algorithm=self._fit_algorithm,
+            alpha=self.alpha,
+            n_jobs=self.n_jobs,
+            check_input=False,
+            positive=self.positive_code,
+            max_iter=self.transform_max_iter,
+            verbose=self.verbose,
+        )
 
-        batch_cost = (0.5 * ((X - code @ dictionary)**2).sum()
-                      + self.alpha * np.sum(np.abs(code))) / batch_size
+        batch_cost = (
+            0.5 * ((X - code @ dictionary) ** 2).sum()
+            + self.alpha * np.sum(np.abs(code))
+        ) / batch_size
 
         # Update inner stats
         self._update_inner_stats(X, code, batch_size, step)
 
         # Update dictionary
         A, B = self._inner_stats
-        _update_dict(dictionary, X, code, A, B, verbose=self.verbose,
-                     random_state=random_state, positive=self.positive_dict)
+        _update_dict(
+            dictionary,
+            X,
+            code,
+            A,
+            B,
+            verbose=self.verbose,
+            random_state=random_state,
+            positive=self.positive_dict,
+        )
 
         return batch_cost
 
@@ -2062,8 +2144,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         B *= beta
         B += np.dot(X.T, code)
 
-    def _minibatch_convergence(self, X, batch_cost, dictionary, dict_buffer,
-                               n_samples, step, n_steps):
+    def _minibatch_convergence(
+        self, X, batch_cost, dictionary, dict_buffer, n_samples, step, n_steps
+    ):
         """Helper function to encapsulate the early stopping logic"""
         batch_size = X.shape[0]
 
@@ -2074,8 +2157,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         # constraint set yet.
         if step == 1:
             if self.verbose:
-                print(f"Minibatch step {step}/{n_steps}: mean batch "
-                      f"cost: {batch_cost}")
+                print(f"Minibatch step {step}/{n_steps}: mean batch cost: {batch_cost}")
             return False
 
         # Compute an Exponentially Weighted Average of the cost function to
@@ -2090,15 +2172,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # Log progress to be able to monitor convergence
         if self.verbose:
-            print(f"Minibatch step {step}/{n_steps}: mean batch cost: "
-                  f"{batch_cost}, ewa cost: {self._ewa_cost}")
+            print(
+                f"Minibatch step {step}/{n_steps}: mean batch cost: "
+                f"{batch_cost}, ewa cost: {self._ewa_cost}"
+            )
 
         # Early stopping based on change of dictionary
         dict_diff = linalg.norm(dictionary - dict_buffer) / self._n_components
         if self.tol > 0 and dict_diff <= self.tol:
             if self.verbose:
-                print(f"Converged (small dictionary change) at step "
-                      f"{step}/{n_steps}")
+                print(f"Converged (small dictionary change) at step {step}/{n_steps}")
             return True
 
         # Early stopping heuristic due to lack of improvement on smoothed
@@ -2109,11 +2192,15 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         else:
             self._no_improvement += 1
 
-        if (self.max_no_improvement is not None
-                and self._no_improvement >= self.max_no_improvement):
+        if (
+            self.max_no_improvement is not None
+            and self._no_improvement >= self.max_no_improvement
+        ):
             if self.verbose:
-                print(f"Converged (lack of improvement in objective function) "
-                      f"at step {step}/{n_steps}")
+                print(
+                    "Converged (lack of improvement in objective function) "
+                    f"at step {step}/{n_steps}"
+                )
             return True
 
         return False
@@ -2135,8 +2222,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, dtype=np.float64, order='C',
-                                copy=self.shuffle)
+        X = self._validate_data(X, dtype=np.float64, order="C", copy=self.shuffle)
 
         self._check_params(X)
         self._random_state = check_random_state(self.random_state)
@@ -2157,7 +2243,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         # Inner stats
         self._inner_stats = (
             np.zeros((self._n_components, self._n_components)),
-            np.zeros((n_features, self._n_components)))
+            np.zeros((n_features, self._n_components)),
+        )
 
         if self.max_iter is not None:
 
@@ -2179,11 +2266,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                 this_X = X_train[batch]
 
                 batch_cost = self._minibatch_step(
-                    this_X, dictionary, self._random_state, i)
+                    this_X, dictionary, self._random_state, i
+                )
 
                 if self._minibatch_convergence(
-                        this_X, batch_cost, dictionary, dict_buffer, n_samples,
-                        i, n_steps):
+                    this_X, batch_cost, dictionary, dict_buffer, n_samples, i, n_steps
+                ):
                     break
 
                 if self.callback is not None:
@@ -2197,7 +2285,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             if self.n_iter != "deprecated":
                 warnings.warn(
                     "'n_iter' is deprecated in version 1.0 and will be removed"
-                    " in version 1.2. Use 'max_iter' instead.", FutureWarning)
+                    " in version 1.2. Use 'max_iter' instead.",
+                    FutureWarning,
+                )
                 n_iter = self.n_iter
             else:
                 n_iter = 1000
@@ -2206,17 +2296,14 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             batches = itertools.cycle(batches)
 
             for i, batch in zip(range(n_iter), batches):
-                self._minibatch_step(X_train[batch], dictionary,
-                                     self._random_state, i)
+                self._minibatch_step(X_train[batch], dictionary, self._random_state, i)
 
-                trigger_verbose = (self.verbose and
-                                   i % ceil(100. / self.verbose) == 0)
+                trigger_verbose = self.verbose and i % ceil(100.0 / self.verbose) == 0
                 if self.verbose > 10 or trigger_verbose:
                     print(f"{i} batches processed.")
 
             self.n_steps_ = n_iter
-            self.n_iter_ = np.ceil(
-                n_iter / int(np.ceil(n_samples / self._batch_size)))
+            self.n_iter_ = np.ceil(n_iter / int(np.ceil(n_samples / self._batch_size)))
 
         self.components_ = dictionary
 
@@ -2248,17 +2335,22 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        has_components = hasattr(self, 'components_')
+        has_components = hasattr(self, "components_")
 
-        X = self._validate_data(X, dtype=np.float64, order='C',
-                                reset=not has_components)
+        X = self._validate_data(
+            X, dtype=np.float64, order="C", reset=not has_components
+        )
 
-        self._random_state = getattr(self, "_random_state",
-                                     check_random_state(self.random_state))
+        self._random_state = getattr(
+            self, "_random_state", check_random_state(self.random_state)
+        )
 
         if iter_offset != "deprecated":
-            warnings.warn("'iter_offset' is deprecated in version 1.0 and "
-                          "will be removed in version 1.2", FutureWarning)
+            warnings.warn(
+                "'iter_offset' is deprecated in version 1.0 and "
+                "will be removed in version 1.2",
+                FutureWarning,
+            )
             self.n_steps_ = iter_offset
         else:
             self.n_steps_ = getattr(self, "n_steps_", 0)
@@ -2271,12 +2363,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
             self._inner_stats = (
                 np.zeros((self._n_components, self._n_components)),
-                np.zeros((X.shape[1], self._n_components)))
+                np.zeros((X.shape[1], self._n_components)),
+            )
         else:
             dictionary = self.components_
 
-        self._minibatch_step(
-            X, dictionary, self._random_state, self.n_steps_)
+        self._minibatch_step(X, dictionary, self._random_state, self.n_steps_)
 
         self.components_ = dictionary
         self.n_steps_ += 1

@@ -612,14 +612,14 @@ def _set_checking_parameters(estimator):
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR, LinearSVC
-        if name in ['LinearSVR', 'LinearSVC']:
+        if name in ["LinearSVR", "LinearSVC"]:
             estimator.set_params(max_iter=20)
         # NMF
-        if name == 'NMF':
+        if name == "NMF":
             # FIXME : init should be removed in 1.1
             estimator.set_params(max_iter=500, init="nndsvda")
         # MLP
-        if name in ['MLPClassifier', 'MLPRegressor']:
+        if name in ["MLPClassifier", "MLPRegressor"]:
             estimator.set_params(max_iter=100)
         # MiniBatchDictionaryLearning
         if name == "MiniBatchDictionaryLearning":
