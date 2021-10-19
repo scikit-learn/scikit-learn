@@ -52,6 +52,11 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |API| The `n_iter` parameter of :class:`decomposition.dict_learning_online`
+
 :mod:`sklearn.ensemble`
 .......................
 
