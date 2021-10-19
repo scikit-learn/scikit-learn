@@ -1656,7 +1656,7 @@ def test_forest_degenerate_feature_importances():
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: "error" if isinstance(x, str) and len(x) > 10 else x,
+    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
 )
 def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
     # Check invalid `max_samples` values
