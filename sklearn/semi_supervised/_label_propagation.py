@@ -97,6 +97,15 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
      tol : float, default=1e-3
          Convergence tolerance: threshold to consider the system at steady
          state.
+     
+     unlabeled_mark: {-1, 'unk'} or custom value, default=-1
+         The value used to mark unlabeled datapoints for training beside
+         actual label classes. Need to prepare training data (y) accordingly.
+         ``-1`` is often used for binary classification problem (where the 
+         main classes are ``0`` and ``1``).
+         ``'unk'`` is often used for categorical label and/or multiclass 
+         classification, but it can be set to another str value if ``'unk'``
+         is one of the main classes.
 
     n_jobs : int, default=None
          The number of parallel jobs to run.
@@ -114,6 +123,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         alpha=1,
         max_iter=30,
         tol=1e-3,
+        unlabeled_mark=-1,
         n_jobs=None,
     ):
 
@@ -129,6 +139,9 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self.alpha = alpha
 
         self.n_jobs = n_jobs
+
+        # unlabeled_mark: the value used to mark unlabeled datapoints
+        self.unlabeled_mark = unlabeled_mark
 
     def _get_kernel(self, X, y=None):
         if self.kernel == "rbf":
@@ -235,7 +248,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             A matrix of shape (n_samples, n_samples) will be created from this.
 
         y : array-like of shape (n_samples,)
-            `n_labeled_samples` (unlabeled points are marked as -1)
+            `n_labeled_samples` (unlabeled points are marked with the value of
+            unlabeled_mark in the class constructor, default value is ``-1``).
             All unlabeled samples will be transductively assigned labels.
 
         Returns
@@ -252,7 +266,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         # label construction
         # construct a categorical distribution for classification only
         classes = np.unique(y)
-        classes = classes[classes != -1]
+        classes = classes[classes != self.unlabeled_mark]
         self.classes_ = classes
 
         n_samples, n_classes = len(y), len(classes)
@@ -266,7 +280,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 % alpha
             )
         y = np.asarray(y)
-        unlabeled = y == -1
+        unlabeled = y == self.unlabeled_mark
 
         # initialize distributions
         self.label_distributions_ = np.zeros((n_samples, n_classes))
@@ -351,6 +365,15 @@ class LabelPropagation(BaseLabelPropagation):
         Convergence tolerance: threshold to consider the system at steady
         state.
 
+    unlabeled_mark: {-1, 'unk'} or custom value, default=-1
+        The value used to mark unlabeled datapoints for training beside
+        actual label classes. Need to prepare training data (y) accordingly.
+        ``-1`` is often used for binary classification problem (where the 
+        main classes are ``0`` and ``1``).
+        ``'unk'`` is often used for categorical label and/or multiclass 
+        classification, but it can be set to another str value if ``'unk'``
+        is one of the main classes.
+
     n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -420,6 +443,7 @@ class LabelPropagation(BaseLabelPropagation):
         n_neighbors=7,
         max_iter=1000,
         tol=1e-3,
+        unlabeled_mark=-1,
         n_jobs=None,
     ):
         super().__init__(
@@ -428,6 +452,7 @@ class LabelPropagation(BaseLabelPropagation):
             n_neighbors=n_neighbors,
             max_iter=max_iter,
             tol=tol,
+            unlabeled_mark=unlabeled_mark,
             n_jobs=n_jobs,
             alpha=None,
         )
@@ -488,7 +513,16 @@ class LabelSpreading(BaseLabelPropagation):
     tol : float, default=1e-3
       Convergence tolerance: threshold to consider the system at steady
       state.
-
+    
+    unlabeled_mark: {-1, 'unk'} or custom value, default=-1
+        The value used to mark unlabeled datapoints for training beside
+        actual label classes. Need to prepare training data (y) accordingly.
+        ``-1`` is often used for binary classification problem (where the 
+        main classes are ``0`` and ``1``).
+        ``'unk'`` is often used for categorical label and/or multiclass 
+        classification, but it can be set to another str value if ``'unk'``
+        is one of the main classes.
+    
     n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -559,6 +593,7 @@ class LabelSpreading(BaseLabelPropagation):
         alpha=0.2,
         max_iter=30,
         tol=1e-3,
+        unlabeled_mark=-1,
         n_jobs=None,
     ):
 
@@ -570,6 +605,7 @@ class LabelSpreading(BaseLabelPropagation):
             alpha=alpha,
             max_iter=max_iter,
             tol=tol,
+            unlabeled_mark=unlabeled_mark,
             n_jobs=n_jobs,
         )
 
