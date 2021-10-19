@@ -707,7 +707,7 @@ class LinearDiscriminantAnalysis(
 
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
-    """Quadratic Discriminant Analysis
+    """Quadratic Discriminant Analysis.
 
     A classifier with a quadratic decision boundary, generated
     by fitting class conditional densities to the data
@@ -790,6 +790,10 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    LinearDiscriminantAnalysis : Linear Discriminant Analysis.
+
     Examples
     --------
     >>> from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
@@ -801,10 +805,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     QuadraticDiscriminantAnalysis()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
-
-    See Also
-    --------
-    LinearDiscriminantAnalysis : Linear Discriminant Analysis.
     """
 
     def __init__(
@@ -832,7 +832,12 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target values (integers)
+            Target values (integers).
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         X, y = self._validate_data(X, y)
         check_classification_targets(y)
@@ -935,10 +940,13 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Vector to be scored, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
         C : ndarray of shape (n_samples,)
+            Estimated probabilities.
         """
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
