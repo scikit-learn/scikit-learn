@@ -46,14 +46,15 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         # 1. All steps
         if attr in params:
             setattr(self, attr, params.pop(attr))
-        # 2. Step replacement
+        # 2. Replace items with estimators in params
         items = getattr(self, attr)
-        names = []
         if isinstance(items, list) and items:
-            names, _ = zip(*items)
-        for name in list(params.keys()):
-            if "__" not in name and name in names:
-                self._replace_estimator(attr, name, params.pop(name))
+            # Get item names used to identify valid names in params
+            item_names, _ = zip(*items)
+            for name in list(params.keys()):
+                if "__" not in name and name in item_names:
+                    self._replace_estimator(attr, name, params.pop(name))
+
         # 3. Step parameters and other initialisation arguments
         super().set_params(**params)
         return self
