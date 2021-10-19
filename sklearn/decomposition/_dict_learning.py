@@ -934,7 +934,7 @@ def dict_learning_online(
         warnings.warn(
             "'inner_stats' is deprecated in version 1.1 and "
             "will be removed in version 1.3.",
-            FutureWarning
+            FutureWarning,
         )
     else:
         inner_stats = None
