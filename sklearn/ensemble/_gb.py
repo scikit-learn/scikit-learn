@@ -1016,7 +1016,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         boosting iteration.
         In addition, it controls the random permutation of the features at
         each split (see Notes for more details).
-        It also controls the random spliting of the training data to obtain a
+        It also controls the random splitting of the training data to obtain a
         validation set if `n_iter_no_change` is not None.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1474,8 +1474,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'ls', 'absolute_error', 'lad', 'huber', \
-            'quantile'}, default='squared_error'
+    loss : {'squared_error', 'absolute_error', 'huber', 'quantile'}, \
+            default='squared_error'
         Loss function to be optimized. 'squared_error' refers to the squared
         error for regression. 'absolute_error' refers to the absolute error of
         regression and is a robust loss function. 'huber' is a
@@ -1593,7 +1593,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         boosting iteration.
         In addition, it controls the random permutation of the features at
         each split (see Notes for more details).
-        It also controls the random spliting of the training data to obtain a
+        It also controls the random splitting of the training data to obtain a
         validation set if `n_iter_no_change` is not None.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1780,7 +1780,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     0.4...
     """
 
-    # TODO: remove "ls" in verion 1.2
+    # TODO: remove "ls" in version 1.2
     _SUPPORTED_LOSS = (
         "squared_error",
         "ls",

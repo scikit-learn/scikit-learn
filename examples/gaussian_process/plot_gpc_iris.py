@@ -21,7 +21,7 @@ iris = datasets.load_iris()
 X = iris.data[:, :2]  # we only take the first two features.
 y = np.array(iris.target, dtype=int)
 
-h = .02  # step size in the mesh
+h = 0.02  # step size in the mesh
 
 kernel = 1.0 * RBF([1.0])
 gpc_rbf_isotropic = GaussianProcessClassifier(kernel=kernel).fit(X, y)
@@ -31,8 +31,7 @@ gpc_rbf_anisotropic = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                     np.arange(y_min, y_max, h))
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
 titles = ["Isotropic RBF", "Anisotropic RBF"]
 plt.figure(figsize=(10, 5))
@@ -48,16 +47,16 @@ for i, clf in enumerate((gpc_rbf_isotropic, gpc_rbf_anisotropic)):
     plt.imshow(Z, extent=(x_min, x_max, y_min, y_max), origin="lower")
 
     # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=np.array(["r", "g", "b"])[y],
-                edgecolors=(0, 0, 0))
-    plt.xlabel('Sepal length')
-    plt.ylabel('Sepal width')
+    plt.scatter(X[:, 0], X[:, 1], c=np.array(["r", "g", "b"])[y], edgecolors=(0, 0, 0))
+    plt.xlabel("Sepal length")
+    plt.ylabel("Sepal width")
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
     plt.xticks(())
     plt.yticks(())
-    plt.title("%s, LML: %.3f" %
-              (titles[i], clf.log_marginal_likelihood(clf.kernel_.theta)))
+    plt.title(
+        "%s, LML: %.3f" % (titles[i], clf.log_marginal_likelihood(clf.kernel_.theta))
+    )
 
 plt.tight_layout()
 plt.show()

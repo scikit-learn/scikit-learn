@@ -257,7 +257,7 @@ def elkan_iter_chunked_dense(
         int n_clusters = centers_new.shape[0]
 
         # hard-coded number of samples per chunk. Splitting in chunks is
-        # necessary to get parallelism. Chunk size chosed to be same as lloyd's
+        # necessary to get parallelism. Chunk size chosen to be same as lloyd's
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
@@ -486,7 +486,7 @@ def elkan_iter_chunked_sparse(
         int[::1] X_indptr = X.indptr
 
         # hard-coded number of samples per chunk. Splitting in chunks is
-        # necessary to get parallelism. Chunk size chosed to be same as lloyd's
+        # necessary to get parallelism. Chunk size chosen to be same as lloyd's
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
