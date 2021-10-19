@@ -2280,6 +2280,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self.n_steps_ = i + 1
             self.n_iter_ = np.ceil((i + 1) / n_steps_per_epoch)
         else:
+            # TODO remove this branch in 1.3
             if self.n_iter != "deprecated":
                 warnings.warn(
                     "'n_iter' is deprecated in version 1.1 and will be removed"
@@ -2339,10 +2340,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             X, dtype=np.float64, order="C", reset=not has_components
         )
 
-        self._random_state = getattr(
-            self, "_random_state", check_random_state(self.random_state)
-        )
-
         if iter_offset != "deprecated":
             warnings.warn(
                 "'iter_offset' is deprecated in version 1.1 and "
@@ -2356,6 +2353,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         if not has_components:
             # This instance has not been fitted yet (fit or partial_fit)
             self._check_params(X)
+            self._random_state = check_random_state(self.random_state)
 
             dictionary = self._initialize_dict(X, self._random_state)
 
