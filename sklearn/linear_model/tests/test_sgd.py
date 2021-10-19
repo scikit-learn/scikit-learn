@@ -250,7 +250,7 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: "error" if isinstance(x, str) and len(x) > 10 else x,
+    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
 )
 def test_sgd_estimator_params_validation(klass, fit_method, params, err_msg):
     """Validate parameters in the different SGD estimators."""

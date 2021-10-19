@@ -107,7 +107,7 @@ def test_classification_toy(loss):
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: "error" if isinstance(x, str) and len(x) > 10 else x,
+    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
 )
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
