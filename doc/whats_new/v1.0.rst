@@ -342,7 +342,7 @@ Changelog
   in 1.2. Use the new parameters `alpha_W` and `alpha_H` instead. :pr:`20512` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Enhancement| Expose `n_oversamples_rate` for :class:`decomposition.PCA`.
+- |Enhancement| :class:`decomposition.PCA` now exposes `n_oversamples_rate`.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
 
 - |Fix| :func:`decomposition.PCA.fit_transform` now returns accurate

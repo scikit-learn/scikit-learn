@@ -1,6 +1,5 @@
 import numpy as np
 import scipy as sp
-from scipy.linalg import svd
 
 import pytest
 
@@ -12,12 +11,11 @@ from sklearn.datasets import load_iris
 from sklearn.decomposition._pca import _assess_dimension
 from sklearn.decomposition._pca import _infer_dimension
 from scipy.sparse.linalg import svds
+from scipy.linalg import svd
+
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
-np.random.seed(12345)
-nfeat = 20
-X = np.random.randn(10 ** 5, nfeat)
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -673,14 +671,17 @@ def test_pca_svd_output(nfeat, seed):
     # The result is the same as svd and svds
     pca = PCA(n_components=1, n_oversamples_rate=1)
     X_tranformed = pca.fit_transform(X).reshape(-1)
+    X_tranformed = np.array([round(abs(v), 5) for v in X_tranformed])
 
     # sparse svd
     U1, s1, _ = svds(X, k=1, return_singular_vectors="u")
     X_tranformed1 = U1[:, 0] * s1[0]
+    X_tranformed1 = np.array([round(abs(v), 5) for v in X_tranformed1])
 
     # dense svd
     U2, s2, Vh2 = svd(X, full_matrices=False)
     X_tranformed2 = U2[:, 0] * s2[0]
+    X_tranformed2 = np.array([round(abs(v), 5) for v in X_tranformed2])
 
-    assert any(X_tranformed - X_tranformed1)
-    assert any(X_tranformed - X_tranformed2)
+    np.testing.assert_array_equal(X_tranformed, X_tranformed1)
+    np.testing.assert_array_equal(X_tranformed, X_tranformed2)
