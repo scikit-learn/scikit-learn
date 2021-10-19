@@ -950,10 +950,8 @@ def dict_learning_online(
         return_n_iter = False
 
     if max_iter is not None:
-        # TODO: split method into fit & transform ?
         transform_algorithm = "lasso_" + method
 
-        # TODO: add split_sign & method_n_nonzero_coef ?
         est = MiniBatchDictionaryLearning(
             n_components=n_components,
             alpha=alpha,
@@ -980,7 +978,7 @@ def dict_learning_online(
             code = est.transform(X)
             return code, est.components_, est.n_iter_, est.n_steps_
 
-    # TODO remove the whole old behavior in 1.2
+    # TODO remove the whole old behavior in 1.3
     # Fallback to old behavior
 
     if n_iter != "deprecated":

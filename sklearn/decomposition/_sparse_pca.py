@@ -407,7 +407,7 @@ class MiniBatchSparsePCA(SparsePCA):
             n_components = self.n_components
 
         with warnings.catch_warnings():
-            # return_n_iter is deprecated. Remove in 1.2
+            # return_n_iter is deprecated. Remove in 1.3
             warnings.simplefilter("ignore", category=FutureWarning)
             Vt, _, self.n_iter_ = dict_learning_online(
                 X.T,
