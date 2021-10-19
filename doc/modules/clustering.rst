@@ -89,14 +89,15 @@ Overview of clustering methods
    * - :ref:`DBSCAN <dbscan>`
      - neighborhood size
      - Very large ``n_samples``, medium ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes, transductive
+     - Non-flat geometry, uneven cluster sizes, outlier removal,
+       transductive
      - Distances between nearest points
 
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
      - Non-flat geometry, uneven cluster sizes, variable cluster density,
-       transductive
+       outlier removal, transductive
      - Distances between points
 
    * - :ref:`Gaussian mixtures <mixture>`
@@ -203,9 +204,9 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to probably better results than
-random initialization, as shown in the reference. 
+random initialization, as shown in the reference.
 
-K-means++ can also be called independently to select seeds for other 
+K-means++ can also be called independently to select seeds for other
 clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
 and example usage.
 
@@ -1383,7 +1384,7 @@ more broadly common names.
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
-   
+
  .. [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
@@ -1394,13 +1395,13 @@ more broadly common names.
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance". JMLR
    <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
-   
+
  .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
    detection algorithms on artificial networks". Scientific Reports 6: 30750.
    `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
-   
-   
+
+
 
 .. _homogeneity_completeness:
 
@@ -1738,8 +1739,8 @@ Calinski-Harabasz Index
 
 
 If the ground truth labels are not known, the Calinski-Harabasz index
-(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
-Ratio Criterion - can be used to evaluate the model, where a higher 
+(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance
+Ratio Criterion - can be used to evaluate the model, where a higher
 Calinski-Harabasz score relates to a model with better defined clusters.
 
 The index is the ratio of the sum of between-clusters dispersion and of
