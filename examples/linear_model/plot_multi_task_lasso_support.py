@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 =============================================
 Joint feature selection with multi-task Lasso

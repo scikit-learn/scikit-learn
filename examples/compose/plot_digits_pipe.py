@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 Pipelining: chaining a PCA and a logistic regression
