@@ -25,7 +25,7 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "matplotlib": ("2.2.2", "benchmark, docs, examples, tests"),
+    "matplotlib": ("2.2.3", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.14.5", "docs, examples, tests"),
     "pandas": ("0.25.0", "benchmark, docs, examples, tests"),
     "seaborn": ("0.9.0", "docs, examples"),

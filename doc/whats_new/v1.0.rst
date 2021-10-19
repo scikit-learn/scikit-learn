@@ -50,6 +50,11 @@ Fixed models
   :class:`sklearn.gaussian_process.GaussianProcessRegressor` allowing
   proper normalization in multi-target scene.
   :pr:`20761` by :user:`Patrick de C. T. R. Ferreira <patrickctrf>`.
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Improves stability of :class:`linear_model.LassoLars` for different
+  versions of openblas. :pr:`21340` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -61,6 +66,13 @@ Fixed models
   an error for `bsr` and `dok` sparse matrices in methods: `fit`, `kneighbors`
   and `radius_neighbors`, due to handling of explicit zeros in `bsr` and `dok`
   :term:`sparse graph` formats. :pr:`21199` by `Thomas Fan`_.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Fix| :meth:`pipeline.Pipeline.get_feature_names_out` correctly passes feature
+  names out from one step of a pipeline to the next. :pr:`21351` by
+  `Thomas Fan`_.
 
 .. _changes_1_0:
 
