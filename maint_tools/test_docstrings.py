@@ -25,13 +25,11 @@ DOCSTRING_IGNORE_LIST = [
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "PassiveAggressiveRegressor",
-    "QuadraticDiscriminantAnalysis",
     "SparseRandomProjection",
     "SpectralBiclustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
     "StackingRegressor",
-    "TransformedTargetRegressor",
 ]
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [

@@ -19,12 +19,12 @@ __all__ = ["TransformedTargetRegressor"]
 class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """Meta-estimator to regress on a transformed target.
 
-    Useful for applying a non-linear transformation to the target ``y`` in
+    Useful for applying a non-linear transformation to the target `y` in
     regression problems. This transformation can be given as a Transformer
-    such as the QuantileTransformer or as a function and its inverse such as
-    ``log`` and ``exp``.
+    such as the :class:`~sklearn.preprocessing.QuantileTransformer` or as a
+    function and its inverse such as `np.log` and `np.exp`.
 
-    The computation during ``fit`` is::
+    The computation during :meth:`fit` is::
 
         regressor.fit(X, func(y))
 
@@ -32,7 +32,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         regressor.fit(X, transformer.transform(y))
 
-    The computation during ``predict`` is::
+    The computation during :meth:`predict` is::
 
         inverse_func(regressor.predict(X))
 
@@ -47,33 +47,34 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     Parameters
     ----------
     regressor : object, default=None
-        Regressor object such as derived from ``RegressorMixin``. This
-        regressor will automatically be cloned each time prior to fitting.
-        If regressor is ``None``, ``LinearRegression()`` is created and used.
+        Regressor object such as derived from
+        :class:`~sklearn.base.RegressorMixin`. This regressor will
+        automatically be cloned each time prior to fitting. If `regressor is
+        None`, :class:`~sklearn.linear_model.LinearRegression` is created and used.
 
     transformer : object, default=None
-        Estimator object such as derived from ``TransformerMixin``. Cannot be
-        set at the same time as ``func`` and ``inverse_func``. If
-        ``transformer`` is ``None`` as well as ``func`` and ``inverse_func``,
-        the transformer will be an identity transformer. Note that the
-        transformer will be cloned during fitting. Also, the transformer is
-        restricting ``y`` to be a numpy array.
+        Estimator object such as derived from
+        :class:`~sklearn.base.TransformerMixin`. Cannot be set at the same time
+        as `func` and `inverse_func`. If `transformer is None` as well as
+        `func` and `inverse_func`, the transformer will be an identity
+        transformer. Note that the transformer will be cloned during fitting.
+        Also, the transformer is restricting `y` to be a numpy array.
 
     func : function, default=None
-        Function to apply to ``y`` before passing to ``fit``. Cannot be set at
-        the same time as ``transformer``. The function needs to return a
-        2-dimensional array. If ``func`` is ``None``, the function used will be
-        the identity function.
+        Function to apply to `y` before passing to :meth:`fit`. Cannot be set
+        at the same time as `transformer`. The function needs to return a
+        2-dimensional array. If `func is None`, the function used will be the
+        identity function.
 
     inverse_func : function, default=None
         Function to apply to the prediction of the regressor. Cannot be set at
-        the same time as ``transformer`` as well. The function needs to return
-        a 2-dimensional array. The inverse function is used to return
+        the same time as `transformer`. The function needs to return a
+        2-dimensional array. The inverse function is used to return
         predictions to the same space of the original training labels.
 
     check_inverse : bool, default=True
-        Whether to check that ``transform`` followed by ``inverse_transform``
-        or ``func`` followed by ``inverse_func`` leads to the original targets.
+        Whether to check that `transform` followed by `inverse_transform`
+        or `func` followed by `inverse_func` leads to the original targets.
 
     Attributes
     ----------
@@ -81,7 +82,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         Fitted regressor.
 
     transformer_ : object
-        Transformer used in ``fit`` and ``predict``.
+        Transformer used in :meth:`fit` and :meth:`predict`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
@@ -94,6 +95,20 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
+        arbitrary callable.
+
+    Notes
+    -----
+    Internally, the target `y` is always converted into a 2-dimensional array
+    to be used by scikit-learn transformers. At the time of prediction, the
+    output will be reshaped to a have the same number of dimensions as `y`.
+
+    See :ref:`examples/compose/plot_transformed_target.py
+    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
 
     Examples
     --------
@@ -110,16 +125,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     1.0
     >>> tt.regressor_.coef_
     array([2.])
-
-    Notes
-    -----
-    Internally, the target ``y`` is always converted into a 2-dimensional array
-    to be used by scikit-learn transformers. At the time of prediction, the
-    output will be reshaped to a have the same number of dimensions as ``y``.
-
-    See :ref:`examples/compose/plot_transformed_target.py
-    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
-
     """
 
     def __init__(
@@ -194,13 +199,13 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             Target values.
 
         **fit_params : dict
-            Parameters passed to the ``fit`` method of the underlying
+            Parameters passed to the `fit` method of the underlying
             regressor.
-
 
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         y = check_array(
             y,
@@ -248,8 +253,8 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     def predict(self, X, **predict_params):
         """Predict using the base regressor, applying inverse.
 
-        The regressor is used to predict and the ``inverse_func`` or
-        ``inverse_transform`` is applied before returning the prediction.
+        The regressor is used to predict and the `inverse_func` or
+        `inverse_transform` is applied before returning the prediction.
 
         Parameters
         ----------
@@ -264,7 +269,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         -------
         y_hat : ndarray of shape (n_samples,)
             Predicted values.
-
         """
         check_is_fitted(self)
         pred = self.regressor_.predict(X, **predict_params)
@@ -295,6 +299,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() returns False the estimator isn't fitted.
         try:
