@@ -230,12 +230,14 @@ problem solved is a PCA problem (dictionary learning) with an
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_2^2+\alpha||V||_1 \\
+                ||X-UV||_{\text{Fro}}^2+\alpha||V||_{1,1} \\
                 \text{subject to } & ||U_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{components}
 
-
-The sparsity-inducing :math:`\ell_1` norm also prevents learning
+:math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
+stands for the entry-wise matrix norm which is the sum of the absolute values
+of all the entries in the matrix.
+The sparsity-inducing :math:`||.||_{1,1}` matrix norm also prevents learning
 components from noise when few training samples are available. The degree
 of penalization (and thus sparsity) can be adjusted through the
 hyperparameter ``alpha``. Small values lead to a gently regularized
@@ -510,7 +512,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_2^2+\alpha||U||_1 \\
+                ||X-UV||_{\text{Fro}}^2+\alpha||U||_{1,1} \\
                 \text{subject to } & ||V_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
@@ -525,7 +527,9 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 .. centered:: |pca_img2| |dict_img2|
 
-
+:math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
+stands for the entry-wise matrix norm which is the sum of the absolute values
+of all the entries in the matrix.
 After using such a procedure to fit the dictionary, the transform is simply a
 sparse coding step that shares the same implementation with all dictionary
 learning objects (see :ref:`SparseCoder`).
@@ -821,25 +825,23 @@ In :class:`NMF`, L1 and L2 priors can be added to the loss function in order
 to regularize the model. The L2 prior uses the Frobenius norm, while the L1
 prior uses an elementwise L1 norm. As in :class:`ElasticNet`, we control the
 combination of L1 and L2 with the :attr:`l1_ratio` (:math:`\rho`) parameter,
-and the intensity of the regularization with the :attr:`alpha`
-(:math:`\alpha`) parameter. Then the priors terms are:
+and the intensity of the regularization with the :attr:`alpha_W` and :attr:`alpha_H`
+(:math:`\alpha_W` and :math:`\alpha_H`) parameters. The priors are scaled by the number
+of samples (:math:`n\_samples`) for `H` and the number of features (:math:`n\_features`)
+for `W` to keep their impact balanced with respect to one another and to the data fit
+term as independent as possible of the size of the training set. Then the priors terms
+are:
 
 .. math::
-    \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
+    (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
+    + (\alpha_H \rho ||H||_1 + \frac{\alpha_H(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2) * n\_samples
 
 and the regularized objective function is:
 
 .. math::
     d_{\mathrm{Fro}}(X, WH)
-    + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
-
-:class:`NMF` regularizes both W and H by default. The :attr:`regularization`
-parameter allows for finer control, with which only W, only H,
-or both can be regularized.
+    + (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
+    + (\alpha_H \rho ||H||_1 + \frac{\alpha_H(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2) * n\_samples
 
 NMF with a beta-divergence
 --------------------------

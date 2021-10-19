@@ -13,11 +13,9 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
-from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
-                     safe_mask)
+from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ._base import SelectorMixin
 
 
@@ -100,7 +98,7 @@ def f_oneway(*args):
     square_of_sums_alldata = sum(sums_args) ** 2
     square_of_sums_args = [s ** 2 for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
-    ssbn = 0.
+    ssbn = 0.0
     for k, _ in enumerate(args):
         ssbn += square_of_sums_args[k] / n_samples_per_class[k]
     ssbn -= square_of_sums_alldata / float(n_samples)
@@ -109,10 +107,9 @@ def f_oneway(*args):
     dfwn = n_samples - n_classes
     msb = ssbn / float(dfbn)
     msw = sswn / float(dfwn)
-    constant_features_idx = np.where(msw == 0.)[0]
-    if (np.nonzero(msb)[0].size != msb.size and constant_features_idx.size):
-        warnings.warn("Features %s are constant." % constant_features_idx,
-                      UserWarning)
+    constant_features_idx = np.where(msw == 0.0)[0]
+    if np.nonzero(msb)[0].size != msb.size and constant_features_idx.size:
+        warnings.warn("Features %s are constant." % constant_features_idx, UserWarning)
     f = msb / msw
     # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()
@@ -146,7 +143,7 @@ def f_classif(X, y):
     chi2 : Chi-squared stats of non-negative features for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
     """
-    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
+    X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
     return f_oneway(*args)
 
@@ -213,7 +210,7 @@ def chi2(X, y):
 
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
-    X = check_array(X, accept_sparse='csr')
+    X = check_array(X, accept_sparse="csr")
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
@@ -221,7 +218,7 @@ def chi2(X, y):
     if Y.shape[1] == 1:
         Y = np.append(1 - Y, Y, axis=1)
 
-    observed = safe_sparse_dot(Y.T, X)          # n_classes * n_features
+    observed = safe_sparse_dot(Y.T, X)  # n_classes * n_features
 
     feature_count = X.sum(axis=0).reshape(1, -1)
     class_prob = Y.mean(axis=0).reshape(1, -1)
@@ -271,8 +268,7 @@ def r_regression(X, y, *, center=True):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     """
-    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                     dtype=np.float64)
+    X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"], dtype=np.float64)
     n_samples = X.shape[0]
 
     # Compute centered values
@@ -285,8 +281,7 @@ def r_regression(X, y, *, center=True):
         else:
             X_means = X.mean(axis=0)
         # Compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) -
-                          n_samples * X_means ** 2)
+        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means ** 2)
     else:
         X_norms = row_norms(X.T)
 
@@ -296,7 +291,6 @@ def r_regression(X, y, *, center=True):
     return correlation_coefficient
 
 
-@_deprecate_positional_args
 def f_regression(X, y, *, center=True):
     """Univariate linear regression tests returning F-statistic and p-values.
 
@@ -369,6 +363,7 @@ def f_regression(X, y, *, center=True):
 ######################################################################
 # Base classes
 
+
 class _BaseFilter(SelectorMixin, BaseEstimator):
     """Initialize the univariate feature selection.
 
@@ -397,14 +392,17 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
-                                   multi_output=True)
+        X, y = self._validate_data(
+            X, y, accept_sparse=["csr", "csc"], multi_output=True
+        )
 
         if not callable(self.score_func):
-            raise TypeError("The score function should be a callable, %s (%s) "
-                            "was passed."
-                            % (self.score_func, type(self.score_func)))
+            raise TypeError(
+                "The score function should be a callable, %s (%s) was passed."
+                % (self.score_func, type(self.score_func))
+            )
 
         self._check_params(X, y)
         score_func_ret = self.score_func(X, y)
@@ -423,7 +421,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         pass
 
     def _more_tags(self):
-        return {'requires_y': True}
+        return {"requires_y": True}
 
 
 ######################################################################
@@ -455,21 +453,16 @@ class SelectPercentile(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.feature_selection import SelectPercentile, chi2
-    >>> X, y = load_digits(return_X_y=True)
-    >>> X.shape
-    (1797, 64)
-    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)
-    >>> X_new.shape
-    (1797, 7)
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
-    Notes
-    -----
-    Ties between features with equal scores will be broken in an unspecified
-    way.
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -484,16 +477,33 @@ class SelectPercentile(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Notes
+    -----
+    Ties between features with equal scores will be broken in an unspecified
+    way.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.feature_selection import SelectPercentile, chi2
+    >>> X, y = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)
+    >>> X_new.shape
+    (1797, 7)
     """
-    @_deprecate_positional_args
+
     def __init__(self, score_func=f_classif, *, percentile=10):
         super().__init__(score_func=score_func)
         self.percentile = percentile
 
     def _check_params(self, X, y):
         if not 0 <= self.percentile <= 100:
-            raise ValueError("percentile should be >=0, <=100; got %r"
-                             % self.percentile)
+            raise ValueError(
+                "percentile should be >=0, <=100; got %r" % self.percentile
+            )
 
     def _get_support_mask(self):
         check_is_fitted(self)
@@ -510,7 +520,7 @@ class SelectPercentile(_BaseFilter):
         ties = np.where(scores == threshold)[0]
         if len(ties):
             max_feats = int(len(scores) * self.percentile / 100)
-            kept_ties = ties[:max_feats - mask.sum()]
+            kept_ties = ties[: max_feats - mask.sum()]
             mask[kept_ties] = True
         return mask
 
@@ -542,21 +552,16 @@ class SelectKBest(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.feature_selection import SelectKBest, chi2
-    >>> X, y = load_digits(return_X_y=True)
-    >>> X.shape
-    (1797, 64)
-    >>> X_new = SelectKBest(chi2, k=20).fit_transform(X, y)
-    >>> X_new.shape
-    (1797, 20)
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
-    Notes
-    -----
-    Ties between features with equal scores will be broken in an unspecified
-    way.
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -572,22 +577,39 @@ class SelectKBest(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Notes
+    -----
+    Ties between features with equal scores will be broken in an unspecified
+    way.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.feature_selection import SelectKBest, chi2
+    >>> X, y = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> X_new = SelectKBest(chi2, k=20).fit_transform(X, y)
+    >>> X_new.shape
+    (1797, 20)
     """
-    @_deprecate_positional_args
+
     def __init__(self, score_func=f_classif, *, k=10):
         super().__init__(score_func=score_func)
         self.k = k
 
     def _check_params(self, X, y):
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
-            raise ValueError("k should be >=0, <= n_features = %d; got %r. "
-                             "Use k='all' to return all features."
-                             % (X.shape[1], self.k))
+            raise ValueError(
+                "k should be >=0, <= n_features = %d; got %r. "
+                "Use k='all' to return all features." % (X.shape[1], self.k)
+            )
 
     def _get_support_mask(self):
         check_is_fitted(self)
 
-        if self.k == 'all':
+        if self.k == "all":
             return np.ones(self.scores_.shape, dtype=bool)
         elif self.k == 0:
             return np.zeros(self.scores_.shape, dtype=bool)
@@ -597,7 +619,7 @@ class SelectKBest(_BaseFilter):
 
             # Request a stable sort. Mergesort takes more memory (~40MB per
             # megafeature on x86-64).
-            mask[np.argsort(scores, kind="mergesort")[-self.k:]] = 1
+            mask[np.argsort(scores, kind="mergesort")[-self.k :]] = 1
             return mask
 
 
@@ -628,16 +650,16 @@ class SelectFpr(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFpr, chi2
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> X.shape
-    (569, 30)
-    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)
-    >>> X_new.shape
-    (569, 16)
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -653,8 +675,19 @@ class SelectFpr(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFpr, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 16)
     """
-    @_deprecate_positional_args
+
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -666,7 +699,7 @@ class SelectFpr(_BaseFilter):
 
 
 class SelectFdr(_BaseFilter):
-    """Filter: Select the p-values for an estimated false discovery rate
+    """Filter: Select the p-values for an estimated false discovery rate.
 
     This uses the Benjamini-Hochberg procedure. ``alpha`` is an upper bound
     on the expected false discovery rate.
@@ -684,17 +717,6 @@ class SelectFdr(_BaseFilter):
     alpha : float, default=5e-2
         The highest uncorrected p-value for features to keep.
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFdr, chi2
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> X.shape
-    (569, 30)
-    >>> X_new = SelectFdr(chi2, alpha=0.01).fit_transform(X, y)
-    >>> X_new.shape
-    (569, 16)
-
     Attributes
     ----------
     scores_ : array-like of shape (n_features,)
@@ -703,9 +725,16 @@ class SelectFdr(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
-    References
-    ----------
-    https://en.wikipedia.org/wiki/False_discovery_rate
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -721,8 +750,23 @@ class SelectFdr(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/False_discovery_rate
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFdr, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFdr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 16)
     """
-    @_deprecate_positional_args
+
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -732,15 +776,16 @@ class SelectFdr(_BaseFilter):
 
         n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        selected = sv[sv <= float(self.alpha) / n_features *
-                      np.arange(1, n_features + 1)]
+        selected = sv[
+            sv <= float(self.alpha) / n_features * np.arange(1, n_features + 1)
+        ]
         if selected.size == 0:
             return np.zeros_like(self.pvalues_, dtype=bool)
         return self.pvalues_ <= selected.max()
 
 
 class SelectFwe(_BaseFilter):
-    """Filter: Select the p-values corresponding to Family-wise error rate
+    """Filter: Select the p-values corresponding to Family-wise error rate.
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
@@ -755,17 +800,6 @@ class SelectFwe(_BaseFilter):
     alpha : float, default=5e-2
         The highest uncorrected p-value for features to keep.
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFwe, chi2
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> X.shape
-    (569, 30)
-    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)
-    >>> X_new.shape
-    (569, 15)
-
     Attributes
     ----------
     scores_ : array-like of shape (n_features,)
@@ -773,6 +807,17 @@ class SelectFwe(_BaseFilter):
 
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -786,8 +831,19 @@ class SelectFwe(_BaseFilter):
     SelectFdr : Select features based on an estimated false discovery rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFwe, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 15)
     """
-    @_deprecate_positional_args
+
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -795,7 +851,7 @@ class SelectFwe(_BaseFilter):
     def _get_support_mask(self):
         check_is_fitted(self)
 
-        return (self.pvalues_ < self.alpha / len(self.pvalues_))
+        return self.pvalues_ < self.alpha / len(self.pvalues_)
 
 
 ######################################################################
@@ -830,17 +886,16 @@ class GenericUnivariateSelect(_BaseFilter):
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned scores only.
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import GenericUnivariateSelect, chi2
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> X.shape
-    (569, 30)
-    >>> transformer = GenericUnivariateSelect(chi2, mode='k_best', param=20)
-    >>> X_new = transformer.fit_transform(X, y)
-    >>> X_new.shape
-    (569, 20)
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -855,16 +910,29 @@ class GenericUnivariateSelect(_BaseFilter):
     SelectFpr : Select features based on a false positive rate test.
     SelectFdr : Select features based on an estimated false discovery rate.
     SelectFwe : Select features based on family-wise error rate.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import GenericUnivariateSelect, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> transformer = GenericUnivariateSelect(chi2, mode='k_best', param=20)
+    >>> X_new = transformer.fit_transform(X, y)
+    >>> X_new.shape
+    (569, 20)
     """
 
-    _selection_modes = {'percentile': SelectPercentile,
-                        'k_best': SelectKBest,
-                        'fpr': SelectFpr,
-                        'fdr': SelectFdr,
-                        'fwe': SelectFwe}
+    _selection_modes: dict = {
+        "percentile": SelectPercentile,
+        "k_best": SelectKBest,
+        "fpr": SelectFpr,
+        "fdr": SelectFdr,
+        "fwe": SelectFwe,
+    }
 
-    @_deprecate_positional_args
-    def __init__(self, score_func=f_classif, *, mode='percentile', param=1e-5):
+    def __init__(self, score_func=f_classif, *, mode="percentile", param=1e-5):
         super().__init__(score_func=score_func)
         self.mode = mode
         self.param = param
@@ -875,17 +943,17 @@ class GenericUnivariateSelect(_BaseFilter):
         # Now perform some acrobatics to set the right named parameter in
         # the selector
         possible_params = selector._get_param_names()
-        possible_params.remove('score_func')
+        possible_params.remove("score_func")
         selector.set_params(**{possible_params[0]: self.param})
 
         return selector
 
     def _check_params(self, X, y):
         if self.mode not in self._selection_modes:
-            raise ValueError("The mode passed should be one of %s, %r,"
-                             " (type %s) was passed."
-                             % (self._selection_modes.keys(), self.mode,
-                                type(self.mode)))
+            raise ValueError(
+                "The mode passed should be one of %s, %r, (type %s) was passed."
+                % (self._selection_modes.keys(), self.mode, type(self.mode))
+            )
 
         self._make_selector()._check_params(X, y)
 

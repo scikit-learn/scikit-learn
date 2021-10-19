@@ -28,7 +28,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
 
@@ -62,7 +62,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         of ``X`` that are obtained after ``transform``.
         If None, n_components is set to the number of features.
 
-    tol : float, defaul=1e-2
+    tol : float, default=1e-2
         Stopping tolerance for log-likelihood increase.
 
     copy : bool, default=True
@@ -120,23 +120,16 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.decomposition import FactorAnalysis
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = FactorAnalysis(n_components=7, random_state=0)
-    >>> X_transformed = transformer.fit_transform(X)
-    >>> X_transformed.shape
-    (1797, 7)
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
-    References
-    ----------
-    - David Barber, Bayesian Reasoning and Machine Learning,
-      Algorithm 21.1.
+        .. versionadded:: 0.24
 
-    - Christopher M. Bishop: Pattern Recognition and Machine Learning,
-      Chapter 12.2.4.
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -146,19 +139,48 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         computed in closed form.
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
+
+    References
+    ----------
+    - David Barber, Bayesian Reasoning and Machine Learning,
+      Algorithm 21.1.
+
+    - Christopher M. Bishop: Pattern Recognition and Machine Learning,
+      Chapter 12.2.4.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FactorAnalysis
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FactorAnalysis(n_components=7, random_state=0)
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components=None, *, tol=1e-2, copy=True,
-                 max_iter=1000,
-                 noise_variance_init=None, svd_method='randomized',
-                 iterated_power=3, rotation=None, random_state=0):
+
+    def __init__(
+        self,
+        n_components=None,
+        *,
+        tol=1e-2,
+        copy=True,
+        max_iter=1000,
+        noise_variance_init=None,
+        svd_method="randomized",
+        iterated_power=3,
+        rotation=None,
+        random_state=0,
+    ):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
-        if svd_method not in ['lapack', 'randomized']:
-            raise ValueError('SVD method %s is not supported. Please consider'
-                             ' the documentation' % svd_method)
+        if svd_method not in ["lapack", "randomized"]:
+            raise ValueError(
+                "SVD method %s is not supported. Please consider the documentation"
+                % svd_method
+            )
         self.svd_method = svd_method
 
         self.noise_variance_init = noise_variance_init
@@ -167,7 +189,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self.rotation = rotation
 
     def fit(self, X, y=None):
-        """Fit the FactorAnalysis model to X using SVD based approach
+        """Fit the FactorAnalysis model to X using SVD based approach.
 
         Parameters
         ----------
@@ -175,10 +197,12 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             Training data.
 
         y : Ignored
+            Ignored parameter.
 
         Returns
         -------
-        self
+        self : object
+            FactorAnalysis class instance.
         """
         X = self._validate_data(X, copy=self.copy, dtype=np.float64)
 
@@ -192,16 +216,18 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         # some constant terms
         nsqrt = sqrt(n_samples)
-        llconst = n_features * log(2. * np.pi) + n_components
+        llconst = n_features * log(2.0 * np.pi) + n_components
         var = np.var(X, axis=0)
 
         if self.noise_variance_init is None:
             psi = np.ones(n_features, dtype=X.dtype)
         else:
             if len(self.noise_variance_init) != n_features:
-                raise ValueError("noise_variance_init dimension does not "
-                                 "with number of features : %d != %d" %
-                                 (len(self.noise_variance_init), n_features))
+                raise ValueError(
+                    "noise_variance_init dimension does not "
+                    "with number of features : %d != %d"
+                    % (len(self.noise_variance_init), n_features)
+                )
             psi = np.array(self.noise_variance_init)
 
         loglike = []
@@ -210,24 +236,33 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         # we'll modify svd outputs to return unexplained variance
         # to allow for unified computation of loglikelihood
-        if self.svd_method == 'lapack':
+        if self.svd_method == "lapack":
+
             def my_svd(X):
-                _, s, Vt = linalg.svd(X,
-                                      full_matrices=False,
-                                      check_finite=False)
-                return (s[:n_components], Vt[:n_components],
-                        squared_norm(s[n_components:]))
-        elif self.svd_method == 'randomized':
+                _, s, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
+                return (
+                    s[:n_components],
+                    Vt[:n_components],
+                    squared_norm(s[n_components:]),
+                )
+
+        elif self.svd_method == "randomized":
             random_state = check_random_state(self.random_state)
 
             def my_svd(X):
-                _, s, Vt = randomized_svd(X, n_components,
-                                          random_state=random_state,
-                                          n_iter=self.iterated_power)
+                _, s, Vt = randomized_svd(
+                    X,
+                    n_components,
+                    random_state=random_state,
+                    n_iter=self.iterated_power,
+                )
                 return s, Vt, squared_norm(X) - squared_norm(s)
+
         else:
-            raise ValueError('SVD method %s is not supported. Please consider'
-                             ' the documentation' % self.svd_method)
+            raise ValueError(
+                "SVD method %s is not supported. Please consider the documentation"
+                % self.svd_method
+            )
 
         for i in range(self.max_iter):
             # SMALL helps numerics
@@ -235,14 +270,14 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             s, Vt, unexp_var = my_svd(X / (sqrt_psi * nsqrt))
             s **= 2
             # Use 'maximum' here to avoid sqrt problems.
-            W = np.sqrt(np.maximum(s - 1., 0.))[:, np.newaxis] * Vt
+            W = np.sqrt(np.maximum(s - 1.0, 0.0))[:, np.newaxis] * Vt
             del Vt
             W *= sqrt_psi
 
             # loglikelihood
             ll = llconst + np.sum(np.log(s))
             ll += unexp_var + np.sum(np.log(psi))
-            ll *= -n_samples / 2.
+            ll *= -n_samples / 2.0
             loglike.append(ll)
             if (ll - old_ll) < self.tol:
                 break
@@ -250,10 +285,12 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
             psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
         else:
-            warnings.warn('FactorAnalysis did not converge.' +
-                          ' You might want' +
-                          ' to increase the number of iterations.',
-                          ConvergenceWarning)
+            warnings.warn(
+                "FactorAnalysis did not converge."
+                + " You might want"
+                + " to increase the number of iterations.",
+                ConvergenceWarning,
+            )
 
         self.components_ = W
         if self.rotation is not None:
@@ -306,7 +343,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         cov = np.dot(self.components_.T, self.components_)
-        cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
+        cov.flat[:: len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
     def get_precision(self):
@@ -323,58 +360,57 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         # handle corner cases first
         if self.n_components == 0:
-            return np.diag(1. / self.noise_variance_)
+            return np.diag(1.0 / self.noise_variance_)
         if self.n_components == n_features:
             return linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
         components_ = self.components_
         precision = np.dot(components_ / self.noise_variance_, components_.T)
-        precision.flat[::len(precision) + 1] += 1.
-        precision = np.dot(components_.T,
-                           np.dot(linalg.inv(precision), components_))
+        precision.flat[:: len(precision) + 1] += 1.0
+        precision = np.dot(components_.T, np.dot(linalg.inv(precision), components_))
         precision /= self.noise_variance_[:, np.newaxis]
         precision /= -self.noise_variance_[np.newaxis, :]
-        precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
+        precision.flat[:: len(precision) + 1] += 1.0 / self.noise_variance_
         return precision
 
     def score_samples(self, X):
-        """Compute the log-likelihood of each sample
+        """Compute the log-likelihood of each sample.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            The data
+            The data.
 
         Returns
         -------
         ll : ndarray of shape (n_samples,)
-            Log-likelihood of each sample under the current model
+            Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
         X = self._validate_data(X, reset=False)
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]
-        log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
-        log_like -= .5 * (n_features * log(2. * np.pi)
-                          - fast_logdet(precision))
+        log_like = -0.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
+        log_like -= 0.5 * (n_features * log(2.0 * np.pi) - fast_logdet(precision))
         return log_like
 
     def score(self, X, y=None):
-        """Compute the average log-likelihood of the samples
+        """Compute the average log-likelihood of the samples.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            The data
+            The data.
 
         y : Ignored
+            Ignored parameter.
 
         Returns
         -------
         ll : float
-            Average log-likelihood of the samples under the current model
+            Average log-likelihood of the samples under the current model.
         """
         return np.mean(self.score_samples(X))
 
@@ -384,14 +420,14 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         implemented = ("varimax", "quartimax")
         method = self.rotation
         if method in implemented:
-            return _ortho_rotation(components.T, method=method,
-                                   tol=tol)[:self.n_components]
+            return _ortho_rotation(components.T, method=method, tol=tol)[
+                : self.n_components
+            ]
         else:
-            raise ValueError("'method' must be in %s, not %s"
-                             % (implemented, method))
+            raise ValueError("'method' must be in %s, not %s" % (implemented, method))
 
 
-def _ortho_rotation(components, method='varimax', tol=1e-6, max_iter=100):
+def _ortho_rotation(components, method="varimax", tol=1e-6, max_iter=100):
     """Return rotated components."""
     nrow, ncol = components.shape
     rotation_matrix = np.eye(ncol)
@@ -403,8 +439,7 @@ def _ortho_rotation(components, method='varimax', tol=1e-6, max_iter=100):
             tmp = comp_rot * np.transpose((comp_rot ** 2).sum(axis=0) / nrow)
         elif method == "quartimax":
             tmp = 0
-        u, s, v = np.linalg.svd(
-            np.dot(components.T, comp_rot ** 3 - tmp))
+        u, s, v = np.linalg.svd(np.dot(components.T, comp_rot ** 3 - tmp))
         rotation_matrix = np.dot(u, v)
         var_new = np.sum(s)
         if var != 0 and var_new < var * (1 + tol):

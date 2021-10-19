@@ -11,7 +11,6 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
-from ..utils.validation import _deprecate_positional_args
 from ..utils.deprecation import deprecated
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
@@ -19,11 +18,12 @@ from ..manifold import spectral_embedding
 from ._kmeans import k_means
 
 
-@_deprecate_positional_args
-def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
-               random_state=None):
-    """Search for a partition matrix (clustering) which is closest to the
-    eigenvector embedding.
+def discretize(
+    vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20, random_state=None
+):
+    """Search for a partition matrix which is closest to the eigenvector embedding.
+
+    This implementation was proposed in [1]_.
 
     Parameters
     ----------
@@ -53,9 +53,9 @@ def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
     References
     ----------
 
-    - Multiclass spectral clustering, 2003
-      Stella X. Yu, Jianbo Shi
-      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+    .. [1] `Multiclass spectral clustering, 2003
+           Stella X. Yu, Jianbo Shi
+           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
     Notes
     -----
@@ -90,8 +90,7 @@ def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
     # search easier.
     norm_ones = np.sqrt(n_samples)
     for i in range(vectors.shape[1]):
-        vectors[:, i] = (vectors[:, i] / np.linalg.norm(vectors[:, i])) \
-            * norm_ones
+        vectors[:, i] = (vectors[:, i] / np.linalg.norm(vectors[:, i])) * norm_ones
         if vectors[0, i] != 0:
             vectors[:, i] = -1 * vectors[:, i] * np.sign(vectors[0, i])
 
@@ -133,7 +132,8 @@ def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
             labels = t_discrete.argmax(axis=1)
             vectors_discrete = csc_matrix(
                 (np.ones(len(labels)), (np.arange(0, n_samples), labels)),
-                shape=(n_samples, n_components))
+                shape=(n_samples, n_components),
+            )
 
             t_svd = vectors_discrete.T * vectors
 
@@ -145,8 +145,7 @@ def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
                 break
 
             ncut_value = 2.0 * (n_samples - S.sum())
-            if ((abs(ncut_value - last_objective_value) < eps) or
-                    (n_iter > n_iter_max)):
+            if (abs(ncut_value - last_objective_value) < eps) or (n_iter > n_iter_max):
                 has_converged = True
             else:
                 # otherwise calculate rotation and continue
@@ -154,15 +153,22 @@ def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
                 rotation = np.dot(Vh.T, U.T)
 
     if not has_converged:
-        raise LinAlgError('SVD did not converge')
+        raise LinAlgError("SVD did not converge")
     return labels
 
 
-@_deprecate_positional_args
-def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
-                        eigen_solver=None, random_state=None, n_init=10,
-                        eigen_tol=0.0, assign_labels='kmeans',
-                        verbose=False):
+def spectral_clustering(
+    affinity,
+    *,
+    n_clusters=8,
+    n_components=None,
+    eigen_solver=None,
+    random_state=None,
+    n_init=10,
+    eigen_tol=0.0,
+    assign_labels="kmeans",
+    verbose=False,
+):
     """Apply clustering to a projection of the normalized Laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -172,7 +178,7 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
     nested circles on the 2D plane.
 
     If affinity is the adjacency matrix of a graph, this method can be
-    used to find normalized graph cuts.
+    used to find normalized graph cuts [1]_, [2]_.
 
     Read more in the :ref:`User Guide <spectral_clustering>`.
 
@@ -197,14 +203,21 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities. If None, then ``'arpack'`` is
-        used.
+        used. See [4]_ for more details regarding `'lobpcg'`.
 
     random_state : int, RandomState instance, default=None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg' and by
-        the K-Means initialization. Use an int to make the randomness
-        deterministic.
-        See :term:`Glossary <random_state>`.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigenvectors decomposition when `eigen_solver ==
+        'amg'`, and for the K-Means initialization. Use an int to make
+        the results deterministic across calls (See
+        :term:`Glossary <random_state>`).
+
+        .. note::
+            When using `eigen_solver == 'amg'`,
+            it is necessary to also fix the global numpy seed with
+            `np.random.seed(int)` to get deterministic results. See
+            https://github.com/pyamg/pyamg/issues/139 for further
+            information.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -221,9 +234,7 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
         space.  There are two ways to assign labels after the Laplacian
         embedding.  k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another
-        approach which is less sensitive to random initialization. See
-        the 'Multiclass spectral clustering' paper referenced below for
-        more details on the discretization approach.
+        approach which is less sensitive to random initialization [3]_.
 
     verbose : bool, default=False
         Verbosity mode.
@@ -238,17 +249,23 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
     References
     ----------
 
-    - Normalized cuts and image segmentation, 2000
-      Jianbo Shi, Jitendra Malik
-      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+    .. [1] `Normalized cuts and image segmentation, 2000
+           Jianbo Shi, Jitendra Malik
+           <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
 
-    - A Tutorial on Spectral Clustering, 2007
-      Ulrike von Luxburg
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
+    .. [2] `A Tutorial on Spectral Clustering, 2007
+           Ulrike von Luxburg
+           <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
 
-    - Multiclass spectral clustering, 2003
-      Stella X. Yu, Jianbo Shi
-      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+    .. [3] `Multiclass spectral clustering, 2003
+           Stella X. Yu, Jianbo Shi
+           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+
+    .. [4] `Toward the Optimal Preconditioned Eigensolver:
+           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+           A. V. Knyazev
+           SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
+           <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
 
     Notes
     -----
@@ -258,27 +275,43 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
     """
-    if assign_labels not in ('kmeans', 'discretize'):
-        raise ValueError("The 'assign_labels' parameter should be "
-                         "'kmeans' or 'discretize', but '%s' was given"
-                         % assign_labels)
+    if assign_labels not in ("kmeans", "discretize"):
+        raise ValueError(
+            "The 'assign_labels' parameter should be "
+            "'kmeans' or 'discretize', but '%s' was given" % assign_labels
+        )
+    if isinstance(affinity, np.matrix):
+        raise TypeError(
+            "spectral_clustering does not support passing in affinity as an "
+            "np.matrix. Please convert to a numpy array with np.asarray. For "
+            "more information see: "
+            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
+        )
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
 
+    # We now obtain the real valued solution matrix to the
+    # relaxed Ncut problem, solving the eigenvalue problem
+    # L_sym x = lambda x  and recovering u = D^-1/2 x.
     # The first eigenvector is constant only for fully connected graphs
     # and should be kept for spectral clustering (drop_first = False)
     # See spectral_embedding documentation.
-    maps = spectral_embedding(affinity, n_components=n_components,
-                              eigen_solver=eigen_solver,
-                              random_state=random_state,
-                              eigen_tol=eigen_tol, drop_first=False)
+    maps = spectral_embedding(
+        affinity,
+        n_components=n_components,
+        eigen_solver=eigen_solver,
+        random_state=random_state,
+        eigen_tol=eigen_tol,
+        drop_first=False,
+    )
     if verbose:
-        print(f'Computing label assignment using {assign_labels}')
+        print(f"Computing label assignment using {assign_labels}")
 
-    if assign_labels == 'kmeans':
-        _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
-                               n_init=n_init, verbose=verbose)
+    if assign_labels == "kmeans":
+        _, labels, _ = k_means(
+            maps, n_clusters, random_state=random_state, n_init=n_init, verbose=verbose
+        )
     else:
         labels = discretize(maps, random_state=random_state)
 
@@ -295,7 +328,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     nested circles on the 2D plane.
 
     If the affinity matrix is the adjacency matrix of a graph, this method
-    can be used to find normalized graph cuts.
+    can be used to find normalized graph cuts [1]_, [2]_.
 
     When calling ``fit``, an affinity matrix is constructed using either
     a kernel function such the Gaussian (aka RBF) kernel with Euclidean
@@ -319,17 +352,24 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities. If None, then ``'arpack'`` is
-        used.
+        used. See [4]_ for more details regarding `'lobpcg'`.
 
     n_components : int, default=n_clusters
-        Number of eigenvectors to use for the spectral embedding
+        Number of eigenvectors to use for the spectral embedding.
 
     random_state : int, RandomState instance, default=None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when ``eigen_solver='amg'`` and by
-        the K-Means initialization. Use an int to make the randomness
-        deterministic.
-        See :term:`Glossary <random_state>`.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigenvectors decomposition when `eigen_solver ==
+        'amg'`, and for the K-Means initialization. Use an int to make
+        the results deterministic across calls (See
+        :term:`Glossary <random_state>`).
+
+        .. note::
+            When using `eigen_solver == 'amg'`,
+            it is necessary to also fix the global numpy seed with
+            `np.random.seed(int)` to get deterministic results. See
+            https://github.com/pyamg/pyamg/issues/139 for further
+            information.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -372,7 +412,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         ways to assign labels after the Laplacian embedding. k-means is a
         popular choice, but it can be sensitive to initialization.
         Discretization is another approach which is less sensitive to random
-        initialization.
+        initialization [3]_.
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
@@ -407,20 +447,22 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     labels_ : ndarray of shape (n_samples,)
         Labels of each point
 
-    Examples
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> from sklearn.cluster import SpectralClustering
-    >>> import numpy as np
-    >>> X = np.array([[1, 1], [2, 1], [1, 0],
-    ...               [4, 7], [3, 5], [3, 6]])
-    >>> clustering = SpectralClustering(n_clusters=2,
-    ...         assign_labels='discretize',
-    ...         random_state=0).fit(X)
-    >>> clustering.labels_
-    array([1, 1, 1, 0, 0, 0])
-    >>> clustering
-    SpectralClustering(assign_labels='discretize', n_clusters=2,
-        random_state=0)
+    sklearn.cluster.KMeans : K-Means clustering.
+    sklearn.cluster.DBSCAN : Density-Based Spatial Clustering of
+        Applications with Noise.
 
     Notes
     -----
@@ -442,25 +484,59 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     References
     ----------
+    .. [1] `Normalized cuts and image segmentation, 2000
+           Jianbo Shi, Jitendra Malik
+           <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
 
-    - Normalized cuts and image segmentation, 2000
-      Jianbo Shi, Jitendra Malik
-      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+    .. [2] `A Tutorial on Spectral Clustering, 2007
+           Ulrike von Luxburg
+           <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
 
-    - A Tutorial on Spectral Clustering, 2007
-      Ulrike von Luxburg
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
+    .. [3] `Multiclass spectral clustering, 2003
+           Stella X. Yu, Jianbo Shi
+           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
-    - Multiclass spectral clustering, 2003
-      Stella X. Yu, Jianbo Shi
-      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+    .. [4] `Toward the Optimal Preconditioned Eigensolver:
+           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+           A. V. Knyazev
+           SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
+           <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
+
+    Examples
+    --------
+    >>> from sklearn.cluster import SpectralClustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = SpectralClustering(n_clusters=2,
+    ...         assign_labels='discretize',
+    ...         random_state=0).fit(X)
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+    >>> clustering
+    SpectralClustering(assign_labels='discretize', n_clusters=2,
+        random_state=0)
     """
-    @_deprecate_positional_args
-    def __init__(self, n_clusters=8, *, eigen_solver=None, n_components=None,
-                 random_state=None, n_init=10, gamma=1., affinity='rbf',
-                 n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',
-                 degree=3, coef0=1, kernel_params=None, n_jobs=None,
-                 verbose=False):
+
+    def __init__(
+        self,
+        n_clusters=8,
+        *,
+        eigen_solver=None,
+        n_components=None,
+        random_state=None,
+        n_init=10,
+        gamma=1.0,
+        affinity="rbf",
+        n_neighbors=10,
+        eigen_tol=0.0,
+        assign_labels="kmeans",
+        degree=3,
+        coef0=1,
+        kernel_params=None,
+        n_jobs=None,
+        verbose=False,
+    ):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
         self.n_components = n_components
@@ -496,59 +572,68 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        self
-
+        self : object
+            A fitted instance of the estimator.
         """
-        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
-                                dtype=np.float64, ensure_min_samples=2)
-        allow_squared = self.affinity in ["precomputed",
-                                          "precomputed_nearest_neighbors"]
+        X = self._validate_data(
+            X,
+            accept_sparse=["csr", "csc", "coo"],
+            dtype=np.float64,
+            ensure_min_samples=2,
+        )
+        allow_squared = self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]
         if X.shape[0] == X.shape[1] and not allow_squared:
-            warnings.warn("The spectral clustering API has changed. ``fit``"
-                          "now constructs an affinity matrix from data. To use"
-                          " a custom affinity matrix, "
-                          "set ``affinity=precomputed``.")
+            warnings.warn(
+                "The spectral clustering API has changed. ``fit``"
+                "now constructs an affinity matrix from data. To use"
+                " a custom affinity matrix, "
+                "set ``affinity=precomputed``."
+            )
 
-        if self.affinity == 'nearest_neighbors':
-            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors,
-                                            include_self=True,
-                                            n_jobs=self.n_jobs)
+        if self.affinity == "nearest_neighbors":
+            connectivity = kneighbors_graph(
+                X, n_neighbors=self.n_neighbors, include_self=True, n_jobs=self.n_jobs
+            )
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
-        elif self.affinity == 'precomputed_nearest_neighbors':
-            estimator = NearestNeighbors(n_neighbors=self.n_neighbors,
-                                         n_jobs=self.n_jobs,
-                                         metric="precomputed").fit(X)
-            connectivity = estimator.kneighbors_graph(X=X, mode='connectivity')
+        elif self.affinity == "precomputed_nearest_neighbors":
+            estimator = NearestNeighbors(
+                n_neighbors=self.n_neighbors, n_jobs=self.n_jobs, metric="precomputed"
+            ).fit(X)
+            connectivity = estimator.kneighbors_graph(X=X, mode="connectivity")
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
-        elif self.affinity == 'precomputed':
+        elif self.affinity == "precomputed":
             self.affinity_matrix_ = X
         else:
             params = self.kernel_params
             if params is None:
                 params = {}
             if not callable(self.affinity):
-                params['gamma'] = self.gamma
-                params['degree'] = self.degree
-                params['coef0'] = self.coef0
-            self.affinity_matrix_ = pairwise_kernels(X, metric=self.affinity,
-                                                     filter_params=True,
-                                                     **params)
+                params["gamma"] = self.gamma
+                params["degree"] = self.degree
+                params["coef0"] = self.coef0
+            self.affinity_matrix_ = pairwise_kernels(
+                X, metric=self.affinity, filter_params=True, **params
+            )
 
         random_state = check_random_state(self.random_state)
-        self.labels_ = spectral_clustering(self.affinity_matrix_,
-                                           n_clusters=self.n_clusters,
-                                           n_components=self.n_components,
-                                           eigen_solver=self.eigen_solver,
-                                           random_state=random_state,
-                                           n_init=self.n_init,
-                                           eigen_tol=self.eigen_tol,
-                                           assign_labels=self.assign_labels,
-                                           verbose=self.verbose)
+        self.labels_ = spectral_clustering(
+            self.affinity_matrix_,
+            n_clusters=self.n_clusters,
+            n_components=self.n_components,
+            eigen_solver=self.eigen_solver,
+            random_state=random_state,
+            n_init=self.n_init,
+            eigen_tol=self.eigen_tol,
+            assign_labels=self.assign_labels,
+            verbose=self.verbose,
+        )
         return self
 
     def fit_predict(self, X, y=None):
-        """Perform spectral clustering from features, or affinity matrix,
-        and return cluster labels.
+        """Perform spectral clustering on `X` and return cluster labels.
 
         Parameters
         ----------
@@ -572,14 +657,17 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         return super().fit_predict(X, y)
 
     def _more_tags(self):
-        return {'pairwise': self.affinity in ["precomputed",
-                                              "precomputed_nearest_neighbors"]}
+        return {
+            "pairwise": self.affinity
+            in ["precomputed", "precomputed_nearest_neighbors"]
+        }
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute `_pairwise` was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
+    )
     @property
     def _pairwise(self):
-        return self.affinity in ["precomputed",
-                                 "precomputed_nearest_neighbors"]
+        return self.affinity in ["precomputed", "precomputed_nearest_neighbors"]

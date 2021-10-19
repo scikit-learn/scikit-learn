@@ -20,7 +20,6 @@ sy-kit learn. sci stands for science!
 Why scikit?
 ------------
 There are multiple scikits, which are scientific toolboxes built around SciPy.
-You can find a list at `<https://scikits.appspot.com/scikits>`_.
 Apart from scikit-learn, another popular one is `scikit-image <https://scikit-image.org/>`_.
 
 How can I contribute to scikit-learn?
