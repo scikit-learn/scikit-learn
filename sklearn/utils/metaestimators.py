@@ -31,10 +31,14 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
             return out
 
         estimators = getattr(self, attr)
-        if not isinstance(out, dict) or not isinstance(estimators, dict):
+        if not isinstance(out, dict):
             return out
 
-        out.update(estimators)
+        try:
+            out.update(estimators)
+        except (TypeError, ValueError):
+            return out
+
         for name, estimator in estimators:
             if hasattr(estimator, "get_params"):
                 for key, value in estimator.get_params(deep=True).items():
