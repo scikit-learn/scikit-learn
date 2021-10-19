@@ -717,7 +717,6 @@ def dict_learning(
         return code, dictionary, errors
 
 
-@_deprecate_positional_args
 def dict_learning_online(X, n_components=2, *, alpha=1, n_iter="deprecated",
                          max_iter=None, return_code=True, dict_init=None,
                          callback=None, batch_size=3, verbose=False,
@@ -1912,7 +1911,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     0.07...
     """
-    @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, n_iter="deprecated",
                  max_iter=None, fit_algorithm='lars', n_jobs=None,
                  batch_size=3, shuffle=True, dict_init=None,
