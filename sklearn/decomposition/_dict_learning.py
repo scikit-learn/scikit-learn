@@ -773,8 +773,8 @@ def dict_learning_online(
     n_iter : int, default=100
         Number of mini-batch iterations to perform.
 
-        .. deprecated:: 1.0
-           ``n_iter`` is deprecated in 1.0 and will be removed in 1.2. Use
+        .. deprecated:: 1.1
+           ``n_iter`` is deprecated in 1.1 and will be removed in 1.3. Use
            ``max_iter`` instead.
 
     max_iter : int, default=None
@@ -782,7 +782,7 @@ def dict_learning_online(
         stopping independently of any early stopping criterion heuristics.
         If ``max_iter`` is not None, ``n_iter`` is ignored.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     return_code : bool, default=True
         Whether to also return the code U or just the dictionary `V`.
@@ -819,9 +819,9 @@ def dict_learning_online(
         Number of previous iterations completed on the dictionary used for
         initialization.
 
-        .. deprecated:: 1.0
+        .. deprecated:: 1.1
            ``iter_offset`` serves internal purpose only and will be removed
-           in 1.2.
+           in 1.3.
 
     random_state : int, RandomState instance or None, default=None
         Used for initializing the dictionary when ``dict_init`` is not
@@ -836,9 +836,9 @@ def dict_learning_online(
         online setting. If `return_inner_stats` is `True`, `return_code` is
         ignored.
 
-        .. deprecated:: 1.0
+        .. deprecated:: 1.1
            ``return_inner_stats`` serves internal purpose only and will be
-           removed in 1.2.
+           removed in 1.3.
 
     inner_stats : tuple of (A, B) ndarrays, default=None
         Inner sufficient statistics that are kept by the algorithm.
@@ -847,15 +847,15 @@ def dict_learning_online(
         `A` `(n_components, n_components)` is the dictionary covariance matrix.
         `B` `(n_features, n_components)` is the data approximation matrix.
 
-        .. deprecated:: 1.0
+        .. deprecated:: 1.1
            ``inner_stats`` serves internal purpose only and will be removed
-           in 1.2.
+           in 1.3.
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-        .. deprecated:: 1.0
-           ``return_n_iter`` will be removed in 1.2 and n_iter will always be
+        .. deprecated:: 1.1
+           ``return_n_iter`` will be removed in 1.3 and n_iter will always be
            returned.
 
     positive_dict : bool, default=False
@@ -879,7 +879,7 @@ def dict_learning_online(
         disable early stopping set `max_no_improvement` to None. Only used if
         `max_iter` is not None.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -914,8 +914,8 @@ def dict_learning_online(
 
     if iter_offset != "deprecated":
         warnings.warn(
-            "'iter_offset' is deprecated in version 1.0 and "
-            "will be removed in version 1.2.",
+            "'iter_offset' is deprecated in version 1.1 and "
+            "will be removed in version 1.3.",
             FutureWarning,
         )
     else:
@@ -923,8 +923,8 @@ def dict_learning_online(
 
     if return_inner_stats != "deprecated":
         warnings.warn(
-            "'return_inner_stats' is deprecated in version 1.0 and "
-            "will be removed in version 1.2.",
+            "'return_inner_stats' is deprecated in version 1.1 and "
+            "will be removed in version 1.3.",
             FutureWarning,
         )
     else:
@@ -932,17 +932,17 @@ def dict_learning_online(
 
     if inner_stats != "deprecated":
         warnings.warn(
-            "'inner_stats' is deprecated in version 1.0 and "
-            "will be removed in version 1.2.",
-            FutureWarning,
+            "'inner_stats' is deprecated in version 1.1 and "
+            "will be removed in version 1.3.",
+            FutureWarning
         )
     else:
         inner_stats = None
 
     if return_n_iter != "deprecated":
         warnings.warn(
-            "'return_n_iter' is deprecated in version 1.0 and "
-            "will be removed in version 1.2. From version 1.2 n_iter"
+            "'return_n_iter' is deprecated in version 1.1 and "
+            "will be removed in version 1.3. From version 1.3 n_iter"
             " will always be returned",
             FutureWarning,
         )
@@ -985,8 +985,8 @@ def dict_learning_online(
 
     if n_iter != "deprecated":
         warnings.warn(
-            "'n_iter' is deprecated in version 1.0 and will be removed"
-            " in version 1.2. Use 'max_iter' instead.",
+            "'n_iter' is deprecated in version 1.1 and will be removed"
+            " in version 1.3. Use 'max_iter' instead.",
             FutureWarning,
         )
     else:
@@ -1743,8 +1743,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     n_iter : int, default=1000
         Total number of iterations over data batches to perform.
 
-        .. deprecated:: 1.0
-           ``n_iter`` is deprecated in 1.0 and will be removed in 1.2. Use
+        .. deprecated:: 1.1
+           ``n_iter`` is deprecated in 1.1 and will be removed in 1.3. Use
            ``max_iter`` instead.
 
     max_iter : int, default=None
@@ -1752,7 +1752,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         stopping independently of any early stopping criterion heuristics.
         If ``max_iter`` is not None, ``n_iter`` is ignored.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     fit_algorithm : {'lars', 'cd'}, default='lars'
         The algorithm used:
@@ -1840,7 +1840,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     callback : callable, default=None
         callable that gets invoked at the end of each iteration.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     tol : float, default=1e-3
         Control early stopping based on the norm of the differences in the
@@ -1849,7 +1849,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         To disable early stopping based on changes in the dictionary, set
         `tol` to 0.0.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     max_no_improvement : int, default=10
         Control early stopping based on the consecutive number of mini batches
@@ -1858,7 +1858,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         To disable convergence detection based on cost function, set
         `max_no_improvement` to None.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
 
     Attributes
@@ -1874,9 +1874,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         `A` `(n_components, n_components)` is the dictionary covariance matrix.
         `B` `(n_features, n_components)` is the data approximation matrix.
 
-        .. deprecated:: 1.0
+        .. deprecated:: 1.1
            ``inner_stats_`` serves internal purpose only and will be removed
-           in 1.2.
+           in 1.3.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1896,22 +1896,22 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         The number of iteration on data batches that has been
         performed before.
 
-        .. deprecated:: 1.0
+        .. deprecated:: 1.1
            ``iter_offset_`` has been renamed ``n_steps_`` and will be
-           removed in 1.2.
+           removed in 1.3.
 
     random_state_ : RandomState instance
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
 
-        .. deprecated:: 1.0
+        .. deprecated:: 1.1
            ``random_state_`` serves internal purpose only and will be removed
-           in 1.2.
+           in 1.3.
 
     n_steps_ : int
         Number of mini-batches processed.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     See Also
     --------
@@ -2007,7 +2007,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     @deprecated(
         "The attribute 'iter_offset_' is deprecated "  # type: ignore
-        "in 1.0 and will be removed in 1.2."
+        "in 1.1 and will be removed in 1.3."
     )
     @property
     def iter_offset_(self):
@@ -2015,7 +2015,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     @deprecated(
         "The attribute 'random_state_' is deprecated "  # type: ignore
-        "in 1.0 and will be removed in 1.2."
+        "in 1.1 and will be removed in 1.3."
     )
     @property
     def random_state_(self):
@@ -2023,7 +2023,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     @deprecated(
         "The attribute 'inner_stats_' is deprecated "  # type: ignore
-        "in 1.0 and will be removed in 1.2."
+        "in 1.1 and will be removed in 1.3."
     )
     @property
     def inner_stats_(self):
@@ -2284,8 +2284,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         else:
             if self.n_iter != "deprecated":
                 warnings.warn(
-                    "'n_iter' is deprecated in version 1.0 and will be removed"
-                    " in version 1.2. Use 'max_iter' instead.",
+                    "'n_iter' is deprecated in version 1.1 and will be removed"
+                    " in version 1.3. Use 'max_iter' instead.",
                     FutureWarning,
                 )
                 n_iter = self.n_iter
@@ -2327,8 +2327,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             if no number is passed, the memory of the object is
             used.
 
-            .. deprecated:: 1.0
-               ``iter_offset`` will be removed in 1.2.
+            .. deprecated:: 1.1
+               ``iter_offset`` will be removed in 1.3.
 
         Returns
         -------
@@ -2347,8 +2347,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         if iter_offset != "deprecated":
             warnings.warn(
-                "'iter_offset' is deprecated in version 1.0 and "
-                "will be removed in version 1.2",
+                "'iter_offset' is deprecated in version 1.1 and "
+                "will be removed in version 1.3",
                 FutureWarning,
             )
             self.n_steps_ = iter_offset

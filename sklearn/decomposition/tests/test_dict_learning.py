@@ -644,9 +644,9 @@ def test_minibatch_dict_learning_wrong_params(param, match):
 def test_minibatch_dict_learning_deprecated_attributes(attr):
     # check that we raise a deprecation warning when accessing the deprecated
     # attributes of MiniBatchDictionaryLearning
-    # FIXME: remove in 1.2
+    # FIXME: remove in 1.3
     depr_msg = (
-        f"The attribute '{attr}' is deprecated in 1.0 and will be removed in 1.2."
+        f"The attribute '{attr}' is deprecated in 1.1 and will be removed in 1.3."
     )
     est = MiniBatchDictionaryLearning(n_components=2, max_iter=1, random_state=0)
     est.fit(X)
@@ -657,9 +657,9 @@ def test_minibatch_dict_learning_deprecated_attributes(attr):
 
 def test_minibatch_dict_learning_partial_fit_iter_offset_deprecated():
     # check the deprecation warning of iter_offset in partial_fit
-    # FIXME: remove in 1.2
+    # FIXME: remove in 1.3
     depr_msg = (
-        "'iter_offset' is deprecated in version 1.0 and will be removed in version 1.2"
+        "'iter_offset' is deprecated in version 1.1 and will be removed in version 1.3"
     )
     est = MiniBatchDictionaryLearning(n_components=2, random_state=0)
 
@@ -669,9 +669,9 @@ def test_minibatch_dict_learning_partial_fit_iter_offset_deprecated():
 
 def test_minibatch_dict_learning_n_iter_deprecated():
     # check the deprecation warning of n_iter
-    # FIXME: remove in 1.2
+    # FIXME: remove in 1.3
     depr_msg = (
-        "'n_iter' is deprecated in version 1.0 and will be removed in version 1.2"
+        "'n_iter' is deprecated in version 1.1 and will be removed in version 1.3"
     )
     est = MiniBatchDictionaryLearning(n_components=2, n_iter=5, random_state=0)
 
@@ -692,9 +692,9 @@ def test_minibatch_dict_learning_n_iter_deprecated():
 def test_dict_learning_online_deprecated_args(arg, val):
     # check the deprecation warning for the deprecated args of
     # dict_learning_online
-    # FIXME: remove in 1.2
+    # FIXME: remove in 1.3
     depr_msg = (
-        f"'{arg}' is deprecated in version 1.0 and will be removed in version 1.2."
+        f"'{arg}' is deprecated in version 1.1 and will be removed in version 1.3."
     )
 
     with pytest.warns(FutureWarning, match=depr_msg):
