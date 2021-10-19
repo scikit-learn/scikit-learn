@@ -567,8 +567,8 @@ def _ridge_regression(
         )
 
     if alpha.size == 1:
-        check_scalar(alpha, "alpha", target_type=numbers.Real,
-                     min_val=0.0, include_boundaries="left")
+        alpha[0] = check_scalar(alpha[0], "alpha", target_type=numbers.Real,
+                   min_val=0.0, include_boundaries="left")
         if n_targets > 1:
             alpha = np.repeat(alpha, n_targets)
 
