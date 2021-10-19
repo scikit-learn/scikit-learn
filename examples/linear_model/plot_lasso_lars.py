@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 =====================
 Lasso path using LARS

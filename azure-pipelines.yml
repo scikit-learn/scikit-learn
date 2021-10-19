@@ -97,8 +97,9 @@ jobs:
         )
       )
     matrix:
-      pylatest_conda_mkl:
+      pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
+        CONDA_CHANNEL: 'conda-forge'
         PYTHON_VERSION: '*'
         BLAS: 'mkl'
         COVERAGE: 'false'
@@ -116,8 +117,9 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      pylatest_conda_mkl:
+      pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
+        CONDA_CHANNEL: 'conda-forge'
         PYTHON_VERSION: '*'
         BLAS: 'mkl'
         COVERAGE: 'true'
@@ -135,8 +137,9 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      py37_conda:
+      py37_conda_forge_openblas_ubuntu_1804:
         DISTRIB: 'conda'
+        CONDA_CHANNEL: 'conda-forge'
         PYTHON_VERSION: '3.7'
         BLAS: 'openblas'
         COVERAGE: 'false'
@@ -164,14 +167,15 @@ jobs:
         THREADPOOLCTL_VERSION: 'min'
         COVERAGE: 'false'
       # Linux + Python 3.7 build with OpenBLAS and without SITE_JOBLIB
-      py37_conda_openblas:
+      py37_conda_defaults_openblas:
         DISTRIB: 'conda'
+        CONDA_CHANNEL: 'defaults'  # Anaconda main channel
         PYTHON_VERSION: '3.7'
         BLAS: 'openblas'
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
         MATPLOTLIB_VERSION: 'min'
-        THREADPOOLCTL_VERSION: '2.0.0'
+        THREADPOOLCTL_VERSION: '2.2.0'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
@@ -206,7 +210,7 @@ jobs:
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
         PYTEST_VERSION: 'min'
-        THREADPOOLCTL_VERSION: 'min'
+        THREADPOOLCTL_VERSION: '2.2.0'
 
 - template: build_tools/azure/posix.yml
   parameters:
@@ -242,13 +246,14 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      py37_conda_mkl:
+      py37_conda_forge_mkl:
+        DISTRIB: 'conda'
+        CONDA_CHANNEL: 'conda-forge'
         PYTHON_VERSION: '3.7'
         CHECK_WARNINGS: 'true'
         PYTHON_ARCH: '64'
         PYTEST_VERSION: '*'
         COVERAGE: 'true'
-        DISTRIB: 'conda'
       py37_pip_openblas_32bit:
         PYTHON_VERSION: '3.7'
         PYTHON_ARCH: '32'
