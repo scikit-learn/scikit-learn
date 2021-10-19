@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 ==============================================
 Regularization path of L1- Logistic Regression
