@@ -30,9 +30,13 @@ X = np.hstack((X, 2 * np.random.random((X.shape[0], 36))))
 # #############################################################################
 # Create a feature-selection transform, a scaler and an instance of SVM that we
 # combine together to have a full-blown estimator
-clf = Pipeline([('anova', SelectPercentile(chi2)),
-                ('scaler', StandardScaler()),
-                ('svc', SVC(gamma="auto"))])
+clf = Pipeline(
+    [
+        ("anova", SelectPercentile(chi2)),
+        ("scaler", StandardScaler()),
+        ("svc", SVC(gamma="auto")),
+    ]
+)
 
 # #############################################################################
 # Plot the cross-validation score as a function of percentile of features
@@ -47,10 +51,9 @@ for percentile in percentiles:
     score_stds.append(this_scores.std())
 
 plt.errorbar(percentiles, score_means, np.array(score_stds))
-plt.title(
-    'Performance of the SVM-Anova varying the percentile of features selected')
+plt.title("Performance of the SVM-Anova varying the percentile of features selected")
 plt.xticks(np.linspace(0, 100, 11, endpoint=True))
-plt.xlabel('Percentile')
-plt.ylabel('Accuracy Score')
-plt.axis('tight')
+plt.xlabel("Percentile")
+plt.ylabel("Accuracy Score")
+plt.axis("tight")
 plt.show()

@@ -32,13 +32,15 @@ from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
 X, y = make_classification(
-  n_samples=100_000, n_features=20, n_informative=2, n_redundant=2,
-  random_state=42
+    n_samples=100_000, n_features=20, n_informative=2, n_redundant=2, random_state=42
 )
 
 train_samples = 100  # Samples used for training the models
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, shuffle=False, test_size=100_000 - train_samples,
+    X,
+    y,
+    shuffle=False,
+    test_size=100_000 - train_samples,
 )
 
 # %%
@@ -92,10 +94,12 @@ gnb = GaussianNB()
 svc = NaivelyCalibratedLinearSVC(C=1.0)
 rfc = RandomForestClassifier()
 
-clf_list = [(lr, 'Logistic'),
-            (gnb, 'Naive Bayes'),
-            (svc, 'SVC'),
-            (rfc, 'Random forest')]
+clf_list = [
+    (lr, "Logistic"),
+    (gnb, "Naive Bayes"),
+    (svc, "SVC"),
+    (rfc, "Random forest"),
+]
 
 # %%
 
@@ -104,20 +108,25 @@ from matplotlib.gridspec import GridSpec
 
 fig = plt.figure(figsize=(10, 10))
 gs = GridSpec(4, 2)
-colors = plt.cm.get_cmap('Dark2')
+colors = plt.cm.get_cmap("Dark2")
 
 ax_calibration_curve = fig.add_subplot(gs[:2, :2])
 calibration_displays = {}
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
     display = CalibrationDisplay.from_estimator(
-        clf, X_test, y_test, n_bins=10, name=name, ax=ax_calibration_curve,
-        color=colors(i)
+        clf,
+        X_test,
+        y_test,
+        n_bins=10,
+        name=name,
+        ax=ax_calibration_curve,
+        color=colors(i),
     )
     calibration_displays[name] = display
 
 ax_calibration_curve.grid()
-ax_calibration_curve.set_title('Calibration plots')
+ax_calibration_curve.set_title("Calibration plots")
 
 # Add histogram
 grid_positions = [(2, 0), (2, 1), (3, 0), (3, 1)]
@@ -126,8 +135,11 @@ for i, (_, name) in enumerate(clf_list):
     ax = fig.add_subplot(gs[row, col])
 
     ax.hist(
-        calibration_displays[name].y_prob, range=(0, 1), bins=10, label=name,
-        color=colors(i)
+        calibration_displays[name].y_prob,
+        range=(0, 1),
+        bins=10,
+        label=name,
+        color=colors(i),
     )
     ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
 

@@ -1474,8 +1474,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'ls', 'absolute_error', 'lad', 'huber', \
-            'quantile'}, default='squared_error'
+    loss : {'squared_error', 'absolute_error', 'huber', 'quantile'}, \
+            default='squared_error'
         Loss function to be optimized. 'squared_error' refers to the squared
         error for regression. 'absolute_error' refers to the absolute error of
         regression and is a robust loss function. 'huber' is a

@@ -60,13 +60,13 @@ for i in range(max_iterations):
     predicted_labels = lp_model.transduction_[unlabeled_indices]
     true_labels = y[unlabeled_indices]
 
-    cm = confusion_matrix(true_labels, predicted_labels,
-                          labels=lp_model.classes_)
+    cm = confusion_matrix(true_labels, predicted_labels, labels=lp_model.classes_)
 
     print("Iteration %i %s" % (i, 70 * "_"))
-    print("Label Spreading model: %d labeled & %d unlabeled (%d total)"
-          % (n_labeled_points, n_total_samples - n_labeled_points,
-             n_total_samples))
+    print(
+        "Label Spreading model: %d labeled & %d unlabeled (%d total)"
+        % (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
+    )
 
     print(classification_report(true_labels, predicted_labels))
 
@@ -74,42 +74,50 @@ for i in range(max_iterations):
     print(cm)
 
     # compute the entropies of transduced label distributions
-    pred_entropies = stats.distributions.entropy(
-        lp_model.label_distributions_.T)
+    pred_entropies = stats.distributions.entropy(lp_model.label_distributions_.T)
 
     # select up to 5 digit examples that the classifier is most uncertain about
     uncertainty_index = np.argsort(pred_entropies)[::-1]
     uncertainty_index = uncertainty_index[
-        np.in1d(uncertainty_index, unlabeled_indices)][:5]
+        np.in1d(uncertainty_index, unlabeled_indices)
+    ][:5]
 
     # keep track of indices that we get labels for
     delete_indices = np.array([], dtype=int)
 
     # for more than 5 iterations, visualize the gain only on the first 5
     if i < 5:
-        f.text(.05, (1 - (i + 1) * .183),
-               "model %d\n\nfit with\n%d labels" %
-               ((i + 1), i * 5 + 10), size=10)
+        f.text(
+            0.05,
+            (1 - (i + 1) * 0.183),
+            "model %d\n\nfit with\n%d labels" % ((i + 1), i * 5 + 10),
+            size=10,
+        )
     for index, image_index in enumerate(uncertainty_index):
         image = images[image_index]
 
         # for more than 5 iterations, visualize the gain only on the first 5
         if i < 5:
             sub = f.add_subplot(5, 5, index + 1 + (5 * i))
-            sub.imshow(image, cmap=plt.cm.gray_r, interpolation='none')
-            sub.set_title("predict: %i\ntrue: %i" % (
-                lp_model.transduction_[image_index], y[image_index]), size=10)
-            sub.axis('off')
+            sub.imshow(image, cmap=plt.cm.gray_r, interpolation="none")
+            sub.set_title(
+                "predict: %i\ntrue: %i"
+                % (lp_model.transduction_[image_index], y[image_index]),
+                size=10,
+            )
+            sub.axis("off")
 
         # labeling 5 points, remote from labeled set
-        delete_index, = np.where(unlabeled_indices == image_index)
+        (delete_index,) = np.where(unlabeled_indices == image_index)
         delete_indices = np.concatenate((delete_indices, delete_index))
 
     unlabeled_indices = np.delete(unlabeled_indices, delete_indices)
     n_labeled_points += len(uncertainty_index)
 
-f.suptitle("Active learning with Label Propagation.\nRows show 5 most "
-           "uncertain labels to learn with the next model.", y=1.15)
-plt.subplots_adjust(left=0.2, bottom=0.03, right=0.9, top=0.9, wspace=0.2,
-                    hspace=0.85)
+f.suptitle(
+    "Active learning with Label Propagation.\nRows show 5 most "
+    "uncertain labels to learn with the next model.",
+    y=1.15,
+)
+plt.subplots_adjust(left=0.2, bottom=0.03, right=0.9, top=0.9, wspace=0.2, hspace=0.85)
 plt.show()
