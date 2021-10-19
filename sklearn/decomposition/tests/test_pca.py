@@ -667,21 +667,22 @@ def test_pca_svd_output(nfeat, seed):
     # Test results consistency
     rng = np.random.RandomState(seed)
     X = rng.randn(10 ** 5, nfeat)
+    valNum = 2
 
     # The result is the same as svd and svds
     pca = PCA(n_components=1, n_oversamples_rate=1)
     X_tranformed = pca.fit_transform(X).reshape(-1)
-    X_tranformed = np.array([round(abs(v), 5) for v in X_tranformed])
+    X_tranformed = np.array([round(abs(v), valNum) for v in X_tranformed])
 
     # sparse svd
     U1, s1, _ = svds(X, k=1, return_singular_vectors="u")
     X_tranformed1 = U1[:, 0] * s1[0]
-    X_tranformed1 = np.array([round(abs(v), 5) for v in X_tranformed1])
+    X_tranformed1 = np.array([round(abs(v), valNum) for v in X_tranformed1])
 
     # dense svd
     U2, s2, Vh2 = svd(X, full_matrices=False)
     X_tranformed2 = U2[:, 0] * s2[0]
-    X_tranformed2 = np.array([round(abs(v), 5) for v in X_tranformed2])
+    X_tranformed2 = np.array([round(abs(v), valNum) for v in X_tranformed2])
 
     np.testing.assert_array_equal(X_tranformed, X_tranformed1)
     np.testing.assert_array_equal(X_tranformed, X_tranformed2)
