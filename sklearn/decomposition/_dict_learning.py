@@ -986,9 +986,11 @@ def dict_learning_online(
     else:
         n_iter = 100
 
-    if batch_size == 'warn':
-        warnings.warn("The default value of batch_size will change from "
-                      "3 to 256 in 1.3.", FutureWarning)
+    if batch_size == "warn":
+        warnings.warn(
+            "The default value of batch_size will change from 3 to 256 in 1.3.",
+            FutureWarning,
+        )
         batch_size = 3
 
     if n_components is None:
@@ -2038,16 +2040,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._fit_algorithm = "lasso_" + self.fit_algorithm
 
         # batch_size
-        self._batch_size = self.batch_size
-        if self._batch_size == 'warn':
-            warnings.warn("The default value of batch_size will change from "
-                            "3 to 256 in 1.3.", FutureWarning)
-            self._batch_size = 3
-        if self._batch_size <= 0:
+        if hasattr(self, "_batch_size") and self._batch_size <= 0:
             raise ValueError(
-                f"batch_size should be > 0, got {self.batch_size} instead."
+                f"batch_size should be > 0, got {self._batch_size} instead."
             )
-        self._batch_size = min(self._batch_size, X.shape[0])
+            self._batch_size = min(self._batch_size, X.shape[0])
 
         # n_iter
         if self.n_iter != "deprecated" and self.n_iter < 0:
@@ -2219,6 +2216,14 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._batch_size = self.batch_size
+        if self.batch_size == "warn":
+            warnings.warn(
+                "The default value of batch_size will change from 3 to 256 in 1.3.",
+                FutureWarning,
+            )
+            self._batch_size = 3
+
         X = self._validate_data(X, dtype=np.float64, order="C", copy=self.shuffle)
 
         self._check_params(X)

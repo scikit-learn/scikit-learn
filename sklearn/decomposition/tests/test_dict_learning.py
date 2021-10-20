@@ -284,7 +284,7 @@ def test_dict_learning_online_shapes():
     rng = np.random.RandomState(0)
     n_components = 8
     code, dictionary = dict_learning_online(
-        X, n_components=n_components, alpha=1, random_state=rng
+        X, n_components=n_components, batch_size=4, alpha=1, random_state=rng
     )
     assert code.shape == (n_samples, n_components)
     assert dictionary.shape == (n_components, n_features)
@@ -295,7 +295,7 @@ def test_dict_learning_online_lars_positive_parameter():
     alpha = 1
     err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        dict_learning_online(X, alpha=alpha, positive_code=True)
+        dict_learning_online(X, batch_size=4, alpha=alpha, positive_code=True)
 
 
 @pytest.mark.parametrize(
@@ -314,6 +314,7 @@ def test_minibatch_dictionary_learning_positivity(
     n_components = 8
     dico = MiniBatchDictionaryLearning(
         n_components,
+        batch_size=4,
         transform_algorithm=transform_algorithm,
         random_state=0,
         positive_code=positive_code,
@@ -338,6 +339,7 @@ def test_minibatch_dictionary_learning_lars(positive_dict):
 
     dico = MiniBatchDictionaryLearning(
         n_components,
+        batch_size=4,
         transform_algorithm="lars",
         random_state=0,
         positive_dict=positive_dict,
@@ -359,6 +361,7 @@ def test_dict_learning_online_positivity(positive_code, positive_dict):
     code, dictionary = dict_learning_online(
         X,
         n_components=n_components,
+        batch_size=4,
         method="cd",
         alpha=1,
         random_state=rng,
@@ -385,18 +388,28 @@ def test_dict_learning_online_verbosity():
     try:
         sys.stdout = StringIO()
         dico = MiniBatchDictionaryLearning(
-            n_components, max_iter=5, verbose=1, random_state=0
+            n_components, batch_size=4, max_iter=5, verbose=1, random_state=0
         )
         dico.fit(X)
         dico = MiniBatchDictionaryLearning(
-            n_components, max_iter=5, verbose=2, random_state=0
+            n_components, batch_size=4, max_iter=5, verbose=2, random_state=0
         )
         dico.fit(X)
         dict_learning_online(
-            X, n_components=n_components, alpha=1, verbose=1, random_state=0
+            X,
+            n_components=n_components,
+            batch_size=4,
+            alpha=1,
+            verbose=1,
+            random_state=0,
         )
         dict_learning_online(
-            X, n_components=n_components, alpha=1, verbose=2, random_state=0
+            X,
+            n_components=n_components,
+            batch_size=4,
+            alpha=1,
+            verbose=2,
+            random_state=0,
         )
     finally:
         sys.stdout = old_stdout
@@ -406,14 +419,18 @@ def test_dict_learning_online_verbosity():
 
 def test_dict_learning_online_estimator_shapes():
     n_components = 5
-    dico = MiniBatchDictionaryLearning(n_components, max_iter=5, random_state=0)
+    dico = MiniBatchDictionaryLearning(
+        n_components, batch_size=4, max_iter=5, random_state=0
+    )
     dico.fit(X)
     assert dico.components_.shape == (n_components, n_features)
 
 
 def test_dict_learning_online_overcomplete():
     n_components = 12
-    dico = MiniBatchDictionaryLearning(n_components, max_iter=5, random_state=0).fit(X)
+    dico = MiniBatchDictionaryLearning(
+        n_components, batch_size=4, max_iter=5, random_state=0
+    ).fit(X)
     assert dico.components_.shape == (n_components, n_features)
 
 
@@ -422,7 +439,7 @@ def test_dict_learning_online_initialization():
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)
     dico = MiniBatchDictionaryLearning(
-        n_components, max_iter=0, dict_init=V, random_state=0
+        n_components, batch_size=4, max_iter=0, dict_init=V, random_state=0
     ).fit(X)
     assert_array_equal(dico.components_, V)
 
@@ -433,7 +450,12 @@ def test_dict_learning_online_readonly_initialization():
     V = rng.randn(n_components, n_features)
     V.setflags(write=False)
     MiniBatchDictionaryLearning(
-        n_components, max_iter=1, dict_init=V, random_state=0, shuffle=False
+        n_components,
+        batch_size=4,
+        max_iter=1,
+        dict_init=V,
+        random_state=0,
+        shuffle=False,
     ).fit(X)
 
 
@@ -624,6 +646,8 @@ def test_sparse_coder_n_features_in():
     assert sc.n_features_in_ == d.shape[1]
 
 
+# default value of batch_size changed. FIXME: remove in 1.3
+@pytest.mark.filterwarnings("ignore:The default value of batch_size will change")
 @pytest.mark.parametrize(
     "param, match",
     [
@@ -648,7 +672,9 @@ def test_minibatch_dict_learning_deprecated_attributes(attr):
     depr_msg = (
         f"The attribute '{attr}' is deprecated in 1.1 and will be removed in 1.3."
     )
-    est = MiniBatchDictionaryLearning(n_components=2, max_iter=1, random_state=0)
+    est = MiniBatchDictionaryLearning(
+        n_components=2, batch_size=4, max_iter=1, random_state=0
+    )
     est.fit(X)
 
     with pytest.warns(FutureWarning, match=depr_msg):
@@ -661,7 +687,7 @@ def test_minibatch_dict_learning_partial_fit_iter_offset_deprecated():
     depr_msg = (
         "'iter_offset' is deprecated in version 1.1 and will be removed in version 1.3"
     )
-    est = MiniBatchDictionaryLearning(n_components=2, random_state=0)
+    est = MiniBatchDictionaryLearning(n_components=2, batch_size=4, random_state=0)
 
     with pytest.warns(FutureWarning, match=depr_msg):
         est.partial_fit(X, iter_offset=0)
@@ -673,7 +699,9 @@ def test_minibatch_dict_learning_n_iter_deprecated():
     depr_msg = (
         "'n_iter' is deprecated in version 1.1 and will be removed in version 1.3"
     )
-    est = MiniBatchDictionaryLearning(n_components=2, n_iter=5, random_state=0)
+    est = MiniBatchDictionaryLearning(
+        n_components=2, batch_size=4, n_iter=5, random_state=0
+    )
 
     with pytest.warns(FutureWarning, match=depr_msg):
         est.fit(X)
@@ -698,7 +726,9 @@ def test_dict_learning_online_deprecated_args(arg, val):
     )
 
     with pytest.warns(FutureWarning, match=depr_msg):
-        dict_learning_online(X, n_components=2, random_state=0, **{arg: val})
+        dict_learning_online(
+            X, n_components=2, batch_size=4, random_state=0, **{arg: val}
+        )
 
 
 def test_batch_size_default_value_future_warning():
@@ -735,6 +765,8 @@ def test_update_dict():
     assert_allclose(newd_batch, newd_online)
 
 
+# default value of batch_size changed. FIXME: remove in 1.3
+@pytest.mark.filterwarnings("ignore:The default value of batch_size will change")
 @pytest.mark.parametrize("Estimator", [DictionaryLearning, MiniBatchDictionaryLearning])
 def test_warning_default_transform_alpha(Estimator):
     dl = Estimator(alpha=0.1)
