@@ -1371,3 +1371,16 @@ def test_custom_kernel_not_array_input(Estimator):
     else:  # regressor
         assert_allclose(svc1.predict(data), svc2.predict(X))
         assert_allclose(svc1.predict(data), svc3.predict(K))
+
+
+def test_svc_raises_error_internal_representation():
+    """Check that SVC raises error when internal representation is altered.
+
+    Non-regression test for #18891 and https://nvd.nist.gov/vuln/detail/CVE-2020-28975
+    """
+    clf = svm.SVC(kernel="linear").fit(X, Y)
+    clf._n_support[0] = 1000000
+
+    msg = "The internal representation of SVC was altered"
+    with pytest.raises(ValueError, match=msg):
+        clf.predict(X)
