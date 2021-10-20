@@ -2003,24 +2003,24 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.max_no_improvement = max_no_improvement
         self.tol = tol
 
-    @deprecated(
-        "The attribute 'iter_offset_' is deprecated "  # type: ignore
+    @deprecated(  # type: ignore
+        "The attribute 'iter_offset_' is deprecated "
         "in 1.1 and will be removed in 1.3."
     )
     @property
     def iter_offset_(self):
         return self.n_iter_
 
-    @deprecated(
-        "The attribute 'random_state_' is deprecated "  # type: ignore
+    @deprecated(  # type: ignore
+        "The attribute 'random_state_' is deprecated "
         "in 1.1 and will be removed in 1.3."
     )
     @property
     def random_state_(self):
         return self._random_state
 
-    @deprecated(
-        "The attribute 'inner_stats_' is deprecated "  # type: ignore
+    @deprecated(  # type: ignore
+        "The attribute 'inner_stats_' is deprecated "
         "in 1.1 and will be removed in 1.3."
     )
     @property
