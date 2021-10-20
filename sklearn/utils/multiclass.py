@@ -322,7 +322,7 @@ def type_of_target(y):
     # check float and contains non-integer float values
     if y.dtype.kind == "f" and np.any(y != y.astype(int)):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
-        _assert_all_finite(y)
+        _assert_all_finite(y, input_name="y")
         return "continuous" + suffix
 
     if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
