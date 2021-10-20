@@ -16,7 +16,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultiLabelBinarizer",
     "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
-    "MultiTaskLasso",
     "MultiTaskLassoCV",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
