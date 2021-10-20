@@ -1839,7 +1839,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         .. versionadded:: 0.22
 
     callback : callable, default=None
-        callable that gets invoked at the end of each iteration.
+        Callable that gets invoked at the end of each iteration.
 
         .. versionadded:: 1.1
 
@@ -1860,7 +1860,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         `max_no_improvement` to None.
 
         .. versionadded:: 1.1
-
 
     Attributes
     ----------
@@ -2149,7 +2148,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # Ignore first iteration because dictionary is not projected on the
         # constraint set yet.
-        if step == 1:
+        if step <= 10:
             if self.verbose:
                 print(f"Minibatch step {step}/{n_steps}: mean batch cost: {batch_cost}")
             return False
@@ -2214,7 +2213,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Returns
         -------
         self : object
-            Returns the instance itself.
+            Return the instance itself.
         """
         self._batch_size = self.batch_size
         if self.batch_size == "warn":
@@ -2316,7 +2315,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         return self
 
     def partial_fit(self, X, y=None, iter_offset="deprecated"):
-        """Updates the model using the data in X as a mini-batch.
+        """Update the model using the data in X as a mini-batch.
 
         Parameters
         ----------
@@ -2339,7 +2338,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Returns
         -------
         self : object
-            Returns the instance itself.
+            Return the instance itself.
         """
         has_components = hasattr(self, "components_")
 
