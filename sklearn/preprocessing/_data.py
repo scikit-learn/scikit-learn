@@ -2259,7 +2259,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        K = self._validate_data(K, copy=copy, dtype=FLOAT_DTYPES, reset=False)
+        K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
 
         K_pred_cols = (np.sum(K, axis=1) / self.K_fit_rows_.shape[0])[:, np.newaxis]
 

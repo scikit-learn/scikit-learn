@@ -1390,7 +1390,7 @@ def test_ordinal_encoder_python_integer():
 
 
 def test_ordinal_encoder_features_names_out_pandas():
-    """Check feature names out is same as the input"""
+    """Check feature names out is same as the input."""
     pd = pytest.importorskip("pandas")
 
     names = ["b", "c", "a"]

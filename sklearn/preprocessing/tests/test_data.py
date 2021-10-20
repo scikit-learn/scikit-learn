@@ -2697,7 +2697,7 @@ def test_one_to_one_features_pandas(Transformer):
 
 
 def test_kernel_centerer_feature_names_out():
-    """Test that kernel centerer feature_names_out"""
+    """Test that kernel centerer `feature_names_out`."""
 
     rng = np.random.RandomState(0)
     X = rng.random_sample((6, 4))
