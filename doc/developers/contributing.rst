@@ -249,22 +249,46 @@ how to set up your git repository:
    account on the GitHub user account. For more details on how to fork a
    repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
-3. Follow steps in :ref:`install_bleeding_edge` to build scikit-learn in
-   development mode.
+3. Clone your fork of the scikit-learn repo from your GitHub account to your
+   local disk:
 
-4. Add the ``upstream`` remote. This saves a reference to the main
+   .. prompt:: bash $
+
+      git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
+      cd scikit-learn
+
+3. Follow steps 2-7 in :ref:`install_bleeding_edge` to build scikit-learn in
+   development mode and return to this document.
+
+4. Install the development dependencies:
+
+   .. prompt:: bash $
+
+        pip install pytest pytest-cov flake8 mypy black==21.6b0
+
+.. _upstream:
+
+5. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
    synchronized with the latest changes:
 
    .. prompt:: bash $
 
-    git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+        git remote add upstream git@github.com:scikit-learn/scikit-learn.git
+
+6. Check that the `upstream` and `origin` remote aliases are configured correctly
+   by running `git remote -v` which should display::
+
+        origin	git@github.com:YourLogin/scikit-learn.git (fetch)
+        origin	git@github.com:YourLogin/scikit-learn.git (push)
+        upstream	git@github.com:scikit-learn/scikit-learn.git (fetch)
+        upstream	git@github.com:scikit-learn/scikit-learn.git (push)
 
 You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
 modifying code and submitting a PR:
 
-5. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+7. Synchronize your ``main`` branch with the ``upstream/main`` branch,
    more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
    .. prompt:: bash $
@@ -273,7 +297,7 @@ modifying code and submitting a PR:
         git fetch upstream
         git merge upstream/main
 
-6. Create a feature branch to hold your development changes:
+8. Create a feature branch to hold your development changes:
 
     .. prompt:: bash $
 
@@ -282,7 +306,7 @@ modifying code and submitting a PR:
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``main`` branch!
 
-7. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
+9. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
    run code style checks before each commit:
 
    .. prompt:: bash $
@@ -293,27 +317,27 @@ modifying code and submitting a PR:
    pre-commit checks can be disabled for a particular commit with
    `git commit -n`.
 
-8. Develop the feature on your feature branch on your computer, using Git to
-   do the version control. When you're done editing, add changed files using
-   ``git add`` and then ``git commit``:
+10. Develop the feature on your feature branch on your computer, using Git to
+    do the version control. When you're done editing, add changed files using
+    ``git add`` and then ``git commit``:
 
-   .. prompt:: bash $
+    .. prompt:: bash $
 
-       git add modified_files
-       git commit
+        git add modified_files
+        git commit
 
-   to record your changes in Git, then push the changes to your GitHub
-   account with:
+    to record your changes in Git, then push the changes to your GitHub
+    account with:
 
-   .. prompt:: bash $
+    .. prompt:: bash $
 
-      git push -u origin my_feature
+       git push -u origin my_feature
 
-9. Follow `these
-  <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-   instructions to create a pull request from your fork. This will send an
-   email to the committers. You may want to consider sending an email to the
-   mailing list for more visibility.
+11. Follow `these
+    <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+    instructions to create a pull request from your fork. This will send an
+    email to the committers. You may want to consider sending an email to the
+    mailing list for more visibility.
 
 .. note::
 
@@ -422,7 +446,8 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    to configure your editor to run `black`.
 
 6. **Make sure that your PR does not add PEP8 violations**. To check the
-   code that you changed, you can run the following command:
+   code that you changed, you can run the following command (see
+   :ref:`above <upstream>` to set up the ``upstream`` remote):
 
    .. prompt:: bash $
 
