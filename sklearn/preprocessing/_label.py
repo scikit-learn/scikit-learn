@@ -475,7 +475,9 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
         # dropped
-        y = check_array(y, accept_sparse="csr", ensure_2d=False, dtype=None)
+        y = check_array(
+            y, input_name="y", accept_sparse="csr", ensure_2d=False, dtype=None
+        )
     else:
         if _num_samples(y) == 0:
             raise ValueError("y has 0 samples: %r" % y)
