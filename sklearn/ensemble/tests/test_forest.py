@@ -1654,6 +1654,9 @@ def test_forest_degenerate_feature_importances():
             r"'\<class 'numpy.ndarray'\>'",
         ),
     ],
+    # Avoid long error messages in test names:
+    # https://github.com/scikit-learn/scikit-learn/issues/21362
+    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
 )
 def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
     # Check invalid `max_samples` values
