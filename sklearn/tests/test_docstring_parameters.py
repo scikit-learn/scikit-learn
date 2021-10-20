@@ -254,6 +254,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == "TSNE":
         est.set_params(learning_rate=200.0, init="random")
 
+    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
+    if Estimator.__name__ == "MiniBatchDictionaryLearning":
+        est.set_params(batch_size=5)
+
     # For PLS, TODO remove in 1.1
     skipped_attributes = {"x_scores_", "y_scores_"}
 
