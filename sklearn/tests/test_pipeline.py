@@ -1517,3 +1517,24 @@ def test_pipeline_check_if_fitted():
         check_is_fitted(pipeline)
     pipeline.fit(iris.data, iris.target)
     check_is_fitted(pipeline)
+
+
+def test_pipeline_get_feature_names_out_passes_names_through():
+    """Check that pipeline passes names through.
+
+    Non-regresion test for #21349.
+    """
+    X, y = iris.data, iris.target
+
+    class AddPrefixStandardScalar(StandardScaler):
+        def get_feature_names_out(self, input_features=None):
+            names = super().get_feature_names_out(input_features=input_features)
+            return np.asarray([f"my_prefix_{name}" for name in names], dtype=object)
+
+    pipe = make_pipeline(AddPrefixStandardScalar(), StandardScaler())
+    pipe.fit(X, y)
+
+    input_names = iris.feature_names
+    feature_names_out = pipe.get_feature_names_out(input_names)
+
+    assert_array_equal(feature_names_out, [f"my_prefix_{name}" for name in input_names])
