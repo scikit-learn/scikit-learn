@@ -76,6 +76,13 @@ Fixed models
   `CVE-2020-28975 <https://nvd.nist.gov/vuln/detail/CVE-2020-28975>`__.
   :pr:`21336` by `Thomas Fan`_.
 
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Solve a bug in :func:`~sklearn.utils.metaestimators.if_delegate_has_method`
+  where the underlying check for an attribute did not work with NumPy arrays.
+  :pr:`21145` by :user:`Zahlii <Zahlii>`.
+
 .. _changes_1_0:
 
 Version 1.0.0
