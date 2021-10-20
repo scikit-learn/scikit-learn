@@ -655,7 +655,7 @@ def test_gpr_predict_error():
 
 
 def test_y_std_with_multitarget_normalized():
-    """Check the proper normalization of `y_std` in multi-target scene.
+    """Check the proper normalization of `y_std` and `y_cov` in multi-target scene.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/17394
@@ -677,6 +677,8 @@ def test_y_std_with_multitarget_normalized():
     )
     model.fit(X_train, y_train)
     y_pred, y_std = model.predict(X_test, return_std=True)
+    _, y_cov = model.predict(X_test, return_cov=True)
 
     assert y_pred.shape == (n_samples, n_targets)
     assert y_std.shape == (n_samples, n_targets)
+    assert y_cov.shape == (n_samples, n_samples, n_targets)

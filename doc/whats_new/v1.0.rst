@@ -50,6 +50,7 @@ Fixed models
   :class:`sklearn.gaussian_process.GaussianProcessRegressor` allowing
   proper normalization in multi-target scene.
   :pr:`20761` by :user:`Patrick de C. T. R. Ferreira <patrickctrf>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
