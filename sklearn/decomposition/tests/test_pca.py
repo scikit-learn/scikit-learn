@@ -667,7 +667,7 @@ def test_pca_svd_output(nfeat, seed):
     # Test results consistency
     rng = np.random.RandomState(seed)
     X = rng.randn(10 ** 5, nfeat)
-    valNum = 1
+    valNum = 3
 
     # The result is the same as svd and svds
     pca = PCA(n_components=1, n_oversamples_rate=1)
