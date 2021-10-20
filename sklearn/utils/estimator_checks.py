@@ -171,9 +171,18 @@ def check_supervised_y_no_nan(name, estimator_orig):
     y = np.full(10, np.inf)
     y = _enforce_estimator_tags_y(estimator, y)
 
-    match = (
-        "Input contains NaN, infinity or a value too large for " r"dtype\('float64'\)."
-    )
+    module_name = estimator.__module__
+    if module_name.startswith("sklearn.") and not (
+        "test_" in module_name or module_name.endswith("_testing")
+    ):
+        # In scikit-learn we want the error message to mention the input name.
+        match = (
+            r"Input y contains NaN, infinity or a value too large for"
+            r" dtype\('float64'\)."
+        )
+    else:
+        # Do not impose a particular error message to third-party libraries.
+        match = None
     err_msg = (
         f"Estimator {name} should have raised error on fitting array y with NaN value."
     )

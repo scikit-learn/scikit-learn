@@ -39,7 +39,7 @@ def test_knn_imputer_default_with_invalid_input(na):
             [6, 6, 2, 5, 7],
         ]
     )
-    with pytest.raises(ValueError, match="Input contains (infinity|NaN)"):
+    with pytest.raises(ValueError, match="Input X contains (infinity|NaN)"):
         KNNImputer(missing_values=na).fit(X)
 
     # Test with inf present in matrix passed in transform()

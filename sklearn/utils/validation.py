@@ -1073,7 +1073,7 @@ def _check_y(y, multi_output=False, y_numeric=False):
         )
     else:
         y = column_or_1d(y, warn=True)
-        _assert_all_finite(y)
+        _assert_all_finite(y, input_name="y")
         _ensure_no_complex_data(y)
     if y_numeric and y.dtype.kind == "O":
         y = y.astype(np.float64)
