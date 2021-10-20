@@ -165,7 +165,7 @@ def assert_all_finite(
     input_name : str, default=""
         The data name used to construct the error message. In particular
         if `input_name` is "X" and the data has NaN values and
-        allow_nane is False, the error message will link to the imputer
+        allow_nan is False, the error message will link to the imputer
         documentation.
     """
     _assert_all_finite(
@@ -468,7 +468,7 @@ def _ensure_sparse_format(
     input_name : str, default=""
         The data name used to construct the error message. In particular
         if `input_name` is "X" and the data has NaN values and
-        allow_nane is False, the error message will link to the imputer
+        allow_nan is False, the error message will link to the imputer
         documentation.
 
     Returns
@@ -644,7 +644,7 @@ def check_array(
     input_name : str, default=""
         The data name used to construct the error message. In particular
         if `input_name` is "X" and the data has NaN values and
-        allow_nane is False, the error message will link to the imputer
+        allow_nan is False, the error message will link to the imputer
         documentation.
 
     Returns
