@@ -68,7 +68,7 @@ Changelog
   - the `inner_stats_`, `iter_offset_` and `random_state_` attributes of
     :class:`decomposition.MiniBatchDictionaryLearning` serve internal purpose and are
     deprecated.
-  - the default value of the `batch_size` parameter of both will change from 3 to ???
+  - the default value of the `batch_size` parameter of both will change from 3 to 256
     in version 1.3.
   
   :pr:`18975` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
