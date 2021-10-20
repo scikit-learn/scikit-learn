@@ -558,6 +558,15 @@ def _ridge_regression(
             # we implement sample_weight via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
+    if not isinstance(alpha, (np.ndarray, type(None), tuple)):
+        alpha = check_scalar(
+            alpha,
+            "alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
     # There should be either 1 or n_targets penalties
     alpha = np.asarray(alpha, dtype=X.dtype).ravel()
     if alpha.size not in [1, n_targets]:
@@ -566,16 +575,8 @@ def _ridge_regression(
             % (alpha.size, n_targets)
         )
 
-    if alpha.size == 1:
-        alpha[0] = check_scalar(
-            alpha[0],
-            "alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
-        if n_targets > 1:
-            alpha = np.repeat(alpha, n_targets)
+    if alpha.size == 1 and n_targets > 1:
+        alpha = np.repeat(alpha, n_targets)
 
     n_iter = None
     if solver == "sparse_cg":
@@ -760,6 +761,11 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        if self.max_iter is not None:
+            self.max_iter = check_scalar(
+                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
+            )
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
