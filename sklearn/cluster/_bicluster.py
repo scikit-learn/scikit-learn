@@ -114,13 +114,18 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
     def fit(self, X, y=None):
-        """Creates a biclustering for X.
+        """Create a biclustering for X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
 
-        y : Ignored
+        y : Not required
+
+        Returns
+        -------
+        self : object.
+            Returns this biclustering instance.
 
         """
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
@@ -284,6 +289,14 @@ class SpectralCoclustering(BaseSpectral):
 
         .. versionadded:: 1.0
 
+    References
+    ----------
+
+    * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
+      bipartite spectral graph partitioning
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
+
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralCoclustering
@@ -298,14 +311,8 @@ class SpectralCoclustering(BaseSpectral):
     >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)
 
-    References
-    ----------
-
-    * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
-      bipartite spectral graph partitioning
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
-
     """
+    
 
     def __init__(
         self,
@@ -439,6 +446,13 @@ class SpectralBiclustering(BaseSpectral):
 
         .. versionadded:: 1.0
 
+    References
+    ----------
+
+    * Kluger, Yuval, et. al., 2003. `Spectral biclustering of microarray
+      data: coclustering genes and conditions
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralBiclustering
@@ -452,13 +466,6 @@ class SpectralBiclustering(BaseSpectral):
     array([0, 1], dtype=int32)
     >>> clustering
     SpectralBiclustering(n_clusters=2, random_state=0)
-
-    References
-    ----------
-
-    * Kluger, Yuval, et. al., 2003. `Spectral biclustering of microarray
-      data: coclustering genes and conditions
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
 
     """
 

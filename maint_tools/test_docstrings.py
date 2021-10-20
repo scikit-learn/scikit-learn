@@ -23,7 +23,6 @@ DOCSTRING_IGNORE_LIST = [
     "OrthogonalMatchingPursuitCV",
     "PassiveAggressiveRegressor",
     "SpectralBiclustering",
-    "SpectralCoclustering",
     "SpectralEmbedding",
     "StackingRegressor",
 ]
