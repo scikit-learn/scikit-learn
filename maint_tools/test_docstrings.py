@@ -22,7 +22,6 @@ DOCSTRING_IGNORE_LIST = [
     "MultiTaskLassoCV",
     "OrthogonalMatchingPursuitCV",
     "PassiveAggressiveRegressor",
-    "SparseRandomProjection",
     "SpectralBiclustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
