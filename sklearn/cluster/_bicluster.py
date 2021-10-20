@@ -312,7 +312,6 @@ class SpectralCoclustering(BaseSpectral):
     SpectralCoclustering(n_clusters=2, random_state=0)
 
     """
-    
 
     def __init__(
         self,
