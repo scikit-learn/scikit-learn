@@ -2304,7 +2304,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         if (
             classifier
             and (y is not None)
-            and (type_of_target(y) in ("binary", "multiclass"))
+            and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
         ):
             return StratifiedKFold(cv)
         else:

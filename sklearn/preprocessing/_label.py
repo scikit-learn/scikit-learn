@@ -289,7 +289,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self.y_type_ = type_of_target(y)
+        self.y_type_ = type_of_target(y, input_name="y")
         if "multioutput" in self.y_type_:
             raise ValueError(
                 "Multioutput target data is not supported with label binarization"
