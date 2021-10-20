@@ -177,7 +177,7 @@ def check_supervised_y_no_nan(name, estimator_orig):
     ):
         # In scikit-learn we want the error message to mention the input name.
         match = (
-            r"Input y contains NaN, infinity or a value too large for"
+            r"Input (y|Y) contains NaN, infinity or a value too large for"
             r" dtype\('float64'\)."
         )
     else:
