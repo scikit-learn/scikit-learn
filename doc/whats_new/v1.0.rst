@@ -43,6 +43,14 @@ Fixed models
   between sparse and dense input. :pr:`21195`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Efficiency| Fixed an efficiency regression introduced in version 1.0.0 in the
+  `transform` method of :class:`feature_extraction.text.CountVectorizer` which no
+  longer checks for uppercase characters in the provided vocabulary. :pr:`21251`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
