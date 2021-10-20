@@ -43,6 +43,14 @@ Fixed models
   between sparse and dense input. :pr:`21195`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Compute `y_std` properly with multi-target in
+  :class:`sklearn.gaussian_process.GaussianProcessRegressor` allowing
+  proper normalization in multi-target scene.
+  :pr:`20761` by :user:`Patrick de C. T. R. Ferreira <patrickctrf>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
