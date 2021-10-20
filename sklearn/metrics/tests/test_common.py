@@ -918,7 +918,11 @@ def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
 def test_classification_inf_nan_input(metric, y_true, y_score):
     """check that classification metrics raise a message mentioning the
     occurrence of non-finite values in the target vectors."""
-    err_msg = "Input y_pred contains NaN, infinity or a value too large"
+    if np.any(np.isnan(y_true)):
+        input_name = "y_true"
+    else:
+        input_name = "y_pred"
+    err_msg = f"Input {input_name} contains NaN, infinity or a value too large"
     with pytest.raises(ValueError, match=err_msg):
         metric(y_true, y_score)
 
