@@ -25,14 +25,14 @@ import numpy as np
 from scipy import linalg
 
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
-from ..utils.validation import check_is_fitted, _generate_get_feature_names_out
+from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
 
-class FactorAnalysis(TransformerMixin, BaseEstimator):
+class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Factor Analysis (FA).
 
     A simple linear generative model with Gaussian latent variables.
@@ -426,22 +426,10 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         else:
             raise ValueError("'method' must be in %s, not %s" % (implemented, method))
 
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Only used to validate feature names with the names seen in :meth:`fit`.
-
-        Returns
-        -------
-        feature_names_out : ndarray of str objects
-            Transformed feature names.
-        """
-        return _generate_get_feature_names_out(
-            self, self.components_.shape[0], input_features
-        )
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
 
 
 def _ortho_rotation(components, method="varimax", tol=1e-6, max_iter=100):

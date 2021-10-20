@@ -15,14 +15,13 @@ from math import sqrt
 
 from ._cdnmf_fast import _update_cdnmf_fast
 from .._config import config_context
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import (
     check_is_fitted,
     check_non_negative,
-    _generate_get_feature_names_out,
 )
 
 EPSILON = np.finfo(np.float32).eps
@@ -1113,7 +1112,7 @@ def non_negative_factorization(
     return W, H, n_iter
 
 
-class NMF(TransformerMixin, BaseEstimator):
+class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Non-Negative Matrix Factorization (NMF).
 
     Find two non-negative matrices (W, H) whose product approximates the non-
@@ -1713,19 +1712,7 @@ class NMF(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
         return np.dot(W, self.components_)
 
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Only used to validate feature names with the names seen in :meth:`fit`.
-
-        Returns
-        -------
-        feature_names_out : ndarray of str objects
-            Transformed feature names.
-        """
-        return _generate_get_feature_names_out(
-            self, self.components_.shape[0], input_features
-        )
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

@@ -14,13 +14,12 @@ import warnings
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
 
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _generate_get_feature_names_out
 
 __all__ = ["fastica", "FastICA"]
 
@@ -320,7 +319,7 @@ def fastica(
                 return None, est._unmixing, sources
 
 
-class FastICA(TransformerMixin, BaseEstimator):
+class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     The implementation is based on [1]_.
@@ -688,19 +687,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         return X
 
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Only used to validate feature names with the names seen in :meth:`fit`.
-
-        Returns
-        -------
-        feature_names_out : ndarray of str objects
-            Transformed feature names.
-        """
-        return _generate_get_feature_names_out(
-            self, self.components_.shape[0], input_features
-        )
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
