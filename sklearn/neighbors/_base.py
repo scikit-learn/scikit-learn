@@ -419,9 +419,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X, y = self._validate_data(
-                    X, y, accept_sparse="csr", multi_output=True, order="C"
-                )
+                X, y = self._validate_data(X, y, accept_sparse="csr", multi_output=True)
 
             if is_classifier(self):
                 # Classification targets require a specific format
@@ -456,7 +454,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = self._validate_data(X, accept_sparse="csr", order="C")
+                X = self._validate_data(X, accept_sparse="csr")
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -748,22 +746,30 @@ class KNeighborsMixin:
             )
         )
 
-        if X is not None:
-            query_is_train = False
-            if self._metric == "precomputed":
-                X = _check_precomputed(X)
-            elif use_pairwise_distances_reductions:
+        query_is_train = X is None
+        if query_is_train:
+            if use_pairwise_distances_reductions:
                 # We force the C-contiguity even if it creates a copy for F-ordered
-                # arrays because this implementation is more efficient.
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
-            else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False)
-        else:
-            query_is_train = True
+                # arrays because PairwiseDistancesArgKmin is more efficient.
+                self._fit_X = self._validate_data(
+                    self._fit_X, accept_sparse="csr", reset=False, order="C"
+                )
             X = self._fit_X
             # Include an extra neighbor to account for the sample itself being
             # returned, which is removed later
             n_neighbors += 1
+        else:
+            if use_pairwise_distances_reductions:
+                # We force the C-contiguity even if it creates a copy for F-ordered
+                # arrays because PairwiseDistancesArgKmin is more efficient.
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                self._fit_X = self._validate_data(
+                    self._fit_X, accept_sparse="csr", reset=False, order="C"
+                )
+            elif self._metric == "precomputed":
+                X = _check_precomputed(X)
+            else:
+                X = self._validate_data(X, accept_sparse="csr", reset=False)
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -1098,19 +1104,24 @@ class RadiusNeighborsMixin:
             )
         )
 
-        if X is not None:
-            query_is_train = False
-            if self._metric == "precomputed":
-                X = _check_precomputed(X)
-            elif use_pairwise_distances_reductions:
+        query_is_train = X is None
+        if query_is_train:
+            if use_pairwise_distances_reductions:
                 # We force the C-contiguity even if it creates a copy for F-ordered
-                # arrays because this implementation is more efficient.
+                # arrays because PairwiseDistancesRadiusNeighborhood is more efficient.
+                self._fit_X = self._validate_data(
+                    self._fit_X, accept_sparse="csr", reset=False, order="C"
+                )
+            X = self._fit_X
+        else:
+            if use_pairwise_distances_reductions:
+                # We force the C-contiguity even if it creates a copy for F-ordered
+                # arrays because PairwiseDistancesRadiusNeighborhood is more efficient.
                 X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+            elif self._metric == "precomputed":
+                X = _check_precomputed(X)
             else:
                 X = self._validate_data(X, accept_sparse="csr", reset=False)
-        else:
-            query_is_train = True
-            X = self._fit_X
 
         if radius is None:
             radius = self.radius
