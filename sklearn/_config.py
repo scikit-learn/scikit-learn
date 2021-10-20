@@ -109,7 +109,7 @@ def set_config(
     if display is not None:
         local_config["display"] = display
     if pairwise_dist_chunk_size is not None:
-        local_config["display"] = pairwise_dist_chunk_size
+        local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
 
 
 @contextmanager
