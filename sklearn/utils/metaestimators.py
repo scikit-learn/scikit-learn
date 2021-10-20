@@ -31,9 +31,6 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
             return out
 
         estimators = getattr(self, attr)
-        if not isinstance(out, dict):
-            return out
-
         try:
             out.update(estimators)
         except (TypeError, ValueError):
