@@ -131,9 +131,12 @@ def _assert_all_finite(
                 # scikit-learn.
                 msg_err += (
                     f"\nEstimator {estimator_name} does not accept missing values"
-                    " encoded as NaN natively. Please make sure to preprocess the"
-                    " data, for instance by using an imputer transformer in a pipeline"
-                    " or drop samples with missing values. See"
+                    " encoded as NaN natively. For supervised learning, you might want"
+                    " to consider sklearn.ensemble.HistGradientBoostingClassifier and"
+                    " Regressor which accept missing values encoded as NaNs natively."
+                    " Alternatively, it is possible to preprocess the data, for"
+                    " instance by using an imputer transformer in a pipeline or drop"
+                    " samples with missing values. See"
                     " https://scikit-learn.org/stable/modules/impute.html"
                 )
             raise ValueError(msg_err)
