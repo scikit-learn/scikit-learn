@@ -450,7 +450,7 @@ def test_countvectorizer_uppercase_in_vocab():
 
     with pytest.warns(UserWarning, match=message):
         vectorizer.fit(vocabulary)
-    
+
     with pytest.warns(None) as record:
         vectorizer.transform(vocabulary)
     assert not record
