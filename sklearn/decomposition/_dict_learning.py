@@ -1866,7 +1866,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     components_ : ndarray of shape (n_components, n_features)
         Components extracted from the data.
 
-    inner_stats_ : tuple of (A, B) ndarrays
+    `inner_stats_` : tuple of (A, B) ndarrays
         Internal sufficient statistics that are kept by the algorithm.
         Keeping them is useful in online settings, to avoid losing the
         history of the evolution, but they shouldn't have any use for the
@@ -1891,13 +1891,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     n_iter_ : int
         Number of iterations over the full dataset.
 
-    iter_offset_ : int
+    `iter_offset_` : int
         The number of iteration on data batches that has been performed before.
 
         .. deprecated:: 1.1
            `iter_offset_` has been renamed `n_steps_` and will be removed in 1.3.
 
-    random_state_ : RandomState instance
+    `random_state_` : RandomState instance
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
 
