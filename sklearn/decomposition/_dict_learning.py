@@ -1933,8 +1933,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
     ...     random_state=42)
     >>> dict_learner = MiniBatchDictionaryLearning(
-    ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
-    ... )
+    ...     n_components=15, batch_size=10, transform_algorithm='lasso_lars',
+    ...     random_state=42)
     >>> X_transformed = dict_learner.fit_transform(X)
 
     We can check the level of sparsity of `X_transformed`:
