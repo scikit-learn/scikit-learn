@@ -113,10 +113,7 @@ def _assert_all_finite(
         ):
             type_err = "infinity" if allow_nan else "NaN, infinity"
             msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
-            if input_name:
-                padded_input_name = input_name + " "
-            else:
-                padded_input_name = ""
+            padded_input_name = input_name + " " if input_name else ""
             msg_err = (
                 f"Input {padded_input_name}contains {type_err} or a value too large for"
                 f" {msg_dtype!r}."
