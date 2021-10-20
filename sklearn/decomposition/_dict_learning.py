@@ -727,7 +727,7 @@ def dict_learning_online(
     return_code=True,
     dict_init=None,
     callback=None,
-    batch_size=3,
+    batch_size="warn",
     verbose=False,
     shuffle=True,
     n_jobs=None,
@@ -985,6 +985,11 @@ def dict_learning_online(
         )
     else:
         n_iter = 100
+
+    if batch_size == 'warn':
+        warnings.warn("The default value of batch_size will change from "
+                      "3 to 256 in 1.3.", FutureWarning)
+        batch_size = 3
 
     if n_components is None:
         n_components = X.shape[1]
@@ -1953,7 +1958,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         max_iter=None,
         fit_algorithm="lars",
         n_jobs=None,
-        batch_size=3,
+        batch_size="warn",
         shuffle=True,
         dict_init=None,
         transform_algorithm="omp",
@@ -1996,24 +2001,21 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.tol = tol
 
     @deprecated(  # type: ignore
-        "The attribute 'iter_offset_' is deprecated "
-        "in 1.1 and will be removed in 1.3."
+        "The attribute 'iter_offset_' is deprecated in 1.1 and will be removed in 1.3."
     )
     @property
     def iter_offset_(self):
         return self.n_iter_
 
     @deprecated(  # type: ignore
-        "The attribute 'random_state_' is deprecated "
-        "in 1.1 and will be removed in 1.3."
+        "The attribute 'random_state_' is deprecated in 1.1 and will be removed in 1.3."
     )
     @property
     def random_state_(self):
         return self._random_state
 
     @deprecated(  # type: ignore
-        "The attribute 'inner_stats_' is deprecated "
-        "in 1.1 and will be removed in 1.3."
+        "The attribute 'inner_stats_' is deprecated in 1.1 and will be removed in 1.3."
     )
     @property
     def inner_stats_(self):
@@ -2036,11 +2038,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._fit_algorithm = "lasso_" + self.fit_algorithm
 
         # batch_size
-        if self.batch_size <= 0:
+        self._batch_size = self.batch_size
+        if self._batch_size == 'warn':
+            warnings.warn("The default value of batch_size will change from "
+                            "3 to 256 in 1.3.", FutureWarning)
+            self._batch_size = 3
+        if self._batch_size <= 0:
             raise ValueError(
                 f"batch_size should be > 0, got {self.batch_size} instead."
             )
-        self._batch_size = min(self.batch_size, X.shape[0])
+        self._batch_size = min(self._batch_size, X.shape[0])
 
         # n_iter
         if self.n_iter != "deprecated" and self.n_iter < 0:
@@ -2250,19 +2257,22 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
             # allow max_iter = 0
             i = -1
+            import time
 
+            t = 0
             for i, batch in zip(range(n_steps), batches):
-
+                t1 = time.time()
                 this_X = X_train[batch]
 
                 batch_cost = self._minibatch_step(
                     this_X, dictionary, self._random_state, i
                 )
-
+                t += time.time() - t1
                 if self._minibatch_convergence(
                     this_X, batch_cost, dictionary, dict_buffer, n_samples, i, n_steps
                 ):
                     break
+                print(f"[{self._ewa_cost},{t}],")
 
                 if self.callback is not None:
                     self.callback(locals())

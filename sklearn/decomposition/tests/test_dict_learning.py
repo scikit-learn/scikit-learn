@@ -701,6 +701,17 @@ def test_dict_learning_online_deprecated_args(arg, val):
         dict_learning_online(X, n_components=2, random_state=0, **{arg: val})
 
 
+def test_batch_size_default_value_future_warning():
+    # Check that a FutureWarning is raised if batch_size is left to its default value.
+    # FIXME: remove in 1.3
+    msg = "The default value of batch_size will change"
+    with pytest.warns(FutureWarning, match=msg):
+        dict_learning_online(X, n_components=2, random_state=0)
+
+    with pytest.warns(FutureWarning, match=msg):
+        MiniBatchDictionaryLearning(n_components=2, random_state=0).fit(X)
+
+
 def test_update_dict():
     # Check the dict update in batch mode vs online mode
     # Non-regression test for #4866
