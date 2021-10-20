@@ -668,6 +668,7 @@ def test_pca_svd_output(nfeat, seed):
     rng = np.random.RandomState(seed)
     X = rng.randn(10 ** 5, nfeat)
     valNum = 1
+    lenNum = 5
 
     # The result is the same as svd and svds
     pca = PCA(n_components=1, n_oversamples_rate=1)
@@ -684,5 +685,9 @@ def test_pca_svd_output(nfeat, seed):
     X_tranformed2 = U2[:, 0] * s2[0]
     X_tranformed2 = np.array([round(abs(v), valNum) for v in X_tranformed2])
 
-    assert np.testing.assert_array_almost_equal(X_tranformed, X_tranformed1, decimal=1)
-    assert np.testing.assert_array_almost_equal(X_tranformed, X_tranformed2, decimal=1)
+    assert np.testing.assert_array_almost_equal(
+        X_tranformed[:lenNum], X_tranformed1[:lenNum], decimal=1
+    )
+    assert np.testing.assert_array_almost_equal(
+        X_tranformed[:lenNum], X_tranformed2[:lenNum], decimal=1
+    )
