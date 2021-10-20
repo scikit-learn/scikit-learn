@@ -67,6 +67,15 @@ Fixed models
   names out from one step of a pipeline to the next. :pr:`21351` by
   `Thomas Fan`_.
 
+:mod:`sklearn.svm`
+..................
+
+- |Fix| :class:`svm.SVC` and :class:`svm.SVR` check for an inconsistency
+  in its internal representation and raise an error instead of segfaulting.
+  This fix also resolves
+  `CVE-2020-28975 <https://nvd.nist.gov/vuln/detail/CVE-2020-28975>`__.
+  :pr:`21336` by `Thomas Fan`_.
+
 .. _changes_1_0:
 
 Version 1.0.0
