@@ -113,6 +113,13 @@ Changelog
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
 
+- |Enhancement| All scikit-learn models now generate more informative
+  error message when some input contains unexpected `NaN` or infinite values.
+  In particular the message contains the input name ("X", "y" or
+  "sample_weight") and if an unexpected `NaN` value is found in `X`, the error
+  message suggests potential solutions.
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
