@@ -545,9 +545,9 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
- * `"Preconditioned Spectral Clustering for Stochastic
+ * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
    Block Partition Streaming Graph Challenge"
-   <https://arxiv.org/abs/1708.07481>`_
+   <1309.0238>`
    David Zhuzhunashvili, Andrew Knyazev
 
 .. _hierarchical_clustering:
@@ -1703,10 +1703,9 @@ cluster analysis.
 
 .. topic:: References
 
- * Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
-   Interpretation and Validation of Cluster Analysis". Computational
-   and Applied Mathematics 20: 53–65.
-   `doi:10.1016/0377-0427(87)90125-7 <https://doi.org/10.1016/0377-0427(87)90125-7>`_.
+ * Peter J. Rousseeuw (1987). :doi:`"Silhouettes: a Graphical Aid to the
+   Interpretation and Validation of Cluster Analysis"<10.1016/0377-0427(87)90125-7>`
+   . Computational and Applied Mathematics 20: 53–65.
 
 
 Advantages
@@ -1805,8 +1804,7 @@ number of points in cluster :math:`q`.
  * Caliński, T., & Harabasz, J. (1974).
    `"A Dendrite Method for Cluster Analysis"
    <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
-   Communications in Statistics-theory and Methods 3: 1-27.
-   `doi:10.1080/03610927408827101 <https://doi.org/10.1080/03610927408827101>`_.
+   :doi:`Communications in Statistics-theory and Methods 3: 1-27 <10.1080/03610927408827101>`.
 
 
 .. _davies-bouldin_index:
@@ -1881,15 +1879,13 @@ Then the Davies-Bouldin index is defined as:
 .. topic:: References
 
  * Davies, David L.; Bouldin, Donald W. (1979).
-   "A Cluster Separation Measure"
+   :doi:`"A Cluster Separation Measure" <10.1109/TPAMI.1979.4766909>`
    IEEE Transactions on Pattern Analysis and Machine Intelligence.
    PAMI-1 (2): 224-227.
-   `doi:10.1109/TPAMI.1979.4766909 <https://doi.org/10.1109/TPAMI.1979.4766909>`_.
 
  * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
-   "On Clustering Validation Techniques"
+   :doi:`"On Clustering Validation Techniques" <10.1023/A:1012801612483>`
    Journal of Intelligent Information Systems, 17(2-3), 107-145.
-   `doi:10.1023/A:1012801612483 <https://doi.org/10.1023/A:1012801612483>`_.
 
  * `Wikipedia entry for Davies-Bouldin index
    <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
