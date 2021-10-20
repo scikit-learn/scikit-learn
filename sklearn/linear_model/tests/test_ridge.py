@@ -351,6 +351,17 @@ def test_ridge_individual_penalties():
             "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
             " 'str'>",
         ),
+        ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
+        (
+            {"tol": 1},
+            TypeError,
+            "tol must be an instance of <class 'float'>, not <class 'int'>",
+        ),
+        (
+            {"tol": "1"},
+            TypeError,
+            "tol must be an instance of <class 'float'>, not <class 'str'>",
+        ),
     ],
 )
 def test_Ridge_params_validation(params, err_type, err_msg):
