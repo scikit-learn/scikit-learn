@@ -13,6 +13,7 @@ from ..neighbors._base import _check_weights
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_feature_names_in
 
 
 class KNNImputer(_BaseImputer):
@@ -217,6 +218,7 @@ class KNNImputer(_BaseImputer):
         _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
+        self._valid_mask = ~np.all(self._mask_fit_X, axis=0)
 
         super()._fit_indicator(self._mask_fit_X)
 
@@ -253,7 +255,7 @@ class KNNImputer(_BaseImputer):
 
         mask = _get_mask(X, self.missing_values)
         mask_fit_X = self._mask_fit_X
-        valid_mask = ~np.all(mask_fit_X, axis=0)
+        valid_mask = self._valid_mask
 
         X_indicator = super()._transform_indicator(mask)
 
@@ -338,3 +340,26 @@ class KNNImputer(_BaseImputer):
             pass
 
         return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+                used as feature names in. If `feature_names_in_` is not defined,
+                then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+                match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(self, input_features)
+        names = input_features[self._valid_mask]
+        return self._concatenate_indicator_feature_names_out(names, input_features)

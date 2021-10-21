@@ -365,7 +365,6 @@ GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "decomposition",
     "discriminant_analysis",
     "ensemble",
-    "impute",
     "isotonic",
     "kernel_approximation",
     "preprocessing",

@@ -68,6 +68,13 @@ Changelog
   error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
   :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
+  :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
+  :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
