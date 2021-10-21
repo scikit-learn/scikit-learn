@@ -421,6 +421,10 @@ class BaseEstimator:
             feature_names_in = _get_feature_names(X)
             if feature_names_in is not None:
                 self.feature_names_in_ = feature_names_in
+            elif hasattr(self, "feature_names_in_"):
+                # Delete the attribute when the estimator is fitted on a new dataset
+                # that has no feature names.
+                delattr(self, "feature_names_in_")
             return
 
         fitted_feature_names = getattr(self, "feature_names_in_", None)
