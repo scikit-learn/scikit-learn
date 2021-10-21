@@ -59,6 +59,8 @@ def test_pls_canonical_basics():
     # Check that inverse_transform works
     X_back = pls.inverse_transform(Xt)
     assert_array_almost_equal(X_back, X)
+    _, Y_back = pls.inverse_transform(Xt, Yt)
+    assert_array_almost_equal(Y_back, Y)
 
 
 def test_sanity_check_pls_regression():
