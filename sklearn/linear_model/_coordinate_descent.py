@@ -2204,8 +2204,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
 
 class MultiTaskElasticNet(Lasso):
-    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as \
-    regularizer.
+    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer.
 
     The optimization objective for MultiTaskElasticNet is::
 
