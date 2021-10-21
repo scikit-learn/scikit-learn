@@ -38,6 +38,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+- |Enhancement| All scikit-learn models now generate more informative
+  error message when some input contains unexpected `NaN` or infinite values.
+  In particular the message contains the input name ("X", "y" or
+  "sample_weight") and if an unexpected `NaN` value is found in `X`, the error
+  message suggests potential solutions.
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -113,11 +120,10 @@ Changelog
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
 
-- |Enhancement| All scikit-learn models now generate more informative
-  error message when some input contains unexpected `NaN` or infinite values.
-  In particular the message contains the input name ("X", "y" or
-  "sample_weight") and if an unexpected `NaN` value is found in `X`, the error
-  message suggests potential solutions.
+- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
+  now accept an `input_name` parameter to make the error message more
+  informative when passed invalid input data (e.g. with NaN or infinite
+  values).
   :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
 
 Code and Documentation Contributors
