@@ -560,19 +560,20 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         matrix of the distances.
 
     eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
-        Parameter description:
-        auto : algorithm will attempt to choose the best method for input data
+        The solver used to compute the eigenvectors. The available options are:
 
-        arpack : use arnoldi iteration in shift-invert mode.
-                    For this method, M may be a dense matrix, sparse matrix,
-                    or general linear operator.
-                    Warning: ARPACK can be unstable for some problems.  It is
-                    best to try several random seeds in order to check results.
+        - `'auto'` : algorithm will attempt to choose the best method for input
+          data.
+        - `'arpack'` : use arnoldi iteration in shift-invert mode. For this
+          method, M may be a dense matrix, sparse matrix, or general linear
+          operator.
+        - `'dense'`  : use standard dense matrix operations for the eigenvalue
+          decomposition. For this method, M must be an array or matrix type.
+          This method should be avoided for large problems.
 
-        dense  : use standard dense matrix operations for the eigenvalue
-                    decomposition.  For this method, M must be an array
-                    or matrix type.  This method should be avoided for
-                    large problems.
+        .. warning::
+           ARPACK can be unstable for some problems.  It is best to try several
+           random seeds in order to check results.
 
     tol : float, default=1e-6
         Tolerance for 'arpack' method
@@ -603,8 +604,8 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
 
     neighbors_algorithm : {'auto', 'brute', 'kd_tree', 'ball_tree'}, \
                           default='auto'
-        Algorithm to use for nearest neighbors search,
-        passed to neighbors.NearestNeighbors instance.
+        Algorithm to use for nearest neighbors search, passed to
+        :class:`~sklearn.neighbors.NearestNeighbors` instance.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator when
@@ -733,7 +734,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
 
         Parameters
         ----------
-        X : array-like of shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training set.
 
         y : Ignored
@@ -742,7 +743,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         Returns
         -------
         self : object
-            LocallyLinearEmbedding class instance.
+            Fitted `LocallyLinearEmbedding` class instance.
         """
         self._fit_transform(X)
         return self
@@ -752,7 +753,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
 
         Parameters
         ----------
-        X : array-like of shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training set.
 
         y : Ignored
@@ -777,13 +778,13 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
 
         Returns
         -------
-        X_new : array, shape = [n_samples, n_components]
+        X_new : ndarray of shape (n_samples, n_components)
             Returns the instance itself.
 
         Notes
         -----
         Because of scaling performed by this method, it is discouraged to use
-        it together with methods that are not scale-invariant (like SVMs)
+        it together with methods that are not scale-invariant (like SVMs).
         """
         check_is_fitted(self)
 
