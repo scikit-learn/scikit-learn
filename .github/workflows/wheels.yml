@@ -101,15 +101,6 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
 
-      # Comment out when numpy/scipy dependencies are on pypi
-      - name: Set pypi index for python dev
-        if: matrix.python == 310
-        run: |
-          echo "EXTRA_CIBW_ENVIRONMENT=PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scipy-wheels-nightly/simple PIP_PRE=true" >> $GITHUB_ENV
-
-          # Do not use the dev version of pandas
-          echo "PANDAS_VERSION_SPECIFIER=<1.4" >> $GITHUB_ENV
-
       - name: Build and test wheels
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
@@ -119,13 +110,12 @@ jobs:
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
                             MACOSX_DEPLOYMENT_TARGET=10.13
-                            ${{ env.EXTRA_CIBW_ENVIRONMENT }}
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
-          CIBW_TEST_REQUIRES: pytest pandas${{ env.PANDAS_VERSION_SPECIFIER }} threadpoolctl
+          CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
           CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} ${{ matrix.bitness }}
           CIBW_BUILD_VERBOSITY: 1
