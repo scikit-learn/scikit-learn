@@ -87,6 +87,13 @@ class KNNImputer(_BaseImputer):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    SimpleImputer : Imputation transformer for completing missing values
+        with simple strategies.
+    IterativeImputer : Multivariate imputer that estimates each feature
+        from all the others.
+
     References
     ----------
     * Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
@@ -179,9 +186,13 @@ class KNNImputer(_BaseImputer):
             Input data, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
         Returns
         -------
         self : object
+            The fitted `KNNImputer` class instance.
         """
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
