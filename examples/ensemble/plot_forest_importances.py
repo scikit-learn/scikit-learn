@@ -52,9 +52,9 @@ forest.fit(X_train, y_train)
 # deviation of accumulation of the impurity decrease within each tree.
 #
 # .. warning::
-#     Impurity-based feature importances can be misleading for high cardinality
-#     features (many unique values). See :ref:`permutation_importance` as
-#     an alternative below.
+#     Impurity-based feature importances can be misleading for **high
+#     cardinality** features (many unique values). See
+#     :ref:`permutation_importance` as an alternative below.
 import time
 import numpy as np
 
