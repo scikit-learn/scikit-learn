@@ -2204,8 +2204,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
 
 class MultiTaskElasticNet(Lasso):
-    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as
-    regularizer.
+    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -2313,6 +2312,20 @@ class MultiTaskElasticNet(Lasso):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
+        cross-validation.
+    ElasticNet : Linear regression with combined L1 and L2 priors as regularizer.
+    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2324,20 +2337,6 @@ class MultiTaskElasticNet(Lasso):
      [0.45663524 0.45612256]]
     >>> print(clf.intercept_)
     [0.0872422 0.0872422]
-
-    See Also
-    --------
-    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
-        cross-validation.
-    ElasticNet
-    MultiTaskLasso
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     def __init__(
