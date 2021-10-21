@@ -105,6 +105,13 @@ Changelog
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
+:mod:`sklearn.tree`
+..................................
+
+- |Enhancement| Added :func:`partial_fit` to :class:`tree.DecisionTreeClassifier`
+  and :class:`tree.ExtraTreeClassifier`.
+  :pr:`18889` by :user:`Haoyin Xu <PSSF23>`.
+
 :mod:`sklearn.utils`
 ....................
 
