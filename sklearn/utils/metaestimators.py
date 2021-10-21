@@ -33,7 +33,11 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         estimators = getattr(self, attr)
         try:
             out.update(estimators)
-        except (TypeError, ValueError):
+        except TypeError:
+            # Here we ignore TypeError for cases where estimators is not a list of
+            # (name, estimator). This is to prevent errors when calling `set_params`.
+            # `BaseEstimator.set_params` calls `get_params` which can error
+            # for invalid values for `estimators`.
             return out
 
         for name, estimator in estimators:
