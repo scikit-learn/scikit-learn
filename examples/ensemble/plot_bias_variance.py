@@ -73,18 +73,20 @@ from sklearn.ensemble import BaggingRegressor
 from sklearn.tree import DecisionTreeRegressor
 
 # Settings
-n_repeat = 50       # Number of iterations for computing expectations
-n_train = 50        # Size of the training set
-n_test = 1000       # Size of the test set
-noise = 0.1         # Standard deviation of the noise
+n_repeat = 50  # Number of iterations for computing expectations
+n_train = 50  # Size of the training set
+n_test = 1000  # Size of the test set
+noise = 0.1  # Standard deviation of the noise
 np.random.seed(0)
 
 # Change this for exploring the bias-variance decomposition of other
 # estimators. This should work well for estimators with high variance (e.g.,
 # decision trees or KNN), but poorly for estimators with low variance (e.g.,
 # linear models).
-estimators = [("Tree", DecisionTreeRegressor()),
-              ("Bagging(Tree)", BaggingRegressor(DecisionTreeRegressor()))]
+estimators = [
+    ("Tree", DecisionTreeRegressor()),
+    ("Bagging(Tree)", BaggingRegressor(DecisionTreeRegressor())),
+]
 
 n_estimators = len(estimators)
 
@@ -93,7 +95,7 @@ n_estimators = len(estimators)
 def f(x):
     x = x.ravel()
 
-    return np.exp(-x ** 2) + 1.5 * np.exp(-(x - 2) ** 2)
+    return np.exp(-(x ** 2)) + 1.5 * np.exp(-((x - 2) ** 2))
 
 
 def generate(n_samples, noise, n_repeat=1):
@@ -141,18 +143,18 @@ for n, (name, estimator) in enumerate(estimators):
         for j in range(n_repeat):
             y_error += (y_test[:, j] - y_predict[:, i]) ** 2
 
-    y_error /= (n_repeat * n_repeat)
+    y_error /= n_repeat * n_repeat
 
     y_noise = np.var(y_test, axis=1)
     y_bias = (f(X_test) - np.mean(y_predict, axis=1)) ** 2
     y_var = np.var(y_predict, axis=1)
 
-    print("{0}: {1:.4f} (error) = {2:.4f} (bias^2) "
-          " + {3:.4f} (var) + {4:.4f} (noise)".format(name,
-                                                      np.mean(y_error),
-                                                      np.mean(y_bias),
-                                                      np.mean(y_var),
-                                                      np.mean(y_noise)))
+    print(
+        "{0}: {1:.4f} (error) = {2:.4f} (bias^2) "
+        " + {3:.4f} (var) + {4:.4f} (noise)".format(
+            name, np.mean(y_error), np.mean(y_bias), np.mean(y_var), np.mean(y_noise)
+        )
+    )
 
     # Plot figures
     plt.subplot(2, n_estimators, n + 1)
@@ -165,14 +167,13 @@ for n, (name, estimator) in enumerate(estimators):
         else:
             plt.plot(X_test, y_predict[:, i], "r", alpha=0.05)
 
-    plt.plot(X_test, np.mean(y_predict, axis=1), "c",
-             label=r"$\mathbb{E}_{LS} \^y(x)$")
+    plt.plot(X_test, np.mean(y_predict, axis=1), "c", label=r"$\mathbb{E}_{LS} \^y(x)$")
 
     plt.xlim([-5, 5])
     plt.title(name)
 
     if n == n_estimators - 1:
-        plt.legend(loc=(1.1, .5))
+        plt.legend(loc=(1.1, 0.5))
 
     plt.subplot(2, n_estimators, n_estimators + n + 1)
     plt.plot(X_test, y_error, "r", label="$error(x)$")
@@ -185,7 +186,7 @@ for n, (name, estimator) in enumerate(estimators):
 
     if n == n_estimators - 1:
 
-        plt.legend(loc=(1.1, .5))
+        plt.legend(loc=(1.1, 0.5))
 
-plt.subplots_adjust(right=.75)
+plt.subplots_adjust(right=0.75)
 plt.show()
