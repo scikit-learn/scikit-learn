@@ -569,7 +569,13 @@ class BaseEstimator:
                 # on X and y isn't equivalent to just calling check_X_y()
                 # :(
                 check_X_params, check_y_params = validate_separately
+                if "estimator" not in check_X_params:
+                    check_X_params = check_X_params.copy()
+                    check_X_params["estimator"] = self
                 X = check_array(X, input_name="X", **check_X_params)
+                if "estimator" not in check_y_params:
+                    check_y_params = check_y_params.copy()
+                    check_y_params["estimator"] = self
                 y = check_array(y, input_name="y", **check_y_params)
             else:
                 X, y = check_X_y(X, y, **check_params)
