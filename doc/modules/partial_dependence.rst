@@ -262,8 +262,8 @@ estimators that support it, and 'brute' is used for the rest.
     C. Molnar, `Interpretable Machine Learning
     <https://christophm.github.io/interpretable-ml-book/>`_, Section 5.1, 2019.
 
-    A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin, `Peeking Inside the
+    A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin, :arxiv:`Peeking Inside the
     Black Box: Visualizing Statistical Learning With Plots of Individual
-    Conditional Expectation <https://arxiv.org/abs/1309.6392>`_,
+    Conditional Expectation <1309.6392>`,
     Journal of Computational and Graphical Statistics, 24(1): 44-65, Springer,
     2015.

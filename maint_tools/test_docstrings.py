@@ -16,21 +16,13 @@ DOCSTRING_IGNORE_LIST = [
     "KNNImputer",
     "LabelSpreading",
     "LocallyLinearEmbedding",
-    "MultiLabelBinarizer",
-    "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
-    "MultiTaskLasso",
-    "MultiTaskLassoCV",
-    "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "PassiveAggressiveRegressor",
-    "QuadraticDiscriminantAnalysis",
-    "SparseRandomProjection",
     "SpectralBiclustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
     "StackingRegressor",
-    "TransformedTargetRegressor",
 ]
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
