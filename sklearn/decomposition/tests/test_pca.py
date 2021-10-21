@@ -17,10 +17,6 @@ from scipy.linalg import svd
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
 
-np.random.seed(12345)
-nfeat = 20
-X = np.random.randn(10 ** 5, nfeat)
-
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 @pytest.mark.parametrize("n_components", range(1, iris.data.shape[1]))
@@ -695,16 +691,16 @@ def test_pca_svd_output(nfeat, seed):
 
 
 @pytest.mark.parametrize(
-    "input, params, err_type, err_msg",
+    "params, err_type, err_msg",
     [
         (
-            X,
-            {"n_components": 1, "n_oversamples_rate": 1},
+            {"n_components": 1, "n_oversamples_rate": 0.8},
             ValueError,
             "n_oversamples_rate must be >= 0",
         ),
     ],
 )
+@pytest.mark.parametrize("input", np.random.randn(10 ** 5, 20))
 def test_pca_params_validation(input, params, err_type, err_msg):
     """Check the parameters validation in `PCA`."""
     with pytest.raises(err_type, match=err_msg):
