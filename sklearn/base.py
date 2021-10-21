@@ -551,6 +551,9 @@ class BaseEstimator:
         no_val_X = isinstance(X, str) and X == "no_validation"
         no_val_y = y is None or isinstance(y, str) and y == "no_validation"
 
+        if "estimator" not in check_params:
+            check_params["estimator"] = self
+
         if no_val_X and no_val_y:
             raise ValueError("Validation should be done on X, y or both.")
         elif not no_val_X and no_val_y:

@@ -214,15 +214,8 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
     data = retype(np.arange(4).reshape(2, 2).astype(np.float64))
     data[0, 0] = np.nan
     estimator = SVR()
-    with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
-        check_array(
-            data,
-            estimator=estimator,
-            input_name=input_name,
-            accept_sparse=True,
-        )
     extended_msg = (
-        f"\nEstimator {estimator.__class__.__name__} does not accept missing values"
+        f"\n{estimator.__class__.__name__} does not accept missing values"
         " encoded as NaN natively. For supervised learning, you might want"
         " to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor"
         " which accept missing values encoded as NaNs natively."
@@ -231,10 +224,26 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
         " or drop samples with missing values. See"
         " https://scikit-learn.org/stable/modules/impute.html"
     )
+
+    with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
+        check_array(
+            data,
+            estimator=estimator,
+            input_name=input_name,
+            accept_sparse=True,
+        )
+
     if input_name == "X":
         assert extended_msg in ctx.value.args[0]
     else:
         assert extended_msg not in ctx.value.args[0]
+
+    if input_name == "X":
+        # Veriy that _validate_data is automatically called with the right argument
+        # to generate the same exception:
+        with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
+            SVR().fit(data, np.ones(data.shape[0]))
+        assert extended_msg in ctx.value.args[0]
 
 
 def test_check_array_force_all_finite_object():
