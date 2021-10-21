@@ -1734,9 +1734,11 @@ def check_estimators_nan_inf(name, estimator_orig):
     y = np.ones(10)
     y[:5] = 0
     y = _enforce_estimator_tags_y(estimator_orig, y)
-    error_string_fit = "Estimator doesn't check for NaN and inf in fit."
-    error_string_predict = "Estimator doesn't check for NaN and inf in predict."
-    error_string_transform = "Estimator doesn't check for NaN and inf in transform."
+    error_string_fit = f"Estimator {name} doesn't check for NaN and inf in fit."
+    error_string_predict = f"Estimator {name} doesn't check for NaN and inf in predict."
+    error_string_transform = (
+        f"Estimator {name} doesn't check for NaN and inf in transform."
+    )
     for X_train in [X_train_nan, X_train_inf]:
         # catch deprecation warnings
         with ignore_warnings(category=FutureWarning):

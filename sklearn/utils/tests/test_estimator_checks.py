@@ -496,7 +496,7 @@ def test_check_estimator():
     except ImportError:
         pass
     # check that predict does input validation (doesn't accept dicts in input)
-    msg = "Estimator doesn't check for NaN and inf in predict"
+    msg = "Estimator NoCheckinPredict doesn't check for NaN and inf in predict"
     with raises(AssertionError, match=msg):
         check_estimator(NoCheckinPredict())
     # check that estimator state does not change
