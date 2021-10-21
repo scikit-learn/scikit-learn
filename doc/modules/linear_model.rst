@@ -934,7 +934,9 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
     .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
 
-    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien: `SAGA: A Fast Incremental Gradient Method With Support for Non-Strongly Convex Composite Objectives. <https://arxiv.org/abs/1407.0202>`_
+    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien: 
+        :arxiv:`SAGA: A Fast Incremental Gradient Method With Support for 
+        Non-Strongly Convex Composite Objectives. <1407.0202>`
 
     .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
 
@@ -1492,12 +1494,12 @@ problem. The current implementation is based on
     <https://gib.people.uic.edu/RQ.pdf>`_
     Econometrica: journal of the Econometric Society, 33-50.
 
-  * Portnoy, S., & Koenker, R. (1997). The Gaussian hare and the Laplacian
+  * Portnoy, S., & Koenker, R. (1997). :doi:`The Gaussian hare and the Laplacian
     tortoise: computability of squared-error versus absolute-error estimators.
-    Statistical Science, 12, 279-300. https://doi.org/10.1214/ss/1030037960
+    Statistical Science, 12, 279-300 <10.1214/ss/1030037960>`.
 
-  * Koenker, R. (2005). Quantile Regression.
-    Cambridge University Press. https://doi.org/10.1017/CBO9780511754098
+  * Koenker, R. (2005). :doi:`Quantile Regression <10.1017/CBO9780511754098>`.
+    Cambridge University Press.
 
 
 .. _polynomial_regression:

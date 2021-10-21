@@ -56,9 +56,9 @@ forest.fit(X, y)
 # deviation of accumulation of the impurity decrease within each tree.
 #
 # .. warning::
-#     Impurity-based feature importances can be misleading for high cardinality
-#     features (many unique values). See :ref:`permutation_importance` as
-#     an alternative.
+#     Impurity-based feature importances can be misleading for **high
+#     cardinality** features (many unique values). See
+#     :ref:`permutation_importance` as an alternative.
 import time
 import matplotlib.pyplot as plt
 

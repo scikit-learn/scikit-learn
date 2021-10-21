@@ -16,7 +16,7 @@ Minimal dependencies
 --------------------
 
 Version 1.1.0 of scikit-learn requires python 3.7+, numpy 1.14.6+ and
-scipy 1.1.0+. Optional minimal dependency is matplotlib 2.2.2+.
+scipy 1.1.0+. Optional minimal dependency is matplotlib 2.2.3+.
 
 Put the changes in their relevant module.
 
@@ -45,6 +45,13 @@ Changelog
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Enhancement| :func:`cross_decomposition._PLS.inverse_transform` now allows
+  reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
+  :user:`Robin Thibaut <robinthibaut>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -60,6 +67,13 @@ Changelog
   :class:`feature_extraction.TfidfVectorizer` by raising an
   error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
   :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
+  :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
+  :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -105,6 +119,10 @@ Changelog
   :func:`neighbors.KernelDensity`.
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
+
+- |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
+  message when running in a jupyter notebook that is not trusted. :pr:`21316`
+  by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
