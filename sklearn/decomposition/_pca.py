@@ -358,7 +358,7 @@ class PCA(_BasePCA):
         svd_solver="auto",
         tol=0.0,
         iterated_power="auto",
-        n_oversamples_rate=0.8,
+        n_oversamples_rate=None,
         random_state=None,
     ):
         self.n_components = n_components
@@ -596,7 +596,10 @@ class PCA(_BasePCA):
 
         elif svd_solver == "randomized":
             # sign flipping is done inside
-            n_oversamples = int(min(X.shape) * self.n_oversamples_rate)
+            if self.n_oversamples_rate is not None:
+                n_oversamples = int(min(X.shape) * self.n_oversamples_rate)
+            else:
+                n_oversamples = 10
             U, S, Vt = randomized_svd(
                 X,
                 n_components=n_components,

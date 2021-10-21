@@ -671,24 +671,24 @@ def test_pca_svd_output(nfeat, seed):
     # Test results consistency
     rng = np.random.RandomState(seed)
     X = rng.randn(10 ** 5, nfeat)
-    valNum = 3
+    val_num = 3
 
     # The result is the same as svd and svds
     pca = PCA(n_components=1, n_oversamples_rate=1)
-    X_tranformed = pca.fit_transform(X).reshape(-1)
-    X_tranformed = np.array([round(abs(v), valNum) for v in X_tranformed])
+    x_tranformed = pca.fit_transform(X).reshape(-1)
+    x_tranformed = np.array([round(abs(v), val_num) for v in x_tranformed])
 
     # sparse svd
-    U1, s1, _ = svds(X, k=1, return_singular_vectors="u")
-    X_tranformed1 = U1[:, 0] * s1[0]
-    X_tranformed1 = np.array([round(abs(v), valNum) for v in X_tranformed1])
-    diff1 = np.linalg.norm(X_tranformed - X_tranformed1, ord=2)
+    U1, S1, _ = svds(X, k=1, return_singular_vectors="u")
+    x_tranformed1 = U1[:, 0] * S1[0]
+    x_tranformed1 = np.array([round(abs(v), val_num) for v in x_tranformed1])
+    diff1 = np.linalg.norm(x_tranformed - x_tranformed1, ord=2)
 
     # dense svd
-    U2, s2, Vh2 = svd(X, full_matrices=False)
-    X_tranformed2 = U2[:, 0] * s2[0]
-    X_tranformed2 = np.array([round(abs(v), valNum) for v in X_tranformed2])
-    diff2 = np.linalg.norm(X_tranformed - X_tranformed2, ord=2)
+    U2, S2, Vh2 = svd(X, full_matrices=False)
+    x_tranformed2 = U2[:, 0] * S2[0]
+    x_tranformed2 = np.array([round(abs(v), val_num) for v in x_tranformed2])
+    diff2 = np.linalg.norm(x_tranformed - x_tranformed2, ord=2)
 
     assert diff1 < nfeat
     assert diff2 < nfeat
@@ -699,7 +699,7 @@ def test_pca_svd_output(nfeat, seed):
     [
         (
             X,
-            {"n_components": 1, "n_oversamples_rate": -1},
+            {"n_components": 1, "n_oversamples_rate": 1},
             ValueError,
             "n_oversamples_rate must be >= 0",
         ),
