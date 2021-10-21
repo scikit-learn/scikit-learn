@@ -111,13 +111,13 @@ def _assert_all_finite(
             or not allow_nan
             and not np.isfinite(X).all()
         ):
-            type_err = "infinity" if allow_nan else "NaN, infinity"
-            msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
+            if not allow_nan and np.isnan(X).any():
+                type_err = "NaN"
+            else:
+                msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
+                type_err = f"infinity or a value too large for {msg_dtype!r}"
             padded_input_name = input_name + " " if input_name else ""
-            msg_err = (
-                f"Input {padded_input_name}contains {type_err} or a value too large for"
-                f" {msg_dtype!r}."
-            )
+            msg_err = f"Input {padded_input_name}contains {type_err}."
             if (
                 not allow_nan
                 and estimator_name

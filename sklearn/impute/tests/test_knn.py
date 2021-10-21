@@ -82,7 +82,7 @@ def test_knn_imputer_default_with_invalid_input(na):
             [np.nan, 6, 0, 5, 13],
         ]
     )
-    msg = r"Input X contains NaN, infinity or a value too large for dtype\('float64'\)"
+    msg = "Input X contains NaN"
     with pytest.raises(ValueError, match=msg):
         imputer.fit(X)
 
