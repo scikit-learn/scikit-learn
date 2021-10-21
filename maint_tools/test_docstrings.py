@@ -17,6 +17,7 @@ DOCSTRING_IGNORE_LIST = [
     "LabelPropagation",
     "LabelSpreading",
     "LocallyLinearEmbedding",
+    "MultiTaskElasticNet",
     "MultiTaskLassoCV",
     "OrthogonalMatchingPursuitCV",
     "PassiveAggressiveRegressor",
