@@ -219,6 +219,8 @@ def type_of_target(y, input_name=""):
     input_name : str, default=""
         The data name used to construct the error message.
 
+        .. versionadded:: 1.1.0
+
     Returns
     -------
     target_type : str

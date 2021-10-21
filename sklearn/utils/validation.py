@@ -656,6 +656,8 @@ def check_array(
         allow_nan is False, the error message will link to the imputer
         documentation.
 
+        .. versionadded:: 1.1.0
+
     Returns
     -------
     array_converted : object
