@@ -670,7 +670,7 @@ def test_minibatch_dict_learning_deprecated_attributes(attr):
     # attributes of MiniBatchDictionaryLearning
     # FIXME: remove in 1.3
     depr_msg = (
-        f"The attribute '{attr}' is deprecated in 1.1 and will be removed in 1.3."
+        f"The attribute `{attr}` is deprecated in 1.1 and will be removed in 1.3."
     )
     est = MiniBatchDictionaryLearning(
         n_components=2, batch_size=4, max_iter=1, random_state=0
