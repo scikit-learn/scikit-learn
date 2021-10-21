@@ -127,7 +127,7 @@ def _assert_all_finite(
                 # Improve the error message on how to handle missing values in
                 # scikit-learn.
                 msg_err += (
-                    f"\nEstimator {estimator_name} does not accept missing values"
+                    f"\n{estimator_name} does not accept missing values"
                     " encoded as NaN natively. For supervised learning, you might want"
                     " to consider sklearn.ensemble.HistGradientBoostingClassifier and"
                     " Regressor which accept missing values encoded as NaNs natively."
