@@ -641,7 +641,7 @@ def test_feature_names_in():
     # fit again but on ndarray does not keep the previous feature names (see #21383)
     trans.fit(df.to_numpy())
     assert not hasattr(trans, "feature_names_in_")
-    
+
     trans.fit(df)
     msg = "The feature names should match those that were passed"
     df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
