@@ -348,14 +348,12 @@ class SpectralCoclustering(BaseSpectral):
 
 class SpectralBiclustering(BaseSpectral):
     """Spectral biclustering (Kluger, 2003).
-
     Partitions rows and columns under the assumption that the data has
     an underlying checkerboard structure. For instance, if there are
     two row partitions and three column partitions, each row will
     belong to three biclusters, and each column will belong to two
     biclusters. The outer product of the corresponding row and column
     label vectors gives this checkerboard structure.
-
     Read more in the :ref:`User Guide <spectral_biclustering>`.
 
     Parameters
@@ -452,6 +450,12 @@ class SpectralBiclustering(BaseSpectral):
       data: coclustering genes and conditions
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
 
+    See Also
+    --------
+    SpectralClustering: Performs a low-dimension embedding of the
+        affinity matrix between samples, followed by clustering, e.g., by KMeans,
+        of the components of the eigenvectors in the low dimensional space.
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralBiclustering
@@ -465,7 +469,6 @@ class SpectralBiclustering(BaseSpectral):
     array([0, 1], dtype=int32)
     >>> clustering
     SpectralBiclustering(n_clusters=2, random_state=0)
-
     """
 
     def __init__(
