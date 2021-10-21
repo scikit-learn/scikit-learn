@@ -1866,7 +1866,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     components_ : ndarray of shape (n_components, n_features)
         Components extracted from the data.
 
-    `inner_stats_` : tuple of (A, B) ndarrays
+    inner_stats_ : tuple of (A, B) ndarrays
         Internal sufficient statistics that are kept by the algorithm.
         Keeping them is useful in online settings, to avoid losing the
         history of the evolution, but they shouldn't have any use for the
@@ -1891,13 +1891,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     n_iter_ : int
         Number of iterations over the full dataset.
 
-    `iter_offset_` : int
+    iter_offset_ : int
         The number of iteration on data batches that has been performed before.
 
         .. deprecated:: 1.1
            `iter_offset_` has been renamed `n_steps_` and will be removed in 1.3.
 
-    `random_state_` : RandomState instance
+    random_state_ : RandomState instance
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
 
@@ -2002,21 +2002,21 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.tol = tol
 
     @deprecated(  # type: ignore
-        "The attribute 'iter_offset_' is deprecated in 1.1 and will be removed in 1.3."
+        "The attribute `iter_offset_` is deprecated in 1.1 and will be removed in 1.3."
     )
     @property
     def iter_offset_(self):
         return self.n_iter_
 
     @deprecated(  # type: ignore
-        "The attribute 'random_state_' is deprecated in 1.1 and will be removed in 1.3."
+        "The attribute `random_state_` is deprecated in 1.1 and will be removed in 1.3."
     )
     @property
     def random_state_(self):
         return self._random_state
 
     @deprecated(  # type: ignore
-        "The attribute 'inner_stats_' is deprecated in 1.1 and will be removed in 1.3."
+        "The attribute `inner_stats_` is deprecated in 1.1 and will be removed in 1.3."
     )
     @property
     def inner_stats_(self):
