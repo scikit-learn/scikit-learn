@@ -639,7 +639,7 @@ def test_feature_names_in():
     assert_array_equal(trans.feature_names_in_, df.columns)
 
     # fit again but on ndarray does not keep the previous feature names (see #21383)
-    trans.fit(df.to_numpy())
+    trans.fit(X_np)
     assert not hasattr(trans, "feature_names_in_")
 
     trans.fit(df)
