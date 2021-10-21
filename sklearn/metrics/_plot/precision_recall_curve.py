@@ -348,6 +348,50 @@ class PrecisionRecallDisplay:
         return viz.plot(ax=ax, name=name, **kwargs)
 
 
+class PrecisionRecallF1Display:
+    """TODO"""
+
+    def __init__(
+        self,
+        precision,
+        recall,
+        thresholds,
+        plot_f1 = True,
+    ):
+        """TODO"""
+
+        self.precision = precision
+        self.recall = recall
+        self.thresholds = thresholds
+
+        self.plot_f1 = plot_f1
+
+        if plot_f1:
+            self.f1_score = 2 * precision * recall / (precision + recall)
+
+    def plot(self):
+        """TODO"""
+
+        import matplotlib.pyplot as plt
+
+        _, ax = plt.subplots()
+
+        ax.plot(self.thresholds, self.precision[:-1], label="precision")
+        ax.plot(self.thresholds, self.recall[:-1], label="recall")
+
+        if self.plot_f1:
+            ax.plot(self.thresholds, self.f1_score[:-1], label="f1-score")
+
+        ax.set(xlabel="Threshold", ylabel="Metrics")
+        ax.legend()
+        ax.grid()
+
+        self.ax_ = ax
+        self.figure_ = ax.figure
+
+        return self
+
+
 @deprecated(
     "Function `plot_precision_recall_curve` is deprecated in 1.0 and will be "
     "removed in 1.2. Use one of the class methods: "
