@@ -266,6 +266,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.intercept_ *= -1
             self.dual_coef_ = -self.dual_coef_
 
+        # If the number of models optimized by libSVM is one, get the number of
+        # iterations as an integer instead of ndarray.
+        if (
+            self._impl in ["c_svc", "nu_svc"] and len(self.classes_) <= 2
+        ) or self._impl in ["one_class", "epsilon_svr", "nu_svr"]:
+            self.n_iter_ = self.n_iter_[0]
+
         return self
 
     def _validate_targets(self, y):
@@ -312,6 +319,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             self.fit_status_,
+            self.n_iter_,
         ) = libsvm.fit(
             X,
             y,
@@ -352,6 +360,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             self.fit_status_,
+            self.n_iter_,
         ) = libsvm_sparse.libsvm_sparse_train(
             X.shape[1],
             X.data,

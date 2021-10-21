@@ -670,6 +670,15 @@ class SVC(BaseSVC):
 
         .. versionadded:: 1.0
 
+    n_iter_ : int or ndarray of shape (n_class*(n_class-1)/2,)
+        Number of iterations run in optimization. If `classes_ <= 2`, only one
+        model is optimized, thus an integer is returned. Otherwise, multiple
+        models are optimized separately, thus having multiple number of
+        iterations. In this case a numpy array is returned with the number of
+        iterations for each model.
+
+        .. versionadded:: 1.1
+
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
 
@@ -925,6 +934,15 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 1.0
 
+    n_iter_ : int or ndarray of shape (n_class*(n_class-1)/2,)
+        Number of iterations run in optimization. If `classes_ <= 2`, only one
+        model is optimized, thus an integer is returned. Otherwise, multiple
+        models are optimized separately, thus having multiple number of
+        iterations. In this case a numpy array is returned with the number of
+        iterations for each model.
+
+        .. versionadded:: 1.1
+
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
@@ -1140,6 +1158,11 @@ class SVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 1.0
 
+    n_iter_ : int
+        Number of iterations run in optimization.
+
+        .. versionadded:: 1.1
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1328,6 +1351,11 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 1.0
 
+    n_iter_ : int
+        Number of iterations run in optimization.
+
+        .. versionadded:: 1.1
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1511,6 +1539,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run in optimization.
+
+        .. versionadded:: 1.1
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.

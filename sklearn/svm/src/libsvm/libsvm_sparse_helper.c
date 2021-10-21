@@ -349,6 +349,16 @@ void copy_sv_coef(char *data, struct svm_csr_model *model)
 }
 
 /*
+ * Get the number of iterations run in optimization
+ */
+void copy_num_iter(char *data, struct svm_csr_model *model)
+{
+    int n_models;
+    n_models = model->nr_class <= 2 ? 1 : model->nr_class * (model->nr_class-1)/2;
+    memcpy(data, model->num_iter, n_models * sizeof(int));
+}
+
+/*
  * Get the number of support vectors in a model.
  */
 npy_intp get_l(struct svm_csr_model *model)
@@ -409,6 +419,7 @@ int free_model(struct svm_csr_model *model)
     free(model->label);
     free(model->probA);
     free(model->probB);
+    free(model->num_iter);
     free(model->nSV);
     free(model);
 

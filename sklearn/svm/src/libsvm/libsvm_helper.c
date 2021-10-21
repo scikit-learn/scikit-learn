@@ -219,6 +219,16 @@ npy_intp get_nr(struct svm_model *model)
 }
 
 /*
+ * Get the number of iterations run in optimization
+ */
+void copy_num_iter(char *data, struct svm_model *model)
+{
+    int n_models;
+    n_models = model->nr_class <= 2 ? 1 : model->nr_class * (model->nr_class-1)/2;
+    memcpy(data, model->num_iter, n_models * sizeof(int));
+}
+
+/*
  * Some helpers to convert from libsvm sparse data structures
  * model->sv_coef is a double **, whereas data is just a double *,
  * so we have to do some stupid copying.
@@ -371,6 +381,7 @@ int free_model(struct svm_model *model)
     free(model->label);
     free(model->probA);
     free(model->probB);
+    free(model->num_iter);
     free(model->nSV);
     free(model);
 
