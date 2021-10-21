@@ -914,7 +914,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        X = self._validate_data(X, ensure_min_samples=2, estimator=self)
+        X = self._validate_data(X, ensure_min_samples=2)
         memory = check_memory(self.memory)
 
         if self.n_clusters is not None and self.n_clusters <= 0:
@@ -1222,7 +1222,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
             X,
             accept_sparse=["csr", "csc", "coo"],
             ensure_min_features=2,
-            estimator=self,
         )
         # save n_features_in_ attribute here to reset it after, because it will
         # be overridden in AgglomerativeClustering since we passed it X.T.
