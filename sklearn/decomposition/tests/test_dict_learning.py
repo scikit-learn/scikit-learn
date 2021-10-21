@@ -116,6 +116,7 @@ def test_max_iter():
             D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
         )
         model.fit_transform(X)
+    print(record.list[0].message)
     assert not record.list
 
 
