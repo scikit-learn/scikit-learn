@@ -877,7 +877,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Yields
-        -------
+        ------
         p : generator of ndarray of shape (n_samples,)
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.

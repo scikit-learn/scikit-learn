@@ -41,7 +41,8 @@ from sklearn.naive_bayes import MultinomialNB
 
 def _not_in_sphinx():
     # Hack to detect whether we are running by the sphinx builder
-    return '__file__' in globals()
+    return "__file__" in globals()
+
 
 # %%
 # Reuters Dataset related routines
@@ -55,17 +56,17 @@ def _not_in_sphinx():
 class ReutersParser(HTMLParser):
     """Utility class to parse a SGML file and yield documents one at a time."""
 
-    def __init__(self, encoding='latin-1'):
+    def __init__(self, encoding="latin-1"):
         HTMLParser.__init__(self)
         self._reset()
         self.encoding = encoding
 
     def handle_starttag(self, tag, attrs):
-        method = 'start_' + tag
+        method = "start_" + tag
         getattr(self, method, lambda x: None)(attrs)
 
     def handle_endtag(self, tag):
-        method = 'end_' + tag
+        method = "end_" + tag
         getattr(self, method, lambda: None)()
 
     def _reset(self):
@@ -99,10 +100,10 @@ class ReutersParser(HTMLParser):
         pass
 
     def end_reuters(self):
-        self.body = re.sub(r'\s+', r' ', self.body)
-        self.docs.append({'title': self.title,
-                          'body': self.body,
-                          'topics': self.topics})
+        self.body = re.sub(r"\s+", r" ", self.body)
+        self.docs.append(
+            {"title": self.title, "body": self.body, "topics": self.topics}
+        )
         self._reset()
 
     def start_title(self, attributes):
@@ -143,37 +144,36 @@ def stream_reuters_documents(data_path=None):
 
     """
 
-    DOWNLOAD_URL = ('http://archive.ics.uci.edu/ml/machine-learning-databases/'
-                    'reuters21578-mld/reuters21578.tar.gz')
-    ARCHIVE_FILENAME = 'reuters21578.tar.gz'
+    DOWNLOAD_URL = (
+        "http://archive.ics.uci.edu/ml/machine-learning-databases/"
+        "reuters21578-mld/reuters21578.tar.gz"
+    )
+    ARCHIVE_FILENAME = "reuters21578.tar.gz"
 
     if data_path is None:
         data_path = os.path.join(get_data_home(), "reuters")
     if not os.path.exists(data_path):
         """Download the dataset."""
-        print("downloading dataset (once and for all) into %s" %
-              data_path)
+        print("downloading dataset (once and for all) into %s" % data_path)
         os.mkdir(data_path)
 
         def progress(blocknum, bs, size):
-            total_sz_mb = '%.2f MB' % (size / 1e6)
-            current_sz_mb = '%.2f MB' % ((blocknum * bs) / 1e6)
+            total_sz_mb = "%.2f MB" % (size / 1e6)
+            current_sz_mb = "%.2f MB" % ((blocknum * bs) / 1e6)
             if _not_in_sphinx():
-                sys.stdout.write(
-                    '\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb))
+                sys.stdout.write("\rdownloaded %s / %s" % (current_sz_mb, total_sz_mb))
 
         archive_path = os.path.join(data_path, ARCHIVE_FILENAME)
-        urlretrieve(DOWNLOAD_URL, filename=archive_path,
-                    reporthook=progress)
+        urlretrieve(DOWNLOAD_URL, filename=archive_path, reporthook=progress)
         if _not_in_sphinx():
-            sys.stdout.write('\r')
+            sys.stdout.write("\r")
         print("untarring Reuters dataset...")
-        tarfile.open(archive_path, 'r:gz').extractall(data_path)
+        tarfile.open(archive_path, "r:gz").extractall(data_path)
         print("done.")
 
     parser = ReutersParser()
     for filename in glob(os.path.join(data_path, "*.sgm")):
-        for doc in parser.parse(open(filename, 'rb')):
+        for doc in parser.parse(open(filename, "rb")):
             yield doc
 
 
@@ -184,8 +184,9 @@ def stream_reuters_documents(data_path=None):
 # Create the vectorizer and limit the number of features to a reasonable
 # maximum
 
-vectorizer = HashingVectorizer(decode_error='ignore', n_features=2 ** 18,
-                               alternate_sign=False)
+vectorizer = HashingVectorizer(
+    decode_error="ignore", n_features=2 ** 18, alternate_sign=False
+)
 
 
 # Iterator over parsed Reuters SGML files.
@@ -196,14 +197,14 @@ data_stream = stream_reuters_documents()
 # files. For other datasets, one should take care of creating a test set with
 # a realistic portion of positive instances.
 all_classes = np.array([0, 1])
-positive_class = 'acq'
+positive_class = "acq"
 
 # Here are some classifiers that support the `partial_fit` method
 partial_fit_classifiers = {
-    'SGD': SGDClassifier(max_iter=5),
-    'Perceptron': Perceptron(),
-    'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(),
+    "SGD": SGDClassifier(max_iter=5),
+    "Perceptron": Perceptron(),
+    "NB Multinomial": MultinomialNB(alpha=0.01),
+    "Passive-Aggressive": PassiveAggressiveClassifier(),
 }
 
 
@@ -213,9 +214,11 @@ def get_minibatch(doc_iter, size, pos_class=positive_class):
     Note: size is before excluding invalid docs with no topics assigned.
 
     """
-    data = [('{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
-            for doc in itertools.islice(doc_iter, size)
-            if doc['topics']]
+    data = [
+        ("{title}\n\n{body}".format(**doc), pos_class in doc["topics"])
+        for doc in itertools.islice(doc_iter, size)
+        if doc["topics"]
+    ]
     if not len(data):
         return np.asarray([], dtype=int), np.asarray([], dtype=int)
     X_text, y = zip(*data)
@@ -231,7 +234,7 @@ def iter_minibatches(doc_iter, minibatch_size):
 
 
 # test data statistics
-test_stats = {'n_test': 0, 'n_test_pos': 0}
+test_stats = {"n_test": 0, "n_test_pos": 0}
 
 # First we hold out a number of examples to estimate accuracy
 n_test_documents = 1000
@@ -241,28 +244,34 @@ parsing_time = time.time() - tick
 tick = time.time()
 X_test = vectorizer.transform(X_test_text)
 vectorizing_time = time.time() - tick
-test_stats['n_test'] += len(y_test)
-test_stats['n_test_pos'] += sum(y_test)
+test_stats["n_test"] += len(y_test)
+test_stats["n_test_pos"] += sum(y_test)
 print("Test set is %d documents (%d positive)" % (len(y_test), sum(y_test)))
 
 
 def progress(cls_name, stats):
     """Report progress information, return a string."""
-    duration = time.time() - stats['t0']
+    duration = time.time() - stats["t0"]
     s = "%20s classifier : \t" % cls_name
     s += "%(n_train)6d train docs (%(n_train_pos)6d positive) " % stats
     s += "%(n_test)6d test docs (%(n_test_pos)6d positive) " % test_stats
     s += "accuracy: %(accuracy).3f " % stats
-    s += "in %.2fs (%5d docs/s)" % (duration, stats['n_train'] / duration)
+    s += "in %.2fs (%5d docs/s)" % (duration, stats["n_train"] / duration)
     return s
 
 
 cls_stats = {}
 
 for cls_name in partial_fit_classifiers:
-    stats = {'n_train': 0, 'n_train_pos': 0,
-             'accuracy': 0.0, 'accuracy_history': [(0, 0)], 't0': time.time(),
-             'runtime_history': [(0, 0)], 'total_fit_time': 0.0}
+    stats = {
+        "n_train": 0,
+        "n_train_pos": 0,
+        "accuracy": 0.0,
+        "accuracy_history": [(0, 0)],
+        "t0": time.time(),
+        "runtime_history": [(0, 0)],
+        "total_fit_time": 0.0,
+    }
     cls_stats[cls_name] = stats
 
 get_minibatch(data_stream, n_test_documents)
@@ -291,23 +300,24 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
         cls.partial_fit(X_train, y_train, classes=all_classes)
 
         # accumulate test accuracy stats
-        cls_stats[cls_name]['total_fit_time'] += time.time() - tick
-        cls_stats[cls_name]['n_train'] += X_train.shape[0]
-        cls_stats[cls_name]['n_train_pos'] += sum(y_train)
+        cls_stats[cls_name]["total_fit_time"] += time.time() - tick
+        cls_stats[cls_name]["n_train"] += X_train.shape[0]
+        cls_stats[cls_name]["n_train_pos"] += sum(y_train)
         tick = time.time()
-        cls_stats[cls_name]['accuracy'] = cls.score(X_test, y_test)
-        cls_stats[cls_name]['prediction_time'] = time.time() - tick
-        acc_history = (cls_stats[cls_name]['accuracy'],
-                       cls_stats[cls_name]['n_train'])
-        cls_stats[cls_name]['accuracy_history'].append(acc_history)
-        run_history = (cls_stats[cls_name]['accuracy'],
-                       total_vect_time + cls_stats[cls_name]['total_fit_time'])
-        cls_stats[cls_name]['runtime_history'].append(run_history)
+        cls_stats[cls_name]["accuracy"] = cls.score(X_test, y_test)
+        cls_stats[cls_name]["prediction_time"] = time.time() - tick
+        acc_history = (cls_stats[cls_name]["accuracy"], cls_stats[cls_name]["n_train"])
+        cls_stats[cls_name]["accuracy_history"].append(acc_history)
+        run_history = (
+            cls_stats[cls_name]["accuracy"],
+            total_vect_time + cls_stats[cls_name]["total_fit_time"],
+        )
+        cls_stats[cls_name]["runtime_history"].append(run_history)
 
         if i % 3 == 0:
             print(progress(cls_name, cls_stats[cls_name]))
     if i % 3 == 0:
-        print('\n')
+        print("\n")
 
 
 # %%
@@ -326,64 +336,66 @@ def plot_accuracy(x, y, x_legend):
     """Plot accuracy as a function of x."""
     x = np.array(x)
     y = np.array(y)
-    plt.title('Classification accuracy as a function of %s' % x_legend)
-    plt.xlabel('%s' % x_legend)
-    plt.ylabel('Accuracy')
+    plt.title("Classification accuracy as a function of %s" % x_legend)
+    plt.xlabel("%s" % x_legend)
+    plt.ylabel("Accuracy")
     plt.grid(True)
     plt.plot(x, y)
 
 
-rcParams['legend.fontsize'] = 10
+rcParams["legend.fontsize"] = 10
 cls_names = list(sorted(cls_stats.keys()))
 
 # Plot accuracy evolution
 plt.figure()
 for _, stats in sorted(cls_stats.items()):
     # Plot accuracy evolution with #examples
-    accuracy, n_examples = zip(*stats['accuracy_history'])
+    accuracy, n_examples = zip(*stats["accuracy_history"])
     plot_accuracy(n_examples, accuracy, "training examples (#)")
     ax = plt.gca()
     ax.set_ylim((0.8, 1))
-plt.legend(cls_names, loc='best')
+plt.legend(cls_names, loc="best")
 
 plt.figure()
 for _, stats in sorted(cls_stats.items()):
     # Plot accuracy evolution with runtime
-    accuracy, runtime = zip(*stats['runtime_history'])
-    plot_accuracy(runtime, accuracy, 'runtime (s)')
+    accuracy, runtime = zip(*stats["runtime_history"])
+    plot_accuracy(runtime, accuracy, "runtime (s)")
     ax = plt.gca()
     ax.set_ylim((0.8, 1))
-plt.legend(cls_names, loc='best')
+plt.legend(cls_names, loc="best")
 
 # Plot fitting times
 plt.figure()
 fig = plt.gcf()
-cls_runtime = [stats['total_fit_time']
-               for cls_name, stats in sorted(cls_stats.items())]
+cls_runtime = [stats["total_fit_time"] for cls_name, stats in sorted(cls_stats.items())]
 
 cls_runtime.append(total_vect_time)
-cls_names.append('Vectorization')
-bar_colors = ['b', 'g', 'r', 'c', 'm', 'y']
+cls_names.append("Vectorization")
+bar_colors = ["b", "g", "r", "c", "m", "y"]
 
 ax = plt.subplot(111)
-rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
-                     color=bar_colors)
+rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5, color=bar_colors)
 
 ax.set_xticks(np.linspace(0, len(cls_names) - 1, len(cls_names)))
 ax.set_xticklabels(cls_names, fontsize=10)
 ymax = max(cls_runtime) * 1.2
 ax.set_ylim((0, ymax))
-ax.set_ylabel('runtime (s)')
-ax.set_title('Training Times')
+ax.set_ylabel("runtime (s)")
+ax.set_title("Training Times")
 
 
 def autolabel(rectangles):
     """attach some text vi autolabel on rectangles."""
     for rect in rectangles:
         height = rect.get_height()
-        ax.text(rect.get_x() + rect.get_width() / 2.,
-                1.05 * height, '%.4f' % height,
-                ha='center', va='bottom')
+        ax.text(
+            rect.get_x() + rect.get_width() / 2.0,
+            1.05 * height,
+            "%.4f" % height,
+            ha="center",
+            va="bottom",
+        )
         plt.setp(plt.xticks()[1], rotation=30)
 
 
@@ -396,23 +408,22 @@ plt.figure()
 cls_runtime = []
 cls_names = list(sorted(cls_stats.keys()))
 for cls_name, stats in sorted(cls_stats.items()):
-    cls_runtime.append(stats['prediction_time'])
+    cls_runtime.append(stats["prediction_time"])
 cls_runtime.append(parsing_time)
-cls_names.append('Read/Parse\n+Feat.Extr.')
+cls_names.append("Read/Parse\n+Feat.Extr.")
 cls_runtime.append(vectorizing_time)
-cls_names.append('Hashing\n+Vect.')
+cls_names.append("Hashing\n+Vect.")
 
 ax = plt.subplot(111)
-rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
-                     color=bar_colors)
+rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5, color=bar_colors)
 
 ax.set_xticks(np.linspace(0, len(cls_names) - 1, len(cls_names)))
 ax.set_xticklabels(cls_names, fontsize=8)
 plt.setp(plt.xticks()[1], rotation=30)
 ymax = max(cls_runtime) * 1.2
 ax.set_ylim((0, ymax))
-ax.set_ylabel('runtime (s)')
-ax.set_title('Prediction Times (%d instances)' % n_test_documents)
+ax.set_ylabel("runtime (s)")
+ax.set_title("Prediction Times (%d instances)" % n_test_documents)
 autolabel(rectangles)
 plt.tight_layout()
 plt.show()

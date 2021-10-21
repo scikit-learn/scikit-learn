@@ -367,7 +367,7 @@ def spectral_embedding(
             X = random_state.rand(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
             _, diffusion_map = lobpcg(
-                laplacian, X, tol=1e-15, largest=False, maxiter=2000
+                laplacian, X, tol=1e-5, largest=False, maxiter=2000
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:

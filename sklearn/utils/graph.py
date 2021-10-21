@@ -92,7 +92,7 @@ def graph_shortest_path(dist_matrix, directed=True, method="auto"):
         if False, then find the shortest path on an undirected graph: the
         algorithm can progress from a point to its neighbors and vice versa.
 
-    method : string ['auto'|'FW'|'D']
+    method : {'auto', 'FW', 'D'}, default='auto'
         method to use.  Options are
         'auto' : attempt to choose the best method for the current problem
         'FW' : Floyd-Warshall algorithm.  O[N^3]

@@ -194,7 +194,9 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         if delegate is None:
             return False
         # raise original AttributeError
-        return getattr(delegate, self.attribute_name) or True
+        getattr(delegate, self.attribute_name)
+
+        return True
 
 
 def if_delegate_has_method(delegate):
@@ -205,7 +207,7 @@ def if_delegate_has_method(delegate):
 
     Parameters
     ----------
-    delegate : string, list of strings or tuple of strings
+    delegate : str, list of str or tuple of str
         Name of the sub-estimator that can be accessed as an attribute of the
         base object. If a list or a tuple of names are provided, the first
         sub-estimator that is an attribute of the base object will be used.
