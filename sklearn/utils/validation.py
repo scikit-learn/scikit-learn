@@ -547,6 +547,15 @@ def _ensure_no_complex_data(array):
         raise ValueError("Complex data not supported\n{}\n".format(array))
 
 
+def _check_estimator_name(estimator):
+    if estimator is not None:
+        if isinstance(estimator, str):
+            return estimator
+        else:
+            return estimator.__class__.__name__
+    return "Estimator"
+
+
 def check_array(
     array,
     accept_sparse=False,
@@ -754,13 +763,7 @@ def check_array(
             )
         )
 
-    if estimator is not None:
-        if isinstance(estimator, str):
-            estimator_name = estimator
-        else:
-            estimator_name = estimator.__class__.__name__
-    else:
-        estimator_name = "Estimator"
+    estimator_name = _check_estimator_name(estimator)
     context = " by %s" % estimator_name if estimator is not None else ""
 
     # When all dataframe columns are sparse, convert to a sparse array
@@ -1053,14 +1056,14 @@ def check_X_y(
         input_name="X",
     )
 
-    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric)
+    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric, estimator=estimator)
 
     check_consistent_length(X, y)
 
     return X, y
 
 
-def _check_y(y, multi_output=False, y_numeric=False):
+def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     """Isolated part of check_X_y dedicated to y validation"""
     if multi_output:
         y = check_array(
@@ -1070,10 +1073,12 @@ def _check_y(y, multi_output=False, y_numeric=False):
             ensure_2d=False,
             dtype=None,
             input_name="y",
+            estimator=estimator,
         )
     else:
+        estimator_name = _check_estimator_name(estimator)
         y = column_or_1d(y, warn=True)
-        _assert_all_finite(y, input_name="y")
+        _assert_all_finite(y, input_name="y", estimator_name=estimator_name)
         _ensure_no_complex_data(y)
     if y_numeric and y.dtype.kind == "O":
         y = y.astype(np.float64)
