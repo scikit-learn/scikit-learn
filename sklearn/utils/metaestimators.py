@@ -13,12 +13,12 @@ from ..utils import _safe_indexing
 from ..base import BaseEstimator
 from ..base import _is_pairwise
 
-__all__ = ['if_delegate_has_method']
+__all__ = ["available_if", "if_delegate_has_method"]
 
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for classifiers composed of named estimators.
-    """
+    """Handles parameter management for classifiers composed of named estimators."""
+
     steps: List[Any]
 
     @abstractmethod
@@ -32,9 +32,9 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         estimators = getattr(self, attr)
         out.update(estimators)
         for name, estimator in estimators:
-            if hasattr(estimator, 'get_params'):
+            if hasattr(estimator, "get_params"):
                 for key, value in estimator.get_params(deep=True).items():
-                    out['%s__%s' % (name, key)] = value
+                    out["%s__%s" % (name, key)] = value
         return out
 
     def _set_params(self, attr, **params):
@@ -48,7 +48,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         if items:
             names, _ = zip(*items)
         for name in list(params.keys()):
-            if '__' not in name and name in names:
+            if "__" not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
         # 3. Step parameters and other initialisation arguments
         super().set_params(**params)
@@ -65,19 +65,104 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
 
     def _validate_names(self, names):
         if len(set(names)) != len(names):
-            raise ValueError('Names provided are not unique: '
-                             '{0!r}'.format(list(names)))
+            raise ValueError("Names provided are not unique: {0!r}".format(list(names)))
         invalid_names = set(names).intersection(self.get_params(deep=False))
         if invalid_names:
-            raise ValueError('Estimator names conflict with constructor '
-                             'arguments: {0!r}'.format(sorted(invalid_names)))
-        invalid_names = [name for name in names if '__' in name]
+            raise ValueError(
+                "Estimator names conflict with constructor arguments: {0!r}".format(
+                    sorted(invalid_names)
+                )
+            )
+        invalid_names = [name for name in names if "__" in name]
         if invalid_names:
-            raise ValueError('Estimator names must not contain __: got '
-                             '{0!r}'.format(invalid_names))
+            raise ValueError(
+                "Estimator names must not contain __: got {0!r}".format(invalid_names)
+            )
 
 
-class _IffHasAttrDescriptor:
+class _AvailableIfDescriptor:
+    """Implements a conditional property using the descriptor protocol.
+
+    Using this class to create a decorator will raise an ``AttributeError``
+    if check(self) returns a falsey value. Note that if check raises an error
+    this will also result in hasattr returning false.
+
+    See https://docs.python.org/3/howto/descriptor.html for an explanation of
+    descriptors.
+    """
+
+    def __init__(self, fn, check, attribute_name):
+        self.fn = fn
+        self.check = check
+        self.attribute_name = attribute_name
+
+        # update the docstring of the descriptor
+        update_wrapper(self, fn)
+
+    def __get__(self, obj, owner=None):
+        attr_err = AttributeError(
+            f"This {repr(owner.__name__)} has no attribute {repr(self.attribute_name)}"
+        )
+        if obj is not None:
+            # delegate only on instances, not the classes.
+            # this is to allow access to the docstrings.
+            if not self.check(obj):
+                raise attr_err
+
+            # lambda, but not partial, allows help() to work with update_wrapper
+            out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
+        else:
+
+            def fn(*args, **kwargs):
+                if not self.check(args[0]):
+                    raise attr_err
+                return self.fn(*args, **kwargs)
+
+            # This makes it possible to use the decorated method as an unbound method,
+            # for instance when monkeypatching.
+            out = lambda *args, **kwargs: fn(*args, **kwargs)  # noqa
+        # update the docstring of the returned function
+        update_wrapper(out, self.fn)
+        return out
+
+
+def available_if(check):
+    """An attribute that is available only if check returns a truthy value
+
+    Parameters
+    ----------
+    check : callable
+        When passed the object with the decorated method, this should return
+        a truthy value if the attribute is available, and either return False
+        or raise an AttributeError if not available.
+
+    Examples
+    --------
+    >>> from sklearn.utils.metaestimators import available_if
+    >>> class HelloIfEven:
+    ...    def __init__(self, x):
+    ...        self.x = x
+    ...
+    ...    def _x_is_even(self):
+    ...        return self.x % 2 == 0
+    ...
+    ...    @available_if(_x_is_even)
+    ...    def say_hello(self):
+    ...        print("Hello")
+    ...
+    >>> obj = HelloIfEven(1)
+    >>> hasattr(obj, "say_hello")
+    False
+    >>> obj.x = 2
+    >>> hasattr(obj, "say_hello")
+    True
+    >>> obj.say_hello()
+    Hello
+    """
+    return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
+
+
+class _IffHasAttrDescriptor(_AvailableIfDescriptor):
     """Implements a conditional property using the descriptor protocol.
 
     Using this class to create a decorator will raise an ``AttributeError``
@@ -92,35 +177,26 @@ class _IffHasAttrDescriptor:
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
     """
+
     def __init__(self, fn, delegate_names, attribute_name):
-        self.fn = fn
+        super().__init__(fn, self._check, attribute_name)
         self.delegate_names = delegate_names
-        self.attribute_name = attribute_name
 
-        # update the docstring of the descriptor
-        update_wrapper(self, fn)
+    def _check(self, obj):
+        delegate = None
+        for delegate_name in self.delegate_names:
+            try:
+                delegate = attrgetter(delegate_name)(obj)
+                break
+            except AttributeError:
+                continue
 
-    def __get__(self, obj, type=None):
-        # raise an AttributeError if the attribute is not present on the object
-        if obj is not None:
-            # delegate only on instances, not the classes.
-            # this is to allow access to the docstrings.
-            for delegate_name in self.delegate_names:
-                try:
-                    delegate = attrgetter(delegate_name)(obj)
-                except AttributeError:
-                    continue
-                else:
-                    getattr(delegate, self.attribute_name)
-                    break
-            else:
-                attrgetter(self.delegate_names[-1])(obj)
+        if delegate is None:
+            return False
+        # raise original AttributeError
+        getattr(delegate, self.attribute_name)
 
-        # lambda, but not partial, allows help() to work with update_wrapper
-        out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)
-        # update the docstring of the returned function
-        update_wrapper(out, self.fn)
-        return out
+        return True
 
 
 def if_delegate_has_method(delegate):
@@ -131,7 +207,7 @@ def if_delegate_has_method(delegate):
 
     Parameters
     ----------
-    delegate : string, list of strings or tuple of strings
+    delegate : str, list of str or tuple of str
         Name of the sub-estimator that can be accessed as an attribute of the
         base object. If a list or a tuple of names are provided, the first
         sub-estimator that is an attribute of the base object will be used.
@@ -142,8 +218,7 @@ def if_delegate_has_method(delegate):
     if not isinstance(delegate, tuple):
         delegate = (delegate,)
 
-    return lambda fn: _IffHasAttrDescriptor(fn, delegate,
-                                            attribute_name=fn.__name__)
+    return lambda fn: _IffHasAttrDescriptor(fn, delegate, attribute_name=fn.__name__)
 
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
@@ -198,8 +273,10 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     """
     if _is_pairwise(estimator):
         if not hasattr(X, "shape"):
-            raise ValueError("Precomputed kernels or affinity matrices have "
-                             "to be passed as arrays or sparse matrices.")
+            raise ValueError(
+                "Precomputed kernels or affinity matrices have "
+                "to be passed as arrays or sparse matrices."
+            )
         # X is a precomputed square kernel matrix
         if X.shape[0] != X.shape[1]:
             raise ValueError("X should be a square kernel matrix")

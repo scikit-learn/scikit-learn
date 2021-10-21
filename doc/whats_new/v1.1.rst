@@ -1,0 +1,138 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_1_1:
+
+Version 1.1.0
+=============
+
+**In Development**
+
+
+.. include:: changelog_legend.inc
+
+Minimal dependencies
+--------------------
+
+Version 1.1.0 of scikit-learn requires python 3.7+, numpy 1.14.6+ and
+scipy 1.1.0+. Optional minimal dependency is matplotlib 2.2.3+.
+
+Put the changes in their relevant module.
+
+Changed models
+--------------
+
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Enhancement| :func:`calibration.calibration_curve` accepts a parameter
+  `pos_label` to specify the positive class label.
+  :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| Add ``class_weight`` to
+  :class:`calibration.CalibratedClassifierCV`, which enables putting weights
+  to classes when training the calibration methods (sigmoid or isotonic).
+  :pr:`17541` by :user:`Achille Mascia <amascia>`.
+
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Enhancement| :func:`cross_decomposition._PLS.inverse_transform` now allows
+  reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
+  :user:`Robin Thibaut <robinthibaut>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fixed a bug that could produce a segfault in rare cases for
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`.
+  :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
+  :class:`feature_extraction.TfidfVectorizer` by raising an
+  error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
+  :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
+  :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
+  :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
+  message when the solver does not support sparse matrices with int64 indices.
+  :pr:`21093` by `Tom Dupre la Tour`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |API| :class:`metrics.DistanceMetric` has been moved from
+  :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
+  Using `neighbors.DistanceMetric` for imports is still valid for
+  backward compatibility, but this alias will be removed in 1.3.
+  :pr:`21177` by :user:`Julien Jerphanion <jjerphan>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| raise an error during cross-validation when the fits for all the
+  splits failed. Similarly raise an error during grid-search when the fits for
+  all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
+  Setting a transformer to "passthrough" will pass the features unchanged.
+  :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.validation._check_sample_weight` can perform a
+  non-negativity check on the sample weights. It can be turned on
+  using the only_non_negative bool parameter.
+  Estimators that check for non-negative weights are updated:
+  :func:`linear_model.LinearRegression` (here the previous
+  error message was misleading),
+  :func:`ensemble.AdaBoostClassifier`,
+  :func:`ensemble.AdaBoostRegressor`,
+  :func:`neighbors.KernelDensity`.
+  :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
+  and :user:`András Simon <simonandras>`.
+
+- |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
+  message when running in a jupyter notebook that is not trusted. :pr:`21316`
+  by `Thomas Fan`_.
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.0, including:
+
+TODO: update at the time of the release.

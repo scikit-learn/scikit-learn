@@ -27,7 +27,7 @@ labeled points and a large amount of unlabeled points.
 
    Semi-supervised algorithms need to make assumptions about the distribution
    of the dataset in order to achieve performance gains. See `here
-   <https://en.wikipedia.org/wiki/Semi-supervised_learning#Assumptions_used>`_
+   <https://en.wikipedia.org/wiki/Semi-supervised_learning#Assumptions>`_
    for more details.
 
 .. _self_training:

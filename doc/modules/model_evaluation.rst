@@ -416,7 +416,7 @@ defined as
 
 .. math::
 
-   \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
+  \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
 
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_.
@@ -437,7 +437,7 @@ In the multilabel case with binary label indicators::
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
 
@@ -563,8 +563,9 @@ or *informedness*.
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
      and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
      2015.
-  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. `ExSTraCS 2.0: description and evaluation of a scalable learning
-     classifier system <https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description 
+      and evaluation of a scalable learning classifier 
+      system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
 
@@ -796,9 +797,10 @@ score:
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format. The
-:func:`plot_precision_recall_curve` function plots the precision recall as
-follows.
+binary classification and multilabel indicator format.
+The :func:`PredictionRecallDisplay.from_estimator` and
+:func:`PredictionRecallDisplay.from_predictions` functions will plot the
+precision-recall curve as follows.
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
         :target: ../auto_examples/model_selection/plot_precision_recall.html#plot-the-precision-recall-curve
@@ -830,7 +832,7 @@ follows.
      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
      IJCV 2010.
   .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
-     <http://www.machinelearning.org/proceedings/icml2006/030_The_Relationship_Bet.pdf>`_,
+     <https://www.biostat.wisc.edu/~page/rocpr.pdf>`_,
      ICML 2006.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
      <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
@@ -1095,7 +1097,7 @@ with a svm classifier in a multiclass problem::
   LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
-  >>> hinge_loss(y_true, pred_decision, labels)
+  >>> hinge_loss(y_true, pred_decision, labels=labels)
   0.56...
 
 .. _log_loss:
@@ -1587,7 +1589,7 @@ Additionally DET curves can be consulted for threshold analysis and operating
 point selection.
 This is particularly helpful if a comparison of error types is required.
 
-One the other hand DET curves do not provide their metric as a single number.
+On the other hand DET curves do not provide their metric as a single number.
 Therefore for either automated evaluation or comparison to other
 classification tasks metrics like the derived area under ROC curve might be
 better suited.
@@ -1960,8 +1962,8 @@ Regression metrics
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
-:func:`mean_absolute_error`, :func:`explained_variance_score` and
-:func:`r2_score`.
+:func:`mean_absolute_error`, :func:`explained_variance_score`,
+:func:`r2_score` and :func:`mean_pinball_loss`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
@@ -2353,6 +2355,99 @@ the difference in errors decreases. Finally, by setting, ``power=2``::
 
 we would get identical errors. The deviance when ``power=2`` is thus only
 sensitive to relative errors.
+
+.. _d2_tweedie_score:
+
+D² score, the coefficient of determination
+-------------------------------------------
+
+The :func:`d2_tweedie_score` function computes the percentage of deviance
+explained. It is a generalization of R², where the squared error is replaced by
+the Tweedie deviance. D², also known as McFadden's likelihood ratio index, is
+calculated as
+
+.. math::
+
+  D^2(y, \hat{y}) = 1 - \frac{\text{D}(y, \hat{y})}{\text{D}(y, \bar{y})} \,.
+
+The argument ``power`` defines the Tweedie power as for
+:func:`mean_tweedie_deviance`. Note that for `power=0`,
+:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+
+Like R², the best possible score is 1.0 and it can be negative (because the
+model can be arbitrarily worse). A constant model that always predicts the
+expected value of y, disregarding the input features, would get a D² score
+of 0.0.
+
+A scorer object with a specific choice of ``power`` can be built by::
+
+  >>> from sklearn.metrics import d2_tweedie_score, make_scorer
+  >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
+
+.. _pinball_loss:
+
+Pinball loss
+------------
+
+The :func:`mean_pinball_loss` function is used to evaluate the predictive
+performance of quantile regression models. The `pinball loss
+<https://en.wikipedia.org/wiki/Quantile_regression#Computation>`_ is equivalent
+to :func:`mean_absolute_error` when the quantile parameter ``alpha`` is set to
+0.5.
+
+.. math::
+
+  \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
+
+Here is a small example of usage of the :func:`mean_pinball_loss` function::
+
+  >>> from sklearn.metrics import mean_pinball_loss
+  >>> y_true = [1, 2, 3]
+  >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
+  0.03...
+  >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
+  0.3...
+  >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
+  0.3...
+  >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
+  0.03...
+  >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
+  0.0
+  >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
+  0.0
+
+It is possible to build a scorer object with a specific choice of ``alpha``::
+
+  >>> from sklearn.metrics import make_scorer
+  >>> mean_pinball_loss_95p = make_scorer(mean_pinball_loss, alpha=0.95)
+
+Such a scorer can be used to evaluate the generalization performance of a
+quantile regressor via cross-validation:
+
+  >>> from sklearn.datasets import make_regression
+  >>> from sklearn.model_selection import cross_val_score
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+  >>>
+  >>> X, y = make_regression(n_samples=100, random_state=0)
+  >>> estimator = GradientBoostingRegressor(
+  ...     loss="quantile",
+  ...     alpha=0.95,
+  ...     random_state=0,
+  ... )
+  >>> cross_val_score(estimator, X, y, cv=5, scoring=mean_pinball_loss_95p)
+  array([13.6..., 9.7..., 23.3..., 9.5..., 10.4...])
+
+It is also possible to build scorer objects for hyper-parameter tuning. The
+sign of the loss must be switched to ensure that greater means better as
+explained in the example linked below.
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+    for an example of using a the pinball loss to evaluate and tune the
+    hyper-parameters of quantile regression models on data with non-symmetric
+    noise and outliers.
+
 
 .. _clustering_metrics:
 

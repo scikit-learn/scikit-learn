@@ -27,16 +27,20 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array, deprecated
+from .utils import deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
+from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
-from .utils.validation import _deprecate_positional_args
 
 
-__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
-           'CategoricalNB']
+__all__ = [
+    "BernoulliNB",
+    "GaussianNB",
+    "MultinomialNB",
+    "ComplementNB",
+    "CategoricalNB",
+]
 
 
 class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
@@ -55,7 +59,10 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
     @abstractmethod
     def _check_X(self, X):
-        """To be overridden in subclasses with the actual checks."""
+        """To be overridden in subclasses with the actual checks.
+
+        Only used in predict* methods.
+        """
 
     def predict(self, X):
         """
@@ -64,11 +71,12 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
         C : ndarray of shape (n_samples,)
-            Predicted target values for X
+            Predicted target values for X.
         """
         check_is_fitted(self)
         X = self._check_X(X)
@@ -82,6 +90,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -104,6 +113,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -117,7 +127,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
 class GaussianNB(_BaseNB):
     """
-    Gaussian Naive Bayes (GaussianNB)
+    Gaussian Naive Bayes (GaussianNB).
 
     Can perform online updates to model parameters via :meth:`partial_fit`.
     For details on algorithm used to update feature means and variance online,
@@ -148,10 +158,21 @@ class GaussianNB(_BaseNB):
         probability of each class.
 
     classes_ : ndarray of shape (n_classes,)
-        class labels known to the classifier
+        class labels known to the classifier.
 
     epsilon_ : float
-        absolute additive value to variances
+        absolute additive value to variances.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     sigma_ : ndarray of shape (n_classes, n_features)
         Variance of each feature per class.
@@ -166,7 +187,14 @@ class GaussianNB(_BaseNB):
         .. versionadded:: 1.0
 
     theta_ : ndarray of shape (n_classes, n_features)
-        mean of each feature per class
+        mean of each feature per class.
+
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : Complement Naive Bayes classifier.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
 
     Examples
     --------
@@ -186,19 +214,18 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, priors=None, var_smoothing=1e-9):
         self.priors = priors
         self.var_smoothing = var_smoothing
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Gaussian Naive Bayes according to X, y
+        """Fit Gaussian Naive Bayes according to X, y.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -212,14 +239,16 @@ class GaussianNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X, y = self._validate_data(X, y)
-        y = column_or_1d(y, warn=True)
-        return self._partial_fit(X, y, np.unique(y), _refit=True,
-                                 sample_weight=sample_weight)
+        return self._partial_fit(
+            X, y, np.unique(y), _refit=True, sample_weight=sample_weight
+        )
 
     def _check_X(self, X):
-        return check_array(X)
+        """Validate X, used only in predict* methods."""
+        return self._validate_data(X, reset=False)
 
     @staticmethod
     def _update_mean_variance(n_past, mu, var, X, sample_weight=None):
@@ -268,8 +297,7 @@ class GaussianNB(_BaseNB):
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
             new_mu = np.average(X, axis=0, weights=sample_weight)
-            new_var = np.average((X - new_mu) ** 2, axis=0,
-                                 weights=sample_weight)
+            new_var = np.average((X - new_mu) ** 2, axis=0, weights=sample_weight)
         else:
             n_new = X.shape[0]
             new_var = np.var(X, axis=0)
@@ -289,8 +317,7 @@ class GaussianNB(_BaseNB):
         # the sum-of-squared-differences (ssd)
         old_ssd = n_past * var
         new_ssd = n_new * new_var
-        total_ssd = (old_ssd + new_ssd +
-                     (n_new * n_past / n_total) * (mu - new_mu) ** 2)
+        total_ssd = old_ssd + new_ssd + (n_new * n_past / n_total) * (mu - new_mu) ** 2
         total_var = total_ssd / n_total
 
         return total_mu, total_var
@@ -313,8 +340,8 @@ class GaussianNB(_BaseNB):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -333,19 +360,20 @@ class GaussianNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
-        return self._partial_fit(X, y, classes, _refit=False,
-                                 sample_weight=sample_weight)
+        return self._partial_fit(
+            X, y, classes, _refit=False, sample_weight=sample_weight
+        )
 
-    def _partial_fit(self, X, y, classes=None, _refit=False,
-                     sample_weight=None):
+    def _partial_fit(self, X, y, classes=None, _refit=False, sample_weight=None):
         """Actual implementation of Gaussian NB fitting.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -367,7 +395,11 @@ class GaussianNB(_BaseNB):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
+        if _refit:
+            self.classes_ = None
+
+        first_call = _check_partial_fit_first_call(self, classes)
+        X, y = self._validate_data(X, y, reset=first_call)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -377,10 +409,7 @@ class GaussianNB(_BaseNB):
         # deviation of the largest dimension.
         self.epsilon_ = self.var_smoothing * np.var(X, axis=0).max()
 
-        if _refit:
-            self.classes_ = None
-
-        if _check_partial_fit_first_call(self, classes):
+        if first_call:
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_features = X.shape[1]
@@ -396,19 +425,17 @@ class GaussianNB(_BaseNB):
                 priors = np.asarray(self.priors)
                 # Check that the provide prior match the number of classes
                 if len(priors) != n_classes:
-                    raise ValueError('Number of priors must match number of'
-                                     ' classes.')
+                    raise ValueError("Number of priors must match number of classes.")
                 # Check that the sum is 1
                 if not np.isclose(priors.sum(), 1.0):
-                    raise ValueError('The sum of the priors should be 1.')
+                    raise ValueError("The sum of the priors should be 1.")
                 # Check that the prior are non-negative
                 if (priors < 0).any():
-                    raise ValueError('Priors must be non-negative.')
+                    raise ValueError("Priors must be non-negative.")
                 self.class_prior_ = priors
             else:
                 # Initialize the priors to zeros for each class
-                self.class_prior_ = np.zeros(len(self.classes_),
-                                             dtype=np.float64)
+                self.class_prior_ = np.zeros(len(self.classes_), dtype=np.float64)
         else:
             if X.shape[1] != self.theta_.shape[1]:
                 msg = "Number of features %d does not match previous data %d."
@@ -422,9 +449,10 @@ class GaussianNB(_BaseNB):
         unique_y_in_classes = np.in1d(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
-            raise ValueError("The target label(s) %s in y do not exist in the "
-                             "initial classes %s" %
-                             (unique_y[~unique_y_in_classes], classes))
+            raise ValueError(
+                "The target label(s) %s in y do not exist in the initial classes %s"
+                % (unique_y[~unique_y_in_classes], classes)
+            )
 
         for y_i in unique_y:
             i = classes.searchsorted(y_i)
@@ -438,8 +466,8 @@ class GaussianNB(_BaseNB):
                 N_i = X_i.shape[0]
 
             new_theta, new_sigma = self._update_mean_variance(
-                self.class_count_[i], self.theta_[i, :], self.var_[i, :],
-                X_i, sw_i)
+                self.class_count_[i], self.theta_[i, :], self.var_[i, :], X_i, sw_i
+            )
 
             self.theta_[i, :] = new_theta
             self.var_[i, :] = new_sigma
@@ -458,17 +486,16 @@ class GaussianNB(_BaseNB):
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
-            n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.var_[i, :]))
-            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
-                                 (self.var_[i, :]), 1)
+            n_ij = -0.5 * np.sum(np.log(2.0 * np.pi * self.var_[i, :]))
+            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / (self.var_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
     @deprecated(  # type: ignore
-        "Attribute sigma_ was deprecated in 1.0 and will be removed in"
-        "1.2. Use var_ instead."
+        "Attribute `sigma_` was deprecated in 1.0 and will be removed in"
+        "1.2. Use `var_` instead."
     )
     @property
     def sigma_(self):
@@ -488,17 +515,18 @@ class _BaseDiscreteNB(_BaseNB):
     """
 
     def _check_X(self, X):
-        return check_array(X, accept_sparse='csr')
+        """Validate X, used only in predict* methods."""
+        return self._validate_data(X, accept_sparse="csr", reset=False)
 
-    def _check_X_y(self, X, y):
-        return self._validate_data(X, y, accept_sparse='csr')
+    def _check_X_y(self, X, y, reset=True):
+        """Validate X and y in fit methods."""
+        return self._validate_data(X, y, accept_sparse="csr", reset=reset)
 
     def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
         if class_prior is not None:
             if len(class_prior) != n_classes:
-                raise ValueError("Number of priors must match number of"
-                                 " classes.")
+                raise ValueError("Number of priors must match number of classes.")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             with warnings.catch_warnings():
@@ -508,22 +536,26 @@ class _BaseDiscreteNB(_BaseNB):
                 log_class_count = np.log(self.class_count_)
 
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (log_class_count -
-                                     np.log(self.class_count_.sum()))
+            self.class_log_prior_ = log_class_count - np.log(self.class_count_.sum())
         else:
             self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
         if np.min(self.alpha) < 0:
-            raise ValueError('Smoothing parameter alpha = %.1e. '
-                             'alpha should be > 0.' % np.min(self.alpha))
+            raise ValueError(
+                "Smoothing parameter alpha = %.1e. alpha should be > 0."
+                % np.min(self.alpha)
+            )
         if isinstance(self.alpha, np.ndarray):
-            if not self.alpha.shape[0] == self.n_features_:
-                raise ValueError("alpha should be a scalar or a numpy array "
-                                 "with shape [n_features]")
+            if not self.alpha.shape[0] == self.n_features_in_:
+                raise ValueError(
+                    "alpha should be a scalar or a numpy array with shape [n_features]"
+                )
         if np.min(self.alpha) < _ALPHA_MIN:
-            warnings.warn('alpha too small will result in numeric errors, '
-                          'setting alpha = %.1e' % _ALPHA_MIN)
+            warnings.warn(
+                "alpha too small will result in numeric errors, setting alpha = %.1e"
+                % _ALPHA_MIN
+            )
             return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
 
@@ -544,8 +576,8 @@ class _BaseDiscreteNB(_BaseNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -562,8 +594,10 @@ class _BaseDiscreteNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
-        X, y = self._check_X_y(X, y)
+        first_call = not hasattr(self, "classes_")
+        X, y = self._check_X_y(X, y, reset=first_call)
         _, n_features = X.shape
 
         if _check_partial_fit_first_call(self, classes):
@@ -571,16 +605,12 @@ class _BaseDiscreteNB(_BaseNB):
             # initialize various cumulative counters
             n_classes = len(classes)
             self._init_counters(n_classes, n_features)
-            self.n_features_ = n_features
-        elif n_features != self.n_features_:
-            msg = "Number of features %d does not match previous data %d."
-            raise ValueError(msg % (n_features, self.n_features_))
 
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
             if len(self.classes_) == 2:
                 Y = np.concatenate((1 - Y, Y), axis=1)
-            else:    # degenerate case: just one class
+            else:  # degenerate case: just one class
                 Y = np.ones_like(Y)
 
         if X.shape[0] != Y.shape[0]:
@@ -611,13 +641,13 @@ class _BaseDiscreteNB(_BaseNB):
         return self
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Naive Bayes classifier according to X, y
+        """Fit Naive Bayes classifier according to X, y.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -628,10 +658,10 @@ class _BaseDiscreteNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X, y = self._check_X_y(X, y)
         _, n_features = X.shape
-        self.n_features_ = n_features
 
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)
@@ -639,7 +669,7 @@ class _BaseDiscreteNB(_BaseNB):
         if Y.shape[1] == 1:
             if len(self.classes_) == 2:
                 Y = np.concatenate((1 - Y, Y), axis=1)
-            else:    # degenerate case: just one class
+            else:  # degenerate case: just one class
                 Y = np.ones_like(Y)
 
         # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
@@ -665,32 +695,51 @@ class _BaseDiscreteNB(_BaseNB):
 
     def _init_counters(self, n_classes, n_features):
         self.class_count_ = np.zeros(n_classes, dtype=np.float64)
-        self.feature_count_ = np.zeros((n_classes, n_features),
-                                       dtype=np.float64)
+        self.feature_count_ = np.zeros((n_classes, n_features), dtype=np.float64)
 
     # mypy error: Decorated property not supported
-    @deprecated("Attribute coef_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute `coef_` was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
+    )
     @property
     def coef_(self):
-        return (self.feature_log_prob_[1:]
-                if len(self.classes_) == 2 else self.feature_log_prob_)
+        return (
+            self.feature_log_prob_[1:]
+            if len(self.classes_) == 2
+            else self.feature_log_prob_
+        )
 
     # mypy error: Decorated property not supported
-    @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
+    @deprecated(  # type: ignore
+        "Attribute `intercept_` was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
+    )
     @property
     def intercept_(self):
-        return (self.class_log_prior_[1:]
-                if len(self.classes_) == 2 else self.class_log_prior_)
+        return (
+            self.class_log_prior_[1:]
+            if len(self.classes_) == 2
+            else self.class_log_prior_
+        )
 
     def _more_tags(self):
-        return {'poor_score': True}
+        return {"poor_score": True}
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `n_features_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `n_features_in_` instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
 
 class MultinomialNB(_BaseDiscreteNB):
     """
-    Naive Bayes classifier for multinomial models
+    Naive Bayes classifier for multinomial models.
 
     The multinomial Naive Bayes classifier is suitable for classification with
     discrete features (e.g., word counts for text classification). The
@@ -753,18 +802,27 @@ class MultinomialNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
-    Examples
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(1)
-    >>> X = rng.randint(5, size=(6, 100))
-    >>> y = np.array([1, 2, 3, 4, 5, 6])
-    >>> from sklearn.naive_bayes import MultinomialNB
-    >>> clf = MultinomialNB()
-    >>> clf.fit(X, y)
-    MultinomialNB()
-    >>> print(clf.predict(X[2:3]))
-    [3]
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : Complement Naive Bayes classifier.
+    GaussianNB : Gaussian Naive Bayes.
 
     Notes
     -----
@@ -777,16 +835,28 @@ class MultinomialNB(_BaseDiscreteNB):
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> from sklearn.naive_bayes import MultinomialNB
+    >>> clf = MultinomialNB()
+    >>> clf.fit(X, y)
+    MultinomialNB()
+    >>> print(clf.predict(X[2:3]))
+    [3]
     """
 
-    @_deprecate_positional_args
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
     def _more_tags(self):
-        return {'requires_positive_X': True}
+        return {"requires_positive_X": True}
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -799,13 +869,13 @@ class MultinomialNB(_BaseDiscreteNB):
         smoothed_fc = self.feature_count_ + alpha
         smoothed_cc = smoothed_fc.sum(axis=1)
 
-        self.feature_log_prob_ = (np.log(smoothed_fc) -
-                                  np.log(smoothed_cc.reshape(-1, 1)))
+        self.feature_log_prob_ = np.log(smoothed_fc) - np.log(
+            smoothed_cc.reshape(-1, 1)
+        )
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        return (safe_sparse_dot(X, self.feature_log_prob_.T) +
-                self.class_log_prior_)
+        return safe_sparse_dot(X, self.feature_log_prob_.T) + self.class_log_prior_
 
 
 class ComplementNB(_BaseDiscreteNB):
@@ -879,6 +949,35 @@ class ComplementNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    GaussianNB : Gaussian Naive Bayes.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
+
+    References
+    ----------
+    Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
+    Tackling the poor assumptions of naive bayes text classifiers. In ICML
+    (Vol. 3, pp. 616-623).
+    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
+
     Examples
     --------
     >>> import numpy as np
@@ -891,25 +990,16 @@ class ComplementNB(_BaseDiscreteNB):
     ComplementNB()
     >>> print(clf.predict(X[2:3]))
     [3]
-
-    References
-    ----------
-    Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
-    Tackling the poor assumptions of naive bayes text classifiers. In ICML
-    (Vol. 3, pp. 616-623).
-    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None,
-                 norm=False):
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None, norm=False):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
         self.norm = norm
 
     def _more_tags(self):
-        return {'requires_positive_X': True}
+        return {"requires_positive_X": True}
 
     def _count(self, X, Y):
         """Count feature occurrences."""
@@ -996,18 +1086,28 @@ class BernoulliNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
-    Examples
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(1)
-    >>> X = rng.randint(5, size=(6, 100))
-    >>> Y = np.array([1, 2, 3, 4, 4, 5])
-    >>> from sklearn.naive_bayes import BernoulliNB
-    >>> clf = BernoulliNB()
-    >>> clf.fit(X, Y)
-    BernoulliNB()
-    >>> print(clf.predict(X[2:3]))
-    [3]
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : The Complement Naive Bayes classifier
+        described in Rennie et al. (2003).
+    GaussianNB : Gaussian Naive Bayes (GaussianNB).
+    MultinomialNB : Naive Bayes classifier for multinomial models.
 
     References
     ----------
@@ -1021,24 +1121,36 @@ class BernoulliNB(_BaseDiscreteNB):
 
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> Y = np.array([1, 2, 3, 4, 4, 5])
+    >>> from sklearn.naive_bayes import BernoulliNB
+    >>> clf = BernoulliNB()
+    >>> clf.fit(X, Y)
+    BernoulliNB()
+    >>> print(clf.predict(X[2:3]))
+    [3]
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, binarize=.0, fit_prior=True,
-                 class_prior=None):
+    def __init__(self, *, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
     def _check_X(self, X):
+        """Validate X, used only in predict* methods."""
         X = super()._check_X(X)
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
         return X
 
-    def _check_X_y(self, X, y):
-        X, y = super()._check_X_y(X, y)
+    def _check_X_y(self, X, y, reset=True):
+        X, y = super()._check_X_y(X, y, reset=reset)
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
         return X, y
@@ -1053,8 +1165,9 @@ class BernoulliNB(_BaseDiscreteNB):
         smoothed_fc = self.feature_count_ + alpha
         smoothed_cc = self.class_count_ + alpha * 2
 
-        self.feature_log_prob_ = (np.log(smoothed_fc) -
-                                  np.log(smoothed_cc.reshape(-1, 1)))
+        self.feature_log_prob_ = np.log(smoothed_fc) - np.log(
+            smoothed_cc.reshape(-1, 1)
+        )
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -1062,8 +1175,10 @@ class BernoulliNB(_BaseDiscreteNB):
         n_features_X = X.shape[1]
 
         if n_features_X != n_features:
-            raise ValueError("Expected input with %d features, got %d instead"
-                             % (n_features, n_features_X))
+            raise ValueError(
+                "Expected input with %d features, got %d instead"
+                % (n_features, n_features_X)
+            )
 
         neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
@@ -1074,7 +1189,7 @@ class BernoulliNB(_BaseDiscreteNB):
 
 
 class CategoricalNB(_BaseDiscreteNB):
-    """Naive Bayes classifier for categorical features
+    """Naive Bayes classifier for categorical features.
 
     The categorical Naive Bayes classifier is suitable for classification with
     discrete features that are categorically distributed. The categories of
@@ -1133,11 +1248,33 @@ class CategoricalNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+        .. deprecated:: 1.0
+            Attribute `n_features_` was deprecated in version 1.0 and will be
+            removed in 1.2. Use `n_features_in_` instead.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_categories_ : ndarray of shape (n_features,), dtype=np.int64
         Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
 
         .. versionadded:: 0.24
+
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    ComplementNB : Complement Naive Bayes classifier.
+    GaussianNB : Gaussian Naive Bayes.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
 
     Examples
     --------
@@ -1153,22 +1290,22 @@ class CategoricalNB(_BaseDiscreteNB):
     [3]
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None,
-                 min_categories=None):
+    def __init__(
+        self, *, alpha=1.0, fit_prior=True, class_prior=None, min_categories=None
+    ):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
         self.min_categories = min_categories
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Naive Bayes classifier according to X, y
+        """Fit Naive Bayes classifier according to X, y.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features. Here, each feature of X is
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. Here, each feature of X is
             assumed to be from a different categorical distribution.
             It is further assumed that all categories of each feature are
             represented by the numbers 0, ..., n - 1, where n refers to the
@@ -1184,6 +1321,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return super().fit(X, y, sample_weight=sample_weight)
 
@@ -1204,8 +1342,8 @@ class CategoricalNB(_BaseDiscreteNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features. Here, each feature of X is
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. Here, each feature of X is
             assumed to be from a different categorical distribution.
             It is further assumed that all categories of each feature are
             represented by the numbers 0, ..., n - 1, where n refers to the
@@ -1227,29 +1365,31 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
-        return super().partial_fit(X, y, classes,
-                                   sample_weight=sample_weight)
+        return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 
     def _more_tags(self):
-        return {'requires_positive_X': True}
+        return {"requires_positive_X": True}
 
     def _check_X(self, X):
-        X = check_array(X, dtype='int', accept_sparse=False,
-                        force_all_finite=True)
+        """Validate X, used only in predict* methods."""
+        X = self._validate_data(
+            X, dtype="int", accept_sparse=False, force_all_finite=True, reset=False
+        )
         check_non_negative(X, "CategoricalNB (input X)")
         return X
 
-    def _check_X_y(self, X, y):
-        X, y = self._validate_data(X, y, dtype='int', accept_sparse=False,
-                                   force_all_finite=True)
+    def _check_X_y(self, X, y, reset=True):
+        X, y = self._validate_data(
+            X, y, dtype="int", accept_sparse=False, force_all_finite=True, reset=reset
+        )
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
     def _init_counters(self, n_classes, n_features):
         self.class_count_ = np.zeros(n_classes, dtype=np.float64)
-        self.category_count_ = [np.zeros((n_classes, 0))
-                                for _ in range(n_features)]
+        self.category_count_ = [np.zeros((n_classes, 0)) for _ in range(n_features)]
 
     @staticmethod
     def _validate_n_categories(X, min_categories):
@@ -1259,16 +1399,14 @@ class CategoricalNB(_BaseDiscreteNB):
         if min_categories is not None:
             if not np.issubdtype(min_categories_.dtype, np.signedinteger):
                 raise ValueError(
-                    f"'min_categories' should have integral type. Got "
+                    "'min_categories' should have integral type. Got "
                     f"{min_categories_.dtype} instead."
                 )
-            n_categories_ = np.maximum(n_categories_X,
-                                       min_categories_,
-                                       dtype=np.int64)
+            n_categories_ = np.maximum(n_categories_X, min_categories_, dtype=np.int64)
             if n_categories_.shape != n_categories_X.shape:
                 raise ValueError(
                     f"'min_categories' should have shape ({X.shape[1]},"
-                    f") when an array-like is provided. Got"
+                    ") when an array-like is provided. Got"
                     f" {min_categories_.shape} instead."
                 )
             return n_categories_
@@ -1280,7 +1418,7 @@ class CategoricalNB(_BaseDiscreteNB):
             diff = highest_feature + 1 - cat_count.shape[1]
             if diff > 0:
                 # we append a column full of zeros for each new category
-                return np.pad(cat_count, [(0, 0), (0, diff)], 'constant')
+                return np.pad(cat_count, [(0, 0), (0, diff)], "constant")
             return cat_count
 
         def _update_cat_count(X_feature, Y, cat_count, n_classes):
@@ -1295,32 +1433,30 @@ class CategoricalNB(_BaseDiscreteNB):
                 cat_count[j, indices] += counts[indices]
 
         self.class_count_ += Y.sum(axis=0)
-        self.n_categories_ = self._validate_n_categories(
-            X, self.min_categories)
-        for i in range(self.n_features_):
+        self.n_categories_ = self._validate_n_categories(X, self.min_categories)
+        for i in range(self.n_features_in_):
             X_feature = X[:, i]
             self.category_count_[i] = _update_cat_count_dims(
-                self.category_count_[i], self.n_categories_[i] - 1)
-            _update_cat_count(X_feature, Y,
-                              self.category_count_[i],
-                              self.class_count_.shape[0])
+                self.category_count_[i], self.n_categories_[i] - 1
+            )
+            _update_cat_count(
+                X_feature, Y, self.category_count_[i], self.class_count_.shape[0]
+            )
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = []
-        for i in range(self.n_features_):
+        for i in range(self.n_features_in_):
             smoothed_cat_count = self.category_count_[i] + alpha
             smoothed_class_count = smoothed_cat_count.sum(axis=1)
             feature_log_prob.append(
-                np.log(smoothed_cat_count) -
-                np.log(smoothed_class_count.reshape(-1, 1)))
+                np.log(smoothed_cat_count) - np.log(smoothed_class_count.reshape(-1, 1))
+            )
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
-        if not X.shape[1] == self.n_features_:
-            raise ValueError("Expected input with %d features, got %d instead"
-                             % (self.n_features_, X.shape[1]))
+        self._check_n_features(X, reset=False)
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
-        for i in range(self.n_features_):
+        for i in range(self.n_features_in_):
             indices = X[:, i]
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_

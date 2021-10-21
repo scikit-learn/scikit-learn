@@ -218,6 +218,18 @@ latest up-to-date workflow.
   `Transcript
   <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
 
+- 3 Components of Reviewing a Pull Request:
+  `Video <https://youtu.be/dyxS9KKCNzA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
+
+.. note::
+  In January 2021, the default branch name changed from ``master`` to ``main``
+  for the scikit-learn GitHub repository to use more inclusive terms.
+  These videos were created prior to the renaming of the branch.
+  For contributors who are viewing these videos to set up their
+  working environment and submitting a PR, ``master`` should be replaced to ``main``.
+
 How to contribute
 -----------------
 
@@ -249,7 +261,7 @@ how to set up your git repository:
 
     .. prompt:: bash $
 
-       pip install cython pytest pytest-cov flake8 mypy
+       pip install cython pytest pytest-cov flake8 mypy black==21.6b0
 
 5. Install scikit-learn in editable mode:
 
@@ -274,12 +286,14 @@ You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
 modifying code and submitting a PR:
 
-7. Synchronize your main branch with the upstream main branch:
+7. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+   more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
    .. prompt:: bash $
 
         git checkout main
-        git pull upstream main
+        git fetch upstream
+        git merge upstream/main
 
 8. Create a feature branch to hold your development changes:
 
@@ -416,12 +430,22 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    verify the correct behavior of the fix or feature. In this manner, further
    modifications on the code base are granted to be consistent with the
    desired behavior. In the case of bug fixes, at the time of the PR, the
-   non-regression tests should fail for the code base in the main branch
+   non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
-5. **Make sure that your PR does not add PEP8 violations**. To check the
+5. Run `black` to auto-format your code.
+
+   .. prompt:: bash $
+
+        black .
+
+   See black's
+   `editor integration documentation <https://black.readthedocs.io/en/stable/integrations/editors.html>`_
+   to configure your editor to run `black`.
+
+6. **Make sure that your PR does not add PEP8 violations**. To check the
    code that you changed, you can run the following command (see
-   :ref:`above <upstream>` to set up the upstream remote):
+   :ref:`above <upstream>` to set up the ``upstream`` remote):
 
    .. prompt:: bash $
 
@@ -429,14 +453,14 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 
    or `make flake8-diff` which should work on unix-like system.
 
-6. Follow the :ref:`coding-guidelines`.
+7. Follow the :ref:`coding-guidelines`.
 
 
-7. When applicable, use the validation tools and scripts in the
+8. When applicable, use the validation tools and scripts in the
    ``sklearn.utils`` submodule.  A list of utility routines available
    for developers can be found in the :ref:`developers-utils` page.
 
-8. Often pull requests resolve one or more other issues (or pull requests).
+9. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
    be closed, you should `use keywords to create link to them
    <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
@@ -446,20 +470,23 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    related to some other issues/PRs, create a link to them without using
    the keywords (e.g., ``See also #1234``).
 
-9. PRs should often substantiate the change, through benchmarks of
-   performance and efficiency (see :ref:`monitoring_performances`) or through
-   examples of usage. Examples also illustrate the features and intricacies of
-   the library to users. Have a look at other examples in the `examples/
-   <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
-   directory for reference. Examples should demonstrate why the new
-   functionality is useful in practice and, if possible, compare it to other
-   methods available in scikit-learn.
+10. PRs should often substantiate the change, through benchmarks of
+    performance and efficiency (see :ref:`monitoring_performances`) or through
+    examples of usage. Examples also illustrate the features and intricacies of
+    the library to users. Have a look at other examples in the `examples/
+    <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
+    directory for reference. Examples should demonstrate why the new
+    functionality is useful in practice and, if possible, compare it to other
+    methods available in scikit-learn.
 
-10. New features often need to be illustrated with narrative documentation in
-    the user guide, with small code snippets. If relevant, please also add
-    references in the literature, with PDF links when possible.
+11. New features have some maintenance overhead. We expect PR authors
+    to take part in the maintenance for the code they submit, at least
+    initially. New features need to be illustrated with narrative
+    documentation in the user guide, with small code snippets.
+    If relevant, please also add references in the literature, with PDF links
+    when possible.
 
-11. The user guide should also include expected time and space complexity
+12. The user guide should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
     large number of samples > 100000, but does not scale in dimensionality:
     n_features is expected to be lower than 100".
@@ -520,7 +547,7 @@ Continuous Integration (CI)
 * Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
   with different dependencies and settings.
 * CircleCI is used to build the docs for viewing, for linting with flake8, and
-  for testing with PyPy on Linux
+  for testing with PyPy and ARM64 / aarch64 on Linux
 
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
@@ -533,7 +560,6 @@ message, the following actions are taken.
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [icc-build]            Add a Travis build with the Intel C compiler (ICC)
-    [arm64]                Add a Travis build for the ARM64 / aarch64 little endian architecture
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots (very long)
@@ -676,7 +702,8 @@ Building the documentation requires installing some additional packages:
 .. prompt:: bash $
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
-                scikit-image packaging seaborn sphinx-prompt
+                scikit-image packaging seaborn sphinx-prompt \
+                sphinxext-opengraph
 
 To build the documentation, you need to be in the ``doc`` folder:
 
@@ -931,7 +958,7 @@ scikit-learn. Make sure it is up to date:
 
 In the benchmark suite, the benchmarks are organized following the same
 structure as scikit-learn. For example, you can compare the performance of a
-specific estimator between upstream/main and the branch you are working on:
+specific estimator between ``upstream/main`` and the branch you are working on:
 
 .. prompt:: bash $
 
@@ -977,7 +1004,7 @@ installed in your current Python environment:
 
   asv run --python=same
 
-It's particulary useful when you installed scikit-learn in editable mode to
+It's particularly useful when you installed scikit-learn in editable mode to
 avoid creating a new environment each time you run the benchmarks. By default
 the results are not saved when using an existing installation. To save the
 results you must specify a commit hash:
@@ -1088,8 +1115,8 @@ use the decorator ``deprecated`` on a property. Please note that the
 decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
-    @deprecated("Attribute labels_ was deprecated in version 0.13 and "
-                "will be removed in 0.15. Use 'classes_' instead")
+    @deprecated("Attribute `labels_` was deprecated in version 0.13 and "
+                "will be removed in 0.15. Use `classes_` instead")
     @property
     def labels_(self):
         return self.classes_
@@ -1201,6 +1228,15 @@ use, and so can respond critically about whether the PR meets your needs. While
 each pull request needs to be signed off by two core developers, you can speed
 up this process by providing your feedback.
 
+.. note::
+
+  The difference between an objective improvement and a subjective nit isn't
+  always clear. Reviewers should recall that code review is primarily about
+  reducing risk in the project. When reviewing code, one should aim at
+  preventing situations which may require a bug fix, a deprecation, or a
+  retraction. Regarding docs: typos, grammar issues and disambiguations are
+  better addressed immediately.
+
 Here are a few important aspects that need to be covered in any code review,
 from high-level questions to a more detailed check-list.
 
@@ -1249,6 +1285,38 @@ from high-level questions to a more detailed check-list.
   instructive?
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
+
+.. _communication:
+
+Communication Guidelines
+------------------------
+
+Reviewing open pull requests (PRs) helps move the project forward. It is a
+great way to get familiar with the codebase and should motivate the
+contributor to keep involved in the project. [1]_
+
+- Every PR, good or bad, is an act of generosity. Opening with a positive
+  comment will help the author feel rewarded, and your subsequent remarks may
+  be heard more clearly. You may feel good also.
+- Begin if possible with the large issues, so the author knows they’ve been
+  understood. Resist the temptation to immediately go line by line, or to open
+  with small pervasive issues.
+- Do not let perfect be the enemy of the good. If you find yourself making
+  many small suggestions that don't fall into the :ref:`code_review`, consider
+  the following approaches:
+
+  - refrain from submitting these;
+  - prefix them as "Nit" so that the contributor knows it's OK not to address;
+  - follow up in a subsequent PR, out of courtesy, you may want to let the
+    original contributor know.
+
+- Do not rush, take the time to make your comments clear and justify your
+  suggestions.
+- You are the face of the project. Bad days occur to everyone, in that
+  occasion you deserve a break: try to take your time and stay offline.
+
+.. [1] Adapted from the numpy `communication guidelines
+       <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
 
 Reading the existing code base
 ==============================
@@ -1308,3 +1376,13 @@ make this task easier and faster (in no particular order).
     <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
     useful to see every occurrence of a pattern (e.g. a function call or a
     variable) in the code base.
+
+- Configure `git blame` to ignore the commit that migrated the code style to
+  `black`.
+
+  .. prompt:: bash $
+
+      git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+  Find out more information in black's
+  `documentation for avoiding ruining git blame <https://black.readthedocs.io/en/stable/guides/introducing_black_to_your_project.html#avoiding-ruining-git-blame>`_.

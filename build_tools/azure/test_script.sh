@@ -4,22 +4,28 @@ set -e
 
 if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "ubuntu-32" ]]; then
+elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
     source $VIRTUALENV/bin/activate
 fi
 
-python --version
-python -c "import numpy; print('numpy %s' % numpy.__version__)"
-python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python -c "\
-try:
-    import pandas
-    print('pandas %s' % pandas.__version__)
-except ImportError:
-    print('pandas not installed')
-"
-python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
-pip list
+if [[ "$BUILD_WITH_ICC" == "true" ]]; then
+    source /opt/intel/oneapi/setvars.sh
+fi
+
+mkdir -p $TEST_DIR
+cp setup.cfg $TEST_DIR
+cd $TEST_DIR
+
+python -c "import sklearn; sklearn.show_versions()"
+python -m threadpoolctl -i sklearn
+
+if ! command -v conda &> /dev/null
+then
+    pip list
+else
+    # conda list provides more info than pip list (when available)
+    conda list
+fi
 
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
@@ -41,10 +47,6 @@ fi
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     TEST_CMD="$TEST_CMD -n2"
 fi
-
-mkdir -p $TEST_DIR
-cp setup.cfg $TEST_DIR
-cd $TEST_DIR
 
 set -x
 $TEST_CMD --pyargs sklearn

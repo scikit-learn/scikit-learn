@@ -12,7 +12,6 @@ from ..base import MultiOutputMixin
 from ..utils import check_random_state, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
 from ..exceptions import ConvergenceWarning
@@ -50,12 +49,13 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     if nom == 1:
         return 0
     if denom == 1:
-        return float('inf')
+        return float("inf")
     return abs(float(np.ceil(np.log(nom) / np.log(denom))))
 
 
-class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
-                      MultiOutputMixin, BaseEstimator):
+class RANSACRegressor(
+    MetaEstimatorMixin, RegressorMixin, MultiOutputMixin, BaseEstimator
+):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
@@ -86,16 +86,26 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     min_samples : int (>= 1) or float ([0, 1]), default=None
         Minimum number of samples chosen randomly from original data. Treated
         as an absolute number of samples for `min_samples >= 1`, treated as a
-        relative number `ceil(min_samples * X.shape[0]`) for
+        relative number `ceil(min_samples * X.shape[0])` for
         `min_samples < 1`. This is typically chosen as the minimal number of
         samples necessary to estimate the given `base_estimator`. By default a
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
-        `min_samples` is chosen as ``X.shape[1] + 1``.
+        `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
+        dependent upon the model, so if a `base_estimator` other than
+        :class:`linear_model.LinearRegression` is used, the user is
+        encouraged to provide a value.
+
+        .. deprecated:: 1.0
+           Not setting `min_samples` explicitly will raise an error in version
+           1.2 for models other than
+           :class:`~sklearn.linear_model.LinearRegression`. To keep the old
+           default behavior, set `min_samples=X.shape[1] + 1` explicitly.
 
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
         By default the threshold is chosen as the MAD (median absolute
-        deviation) of the target values `y`.
+        deviation) of the target values `y`. Points whose residuals are
+        strictly equal to the threshold are considered as inliers.
 
     is_data_valid : callable, default=None
         This function is called with the randomly selected data before the
@@ -137,10 +147,9 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         as 0.99 (the default) and e is the current fraction of inliers w.r.t.
         the total number of samples.
 
-    loss : string, callable, default='absolute_loss'
-        String inputs, "absolute_loss" and "squared_loss" are supported which
-        find the absolute loss and squared loss per sample
-        respectively.
+    loss : str, callable, default='absolute_error'
+        String inputs, 'absolute_error' and 'squared_error' are supported which
+        find the absolute error and squared error per sample respectively.
 
         If ``loss`` is a callable, then it should be a function that takes
         two arrays as inputs, the true and predicted value and returns a 1-D
@@ -151,6 +160,14 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         then this sample is classified as an outlier.
 
         .. versionadded:: 0.18
+
+        .. deprecated:: 1.0
+            The loss 'squared_loss' was deprecated in v1.0 and will be removed
+            in version 1.2. Use `loss='squared_error'` which is equivalent.
+
+        .. deprecated:: 1.0
+            The loss 'absolute_loss' was deprecated in v1.0 and will be removed
+            in version 1.2. Use `loss='absolute_error'` which is equivalent.
 
     random_state : int, RandomState instance, default=None
         The generator used to initialize the centers.
@@ -186,6 +203,29 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
         .. versionadded:: 0.19
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    HuberRegressor : Linear regression model that is robust to outliers.
+    TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
+    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
+
+    References
+    ----------
+    .. [1] https://en.wikipedia.org/wiki/RANSAC
+    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
+    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
+
     Examples
     --------
     >>> from sklearn.linear_model import RANSACRegressor
@@ -197,20 +237,24 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     0.9885...
     >>> reg.predict(X[:1,])
     array([-31.9417...])
+    """  # noqa: E501
 
-    References
-    ----------
-    .. [1] https://en.wikipedia.org/wiki/RANSAC
-    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
-    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
-    """
-    @_deprecate_positional_args
-    def __init__(self, base_estimator=None, *, min_samples=None,
-                 residual_threshold=None, is_data_valid=None,
-                 is_model_valid=None, max_trials=100, max_skips=np.inf,
-                 stop_n_inliers=np.inf, stop_score=np.inf,
-                 stop_probability=0.99, loss='absolute_loss',
-                 random_state=None):
+    def __init__(
+        self,
+        base_estimator=None,
+        *,
+        min_samples=None,
+        residual_threshold=None,
+        is_data_valid=None,
+        is_model_valid=None,
+        max_trials=100,
+        max_skips=np.inf,
+        stop_n_inliers=np.inf,
+        stop_score=np.inf,
+        stop_probability=0.99,
+        loss="absolute_error",
+        random_state=None,
+    ):
 
         self.base_estimator = base_estimator
         self.min_samples = min_samples
@@ -230,7 +274,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
@@ -243,20 +287,26 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
             .. versionadded:: 0.18
 
+        Returns
+        -------
+        self : object
+            Fitted `RANSACRegressor` estimator.
+
         Raises
         ------
         ValueError
             If no valid consensus set could be found. This occurs if
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
-
         """
-        # Need to validate separately here.
-        # We can't pass multi_ouput=True because that would allow y to be csr.
-        check_X_params = dict(accept_sparse='csr')
+        # Need to validate separately here. We can't pass multi_ouput=True
+        # because that would allow y to be csr. Delay expensive finiteness
+        # check to the base estimator's own input validation.
+        check_X_params = dict(accept_sparse="csr", force_all_finite=False)
         check_y_params = dict(ensure_2d=False)
-        X, y = self._validate_data(X, y, validate_separately=(check_X_params,
-                                                              check_y_params))
+        X, y = self._validate_data(
+            X, y, validate_separately=(check_X_params, check_y_params)
+        )
         check_consistent_length(X, y)
 
         if self.base_estimator is not None:
@@ -265,21 +315,29 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             base_estimator = LinearRegression()
 
         if self.min_samples is None:
-            # assume linear model by default
+            if not isinstance(base_estimator, LinearRegression):
+                # FIXME: in 1.2, turn this warning into an error
+                warnings.warn(
+                    "From version 1.2, `min_samples` needs to be explicitly "
+                    "set otherwise an error will be raised. To keep the "
+                    "current behavior, you need to set `min_samples` to "
+                    f"`X.shape[1] + 1 that is {X.shape[1] + 1}",
+                    FutureWarning,
+                )
             min_samples = X.shape[1] + 1
         elif 0 < self.min_samples < 1:
             min_samples = np.ceil(self.min_samples * X.shape[0])
         elif self.min_samples >= 1:
             if self.min_samples % 1 != 0:
-                raise ValueError("Absolute number of samples must be an "
-                                 "integer value.")
+                raise ValueError("Absolute number of samples must be an integer value.")
             min_samples = self.min_samples
         else:
-            raise ValueError("Value for `min_samples` must be scalar and "
-                             "positive.")
+            raise ValueError("Value for `min_samples` must be scalar and positive.")
         if min_samples > X.shape[0]:
-            raise ValueError("`min_samples` may not be larger than number "
-                             "of samples: n_samples = %d." % (X.shape[0]))
+            raise ValueError(
+                "`min_samples` may not be larger than number "
+                "of samples: n_samples = %d." % (X.shape[0])
+            )
 
         if self.stop_probability < 0 or self.stop_probability > 1:
             raise ValueError("`stop_probability` must be in range [0, 1].")
@@ -290,28 +348,46 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         else:
             residual_threshold = self.residual_threshold
 
-        if self.loss == "absolute_loss":
+        # TODO: Remove absolute_loss in v1.2.
+        if self.loss in ("absolute_error", "absolute_loss"):
+            if self.loss == "absolute_loss":
+                warnings.warn(
+                    "The loss 'absolute_loss' was deprecated in v1.0 and will "
+                    "be removed in version 1.2. Use `loss='absolute_error'` "
+                    "which is equivalent.",
+                    FutureWarning,
+                )
             if y.ndim == 1:
                 loss_function = lambda y_true, y_pred: np.abs(y_true - y_pred)
             else:
-                loss_function = lambda \
-                    y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
-
-        elif self.loss == "squared_loss":
+                loss_function = lambda y_true, y_pred: np.sum(
+                    np.abs(y_true - y_pred), axis=1
+                )
+        # TODO: Remove squared_loss in v1.2.
+        elif self.loss in ("squared_error", "squared_loss"):
+            if self.loss == "squared_loss":
+                warnings.warn(
+                    "The loss 'squared_loss' was deprecated in v1.0 and will "
+                    "be removed in version 1.2. Use `loss='squared_error'` "
+                    "which is equivalent.",
+                    FutureWarning,
+                )
             if y.ndim == 1:
                 loss_function = lambda y_true, y_pred: (y_true - y_pred) ** 2
             else:
-                loss_function = lambda \
-                    y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
+                loss_function = lambda y_true, y_pred: np.sum(
+                    (y_true - y_pred) ** 2, axis=1
+                )
 
         elif callable(self.loss):
             loss_function = self.loss
 
         else:
             raise ValueError(
-                "loss should be 'absolute_loss', 'squared_loss' or a callable."
-                "Got %s. " % self.loss)
-
+                "loss should be 'absolute_error', 'squared_error' or a "
+                "callable. Got %s. "
+                % self.loss
+            )
 
         random_state = check_random_state(self.random_state)
 
@@ -320,14 +396,16 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         except ValueError:
             pass
 
-        estimator_fit_has_sample_weight = has_fit_parameter(base_estimator,
-                                                            "sample_weight")
+        estimator_fit_has_sample_weight = has_fit_parameter(
+            base_estimator, "sample_weight"
+        )
         estimator_name = type(base_estimator).__name__
-        if (sample_weight is not None and not
-                estimator_fit_has_sample_weight):
-            raise ValueError("%s does not support sample_weight. Samples"
-                             " weights are only used for the calibration"
-                             " itself." % estimator_name)
+        if sample_weight is not None and not estimator_fit_has_sample_weight:
+            raise ValueError(
+                "%s does not support sample_weight. Samples"
+                " weights are only used for the calibration"
+                " itself." % estimator_name
+            )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -350,19 +428,24 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         while self.n_trials_ < max_trials:
             self.n_trials_ += 1
 
-            if (self.n_skips_no_inliers_ + self.n_skips_invalid_data_ +
-                    self.n_skips_invalid_model_) > self.max_skips:
+            if (
+                self.n_skips_no_inliers_
+                + self.n_skips_invalid_data_
+                + self.n_skips_invalid_model_
+            ) > self.max_skips:
                 break
 
             # choose random sample set
-            subset_idxs = sample_without_replacement(n_samples, min_samples,
-                                                     random_state=random_state)
+            subset_idxs = sample_without_replacement(
+                n_samples, min_samples, random_state=random_state
+            )
             X_subset = X[subset_idxs]
             y_subset = y[subset_idxs]
 
             # check if random sample set is valid
-            if (self.is_data_valid is not None
-                    and not self.is_data_valid(X_subset, y_subset)):
+            if self.is_data_valid is not None and not self.is_data_valid(
+                X_subset, y_subset
+            ):
                 self.n_skips_invalid_data_ += 1
                 continue
 
@@ -370,12 +453,14 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             if sample_weight is None:
                 base_estimator.fit(X_subset, y_subset)
             else:
-                base_estimator.fit(X_subset, y_subset,
-                                   sample_weight=sample_weight[subset_idxs])
+                base_estimator.fit(
+                    X_subset, y_subset, sample_weight=sample_weight[subset_idxs]
+                )
 
             # check if estimated model is valid
-            if (self.is_model_valid is not None and not
-                    self.is_model_valid(base_estimator, X_subset, y_subset)):
+            if self.is_model_valid is not None and not self.is_model_valid(
+                base_estimator, X_subset, y_subset
+            ):
                 self.n_skips_invalid_model_ += 1
                 continue
 
@@ -384,7 +469,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             residuals_subset = loss_function(y, y_pred)
 
             # classify data into inliers and outliers
-            inlier_mask_subset = residuals_subset < residual_threshold
+            inlier_mask_subset = residuals_subset <= residual_threshold
             n_inliers_subset = np.sum(inlier_mask_subset)
 
             # less inliers -> skip current random sample
@@ -398,13 +483,11 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             y_inlier_subset = y[inlier_idxs_subset]
 
             # score of inlier data set
-            score_subset = base_estimator.score(X_inlier_subset,
-                                                y_inlier_subset)
+            score_subset = base_estimator.score(X_inlier_subset, y_inlier_subset)
 
             # same number of inliers but worse score -> skip current random
             # sample
-            if (n_inliers_subset == n_inliers_best
-                    and score_subset < score_best):
+            if n_inliers_subset == n_inliers_best and score_subset < score_best:
                 continue
 
             # save current random sample as best sample
@@ -417,38 +500,49 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
             max_trials = min(
                 max_trials,
-                _dynamic_max_trials(n_inliers_best, n_samples,
-                                    min_samples, self.stop_probability))
+                _dynamic_max_trials(
+                    n_inliers_best, n_samples, min_samples, self.stop_probability
+                ),
+            )
 
             # break if sufficient number of inliers or score is reached
-            if n_inliers_best >= self.stop_n_inliers or \
-                            score_best >= self.stop_score:
+            if n_inliers_best >= self.stop_n_inliers or score_best >= self.stop_score:
                 break
 
         # if none of the iterations met the required criteria
         if inlier_mask_best is None:
-            if ((self.n_skips_no_inliers_ + self.n_skips_invalid_data_ +
-                    self.n_skips_invalid_model_) > self.max_skips):
+            if (
+                self.n_skips_no_inliers_
+                + self.n_skips_invalid_data_
+                + self.n_skips_invalid_model_
+            ) > self.max_skips:
                 raise ValueError(
                     "RANSAC skipped more iterations than `max_skips` without"
                     " finding a valid consensus set. Iterations were skipped"
                     " because each randomly chosen sub-sample failed the"
                     " passing criteria. See estimator attributes for"
-                    " diagnostics (n_skips*).")
+                    " diagnostics (n_skips*)."
+                )
             else:
                 raise ValueError(
                     "RANSAC could not find a valid consensus set. All"
                     " `max_trials` iterations were skipped because each"
                     " randomly chosen sub-sample failed the passing criteria."
-                    " See estimator attributes for diagnostics (n_skips*).")
+                    " See estimator attributes for diagnostics (n_skips*)."
+                )
         else:
-            if (self.n_skips_no_inliers_ + self.n_skips_invalid_data_ +
-                    self.n_skips_invalid_model_) > self.max_skips:
-                warnings.warn("RANSAC found a valid consensus set but exited"
-                              " early due to skipping more iterations than"
-                              " `max_skips`. See estimator attributes for"
-                              " diagnostics (n_skips*).",
-                              ConvergenceWarning)
+            if (
+                self.n_skips_no_inliers_
+                + self.n_skips_invalid_data_
+                + self.n_skips_invalid_model_
+            ) > self.max_skips:
+                warnings.warn(
+                    "RANSAC found a valid consensus set but exited"
+                    " early due to skipping more iterations than"
+                    " `max_skips`. See estimator attributes for"
+                    " diagnostics (n_skips*).",
+                    ConvergenceWarning,
+                )
 
         # estimate final model using all inliers
         if sample_weight is None:
@@ -457,7 +551,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             base_estimator.fit(
                 X_inlier_best,
                 y_inlier_best,
-                sample_weight=sample_weight[inlier_best_idxs_subset])
+                sample_weight=sample_weight[inlier_best_idxs_subset],
+            )
 
         self.estimator_ = base_estimator
         self.inlier_mask_ = inlier_mask_best
@@ -470,7 +565,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
@@ -478,20 +574,25 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             Returns predicted values.
         """
         check_is_fitted(self)
-
+        X = self._validate_data(
+            X,
+            force_all_finite=False,
+            accept_sparse=True,
+            reset=False,
+        )
         return self.estimator_.predict(X)
 
     def score(self, X, y):
-        """Returns the score of the prediction.
+        """Return the score of the prediction.
 
         This is a wrapper for `estimator_.score(X, y)`.
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples, n_features]
+        X : (array-like or sparse matrix} of shape (n_samples, n_features)
             Training data.
 
-        y : array, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
         Returns
@@ -500,13 +601,19 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             Score of the prediction.
         """
         check_is_fitted(self)
-
+        X = self._validate_data(
+            X,
+            force_all_finite=False,
+            accept_sparse=True,
+            reset=False,
+        )
         return self.estimator_.score(X, y)
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }

@@ -8,8 +8,8 @@ from .utils import make_gen_classif_scorers
 class SVCBenchmark(Predictor, Estimator, Benchmark):
     """Benchmarks for SVC."""
 
-    param_names = ['kernel']
-    params = (['linear', 'poly', 'rbf', 'sigmoid'],)
+    param_names = ["kernel"]
+    params = (["linear", "poly", "rbf", "sigmoid"],)
 
     def setup_cache(self):
         super().setup_cache()
@@ -18,13 +18,11 @@ class SVCBenchmark(Predictor, Estimator, Benchmark):
         return _synth_classification_dataset()
 
     def make_estimator(self, params):
-        kernel, = params
+        (kernel,) = params
 
-        estimator = SVC(max_iter=100,
-                        tol=1e-16,
-                        kernel=kernel,
-                        random_state=0,
-                        gamma='scale')
+        estimator = SVC(
+            max_iter=100, tol=1e-16, kernel=kernel, random_state=0, gamma="scale"
+        )
 
         return estimator
 
