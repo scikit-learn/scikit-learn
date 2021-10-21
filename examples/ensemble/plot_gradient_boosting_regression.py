@@ -45,19 +45,19 @@ X, y = diabetes.data, diabetes.target
 # for testing. We will also set the regression model parameters. You can play
 # with these parameters to see how the results change.
 #
-# n_estimators : the number of boosting stages that will be performed.
+# `n_estimators` : the number of boosting stages that will be performed.
 # Later, we will plot deviance against boosting iterations.
 #
-# max_depth : limits the number of nodes in the tree.
+# `max_depth` : limits the number of nodes in the tree.
 # The best value depends on the interaction of the input variables.
 #
-# min_samples_split : the minimum number of samples required to split an
+# `min_samples_split` : the minimum number of samples required to split an
 # internal node.
 #
-# learning_rate : how much the contribution of each tree will shrink.
+# `learning_rate` : how much the contribution of each tree will shrink.
 #
-# loss : loss function to optimize. The least squares function is  used in this
-# case however, there are many other options (see
+# `loss` : loss function to optimize. The least squares function is  used in
+# this case however, there are many other options (see
 # :class:`~sklearn.ensemble.GradientBoostingRegressor` ).
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -74,7 +74,7 @@ params = {
 
 # %%
 # Fit regression model
-# -------------------------------------
+# --------------------
 #
 # Now we will initiate the gradient boosting regressors and fit it with our
 # training data. Let's also look and the mean squared error on the test data.
@@ -87,7 +87,7 @@ print("The mean squared error (MSE) on test set: {:.4f}".format(mse))
 
 # %%
 # Plot training deviance
-# -------------------------------------
+# ----------------------
 #
 # Finally, we will visualize the results. To do that we will first compute the
 # test set deviance and then plot it against boosting iterations.
@@ -116,12 +116,13 @@ plt.show()
 
 # %%
 # Plot feature importance
-# -------------------------------------
+# -----------------------
 #
-# Careful, impurity-based feature importances can be misleading for
-# high cardinality features (many unique values). As an alternative,
-# the permutation importances of ``reg`` can be computed on a
-# held out test set. See :ref:`permutation_importance` for more details.
+# .. warning::
+#    Careful, impurity-based feature importances can be misleading for
+#    **high cardinality** features (many unique values). As an alternative,
+#    the permutation importances of ``reg`` can be computed on a
+#    held out test set. See :ref:`permutation_importance` for more details.
 #
 # For this example, the impurity-based and permutation methods identify the
 # same 2 strongly predictive features but not in the same order. The third most
