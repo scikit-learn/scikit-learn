@@ -14,7 +14,7 @@ from ..utils.validation import check_array, check_X_y
 from ..utils.multiclass import check_classification_targets
 
 
-def _compute_mi_cc(x, y, n_neighbors):
+def _compute_mi_cc(x, y, n_neighbors, n_jobs):
     """Compute mutual information between two continuous variables.
 
     Parameters
@@ -25,6 +25,12 @@ def _compute_mi_cc(x, y, n_neighbors):
 
     n_neighbors : int
         Number of nearest neighbors to search for each point, see [1]_.
+
+    n_jobs : int, default=None
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -51,7 +57,7 @@ def _compute_mi_cc(x, y, n_neighbors):
     xy = np.hstack((x, y))
 
     # Here we rely on NearestNeighbors to select the fastest algorithm.
-    nn = NearestNeighbors(metric="chebyshev", n_neighbors=n_neighbors)
+    nn = NearestNeighbors(metric="chebyshev", n_neighbors=n_neighbors, n_jobs=n_jobs)
 
     nn.fit(xy)
     radius = nn.kneighbors()[0]
@@ -77,7 +83,7 @@ def _compute_mi_cc(x, y, n_neighbors):
     return max(0, mi)
 
 
-def _compute_mi_cd(c, d, n_neighbors):
+def _compute_mi_cd(c, d, n_neighbors, n_jobs):
     """Compute mutual information between continuous and discrete variables.
 
     Parameters
@@ -90,6 +96,12 @@ def _compute_mi_cd(c, d, n_neighbors):
 
     n_neighbors : int
         Number of nearest neighbors to search for each point, see [1]_.
+
+    n_jobs : int, default=None
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -115,7 +127,7 @@ def _compute_mi_cd(c, d, n_neighbors):
     radius = np.empty(n_samples)
     label_counts = np.empty(n_samples)
     k_all = np.empty(n_samples)
-    nn = NearestNeighbors()
+    nn = NearestNeighbors(n_jobs=n_jobs)
     for label in np.unique(d):
         mask = d == label
         count = np.sum(mask)
@@ -150,7 +162,7 @@ def _compute_mi_cd(c, d, n_neighbors):
     return max(0, mi)
 
 
-def _compute_mi(x, y, x_discrete, y_discrete, n_neighbors=3):
+def _compute_mi(x, y, x_discrete, y_discrete, n_neighbors=3, n_jobs=None):
     """Compute mutual information between two variables.
 
     This is a simple wrapper which selects a proper function to call based on
@@ -159,11 +171,11 @@ def _compute_mi(x, y, x_discrete, y_discrete, n_neighbors=3):
     if x_discrete and y_discrete:
         return mutual_info_score(x, y)
     elif x_discrete and not y_discrete:
-        return _compute_mi_cd(y, x, n_neighbors)
+        return _compute_mi_cd(y, x, n_neighbors, n_jobs)
     elif not x_discrete and y_discrete:
-        return _compute_mi_cd(x, y, n_neighbors)
+        return _compute_mi_cd(x, y, n_neighbors, n_jobs)
     else:
-        return _compute_mi_cc(x, y, n_neighbors)
+        return _compute_mi_cc(x, y, n_neighbors, n_jobs)
 
 
 def _iterate_columns(X, columns=None):
@@ -202,6 +214,7 @@ def _estimate_mi(
     discrete_features="auto",
     discrete_target=False,
     n_neighbors=3,
+    n_jobs=None,
     copy=True,
     random_state=None,
 ):
@@ -229,6 +242,12 @@ def _estimate_mi(
         Number of neighbors to use for MI estimation for continuous variables,
         see [1]_ and [2]_. Higher values reduce variance of the estimation, but
         could introduce a bias.
+
+    n_jobs : int, default=None
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
@@ -298,7 +317,7 @@ def _estimate_mi(
         y += 1e-10 * np.maximum(1, np.mean(np.abs(y))) * rng.randn(n_samples)
 
     mi = [
-        _compute_mi(x, y, discrete_feature, discrete_target, n_neighbors)
+        _compute_mi(x, y, discrete_feature, discrete_target, n_neighbors, n_jobs)
         for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
     ]
 
@@ -306,7 +325,7 @@ def _estimate_mi(
 
 
 def mutual_info_regression(
-    X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
+    X, y, *, discrete_features="auto", n_neighbors=3, n_jobs=None, copy=True, random_state=None
 ):
     """Estimate mutual information for a continuous target variable.
 
@@ -341,6 +360,12 @@ def mutual_info_regression(
         Number of neighbors to use for MI estimation for continuous variables,
         see [2]_ and [3]_. Higher values reduce variance of the estimation, but
         could introduce a bias.
+
+    n_jobs : int, default=None
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
@@ -381,11 +406,11 @@ def mutual_info_regression(
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector", Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
-    return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy, random_state)
+    return _estimate_mi(X, y, discrete_features, False, n_neighbors, n_jobs, copy, random_state)
 
 
 def mutual_info_classif(
-    X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
+    X, y, *, discrete_features="auto", n_neighbors=3, n_jobs=None, copy=True, random_state=None
 ):
     """Estimate mutual information for a discrete target variable.
 
@@ -420,6 +445,12 @@ def mutual_info_classif(
         Number of neighbors to use for MI estimation for continuous variables,
         see [2]_ and [3]_. Higher values reduce variance of the estimation, but
         could introduce a bias.
+
+    n_jobs : int, default=None
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
@@ -461,4 +492,4 @@ def mutual_info_classif(
            of a Random Vector:, Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
     check_classification_targets(y)
-    return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy, random_state)
+    return _estimate_mi(X, y, discrete_features, True, n_neighbors, n_jobs, copy, random_state)
