@@ -611,29 +611,28 @@ def test_grower_interaction_constraints():
         )
         grower.grow()
 
-        root_feature_splits.append(grower.root.split_info.feature_idx)
+        root_feature_idx = grower.root.split_info.feature_idx
+        root_feature_splits.append(root_feature_idx)
 
-        if grower.root.split_info.feature_idx in {0, 1, 2}:
-            root_feature_idx = grower.root.split_info.feature_idx
-            constraint_set = {0: {0, 1}, 1: {0, 1, 2}, 2: {1, 2}}[root_feature_idx]
-            for node in (grower.root.left_child, grower.root.right_child):
-                # test allowed_features of children of root node
-                assert_array_equal(node.allowed_features, list(constraint_set))
-            if root_feature_idx in {0, 2}:
-                # test that {0, 1} and {1, 2} don't interact with each other
-                for node in get_all_children(grower.root):
-                    if not node.is_leaf:
-                        assert (
-                            node.split_info.feature_idx
-                            in {0: {0, 1}, 2: {1, 2}}[root_feature_idx]
-                        )
-            for node in get_all_children(grower.root):
-                if not node.is_leaf:
-                    assert node.split_info.feature_idx in constraint_set
-        elif grower.root.split_info.feature_idx in {3, 4, 5}:
-            for node in get_all_children(grower.root):
-                if not node.is_leaf:
-                    assert node.split_info.feature_idx in {3, 4, 5}
+        feature_idx_to_constraint_set = {
+            0: {0, 1},
+            1: {0, 1, 2},
+            2: {1, 2},
+            3: {3, 4, 5},
+            4: {3, 4, 5},
+            5: {3, 4, 5},
+        }
+
+        root_constraint_set = feature_idx_to_constraint_set[root_feature_idx]
+        for node in (grower.root.left_child, grower.root.right_child):
+            # Root's children's allowed_features must be the root's constraints set.
+            assert_array_equal(node.allowed_features, list(root_constraint_set))
+        for node in get_all_children(grower.root):
+            # Nodes accessible from the root must have their index in the root's
+            # constraints set. For example, sets {0, 1} and {1, 2} must not interact
+            # with each other.
+            if not node.is_leaf:
+                assert node.split_info.feature_idx in root_constraint_set
 
     # Make sure that every feature is used at least once as split for the root node.
     assert len(set(root_feature_splits)) == n_features
