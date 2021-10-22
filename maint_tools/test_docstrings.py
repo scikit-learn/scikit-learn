@@ -13,25 +13,13 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 # List of modules ignored when checking for numpydoc validation.
 DOCSTRING_IGNORE_LIST = [
-    "KNNImputer",
-    "LabelPropagation",
     "LabelSpreading",
-    "LocallyLinearEmbedding",
-    "MultiLabelBinarizer",
-    "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
-    "MultiTaskLasso",
-    "MultiTaskLassoCV",
-    "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "PassiveAggressiveRegressor",
-    "QuadraticDiscriminantAnalysis",
-    "SparseRandomProjection",
-    "SpectralBiclustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
     "StackingRegressor",
-    "TransformedTargetRegressor",
 ]
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
@@ -228,6 +216,10 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.extmath.weighted_mode",
     "sklearn.utils.fixes.delayed",
     "sklearn.utils.fixes.linspace",
+    # To be fixed in upstream issue:
+    # https://github.com/joblib/threadpoolctl/issues/108
+    "sklearn.utils.fixes.threadpool_info",
+    "sklearn.utils.fixes.threadpool_limits",
     "sklearn.utils.gen_batches",
     "sklearn.utils.gen_even_slices",
     "sklearn.utils.get_chunk_n_rows",

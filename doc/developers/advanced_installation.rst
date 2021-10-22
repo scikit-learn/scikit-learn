@@ -47,33 +47,52 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-        git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
-        cd scikit-learn
+     git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
+
+#. Install a recent version of Python (3.9 is recommended at the time of writing)
+   for instance using Miniforge3_. Miniforge provides a conda-based distribution
+   of Python and the most popular scientific libraries.
+
+   If you installed Python with conda, we recommend to create a dedicated
+   `conda environment`_ with all the build dependencies of scikit-learn
+   (namely NumPy_, SciPy_, and Cython_):
+
+   .. prompt:: bash $
+
+     conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython
+     conda activate sklearn-env
+
+#. **Alternative to conda:** If you run Linux or similar, you can instead use
+   your system's Python provided it is recent enough (3.7 or higher
+   at the time of writing). In this case, we recommend to create a dedicated
+   virtualenv_ and install the scikit-learn build dependencies with pip:
+
+   .. prompt:: bash $
+
+     python3 -m venv sklearn-env
+     source sklearn-env/bin/activate
+     pip install wheel numpy scipy cython
 
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
 
-#. Optional (but recommended): create and activate a dedicated virtualenv_
-   or `conda environment`_.
-
-#. Install NumPy_, SciPy_, and Cython_ and build the project with pip in
-   :ref:`editable_mode`:
+#. Build the project with pip in :ref:`editable_mode`:
 
    .. prompt:: bash $
 
-        pip install numpy scipy cython
-        pip install --verbose --no-build-isolation --editable .
+     pip install --verbose --no-build-isolation --editable .
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`:
 
    .. prompt:: bash $
 
-    python -c "import sklearn; sklearn.show_versions()"
+     python -c "import sklearn; sklearn.show_versions()"
 
 #. Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
    the tests on the module of your choice.
@@ -439,6 +458,7 @@ the base system and these steps will not be necessary.
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
 
 Alternative compilers
 =====================

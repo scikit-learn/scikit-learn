@@ -1239,7 +1239,7 @@ class SGDClassifier(BaseSGDClassifier):
         ----------
         Zadrozny and Elkan, "Transforming classifier scores into multiclass
         probability estimates", SIGKDD'02,
-        http://www.research.ibm.com/people/z/zadrozny/kdd2002-Transf.pdf
+        https://dl.acm.org/doi/pdf/10.1145/775047.775151
 
         The justification for the formula in the loss="modified_huber"
         case is in the appendix B in:
