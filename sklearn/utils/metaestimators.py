@@ -29,8 +29,18 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         out = super().get_params(deep=deep)
         if not deep:
             return out
+
         estimators = getattr(self, attr)
-        out.update(estimators)
+        try:
+            out.update(estimators)
+        except (TypeError, ValueError):
+            # Ignore TypeError for cases where estimators is not a list of
+            # (name, estimator) and ignore ValueError when the list is not
+            # formated correctly. This is to prevent errors when calling
+            # `set_params`. `BaseEstimator.set_params` calls `get_params` which
+            # can error for invalid values for `estimators`.
+            return out
+
         for name, estimator in estimators:
             if hasattr(estimator, "get_params"):
                 for key, value in estimator.get_params(deep=True).items():
@@ -42,14 +52,15 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         # 1. All steps
         if attr in params:
             setattr(self, attr, params.pop(attr))
-        # 2. Step replacement
+        # 2. Replace items with estimators in params
         items = getattr(self, attr)
-        names = []
-        if items:
-            names, _ = zip(*items)
-        for name in list(params.keys()):
-            if "__" not in name and name in names:
-                self._replace_estimator(attr, name, params.pop(name))
+        if isinstance(items, list) and items:
+            # Get item names used to identify valid names in params
+            item_names, _ = zip(*items)
+            for name in list(params.keys()):
+                if "__" not in name and name in item_names:
+                    self._replace_estimator(attr, name, params.pop(name))
+
         # 3. Step parameters and other initialisation arguments
         super().set_params(**params)
         return self

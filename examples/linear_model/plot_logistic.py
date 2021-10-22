@@ -9,8 +9,6 @@ synthetic dataset, classify values as either 0 or 1,
 i.e. class one or two, using the logistic curve.
 
 """
-print(__doc__)
-
 
 # Code source: Gael Varoquaux
 # License: BSD 3 clause
