@@ -203,9 +203,11 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    n_oversamples_rate : float, default=0.8
-        The percentage of features that need to be extract.
-        Must be of range [0, infinity).
+    n_oversamples : int, default=10
+        This parameter is only relevant when `svd_solver="randomized"`.
+        It corresponds to the additional number of random vectors to sample the
+        range of `X` so as to ensure proper conditioning. See
+        :func:`~sklearn.utils.extmath.randomized_svd` for more details.
 
         .. versionadded:: 1.0.1
 
@@ -358,7 +360,7 @@ class PCA(_BasePCA):
         svd_solver="auto",
         tol=0.0,
         iterated_power="auto",
-        n_oversamples_rate=None,
+        n_oversamples=10,
         random_state=None,
     ):
         self.n_components = n_components
@@ -367,7 +369,7 @@ class PCA(_BasePCA):
         self.svd_solver = svd_solver
         self.tol = tol
         self.iterated_power = iterated_power
-        self.n_oversamples_rate = n_oversamples_rate
+        self.n_oversamples = n_oversamples
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -388,10 +390,10 @@ class PCA(_BasePCA):
             Returns the instance itself.
         """
         check_scalar(
-            self.n_oversamples_rate,
-            "n_oversamples_rate",
-            min_val=0,
-            target_type=numbers.Real,
+            self.n_oversamples,
+            "n_oversamples",
+            min_val=1,
+            target_type=numbers.Integral,
         )
 
         self._fit(X)
@@ -596,14 +598,10 @@ class PCA(_BasePCA):
 
         elif svd_solver == "randomized":
             # sign flipping is done inside
-            if self.n_oversamples_rate is not None:
-                n_oversamples = int(min(X.shape) * self.n_oversamples_rate)
-            else:
-                n_oversamples = 10
             U, S, Vt = randomized_svd(
                 X,
                 n_components=n_components,
-                n_oversamples=n_oversamples,
+                n_oversamples=self.n_oversamples,
                 n_iter=self.iterated_power,
                 flip_sign=True,
                 random_state=random_state,

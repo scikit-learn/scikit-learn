@@ -52,6 +52,13 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Expose a parameter `n_oversamples` to tune the `randomized_svd` and get
+  accurate results when the number of features is large.
+  :pr:`21109` by :user:`Smile <x-shadow-man>`.
+
 :mod:`sklearn.ensemble`
 .......................
 

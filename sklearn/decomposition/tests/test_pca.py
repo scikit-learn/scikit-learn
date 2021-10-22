@@ -10,9 +10,6 @@ from sklearn.decomposition import PCA
 from sklearn.datasets import load_iris
 from sklearn.decomposition._pca import _assess_dimension
 from sklearn.decomposition._pca import _infer_dimension
-from scipy.sparse.linalg import svds
-from scipy.linalg import svd
-
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
@@ -661,47 +658,51 @@ def test_assess_dimesion_rank_one():
         assert _assess_dimension(s, rank, n_samples) == -np.inf
 
 
-@pytest.mark.parametrize("nfeat", [10, 11, 12, 20, 100])
-@pytest.mark.parametrize("seed", range(5))
-def test_pca_svd_output(nfeat, seed):
-    # Test results consistency
-    rng = np.random.RandomState(seed)
-    X = rng.randn(10 ** 5, nfeat)
-    val_num = 3
+def test_pca_randomized_svd_n_oversamples():
+    """Check that exposing and setting `n_oversamples` will provide accurate results
+    even when `X` as a large number of features.
 
-    # The result is the same as svd and svds
-    pca = PCA(n_components=1, n_oversamples_rate=1)
-    x_tranformed = pca.fit_transform(X).reshape(-1)
-    x_tranformed = np.array([round(abs(v), val_num) for v in x_tranformed])
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20589
+    """
+    rng = np.random.RandomState(0)
+    n_features = 100
+    X = rng.randn(1_000, n_features)
 
-    # sparse svd
-    U1, S1, _ = svds(X, k=1, return_singular_vectors="u")
-    x_tranformed1 = U1[:, 0] * S1[0]
-    x_tranformed1 = np.array([round(abs(v), val_num) for v in x_tranformed1])
-    diff1 = np.linalg.norm(x_tranformed - x_tranformed1, ord=2)
+    # The default value of `n_oversamples` will lead to inaccurate results
+    # We force it to the number of features.
+    pca_randomized = PCA(
+        n_components=1, svd_solver="randomized", n_oversamples=n_features
+    ).fit(X)
+    pca_full = PCA(n_components=1, svd_solver="full").fit(X)
+    pca_arpack = PCA(n_components=1, svd_solver="arpack").fit(X)
 
-    # dense svd
-    U2, S2, Vh2 = svd(X, full_matrices=False)
-    x_tranformed2 = U2[:, 0] * S2[0]
-    x_tranformed2 = np.array([round(abs(v), val_num) for v in x_tranformed2])
-    diff2 = np.linalg.norm(x_tranformed - x_tranformed2, ord=2)
-
-    assert diff1 < nfeat
-    assert diff2 < nfeat
+    assert np.sum(
+        np.abs(pca_full.components_) - np.abs(pca_arpack.components_)
+    ) == pytest.approx(0, rel=1e-8)
+    assert np.sum(
+        np.abs(pca_randomized.components_) - np.abs(pca_arpack.components_)
+    ) == pytest.approx(0, rel=1e-8)
 
 
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
         (
-            {"n_components": 1, "n_oversamples_rate": 0.8},
+            {"n_oversamples": 0},
             ValueError,
-            "n_oversamples_rate must be >= 0",
+            "n_oversamples == 0, must be >= 1.",
+        ),
+        (
+            {"n_oversamples": 1.5},
+            TypeError,
+            "n_oversamples must be an instance of <class 'numbers.Integral'>",
         ),
     ],
 )
-@pytest.mark.parametrize("input", np.random.randn(10 ** 5, 20))
-def test_pca_params_validation(input, params, err_type, err_msg):
+def test_pca_params_validation(params, err_type, err_msg):
     """Check the parameters validation in `PCA`."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(100, 20)
     with pytest.raises(err_type, match=err_msg):
-        PCA(**params).fit(input)
+        PCA(**params).fit(X)
