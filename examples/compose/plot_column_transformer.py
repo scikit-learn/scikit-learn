@@ -15,6 +15,7 @@ This example demonstrates how to use
 :class:`~sklearn.compose.ColumnTransformer` on a dataset containing
 different types of features. The choice of features is not particularly
 helpful, but serves to illustrate the technique.
+
 """
 
 # Author: Matt Terry <matt.terry@gmail.com>

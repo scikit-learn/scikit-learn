@@ -5,7 +5,9 @@ Prediction Intervals for Gradient Boosting Regression
 
 This example shows how quantile regression can be used to create prediction
 intervals.
+
 """
+
 # %%
 # Generate some data for a synthetic regression problem by applying the
 # function f to uniformly sampled random inputs.

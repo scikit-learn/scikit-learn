@@ -21,6 +21,7 @@ for a very short time. Training longer would result in weights with a much
 smoother spatial appearance. The example will throw a warning because it
 doesn't converge, in this case this is what we want because of CI's time
 constraints.
+
 """
 
 import warnings
@@ -29,8 +30,6 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_openml
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPClassifier
-
-print(__doc__)
 
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml("mnist_784", version=1, return_X_y=True)

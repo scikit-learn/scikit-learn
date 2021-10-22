@@ -758,7 +758,6 @@ class BiclusterMixin:
             Indices of rows in the dataset that belong to the bicluster.
         col_ind : ndarray, dtype=np.intp
             Indices of columns in the dataset that belong to the bicluster.
-
         """
         rows = self.rows_[i]
         columns = self.columns_[i]

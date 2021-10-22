@@ -43,6 +43,28 @@ Fixed models
   between sparse and dense input. :pr:`21195`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Compute `y_std` properly with multi-target in
+  :class:`sklearn.gaussian_process.GaussianProcessRegressor` allowing
+  proper normalization in multi-target scene.
+  :pr:`20761` by :user:`Patrick de C. T. R. Ferreira <patrickctrf>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Efficiency| Fixed an efficiency regression introduced in version 1.0.0 in the
+  `transform` method of :class:`feature_extraction.text.CountVectorizer` which no
+  longer checks for uppercase characters in the provided vocabulary. :pr:`21251`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Improves stability of :class:`linear_model.LassoLars` for different
+  versions of openblas. :pr:`21340` by `Thomas Fan`_.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -53,6 +75,29 @@ Fixed models
   an error for `bsr` and `dok` sparse matrices in methods: `fit`, `kneighbors`
   and `radius_neighbors`, due to handling of explicit zeros in `bsr` and `dok`
   :term:`sparse graph` formats. :pr:`21199` by `Thomas Fan`_.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Fix| :meth:`pipeline.Pipeline.get_feature_names_out` correctly passes feature
+  names out from one step of a pipeline to the next. :pr:`21351` by
+  `Thomas Fan`_.
+
+:mod:`sklearn.svm`
+..................
+
+- |Fix| :class:`svm.SVC` and :class:`svm.SVR` check for an inconsistency
+  in its internal representation and raise an error instead of segfaulting.
+  This fix also resolves
+  `CVE-2020-28975 <https://nvd.nist.gov/vuln/detail/CVE-2020-28975>`__.
+  :pr:`21336` by `Thomas Fan`_.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Solve a bug in :func:`~sklearn.utils.metaestimators.if_delegate_has_method`
+  where the underlying check for an attribute did not work with NumPy arrays.
+  :pr:`21145` by :user:`Zahlii <Zahlii>`.
 
 .. _changes_1_0:
 
@@ -675,6 +720,10 @@ Changelog
   of the neighbors graph along some minimum distance pairs, instead of changing
   every infinite distances to zero. :pr:`20531` by `Roman Yurchak`_ and `Tom
   Dupre la Tour`_.
+
+- |Fix| Decrease the numerical default tolerance in the lobpcg call
+  in :func:`manifold.spectral_embedding` to prevent numerical instability.
+  :pr:`21194` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.metrics`
 ......................
