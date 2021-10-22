@@ -2853,7 +2853,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         X : ndarray of shape (n_samples, n_features)
             Training data.
         y : ndarray of shape (n_samples, n_targets)
-            Target. Will be cast to X's dtype if necessary.
+            Training target variable. Will be cast to X's dtype if necessary.
 
         Returns
         -------
