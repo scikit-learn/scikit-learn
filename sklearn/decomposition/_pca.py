@@ -209,7 +209,7 @@ class PCA(_BasePCA):
         range of `X` so as to ensure proper conditioning. See
         :func:`~sklearn.utils.extmath.randomized_svd` for more details.
 
-        .. versionadded:: 1.0.1
+        .. versionadded:: 1.1
 
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
