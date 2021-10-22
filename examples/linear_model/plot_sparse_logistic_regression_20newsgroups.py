@@ -17,7 +17,11 @@ instead.
 A more traditional (and possibly better) way to predict on a sparse subset of
 input features would be to use univariate feature selection followed by a
 traditional (l2-penalised) logistic regression model.
+
 """
+
+# Author: Arthur Mensch
+
 import timeit
 import warnings
 
@@ -28,9 +32,6 @@ from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.exceptions import ConvergenceWarning
-
-print(__doc__)
-# Author: Arthur Mensch
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
 t0 = timeit.default_timer()

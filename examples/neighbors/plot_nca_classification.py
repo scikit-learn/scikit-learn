@@ -12,6 +12,7 @@ using the Euclidean distance after the transformation learned by Neighborhood
 Components Analysis. The latter aims to find a linear transformation that
 maximises the (stochastic) nearest neighbor classification accuracy on the
 training set.
+
 """
 
 # License: BSD 3 clause
@@ -25,8 +26,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier, NeighborhoodComponentsAnalysis
 from sklearn.pipeline import Pipeline
 
-
-print(__doc__)
 
 n_neighbors = 1
 
