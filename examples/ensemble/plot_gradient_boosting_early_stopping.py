@@ -29,6 +29,7 @@ This example illustrates how the early stopping can used in the
 almost the same accuracy as compared to a model built without early stopping
 using many fewer estimators. This can significantly reduce training time,
 memory usage and prediction latency.
+
 """
 
 # Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
@@ -43,8 +44,6 @@ import matplotlib.pyplot as plt
 from sklearn import ensemble
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
-
-print(__doc__)
 
 data_list = [datasets.load_iris(), datasets.load_digits()]
 data_list = [(d.data, d.target) for d in data_list]

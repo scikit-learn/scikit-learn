@@ -9,7 +9,6 @@ matrix decomposition (dimension reduction) methods from the module
 :ref:`decompositions`) .
 
 """
-print(__doc__)
 
 # Authors: Vlad Niculae, Alexandre Gramfort
 # License: BSD 3 clause

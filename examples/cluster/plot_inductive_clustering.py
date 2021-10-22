@@ -17,10 +17,11 @@ learn an inductive model with a classifier, which has several benefits:
 
 This example illustrates a generic implementation of a meta-estimator which
 extends clustering by inducing a classifier from the cluster labels.
+
 """
+
 # Authors: Chirag Nagpal
 #          Christos Aridas
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -35,8 +35,8 @@ four correct classifications and fails on one.
 .. [1] Haussler, D. (1999). Convolution kernels on discrete structures
        (Vol. 646). Technical report, Department of Computer Science, University
        of California at Santa Cruz.
+
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -26,9 +26,8 @@ wage as a function of various features such as experience, age, or education.
 .. contents::
    :local:
    :depth: 1
-"""
 
-print(__doc__)
+"""
 
 import numpy as np
 import scipy as sp
