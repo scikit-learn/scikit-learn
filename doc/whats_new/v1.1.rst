@@ -68,6 +68,15 @@ Changelog
   error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
   :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
+:mod:`sklearn.feature_selection`
+.................................
+
+- |Enhancement| Enabled parallel processing for
+  :func:`feature_selection.mutual_info_regression` and
+  :class:`feature_selection.mutual_info_classif` by offering
+  n_jobs parameters.
+  :pr:`21409` by :user:`Bingo Li <Bingoko>`.
+
 :mod:`sklearn.impute`
 .....................
 
