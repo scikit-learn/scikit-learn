@@ -108,7 +108,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
         'diag' : shape of (n_components, n_features)
         'spherical' : shape of (n_components,)
 
-    covariance_type : string
+    covariance_type : str
 
     n_components : int
         Number of components.

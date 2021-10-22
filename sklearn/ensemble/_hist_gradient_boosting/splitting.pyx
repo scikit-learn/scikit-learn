@@ -395,6 +395,19 @@ cdef class Splitter:
                     sizeof(unsigned int) * left_counts[thread_idx]
                 )
                 if right_counts[thread_idx] > 0:
+                    # If we're splitting the rightmost node of the tree, i.e. the
+                    # rightmost node in the partition array, and if n_threads >= 2, one
+                    # might have right_counts[-1] = 0 and right_offset[-1] = len(sample_indices)
+                    # leading to evaluating
+                    #
+                    #    &sample_indices[right_offset[-1]] = &samples_indices[n_samples_at_node]
+                    #                                      = &partition[n_samples_in_tree]
+                    #
+                    # which is an out-of-bounds read access that can cause a segmentation fault.
+                    # When boundscheck=True, removing this check produces this exception:
+                    #
+                    #    IndexError: Out of bounds on buffer access
+                    #
                     memcpy(
                         &sample_indices[right_offset[thread_idx]],
                         &right_indices_buffer[offset_in_buffers[thread_idx]],
