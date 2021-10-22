@@ -38,7 +38,7 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-- |Enhancement| All scikit-learn models now generate more informative
+- |Enhancement| All scikit-learn models now generate a more informative
   error message when some input contains unexpected `NaN` or infinite values.
   In particular the message contains the input name ("X", "y" or
   "sample_weight") and if an unexpected `NaN` value is found in `X`, the error
