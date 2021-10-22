@@ -55,8 +55,8 @@ def test_compute_mi_cc():
         assert_almost_equal(I_computed, I_theory, 1)
 
     for n_neighbors in [3, 5, 7]:
-        I_computed = _compute_mi(x, y, False, False, n_neighbors, n_jobs=2)
-        assert_almost_equal(I_computed, I_theory, 1)
+        I_computed_ = _compute_mi(x, y, False, False, n_neighbors, n_jobs=2)
+        assert_almost_equal(I_computed_, I_theory, 1)
 
 
 def test_compute_mi_cd():
@@ -96,8 +96,8 @@ def test_compute_mi_cd():
             assert_almost_equal(I_computed, I_theory, 1)
 
         for n_neighbors in [3, 5, 7]:
-            I_computed = _compute_mi(x, y, True, False, n_neighbors, n_jobs=2)
-            assert_almost_equal(I_computed, I_theory, 1)
+            I_computed_ = _compute_mi(x, y, True, False, n_neighbors, n_jobs=2)
+            assert_almost_equal(I_computed_, I_theory, 1)
 
 
 def test_compute_mi_cd_unique_label():
@@ -151,8 +151,8 @@ def test_mutual_info_regression():
     mi = mutual_info_regression(X, y, random_state=0)
     assert_array_equal(np.argsort(-mi), np.array([1, 2, 0]))
 
-    mi = mutual_info_regression(X, y, random_state=0, n_jobs=2)
-    assert_array_equal(np.argsort(-mi), np.array([1, 2, 0]))
+    mi_ = mutual_info_regression(X, y, random_state=0, n_jobs=2)
+    assert_array_equal(np.argsort(-mi_), np.array([1, 2, 0]))
 
 
 def test_mutual_info_classif_mixed():
@@ -178,19 +178,19 @@ def test_mutual_info_classif_mixed():
         # The MI should be the same
         assert mi_nn[2] == mi[2]
 
-    mi = mutual_info_classif(X, y, discrete_features=[2], n_neighbors=3, random_state=0, n_jobs=2)
-    assert_array_equal(np.argsort(-mi), [2, 0, 1])
+    mi_ = mutual_info_classif(X, y, discrete_features=[2], n_neighbors=3, random_state=0, n_jobs=2)
+    assert_array_equal(np.argsort(-mi_), [2, 0, 1])
     for n_neighbors in [5, 7, 9]:
-        mi_nn = mutual_info_classif(
+        mi_nn_ = mutual_info_classif(
             X, y, discrete_features=[2], n_neighbors=n_neighbors, random_state=0, n_jobs=2
         )
         # Check that the continuous values have an higher MI with greater
         # n_neighbors
-        assert mi_nn[0] > mi[0]
-        assert mi_nn[1] > mi[1]
+        assert mi_nn_[0] > mi_[0]
+        assert mi_nn_[1] > mi_[1]
         # The n_neighbors should not have any effect on the discrete value
         # The MI should be the same
-        assert mi_nn[2] == mi[2]
+        assert mi_nn_[2] == mi_[2]
 
 
 def test_mutual_info_options():
