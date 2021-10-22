@@ -178,11 +178,18 @@ def test_mutual_info_classif_mixed():
         # The MI should be the same
         assert mi_nn[2] == mi[2]
 
-    mi_ = mutual_info_classif(X, y, discrete_features=[2], n_neighbors=3, random_state=0, n_jobs=2)
+    mi_ = mutual_info_classif(
+        X, y, discrete_features=[2], n_neighbors=3, random_state=0, n_jobs=2
+    )
     assert_array_equal(np.argsort(-mi_), [2, 0, 1])
     for n_neighbors in [5, 7, 9]:
         mi_nn_ = mutual_info_classif(
-            X, y, discrete_features=[2], n_neighbors=n_neighbors, random_state=0, n_jobs=2
+            X,
+            y,
+            discrete_features=[2],
+            n_neighbors=n_neighbors,
+            random_state=0,
+            n_jobs=2,
         )
         # Check that the continuous values have an higher MI with greater
         # n_neighbors

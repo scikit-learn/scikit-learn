@@ -332,7 +332,7 @@ def mutual_info_regression(
     n_neighbors=3,
     n_jobs=None,
     copy=True,
-    random_state=None
+    random_state=None,
 ):
     """Estimate mutual information for a continuous target variable.
 
@@ -413,14 +413,16 @@ def mutual_info_regression(
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector", Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
-    return _estimate_mi(X=X,
-                        y=y,
-                        discrete_features=discrete_features,
-                        discrete_target=False,
-                        n_neighbors=n_neighbors,
-                        n_jobs=n_jobs,
-                        copy=copy,
-                        random_state=random_state)
+    return _estimate_mi(
+        X=X,
+        y=y,
+        discrete_features=discrete_features,
+        discrete_target=False,
+        n_neighbors=n_neighbors,
+        n_jobs=n_jobs,
+        copy=copy,
+        random_state=random_state,
+    )
 
 
 def mutual_info_classif(
@@ -431,7 +433,7 @@ def mutual_info_classif(
     n_neighbors=3,
     n_jobs=None,
     copy=True,
-    random_state=None
+    random_state=None,
 ):
     """Estimate mutual information for a discrete target variable.
 
@@ -513,11 +515,13 @@ def mutual_info_classif(
            of a Random Vector:, Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
     check_classification_targets(y)
-    return _estimate_mi(X=X,
-                        y=y,
-                        discrete_features=discrete_features,
-                        discrete_target=True,
-                        n_neighbors=n_neighbors,
-                        n_jobs=n_jobs,
-                        copy=copy,
-                        random_state=random_state)
+    return _estimate_mi(
+        X=X,
+        y=y,
+        discrete_features=discrete_features,
+        discrete_target=True,
+        n_neighbors=n_neighbors,
+        n_jobs=n_jobs,
+        copy=copy,
+        random_state=random_state,
+    )
