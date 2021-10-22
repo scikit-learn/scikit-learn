@@ -16,6 +16,7 @@ from itertools import product, chain
 from functools import partial
 
 import pytest
+import numpy as np
 
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
@@ -402,3 +403,47 @@ def test_transformers_get_feature_names_out(transformer):
         check_transformer_get_feature_names_out_pandas(
             transformer.__class__.__name__, transformer
         )
+
+
+VALIDATE_ESTIMATOR_INIT = [
+    "ColumnTransformer",
+    "FactorAnalysis",
+    "FastICA",
+    "FeatureHasher",
+    "FeatureUnion",
+    "GridSearchCV",
+    "HalvingGridSearchCV",
+    "KernelDensity",
+    "KernelPCA",
+    "LabelBinarizer",
+    "NuSVC",
+    "NuSVR",
+    "OneClassSVM",
+    "Pipeline",
+    "RadiusNeighborsClassifier",
+    "SGDOneClassSVM",
+    "SVC",
+    "SVR",
+    "TheilSenRegressor",
+    "TweedieRegressor",
+]
+VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    [est for name, est in all_estimators() if name not in VALIDATE_ESTIMATOR_INIT],
+)
+def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
+    """Check that init or set_param does not raise errors."""
+    params = signature(Estimator).parameters
+
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), {}, []]
+    for value in smoke_test_values:
+        new_params = {key: value for key in params}
+
+        # Does not raise
+        est = Estimator(**new_params)
+
+        # Also do does not raise
+        est.set_params(**new_params)
