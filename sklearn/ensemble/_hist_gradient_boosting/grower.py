@@ -71,9 +71,9 @@ class TreeNode:
     allowed_features : None or ndarray, dtype=int
         Indices of features allowed to split for children.
     interaction_cst_indices : None or list of ints
-        Indices of the interaction sets/groups that have to be applied on
-        splits of child nodes. The fewer sets the harder the constraint as
-        fewer sets contain fewer features.
+        Indices of the interaction sets that have to be applied on splits of
+        child nodes. The fewer sets the stronger the constraint as fewer sets
+        contain fewer features.
     children_lower_bound : float
     children_upper_bound : float
     """
@@ -659,9 +659,9 @@ class TreeGrower:
         allowed_features : None or ndarray, dtype=int
             Indices of features allowed to split for children.
         interaction_cst_indices : None or list of ints
-            Indices of the interaction sets/groups that have to be applied on
-            splits of child nodes. The fewer sets the harder the constraint as
-            fewer sets contain fewer features.
+            Indices of the interaction sets that have to be applied on splits of
+            child nodes. The fewer sets the stronger the constraint as fewer sets
+            contain fewer features.
         """
         # Note:
         #  - Case of no interactions is already captured before function call.

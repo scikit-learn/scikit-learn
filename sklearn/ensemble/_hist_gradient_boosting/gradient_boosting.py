@@ -1132,14 +1132,18 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.23
 
     interaction_cst : iterable of iterables of int, default=None
-        Each inner list or set specifies the feature indices that are allowed
-        to interact with each other, meaning splits in child nodes are only
-        allowed in those sets. If there are more features than specified in
-        these constraints, they are treated as if they were specified as an
-        additional set.
-        For instance, with 5 features in total, `[{0, 1}]` is equivalent to
-        `[{0, 1}, {2, 3, 4}]`, and says that a single branch of a tree is
-        either only split on features 0 and 1 or only on features 2, 3 and 4.
+        Specify interaction constraints, i.e. sets of features which can
+        only interact with each other in child nodes splits.
+
+        Each iterable materializes a constraint by the set of indices of
+        the features that are allowed to interact with each other.
+        If there are more features than specified in these constraints,
+        they are treated as if they were specified as an additional set.
+
+        For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
+        is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
+        and specifies that a single branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
 
         .. versionadded:: 1.1
 
@@ -1458,14 +1462,18 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.23
 
     interaction_cst : iterable of iterables of int, default=None
-        Each inner list or set specifies the feature indices that are allowed
-        to interact with each other, meaning splits in child nodes are only
-        allowed in those sets. If there are more features than specified in
-        these constraints, they are treated as if they were specified as an
-        additional set.
-        For instance, with 5 features in total, `[{0, 1}]` is equivalent to
-        `[{0, 1}, {2, 3, 4}]`, and says that a single branch of a tree is
-        either only split on features 0 and 1 or only on features 2, 3 and 4.
+        Specify interaction constraints, i.e. sets of features which can
+        only interact with each other in child nodes splits.
+
+        Each iterable materializes a constraint by the set of indices of
+        the features that are allowed to interact with each other.
+        If there are more features than specified in these constraints,
+        they are treated as if they were specified as an additional set.
+
+        For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
+        is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
+        and specifies that a single branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
 
         .. versionadded:: 1.1
 
