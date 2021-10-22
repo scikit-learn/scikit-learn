@@ -489,7 +489,7 @@ class SpectralEmbedding(BaseEstimator):
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
-    
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
