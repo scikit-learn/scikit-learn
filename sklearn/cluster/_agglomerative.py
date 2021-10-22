@@ -23,7 +23,6 @@ from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
 from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory
-from ..utils.validation import _num_features
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
 from . import _hierarchical_fast as _hierarchical  # type: ignore
