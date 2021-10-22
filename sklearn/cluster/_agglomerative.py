@@ -23,6 +23,7 @@ from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
 from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory
+from ..utils.validation import _num_features
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
 from . import _hierarchical_fast as _hierarchical  # type: ignore
@@ -915,6 +916,22 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             Returns the fitted instance.
         """
         X = self._validate_data(X, ensure_min_samples=2, estimator=self)
+        return self._fit(X)
+
+    def _fit(self, X):
+        """Fit without validation
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+            Training instances to cluster, or distances between instances if
+            ``affinity='precomputed'``.
+
+        Returns
+        -------
+        self : object
+            Returns the fitted instance.
+        """
         memory = check_memory(self.memory)
 
         if self.n_clusters is not None and self.n_clusters <= 0:
@@ -1218,17 +1235,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(
-            X,
-            accept_sparse=["csr", "csc", "coo"],
-            ensure_min_features=2,
-            estimator=self,
-        )
-        # save n_features_in_ attribute here to reset it after, because it will
-        # be overridden in AgglomerativeClustering since we passed it X.T.
-        n_features_in_ = self.n_features_in_
-        AgglomerativeClustering.fit(self, X.T)
-        self.n_features_in_ = n_features_in_
+        X = self._validate_data(X, ensure_min_features=2, estimator=self)
+        super()._fit(X.T)
         return self
 
     @property
