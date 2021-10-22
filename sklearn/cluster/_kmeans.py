@@ -15,13 +15,13 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-from threadpoolctl import threadpool_limits
-from threadpoolctl import threadpool_info
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.fixes import threadpool_limits
+from ..utils.fixes import threadpool_info
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils import check_array
@@ -29,10 +29,12 @@ from ..utils import check_random_state
 from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..exceptions import ConvergenceWarning
 from ._k_means_common import CHUNK_SIZE
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
+from ._k_means_common import _is_same_clustering
 from ._k_means_minibatch import _minibatch_update_dense
 from ._k_means_minibatch import _minibatch_update_sparse
 from ._k_means_lloyd import lloyd_iter_chunked_dense
@@ -79,7 +81,7 @@ def kmeans_plusplus(
     Returns
     -------
     centers : ndarray of shape (n_clusters, n_features)
-        The inital centers for k-means.
+        The initial centers for k-means.
 
     indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
@@ -171,7 +173,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
     Returns
     -------
     centers : ndarray of shape (n_clusters, n_features)
-        The inital centers for k-means.
+        The initial centers for k-means.
 
     indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
@@ -729,6 +731,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
     else:
         _labels = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
+        X = ReadonlyArrayWrapper(X)
 
     _labels(
         X,
@@ -828,7 +831,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         intensive due to the allocation of an extra array of shape
         (n_samples, n_clusters).
 
-        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
+        For now "auto" (kept for backward compatibility) chooses "elkan" but it
         might change in the future for a better heuristic.
 
         .. versionchanged:: 0.18
@@ -855,6 +858,12 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1125,7 +1134,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
             Fitted estimator.
         """
         X = self._validate_data(
@@ -1166,7 +1175,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         else:
             kmeans_single = _kmeans_single_elkan
 
-        best_inertia = None
+        best_inertia, best_labels = None, None
 
         for i in range(self._n_init):
             # Initialize centers
@@ -1189,9 +1198,14 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             )
 
             # determine if these results are the best so far
-            # allow small tolerance on the inertia to accommodate for
-            # non-deterministic rounding errors due to parallel computation
-            if best_inertia is None or inertia < best_inertia * (1 - 1e-6):
+            # we chose a new run if it has a better inertia and the clustering is
+            # different from the best so far (it's possible that the inertia is
+            # slightly better even if the clustering is the same with potentially
+            # permuted labels, due to rounding errors)
+            if best_inertia is None or (
+                inertia < best_inertia
+                and not _is_same_clustering(labels, best_labels, self.n_clusters)
+            ):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
@@ -1443,7 +1457,13 @@ def _mini_batch_step(
         )
     else:
         _minibatch_update_dense(
-            X, sample_weight, centers, centers_new, weight_sums, labels, n_threads
+            ReadonlyArrayWrapper(X),
+            sample_weight,
+            centers,
+            centers_new,
+            weight_sums,
+            labels,
+            n_threads,
         )
 
     # Reassign clusters that have very low weight
@@ -1602,7 +1622,7 @@ class MiniBatchKMeans(KMeans):
         .. versionadded:: 1.0
 
     counts_ : ndarray of shape (n_clusters,)
-        Weigth sum of each cluster.
+        Weight sum of each cluster.
 
         .. deprecated:: 0.24
            This attribute is deprecated in 0.24 and will be removed in
@@ -1619,6 +1639,12 @@ class MiniBatchKMeans(KMeans):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1865,7 +1891,8 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        self
+        self : object
+            Fitted estimator.
         """
         X = self._validate_data(
             X,
@@ -2018,7 +2045,8 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        self
+        self : object
+            Return updated estimator.
         """
         has_centers = hasattr(self, "cluster_centers_")
 

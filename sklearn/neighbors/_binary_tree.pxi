@@ -153,11 +153,16 @@ import numpy as np
 import warnings
 from ..utils import check_array
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from ._typedefs import DTYPE, ITYPE
+from sklearn.utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+from sklearn.utils._typedefs import DTYPE, ITYPE
 
-from ._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
-                             euclidean_dist_to_rdist, euclidean_rdist_to_dist)
+from ..metrics._dist_metrics cimport (
+    DistanceMetric,
+    euclidean_dist,
+    euclidean_rdist,
+    euclidean_dist_to_rdist,
+    euclidean_rdist_to_dist,
+)
 
 from ._partition_nodes cimport partition_node_indices
 
@@ -570,7 +575,7 @@ cdef class NeighborsHeap:
         cdef ITYPE_t* ind_arr = &self.indices[row, 0]
 
         # check if val should be in heap
-        if val > dist_arr[0]:
+        if val >= dist_arr[0]:
             return 0
 
         # insert val at position zero
@@ -878,7 +883,7 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS
-from ._dist_metrics import get_valid_metric_ids
+from sklearn.metrics._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 
@@ -1722,8 +1727,7 @@ cdef class BinaryTree:
                 dist_pt = self.rdist(pt,
                                      &self.data[self.idx_array[i], 0],
                                      self.data.shape[1])
-                if dist_pt < heap.largest(i_pt):
-                    heap._push(i_pt, dist_pt, self.idx_array[i])
+                heap._push(i_pt, dist_pt, self.idx_array[i])
 
         #------------------------------------------------------------
         # Case 3: Node is not a leaf.  Recursively query subnodes
@@ -1785,8 +1789,7 @@ cdef class BinaryTree:
                     dist_pt = self.rdist(pt,
                                          &self.data[self.idx_array[i], 0],
                                          self.data.shape[1])
-                    if dist_pt < heap.largest(i_pt):
-                        heap._push(i_pt, dist_pt, self.idx_array[i])
+                    heap._push(i_pt, dist_pt, self.idx_array[i])
 
             #------------------------------------------------------------
             # Case 3: Node is not a leaf.  Add subnodes to the node heap
@@ -1840,8 +1843,7 @@ cdef class BinaryTree:
                         data1 + n_features * self.idx_array[i1],
                         data2 + n_features * i_pt,
                         n_features)
-                    if dist_pt < heap.largest(i_pt):
-                        heap._push(i_pt, dist_pt, self.idx_array[i1])
+                    heap._push(i_pt, dist_pt, self.idx_array[i1])
 
                 # keep track of node bound
                 bounds[i_node2] = fmax(bounds[i_node2],
@@ -1953,8 +1955,7 @@ cdef class BinaryTree:
                             data1 + n_features * self.idx_array[i1],
                             data2 + n_features * i_pt,
                             n_features)
-                        if dist_pt < heap.largest(i_pt):
-                            heap._push(i_pt, dist_pt, self.idx_array[i1])
+                        heap._push(i_pt, dist_pt, self.idx_array[i1])
 
                     # keep track of node bound
                     bounds[i_node2] = fmax(bounds[i_node2],

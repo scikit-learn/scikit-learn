@@ -22,13 +22,15 @@ n_nonzero_coefs = 17
 # y = Xw
 # |x|_0 = n_nonzero_coefs
 
-y, X, w = make_sparse_coded_signal(n_samples=1,
-                                   n_components=n_components,
-                                   n_features=n_features,
-                                   n_nonzero_coefs=n_nonzero_coefs,
-                                   random_state=0)
+y, X, w = make_sparse_coded_signal(
+    n_samples=1,
+    n_components=n_components,
+    n_features=n_features,
+    n_nonzero_coefs=n_nonzero_coefs,
+    random_state=0,
+)
 
-idx, = w.nonzero()
+(idx,) = w.nonzero()
 
 # distort the clean signal
 y_noisy = y + 0.05 * np.random.randn(len(y))
@@ -41,11 +43,10 @@ plt.title("Sparse signal")
 plt.stem(idx, w[idx], use_line_collection=True)
 
 # plot the noise-free reconstruction
-omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs,
-                                normalize=False)
+omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs, normalize=False)
 omp.fit(X, y)
 coef = omp.coef_
-idx_r, = coef.nonzero()
+(idx_r,) = coef.nonzero()
 plt.subplot(4, 1, 2)
 plt.xlim(0, 512)
 plt.title("Recovered signal from noise-free measurements")
@@ -54,7 +55,7 @@ plt.stem(idx_r, coef[idx_r], use_line_collection=True)
 # plot the noisy reconstruction
 omp.fit(X, y_noisy)
 coef = omp.coef_
-idx_r, = coef.nonzero()
+(idx_r,) = coef.nonzero()
 plt.subplot(4, 1, 3)
 plt.xlim(0, 512)
 plt.title("Recovered signal from noisy measurements")
@@ -64,13 +65,12 @@ plt.stem(idx_r, coef[idx_r], use_line_collection=True)
 omp_cv = OrthogonalMatchingPursuitCV(normalize=False)
 omp_cv.fit(X, y_noisy)
 coef = omp_cv.coef_
-idx_r, = coef.nonzero()
+(idx_r,) = coef.nonzero()
 plt.subplot(4, 1, 4)
 plt.xlim(0, 512)
 plt.title("Recovered signal from noisy measurements with CV")
 plt.stem(idx_r, coef[idx_r], use_line_collection=True)
 
 plt.subplots_adjust(0.06, 0.04, 0.94, 0.90, 0.20, 0.38)
-plt.suptitle('Sparse signal recovery with Orthogonal Matching Pursuit',
-             fontsize=16)
+plt.suptitle("Sparse signal recovery with Orthogonal Matching Pursuit", fontsize=16)
 plt.show()

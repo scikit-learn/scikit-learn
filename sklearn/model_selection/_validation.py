@@ -7,6 +7,7 @@ functions to validate the model.
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Raghav RV <rvraghav93@gmail.com>
+#         Michal Karbownik <michakarbownik@gmail.com>
 # License: BSD 3 clause
 
 
@@ -15,6 +16,7 @@ import numbers
 import time
 from traceback import format_exc
 from contextlib import suppress
+from collections import Counter
 
 import numpy as np
 import scipy.sparse as sp
@@ -28,7 +30,7 @@ from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
-from ..exceptions import FitFailedWarning, NotFittedError
+from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
 
@@ -281,6 +283,8 @@ def cross_validate(
         for train, test in cv.split(X, y, groups)
     )
 
+    _warn_or_raise_about_fit_failures(results, error_score)
+
     # For callabe scoring, the return type is only know after calling. If the
     # return type is a dictionary, the error scores can now be inserted with
     # the correct key.
@@ -318,13 +322,10 @@ def _insert_error_scores(results, error_score):
     successful_score = None
     failed_indices = []
     for i, result in enumerate(results):
-        if result["fit_failed"]:
+        if result["fit_error"] is not None:
             failed_indices.append(i)
         elif successful_score is None:
             successful_score = result["test_scores"]
-
-    if successful_score is None:
-        raise NotFittedError("All estimators failed to fit")
 
     if isinstance(successful_score, dict):
         formatted_error = {name: error_score for name in successful_score}
@@ -341,6 +342,41 @@ def _normalize_score_results(scores, scaler_score_key="score"):
         return _aggregate_score_dicts(scores)
     # scaler
     return {scaler_score_key: scores}
+
+
+def _warn_or_raise_about_fit_failures(results, error_score):
+    fit_errors = [
+        result["fit_error"] for result in results if result["fit_error"] is not None
+    ]
+    if fit_errors:
+        num_failed_fits = len(fit_errors)
+        num_fits = len(results)
+        fit_errors_counter = Counter(fit_errors)
+        delimiter = "-" * 80 + "\n"
+        fit_errors_summary = "\n".join(
+            f"{delimiter}{n} fits failed with the following error:\n{error}"
+            for error, n in fit_errors_counter.items()
+        )
+
+        if num_failed_fits == num_fits:
+            all_fits_failed_message = (
+                f"\nAll the {num_fits} fits failed.\n"
+                "It is is very likely that your model is misconfigured.\n"
+                "You can try to debug the error by setting error_score='raise'.\n\n"
+                f"Below are more details about the failures:\n{fit_errors_summary}"
+            )
+            raise ValueError(all_fits_failed_message)
+
+        else:
+            some_fits_failed_message = (
+                f"\n{num_failed_fits} fits failed out of a total of {num_fits}.\n"
+                "The score on these train-test partitions for these parameters"
+                f" will be set to {error_score}.\n"
+                "If these failures are not expected, you can try to debug them "
+                "by setting error_score='raise'.\n\n"
+                f"Below are more details about the failures:\n{fit_errors_summary}"
+            )
+            warnings.warn(some_fits_failed_message, FitFailedWarning)
 
 
 def cross_val_score(
@@ -388,18 +424,18 @@ def cross_val_score(
         Similar to :func:`cross_validate`
         but only a single metric is permitted.
 
-        If None, the estimator's default scorer (if available) is used.
+        If `None`, the estimator's default scorer (if available) is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
+        - `None`, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For int/None inputs, if the estimator is a classifier and ``y`` is
+        For `int`/`None` inputs, if the estimator is a classifier and `y` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used. These splitters are instantiated
         with `shuffle=False` so the splits will be the same across calls.
@@ -408,7 +444,7 @@ def cross_val_score(
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            `cv` default value if `None` changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
@@ -429,7 +465,7 @@ def cross_val_score(
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
+            - ``None``, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
@@ -598,8 +634,8 @@ def _fit_and_score(
             The parameters that have been evaluated.
         estimator : estimator object
             The fitted estimator.
-        fit_failed : bool
-            The estimator failed to fit.
+        fit_error : str or None
+            Traceback str if the fit failed, None if the fit succeeded.
     """
     if not isinstance(error_score, numbers.Number) and error_score != "raise":
         raise ValueError(
@@ -666,15 +702,9 @@ def _fit_and_score(
                 test_scores = error_score
                 if return_train_score:
                     train_scores = error_score
-            warnings.warn(
-                "Estimator fit failed. The score on this train-test"
-                " partition for these parameters will be set to %f. "
-                "Details: \n%s" % (error_score, format_exc()),
-                FitFailedWarning,
-            )
-        result["fit_failed"] = True
+        result["fit_error"] = format_exc()
     else:
-        result["fit_failed"] = False
+        result["fit_error"] = None
 
         fit_time = time.time() - start_time
         test_scores = _score(estimator, X_test, y_test, scorer, error_score)
@@ -1194,18 +1224,18 @@ def permutation_test_score(
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
-        If None the estimator's score method is used.
+        If `None` the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
+        - `None`, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For int/None inputs, if the estimator is a classifier and ``y`` is
+        For `int`/`None` inputs, if the estimator is a classifier and `y` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used. These splitters are instantiated
         with `shuffle=False` so the splits will be the same across calls.
@@ -1214,7 +1244,7 @@ def permutation_test_score(
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            `cv` default value if `None` changed from 3-fold to 5-fold.
 
     n_permutations : int, default=100
         Number of times to permute ``y``.
@@ -1358,8 +1388,8 @@ def learning_curve(
         An object of that type which is cloned for each validation.
 
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Target relative to X for classification or regression;
@@ -1715,8 +1745,8 @@ def validation_curve(
         An object of that type which is cloned for each validation.
 
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         Target relative to X for classification or regression;

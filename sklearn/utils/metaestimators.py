@@ -100,18 +100,27 @@ class _AvailableIfDescriptor:
         update_wrapper(self, fn)
 
     def __get__(self, obj, owner=None):
+        attr_err = AttributeError(
+            f"This {repr(owner.__name__)} has no attribute {repr(self.attribute_name)}"
+        )
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
             if not self.check(obj):
-                raise AttributeError(
-                    f"This {repr(owner.__name__)}"
-                    " has no attribute"
-                    f" {repr(self.attribute_name)}"
-                )
+                raise attr_err
 
-        # lambda, but not partial, allows help() to work with update_wrapper
-        out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
+            # lambda, but not partial, allows help() to work with update_wrapper
+            out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
+        else:
+
+            def fn(*args, **kwargs):
+                if not self.check(args[0]):
+                    raise attr_err
+                return self.fn(*args, **kwargs)
+
+            # This makes it possible to use the decorated method as an unbound method,
+            # for instance when monkeypatching.
+            out = lambda *args, **kwargs: fn(*args, **kwargs)  # noqa
         # update the docstring of the returned function
         update_wrapper(out, self.fn)
         return out
@@ -185,7 +194,9 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         if delegate is None:
             return False
         # raise original AttributeError
-        return getattr(delegate, self.attribute_name) or True
+        getattr(delegate, self.attribute_name)
+
+        return True
 
 
 def if_delegate_has_method(delegate):
@@ -196,7 +207,7 @@ def if_delegate_has_method(delegate):
 
     Parameters
     ----------
-    delegate : string, list of strings or tuple of strings
+    delegate : str, list of str or tuple of str
         Name of the sub-estimator that can be accessed as an attribute of the
         base object. If a list or a tuple of names are provided, the first
         sub-estimator that is an attribute of the base object will be used.

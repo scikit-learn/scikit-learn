@@ -19,6 +19,7 @@ the lower the better.
 #          Saurabh Jha <saurabh.jhaa@gmail.com>
 #          Bernardo Stein <bernardovstein@gmail.com>
 #          Shangwu Yao <shangwuyao@gmail.com>
+#          Michal Karbownik <michakarbownik@gmail.com>
 # License: BSD 3 clause
 
 
@@ -180,8 +181,8 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Notes
     -----
-    In binary and multiclass classification, this function is equal
-    to the ``jaccard_score`` function.
+    In binary classification, this function is equal to the `jaccard_score`
+    function.
 
     Examples
     --------
@@ -424,14 +425,16 @@ def multilabel_confusion_matrix(
 
     See Also
     --------
-    confusion_matrix
+    confusion_matrix : Compute confusion matrix to evaluate the accuracy of a
+        classifier.
 
     Notes
     -----
-    The multilabel_confusion_matrix calculates class-wise or sample-wise
+    The `multilabel_confusion_matrix` calculates class-wise or sample-wise
     multilabel confusion matrices, and in multiclass tasks, labels are
-    binarized under a one-vs-rest way; while confusion_matrix calculates
-    one confusion matrix for confusion between every two classes.
+    binarized under a one-vs-rest way; while
+    :func:`~sklearn.metrics.confusion_matrix` calculates one confusion matrix
+    for confusion between every two classes.
 
     Examples
     --------
@@ -606,11 +609,11 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to select a
-        subset of labels. If None, all labels that appear at least once in
+        subset of labels. If `None`, all labels that appear at least once in
         ``y1`` or ``y2`` are used.
 
     weights : {'linear', 'quadratic'}, default=None
-        Weighting type to calculate the score. None means no weighted;
+        Weighting type to calculate the score. `None` means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -698,8 +701,8 @@ def jaccard_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {None, 'micro', 'macro', 'samples', 'weighted', \
-            'binary'}, default='binary'
+    average : {'micro', 'macro', 'samples', 'weighted', \
+            'binary'} or None, default='binary'
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
@@ -735,7 +738,7 @@ def jaccard_score(
 
     See Also
     --------
-    accuracy_score, f_score, multilabel_confusion_matrix
+    accuracy_score, f1_score, multilabel_confusion_matrix
 
     Notes
     -----
@@ -988,7 +991,7 @@ def f1_score(
 ):
     """Compute the F1 score, also known as balanced F-score or F-measure.
 
-    The F1 score can be interpreted as a weighted average of the precision and
+    The F1 score can be interpreted as a harmonic mean of the precision and
     recall, where an F1 score reaches its best value at 1 and worst score at 0.
     The relative contribution of precision and recall to the F1 score are
     equal. The formula for the F1 score is::
@@ -1093,6 +1096,11 @@ def f1_score(
     >>> y_pred = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true, y_pred, zero_division=1)
     1.0...
+    >>> # multilabel classification
+    >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
+    >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
+    >>> f1_score(y_true, y_pred, average=None)
+    array([0.66666667, 1.        , 0.66666667])
 
     Notes
     -----
@@ -1166,7 +1174,7 @@ def fbeta_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None \
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -1467,7 +1475,7 @@ def precision_recall_fscore_support(
     precision : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    recall : float (if average is not None) or array of float, , shape =\
+    recall : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
     fbeta_score : float (if average is not None) or array of float, shape =\
@@ -1654,7 +1662,7 @@ def precision_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} \
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -1688,8 +1696,8 @@ def precision_score(
 
     Returns
     -------
-    precision : float (if average is not None) or array of float of shape
-        (n_unique_labels,)
+    precision : float (if average is not None) or array of float of shape \
+                (n_unique_labels,)
         Precision of the positive class in binary classification or weighted
         average of the precision of each class for the multiclass task.
 
@@ -1721,7 +1729,11 @@ def precision_score(
     array([0.33..., 0.        , 0.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=1)
     array([0.33..., 1.        , 1.        ])
-
+    >>> # multilabel classification
+    >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
+    >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
+    >>> precision_score(y_true, y_pred, average=None)
+    array([0.5, 1. , 1. ])
     """
     p, _, _, _ = precision_recall_fscore_support(
         y_true,
@@ -1782,7 +1794,7 @@ def recall_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} \
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -1801,7 +1813,8 @@ def recall_score(
             Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
-            F-score that is not between precision and recall.
+            F-score that is not between precision and recall. Weighted recall
+            is equal to accuracy.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
@@ -1816,8 +1829,8 @@ def recall_score(
 
     Returns
     -------
-    recall : float (if average is not None) or array of float of shape
-        (n_unique_labels,)
+    recall : float (if average is not None) or array of float of shape \
+             (n_unique_labels,)
         Recall of the positive class in binary classification or weighted
         average of the recall of each class for the multiclass task.
 
@@ -1850,6 +1863,11 @@ def recall_score(
     array([0.5, 0. , 0. ])
     >>> recall_score(y_true, y_pred, average=None, zero_division=1)
     array([0.5, 1. , 1. ])
+    >>> # multilabel classification
+    >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
+    >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
+    >>> recall_score(y_true, y_pred, average=None)
+    array([1. , 1. , 0.5])
     """
     _, r, _, _ = precision_recall_fscore_support(
         y_true,
@@ -1991,7 +2009,7 @@ def classification_report(
 
     Returns
     -------
-    report : string / dict
+    report : str or dict
         Text summary of the precision, recall, F1 score for each class.
         Dictionary returned if output_dict is True. Dictionary has the
         following structure::
@@ -2260,7 +2278,7 @@ def log_loss(
     for its training data ``y_true``.
     The log loss is only defined for two or more labels.
     For a single sample with true label :math:`y \in \{0,1\}` and
-    and a probability estimate :math:`p = \operatorname{Pr}(y = 1)`, the log
+    a probability estimate :math:`p = \operatorname{Pr}(y = 1)`, the log
     loss is:
 
     .. math::
@@ -2566,12 +2584,12 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
         Sample weights.
 
     pos_label : int or str, default=None
-        Label of the positive class. `pos_label` will be infered in the
+        Label of the positive class. `pos_label` will be inferred in the
         following manner:
 
         * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
         * else if `y_true` contains string, an error will be raised and
-          `pos_label` should be explicitely specified;
+          `pos_label` should be explicitly specified;
         * otherwise, `pos_label` defaults to the greater label,
           i.e. `np.unique(y_true)[-1]`.
 

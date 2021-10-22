@@ -18,7 +18,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     This Sequential Feature Selector adds (forward selection) or
     removes (backward selection) features to form a feature subset in a
     greedy fashion. At each stage, this estimator chooses the best feature to
-    add or remove based on the cross-validation score of an estimator.
+    add or remove based on the cross-validation score of an estimator. In
+    the case of unsupervised learning, this Sequential Feature Selector
+    looks only at the features (X), not the desired outputs (y).
 
     Read more in the :ref:`User Guide <sequential_feature_selection>`.
 
@@ -81,6 +83,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_features_to_select_ : int
         The number of features that were selected.
 
@@ -89,6 +97,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
     See Also
     --------
+    GenericUnivariateSelect : Univariate feature selector with configurable
+        strategy.
     RFE : Recursive feature elimination based on importance weights.
     RFECV : Recursive feature elimination based on importance weights, with
         automatic selection of the number of features.
@@ -130,28 +140,30 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self.cv = cv
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
-        """Learn the features to select.
+    def fit(self, X, y=None):
+        """Learn the features to select from X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors.
-        y : array-like of shape (n_samples,)
-            Target values.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
+
+        y : array-like of shape (n_samples,), default=None
+            Target values. This parameter may be ignored for
+            unsupervised learning.
 
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         tags = self._get_tags()
-        X, y = self._validate_data(
+        X = self._validate_data(
             X,
-            y,
             accept_sparse="csc",
             ensure_min_features=2,
             force_all_finite=not tags.get("allow_nan", True),
-            multi_output=True,
         )
         n_features = X.shape[1]
 

@@ -58,8 +58,7 @@ amount_labeled = np.empty((x_values.shape[0], n_splits))
 amount_iterations = np.empty((x_values.shape[0], n_splits))
 
 for (i, threshold) in enumerate(x_values):
-    self_training_clf = SelfTrainingClassifier(base_classifier,
-                                               threshold=threshold)
+    self_training_clf = SelfTrainingClassifier(base_classifier, threshold=threshold)
 
     # We need manual cross validation so that we don't treat -1 as a separate
     # class when computing accuracy
@@ -74,8 +73,10 @@ for (i, threshold) in enumerate(x_values):
         self_training_clf.fit(X_train, y_train)
 
         # The amount of labeled samples that at the end of fitting
-        amount_labeled[i, fold] = total_samples - np.unique(
-            self_training_clf.labeled_iter_, return_counts=True)[1][0]
+        amount_labeled[i, fold] = (
+            total_samples
+            - np.unique(self_training_clf.labeled_iter_, return_counts=True)[1][0]
+        )
         # The last iteration the classifier labeled a sample in
         amount_iterations[i, fold] = np.max(self_training_clf.labeled_iter_)
 
@@ -84,26 +85,34 @@ for (i, threshold) in enumerate(x_values):
 
 
 ax1 = plt.subplot(211)
-ax1.errorbar(x_values, scores.mean(axis=1),
-             yerr=scores.std(axis=1),
-             capsize=2, color='b')
-ax1.set_ylabel('Accuracy', color='b')
-ax1.tick_params('y', colors='b')
+ax1.errorbar(
+    x_values, scores.mean(axis=1), yerr=scores.std(axis=1), capsize=2, color="b"
+)
+ax1.set_ylabel("Accuracy", color="b")
+ax1.tick_params("y", colors="b")
 
 ax2 = ax1.twinx()
-ax2.errorbar(x_values, amount_labeled.mean(axis=1),
-             yerr=amount_labeled.std(axis=1),
-             capsize=2, color='g')
+ax2.errorbar(
+    x_values,
+    amount_labeled.mean(axis=1),
+    yerr=amount_labeled.std(axis=1),
+    capsize=2,
+    color="g",
+)
 ax2.set_ylim(bottom=0)
-ax2.set_ylabel('Amount of labeled samples', color='g')
-ax2.tick_params('y', colors='g')
+ax2.set_ylabel("Amount of labeled samples", color="g")
+ax2.tick_params("y", colors="g")
 
 ax3 = plt.subplot(212, sharex=ax1)
-ax3.errorbar(x_values, amount_iterations.mean(axis=1),
-             yerr=amount_iterations.std(axis=1),
-             capsize=2, color='b')
+ax3.errorbar(
+    x_values,
+    amount_iterations.mean(axis=1),
+    yerr=amount_iterations.std(axis=1),
+    capsize=2,
+    color="b",
+)
 ax3.set_ylim(bottom=0)
-ax3.set_ylabel('Amount of iterations')
-ax3.set_xlabel('Threshold')
+ax3.set_ylabel("Amount of iterations")
+ax3.set_xlabel("Threshold")
 
 plt.show()

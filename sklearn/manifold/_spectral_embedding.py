@@ -367,7 +367,7 @@ def spectral_embedding(
             X = random_state.rand(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
             _, diffusion_map = lobpcg(
-                laplacian, X, tol=1e-15, largest=False, maxiter=2000
+                laplacian, X, tol=1e-5, largest=False, maxiter=2000
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
@@ -462,6 +462,12 @@ class SpectralEmbedding(BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_neighbors_ : int
         Number of nearest neighbors effectively used.
 
@@ -533,8 +539,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : array-like of shape (n_samples, n_samples),
@@ -592,8 +598,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : {array-like, sparse matrix}, shape (n_samples, n_samples),
@@ -647,8 +653,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : {array-like, sparse matrix} of shape (n_samples, n_samples),

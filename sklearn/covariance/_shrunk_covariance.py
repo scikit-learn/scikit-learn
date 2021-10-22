@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
+from .._config import config_context
 from ..utils import check_array
 
 
@@ -97,6 +98,12 @@ class ShrunkCovariance(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     EllipticEnvelope : An object for detecting outliers in
@@ -150,8 +157,8 @@ class ShrunkCovariance(EmpiricalCovariance):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -211,7 +218,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
     """
-    X = np.asarray(X)
+    X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         return 0.0
@@ -265,7 +272,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     delta = delta_ - 2.0 * mu * emp_cov_trace.sum() + n_features * mu ** 2
     delta /= n_features
     # get final beta as the min between beta and delta
-    # We do this to prevent shrinking more than "1", which whould invert
+    # We do this to prevent shrinking more than "1", which would invert
     # the value of covariances
     beta = min(beta, delta)
     # finally get shrinkage
@@ -310,7 +317,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
     """
-    X = np.asarray(X)
+    X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
@@ -384,6 +391,12 @@ class LedoitWolf(EmpiricalCovariance):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -461,9 +474,10 @@ class LedoitWolf(EmpiricalCovariance):
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        covariance, shrinkage = ledoit_wolf(
-            X - self.location_, assume_centered=True, block_size=self.block_size
-        )
+        with config_context(assume_finite=True):
+            covariance, shrinkage = ledoit_wolf(
+                X - self.location_, assume_centered=True, block_size=self.block_size
+            )
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)
 
@@ -582,6 +596,12 @@ class OAS(EmpiricalCovariance):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
