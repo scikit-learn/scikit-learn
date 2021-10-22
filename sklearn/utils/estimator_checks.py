@@ -3217,11 +3217,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # labeled, hence n_iter_ = 0 is valid.
     not_run_check_n_iter = [
         "Ridge",
-        "SVR",
-        "NuSVR",
-        "NuSVC",
         "RidgeClassifier",
-        "SVC",
         "RandomizedLasso",
         "LogisticRegressionCV",
         "LinearSVC",
@@ -3248,7 +3244,11 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
 
         estimator.fit(X, y_)
 
-        assert estimator.n_iter_ >= 1
+        # These return a n_iter per model optimized
+        if name in ["SVC", "NuSVC"] and len(estimator.classes_) > 2:
+            assert np.all(estimator.n_iter_ >= 1)
+        else:
+            assert estimator.n_iter_ >= 1
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3275,7 +3275,9 @@ def check_transformer_n_iter(name, estimator_orig):
         estimator.fit(X, y_)
 
         # These return a n_iter per component.
-        if name in CROSS_DECOMPOSITION:
+        if (name in CROSS_DECOMPOSITION) or (
+            name in ["SVC", "NuSVC"] and len(estimator.classes_) > 2
+        ):
             for iter_ in estimator.n_iter_:
                 assert iter_ >= 1
         else:
