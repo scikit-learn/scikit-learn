@@ -68,6 +68,13 @@ Changelog
   error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
   :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
+  :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
+  :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -121,6 +128,10 @@ Changelog
   :func:`neighbors.KernelDensity`.
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
+
+- |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
+  message when running in a jupyter notebook that is not trusted. :pr:`21316`
+  by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
