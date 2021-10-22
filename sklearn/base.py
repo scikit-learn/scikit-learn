@@ -525,14 +525,22 @@ class BaseEstimator:
                It is recommended to call reset=True in `fit` and in the first
                call to `partial_fit`. All other methods that validate `X`
                should set `reset=False`.
+
         validate_separately : False or tuple of dicts, default=False
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs
             to be used for calling check_array() on X and y respectively.
+
+            `estimator=self` is automatically added to these dicts to generate
+            more informative error message in case of invalid input data.
+
         **check_params : kwargs
             Parameters passed to :func:`sklearn.utils.check_array` or
             :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
             is not False.
+
+            `estimator=self` is automatically added to these params to generate
+            more informative error message in case of invalid input data.
 
         Returns
         -------
