@@ -648,10 +648,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
     ):
         self._validate_params()
         if hasattr(self, "classes_"):
+            # delete the attribute otherwise _partial_fit thinks it's not the first call
             delattr(self, "classes_")
 
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
+        y = self._validate_data(y=y)
         classes = np.unique(y)
 
         if self.warm_start and hasattr(self, "coef_"):

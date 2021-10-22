@@ -241,6 +241,7 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        y = self._validate_data(y=y)
         return self._partial_fit(
             X, y, np.unique(y), _refit=True, sample_weight=sample_weight
         )
