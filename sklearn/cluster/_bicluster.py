@@ -290,6 +290,17 @@ class SpectralCoclustering(BaseSpectral):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    sklearn.cluster.SpectralClustering : Apply clustering to a projection of the
+        normalized Laplacian.
+
+    References
+    ----------
+    * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
+      bipartite spectral graph partitioning
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralCoclustering
@@ -303,14 +314,6 @@ class SpectralCoclustering(BaseSpectral):
     array([0, 0], dtype=int32)
     >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)
-
-    References
-    ----------
-
-    * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
-      bipartite spectral graph partitioning
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
-
     """
 
     def __init__(
