@@ -1098,6 +1098,52 @@ def test_check_interaction_cst(interaction_cst, n_features, result):
     assert est._check_interaction_cst(n_features) == result
 
 
+def test_interaction_cst_numerically():
+    """Check that interaction constraints have no forbidden interactions."""
+    rng = np.random.RandomState(42)
+    n_samples = 1000
+    X = rng.uniform(size=(n_samples, 2))
+    # Construct y with a strong interaction term
+    # y = x0 + x1 + 5 * x0 * x1
+    y = np.c_[X, 5 * X[:, 0] * X[:, 1]].sum(axis=1)
+
+    est = HistGradientBoostingRegressor()
+    est.fit(X, y)
+    est_no_interactions = HistGradientBoostingRegressor(interaction_cst=[{0}, {1}])
+    est_no_interactions.fit(X, y)
+
+    delta = 0.25
+    # Make sure we do not extrapolate out of the training set as tree-based estimators
+    # are very bad in doing so.
+    X_test = X[(X[:, 0] < 1 - delta) & (X[:, 1] < 1 - delta)]
+    X_delta_0 = X_test + [delta, 0]
+    X_delta_1 = X_test + [0, delta]
+    X_delta_0_1 = X_test + [delta, delta]
+
+    # Note: For true y, we have
+    # y(x0+d, x1+d) = y(x0, x1) + 5 * d * (2/5 + x0 + x1) + 5 * d**2
+    # y(x0+d, x1) = y(x0, x1) + 5 * d * (1/5 + x1)
+    # y(x0, x1+d) = y(x0, x1) + 5 * d * (1/5 + x0)
+    assert_allclose(
+        est_no_interactions.predict(X_delta_0_1)
+        + est_no_interactions.predict(X_test)
+        - est_no_interactions.predict(X_delta_0)
+        - est_no_interactions.predict(X_delta_1),
+        0,
+        atol=1e-12,
+    )
+
+    # Correct result of the expressions is 5 * delta**2. But this is hard to achieve by
+    # a fitted tree-based model. The expression should, however, at least be positive!
+    assert np.all(
+        est.predict(X_delta_0_1)
+        + est.predict(X_test)
+        - est.predict(X_delta_0)
+        - est.predict(X_delta_1)
+        > 0.01
+    )
+
+
 # TODO: Remove in v1.2
 @pytest.mark.parametrize(
     "old_loss, new_loss",
