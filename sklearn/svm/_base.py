@@ -271,7 +271,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if (
             self._impl in ["c_svc", "nu_svc"] and len(self.classes_) <= 2
         ) or self._impl in ["one_class", "epsilon_svr", "nu_svr"]:
-            self.n_iter_ = self.n_iter_[0]
+            self.n_iter_ = self._num_iter[0]
+        else:
+            self.n_iter_ = self._num_iter
 
         return self
 
@@ -319,7 +321,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             self.fit_status_,
-            self.n_iter_,
+            self._num_iter,
         ) = libsvm.fit(
             X,
             y,
@@ -360,7 +362,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             self.fit_status_,
-            self.n_iter_,
+            self._num_iter,
         ) = libsvm_sparse.libsvm_sparse_train(
             X.shape[1],
             X.data,
@@ -448,6 +450,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._n_support,
             self._dual_coef_,
             self._intercept_,
+            self._num_iter,
             self._probA,
             self._probB,
             svm_type=svm_type,
@@ -492,6 +495,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._n_support,
             self._probA,
             self._probB,
+            self._num_iter,
         )
 
     def _compute_kernel(self, X):
@@ -549,6 +553,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._n_support,
             self._dual_coef_,
             self._intercept_,
+            self._num_iter,
             self._probA,
             self._probB,
             svm_type=LIBSVM_IMPL.index(self._impl),
@@ -592,6 +597,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._n_support,
             self._probA,
             self._probB,
+            self._num_iter,
         )
 
     def _validate_for_predict(self, X):
@@ -895,6 +901,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self._n_support,
             self._dual_coef_,
             self._intercept_,
+            self._num_iter,
             self._probA,
             self._probB,
             svm_type=svm_type,
@@ -940,6 +947,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self._n_support,
             self._probA,
             self._probB,
+            self._num_iter,
         )
 
     def _get_coef(self):

@@ -66,12 +66,54 @@ def test_libsvm_iris():
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
     # check also the low-level API
-    model = _libsvm.fit(iris.data, iris.target.astype(np.float64))
-    pred = _libsvm.predict(iris.data, *model)
+    (
+        libsvm_support,
+        libsvm_support_vectors,
+        libsvm_n_class_SV,
+        libsvm_sv_coef,
+        libsvm_intercept,
+        libsvm_probA,
+        libsvm_probB,
+        libsvm_fit_status,
+        libsvm_num_iter,
+    ) = _libsvm.fit(iris.data, iris.target.astype(np.float64))
+
+    lib_svm_model = (
+        libsvm_support,
+        libsvm_support_vectors,
+        libsvm_n_class_SV,
+        libsvm_sv_coef,
+        libsvm_intercept,
+        libsvm_num_iter,
+        libsvm_probA,
+        libsvm_probB,
+    )
+    pred = _libsvm.predict(iris.data, *lib_svm_model)
     assert np.mean(pred == iris.target) > 0.95
 
-    model = _libsvm.fit(iris.data, iris.target.astype(np.float64), kernel="linear")
-    pred = _libsvm.predict(iris.data, *model, kernel="linear")
+    (
+        libsvm_support,
+        libsvm_support_vectors,
+        libsvm_n_class_SV,
+        libsvm_sv_coef,
+        libsvm_intercept,
+        libsvm_probA,
+        libsvm_probB,
+        libsvm_fit_status,
+        libsvm_num_iter,
+    ) = _libsvm.fit(iris.data, iris.target.astype(np.float64), kernel="linear")
+
+    lib_svm_model = (
+        libsvm_support,
+        libsvm_support_vectors,
+        libsvm_n_class_SV,
+        libsvm_sv_coef,
+        libsvm_intercept,
+        libsvm_num_iter,
+        libsvm_probA,
+        libsvm_probB,
+    )
+    pred = _libsvm.predict(iris.data, *lib_svm_model, kernel="linear")
     assert np.mean(pred == iris.target) > 0.95
 
     pred = _libsvm.cross_validation(

@@ -156,7 +156,7 @@ def fit(
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates, empty array for probability=False.
 
-    n_iter_ : ndarray of shape (n_class*(n_class-1)/2,) if n_class > 2 \
+    num_iter : ndarray of shape (n_class*(n_class-1)/2,) if n_class > 2 \
               else (1,)
         Number of iterations run in optimization.
     """
@@ -294,6 +294,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
             np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
             np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
+            np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter,
             np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
             int svm_type=0, kernel='rbf', int degree=3,
@@ -324,6 +325,10 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     intercept : array of shape (n_class*(n_class-1)/2)
         Intercept in decision function.
+
+    num_iter : ndarray of shape (n_class*(n_class-1)/2,) if n_class > 2 \
+              else (1,)
+        Number of iterations run in optimization.
 
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates.
@@ -365,7 +370,8 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                        class_weight_label.data, class_weight.data)
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
-                      sv_coef.data, intercept.data, nSV.data, probA.data, probB.data)
+                      sv_coef.data, intercept.data, nSV.data, probA.data,
+                      probB.data, num_iter.data)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     #TODO: use check_model
@@ -388,6 +394,7 @@ def predict_proba(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, kernel='rbf', int degree=3,
@@ -429,6 +436,10 @@ def predict_proba(
     intercept : array of shape (n_class*(n_class-1)/2,)
         Intercept in decision function.
 
+    num_iter : ndarray of shape (n_class*(n_class-1)/2,) if n_class > 2 \
+              else (1,)
+        Number of iterations run in optimization.
+
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates.
 
@@ -469,7 +480,7 @@ def predict_proba(
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
-                      probA.data, probB.data)
+                      probA.data, probB.data, num_iter.data)
 
     cdef np.npy_intp n_class = get_nr(model)
     cdef BlasFunctions blas_functions
@@ -493,6 +504,7 @@ def decision_function(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, kernel='rbf', int degree=3,
@@ -526,6 +538,10 @@ def decision_function(
 
     intercept : array, shape=[n_class*(n_class-1)/2]
         Intercept in decision function.
+
+    num_iter : ndarray of shape (n_class*(n_class-1)/2,) if n_class > 2 \
+              else (1,)
+        Number of iterations run in optimization.
 
     probA, probB : array, shape=[n_class*(n_class-1)/2]
         Probability estimates.
@@ -571,7 +587,7 @@ def decision_function(
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
-                      probA.data, probB.data)
+                      probA.data, probB.data, num_iter.data)
 
     if svm_type > 1:
         n_class = 1

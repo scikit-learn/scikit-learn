@@ -53,7 +53,7 @@ cdef extern from "libsvm_helper.c":
 
     svm_model *set_model (svm_parameter *, int, char *, np.npy_intp *,
                          char *, np.npy_intp *, np.npy_intp *, char *,
-                         char *, char *, char *, char *)
+                         char *, char *, char *, char *, char *)
 
     void copy_sv_coef   (char *, svm_model *)
     void copy_num_iter  (char *, svm_model *)
