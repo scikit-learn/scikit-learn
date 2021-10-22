@@ -105,6 +105,12 @@ Changelog
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
+:mod:`sklearn.svm`
+...................
+
+- |Enhancement| Exposed the number of iterations attribute in
+  :class:`svm.BaseLibSVM`. :pr:`21408` by :user:`Juan Martín Loyola <jmloyola>`.
+
 :mod:`sklearn.utils`
 ....................
 
