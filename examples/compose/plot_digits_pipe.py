@@ -10,13 +10,10 @@ regression does the prediction.
 We use a GridSearchCV to set the dimensionality of the PCA
 
 """
-print(__doc__)
-
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
-
 
 import numpy as np
 import matplotlib.pyplot as plt

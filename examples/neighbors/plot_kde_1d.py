@@ -25,7 +25,9 @@ The third figure compares kernel density estimates for a distribution of 100
 samples in 1 dimension.  Though this example uses 1D distributions, kernel
 density estimation is easily and efficiently extensible to higher dimensions
 as well.
+
 """
+
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 #
 import numpy as np
