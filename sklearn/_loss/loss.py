@@ -476,10 +476,7 @@ class HalfSquaredError(IdentityLink, CyHalfSquaredError, BaseLoss):
 
     def __init__(self, sample_weight=None):
         super().__init__()
-        if sample_weight is None:
-            self.constant_hessian = True
-        else:
-            self.constant_hessian = False
+        self.constant_hessian = sample_weight is None
 
 
 class AbsoluteError(IdentityLink, CyAbsoluteError, BaseLoss):
@@ -502,10 +499,7 @@ class AbsoluteError(IdentityLink, CyAbsoluteError, BaseLoss):
     def __init__(self, sample_weight=None):
         super().__init__()
         self.approx_hessian = True
-        if sample_weight is None:
-            self.constant_hessian = True
-        else:
-            self.constant_hessian = False
+        self.constant_hessian = sample_weight is None
 
     def fit_intercept_only(self, y_true, sample_weight=None):
         """Compute raw_prediction of an intercept-only model.
@@ -552,10 +546,7 @@ class PinballLoss(IdentityLink, CyPinballLoss, BaseLoss):
         BaseLoss.__init__(self)
         CyPinballLoss.__init__(self, quantile=float(quantile))
         self.approx_hessian = True
-        if sample_weight is None:
-            self.constant_hessian = True
-        else:
-            self.constant_hessian = False
+        self.constant_hessian = sample_weight is None
         if quantile <= 0 or quantile >= 1:
             raise ValueError(
                 "PinballLoss aka quantile loss only accepts "

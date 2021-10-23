@@ -63,7 +63,7 @@ def test_link_inverse_identity(link):
     rng = np.random.RandomState(42)
     link = link()
     n_samples, n_classes = 100, None
-    if link.multiclass:
+    if link.is_multiclass:
         n_classes = 10
         raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples, n_classes))
         if isinstance(link, MultinomialLogit):
@@ -84,7 +84,7 @@ def test_link_out_argument(link):
     rng = np.random.RandomState(42)
     link = link()
     n_samples, n_classes = 100, None
-    if link.multiclass:
+    if link.is_multiclass:
         n_classes = 10
         raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples, n_classes))
         if isinstance(link, MultinomialLogit):

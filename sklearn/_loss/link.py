@@ -52,10 +52,7 @@ class Interval:
             high = np.less(x, self.high)
 
         # Note: np.all returns numpy.bool_
-        if np.all(high):
-            return True
-        else:
-            return False
+        return bool(np.all(high))
 
 
 def _inclusive_low_high(interval, dtype=np.float64):
@@ -101,7 +98,7 @@ class BaseLink(ABC):
     parameters.
     """
 
-    multiclass = False
+    is_multiclass = False  # used for testing only
 
     # Usually, raw_prediction may be any real number and y_pred is an open
     # interval.
@@ -202,7 +199,7 @@ class MultinomialLogit(BaseLink):
 
     We have to choose additional contraints in order to make
 
-        y_pred_k = exp(raw_pred_k) / sum(exp(raw_pred_k), k=0..n_classes-1)
+        y_pred[k] = exp(raw_pred[k]) / sum(exp(raw_pred[k]), k=0..n_classes-1)
 
     for n_classes classes identifiable and invertible.
     We choose the symmetric side contraint where the geometric mean response
@@ -236,7 +233,7 @@ class MultinomialLogit(BaseLink):
         http://epub.ub.uni-muenchen.de/11001/1/tr067.pdf
     """
 
-    multiclass = True
+    is_multiclass = True
     interval_y_pred = Interval(0, 1, False, False)
 
     def symmetrize_raw_prediction(self, raw_prediction):
@@ -245,8 +242,7 @@ class MultinomialLogit(BaseLink):
     def link(self, y_pred, out=None):
         # geometric mean as reference category
         gm = gmean(y_pred, axis=1)
-        out = np.log(y_pred / gm[:, np.newaxis], out=out)
-        return out
+        return np.log(y_pred / gm[:, np.newaxis], out=out)
 
     def inverse(self, raw_prediction, out=None):
         if out is None:

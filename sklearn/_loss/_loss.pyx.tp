@@ -951,7 +951,7 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
 
         # We assume n_samples > n_classes. In this case having the inner loop
         # over n_classes is a good default.
-        # TODO: If every memoryview is contiguous and raw_preduction is
+        # TODO: If every memoryview is contiguous and raw_prediction is
         #       f-contiguous, can we write a better algo (loops) to improve
         #       performance?
         if sample_weight is None:
