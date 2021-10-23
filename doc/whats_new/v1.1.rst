@@ -52,6 +52,17 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |API| :func:`make_sparse_coded_signal` now accepts a parameter `data_transposed`
+  to explicitly specify the shape of matrix `X`. The default behavior `True` is to return
+  a transposed matrix `X`; will change to `False` in the 1.3. :pr:`21425` by
+  :user:`Gabriel Stefanini Vicente <g4brielvs>`.
+
+  .. deprecated:: 1.1
+   ``data_transposed`` default will change from False to True in 1.3.
+
 :mod:`sklearn.impute`
 .....................
 
