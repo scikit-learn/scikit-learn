@@ -32,8 +32,6 @@ Hamming Loss).
 
 """
 
-print(__doc__)
-
 # Authors: Eustache Diemert <eustache@diemert.fr>
 #          Maria Telenczuk <https://github.com/maikia>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>

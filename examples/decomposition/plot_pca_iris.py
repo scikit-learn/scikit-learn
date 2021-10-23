@@ -10,8 +10,6 @@ See `here <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
 information on this dataset.
 
 """
-print(__doc__)
-
 
 # Code source: Gaël Varoquaux
 # License: BSD 3 clause
