@@ -1036,8 +1036,8 @@ cdef inline Y_DTYPE_C _split_gain(
     the node a leaf of the tree.
 
     See Equation 7 of:
-    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-    https://arxiv.org/abs/1603.02754
+    :arxiv: `T. Chen, C. Guestrin, (2016) XGBoost: A Scalable Tree Boosting System, 
+    <1603.02754>.`_
     """
     cdef:
         Y_DTYPE_C gain
@@ -1075,8 +1075,8 @@ cdef inline Y_DTYPE_C _loss_from_value(
     """Return loss of a node from its (bounded) value
 
     See Equation 6 of:
-    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-    https://arxiv.org/abs/1603.02754
+    :arxiv: `T. Chen, C. Guestrin, (2016) XGBoost: A Scalable Tree Boosting System, 
+    <1603.02754>.`_
     """
     return sum_gradient * value
 
@@ -1115,8 +1115,8 @@ cpdef inline Y_DTYPE_C compute_node_value(
     monotonic constraints. Shrinkage is ignored.
 
     See Equation 5 of:
-    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-    https://arxiv.org/abs/1603.02754
+    :arxiv: `T. Chen, C. Guestrin, (2016) XGBoost: A Scalable Tree Boosting System, 
+    <1603.02754>.`_
     """
 
     cdef:
