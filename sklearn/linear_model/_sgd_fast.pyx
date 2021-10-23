@@ -21,7 +21,7 @@ from numpy.math cimport INFINITY
 cdef extern from "_sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
-from ..utils._weight_vector cimport WeightVector
+from ..utils._weight_vector cimport WeightVector64 as WeightVector
 from ..utils._seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 np.import_array()
@@ -55,9 +55,9 @@ cdef class LossFunction:
         Parameters
         ----------
         p : double
-            The prediction, p = w^T x
+            The prediction, `p = w^T x + intercept`.
         y : double
-            The true value (aka target)
+            The true value (aka target).
 
         Returns
         -------
@@ -66,26 +66,60 @@ cdef class LossFunction:
         """
         return 0.
 
-    def dloss(self, double p, double y):
+    def py_dloss(self, double p, double y):
+        """Python version of `dloss` for testing.
+
+        Pytest needs a python function and can't use cdef functions.
+
+        Parameters
+        ----------
+        p : double
+            The prediction, `p = w^T x`.
+        y : double
+            The true value (aka target).
+
+        Returns
+        -------
+        double
+            The derivative of the loss function with regards to `p`.
+        """
+        return self.dloss(p, y)
+
+    def py_loss(self, double p, double y):
+        """Python version of `loss` for testing.
+
+        Pytest needs a python function and can't use cdef functions.
+
+        Parameters
+        ----------
+        p : double
+            The prediction, `p = w^T x + intercept`.
+        y : double
+            The true value (aka target).
+
+        Returns
+        -------
+        double
+            The loss evaluated at `p` and `y`.
+        """
+        return self.loss(p, y)
+
+    cdef double dloss(self, double p, double y) nogil:
         """Evaluate the derivative of the loss function with respect to
         the prediction `p`.
 
         Parameters
         ----------
         p : double
-            The prediction, p = w^T x
+            The prediction, `p = w^T x`.
         y : double
-            The true value (aka target)
+            The true value (aka target).
+
         Returns
         -------
         double
             The derivative of the loss function with regards to `p`.
         """
-        return self._dloss(p, y)
-
-    cdef double _dloss(self, double p, double y) nogil:
-        # Implementation of dloss; separate function because cpdef and nogil
-        # can't be combined.
         return 0.
 
 
@@ -95,7 +129,7 @@ cdef class Regression(LossFunction):
     cdef double loss(self, double p, double y) nogil:
         return 0.
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         return 0.
 
 
@@ -105,7 +139,7 @@ cdef class Classification(LossFunction):
     cdef double loss(self, double p, double y) nogil:
         return 0.
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         return 0.
 
 
@@ -126,7 +160,7 @@ cdef class ModifiedHuber(Classification):
         else:
             return -4.0 * z
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double z = p * y
         if z >= 1.0:
             return 0.0
@@ -161,7 +195,7 @@ cdef class Hinge(Classification):
             return self.threshold - z
         return 0.0
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double z = p * y
         if z <= self.threshold:
             return -y
@@ -193,7 +227,7 @@ cdef class SquaredHinge(Classification):
             return z * z
         return 0.0
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double z = self.threshold - p * y
         if z > 0:
             return -2 * y * z
@@ -215,7 +249,7 @@ cdef class Log(Classification):
             return -z
         return log(1.0 + exp(-z))
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double z = p * y
         # approximately equal and saves the computation of the log
         if z > 18.0:
@@ -233,7 +267,7 @@ cdef class SquaredLoss(Regression):
     cdef double loss(self, double p, double y) nogil:
         return 0.5 * (p - y) * (p - y)
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         return p - y
 
     def __reduce__(self):
@@ -262,7 +296,7 @@ cdef class Huber(Regression):
         else:
             return self.c * abs_r - (0.5 * self.c * self.c)
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double r = p - y
         cdef double abs_r = fabs(r)
         if abs_r <= self.c:
@@ -291,7 +325,7 @@ cdef class EpsilonInsensitive(Regression):
         cdef double ret = fabs(y - p) - self.epsilon
         return ret if ret > 0 else 0
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         if y - p > self.epsilon:
             return -1
         elif p - y > self.epsilon:
@@ -318,7 +352,7 @@ cdef class SquaredEpsilonInsensitive(Regression):
         cdef double ret = fabs(y - p) - self.epsilon
         return ret * ret if ret > 0 else 0
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double z
         z = y - p
         if z > self.epsilon:
@@ -349,6 +383,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double weight_pos, double weight_neg,
                int learning_rate, double eta0,
                double power_t,
+               bint one_class,
                double t=1.0,
                double intercept_decay=1.0,
                int average=0):
@@ -418,6 +453,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The initial learning rate.
     power_t : double
         The exponent for inverse scaling learning rate.
+    one_class : boolean
+        Whether to solve the One-Class SVM optimization problem.
     t : double
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
@@ -425,6 +462,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     average : int
         The number of iterations before averaging starts. average=1 is
         equivalent to averaging for all iterations.
+
 
     Returns
     -------
@@ -459,6 +497,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double eta = 0.0
     cdef double p = 0.0
     cdef double update = 0.0
+    cdef double intercept_update = 0.0
     cdef double sumloss = 0.0
     cdef double score = 0.0
     cdef double best_loss = INFINITY
@@ -542,7 +581,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                     update = loss.loss(p, y) / (update + 0.5 / C)
                 else:
-                    dloss = loss._dloss(p, y)
+                    dloss = loss.dloss(p, y)
                     # clip dloss with large values to avoid numerical
                     # instabilities
                     if dloss < -MAX_DLOSS:
@@ -565,10 +604,15 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     # do not scale to negative values when eta or alpha are too
                     # big: instead set the weights to zero
                     w.scale(max(0, 1.0 - ((1.0 - l1_ratio) * eta * alpha)))
+
                 if update != 0.0:
                     w.add(x_data_ptr, x_ind_ptr, xnnz, update)
-                    if fit_intercept == 1:
-                        intercept += update * intercept_decay
+                if fit_intercept == 1:
+                    intercept_update = update
+                    if one_class:  # specific for One-Class SVM
+                        intercept_update -= 2. * eta * alpha
+                    if intercept_update != 0:
+                        intercept += intercept_update * intercept_decay
 
                 if 0 < average <= t:
                     # compute the average for the intercept and update the

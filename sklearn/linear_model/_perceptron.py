@@ -5,7 +5,7 @@ from ._stochastic_gradient import BaseSGDClassifier
 
 
 class Perceptron(BaseSGDClassifier):
-    """Perceptron
+    """Linear perceptron classifier.
 
     Read more in the :ref:`User Guide <perceptron>`.
 
@@ -18,6 +18,13 @@ class Perceptron(BaseSGDClassifier):
     alpha : float, default=0.0001
         Constant that multiplies the regularization term if regularization is
         used.
+
+    l1_ratio : float, default=0.15
+        The Elastic Net mixing parameter, with `0 <= l1_ratio <= 1`.
+        `l1_ratio=0` corresponds to L2 penalty, `l1_ratio=1` to L1.
+        Only used if `penalty='elasticnet'`.
+
+        .. versionadded:: 0.24
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -40,7 +47,7 @@ class Perceptron(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
 
     verbose : int, default=0
-        The verbosity level
+        The verbosity level.
 
     eta0 : double, default=1
         Constant by which the updates are multiplied.
@@ -87,7 +94,7 @@ class Perceptron(BaseSGDClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -96,31 +103,54 @@ class Perceptron(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : ndarray of shape = [1, n_features] if n_classes == 2 else \
-        [n_classes, n_features]
+    classes_ : ndarray of shape (n_classes,)
+        The unique classes labels.
+
+    coef_ : ndarray of shape (1, n_features) if n_classes == 2 else \
+            (n_classes, n_features)
         Weights assigned to the features.
 
-    intercept_ : ndarray of shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
+
+    loss_function_ : concrete LossFunction
+        The function that determines the loss, or difference between the
+        output of the algorithm and the target values.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
-    classes_ : ndarray of shape (n_classes,)
-        The unique classes labels.
-
     t_ : int
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    See Also
+    --------
+    sklearn.linear_model.SGDClassifier : Linear classifiers
+        (SVM, logistic regression, etc.) with SGD training.
+
     Notes
     -----
-
     ``Perceptron`` is a classification algorithm which shares the same
     underlying implementation with ``SGDClassifier``. In fact,
     ``Perceptron()`` is equivalent to `SGDClassifier(loss="perceptron",
     eta0=1, learning_rate="constant", penalty=None)`.
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/Perceptron and references therein.
 
     Examples
     --------
@@ -132,28 +162,46 @@ class Perceptron(BaseSGDClassifier):
     Perceptron()
     >>> clf.score(X, y)
     0.939...
-
-    See also
-    --------
-
-    SGDClassifier
-
-    References
-    ----------
-
-    https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
 
-    def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
-                 max_iter=1000, tol=1e-3, shuffle=True, verbose=0, eta0=1.0,
-                 n_jobs=None, random_state=0, early_stopping=False,
-                 validation_fraction=0.1, n_iter_no_change=5,
-                 class_weight=None, warm_start=False):
+    def __init__(
+        self,
+        *,
+        penalty=None,
+        alpha=0.0001,
+        l1_ratio=0.15,
+        fit_intercept=True,
+        max_iter=1000,
+        tol=1e-3,
+        shuffle=True,
+        verbose=0,
+        eta0=1.0,
+        n_jobs=None,
+        random_state=0,
+        early_stopping=False,
+        validation_fraction=0.1,
+        n_iter_no_change=5,
+        class_weight=None,
+        warm_start=False,
+    ):
         super().__init__(
-            loss="perceptron", penalty=penalty, alpha=alpha, l1_ratio=0,
-            fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
-            shuffle=shuffle, verbose=verbose, random_state=random_state,
-            learning_rate="constant", eta0=eta0, early_stopping=early_stopping,
+            loss="perceptron",
+            penalty=penalty,
+            alpha=alpha,
+            l1_ratio=l1_ratio,
+            fit_intercept=fit_intercept,
+            max_iter=max_iter,
+            tol=tol,
+            shuffle=shuffle,
+            verbose=verbose,
+            random_state=random_state,
+            learning_rate="constant",
+            eta0=eta0,
+            early_stopping=early_stopping,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, power_t=0.5,
-            warm_start=warm_start, class_weight=class_weight, n_jobs=n_jobs)
+            n_iter_no_change=n_iter_no_change,
+            power_t=0.5,
+            warm_start=warm_start,
+            class_weight=class_weight,
+            n_jobs=n_jobs,
+        )

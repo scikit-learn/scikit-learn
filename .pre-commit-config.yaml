@@ -1,0 +1,22 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+-   repo: https://github.com/psf/black
+    rev: 21.6b0
+    hooks:
+    -   id: black
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+    -   id: flake8
+        types: [file, python]
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.782
+    hooks:
+     -  id: mypy
+        files: sklearn/
+        additional_dependencies: [pytest==6.2.4]

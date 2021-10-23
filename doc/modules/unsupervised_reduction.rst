@@ -37,7 +37,7 @@ documentation: :ref:`random_projection`.
 
 .. topic:: **Examples**
 
-   * :ref:`sphx_glr_auto_examples_plot_johnson_lindenstrauss_bound.py`
+   * :ref:`sphx_glr_auto_examples_miscellaneous_plot_johnson_lindenstrauss_bound.py`
 
 Feature agglomeration
 ------------------------

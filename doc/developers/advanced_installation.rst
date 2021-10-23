@@ -1,11 +1,13 @@
 
 .. _advanced-installation:
 
+.. include:: ../min_dependency_substitutions.rst
+
 ==================================================
 Installing the development version of scikit-learn
 ==================================================
 
-This section introduces how to install the **master branch** of scikit-learn.
+This section introduces how to install the **main branch** of scikit-learn.
 This can be done by either installing a nightly build or building from source.
 
 .. _install_nightly_builds:
@@ -20,11 +22,11 @@ basis.
 Installing a nightly build is the quickest way to:
 
 - try a new feature that will be shipped in the next release (that is, a
-  feature from a pull-request that was recently merged to the master branch);
+  feature from a pull-request that was recently merged to the main branch);
 
 - check whether a bug you encountered has been fixed since the last release.
 
-::
+.. prompt:: bash $
 
   pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 
@@ -41,30 +43,56 @@ feature, code or documentation improvement).
 
 #. Use `Git <https://git-scm.com/>`_ to check out the latest source from the
    `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
-   Github.::
+   Github.:
 
-        git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
-        cd scikit-learn
+   .. prompt:: bash $
+
+     git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
+
+#. Install a recent version of Python (3.9 is recommended at the time of writing)
+   for instance using Miniforge3_. Miniforge provides a conda-based distribution
+   of Python and the most popular scientific libraries.
+
+   If you installed Python with conda, we recommend to create a dedicated
+   `conda environment`_ with all the build dependencies of scikit-learn
+   (namely NumPy_, SciPy_, and Cython_):
+
+   .. prompt:: bash $
+
+     conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython
+     conda activate sklearn-env
+
+#. **Alternative to conda:** If you run Linux or similar, you can instead use
+   your system's Python provided it is recent enough (3.7 or higher
+   at the time of writing). In this case, we recommend to create a dedicated
+   virtualenv_ and install the scikit-learn build dependencies with pip:
+
+   .. prompt:: bash $
+
+     python3 -m venv sklearn-env
+     source sklearn-env/bin/activate
+     pip install wheel numpy scipy cython
 
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
 
-#. Optional (but recommended): create and activate a dedicated virtualenv_
-   or `conda environment`_.
+#. Build the project with pip in :ref:`editable_mode`:
 
-#. Install Cython_ and build the project with pip in :ref:`editable_mode`::
+   .. prompt:: bash $
 
-        pip install cython
-        pip install --verbose --no-build-isolation --editable .
+     pip install --verbose --no-build-isolation --editable .
 
 #. Check that the installed scikit-learn has a version number ending with
-   `.dev0`::
+   `.dev0`:
 
-    python -c "import sklearn; sklearn.show_versions()"
+   .. prompt:: bash $
+
+     python -c "import sklearn; sklearn.show_versions()"
 
 #. Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
    the tests on the module of your choice.
@@ -86,13 +114,11 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.6),
-- NumPy (>= 1.13.3),
-- SciPy (>= 0.19),
-- Joblib (>= 0.11).
-
-Those dependencies are **automatically installed by pip** if they were missing
-when building scikit-learn from source.
+- Python (>= 3.7),
+- NumPy (>= |NumpyMinVersion|),
+- SciPy (>= |ScipyMinVersion|),
+- Joblib (>= |JoblibMinVersion|),
+- threadpoolctl (>= |ThreadpoolctlMinVersion|).
 
 .. note::
 
@@ -110,7 +136,7 @@ Building Scikit-learn also requires:
     # - sklearn/_build_utils/__init__.py
     # - advanced installation guide
 
-- Cython >= 0.28.5
+- Cython >= |CythonMinVersion|
 - A C/C++ compiler and a matching OpenMP_ runtime library. See the
   :ref:`platform system specific instructions
   <platform_specific_instructions>` for more details.
@@ -134,9 +160,7 @@ Test dependencies
 
 Running tests requires:
 
-.. |PytestMinVersion| replace:: 4.6.2
-
-- pytest >=\ |PytestMinVersion|
+- pytest >= |PytestMinVersion|
 
 Some tests also require `pandas <https://pandas.pydata.org>`_.
 
@@ -193,14 +217,19 @@ First, install `Build Tools for Visual Studio 2019
 Secondly, find out if you are running 64-bit or 32-bit Python. The building
 command depends on the architecture of the Python interpreter. You can check
 the architecture by running the following in ``cmd`` or ``powershell``
-console::
+console:
+
+.. prompt:: bash $
 
     python -c "import struct; print(struct.calcsize('P') * 8)"
 
-For 64-bit Python, configure the build environment with::
+For 64-bit Python, configure the build environment by running the following
+commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
 
-    SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+    ::
+
+      $ SET DISTUTILS_USE_SDK=1
+      $ "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
@@ -208,7 +237,9 @@ Please be aware that the path above might be different from user to user. The
 aim is to point to the "vcvarsall.bat" file that will set the necessary
 environment variables in the current command prompt.
 
-Finally, build scikit-learn from this command prompt::
+Finally, build scikit-learn from this command prompt:
+
+.. prompt:: bash $
 
     pip install --verbose --no-build-isolation --editable .
 
@@ -225,6 +256,11 @@ to enable OpenMP support:
 
 - or install `libomp` with Homebrew to extend the default Apple clang compiler.
 
+For Apple Silicon M1 hardware, only the conda-forge method below is known to
+work at the time of writing (January 2021). You can install the `macos/arm64`
+distribution of conda using the `miniforge installer
+<https://github.com/conda-forge/miniforge#miniforge>`_
+
 macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -232,15 +268,19 @@ If you use the conda package manager (version >= 4.7), you can install the
 ``compilers`` meta-package from the conda-forge channel, which provides
 OpenMP-enabled C/C++ compilers based on the llvm toolchain.
 
-First install the macOS command line tools::
+First install the macOS command line tools:
+
+.. prompt:: bash $
 
     xcode-select --install
 
 It is recommended to use a dedicated `conda environment`_ to build
-scikit-learn from source::
+scikit-learn from source:
 
-    conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-        "conda-forge::compilers>=1.0.4" conda-forge::llvm-openmp
+.. prompt:: bash $
+
+    conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
+        joblib threadpoolctl pytest compilers llvm-openmp
     conda activate sklearn-dev
     make clean
     pip install --verbose --no-build-isolation --editable .
@@ -253,14 +293,18 @@ scikit-learn from source::
     problems for this setup.
 
 You can check that the custom compilers are properly installed from conda
-forge using the following command::
+forge using the following command:
 
-    conda list 
+.. prompt:: bash $
+
+    conda list
 
 which should include ``compilers`` and ``llvm-openmp``.
 
 The compilers meta-package will automatically set custom environment
-variables::
+variables:
+
+.. prompt:: bash $
 
     echo $CC
     echo $CXX
@@ -282,17 +326,23 @@ macOS compilers from Homebrew
 Another solution is to enable OpenMP support for the clang compiler shipped
 by default on macOS.
 
-First install the macOS command line tools::
+First install the macOS command line tools:
+
+.. prompt:: bash $
 
     xcode-select --install
 
 Install the Homebrew_ package manager for macOS.
 
-Install the LLVM OpenMP library::
+Install the LLVM OpenMP library:
+
+.. prompt:: bash $
 
     brew install libomp
 
-Set the following environment variables::
+Set the following environment variables:
+
+.. prompt:: bash $
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
@@ -302,7 +352,9 @@ Set the following environment variables::
     export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
 
 Finally, build scikit-learn in verbose mode (to check for the presence of the
-``-fopenmp`` flag in the compiler commands)::
+``-fopenmp`` flag in the compiler commands):
+
+.. prompt:: bash $
 
     make clean
     pip install --verbose --no-build-isolation --editable .
@@ -320,11 +372,15 @@ installed the scikit-learn Python development headers and a working C/C++
 compiler with OpenMP support (typically the GCC toolchain).
 
 Install build dependencies for Debian-based operating systems, e.g.
-Ubuntu::
+Ubuntu:
+
+.. prompt:: bash $
 
     sudo apt-get install build-essential python3-dev python3-pip
 
-then proceed as usual::
+then proceed as usual:
+
+.. prompt:: bash $
 
     pip3 install cython
     pip3 install --verbose --editable .
@@ -337,12 +393,16 @@ isolation from the Python packages installed via the system packager. When
 using an isolated environment, ``pip3`` should be replaced by ``pip`` in the
 above commands.
 
-When precompiled wheels of the runtime dependencies are not avalaible for your
-architecture (e.g. ARM), you can install the system versions::
+When precompiled wheels of the runtime dependencies are not available for your
+architecture (e.g. ARM), you can install the system versions:
+
+.. prompt:: bash $
 
     sudo apt-get install cython3 python3-numpy python3-scipy
 
-On Red Hat and clones (e.g. CentOS), install the dependencies using::
+On Red Hat and clones (e.g. CentOS), install the dependencies using:
+
+.. prompt:: bash $
 
     sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
 
@@ -350,9 +410,12 @@ Linux compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Alternatively, install a recent version of the GNU C Compiler toolchain (GCC)
-in the user folder using conda::
+in the user folder using conda:
 
-    conda create -n sklearn-dev numpy scipy joblib cython conda-forge::compilers
+.. prompt:: bash $
+
+    conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
+        joblib threadpoolctl pytest compilers
     conda activate sklearn-dev
     pip install --verbose --no-build-isolation --editable .
 
@@ -363,19 +426,25 @@ FreeBSD
 
 The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not
 include OpenMP support. You need to install the `openmp` library from packages
-(or ports)::
+(or ports):
+
+.. prompt:: bash $
 
     sudo pkg install openmp
 
 This will install header files in ``/usr/local/include`` and libs in
 ``/usr/local/lib``. Since these directories are not searched by default, you
-can set the environment variables to these locations::
+can set the environment variables to these locations:
+
+.. prompt:: bash $
 
     export CFLAGS="$CFLAGS -I/usr/local/include"
     export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/lib -L/usr/local/lib -lomp"
 
-Finally, build the package using the standard command::
+Finally, build the package using the standard command:
+
+.. prompt:: bash $
 
     pip install --verbose --no-build-isolation --editable .
 
@@ -384,6 +453,92 @@ the base system and these steps will not be necessary.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _Cython: https://cython.org
+.. _NumPy: https://numpy.org
+.. _SciPy: https://www.scipy.org
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
+
+Alternative compilers
+=====================
+
+The command:
+
+.. prompt:: bash $
+
+    pip install --verbose --editable .
+
+will build scikit-learn using your default C/C++ compiler. If you want to build
+scikit-learn with another compiler handled by ``distutils`` or by
+``numpy.distutils``, use the following command:
+
+.. prompt:: bash $
+
+    python setup.py build_ext --compiler=<compiler> -i build_clib --compiler=<compiler>
+
+To see the list of available compilers run:
+
+.. prompt:: bash $
+
+    python setup.py build_ext --help-compiler
+
+If your compiler is not listed here, you can specify it via the ``CC`` and
+``LDSHARED`` environment variables (does not work on windows):
+
+.. prompt:: bash $
+
+    CC=<compiler> LDSHARED="<compiler> -shared" python setup.py build_ext -i
+
+Building with Intel C Compiler (ICC) using oneAPI on Linux
+----------------------------------------------------------
+
+Intel provides access to all of its oneAPI toolkits and packages through a
+public APT repository. First you need to get and install the public key of this
+repository:
+
+.. prompt:: bash $
+
+    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+
+Then, add the oneAPI repository to your APT repositories:
+
+.. prompt:: bash $
+
+    sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+    sudo apt-get update
+
+Install ICC, packaged under the name
+``intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic``:
+
+.. prompt:: bash $
+
+    sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+
+Before using ICC, you need to set up environment variables:
+
+.. prompt:: bash $
+
+    source /opt/intel/oneapi/setvars.sh
+
+Finally, you can build scikit-learn. For example on Linux x86_64:
+
+.. prompt:: bash $
+
+    python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
+
+Parallel builds
+===============
+
+It is possible to build scikit-learn compiled extensions in parallel by setting
+and environment variable as follows before calling the ``pip install`` or
+``python setup.py build_ext`` commands::
+
+    export SKLEARN_BUILD_PARALLEL=3
+    pip install --verbose --no-build-isolation --editable .
+
+On a machine with 2 CPU cores, it can be beneficial to use a parallelism level
+of 3 to overlap IO bound tasks (reading and writing files on disk) with CPU
+bound tasks (actually compiling).

@@ -6,27 +6,32 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-import os
 import csv
+import hashlib
+import gzip
 import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
-from os.path import dirname, exists, expanduser, isdir, join, splitext
-import hashlib
+from os.path import expanduser, isdir, join, splitext
+from importlib import resources
 
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
+from ..utils.deprecation import deprecated
 
 import numpy as np
 
 from urllib.request import urlretrieve
 
-RemoteFileMetadata = namedtuple('RemoteFileMetadata',
-                                ['filename', 'url', 'checksum'])
+DATA_MODULE = "sklearn.datasets.data"
+DESCR_MODULE = "sklearn.datasets.descr"
+IMAGES_MODULE = "sklearn.datasets.images"
+
+RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "checksum"])
 
 
-def get_data_home(data_home=None):
+def get_data_home(data_home=None) -> str:
     """Return the path of the scikit-learn data dir.
 
     This folder is used by some large dataset loaders to avoid downloading the
@@ -43,15 +48,14 @@ def get_data_home(data_home=None):
 
     Parameters
     ----------
-    data_home : str | None
-        The path to scikit-learn data dir.
+    data_home : str, default=None
+        The path to scikit-learn data directory. If `None`, the default path
+        is `~/sklearn_learn_data`.
     """
     if data_home is None:
-        data_home = environ.get('SCIKIT_LEARN_DATA',
-                                join('~', 'scikit_learn_data'))
+        data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
     data_home = expanduser(data_home)
-    if not exists(data_home):
-        makedirs(data_home)
+    makedirs(data_home, exist_ok=True)
     return data_home
 
 
@@ -60,17 +64,23 @@ def clear_data_home(data_home=None):
 
     Parameters
     ----------
-    data_home : str | None
-        The path to scikit-learn data dir.
+    data_home : str, default=None
+        The path to scikit-learn data directory. If `None`, the default path
+        is `~/sklearn_learn_data`.
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
 
 
-def _convert_data_dataframe(caller_name, data, target,
-                            feature_names, target_names):
-    pd = check_pandas_support('{} with as_frame=True'.format(caller_name))
-    data_df = pd.DataFrame(data, columns=feature_names)
+def _convert_data_dataframe(
+    caller_name, data, target, feature_names, target_names, sparse_data=False
+):
+    pd = check_pandas_support("{} with as_frame=True".format(caller_name))
+    if not sparse_data:
+        data_df = pd.DataFrame(data, columns=feature_names)
+    else:
+        data_df = pd.DataFrame.sparse.from_spmatrix(data, columns=feature_names)
+
     target_df = pd.DataFrame(target, columns=target_names)
     combined_df = pd.concat([data_df, target_df], axis=1)
     X = combined_df[feature_names]
@@ -80,9 +90,17 @@ def _convert_data_dataframe(caller_name, data, target,
     return combined_df, X, y
 
 
-def load_files(container_path, description=None, categories=None,
-               load_content=True, shuffle=True, encoding=None,
-               decode_error='strict', random_state=0):
+def load_files(
+    container_path,
+    *,
+    description=None,
+    categories=None,
+    load_content=True,
+    shuffle=True,
+    encoding=None,
+    decode_error="strict",
+    random_state=0,
+):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -123,34 +141,34 @@ def load_files(container_path, description=None, categories=None,
 
     Parameters
     ----------
-    container_path : string or unicode
+    container_path : str
         Path to the main folder holding one subfolder per category
 
-    description : string or unicode, optional (default=None)
+    description : str, default=None
         A paragraph describing the characteristic of the dataset: its source,
         reference, etc.
 
-    categories : A collection of strings or None, optional (default=None)
+    categories : list of str, default=None
         If None (default), load all the categories. If not None, list of
         category names to load (other categories ignored).
 
-    load_content : bool, optional (default=True)
+    load_content : bool, default=True
         Whether to load or not the content of the different files. If true a
         'data' attribute containing the text information is present in the data
         structure returned. If not, a filenames attribute gives the path to the
         files.
 
-    shuffle : bool, optional (default=True)
+    shuffle : bool, default=True
         Whether or not to shuffle the data: might be important for models that
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    encoding : string or None (default is None)
+    encoding : str, default=None
         If None, do not try to decode the content of the files (e.g. for images
         or other non-text content). If not None, encoding to use to decode text
         files to Unicode if load_content is True.
 
-    decode_error : {'strict', 'ignore', 'replace'}, optional
+    decode_error : {'strict', 'ignore', 'replace'}, default='strict'
         Instruction on what to do if a byte sequence is given to analyze that
         contains characters not of the given `encoding`. Passed as keyword
         argument 'errors' to bytes.decode.
@@ -181,8 +199,9 @@ def load_files(container_path, description=None, categories=None,
     target_names = []
     filenames = []
 
-    folders = [f for f in sorted(listdir(container_path))
-               if isdir(join(container_path, f))]
+    folders = [
+        f for f in sorted(listdir(container_path)) if isdir(join(container_path, f))
+    ]
 
     if categories is not None:
         folders = [f for f in folders if f in categories]
@@ -190,8 +209,7 @@ def load_files(container_path, description=None, categories=None,
     for label, folder in enumerate(folders):
         target_names.append(folder)
         folder_path = join(container_path, folder)
-        documents = [join(folder_path, d)
-                     for d in sorted(listdir(folder_path))]
+        documents = [join(folder_path, d) for d in sorted(listdir(folder_path))]
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
@@ -209,65 +227,180 @@ def load_files(container_path, description=None, categories=None,
     if load_content:
         data = []
         for filename in filenames:
-            with open(filename, 'rb') as f:
+            with open(filename, "rb") as f:
                 data.append(f.read())
         if encoding is not None:
             data = [d.decode(encoding, decode_error) for d in data]
-        return Bunch(data=data,
-                     filenames=filenames,
-                     target_names=target_names,
-                     target=target,
-                     DESCR=description)
+        return Bunch(
+            data=data,
+            filenames=filenames,
+            target_names=target_names,
+            target=target,
+            DESCR=description,
+        )
 
-    return Bunch(filenames=filenames,
-                 target_names=target_names,
-                 target=target,
-                 DESCR=description)
+    return Bunch(
+        filenames=filenames, target_names=target_names, target=target, DESCR=description
+    )
 
 
-def load_data(module_path, data_file_name):
-    """Loads data from module_path/data/data_file_name.
+def load_csv_data(
+    data_file_name,
+    *,
+    data_module=DATA_MODULE,
+    descr_file_name=None,
+    descr_module=DESCR_MODULE,
+):
+    """Loads `data_file_name` from `data_module with `importlib.resources`.
 
     Parameters
     ----------
-    module_path : string
-        The module path.
+    data_file_name : str
+        Name of csv file to be loaded from `data_module/data_file_name`.
+        For example `'wine_data.csv'`.
 
-    data_file_name : string
-        Name of csv file to be loaded from
-        module_path/data/data_file_name. For example 'wine_data.csv'.
+    data_module : str or module, default='sklearn.datasets.data'
+        Module where data lives. The default is `'sklearn.datasets.data'`.
+
+    descr_file_name : str, default=None
+        Name of rst file to be loaded from `descr_module/descr_file_name`.
+        For example `'wine_data.rst'`. See also :func:`load_descr`.
+        If not None, also returns the corresponding description of
+        the dataset.
+
+    descr_module : str or module, default='sklearn.datasets.descr'
+        Module where `descr_file_name` lives. See also :func:`load_descr`.
+        The default is `'sklearn.datasets.descr'`.
 
     Returns
     -------
-    data : Numpy array
+    data : ndarray of shape (n_samples, n_features)
         A 2D array with each row representing one sample and each column
         representing the features of a given sample.
 
-    target : Numpy array
-        A 1D array holding target variables for all the samples in `data.
-        For example target[0] is the target varible for data[0].
+    target : ndarry of shape (n_samples,)
+        A 1D array holding target variables for all the samples in `data`.
+        For example target[0] is the target variable for data[0].
 
-    target_names : Numpy array
+    target_names : ndarry of shape (n_samples,)
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
+
+    descr : str, optional
+        Description of the dataset (the content of `descr_file_name`).
+        Only returned if `descr_file_name` is not None.
     """
-    with open(join(module_path, 'data', data_file_name)) as csv_file:
+    with resources.open_text(data_module, data_file_name) as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
         n_features = int(temp[1])
         target_names = np.array(temp[2:])
         data = np.empty((n_samples, n_features))
-        target = np.empty((n_samples,), dtype=np.int)
+        target = np.empty((n_samples,), dtype=int)
 
         for i, ir in enumerate(data_file):
             data[i] = np.asarray(ir[:-1], dtype=np.float64)
-            target[i] = np.asarray(ir[-1], dtype=np.int)
+            target[i] = np.asarray(ir[-1], dtype=int)
 
-    return data, target, target_names
+    if descr_file_name is None:
+        return data, target, target_names
+    else:
+        assert descr_module is not None
+        descr = load_descr(descr_module=descr_module, descr_file_name=descr_file_name)
+        return data, target, target_names, descr
 
 
-def load_wine(return_X_y=False, as_frame=False):
+def load_gzip_compressed_csv_data(
+    data_file_name,
+    *,
+    data_module=DATA_MODULE,
+    descr_file_name=None,
+    descr_module=DESCR_MODULE,
+    encoding="utf-8",
+    **kwargs,
+):
+    """Loads gzip-compressed `data_file_name` from `data_module` with `importlib.resources`.
+
+    1) Open resource file with `importlib.resources.open_binary`
+    2) Decompress file obj with `gzip.open`
+    3) Load decompressed data with `np.loadtxt`
+
+    Parameters
+    ----------
+    data_file_name : str
+        Name of gzip-compressed csv file  (`'*.csv.gz'`) to be loaded from
+        `data_module/data_file_name`. For example `'diabetes_data.csv.gz'`.
+
+    data_module : str or module, default='sklearn.datasets.data'
+        Module where data lives. The default is `'sklearn.datasets.data'`.
+
+    descr_file_name : str, default=None
+        Name of rst file to be loaded from `descr_module/descr_file_name`.
+        For example `'wine_data.rst'`. See also :func:`load_descr`.
+        If not None, also returns the corresponding description of
+        the dataset.
+
+    descr_module : str or module, default='sklearn.datasets.descr'
+        Module where `descr_file_name` lives. See also :func:`load_descr`.
+        The default  is `'sklearn.datasets.descr'`.
+
+    encoding : str, default="utf-8"
+        Name of the encoding that the gzip-decompressed file will be
+        decoded with. The default is 'utf-8'.
+
+    **kwargs : dict, optional
+        Keyword arguments to be passed to `np.loadtxt`;
+        e.g. delimiter=','.
+
+    Returns
+    -------
+    data : ndarray of shape (n_samples, n_features)
+        A 2D array with each row representing one sample and each column
+        representing the features and/or target of a given sample.
+
+    descr : str, optional
+        Description of the dataset (the content of `descr_file_name`).
+        Only returned if `descr_file_name` is not None.
+    """
+    with resources.open_binary(data_module, data_file_name) as compressed_file:
+        compressed_file = gzip.open(compressed_file, mode="rt", encoding=encoding)
+        data = np.loadtxt(compressed_file, **kwargs)
+
+    if descr_file_name is None:
+        return data
+    else:
+        assert descr_module is not None
+        descr = load_descr(descr_module=descr_module, descr_file_name=descr_file_name)
+        return data, descr
+
+
+def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
+    """Load `descr_file_name` from `descr_module` with `importlib.resources`.
+
+    Parameters
+    ----------
+    descr_file_name : str, default=None
+        Name of rst file to be loaded from `descr_module/descr_file_name`.
+        For example `'wine_data.rst'`. See also :func:`load_descr`.
+        If not None, also returns the corresponding description of
+        the dataset.
+
+    descr_module : str or module, default='sklearn.datasets.descr'
+        Module where `descr_file_name` lives. See also :func:`load_descr`.
+        The default  is `'sklearn.datasets.descr'`.
+
+    Returns
+    -------
+    fdescr : str
+        Content of `descr_file_name`.
+    """
+    fdescr = resources.read_text(descr_module, descr_file_name)
+
+    return fdescr
+
+
+def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
     .. versionadded:: 0.18
@@ -287,7 +420,7 @@ def load_wine(return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -341,47 +474,50 @@ def load_wine(return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['class_0', 'class_1', 'class_2']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, 'wine_data.csv')
 
-    with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
-        fdescr = rst_file.read()
+    data, target, target_names, fdescr = load_csv_data(
+        data_file_name="wine_data.csv", descr_file_name="wine_data.rst"
+    )
 
-    feature_names = ['alcohol',
-                     'malic_acid',
-                     'ash',
-                     'alcalinity_of_ash',
-                     'magnesium',
-                     'total_phenols',
-                     'flavanoids',
-                     'nonflavanoid_phenols',
-                     'proanthocyanins',
-                     'color_intensity',
-                     'hue',
-                     'od280/od315_of_diluted_wines',
-                     'proline']
+    feature_names = [
+        "alcohol",
+        "malic_acid",
+        "ash",
+        "alcalinity_of_ash",
+        "magnesium",
+        "total_phenols",
+        "flavanoids",
+        "nonflavanoid_phenols",
+        "proanthocyanins",
+        "color_intensity",
+        "hue",
+        "od280/od315_of_diluted_wines",
+        "proline",
+    ]
 
     frame = None
-    target_columns = ['target', ]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
-        frame, data, target = _convert_data_dataframe("load_wine",
-                                                      data,
-                                                      target,
-                                                      feature_names,
-                                                      target_columns)
+        frame, data, target = _convert_data_dataframe(
+            "load_wine", data, target, feature_names, target_columns
+        )
 
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 frame=frame,
-                 target_names=target_names,
-                 DESCR=fdescr,
-                 feature_names=feature_names)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        target_names=target_names,
+        DESCR=fdescr,
+        feature_names=feature_names,
+    )
 
 
-def load_iris(return_X_y=False, as_frame=False):
+def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
     The iris dataset is a classic and very easy multi-class classification
@@ -399,7 +535,7 @@ def load_iris(return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
 
@@ -439,6 +575,8 @@ def load_iris(return_X_y=False, as_frame=False):
         filename: str
             The path to the location of the data.
 
+            .. versionadded:: 0.20
+
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
@@ -462,38 +600,43 @@ def load_iris(return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, 'iris.csv')
-    iris_csv_filename = join(module_path, 'data', 'iris.csv')
+    data_file_name = "iris.csv"
+    data, target, target_names, fdescr = load_csv_data(
+        data_file_name=data_file_name, descr_file_name="iris.rst"
+    )
 
-    with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
-        fdescr = rst_file.read()
-
-    feature_names = ['sepal length (cm)', 'sepal width (cm)',
-                     'petal length (cm)', 'petal width (cm)']
+    feature_names = [
+        "sepal length (cm)",
+        "sepal width (cm)",
+        "petal length (cm)",
+        "petal width (cm)",
+    ]
 
     frame = None
-    target_columns = ['target', ]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
-        frame, data, target = _convert_data_dataframe("load_iris",
-                                                      data,
-                                                      target,
-                                                      feature_names,
-                                                      target_columns)
+        frame, data, target = _convert_data_dataframe(
+            "load_iris", data, target, feature_names, target_columns
+        )
 
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 frame=frame,
-                 target_names=target_names,
-                 DESCR=fdescr,
-                 feature_names=feature_names,
-                 filename=iris_csv_filename)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        target_names=target_names,
+        DESCR=fdescr,
+        feature_names=feature_names,
+        filename=data_file_name,
+        data_module=DATA_MODULE,
+    )
 
 
-def load_breast_cancer(return_X_y=False, as_frame=False):
+def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
     The breast cancer dataset is a classic and very easy binary classification
@@ -551,6 +694,8 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
         filename: str
             The path to the location of the data.
 
+            .. versionadded:: 0.20
+
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
@@ -571,51 +716,71 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['malignant', 'benign']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, 'breast_cancer.csv')
-    csv_filename = join(module_path, 'data', 'breast_cancer.csv')
+    data_file_name = "breast_cancer.csv"
+    data, target, target_names, fdescr = load_csv_data(
+        data_file_name=data_file_name, descr_file_name="breast_cancer.rst"
+    )
 
-    with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
-        fdescr = rst_file.read()
-
-    feature_names = np.array(['mean radius', 'mean texture',
-                              'mean perimeter', 'mean area',
-                              'mean smoothness', 'mean compactness',
-                              'mean concavity', 'mean concave points',
-                              'mean symmetry', 'mean fractal dimension',
-                              'radius error', 'texture error',
-                              'perimeter error', 'area error',
-                              'smoothness error', 'compactness error',
-                              'concavity error', 'concave points error',
-                              'symmetry error', 'fractal dimension error',
-                              'worst radius', 'worst texture',
-                              'worst perimeter', 'worst area',
-                              'worst smoothness', 'worst compactness',
-                              'worst concavity', 'worst concave points',
-                              'worst symmetry', 'worst fractal dimension'])
+    feature_names = np.array(
+        [
+            "mean radius",
+            "mean texture",
+            "mean perimeter",
+            "mean area",
+            "mean smoothness",
+            "mean compactness",
+            "mean concavity",
+            "mean concave points",
+            "mean symmetry",
+            "mean fractal dimension",
+            "radius error",
+            "texture error",
+            "perimeter error",
+            "area error",
+            "smoothness error",
+            "compactness error",
+            "concavity error",
+            "concave points error",
+            "symmetry error",
+            "fractal dimension error",
+            "worst radius",
+            "worst texture",
+            "worst perimeter",
+            "worst area",
+            "worst smoothness",
+            "worst compactness",
+            "worst concavity",
+            "worst concave points",
+            "worst symmetry",
+            "worst fractal dimension",
+        ]
+    )
 
     frame = None
-    target_columns = ['target', ]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
-        frame, data, target = _convert_data_dataframe("load_breast_cancer",
-                                                      data,
-                                                      target,
-                                                      feature_names,
-                                                      target_columns)
+        frame, data, target = _convert_data_dataframe(
+            "load_breast_cancer", data, target, feature_names, target_columns
+        )
 
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 frame=frame,
-                 target_names=target_names,
-                 DESCR=fdescr,
-                 feature_names=feature_names,
-                 filename=csv_filename)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        target_names=target_names,
+        DESCR=fdescr,
+        feature_names=feature_names,
+        filename=data_file_name,
+        data_module=DATA_MODULE,
+    )
 
 
-def load_digits(n_class=10, return_X_y=False, as_frame=False):
+def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
     Each datapoint is a 8x8 image of a digit.
@@ -632,10 +797,10 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    n_class : integer, between 0 and 10, optional (default=10)
-        The number of classes to return.
+    n_class : int, default=10
+        The number of classes to return. Between 0 and 10.
 
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -665,6 +830,9 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
             The names of the dataset columns.
         target_names: list
             The names of target classes.
+
+            .. versionadded:: 0.20
+
         frame: DataFrame of shape (1797, 65)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
@@ -690,17 +858,18 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
         >>> digits = load_digits()
         >>> print(digits.data.shape)
         (1797, 64)
-        >>> import matplotlib.pyplot as plt #doctest: +SKIP
-        >>> plt.gray() #doctest: +SKIP
-        >>> plt.matshow(digits.images[0]) #doctest: +SKIP
-        >>> plt.show() #doctest: +SKIP
+        >>> import matplotlib.pyplot as plt
+        >>> plt.gray()
+        >>> plt.matshow(digits.images[0])
+        <...>
+        >>> plt.show()
     """
-    module_path = dirname(__file__)
-    data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
-                      delimiter=',')
-    with open(join(module_path, 'descr', 'digits.rst')) as f:
-        descr = f.read()
-    target = data[:, -1].astype(np.int, copy=False)
+
+    data, fdescr = load_gzip_compressed_csv_data(
+        data_file_name="digits.csv.gz", descr_file_name="digits.rst", delimiter=","
+    )
+
+    target = data[:, -1].astype(int, copy=False)
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
@@ -710,32 +879,36 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
         flat_data, target = flat_data[idx], target[idx]
         images = images[idx]
 
-    feature_names = ['pixel_{}_{}'.format(row_idx, col_idx)
-                     for row_idx in range(8)
-                     for col_idx in range(8)]
+    feature_names = [
+        "pixel_{}_{}".format(row_idx, col_idx)
+        for row_idx in range(8)
+        for col_idx in range(8)
+    ]
 
     frame = None
-    target_columns = ['target', ]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
-        frame, flat_data, target = _convert_data_dataframe("load_digits",
-                                                           flat_data,
-                                                           target,
-                                                           feature_names,
-                                                           target_columns)
+        frame, flat_data, target = _convert_data_dataframe(
+            "load_digits", flat_data, target, feature_names, target_columns
+        )
 
     if return_X_y:
         return flat_data, target
 
-    return Bunch(data=flat_data,
-                 target=target,
-                 frame=frame,
-                 feature_names=feature_names,
-                 target_names=np.arange(10),
-                 images=images,
-                 DESCR=descr)
+    return Bunch(
+        data=flat_data,
+        target=target,
+        frame=frame,
+        feature_names=feature_names,
+        target_names=np.arange(10),
+        images=images,
+        DESCR=fdescr,
+    )
 
 
-def load_diabetes(return_X_y=False, as_frame=False):
+def load_diabetes(*, return_X_y=False, as_frame=False):
     """Load and return the diabetes dataset (regression).
 
     ==============   ==================
@@ -744,6 +917,12 @@ def load_diabetes(return_X_y=False, as_frame=False):
     Features         real, -.2 < x < .2
     Targets          integer 25 - 346
     ==============   ==================
+
+    .. note::
+       The meaning of each feature (i.e. `feature_names`) might be unclear
+       (especially for `ltg`) as the documentation of the original dataset is
+       not explicit. We provide information that seems correct in regard with
+       the scientific literature in this field of research.
 
     Read more in the :ref:`User Guide <diabetes_dataset>`.
 
@@ -793,42 +972,41 @@ def load_diabetes(return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
     """
-    module_path = dirname(__file__)
-    base_dir = join(module_path, 'data')
-    data_filename = join(base_dir, 'diabetes_data.csv.gz')
-    data = np.loadtxt(data_filename)
-    target_filename = join(base_dir, 'diabetes_target.csv.gz')
-    target = np.loadtxt(target_filename)
+    data_filename = "diabetes_data.csv.gz"
+    target_filename = "diabetes_target.csv.gz"
+    data = load_gzip_compressed_csv_data(data_filename)
+    target = load_gzip_compressed_csv_data(target_filename)
 
-    with open(join(module_path, 'descr', 'diabetes.rst')) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("diabetes.rst")
 
-    feature_names = ['age', 'sex', 'bmi', 'bp',
-                     's1', 's2', 's3', 's4', 's5', 's6']
+    feature_names = ["age", "sex", "bmi", "bp", "s1", "s2", "s3", "s4", "s5", "s6"]
 
     frame = None
-    target_columns = ['target', ]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
-        frame, data, target = _convert_data_dataframe("load_diabetes",
-                                                      data,
-                                                      target,
-                                                      feature_names,
-                                                      target_columns)
+        frame, data, target = _convert_data_dataframe(
+            "load_diabetes", data, target, feature_names, target_columns
+        )
 
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 frame=frame,
-                 DESCR=fdescr,
-                 feature_names=feature_names,
-                 data_filename=data_filename,
-                 target_filename=target_filename)
+    return Bunch(
+        data=data,
+        target=target,
+        frame=frame,
+        DESCR=fdescr,
+        feature_names=feature_names,
+        data_filename=data_filename,
+        target_filename=target_filename,
+        data_module=DATA_MODULE,
+    )
 
 
-def load_linnerud(return_X_y=False, as_frame=False):
-    """Load and return the physical excercise linnerud dataset.
+def load_linnerud(*, return_X_y=False, as_frame=False):
+    """Load and return the physical exercise Linnerud dataset.
 
     This dataset is suitable for multi-ouput regression tasks.
 
@@ -843,7 +1021,7 @@ def load_linnerud(return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -885,51 +1063,92 @@ def load_linnerud(return_X_y=False, as_frame=False):
         target_filename: str
             The path to the location of the target.
 
+            .. versionadded:: 0.20
+
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
     """
-    base_dir = join(dirname(__file__), 'data/')
-    data_filename = join(base_dir, 'linnerud_exercise.csv')
-    target_filename = join(base_dir, 'linnerud_physiological.csv')
+    data_filename = "linnerud_exercise.csv"
+    target_filename = "linnerud_physiological.csv"
 
-    # Read data
-    data_exercise = np.loadtxt(data_filename, skiprows=1)
-    data_physiological = np.loadtxt(target_filename, skiprows=1)
-
-    # Read header
-    with open(data_filename) as f:
+    # Read header and data
+    with resources.open_text(DATA_MODULE, data_filename) as f:
         header_exercise = f.readline().split()
-    with open(target_filename) as f:
-        header_physiological = f.readline().split()
+        f.seek(0)  # reset file obj
+        data_exercise = np.loadtxt(f, skiprows=1)
 
-    with open(dirname(__file__) + '/descr/linnerud.rst') as f:
-        descr = f.read()
+    with resources.open_text(DATA_MODULE, target_filename) as f:
+        header_physiological = f.readline().split()
+        f.seek(0)  # reset file obj
+        data_physiological = np.loadtxt(f, skiprows=1)
+
+    fdescr = load_descr("linnerud.rst")
 
     frame = None
     if as_frame:
-        (frame,
-         data_exercise,
-         data_physiological) = _convert_data_dataframe("load_linnerud",
-                                                       data_exercise,
-                                                       data_physiological,
-                                                       header_exercise,
-                                                       header_physiological)
+        (frame, data_exercise, data_physiological) = _convert_data_dataframe(
+            "load_linnerud",
+            data_exercise,
+            data_physiological,
+            header_exercise,
+            header_physiological,
+        )
     if return_X_y:
         return data_exercise, data_physiological
 
-    return Bunch(data=data_exercise,
-                 feature_names=header_exercise,
-                 target=data_physiological,
-                 target_names=header_physiological,
-                 frame=frame,
-                 DESCR=descr,
-                 data_filename=data_filename,
-                 target_filename=target_filename)
+    return Bunch(
+        data=data_exercise,
+        feature_names=header_exercise,
+        target=data_physiological,
+        target_names=header_physiological,
+        frame=frame,
+        DESCR=fdescr,
+        data_filename=data_filename,
+        target_filename=target_filename,
+        data_module=DATA_MODULE,
+    )
 
 
-def load_boston(return_X_y=False):
-    """Load and return the boston house-prices dataset (regression).
+@deprecated(
+    r"""`load_boston` is deprecated in 1.0 and will be removed in 1.2.
+
+    The Boston housing prices dataset has an ethical problem. You can refer to
+    the documentation of this function for further details.
+
+    The scikit-learn maintainers therefore strongly discourage the use of this
+    dataset unless the purpose of the code is to study and educate about
+    ethical issues in data science and machine learning.
+
+    In this special case, you can fetch the dataset from the original
+    source::
+
+        import pandas as pd
+        import numpy as np
+
+
+        data_url = "http://lib.stat.cmu.edu/datasets/boston"
+        raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+        data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+        target = raw_df.values[1::2, 2]
+
+    Alternative datasets include the California housing dataset (i.e.
+    :func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
+    dataset. You can load the datasets as follows::
+
+        from sklearn.datasets import fetch_california_housing
+        housing = fetch_california_housing()
+
+    for the California housing dataset and::
+
+        from sklearn.datasets import fetch_openml
+        housing = fetch_openml(name="house_prices", as_frame=True)
+
+    for the Ames housing dataset.
+    """
+)
+def load_boston(*, return_X_y=False):
+    r"""Load and return the boston house-prices dataset (regression).
 
     ==============   ==============
     Samples total               506
@@ -940,9 +1159,53 @@ def load_boston(return_X_y=False):
 
     Read more in the :ref:`User Guide <boston_dataset>`.
 
+    .. deprecated:: 1.0
+       This function is deprecated in 1.0 and will be removed in 1.2. See the
+       warning message below for further details regarding the alternative
+       datasets.
+
+    .. warning::
+        The Boston housing prices dataset has an ethical problem: as
+        investigated in [1]_, the authors of this dataset engineered a
+        non-invertible variable "B" assuming that racial self-segregation had a
+        positive impact on house prices [2]_. Furthermore the goal of the
+        research that led to the creation of this dataset was to study the
+        impact of air quality but it did not give adequate demonstration of the
+        validity of this assumption.
+
+        The scikit-learn maintainers therefore strongly discourage the use of
+        this dataset unless the purpose of the code is to study and educate
+        about ethical issues in data science and machine learning.
+
+        In this special case, you can fetch the dataset from the original
+        source::
+
+            import pandas as pd  # doctest: +SKIP
+            import numpy as np
+
+
+            data_url = "http://lib.stat.cmu.edu/datasets/boston"
+            raw_df = pd.read_csv(data_url, sep="s+", skiprows=22, header=None)
+            data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+            target = raw_df.values[1::2, 2]
+
+        Alternative datasets include the California housing dataset [3]_
+        (i.e. :func:`~sklearn.datasets.fetch_california_housing`) and Ames
+        housing dataset [4]_. You can load the datasets as follows::
+
+            from sklearn.datasets import fetch_california_housing
+            housing = fetch_california_housing()
+
+        for the California housing dataset and::
+
+            from sklearn.datasets import fetch_openml
+            housing = fetch_openml(name="house_prices", as_frame=True)  # noqa
+
+        for the Ames housing dataset.
+
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -955,12 +1218,13 @@ def load_boston(return_X_y=False):
 
         data : ndarray of shape (506, 13)
             The data matrix.
-        target : ndarray of shape (506, )
+        target : ndarray of shape (506,)
             The regression target.
         filename : str
             The physical location of boston csv dataset.
 
             .. versionadded:: 0.20
+
         DESCR : str
             The full description of the dataset.
         feature_names : ndarray
@@ -975,21 +1239,42 @@ def load_boston(return_X_y=False):
         .. versionchanged:: 0.20
             Fixed a wrong data point at [445, 0].
 
+    References
+    ----------
+    .. [1] `Racist data destruction? M Carlisle,
+            <https://medium.com/@docintangible/racist-data-destruction-113e3eff54a8>`_
+    .. [2] `Harrison Jr, David, and Daniel L. Rubinfeld.
+           "Hedonic housing prices and the demand for clean air."
+           Journal of environmental economics and management 5.1 (1978): 81-102.
+           <https://www.researchgate.net/publication/4974606_Hedonic_housing_prices_and_the_demand_for_clean_air>`_
+    .. [3] `California housing dataset
+            <https://scikit-learn.org/stable/datasets/real_world.html#california-housing-dataset>`_
+    .. [4] `Ames housing dataset
+            <https://www.openml.org/d/42165>`_
+
     Examples
     --------
+    >>> import warnings
     >>> from sklearn.datasets import load_boston
-    >>> X, y = load_boston(return_X_y=True)
+    >>> with warnings.catch_warnings():
+    ...     # You should probably not use this dataset.
+    ...     warnings.filterwarnings("ignore")
+    ...     X, y = load_boston(return_X_y=True)
     >>> print(X.shape)
     (506, 13)
     """
-    module_path = dirname(__file__)
+    # TODO: once the deprecation period is over, implement a module level
+    # `__getattr__` function in`sklearn.datasets` to raise an exception with
+    # an informative error message at import time instead of just removing
+    # load_boston. The goal is to avoid having beginners that copy-paste code
+    # from numerous books and tutorials that use this dataset loader get
+    # a confusing ImportError when trying to learn scikit-learn.
+    # See: https://www.python.org/dev/peps/pep-0562/
 
-    fdescr_name = join(module_path, 'descr', 'boston_house_prices.rst')
-    with open(fdescr_name) as f:
-        descr_text = f.read()
+    descr_text = load_descr("boston_house_prices.rst")
 
-    data_file_name = join(module_path, 'data', 'boston_house_prices.csv')
-    with open(data_file_name) as f:
+    data_file_name = "boston_house_prices.csv"
+    with resources.open_text(DATA_MODULE, data_file_name) as f:
         data_file = csv.reader(f)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -1006,12 +1291,15 @@ def load_boston(return_X_y=False):
     if return_X_y:
         return data, target
 
-    return Bunch(data=data,
-                 target=target,
-                 # last column is target value
-                 feature_names=feature_names[:-1],
-                 DESCR=descr_text,
-                 filename=data_file_name)
+    return Bunch(
+        data=data,
+        target=target,
+        # last column is target value
+        feature_names=feature_names[:-1],
+        DESCR=descr_text,
+        filename=data_file_name,
+        data_module=DATA_MODULE,
+    )
 
 
 def load_sample_images():
@@ -1050,18 +1338,17 @@ def load_sample_images():
     # import PIL only when needed
     from ..externals._pilutil import imread
 
-    module_path = join(dirname(__file__), "images")
-    with open(join(module_path, 'README.txt')) as f:
-        descr = f.read()
-    filenames = [join(module_path, filename)
-                 for filename in sorted(os.listdir(module_path))
-                 if filename.endswith(".jpg")]
-    # Load image data for each image in the source folder.
-    images = [imread(filename) for filename in filenames]
+    descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
-    return Bunch(images=images,
-                 filenames=filenames,
-                 DESCR=descr)
+    filenames, images = [], []
+    for filename in sorted(resources.contents(IMAGES_MODULE)):
+        if filename.endswith(".jpg"):
+            filenames.append(filename)
+            with resources.open_binary(IMAGES_MODULE, filename) as image_file:
+                image = imread(image_file)
+            images.append(image)
+
+    return Bunch(images=images, filenames=filenames, DESCR=descr)
 
 
 def load_sample_image(image_name):
@@ -1148,22 +1435,22 @@ def _fetch_remote(remote, dirname=None):
         Named tuple containing remote dataset meta information: url, filename
         and checksum
 
-    dirname : string
+    dirname : str
         Directory to save the file to.
 
     Returns
     -------
-    file_path: string
+    file_path: str
         Full path of the created file.
     """
 
-    file_path = (remote.filename if dirname is None
-                 else join(dirname, remote.filename))
+    file_path = remote.filename if dirname is None else join(dirname, remote.filename)
     urlretrieve(remote.url, file_path)
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
-        raise IOError("{} has an SHA256 checksum ({}) "
-                      "differing from expected ({}), "
-                      "file may be corrupted.".format(file_path, checksum,
-                                                      remote.checksum))
+        raise IOError(
+            "{} has an SHA256 checksum ({}) "
+            "differing from expected ({}), "
+            "file may be corrupted.".format(file_path, checksum, remote.checksum)
+        )
     return file_path

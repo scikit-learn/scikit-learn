@@ -16,8 +16,8 @@ There are two options to assign labels:
   using a kmeans algorithm
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space.
+
 """
-print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
 # License: BSD 3 clause
@@ -25,7 +25,6 @@ print(__doc__)
 import time
 
 import numpy as np
-from distutils.version import LooseVersion
 from scipy.ndimage.filters import gaussian_filter
 import matplotlib.pyplot as plt
 import skimage
@@ -34,10 +33,11 @@ from skimage.transform import rescale
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
+from sklearn.utils.fixes import parse_version
 
 # these were introduced in skimage-0.14
-if LooseVersion(skimage.__version__) >= '0.14':
-    rescale_params = {'anti_aliasing': False, 'multichannel': False}
+if parse_version(skimage.__version__) >= parse_version("0.14"):
+    rescale_params = {"anti_aliasing": False, "multichannel": False}
 else:
     rescale_params = {}
 
@@ -48,8 +48,7 @@ orig_coins = coins()
 # Applying a Gaussian filter for smoothing prior to down-scaling
 # reduces aliasing artifacts.
 smoothened_coins = gaussian_filter(orig_coins, sigma=2)
-rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect",
-                         **rescale_params)
+rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect", **rescale_params)
 
 # Convert the image into a graph with the value of the gradient on the
 # edges.
@@ -66,24 +65,24 @@ graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 # installed)
 N_REGIONS = 25
 
-#############################################################################
+# %%
 # Visualize the resulting regions
 
-for assign_labels in ('kmeans', 'discretize'):
+for assign_labels in ("kmeans", "discretize"):
     t0 = time.time()
-    labels = spectral_clustering(graph, n_clusters=N_REGIONS,
-                                 assign_labels=assign_labels, random_state=42)
+    labels = spectral_clustering(
+        graph, n_clusters=N_REGIONS, assign_labels=assign_labels, random_state=42
+    )
     t1 = time.time()
     labels = labels.reshape(rescaled_coins.shape)
 
     plt.figure(figsize=(5, 5))
     plt.imshow(rescaled_coins, cmap=plt.cm.gray)
     for l in range(N_REGIONS):
-        plt.contour(labels == l,
-                    colors=[plt.cm.nipy_spectral(l / float(N_REGIONS))])
+        plt.contour(labels == l, colors=[plt.cm.nipy_spectral(l / float(N_REGIONS))])
     plt.xticks(())
     plt.yticks(())
-    title = 'Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0))
+    title = "Spectral clustering: %s, %.2fs" % (assign_labels, (t1 - t0))
     print(title)
     plt.title(title)
 plt.show()
