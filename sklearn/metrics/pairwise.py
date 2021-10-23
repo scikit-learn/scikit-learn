@@ -227,8 +227,7 @@ def euclidean_distances(
     X, Y=None, *, Y_norm_squared=None, squared=False, X_norm_squared=None
 ):
     """
-    Considering the rows of X (and Y=X) as vectors, compute the
-    distance matrix between each pair of vectors.
+    Compute the distance matrix between a pair of vectors, X and Y.
 
     For efficiency reasons, the euclidean distance between a pair of row
     vector x and y is computed as::
@@ -250,6 +249,7 @@ def euclidean_distances(
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
+        Array containing points.
 
     Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), \
             default=None
@@ -270,18 +270,20 @@ def euclidean_distances(
         ``(X**2).sum(axis=1)``)
         May be ignored in some cases, see the note below.
 
-    Notes
-    -----
-    To achieve better accuracy, `X_norm_squared` and `Y_norm_squared` may be
-    unused if they are passed as ``float32``.
-
     Returns
     -------
     distances : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the distances between the row vectors of X
+        and the row vectors of Y.
 
     See Also
     --------
     paired_distances : Distances betweens pairs of elements of X and Y.
+
+    Notes
+    -----
+    To achieve better accuracy, `X_norm_squared` and `Y_norm_squared` may be
+    unused if they are passed as ``float32``.
 
     Examples
     --------
