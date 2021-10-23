@@ -24,7 +24,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     ----------
     n_components : int, default=None
         Number of sparse atoms to extract. If None, then ``n_components``
-        is set to ``n_features``.
+        is set to ``n_features_in_``.
 
     alpha : float, default=1
         Sparsity controlling parameter. Higher values lead to sparser
