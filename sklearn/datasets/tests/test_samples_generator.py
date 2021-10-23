@@ -502,7 +502,7 @@ def test_make_sparse_coded_signal():
     assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1]))
 
 
-# FIXME: to be removed
+# TODO: to be removed in 1.3.
 def test_make_sparse_code_signal_warning():
     """Check the message for future deprecation."""
     warn_msg = "The default value of data_transposed will change from True to False"

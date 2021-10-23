@@ -1235,6 +1235,7 @@ def make_low_rank_matrix(
     return np.dot(np.dot(u, s), v.T)
 
 
+# TODO: Change argument `data_transposed` default from True to False in 1.3.
 def make_sparse_coded_signal(
     n_samples,
     *,
@@ -1242,7 +1243,7 @@ def make_sparse_coded_signal(
     n_features,
     n_nonzero_coefs,
     random_state=None,
-    data_transposed=True,
+    data_transposed="deprecated",
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
@@ -1272,8 +1273,9 @@ def make_sparse_coded_signal(
         See :term:`Glossary <random_state>`.
 
     data_transposed: bool, default=True
-        By default, matrix X is transposed. This can be confusing and error
-        prone, the default is going be changed to False in the next release cycle.
+        By default, matrix X is transposed.
+
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -1305,14 +1307,15 @@ def make_sparse_coded_signal(
     # encode signal
     Y = np.dot(D, X)
 
-    # whether to transpose
-    if data_transposed:
-        # raise warning for future default change
+    # raise warning if data_transposed is not passed explicitly
+    if data_transposed == "deprecated":
         warnings.warn(
             "The default value of data_transposed will change from True to False",
             FutureWarning,
         )
-    else:
+
+    # tranpose if needed
+    if not data_transposed:
         X = X.T
 
     return map(np.squeeze, (Y, D, X))
