@@ -248,7 +248,8 @@ class MiniBatchSparsePCA(SparsePCA):
     Parameters
     ----------
     n_components : int, default=None
-        Number of sparse atoms to extract.
+        Number of sparse atoms to extract. If None, then ``n_components``
+        is set to ``n_features_in_``.
 
     alpha : int, default=1
         Sparsity controlling parameter. Higher values lead to sparser
