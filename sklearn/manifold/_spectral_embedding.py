@@ -672,7 +672,7 @@ class SpectralEmbedding(BaseEstimator):
         Returns
         -------
         X_new : array-like of shape (n_samples, n_components)
-                Spectral embedding of the training matrix.
+            Spectral embedding of the training matrix.
         """
         self.fit(X)
         return self.embedding_
