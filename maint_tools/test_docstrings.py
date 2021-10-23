@@ -22,7 +22,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn._config.get_config",
     "sklearn.base.clone",
     "sklearn.cluster._affinity_propagation.affinity_propagation",
-    "sklearn.cluster._agglomerative.linkage_tree",
     "sklearn.cluster._kmeans.k_means",
     "sklearn.cluster._kmeans.kmeans_plusplus",
     "sklearn.cluster._mean_shift.estimate_bandwidth",
