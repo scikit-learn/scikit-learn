@@ -365,7 +365,13 @@ def indexable(*iterables):
     ----------
     *iterables : {lists, dataframes, ndarrays, sparse matrices}
         List of objects to ensure sliceability.
+
+    Returns
+    ----------
+    list
+        Returns a list of indexable objects.
     """
+
     result = [_make_indexable(X) for X in iterables]
     check_consistent_length(*result)
     return result
