@@ -204,9 +204,10 @@ def randomized_range_finder(
     -----
 
     Follows Algorithm 4.3 of
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
+    :arxiv: `Halko, et al. (2009) "Finding structure with randomness:
+    Stochastic algorithms for constructing approximate matrix decompositions"
+    <0909.4061>`_
+
 
     An implementation of a randomized algorithm for principal component
     analysis
@@ -346,9 +347,9 @@ def randomized_svd(
 
     References
     ----------
-    * Finding structure with randomness: Stochastic algorithms for constructing
-      approximate matrix decompositions (Algorithm 4.3)
-      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
+    * :arxiv: `Halko, et al. (2009) "Finding structure with randomness:
+    Stochastic algorithms for constructing approximate matrix decompositions"
+    <0909.4061>`_
 
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -538,9 +539,9 @@ def _randomized_eigsh(
 
     References
     ----------
-    * Finding structure with randomness: Stochastic algorithms for constructing
-      approximate matrix decompositions (Algorithm 4.3 for strategy 'module')
-      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
+    * :arxiv: `Halko, et al. (2009) "Finding structure with randomness:
+    Stochastic algorithms for constructing approximate matrix decompositions"
+    (Algorithm 4.3 for strategy 'module') <0909.4061>`_
 
     """
     if selection == "value":  # pragma: no cover
