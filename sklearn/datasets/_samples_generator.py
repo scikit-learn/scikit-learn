@@ -8,6 +8,7 @@ Generate samples of synthetic data sets.
 
 import numbers
 import array
+import warnings
 from collections.abc import Iterable
 
 import numpy as np
@@ -1235,7 +1236,13 @@ def make_low_rank_matrix(
 
 
 def make_sparse_coded_signal(
-    n_samples, *, n_components, n_features, n_nonzero_coefs, random_state=None
+    n_samples,
+    *,
+    n_components,
+    n_features,
+    n_nonzero_coefs,
+    random_state=None,
+    data_transposed=True,
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
@@ -1263,6 +1270,10 @@ def make_sparse_coded_signal(
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    data_transposed: bool, default=True
+        By default, matrix X is transposed. This can be confusing and error
+        prone, the default is going be changed to False in the next release cycle.
 
     Returns
     -------
@@ -1293,6 +1304,16 @@ def make_sparse_coded_signal(
 
     # encode signal
     Y = np.dot(D, X)
+
+    # whether to transpose
+    if data_transposed:
+        # raise warning for future default change
+        warnings.warn(
+            "The default value of data_transposed will change from True to False",
+            FutureWarning,
+        )
+    else:
+        X = X.T
 
     return map(np.squeeze, (Y, D, X))
 

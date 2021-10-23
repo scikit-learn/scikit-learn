@@ -502,6 +502,16 @@ def test_make_sparse_coded_signal():
     assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1]))
 
 
+# FIXME: to be removed
+def test_make_sparse_code_signal_warning():
+    """Check the message for future deprecation."""
+    warn_msg = "The default value of data_transposed will change from True to False"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        make_sparse_coded_signal(
+            n_samples=1, n_components=1, n_features=1, n_nonzero_coefs=1, random_state=0
+        )
+
+
 def test_make_sparse_uncorrelated():
     X, y = make_sparse_uncorrelated(n_samples=5, n_features=10, random_state=0)
 
