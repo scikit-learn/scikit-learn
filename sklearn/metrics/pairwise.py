@@ -249,7 +249,7 @@ def euclidean_distances(
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
-        Array containing points.
+        An array where each row is a sample and each column is a feature. 
 
     Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), \
             default=None
