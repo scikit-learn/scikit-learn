@@ -6,8 +6,9 @@ Non-negative least squares
 In this example, we fit a linear model with positive constraints on the
 regression coefficients and compare the estimated coefficients to a classic
 linear regression.
+
 """
-print(__doc__)
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score

@@ -10,8 +10,9 @@ by the error bars.
 
 As expected, the plot suggests that 3 features are informative, while the
 remaining are not.
+
 """
-print(__doc__)
+
 import matplotlib.pyplot as plt
 
 # %%

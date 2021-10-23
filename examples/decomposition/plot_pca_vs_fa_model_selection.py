@@ -37,8 +37,6 @@ from sklearn.covariance import ShrunkCovariance, LedoitWolf
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GridSearchCV
 
-print(__doc__)
-
 # #############################################################################
 # Create the data
 

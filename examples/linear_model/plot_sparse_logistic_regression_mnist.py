@@ -16,6 +16,10 @@ below what can be reached by an l2-penalized linear model or a non-linear
 multi-layer perceptron model on this dataset.
 
 """
+
+# Author: Arthur Mensch <arthur.mensch@m4x.org>
+# License: BSD 3 clause
+
 import time
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,11 +29,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
-
-print(__doc__)
-
-# Author: Arthur Mensch <arthur.mensch@m4x.org>
-# License: BSD 3 clause
 
 # Turn down for faster convergence
 t0 = time.time()
