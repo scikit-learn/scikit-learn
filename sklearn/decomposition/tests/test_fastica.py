@@ -275,7 +275,7 @@ def test_fastica_errors():
     X = rng.random_sample((n_samples, n_features))
     w_init = rng.randn(n_features + 1, n_features + 1)
     with pytest.raises(ValueError, match="max_iter should be greater than 1"):
-        FastICA(max_iter=0)
+        FastICA(max_iter=0).fit(X)
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
         fastica(X, fun_args={"alpha": 0})
     with pytest.raises(
