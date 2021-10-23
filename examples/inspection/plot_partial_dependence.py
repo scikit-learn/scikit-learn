@@ -21,16 +21,16 @@ This example shows how to obtain partial dependence and ICE plots from a
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor` trained on the
 California housing dataset. The example is taken from [1]_.
 
-.. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
-       Learning Ed. 2", Springer, 2009.
+.. [1] `T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
+       Learning Ed. 2", Springer, 2009.`_
 
 .. [2] For classification you can think of it as the regression score before
        the link function.
 
-.. [3] Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E., Peeking Inside
-       the Black Box: Visualizing Statistical Learning With Plots of
-       Individual Conditional Expectation. (2015) Journal of Computational and
-       Graphical Statistics, 24(1): 44-65 (https://arxiv.org/abs/1309.6392)
+.. [3] :arxiv: `Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E. (2015).
+       "Peeking Inside the Black Box: Visualizing Statistical Learning With Plots of
+       Individual Conditional Expectation". Journal of Computational and
+       Graphical Statistics, 24(1): 44-65 <1309.6392>_
 
 """
 
