@@ -261,7 +261,7 @@ factorization, while larger values shrink many coefficients to zero.
      <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
      
   .. [Jen09] `R. Jenatton, G. Obozinski, F. Bach, 2009. 
-      "Structured Sparse Principal Component Analysis"
+     "Structured Sparse Principal Component Analysis"
      <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      
 
