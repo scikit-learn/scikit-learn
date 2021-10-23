@@ -157,8 +157,8 @@ def check_iris_criterion(name, criterion):
     assert score > 0.5, "Failed with criterion %s and score = %f" % (criterion, score)
 
 
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-@pytest.mark.parametrize('criterion', ("gini", "entropy", "hellinger"))
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize("criterion", ("gini", "entropy", "hellinger"))
 def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
