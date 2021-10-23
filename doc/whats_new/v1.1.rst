@@ -61,7 +61,7 @@ Changelog
   :user:`Gabriel Stefanini Vicente <g4brielvs>`.
 
   .. deprecated:: 1.1
-   ``data_transposed`` default will change from False to True in 1.3.
+   ``data_transposed`` default will change from True to False in 1.3.
 
 :mod:`sklearn.impute`
 .....................
