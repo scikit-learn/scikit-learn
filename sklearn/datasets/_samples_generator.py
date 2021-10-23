@@ -1314,7 +1314,7 @@ def make_sparse_coded_signal(
             FutureWarning,
         )
 
-    # tranpose if needed
+    # transpose if needed
     if not data_transposed:
         X = X.T
 
