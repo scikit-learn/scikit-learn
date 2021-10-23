@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 Feature agglomeration
@@ -8,8 +6,8 @@ Feature agglomeration
 
 These images how similar features are merged together using
 feature agglomeration.
+
 """
-print(__doc__)
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler

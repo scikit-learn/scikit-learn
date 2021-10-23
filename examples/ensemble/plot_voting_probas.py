@@ -22,7 +22,6 @@ set and plot the predicted class probabilities for the first sample in this
 example dataset.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

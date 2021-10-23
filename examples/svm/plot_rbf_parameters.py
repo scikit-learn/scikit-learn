@@ -74,7 +74,6 @@ expense of compute time. Increasing the value number of ``C_range`` and
 map.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
