@@ -429,11 +429,11 @@ def linkage_tree(
               observations of the two sets.
 
     affinity : str or callable, default='euclidean'
-        which metric to use. Can be 'euclidean', 'manhattan', or any
+        Which metric to use. Can be 'euclidean', 'manhattan', or any
         distance known to paired distance (see metric.pairwise).
 
     return_distance : bool, default=False
-        whether or not to return the distances between the clusters.
+        Whether or not to return the distances between the clusters.
 
     Returns
     -------
