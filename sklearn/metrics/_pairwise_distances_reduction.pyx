@@ -294,24 +294,19 @@ cdef class PairwiseDistancesReduction:
 
         self.datasets_pair = datasets_pair
 
-        self.n_samples_Y = datasets_pair.n_samples_Y()
-        self.Y_n_samples_chunk = min(self.n_samples_Y, n_samples_chunk)
-        Y_n_full_chunks = self.n_samples_Y // self.Y_n_samples_chunk
-        self.Y_n_samples_remainder = self.n_samples_Y % self.Y_n_samples_chunk
-
         self.n_samples_X = datasets_pair.n_samples_X()
         self.X_n_samples_chunk = min(self.n_samples_X, n_samples_chunk)
         X_n_full_chunks = self.n_samples_X // self.X_n_samples_chunk
         self.X_n_samples_remainder = self.n_samples_X % self.X_n_samples_chunk
 
-        # Counting remainder chunk in total number of chunks
-        self.Y_n_chunks = Y_n_full_chunks + (
-            self.n_samples_Y != (Y_n_full_chunks * self.Y_n_samples_chunk)
-        )
+        self.n_samples_Y = datasets_pair.n_samples_Y()
+        self.Y_n_samples_chunk = min(self.n_samples_Y, n_samples_chunk)
+        Y_n_full_chunks = self.n_samples_Y // self.Y_n_samples_chunk
+        self.Y_n_samples_remainder = self.n_samples_Y % self.Y_n_samples_chunk
 
-        self.X_n_chunks = X_n_full_chunks + (
-            self.n_samples_X != (X_n_full_chunks * self.X_n_samples_chunk)
-        )
+        # Counting remainder chunk in total number of chunks
+        self.X_n_chunks = X_n_full_chunks + (self.X_n_samples_remainder != 0)
+        self.Y_n_chunks = Y_n_full_chunks + (self.Y_n_samples_remainder != 0)
 
     def compute(
         self,
