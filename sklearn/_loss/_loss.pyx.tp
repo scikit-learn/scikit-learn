@@ -645,7 +645,7 @@ cdef class CyLossFunction:
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] loss,            # OUT
+        G_DTYPE_C[::1] loss_out,        # OUT
         int n_threads=1
     ):
         """Compute the pointwise loss value for each input.
@@ -658,7 +658,7 @@ cdef class CyLossFunction:
             Raw prediction values (in link space).
         sample_weight : array of shape (n_samples,) or None
             Sample weights.
-        loss : array of shape (n_samples,)
+        loss_out : array of shape (n_samples,)
             A location into which the result is stored.
         n_threads : int
             Number of threads used by OpenMP (if any).
@@ -675,7 +675,7 @@ cdef class CyLossFunction:
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] gradient,        # OUT
+        G_DTYPE_C[::1] gradient_out,    # OUT
         int n_threads=1
     ):
         """Compute gradient of loss w.r.t raw_prediction for each input.
@@ -688,7 +688,7 @@ cdef class CyLossFunction:
             Raw prediction values (in link space).
         sample_weight : array of shape (n_samples,) or None
             Sample weights.
-        gradient : array of shape (n_samples,)
+        gradient_out : array of shape (n_samples,)
             A location into which the result is stored.
         n_threads : int
             Number of threads used by OpenMP (if any).
@@ -705,8 +705,8 @@ cdef class CyLossFunction:
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] loss,            # OUT
-        G_DTYPE_C[::1] gradient,        # OUT
+        G_DTYPE_C[::1] loss_out,        # OUT
+        G_DTYPE_C[::1] gradient_out,    # OUT
         int n_threads=1
     ):
         """Compute loss and gradient of loss w.r.t raw_prediction.
@@ -719,9 +719,9 @@ cdef class CyLossFunction:
             Raw prediction values (in link space).
         sample_weight : array of shape (n_samples,) or None
             Sample weights.
-        loss : array of shape (n_samples,) or None
+        loss_out : array of shape (n_samples,) or None
             A location into which the element-wise loss is stored.
-        gradient : array of shape (n_samples,)
+        gradient_out : array of shape (n_samples,)
             A location into which the gradient is stored.
         n_threads : int
             Number of threads used by OpenMP (if any).
@@ -734,19 +734,17 @@ cdef class CyLossFunction:
         gradient : array of shape (n_samples,)
             Element-wise gradients.
         """
-        self._loss(y_true, raw_prediction, sample_weight, loss,
-                            n_threads)
-        self._gradient(y_true, raw_prediction, sample_weight, gradient,
-                      n_threads)
-        return np.asarray(loss), np.asarray(gradient)
+        self._loss(y_true, raw_prediction, sample_weight, loss_out, n_threads)
+        self._gradient(y_true, raw_prediction, sample_weight, gradient_out, n_threads)
+        return np.asarray(loss_out), np.asarray(gradient_out)
 
     def _gradient_hessian(
         self,
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] gradient,        # OUT
-        G_DTYPE_C[::1] hessian,         # OUT
+        G_DTYPE_C[::1] gradient_out,    # OUT
+        G_DTYPE_C[::1] hessian_out,     # OUT
         int n_threads=1
     ):
         """Compute gradient and hessian of loss w.r.t raw_prediction.
@@ -759,9 +757,9 @@ cdef class CyLossFunction:
             Raw prediction values (in link space).
         sample_weight : array of shape (n_samples,) or None
             Sample weights.
-        gradient : array of shape (n_samples,)
+        gradient_out : array of shape (n_samples,)
             A location into which the gradient is stored.
-        hessian : array of shape (n_samples,)
+        hessian_out : array of shape (n_samples,)
             A location into which the hessian is stored.
         n_threads : int
             Number of threads used by OpenMP (if any).
@@ -807,7 +805,7 @@ cdef class {{name}}(CyLossFunction):
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] loss,            # OUT
+        G_DTYPE_C[::1] loss_out,        # OUT
         int n_threads=1
     ):
         cdef:
@@ -818,14 +816,14 @@ cdef class {{name}}(CyLossFunction):
             for i in prange(
                 n_samples, schedule='static', nogil=True, num_threads=n_threads
             ):
-                loss[i] = {{closs}}(y_true[i], raw_prediction[i]{{with_param}})
+                loss_out[i] = {{closs}}(y_true[i], raw_prediction[i]{{with_param}})
         else:
             for i in prange(
                 n_samples, schedule='static', nogil=True, num_threads=n_threads
             ):
-                loss[i] = sample_weight[i] * {{closs}}(y_true[i], raw_prediction[i]{{with_param}})
+                loss_out[i] = sample_weight[i] * {{closs}}(y_true[i], raw_prediction[i]{{with_param}})
 
-        return np.asarray(loss)
+        return np.asarray(loss_out)
 
     {{if closs_grad is not None}}
     def _loss_gradient(
@@ -833,8 +831,8 @@ cdef class {{name}}(CyLossFunction):
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] loss,            # OUT
-        G_DTYPE_C[::1] gradient,        # OUT
+        G_DTYPE_C[::1] loss_out,        # OUT
+        G_DTYPE_C[::1] gradient_out,    # OUT
         int n_threads=1
     ):
         cdef:
@@ -847,17 +845,17 @@ cdef class {{name}}(CyLossFunction):
                 n_samples, schedule='static', nogil=True, num_threads=n_threads
             ):
                 dbl2 = {{closs_grad}}(y_true[i], raw_prediction[i]{{with_param}})
-                loss[i] = dbl2.val1
-                gradient[i] = dbl2.val2
+                loss_out[i] = dbl2.val1
+                gradient_out[i] = dbl2.val2
         else:
             for i in prange(
                 n_samples, schedule='static', nogil=True, num_threads=n_threads
             ):
                 dbl2 = {{closs_grad}}(y_true[i], raw_prediction[i]{{with_param}})
-                loss[i] = sample_weight[i] * dbl2.val1
-                gradient[i] = sample_weight[i] * dbl2.val2
+                loss_out[i] = sample_weight[i] * dbl2.val1
+                gradient_out[i] = sample_weight[i] * dbl2.val2
 
-        return np.asarray(loss), np.asarray(gradient)
+        return np.asarray(loss_out), np.asarray(gradient_out)
     {{endif}}
 
     def _gradient(
@@ -865,7 +863,7 @@ cdef class {{name}}(CyLossFunction):
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] gradient,        # OUT
+        G_DTYPE_C[::1] gradient_out,    # OUT
         int n_threads=1
     ):
         cdef:
@@ -876,22 +874,22 @@ cdef class {{name}}(CyLossFunction):
             for i in prange(
                 n_samples, schedule='static', nogil=True, num_threads=n_threads
             ):
-                gradient[i] = {{cgrad}}(y_true[i], raw_prediction[i]{{with_param}})
+                gradient_out[i] = {{cgrad}}(y_true[i], raw_prediction[i]{{with_param}})
         else:
             for i in prange(
                 n_samples, schedule='static', nogil=True, num_threads=n_threads
             ):
-                gradient[i] = sample_weight[i] * {{cgrad}}(y_true[i], raw_prediction[i]{{with_param}})
+                gradient_out[i] = sample_weight[i] * {{cgrad}}(y_true[i], raw_prediction[i]{{with_param}})
 
-        return np.asarray(gradient)
+        return np.asarray(gradient_out)
 
     def _gradient_hessian(
         self,
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,   # IN
-        G_DTYPE_C[::1] gradient,        # OUT
-        G_DTYPE_C[::1] hessian,         # OUT
+        G_DTYPE_C[::1] gradient_out,    # OUT
+        G_DTYPE_C[::1] hessian_out,     # OUT
         int n_threads=1
     ):
         cdef:
@@ -904,17 +902,17 @@ cdef class {{name}}(CyLossFunction):
                 n_samples, schedule='static', nogil=True, num_threads=n_threads
             ):
                 dbl2 = {{cgrad_hess}}(y_true[i], raw_prediction[i]{{with_param}})
-                gradient[i] = dbl2.val1
-                hessian[i] = dbl2.val2
+                gradient_out[i] = dbl2.val1
+                hessian_out[i] = dbl2.val2
         else:
             for i in prange(
                 n_samples, schedule='static', nogil=True, num_threads=n_threads
             ):
                 dbl2 = {{cgrad_hess}}(y_true[i], raw_prediction[i]{{with_param}})
-                gradient[i] = sample_weight[i] * dbl2.val1
-                hessian[i] = sample_weight[i] * dbl2.val2
+                gradient_out[i] = sample_weight[i] * dbl2.val1
+                hessian_out[i] = sample_weight[i] * dbl2.val2
 
-        return np.asarray(gradient), np.asarray(hessian)
+        return np.asarray(gradient_out), np.asarray(hessian_out)
 
 {{endfor}}
 
@@ -941,7 +939,7 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
         Y_DTYPE_C[::1] y_true,           # IN
         Y_DTYPE_C[:, :] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,    # IN
-        G_DTYPE_C[::1] loss,             # OUT
+        G_DTYPE_C[::1] loss_out,         # OUT
         int n_threads=1
     ):
         cdef:
@@ -967,12 +965,12 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
                     sum_exp_minus_max(i, raw_prediction, p)
                     max_value = p[n_classes]     # p[-2]
                     sum_exps = p[n_classes + 1]  # p[-1]
-                    loss[i] = log(sum_exps) + max_value
+                    loss_out[i] = log(sum_exps) + max_value
 
                     for k in range(n_classes):
                         # label decode y_true
                         if y_true[i] == k:
-                            loss[i] -= raw_prediction[i, k]
+                            loss_out[i] -= raw_prediction[i, k]
 
                 free(p)
         else:
@@ -983,26 +981,26 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
                     sum_exp_minus_max(i, raw_prediction, p)
                     max_value = p[n_classes]     # p[-2]
                     sum_exps = p[n_classes + 1]  # p[-1]
-                    loss[i] = log(sum_exps) + max_value
+                    loss_out[i] = log(sum_exps) + max_value
 
                     for k in range(n_classes):
                         # label decode y_true
                         if y_true[i] == k:
-                            loss[i] -= raw_prediction[i, k]
+                            loss_out[i] -= raw_prediction[i, k]
 
-                    loss[i] *= sample_weight[i]
+                    loss_out[i] *= sample_weight[i]
 
                 free(p)
 
-        return np.asarray(loss)
+        return np.asarray(loss_out)
 
     def _loss_gradient(
         self,
         Y_DTYPE_C[::1] y_true,           # IN
         Y_DTYPE_C[:, :] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,    # IN
-        G_DTYPE_C[::1] loss,             # OUT
-        G_DTYPE_C[:, :] gradient,        # OUT
+        G_DTYPE_C[::1] loss_out,         # OUT
+        G_DTYPE_C[:, :] gradient_out,    # OUT
         int n_threads=1
     ):
         cdef:
@@ -1023,15 +1021,15 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
                     sum_exp_minus_max(i, raw_prediction, p)
                     max_value = p[n_classes]  # p[-2]
                     sum_exps = p[n_classes + 1]  # p[-1]
-                    loss[i] = log(sum_exps) + max_value
+                    loss_out[i] = log(sum_exps) + max_value
 
                     for k in range(n_classes):
                         # label decode y_true
                         if y_true [i] == k:
-                            loss[i] -= raw_prediction[i, k]
+                            loss_out[i] -= raw_prediction[i, k]
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = p_k - (y_true == k)
-                        gradient[i, k] = p[k] - (y_true[i] == k)
+                        gradient_out[i, k] = p[k] - (y_true[i] == k)
 
                 free(p)
         else:
@@ -1042,28 +1040,28 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
                     sum_exp_minus_max(i, raw_prediction, p)
                     max_value = p[n_classes]  # p[-2]
                     sum_exps = p[n_classes + 1]  # p[-1]
-                    loss[i] = log(sum_exps) + max_value
+                    loss_out[i] = log(sum_exps) + max_value
 
                     for k in range(n_classes):
                         # label decode y_true
                         if y_true [i] == k:
-                            loss[i] -= raw_prediction[i, k]
+                            loss_out[i] -= raw_prediction[i, k]
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = (p_k - (y_true == k)) * sw
-                        gradient[i, k] = (p[k] - (y_true[i] == k)) * sample_weight[i]
+                        gradient_out[i, k] = (p[k] - (y_true[i] == k)) * sample_weight[i]
 
-                    loss[i] *= sample_weight[i]
+                    loss_out[i] *= sample_weight[i]
 
                 free(p)
 
-        return np.asarray(loss), np.asarray(gradient)
+        return np.asarray(loss_out), np.asarray(gradient_out)
 
     def _gradient(
         self,
         Y_DTYPE_C[::1] y_true,           # IN
         Y_DTYPE_C[:, :] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,    # IN
-        G_DTYPE_C[:, :] gradient,        # OUT
+        G_DTYPE_C[:, :] gradient_out,    # OUT
         int n_threads=1
     ):
         cdef:
@@ -1087,7 +1085,7 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
                     for k in range(n_classes):
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = y_pred_k - (y_true == k)
-                        gradient[i, k] = p[k] - (y_true[i] == k)
+                        gradient_out[i, k] = p[k] - (y_true[i] == k)
 
                 free(p)
         else:
@@ -1101,19 +1099,19 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
                     for k in range(n_classes):
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = (p_k - (y_true == k)) * sw
-                        gradient[i, k] = (p[k] - (y_true[i] == k)) * sample_weight[i]
+                        gradient_out[i, k] = (p[k] - (y_true[i] == k)) * sample_weight[i]
 
                 free(p)
 
-        return np.asarray(gradient)
+        return np.asarray(gradient_out)
 
     def _gradient_hessian(
         self,
         Y_DTYPE_C[::1] y_true,           # IN
         Y_DTYPE_C[:, :] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,    # IN
-        G_DTYPE_C[:, :] gradient,        # OUT
-        G_DTYPE_C[:, :] hessian,         # OUT
+        G_DTYPE_C[:, :] gradient_out,    # OUT
+        G_DTYPE_C[:, :] hessian_out,     # OUT
         int n_threads=1
     ):
         cdef:
@@ -1138,8 +1136,8 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # hessian_k = p_k * (1 - p_k)
                         # gradient_k = p_k - (y_true == k)
-                        gradient[i, k] = p[k] - (y_true[i] == k)
-                        hessian[i, k] = p[k] * (1. - p[k])
+                        gradient_out[i, k] = p[k] - (y_true[i] == k)
+                        hessian_out[i, k] = p[k] * (1. - p[k])
 
                 free(p)
         else:
@@ -1154,12 +1152,12 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = (p_k - (y_true == k)) * sw
                         # hessian_k = p_k * (1 - p_k) * sw
-                        gradient[i, k] = (p[k] - (y_true[i] == k)) * sample_weight[i]
-                        hessian[i, k] = (p[k] * (1. - p[k])) * sample_weight[i]
+                        gradient_out[i, k] = (p[k] - (y_true[i] == k)) * sample_weight[i]
+                        hessian_out[i, k] = (p[k] * (1. - p[k])) * sample_weight[i]
 
                 free(p)
 
-        return np.asarray(gradient), np.asarray(hessian)
+        return np.asarray(gradient_out), np.asarray(hessian_out)
 
 
     # This method simplifies the implementation of hessp in linear models,
@@ -1170,8 +1168,8 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
         Y_DTYPE_C[::1] y_true,           # IN
         Y_DTYPE_C[:, :] raw_prediction,  # IN
         Y_DTYPE_C[::1] sample_weight,    # IN
-        G_DTYPE_C[:, :] gradient,        # OUT
-        G_DTYPE_C[:, :] proba,           # OUT
+        G_DTYPE_C[:, :] gradient_out,    # OUT
+        G_DTYPE_C[:, :] proba_out,       # OUT
         int n_threads=1
     ):
         cdef:
@@ -1193,9 +1191,9 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
                     sum_exps = p[n_classes + 1]  # p[-1]
 
                     for k in range(n_classes):
-                        proba[i, k] = p[k] / sum_exps  # y_pred_k = prob of class k
+                        proba_out[i, k] = p[k] / sum_exps  # y_pred_k = prob of class k
                         # gradient_k = y_pred_k - (y_true == k)
-                        gradient[i, k] = proba[i, k] - (y_true[i] == k)
+                        gradient_out[i, k] = proba_out[i, k] - (y_true[i] == k)
 
                 free(p)
         else:
@@ -1207,10 +1205,10 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
                     sum_exps = p[n_classes + 1]  # p[-1]
 
                     for k in range(n_classes):
-                        proba[i, k] = p[k] / sum_exps  # y_pred_k = prob of class k
+                        proba_out[i, k] = p[k] / sum_exps  # y_pred_k = prob of class k
                         # gradient_k = (p_k - (y_true == k)) * sw
-                        gradient[i, k] = (proba[i, k] - (y_true[i] == k)) * sample_weight[i]
+                        gradient_out[i, k] = (proba_out[i, k] - (y_true[i] == k)) * sample_weight[i]
 
                 free(p)
 
-        return np.asarray(gradient), np.asarray(proba)
+        return np.asarray(gradient_out), np.asarray(proba_out)

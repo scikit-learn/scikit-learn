@@ -283,22 +283,22 @@ def test_loss_dtype(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        loss=out1,
+        loss_out=out1,
         n_threads=n_threads,
     )
     loss.gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        gradient=out2,
+        gradient_out=out2,
         n_threads=n_threads,
     )
     loss.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        loss=out1,
-        gradient=out2,
+        loss_out=out1,
+        gradient_out=out2,
         n_threads=n_threads,
     )
     if out1 is not None and loss.is_multiclass:
@@ -307,8 +307,8 @@ def test_loss_dtype(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        gradient=out1,
-        hessian=out2,
+        gradient_out=out1,
+        hessian_out=out2,
         n_threads=n_threads,
     )
     loss(y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight)
@@ -321,8 +321,8 @@ def test_loss_dtype(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            gradient=out1,
-            proba=out2,
+            gradient_out=out1,
+            proba_out=out2,
             n_threads=n_threads,
         )
 
@@ -352,13 +352,13 @@ def test_loss_same_as_C_functions(loss, sample_weight):
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            loss=out_l1,
+            loss_out=out_l1,
         ),
         loss._loss(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            loss=out_l2,
+            loss_out=out_l2,
         ),
     )
     assert_allclose(
@@ -366,28 +366,28 @@ def test_loss_same_as_C_functions(loss, sample_weight):
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            gradient=out_g1,
+            gradient_out=out_g1,
         ),
         loss._gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            gradient=out_g2,
+            gradient_out=out_g2,
         ),
     )
     loss.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        loss=out_l1,
-        gradient=out_g1,
+        loss_out=out_l1,
+        gradient_out=out_g1,
     )
     loss._loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        loss=out_l2,
-        gradient=out_g2,
+        loss_out=out_l2,
+        gradient_out=out_g2,
     )
     assert_allclose(out_l1, out_l2)
     assert_allclose(out_g1, out_g2)
@@ -395,15 +395,15 @@ def test_loss_same_as_C_functions(loss, sample_weight):
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        gradient=out_g1,
-        hessian=out_h1,
+        gradient_out=out_g1,
+        hessian_out=out_h1,
     )
     loss._gradient_hessian(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        gradient=out_g2,
-        hessian=out_h2,
+        gradient_out=out_g2,
+        hessian_out=out_h2,
     )
     assert_allclose(out_g1, out_g2)
     assert_allclose(out_h1, out_h2)
@@ -437,27 +437,27 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        loss=out_l1,
+        loss_out=out_l1,
     )
     g1 = loss.gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        gradient=out_g1,
+        gradient_out=out_g1,
     )
     l2, g2 = loss.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        loss=out_l2,
-        gradient=out_g2,
+        loss_out=out_l2,
+        gradient_out=out_g2,
     )
     g3, h3 = loss.gradient_hessian(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
-        gradient=out_g3,
-        hessian=out_h3,
+        gradient_out=out_g3,
+        hessian_out=out_h3,
     )
     assert_allclose(l1, l2)
     assert_array_equal(l1, out_l1)
@@ -481,8 +481,8 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            gradient=out_g4,
-            proba=out_proba,
+            gradient_out=out_g4,
+            proba_out=out_proba,
         )
         assert_allclose(g1, out_g4)
         assert_allclose(g1, g4)
@@ -975,8 +975,8 @@ def test_predict_proba(loss):
                 y_true=y_true,
                 raw_prediction=raw_prediction,
                 sample_weight=None,
-                gradient=grad,
-                proba=proba,
+                gradient_out=grad,
+                proba_out=proba,
             )
             assert proba.shape == (n_samples, loss.n_classes)
             assert np.sum(proba, axis=1) == approx(1, rel=1e-11)
@@ -986,7 +986,7 @@ def test_predict_proba(loss):
                     y_true=y_true,
                     raw_prediction=raw_prediction,
                     sample_weight=None,
-                    gradient=None,
+                    gradient_out=None,
                 ),
             )
 

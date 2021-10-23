@@ -141,7 +141,7 @@ class BaseLoss(BaseLink, CyLossFunction):
         y_true,
         raw_prediction,
         sample_weight=None,
-        loss=None,
+        loss_out=None,
         n_threads=1,
     ):
         """Compute the pointwise loss value for each input.
@@ -155,7 +155,7 @@ class BaseLoss(BaseLink, CyLossFunction):
             Raw prediction values (in link space).
         sample_weight : None or C-contiguous array of shape (n_samples,)
             Sample weights.
-        loss : None or C-contiguous array of shape (n_samples,)
+        loss_out : None or C-contiguous array of shape (n_samples,)
             A location into which the result is stored. If None, a new array
             might be created.
         n_threads : int, default=1
@@ -166,8 +166,8 @@ class BaseLoss(BaseLink, CyLossFunction):
         loss : array of shape (n_samples,)
             Element-wise loss function.
         """
-        if loss is None:
-            loss = np.empty_like(y_true)
+        if loss_out is None:
+            loss_out = np.empty_like(y_true)
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
@@ -180,7 +180,7 @@ class BaseLoss(BaseLink, CyLossFunction):
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            loss=loss,
+            loss_out=loss_out,
             n_threads=n_threads,
         )
 
@@ -189,8 +189,8 @@ class BaseLoss(BaseLink, CyLossFunction):
         y_true,
         raw_prediction,
         sample_weight=None,
-        loss=None,
-        gradient=None,
+        loss_out=None,
+        gradient_out=None,
         n_threads=1,
     ):
         """Compute loss and gradient w.r.t. raw_prediction for each input.
@@ -204,10 +204,10 @@ class BaseLoss(BaseLink, CyLossFunction):
             Raw prediction values (in link space).
         sample_weight : None or C-contiguous array of shape (n_samples,)
             Sample weights.
-        loss : None or C-contiguous array of shape (n_samples,)
+        loss_out : None or C-contiguous array of shape (n_samples,)
             A location into which the loss is stored. If None, a new array
             might be created.
-        gradient : None or C-contiguous array of shape (n_samples,) or array \
+        gradient_out : None or C-contiguous array of shape (n_samples,) or array \
             of shape (n_samples, n_classes)
             A location into which the gradient is stored. If None, a new array
             might be created.
@@ -222,20 +222,20 @@ class BaseLoss(BaseLink, CyLossFunction):
         gradient : array of shape (n_samples,) or (n_samples, n_classes)
             Element-wise gradients.
         """
-        if loss is None:
-            if gradient is None:
-                loss = np.empty_like(y_true)
-                gradient = np.empty_like(raw_prediction)
+        if loss_out is None:
+            if gradient_out is None:
+                loss_out = np.empty_like(y_true)
+                gradient_out = np.empty_like(raw_prediction)
             else:
-                loss = np.empty_like(y_true, dtype=gradient.dtype)
-        elif gradient is None:
-            gradient = np.empty_like(raw_prediction, dtype=loss.dtype)
+                loss_out = np.empty_like(y_true, dtype=gradient_out.dtype)
+        elif gradient_out is None:
+            gradient_out = np.empty_like(raw_prediction, dtype=loss_out.dtype)
 
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
-        if gradient.ndim == 2 and gradient.shape[1] == 1:
-            gradient = gradient.squeeze(1)
+        if gradient_out.ndim == 2 and gradient_out.shape[1] == 1:
+            gradient_out = gradient_out.squeeze(1)
 
         y_true = ReadonlyArrayWrapper(y_true)
         raw_prediction = ReadonlyArrayWrapper(raw_prediction)
@@ -245,8 +245,8 @@ class BaseLoss(BaseLink, CyLossFunction):
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            loss=loss,
-            gradient=gradient,
+            loss_out=loss_out,
+            gradient_out=gradient_out,
             n_threads=n_threads,
         )
 
@@ -255,7 +255,7 @@ class BaseLoss(BaseLink, CyLossFunction):
         y_true,
         raw_prediction,
         sample_weight=None,
-        gradient=None,
+        gradient_out=None,
         n_threads=1,
     ):
         """Compute gradient of loss w.r.t raw_prediction for each input.
@@ -269,7 +269,7 @@ class BaseLoss(BaseLink, CyLossFunction):
             Raw prediction values (in link space).
         sample_weight : None or C-contiguous array of shape (n_samples,)
             Sample weights.
-        gradient : None or C-contiguous array of shape (n_samples,) or array \
+        gradient_out : None or C-contiguous array of shape (n_samples,) or array \
             of shape (n_samples, n_classes)
             A location into which the result is stored. If None, a new array
             might be created.
@@ -281,14 +281,14 @@ class BaseLoss(BaseLink, CyLossFunction):
         gradient : array of shape (n_samples,) or (n_samples, n_classes)
             Element-wise gradients.
         """
-        if gradient is None:
-            gradient = np.empty_like(raw_prediction)
+        if gradient_out is None:
+            gradient_out = np.empty_like(raw_prediction)
 
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
-        if gradient.ndim == 2 and gradient.shape[1] == 1:
-            gradient = gradient.squeeze(1)
+        if gradient_out.ndim == 2 and gradient_out.shape[1] == 1:
+            gradient_out = gradient_out.squeeze(1)
 
         y_true = ReadonlyArrayWrapper(y_true)
         raw_prediction = ReadonlyArrayWrapper(raw_prediction)
@@ -298,7 +298,7 @@ class BaseLoss(BaseLink, CyLossFunction):
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            gradient=gradient,
+            gradient_out=gradient_out,
             n_threads=n_threads,
         )
 
@@ -307,8 +307,8 @@ class BaseLoss(BaseLink, CyLossFunction):
         y_true,
         raw_prediction,
         sample_weight=None,
-        gradient=None,
-        hessian=None,
+        gradient_out=None,
+        hessian_out=None,
         n_threads=1,
     ):
         """Compute gradient and hessian of loss w.r.t raw_prediction.
@@ -322,11 +322,11 @@ class BaseLoss(BaseLink, CyLossFunction):
             Raw prediction values (in link space).
         sample_weight : None or C-contiguous array of shape (n_samples,)
             Sample weights.
-        gradient : None or C-contiguous array of shape (n_samples,) or array \
+        gradient_out : None or C-contiguous array of shape (n_samples,) or array \
             of shape (n_samples, n_classes)
             A location into which the gradient is stored. If None, a new array
             might be created.
-        hessian : None or C-contiguous array of shape (n_samples,) or array \
+        hessian_out : None or C-contiguous array of shape (n_samples,) or array \
             of shape (n_samples, n_classes)
             A location into which the hessian is stored. If None, a new array
             might be created.
@@ -341,22 +341,22 @@ class BaseLoss(BaseLink, CyLossFunction):
         hessian : arrays of shape (n_samples,) or (n_samples, n_classes)
             Element-wise hessians.
         """
-        if gradient is None:
-            if hessian is None:
-                gradient = np.empty_like(raw_prediction)
-                hessian = np.empty_like(raw_prediction)
+        if gradient_out is None:
+            if hessian_out is None:
+                gradient_out = np.empty_like(raw_prediction)
+                hessian_out = np.empty_like(raw_prediction)
             else:
-                gradient = np.empty_like(hessian)
-        elif hessian is None:
-            hessian = np.empty_like(gradient)
+                gradient_out = np.empty_like(hessian_out)
+        elif hessian_out is None:
+            hessian_out = np.empty_like(gradient_out)
 
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
-        if gradient.ndim == 2 and gradient.shape[1] == 1:
-            gradient = gradient.squeeze(1)
-        if hessian.ndim == 2 and hessian.shape[1] == 1:
-            hessian = hessian.squeeze(1)
+        if gradient_out.ndim == 2 and gradient_out.shape[1] == 1:
+            gradient_out = gradient_out.squeeze(1)
+        if hessian_out.ndim == 2 and hessian_out.shape[1] == 1:
+            hessian_out = hessian_out.squeeze(1)
 
         y_true = ReadonlyArrayWrapper(y_true)
         raw_prediction = ReadonlyArrayWrapper(raw_prediction)
@@ -366,8 +366,8 @@ class BaseLoss(BaseLink, CyLossFunction):
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            gradient=gradient,
-            hessian=hessian,
+            gradient_out=gradient_out,
+            hessian_out=hessian_out,
             n_threads=n_threads,
         )
 
@@ -396,7 +396,7 @@ class BaseLoss(BaseLink, CyLossFunction):
                 y_true=y_true,
                 raw_prediction=raw_prediction,
                 sample_weight=None,
-                loss=None,
+                loss_out=None,
                 n_threads=n_threads,
             ),
             weights=sample_weight,
@@ -846,8 +846,8 @@ class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseL
         y_true,
         raw_prediction,
         sample_weight=None,
-        gradient=None,
-        proba=None,
+        gradient_out=None,
+        proba_out=None,
         n_threads=1,
     ):
         """Compute gradient and class probabilities fow raw_prediction.
@@ -860,10 +860,10 @@ class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseL
             Raw prediction values (in link space).
         sample_weight : None or C-contiguous array of shape (n_samples,)
             Sample weights.
-        gradient : None or array of shape (n_samples, n_classes)
+        gradient_out : None or array of shape (n_samples, n_classes)
             A location into which the gradient is stored. If None, a new array
             might be created.
-        proba : None or array of shape (n_samples, n_classes)
+        proba_out : None or array of shape (n_samples, n_classes)
             A location into which the class probabilities are stored. If None,
             a new array might be created.
         n_threads : int, default=1
@@ -877,14 +877,14 @@ class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseL
         proba : array of shape (n_samples, n_classes)
             Element-wise class probabilites.
         """
-        if gradient is None:
-            if proba is None:
-                gradient = np.empty_like(raw_prediction)
-                proba = np.empty_like(raw_prediction)
+        if gradient_out is None:
+            if proba_out is None:
+                gradient_out = np.empty_like(raw_prediction)
+                proba_out = np.empty_like(raw_prediction)
             else:
-                gradient = np.empty_like(proba)
-        elif proba is None:
-            proba = np.empty_like(gradient)
+                gradient_out = np.empty_like(proba_out)
+        elif proba_out is None:
+            proba_out = np.empty_like(gradient_out)
 
         y_true = ReadonlyArrayWrapper(y_true)
         raw_prediction = ReadonlyArrayWrapper(raw_prediction)
@@ -894,8 +894,8 @@ class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseL
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
-            gradient=gradient,
-            proba=proba,
+            gradient_out=gradient_out,
+            proba_out=proba_out,
             n_threads=n_threads,
         )
 
