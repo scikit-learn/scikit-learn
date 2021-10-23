@@ -256,12 +256,14 @@ factorization, while larger values shrink many coefficients to zero.
 
 .. topic:: References:
 
-  .. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
+  .. [Mrl09] `J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009. 
+     "Online Dictionary Learning for Sparse Coding"
      <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
-     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
-  .. [Jen09] `"Structured Sparse Principal Component Analysis"
+     
+  .. [Jen09] `R. Jenatton, G. Obozinski, F. Bach, 2009. 
+      "Structured Sparse Principal Component Analysis"
      <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
-     R. Jenatton, G. Obozinski, F. Bach, 2009
+     
 
 
 .. _kernel_PCA:
@@ -342,15 +344,13 @@ components is less than 10 (strict) and the number of samples is more than 200
     * *randomized* solver:
 
         * Algorithm 4.3 in
-          :arxiv:`"Finding structure with randomness: Stochastic algorithms for
-          constructing approximate matrix decompositions"
+          :arxiv:`Halko, et al., 2009. "Finding structure with randomness: Stochastic algorithms for
+          constructing approximate matrix decompositions"_
           <0909.4061>`
-          Halko, et al., 2009
 
-        * :arxiv:`"An implementation of a randomized algorithm for principal component
+        * :arxiv:`A. Szlam et al. 2014. "An implementation of a randomized algorithm for principal component
           analysis"
-          <1412.3510>`
-          A. Szlam et al. 2014
+          <1412.3510>`_
 
     * *arpack* solver:
       `scipy.sparse.linalg.eigsh documentation
@@ -577,9 +577,8 @@ extracted from part of the image of a raccoon face looks like.
 
 .. topic:: References:
 
-  * `"Online dictionary learning for sparse coding"
+  * `J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009. "Online dictionary learning for sparse coding"
     <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
-    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
 .. _MiniBatchDictionaryLearning:
 
@@ -915,29 +914,23 @@ stored components::
 
 .. topic:: References:
 
-    .. [1] `"Learning the parts of objects by non-negative matrix factorization"
+    .. [1] `D. Lee, S. Seung, 1999. "Learning the parts of objects by non-negative matrix factorization"
       <http://www.columbia.edu/~jwp2128/Teaching/E4903/papers/nmf_nature.pdf>`_
-      D. Lee, S. Seung, 1999
 
-    .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
+    .. [2] `P. Hoyer, 2004. "Non-negative Matrix Factorization with Sparseness Constraints"
       <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
-      P. Hoyer, 2004
 
-    .. [4] `"SVD based initialization: A head start for nonnegative
+    .. [4] `C. Boutsidis, E. Gallopoulos, 2008. "SVD based initialization: A head start for nonnegative
       matrix factorization"
       <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
-      C. Boutsidis, E. Gallopoulos, 2008
 
-    .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
+    .. [5] `A. Cichocki, A. Phan, 2009. "Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
-      A. Cichocki, A. Phan, 2009
 
-    .. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with the beta-divergence"
+    .. [6] :arxiv:`C. Fevotte, J. Idier, 2011. "Algorithms for nonnegative matrix factorization with the beta-divergence"
       <1010.1763>`
-      C. Fevotte, J. Idier, 2011
-
-
+      
 .. _LatentDirichletAllocation:
 
 Latent Dirichlet Allocation (LDA)
@@ -1034,21 +1027,17 @@ when data can be fetched sequentially.
 
 .. topic:: References:
 
-    * `"Latent Dirichlet Allocation"
+    * `D. Blei, A. Ng, M. Jordan, 2003. "Latent Dirichlet Allocation"
       <http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
-      D. Blei, A. Ng, M. Jordan, 2003
 
-    * `"Online Learning for Latent Dirichlet Allocation”
+    * `M. Hoffman, D. Blei, F. Bach, 2010. "Online Learning for Latent Dirichlet Allocation”
       <https://papers.nips.cc/paper/3902-online-learning-for-latent-dirichlet-allocation.pdf>`_
-      M. Hoffman, D. Blei, F. Bach, 2010
 
-    * `"Stochastic Variational Inference"
+    * `M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013. "Stochastic Variational Inference"
       <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
-      M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
 
-    * `"The varimax criterion for analytic rotation in factor analysis"
+    * `H. F. Kaiser, 1958. "The varimax criterion for analytic rotation in factor analysis"
       <https://link.springer.com/article/10.1007%2FBF02289233>`_
-      H. F. Kaiser, 1958
 
 See also :ref:`nca_dim_reduction` for dimensionality reduction with
 Neighborhood Components Analysis.
