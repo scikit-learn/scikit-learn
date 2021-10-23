@@ -451,7 +451,6 @@ def single_linkage_label(L):
     return _single_linkage_label(L)
 
 
-# Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
 @cython.boundscheck(False)
 @cython.nonecheck(False)
 def mst_linkage_core(
@@ -461,8 +460,8 @@ def mst_linkage_core(
     Compute the necessary elements of a minimum spanning
     tree for computation of single linkage clustering. This
     represents the MST-LINKAGE-CORE algorithm (Figure 6) from
-    *Modern hierarchical, agglomerative clustering algorithms*
-    by Daniel Mullner (https://arxiv.org/abs/1109.2378).
+    :arxiv: `Daniel Mullner, "Modern hierarchical, agglomerative clustering
+    algorithms" <1109.2378>`.
 
     In contrast to the scipy implementation is never computes
     a full distance matrix, generating distances only as they
@@ -483,8 +482,9 @@ def mst_linkage_core(
     mst_core_data: array of shape (n_samples, 3)
         An array providing information from which one
         can either compute an MST, or the linkage hierarchy
-        very efficiently. See https://arxiv.org/abs/1109.2378
-        algorithm MST-LINKAGE-CORE for more details.
+        very efficiently. See :arxiv: `Daniel Mullner, "Modern hierarchical,
+        agglomerative clustering algorithms" <1109.2378>` algorithm 
+        MST-LINKAGE-CORE for more details.
     """
     cdef:
         ITYPE_t n_samples = raw_data.shape[0]
