@@ -29,7 +29,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.cluster._mean_shift.estimate_bandwidth",
     "sklearn.cluster._mean_shift.get_bin_seeds",
     "sklearn.cluster._mean_shift.mean_shift",
-    "sklearn.cluster._optics.cluster_optics_dbscan",
     "sklearn.cluster._optics.cluster_optics_xi",
     "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
