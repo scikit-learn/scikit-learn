@@ -347,9 +347,9 @@ components is less than 10 (strict) and the number of samples is more than 200
           <0909.4061>`
           Halko, et al., 2009
 
-        * `"An implementation of a randomized algorithm for principal component
+        * :arxiv:`"An implementation of a randomized algorithm for principal component
           analysis"
-          <https://arxiv.org/pdf/1412.3510.pdf>`_
+          <1412.3510>`
           A. Szlam et al. 2014
 
     * *arpack* solver:
