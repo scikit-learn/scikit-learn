@@ -301,7 +301,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
 
 class PassiveAggressiveRegressor(BaseSGDRegressor):
-    """Passive Aggressive Regressor
+    """Passive Aggressive Regressor.
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
 
@@ -352,7 +352,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    verbose : integer, default=0
+    verbose : int, default=0
         The verbosity level.
 
     loss : str, default="epsilon_insensitive"
@@ -416,6 +416,17 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    See Also
+    --------
+    SGDRegressor : Linear model fitted by minimizing a regularized
+        empirical loss with SGD.
+
+    References
+    ----------
+    Online Passive-Aggressive Algorithms
+    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
+    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006).
+
     Examples
     --------
     >>> from sklearn.linear_model import PassiveAggressiveRegressor
@@ -432,18 +443,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     [-0.02306214]
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-0.02306214]
-
-    See Also
-    --------
-    SGDRegressor : Linear model fitted by minimizing a regularized
-        empirical loss with SGD.
-
-    References
-    ----------
-    Online Passive-Aggressive Algorithms
-    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006).
-
     """
 
     def __init__(
