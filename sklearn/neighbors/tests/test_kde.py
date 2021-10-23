@@ -107,11 +107,12 @@ def test_kde_algorithm_metric_choice(algorithm, metric):
     X = rng.randn(10, 2)  # 2 features required for haversine dist.
     Y = rng.randn(10, 2)
 
+    kde = KernelDensity(algorithm=algorithm, metric=metric)
+
     if algorithm == "kd_tree" and metric not in KDTree.valid_metrics:
         with pytest.raises(ValueError):
-            KernelDensity(algorithm=algorithm, metric=metric)
+            kde.fit(X)
     else:
-        kde = KernelDensity(algorithm=algorithm, metric=metric)
         kde.fit(X)
         y_dens = kde.score_samples(Y)
         assert y_dens.shape == Y.shape[:1]
