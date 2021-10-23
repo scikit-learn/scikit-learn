@@ -127,16 +127,17 @@ def test_kde_score(n_samples=100, n_features=3):
 
 
 def test_kde_badargs():
+    X = np.random.random((200, 10))
     with pytest.raises(ValueError):
-        KernelDensity(algorithm="blah")
+        KernelDensity(algorithm="blah").fit(X)
     with pytest.raises(ValueError):
-        KernelDensity(bandwidth=0)
+        KernelDensity(bandwidth=0).fit(X)
     with pytest.raises(ValueError):
-        KernelDensity(kernel="blah")
+        KernelDensity(kernel="blah").fit(X)
     with pytest.raises(ValueError):
-        KernelDensity(metric="blah")
+        KernelDensity(metric="blah").fit(X)
     with pytest.raises(ValueError):
-        KernelDensity(algorithm="kd_tree", metric="blah")
+        KernelDensity(algorithm="kd_tree", metric="blah").fit(X)
     kde = KernelDensity()
     with pytest.raises(ValueError):
         kde.fit(np.random.random((200, 10)), sample_weight=np.random.random((200, 10)))
