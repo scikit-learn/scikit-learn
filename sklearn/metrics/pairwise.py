@@ -253,7 +253,8 @@ def euclidean_distances(
 
     Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), \
             default=None
-        If `None`, uses `Y=X`.
+        An array where each row is a sample and each column is a feature.
+        If `None`, method uses `Y=X`.
 
     Y_norm_squared : array-like of shape (n_samples_Y,) or (n_samples_Y, 1) \
             or (1, n_samples_Y), default=None
