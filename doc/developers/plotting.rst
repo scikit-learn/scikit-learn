@@ -64,8 +64,8 @@ Plotting with Multiple Axes
 ---------------------------
 
 Some of the plotting tools like
-:func:`~sklearn.inspection.plot_partial_dependence` and
-:class:`~sklearn.inspection.PartialDependenceDisplay` support plottong on
+:func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
+:class:`~sklearn.inspection.PartialDependenceDisplay` support plotting on
 multiple axes. Two different scenarios are supported:
 
 1. If a list of axes is passed in, `plot` will check if the number of axes is
@@ -87,8 +87,8 @@ be placed. In this case, we suggest using matplotlib's
 By default, the `ax` keyword in `plot` is `None`. In this case, the single
 axes is created and the gridspec api is used to create the regions to plot in.
 
-See for example, :func:`~sklearn.inspection.plot_partial_dependence` which
-plots multiple lines and contours using this API. The axes defining the
+See for example, :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator
+which plots multiple lines and contours using this API. The axes defining the
 bounding box is saved in a `bounding_ax_` attribute. The individual axes
 created are stored in an `axes_` ndarray, corresponding to the axes position on
 the grid. Positions that are not used are set to `None`. Furthermore, the

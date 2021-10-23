@@ -52,8 +52,8 @@ from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _get_feature_names,
     _check_feature_names_in,
+    _check_fit_params,
 )
-from sklearn.utils.validation import _check_fit_params
 from sklearn.base import BaseEstimator
 import sklearn
 
@@ -1253,6 +1253,14 @@ def test_check_sample_weight():
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
+    # check negative weight when only_non_negative=True
+    X = np.ones((5, 2))
+    sample_weight = np.ones(_num_samples(X))
+    sample_weight[-1] = -10
+    err_msg = "Negative values in data passed to `sample_weight`"
+    with pytest.raises(ValueError, match=err_msg):
+        _check_sample_weight(sample_weight, X, only_non_negative=True)
+
 
 @pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])
 def test_allclose_dense_sparse_equals(toarray):
@@ -1406,8 +1414,8 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame(
         {
-            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1),
-            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2),
+            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
+            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
 
@@ -1448,8 +1456,8 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
     pd = pytest.importorskip("pandas", minversion="0.25.0")
     df = pd.DataFrame(
         {
-            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1),
-            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2),
+            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
+            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
     arr = check_array(df, accept_sparse=["csr", "csc"])

@@ -29,7 +29,7 @@ from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
-from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
+from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check_scalar
 from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
@@ -60,7 +60,7 @@ def _preprocess(doc, accent_function=None, lower=False):
         Function for handling accented characters. Common strategies include
         normalizing and removing.
     lower: bool, default=False
-        Whether to use str.lower to lowercase all fo the text
+        Whether to use str.lower to lowercase all of the text
 
     Returns
     -------
@@ -156,7 +156,7 @@ def strip_accents_ascii(s):
 
     Parameters
     ----------
-    s : string
+    s : str
         The string to strip
 
     See Also
@@ -175,7 +175,7 @@ def strip_tags(s):
 
     Parameters
     ----------
-    s : string
+    s : str
         The string to strip
     """
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
@@ -204,7 +204,7 @@ class _VectorizerMixin:
 
         Parameters
         ----------
-        doc : str
+        doc : bytes or str
             The string to decode.
 
         Returns
@@ -555,7 +555,7 @@ class _VectorizerMixin:
 
 
 class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
-    r"""Convert a collection of text documents to a matrix of token occurrences
+    r"""Convert a collection of text documents to a matrix of token occurrences.
 
     It turns a collection of text documents into a scipy.sparse matrix holding
     token occurrence counts (or binary occurrence information), possibly
@@ -568,10 +568,10 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     This strategy has several advantages:
 
     - it is very low memory scalable to large datasets as there is no need to
-      store a vocabulary dictionary in memory
+      store a vocabulary dictionary in memory.
 
     - it is fast to pickle and un-pickle as it holds no state besides the
-      constructor parameters
+      constructor parameters.
 
     - it can be used in a streaming (partial fit) or parallel pipeline as there
       is no state computed during fit.
@@ -595,7 +595,6 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
 
     Parameters
     ----------
-
     input : {'filename', 'file', 'content'}, default='content'
         - If `'filename'`, the sequence passed as an argument to fit is
           expected to be a list of filenames that need reading to fetch
@@ -607,7 +606,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         - If `'content'`, the input is expected to be a sequence of items that
           can be of type string or byte.
 
-    encoding : string, default='utf-8'
+    encoding : str, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
         decode.
 
@@ -621,7 +620,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         Remove accents and perform other character normalization
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
-        an direct ASCII mapping.
+        a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
@@ -686,7 +685,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
 
-    binary : bool, default=False.
+    binary : bool, default=False
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
         counts.
@@ -704,6 +703,13 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     dtype : type, default=np.float64
         Type of the matrix returned by fit_transform() or transform().
 
+    See Also
+    --------
+    CountVectorizer : Convert a collection of text documents to a matrix of
+        token counts.
+    TfidfVectorizer : Convert a collection of raw documents to a matrix of
+        TF-IDF features.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import HashingVectorizer
@@ -717,11 +723,6 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     >>> X = vectorizer.fit_transform(corpus)
     >>> print(X.shape)
     (4, 16)
-
-    See Also
-    --------
-    CountVectorizer, TfidfVectorizer
-
     """
 
     def __init__(
@@ -762,7 +763,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self.dtype = dtype
 
     def partial_fit(self, X, y=None):
-        """Does nothing: this transformer is stateless.
+        """No-op: this transformer is stateless.
 
         This method is just there to mark the fact that this transformer
         can work in a streaming setup.
@@ -771,16 +772,32 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         ----------
         X : ndarray of shape [n_samples, n_features]
             Training data.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        self : object
+            HashingVectorizer instance.
         """
         return self
 
     def fit(self, X, y=None):
-        """Does nothing: this transformer is stateless.
+        """No-op: this transformer is stateless.
 
         Parameters
         ----------
         X : ndarray of shape [n_samples, n_features]
             Training data.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        self : object
+            HashingVectorizer instance.
         """
         # triggers a parameter validation
         if isinstance(X, str):
@@ -1103,15 +1120,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self.stop_words = stop_words
         self.max_df = max_df
         self.min_df = min_df
-        if max_df < 0 or min_df < 0:
-            raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
-        if max_features is not None:
-            if not isinstance(max_features, numbers.Integral) or max_features <= 0:
-                raise ValueError(
-                    "max_features=%r, neither a positive integer nor None"
-                    % max_features
-                )
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary
@@ -1185,17 +1194,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         j_indices = []
         indptr = []
 
-        if self.lowercase:
-            for vocab in vocabulary:
-                if any(map(str.isupper, vocab)):
-                    warnings.warn(
-                        "Upper case characters found in"
-                        " vocabulary while 'lowercase'"
-                        " is True. These entries will not"
-                        " be matched with any documents"
-                    )
-                    break
-
         values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
@@ -1247,6 +1245,23 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         )
         X.sort_indices()
         return vocabulary, X
+
+    def _validate_params(self):
+        """Validation of min_df, max_df and max_features"""
+        super()._validate_params()
+
+        if self.max_features is not None:
+            check_scalar(self.max_features, "max_features", numbers.Integral, min_val=0)
+
+        if isinstance(self.min_df, numbers.Integral):
+            check_scalar(self.min_df, "min_df", numbers.Integral, min_val=0)
+        else:
+            check_scalar(self.min_df, "min_df", numbers.Real, min_val=0.0, max_val=1.0)
+
+        if isinstance(self.max_df, numbers.Integral):
+            check_scalar(self.max_df, "max_df", numbers.Integral, min_val=0)
+        else:
+            check_scalar(self.max_df, "max_df", numbers.Real, min_val=0.0, max_val=1.0)
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
@@ -1300,6 +1315,17 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         max_df = self.max_df
         min_df = self.min_df
         max_features = self.max_features
+
+        if self.fixed_vocabulary_ and self.lowercase:
+            for term in self.vocabulary:
+                if any(map(str.isupper, term)):
+                    warnings.warn(
+                        "Upper case characters found in"
+                        " vocabulary while 'lowercase'"
+                        " is True. These entries will not"
+                        " be matched with any documents"
+                    )
+                    break
 
         vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary_)
 
@@ -1487,7 +1513,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
           See :func:`preprocessing.normalize`.
 
     use_idf : bool, default=True
-        Enable inverse-document-frequency reweighting.
+        Enable inverse-document-frequency reweighting. If False, idf(t) = 1.
 
     smooth_idf : bool, default=True
         Smooth idf weights by adding one to document frequencies, as if an
@@ -1540,7 +1566,6 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> from sklearn.feature_extraction.text import TfidfTransformer
     >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> from sklearn.pipeline import Pipeline
-    >>> import numpy as np
     >>> corpus = ['this is the first document',
     ...           'this document is the second document',
     ...           'and this is the third one',
@@ -1826,7 +1851,7 @@ class TfidfVectorizer(CountVectorizer):
           See :func:`preprocessing.normalize`.
 
     use_idf : bool, default=True
-        Enable inverse-document-frequency reweighting.
+        Enable inverse-document-frequency reweighting. If False, idf(t) = 1.
 
     smooth_idf : bool, default=True
         Smooth idf weights by adding one to document frequencies, as if an
