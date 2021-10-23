@@ -355,19 +355,16 @@ or want to do additional monitoring, using ``warm_start=True`` and
 
 .. topic:: References:
 
-    * `"Learning representations by back-propagating errors."
+    * `Rumelhart, David E., Geoffrey E. Hinton, and Ronald J. Williams. "Learning representations by back-propagating errors."
       <https://www.iro.umontreal.ca/~pift6266/A06/refs/backprop_old.pdf>`_
-      Rumelhart, David E., Geoffrey E. Hinton, and Ronald J. Williams.
 
-    * `"Stochastic Gradient Descent" <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
+    * `L. Bottou - Website, 2010. "Stochastic Gradient Descent" <https://leon.bottou.org/projects/sgd>`_
 
-    * `"Backpropagation" <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_
-      Andrew Ng, Jiquan Ngiam, Chuan Yu Foo, Yifan Mai, Caroline Suen - Website, 2011.
+    * `Andrew Ng, Jiquan Ngiam, Chuan Yu Foo, Yifan Mai, Caroline Suen - Website, 2011. "Backpropagation
+      <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_
 
-    * `"Efficient BackProp" <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
-      Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
-      of the Trade 1998.
-
-    *  `"Adam: A method for stochastic optimization."
+    * `Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks of the Trade 1998. "Efficient BackProp"
+      <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
+      
+    *  :arxiv:`Kingma, Diederik, and Jimmy Ba. arXiv preprint arXiv:1412.6980 (2014). "Adam: A method for stochastic optimization."
        <https://arxiv.org/pdf/1412.6980v8.pdf>`_
-       Kingma, Diederik, and Jimmy Ba. arXiv preprint arXiv:1412.6980 (2014).
