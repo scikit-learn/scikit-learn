@@ -293,14 +293,14 @@ def k_means(
         Method for initialization:
 
         - `'k-means++'` : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
+          clustering in a smart way to speed up convergence. See section
+          Notes in k_init for more details.
         - `'random'`: choose `n_clusters` observations (rows) at random from data
-        for the initial centroids.
+          for the initial centroids.
         - If an array is passed, it should be of shape `(n_clusters, n_features)`
-        and gives the initial centers.
+          and gives the initial centers.
         - If a callable is passed, it should take arguments `X`, `n_clusters` and a
-        random state and return an initialization.
+          random state and return an initialization.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
