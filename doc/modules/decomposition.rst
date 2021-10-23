@@ -438,7 +438,7 @@ compensating for LSA's erroneous assumptions about textual data.
     <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 
 
-.. _DictionaryLearning:
+.. _DictionaryLearning: 
 
 Dictionary Learning
 ===================
