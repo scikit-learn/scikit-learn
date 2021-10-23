@@ -7,7 +7,7 @@
 Version 1.0.1
 =============
 
-**In Development**
+**October 2021**
 
 Changelog
 ---------
@@ -43,6 +43,14 @@ Fixed models
   between sparse and dense input. :pr:`21195`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fixed a bug that could produce a segfault in rare cases for
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`.
+  :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.gaussian_process`
 ...............................
 
@@ -59,11 +67,20 @@ Fixed models
   longer checks for uppercase characters in the provided vocabulary. :pr:`21251`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
+  :class:`feature_extraction.TfidfVectorizer` by raising an
+  error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
+  :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
 - |Fix| Improves stability of :class:`linear_model.LassoLars` for different
   versions of openblas. :pr:`21340` by `Thomas Fan`_.
+
+- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
+  message when the solver does not support sparse matrices with int64 indices.
+  :pr:`21093` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -94,6 +111,18 @@ Fixed models
 
 :mod:`sklearn.utils`
 ....................
+
+- |Enhancement| :func:`utils.validation._check_sample_weight` can perform a
+  non-negativity check on the sample weights. It can be turned on
+  using the only_non_negative bool parameter.
+  Estimators that check for non-negative weights are updated:
+  :func:`linear_model.LinearRegression` (here the previous
+  error message was misleading),
+  :func:`ensemble.AdaBoostClassifier`,
+  :func:`ensemble.AdaBoostRegressor`,
+  :func:`neighbors.KernelDensity`.
+  :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
+  and :user:`András Simon <simonandras>`.
 
 - |Fix| Solve a bug in :func:`~sklearn.utils.metaestimators.if_delegate_has_method`
   where the underlying check for an attribute did not work with NumPy arrays.
