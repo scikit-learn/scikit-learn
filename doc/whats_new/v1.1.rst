@@ -59,6 +59,19 @@ Changelog
 - |Fix| :class:`linear_model.LogisticRegression` now raises a better error
   message when the solver does not support sparse matrices with int64 indices.
   :pr:`21093` by `Tom Dupre la Tour`_.
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Enhancement| :func:`cross_decomposition._PLS.inverse_transform` now allows
+  reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
+  :user:`Robin Thibaut <robinthibaut>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
+  :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
+  :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
