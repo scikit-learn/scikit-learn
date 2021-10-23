@@ -933,8 +933,8 @@ stored components::
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
       A. Cichocki, A. Phan, 2009
 
-    .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
-      <https://arxiv.org/pdf/1010.1763.pdf>`_
+    .. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with the beta-divergence"
+      <1010.1763>`
       C. Fevotte, J. Idier, 2011
 
 
