@@ -695,12 +695,9 @@ cdef class HellingerDistance(ClassificationCriterion):
 
         return impurity_right + impurity_left
 
-    cdef double impurity_improvement(self, double impurity) nogil:
-        cdef:
-            double impurity_left
-            double impurity_right
-
-        self.children_impurity(&impurity_left, &impurity_right)
+    cdef double impurity_improvement(self, double impurity_parent,
+                                     double impurity_left,
+                                     double impurity_right) nogil:
 
         return impurity_right + impurity_left
 
