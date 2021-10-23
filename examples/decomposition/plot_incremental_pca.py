@@ -18,7 +18,6 @@ intended for large datasets which do not fit in main memory, requiring
 incremental approaches.
 
 """
-print(__doc__)
 
 # Authors: Kyle Kastner
 # License: BSD 3 clause
