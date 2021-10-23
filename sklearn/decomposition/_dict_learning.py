@@ -763,7 +763,8 @@ def dict_learning_online(
         Data matrix.
 
     n_components : int, default=2
-        Number of dictionary atoms to extract.
+        Number of dictionary atoms to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : float, default=1
         Sparsity controlling parameter.
@@ -1336,7 +1337,8 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     Parameters
     ----------
     n_components : int, default=n_features
-        Number of dictionary elements to extract.
+        Number of dictionary elements to extract. If None, then ``n_components``
+        is set to ``n_features_in_``.
 
     alpha : float, default=1.0
         Sparsity controlling parameter.
