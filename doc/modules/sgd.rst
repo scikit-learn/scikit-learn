@@ -381,10 +381,9 @@ Tips on Practical Use
 
 .. topic:: References:
 
- * `"Efficient BackProp" <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
-   Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
-   of the Trade 1998.
-
+ * `Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks of the Trade 1998. "Efficient BackProp" 
+    <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
+   
 .. _sgd_mathematical_formulation:
 
 Mathematical formulation
@@ -543,30 +542,23 @@ The code is written in Cython.
 
 .. topic:: References:
 
-   .. [#1] `"Stochastic Gradient Descent"
-       <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
+   .. [#1] `L. Bottou - Website, 2010. "Stochastic Gradient Descent"
+       <https://leon.bottou.org/projects/sgd>`_ 
 
-   .. [#2] `"Pegasos: Primal estimated sub-gradient solver for svm"
+   .. [#2] `S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07. "Pegasos: Primal estimated sub-gradient solver for svm"
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
-      S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
-   .. [#3] `"Stochastic gradient descent training for l1-regularized
-      log-linear models with cumulative penalty"
+   .. [#3] `Y. Tsuruoka, J. Tsujii, S. Ananiadou - In Proceedings of the AFNLP/ACL'09. 
+      "Stochastic gradient descent training for l1-regularized log-linear models with cumulative penalty"
       <https://www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
-      Y. Tsuruoka, J. Tsujii, S. Ananiadou - In Proceedings of the AFNLP/ACL
-      '09.
 
-   .. [#4] `"Towards Optimal One Pass Large Scale Learning with
-      Averaged Stochastic Gradient Descent"
-      <https://arxiv.org/pdf/1107.2490v2.pdf>`_
-      Xu, Wei
+   .. [#4] :arxiv:`Xu, Wei. "Towards Optimal One Pass Large Scale Learning with
+      Averaged Stochastic Gradient Descent" <1107.2490v2>`_
 
-   .. [#5] `"Regularization and variable selection via the elastic net"
+   .. [#5] `H. Zou, T. Hastie. "Regularization and variable selection via the elastic net"
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
-      H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
-      67 (2), 301-320.
+      Journal of the Royal Statistical Society Series B, 67 (2), 301-320.
 
-   .. [#6] `"Solving large scale linear prediction problems using stochastic
+   .. [#6] `T. Zhang - In Proceedings of ICML '04. "Solving large scale linear prediction problems using stochastic
       gradient descent algorithms"
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.7377>`_
-      T. Zhang - In Proceedings of ICML '04.
