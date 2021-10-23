@@ -15,7 +15,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 DOCSTRING_IGNORE_LIST = [
     "LabelSpreading",
     "MultiTaskElasticNetCV",
-    "OrthogonalMatchingPursuitCV",
     "PassiveAggressiveRegressor",
     "SpectralCoclustering",
     "SpectralEmbedding",
