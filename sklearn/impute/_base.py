@@ -15,6 +15,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
 from ..utils import is_scalar_nan
 
@@ -112,6 +113,13 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
             )
 
         return hstack((X_imputed, X_indicator))
+
+    def _concatenate_indicator_feature_names_out(self, names, input_features):
+        if not self.add_indicator:
+            return names
+
+        indicator_names = self.indicator_.get_feature_names_out(input_features)
+        return np.concatenate([names, indicator_names])
 
     def _more_tags(self):
         return {"allow_nan": is_scalar_nan(self.missing_values)}
@@ -596,6 +604,30 @@ class SimpleImputer(_BaseImputer):
         X_original[full_mask] = self.missing_values
         return X_original
 
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+                used as feature names in. If `feature_names_in_` is not defined,
+                then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+                match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(self, input_features)
+        non_missing_mask = np.logical_not(_get_mask(self.statistics_, np.nan))
+        names = input_features[non_missing_mask]
+        return self._concatenate_indicator_feature_names_out(names, input_features)
+
 
 class MissingIndicator(TransformerMixin, BaseEstimator):
     """Binary indicators for missing values.
@@ -921,6 +953,35 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             imputer_mask = imputer_mask[:, self.features_]
 
         return imputer_mask
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(self, input_features)
+        prefix = self.__class__.__name__.lower()
+        return np.asarray(
+            [
+                f"{prefix}_{feature_name}"
+                for feature_name in input_features[self.features_]
+            ],
+            dtype=object,
+        )
 
     def _more_tags(self):
         return {

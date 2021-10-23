@@ -1194,17 +1194,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         j_indices = []
         indptr = []
 
-        if self.lowercase:
-            for vocab in vocabulary:
-                if any(map(str.isupper, vocab)):
-                    warnings.warn(
-                        "Upper case characters found in"
-                        " vocabulary while 'lowercase'"
-                        " is True. These entries will not"
-                        " be matched with any documents"
-                    )
-                    break
-
         values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
@@ -1326,6 +1315,17 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         max_df = self.max_df
         min_df = self.min_df
         max_features = self.max_features
+
+        if self.fixed_vocabulary_ and self.lowercase:
+            for term in self.vocabulary:
+                if any(map(str.isupper, term)):
+                    warnings.warn(
+                        "Upper case characters found in"
+                        " vocabulary while 'lowercase'"
+                        " is True. These entries will not"
+                        " be matched with any documents"
+                    )
+                    break
 
         vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary_)
 

@@ -56,11 +56,12 @@ scale of 0.138 years and a white-noise contribution of 0.197ppm. Thus, the
 overall noise level is very small, indicating that the data can be very well
 explained by the model. The figure shows also that the model makes very
 confident predictions until around 2015.
+
 """
+
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
 # License: BSD 3 clause
-
 
 import numpy as np
 
@@ -73,8 +74,6 @@ from sklearn.gaussian_process.kernels import (
     RationalQuadratic,
     ExpSineSquared,
 )
-
-print(__doc__)
 
 
 def load_mauna_loa_atmospheric_co2():

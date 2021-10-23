@@ -18,7 +18,6 @@ whereas real SAMME.R uses the predicted class probabilities.
 .. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 
 """
-print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>,
 #         Noel Dawe <noel.dawe@gmail.com>

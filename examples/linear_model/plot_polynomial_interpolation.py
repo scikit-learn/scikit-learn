@@ -33,8 +33,8 @@ This example shows that these two transformers are well suited to model
 non-linear effects with a linear model, using a pipeline to add non-linear
 features. Kernel methods extend this idea and can induce very high (even
 infinite) dimensional feature spaces.
+
 """
-print(__doc__)
 
 # Author: Mathieu Blondel
 #         Jake Vanderplas

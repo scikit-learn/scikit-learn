@@ -19,7 +19,6 @@ There are three options to assign labels:
 * 'cluster_qr' assigns lables using the QR factorization with pivoting
   that directly determines the partiion in the embedding space.
 """
-print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
 # License: BSD 3 clause

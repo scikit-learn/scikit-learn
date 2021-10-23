@@ -6,8 +6,9 @@ Plot multinomial and One-vs-Rest Logistic Regression
 Plot decision surface of multinomial and One-vs-Rest Logistic Regression.
 The hyperplanes corresponding to the three One-vs-Rest (OVR) classifiers
 are represented by the dashed lines.
+
 """
-print(__doc__)
+
 # Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 # License: BSD 3 clause
 
