@@ -99,38 +99,22 @@ def set_config(
 
 @contextmanager
 def config_context(**new_config):
-    """Context manager for global scikit-learn configuration
+    """Context manager for global scikit-learn configuration.
 
     Parameters
     ----------
-    assume_finite : bool, default=False
-        If True, validation for finiteness will be skipped,
-        saving time, but leading to potential crashes. If
-        False, validation for finiteness will be performed,
-        avoiding error.  Global default: False.
+    **new_config : dict, optional
+        Dictionary of parameters to pass to the configuration.
+        The parameters are documented in the docstring of :func:`set_config`.
 
-    working_memory : int, default=1024
-        If set, scikit-learn will attempt to limit the size of temporary arrays
-        to this number of MiB (per job when parallelised), often saving both
-        computation time and memory on expensive operations that can be
-        performed in chunks. Global default: 1024.
+    Yields
+    ------
+    None.
 
-    print_changed_only : bool, default=True
-        If True, only the parameters that were set to non-default
-        values will be printed when printing an estimator. For example,
-        ``print(SVC())`` while True will only print 'SVC()', but would print
-        'SVC(C=1.0, cache_size=200, ...)' with all the non-changed parameters
-        when False. Default is True.
-
-        .. versionchanged:: 0.23
-           Default changed from False to True.
-
-    display : {'text', 'diagram'}, default='text'
-        If 'diagram', estimators will be displayed as a diagram in a Jupyter
-        lab or notebook context. If 'text', estimators will be displayed as
-        text. Default is 'text'.
-
-        .. versionadded:: 0.23
+    See Also
+    --------
+    set_config : Set global scikit-learn configuration.
+    get_config : Retrieve current values of the global configuration.
 
     Notes
     -----
@@ -149,11 +133,6 @@ def config_context(**new_config):
     Traceback (most recent call last):
     ...
     ValueError: Input contains NaN, ...
-
-    See Also
-    --------
-    set_config : Set global scikit-learn configuration.
-    get_config : Retrieve current values of the global configuration.
     """
     old_config = get_config()
     set_config(**new_config)
