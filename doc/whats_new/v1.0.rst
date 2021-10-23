@@ -128,6 +128,14 @@ Fixed models
   where the underlying check for an attribute did not work with NumPy arrays.
   :pr:`21145` by :user:`Zahlii <Zahlii>`.
 
+Miscellaneous
+.............
+
+- |Fix| Fitting an estimator on a dataset that has no feature names, that was previously
+  fitted on a dataset with feature names no longer keeps the old feature names stored in
+  the `feature_names_in_` attribute. :pr:`21389` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 .. _changes_1_0:
 
 Version 1.0.0
