@@ -227,7 +227,7 @@ def euclidean_distances(
     X, Y=None, *, Y_norm_squared=None, squared=False, X_norm_squared=None
 ):
     """
-    Compute the distance matrix from a vector array X and optional Y.
+    Compute the distance matrix between each pair from a vector array X and Y.
 
     For efficiency reasons, the euclidean distance between a pair of row
     vector x and y is computed as::
