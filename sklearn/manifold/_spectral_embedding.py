@@ -473,7 +473,7 @@ class SpectralEmbedding(BaseEstimator):
 
     See Also
     --------
-    Isomap: Non-linear dimensionality reduction through Isometric Mapping.
+    Isomap : Non-linear dimensionality reduction through Isometric Mapping.
 
     References
     ----------
