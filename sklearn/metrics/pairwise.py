@@ -273,8 +273,8 @@ def euclidean_distances(
     Returns
     -------
     distances : ndarray of shape (n_samples_X, n_samples_Y)
-        Returns the distances between the row vectors of X
-        and the row vectors of Y.
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`.
 
     See Also
     --------
