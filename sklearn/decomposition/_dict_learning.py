@@ -1338,7 +1338,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     ----------
     n_components : int, default=n_features
         Number of dictionary elements to extract. If None, then ``n_components``
-        is set to ``n_features_in_``.
+        is set to ``n_features``.
 
     alpha : float, default=1.0
         Sparsity controlling parameter.
