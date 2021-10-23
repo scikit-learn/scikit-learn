@@ -1,6 +1,6 @@
 import warnings
+import numbers
 from abc import ABCMeta, abstractmethod
-from collections import Iterable
 
 import numpy as np
 import scipy.sparse as sp
@@ -239,13 +239,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                     "When 'gamma' is a string, it should be either 'scale' or "
                     "'auto'. Got '{}' instead.".format(self.gamma)
                 )
-        elif isinstance(self.gamma, Iterable):
-            msg = (
-                "The gamma value should be set to 'scale', 'auto' or a float value"
-                f" {self.gamma} is not a valid option"
-            )
-            raise ValueError(msg)
-        else:
+        elif isinstance(self.gamma, numbers.Real):
             if self.gamma == 0:
                 msg = (
                     "The gamma value of 0.0 is invalid. Use 'auto' to set"
@@ -253,6 +247,12 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 )
                 raise ValueError(msg)
             self._gamma = self.gamma
+        else:
+            msg = (
+                "The gamma value should be set to 'scale', 'auto' or a float value"
+                f" {self.gamma} is not a valid option"
+            )
+            raise ValueError(msg)
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
