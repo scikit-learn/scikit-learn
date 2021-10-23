@@ -1,8 +1,10 @@
-import numpy as np
-import scipy.sparse as sp
 import warnings
 from abc import ABCMeta, abstractmethod
 from collections import Iterable
+
+import numpy as np
+import scipy.sparse as sp
+
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
 from . import _libsvm as libsvm  # type: ignore
@@ -241,7 +243,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             msg = (
                 "The gamma value should be set to 'scale', 'auto' or a float value"
                 f" {self.gamma} is not a valid option"
-                )
+            )
             raise ValueError(msg)
         else:
             if self.gamma == 0:
