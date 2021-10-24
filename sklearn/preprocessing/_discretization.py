@@ -68,6 +68,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     subsample : int or None (default='warn')
         Maximum number of samples, used to fit the model, for computational
         efficiency. Used when `strategy="quantile"`.
+        subsample=None means that all the training samples are used when
+        computing the quantiles that determine the binning thresholds.
+        Since quantile computation relies on sorting each column of X and
+        that sorting has an n log(n) time complexity, it is recommended
+        to use subsampling on datasets with a very large number of samples.
 
     random_state : int, RandomState instance or None (default=None)
         Determines random number generation for subsampling.
@@ -210,7 +215,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             elif isinstance(self.subsample, numbers.Integral):
                 if self.subsample <= 0:
                     raise ValueError(
-                        "Invalid value for `subsample`: {self.subsample}. The "
+                        f"Invalid value for `subsample`: {self.subsample}. The "
                         "number of subsamples must be at least one."
                     )
 
@@ -222,14 +227,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     X = _safe_indexing(X, subsample_idx)
             else:
                 raise ValueError(
-                    "Invalid value for `subsample`: {self.subsample}. "
+                    f"Invalid value for `subsample`: {self.subsample}. "
                     "`subsample` must be int or None."
                 )
         elif self.strategy != "quantile" and isinstance(
             self.subsample, numbers.Integral
         ):
             raise ValueError(
-                "Invalid parameter for `strategy`: {self.strategy}. "
+                f"Invalid parameter for `strategy`: {self.strategy}. "
                 '`subsample` must be used with `strategy`="quantile".'
             )
 
