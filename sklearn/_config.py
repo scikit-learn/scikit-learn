@@ -99,7 +99,7 @@ def set_config(
 
 @contextmanager
 def config_context(
-    assume_finite=False, working_memory=1024, print_changed_only=True, display="text"
+    *, assume_finite=False, working_memory=1024, print_changed_only=True, display="text"
 ):
     """Context manager for global scikit-learn configuration.
 
