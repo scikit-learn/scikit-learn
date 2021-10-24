@@ -277,9 +277,9 @@ class DecisionBoundaryDisplay:
 
         possible_plot_methods = ("contourf", "contour", "pcolormesh")
         if plot_method not in possible_plot_methods:
-            avaliable_methods = ", ".join(possible_plot_methods)
+            available_methods = ", ".join(possible_plot_methods)
             raise ValueError(
-                f"plot_method must be one of {avaliable_methods}. "
+                f"plot_method must be one of {available_methods}. "
                 f"Got {plot_method} instead."
             )
 
