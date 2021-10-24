@@ -30,7 +30,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
     "sklearn.compose._column_transformer.make_column_transformer",
-    "sklearn.covariance._empirical_covariance.log_likelihood",
     "sklearn.covariance._graph_lasso.graphical_lasso",
     "sklearn.covariance._robust_covariance.fast_mcd",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
@@ -152,7 +151,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
     "sklearn.metrics.pairwise.distance_metrics",
-    "sklearn.metrics.pairwise.euclidean_distances",
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.laplacian_kernel",
@@ -241,7 +239,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.validation.check_random_state",
     "sklearn.utils.validation.column_or_1d",
     "sklearn.utils.validation.has_fit_parameter",
-    "sklearn.utils.validation.indexable",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
