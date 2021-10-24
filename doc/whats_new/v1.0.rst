@@ -943,10 +943,6 @@ Changelog
   `n_features_in_` and will be removed in 1.2. :pr:`20240` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
-  This allow users to specify a maximum number of samples to be used while fitting
-  the model. The option is only available when `strategy` is set to `quantile`.
-  :pr:`20397` by :user:`Felipe Bidu <fbidu>`.
 :mod:`sklearn.svm`
 ...................
 

@@ -105,6 +105,14 @@ Changelog
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
+  This allow users to specify a maximum number of samples to be used while fitting
+  the model. The option is only available when `strategy` is set to `quantile`.
+  :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
+
 :mod:`sklearn.utils`
 ....................
 
