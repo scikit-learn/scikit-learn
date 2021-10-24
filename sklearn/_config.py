@@ -162,7 +162,12 @@ def config_context(
     ValueError: Input contains NaN, ...
     """
     old_config = get_config()
-    set_config(**new_config)
+    set_config(
+        assume_finite=assume_finite,
+        working_memory=working_memory,
+        print_changed_only=print_changed_only,
+        display=display,
+    )
 
     try:
         yield
