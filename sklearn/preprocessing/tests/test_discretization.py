@@ -3,6 +3,7 @@ import numpy as np
 import scipy.sparse as sp
 import warnings
 
+from sklearn import clone
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils._testing import (
@@ -379,46 +380,61 @@ def test_32_equal_64(input_dtype, encode):
     assert_allclose_dense_sparse(Xt_32, Xt_64)
 
 
-def test_subsample_full_and_none():
+@pytest.mark.parametrize("subsample", [None, "warn"])
+def test_kbinsdiscretizer_subsample_default(subsample):
+    """Check the consistency of the default strategy of `subsample`."""
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
-    kbd_subs_none = KBinsDiscretizer(
-        n_bins=10, encode="ordinal", strategy="quantile", subsample=None
-    )
-    kbd_subs_xlen = KBinsDiscretizer(
-        n_bins=10, encode="ordinal", strategy="quantile", subsample=X.shape[0]
-    )
-    kbd_subs_none.fit(X)
-    kbd_subs_xlen.fit(X)
+    kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
 
-    assert_array_equal(kbd_subs_none.bin_edges_[0], kbd_subs_xlen.bin_edges_[0])
-    assert kbd_subs_none.bin_edges_.shape == kbd_subs_xlen.bin_edges_.shape
+    msg = "In version 1.2 onwards, subsample=2e5 will be used by default. Pass subsample=None to silence this warning for now."
+    if subsample == 'warn':
+        with pytest.warns(FutureWarning, match=msg):
+            kbd_default.fit(X)
+    else:
+        kbd_default.fit(X)
+
+    kbd_with_subsampling = clone(kbd_default)
+    kbd_with_subsampling.set_params(subsample=subsample).fit(X)
+
+    for bin_kbd_default, bin_kbd_with_subsampling in (
+        zip(kbd_default.bin_edges_[0], kbd_with_subsampling.bin_edges_[0])
+    ):
+        np.testing.assert_allclose(bin_kbd_default, bin_kbd_with_subsampling)
+    assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
 
 
-def test_subsample_default_and_none():
+def test_kbinsdiscretizer_subsample_strategy_other():
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
-    kbd_subs_none = KBinsDiscretizer(
-        n_bins=10, encode="ordinal", strategy="quantile", subsample=None
-    )
-    kbd_subs_def = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
-    kbd_subs_none.fit(X)
+    kbd = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="uniform",
+                           subsample=X.shape[0])
 
-    msg = "Pass subsample=None"
-    with pytest.warns(FutureWarning, match=msg):
-        kbd_subs_def.fit(X)
-
-    assert_array_equal(kbd_subs_none.bin_edges_[0], kbd_subs_def.bin_edges_[0])
-    assert kbd_subs_none.bin_edges_.shape == kbd_subs_def.bin_edges_.shape
+    with pytest.raises(ValueError, match='`subsample` must be used with `strategy`="quantile".'):
+        kbd.fit(X)
 
 
-def test_subsample_less_than_n_samples():
-    X = np.random.rand(100, 5)
-    subsample = 10
-    discretizer = KBinsDiscretizer(
-        n_bins=10, encode="ordinal", strategy="quantile", subsample=subsample
-    )
-    discretizer.fit(X)
+def test_kbinsdiscretizer_subsample_value_other():
+    X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
+    kbd = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile",
+                           subsample="full")
 
-    for feature_idx in range(X.shape[1]):
-        # the number of bin_edges is equal to X.shape[0] + 1 if
-        # subsample is None
-        assert len(np.unique(discretizer.bin_edges_[feature_idx])) == subsample + 1
+    with pytest.raises(ValueError, match="`subsample` must be int or None."):
+        kbd.fit(X)
+
+
+@pytest.mark.parametrize("subsample", [0, 10])
+def test_kbinsdiscretizer_subsample_values(subsample):
+    X = np.random.rand(100, 1).reshape(-1, 1)
+    kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal",
+                                   strategy="quantile", subsample=None)
+
+    kbd_with_subsampling = clone(kbd_default)
+    kbd_with_subsampling.set_params(subsample=subsample)
+
+    if subsample == 0:
+        with pytest.raises(ValueError, match="number of subsamples must be at least one."):
+            kbd_with_subsampling.fit(X)
+    else:
+        kbd_default.fit(X)
+        kbd_with_subsampling.fit(X)
+        assert not np.all(kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0])
+        assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
