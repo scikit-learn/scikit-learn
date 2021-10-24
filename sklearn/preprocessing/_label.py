@@ -275,7 +275,22 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        
+        if self.neg_label >= self.pos_label:
+            raise ValueError(
+                f"neg_label={self.neg_label} must be strictly less than "
+                f"pos_label={self.pos_label}."
+            )
+
+        if self.sparse_output and (self.pos_label == 0 or self.neg_label != 0):
+            raise ValueError(
+               "Sparse binarization is only supported with non "
+               "zero pos_label and zero neg_label, got "
+               f"pos_label={self.pos_label} and neg_label={self.neg_label}"
+            )
+        
         self.y_type_ = type_of_target(y, input_name="y")
+
         if "multioutput" in self.y_type_:
             raise ValueError(
                 "Multioutput target data is not supported with label binarization"
