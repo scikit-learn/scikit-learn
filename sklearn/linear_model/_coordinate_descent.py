@@ -2647,7 +2647,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         prediction score is used. Note that a good choice of list of
         values for l1_ratio is often to put more values close to 1
         (i.e. Lasso) and less close to 0 (i.e. Ridge), as in ``[.1, .5, .7,
-        .9, .95, .99, 1]``
+        .9, .95, .99, 1]``.
 
     eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
@@ -2768,6 +2768,21 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
+    MultiTaskLassoCV : Multi-task Lasso model trained with L1/L2
+        mixed-norm as regularizer.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2780,19 +2795,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
      [0.52875032 0.46958558]]
     >>> print(clf.intercept_)
     [0.00166409 0.00166409]
-
-    See Also
-    --------
-    MultiTaskElasticNet
-    ElasticNetCV
-    MultiTaskLassoCV
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     path = staticmethod(enet_path)
@@ -2849,13 +2851,14 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Data
+            Training data.
         y : ndarray of shape (n_samples, n_targets)
-            Target. Will be cast to X's dtype if necessary
+            Training target variable. Will be cast to X's dtype if necessary.
 
         Returns
         -------
         self : object
+            Returns MultiTaskElasticNet instance.
         """
         return super().fit(X, y)
 

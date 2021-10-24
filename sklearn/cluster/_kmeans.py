@@ -269,7 +269,7 @@ def k_means(
     algorithm="auto",
     return_n_iter=False,
 ):
-    """K-means clustering algorithm.
+    """Perform K-means clustering algorithm.
 
     Read more in the :ref:`User Guide <k_means>`.
 
@@ -285,30 +285,27 @@ def k_means(
         centroids to generate.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        The weights for each observation in X. If None, all observations
+        The weights for each observation in `X`. If `None`, all observations
         are assigned equal weight.
 
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
-
-        'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids.
-
-        If an array is passed, it should be of shape (n_clusters, n_features)
-        and gives the initial centers.
-
-        If a callable is passed, it should take arguments X, n_clusters and a
-        random state and return an initialization.
+        - `'k-means++'` : selects initial cluster centers for k-mean
+          clustering in a smart way to speed up convergence. See section
+          Notes in k_init for more details.
+        - `'random'`: choose `n_clusters` observations (rows) at random from data
+          for the initial centroids.
+        - If an array is passed, it should be of shape `(n_clusters, n_features)`
+          and gives the initial centers.
+        - If a callable is passed, it should take arguments `X`, `n_clusters` and a
+          random state and return an initialization.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
+        `n_init` consecutive runs in terms of inertia.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -328,22 +325,22 @@ def k_means(
 
     copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
-        the data first. If copy_x is True (default), then the original data is
+        the data first. If `copy_x` is True (default), then the original data is
         not modified. If False, the original data is modified, and put back
         before the function returns, but small numerical differences may be
         introduced by subtracting and then adding the data mean. Note that if
         the original data is not C-contiguous, a copy will be made even if
-        copy_x is False. If the original data is sparse, but not in CSR format,
-        a copy will be made even if copy_x is False.
+        `copy_x` is False. If the original data is sparse, but not in CSR format,
+        a copy will be made even if `copy_x` is False.
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
-        K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient on data with well-defined
+        K-means algorithm to use. The classical EM-style algorithm is `"full"`.
+        The `"elkan"` variation is more efficient on data with well-defined
         clusters, by using the triangle inequality. However it's more memory
         intensive due to the allocation of an extra array of shape
-        (n_samples, n_clusters).
+        `(n_samples, n_clusters)`.
 
-        For now "auto" (kept for backward compatibility) chooses "elkan" but it
+        For now `"auto"` (kept for backward compatibility) chooses `"elkan"` but it
         might change in the future for a better heuristic.
 
     return_n_iter : bool, default=False
@@ -355,7 +352,7 @@ def k_means(
         Centroids found at the last iteration of k-means.
 
     label : ndarray of shape (n_samples,)
-        label[i] is the code or index of the centroid the
+        The `label[i]` is the code or index of the centroid the
         i'th observation is closest to.
 
     inertia : float

@@ -815,7 +815,7 @@ def cross_val_predict(
     pre_dispatch="2*n_jobs",
     method="predict",
 ):
-    """Generate cross-validated estimates for each input data point
+    """Generate cross-validated estimates for each input data point.
 
     The data is split according to the cv parameter. Each sample belongs
     to exactly one test set, and its prediction is computed with an
@@ -853,7 +853,7 @@ def cross_val_predict(
         - None, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
