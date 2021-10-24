@@ -15,13 +15,13 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-from threadpoolctl import threadpool_limits
-from threadpoolctl import threadpool_info
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.fixes import threadpool_limits
+from ..utils.fixes import threadpool_info
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils import check_array
@@ -34,6 +34,7 @@ from ..exceptions import ConvergenceWarning
 from ._k_means_common import CHUNK_SIZE
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
+from ._k_means_common import _is_same_clustering
 from ._k_means_minibatch import _minibatch_update_dense
 from ._k_means_minibatch import _minibatch_update_sparse
 from ._k_means_lloyd import lloyd_iter_chunked_dense
@@ -80,7 +81,7 @@ def kmeans_plusplus(
     Returns
     -------
     centers : ndarray of shape (n_clusters, n_features)
-        The inital centers for k-means.
+        The initial centers for k-means.
 
     indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
@@ -172,7 +173,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
     Returns
     -------
     centers : ndarray of shape (n_clusters, n_features)
-        The inital centers for k-means.
+        The initial centers for k-means.
 
     indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
@@ -268,7 +269,7 @@ def k_means(
     algorithm="auto",
     return_n_iter=False,
 ):
-    """K-means clustering algorithm.
+    """Perform K-means clustering algorithm.
 
     Read more in the :ref:`User Guide <k_means>`.
 
@@ -284,30 +285,27 @@ def k_means(
         centroids to generate.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        The weights for each observation in X. If None, all observations
+        The weights for each observation in `X`. If `None`, all observations
         are assigned equal weight.
 
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
-
-        'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids.
-
-        If an array is passed, it should be of shape (n_clusters, n_features)
-        and gives the initial centers.
-
-        If a callable is passed, it should take arguments X, n_clusters and a
-        random state and return an initialization.
+        - `'k-means++'` : selects initial cluster centers for k-mean
+          clustering in a smart way to speed up convergence. See section
+          Notes in k_init for more details.
+        - `'random'`: choose `n_clusters` observations (rows) at random from data
+          for the initial centroids.
+        - If an array is passed, it should be of shape `(n_clusters, n_features)`
+          and gives the initial centers.
+        - If a callable is passed, it should take arguments `X`, `n_clusters` and a
+          random state and return an initialization.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
+        `n_init` consecutive runs in terms of inertia.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -327,22 +325,22 @@ def k_means(
 
     copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
-        the data first. If copy_x is True (default), then the original data is
+        the data first. If `copy_x` is True (default), then the original data is
         not modified. If False, the original data is modified, and put back
         before the function returns, but small numerical differences may be
         introduced by subtracting and then adding the data mean. Note that if
         the original data is not C-contiguous, a copy will be made even if
-        copy_x is False. If the original data is sparse, but not in CSR format,
-        a copy will be made even if copy_x is False.
+        `copy_x` is False. If the original data is sparse, but not in CSR format,
+        a copy will be made even if `copy_x` is False.
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
-        K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient on data with well-defined
+        K-means algorithm to use. The classical EM-style algorithm is `"full"`.
+        The `"elkan"` variation is more efficient on data with well-defined
         clusters, by using the triangle inequality. However it's more memory
         intensive due to the allocation of an extra array of shape
-        (n_samples, n_clusters).
+        `(n_samples, n_clusters)`.
 
-        For now "auto" (kept for backward compatibility) chooses "elkan" but it
+        For now `"auto"` (kept for backward compatibility) chooses `"elkan"` but it
         might change in the future for a better heuristic.
 
     return_n_iter : bool, default=False
@@ -354,7 +352,7 @@ def k_means(
         Centroids found at the last iteration of k-means.
 
     label : ndarray of shape (n_samples,)
-        label[i] is the code or index of the centroid the
+        The `label[i]` is the code or index of the centroid the
         i'th observation is closest to.
 
     inertia : float
@@ -830,7 +828,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         intensive due to the allocation of an extra array of shape
         (n_samples, n_clusters).
 
-        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
+        For now "auto" (kept for backward compatibility) chooses "elkan" but it
         might change in the future for a better heuristic.
 
         .. versionchanged:: 0.18
@@ -1133,7 +1131,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
             Fitted estimator.
         """
         X = self._validate_data(
@@ -1174,7 +1172,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         else:
             kmeans_single = _kmeans_single_elkan
 
-        best_inertia = None
+        best_inertia, best_labels = None, None
 
         for i in range(self._n_init):
             # Initialize centers
@@ -1197,9 +1195,14 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             )
 
             # determine if these results are the best so far
-            # allow small tolerance on the inertia to accommodate for
-            # non-deterministic rounding errors due to parallel computation
-            if best_inertia is None or inertia < best_inertia * (1 - 1e-6):
+            # we chose a new run if it has a better inertia and the clustering is
+            # different from the best so far (it's possible that the inertia is
+            # slightly better even if the clustering is the same with potentially
+            # permuted labels, due to rounding errors)
+            if best_inertia is None or (
+                inertia < best_inertia
+                and not _is_same_clustering(labels, best_labels, self.n_clusters)
+            ):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
@@ -1616,7 +1619,7 @@ class MiniBatchKMeans(KMeans):
         .. versionadded:: 1.0
 
     counts_ : ndarray of shape (n_clusters,)
-        Weigth sum of each cluster.
+        Weight sum of each cluster.
 
         .. deprecated:: 0.24
            This attribute is deprecated in 0.24 and will be removed in
@@ -1885,7 +1888,8 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        self
+        self : object
+            Fitted estimator.
         """
         X = self._validate_data(
             X,
@@ -2038,7 +2042,8 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        self
+        self : object
+            Return updated estimator.
         """
         has_centers = hasattr(self, "cluster_centers_")
 
