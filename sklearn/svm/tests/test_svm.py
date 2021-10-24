@@ -1204,10 +1204,10 @@ def test_svc_ovr_tie_breaking(SVCClass):
     """Test if predict breaks ties in OVR mode.
     Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
     """
-    X, y = make_blobs(random_state=27)
+    X, y = make_blobs(random_state=27, n_samples=10)
 
-    xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 1000)
-    ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 1000)
+    xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
+    ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 100)
     xx, yy = np.meshgrid(xs, ys)
 
     svm = SVCClass(
