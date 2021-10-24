@@ -753,6 +753,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         Returns
         -------
         self : object
+            Returns a fitted instance.
         """
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
