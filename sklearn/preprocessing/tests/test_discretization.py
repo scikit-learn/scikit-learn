@@ -384,7 +384,7 @@ def test_32_equal_64(input_dtype, encode):
 def test_kbinsdiscretizer_subsample_default(subsample):
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
     kbd_default = KBinsDiscretizer(
-        n_bins=10, encode="ordinal", strategy="quantile", subsample=None
+        n_bins=10, encode="ordinal", strategy="quantile", subsample=subsample
     )
 
     err_msg = (
