@@ -57,10 +57,10 @@ def empirical_covariance(X, *, assume_centered=False):
         Data from which to compute the covariance estimate.
 
     assume_centered : bool, default=False
-        If True, data will not be centered before computation.
+        If `True`, data will not be centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
-        If False, data will be centered before computation.
+        If `False`, data will be centered before computation.
 
     Returns
     -------
