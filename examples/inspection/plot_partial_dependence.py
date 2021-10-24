@@ -252,6 +252,44 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # house age, whereas for values less than two there is a strong dependence on
 # age.
 #
+# The histogram gradient boosters do have the interesting option to constrain
+# possible interactions among features. We do so by not allowing any
+# interaction and thus render the model as a version of a tree-based boosted
+# generalized additive model (GAM). This makes the model more interpretable
+# as the effect of each feature can be investaged independently of all others:
+
+print("Training interaction constraint HistGradientBoostingRegressor...")
+tic = time()
+est_no_interactions = HistGradientBoostingRegressor(
+    interaction_cst=list(zip(range(X_train.shape[1])))
+)
+est_no_interactions.fit(X_train, y_train)
+print(f"done in {time() - tic:.3f}s")
+print("Computing partial dependence plots...")
+tic = time()
+_, ax = plt.subplots(ncols=3, figsize=(9, 4))
+display = PartialDependenceDisplay.from_estimator(
+    est_no_interactions,
+    X_train,
+    features,
+    kind="average",
+    n_jobs=3,
+    grid_resolution=20,
+    ax=ax,
+)
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    "Partial dependence of house value with Gradient Boosting\n"
+    "and not interactions allowed"
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+
+# %%
+# In the contour plot, we clearly see that the is hardly any interaction left.
+# The remaing one might be a result of numerically precision of partial
+# dependence. We also see that the univariate dependence plots are slightly
+# different as the model tries to compensate the forbidden interactions.
+#
 # 3D interaction plots
 # --------------------
 #
