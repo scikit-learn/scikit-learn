@@ -241,7 +241,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.validation.check_random_state",
     "sklearn.utils.validation.column_or_1d",
     "sklearn.utils.validation.has_fit_parameter",
-    "sklearn.utils.validation.indexable",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
