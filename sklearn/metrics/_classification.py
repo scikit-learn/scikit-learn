@@ -177,7 +177,9 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     See Also
     --------
-    jaccard_score, hamming_loss, zero_one_loss
+    jaccard_score : Jaccard similarity coefficient score.
+    hamming_loss : Compute the average Hamming loss.
+    zero_one_loss : Zero-one classification loss.
 
     Notes
     -----
