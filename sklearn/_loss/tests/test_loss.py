@@ -846,7 +846,7 @@ def test_loss_intercept_only(loss, sample_weight):
             fun,
             np.empty((loss.n_classes)),
             tol=1e-13,
-            options={"maxiter": 200},
+            options={"maxiter": 100},
             method="SLSQP",
             constraints={
                 "type": "eq",
