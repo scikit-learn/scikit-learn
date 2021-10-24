@@ -384,8 +384,9 @@ def test_32_equal_64(input_dtype, encode):
 def test_kbinsdiscretizer_subsample_default(subsample):
     """Check the consistency of the default strategy of `subsample`."""
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
-    kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal",
-                                   strategy="quantile", subsample=None)
+    kbd_default = KBinsDiscretizer(
+        n_bins=10, encode="ordinal", strategy="quantile", subsample=None
+    )
 
     err_msg = (
         "In version 1.2 onwards, subsample=2e5 will be used by default. "
