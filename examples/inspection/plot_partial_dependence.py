@@ -256,7 +256,7 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # possible interactions among features. We do so by not allowing any
 # interaction and thus render the model as a version of a tree-based boosted
 # generalized additive model (GAM). This makes the model more interpretable
-# as the effect of each feature can be investaged independently of all others:
+# as the effect of each feature can be investaged independently of all others.
 
 print("Training interaction constraint HistGradientBoostingRegressor...")
 tic = time()
