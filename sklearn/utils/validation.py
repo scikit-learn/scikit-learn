@@ -367,9 +367,10 @@ def indexable(*iterables):
         List of objects to ensure sliceability.
 
     Returns
-    ----------
-    list
-        Returns a list of indexable objects.
+    -------
+    result : list of {ndarray, sparse matrix, dataframe} or None
+        Returns a list containing indexable arrays (i.e. NumPy array,
+        sparse matrix, or dataframe) or `None`.
     """
 
     result = [_make_indexable(X) for X in iterables]
