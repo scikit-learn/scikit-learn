@@ -225,11 +225,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         "Invalid value for `subsample`: {self.subsample}. "
                         "`subsample` must be int or None."
                     )
-        elif self.strategy != "quantile" and isinstance(self.subsample, numbers.Integral):
+        elif self.strategy != "quantile" and isinstance(
+             self.subsample, numbers.Integral):
             raise ValueError(
-                    "Invalid parameter for `strategy`: {self.strategy}. "
-                    '`subsample` must be used with `strategy`="quantile".'
-                )
+                "Invalid parameter for `strategy`: {self.strategy}. "
+                '`subsample` must be used with `strategy`="quantile".'
+            )
 
         valid_encode = ("onehot", "onehot-dense", "ordinal")
         if self.encode not in valid_encode:

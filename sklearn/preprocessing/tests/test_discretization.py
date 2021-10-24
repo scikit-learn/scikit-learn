@@ -386,9 +386,12 @@ def test_kbinsdiscretizer_subsample_default(subsample):
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
     kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
 
-    msg = "In version 1.2 onwards, subsample=2e5 will be used by default. Pass subsample=None to silence this warning for now."
+    err_msg = (
+        "In version 1.2 onwards, subsample=2e5 will be used by default. "
+        "Pass subsample=None to silence this warning for now."
+    )
     if subsample == 'warn':
-        with pytest.warns(FutureWarning, match=msg):
+        with pytest.warns(FutureWarning, match=err_msg):
             kbd_default.fit(X)
     else:
         kbd_default.fit(X)
@@ -408,7 +411,8 @@ def test_kbinsdiscretizer_subsample_strategy_other():
     kbd = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="uniform",
                            subsample=X.shape[0])
 
-    with pytest.raises(ValueError, match='`subsample` must be used with `strategy`="quantile".'):
+    err_msg = '`subsample` must be used with `strategy`="quantile".'
+    with pytest.raises(ValueError, match=err_msg):
         kbd.fit(X)
 
 
@@ -431,10 +435,12 @@ def test_kbinsdiscretizer_subsample_values(subsample):
     kbd_with_subsampling.set_params(subsample=subsample)
 
     if subsample == 0:
-        with pytest.raises(ValueError, match="number of subsamples must be at least one."):
+        with pytest.raises(ValueError,
+                           match="number of subsamples must be at least one."):
             kbd_with_subsampling.fit(X)
     else:
         kbd_default.fit(X)
         kbd_with_subsampling.fit(X)
-        assert not np.all(kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0])
+        assert not np.all(
+            kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0])
         assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
