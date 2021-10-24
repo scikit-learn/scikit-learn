@@ -95,6 +95,13 @@ Changelog
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
   by `Thomas Fan`_.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
+  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
+  :user:`Lucy Jimenez <LucyJimenez>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
