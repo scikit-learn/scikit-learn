@@ -1004,7 +1004,7 @@ installed in your current Python environment:
 
   asv run --python=same
 
-It's particulary useful when you installed scikit-learn in editable mode to
+It's particularly useful when you installed scikit-learn in editable mode to
 avoid creating a new environment each time you run the benchmarks. By default
 the results are not saved when using an existing installation. To save the
 results you must specify a commit hash:

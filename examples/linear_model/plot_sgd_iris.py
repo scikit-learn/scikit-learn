@@ -8,7 +8,6 @@ The hyperplanes corresponding to the three one-versus-all (OVA) classifiers
 are represented by the dashed lines.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,18 +39,30 @@ X = (X - mean) / std
 clf = SGDClassifier(alpha=0.001, max_iter=100).fit(X, y)
 ax = plt.gca()
 DecisionBoundaryDisplay.from_estimator(
-    clf, X, cmap=plt.cm.Paired, ax=ax, response_method='predict',
-    xlabel=iris.feature_names[0], ylabel=iris.feature_names[1],
+    clf,
+    X,
+    cmap=plt.cm.Paired,
+    ax=ax,
+    response_method="predict",
+    xlabel=iris.feature_names[0],
+    ylabel=iris.feature_names[1],
 )
-plt.axis('tight')
+plt.axis("tight")
 
 # Plot also the training points
 for i, color in zip(clf.classes_, colors):
     idx = np.where(y == i)
-    plt.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
-                cmap=plt.cm.Paired, edgecolor='black', s=20)
+    plt.scatter(
+        X[idx, 0],
+        X[idx, 1],
+        c=color,
+        label=iris.target_names[i],
+        cmap=plt.cm.Paired,
+        edgecolor="black",
+        s=20,
+    )
 plt.title("Decision surface of multi-class SGD")
-plt.axis('tight')
+plt.axis("tight")
 
 # Plot the three one-against-all classifiers
 xmin, xmax = plt.xlim()
@@ -64,8 +75,7 @@ def plot_hyperplane(c, color):
     def line(x0):
         return (-(x0 * coef[c, 0]) - intercept[c]) / coef[c, 1]
 
-    plt.plot([xmin, xmax], [line(xmin), line(xmax)],
-             ls="--", color=color)
+    plt.plot([xmin, xmax], [line(xmin), line(xmax)], ls="--", color=color)
 
 
 for i, color in zip(clf.classes_, colors):

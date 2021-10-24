@@ -563,22 +563,6 @@ class SelectKBest(_BaseFilter):
 
         .. versionadded:: 1.0
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.feature_selection import SelectKBest, chi2
-    >>> X, y = load_digits(return_X_y=True)
-    >>> X.shape
-    (1797, 64)
-    >>> X_new = SelectKBest(chi2, k=20).fit_transform(X, y)
-    >>> X_new.shape
-    (1797, 20)
-
-    Notes
-    -----
-    Ties between features with equal scores will be broken in an unspecified
-    way.
-
     See Also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
@@ -593,6 +577,22 @@ class SelectKBest(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Notes
+    -----
+    Ties between features with equal scores will be broken in an unspecified
+    way.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.feature_selection import SelectKBest, chi2
+    >>> X, y = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> X_new = SelectKBest(chi2, k=20).fit_transform(X, y)
+    >>> X_new.shape
+    (1797, 20)
     """
 
     def __init__(self, score_func=f_classif, *, k=10):
@@ -661,17 +661,6 @@ class SelectFpr(_BaseFilter):
 
         .. versionadded:: 1.0
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFpr, chi2
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> X.shape
-    (569, 30)
-    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)
-    >>> X_new.shape
-    (569, 16)
-
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
@@ -686,6 +675,17 @@ class SelectFpr(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFpr, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 16)
     """
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
@@ -699,7 +699,7 @@ class SelectFpr(_BaseFilter):
 
 
 class SelectFdr(_BaseFilter):
-    """Filter: Select the p-values for an estimated false discovery rate
+    """Filter: Select the p-values for an estimated false discovery rate.
 
     This uses the Benjamini-Hochberg procedure. ``alpha`` is an upper bound
     on the expected false discovery rate.
@@ -716,17 +716,6 @@ class SelectFdr(_BaseFilter):
 
     alpha : float, default=5e-2
         The highest uncorrected p-value for features to keep.
-
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFdr, chi2
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> X.shape
-    (569, 30)
-    >>> X_new = SelectFdr(chi2, alpha=0.01).fit_transform(X, y)
-    >>> X_new.shape
-    (569, 16)
 
     Attributes
     ----------
@@ -747,10 +736,6 @@ class SelectFdr(_BaseFilter):
 
         .. versionadded:: 1.0
 
-    References
-    ----------
-    https://en.wikipedia.org/wiki/False_discovery_rate
-
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
@@ -765,6 +750,21 @@ class SelectFdr(_BaseFilter):
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/False_discovery_rate
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFdr, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFdr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 16)
     """
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
@@ -785,7 +785,7 @@ class SelectFdr(_BaseFilter):
 
 
 class SelectFwe(_BaseFilter):
-    """Filter: Select the p-values corresponding to Family-wise error rate
+    """Filter: Select the p-values corresponding to Family-wise error rate.
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
@@ -799,17 +799,6 @@ class SelectFwe(_BaseFilter):
 
     alpha : float, default=5e-2
         The highest uncorrected p-value for features to keep.
-
-    Examples
-    --------
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFwe, chi2
-    >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> X.shape
-    (569, 30)
-    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)
-    >>> X_new.shape
-    (569, 15)
 
     Attributes
     ----------
@@ -842,6 +831,17 @@ class SelectFwe(_BaseFilter):
     SelectFdr : Select features based on an estimated false discovery rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
         mode.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.feature_selection import SelectFwe, chi2
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> X.shape
+    (569, 30)
+    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new.shape
+    (569, 15)
     """
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):

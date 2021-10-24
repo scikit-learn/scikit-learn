@@ -248,13 +248,16 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
         ),
         ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
     ],
+    # Avoid long error messages in test names:
+    # https://github.com/scikit-learn/scikit-learn/issues/21362
+    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
 )
 def test_sgd_estimator_params_validation(klass, fit_method, params, err_msg):
     """Validate parameters in the different SGD estimators."""
     try:
         sgd_estimator = klass(**params)
     except TypeError as err:
-        if "__init__() got an unexpected keyword argument" in str(err):
+        if "unexpected keyword argument" in str(err):
             # skip test if the parameter is not supported by the estimator
             return
         raise err

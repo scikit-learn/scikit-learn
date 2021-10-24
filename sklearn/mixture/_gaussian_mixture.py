@@ -108,7 +108,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
         'diag' : shape of (n_components, n_features)
         'spherical' : shape of (n_components,)
 
-    covariance_type : string
+    covariance_type : str
 
     n_components : int
         Number of components.
@@ -610,6 +610,11 @@ class GaussianMixture(BaseMixture):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    BayesianGaussianMixture : Gaussian mixture model fit with a variational
+        inference.
+
     Examples
     --------
     >>> import numpy as np
@@ -621,11 +626,6 @@ class GaussianMixture(BaseMixture):
            [ 1.,  2.]])
     >>> gm.predict([[0, 0], [12, 3]])
     array([1, 0])
-
-    See Also
-    --------
-    BayesianGaussianMixture : Gaussian mixture model fit with a variational
-        inference.
     """
 
     def __init__(
@@ -811,6 +811,7 @@ class GaussianMixture(BaseMixture):
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
+            The input samples.
 
         Returns
         -------
@@ -827,6 +828,7 @@ class GaussianMixture(BaseMixture):
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
+            The input samples.
 
         Returns
         -------

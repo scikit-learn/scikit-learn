@@ -325,7 +325,7 @@ def mean_absolute_percentage_error(
         weighted average of all output errors is returned.
 
         MAPE output is non-negative floating point. The best value is 0.0.
-        But note the fact that bad predictions can lead to arbitarily large
+        But note the fact that bad predictions can lead to arbitrarily large
         MAPE values, especially if some y_true values are very close to zero.
         Note that we return a large value instead of `inf` when y_true is zero.
 
@@ -822,7 +822,7 @@ def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average
 
 def max_error(y_true, y_pred):
     """
-    max_error metric calculates the maximum residual error.
+    The max_error metric calculates the maximum residual error.
 
     Read more in the :ref:`User Guide <max_error>`.
 
