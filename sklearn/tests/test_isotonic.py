@@ -24,10 +24,11 @@ from sklearn.utils import shuffle
 from scipy.special import expit
 
 
-def test_permutation_invariance():
+@pytest.mark.parametrize("centered", [True, False])
+def test_permutation_invariance(centered):
     # check that fit is permutation invariant.
     # regression test of missing sorting of sample-weights
-    ir = IsotonicRegression()
+    ir = IsotonicRegression(centered=centered)
     x = [1, 2, 3, 4, 5, 6, 7]
     y = [1, 41, 51, 1, 2, 5, 24]
     sample_weight = [1, 2, 3, 4, 5, 6, 7]
@@ -109,7 +110,8 @@ def test_check_ci_warn():
     assert not is_increasing
 
 
-def test_isotonic_regression():
+@pytest.mark.parametrize("centered", [True, False])
+def test_isotonic_regression(centered):
     y = np.array([3, 7, 5, 9, 8, 7, 10])
     y_ = np.array([3, 6, 6, 8, 8, 8, 10])
     assert_array_equal(y_, isotonic_regression(y))
@@ -119,19 +121,19 @@ def test_isotonic_regression():
     assert_array_equal(y_, isotonic_regression(y))
 
     x = np.arange(len(y))
-    ir = IsotonicRegression(y_min=0.0, y_max=1.0)
+    ir = IsotonicRegression(y_min=0.0, y_max=1.0, centered=centered)
     ir.fit(x, y)
     assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
     assert_array_equal(ir.transform(x), ir.predict(x))
 
     # check that it is immune to permutation
     perm = np.random.permutation(len(y))
-    ir = IsotonicRegression(y_min=0.0, y_max=1.0)
+    ir = IsotonicRegression(y_min=0.0, y_max=1.0, centered=centered)
     assert_array_equal(ir.fit_transform(x[perm], y[perm]), ir.fit_transform(x, y)[perm])
     assert_array_equal(ir.transform(x[perm]), ir.transform(x)[perm])
 
     # check we don't crash when all x are equal:
-    ir = IsotonicRegression()
+    ir = IsotonicRegression(centered=centered)
     assert_array_equal(ir.fit_transform(np.ones(len(x)), y), np.mean(y))
 
 
@@ -304,9 +306,10 @@ def test_isotonic_sample_weight_parameter_default_value():
     assert_array_equal(y_set_value, y_default_value)
 
 
-def test_isotonic_min_max_boundaries():
+@pytest.mark.parametrize("centered", [True, False])
+def test_isotonic_min_max_boundaries(centered):
     # check if min value is used correctly
-    ir = IsotonicRegression(y_min=2, y_max=4)
+    ir = IsotonicRegression(y_min=2, y_max=4, centered=centered)
     n = 6
     x = np.arange(n)
     y = np.arange(n)
@@ -324,6 +327,30 @@ def test_isotonic_sample_weight():
     received_y = ir.fit_transform(x, y, sample_weight=sample_weight)
 
     assert_array_equal(expected_y, received_y)
+
+
+def test_isotonic_sample_weight_centered():
+    x = [1, 2, 3, 4, 5, 6, 7]
+    y = [1, 41, 51, 1, 2, 5, 24]
+    sample_weight = [1, 2, 3, 4, 5, 6, 7]
+
+    expected_y_cir = [1, 4.7, 8.4, 12.1, 15.96, 19.98, 24]
+    cir = IsotonicRegression(centered=True)
+    received_y_cir = cir.fit_transform(x, y, sample_weight=sample_weight)
+    print(expected_y_cir, received_y_cir)
+    assert_allclose(expected_y_cir, received_y_cir)
+
+
+def test_isotonic_sample_weight_centered_reversed():
+    x = [1, 2, 3, 4, 5, 6, 7]
+    y = [24, 5, 2, 1, 51, 41, 1]
+    sample_weight = [1, 2, 3, 4, 5, 6, 7]
+
+    expected_y_cir = [4.4, 4.4, 4.4, 12.05714286, 19.71428571, 27.37142857, 28.22222222]
+    cir = IsotonicRegression(centered=True)
+    received_y_cir = cir.fit_transform(x, y, sample_weight=sample_weight)
+    print(expected_y_cir, received_y_cir)
+    assert_allclose(expected_y_cir, received_y_cir)
 
 
 def test_isotonic_regression_oob_raise():

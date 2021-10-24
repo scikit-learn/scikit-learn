@@ -163,6 +163,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
           the nearest train interval endpoint.
         - 'raise', a `ValueError` is raised.
 
+    centered : bool, default=False
+        The fitted function `f_` is interpolated using the 'Centered Isotonic
+        Regression' method, instead of the regular stepwise Isotonic Regression
+        method.
+
     Attributes
     ----------
     X_min_ : float
@@ -184,7 +189,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         .. versionadded:: 0.24
 
     f_ : function
-        The stepwise interpolating function that covers the input domain ``X``.
+        The interpolating function that covers the input domain ``X``.
 
     increasing_ : bool
         Inferred value for ``increasing``.
@@ -216,6 +221,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     Correctness of Kruskal's algorithms for monotone regression with ties
     de Leeuw, Psychometrica, 1977
 
+    Centered Isotonic Regression: Point and Interval Estimation for
+    Dose–Response Studies, Statistics in Biopharmaceutical Research, Vol. 9,
+    Issue 3, 2017, pp 258-267
+
     Examples
     --------
     >>> from sklearn.datasets import make_regression
@@ -226,11 +235,20 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     array([1.8628..., 3.7256...])
     """
 
-    def __init__(self, *, y_min=None, y_max=None, increasing=True, out_of_bounds="nan"):
+    def __init__(
+        self,
+        *,
+        y_min=None,
+        y_max=None,
+        increasing=True,
+        out_of_bounds="nan",
+        centered=False,
+    ):
         self.y_min = y_min
         self.y_max = y_max
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
+        self.centered = centered
 
     def _check_input_data_shape(self, X):
         if not (X.ndim == 1 or (X.ndim == 2 and X.shape[1] == 1)):
@@ -292,7 +310,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         # Handle the left and right bounds on X
         self.X_min_, self.X_max_ = np.min(X), np.max(X)
 
-        if trim_duplicates:
+        if trim_duplicates and not self.centered:
             # Remove unnecessary points for faster prediction
             keep_data = np.ones((len(y),), dtype=bool)
             # Aside from the 1st and last point, remove points whose y values
@@ -301,12 +319,47 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
                 np.not_equal(y[1:-1], y[:-2]), np.not_equal(y[1:-1], y[2:])
             )
             return X[keep_data], y[keep_data]
+        elif trim_duplicates and self.centered:
+            # Removed unnecessary points according to the Centered Isotoinc
+            # Regression (CIR) method.
+            X, y = self._build_cir_points(X, y, sample_weight)
+            return X, y
         else:
             # The ability to turn off trim_duplicates is only used to it make
             # easier to unit test that removing duplicates in y does not have
             # any impact the resulting interpolation function (besides
             # prediction speed).
             return X, y
+
+    def _build_cir_points(self, X, y, sample_weight):
+        """
+        Generate the points X_, y_ for the output function when Centered
+        Isotonic Regression (CIR) is chosen, based on non-trimmed points X, y.
+        """
+        X_ = y_ = np.array([])
+
+        for y_step in np.unique(y):
+            idx = np.where(y == y_step)[0]
+
+            # y values of 0 and 1 are special cases in CIR
+            if y_step in [0, 1] and len(idx) > 1:
+                X_ = np.append(X_, [X[min(idx)], X[max(idx)]])
+                y_ = np.append(y_, [y_step, y_step])
+            else:
+                X_mean = (X[idx] * sample_weight[idx]).sum() / sample_weight[idx].sum()
+                X_ = np.append(X_, X_mean)
+                y_ = np.append(y_, y_step)
+
+        # Ensure that the original domain is maintained
+        if np.min(X_) > self.X_min_:
+            X_ = np.insert(X_, 0, self.X_min_)
+            y_ = np.insert(y_, 0, y[0])
+
+        if np.max(X_) < self.X_max_:
+            X_ = np.append(X_, self.X_max_)
+            y_ = np.append(y_, y[-1])
+
+        return X_, y_
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
