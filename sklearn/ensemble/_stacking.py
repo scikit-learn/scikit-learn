@@ -670,6 +670,10 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     stack_method_ : list of str
         The method used by each base estimator.
 
+    See Also
+    --------
+    StackingClassifier : Stack of estimators with a final classifier.
+
     References
     ----------
     .. [1] Wolpert, David H. "Stacked generalization." Neural networks 5.2
@@ -698,7 +702,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     ... )
     >>> reg.fit(X_train, y_train).score(X_test, y_test)
     0.3...
-
     """
 
     def __init__(
