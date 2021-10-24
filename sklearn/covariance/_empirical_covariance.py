@@ -24,9 +24,9 @@ from ..metrics.pairwise import pairwise_distances
 def log_likelihood(emp_cov, precision):
     """Compute the sample mean of the log_likelihood under a covariance model.
 
-    computes the empirical expected log-likelihood (accounting for the
-    normalization terms and scaling), allowing for universal comparison (beyond
-    this software package)
+    Computes the empirical expected log-likelihood, allowing for universal
+    comparison (beyond this software package), and accounts for normalization
+    terms and scaling.
 
     Parameters
     ----------
