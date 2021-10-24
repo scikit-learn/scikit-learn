@@ -387,10 +387,7 @@ def test_kbinsdiscretizer_subsample_default(subsample):
         n_bins=10, encode="ordinal", strategy="quantile", subsample=subsample
     )
 
-    err_msg = (
-        "In version 1.2 onwards, subsample=2e5 will be used by default. "
-        "Pass subsample=None to silence this warning for now."
-    )
+    err_msg = "In version 1.2 onwards, subsample=2e5 will be used by default"
     if subsample == "warn":
         with pytest.warns(FutureWarning, match=err_msg):
             kbd_default.fit(X)
