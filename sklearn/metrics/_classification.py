@@ -177,9 +177,12 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     See Also
     --------
-    jaccard_score : Jaccard similarity coefficient score.
-    hamming_loss : Compute the average Hamming loss.
-    zero_one_loss : Zero-one classification loss.
+    balanced_accuracy_score : Compute the balanced accuracy to deal with imbalanced datasets.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+    hamming_loss : Compute the average Hamming loss or Hamming distance between
+    two sets of samples.
+    zero_one_loss : Compute the Zero-one classification loss. By default, the
+    function will return the percentage of imperfectly predicted subsets.
 
     Notes
     -----
