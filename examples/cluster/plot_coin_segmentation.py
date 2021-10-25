@@ -16,8 +16,8 @@ There are two options to assign labels:
   using a kmeans algorithm
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space.
+
 """
-print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
 # License: BSD 3 clause

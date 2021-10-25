@@ -617,6 +617,21 @@ class SparseRandomProjection(BaseRandomProjection):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    GaussianRandomProjection : Reduce dimensionality through Gaussian
+        random projection.
+
+    References
+    ----------
+
+    .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
+           "Very Sparse Random Projections".
+           https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+
+    .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
+           https://users.soe.ucsc.edu/~optas/papers/jl.pdf
+
     Examples
     --------
     >>> import numpy as np
@@ -630,21 +645,6 @@ class SparseRandomProjection(BaseRandomProjection):
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
     0.0100...
-
-    See Also
-    --------
-    GaussianRandomProjection
-
-    References
-    ----------
-
-    .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
-           "Very Sparse Random Projections".
-           https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
-
-    .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           https://users.soe.ucsc.edu/~optas/papers/jl.pdf
-
     """
 
     def __init__(

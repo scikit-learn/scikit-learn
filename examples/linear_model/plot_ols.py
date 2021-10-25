@@ -12,13 +12,11 @@ and the responses predicted by the linear approximation.
 
 The coefficients, residual sum of squares and the coefficient of
 determination are also calculated.
-"""
-print(__doc__)
 
+"""
 
 # Code source: Jaques Grobler
 # License: BSD 3 clause
-
 
 import matplotlib.pyplot as plt
 import numpy as np
