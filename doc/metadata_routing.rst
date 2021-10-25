@@ -1,6 +1,8 @@
 
 .. _metadata_routing:
 
+.. TODO: update doc/conftest.py once document is updated and examples run.
+
 Metadata Routing
 ================
 
@@ -57,6 +59,9 @@ Both of these *consumers* understand the meaning of the key
   ...     props={"sample_weight": my_weights, "groups": my_groups},
   ...     scoring=weighted_acc,
   ... )
+
+Note that in this example, ``my_weights`` is passed to both the scorer and
+``~linear_model.LogisticRegressionCV``.
 
 Error handling: if ``props={'sample_weigh': my_weights, ...}`` were passed
 (note the typo), cross_validate would raise an error, since 'sample_weigh' was
@@ -146,7 +151,7 @@ API Interface
 A *consumer* is an object (estimator, meta-estimator, scorer, splitter) which
 accepts and uses some metadata in at least one of their methods (``fit``,
 ``predict``, ``inverse_transform``, ``transform``, ``score``, ``split``).
-Meta-estimators which only forward the metadata other objects (the child
+Meta-estimators which only forward the metadata to other objects (the child
 estimator, scorers, or splitters) and don't use the metadata themselves are not
 consumers. (Meta)Estimators which route metadata to other objects are routers.
 An (meta)estimator can be a consumer and a router at the same time.
@@ -164,7 +169,8 @@ which accepts at least one metadata. For instance, if an estimator supports
 - ``RequestType.ERROR_IF_PASSED`` or ``None``: router will raise an error if
   ``sample_weight`` is passed. This is in almost all cases the default value
   when an object is instantiated and ensures the user sets the metadata
-  requests explicitly when a metadata is passed.
+  requests explicitly when a metadata is passed. The only exception are
+  ``Group*Fold`` splitters.
 - ``"param_name"``: if this estimator is used in a meta-estimator, the
   meta-estimator should forward ``"param_name"`` as ``sample_weight`` to this
   estimator. This means the mapping between the metadata required by the
@@ -174,7 +180,7 @@ which accepts at least one metadata. For instance, if an estimator supports
 
 For the scorers, this is done the same way, using ``.score_requests`` method.
 
-If a metadata, e.g. ``sample_weight`` is passed by the user, the metadata
+If a metadata, e.g. ``sample_weight``, is passed by the user, the metadata
 request for all objects which potentially can accept ``sample_weight`` should
 be set by the user, otherwise an error is raised by the router object. For
 example, the following code would raise, since it hasn't been explicitly set

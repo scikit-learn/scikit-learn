@@ -92,7 +92,8 @@ est.get_metadata_request()
 # %%
 # As you can see, now the two metadata have explicit request values, one is
 # requested and the other one is not. Instead of ``True`` and ``False``, we
-# could also use the ``RequestType`` values.
+# could also use the :class:`~sklearn.utils.metadata_requests.RequestType``
+# values.
 
 est = (
     ExampleClassifier()
@@ -219,7 +220,7 @@ except ValueError as e:
 
 # %%
 # In order to understand the above implementation of ``get_metadata_request``,
-# we need to also introduce an aliaced metadata. This is when an estimator
+# we need to also introduce an aliased metadata. This is when an estimator
 # requests a metadata with a different name than the default value. For
 # instance, in a setting where there are two estimators in a pipeline, one
 # could request ``sample_weight1`` and the other ``sample_weight2``. Note that
