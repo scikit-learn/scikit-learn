@@ -516,7 +516,7 @@ class SimpleImputer(_BaseImputer):
                 missing = np.arange(X.shape[1])[invalid_mask]
                 if self.verbose != "deprecated" and self.verbose:
                     warnings.warn(
-                        "Deleting features without observed values: %s" % missing
+                        "Skipping features without observed values: %s" % missing
                     )
                 X = X[:, valid_statistics_indexes]
 
