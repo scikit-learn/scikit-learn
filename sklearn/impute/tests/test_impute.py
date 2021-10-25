@@ -102,7 +102,7 @@ def test_imputation_deletion_warning(strategy):
     with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
         imputer.fit(X)
 
-    with pytest.warns(UserWarning, match="Deleting"):
+    with pytest.warns(UserWarning, match="Skipping"):
         imputer.transform(X)
 
 
