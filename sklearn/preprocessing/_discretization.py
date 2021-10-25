@@ -206,16 +206,18 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if self.strategy == "quantile" and self.subsample is not None:
             if self.subsample == "warn":
-                warnings.warn(
-                    "In version 1.2 onwards, subsample=2e5 "
-                    "will be used by default. Pass subsample=None to "
-                    "silence this warning for now.",
-                    FutureWarning,
-                )
+                if X.shape[0] > 2e5:
+                    warnings.warn(
+                        "In version 1.2 onwards, subsample=2e5 "
+                        "will be used by default. Set subsample explicitly to "
+                        "silence this warning in the mean time. Set "
+                        "subsample=None to disable subsampling explicitly.",
+                        FutureWarning,
+                    )
             elif isinstance(self.subsample, numbers.Integral):
                 if self.subsample <= 0:
                     raise ValueError(
-                        f"Invalid value for `subsample`: {self.subsample}. The "
+                        f"Invalid value for `subsample`: {self.subsample!r}. The "
                         "number of subsamples must be at least one."
                     )
 
@@ -227,7 +229,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     X = _safe_indexing(X, subsample_idx)
             else:
                 raise ValueError(
-                    f"Invalid value for `subsample`: {self.subsample}. "
+                    f"Invalid value for `subsample`: {self.subsample!r}. "
                     "`subsample` must be int or None."
                 )
         elif self.strategy != "quantile" and isinstance(

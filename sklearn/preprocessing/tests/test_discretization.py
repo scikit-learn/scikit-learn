@@ -385,19 +385,11 @@ def test_kbinsdiscretizer_subsample_default(subsample):
     # Since the size of X is small (< 2e5), subsampling will not take place.
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
     kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
-
-    err_msg = "In version 1.2 onwards, subsample=2e5 will be used by default"
-    with pytest.warns(FutureWarning, match=err_msg):
-        kbd_default.fit(X)
+    kbd_default.fit(X)
 
     kbd_with_subsampling = clone(kbd_default)
     kbd_with_subsampling.set_params(subsample=subsample)
-
-    if subsample == "warn":
-        with pytest.warns(FutureWarning, match=err_msg):
-            kbd_with_subsampling.fit(X)
-    else:
-        kbd_with_subsampling.fit(X)
+    kbd_with_subsampling.fit(X)
 
     for bin_kbd_default, bin_kbd_with_subsampling in zip(
         kbd_default.bin_edges_[0], kbd_with_subsampling.bin_edges_[0]
@@ -408,9 +400,7 @@ def test_kbinsdiscretizer_subsample_default(subsample):
 
 def test_kbinsdiscretizer_subsample_strategy_other():
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
-    kbd = KBinsDiscretizer(
-        n_bins=10, encode="ordinal", strategy="uniform", subsample=X.shape[0]
-    )
+    kbd = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="uniform", subsample=3)
 
     err_msg = '`subsample` must be used with `strategy`="quantile".'
     with pytest.raises(ValueError, match=err_msg):
@@ -430,9 +420,7 @@ def test_kbinsdiscretizer_subsample_value_other():
 @pytest.mark.parametrize("subsample", [0, int(2e5)])
 def test_kbinsdiscretizer_subsample_values(subsample):
     X = np.random.rand(250000, 1).reshape(-1, 1)
-    kbd_default = KBinsDiscretizer(
-        n_bins=10, encode="ordinal", strategy="quantile", subsample=None
-    )
+    kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
 
     kbd_with_subsampling = clone(kbd_default)
     kbd_with_subsampling.set_params(subsample=subsample)
