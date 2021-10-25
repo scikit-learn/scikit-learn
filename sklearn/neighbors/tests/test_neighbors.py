@@ -163,8 +163,6 @@ def test_unsupervised_kneighbors(
     [
         neighbors.KNeighborsClassifier,
         neighbors.KNeighborsRegressor,
-        neighbors.RadiusNeighborsClassifier,
-        neighbors.RadiusNeighborsRegressor,
     ],
 )
 def test_neigh_predictions_algorithm_agnosticity(
@@ -222,8 +220,6 @@ def test_neigh_predictions_algorithm_agnosticity(
     [
         neighbors.KNeighborsClassifier,
         neighbors.KNeighborsRegressor,
-        neighbors.RadiusNeighborsClassifier,
-        neighbors.RadiusNeighborsRegressor,
     ],
 )
 def test_neighs_predictions_fast_euclidean_correctness(
@@ -455,8 +451,6 @@ def test_precomputed_dense():
     estimators = [
         neighbors.KNeighborsClassifier,
         neighbors.KNeighborsRegressor,
-        neighbors.RadiusNeighborsClassifier,
-        neighbors.RadiusNeighborsRegressor,
     ]
     check_precomputed(make_train_test, estimators)
 

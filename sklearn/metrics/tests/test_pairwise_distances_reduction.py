@@ -13,9 +13,7 @@ from sklearn.metrics._dist_metrics import (
 from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
-    PairwiseDistancesRadiusNeighborhood,
     FastEuclideanPairwiseDistancesArgKmin,
-    FastEuclideanPairwiseDistancesRadiusNeighborhood,
     _sqeuclidean_row_norms,
 )
 
@@ -77,7 +75,6 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices):
 
 ASSERT_RESULT = {
     PairwiseDistancesArgKmin: assert_argkmin_results_equality,
-    PairwiseDistancesRadiusNeighborhood: assert_radius_neighborhood_results_equality,
 }
 
 
@@ -145,58 +142,12 @@ def test_argkmin_factory_method_wrong_usages():
         )
 
 
-def test_radius_neighborhood_factory_method_wrong_usages():
-    rng = np.random.RandomState(1)
-    X = rng.rand(100, 10)
-    Y = rng.rand(100, 10)
-    radius = 5
-    metric = "euclidean"
-
-    with pytest.raises(
-        ValueError, match="Only 64bit float datasets are supported for X and Y."
-    ):
-        PairwiseDistancesRadiusNeighborhood.get_for(
-            X=X.astype(np.float32), Y=Y, radius=radius, metric=metric
-        )
-
-    with pytest.raises(
-        ValueError, match="Only 64bit float datasets are supported for X and Y."
-    ):
-        PairwiseDistancesRadiusNeighborhood.get_for(
-            X=X, Y=Y.astype(np.int32), radius=radius, metric=metric
-        )
-
-    with pytest.raises(ValueError, match="radius == -1.0, must be >= 0."):
-        PairwiseDistancesRadiusNeighborhood.get_for(X=X, Y=Y, radius=-1, metric=metric)
-
-    with pytest.raises(ValueError, match="Unrecognized metric"):
-        PairwiseDistancesRadiusNeighborhood.get_for(
-            X=X, Y=Y, radius=radius, metric="wrong metric"
-        )
-
-    with pytest.raises(
-        ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
-    ):
-        PairwiseDistancesRadiusNeighborhood.get_for(
-            X=np.array([1.0, 2.0]), Y=Y, radius=radius, metric=metric
-        )
-
-    with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
-        PairwiseDistancesRadiusNeighborhood.get_for(
-            X=np.asfortranarray(X), Y=Y, radius=radius, metric=metric
-        )
-
-
 @fails_if_unstable_openblas
 @pytest.mark.filterwarnings("ignore:Constructing a DIA matrix")
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction, FastPairwiseDistancesReduction",
     [
         (PairwiseDistancesArgKmin, FastEuclideanPairwiseDistancesArgKmin),
-        (
-            PairwiseDistancesRadiusNeighborhood,
-            FastEuclideanPairwiseDistancesRadiusNeighborhood,
-        ),
     ],
 )
 def test_pairwise_distances_reduction_factory_method(
@@ -243,7 +194,7 @@ def test_pairwise_distances_reduction_factory_method(
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+    [PairwiseDistancesArgKmin],
 )
 def test_chunk_size_agnosticism(
     PairwiseDistancesReduction,
@@ -284,7 +235,7 @@ def test_chunk_size_agnosticism(
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+    [PairwiseDistancesArgKmin],
 )
 def test_n_threads_agnosticism(
     PairwiseDistancesReduction,
@@ -323,7 +274,7 @@ def test_n_threads_agnosticism(
 @pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+    [PairwiseDistancesArgKmin],
 )
 def test_strategies_consistency(
     PairwiseDistancesReduction,
@@ -417,17 +368,6 @@ def test_fast_sqeuclidean_correctness(
 
     assert_argkmin_results_equality(eucl_dist, fse_dist, eucl_indices, fse_indices)
 
-    eucl_dist, eucl_indices = PairwiseDistancesRadiusNeighborhood.get_for(
-        X, Y, radius, metric="euclidean"
-    ).compute(return_distance=True)
-    fse_dist, fse_indices = PairwiseDistancesRadiusNeighborhood.get_for(
-        X, Y, radius, metric="fast_euclidean"
-    ).compute(return_distance=True)
-
-    assert_radius_neighborhood_results_equality(
-        eucl_dist, fse_dist, eucl_indices, fse_indices
-    )
-
 
 @fails_if_unstable_openblas
 @pytest.mark.parametrize("n_features", [50, 500])
@@ -435,7 +375,7 @@ def test_fast_sqeuclidean_correctness(
 @pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+    [PairwiseDistancesArgKmin],
 )
 def test_fast_sqeuclidean_translation_invariance(
     n_features,

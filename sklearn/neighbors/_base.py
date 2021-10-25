@@ -25,7 +25,6 @@ from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..metrics._pairwise_distances_reduction import (
     PairwiseDistancesArgKmin,
-    PairwiseDistancesRadiusNeighborhood,
 )
 from ..utils import (
     check_array,
@@ -589,6 +588,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if (
                 self.effective_metric_ in specialised_metrics
                 and self._metric not in specialised_metrics
+                # TODO: remove this condition once PairwiseDistancesRadiusNeighbors
+                # has been introduced.
+                and isinstance(self, KNeighborsMixin)
             ):
                 # In that case, the standard stabler metric has not been explicitly
                 # specified by the user, so we prefer its fast alternative.
@@ -804,7 +806,7 @@ class KNeighborsMixin:
 
         elif self._fit_method == "brute":
             # TODO: support sparse matrices
-            # When ArgKmin is not supported and when the user ask for a
+            # When PairwiseDistancesArgKmin is not supported and when the user ask for a
             # fast alternative, we need to revert to the standard.
             if self.effective_metric_ in ("fast_sqeuclidean", "fast_euclidean"):
                 # The fast alternatives are only available for dense datasets.
@@ -1013,7 +1015,10 @@ class RadiusNeighborsMixin:
         neigh_ind = [np.where(d <= radius)[0] for d in dist]
 
         if return_distance:
-            dist = [d[neigh_ind[i]] for i, d in enumerate(dist)]
+            if self.effective_metric_ == "euclidean":
+                dist = [np.sqrt(d[neigh_ind[i]]) for i, d in enumerate(dist)]
+            else:
+                dist = [d[neigh_ind[i]] for i, d in enumerate(dist)]
             results = dist, neigh_ind
         else:
             results = neigh_ind
@@ -1097,64 +1102,38 @@ class RadiusNeighborsMixin:
         """
         check_is_fitted(self)
 
-        use_pairwise_distances_reductions = (
-            self._fit_method == "brute"
-            and PairwiseDistancesRadiusNeighborhood.is_usable_for(
-                X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
-            )
-        )
-
-        query_is_train = X is None
-        if query_is_train:
-            if use_pairwise_distances_reductions:
-                # We force the C-contiguity even if it creates a copy for F-ordered
-                # arrays because PairwiseDistancesRadiusNeighborhood is more efficient.
-                self._fit_X = self._validate_data(
-                    self._fit_X, accept_sparse="csr", reset=False, order="C"
-                )
-            X = self._fit_X
-        else:
-            if use_pairwise_distances_reductions:
-                # We force the C-contiguity even if it creates a copy for F-ordered
-                # arrays because PairwiseDistancesRadiusNeighborhood is more efficient.
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
-            elif self._metric == "precomputed":
+        if X is not None:
+            query_is_train = False
+            if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
                 X = self._validate_data(X, accept_sparse="csr", reset=False)
+        else:
+            query_is_train = True
+            X = self._fit_X
 
         if radius is None:
             radius = self.radius
 
-        if use_pairwise_distances_reductions:
-            results = PairwiseDistancesRadiusNeighborhood.get_for(
-                X=X,
-                Y=self._fit_X,
-                radius=radius,
-                metric=self.effective_metric_,
-                metric_kwargs=self.effective_metric_params_,
-                n_threads=self.n_jobs,
-                sort_results=sort_results,
-            ).compute(
-                strategy="auto",
-                return_distance=return_distance,
-            )
-
-        elif (
-            self._fit_method == "brute"
-            and self._metric == "precomputed"
-            and issparse(X)
-        ):
+        if self._fit_method == "brute" and self.metric == "precomputed" and issparse(X):
             results = _radius_neighbors_from_graph(
                 X, radius=radius, return_distance=return_distance
             )
 
         elif self._fit_method == "brute":
-            # When RadiusNeighborhood is not supported and when the user ask for a
-            # fast alternative, we need to revert to the standard.
+            # TODO: support sparse matrices
+            # When PairwiseDistancesRadiusNeighborhood is not supported and when
+            # the user ask for a fast alternative, we need to revert to the standard.
             if self.effective_metric_ in ("fast_sqeuclidean", "fast_euclidean"):
                 # The fast alternatives are only available for dense datasets.
                 self.effective_metric_ = self.effective_metric_.replace("fast_", "")
+
+            # for efficiency, use squared euclidean distances
+            if self.effective_metric_ == "euclidean":
+                radius *= radius
+                kwds = {"squared": True}
+            else:
+                kwds = self.effective_metric_params_
 
             reduce_func = partial(
                 self._radius_neighbors_reduce_func,
@@ -1168,7 +1147,7 @@ class RadiusNeighborsMixin:
                 reduce_func=reduce_func,
                 metric=self.effective_metric_,
                 n_jobs=self.n_jobs,
-                **self.effective_metric_params_,
+                **kwds,
             )
             if return_distance:
                 neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
