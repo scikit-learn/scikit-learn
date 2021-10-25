@@ -8,6 +8,7 @@ body:
     label: Describe the issue linked to the documentation
     description: >
       Tell us about the confusion introduced in the documentation.
+      Please specify the documentation path and file.
   validations:
     required: true
 - type: textarea
