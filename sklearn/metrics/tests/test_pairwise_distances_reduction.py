@@ -5,9 +5,6 @@ from scipy.sparse import csr_matrix
 
 from sklearn.metrics._dist_metrics import (
     DenseDenseDatasetsPair,
-    DenseSparseDatasetsPair,
-    SparseDenseDatasetsPair,
-    SparseSparseDatasetsPair,
 )
 
 from sklearn.metrics._pairwise_distances_reduction import (
@@ -165,20 +162,22 @@ def test_pairwise_distances_reduction_factory_method(
     dense_dense_instance = PairwiseDistancesReduction.get_for(X, Y, dummy_arg, metric)
     assert isinstance(dense_dense_instance.datasets_pair, DenseDenseDatasetsPair)
 
-    sparse_sparse_instance = PairwiseDistancesReduction.get_for(
-        csr_matrix(X), csr_matrix(Y), dummy_arg, metric
-    )
-    assert isinstance(sparse_sparse_instance.datasets_pair, SparseSparseDatasetsPair)
+    with pytest.raises(
+        ValueError, match="Only dense datasets are supported for X and Y."
+    ):
+        PairwiseDistancesReduction.get_for(
+            csr_matrix(X), csr_matrix(Y), dummy_arg, metric
+        )
 
-    dense_sparse_instance = PairwiseDistancesReduction.get_for(
-        X, csr_matrix(Y), dummy_arg, metric=metric
-    )
-    assert isinstance(dense_sparse_instance.datasets_pair, DenseSparseDatasetsPair)
+    with pytest.raises(
+        ValueError, match="Only dense datasets are supported for X and Y."
+    ):
+        PairwiseDistancesReduction.get_for(X, csr_matrix(Y), dummy_arg, metric=metric)
 
-    sparse_dense_instance = PairwiseDistancesReduction.get_for(
-        csr_matrix(X), Y, dummy_arg, metric=metric
-    )
-    assert isinstance(sparse_dense_instance.datasets_pair, SparseDenseDatasetsPair)
+    with pytest.raises(
+        ValueError, match="Only dense datasets are supported for X and Y."
+    ):
+        PairwiseDistancesReduction.get_for(csr_matrix(X), Y, dummy_arg, metric=metric)
 
     # Test specialisations creation
     fast_euclidean_instance = PairwiseDistancesReduction.get_for(
