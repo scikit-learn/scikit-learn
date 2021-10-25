@@ -172,7 +172,7 @@ class SimpleImputer(_BaseImputer):
            removed in 1.3. A warning will always be raised upon the removal of
            empty columns in the future version.
 
-    copy : boolean, default=True
+    copy : bool, default=True
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
         a new copy will always be made, even if `copy=False`:
