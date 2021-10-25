@@ -237,7 +237,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # computation
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
-            # TODO: remove when PDP suports sample weights
+            # TODO: remove when PDP supports sample weights
             self._fitted_with_sw = True
 
         rng = check_random_state(self.random_state)
@@ -1021,10 +1021,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'least_squares', 'absolute_error', \
-            'least_absolute_deviation', 'poisson'}, default='squared_error'
+    loss : {'squared_error', 'absolute_error', 'poisson'}, \
+            default='squared_error'
         The loss function to use in the boosting process. Note that the
-        "least squares" and "poisson" losses actually implement
+        "squared error" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
         computation of the gradient. Furthermore, "poisson" loss internally
         uses a log-link and requires ``y >= 0``.

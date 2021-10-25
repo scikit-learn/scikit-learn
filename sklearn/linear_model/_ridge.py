@@ -700,16 +700,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
-        _dtype = [np.float64, np.float32]
-        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
-        X, y = self._validate_data(
-            X,
-            y,
-            accept_sparse=_accept_sparse,
-            dtype=_dtype,
-            multi_output=True,
-            y_numeric=True,
-        )
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
                 "'lbfgs' solver can be used only when positive=True. "
@@ -1008,6 +998,15 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
+        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse=_accept_sparse,
+            dtype=[np.float64, np.float32],
+            multi_output=True,
+            y_numeric=True,
+        )
         return super().fit(X, y, sample_weight=sample_weight)
 
 
@@ -1546,7 +1545,7 @@ class _RidgeGCV(LinearModel):
 
     def _sparse_multidot_diag(self, X, A, X_mean, sqrt_sw):
         """Compute the diagonal of (X - X_mean).dot(A).dot((X - X_mean).T)
-        without explicitely centering X nor computing X.dot(A)
+        without explicitly centering X nor computing X.dot(A)
         when X is sparse.
 
         Parameters

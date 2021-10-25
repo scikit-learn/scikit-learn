@@ -587,8 +587,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``. It contains many informations for
-        analysing the results of a search.
+        imported into a pandas ``DataFrame``. It contains lots of information
+        for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
 
@@ -925,8 +925,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``. It contains many informations for
-        analysing the results of a search.
+        imported into a pandas ``DataFrame``. It contains lots of information
+        for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
 
@@ -1002,6 +1002,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> from sklearn.experimental import enable_halving_search_cv  # noqa
     >>> from sklearn.model_selection import HalvingRandomSearchCV
     >>> from scipy.stats import randint
+    >>> import numpy as np
     ...
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = RandomForestClassifier(random_state=0)
