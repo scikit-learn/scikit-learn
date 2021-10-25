@@ -284,9 +284,9 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         if self.sparse_output and (self.pos_label == 0 or self.neg_label != 0):
             raise ValueError(
-               "Sparse binarization is only supported with non "
-               "zero pos_label and zero neg_label, got "
-               f"pos_label={self.pos_label} and neg_label={self.neg_label}"
+                "Sparse binarization is only supported with non "
+                "zero pos_label and zero neg_label, got "
+                f"pos_label={self.pos_label} and neg_label={self.neg_label}"
             )
         
         self.y_type_ = type_of_target(y, input_name="y")

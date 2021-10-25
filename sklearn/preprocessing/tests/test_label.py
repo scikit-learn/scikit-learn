@@ -149,7 +149,6 @@ def test_label_binarizer_errors():
     with pytest.raises(ValueError, match=err_msg):
         LabelBinarizer(neg_label=1, pos_label=2, sparse_output=True).fit(input_labels)
 
-
     # Fail on y_type
     err_msg = "foo format is not supported"
     with pytest.raises(ValueError, match=err_msg):
