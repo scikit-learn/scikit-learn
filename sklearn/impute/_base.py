@@ -234,13 +234,18 @@ class SimpleImputer(_BaseImputer):
      [ 4.   3.5  6. ]
      [10.   3.5  9. ]]
     """
-    def __init__(self, *, missing_values=np.nan, strategy="mean",
-                 fill_value=None, verbose="deprecated", copy=True,
-                 add_indicator=False):
-        super().__init__(
-            missing_values=missing_values,
-            add_indicator=add_indicator
-        )
+
+    def __init__(
+        self,
+        *,
+        missing_values=np.nan,
+        strategy="mean",
+        fill_value=None,
+        verbose="deprecated",
+        copy=True,
+        add_indicator=False,
+    ):
+        super().__init__(missing_values=missing_values, add_indicator=add_indicator)
         self.strategy = strategy
         self.fill_value = fill_value
         self.verbose = verbose
@@ -325,10 +330,13 @@ class SimpleImputer(_BaseImputer):
             Fitted estimator.
         """
         if self.verbose != "deprecated":
-            warnings.warn("The 'verbose' parameter was deprecated in version "
-                          "1.1 and will be removed in 1.3. A warning will "
-                          "always be raised upon the removal of empty columns "
-                          "in the future version.", FutureWarning)
+            warnings.warn(
+                "The 'verbose' parameter was deprecated in version "
+                "1.1 and will be removed in 1.3. A warning will "
+                "always be raised upon the removal of empty columns "
+                "in the future version.",
+                FutureWarning,
+            )
 
         X = self._validate_input(X, in_fit=True)
 
@@ -507,8 +515,9 @@ class SimpleImputer(_BaseImputer):
             if invalid_mask.any():
                 missing = np.arange(X.shape[1])[invalid_mask]
                 if self.verbose != "deprecated" and self.verbose:
-                    warnings.warn("Deleting features without "
-                                  "observed values: %s" % missing)
+                    warnings.warn(
+                        "Deleting features without observed values: %s" % missing
+                    )
                 X = X[:, valid_statistics_indexes]
 
         # Do actual imputation
