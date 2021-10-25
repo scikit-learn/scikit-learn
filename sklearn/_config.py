@@ -109,20 +109,23 @@ def config_context(
         If True, validation for finiteness will be skipped,
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
-        avoiding error. If None, then it will be set to False.
+        avoiding error. If None, the existing value won't change.
+        The default value is False.
 
     working_memory : int, default=None
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
-        performed in chunks. If None, then it will be set to 1024.
+        performed in chunks. If None, the existing value won't change.
+        The default value is 1024.
 
     print_changed_only : bool, default=None
         If True, only the parameters that were set to non-default
         values will be printed when printing an estimator. For example,
         ``print(SVC())`` while True will only print 'SVC()', but would print
         'SVC(C=1.0, cache_size=200, ...)' with all the non-changed parameters
-        when False. If None, then it will be set to True.
+        when False. If None, the existing value won't change.
+        The default value is True.
 
         .. versionchanged:: 0.23
            Default changed from False to True.
@@ -130,7 +133,8 @@ def config_context(
     display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
-        text. If None, then it will be set to 'text'.
+        text. If None, the existing value won't change.
+        The default value is 'text'.
 
         .. versionadded:: 0.23
 
