@@ -16,12 +16,12 @@ This behavior is pronounced for the average linkage strategy,
 that ends up with a couple of singleton clusters, while in the case
 of single linkage we get a single central cluster with all other clusters
 being drawn from noise points around the fringes.
+
 """
 
 # Authors: Gael Varoquaux
 # License: BSD 3 clause (C) INRIA 2014
 
-print(__doc__)
 from time import time
 
 import numpy as np
