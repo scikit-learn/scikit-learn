@@ -3242,6 +3242,9 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
 
         set_random_state(estimator, 0)
 
+        if name in ["SVC", "NuSVC"] and estimator.kernel == "precomputed":
+            X = np.dot(X, X.T)
+
         estimator.fit(X, y_)
 
         # These return a n_iter per model optimized
