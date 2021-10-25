@@ -795,6 +795,9 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             ITYPE_t heaps_size = self.X_n_samples_chunk * self.k
             ITYPE_t thread_num
 
+        # The allocation is done in parallel for data locality purposes: this way
+        # the heaps used in each threads are allocated in pages which are closer
+        # to processor core used by the thread.
         for thread_num in prange(num_threads, schedule='static', nogil=True,
                                  num_threads=num_threads):
             # As chunks of X are shared across threads, so must their
