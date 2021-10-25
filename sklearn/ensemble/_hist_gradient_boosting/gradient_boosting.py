@@ -216,16 +216,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             and all(isinstance(x, Iterable) for x in self.interaction_cst)
         ):
             raise ValueError(
-                "Interaction constraints must be None or an iterable of iterables"
+                "Interaction constraints must be None or an iterable of iterables, "
+                f"got: {self.interaction_cst!r}."
             )
-        if not all(
-            (x == int(x) and 0 <= x and x < n_features)
+
+        invalid_indices = [
+            x
             for cst_set in self.interaction_cst
             for x in cst_set
-        ):
+            if not (x == int(x) and 0 <= x and x < n_features)
+        ]
+        if invalid_indices:
             raise ValueError(
                 "Interaction constraints must consist of integer indices in [0,"
-                " n_features - 1], specifying the position of features."
+                f" n_features - 1] = [0, {n_features - 1}], specifying the position of"
+                f" features, got invalid indices: {invalid_indices!r}"
             )
 
         constraints = [set([int(x) for x in group]) for group in self.interaction_cst]

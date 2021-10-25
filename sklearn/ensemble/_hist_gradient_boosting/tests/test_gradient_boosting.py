@@ -77,17 +77,17 @@ def _make_dumb_dataset(n_samples):
         (
             {"interaction_cst": [{0, 9999}]},
             r"Interaction constraints must consist of integer indices in \[0,"
-            r" n_features - 1\], specifying the position of features.",
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
         ),
         (
             {"interaction_cst": [{-1, 0}]},
             r"Interaction constraints must consist of integer indices in \[0,"
-            r" n_features - 1\], specifying the position of features.",
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
         ),
         (
             {"interaction_cst": [{0.5}]},
             r"Interaction constraints must consist of integer indices in \[0,"
-            r" n_features - 1\], specifying the position of features.",
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
         ),
     ],
 )
