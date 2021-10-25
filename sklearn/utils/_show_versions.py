@@ -92,8 +92,11 @@ def show_versions():
     for k, stat in deps_info.items():
         print("{k:>13}: {stat}".format(k=k, stat=stat))
 
-    built_with_openmp = _openmp_parallelism_enabled()
-    print("\n{k}: {stat}".format(k="Built with OpenMP", stat=built_with_openmp))
+    print(
+        "\n{k}: {stat}".format(
+            k="Built with OpenMP", stat=_openmp_parallelism_enabled()
+        )
+    )
 
     # show threadpoolctl results when built with openmp
     modules = ["numpy", "scipy", "sklearn"]
