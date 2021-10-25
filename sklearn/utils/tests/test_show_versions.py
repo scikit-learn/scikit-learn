@@ -1,7 +1,10 @@
+from threadpoolctl import threadpool_info
+
 from sklearn.utils._show_versions import _get_sys_info
 from sklearn.utils._show_versions import _get_deps_info
 from sklearn.utils._show_versions import show_versions
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._openmp_helpers import _openmp_parallelism_enabled
 
 
 def test_get_sys_info():
@@ -34,3 +37,8 @@ def test_show_versions(capsys):
 
     assert "python" in out
     assert "numpy" in out
+
+    if _openmp_parallelism_enabled():
+        info = threadpool_info()
+        if info:
+            assert "threadpoolctl info:" in out
