@@ -25,7 +25,7 @@ from scipy.special import comb
 import pytest
 
 import joblib
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
@@ -1795,3 +1795,15 @@ def test_mse_criterion_object_segfault_smoke_test(Forest):
     est = FOREST_REGRESSORS[Forest](n_estimators=2, n_jobs=2, criterion=mse_criterion)
 
     est.fit(X_reg, y)
+
+
+def test_random_trees_embedding_feature_names_out():
+    """Check feature names out for NMF."""
+    random_state = np.random.RandomState(0)
+    X = np.abs(random_state.randn(100, 4))
+
+    hasher = RandomTreesEmbedding(n_estimators=10, sparse_output=False).fit(X)
+    names = hasher.get_feature_names_out()
+    assert_array_equal(
+        [f"randomtreesembedding{i}" for i in range(hasher.n_outputs_)], names
+    )

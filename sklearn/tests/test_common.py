@@ -365,7 +365,6 @@ GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "cross_decomposition",
     "decomposition",
     "discriminant_analysis",
-    "ensemble",
     "isotonic",
     "kernel_approximation",
     "preprocessing",

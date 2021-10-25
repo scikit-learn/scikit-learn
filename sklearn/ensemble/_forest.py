@@ -52,6 +52,7 @@ from joblib import Parallel
 
 from ..base import is_classifier
 from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin
+from ..base import _check_feature_names_in
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (
@@ -2653,3 +2654,21 @@ class RandomTreesEmbedding(BaseForest):
         """
         check_is_fitted(self)
         return self.one_hot_encoder_.transform(self.apply(X))
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        _check_feature_names_in(self, input_features)
+        class_name = self.__class__.__name__.lower()
+        return np.asarray(
+            [f"{class_name}{i}" for i in range(self.n_outputs_)],
+            dtype=object,
+        )
