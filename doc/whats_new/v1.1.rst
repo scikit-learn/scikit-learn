@@ -65,6 +65,10 @@ Changelog
   :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
   :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
 
+- |API| The `verbose` parameter was deprecated for :class:`impute.SimpleImputer`.
+  A warning will always be raised upon the removal of empty columns.
+  :pr:`18467` by :user:`Oleh Kozynets <OlehKSS>`.
+
 :mod:`sklearn.metrics`
 ......................
 
