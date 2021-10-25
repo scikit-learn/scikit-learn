@@ -67,7 +67,8 @@ Changelog
 
 - |API| The `verbose` parameter was deprecated for :class:`impute.SimpleImputer`.
   A warning will always be raised upon the removal of empty columns.
-  :pr:`18467` by :user:`Oleh Kozynets <OlehKSS>`.
+  :pr:`21448` by :user:`Oleh Kozynets <OlehKSS>` and
+  :user:`Christian Ritter <chritter>.
 
 :mod:`sklearn.metrics`
 ......................
