@@ -2212,7 +2212,12 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
     See Also
     --------
-    accuracy_score, jaccard_score, zero_one_loss
+    accuracy_score : Compute the accuracy score. By default, the function will
+        return the fraction of correct predictions divided by the total number
+        of predictions.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+    zero_one_loss : Compute the Zero-one classification loss. By default, the
+        function will return the percentage of imperfectly predicted subsets.
 
     Notes
     -----
