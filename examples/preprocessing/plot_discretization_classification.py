@@ -26,7 +26,9 @@ features, which easily lead to overfitting when the number of samples is small.
 The plots show training points in solid colors and testing points
 semi-transparent. The lower right shows the classification accuracy on the test
 set.
+
 """
+
 # Code source: Tom Dupré la Tour
 # Adapted from plot_classifier_comparison by Gaël Varoquaux and Andreas Müller
 #
@@ -46,8 +48,6 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
-
-print(__doc__)
 
 h = 0.02  # step size in the mesh
 

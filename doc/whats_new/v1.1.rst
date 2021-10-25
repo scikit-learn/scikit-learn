@@ -52,21 +52,11 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
-:mod:`sklearn.ensemble`
-.......................
+:mod:`sklearn.decomposition`
+............................
 
-- |Fix| Fixed a bug that could produce a segfault in rare cases for
-  :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor`.
-  :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
-
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
-  :class:`feature_extraction.TfidfVectorizer` by raising an
-  error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
-  :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
+- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
+  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -74,13 +64,6 @@ Changelog
 - |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
   :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
   :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
-
-:mod:`sklearn.linear_model`
-...........................
-
-- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
-  message when the solver does not support sparse matrices with int64 indices.
-  :pr:`21093` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................
@@ -116,21 +99,16 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| :func:`utils.validation._check_sample_weight` can perform a
-  non-negativity check on the sample weights. It can be turned on
-  using the only_non_negative bool parameter.
-  Estimators that check for non-negative weights are updated:
-  :func:`linear_model.LinearRegression` (here the previous
-  error message was misleading),
-  :func:`ensemble.AdaBoostClassifier`,
-  :func:`ensemble.AdaBoostRegressor`,
-  :func:`neighbors.KernelDensity`.
-  :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
-  and :user:`András Simon <simonandras>`.
-
 - |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
   by `Thomas Fan`_.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
+  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
+  :user:`Lucy Jimenez <LucyJimenez>`.
 
 Code and Documentation Contributors
 -----------------------------------

@@ -15,7 +15,6 @@ The outer product of the row and column label vectors shows a
 representation of the checkerboard structure.
 
 """
-print(__doc__)
 
 # Author: Kemal Eren <kemal@kemaleren.com>
 # License: BSD 3 clause
