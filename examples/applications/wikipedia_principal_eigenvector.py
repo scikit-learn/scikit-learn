@@ -27,6 +27,7 @@ algorithm implemented in scikit-learn.
 
 The graph data is fetched from the DBpedia dumps. DBpedia is an extraction
 of the latent structured data of the Wikipedia content.
+
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
@@ -45,8 +46,6 @@ from scipy import sparse
 from sklearn.decomposition import randomized_svd
 from urllib.request import urlopen
 
-
-print(__doc__)
 
 # #############################################################################
 # Where to download the data, if not already on disk

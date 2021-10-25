@@ -12,9 +12,8 @@ that of L1 and L2.
 
 We classify 8x8 images of digits into two classes: 0-4 against 5-9.
 The visualization shows coefficients of the models for varying C.
-"""
 
-print(__doc__)
+"""
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
