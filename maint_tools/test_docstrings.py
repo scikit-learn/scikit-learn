@@ -100,7 +100,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._classification.confusion_matrix",
     "sklearn.metrics._classification.f1_score",
     "sklearn.metrics._classification.fbeta_score",
-    "sklearn.metrics._classification.hamming_loss",
     "sklearn.metrics._classification.hinge_loss",
     "sklearn.metrics._classification.jaccard_score",
     "sklearn.metrics._classification.log_loss",
