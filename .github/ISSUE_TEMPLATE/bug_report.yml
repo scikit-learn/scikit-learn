@@ -71,7 +71,7 @@ body:
       ```
   validations:
     required: true
-type: textarea
+- type: textarea
   attributes:
     label: Desktop OS
     description: >
