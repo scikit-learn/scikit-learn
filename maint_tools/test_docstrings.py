@@ -94,7 +94,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.linear_model._ridge.ridge_regression",
     "sklearn.manifold._locally_linear.locally_linear_embedding",
     "sklearn.manifold._t_sne.trustworthiness",
-    "sklearn.metrics._classification.accuracy_score",
     "sklearn.metrics._classification.balanced_accuracy_score",
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.classification_report",
