@@ -21,12 +21,11 @@ For further details, "How to Use t-SNE Effectively"
 https://distill.pub/2016/misread-tsne/ provides a good discussion of the
 effects of various parameters, as well as interactive plots to explore
 those effects.
+
 """
 
 # Author: Narine Kokhlikyan <narine@slice.com>
 # License: BSD
-
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

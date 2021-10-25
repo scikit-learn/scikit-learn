@@ -22,7 +22,6 @@ as much as the weights of the :class:`~neighbors.KNeighborsClassifier`
 classifier when the averaged probability is calculated.
 
 """
-print(__doc__)
 
 from itertools import product
 

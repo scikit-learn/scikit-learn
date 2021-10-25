@@ -10,9 +10,8 @@ space while controlling the distortion in the pairwise distances.
 
 .. _`Johnson-Lindenstrauss lemma`: https://en.wikipedia.org/wiki/\
     Johnson%E2%80%93Lindenstrauss_lemma
-"""
 
-print(__doc__)
+"""
 
 import sys
 from time import time
