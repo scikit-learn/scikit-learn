@@ -81,6 +81,13 @@ body:
        - Version [e.g. 22]
   validations:
     required: true
+- type: textarea
+  attributes:
+    label: Screenshots of Bug
+    description: >
+      Please provide screenshots of bug if possible to further clairfy the issue.
+  validations:
+    required: false
 - type: markdown
   attributes:
     value: >
