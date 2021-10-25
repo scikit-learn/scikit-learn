@@ -71,6 +71,14 @@ Changelog
 :mod:`sklearn.impute`
 .....................
 
+- |Feature| Adds the parameter `centered` to
+  :class:`isotonic.IsotonicRegression` to use 'Centered Isotonic Regression'
+  for building the interpolation function.
+  :pr:`21454` by :user:`Mathijs <mathijs02>`.
+
+:mod:`sklearn.isotonic`
+.....................
+
 - |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
   :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
   :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
