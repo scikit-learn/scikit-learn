@@ -485,7 +485,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             "n_estimators",
             target_type=numbers.Integral,
             min_val=1,
-            include_boundaries="Left"
+            include_boundaries="left"
         )
 
         check_scalar(
@@ -493,7 +493,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             "learning_rate",
             target_type=numbers.Real,
             min_val=1,
-            include_boundaries="Left"
+            include_boundaries="left"
         )
 
         # Check that algorithm is supported
