@@ -945,15 +945,20 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         If ``normalize == True``, return the fraction of misclassifications
         (float), else it returns the number of misclassifications (int).
 
+    See Also
+    --------
+    accuracy_score : Compute the accuracy score. By default, the function will
+        return the fraction of correct predictions divided by the total number
+        of predictions.
+    hamming_loss : Compute the average Hamming loss or Hamming distance between
+        two sets of samples.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+
     Notes
     -----
     In multilabel classification, the zero_one_loss function corresponds to
     the subset zero-one loss: for each sample, the entire set of labels must be
     correctly predicted, otherwise the loss for that sample is equal to one.
-
-    See Also
-    --------
-    accuracy_score, hamming_loss, jaccard_score
 
     Examples
     --------
