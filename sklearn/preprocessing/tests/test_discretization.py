@@ -417,9 +417,18 @@ def test_kbinsdiscretizer_subsample_value_other():
         kbd.fit(X)
 
 
+def test_kbinsdiscretizer_subsample_warn():
+    X = np.random.rand(200001, 1).reshape(-1, 1)
+    kbd = KBinsDiscretizer(n_bins=100, encode="ordinal", strategy="quantile")
+
+    msg = "In version 1.2 onwards, subsample=2e5 will be used by default."
+    with pytest.warns(FutureWarning, match=msg):
+        kbd.fit(X)
+
+
 @pytest.mark.parametrize("subsample", [0, int(2e5)])
 def test_kbinsdiscretizer_subsample_values(subsample):
-    X = np.random.rand(250000, 1).reshape(-1, 1)
+    X = np.random.rand(220000, 1).reshape(-1, 1)
     kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
 
     kbd_with_subsampling = clone(kbd_default)
