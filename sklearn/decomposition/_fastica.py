@@ -444,10 +444,6 @@ class FastICA(TransformerMixin, BaseEstimator):
         random_state=None,
     ):
         super().__init__()
-        if max_iter < 1:
-            raise ValueError(
-                "max_iter should be greater than 1, got (max_iter={})".format(max_iter)
-            )
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
@@ -553,6 +549,13 @@ class FastICA(TransformerMixin, BaseEstimator):
                     "w_init has invalid shape -- should be %(shape)s"
                     % {"shape": (n_components, n_components)}
                 )
+
+        if self.max_iter < 1:
+            raise ValueError(
+                "max_iter should be greater than 1, got (max_iter={})".format(
+                    self.max_iter
+                )
+            )
 
         kwargs = {
             "tol": self.tol,

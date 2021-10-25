@@ -14,7 +14,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 # List of modules ignored when checking for numpydoc validation.
 DOCSTRING_IGNORE_LIST = [
     "SpectralCoclustering",
-    "SpectralEmbedding",
     "StackingRegressor",
 ]
 
@@ -23,19 +22,14 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn._config.get_config",
     "sklearn.base.clone",
     "sklearn.cluster._affinity_propagation.affinity_propagation",
-    "sklearn.cluster._agglomerative.linkage_tree",
-    "sklearn.cluster._kmeans.k_means",
     "sklearn.cluster._kmeans.kmeans_plusplus",
     "sklearn.cluster._mean_shift.estimate_bandwidth",
     "sklearn.cluster._mean_shift.get_bin_seeds",
     "sklearn.cluster._mean_shift.mean_shift",
-    "sklearn.cluster._optics.cluster_optics_dbscan",
     "sklearn.cluster._optics.cluster_optics_xi",
     "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
     "sklearn.compose._column_transformer.make_column_transformer",
-    "sklearn.covariance._empirical_covariance.empirical_covariance",
-    "sklearn.covariance._empirical_covariance.log_likelihood",
     "sklearn.covariance._graph_lasso.graphical_lasso",
     "sklearn.covariance._robust_covariance.fast_mcd",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
@@ -131,7 +125,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._ranking.roc_auc_score",
     "sklearn.metrics._ranking.roc_curve",
     "sklearn.metrics._ranking.top_k_accuracy_score",
-    "sklearn.metrics._regression.max_error",
     "sklearn.metrics._regression.mean_absolute_error",
     "sklearn.metrics._regression.mean_pinball_loss",
     "sklearn.metrics._scorer.make_scorer",
@@ -158,7 +151,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
     "sklearn.metrics.pairwise.distance_metrics",
-    "sklearn.metrics.pairwise.euclidean_distances",
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.laplacian_kernel",
@@ -177,8 +169,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
     "sklearn.model_selection._split.check_cv",
-    "sklearn.model_selection._split.train_test_split",
-    "sklearn.model_selection._validation.cross_val_predict",
     "sklearn.model_selection._validation.cross_val_score",
     "sklearn.model_selection._validation.cross_validate",
     "sklearn.model_selection._validation.learning_curve",
@@ -249,7 +239,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.validation.check_random_state",
     "sklearn.utils.validation.column_or_1d",
     "sklearn.utils.validation.has_fit_parameter",
-    "sklearn.utils.validation.indexable",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
