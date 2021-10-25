@@ -177,7 +177,13 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     See Also
     --------
-    jaccard_score, hamming_loss, zero_one_loss
+    balanced_accuracy_score : Compute the balanced accuracy to deal with
+        imbalanced datasets.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+    hamming_loss : Compute the average Hamming loss or Hamming distance between
+        two sets of samples.
+    zero_one_loss : Compute the Zero-one classification loss. By default, the
+        function will return the percentage of imperfectly predicted subsets.
 
     Notes
     -----
@@ -939,15 +945,20 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         If ``normalize == True``, return the fraction of misclassifications
         (float), else it returns the number of misclassifications (int).
 
+    See Also
+    --------
+    accuracy_score : Compute the accuracy score. By default, the function will
+        return the fraction of correct predictions divided by the total number
+        of predictions.
+    hamming_loss : Compute the average Hamming loss or Hamming distance between
+        two sets of samples.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+
     Notes
     -----
     In multilabel classification, the zero_one_loss function corresponds to
     the subset zero-one loss: for each sample, the entire set of labels must be
     correctly predicted, otherwise the loss for that sample is equal to one.
-
-    See Also
-    --------
-    accuracy_score, hamming_loss, jaccard_score
 
     Examples
     --------
@@ -991,7 +1002,7 @@ def f1_score(
 ):
     """Compute the F1 score, also known as balanced F-score or F-measure.
 
-    The F1 score can be interpreted as a weighted average of the precision and
+    The F1 score can be interpreted as a harmonic mean of the precision and
     recall, where an F1 score reaches its best value at 1 and worst score at 0.
     The relative contribution of precision and recall to the F1 score are
     equal. The formula for the F1 score is::
@@ -2009,7 +2020,7 @@ def classification_report(
 
     Returns
     -------
-    report : string / dict
+    report : str or dict
         Text summary of the precision, recall, F1 score for each class.
         Dictionary returned if output_dict is True. Dictionary has the
         following structure::
@@ -2206,7 +2217,12 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
     See Also
     --------
-    accuracy_score, jaccard_score, zero_one_loss
+    accuracy_score : Compute the accuracy score. By default, the function will
+        return the fraction of correct predictions divided by the total number
+        of predictions.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+    zero_one_loss : Compute the Zero-one classification loss. By default, the
+        function will return the percentage of imperfectly predicted subsets.
 
     Notes
     -----
