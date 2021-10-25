@@ -98,7 +98,7 @@ def test_imputation_deletion_warning(strategy):
     X[:, 0] = np.nan
     imputer = SimpleImputer(strategy=strategy, verbose=1)
 
-    # TODO: Remove in 1.2
+    # TODO: Remove in 1.3
     with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
         imputer.fit(X)
 

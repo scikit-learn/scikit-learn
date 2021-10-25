@@ -167,9 +167,9 @@ class SimpleImputer(_BaseImputer):
     verbose : int, default=0
         Controls the verbosity of the imputer.
 
-        .. deprecated:: 1.0
-           The 'verbose' parameter was deprecated in version 1.0 and will be
-           removed in 1.2. A warning will always be raised upon the removal of
+        .. deprecated:: 1.1
+           The 'verbose' parameter was deprecated in version 1.1 and will be
+           removed in 1.3. A warning will always be raised upon the removal of
            empty columns in the future version.
 
     copy : boolean, default=True
@@ -326,7 +326,7 @@ class SimpleImputer(_BaseImputer):
         """
         if self.verbose != "deprecated":
             warnings.warn("The 'verbose' parameter was deprecated in version "
-                          "1.0 and will be removed in 1.2. A warning will "
+                          "1.1 and will be removed in 1.3. A warning will "
                           "always be raised upon the removal of empty columns "
                           "in the future version.", FutureWarning)
 
