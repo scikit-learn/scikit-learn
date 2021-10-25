@@ -71,6 +71,16 @@ body:
       ```
   validations:
     required: true
+type: textarea
+  attributes:
+    label: Desktop OS
+    description: >
+      Please specify which OS you are experiencing the bug issue.
+       - OS: [e.g. iOS]
+       - Browser [e.g. chrome, safari]
+       - Version [e.g. 22]
+  validations:
+    required: true
 - type: markdown
   attributes:
     value: >
