@@ -2,6 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_0_2:
+
+Version 1.0.2
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed an infinite loop in :func:`cluster.SpectralClustering` by
+  moving an iteration counter from try to except.
+  :pr:`21271` by :user:`Tyler Martin <martintb>`
+
 .. _changes_1_0_1:
 
 Version 1.0.1
