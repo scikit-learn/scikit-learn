@@ -237,7 +237,7 @@ def spectral_clustering(
         See [4]_ for more details regarding ``'lobpcg'``.
         Eigensolver ``'amg'`` runs ``'lobpcg'`` with optional
         Algebraic MultiGrid preconditioning and requires pyamg to be installed.
-        It can be faster on very large sparse problems, but may be unstable.
+        It can be faster on very large sparse problems [6]_ and [7]_.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization
@@ -303,7 +303,7 @@ def spectral_clustering(
            <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
     .. [4] `Toward the Optimal Preconditioned Eigensolver:
-           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
            A. V. Knyazev
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
            <:doi:`10.1137/S1064827500366124`>`_
@@ -311,6 +311,16 @@ def spectral_clustering(
     .. [5] `Simple, direct, and efficient multi-way spectral clustering, 2019
            Anil Damle, Victor Minden, Lexing Ying
            <:doi:`10.1093/imaiai/iay008`>`_
+
+    .. [6] `Multiscale Spectral Image Segmentation Multiscale preconditioning
+           for computing eigenvalues of graph Laplacians in image segmentation, 2006
+           Andrew Knyazev
+           <:doi:`10.13140/RG.2.2.35280.02565`>`_
+
+    .. [7] `Preconditioned spectral clustering for stochastic block partition
+           streaming graph challenge (Preliminary version at arXiv.)
+           David Zhuzhunashvili, Andrew Knyazev
+           <:doi:`10.1109/HPEC.2017.8091045`>`_
 
     Notes
     -----
