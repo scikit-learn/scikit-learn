@@ -6,7 +6,7 @@
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
 
 .. |Travis| image:: https://api.travis-ci.com/scikit-learn/scikit-learn.svg?branch=main
-.. _Travis: https://travis-ci.com/scikit-learn/scikit-learn
+.. _Travis: https://app.travis-ci.com/scikit-learn/scikit-learn
 
 .. |Codecov| image:: https://codecov.io/gh/scikit-learn/scikit-learn/branch/main/graph/badge.svg?token=Pk8G9gg3y9
 .. _Codecov: https://codecov.io/gh/scikit-learn/scikit-learn
