@@ -467,9 +467,7 @@ def test_missing_values_minmax_imputation():
         # Pre-bin the data to ensure a deterministic handling by the 2
         # strategies and also make it easier to insert np.nan in a structured
         # way:
-        X = KBinsDiscretizer(n_bins=42, encode="ordinal", subsample=None).fit_transform(
-            X
-        )
+        X = KBinsDiscretizer(n_bins=42, encode="ordinal").fit_transform(X)
 
         # First feature has missing values completely at random:
         rnd_mask = rng.rand(X.shape[0]) > 0.9
