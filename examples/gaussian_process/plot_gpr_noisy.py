@@ -14,8 +14,8 @@ model has a higher likelihood; however, depending on the initial value for the
 hyperparameters, the gradient-based optimization might also converge to the
 high-noise solution. It is thus important to repeat the optimization several
 times for different initializations.
+
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #

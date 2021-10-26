@@ -9,7 +9,6 @@ feature of the coefficient vector, and this is displayed as a function
 of the regularization parameter.
 
 """
-print(__doc__)
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
