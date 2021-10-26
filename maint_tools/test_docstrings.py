@@ -3,8 +3,11 @@ from inspect import signature
 from typing import Optional
 
 import pytest
-from sklearn.utils import all_estimators
-from sklearn.utils.discovery import all_functions
+from sklearn.utils.discovery import (
+    all_displays,
+    all_estimators,
+    all_functions,
+)
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
@@ -232,7 +235,8 @@ FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
 def get_all_methods():
     estimators = all_estimators()
-    for name, Estimator in estimators:
+    displays = all_displays()
+    for name, Estimator in estimators + displays:
         if name.startswith("_"):
             # skip private classes
             continue
