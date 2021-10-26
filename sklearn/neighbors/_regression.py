@@ -311,8 +311,8 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
     metric : str or callable, default='minkowski'
         The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. For a list of available metrics, see the documentation of
-        :class:`~sklearn.metrics.DistanceMetric`.
+        metric. See the documentation of :class:`DistanceMetric` for a
+        list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
@@ -439,12 +439,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
                 dtype=double
             Target values.
         """
-        if self.weights == "uniform":
-            # In that case, we do not need the distance so we do not compute them.
-            neigh_ind = self.radius_neighbors(X, return_distance=False)
-            neigh_dist = None
-        else:
-            neigh_dist, neigh_ind = self.radius_neighbors(X)
+        neigh_dist, neigh_ind = self.radius_neighbors(X)
 
         weights = _get_weights(neigh_dist, self.weights)
 

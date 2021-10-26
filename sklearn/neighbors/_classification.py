@@ -623,12 +623,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         n_queries = _num_samples(X)
 
-        if self.weights == "uniform":
-            # In that case, we do not need the distance so we do not compute them.
-            neigh_ind = self.radius_neighbors(X, return_distance=False)
-            neigh_dist = None
-        else:
-            neigh_dist, neigh_ind = self.radius_neighbors(X)
+        neigh_dist, neigh_ind = self.radius_neighbors(X)
 
         outlier_mask = np.zeros(n_queries, dtype=bool)
         outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
