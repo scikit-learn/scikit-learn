@@ -8,7 +8,7 @@ adapted from :func:`pandas.show_versions`
 import platform
 import sys
 import importlib
-from threadpoolctl import threadpool_info
+from ..utils.fixes import threadpool_info
 
 
 from ._openmp_helpers import _openmp_parallelism_enabled
@@ -98,26 +98,14 @@ def show_versions():
         )
     )
 
-    # show threadpoolctl results when built with openmp
-    modules = ["numpy", "scipy", "sklearn"]
-    for mod in modules:
-        importlib.import_module(mod)
-
+    # show threadpoolctl results
     threadpool_results = threadpool_info()
     if threadpool_results:
         print()
         print("threadpoolctl info:")
-        keys = [
-            "filepath",
-            "prefix",
-            "user_api",
-            "internal_api",
-            "version",
-            "num_threads",
-        ]
-        display_format = "{key:>13}: {value}"
+
         for i, result in enumerate(threadpool_results):
-            for key in keys:
-                print(display_format.format(key=key, value=result[key]))
+            for key, val in result.items():
+                print(f"{key:>15}: {val}")
             if i != len(threadpool_results) - 1:
                 print()

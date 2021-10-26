@@ -1,5 +1,4 @@
-from threadpoolctl import threadpool_info
-
+from sklearn.utils.fixes import threadpool_info
 from sklearn.utils._show_versions import _get_sys_info
 from sklearn.utils._show_versions import _get_deps_info
 from sklearn.utils._show_versions import show_versions
