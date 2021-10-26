@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Algorithms for spectral clustering"""
 
-# Author: Gael Varoquaux gael.varoquaux@normalesup.org
+# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Brian Cheung
 #         Wei LI <kuantkid@gmail.com>
+#         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
 # License: BSD 3 clause
 import warnings
 
@@ -42,7 +43,7 @@ def cluster_qr(vectors):
         ----------
         .. [1] `Simple, direct, and efficient multi-way spectral clustering, 2019
             Anil Damle, Victor Minden, Lexing Ying
-            <https://doi.org/10.1093/imaiai/iay008>`_
+            <:doi:`10.1093/imaiai/iay008`>`_
 
     """
 
@@ -305,11 +306,11 @@ def spectral_clustering(
            Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
            A. V. Knyazev
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
-           <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
+           <:doi:`10.1137/S1064827500366124`>`_
 
     .. [5] `Simple, direct, and efficient multi-way spectral clustering, 2019
            Anil Damle, Victor Minden, Lexing Ying
-           <https://doi.org/10.1093/imaiai/iay008>`_
+           <:doi:`10.1093/imaiai/iay008`>`_
 
     Notes
     -----
