@@ -412,7 +412,6 @@ VALIDATE_ESTIMATOR_INIT = [
     "FeatureUnion",
     "GridSearchCV",
     "HalvingGridSearchCV",
-    "KernelDensity",
     "KernelPCA",
     "LabelBinarizer",
     "NuSVC",

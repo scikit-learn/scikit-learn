@@ -14,7 +14,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 # List of modules ignored when checking for numpydoc validation.
 DOCSTRING_IGNORE_LIST = [
     "SpectralCoclustering",
-    "StackingRegressor",
 ]
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
@@ -30,8 +29,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
     "sklearn.compose._column_transformer.make_column_transformer",
-    "sklearn.covariance._empirical_covariance.empirical_covariance",
-    "sklearn.covariance._empirical_covariance.log_likelihood",
     "sklearn.covariance._graph_lasso.graphical_lasso",
     "sklearn.covariance._robust_covariance.fast_mcd",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
@@ -96,7 +93,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.linear_model._ridge.ridge_regression",
     "sklearn.manifold._locally_linear.locally_linear_embedding",
     "sklearn.manifold._t_sne.trustworthiness",
-    "sklearn.metrics._classification.accuracy_score",
     "sklearn.metrics._classification.balanced_accuracy_score",
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.classification_report",
@@ -104,14 +100,12 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._classification.confusion_matrix",
     "sklearn.metrics._classification.f1_score",
     "sklearn.metrics._classification.fbeta_score",
-    "sklearn.metrics._classification.hamming_loss",
     "sklearn.metrics._classification.hinge_loss",
     "sklearn.metrics._classification.jaccard_score",
     "sklearn.metrics._classification.log_loss",
     "sklearn.metrics._classification.precision_recall_fscore_support",
     "sklearn.metrics._classification.precision_score",
     "sklearn.metrics._classification.recall_score",
-    "sklearn.metrics._classification.zero_one_loss",
     "sklearn.metrics._plot.confusion_matrix.plot_confusion_matrix",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
@@ -153,7 +147,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
     "sklearn.metrics.pairwise.distance_metrics",
-    "sklearn.metrics.pairwise.euclidean_distances",
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.laplacian_kernel",
@@ -242,7 +235,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.validation.check_random_state",
     "sklearn.utils.validation.column_or_1d",
     "sklearn.utils.validation.has_fit_parameter",
-    "sklearn.utils.validation.indexable",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
