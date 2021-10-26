@@ -27,7 +27,7 @@ from sklearn.ensemble import (
     RandomForestRegressor,
     VotingClassifier,
 )
-from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline, make_pipeline
@@ -189,7 +189,7 @@ def test_parallel_execution(data, method, ensemble):
     X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    base_estimator = LinearSVC(random_state=42)
+    base_estimator = make_pipeline(StandardScaler(), LinearSVC(random_state=42))
 
     cal_clf_parallel = CalibratedClassifierCV(
         base_estimator, method=method, n_jobs=2, ensemble=ensemble
@@ -632,48 +632,6 @@ def iris_data():
 def iris_data_binary(iris_data):
     X, y = iris_data
     return X[y < 2], y[y < 2]
-
-
-def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
-    X, y = iris_data
-    X_binary, y_binary = iris_data_binary
-
-    reg = LinearRegression().fit(X, y)
-    msg = (
-        "The estimator should be a fitted binary classifier. Got a LinearRegression "
-        "estimator with multiclass type of target."
-    )
-    with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(reg, X, y)
-
-    clf = LinearSVC().fit(X_binary, y_binary)
-    msg = "LinearSVC has none of the following attributes: predict_proba"
-    with pytest.raises(AttributeError, match=msg):
-        CalibrationDisplay.from_estimator(clf, X_binary, y_binary)
-
-    clf = LogisticRegression()
-    with pytest.raises(NotFittedError):
-        CalibrationDisplay.from_estimator(clf, X_binary, y_binary)
-
-
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
-    X, y = iris_data
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
-    y_prob = clf.predict_proba(X)
-
-    if constructor_name == "from_estimator":
-        msg = (
-            "The estimator should be a fitted binary classifier. Got a "
-            "DecisionTreeClassifier estimator with multiclass type of target."
-        )
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_estimator(clf, X, y)
-    else:
-        msg = "The target should be binary. Got a multiclass type of target."
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_predictions(y, y_prob)
 
 
 @pytest.mark.parametrize("n_bins", [5, 10])

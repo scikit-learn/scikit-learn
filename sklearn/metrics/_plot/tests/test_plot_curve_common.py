@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from sklearn.base import ClassifierMixin
@@ -8,7 +9,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from sklearn.metrics import plot_det_curve, plot_roc_curve, plot_precision_recall_curve
 
@@ -33,17 +34,57 @@ def data_binary(data):
 @pytest.mark.parametrize(
     "plot_func", [plot_det_curve, plot_roc_curve, plot_precision_recall_curve]
 )
-def test_plot_curve_error_non_binary(pyplot, data, plot_func):
+def test_plot_curve_error_classifier(pyplot, data, data_binary, plot_func):
+    """Check that a proper error is raised when only binary classification is
+    supported."""
     X, y = data
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
+    X_binary, y_binary = data_binary
+
+    # Case 1: multiclass classifier with multiclass target
+    clf = DecisionTreeClassifier().fit(X, y)
 
     msg = (
-        "The estimator should be a fitted binary classifier. Got a "
-        "DecisionTreeClassifier estimator with multiclass type of target."
+        "This DecisionTreeClassifier instance is not a binary classifier. It was "
+        f"fitted on multiclass problem with {len(np.unique(y))} classes."
     )
     with pytest.raises(ValueError, match=msg):
         plot_func(clf, X, y)
+
+    # Case 2: multiclass classifier with binary target
+    with pytest.raises(ValueError, match=msg):
+        plot_func(clf, X_binary, y_binary)
+
+    # Case 3: binary classifier with multiclass target
+    clf = DecisionTreeClassifier().fit(X_binary, y_binary)
+    msg = "The target y is not binary. Got multiclass type of target."
+    with pytest.raises(ValueError, match=msg):
+        plot_func(clf, X, y)
+
+
+@pytest.mark.parametrize(
+    "plot_func", [plot_det_curve, plot_roc_curve, plot_precision_recall_curve]
+)
+def test_plot_curve_error_regression(pyplot, data_binary, plot_func):
+    """Check that we raise an error with regressor."""
+
+    # Case 1: regressor
+    X, y = data_binary
+    regressor = DecisionTreeRegressor().fit(X, y)
+
+    msg = (
+        "This plotting functionalities only support a binary classifier. Got a "
+        "DecisionTreeRegressor instead."
+    )
+    with pytest.raises(ValueError, match=msg):
+        plot_func(regressor, X, y)
+
+    # Case 2: regression target
+    classifier = DecisionTreeClassifier().fit(X, y)
+    # Force `y_true` to be seen as a regression problem
+    y = y + 0.5
+    msg = "The target y is not binary. Got continuous type of target."
+    with pytest.raises(ValueError, match=msg):
+        plot_func(classifier, X, y)
 
 
 @pytest.mark.parametrize(

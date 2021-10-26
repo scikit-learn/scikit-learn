@@ -1,16 +1,14 @@
 import scipy as sp
 
-from .base import BaseBinaryClassifierCurveDisplay
+from .base import BaseBinaryClassifierCurveDisplay, _check_estimator_target
 
 from .. import det_curve
 
-from ...base import is_classifier
 from ...utils import (
     _get_response,
     check_matplotlib_support,
 )
 from ...utils import deprecated
-from ...utils.multiclass import type_of_target
 
 
 class DetCurveDisplay(BaseBinaryClassifierCurveDisplay):
@@ -454,12 +452,7 @@ def plot_det_curve(
     """
     check_matplotlib_support("plot_det_curve")
 
-    if not (is_classifier(estimator) and type_of_target(y) == "binary"):
-        raise ValueError(
-            "The estimator should be a fitted binary classifier. "
-            f"Got a {estimator.__class__.__name__} estimator with {type_of_target(y)} "
-            "type of target."
-        )
+    _check_estimator_target(estimator, y)
 
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]

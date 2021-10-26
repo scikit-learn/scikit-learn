@@ -1,11 +1,9 @@
-from .base import BaseBinaryClassifierCurveDisplay
+from .base import BaseBinaryClassifierCurveDisplay, _check_estimator_target
 
 from .. import average_precision_score
 from .. import precision_recall_curve
 
-from ...base import is_classifier
 from ...utils import _get_response, check_matplotlib_support, deprecated
-from ...utils.multiclass import type_of_target
 
 
 class PrecisionRecallDisplay(BaseBinaryClassifierCurveDisplay):
@@ -425,13 +423,7 @@ def plot_precision_recall_curve(
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
-    if not (is_classifier(estimator) and type_of_target(y) == "binary"):
-        raise ValueError(
-            "The estimator should be a fitted binary classifier. "
-            f"Got a {estimator.__class__.__name__} estimator with {type_of_target(y)} "
-            "type of target."
-        )
-    print(estimator.classes_)
+    _check_estimator_target(estimator, y)
 
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]

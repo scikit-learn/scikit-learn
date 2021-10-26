@@ -10,6 +10,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
+from sklearn.calibration import CalibrationDisplay
 from sklearn.metrics import (
     DetCurveDisplay,
     PrecisionRecallDisplay,
@@ -29,7 +30,8 @@ def data_binary(data):
 
 
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
 )
 def test_display_curve_error_classifier(pyplot, data, data_binary, Display):
     """Check that a proper error is raised when only binary classification is
@@ -59,7 +61,8 @@ def test_display_curve_error_classifier(pyplot, data, data_binary, Display):
 
 
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
 )
 def test_display_curve_error_regression(pyplot, data_binary, Display):
     """Check that we raise an error with regressor."""
@@ -69,7 +72,7 @@ def test_display_curve_error_regression(pyplot, data_binary, Display):
     regressor = DecisionTreeRegressor().fit(X, y)
 
     msg = (
-        f"This {Display.__name__} can only be used with a classifier. Got a "
+        "This plotting functionalities only support a binary classifier. Got a "
         "DecisionTreeRegressor instead."
     )
     with pytest.raises(ValueError, match=msg):
@@ -178,7 +181,8 @@ def test_display_curve_estimator_name_multiple_calls(
     ],
 )
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
 )
 def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     """Check that a proper error is raised when the classifier is not
