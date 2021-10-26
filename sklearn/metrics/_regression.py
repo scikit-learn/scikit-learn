@@ -822,7 +822,7 @@ def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average
 
 def max_error(y_true, y_pred):
     """
-    max_error metric calculates the maximum residual error.
+    The max_error metric calculates the maximum residual error.
 
     Read more in the :ref:`User Guide <max_error>`.
 
