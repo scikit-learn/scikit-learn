@@ -20,7 +20,9 @@ There are three options to assign labels:
   that directly determines the partition in the embedding space.
 """
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
+# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
+#         Brian Cheung
+#         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
 # License: BSD 3 clause
 
 import time
