@@ -670,12 +670,12 @@ class SVC(BaseSVC):
 
         .. versionadded:: 1.0
 
-    n_iter_ : int or ndarray of shape (n_class*(n_class-1)/2,)
-        Number of iterations run in optimization. If `classes_ <= 2`, only one
-        model is optimized, thus an integer is returned. Otherwise, multiple
-        models are optimized separately, thus having multiple number of
-        iterations. In this case a numpy array is returned with the number of
-        iterations for each model.
+    n_iter_ : int or ndarray of shape (n_class * (n_class - 1) // 2,)
+        Number of iterations run by the optimization routine to fit the model.
+        If `classes_ <= 2`, only one model is optimized, thus an integer is
+        returned. Otherwise, multiple models are optimized separately, thus
+        having multiple number of iterations. In this case a numpy array is
+        returned with the number of iterations for each model.
 
         .. versionadded:: 1.1
 
@@ -934,12 +934,12 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 1.0
 
-    n_iter_ : int or ndarray of shape (n_class*(n_class-1)/2,)
-        Number of iterations run in optimization. If `classes_ <= 2`, only one
-        model is optimized, thus an integer is returned. Otherwise, multiple
-        models are optimized separately, thus having multiple number of
-        iterations. In this case a numpy array is returned with the number of
-        iterations for each model.
+    n_iter_ : int or ndarray of shape (n_class * (n_class - 1) // 2,)
+        Number of iterations run by the optimization routine to fit the model.
+        If `classes_ <= 2`, only one model is optimized, thus an integer is
+        returned. Otherwise, multiple models are optimized separately, thus
+        having multiple number of iterations. In this case a numpy array is
+        returned with the number of iterations for each model.
 
         .. versionadded:: 1.1
 
@@ -1159,7 +1159,7 @@ class SVR(RegressorMixin, BaseLibSVM):
         .. versionadded:: 1.0
 
     n_iter_ : int
-        Number of iterations run in optimization.
+        Number of iterations run by the optimization routine to fit the model.
 
         .. versionadded:: 1.1
 
@@ -1352,7 +1352,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         .. versionadded:: 1.0
 
     n_iter_ : int
-        Number of iterations run in optimization.
+        Number of iterations run by the optimization routine to fit the model.
 
         .. versionadded:: 1.1
 
@@ -1541,7 +1541,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         .. versionadded:: 1.0
 
     n_iter_ : int
-        Number of iterations run in optimization.
+        Number of iterations run by the optimization routine to fit the model.
 
         .. versionadded:: 1.1
 

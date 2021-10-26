@@ -156,9 +156,8 @@ def fit(
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates, empty array for probability=False.
 
-    num_iter : ndarray of shape (n_class*(n_class-1)/2,) if n_class > 2 \
-              else (1,)
-        Number of iterations run in optimization.
+    num_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
+        Number of iterations run by the optimization routine to fit the model.
     """
 
     cdef svm_parameter param
@@ -207,12 +206,8 @@ def fit(
     n_class = get_nr(model)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter
-    if n_class > 2:
-        num_iter = np.empty (int((n_class*(n_class-1))/2), dtype=np.int32)
-        copy_num_iter (num_iter.data, model)
-    else:
-        num_iter = np.empty (1, dtype=np.int32)
-        copy_num_iter (num_iter.data, model)
+    num_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.int32)
+    copy_num_iter (num_iter.data, model)
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef
     sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
@@ -326,9 +321,8 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     intercept : array of shape (n_class*(n_class-1)/2)
         Intercept in decision function.
 
-    num_iter : ndarray of shape (n_class*(n_class-1)/2,) if n_class > 2 \
-              else (1,)
-        Number of iterations run in optimization.
+    num_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
+        Number of iterations run by the optimization routine to fit the model.
 
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates.
@@ -436,9 +430,8 @@ def predict_proba(
     intercept : array of shape (n_class*(n_class-1)/2,)
         Intercept in decision function.
 
-    num_iter : ndarray of shape (n_class*(n_class-1)/2,) if n_class > 2 \
-              else (1,)
-        Number of iterations run in optimization.
+    num_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
+        Number of iterations run by the optimization routine to fit the model.
 
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates.
@@ -539,9 +532,8 @@ def decision_function(
     intercept : array, shape=[n_class*(n_class-1)/2]
         Intercept in decision function.
 
-    num_iter : ndarray of shape (n_class*(n_class-1)/2,) if n_class > 2 \
-              else (1,)
-        Number of iterations run in optimization.
+    num_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
+        Number of iterations run by the optimization routine to fit the model.
 
     probA, probB : array, shape=[n_class*(n_class-1)/2]
         Probability estimates.

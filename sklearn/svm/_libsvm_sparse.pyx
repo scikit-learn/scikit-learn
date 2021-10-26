@@ -161,12 +161,8 @@ def libsvm_sparse_train ( int n_features,
     cdef np.npy_intp n_class = get_nr(model)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter
-    if n_class > 2:
-        num_iter = np.empty (int((n_class*(n_class-1))/2), dtype=np.int32)
-        copy_num_iter (num_iter.data, model)
-    else:
-        num_iter = np.empty (1, dtype=np.int32)
-        copy_num_iter (num_iter.data, model)
+    num_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.int32)
+    copy_num_iter (num_iter.data, model)
 
     # copy model.sv_coef
     # we create a new array instead of resizing, otherwise
