@@ -523,6 +523,10 @@ below.
 ================================  ================================  ================================
 
 .. topic:: References:
+       
+ * `"Multiclass spectral clustering"
+   <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+   Stella X. Yu, Jianbo Shi, 2003
 
  * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
     Anil Damle, Victor Minden, Lexing Ying, 2019
