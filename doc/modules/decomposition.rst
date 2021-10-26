@@ -167,15 +167,12 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 .. topic:: References:
 
     * Algorithm 4.3 in
-      :arxiv:`"Finding structure with randomness: Stochastic algorithms for
-      constructing approximate matrix decompositions"
-      <0909.4061>`
-      Halko, et al., 2009
+      :arxiv:`Halko, et al. (2009) "Finding structure with randomness:
+      Stochastic algorithms for constructing approximate matrix decompositions"
+      <0909.4061>`_
 
-    * :arxiv:`"An implementation of a randomized algorithm for principal component
-      analysis"
-      <1412.3510>`
-      A. Szlam et al. 2014
+    * :arxiv:`A. Szlam et al. (2014) "An implementation of a randomized algorithm
+      for principal component analysis" <1412.3510>`_
 
 .. _SparsePCA:
 
@@ -344,13 +341,11 @@ components is less than 10 (strict) and the number of samples is more than 200
     * *randomized* solver:
 
         * Algorithm 4.3 in
-          :arxiv:`Halko, et al., 2009. "Finding structure with randomness: Stochastic algorithms for
-          constructing approximate matrix decompositions"_
-          <0909.4061>`
+          :arxiv:`Halko, et al. (2009) "Finding structure with randomness: Stochastic
+          algorithms for constructing approximate matrix decompositions" <0909.4061>`_
 
-        * :arxiv:`A. Szlam et al. 2014. "An implementation of a randomized algorithm for principal component
-          analysis"
-          <1412.3510>`_
+        * :arxiv:`A. Szlam et al. 2014. "An implementation of a randomized algorithm
+          for principal component analysis" <1412.3510>`_
 
     * *arpack* solver:
       `scipy.sparse.linalg.eigsh documentation
@@ -928,8 +923,8 @@ stored components::
       factorizations."
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
 
-    .. [6] :arxiv:`C. Fevotte, J. Idier, 2011. "Algorithms for nonnegative matrix factorization with the beta-divergence"
-      <1010.1763>`
+    .. [6] :arxiv:`C. Fevotte, J. Idier, 2011. "Algorithms for nonnegative matrix factorization with
+        the beta-divergence" <1010.1763>`_
       
 .. _LatentDirichletAllocation:
 
