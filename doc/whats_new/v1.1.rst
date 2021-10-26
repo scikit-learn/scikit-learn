@@ -91,8 +91,10 @@ Changelog
 :mod:`sklearn.svm`
 ...................
 
-- |Enhancement| Exposed the number of iterations attribute in
-  :class:`svm.BaseLibSVM`. :pr:`21408` by :user:`Juan Martín Loyola <jmloyola>`.
+- |Enhancement| :class:`svm.OneClassSVM`, :class:`svm.NuSVC`,
+  :class:`svm.NuSVR`, :class:`svm.SVC` and :class:`svm.SVR` now expose
+  `n_iter_`, the number of iterations used by the libsvm optimization routine.
+  :pr:`21408` by :user:`Juan Martín Loyola <jmloyola>`.
 
 :mod:`sklearn.utils`
 ....................
