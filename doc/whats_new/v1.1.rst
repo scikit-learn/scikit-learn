@@ -45,6 +45,13 @@ Changelog
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed an infinite loop in :func:`cluster.SpectralClustering` by
+  moving an iteration counter from try to except.
+  :pr:`21271` by :user:`Tyler Martin <martintb>`
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -123,12 +130,6 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
   by `Thomas Fan`_.
-  
-:mod:`sklearn.cluster`
-................................
-- |Fix| Fixed an infinite loop in :func:`cluster._spectral.discretize` by 
-  moving an iteration counter from try to except.
-  :pr:`21271` by :user:`Tyler Martin <martintb>`
 
 Code and Documentation Contributors
 -----------------------------------
