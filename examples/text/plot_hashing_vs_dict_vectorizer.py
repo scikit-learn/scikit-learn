@@ -13,10 +13,12 @@ on text documents.
 
 A discrepancy between the number of terms reported for DictVectorizer and
 for FeatureHasher is to be expected due to hash collisions.
+
 """
 
 # Author: Lars Buitinck
 # License: BSD 3 clause
+
 from collections import defaultdict
 import re
 import sys
@@ -51,13 +53,13 @@ def token_freqs(doc):
 
 
 categories = [
-    'alt.atheism',
-    'comp.graphics',
-    'comp.sys.ibm.pc.hardware',
-    'misc.forsale',
-    'rec.autos',
-    'sci.space',
-    'talk.religion.misc',
+    "alt.atheism",
+    "comp.graphics",
+    "comp.sys.ibm.pc.hardware",
+    "misc.forsale",
+    "rec.autos",
+    "sci.space",
+    "talk.religion.misc",
 ]
 # Uncomment the following line to use a larger set (11k+ documents)
 # categories = None
@@ -77,9 +79,8 @@ except ValueError:
 
 
 print("Loading 20 newsgroups training data")
-raw_data, _ = fetch_20newsgroups(subset='train', categories=categories,
-                                 return_X_y=True)
-data_size_mb = sum(len(s.encode('utf-8')) for s in raw_data) / 1e6
+raw_data, _ = fetch_20newsgroups(subset="train", categories=categories, return_X_y=True)
+data_size_mb = sum(len(s.encode("utf-8")) for s in raw_data) / 1e6
 print("%d documents - %0.3fMB" % (len(raw_data), data_size_mb))
 print()
 
