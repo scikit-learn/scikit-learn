@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 ==============================================
 Regularization path of L1- Logistic Regression
@@ -25,7 +24,6 @@ reused to initialize the next model fit to speed-up the computation of the
 full-path.
 
 """
-print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause

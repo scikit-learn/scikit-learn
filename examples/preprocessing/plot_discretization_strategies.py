@@ -14,6 +14,7 @@ This example presents the different strategies implemented in KBinsDiscretizer:
   procedure.
 
 The plot shows the regions where the discretized encoding is constant.
+
 """
 
 # Author: Tom Dupré la Tour
@@ -24,8 +25,6 @@ import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.datasets import make_blobs
-
-print(__doc__)
 
 strategies = ["uniform", "quantile", "kmeans"]
 

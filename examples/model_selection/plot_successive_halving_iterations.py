@@ -9,6 +9,7 @@ iteratively chooses the best parameter combination out of
 multiple candidates.
 
 """
+
 import pandas as pd
 from sklearn import datasets
 import matplotlib.pyplot as plt
@@ -19,8 +20,6 @@ from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.ensemble import RandomForestClassifier
 
-
-print(__doc__)
 
 # %%
 # We first define the parameter space and train a
