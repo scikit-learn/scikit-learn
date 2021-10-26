@@ -14,10 +14,10 @@ There are three options to assign labels:
 
 * 'kmeans' spectral clustering clusters samples in the embedding space
   using a kmeans algorithm
-* 'discrete' iteratively searchs for the closest partition
+* 'discrete' iteratively searches for the closest partition
   space to the embedding space of spectral clustering.
-* 'cluster_qr' assigns lables using the QR factorization with pivoting
-  that directly determines the partiion in the embedding space.
+* 'cluster_qr' assigns labels using the QR factorization with pivoting
+  that directly determines the partition in the embedding space.
 """
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
