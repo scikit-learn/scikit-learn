@@ -356,6 +356,12 @@ The converse mapping from feature name to column index is stored in the
   >>> vectorizer.vocabulary_.get('document')
   1
 
+A count of how many times each feature name occurs is stored in the
+``vocabulary_count_`` attribute of the vectorizer::
+
+  >>> vectorizer.vocabulary_count_.get('document')
+  3
+
 Hence words that were not seen in the training corpus will be completely
 ignored in future calls to the transform method::
 
