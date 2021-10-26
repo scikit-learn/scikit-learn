@@ -49,9 +49,10 @@ Changelog
 ......................
 
 - |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral` 
-  now include the new 'cluster_qr' method from :func:`cluster.cluster_qr`
+  now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
   that clusters samples in the embedding space as an alternative to the existing
-  'kmeans' and 'discrete' methods. See `spectral_clustering` for more details.
+  `'kmeans'` and `'discrete'` methods.
+  See :func:`cluster.spectral_clustering` for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
 
 :mod:`sklearn.cross_decomposition`
