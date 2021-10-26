@@ -522,6 +522,12 @@ below.
 |coin_kmeans|                          |coin_discretize|                  |coin_cluster_qr|
 ================================  ================================  ================================
 
+.. topic:: References:
+
+ * `"Simple, direct, and efficient multi-way spectral clustering"
+    <:doi:`10.1093/imaiai/iay008`>`_
+    Anil Damle, Victor Minden, Lexing Ying, 2019
+
 Spectral Clustering Graphs
 --------------------------
 
