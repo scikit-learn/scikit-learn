@@ -58,13 +58,6 @@ Changelog
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
-:mod:`sklearn.impute`
-.....................
-
-- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
-  message when the solver does not support sparse matrices with int64 indices.
-  :pr:`21093` by `Tom Dupre la Tour`_.
-  
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -73,6 +66,10 @@ Changelog
   :class:`preprocessing.KernelCenterer`,
   :class:`preprocessing.OrdinalEncoder`, and
   :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
+
+:mod:`sklearn.impute`
+.....................
+
 - |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
   :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
   :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
