@@ -1255,14 +1255,23 @@ def _get_response_values(
     response_method=None,
     pos_label=None,
 ):
-    """Return response and positive label.
+    """Compute the response values of a classifier or a regressor.
+
+    The response values are predictions, one scalar value for each sample in X
+    that depends on the specific choice of `response_method`.
+
+    This helper only accepts multiclass classifiers with the `predict` response
+    method.
+
+    If `estimator` is a binary classifier, also return the label for the
+    effective positive class.
 
     .. versionadded:: 1.1
 
     Parameters
     ----------
     estimator : estimator instance
-        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        Fitted classifier or regressor or a fitted :class:`~sklearn.pipeline.Pipeline`
         in which the last estimator is a classifier.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
