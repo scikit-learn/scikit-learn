@@ -17,6 +17,7 @@ from scipy import sparse
 from joblib import Parallel
 
 from .base import clone, TransformerMixin
+from .preprocessing import FunctionTransformer
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import available_if
 from .utils import (
@@ -745,6 +746,7 @@ class Pipeline(_BaseComposition):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        feature_names_out = input_features
         for _, name, transform in self._iter():
             if not hasattr(transform, "get_feature_names_out"):
                 raise AttributeError(
@@ -752,8 +754,8 @@ class Pipeline(_BaseComposition):
                     "Did you mean to call pipeline[:-1].get_feature_names_out"
                     "()?".format(name)
                 )
-            feature_names = transform.get_feature_names_out(input_features)
-        return feature_names
+            feature_names_out = transform.get_feature_names_out(feature_names_out)
+        return feature_names_out
 
     @property
     def n_features_in_(self):
@@ -863,6 +865,7 @@ def make_pipeline(*steps, memory=None, verbose=False):
     --------
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.pipeline import make_pipeline
     >>> make_pipeline(StandardScaler(), GaussianNB(priors=None))
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('gaussiannb', GaussianNB())])
@@ -914,8 +917,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Parameters of the transformers may be set using its name and the parameter
     name separated by a '__'. A transformer may be replaced entirely by
-    setting the parameter with its name to another transformer,
-    or removed by setting to 'drop'.
+    setting the parameter with its name to another transformer, removed by
+    setting to 'drop' or disabled by setting to 'passthrough' (features are
+    passed without transformation).
 
     Read more in the :ref:`User Guide <feature_union>`.
 
@@ -923,12 +927,14 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Parameters
     ----------
-    transformer_list : list of tuple
-        List of tuple containing `(str, transformer)`. The first element
-        of the tuple is name affected to the transformer while the
-        second element is a scikit-learn transformer instance.
-        The transformer instance can also be `"drop"` for it to be
-        ignored.
+    transformer_list : list of (str, transformer) tuples
+        List of transformer objects to be applied to the data. The first
+        half of each tuple is the name of the transformer. The transformer can
+        be 'drop' for it to be ignored or can be 'passthrough' for features to
+        be passed unchanged.
+
+        .. versionadded:: 1.1
+           Added the option `"passthrough"`.
 
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
@@ -1038,7 +1044,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # validate estimators
         for t in transformers:
-            if t == "drop":
+            if t in ("drop", "passthrough"):
                 continue
             if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not hasattr(
                 t, "transform"
@@ -1065,12 +1071,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         Generate (name, trans, weight) tuples excluding None and
         'drop' transformers.
         """
+
         get_weight = (self.transformer_weights or {}).get
-        return (
-            (name, trans, get_weight(name))
-            for name, trans in self.transformer_list
-            if trans != "drop"
-        )
+
+        for name, trans in self.transformer_list:
+            if trans == "drop":
+                continue
+            if trans == "passthrough":
+                trans = FunctionTransformer()
+            yield (name, trans, get_weight(name))
 
     @deprecated(
         "get_feature_names is deprecated in 1.0 and will be removed "

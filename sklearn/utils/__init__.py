@@ -91,6 +91,7 @@ class Bunch(dict):
 
     Examples
     --------
+    >>> from sklearn.utils import Bunch
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
     2
@@ -495,6 +496,7 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
+      >>> import numpy as np
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
@@ -632,6 +634,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
+      >>> import numpy as np
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
@@ -1001,6 +1004,8 @@ def is_scalar_nan(x):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.utils import is_scalar_nan
     >>> is_scalar_nan(np.nan)
     True
     >>> is_scalar_nan(float("nan"))
@@ -1087,7 +1092,7 @@ def _approximate_mode(class_counts, n_draws, rng):
 def check_matplotlib_support(caller_name):
     """Raise ImportError with detailed error message if mpl is not installed.
 
-    Plot utilities like any of the Display's ploting functions should lazily import
+    Plot utilities like any of the Display's plotting functions should lazily import
     matplotlib and call this helper before any computation.
 
     Parameters
@@ -1145,7 +1150,7 @@ def all_estimators(type_filter=None):
     -------
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actuall type of the class.
+        and ``class`` is the actual type of the class.
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings

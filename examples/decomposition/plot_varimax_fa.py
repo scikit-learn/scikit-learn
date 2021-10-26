@@ -13,6 +13,7 @@ structure; here, for example, the varimax rotation, which
 is found by maximizing the squared variances of the weights,
 finds a structure where the second component only loads
 positively on sepal width.
+
 """
 
 # Authors: Jona Sassenhagen
@@ -24,8 +25,6 @@ import numpy as np
 from sklearn.decomposition import FactorAnalysis, PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
-
-print(__doc__)
 
 # %%
 # Load Iris data
@@ -52,9 +51,11 @@ plt.tight_layout()
 # Run factor analysis with Varimax rotation
 n_comps = 2
 
-methods = [('PCA', PCA()),
-           ('Unrotated FA', FactorAnalysis()),
-           ('Varimax FA', FactorAnalysis(rotation='varimax'))]
+methods = [
+    ("PCA", PCA()),
+    ("Unrotated FA", FactorAnalysis()),
+    ("Varimax FA", FactorAnalysis(rotation="varimax")),
+]
 fig, axes = plt.subplots(ncols=len(methods), figsize=(10, 8))
 
 for ax, (method, fa) in zip(axes, methods):

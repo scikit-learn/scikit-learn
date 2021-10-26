@@ -108,8 +108,8 @@ class PrecisionRecallDisplay(BaseBinaryClassifierCurveDisplay):
             created.
 
         name : str, default=None
-            Name of precision recall curve for labeling. If `None`, use the
-            name of the estimator.
+            Name of precision recall curve for labeling. If `None`, use
+            `estimator_name` if not `None`, otherwise no labeling is shown.
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.

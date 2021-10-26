@@ -702,9 +702,6 @@ class OneHotEncoder(_BaseEncoder):
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
-        Returns `input_features` as this transformation doesn't add or drop
-        features.
-
         Parameters
         ----------
         input_features : array-like of str or None, default=None
@@ -853,7 +850,8 @@ class OrdinalEncoder(_BaseEncoder):
 
         Returns
         -------
-        self
+        self : object
+            Fitted encoder.
         """
         handle_unknown_strategies = ("error", "use_encoded_value")
         if self.handle_unknown not in handle_unknown_strategies:

@@ -109,34 +109,17 @@ jobs:
           name: linting
           command: ./build_tools/circle/linting.sh
 
-  pypy3:
-    docker:
-      - image: condaforge/miniforge3
-    environment:
-      # Avoid the interactive dialog when installing tzdata
-      - DEBIAN_FRONTEND: noninteractive
-    steps:
-      - restore_cache:
-          keys:
-            - pypy3-ccache-{{ .Branch }}
-            - pypy3-ccache
-      - run: apt-get -yq update && apt-get -yq install git ssh
-      - checkout
-      - run: conda init bash && source ~/.bashrc
-      - run: ./build_tools/circle/build_test_pypy.sh
-      - save_cache:
-          key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
-          paths:
-            - ~/.ccache
-            - ~/.cache/pip
-
   linux-arm64:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
     environment:
+      # Use the latest supported version of python
+      - PYTHON_VERSION: '3.9'
       - OMP_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
+      - NUMPY_VERSION: 'latest'
+      - SCIPY_VERSION: 'latest'
       - CYTHON_VERSION: 'latest'
       - JOBLIB_VERSION: 'latest'
       - THREADPOOLCTL_VERSION: 'latest'
@@ -147,18 +130,16 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: linux-arm64-{{ .Branch }}
       - run: ./build_tools/circle/build_test_arm.sh
       - save_cache:
-          key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
+          key: linux-arm64-{{ .Branch }}
           paths:
-            - ~/.ccache
+            - ~/.cache/ccache
             - ~/.cache/pip
-      - save_cache:
-          key: v1-datasets-{{ .Branch }}
-          paths:
             - ~/scikit_learn_data
-
+            # The source build folder.
+            - ~/project/build
   deploy:
     docker:
       - image: circleci/python:3.7
@@ -190,16 +171,6 @@ workflows:
       - deploy:
           requires:
             - doc
-  pypy:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - main
-    jobs:
-      - pypy3
   linux-arm64:
     jobs:
       - linux-arm64
