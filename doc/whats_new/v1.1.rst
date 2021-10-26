@@ -124,7 +124,6 @@ Miscellaneous
   - :func:`sklearn.metrics.pairwise_distances_argmin_min`
   - :class:`sklearn.cluster.AffinityPropagation`
   - :class:`sklearn.cluster.Birch`
-  - :class:`sklearn.cluster.DBSCAN`
   - :class:`sklearn.cluster.MeanShift`
   - :class:`sklearn.cluster.OPTICS`
   - :class:`sklearn.cluster.SpectralClustering`
@@ -143,7 +142,7 @@ Miscellaneous
   For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors`
   can be up to 20× faster than in the previous versions'.
 
-  :pr:`20254` by :user:`Julien Jerphanion <jjerphan>`.
+  :pr:`21462` by :user:`Julien Jerphanion <jjerphan>`.
 
 
 Code and Documentation Contributors
