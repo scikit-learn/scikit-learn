@@ -59,7 +59,7 @@ Changelog
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
 :mod:`sklearn.feature_extraction`
-............................
+.................................
 
 - |Enhancement| Adds `vocabulary_count_` to :class:`feature_extraction.CountVectorizer`, which maps
   each vocabulary term to a count of its usage. :pr:`21458` by :user:`Christian Allinson <caallinson>`
