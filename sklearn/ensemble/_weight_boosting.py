@@ -485,7 +485,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             "n_estimators",
             target_type=numbers.Integral,
             min_val=1,
-            include_boundaries="left"
+            include_boundaries="left",
         )
 
         check_scalar(
@@ -493,14 +493,15 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             "learning_rate",
             target_type=numbers.Real,
             min_val=1,
-            include_boundaries="left"
+            include_boundaries="left",
         )
 
         # Check that algorithm is supported
         if self.algorithm not in ("SAMME", "SAMME.R"):
             raise ValueError(
                 "Algorithm must be 'SAMME' or 'SAMME.R'. Got %s instead."
-                % self.algorithm)
+                % self.algorithm
+            )
 
         # Fit
         return super().fit(X, y, sample_weight)
