@@ -12,9 +12,7 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 # List of modules ignored when checking for numpydoc validation.
-DOCSTRING_IGNORE_LIST = [
-    "SpectralCoclustering",
-]
+DOCSTRING_IGNORE_LIST = []
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn._config.config_context",
