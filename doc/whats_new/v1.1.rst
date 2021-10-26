@@ -53,7 +53,10 @@ Changelog
   :user:`Robin Thibaut <robinthibaut>`.
 
 :mod:`sklearn.decomposition`
-..................................
+............................
+
+- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
+  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
@@ -70,21 +73,6 @@ Changelog
   :class:`~sklearn.decomposition.SparsePCA`,
   and :class:`~sklearn.decomposition.TruncatedSVD`. :pr:`21334` by
   `Thomas Fan`_.
-
-:mod:`sklearn.ensemble`
-.......................
-
-- |Fix| Fixed a bug that could produce a segfault in rare cases for
-  :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor`.
-  :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
-
-:mod:`sklearn.feature_extraction`
-.................................
-............................
-
-- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
-  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
 :mod:`sklearn.impute`
 .....................
