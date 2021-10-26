@@ -639,18 +639,21 @@ def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
     X_binary, y_binary = iris_data_binary
 
     reg = LinearRegression().fit(X, y)
-    msg = "'estimator' should be a fitted classifier"
+    msg = (
+        "The estimator should be a fitted binary classifier. Got a LinearRegression "
+        "estimator with multiclass type of target."
+    )
     with pytest.raises(ValueError, match=msg):
         CalibrationDisplay.from_estimator(reg, X, y)
 
-    clf = LinearSVC().fit(X, y)
-    msg = "response method predict_proba is not defined in"
-    with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(clf, X, y)
+    clf = LinearSVC().fit(X_binary, y_binary)
+    msg = "LinearSVC has none of the following attributes: predict_proba"
+    with pytest.raises(AttributeError, match=msg):
+        CalibrationDisplay.from_estimator(clf, X_binary, y_binary)
 
     clf = LogisticRegression()
     with pytest.raises(NotFittedError):
-        CalibrationDisplay.from_estimator(clf, X, y)
+        CalibrationDisplay.from_estimator(clf, X_binary, y_binary)
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
@@ -661,11 +664,14 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
     y_prob = clf.predict_proba(X)
 
     if constructor_name == "from_estimator":
-        msg = "to be a binary classifier, but got"
+        msg = (
+            "The estimator should be a fitted binary classifier. Got a "
+            "DecisionTreeClassifier estimator with multiclass type of target."
+        )
         with pytest.raises(ValueError, match=msg):
             CalibrationDisplay.from_estimator(clf, X, y)
     else:
-        msg = "y should be a 1d array, got an array of shape"
+        msg = "The target should be binary. Got a multiclass type of target."
         with pytest.raises(ValueError, match=msg):
             CalibrationDisplay.from_predictions(y, y_prob)
 
