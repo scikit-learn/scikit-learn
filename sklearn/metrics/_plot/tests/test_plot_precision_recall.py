@@ -56,28 +56,32 @@ def test_errors(pyplot):
 
 
 @pytest.mark.parametrize(
-    "response_method, msg",
+    "response_method, err_type, err_msg",
     [
         (
             "predict_proba",
-            "response method predict_proba is not defined in MyClassifier",
+            AttributeError,
+            "MyClassifier has none of the following attributes: predict_proba",
         ),
         (
             "decision_function",
-            "response method decision_function is not defined in MyClassifier",
+            AttributeError,
+            "MyClassifier has none of the following attributes: decision_function",
         ),
         (
             "auto",
-            "response method decision_function or predict_proba is not "
-            "defined in MyClassifier",
+            AttributeError,
+            "MyClassifier has none of the following attributes: predict_proba, "
+            "decision_function",
         ),
         (
             "bad_method",
-            "response_method must be 'predict_proba', 'decision_function' or 'auto'",
+            AttributeError,
+            "MyClassifier has none of the following attributes: bad_method",
         ),
     ],
 )
-def test_error_bad_response(pyplot, response_method, msg):
+def test_error_bad_response(pyplot, response_method, err_type, err_msg):
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     class MyClassifier(ClassifierMixin, BaseEstimator):
@@ -88,7 +92,7 @@ def test_error_bad_response(pyplot, response_method, msg):
 
     clf = MyClassifier().fit(X, y)
 
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(err_type, match=err_msg):
         plot_precision_recall_curve(clf, X, y, response_method=response_method)
 
 

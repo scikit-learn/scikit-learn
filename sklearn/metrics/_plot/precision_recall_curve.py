@@ -431,6 +431,7 @@ def plot_precision_recall_curve(
             f"Got a {estimator.__class__.__name__} estimator with {type_of_target(y)} "
             "type of target."
         )
+    print(estimator.classes_)
 
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]

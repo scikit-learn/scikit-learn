@@ -31,16 +31,29 @@ def data_binary(data):
 @pytest.mark.parametrize(
     "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
 )
-def test_display_curve_error_non_binary(pyplot, data, Display):
+def test_display_curve_error_classifier(pyplot, data, data_binary, Display):
     """Check that a proper error is raised when only binary classification is
     supported."""
     X, y = data
+    X_binary, y_binary = data_binary
+
+    # Case 1: multiclass classifier with multiclass target
     clf = DecisionTreeClassifier().fit(X, y)
 
     msg = (
-        "The estimator should be a fitted binary classifier. Got a "
-        "DecisionTreeClassifier estimator with multiclass type of target."
+        "This DecisionTreeClassifier instance is not a binary classifier. It was "
+        f"fitted on multiclass problem with {len(np.unique(y))} classes."
     )
+    with pytest.raises(ValueError, match=msg):
+        Display.from_estimator(clf, X, y)
+
+    # Case 2: multiclass classifier with binary target
+    with pytest.raises(ValueError, match=msg):
+        Display.from_estimator(clf, X_binary, y_binary)
+
+    # Case 3: binary classifier with multiclass target
+    clf = DecisionTreeClassifier().fit(X_binary, y_binary)
+    msg = "The target y is not binary. Got multiclass type of target."
     with pytest.raises(ValueError, match=msg):
         Display.from_estimator(clf, X, y)
 
@@ -48,7 +61,7 @@ def test_display_curve_error_non_binary(pyplot, data, Display):
 @pytest.mark.parametrize(
     "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
 )
-def test_display_curve_error_regression(pyplot, data, data_binary, Display):
+def test_display_curve_error_regression(pyplot, data_binary, Display):
     """Check that we raise an error with regressor."""
 
     # Case 1: regressor
@@ -56,34 +69,19 @@ def test_display_curve_error_regression(pyplot, data, data_binary, Display):
     regressor = DecisionTreeRegressor().fit(X, y)
 
     msg = (
-        "The estimator should be a fitted binary classifier. Got a "
-        "DecisionTreeRegressor estimator with binary type of target."
+        f"This {Display.__name__} can only be used with a classifier. Got a "
+        "DecisionTreeRegressor instead."
     )
     with pytest.raises(ValueError, match=msg):
         Display.from_estimator(regressor, X, y)
 
-    # Case 2: classifier with non-binary target
-    X, y = data
+    # Case 2: regression target
     classifier = DecisionTreeClassifier().fit(X, y)
-
-    msg = (
-        "The estimator should be a fitted binary classifier. Got a "
-        "DecisionTreeClassifier estimator with multiclass type of target."
-    )
-    with pytest.raises(ValueError, match=msg):
-        Display.from_estimator(classifier, X, y)
-
-    # Case 3: regression target
-    X, y = data
     # Force `y_true` to be seen as a regression problem
     y = y + 0.5
-    msg = (
-        "The estimator should be a fitted binary classifier. Got a "
-        "DecisionTreeClassifier estimator with continuous type of target."
-    )
+    msg = "The target y is not binary. Got continuous type of target."
     with pytest.raises(ValueError, match=msg):
         Display.from_estimator(classifier, X, y)
-    msg = "The target should be binary. Got a continuous type of target."
     with pytest.raises(ValueError, match=msg):
         Display.from_predictions(y, regressor.fit(X, y).predict(X))
 
