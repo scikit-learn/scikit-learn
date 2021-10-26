@@ -36,7 +36,7 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
     """Decorator for methods that issues warnings for positional arguments.
 
-    Using the keyword-only argument syntax in pep 3102, arguments after the
+    Using the keyword-only argument syntax in PEP 3102, arguments after the
     * will issue a warning when passed as a positional argument.
 
     Parameters
@@ -135,7 +135,7 @@ def assert_all_finite(X, *, allow_nan=False):
 
 
 def as_float_array(X, *, copy=True, force_all_finite=True):
-    """Converts an array-like to an array of floats.
+    """Convert an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
     type. The function can create a copy or modify the argument depending
@@ -146,17 +146,17 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     X : {array-like, sparse matrix}
 
     copy : bool, default=True
-        If True, a copy of X will be created. If False, a copy may still be
-        returned if X's dtype is not a floating point type.
+        If `True`, a copy of `X` will be created. If `False`, a copy may still
+        be returned if `X`'s dtype is not a floating point type.
 
     force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in X. The
+        Whether to raise an error on `np.inf`, `np.nan`, `pd.NA` in `X`. The
         possibilities are:
 
-        - True: Force all values of X to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in X.
-        - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
-          be infinite.
+        - True: force all values of `X` to be finite.
+        - False: accept `np.inf`, `np.nan`, `pd.NA` in `X`.
+        - 'allow-nan': accept only `np.nan` and `pd.NA` values in `X`. Values
+          cannot be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
@@ -193,7 +193,7 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
 
 
 def _is_arraylike(x):
-    """Returns whether the input is array-like."""
+    """Return whether the input is array-like."""
     return hasattr(x, "__len__") or hasattr(x, "shape") or hasattr(x, "__array__")
 
 
@@ -205,6 +205,7 @@ def _num_features(X):
     this function will return the length of the first element, assuming
     that subsequent elements are all lists of the same length without
     checking.
+
     Parameters
     ----------
     X : array-like
@@ -213,7 +214,7 @@ def _num_features(X):
     Returns
     -------
     features : int
-        Number of features
+        Number of features.
     """
     type_ = type(X)
     if type_.__module__ == "builtins":
@@ -317,7 +318,7 @@ def check_memory(memory):
 def check_consistent_length(*arrays):
     """Check that all arrays have consistent first dimensions.
 
-    Checks whether all objects in arrays have the same shape or length.
+    Check whether all objects in arrays have the same shape or length.
 
     Parameters
     ----------
@@ -357,7 +358,7 @@ def _make_indexable(iterable):
 def indexable(*iterables):
     """Make arrays indexable for cross-validation.
 
-    Checks consistent length, passes through None, and ensures that everything
+    Check consistent length, pass through None, and ensure that everything
     can be indexed by converting sparse matrices to csr and converting
     non-interable objects to arrays.
 
@@ -383,7 +384,7 @@ def _ensure_sparse_format(
 ):
     """Convert a sparse matrix to a given format.
 
-    Checks the sparse format of spmatrix and converts if necessary.
+    Check the sparse format of spmatrix and convert if necessary.
 
     Parameters
     ----------
@@ -394,24 +395,24 @@ def _ensure_sparse_format(
         String[s] representing allowed sparse matrix formats ('csc',
         'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). If the input is sparse but
         not in the allowed format, it will be converted to the first listed
-        format. True allows the input to be any format. False means
+        format. `True` allows the input to be any format. `False` means
         that a sparse matrix input will raise an error.
 
     dtype : str, type or None
-        Data type of result. If None, the dtype of the input is preserved.
+        Data type of result. If `None`, the dtype of the input is preserved.
 
     copy : bool
-        Whether a forced copy will be triggered. If copy=False, a copy might
+        Whether a forced copy will be triggered. If `copy=False`, a copy might
         be triggered by a conversion.
 
     force_all_finite : bool or 'allow-nan'
-        Whether to raise an error on np.inf, np.nan, pd.NA in X. The
+        Whether to raise an error on `np.inf`, `np.nan`, `pd.NA` in `X`. The
         possibilities are:
 
-        - True: Force all values of X to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in X.
-        - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
-          be infinite.
+        - True: force all values of `X` to be finite.
+        - False: accept `np.inf`, `np.nan`, `pd.NA` in `X`.
+        - 'allow-nan': accept only `np.nan` and `pd.NA` values in `X`. Values
+          cannot be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
@@ -520,41 +521,41 @@ def check_array(
     accept_sparse : str, bool or list/tuple of str, default=False
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc. If the input is sparse but not in the allowed format,
-        it will be converted to the first listed format. True allows the input
-        to be any format. False means that a sparse matrix input will
+        it will be converted to the first listed format. `True` allows the
+        input to be any format. `False` means that a sparse matrix input will
         raise an error.
 
     accept_large_sparse : bool, default=True
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
-        accept_sparse, accept_large_sparse=False will cause it to be accepted
-        only if its indices are stored with a 32-bit dtype.
+        `accept_sparse`, `accept_large_sparse=False` will cause it to be
+        accepted only if its indices are stored with a 32-bit dtype.
 
         .. versionadded:: 0.20
 
     dtype : 'numeric', type, list of type or None, default='numeric'
-        Data type of result. If None, the dtype of the input is preserved.
+        Data type of result. If `None`, the dtype of the input is preserved.
         If "numeric", dtype is preserved unless array.dtype is object.
         If dtype is a list of types, conversion on the first type is only
         performed if the dtype of the input is not in the list.
 
     order : {'F', 'C'} or None, default=None
-        Whether an array will be forced to be fortran or c-style.
-        When order is None (default), then if copy=False, nothing is ensured
-        about the memory layout of the output array; otherwise (copy=True)
-        the memory layout of the returned array is kept as close as possible
-        to the original array.
+        Whether an array will be forced to be Fortran or c-style.
+        When order is `None` (default), then if `copy=False`, nothing is
+        ensured about the memory layout of the output array; otherwise
+        (`copy=True`) the memory layout of the returned array is kept as close
+        as possible to the original array.
 
     copy : bool, default=False
-        Whether a forced copy will be triggered. If copy=False, a copy might
+        Whether a forced copy will be triggered. If `copy=False`, a copy might
         be triggered by a conversion.
 
     force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        Whether to raise an error on `np.inf`, `np.nan`, `pd.NA` in array. The
         possibilities are:
 
-        - True: Force all values of array to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in array.
-        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+        - True: force all values of array to be finite.
+        - False: accept `np.inf`, `np.nan`, `pd.NA` in array.
+        - 'allow-nan': accept only `np.nan` and `pd.NA` values in array. Values
           cannot be infinite.
 
         .. versionadded:: 0.20
@@ -571,14 +572,14 @@ def check_array(
 
     ensure_min_samples : int, default=1
         Make sure that the array has a minimum number of samples in its first
-        axis (rows for a 2D array). Setting to 0 disables this check.
+        axis (rows for a 2D array). Setting to `0` disables this check.
 
     ensure_min_features : int, default=1
         Make sure that the 2D array has some minimum number of features
-        (columns). The default value of 1 rejects empty datasets.
+        (columns). The default value of `1` rejects empty datasets.
         This check is only enforced when the input data has effectively 2
-        dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
-        disables this check.
+        dimensions or is originally 1D and ``ensure_2d`` is `True`. Setting to
+        `0` disables this check.
 
     estimator : str or estimator instance, default=None
         If passed, include the name of the estimator in warning messages.
@@ -861,7 +862,7 @@ def check_X_y(
 ):
     """Input validation for standard estimators.
 
-    Checks X and y for consistent length, enforces X to be 2D and y 1D. By
+    Check X and y for consistent length, enforce X to be 2D and y 1D. By
     default, X is checked to be non-empty and containing only finite values.
     Standard input checks are also applied to y, such as checking that y
     does not have np.nan or np.inf targets. For multi-label y, set
@@ -879,39 +880,40 @@ def check_X_y(
     accept_sparse : str, bool or list of str, default=False
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc. If the input is sparse but not in the allowed format,
-        it will be converted to the first listed format. True allows the input
-        to be any format. False means that a sparse matrix input will
+        it will be converted to the first listed format. `True` allows the input
+        to be any format. `False` means that a sparse matrix input will
         raise an error.
 
     accept_large_sparse : bool, default=True
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
-        accept_sparse, accept_large_sparse will cause it to be accepted only
+        `accept_sparse`, `accept_large_sparse` will cause it to be accepted only
         if its indices are stored with a 32-bit dtype.
 
         .. versionadded:: 0.20
 
     dtype : 'numeric', type, list of type or None, default='numeric'
-        Data type of result. If None, the dtype of the input is preserved.
+        Data type of result. If `None`, the dtype of the input is preserved.
         If "numeric", dtype is preserved unless array.dtype is object.
         If dtype is a list of types, conversion on the first type is only
         performed if the dtype of the input is not in the list.
 
     order : {'F', 'C'}, default=None
-        Whether an array will be forced to be fortran or c-style.
+        Whether an array will be forced to be Fortran or c-style.
 
     copy : bool, default=False
-        Whether a forced copy will be triggered. If copy=False, a copy might
+        Whether a forced copy will be triggered. If `copy=False`, a copy might
         be triggered by a conversion.
 
     force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in X. This parameter
-        does not influence whether y can have np.inf, np.nan, pd.NA values.
+        Whether to raise an error on `n`p.inf`, `np.nan`, `pd.NA` in `X`. This
+        parameter does not influence whether `y` can have `np.inf`, `np.nan`,
+        `pd.NA` values.
         The possibilities are:
 
-        - True: Force all values of X to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in X.
-        - 'allow-nan': accepts only np.nan or pd.NA values in X. Values cannot
-          be infinite.
+        - True: force all values of `X` to be finite.
+        - False: accept `np.inf`, `np.nan`, `pd.NA` in `X`.
+        - 'allow-nan': accept only `np.nan` or `pd.NA` values in `X`. Values
+          cannot be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
@@ -920,30 +922,30 @@ def check_X_y(
            Accepts `pd.NA` and converts it into `np.nan`
 
     ensure_2d : bool, default=True
-        Whether to raise a value error if X is not 2D.
+        Whether to raise a value error if `X` is not 2D.
 
     allow_nd : bool, default=False
-        Whether to allow X.ndim > 2.
+        Whether to allow `X.ndim` > 2.
 
     multi_output : bool, default=False
-        Whether to allow 2D y (array or sparse matrix). If false, y will be
-        validated as a vector. y cannot have np.nan or np.inf values if
-        multi_output=True.
+        Whether to allow 2D `y` (array or sparse matrix). If `False`, `y` will
+        be validated as a vector. `y` cannot have `np.nan` or `np.inf` values if
+        `multi_output=True`.
 
     ensure_min_samples : int, default=1
-        Make sure that X has a minimum number of samples in its first
+        Make sure that `X` has a minimum number of samples in its first
         axis (rows for a 2D array).
 
     ensure_min_features : int, default=1
         Make sure that the 2D array has some minimum number of features
-        (columns). The default value of 1 rejects empty datasets.
-        This check is only enforced when X has effectively 2 dimensions or
-        is originally 1D and ``ensure_2d`` is True. Setting to 0 disables
+        (columns). The default value of `1` rejects empty datasets.
+        This check is only enforced when `X` has effectively 2 dimensions or
+        is originally 1D and ``ensure_2d`` is `True`. Setting to `0` disables
         this check.
 
     y_numeric : bool, default=False
-        Whether to ensure that y has a numeric type. If dtype of y is object,
-        it is converted to float64. Should only be used for regression
+        Whether to ensure that `y` has a numeric type. If dtype of `y` is
+        object, it is converted to float64. Should only be used for regression
         algorithms.
 
     estimator : str or estimator instance, default=None
@@ -952,10 +954,10 @@ def check_X_y(
     Returns
     -------
     X_converted : object
-        The converted and validated X.
+        The converted and validated `X`.
 
     y_converted : object
-        The converted and validated y.
+        The converted and validated `y`.
     """
     if y is None:
         raise ValueError("y cannot be None")
@@ -1039,10 +1041,11 @@ def check_random_state(seed):
     Parameters
     ----------
     seed : None, int or instance of RandomState
-        If seed is None, return the RandomState singleton used by np.random.
+        If seed is `None`, return the RandomState singleton used by
+          `np.random`.
         If seed is an int, return a new RandomState instance seeded with seed.
         If seed is already a RandomState instance, return it.
-        Otherwise raise ValueError.
+        Otherwise raise ``ValueError``.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -1056,7 +1059,7 @@ def check_random_state(seed):
 
 
 def has_fit_parameter(estimator, parameter):
-    """Checks whether the estimator's fit method supports the given parameter.
+    """Check whether the estimator's fit method supports the given parameter.
 
     Parameters
     ----------
@@ -1078,7 +1081,6 @@ def has_fit_parameter(estimator, parameter):
     >>> from sklearn.utils.validation import has_fit_parameter
     >>> has_fit_parameter(SVC(), "sample_weight")
     True
-
     """
     return parameter in signature(estimator.fit).parameters
 
@@ -1094,16 +1096,16 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
     ----------
     array : {ndarray, sparse matrix}
         Input object to check / convert. Must be two-dimensional and square,
-        otherwise a ValueError will be raised.
+        otherwise a ``ValueError`` will be raised.
 
     tol : float, default=1e-10
-        Absolute tolerance for equivalence of arrays. Default = 1E-10.
+        Absolute tolerance for equivalence of arrays.
 
     raise_warning : bool, default=True
-        If True then raise a warning if conversion is required.
+        If `True` then raise a warning if conversion is required.
 
     raise_exception : bool, default=False
-        If True then raise an exception if array is not symmetric.
+        If `True` then raise an exception if array is not symmetric.
 
     Returns
     -------
@@ -1147,7 +1149,7 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
 def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 
-    Checks if the estimator is fitted by verifying the presence of
+    Check if the estimator is fitted by verifying the presence of
     fitted attributes (ending with a trailing underscore) and otherwise
     raises a NotFittedError with the given message.
 
@@ -1226,7 +1228,7 @@ def check_non_negative(X, whom):
         Input data.
 
     whom : str
-        Who passed X to this function.
+        Who passed `X` to this function.
     """
     # avoid X.min() on sparse matrix since it also sorts the indices
     if sp.issparse(X):
@@ -1266,11 +1268,11 @@ def check_scalar(
         Acceptable data types for the parameter.
 
     min_val : float or int, default=None
-        The minimum valid value the parameter can take. If None (default) it
+        The minimum valid value the parameter can take. If `None` (default) it
         is implied that the parameter does not have a lower bound.
 
     max_val : float or int, default=False
-        The maximum valid value the parameter can take. If None (default) it
+        The maximum valid value the parameter can take. If `None` (default) it
         is implied that the parameter does not have an upper bound.
 
     include_boundaries : {"left", "right", "both", "neither"}, default="both"
@@ -1526,13 +1528,13 @@ def _check_sample_weight(
 
     dtype : dtype, default=None
         dtype of the validated `sample_weight`.
-        If None, and the input `sample_weight` is an array, the dtype of the
+        If `None`, and the input `sample_weight` is an array, the dtype of the
         input is preserved; otherwise an array with the default numpy dtype
         is be allocated.  If `dtype` is not one of `float32`, `float64`,
         `None`, the output will be of dtype `float64`.
 
     copy : bool, default=False
-        If True, a copy of sample_weight will be created.
+        If `True`, a copy of sample_weight will be created.
 
     Returns
     -------
@@ -1595,7 +1597,7 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
     atol : float, default=1e-9
         absolute tolerance; see numpy.allclose. Note that the default here is
         more tolerant than the default for numpy.testing.assert_allclose, where
-        atol=0.
+        `atol=0`.
     """
     if sp.issparse(x) and sp.issparse(y):
         x = x.tocsr()
