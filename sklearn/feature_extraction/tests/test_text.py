@@ -1665,3 +1665,17 @@ def test_nonnegative_hashing_vectorizer_result_indices():
     hashing = HashingVectorizer(n_features=1000000, ngram_range=(2, 3))
     indices = hashing.transform(["22pcs efuture"]).indices
     assert indices[0] >= 0
+
+
+def test_vocabulary_count():
+    vec = CountVectorizer().fit(JUNK_FOOD_DOCS)
+    vocabulary_count = vec.vocabulary_count_
+    vocabulary_count_truth = {
+        "the": 7,
+        "pizza": 4,
+        "beer": 6,
+        "copyright": 5,
+        "burger": 5,
+        "coke": 3,
+    }
+    assert vocabulary_count == vocabulary_count_truth

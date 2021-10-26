@@ -1028,6 +1028,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
+    vocabulary_count_ : dict
+        A mapping of terms to a count of their usage.
+
     fixed_vocabulary_ : bool
         True if a fixed vocabulary of term to indices mapping
         is provided by the user.
@@ -1350,6 +1353,13 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             if max_features is None:
                 X = self._sort_features(X, vocabulary)
             self.vocabulary_ = vocabulary
+
+        self.vocabulary_count_ = dict(
+            zip(
+                [z[0] for z in sorted(self.vocabulary_.items(), key=itemgetter(1))],
+                X.sum(axis=0).A.ravel(),
+            )
+        )
 
         return X
 
