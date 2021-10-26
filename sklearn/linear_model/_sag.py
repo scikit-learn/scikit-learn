@@ -230,7 +230,7 @@ def sag_solver(
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
     https://hal.inria.fr/hal-00860051/document
-    
+
     :arxiv: `Defazio, A., Bach F. & Lacoste-Julien S. (2014).
     "SAGA: A Fast Incremental Gradient Method With Support
     for Non-Strongly Convex Composite Objectives" <1407.0202>`_
