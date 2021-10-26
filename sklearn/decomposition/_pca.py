@@ -203,11 +203,13 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    n_oversamples_rate : float, default=0.8
-        The percentage of features that need to be extract.
-        Must be of range [0, infinity).
+    n_oversamples : int, default=10
+        This parameter is only relevant when `svd_solver="randomized"`.
+        It corresponds to the additional number of random vectors to sample the
+        range of `X` so as to ensure proper conditioning. See
+        :func:`~sklearn.utils.extmath.randomized_svd` for more details.
 
-        .. versionadded:: 1.0.1
+        .. versionadded:: 1.1
 
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
