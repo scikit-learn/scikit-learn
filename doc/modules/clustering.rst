@@ -524,8 +524,7 @@ below.
 
 .. topic:: References:
 
- * `"Simple, direct, and efficient multi-way spectral clustering"
-    <:doi:`10.1093/imaiai/iay008`>`_
+ * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
     Anil Damle, Victor Minden, Lexing Ying, 2019
 
 Spectral Clustering Graphs
