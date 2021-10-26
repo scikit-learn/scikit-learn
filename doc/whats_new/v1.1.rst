@@ -123,6 +123,12 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
   by `Thomas Fan`_.
+  
+:mod:`sklearn.cluster`
+................................
+- |Fix| Fixed an infinite loop in :func:`cluster._spectral.discretize` by 
+  moving an iteration counter from try to except.
+  :pr:`21271` by :user:`Tyler Martin <martintb>`
 
 Code and Documentation Contributors
 -----------------------------------
