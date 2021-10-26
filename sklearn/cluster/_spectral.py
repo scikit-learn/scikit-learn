@@ -9,12 +9,8 @@ import warnings
 
 import numpy as np
 
-# Required in cluster_qr
-from scipy.linalg import qr, svd
-
-# Required in discretize
+from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
-from scipy.linalg import LinAlgError
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
