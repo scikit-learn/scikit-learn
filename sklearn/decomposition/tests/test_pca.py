@@ -661,8 +661,8 @@ def test_assess_dimesion_rank_one():
         assert _assess_dimension(s, rank, n_samples) == -np.inf
 
 
-@pytest.mark.parametrize("nfeat", [10, 11, 12, 20, 100])
-@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("nfeat", [10, 20, 100])
+@pytest.mark.parametrize("seed", range(0))
 def test_pca_svd_output(nfeat, seed):
     # Test results consistency
     rng = np.random.RandomState(seed)
@@ -670,7 +670,7 @@ def test_pca_svd_output(nfeat, seed):
     val_num = 3
 
     # The result is the same as svd and svds
-    pca = PCA(n_components=1, n_oversamples_rate=1)
+    pca = PCA(n_components=1, n_oversamples=nfeat)
     x_tranformed = pca.fit_transform(X).reshape(-1)
     x_tranformed = np.array([round(abs(v), val_num) for v in x_tranformed])
 
@@ -694,9 +694,14 @@ def test_pca_svd_output(nfeat, seed):
     "params, err_type, err_msg",
     [
         (
-            {"n_components": 1, "n_oversamples_rate": 0.8},
+            {"n_components": 1, "n_oversamples": 0},
             ValueError,
-            "n_oversamples_rate must be >= 0",
+            "n_oversamples must be >= 1",
+        ),
+        (
+            {"n_oversamples": 1.8},
+            TypeError,
+            "n_oversamples must be an instance of <class 'numbers.Integral'>",
         ),
     ],
 )
