@@ -58,6 +58,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    Modified 2021:
 
    - Exposed number of iterations run in optimization, Juan Martín Loyola.
+     See <https://github.com/scikit-learn/scikit-learn/pull/21408/>
  */
 
 #include <math.h>
