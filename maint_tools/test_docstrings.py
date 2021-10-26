@@ -1,13 +1,10 @@
 import re
 from inspect import signature
-import pkgutil
-import inspect
-import importlib
 from typing import Optional
 
 import pytest
 from sklearn.utils import all_estimators
-import sklearn
+from sklearn.utils.discovery import all_functions
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
@@ -255,49 +252,10 @@ def get_all_methods():
             yield Estimator, method
 
 
-def _is_checked_function(item):
-    if not inspect.isfunction(item):
-        return False
-
-    if item.__name__.startswith("_"):
-        return False
-
-    mod = item.__module__
-    if not mod.startswith("sklearn.") or mod.endswith("estimator_checks"):
-        return False
-
-    return True
-
-
 def get_all_functions_names():
-    """Get all public functions define in the sklearn module"""
-    modules_to_ignore = {
-        "tests",
-        "externals",
-        "setup",
-        "conftest",
-        "experimental",
-        "estimator_checks",
-    }
-
-    all_functions_names = set()
-    for module_finder, module_name, ispkg in pkgutil.walk_packages(
-        path=sklearn.__path__, prefix="sklearn."
-    ):
-        module_parts = module_name.split(".")
-        if (
-            any(part in modules_to_ignore for part in module_parts)
-            or "._" in module_name
-        ):
-            continue
-
-        module = importlib.import_module(module_name)
-        functions = inspect.getmembers(module, _is_checked_function)
-        for name, func in functions:
-            full_name = f"{func.__module__}.{func.__name__}"
-            all_functions_names.add(full_name)
-
-    return sorted(all_functions_names)
+    functions = all_functions()
+    for name, _ in functions:
+        yield name
 
 
 def filter_errors(errors, method, Estimator=None):
