@@ -11,9 +11,6 @@ import sklearn
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
-# List of modules ignored when checking for numpydoc validation.
-DOCSTRING_IGNORE_LIST = []
-
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn._config.config_context",
     "sklearn._config.get_config",
@@ -163,6 +160,7 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
     "sklearn.model_selection._split.check_cv",
+    "sklearn.model_selection._validation.cross_val_score",
     "sklearn.model_selection._validation.cross_validate",
     "sklearn.model_selection._validation.learning_curve",
     "sklearn.model_selection._validation.permutation_test_score",
@@ -396,12 +394,6 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
 
 @pytest.mark.parametrize("function_name", get_all_functions_names())
 def test_function_docstring(function_name, request):
-    """Check function docstrings using numpydoc."""
-    if function_name in FUNCTION_DOCSTRING_IGNORE_LIST:
-        request.applymarker(
-            pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
-        )
-
     res = numpydoc_validation.validate(function_name)
 
     res["errors"] = list(filter_errors(res["errors"], method="function"))
@@ -420,11 +412,6 @@ def test_docstring(Estimator, method, request):
         import_path.append(method)
 
     import_path = ".".join(import_path)
-
-    if Estimator.__name__ in DOCSTRING_IGNORE_LIST:
-        request.applymarker(
-            pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
-        )
 
     res = numpydoc_validation.validate(import_path)
 
