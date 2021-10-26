@@ -19,6 +19,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 from joblib import Parallel, effective_n_jobs
 
+from .. import config_context
 from ..utils.validation import _num_samples
 from ..utils.validation import check_non_negative
 from ..utils import check_array
@@ -674,11 +675,14 @@ def pairwise_distances_argmin_min(
         if metric == "fast_euclidean":
             metric = "euclidean"
 
-        indices, values = zip(
-            *pairwise_distances_chunked(
-                X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs
+        # Turn off check for finiteness because this is costly and because arrays
+        # have already been validated.
+        with config_context(assume_finite=True):
+            indices, values = zip(
+                *pairwise_distances_chunked(
+                    X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs
+                )
             )
-        )
         indices = np.concatenate(indices)
         values = np.concatenate(values)
 
@@ -776,15 +780,18 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         if metric == "fast_euclidean":
             metric = "euclidean"
 
-        indices = np.concatenate(
-            list(
-                # This returns a np.ndarray generator whose arrays we need
-                # to flatten into one.
-                pairwise_distances_chunked(
-                    X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
+        # Turn off check for finiteness because this is costly and because arrays
+        # have already been validated.
+        with config_context(assume_finite=True):
+            indices = np.concatenate(
+                list(
+                    # This returns a np.ndarray generator whose arrays we need
+                    # to flatten into one.
+                    pairwise_distances_chunked(
+                        X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
+                    )
                 )
             )
-        )
 
     return indices
 
