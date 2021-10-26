@@ -440,13 +440,15 @@ def test_pairwise_distances_argmin_min():
 
     expected_idx = [0, 1]
     expected_vals = [2, 2]
+    expected_vals_sq = [4, 4]
 
-    # euclidean metric
+    # Euclidean metric
     idx, vals = pairwise_distances_argmin_min(X, Y, metric="euclidean")
     idx2 = pairwise_distances_argmin(X, Y, metric="euclidean")
     assert_array_almost_equal(idx, expected_idx)
     assert_array_almost_equal(idx2, expected_idx)
     assert_array_almost_equal(vals, expected_vals)
+
     # sparse matrix case
     idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="euclidean")
     assert_array_almost_equal(idxsp, expected_idx)
@@ -455,14 +457,26 @@ def test_pairwise_distances_argmin_min():
     assert type(idxsp) == np.ndarray
     assert type(valssp) == np.ndarray
 
-    # euclidean metric squared
-    idx, vals = pairwise_distances_argmin_min(
-        X,
-        Y,
-        metric="fast_euclidean",
-    )
+    # Squared Euclidean metric
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="sqeuclidean")
+    idx2 = pairwise_distances_argmin(X, Y, metric="sqeuclidean")
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(vals, expected_vals_sq)
+    assert_array_almost_equal(idx2, expected_idx)
+
+    # Fast Euclidean metric
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="fast_euclidean")
+    idx2 = pairwise_distances_argmin(X, Y, metric="fast_euclidean")
     assert_array_almost_equal(idx, expected_idx)
     assert_array_almost_equal(vals, expected_vals)
+    assert_array_almost_equal(idx2, expected_idx)
+
+    # Fast Squared Euclidean metric
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="fast_sqeuclidean")
+    idx2 = pairwise_distances_argmin(X, Y, metric="fast_sqeuclidean")
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(vals, expected_vals_sq)
+    assert_array_almost_equal(idx2, expected_idx)
 
     # Non-euclidean scikit-learn metric
     idx, vals = pairwise_distances_argmin_min(X, Y, metric="manhattan")
