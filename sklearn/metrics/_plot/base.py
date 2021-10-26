@@ -11,11 +11,11 @@ from ...utils.validation import check_is_fitted
 def _check_estimator_target(estimator, y):
     """Helper to check that estimator is a binary classifier and y is binary.
 
-    This function is aside from the class `BaseBinaryClassifierCurveDisplay`
+    This function is aside from the class `BinaryClassifierCurveDisplayMixin`
     below because it allows to have consistent error messages between the
     displays and the plotting functions.
 
-    FIXME: Move into `BaseBinaryClassifierCurveDisplay.from_estimator` when
+    FIXME: Move into `BinaryClassifierCurveDisplayMixin.from_estimator` when
     the plotting functions will be removed in 1.2.
     """
     try:
@@ -44,8 +44,12 @@ def _check_estimator_target(estimator, y):
         )
 
 
-class BaseBinaryClassifierCurveDisplay:
-    """xxx"""
+class BinaryClassifierCurveDisplayMixin:
+    """Mixin class to be used in Displays requiring a binary classifier.
+
+    The aim of this class is to make some validations regarding the estimator and the
+    target and gather the response of the estimator.
+    """
 
     def plot(self, *, name=None):
         check_matplotlib_support(f"{self.__class__.__name__}.plot")

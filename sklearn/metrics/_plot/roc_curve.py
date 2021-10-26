@@ -1,4 +1,4 @@
-from .base import BaseBinaryClassifierCurveDisplay, _check_estimator_target
+from .base import BinaryClassifierCurveDisplayMixin, _check_estimator_target
 
 from .. import auc
 from .. import roc_curve
@@ -6,7 +6,7 @@ from .. import roc_curve
 from ...utils import _get_response, check_matplotlib_support, deprecated
 
 
-class RocCurveDisplay(BaseBinaryClassifierCurveDisplay):
+class RocCurveDisplay(BinaryClassifierCurveDisplayMixin):
     """ROC Curve visualization.
 
     It is recommend to use

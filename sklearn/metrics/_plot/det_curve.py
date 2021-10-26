@@ -1,6 +1,6 @@
 import scipy as sp
 
-from .base import BaseBinaryClassifierCurveDisplay, _check_estimator_target
+from .base import BinaryClassifierCurveDisplayMixin, _check_estimator_target
 
 from .. import det_curve
 
@@ -11,7 +11,7 @@ from ...utils import (
 from ...utils import deprecated
 
 
-class DetCurveDisplay(BaseBinaryClassifierCurveDisplay):
+class DetCurveDisplay(BinaryClassifierCurveDisplayMixin):
     """DET curve visualization.
 
     It is recommend to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`

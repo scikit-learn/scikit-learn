@@ -27,7 +27,7 @@ from .base import (
     MetaEstimatorMixin,
 )
 from .metrics._base import _check_pos_label_consistency
-from .metrics._plot.base import BaseBinaryClassifierCurveDisplay
+from .metrics._plot.base import BinaryClassifierCurveDisplayMixin
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
     column_or_1d,
@@ -985,7 +985,7 @@ def calibration_curve(
     return prob_true, prob_pred
 
 
-class CalibrationDisplay(BaseBinaryClassifierCurveDisplay):
+class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
     """Calibration curve (also known as reliability diagram) visualization.
 
     It is recommended to use

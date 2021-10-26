@@ -1,4 +1,4 @@
-from .base import BaseBinaryClassifierCurveDisplay, _check_estimator_target
+from .base import BinaryClassifierCurveDisplayMixin, _check_estimator_target
 
 from .. import average_precision_score
 from .. import precision_recall_curve
@@ -6,7 +6,7 @@ from .. import precision_recall_curve
 from ...utils import _get_response, check_matplotlib_support, deprecated
 
 
-class PrecisionRecallDisplay(BaseBinaryClassifierCurveDisplay):
+class PrecisionRecallDisplay(BinaryClassifierCurveDisplayMixin):
     """Precision Recall visualization.
 
     It is recommend to use
