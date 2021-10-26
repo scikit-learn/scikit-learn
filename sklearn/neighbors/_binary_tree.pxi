@@ -153,11 +153,16 @@ import numpy as np
 import warnings
 from ..utils import check_array
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from ._typedefs import DTYPE, ITYPE
+from sklearn.utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+from sklearn.utils._typedefs import DTYPE, ITYPE
 
-from ._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
-                             euclidean_dist_to_rdist, euclidean_rdist_to_dist)
+from ..metrics._dist_metrics cimport (
+    DistanceMetric,
+    euclidean_dist,
+    euclidean_rdist,
+    euclidean_dist_to_rdist,
+    euclidean_rdist_to_dist,
+)
 
 from ._partition_nodes cimport partition_node_indices
 
@@ -878,7 +883,7 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS
-from ._dist_metrics import get_valid_metric_ids
+from sklearn.metrics._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 

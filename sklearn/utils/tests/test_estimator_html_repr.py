@@ -1,4 +1,5 @@
 from contextlib import closing
+import html
 from io import StringIO
 
 import pytest
@@ -278,3 +279,14 @@ def test_one_estimator_print_change_only(print_changed_only):
         pca_repr = str(pca)
         html_output = estimator_html_repr(pca)
         assert pca_repr in html_output
+
+
+def test_fallback_exists():
+    """Check that repr fallback is in the HTML."""
+    pca = PCA(n_components=10)
+    html_output = estimator_html_repr(pca)
+
+    assert (
+        f'<div class="sk-text-repr-fallback"><pre>{html.escape(str(pca))}'
+        in html_output
+    )
