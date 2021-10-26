@@ -199,8 +199,7 @@ class DetCurveDisplay:
         ax=None,
         **kwargs,
     ):
-        """Plot DET curve given the true and
-        predicted labels.
+        """Plot DET curve given the true and predicted labels.
 
         Read more in the :ref:`User Guide <visualizations>`.
 
