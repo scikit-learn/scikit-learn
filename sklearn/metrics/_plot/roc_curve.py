@@ -3,7 +3,7 @@ from .base import BinaryClassifierCurveDisplayMixin, _check_estimator_target
 from .. import auc
 from .. import roc_curve
 
-from ...utils import _get_response, check_matplotlib_support, deprecated
+from ...utils import _get_response_values, check_matplotlib_support, deprecated
 
 
 class RocCurveDisplay(BinaryClassifierCurveDisplayMixin):
@@ -82,7 +82,7 @@ class RocCurveDisplay(BinaryClassifierCurveDisplayMixin):
         self.pos_label = pos_label
 
     def plot(self, ax=None, *, name=None, **kwargs):
-        """Plot visualization
+        """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's ``plot``.
 
@@ -454,7 +454,7 @@ def plot_roc_curve(
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]
 
-    y_pred, pos_label = _get_response(
+    y_pred, pos_label = _get_response_values(
         estimator, X, y, response_method, pos_label=pos_label
     )
 

@@ -1248,7 +1248,7 @@ def all_estimators(type_filter=None):
     return sorted(set(estimators), key=itemgetter(0))
 
 
-def _get_response(
+def _get_response_values(
     estimator,
     X,
     y_true,

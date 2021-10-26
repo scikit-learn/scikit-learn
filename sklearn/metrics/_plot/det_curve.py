@@ -5,7 +5,7 @@ from .base import BinaryClassifierCurveDisplayMixin, _check_estimator_target
 from .. import det_curve
 
 from ...utils import (
-    _get_response,
+    _get_response_values,
     check_matplotlib_support,
 )
 from ...utils import deprecated
@@ -457,7 +457,7 @@ def plot_det_curve(
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]
 
-    y_pred, pos_label = _get_response(
+    y_pred, pos_label = _get_response_values(
         estimator, X, y, response_method, pos_label=pos_label
     )
 

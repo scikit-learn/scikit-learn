@@ -3,7 +3,7 @@ from .base import BinaryClassifierCurveDisplayMixin, _check_estimator_target
 from .. import average_precision_score
 from .. import precision_recall_curve
 
-from ...utils import _get_response, check_matplotlib_support, deprecated
+from ...utils import _get_response_values, check_matplotlib_support, deprecated
 
 
 class PrecisionRecallDisplay(BinaryClassifierCurveDisplayMixin):
@@ -428,7 +428,7 @@ def plot_precision_recall_curve(
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]
 
-    y_pred, pos_label = _get_response(
+    y_pred, pos_label = _get_response_values(
         estimator, X, y, response_method, pos_label=pos_label
     )
 
