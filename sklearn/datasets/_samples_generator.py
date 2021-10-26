@@ -1247,8 +1247,8 @@ def make_sparse_coded_signal(
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix Y = DX, such as D is (n_features, n_components),
-    X is (n_components, n_samples) and each column of X has exactly
+    Returns a matrix Y = XD, such as  X is (n_samples, n_components),
+    D is (n_components, n_features) and each row of X has exactly
     n_nonzero_coefs non-zero elements.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -1279,44 +1279,45 @@ def make_sparse_coded_signal(
 
     Returns
     -------
-    data : ndarray of shape (n_features, n_samples)
+    data : ndarray of shape (n_samples, n_features)
         The encoded signal (Y).
 
-    dictionary : ndarray of shape (n_features, n_components)
+    dictionary : ndarray of shape (n_components, n_features)
         The dictionary with normalized components (D).
 
-    code : ndarray of shape (n_components, n_samples)
-        The sparse code such that each column of this matrix has exactly
+    code : ndarray of shape (n_samples, n_components)
+        The sparse code such that each row of this matrix has exactly
         n_nonzero_coefs non-zero items (X).
 
     """
     generator = check_random_state(random_state)
 
     # generate dictionary
-    D = generator.randn(n_features, n_components)
+    D = generator.randn(n_components, n_features)
     D /= np.sqrt(np.sum((D ** 2), axis=0))
 
     # generate code
-    X = np.zeros((n_components, n_samples))
+    X = np.zeros((n_samples, n_components))
     for i in range(n_samples):
         idx = np.arange(n_components)
         generator.shuffle(idx)
         idx = idx[:n_nonzero_coefs]
-        X[idx, i] = generator.randn(n_nonzero_coefs)
+        X[i, idx] = generator.randn(n_nonzero_coefs)
 
     # encode signal
-    Y = np.dot(D, X)
+    Y = np.dot(X, D)
 
     # raise warning if data_transposed is not passed explicitly
     if data_transposed == "deprecated":
+        data_transposed = True
         warnings.warn(
             "The default value of data_transposed will change from True to False",
             FutureWarning,
         )
 
     # transpose if needed
-    if not data_transposed:
-        X = X.T
+    if data_transposed:
+        (Y, D, X) = map(np.transpose, (Y, D, X))
 
     return map(np.squeeze, (Y, D, X))
 
