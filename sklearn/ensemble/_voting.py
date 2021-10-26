@@ -23,6 +23,8 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
+from ..base import _check_feature_names_in
+
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
@@ -143,6 +145,14 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     def _more_tags(self):
         return {"preserves_dtype": []}
+
+    def get_feature_names_out(self, input_features=None):
+        _check_feature_names_in(self, input_features)
+        class_name = self.__class__.__name__.lower()
+        return np.asarray(
+            [f"{class_name}{i}" for i in range(len(self.estimators_))],
+            dtype=object,
+        )
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):

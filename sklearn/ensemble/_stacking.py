@@ -13,6 +13,8 @@ import scipy.sparse as sparse
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
+from ..base import _check_feature_names_in
+
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 
@@ -276,6 +278,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             "parallel", [final_estimator], names=["final_estimator"], dash_wrapped=False
         )
         return _VisualBlock("serial", (parallel, final_block), dash_wrapped=False)
+
+    def get_feature_names_out(self, input_features=None):
+        _check_feature_names_in(self, input_features)
+        class_name = self.__class__.__name__.lower()
+        return np.asarray(
+            [f"{class_name}{i}" for i in range(len(self.estimators_))],
+            dtype=object,
+        )
 
 
 class StackingClassifier(ClassifierMixin, _BaseStacking):
