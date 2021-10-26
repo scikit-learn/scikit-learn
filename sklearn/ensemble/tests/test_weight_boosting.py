@@ -554,13 +554,17 @@ def test_adaboostregressor_sample_weight():
     [
         ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
         ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be >= 1."),
-        ({"algorithm": "unknown"}, ValueError, "Algorithm must be 'SAMME' or 'SAMME.R'.")
+        (
+            {"algorithm": "unknown"},
+            ValueError,
+            "Algorithm must be 'SAMME' or 'SAMME.R'.",
+        ),
     ],
 )
 def test_adaboost_classifier_params_validation(params, err_type, err_msg):
     """Check the parameters validation in `AdaBoostClassifier`."""
     with pytest.raises(err_type, match=err_msg):
-        AdaBoostClassifier(**params).fit(X, y_class) # args are from toy sample
+        AdaBoostClassifier(**params).fit(X, y_class)  # args are from toy sample
 
 
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
