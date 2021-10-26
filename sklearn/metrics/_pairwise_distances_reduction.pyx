@@ -13,6 +13,12 @@
 # The routines defined here are used in various algorithms performing
 # the same structure of operations on distances between vectors
 # of a datasets pair (X, Y).
+#
+# Importantly, the core of the computation is chunked to make sure that the pairwise
+# distance chunk matrices stay in CPU cache before applying the final reduction step.
+# Furthermore, the chunking strategy is also used to leverage OpenMP-based parallelism
+# (using Cython prange loops) which gives another multiplicative speed-up in
+# favorable cases on many-core machines.
 
 cimport numpy as np
 import numpy as np
