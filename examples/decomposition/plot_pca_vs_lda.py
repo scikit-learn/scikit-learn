@@ -15,8 +15,8 @@ plot the different samples on the 2 first principal components.
 Linear Discriminant Analysis (LDA) tries to identify attributes that
 account for the most variance *between classes*. In particular,
 LDA, in contrast to PCA, is a supervised method, using known class labels.
+
 """
-print(__doc__)
 
 import matplotlib.pyplot as plt
 

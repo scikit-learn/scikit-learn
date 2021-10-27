@@ -32,7 +32,6 @@ label.
              :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
