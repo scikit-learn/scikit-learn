@@ -61,7 +61,7 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Enhancement| Adds `vocabulary_count_` to :class:`feature_extraction.CountVectorizer`, which maps
+- |Enhancement| Adds `vocabulary_count_` to :class:`feature_extraction.text.CountVectorizer`, which maps
   each vocabulary term to a count of its occurrence. :pr:`21458` by :user:`Christian Allinson <caallinson>`
 
 :mod:`sklearn.impute`
