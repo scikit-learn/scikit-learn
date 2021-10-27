@@ -1232,7 +1232,7 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
         """
-        y_prob, _, name = super().from_estimator(
+        y_prob, pos_label, name = super().from_estimator(
             estimator,
             X,
             y,
@@ -1350,7 +1350,7 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()
         """
-        _, name = super().from_predictions(
+        pos_label, name = super().from_predictions(
             y_true,
             y_prob,
             pos_label=pos_label,
