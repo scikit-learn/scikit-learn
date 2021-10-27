@@ -1056,7 +1056,7 @@ def linear_kernel(X, Y=None, dense_output=True):
         A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        A second feature array. If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     dense_output : bool, default=True
         Whether to return dense output even when the input is sparse. If
