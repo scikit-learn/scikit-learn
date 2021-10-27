@@ -38,7 +38,8 @@ n_features = 1000
 n_components = 10
 n_top_words = 20
 batch_size = 512
-init = 'nndsvda'
+init = "nndsvda"
+
 
 def plot_top_words(model, feature_names, n_top_words, title):
     fig, axes = plt.subplots(2, 5, figsize=(30, 15), sharex=True)
@@ -102,7 +103,9 @@ print(
     "n_samples=%d and n_features=%d..." % (n_samples, n_features)
 )
 t0 = time()
-nmf = NMF(n_components=n_components, random_state=1, init=init, alpha=0.1, l1_ratio=0.5).fit(tfidf)
+nmf = NMF(
+    n_components=n_components, random_state=1, init=init, alpha=0.1, l1_ratio=0.5
+).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
 
@@ -119,56 +122,94 @@ print(
     % (n_samples, n_features),
 )
 t0 = time()
-nmf = NMF(n_components=n_components, random_state=1, init=init,
-          beta_loss='kullback-leibler', solver='mu', max_iter=1000, alpha=.1,
-          l1_ratio=.5).fit(tfidf)
+nmf = NMF(
+    n_components=n_components,
+    random_state=1,
+    init=init,
+    beta_loss="kullback-leibler",
+    solver="mu",
+    max_iter=1000,
+    alpha=0.1,
+    l1_ratio=0.5,
+).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
 tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-plot_top_words(nmf, tfidf_feature_names, n_top_words,
-               'Topics in NMF model (generalized Kullback-Leibler divergence)')
+plot_top_words(
+    nmf,
+    tfidf_feature_names,
+    n_top_words,
+    "Topics in NMF model (generalized Kullback-Leibler divergence)",
+)
 
 # Fit the MiniBatchNMF model
-print('\n' * 2, "Fitting the MiniBatchNMF model (Frobenius norm) with tf-idf "
-      "features, n_samples=%d and n_features=%d, batch_size=%d..."
-      % (n_samples, n_features, batch_size))
+print(
+    "\n" * 2,
+    "Fitting the MiniBatchNMF model (Frobenius norm) with tf-idf "
+    "features, n_samples=%d and n_features=%d, batch_size=%d..."
+    % (n_samples, n_features, batch_size),
+)
 t0 = time()
 mbnmf = MiniBatchNMF(
-            n_components=n_components, random_state=1, init=init,
-            batch_size=batch_size, alpha=.1, l1_ratio=.5
-        ).fit(tfidf)
+    n_components=n_components,
+    random_state=1,
+    init=init,
+    batch_size=batch_size,
+    alpha=0.1,
+    l1_ratio=0.5,
+).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
 
 tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-plot_top_words(mbnmf, tfidf_feature_names, n_top_words,
-               'Topics in MiniBatchNMF model (Frobenius norm)')
+plot_top_words(
+    mbnmf,
+    tfidf_feature_names,
+    n_top_words,
+    "Topics in MiniBatchNMF model (Frobenius norm)",
+)
 
 # Fit the MiniBatchNMF model
-print('\n' * 2, "Fitting the MiniBatchNMF model (generalized Kullback-Leibler "
-      "divergence) with tf-idf features, n_samples=%d and n_features=%d, "
-      "batch_size=%d..."
-      % (n_samples, n_features, batch_size))
+print(
+    "\n" * 2,
+    "Fitting the MiniBatchNMF model (generalized Kullback-Leibler "
+    "divergence) with tf-idf features, n_samples=%d and n_features=%d, "
+    "batch_size=%d..." % (n_samples, n_features, batch_size),
+)
 t0 = time()
 mbnmf = MiniBatchNMF(
-            n_components=n_components, random_state=1, batch_size=batch_size,
-            beta_loss='kullback-leibler', solver='mu', max_iter=1000, alpha=.1,
-            l1_ratio=.5, init=init
-        ).fit(tfidf)
+    n_components=n_components,
+    random_state=1,
+    batch_size=batch_size,
+    beta_loss="kullback-leibler",
+    solver="mu",
+    max_iter=1000,
+    alpha=0.1,
+    l1_ratio=0.5,
+    init=init,
+).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
 tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-plot_top_words(mbnmf, tfidf_feature_names, n_top_words,
-               'Topics in MiniBatchNMF model (generalized '
-               'Kullback-Leibler divergence)')
+plot_top_words(
+    mbnmf,
+    tfidf_feature_names,
+    n_top_words,
+    "Topics in MiniBatchNMF model (generalized Kullback-Leibler divergence)",
+)
 
-print('\n' * 2, "Fitting LDA models with tf features, "
-      "n_samples=%d and n_features=%d..."
-      % (n_samples, n_features))
-lda = LatentDirichletAllocation(n_components=n_components, max_iter=5,
-                                learning_method='online',
-                                learning_offset=50.,
-                                random_state=0)
+print(
+    "\n" * 2,
+    "Fitting LDA models with tf features, n_samples=%d and n_features=%d..."
+    % (n_samples, n_features),
+)
+lda = LatentDirichletAllocation(
+    n_components=n_components,
+    max_iter=5,
+    learning_method="online",
+    learning_offset=50.0,
+    random_state=0,
+)
 t0 = time()
 lda.fit(tf)
 print("done in %0.3fs." % (time() - t0))
