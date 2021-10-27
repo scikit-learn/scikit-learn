@@ -283,19 +283,24 @@ def test_dict_learning_split():
 def test_dict_learning_online_shapes():
     rng = np.random.RandomState(0)
     n_components = 8
-    code, dictionary = dict_learning_online(
-        X, n_components=n_components, batch_size=4, alpha=1, random_state=rng
+
+    code, dictionary, _, _ = dict_learning_online(
+        X, n_components=n_components, batch_size=4, max_iter=10, random_state=rng, return_code=True
     )
     assert code.shape == (n_samples, n_components)
     assert dictionary.shape == (n_components, n_features)
     assert np.dot(code, dictionary).shape == X.shape
 
+    dictionary, _, _ = dict_learning_online(
+        X, n_components=n_components, batch_size=4, max_iter=10, random_state=rng, return_code=False
+    )
+    assert dictionary.shape == (n_components, n_features)
+
 
 def test_dict_learning_online_lars_positive_parameter():
-    alpha = 1
     err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        dict_learning_online(X, batch_size=4, alpha=alpha, positive_code=True)
+        dict_learning_online(X, batch_size=4, max_iter=10, positive_code=True)
 
 
 @pytest.mark.parametrize(
@@ -772,3 +777,12 @@ def test_warning_default_transform_alpha(Estimator):
     dl = Estimator(alpha=0.1)
     with pytest.warns(FutureWarning, match="default transform_alpha"):
         dl.fit_transform(X)
+
+
+# FIXME: remove in 1.3
+def test_dict_learning_online_n_iter_deprecated():
+    # Check that an error is raised when a deprecated argument is set when max_iter
+    # is also set.
+    msg = "the following args are incompatible with 'max_iter'"
+    with pytest.raises(ValueError, match=msg):
+        dict_learning_online(X, max_iter=10, return_inner_stats=True)

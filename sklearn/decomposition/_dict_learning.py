@@ -2041,10 +2041,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._fit_algorithm = "lasso_" + self.fit_algorithm
 
         # batch_size
-        if hasattr(self, "_batch_size") and self._batch_size <= 0:
-            raise ValueError(
-                f"batch_size should be > 0, got {self._batch_size} instead."
-            )
+        if hasattr(self, "_batch_size"):
+            if self._batch_size <= 0:
+                raise ValueError(
+                    f"batch_size should be > 0, got {self._batch_size} instead."
+                )
             self._batch_size = min(self._batch_size, X.shape[0])
 
         # n_iter
@@ -2150,7 +2151,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # Ignore first iteration because dictionary is not projected on the
         # constraint set yet.
-        if step <= 10:
+        if step <= 1:
             if self.verbose:
                 print(f"Minibatch step {step}/{n_steps}: mean batch cost: {batch_cost}")
             return False
