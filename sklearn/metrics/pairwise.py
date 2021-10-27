@@ -1067,7 +1067,7 @@ def linear_kernel(X, Y=None, dense_output=True):
     Returns
     -------
     Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
-        The Gram matrix of the linear kernel, i.e. X.T * Y.
+        The Gram matrix of the linear kernel, i.e. `X.T @ Y`.
     """
     X, Y = check_pairwise_arrays(X, Y)
     return safe_sparse_dot(X, Y.T, dense_output=dense_output)
