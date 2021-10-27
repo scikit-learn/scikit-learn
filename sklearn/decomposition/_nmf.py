@@ -2256,9 +2256,7 @@ class MiniBatchNMF(NMF):
             Number of mini-batches processed.
         """
         check_non_negative(X, "NMF (input X)")
-        X, val = X[:-1000], X[-1000:]
         self._check_params(X)
-        random_state = check_random_state(self.random_state)
 
         if X.min() == 0 and self._beta_loss <= 0:
             raise ValueError(
