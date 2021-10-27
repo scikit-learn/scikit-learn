@@ -823,16 +823,17 @@ def test_calibration_curve_pos_label(dtype_y_str):
     assert_allclose(prob_true, [0, 0, 0.5, 1])
 
 
-def test_calibration_display_pos_label(pyplot, iris_data_binary):
+@pytest.mark.parametrize("pos_label, expected_pos_label", [(None, 1), (0, 0), (1, 1)])
+def test_calibration_display_pos_label(
+    pyplot, iris_data_binary, pos_label, expected_pos_label
+):
     """Check the behaviour of `pos_label` in the `CalibrationDisplay`."""
     X, y = iris_data_binary
 
     lr = LogisticRegression().fit(X, y)
-
-    pos_label = 0
     viz = CalibrationDisplay.from_estimator(lr, X, y, pos_label=pos_label)
 
-    y_prob = lr.predict_proba(X)[:, pos_label]
+    y_prob = lr.predict_proba(X)[:, expected_pos_label]
     prob_true, prob_pred = calibration_curve(y, y_prob, pos_label=pos_label)
 
     assert_allclose(viz.prob_true, prob_true)
@@ -841,10 +842,11 @@ def test_calibration_display_pos_label(pyplot, iris_data_binary):
 
     assert (
         viz.ax_.get_xlabel()
-        == f"Mean predicted probability (Positive class: {pos_label})"
+        == f"Mean predicted probability (Positive class: {expected_pos_label})"
     )
     assert (
-        viz.ax_.get_ylabel() == f"Fraction of positives (Positive class: {pos_label})"
+        viz.ax_.get_ylabel()
+        == f"Fraction of positives (Positive class: {expected_pos_label})"
     )
     assert viz.line_.get_label() == "LogisticRegression"
 
