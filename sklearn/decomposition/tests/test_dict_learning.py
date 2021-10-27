@@ -671,7 +671,7 @@ def test_sparse_coder_n_features_in():
         ({"batch_size": 0}, "batch_size should be > 0"),
         ({"n_iter": -1}, "n_iter should be >= 0"),
         ({"max_iter": -1}, "max_iter should be >= 0"),
-        ({"max_no_improvement": -1}, "max_no_improvement should be >= 0")
+        ({"max_no_improvement": -1}, "max_no_improvement should be >= 0"),
     ],
 )
 def test_minibatch_dict_learning_wrong_params(param, match):
