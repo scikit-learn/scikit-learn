@@ -300,11 +300,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             n_classes = len(self.classes_)
             predictions = _compute_predictions(pred_method, method_name, X, n_classes)
 
-            self.class_weight_ = compute_class_weight(
-                self.class_weight, classes=self.classes_, y=y
-            )
-            label_encoder_ = LabelEncoder()
-            sample_weight *= self.class_weight_[label_encoder_.fit_transform(y)]
+            if self.class_weight is not None:
+                self.class_weight_ = compute_class_weight(
+                    self.class_weight, classes=self.classes_, y=y
+                )
+                label_encoder_ = LabelEncoder()
+                sample_weight *= self.class_weight_[label_encoder_.fit_transform(y)]
 
             calibrated_classifier = _fit_calibrator(
                 base_estimator,
@@ -336,12 +337,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "incorrect."
                 )
 
-            # build sample weights for calibrator
-            self.class_weight_ = compute_class_weight(
-                self.class_weight, classes=self.classes_, y=y
-            )
-            label_encoder_ = LabelEncoder()
-            sample_weight *= self.class_weight_[label_encoder_.fit_transform(y)]
+            if self.class_weight is not None:
+                # build sample weights for calibrator
+                self.class_weight_ = compute_class_weight(
+                    self.class_weight, classes=self.classes_, y=y
+                )
+                label_encoder_ = LabelEncoder()
+                sample_weight *= self.class_weight_[label_encoder_.fit_transform(y)]
 
             # Check that each cross-validation fold can have at least one
             # example per class
