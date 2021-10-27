@@ -90,12 +90,14 @@ def _weight_func(dist):
 @pytest.mark.parametrize("n_features", [5, 100])
 @pytest.mark.parametrize("n_query_pts", [10, 100])
 @pytest.mark.parametrize("n_neighbors", [1, 10, 100])
+@pytest.mark.parametrize("query_is_train", [False, True])
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 def test_unsupervised_kneighbors(
     n_samples,
     n_features,
     n_query_pts,
     n_neighbors,
+    query_is_train,
     metric,
 ):
     # The different algorithms must return identical results
@@ -106,7 +108,7 @@ def test_unsupervised_kneighbors(
     local_rng = np.random.RandomState(0)
     X = local_rng.rand(n_samples, n_features)
 
-    test = local_rng.rand(n_query_pts, n_features)
+    query = X if query_is_train else local_rng.rand(n_query_pts, n_features)
 
     results_nodist = []
     results = []
@@ -117,8 +119,8 @@ def test_unsupervised_kneighbors(
         )
         neigh.fit(X)
 
-        results_nodist.append(neigh.kneighbors(test, return_distance=False))
-        results.append(neigh.kneighbors(test, return_distance=True))
+        results_nodist.append(neigh.kneighbors(query, return_distance=False))
+        results.append(neigh.kneighbors(query, return_distance=True))
 
     for i in range(len(results) - 1):
         algorithm = ALGORITHMS[i]
