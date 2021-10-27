@@ -2307,7 +2307,9 @@ class MiniBatchNMF(NMF):
             t += end - start
 
             ### *** ###
-            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X[batch])
+            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(
+                X[batch]
+            )
             batch_cost2 = (
                 _beta_divergence(X[batch], W[batch], H, self._beta_loss)
                 + l1_reg_W * W[batch].sum()
@@ -2317,7 +2319,9 @@ class MiniBatchNMF(NMF):
             )
             batch_cost2 /= X[batch].shape[0]
 
-            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X[batch])
+            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(
+                X[batch]
+            )
             W_batch = self._solve_W(X[batch], H, self._transform_max_iter)
             batch_cost2_solved = (
                 _beta_divergence(X[batch], W_batch, H, self._beta_loss)
@@ -2364,8 +2368,18 @@ class MiniBatchNMF(NMF):
             H_diff = np.mean(linalg.norm(H - H_buffer, axis=1) / linalg.norm(H, axis=1))
             # print(f"[{i},{t},{batch_cost2},{self._ewa_cost},{train_cost},{batch_cost2_solved},"
             #       f"{train_cost_solved},{val_cost},{H_diff}],")
-            self.res_.append([i,t,batch_cost2,train_cost,batch_cost2_solved,
-                              train_cost_solved,val_cost,H_diff])
+            self.res_.append(
+                [
+                    i,
+                    t,
+                    batch_cost2,
+                    train_cost,
+                    batch_cost2_solved,
+                    train_cost_solved,
+                    val_cost,
+                    H_diff,
+                ]
+            )
             ### *** ###
 
             if update_H and self._minibatch_convergence(
