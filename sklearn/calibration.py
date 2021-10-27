@@ -1016,9 +1016,9 @@ class CalibrationDisplay:
         Name of estimator. If None, the estimator name is not shown.
 
     pos_label : str or int, default=None
-        The class considered as the positive class when computing the
-        calibration curve. By default, `estimators.classes_[1]` is considered
-        as the positive class.
+        The positive class when computing the calibration curve.
+        By default, `estimators.classes_[1]` is considered as the
+        positive class.
 
         .. versionadded:: 1.1
 
@@ -1106,7 +1106,7 @@ class CalibrationDisplay:
 
         name = self.estimator_name if name is None else name
         info_pos_label = (
-            f" (Positive class: {self.pos_label})" if self.pos_label is not None else ""
+            f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         line_kwargs = {}
@@ -1123,8 +1123,8 @@ class CalibrationDisplay:
         if "label" in line_kwargs:
             ax.legend(loc="lower right")
 
-        xlabel = "Mean predicted probability" + info_pos_label
-        ylabel = "Fraction of positives" + info_pos_label
+        xlabel = f"Mean predicted probability {info_pos_label}"
+        ylabel = f"Fraction of positives {info_pos_label}"
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
         self.ax_ = ax
@@ -1187,9 +1187,9 @@ class CalibrationDisplay:
               on predicted probabilities.
 
         pos_label : str or int, default=None
-            The class considered as the positive class when computing the
-            calibration curve. By default, `estimators.classes_[1]` is
-            considered as the positive class.
+            The positive class when computing the calibration curve.
+            By default, `estimators.classes_[1]` is considered as the
+            positive class.
 
             .. versionadded:: 1.1
 
@@ -1307,9 +1307,9 @@ class CalibrationDisplay:
               on predicted probabilities.
 
         pos_label : str or int, default=None
-            The class considered as the positive class when computing the
-            calibration curve. By default, `estimators.classes_[1]` is
-            considered as the positive class.
+            The positive class when computing the calibration curve.
+            By default, `estimators.classes_[1]` is considered as the
+            positive class.
 
             .. versionadded:: 1.1
 
