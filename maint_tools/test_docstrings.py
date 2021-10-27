@@ -11,12 +11,6 @@ import sklearn
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
-# List of modules ignored when checking for numpydoc validation.
-DOCSTRING_IGNORE_LIST = [
-    "SpectralCoclustering",
-    "StackingRegressor",
-]
-
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn._config.config_context",
     "sklearn._config.get_config",
@@ -94,7 +88,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.linear_model._ridge.ridge_regression",
     "sklearn.manifold._locally_linear.locally_linear_embedding",
     "sklearn.manifold._t_sne.trustworthiness",
-    "sklearn.metrics._classification.accuracy_score",
     "sklearn.metrics._classification.balanced_accuracy_score",
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.classification_report",
@@ -102,14 +95,12 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._classification.confusion_matrix",
     "sklearn.metrics._classification.f1_score",
     "sklearn.metrics._classification.fbeta_score",
-    "sklearn.metrics._classification.hamming_loss",
     "sklearn.metrics._classification.hinge_loss",
     "sklearn.metrics._classification.jaccard_score",
     "sklearn.metrics._classification.log_loss",
     "sklearn.metrics._classification.precision_recall_fscore_support",
     "sklearn.metrics._classification.precision_score",
     "sklearn.metrics._classification.recall_score",
-    "sklearn.metrics._classification.zero_one_loss",
     "sklearn.metrics._plot.confusion_matrix.plot_confusion_matrix",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
@@ -169,7 +160,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
     "sklearn.model_selection._split.check_cv",
-    "sklearn.model_selection._validation.cross_val_score",
     "sklearn.model_selection._validation.cross_validate",
     "sklearn.model_selection._validation.learning_curve",
     "sklearn.model_selection._validation.permutation_test_score",
@@ -427,11 +417,6 @@ def test_docstring(Estimator, method, request):
         import_path.append(method)
 
     import_path = ".".join(import_path)
-
-    if Estimator.__name__ in DOCSTRING_IGNORE_LIST:
-        request.applymarker(
-            pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
-        )
 
     res = numpydoc_validation.validate(import_path)
 

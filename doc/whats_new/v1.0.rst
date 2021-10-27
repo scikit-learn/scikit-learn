@@ -2,6 +2,26 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_0_2:
+
+Version 1.0.2
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed the constraint on the objective function of
+  :class:`decomposition.DictionaryLearning`,
+  :class:`decomposition.MiniBatchDictionaryLearning`, :class:`decomposition.SparsePCA`
+  and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
+  article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+
 .. _changes_1_0_1:
 
 Version 1.0.1
