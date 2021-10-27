@@ -1013,6 +1013,13 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
+    pos_label : str or int, default=None
+        The positive class when computing the calibration curve.
+        By default, `estimators.classes_[1]` is considered as the
+        positive class.
+
+        .. versionadded:: 1.1
+
     Attributes
     ----------
     line_ : matplotlib Artist
@@ -1052,11 +1059,14 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
     <...>
     """
 
-    def __init__(self, prob_true, prob_pred, y_prob, *, estimator_name=None):
+    def __init__(
+        self, prob_true, prob_pred, y_prob, *, estimator_name=None, pos_label=None
+    ):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
         self.estimator_name = estimator_name
+        self.pos_label = pos_label
 
     def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
         """Plot visualization.
@@ -1093,6 +1103,9 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
             fig, ax = plt.subplots()
 
         name = self.estimator_name if name is None else name
+        info_pos_label = (
+            f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
+        )
 
         line_kwargs = {}
         if name is not None:
@@ -1108,7 +1121,9 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
         if "label" in line_kwargs:
             ax.legend(loc="lower right")
 
-        ax.set(xlabel="Mean predicted probability", ylabel="Fraction of positives")
+        xlabel = f"Mean predicted probability {info_pos_label}"
+        ylabel = f"Fraction of positives {info_pos_label}"
+        ax.set(xlabel=xlabel, ylabel=ylabel)
 
         self.ax_ = ax
         self.figure_ = ax.figure
@@ -1123,6 +1138,7 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
         *,
         n_bins=5,
         strategy="uniform",
+        pos_label=None,
         name=None,
         ref_line=True,
         ax=None,
@@ -1168,6 +1184,13 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
 
+        pos_label : str or int, default=None
+            The positive class when computing the calibration curve.
+            By default, `estimators.classes_[1]` is considered as the
+            positive class.
+
+            .. versionadded:: 1.1
+
         name : str, default=None
             Name for labeling curve. If `None`, the name of the estimator is
             used.
@@ -1209,14 +1232,12 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
         """
-        # FIXME: `pos_label` should not be set to None
-        # We should allow any int or string in `calibration_curve`.
         y_prob, _, name = super().from_estimator(
             estimator,
             X,
             y,
             response_method="predict_proba",
-            pos_label=None,
+            pos_label=pos_label,
             name=name,
         )
 
@@ -1225,6 +1246,7 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
             y_prob,
             n_bins=n_bins,
             strategy=strategy,
+            pos_label=pos_label,
             name=name,
             ref_line=ref_line,
             ax=ax,
@@ -1239,6 +1261,7 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
         *,
         n_bins=5,
         strategy="uniform",
+        pos_label=None,
         name=None,
         ref_line=True,
         ax=None,
@@ -1278,6 +1301,13 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
+
+        pos_label : str or int, default=None
+            The positive class when computing the calibration curve.
+            By default, `estimators.classes_[1]` is considered as the
+            positive class.
+
+            .. versionadded:: 1.1
 
         name : str, default=None
             Name for labeling curve.
@@ -1323,17 +1353,21 @@ class CalibrationDisplay(BinaryClassifierCurveDisplayMixin):
         _, name = super().from_predictions(
             y_true,
             y_prob,
-            pos_label=None,
+            pos_label=pos_label,
             name=name,
         )
 
-        # FIXME: `pos_label` should be a parameter of `calibration_curve`
         prob_true, prob_pred = calibration_curve(
-            y_true, y_prob, n_bins=n_bins, strategy=strategy
+            y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
         )
-        name = name if name is not None else "Classifier"
+        name = "Classifier" if name is None else name
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
 
         disp = cls(
-            prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob, estimator_name=name
+            prob_true=prob_true,
+            prob_pred=prob_pred,
+            y_prob=y_prob,
+            estimator_name=name,
+            pos_label=pos_label,
         )
         return disp.plot(ax=ax, ref_line=ref_line, **kwargs)
