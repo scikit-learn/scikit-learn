@@ -1029,7 +1029,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         A mapping of terms to feature indices.
 
     vocabulary_count_ : dict
-        A mapping of terms to a count of their usage.
+        A mapping of terms to a count of their occurrence.
 
     fixed_vocabulary_ : bool
         True if a fixed vocabulary of term to indices mapping
@@ -1356,7 +1356,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         self.vocabulary_count_ = dict(
             zip(
-                [z[0] for z in sorted(self.vocabulary_.items(), key=itemgetter(1))],
+                [t for t, _ in sorted(self.vocabulary_.items(), key=itemgetter(1))],
                 X.sum(axis=0).A.ravel(),
             )
         )
@@ -1875,6 +1875,9 @@ class TfidfVectorizer(CountVectorizer):
     ----------
     vocabulary_ : dict
         A mapping of terms to feature indices.
+
+    vocabulary_count_ : dict
+        A mapping of terms to a count of their occurrence.
 
     fixed_vocabulary_ : bool
         True if a fixed vocabulary of term to indices mapping

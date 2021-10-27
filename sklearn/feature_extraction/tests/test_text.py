@@ -1678,4 +1678,30 @@ def test_vocabulary_count():
         "burger": 5,
         "coke": 3,
     }
+
+    ngram_vec = CountVectorizer(ngram_range=(1, 2)).fit(JUNK_FOOD_DOCS)
+    ngram_vocabulary_count = ngram_vec.vocabulary_count_
+    ngram_vocabulary_count_truth = {
+        "beer": 6,
+        "beer beer": 2,
+        "beer copyright": 4,
+        "burger": 5,
+        "burger beer": 2,
+        "burger burger": 1,
+        "burger coke": 1,
+        "coke": 3,
+        "coke burger": 2,
+        "coke copyright": 1,
+        "copyright": 5,
+        "pizza": 4,
+        "pizza beer": 2,
+        "pizza burger": 1,
+        "pizza pizza": 1,
+        "the": 7,
+        "the burger": 1,
+        "the coke": 2,
+        "the pizza": 3,
+        "the the": 1,
+    }
     assert vocabulary_count == vocabulary_count_truth
+    assert ngram_vocabulary_count == ngram_vocabulary_count_truth
