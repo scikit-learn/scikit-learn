@@ -21,6 +21,12 @@ Changelog
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed the computation of AIC and BIC in
+  :class:`linear_model.LassoLarsIC`.
+  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_0_1:
 
