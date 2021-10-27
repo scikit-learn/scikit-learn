@@ -632,6 +632,11 @@ def _set_checking_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
+    if name == "MeanShift":
+        # In the case of check_fit2d_1sample, bandwidth is set to None and
+        # is thus estimated. De facto it is 0.0 as a single sample is provided
+        # and this makes the test fails. Hence we give it a placeholder value.
+        estimator.set_params(bandwidth=1.0)
 
     if name == "TruncatedSVD":
         # TruncatedSVD doesn't run with n_components = n_features
