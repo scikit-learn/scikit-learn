@@ -73,8 +73,11 @@ def test_classification():
     ]:
         for params in grid:
             BaggingClassifier(
-                base_estimator=base_estimator, random_state=rng,
-                n_estimators=2, **params).fit(X_train, y_train).predict(X_test)
+                base_estimator=base_estimator,
+                random_state=rng,
+                n_estimators=2,
+                **params,
+            ).fit(X_train, y_train).predict(X_test)
 
 
 @pytest.mark.parametrize(
