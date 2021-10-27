@@ -45,6 +45,10 @@ Changelog
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :class:`CalibrationDisplay` accepts a parameter `pos_label` to
+  add this information to the plot.
+  :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
