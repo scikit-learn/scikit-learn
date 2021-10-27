@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+from numpy.testing import assert_array_equal
 
 import pytest
 
@@ -706,3 +707,11 @@ def test_pca_params_validation(params, err_type, err_msg):
     X = rng.randn(100, 20)
     with pytest.raises(err_type, match=err_msg):
         PCA(**params).fit(X)
+
+
+def test_feature_names_out():
+    """Check feature names out for PCA."""
+    pca = PCA(n_components=2).fit(iris.data)
+
+    names = pca.get_feature_names_out()
+    assert_array_equal([f"pca{i}" for i in range(2)], names)

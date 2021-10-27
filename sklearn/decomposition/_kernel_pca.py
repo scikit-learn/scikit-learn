@@ -10,15 +10,18 @@ from scipy.sparse.linalg import eigsh
 
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip, _randomized_eigsh
-from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
+from ..utils.validation import (
+    check_is_fitted,
+    _check_psd_eigenvalues,
+)
 from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(TransformerMixin, BaseEstimator):
+class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Kernel Principal component analysis (KPCA).
 
     Non-linear dimensionality reduction through the use of kernels (see
@@ -546,3 +549,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             "preserves_dtype": [np.float64, np.float32],
             "pairwise": self.kernel == "precomputed",
         }
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.eigenvalues_.shape[0]
