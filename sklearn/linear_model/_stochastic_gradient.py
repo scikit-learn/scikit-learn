@@ -18,6 +18,7 @@ from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..utils import check_random_state
+from ..utils.metaestimators import available_if
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -120,26 +121,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.average = average
         self.max_iter = max_iter
         self.tol = tol
-        # current tests expect init to do parameter validation
-        # but we are not allowed to set attributes
-        self._validate_params()
-
-    def set_params(self, **kwargs):
-        """Set and validate the parameters of estimator.
-
-        Parameters
-        ----------
-        **kwargs : dict
-            Estimator parameters.
-
-        Returns
-        -------
-        self : object
-            Estimator instance.
-        """
-        super().set_params(**kwargs)
-        self._validate_params()
-        return self
 
     @abstractmethod
     def fit(self, X, y):
@@ -411,7 +392,7 @@ def fit_binary(
     C : float
         Maximum step size for passive aggressive
 
-    learning_rate : string
+    learning_rate : str
         The learning rate. Accepted values are 'constant', 'optimal',
         'invscaling', 'pa1' and 'pa2'.
 
@@ -667,19 +648,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
     ):
         self._validate_params()
         if hasattr(self, "classes_"):
-            self.classes_ = None
-
-        X, y = self._validate_data(
-            X,
-            y,
-            accept_sparse="csr",
-            dtype=np.float64,
-            order="C",
-            accept_large_sparse=False,
-        )
+            # delete the attribute otherwise _partial_fit thinks it's not the first call
+            delattr(self, "classes_")
 
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
+        y = self._validate_data(y=y)
         classes = np.unique(y)
 
         if self.warm_start and hasattr(self, "coef_"):
@@ -1107,7 +1081,7 @@ class SGDClassifier(BaseSGDClassifier):
         existing counter.
 
     average : bool or int, default=False
-        When set to True, computes the averaged SGD weights accross all
+        When set to True, computes the averaged SGD weights across all
         updates and stores the result in the ``coef_`` attribute. If set to
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
@@ -1138,6 +1112,12 @@ class SGDClassifier(BaseSGDClassifier):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1219,9 +1199,10 @@ class SGDClassifier(BaseSGDClassifier):
             raise AttributeError(
                 "probability estimates are not available for loss=%r" % self.loss
             )
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_proba)
+    def predict_proba(self, X):
         """Probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -1251,16 +1232,12 @@ class SGDClassifier(BaseSGDClassifier):
         ----------
         Zadrozny and Elkan, "Transforming classifier scores into multiclass
         probability estimates", SIGKDD'02,
-        http://www.research.ibm.com/people/z/zadrozny/kdd2002-Transf.pdf
+        https://dl.acm.org/doi/pdf/10.1145/775047.775151
 
         The justification for the formula in the loss="modified_huber"
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
-        self._check_proba()
-        return self._predict_proba
-
-    def _predict_proba(self, X):
         check_is_fitted(self)
 
         if self.loss == "log":
@@ -1306,8 +1283,8 @@ class SGDClassifier(BaseSGDClassifier):
                 % self.loss
             )
 
-    @property
-    def predict_log_proba(self):
+    @available_if(_check_proba)
+    def predict_log_proba(self, X):
         """Log of probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -1329,10 +1306,6 @@ class SGDClassifier(BaseSGDClassifier):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
-        self._check_proba()
-        return self._predict_log_proba
-
-    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
     def _more_tags(self):
@@ -1456,10 +1429,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Subset of training data
+            Subset of training data.
 
         y : numpy array of shape (n_samples,)
-            Subset of target values
+            Subset of target values.
 
         sample_weight : array-like, shape (n_samples,), default=None
             Weights applied to individual samples.
@@ -1467,7 +1440,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns an instance of self.
         """
         self._validate_params(for_partial_fit=True)
         return self._partial_fit(
@@ -1541,10 +1515,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : ndarray of shape (n_samples,)
-            Target values
+            Target values.
 
         coef_init : ndarray of shape (n_features,), default=None
             The initial coefficients to warm-start the optimization.
@@ -1557,7 +1531,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted `SGDRegressor` estimator.
         """
         return self._fit(
             X,
@@ -1591,11 +1566,12 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         return scores.ravel()
 
     def predict(self, X):
-        """Predict using the linear model
+        """Predict using the linear model.
 
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
@@ -1690,7 +1666,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
 
 class SGDRegressor(BaseSGDRegressor):
-    """Linear model fitted by minimizing a regularized empirical loss with SGD
+    """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with
@@ -1785,7 +1761,7 @@ class SGDRegressor(BaseSGDRegressor):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    learning_rate : string, default='invscaling'
+    learning_rate : str, default='invscaling'
         The learning rate schedule:
 
         - 'constant': `eta = eta0`
@@ -1849,7 +1825,7 @@ class SGDRegressor(BaseSGDRegressor):
         existing counter.
 
     average : bool or int, default=False
-        When set to True, computes the averaged SGD weights accross all
+        When set to True, computes the averaged SGD weights across all
         updates and stores the result in the ``coef_`` attribute. If set to
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
@@ -1875,6 +1851,22 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    HuberRegressor : Linear regression model that is robust to outliers.
+    Lars : Least Angle Regression model.
+    Lasso : Linear Model trained with L1 prior as regularizer.
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    Ridge : Linear least squares with l2 regularization.
+    sklearn.svm.SVR : Epsilon-Support Vector Regression.
+    TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
+
     Examples
     --------
     >>> import numpy as np
@@ -1891,11 +1883,6 @@ class SGDRegressor(BaseSGDRegressor):
     >>> reg.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdregressor', SGDRegressor())])
-
-    See Also
-    --------
-    Ridge, ElasticNet, Lasso, sklearn.svm.SVR
-
     """
 
     def __init__(
@@ -1989,8 +1976,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, optional
-        The verbosity level
+    verbose : int, optional
+        The verbosity level.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
@@ -1999,7 +1986,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    learning_rate : string, optional
+    learning_rate : str, optional
         The learning rate schedule to use with `fit`. (If using `partial_fit`,
         learning rate must be controlled directly).
 
@@ -2067,6 +2054,23 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
+
+    Notes
+    -----
+    This estimator has a linear complexity in the number of training samples
+    and is thus better suited than the `sklearn.svm.OneClassSVM`
+    implementation for datasets with a large number of training samples (say
+    > 10,000).
+
     Examples
     --------
     >>> import numpy as np
@@ -2078,17 +2082,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     >>> print(clf.predict([[4, 4]]))
     [1]
-
-    See also
-    --------
-    sklearn.svm.OneClassSVM
-
-    Notes
-    -----
-    This estimator has a linear complexity in the number of training samples
-    and is thus better suited than the `sklearn.svm.OneClassSVM`
-    implementation for datasets with a large number of training samples (say
-    > 10,000).
     """
 
     loss_functions = {"hinge": (Hinge, 1.0)}
@@ -2303,6 +2296,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Subset of the training data.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
@@ -2310,7 +2305,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns a fitted instance of self.
         """
 
         alpha = self.nu / 2
@@ -2391,6 +2387,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         coef_init : array, shape (n_classes, n_features)
             The initial coefficients to warm-start the optimization.
@@ -2406,7 +2404,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns a fitted instance of self.
         """
 
         alpha = self.nu / 2

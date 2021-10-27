@@ -17,11 +17,14 @@ from scipy import linalg
 
 from ._cdnmf_fast import _update_cdnmf_fast
 from .._config import config_context
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array, gen_batches
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import (
+    check_is_fitted,
+    check_non_negative,
+)
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -951,7 +954,7 @@ def non_negative_factorization(
 
     The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
     `H` to keep their impact balanced with respect to one another and to the data fit
-    term as independant as possible of the size `n_samples` of the training set.
+    term as independent as possible of the size `n_samples` of the training set.
 
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
@@ -1136,7 +1139,7 @@ def non_negative_factorization(
     return W, H, n_iter
 
 
-class NMF(TransformerMixin, BaseEstimator):
+class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Non-Negative Matrix Factorization (NMF).
 
     Find two non-negative matrices (W, H) whose product approximates the non-
@@ -1169,7 +1172,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
     The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
     `H` to keep their impact balanced with respect to one another and to the data fit
-    term as independant as possible of the size `n_samples` of the training set.
+    term as independent as possible of the size `n_samples` of the training set.
 
     The objective function is minimized with an alternating minimization of W
     and H.
@@ -1318,14 +1321,21 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> import numpy as np
-    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
-    >>> from sklearn.decomposition import NMF
-    >>> model = NMF(n_components=2, init='random', random_state=0)
-    >>> W = model.fit_transform(X)
-    >>> H = model.components_
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    PCA : Principal component analysis.
+    SparseCoder : Find a sparse representation of data from a fixed,
+        precomputed dictionary.
+    SparsePCA : Sparse Principal Components Analysis.
+    TruncatedSVD : Dimensionality reduction using truncated SVD.
 
     References
     ----------
@@ -1336,6 +1346,15 @@ class NMF(TransformerMixin, BaseEstimator):
 
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import NMF
+    >>> model = NMF(n_components=2, init='random', random_state=0)
+    >>> W = model.fit_transform(X)
+    >>> H = model.components_
     """
 
     def __init__(
@@ -1524,10 +1543,11 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be decomposed.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
-            Not used, present here for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         W : array-like of shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
@@ -1667,17 +1687,19 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be decomposed.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
-            Not used, present here for API consistency by convention.
+            Not used, present for API consistency by convention.
 
-        **params : dict
-            Additional fit parameters.
+        **params : kwargs
+            Parameters (keyword arguments) and values passed to
+            the fit_transform instance.
 
         Returns
         -------
-        self
+        self : object
             Returns the instance itself.
         """
         self.fit_transform(X, **params)
@@ -1689,7 +1711,8 @@ class NMF(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be transformed by the model.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
@@ -1709,6 +1732,8 @@ class NMF(TransformerMixin, BaseEstimator):
     def inverse_transform(self, W):
         """Transform data back to its original space.
 
+        .. versionadded:: 0.18
+
         Parameters
         ----------
         W : {ndarray, sparse matrix} of shape (n_samples, n_components)
@@ -1717,12 +1742,15 @@ class NMF(TransformerMixin, BaseEstimator):
         Returns
         -------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Data matrix of original shape.
-
-            .. versionadded:: 0.18
+            Returns a data matrix of the original shape.
         """
         check_is_fitted(self)
         return np.dot(W, self.components_)
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
 
 
 class MiniBatchNMF(NMF):

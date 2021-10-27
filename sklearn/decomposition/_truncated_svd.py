@@ -10,7 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
@@ -21,7 +21,7 @@ from ..utils.validation import check_is_fitted
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(TransformerMixin, BaseEstimator):
+class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
@@ -64,7 +64,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    tol : float, default=0.
+    tol : float, default=0.0
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
         SVD solver.
 
@@ -90,6 +90,35 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    FactorAnalysis : A simple linear generative model with
+        Gaussian latent variables.
+    IncrementalPCA : Incremental principal components analysis.
+    KernelPCA : Kernel Principal component analysis.
+    NMF : Non-Negative Matrix Factorization.
+    PCA : Principal component analysis.
+
+    Notes
+    -----
+    SVD suffers from a problem called "sign indeterminacy", which means the
+    sign of the ``components_`` and the output from transform depend on the
+    algorithm and random state. To work around this, fit instances of this
+    class to data once, then keep the instance around to do transformations.
+
+    References
+    ----------
+    Finding structure with randomness: Stochastic algorithms for constructing
+    approximate matrix decompositions
+    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
+
     Examples
     --------
     >>> from sklearn.decomposition import TruncatedSVD
@@ -108,23 +137,6 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     0.2102...
     >>> print(svd.singular_values_)
     [35.2410...  4.5981...   4.5420...  4.4486...  4.3288...]
-
-    See Also
-    --------
-    PCA
-
-    References
-    ----------
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
-
-    Notes
-    -----
-    SVD suffers from a problem called "sign indeterminacy", which means the
-    sign of the ``components_`` and the output from transform depend on the
-    algorithm and random state. To work around this, fit instances of this
-    class to data once, then keep the instance around to do transformations.
     """
 
     def __init__(
@@ -151,6 +163,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             Training data.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -169,6 +182,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             Training data.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -259,3 +273,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"preserves_dtype": [np.float64, np.float32]}
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

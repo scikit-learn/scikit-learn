@@ -167,9 +167,9 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 .. topic:: References:
 
     * Algorithm 4.3 in
-      `"Finding structure with randomness: Stochastic algorithms for
+      :arxiv:`"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
-      <https://arxiv.org/abs/0909.4061>`_
+      <0909.4061>`
       Halko, et al., 2009
 
     * `"An implementation of a randomized algorithm for principal component
@@ -341,13 +341,13 @@ components is less than 10 (strict) and the number of samples is more than 200
 
     * *randomized* solver:
 
-        - Algorithm 4.3 in
-          `"Finding structure with randomness: Stochastic algorithms for
+        * Algorithm 4.3 in
+          :arxiv:`"Finding structure with randomness: Stochastic algorithms for
           constructing approximate matrix decompositions"
-          <https://arxiv.org/abs/0909.4061>`_
+          <0909.4061>`
           Halko, et al., 2009
 
-        - `"An implementation of a randomized algorithm for principal component
+        * `"An implementation of a randomized algorithm for principal component
           analysis"
           <https://arxiv.org/pdf/1412.3510.pdf>`_
           A. Szlam et al. 2014
@@ -829,7 +829,7 @@ and the intensity of the regularization with the :attr:`alpha_W` and :attr:`alph
 (:math:`\alpha_W` and :math:`\alpha_H`) parameters. The priors are scaled by the number
 of samples (:math:`n\_samples`) for `H` and the number of features (:math:`n\_features`)
 for `W` to keep their impact balanced with respect to one another and to the data fit
-term as independant as possible of the size of the training set. Then the priors terms
+term as independent as possible of the size of the training set. Then the priors terms
 are:
 
 .. math::

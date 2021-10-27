@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
 from itertools import islice
+import math
 import numbers
 import platform
 import struct
@@ -88,6 +89,7 @@ class Bunch(dict):
 
     Examples
     --------
+    >>> from sklearn.utils import Bunch
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
     2
@@ -209,9 +211,15 @@ def _pandas_indexing(X, key, key_dtype, axis):
         key = key if key.flags.writeable else key.copy()
     elif isinstance(key, tuple):
         key = list(key)
-    # check whether we should index with loc or iloc
-    indexer = X.iloc if key_dtype == "int" else X.loc
-    return indexer[:, key] if axis else indexer[key]
+
+    if key_dtype == "int" and not (isinstance(key, slice) or np.isscalar(key)):
+        # using take() instead of iloc[] ensures the return value is a "proper"
+        # copy that will not raise SettingWithCopyWarning
+        return X.take(key, axis=axis)
+    else:
+        # check whether we should index with loc or iloc
+        indexer = X.iloc if key_dtype == "int" else X.loc
+        return indexer[:, key] if axis else indexer[key]
 
 
 def _list_indexing(X, key, key_dtype):
@@ -486,6 +494,7 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
+      >>> import numpy as np
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
@@ -623,6 +632,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
+      >>> import numpy as np
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
@@ -992,6 +1002,8 @@ def is_scalar_nan(x):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.utils import is_scalar_nan
     >>> is_scalar_nan(np.nan)
     True
     >>> is_scalar_nan(float("nan"))
@@ -1003,9 +1015,7 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    # convert from numpy.bool_ to python bool to ensure that testing
-    # is_scalar_nan(x) is True does not fail.
-    return bool(isinstance(x, numbers.Real) and np.isnan(x))
+    return isinstance(x, numbers.Real) and math.isnan(x)
 
 
 def _approximate_mode(class_counts, n_draws, rng):
@@ -1051,7 +1061,7 @@ def _approximate_mode(class_counts, n_draws, rng):
     rng = check_random_state(rng)
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
-    continuous = n_draws * class_counts / class_counts.sum()
+    continuous = class_counts / class_counts.sum() * n_draws
     # floored means we don't overshoot n_samples, but probably undershoot
     floored = np.floor(continuous)
     # we add samples according to how much "left over" probability
@@ -1080,7 +1090,7 @@ def _approximate_mode(class_counts, n_draws, rng):
 def check_matplotlib_support(caller_name):
     """Raise ImportError with detailed error message if mpl is not installed.
 
-    Plot utilities like :func:`plot_partial_dependence` should lazily import
+    Plot utilities like any of the Display's plotting functions should lazily import
     matplotlib and call this helper before any computation.
 
     Parameters
@@ -1138,7 +1148,7 @@ def all_estimators(type_filter=None):
     -------
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actuall type of the class.
+        and ``class`` is the actual type of the class.
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings

@@ -12,6 +12,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
+from ..utils.deprecation import deprecated
 
 
 def _tosequence(X):
@@ -74,6 +75,12 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         A list of length n_features containing the feature names (e.g., "f=ham"
         and "f=spam").
 
+    See Also
+    --------
+    FeatureHasher : Performs vectorization using only a hash function.
+    sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
+        features encoded as columns of arbitrary data types.
+
     Examples
     --------
     >>> from sklearn.feature_extraction import DictVectorizer
@@ -88,12 +95,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
-
-    See Also
-    --------
-    FeatureHasher : Performs vectorization using only a hash function.
-    sklearn.preprocessing.OrdinalEncoder : Handles nominal/categorical
-        features encoded as columns of arbitrary data types.
     """
 
     def __init__(self, *, dtype=np.float64, separator="=", sparse=True, sort=True):
@@ -133,8 +134,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 indices.append(vocab[feature_name])
                 values.append(self.dtype(vv))
 
-        return
-
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
 
@@ -148,10 +147,12 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                Accepts multiple string values for one categorical feature.
 
         y : (ignored)
+            Ignored parameter.
 
         Returns
         -------
-        self
+        self : object
+            DictVectorizer class instance.
         """
         feature_names = []
         vocab = {}
@@ -226,13 +227,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                     v = 1
                 elif isinstance(v, Number) or (v is None):
                     feature_name = f
-                elif isinstance(v, Mapping):
-                    raise TypeError(
-                        f"Unsupported value Type {type(v)} "
-                        f"for {f}: {v}.\n"
-                        "Mapping objects are not supported."
-                    )
-                elif isinstance(v, Iterable):
+                elif not isinstance(v, Mapping) and isinstance(v, Iterable):
                     feature_name = None
                     self._add_iterable_element(
                         f,
@@ -243,6 +238,12 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                         transforming=transforming,
                         indices=indices,
                         values=values,
+                    )
+                else:
+                    raise TypeError(
+                        f"Unsupported value Type {type(v)} "
+                        f"for {f}: {v}.\n"
+                        f"{type(v)} objects are not supported."
                     )
 
                 if feature_name is not None:
@@ -302,6 +303,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                Accepts multiple string values for one categorical feature.
 
         y : (ignored)
+            Ignored parameter.
 
         Returns
         -------
@@ -370,13 +372,41 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         """
         return self._transform(X, fitting=False)
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self):
-        """Returns a list of feature names, ordered by their indices.
+        """Return a list of feature names, ordered by their indices.
 
         If one-of-K coding is applied to categorical features, this will
         include the constructed feature names but not the original ones.
+
+        Returns
+        -------
+        feature_names_ : list of length (n_features,)
+           List containing the feature names (e.g., "f=ham" and "f=spam").
         """
         return self.feature_names_
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        if any(not isinstance(name, str) for name in self.feature_names_):
+            feature_names = [str(name) for name in self.feature_names_]
+        else:
+            feature_names = self.feature_names_
+        return np.asarray(feature_names, dtype=object)
 
     def restrict(self, support, indices=False):
         """Restrict the features to those in support using feature selection.
@@ -393,7 +423,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
+            DictVectorizer class instance.
 
         Examples
         --------
@@ -403,12 +434,12 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         >>> D = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
         >>> X = v.fit_transform(D)
         >>> support = SelectKBest(chi2, k=2).fit(X, [0, 1])
-        >>> v.get_feature_names()
-        ['bar', 'baz', 'foo']
+        >>> v.get_feature_names_out()
+        array(['bar', 'baz', 'foo'], ...)
         >>> v.restrict(support.get_support())
         DictVectorizer()
-        >>> v.get_feature_names()
-        ['bar', 'foo']
+        >>> v.get_feature_names_out()
+        array(['bar', 'foo'], ...)
         """
         if not indices:
             support = np.where(support)[0]

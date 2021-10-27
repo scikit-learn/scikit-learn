@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
 
 from ..utils import check_array, as_float_array, check_random_state
@@ -172,8 +172,8 @@ def fastica(
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     n_components : int, default=None
         Number of components to extract. If None no dimension reduction
@@ -319,7 +319,7 @@ def fastica(
                 return None, est._unmixing, sources
 
 
-class FastICA(TransformerMixin, BaseEstimator):
+class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     The implementation is based on [1]_.
@@ -389,6 +389,12 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         If the algorithm is "deflation", n_iter is the
         maximum number of iterations run across all components. Else
@@ -438,10 +444,6 @@ class FastICA(TransformerMixin, BaseEstimator):
         random_state=None,
     ):
         super().__init__()
-        if max_iter < 1:
-            raise ValueError(
-                "max_iter should be greater than 1, got (max_iter={})".format(max_iter)
-            )
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
@@ -458,8 +460,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         compute_sources : bool, default=False
             If False, sources are not computes but only the rotation matrix.
@@ -548,6 +550,13 @@ class FastICA(TransformerMixin, BaseEstimator):
                     % {"shape": (n_components, n_components)}
                 )
 
+        if self.max_iter < 1:
+            raise ValueError(
+                "max_iter should be greater than 1, got (max_iter={})".format(
+                    self.max_iter
+                )
+            )
+
         kwargs = {
             "tol": self.tol,
             "g": g,
@@ -594,8 +603,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -614,8 +623,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -634,8 +643,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Data to transform, where n_samples is the number of samples
-            and n_features is the number of features.
+            Data to transform, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         copy : bool, default=True
             If False, data passed to fit can be overwritten. Defaults to True.
@@ -662,8 +671,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_components)
-            Sources, where n_samples is the number of samples
-            and n_components is the number of components.
+            Sources, where `n_samples` is the number of samples
+            and `n_components` is the number of components.
         copy : bool, default=True
             If False, data passed to fit are overwritten. Defaults to True.
 
@@ -680,3 +689,8 @@ class FastICA(TransformerMixin, BaseEstimator):
             X += self.mean_
 
         return X
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
