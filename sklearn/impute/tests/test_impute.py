@@ -1533,3 +1533,22 @@ def test_simple_impute_pd_na_float_median():
     df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="Float64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
     assert_array_equal(imputer.fit_transform(df), [[1.0], [2.0], [2.0], [3.0]])
+
+
+def test_missing_indicator_feature_names_out():
+    """Check that missing indicator return the feature names with a prefix."""
+    pd = pytest.importorskip("pandas")
+
+    missing_values = np.nan
+    X = pd.DataFrame(
+        [
+            [missing_values, missing_values, 1, missing_values],
+            [4, missing_values, 2, 10],
+        ],
+        columns=["a", "b", "c", "d"],
+    )
+
+    indicator = MissingIndicator(missing_values=missing_values).fit(X)
+    feature_names = indicator.get_feature_names_out()
+    expected_names = ["missingindicator_a", "missingindicator_b", "missingindicator_d"]
+    assert_array_equal(expected_names, feature_names)

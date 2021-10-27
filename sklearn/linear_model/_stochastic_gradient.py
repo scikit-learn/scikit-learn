@@ -648,19 +648,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
     ):
         self._validate_params()
         if hasattr(self, "classes_"):
-            self.classes_ = None
-
-        X, y = self._validate_data(
-            X,
-            y,
-            accept_sparse="csr",
-            dtype=np.float64,
-            order="C",
-            accept_large_sparse=False,
-        )
+            # delete the attribute otherwise _partial_fit thinks it's not the first call
+            delattr(self, "classes_")
 
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
+        y = self._validate_data(y=y)
         classes = np.unique(y)
 
         if self.warm_start and hasattr(self, "coef_"):
@@ -1239,7 +1232,7 @@ class SGDClassifier(BaseSGDClassifier):
         ----------
         Zadrozny and Elkan, "Transforming classifier scores into multiclass
         probability estimates", SIGKDD'02,
-        http://www.research.ibm.com/people/z/zadrozny/kdd2002-Transf.pdf
+        https://dl.acm.org/doi/pdf/10.1145/775047.775151
 
         The justification for the formula in the loss="modified_huber"
         case is in the appendix B in:

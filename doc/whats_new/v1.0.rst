@@ -7,7 +7,7 @@
 Version 1.0.1
 =============
 
-**In Development**
+**October 2021**
 
 Changelog
 ---------
@@ -43,6 +43,45 @@ Fixed models
   between sparse and dense input. :pr:`21195`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fixed a bug that could produce a segfault in rare cases for
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`.
+  :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Compute `y_std` properly with multi-target in
+  :class:`sklearn.gaussian_process.GaussianProcessRegressor` allowing
+  proper normalization in multi-target scene.
+  :pr:`20761` by :user:`Patrick de C. T. R. Ferreira <patrickctrf>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Efficiency| Fixed an efficiency regression introduced in version 1.0.0 in the
+  `transform` method of :class:`feature_extraction.text.CountVectorizer` which no
+  longer checks for uppercase characters in the provided vocabulary. :pr:`21251`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
+  :class:`feature_extraction.TfidfVectorizer` by raising an
+  error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
+  :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Improves stability of :class:`linear_model.LassoLars` for different
+  versions of openblas. :pr:`21340` by `Thomas Fan`_.
+
+- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
+  message when the solver does not support sparse matrices with int64 indices.
+  :pr:`21093` by `Tom Dupre la Tour`_.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -53,6 +92,49 @@ Fixed models
   an error for `bsr` and `dok` sparse matrices in methods: `fit`, `kneighbors`
   and `radius_neighbors`, due to handling of explicit zeros in `bsr` and `dok`
   :term:`sparse graph` formats. :pr:`21199` by `Thomas Fan`_.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Fix| :meth:`pipeline.Pipeline.get_feature_names_out` correctly passes feature
+  names out from one step of a pipeline to the next. :pr:`21351` by
+  `Thomas Fan`_.
+
+:mod:`sklearn.svm`
+..................
+
+- |Fix| :class:`svm.SVC` and :class:`svm.SVR` check for an inconsistency
+  in its internal representation and raise an error instead of segfaulting.
+  This fix also resolves
+  `CVE-2020-28975 <https://nvd.nist.gov/vuln/detail/CVE-2020-28975>`__.
+  :pr:`21336` by `Thomas Fan`_.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.validation._check_sample_weight` can perform a
+  non-negativity check on the sample weights. It can be turned on
+  using the only_non_negative bool parameter.
+  Estimators that check for non-negative weights are updated:
+  :func:`linear_model.LinearRegression` (here the previous
+  error message was misleading),
+  :func:`ensemble.AdaBoostClassifier`,
+  :func:`ensemble.AdaBoostRegressor`,
+  :func:`neighbors.KernelDensity`.
+  :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
+  and :user:`András Simon <simonandras>`.
+
+- |Fix| Solve a bug in :func:`~sklearn.utils.metaestimators.if_delegate_has_method`
+  where the underlying check for an attribute did not work with NumPy arrays.
+  :pr:`21145` by :user:`Zahlii <Zahlii>`.
+
+Miscellaneous
+.............
+
+- |Fix| Fitting an estimator on a dataset that has no feature names, that was previously
+  fitted on a dataset with feature names no longer keeps the old feature names stored in
+  the `feature_names_in_` attribute. :pr:`21389` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 .. _changes_1_0:
 
@@ -677,7 +759,7 @@ Changelog
   Dupre la Tour`_.
 
 - |Fix| Decrease the numerical default tolerance in the lobpcg call
-  in :func:`manifold.spectral_embedding` to prevent numerical instability. 
+  in :func:`manifold.spectral_embedding` to prevent numerical instability.
   :pr:`21194` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.metrics`

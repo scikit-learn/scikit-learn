@@ -12,8 +12,7 @@ customize the plot with the visualization API.
 
     See also :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
 
-"""  # noqa
-print(__doc__)
+"""  # noqa: E501
 
 import pandas as pd
 import matplotlib.pyplot as plt

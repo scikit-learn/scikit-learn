@@ -35,11 +35,12 @@ policyholders.
     <http://dx.doi.org/10.2139/ssrn.3164764>`_
 
 """
-print(__doc__)
+
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
