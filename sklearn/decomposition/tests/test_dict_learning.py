@@ -800,7 +800,7 @@ def test_dict_learning_online_n_iter_deprecated():
 
 @pytest.mark.parametrize(
     "estimator",
-    [SparseCoder(X.T), DictionaryLearning(), MiniBatchDictionaryLearning()],
+    [SparseCoder(X.T), DictionaryLearning(), MiniBatchDictionaryLearning(batch_size=4)],
     ids=lambda x: x.__class__.__name__,
 )
 def test_get_feature_names_out(estimator):
