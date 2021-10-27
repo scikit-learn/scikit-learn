@@ -46,7 +46,7 @@ enhance the functionality of scikit-learn's estimators.
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
   
-- `Featuretools <https://github.com/FeatureLabs/featuretools>`_
+- `Featuretools <https://github.com/alteryx/featuretools>`_
   A framework to perform automated feature engineering. It can be used for 
   transforming temporal and relational datasets into feature matrices for 
   machine learning.
@@ -58,7 +58,18 @@ enhance the functionality of scikit-learn's estimators.
   it can stream minibatches, use data checkpoints, build funky pipelines, and
   serialize models with custom per-step savers.
 
+- `EvalML <https://github.com/alteryx/evalml>`_
+  EvalML is an AutoML library which builds, optimizes, and evaluates
+  machine learning pipelines using domain-specific objective functions.
+  It incorporates multiple modeling libraries under one API, and
+  the objects that EvalML creates use an sklearn-compatible API.
+
 **Experimentation frameworks**
+
+- `Neptune <https://neptune.ai/>`_ Metadata store for MLOps, 
+  built for teams that run a lot of experiments.‌ It gives you a single 
+  place to log, store, display, organize, compare, and query all your 
+  model building metadata.
 
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
@@ -96,7 +107,7 @@ enhance the functionality of scikit-learn's estimators.
   cross-validated parameter search using any of these strategies.
 
 - `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
-   algorithms instead of gridsearch in scikit-learn.
+  algorithms instead of gridsearch in scikit-learn.
 
 **Model export for production**
 
@@ -111,6 +122,11 @@ enhance the functionality of scikit-learn's estimators.
 
 - `sklearn-porter <https://github.com/nok/sklearn-porter>`_
   Transpile trained scikit-learn models to C, Java, Javascript and others.
+
+- `m2cgen <https://github.com/BayesWitnesses/m2cgen>`_
+  A lightweight library which allows to transpile trained machine learning
+  models including many scikit-learn estimators into a native code of C, Java,
+  Go, R, PHP, Dart, Haskell, Rust and many other programming languages.
 
 - `treelite <https://treelite.readthedocs.io>`_
   Compiles tree-based ensemble models into C code for minimizing prediction
@@ -331,6 +347,9 @@ and promote community efforts.
   (`source <https://github.com/apachecn/sklearn-doc-zh>`__)
 - `Persian translation <https://sklearn.ir/>`_
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
+- `Spanish translation <https://qu4nt.github.io/sklearn-doc-es/>`_
+  (`source <https://github.com/qu4nt/sklearn-doc-es>`__)
+  
 
 .. rubric:: Footnotes
 

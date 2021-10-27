@@ -10,8 +10,7 @@ a digit classification task.
 
     See also :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
 
-"""
-print(__doc__)
+"""  # noqa: E501
 
 from sklearn.svm import SVC
 from sklearn.datasets import load_digits

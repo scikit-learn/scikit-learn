@@ -61,8 +61,8 @@ def add_toctree_functions(app, pagename, templatename, context, doctree):
         # "collapse=True" collapses sub-pages of non-active TOC pages.
         # maxdepth controls how many TOC levels are returned
         toctree = TocTree(app.env).get_toctree_for(
-            pagename, app.builder, collapse=collapse, maxdepth=maxdepth,
-            **kwargs)
+            pagename, app.builder, collapse=collapse, maxdepth=maxdepth, **kwargs
+        )
         # If no toctree is defined (AKA a single-page site), skip this
         if toctree is None:
             return []
@@ -73,13 +73,18 @@ def add_toctree_functions(app, pagename, templatename, context, doctree):
         #       <list_item classes="toctree-l1">
         #       <list_item classes="toctree-l1">
         # `list_item`s are the actual TOC links and are the only thing we want
-        toc_items = [item for child in toctree.children for item in child
-                     if isinstance(item, docutils.nodes.list_item)]
+        toc_items = [
+            item
+            for child in toctree.children
+            for item in child
+            if isinstance(item, docutils.nodes.list_item)
+        ]
 
         # Now convert our docutils nodes into dicts that Jinja can use
-        nav = [docutils_node_to_jinja(child, only_pages=True,
-                                      numbered=numbered)
-               for child in toc_items]
+        nav = [
+            docutils_node_to_jinja(child, only_pages=True, numbered=numbered)
+            for child in toc_items
+        ]
 
         return nav
 
@@ -124,7 +129,7 @@ def docutils_node_to_jinja(list_item, only_pages=False, numbered=False):
         title = f"{secnumber}. {title}"
 
     # If we've got an anchor link, skip it if we wish
-    if only_pages and '#' in url:
+    if only_pages and "#" in url:
         return None
 
     # Converting the docutils attributes into jinja-friendly objects
@@ -141,8 +146,9 @@ def docutils_node_to_jinja(list_item, only_pages=False, numbered=False):
         # The `.children` of the bullet_list has the nodes of the sub-pages.
         subpage_list = list_item.children[1].children
         for sub_page in subpage_list:
-            child_nav = docutils_node_to_jinja(sub_page, only_pages=only_pages,
-                                               numbered=numbered)
+            child_nav = docutils_node_to_jinja(
+                sub_page, only_pages=only_pages, numbered=numbered
+            )
             if child_nav is not None:
                 nav["children"].append(child_nav)
     return nav
@@ -151,4 +157,4 @@ def docutils_node_to_jinja(list_item, only_pages=False, numbered=False):
 def setup(app):
     app.connect("html-page-context", add_toctree_functions)
 
-    return {'parallel_read_safe': True, 'parallel_write_safe': True}
+    return {"parallel_read_safe": True, "parallel_write_safe": True}

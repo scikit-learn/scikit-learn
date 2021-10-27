@@ -6,12 +6,12 @@ import numpy as np
 
 class DrawTree:
     def __init__(self, tree, parent=None, depth=0, number=1):
-        self.x = -1.
+        self.x = -1.0
         self.y = depth
         self.tree = tree
-        self.children = [DrawTree(c, self, depth + 1, i + 1)
-                         for i, c
-                         in enumerate(tree.children)]
+        self.children = [
+            DrawTree(c, self, depth + 1, i + 1) for i, c in enumerate(tree.children)
+        ]
         self.parent = parent
         self.thread = None
         self.mod = 0
@@ -38,10 +38,10 @@ class DrawTree:
         return n
 
     def get_lmost_sibling(self):
-        if not self._lmost_sibling and self.parent and self != \
-                self.parent.children[0]:
+        if not self._lmost_sibling and self.parent and self != self.parent.children[0]:
             self._lmost_sibling = self.parent.children[0]
         return self._lmost_sibling
+
     lmost_sibling = property(get_lmost_sibling)
 
     def __str__(self):
@@ -51,7 +51,7 @@ class DrawTree:
         return self.__str__()
 
     def max_extents(self):
-        extents = [c.max_extents() for c in self. children]
+        extents = [c.max_extents() for c in self.children]
         extents.append((self.x, self.y))
         return np.max(extents, axis=0)
 
@@ -70,12 +70,12 @@ def third_walk(tree, n):
         third_walk(c, n)
 
 
-def first_walk(v, distance=1.):
+def first_walk(v, distance=1.0):
     if len(v.children) == 0:
         if v.lmost_sibling:
             v.x = v.lbrother().x + distance
         else:
-            v.x = 0.
+            v.x = 0.0
     else:
         default_ancestor = v.children[0]
         for w in v.children:
