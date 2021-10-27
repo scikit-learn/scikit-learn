@@ -5,6 +5,8 @@ import pytest
 from scipy import linalg
 from sklearn.base import clone
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
@@ -938,3 +940,23 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
     if has_coef_path:
         assert_allclose(model_64.coef_path_, model_32.coef_path_, rtol=rtol, atol=atol)
     assert_allclose(model_64.intercept_, model_32.intercept_, rtol=rtol, atol=atol)
+
+
+@pytest.mark.parametrize("criterion", ["aic", "bic"])
+def test_lassolarsic_alpha_selection(criterion):
+    """Check that we properly compute the AIC and BIC score.
+
+    In this test, we reproduce the example of the Fig. 2 of Zou et al.
+    In this example, only 7 features should be selected.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/14566
+    https://github.com/scikit-learn/scikit-learn/issues/17145
+    """
+    model = make_pipeline(
+        StandardScaler(), LassoLarsIC(criterion=criterion, normalize=False)
+    )
+    model.fit(X, y)
+
+    best_alpha_selected = np.argmin(model[-1].criterion_)
+    assert best_alpha_selected == 7

@@ -2049,8 +2049,7 @@ class LassoLarsIC(LassoLars):
     criterion_ : array-like of shape (n_alphas,)
         The value of the information criteria ('aic', 'bic') across all
         alphas. The alpha which has the smallest information criterion is
-        chosen. This value is larger by a factor of ``n_samples`` compared to
-        Eqns. 2.15 and 2.16 in (Zou et al, 2007).
+        chosen.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2191,7 +2190,7 @@ class LassoLarsIC(LassoLars):
         residuals = y[:, np.newaxis] - np.dot(X, coef_path_)
         mean_squared_error = np.mean(residuals ** 2, axis=0)
 
-        degrees_freedom = np.zeros(coef_path_.shape[1], dtype=int)
+        degrees_of_freedom = np.zeros(coef_path_.shape[1], dtype=int)
         for k, coef in enumerate(coef_path_.T):
             mask = np.abs(coef) > np.finfo(coef.dtype).eps
             if not np.any(mask):
@@ -2199,11 +2198,14 @@ class LassoLarsIC(LassoLars):
             # get the number of degrees of freedom equal to:
             # Xc = X[:, mask]
             # Trace(Xc * inv(Xc.T, Xc) * Xc.T) ie the number of non-zero coefs
-            degrees_freedom[k] = np.sum(mask)
+            degrees_of_freedom[k] = np.sum(mask)
 
         self.alphas_ = alphas_
-        # Eqns. 2.15--16 in (Zou et al, 2007)
-        self.criterion_ = n_samples * np.log(mean_squared_error) + K * degrees_freedom
+        self.criterion_ = (
+            n_samples * (np.log(2 * np.pi) + 1)  # constant that could be neglected
+            + n_samples * np.log(mean_squared_error)
+            + K * degrees_of_freedom
+        )
         n_best = np.argmin(self.criterion_)
 
         self.alpha_ = alphas_[n_best]
