@@ -285,14 +285,24 @@ def test_dict_learning_online_shapes():
     n_components = 8
 
     code, dictionary, _, _ = dict_learning_online(
-        X, n_components=n_components, batch_size=4, max_iter=10, random_state=rng, return_code=True
+        X,
+        n_components=n_components,
+        batch_size=4,
+        max_iter=10,
+        random_state=rng,
+        return_code=True,
     )
     assert code.shape == (n_samples, n_components)
     assert dictionary.shape == (n_components, n_features)
     assert np.dot(code, dictionary).shape == X.shape
 
     dictionary, _, _ = dict_learning_online(
-        X, n_components=n_components, batch_size=4, max_iter=10, random_state=rng, return_code=False
+        X,
+        n_components=n_components,
+        batch_size=4,
+        max_iter=10,
+        random_state=rng,
+        return_code=False,
     )
     assert dictionary.shape == (n_components, n_features)
 
