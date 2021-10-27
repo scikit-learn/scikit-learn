@@ -1961,8 +1961,8 @@ class LassoLarsIC(LassoLars):
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    AIC is the Akaike information criterion and BIC is the Bayes
-    Information criterion. Such criteria are useful to select the value
+    AIC is the Akaike information criterion [2]_ and BIC is the Bayes
+    Information criterion [3]_. Such criteria are useful to select the value
     of the regularization parameter by making a trade-off between the
     goodness of fit and the complexity of the model. A good model should
     explain well the data while being simple.
@@ -2078,14 +2078,19 @@ class LassoLarsIC(LassoLars):
 
     Notes
     -----
-    The estimation of the number of degrees of freedom is given by:
+    The number of degrees of freedom is computed as in [1]_.
 
-    "On the degrees of freedom of the lasso"
-    Hui Zou, Trevor Hastie, and Robert Tibshirani
-    Ann. Statist. Volume 35, Number 5 (2007), 2173-2192.
+    References
+    ----------
+    .. [1] "On the degrees of freedom of the lasso"
+           Hui Zou, Trevor Hastie, and Robert Tibshirani
+           Ann. Statist. Volume 35, Number 5 (2007), 2173-2192.
 
-    https://en.wikipedia.org/wiki/Akaike_information_criterion
-    https://en.wikipedia.org/wiki/Bayesian_information_criterion
+    .. [2] `Wikipedia entry on the Akaike information criterion
+            <https://en.wikipedia.org/wiki/Akaike_information_criterion>`_
+
+    .. [3] `Wikipedia entry on the Bayesian information criterion
+            <https://en.wikipedia.org/wiki/Bayesian_information_criterion>`_
 
     Examples
     --------
@@ -2183,11 +2188,10 @@ class LassoLarsIC(LassoLars):
         else:
             raise ValueError("criterion should be either bic or aic")
 
-        R = y[:, np.newaxis] - np.dot(X, coef_path_)  # residuals
-        mean_squared_error = np.mean(R ** 2, axis=0)
-        sigma2 = np.var(y)
+        residuals = y[:, np.newaxis] - np.dot(X, coef_path_)
+        mean_squared_error = np.mean(residuals ** 2, axis=0)
 
-        df = np.zeros(coef_path_.shape[1], dtype=int)  # Degrees of freedom
+        degrees_freedom = np.zeros(coef_path_.shape[1], dtype=int)
         for k, coef in enumerate(coef_path_.T):
             mask = np.abs(coef) > np.finfo(coef.dtype).eps
             if not np.any(mask):
@@ -2195,13 +2199,11 @@ class LassoLarsIC(LassoLars):
             # get the number of degrees of freedom equal to:
             # Xc = X[:, mask]
             # Trace(Xc * inv(Xc.T, Xc) * Xc.T) ie the number of non-zero coefs
-            df[k] = np.sum(mask)
+            degrees_freedom[k] = np.sum(mask)
 
         self.alphas_ = alphas_
-        eps64 = np.finfo("float64").eps
-        self.criterion_ = (
-            n_samples * mean_squared_error / (sigma2 + eps64) + K * df
-        )  # Eqns. 2.15--16 in (Zou et al, 2007)
+        # Eqns. 2.15--16 in (Zou et al, 2007)
+        self.criterion_ = n_samples * np.log(mean_squared_error) + K * degrees_freedom
         n_best = np.argmin(self.criterion_)
 
         self.alpha_ = alphas_[n_best]
