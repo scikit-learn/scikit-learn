@@ -45,6 +45,10 @@ Changelog
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :class:`CalibrationDisplay` accepts a parameter `pos_label` to
+  add this information to the plot.
+  :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -58,12 +62,37 @@ Changelog
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
+- |API| Adds :term:`get_feature_names_out` to all transformers in the
+  :mod:`~sklearn.decomposition` module:
+  :class:`~sklearn.decomposition.DictionaryLearning`,
+  :class:`~sklearn.decomposition.FactorAnalysis`,
+  :class:`~sklearn.decomposition.FastICA`,
+  :class:`~sklearn.decomposition.IncrementalPCA`,
+  :class:`~sklearn.decomposition.KernelPCA`,
+  :class:`~sklearn.decomposition.LatentDirichletAllocation`,
+  :class:`~sklearn.decomposition.MiniBatchDictionaryLearning`,
+  :class:`~sklearn.decomposition.MiniBatchSparsePCA`,
+  :class:`~sklearn.decomposition.NMF`,
+  :class:`~sklearn.decomposition.PCA`,
+  :class:`~sklearn.decomposition.SparsePCA`,
+  and :class:`~sklearn.decomposition.TruncatedSVD`. :pr:`21334` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.impute`
 .....................
 
 - |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
   :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
   :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
+
+- |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
+  `predict` was performing an `argmax` on the scores obtained from
+  `decision_function` instead of returning the multilabel indicator matrix.
+  :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
+  multilabel classification.
+  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
