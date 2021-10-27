@@ -14,7 +14,7 @@ import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import deprecated
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
@@ -1143,7 +1143,7 @@ def dict_learning_online(
         return dictionary
 
 
-class _BaseSparseCoding(TransformerMixin):
+class _BaseSparseCoding(_ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     """Base class from SparseCoder and DictionaryLearning algorithms."""
 
     def __init__(
@@ -1444,6 +1444,11 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """Number of features seen during `fit`."""
         return self.dictionary.shape[1]
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.n_components_
+
 
 class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Dictionary learning.
@@ -1715,6 +1720,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.components_ = U
         self.error_ = E
         return self
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
 
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -2379,3 +2389,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.n_steps_ += 1
 
         return self
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

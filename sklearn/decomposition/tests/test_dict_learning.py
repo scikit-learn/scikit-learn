@@ -786,3 +786,21 @@ def test_dict_learning_online_n_iter_deprecated():
     msg = "the following args are incompatible with 'max_iter'"
     with pytest.raises(ValueError, match=msg):
         dict_learning_online(X, max_iter=10, return_inner_stats=True)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [SparseCoder(X.T), DictionaryLearning(), MiniBatchDictionaryLearning()],
+    ids=lambda x: x.__class__.__name__,
+)
+def test_get_feature_names_out(estimator):
+    """Check feature names for dict learning estimators."""
+    estimator.fit(X)
+    n_components = X.shape[1]
+
+    feature_names_out = estimator.get_feature_names_out()
+    estimator_name = estimator.__class__.__name__.lower()
+    assert_array_equal(
+        feature_names_out,
+        [f"{estimator_name}{i}" for i in range(n_components)],
+    )
