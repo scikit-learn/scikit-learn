@@ -1012,7 +1012,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         return super().fit(X, y, sample_weight=sample_weight)
 
 
-class _BaseRidgeClassifier(LinearClassifierMixin):
+class _RidgeClassifierMixin(LinearClassifierMixin):
     def _prepare_data(self, X, y, sample_weight, solver):
         """Validate `X` and `y` and binarize `y`.
 
@@ -1098,7 +1098,7 @@ class _BaseRidgeClassifier(LinearClassifierMixin):
         return {"multilabel": True}
 
 
-class RidgeClassifier(_BaseRidgeClassifier, _BaseRidge):
+class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     """Classifier using Ridge regression.
 
     This classifier first converts the target values into ``{-1, 1}`` and
@@ -2209,7 +2209,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     """
 
 
-class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
+class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2382,7 +2382,9 @@ class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
         self : object
             Fitted estimator.
         """
-        # by using solver="eigen" we force to accept all sparse format
+        # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
+        # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
+        # all sparse format.
         X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, solver="eigen")
 
         # If cv is None, gcv mode will be used and we used the binarized Y
@@ -2391,7 +2393,7 @@ class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
         # estimators are used where y will be binarized. Thus, we pass y
         # instead of the binarized Y.
         target = Y if self.cv is None else y
-        _BaseRidgeCV.fit(self, X, target, sample_weight=sample_weight)
+        super().fit(X, target, sample_weight=sample_weight)
         return self
 
     def _more_tags(self):
