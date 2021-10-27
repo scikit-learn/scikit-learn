@@ -86,9 +86,9 @@ iris = load_iris()
 @pytest.mark.parametrize("grid_resolution", (5, 10))
 @pytest.mark.parametrize("features", ([1], [1, 2]))
 @pytest.mark.parametrize("kind", ("average", "individual", "both"))
-@pytest.mark.parametrize("use_custom_range", [True, False])
+@pytest.mark.parametrize("use_custom_values", [True, False])
 def test_output_shape(
-    Estimator, method, data, grid_resolution, features, kind, use_custom_range
+    Estimator, method, data, grid_resolution, features, kind, use_custom_values
 ):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
@@ -104,10 +104,10 @@ def test_output_shape(
     (X, y), n_targets = data
     n_instances = X.shape[0]
 
-    custom_range = None
-    if use_custom_range:
+    custom_values = None
+    if use_custom_values:
         grid_resolution = 5
-        custom_range = {f: X[:grid_resolution, f] for f in features}
+        custom_values = {f: X[:grid_resolution, f] for f in features}
 
     est.fit(X, y)
     result = partial_dependence(
@@ -117,7 +117,7 @@ def test_output_shape(
         method=method,
         kind=kind,
         grid_resolution=grid_resolution,
-        custom_range=custom_range,
+        custom_values=custom_values,
     )
     pdp, axes = result, result["values"]
 
@@ -160,46 +160,60 @@ def test_grid_from_X():
     # n_unique_values > grid_resolution
     X = rng.normal(size=(20, 2))
     grid, axes = _grid_from_X(
-        X, percentiles, grid_resolution=grid_resolution, custom_range={}
+        X, percentiles, grid_resolution=grid_resolution, custom_values={}
     )
     assert grid.shape == (grid_resolution * grid_resolution, X.shape[1])
     assert np.asarray(axes).shape == (2, grid_resolution)
+    assert grid.dtype == X.dtype
 
     # n_unique_values < grid_resolution, will use actual values
     n_unique_values = 12
     X[n_unique_values - 1 :, 0] = 12345
     rng.shuffle(X)  # just to make sure the order is irrelevant
     grid, axes = _grid_from_X(
-        X, percentiles, grid_resolution=grid_resolution, custom_range={}
+        X, percentiles, grid_resolution=grid_resolution, custom_values={}
     )
     assert grid.shape == (n_unique_values * grid_resolution, X.shape[1])
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (grid_resolution,)
+    assert grid.dtype == X.dtype
 
     # Check that uses custom_range
     X = rng.normal(size=(20, 2))
     X[n_unique_values - 1 :, 0] = 12345
     col_1_range = [0, 2, 3]
     grid, axes = _grid_from_X(
-        X, percentiles, grid_resolution=grid_resolution, custom_range={1: col_1_range}
+        X, percentiles, grid_resolution=grid_resolution, custom_values={1: col_1_range}
     )
     assert grid.shape == (n_unique_values * len(col_1_range), X.shape[1])
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (len(col_1_range),)
+    assert grid.dtype == X.dtype
 
     # Check that grid_resolution does not impact custom_range
     X = rng.normal(size=(20, 2))
     col_0_range = [0, 2, 3, 4, 5, 6]
     grid_resolution = 5
     grid, axes = _grid_from_X(
-        X, percentiles, grid_resolution=grid_resolution, custom_range={0: col_0_range}
+        X, percentiles, grid_resolution=grid_resolution, custom_values={0: col_0_range}
     )
     assert grid.shape == (grid_resolution * len(col_0_range), X.shape[1])
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (len(col_0_range),)
     assert axes[1].shape == (grid_resolution,)
+    assert grid.dtype == np.array(col_0_range).dtype
+
+    X = np.array([[0, "a"], [1, "b"], [2, "c"]])
+
+    grid, axes = _grid_from_X(
+        X,
+        percentiles,
+        grid_resolution=grid_resolution,
+        custom_values={1: ["a", "b", "c"]},
+    )
+    assert grid.dtype == object
 
 
 @pytest.mark.parametrize(
@@ -218,7 +232,10 @@ def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
     X = np.asarray([[1, 2], [3, 4]])
     with pytest.raises(ValueError, match=err_msg):
         _grid_from_X(
-            X, grid_resolution=grid_resolution, percentiles=percentiles, custom_range={}
+            X,
+            grid_resolution=grid_resolution,
+            percentiles=percentiles,
+            custom_values={},
         )
 
 
@@ -533,7 +550,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         ),
         (
             LinearRegression(),
-            {"features": [0, 1], "custom_range": {0: [1, 2, 3], 1: np.ones((3, 3))}},
+            {"features": [0, 1], "custom_values": {0: [1, 2, 3], 1: np.ones((3, 3))}},
             "Grid for feature 1 is not a one-dimensional array. Got 2 dimensions",
         ),
     ],
@@ -687,15 +704,15 @@ def test_partial_dependence_pipeline():
 
 
 @pytest.mark.parametrize(
-    "features, custom_range, n_vals_expected",
+    "features, custom_values, n_vals_expected",
     [
         (["b"], {"b": ["a", "b"]}, 2),
         (["b"], {"b": ["a"]}, 1),
         (["a", "b"], {"a": [1, 2], "b": ["a", "b"]}, 4),
     ],
 )
-def test_partial_dependence_pipeline_custom_range(
-    features, custom_range, n_vals_expected
+def test_partial_dependence_pipeline_custom_values(
+    features, custom_values, n_vals_expected
 ):
     pd = pytest.importorskip("pandas")
     pl = make_pipeline(
@@ -712,7 +729,7 @@ def test_partial_dependence_pipeline_custom_range(
         X_holdout,
         features=features,
         grid_resolution=3,
-        custom_range=custom_range,
+        custom_values=custom_values,
         kind="average",
     )
     assert part_dep["average"].size == n_vals_expected
@@ -790,7 +807,7 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
 
 
 @pytest.mark.parametrize(
-    "features, custom_range, expected_pd_shape",
+    "features, custom_values, expected_pd_shape",
     [
         (0, None, (3, 10)),
         (0, {0: [1, 2, 3]}, (3, 3)),
@@ -814,19 +831,19 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     ],
     ids=[
         "scalar-int",
-        "scalar-int-custom-range",
+        "scalar-int-custom-values",
         "scalar-str",
-        "scalar-str-custom-range",
+        "scalar-str-custom-values",
         "list-int",
-        "list-int-custom-range",
+        "list-int-custom-values",
         "list-str",
-        "list-str-custom-range",
-        "list-str-custom-range-incorrect",
+        "list-str-custom-values",
+        "list-str-custom-values-incorrect",
         "list-str-three-features",
         "mask",
     ],
 )
-def test_partial_dependence_feature_type(features, custom_range, expected_pd_shape):
+def test_partial_dependence_feature_type(features, custom_values, expected_pd_shape):
     # check all possible features type supported in PDP
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(iris.data, columns=iris.feature_names)
@@ -845,7 +862,7 @@ def test_partial_dependence_feature_type(features, custom_range, expected_pd_sha
         features=features,
         grid_resolution=10,
         kind="average",
-        custom_range=custom_range,
+        custom_values=custom_values,
     )
     assert pdp_pipe["average"].shape == expected_pd_shape
     assert len(pdp_pipe["values"]) == len(pdp_pipe["average"].shape) - 1
