@@ -491,18 +491,41 @@ def test_make_low_rank_matrix():
 
 def test_make_sparse_coded_signal():
     Y, D, X = make_sparse_coded_signal(
-        n_samples=5, n_components=8, n_features=10, n_nonzero_coefs=3, random_state=0
+        n_samples=5,
+        n_components=8,
+        n_features=10,
+        n_nonzero_coefs=3,
+        random_state=0,
+        data_transposed=False,
+    )
+    assert Y.shape == (5, 10), "Y shape mismatch"
+    assert D.shape == (8, 10), "D shape mismatch"
+    assert X.shape == (5, 8), "X shape mismatch"
+    for i in X:
+        assert len(np.flatnonzero(i)) == 3, "Non-zero coefs mismatch"
+    assert_array_almost_equal(np.dot(X, D), Y)
+    assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1]))
+
+
+# TODO: to be removed in 1.3
+def test_make_sparse_coded_signal_transposed():
+    Y, D, X = make_sparse_coded_signal(
+        n_samples=5,
+        n_components=8,
+        n_features=10,
+        n_nonzero_coefs=3,
+        random_state=0,
+        data_transposed=True,
     )
     assert Y.shape == (10, 5), "Y shape mismatch"
     assert D.shape == (10, 8), "D shape mismatch"
     assert X.shape == (8, 5), "X shape mismatch"
-    for col in X.T:
-        assert len(np.flatnonzero(col)) == 3, "Non-zero coefs mismatch"
+    for i in X.T:
+        assert len(np.flatnonzero(i)) == 3, "Non-zero coefs mismatch"
     assert_array_almost_equal(np.dot(D, X), Y)
-    assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1]))
 
 
-# TODO: to be removed in 1.3.
+# TODO: to be removed in 1.3
 def test_make_sparse_code_signal_warning():
     """Check the message for future deprecation."""
     warn_msg = "The default value of data_transposed will change from True to False"
