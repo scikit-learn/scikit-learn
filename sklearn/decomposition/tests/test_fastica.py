@@ -79,7 +79,7 @@ def test_fastica_simple(add_noise, seed):
 
     algos = ["parallel", "deflation"]
     nls = ["logcosh", "exp", "cube", g_test]
-    whitening = ["arbitrary-variance", "unitary-variance", False]
+    whitening = ["arbitrary-variance", "unit-variance", False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
             k_, mixing_, s_ = fastica(
@@ -331,7 +331,7 @@ def test_fastica_whiten_default_value_deprecation():
     for ica in [FastICA(), FastICA(whiten=True)]:
         with pytest.warns(FutureWarning, match=r"From version 1.3 whiten="):
             ica.fit(X)
-            assert ica.whiten_ == "arbitrary-variance"
+            assert ica._whiten == "arbitrary-variance"
 
 
 def test_fastica_whiten_backwards_compatibility():
@@ -349,7 +349,7 @@ def test_fastica_whiten_backwards_compatibility():
     assert_almost_equal(np.var(Xt), 1.0 / 100)
 
 
-@pytest.mark.parametrize("whiten", ["arbitrary-variance", "unitary-variance", False])
+@pytest.mark.parametrize("whiten", ["arbitrary-variance", "unit-variance", False])
 @pytest.mark.parametrize("return_X_mean", [True, False])
 @pytest.mark.parametrize("return_n_iter", [True, False])
 def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
