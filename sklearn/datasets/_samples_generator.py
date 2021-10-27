@@ -1480,7 +1480,7 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
         See :term:`Glossary <random_state>`.
 
     hole : bool, default=False
-        If True generates the swiss roll with hole dataset
+        If True generates the swiss roll with hole dataset.
 
     Returns
     -------
