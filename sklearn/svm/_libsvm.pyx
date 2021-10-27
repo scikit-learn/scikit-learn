@@ -205,8 +205,8 @@ def fit(
     SV_len  = get_l(model)
     n_class = get_nr(model)
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter
-    n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.int32)
+    cdef np.ndarray[int, ndim=1, mode='c'] n_iter
+    n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
     copy_n_iter(n_iter.data, model)
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef
@@ -289,7 +289,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
             np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
             np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-            np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter,
+            np.ndarray[int, ndim=1, mode='c'] n_iter,
             np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
             int svm_type=0, kernel='rbf', int degree=3,
@@ -388,7 +388,7 @@ def predict_proba(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter,
+    np.ndarray[int, ndim=1, mode='c'] n_iter,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, kernel='rbf', int degree=3,
@@ -497,7 +497,7 @@ def decision_function(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter,
+    np.ndarray[int, ndim=1, mode='c'] n_iter,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, kernel='rbf', int degree=3,

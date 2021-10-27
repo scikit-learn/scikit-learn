@@ -160,8 +160,8 @@ def libsvm_sparse_train ( int n_features,
     cdef np.npy_intp SV_len = get_l(model)
     cdef np.npy_intp n_class = get_nr(model)
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter
-    n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.int32)
+    cdef np.ndarray[int, ndim=1, mode='c'] n_iter
+    n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
     copy_n_iter(n_iter.data, model)
 
     # copy model.sv_coef
@@ -242,7 +242,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
                             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
                             np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
                             np.ndarray[np.float64_t, ndim=1, mode='c'] probB,
-                            np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter):
+                            np.ndarray[int, ndim=1, mode='c'] n_iter):
     """
     Predict values T given a model.
 
@@ -320,7 +320,7 @@ def libsvm_sparse_predict_proba(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter):
+    np.ndarray[int, ndim=1, mode='c'] n_iter):
     """
     Predict values T given a model.
     """
@@ -382,7 +382,7 @@ def libsvm_sparse_decision_function(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter):
+    np.ndarray[int, ndim=1, mode='c'] n_iter):
     """
     Predict margin (libsvm name for this is predict_values)
 
