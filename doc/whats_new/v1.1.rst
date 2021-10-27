@@ -76,7 +76,7 @@ Changelog
   :pr:`21093` by `Tom Dupre la Tour`_.
 
 - |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
-  `predict` was performing an `argmax` on the scores obtain from
+  `predict` was performing an `argmax` on the scores obtained from
   `decision_function` instead of returning the multilabel indicator matrix.
   :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
 
