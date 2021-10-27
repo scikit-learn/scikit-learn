@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+from numpy.testing import assert_array_equal
 
 import pytest
 
@@ -657,6 +658,7 @@ def test_assess_dimesion_rank_one():
     for rank in range(2, n_features):
         assert _assess_dimension(s, rank, n_samples) == -np.inf
 
+
 import time
 from scipy.linalg import svd
 def test_pca_svd_output():
@@ -692,3 +694,11 @@ def test_pca_svd_output():
 
     print("\nthe next three rows should be the same up to sign:")
     print(" PCA       ", vals0[0:5], "\n sparse SVD", vals1[0:5], "\n dense SVD ", vals2[0:5], "\n")
+
+
+def test_feature_names_out():
+    """Check feature names out for PCA."""
+    pca = PCA(n_components=2).fit(iris.data)
+
+    names = pca.get_feature_names_out()
+    assert_array_equal([f"pca{i}" for i in range(2)], names)

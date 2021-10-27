@@ -27,7 +27,6 @@ def _scale_normalize(X):
 
     Returns the normalized matrix and the row and column scaling
     factors.
-
     """
     X = make_nonnegative(X)
     row_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=1))).squeeze()
@@ -48,7 +47,6 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     """Normalize rows and columns of ``X`` simultaneously so that all
     rows sum to one constant and all columns sum to a different
     constant.
-
     """
     # According to paper, this can also be done more efficiently with
     # deviation reduction and balancing algorithms.
@@ -137,7 +135,6 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     def _svd(self, array, n_components, n_discard):
         """Returns first `n_components` left and right singular
         vectors u and v, discarding the first `n_discard`.
-
         """
         if self.svd_method == "randomized":
             kwargs = {}
@@ -290,6 +287,17 @@ class SpectralCoclustering(BaseSpectral):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    SpectralBiclustering : Partitions rows and columns under the assumption
+        that the data has an underlying checkerboard structure.
+
+    References
+    ----------
+    * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
+      bipartite spectral graph partitioning
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralCoclustering
@@ -303,14 +311,6 @@ class SpectralCoclustering(BaseSpectral):
     array([0, 0], dtype=int32)
     >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)
-
-    References
-    ----------
-
-    * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
-      bipartite spectral graph partitioning
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
-
     """
 
     def __init__(
