@@ -1042,7 +1042,7 @@ def check_random_state(seed):
     ----------
     seed : None, int or instance of RandomState
         If seed is `None`, return the RandomState singleton used by
-          `np.random`.
+        `np.random`.
         If seed is an int, return a new RandomState instance seeded with seed.
         If seed is already a RandomState instance, return it.
         Otherwise raise ``ValueError``.
@@ -1147,7 +1147,7 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
 
 
 def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
-    """Perform is_fitted validation for estimator.
+    """Perform `is_fitted` validation for estimator.
 
     Check if the estimator is fitted by verifying the presence of
     fitted attributes (ending with a trailing underscore) and otherwise
