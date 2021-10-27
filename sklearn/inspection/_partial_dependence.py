@@ -143,17 +143,22 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
                 )
         values.append(axis)
 
-    # Store cartesian in grid of dtype=object to support grids of str/numeric values
+    # Create a place holder for the cartesian product of the individual grids.
     shape = (len(v) for v in values)
     ix = np.indices(shape)
     ix = ix.reshape(len(values), -1).T
 
+    # If the user is computing partial dependence for a mix of
+    # numeric/non-numeric features we use object dtype.
+    # Else, we use the first dtype in values,
+    # which is the default behavior of the cartesian function.
     dtypes = [arr.dtype for arr in values]
     out_dtype = (
         object
         if any(not np.issubdtype(dtype, np.number) for dtype in dtypes)
         else dtypes[0]
     )
+
     out = np.empty_like(ix, dtype=out_dtype)
     return cartesian(values, out), values
 
