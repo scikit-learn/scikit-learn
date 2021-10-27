@@ -1053,7 +1053,7 @@ def linear_kernel(X, Y=None, dense_output=True):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
-        Array of pairwise kernels between samples, or a feature array.
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
         A second feature array. If `None`, uses `Y=X`.
