@@ -2299,8 +2299,6 @@ class MiniBatchNMF(NMF):
         if self.fresh_restarts:
             W = self._solve_W(X, H, self._transform_max_iter)
 
-        self.res_ = np.array(self.res_)
-
         n_steps = i + 1
         n_iter = int(np.ceil((i + 1) / n_steps_per_epoch))
 

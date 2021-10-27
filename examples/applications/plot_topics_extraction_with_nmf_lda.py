@@ -104,7 +104,12 @@ print(
 )
 t0 = time()
 nmf = NMF(
-    n_components=n_components, random_state=1, init=init, alpha=0.1, l1_ratio=0.5
+    n_components=n_components,
+    random_state=1,
+    init=init,
+    alpha_W=0.1,
+    alpha_H=0.1,
+    l1_ratio=0.5,
 ).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
@@ -129,12 +134,13 @@ nmf = NMF(
     beta_loss="kullback-leibler",
     solver="mu",
     max_iter=1000,
-    alpha=0.1,
+    alpha_W=0.1,
+    alpha_H=0.1,
     l1_ratio=0.5,
 ).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
-tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+tfidf_feature_names = tfidf_vectorizer.get_feature_names_out()
 plot_top_words(
     nmf,
     tfidf_feature_names,
@@ -153,15 +159,16 @@ t0 = time()
 mbnmf = MiniBatchNMF(
     n_components=n_components,
     random_state=1,
-    init=init,
     batch_size=batch_size,
-    alpha=0.1,
+    init=init,
+    alpha_W=0.1,
+    alpha_H=0.1,
     l1_ratio=0.5,
 ).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
 
-tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+tfidf_feature_names = tfidf_vectorizer.get_feature_names_out()
 plot_top_words(
     mbnmf,
     tfidf_feature_names,
@@ -181,16 +188,15 @@ mbnmf = MiniBatchNMF(
     n_components=n_components,
     random_state=1,
     batch_size=batch_size,
-    beta_loss="kullback-leibler",
-    solver="mu",
-    max_iter=1000,
-    alpha=0.1,
-    l1_ratio=0.5,
     init=init,
+    beta_loss="kullback-leibler",
+    alpha_W=0.1,
+    alpha_H=0.1,
+    l1_ratio=0.5,
 ).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
-tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+tfidf_feature_names = tfidf_vectorizer.get_feature_names_out()
 plot_top_words(
     mbnmf,
     tfidf_feature_names,
