@@ -156,7 +156,7 @@ def fit(
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates, empty array for probability=False.
 
-    num_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
+    n_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
         Number of iterations run by the optimization routine to fit the model.
     """
 
@@ -205,9 +205,9 @@ def fit(
     SV_len  = get_l(model)
     n_class = get_nr(model)
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter
-    num_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.int32)
-    copy_num_iter (num_iter.data, model)
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter
+    n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.int32)
+    copy_n_iter(n_iter.data, model)
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef
     sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
@@ -258,7 +258,7 @@ def fit(
     free(problem.x)
 
     return (support, support_vectors, n_class_SV, sv_coef, intercept,
-           probA, probB, fit_status, num_iter)
+           probA, probB, fit_status, n_iter)
 
 
 cdef void set_predict_params(
@@ -289,7 +289,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
             np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
             np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-            np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter,
+            np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter,
             np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
             int svm_type=0, kernel='rbf', int degree=3,
@@ -321,7 +321,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     intercept : array of shape (n_class*(n_class-1)/2)
         Intercept in decision function.
 
-    num_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
+    n_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
         Number of iterations run by the optimization routine to fit the model.
 
     probA, probB : array of shape (n_class*(n_class-1)/2,)
@@ -365,7 +365,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data, probA.data,
-                      probB.data, num_iter.data)
+                      probB.data, n_iter.data)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     #TODO: use check_model
@@ -388,7 +388,7 @@ def predict_proba(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, kernel='rbf', int degree=3,
@@ -430,7 +430,7 @@ def predict_proba(
     intercept : array of shape (n_class*(n_class-1)/2,)
         Intercept in decision function.
 
-    num_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
+    n_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
         Number of iterations run by the optimization routine to fit the model.
 
     probA, probB : array of shape (n_class*(n_class-1)/2,)
@@ -473,7 +473,7 @@ def predict_proba(
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
-                      probA.data, probB.data, num_iter.data)
+                      probA.data, probB.data, n_iter.data)
 
     cdef np.npy_intp n_class = get_nr(model)
     cdef BlasFunctions blas_functions
@@ -497,7 +497,7 @@ def decision_function(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, kernel='rbf', int degree=3,
@@ -532,7 +532,7 @@ def decision_function(
     intercept : array, shape=[n_class*(n_class-1)/2]
         Intercept in decision function.
 
-    num_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
+    n_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
         Number of iterations run by the optimization routine to fit the model.
 
     probA, probB : array, shape=[n_class*(n_class-1)/2]
@@ -579,7 +579,7 @@ def decision_function(
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
-                      probA.data, probB.data, num_iter.data)
+                      probA.data, probB.data, n_iter.data)
 
     if svm_type > 1:
         n_class = 1

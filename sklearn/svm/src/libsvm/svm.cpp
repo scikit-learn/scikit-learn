@@ -557,7 +557,7 @@ public:
                 double *upper_bound;
 		double r;	// for Solver_NU
                 bool solve_timed_out;
-		int num_iter;
+		int n_iter;
 	};
 
 	void Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
@@ -925,7 +925,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 		si->upper_bound[i] = C[i];
 
 	// store number of iterations
-	si->num_iter = iter;
+	si->n_iter = iter;
 
 	info("\noptimization finished, #iter = %d\n",iter);
 
@@ -1845,7 +1845,7 @@ struct decision_function
 {
 	double *alpha;
 	double rho;
-	int num_iter;
+	int n_iter;
 };
 
 static decision_function svm_train_one(
@@ -1911,7 +1911,7 @@ static decision_function svm_train_one(
 	decision_function f;
 	f.alpha = alpha;
 	f.rho = si.rho;
-	f.num_iter = si.num_iter;
+	f.n_iter = si.n_iter;
 	return f;
 }
 
@@ -2397,8 +2397,8 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
                 NAMESPACE::decision_function f = NAMESPACE::svm_train_one(prob,param,0,0, status,blas_functions);
 		model->rho = Malloc(double,1);
 		model->rho[0] = f.rho;
-		model->num_iter = Malloc(int,1);
-		model->num_iter[0] = f.num_iter;
+		model->n_iter = Malloc(int,1);
+		model->n_iter[0] = f.n_iter;
 
 		int nSV = 0;
 		int i;
@@ -2535,11 +2535,11 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 			model->label[i] = label[i];
 
 		model->rho = Malloc(double,nr_class*(nr_class-1)/2);
-		model->num_iter = Malloc(int,nr_class*(nr_class-1)/2);
+		model->n_iter = Malloc(int,nr_class*(nr_class-1)/2);
 		for(i=0;i<nr_class*(nr_class-1)/2;i++)
 		{
 			model->rho[i] = f[i].rho;
-			model->num_iter[i] = f[i].num_iter;
+			model->n_iter[i] = f[i].n_iter;
 		}
 
 		if(param->probability)
@@ -2995,8 +2995,8 @@ void PREFIX(free_model_content)(PREFIX(model)* model_ptr)
 	free(model_ptr->nSV);
 	model_ptr->nSV = NULL;
 
-	free(model_ptr->num_iter);
-	model_ptr->num_iter = NULL;
+	free(model_ptr->n_iter);
+	model_ptr->n_iter = NULL;
 }
 
 void PREFIX(free_and_destroy_model)(PREFIX(model)** model_ptr_ptr)

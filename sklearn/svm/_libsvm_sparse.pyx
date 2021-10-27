@@ -35,13 +35,13 @@ cdef extern from "libsvm_sparse_helper.c":
                             char *SV_indices, np.npy_intp *SV_intptr_dims,
                             char *SV_intptr,
                             char *sv_coef, char *rho, char *nSV,
-                            char *probA, char *probB, char *num_iter)
+                            char *probA, char *probB, char *n_iter)
     svm_parameter *set_parameter (int , int , int , double, double ,
                                   double , double , double , double,
                                   double, int, int, int, char *, char *, int,
                                   int)
     void copy_sv_coef   (char *, svm_csr_model *)
-    void copy_num_iter  (char *, svm_csr_model *)
+    void copy_n_iter  (char *, svm_csr_model *)
     void copy_support   (char *, svm_csr_model *)
     void copy_intercept (char *, svm_csr_model *, np.npy_intp *)
     int copy_predict (char *, svm_csr_model *, np.npy_intp *, char *, BlasFunctions *)
@@ -160,9 +160,9 @@ def libsvm_sparse_train ( int n_features,
     cdef np.npy_intp SV_len = get_l(model)
     cdef np.npy_intp n_class = get_nr(model)
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter
-    num_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.int32)
-    copy_num_iter (num_iter.data, model)
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter
+    n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.int32)
+    copy_n_iter(n_iter.data, model)
 
     # copy model.sv_coef
     # we create a new array instead of resizing, otherwise
@@ -222,7 +222,7 @@ def libsvm_sparse_train ( int n_features,
     free_param(param)
 
     return (support, support_vectors_, sv_coef_data, intercept, n_class_SV,
-            probA, probB, fit_status, num_iter)
+            probA, probB, fit_status, n_iter)
 
 
 def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
@@ -242,7 +242,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
                             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
                             np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
                             np.ndarray[np.float64_t, ndim=1, mode='c'] probB,
-                            np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter):
+                            np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter):
     """
     Predict values T given a model.
 
@@ -283,7 +283,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
                           SV_indices.shape, SV_indices.data,
                           SV_indptr.shape, SV_indptr.data,
                           sv_coef.data, intercept.data,
-                          nSV.data, probA.data, probB.data, num_iter.data)
+                          nSV.data, probA.data, probB.data, n_iter.data)
     #TODO: use check_model
     dec_values = np.empty(T_indptr.shape[0]-1)
     cdef BlasFunctions blas_functions
@@ -320,7 +320,7 @@ def libsvm_sparse_predict_proba(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter):
+    np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter):
     """
     Predict values T given a model.
     """
@@ -341,7 +341,7 @@ def libsvm_sparse_predict_proba(
                           SV_indices.shape, SV_indices.data,
                           SV_indptr.shape, SV_indptr.data,
                           sv_coef.data, intercept.data,
-                          nSV.data, probA.data, probB.data, num_iter.data)
+                          nSV.data, probA.data, probB.data, n_iter.data)
     #TODO: use check_model
     cdef np.npy_intp n_class = get_nr(model)
     cdef int rv
@@ -382,7 +382,7 @@ def libsvm_sparse_decision_function(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] num_iter):
+    np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter):
     """
     Predict margin (libsvm name for this is predict_values)
 
@@ -407,7 +407,7 @@ def libsvm_sparse_decision_function(
                           SV_indices.shape, SV_indices.data,
                           SV_indptr.shape, SV_indptr.data,
                           sv_coef.data, intercept.data,
-                          nSV.data, probA.data, probB.data, num_iter.data)
+                          nSV.data, probA.data, probB.data, n_iter.data)
 
     if svm_type > 1:
         n_class = 1

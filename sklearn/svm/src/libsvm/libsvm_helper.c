@@ -109,7 +109,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
                             char *support, npy_intp *support_dims,
                             npy_intp *sv_coef_strides,
                             char *sv_coef, char *rho, char *nSV,
-                            char *probA, char *probB, char *num_iter)
+                            char *probA, char *probB, char *n_iter)
 {
     struct svm_model *model;
     double *dsv_coef = (double *) sv_coef;
@@ -128,8 +128,8 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
         goto sv_coef_error;
     if ((model->rho = malloc( m * sizeof(double))) == NULL)
         goto rho_error;
-    if ((model->num_iter = malloc(n_models * sizeof(int))) == NULL)
-        goto num_iter_error;
+    if ((model->n_iter = malloc(n_models * sizeof(int))) == NULL)
+        goto n_iter_error;
 
     model->nr_class = nr_class;
     model->param = *param;
@@ -184,8 +184,8 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     model->free_sv = 0;
     return model;
 
-num_iter_error:
-    free(model->num_iter);
+n_iter_error:
+    free(model->n_iter);
 probB_error:
     free(model->probA);
 probA_error:
@@ -226,11 +226,11 @@ npy_intp get_nr(struct svm_model *model)
 /*
  * Get the number of iterations run in optimization
  */
-void copy_num_iter(char *data, struct svm_model *model)
+void copy_n_iter(char *data, struct svm_model *model)
 {
     int n_models;
     n_models = model->nr_class <= 2 ? 1 : model->nr_class * (model->nr_class-1)/2;
-    memcpy(data, model->num_iter, n_models * sizeof(int));
+    memcpy(data, model->n_iter, n_models * sizeof(int));
 }
 
 /*
@@ -386,7 +386,7 @@ int free_model(struct svm_model *model)
     free(model->label);
     free(model->probA);
     free(model->probB);
-    free(model->num_iter);
+    free(model->n_iter);
     free(model->nSV);
     free(model);
 

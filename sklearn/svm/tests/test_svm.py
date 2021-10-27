@@ -75,7 +75,7 @@ def test_libsvm_iris():
         libsvm_probA,
         libsvm_probB,
         libsvm_fit_status,
-        libsvm_num_iter,
+        libsvm_n_iter,
     ) = _libsvm.fit(iris.data, iris.target.astype(np.float64))
 
     lib_svm_model = (
@@ -84,7 +84,7 @@ def test_libsvm_iris():
         libsvm_n_class_SV,
         libsvm_sv_coef,
         libsvm_intercept,
-        libsvm_num_iter,
+        libsvm_n_iter,
         libsvm_probA,
         libsvm_probB,
     )
@@ -100,7 +100,7 @@ def test_libsvm_iris():
         libsvm_probA,
         libsvm_probB,
         libsvm_fit_status,
-        libsvm_num_iter,
+        libsvm_n_iter,
     ) = _libsvm.fit(iris.data, iris.target.astype(np.float64), kernel="linear")
 
     lib_svm_model = (
@@ -109,7 +109,7 @@ def test_libsvm_iris():
         libsvm_n_class_SV,
         libsvm_sv_coef,
         libsvm_intercept,
-        libsvm_num_iter,
+        libsvm_n_iter,
         libsvm_probA,
         libsvm_probB,
     )
