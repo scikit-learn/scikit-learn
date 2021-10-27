@@ -31,7 +31,6 @@ for other tasks such as object classification, where performance is not
 necessarily related to visualisation.
 
 """
-print(__doc__)
 
 from time import time
 

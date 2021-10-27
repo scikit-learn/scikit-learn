@@ -8,7 +8,6 @@ Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
 Between Data Points", Science Feb. 2007
 
 """
-print(__doc__)
 
 from sklearn.cluster import AffinityPropagation
 from sklearn import metrics

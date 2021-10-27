@@ -471,17 +471,9 @@ class SpectralEmbedding(BaseEstimator):
     n_neighbors_ : int
         Number of nearest neighbors effectively used.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.manifold import SpectralEmbedding
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> X.shape
-    (1797, 64)
-    >>> embedding = SpectralEmbedding(n_components=2)
-    >>> X_transformed = embedding.fit_transform(X[:100])
-    >>> X_transformed.shape
-    (100, 2)
+    Isomap : Non-linear dimensionality reduction through Isometric Mapping.
 
     References
     ----------
@@ -497,6 +489,18 @@ class SpectralEmbedding(BaseEstimator):
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import SpectralEmbedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = SpectralEmbedding(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
     """
 
     def __init__(
@@ -607,6 +611,7 @@ class SpectralEmbedding(BaseEstimator):
             samples.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -662,10 +667,12 @@ class SpectralEmbedding(BaseEstimator):
             samples.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         X_new : array-like of shape (n_samples, n_components)
+            Spectral embedding of the training matrix.
         """
         self.fit(X)
         return self.embedding_

@@ -703,8 +703,8 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     assert isinstance(viz.ax_, mpl.axes.Axes)
     assert isinstance(viz.figure_, mpl.figure.Figure)
 
-    assert viz.ax_.get_xlabel() == "Mean predicted probability"
-    assert viz.ax_.get_ylabel() == "Fraction of positives"
+    assert viz.ax_.get_xlabel() == "Mean predicted probability (Positive class: 1)"
+    assert viz.ax_.get_ylabel() == "Fraction of positives (Positive class: 1)"
     assert viz.line_.get_label() == "LogisticRegression"
 
 
@@ -821,6 +821,34 @@ def test_calibration_curve_pos_label(dtype_y_str):
     assert_allclose(prob_true, [0, 0, 0.5, 1])
     prob_true, _ = calibration_curve(y_true_str, 1 - y_pred, n_bins=4, pos_label="spam")
     assert_allclose(prob_true, [0, 0, 0.5, 1])
+
+
+@pytest.mark.parametrize("pos_label, expected_pos_label", [(None, 1), (0, 0), (1, 1)])
+def test_calibration_display_pos_label(
+    pyplot, iris_data_binary, pos_label, expected_pos_label
+):
+    """Check the behaviour of `pos_label` in the `CalibrationDisplay`."""
+    X, y = iris_data_binary
+
+    lr = LogisticRegression().fit(X, y)
+    viz = CalibrationDisplay.from_estimator(lr, X, y, pos_label=pos_label)
+
+    y_prob = lr.predict_proba(X)[:, expected_pos_label]
+    prob_true, prob_pred = calibration_curve(y, y_prob, pos_label=pos_label)
+
+    assert_allclose(viz.prob_true, prob_true)
+    assert_allclose(viz.prob_pred, prob_pred)
+    assert_allclose(viz.y_prob, y_prob)
+
+    assert (
+        viz.ax_.get_xlabel()
+        == f"Mean predicted probability (Positive class: {expected_pos_label})"
+    )
+    assert (
+        viz.ax_.get_ylabel()
+        == f"Fraction of positives (Positive class: {expected_pos_label})"
+    )
+    assert viz.line_.get_label() == "LogisticRegression"
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])

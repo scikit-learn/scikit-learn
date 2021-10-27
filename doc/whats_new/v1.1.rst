@@ -45,6 +45,10 @@ Changelog
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :class:`CalibrationDisplay` accepts a parameter `pos_label` to
+  add this information to the plot.
+  :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -54,6 +58,25 @@ Changelog
 
 :mod:`sklearn.decomposition`
 ............................
+
+- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
+  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
+
+- |API| Adds :term:`get_feature_names_out` to all transformers in the
+  :mod:`~sklearn.decomposition` module:
+  :class:`~sklearn.decomposition.DictionaryLearning`,
+  :class:`~sklearn.decomposition.FactorAnalysis`,
+  :class:`~sklearn.decomposition.FastICA`,
+  :class:`~sklearn.decomposition.IncrementalPCA`,
+  :class:`~sklearn.decomposition.KernelPCA`,
+  :class:`~sklearn.decomposition.LatentDirichletAllocation`,
+  :class:`~sklearn.decomposition.MiniBatchDictionaryLearning`,
+  :class:`~sklearn.decomposition.MiniBatchSparsePCA`,
+  :class:`~sklearn.decomposition.NMF`,
+  :class:`~sklearn.decomposition.PCA`,
+  :class:`~sklearn.decomposition.SparsePCA`,
+  and :class:`~sklearn.decomposition.TruncatedSVD`. :pr:`21334` by
+  `Thomas Fan`_.
 
 - |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
   The default value of its :code:`whiten` argument in will change from
@@ -77,6 +100,13 @@ Changelog
   :class:`feature_extraction.TfidfVectorizer` by raising an
   error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
   :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
+  :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
+  :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -111,17 +141,16 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| :func:`utils.validation._check_sample_weight` can perform a
-  non-negativity check on the sample weights. It can be turned on
-  using the only_non_negative bool parameter.
-  Estimators that check for non-negative weights are updated:
-  :func:`linear_model.LinearRegression` (here the previous
-  error message was misleading),
-  :func:`ensemble.AdaBoostClassifier`,
-  :func:`ensemble.AdaBoostRegressor`,
-  :func:`neighbors.KernelDensity`.
-  :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
-  and :user:`András Simon <simonandras>`.
+- |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
+  message when running in a jupyter notebook that is not trusted. :pr:`21316`
+  by `Thomas Fan`_.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
+  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
+  :user:`Lucy Jimenez <LucyJimenez>`.
 
 Code and Documentation Contributors
 -----------------------------------
