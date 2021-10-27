@@ -24,6 +24,8 @@ from .utils.validation import check_array
 from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
+from .utils.validation import _generate_get_feature_names_out
+from .utils.validation import check_is_fitted
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _get_feature_names
 
@@ -877,6 +879,31 @@ class _OneToOneFeatureMixin:
             Same as input features.
         """
         return _check_feature_names_in(self, input_features)
+
+
+class _ClassNamePrefixFeaturesOutMixin:
+    """Mixin class for transformers that generate their own names by prefixing.
+
+    Assumes that `_n_features_out` is defined for the estimator.
+    """
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        check_is_fitted(self, "_n_features_out")
+        return _generate_get_feature_names_out(
+            self, self._n_features_out, input_features=input_features
+        )
 
 
 class DensityMixin:

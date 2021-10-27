@@ -741,3 +741,13 @@ def test_init_default_deprecation():
         NMF().fit(A)
     with pytest.warns(FutureWarning, match=msg):
         non_negative_factorization(A)
+
+
+def test_feature_names_out():
+    """Check feature names out for NMF."""
+    random_state = np.random.RandomState(0)
+    X = np.abs(random_state.randn(10, 4))
+    nmf = NMF(n_components=3, init="nndsvda").fit(X)
+
+    names = nmf.get_feature_names_out()
+    assert_array_equal([f"nmf{i}" for i in range(3)], names)
