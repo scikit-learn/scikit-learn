@@ -26,7 +26,8 @@ Changelog
 
 - |Fix| Fixed the computation of AIC and BIC in
   :class:`linear_model.LassoLarsIC`.
-  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Andrés Babino <ababino>`.
 
 .. _changes_1_0_1:
 
