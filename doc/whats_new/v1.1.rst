@@ -85,35 +85,12 @@ Changelog
   :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and
   :user:`Julien Jerphanion <jjerphan>`
 
-:mod:`sklearn.ensemble`
-.......................
-
-- |Fix| Fixed a bug that could produce a segfault in rare cases for
-  :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor`.
-  :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
-
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
-  :class:`feature_extraction.TfidfVectorizer` by raising an
-  error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
-  :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
-
 :mod:`sklearn.impute`
 .....................
 
 - |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
   :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
   :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
-
-:mod:`sklearn.linear_model`
-...........................
-
-- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
-  message when the solver does not support sparse matrices with int64 indices.
-  :pr:`21093` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................
