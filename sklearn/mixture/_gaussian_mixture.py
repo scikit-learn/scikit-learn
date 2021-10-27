@@ -415,7 +415,10 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     """
     n_samples, n_features = X.shape
     n_components, _ = means.shape
-    # det(precision_chol) is half of det(precision)
+    # The determinant of the precision matrix from the Cholesky decomposition
+    # corresponds to the negative half of the determinant of the full precision
+    # matrix.
+    # In short: det(precision_chol) = - det(precision) / 2
     log_det = _compute_log_det_cholesky(precisions_chol, covariance_type, n_features)
 
     if covariance_type == "full":
@@ -445,6 +448,8 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
             - 2 * np.dot(X, means.T * precisions)
             + np.outer(row_norms(X, squared=True), precisions)
         )
+    # Since we are using the precision of the Cholesky decomposition,
+    # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
     return -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
 
 
