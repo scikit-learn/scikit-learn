@@ -2116,8 +2116,7 @@ class MiniBatchNMF(NMF):
         # counts steps starting from 1 for user friendly verbose mode.
         step = step + 1
 
-        # Ignore first iteration because dictionary is not projected on the
-        # constraint set yet.
+        # Ignore first iteration because H is not updated yet.
         if step == 1:
             if self.verbose:
                 print(f"Minibatch step {step}/{n_steps}: mean batch cost: {batch_cost}")
@@ -2145,8 +2144,7 @@ class MiniBatchNMF(NMF):
         if self.tol > 0 and H_diff <= self.tol:
             if self.verbose:
                 print(f"Converged (small H change) at step {step}/{n_steps}")
-            print("# CV on H")
-            # return True
+            return True
 
         # Early stopping heuristic due to lack of improvement on smoothed
         # cost function
@@ -2165,8 +2163,7 @@ class MiniBatchNMF(NMF):
                     "Converged (lack of improvement in objective function) "
                     f"at step {step}/{n_steps}"
                 )
-            print("# CV on obj")
-            # return True
+            return True
 
         return False
 
@@ -2209,9 +2206,9 @@ class MiniBatchNMF(NMF):
                 ConvergenceWarning,
             )
 
-        # self.reconstruction_err_ = _beta_divergence(
-        #     X, W, H, self._beta_loss, square_root=True
-        # )
+        self.reconstruction_err_ = _beta_divergence(
+            X, W, H, self._beta_loss, square_root=True
+        )
 
         self.n_components_ = H.shape[0]
         self.components_ = H
@@ -2290,97 +2287,9 @@ class MiniBatchNMF(NMF):
         n_steps_per_epoch = int(np.ceil(n_samples / self._batch_size))
         n_steps = self.max_iter * n_steps_per_epoch
 
-        t = 0
-        self.res_ = []
-
         for i, batch in zip(range(n_steps), batches):
 
-            # shuffle the training set before each epoch
-            if i % n_steps_per_epoch == 0:
-                permutation = random_state.permutation(n_samples)
-                X = X[permutation]
-                W = W[permutation]
-
-            start = time.time()
             batch_cost = self._minibatch_step(X[batch], W[batch], H, update_H)
-            end = time.time()
-            t += end - start
-
-            ### *** ###
-            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(
-                X[batch]
-            )
-            batch_cost2 = (
-                _beta_divergence(X[batch], W[batch], H, self._beta_loss)
-                + l1_reg_W * W[batch].sum()
-                + l1_reg_H * H.sum()
-                + l2_reg_W * (W[batch] ** 2).sum()
-                + l2_reg_H * (H ** 2).sum()
-            )
-            batch_cost2 /= X[batch].shape[0]
-
-            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(
-                X[batch]
-            )
-            W_batch = self._solve_W(X[batch], H, self._transform_max_iter)
-            batch_cost2_solved = (
-                _beta_divergence(X[batch], W_batch, H, self._beta_loss)
-                + l1_reg_W * W_batch.sum()
-                + l1_reg_H * H.sum()
-                + l2_reg_W * (W_batch ** 2).sum()
-                + l2_reg_H * (H ** 2).sum()
-            )
-            batch_cost2_solved /= X[batch].shape[0]
-
-            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
-            train_cost = (
-                _beta_divergence(X, W, H, self._beta_loss)
-                + l1_reg_W * W.sum()
-                + l1_reg_H * H.sum()
-                + l2_reg_W * (W ** 2).sum()
-                + l2_reg_H * (H ** 2).sum()
-            )
-            train_cost /= X.shape[0]
-
-            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
-            W_train = self._solve_W(X, H, self._transform_max_iter)
-            train_cost_solved = (
-                _beta_divergence(X, W_train, H, self._beta_loss)
-                + l1_reg_W * W_train.sum()
-                + l1_reg_H * H.sum()
-                + l2_reg_W * (W_train ** 2).sum()
-                + l2_reg_H * (H ** 2).sum()
-            )
-            train_cost_solved /= X.shape[0]
-
-            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(val)
-            W_val = self._solve_W(val, H, self._transform_max_iter)
-            val_cost = (
-                _beta_divergence(val, W_val, H, self._beta_loss)
-                + l1_reg_W * W_val.sum()
-                + l1_reg_H * H.sum()
-                + l2_reg_W * (W_val ** 2).sum()
-                + l2_reg_H * (H ** 2).sum()
-            )
-            val_cost /= val.shape[0]
-
-            # H_diff = linalg.norm(H - H_buffer) / linalg.norm(H)
-            H_diff = np.mean(linalg.norm(H - H_buffer, axis=1) / linalg.norm(H, axis=1))
-            # print(f"[{i},{t},{batch_cost2},{self._ewa_cost},{train_cost},{batch_cost2_solved},"
-            #       f"{train_cost_solved},{val_cost},{H_diff}],")
-            self.res_.append(
-                [
-                    i,
-                    t,
-                    batch_cost2,
-                    train_cost,
-                    batch_cost2_solved,
-                    train_cost_solved,
-                    val_cost,
-                    H_diff,
-                ]
-            )
-            ### *** ###
 
             if update_H and self._minibatch_convergence(
                 X, batch_cost, H, H_buffer, n_samples, i, n_steps
