@@ -85,6 +85,15 @@ Changelog
   :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
   :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
 
+- |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
+  `predict` was performing an `argmax` on the scores obtained from
+  `decision_function` instead of returning the multilabel indicator matrix.
+  :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
+  multilabel classification.
+  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.metrics`
 ......................
 
