@@ -74,12 +74,6 @@ Changelog
   and :class:`~sklearn.decomposition.TruncatedSVD`. :pr:`21334` by
   `Thomas Fan`_.
 
-- |Fix| Fixed the constraint on the objective function of
-  :class:`decomposition.DictionaryLearning`,
-  :class:`decomposition.MiniBatchDictionaryLearning`, :class:`decomposition.SparsePCA`
-  and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
-  article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
 :mod:`sklearn.impute`
 .....................
 
