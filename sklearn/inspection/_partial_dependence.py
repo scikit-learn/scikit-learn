@@ -36,7 +36,7 @@ __all__ = [
 ]
 
 
-def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_range):
+def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values):
     """Generate a grid of points based on the percentiles of X.
 
     The grid is a cartesian product between the columns of ``values``. The
@@ -65,7 +65,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_range):
         The number of equally spaced points to be placed on the grid for each
         feature.
 
-    custom_range: dict
+    custom_values: dict
         Mapping from column index of X to an array-like of values where
         the partial dependence should be calculated for that feature
 
@@ -95,9 +95,9 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_range):
     # TODO: we should handle missing values (i.e. `np.nan`) specifically and store them
     # in a different Bunch attribute.
     for feature, is_cat in enumerate(is_categorical):
-        if feature in custom_range:
+        if feature in custom_values:
             # Use values in the custom range
-            feature_range = custom_range[feature]
+            feature_range = custom_values[feature]
             if not isinstance(feature_range, np.ndarray):
                 feature_range = np.array(feature_range)
             if feature_range.ndim != 1:
@@ -147,7 +147,14 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_range):
     shape = (len(v) for v in values)
     ix = np.indices(shape)
     ix = ix.reshape(len(values), -1).T
-    out = np.empty_like(ix, dtype=object)
+
+    dtypes = [arr.dtype for arr in values]
+    out_dtype = (
+        object
+        if any(not np.issubdtype(dtype, np.number) for dtype in dtypes)
+        else dtypes[0]
+    )
+    out = np.empty_like(ix, dtype=out_dtype)
     return cartesian(values, out), values
 
 
@@ -259,7 +266,7 @@ def partial_dependence(
     grid_resolution=100,
     method="auto",
     kind="average",
-    custom_range=None,
+    custom_values=None,
 ):
     """Partial dependence of ``features``.
 
@@ -382,7 +389,7 @@ def partial_dependence(
 
         .. versionadded:: 0.24
 
-    custom_range: dict
+    custom_values: dict
         A dictionary mapping an element of `features` to an array of values where
         the partial dependence should be calculated for that feature. Setting a range
         of values for a feature overrides `grid_resolution` and `percentiles`.
@@ -573,13 +580,13 @@ def partial_dependence(
                 f" integer, or string. Got {categorical_features.dtype} instead."
             )
 
-    custom_range = custom_range or {}
-    if isinstance(features, (str, int, float, bool)):
+    custom_values = custom_values or {}
+    if isinstance(features, (str, int)):
         features = [features]
-    custom_range = {
-        index: custom_range.get(feature)
+    custom_values_idx = {
+        index: custom_values.get(feature)
         for index, feature in enumerate(features)
-        if feature in custom_range
+        if feature in custom_values
     }
 
     grid, values = _grid_from_X(
@@ -587,7 +594,7 @@ def partial_dependence(
         percentiles,
         is_categorical,
         grid_resolution,
-        custom_range,
+        custom_values_idx,
     )
 
     if method == "brute":
