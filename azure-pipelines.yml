@@ -237,7 +237,7 @@ jobs:
 - template: build_tools/azure/windows.yml
   parameters:
     name: Windows
-    vmImage: vs2017-win2016
+    vmImage: windows-latest
     dependsOn: [linting, git_commit]
     condition: |
       and(
