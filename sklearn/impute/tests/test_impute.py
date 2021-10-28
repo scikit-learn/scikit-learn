@@ -28,6 +28,11 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute._base import _most_frequent
 
 
+def _assert_array_equal_and_same_dtype(x, y):
+    assert_array_equal(x, y)
+    assert x.dtype == y.dtype
+
+
 def _check_statistics(X, X_true, strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
 
@@ -1501,35 +1506,43 @@ def test_simple_impute_pd_na():
     # Impute pandas array of string types.
     df = pd.DataFrame({"feature": pd.Series(["abc", None, "de"], dtype="string")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value="na")
-    assert_array_equal(
-        imputer.fit_transform(df), np.array([["abc"], ["na"], ["de"]], dtype="<U3")
+    _assert_array_equal_and_same_dtype(
+        imputer.fit_transform(df), np.array([["abc"], ["na"], ["de"]], dtype=object)
     )
 
     # Impute pandas array of string types without any missing values.
     df = pd.DataFrame({"feature": pd.Series(["abc", "de", "fgh"], dtype="string")})
     imputer = SimpleImputer(fill_value="ok", strategy="constant")
-    assert_array_equal(
-        imputer.fit_transform(df), np.array([["abc"], ["de"], ["fgh"]], dtype="<U3")
+    _assert_array_equal_and_same_dtype(
+        imputer.fit_transform(df), np.array([["abc"], ["de"], ["fgh"]], dtype=object)
     )
 
     # Impute pandas array of integer types.
     df = pd.DataFrame({"feature": pd.Series([1, None, 3], dtype="Int64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-1)
-    assert_array_equal(imputer.fit_transform(df), [[1], [-1], [3]])
+    _assert_array_equal_and_same_dtype(
+        imputer.fit_transform(df), np.array([[1], [-1], [3]], dtype="float64")
+    )
 
     # Use `np.nan` also works.
     imputer = SimpleImputer(missing_values=np.nan, strategy="constant", fill_value=-1)
-    assert_array_equal(imputer.fit_transform(df), [[1], [-1], [3]])
+    _assert_array_equal_and_same_dtype(
+        imputer.fit_transform(df), np.array([[1], [-1], [3]], dtype="float64")
+    )
 
     # Impute pandas array of integer types with 'median' strategy.
     df = pd.DataFrame({"feature": pd.Series([1, None, 2, 3], dtype="Int64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
-    assert_array_equal(imputer.fit_transform(df), [[1], [2], [2], [3]])
+    _assert_array_equal_and_same_dtype(
+        imputer.fit_transform(df), np.array([[1], [2], [2], [3]], dtype="float64")
+    )
 
     # Impute pandas array of float types.
-    df = pd.DataFrame({"feature": pd.Series([0.1, None, 0.3], dtype="Float32")})
+    df = pd.DataFrame({"feature": pd.Series([1.0, None, 3.0], dtype="float64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-2.0)
-    assert_array_almost_equal(imputer.fit_transform(df), [[0.1], [-2.0], [0.3]])
+    _assert_array_equal_and_same_dtype(
+        imputer.fit_transform(df), np.array([[1.0], [-2.0], [3.0]], dtype="float64")
+    )
 
 
 # Currently for float type arrays, `SimpleImputer` only supports 'constant'
@@ -1540,7 +1553,10 @@ def test_simple_impute_pd_na_float_median():
     pd = pytest.importorskip("pandas", minversion="1.0")
     df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="Float64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
-    assert_array_equal(imputer.fit_transform(df), [[1.0], [2.0], [2.0], [3.0]])
+    _assert_array_equal_and_same_dtype(
+        imputer.fit_transform(df),
+        np.array([[1.0], [2.0], [2.0], [3.0]], dtype="float64"),
+    )
 
 
 def test_missing_indicator_feature_names_out():
