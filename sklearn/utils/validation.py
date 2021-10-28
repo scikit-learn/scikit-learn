@@ -553,7 +553,7 @@ def _check_estimator_name(estimator):
             return estimator
         else:
             return estimator.__class__.__name__
-    return "Estimator"
+    return None
 
 
 def check_array(
