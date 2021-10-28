@@ -1849,8 +1849,8 @@ def recall_score(
     --------
     precision_recall_fscore_support : Compute precision, recall, F-measure and
         support for each class.
-    precision_score : Compute the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
-        true positives and ``fp`` the number of false positives.
+    precision_score : Compute the ratio ``tp / (tp + fp)`` where ``tp`` is the
+        number of true positives and ``fp`` the number of false positives.
     balanced_accuracy_score : Compute balanced accuracy to deal with imbalanced
         datasets.
     multilabel_confusion_matrix : Compute a confusion matrix for each class or
