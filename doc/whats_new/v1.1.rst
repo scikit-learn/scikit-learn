@@ -85,6 +85,10 @@ Changelog
   and :class:`~sklearn.decomposition.TruncatedSVD`. :pr:`21334` by
   `Thomas Fan`_.
 
+- |Enhancement| Introduce :class:`decomposition.GDNMF` to perform
+  non-negative matrix factorization, utilizing (side) labels and graph structure.
+  :pr:`21522` by :user:`Jason Zhang <jasonyz-ucb>`.
+
 :mod:`sklearn.impute`
 .....................
 

@@ -32,7 +32,7 @@ rng = RandomState(0)
 
 # #############################################################################
 # Load faces data
-faces, _ = fetch_olivetti_faces(return_X_y=True, shuffle=True, random_state=rng)
+faces, labels = fetch_olivetti_faces(return_X_y=True, shuffle=True, random_state=rng)
 n_samples, n_features = faces.shape
 
 # global centering
@@ -76,6 +76,17 @@ estimators = [
     (
         "Non-negative components - NMF",
         decomposition.NMF(n_components=n_components, tol=5e-3),
+        False,
+    ),
+    (
+        "Non-negative components - GDNMF",
+        decomposition.GDNMF(
+            n_components=n_components,
+            graph_coeff=0.1,
+            label_coeff=0.1,
+            tol=5e-3,
+            random_state=rng,
+        ),
         False,
     ),
     (
@@ -134,7 +145,7 @@ for name, estimator, center in estimators:
     data = faces
     if center:
         data = faces_centered
-    estimator.fit(data)
+    estimator.fit(data, labels)
     train_time = time() - t0
     print("done in %0.3fs" % train_time)
     if hasattr(estimator, "cluster_centers_"):

@@ -23,11 +23,13 @@ from ._dict_learning import (
 from ._factor_analysis import FactorAnalysis
 from ..utils.extmath import randomized_svd
 from ._lda import LatentDirichletAllocation
+from ._gdnmf import GDNMF
 
 
 __all__ = [
     "DictionaryLearning",
     "FastICA",
+    "GDNMF",
     "IncrementalPCA",
     "KernelPCA",
     "MiniBatchDictionaryLearning",
