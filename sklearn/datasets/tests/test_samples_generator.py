@@ -536,8 +536,9 @@ def test_make_swiss_roll():
 
     assert X_h.shape == (5, 3), "X shape mismatch with hole"
     assert t_h.shape == (5,), "t shape mismatch with hole"
-    assert_array_almost_equal(X_h[:, 0], np.sin(t_h))
-    assert_array_almost_equal(X_h[:, 2], np.sign(t_h) * (np.cos(t_h) - 1))
+    assert_array_almost_equal(X_h[:, 0], t_h * np.cos(t_h))
+    assert_array_almost_equal(X_h[:, 2], t_h * np.sin(t_h))
+
 
 def test_make_s_curve():
     X, t = make_s_curve(n_samples=5, noise=0.0, random_state=0)
