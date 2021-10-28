@@ -216,7 +216,7 @@ def mean_pinball_loss(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    alpha: double, slope of the pinball loss, default=0.5,
+    alpha: float, slope of the pinball loss, default=0.5,
         this loss is equivalent to :ref:`mean_absolute_error` when `alpha=0.5`,
         `alpha=0.95` is minimized by estimators of the 95th percentile.
 
