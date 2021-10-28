@@ -483,7 +483,7 @@ def _ensure_no_complex_data(array):
         raise ValueError("Complex data not supported\n{}\n".format(array))
 
 
-def _pandas_dtype_needs_early_conversation(pd_dtype):
+def _pandas_dtype_needs_early_conversion(pd_dtype):
     """Return True if pandas extension pd_dtype need to be converted early."""
     try:
         from pandas.api.types import (
@@ -632,7 +632,7 @@ def check_array(
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    pandas_requires_conversation = False
+    pandas_requires_conversion = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
@@ -650,8 +650,8 @@ def check_array(
             if dtype_iter.kind == "b":
                 # pandas boolean dtype __array__ interface coerces bools to objects
                 dtype_iter = np.dtype(object)
-            elif _pandas_dtype_needs_early_conversation(dtype_iter):
-                pandas_requires_conversation = True
+            elif _pandas_dtype_needs_early_conversion(dtype_iter):
+                pandas_requires_conversion = True
 
             dtypes_orig.append(dtype_iter)
 
@@ -674,7 +674,7 @@ def check_array(
             # list of accepted types.
             dtype = dtype[0]
 
-    if pandas_requires_conversation:
+    if pandas_requires_conversion:
         # pandas dataframe requires conversion earlier to handle extension dtypes with
         # nans
         array = array.astype(dtype)
