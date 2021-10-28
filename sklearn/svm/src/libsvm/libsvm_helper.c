@@ -235,8 +235,7 @@ npy_intp get_nr(struct svm_model *model)
  */
 void copy_n_iter(char *data, struct svm_model *model)
 {
-    int n_models;
-    n_models = max(1, model->nr_class * (model->nr_class-1)/2);
+    const int n_models = max(1, model->nr_class * (model->nr_class-1)/2);
     memcpy(data, model->n_iter, n_models * sizeof(int));
 }
 
