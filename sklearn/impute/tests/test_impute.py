@@ -1505,6 +1505,13 @@ def test_simple_impute_pd_na():
         imputer.fit_transform(df), np.array([["abc"], ["na"], ["de"]], dtype="<U3")
     )
 
+    # Impute pandas array of string types without any missing values.
+    df = pd.DataFrame({"feature": pd.Series(["abc", "de", "fgh"], dtype="string")})
+    imputer = SimpleImputer(fill_value="ok", strategy="constant")
+    assert_array_equal(
+        imputer.fit_transform(df), np.array([["abc"], ["de"], ["fgh"]], dtype="<U3")
+    )
+
     # Impute pandas array of integer types.
     df = pd.DataFrame({"feature": pd.Series([1, None, 3], dtype="Int64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-1)
