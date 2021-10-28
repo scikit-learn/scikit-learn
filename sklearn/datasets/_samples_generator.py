@@ -1469,7 +1469,7 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     Parameters
     ----------
     n_samples : int, default=100
-        The number of sample points on the S curve.
+        The number of sample points on the Swiss Roll.
 
     noise : float, default=0.0
         The standard deviation of the gaussian noise.
