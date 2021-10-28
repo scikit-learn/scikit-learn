@@ -69,7 +69,7 @@ def _write_label_html(
     name = html.escape(name)
 
     if name_details is not None:
-        name_details = html.escape(name_details)
+        name_details = html.escape(str(name_details))
         checked_str = "checked" if checked else ""
         est_id = uuid.uuid4()
         out.write(
