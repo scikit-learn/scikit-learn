@@ -2,6 +2,13 @@
 #include <numpy/arrayobject.h>
 #include "svm.h"
 #include "_svm_cython_blas_helpers.h"
+
+
+#ifndef max
+    #define max(x, y) (((x) > (y)) ? (x) : (y))
+#endif
+
+
 /*
  * Some helper methods for libsvm bindings.
  *
@@ -229,7 +236,7 @@ npy_intp get_nr(struct svm_model *model)
 void copy_n_iter(char *data, struct svm_model *model)
 {
     int n_models;
-    n_models = model->nr_class <= 2 ? 1 : model->nr_class * (model->nr_class-1)/2;
+    n_models = max(1, model->nr_class * (model->nr_class-1)/2);
     memcpy(data, model->n_iter, n_models * sizeof(int));
 }
 
