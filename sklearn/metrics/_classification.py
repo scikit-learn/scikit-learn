@@ -1925,10 +1925,12 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     Returns
     -------
     balanced_accuracy : float
-        Balanced accuracy score in the range 0 to 1.
+        Balanced accuracy score.
 
     See Also
     --------
+    average_precision_score : Compute average precision (AP) from prediction
+        scores.
     recall_score : Compute the ratio ``tp / (tp + fn)``, where ``tp`` is
         the number of true positives and ``fn`` the number of false negatives.
     roc_auc_score : Compute Area Under the Receiver Operating Characteristic
