@@ -1961,7 +1961,7 @@ class MiniBatchNMF(NMF):
         beta_loss="frobenius",
         tol=1e-4,
         max_no_improvement=10,
-        max_iter=100,
+        max_iter=200,
         alpha_W=0.0,
         alpha_H="same",
         l1_ratio=0.0,
@@ -2290,7 +2290,7 @@ class MiniBatchNMF(NMF):
             batch_cost = self._minibatch_step(X[batch], W[batch], H, update_H)
 
             if update_H and self._minibatch_convergence(
-                X, batch_cost, H, H_buffer, n_samples, i, n_steps
+                X[batch], batch_cost, H, H_buffer, n_samples, i, n_steps
             ):
                 break
 
