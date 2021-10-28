@@ -1756,7 +1756,7 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 class MiniBatchNMF(NMF):
     """Mini-Batch Non-Negative Matrix Factorization (NMF).
 
-    .. versionadded:: 1.0
+    .. versionadded:: 1.1
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -1919,6 +1919,10 @@ class MiniBatchNMF(NMF):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
 
     See Also
     --------
