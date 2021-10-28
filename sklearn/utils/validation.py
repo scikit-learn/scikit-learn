@@ -490,6 +490,33 @@ def _ensure_no_complex_data(array):
         raise ValueError("Complex data not supported\n{}\n".format(array))
 
 
+def _pandas_dtype_needs_early_conversion(pd_dtype):
+    """Return True if pandas extension pd_dtype need to be converted early."""
+    try:
+        from pandas.api.types import (
+            is_extension_array_dtype,
+            is_float_dtype,
+            is_integer_dtype,
+            is_sparse,
+        )
+    except ImportError:
+        return False
+
+    if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
+        # Sparse arrays will be converted later in `check_array`
+        # Only handle extension arrays for interger and floats
+        return False
+    elif is_float_dtype(pd_dtype):
+        # Float ndarrays can normally support nans. They need to be converted
+        # first to map pd.NA to np.nan
+        return True
+    elif is_integer_dtype(pd_dtype):
+        # XXX: Warn when converting from a high integer to a float
+        return True
+
+    return False
+
+
 def check_array(
     array,
     accept_sparse=False,
@@ -612,7 +639,7 @@ def check_array(
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    has_pd_integer_array = False
+    pandas_requires_conversion = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
@@ -625,42 +652,17 @@ def check_array(
                     "It will be converted to a dense numpy array."
                 )
 
-        dtypes_orig = list(array.dtypes)
-        # pandas boolean dtype __array__ interface coerces bools to objects
-        for i, dtype_iter in enumerate(dtypes_orig):
+        dtypes_orig = []
+        for dtype_iter in array.dtypes:
             if dtype_iter.kind == "b":
-                dtypes_orig[i] = np.dtype(object)
-            elif dtype_iter.name.startswith(("Int", "UInt")):
-                # name looks like an Integer Extension Array, now check for
-                # the dtype
-                with suppress(ImportError):
-                    from pandas import (
-                        Int8Dtype,
-                        Int16Dtype,
-                        Int32Dtype,
-                        Int64Dtype,
-                        UInt8Dtype,
-                        UInt16Dtype,
-                        UInt32Dtype,
-                        UInt64Dtype,
-                    )
+                # pandas boolean dtype __array__ interface coerces bools to objects
+                dtype_iter = np.dtype(object)
+            elif _pandas_dtype_needs_early_conversion(dtype_iter):
+                pandas_requires_conversion = True
 
-                    if isinstance(
-                        dtype_iter,
-                        (
-                            Int8Dtype,
-                            Int16Dtype,
-                            Int32Dtype,
-                            Int64Dtype,
-                            UInt8Dtype,
-                            UInt16Dtype,
-                            UInt32Dtype,
-                            UInt64Dtype,
-                        ),
-                    ):
-                        has_pd_integer_array = True
+            dtypes_orig.append(dtype_iter)
 
-        if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
+        if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
     if dtype_numeric:
@@ -679,9 +681,12 @@ def check_array(
             # list of accepted types.
             dtype = dtype[0]
 
-    if has_pd_integer_array:
-        # If there are any pandas integer extension arrays,
+    if pandas_requires_conversion:
+        # pandas dataframe requires conversion earlier to handle extension dtypes with
+        # nans
         array = array.astype(dtype)
+        # Since we converted here, we do not need to convert again later
+        dtype = None
 
     if force_all_finite not in (True, False, "allow-nan"):
         raise ValueError(
