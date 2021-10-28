@@ -1544,14 +1544,8 @@ def test_simple_impute_pd_na():
         imputer.fit_transform(df), np.array([[1.0], [-2.0], [3.0]], dtype="float64")
     )
 
-
-# Currently for float type arrays, `SimpleImputer` only supports 'constant'
-# imputing strategy. Other strategies will raise a `TypeError`.
-# XFAIL to be removed once #21278 gets merged
-@pytest.mark.xfail
-def test_simple_impute_pd_na_float_median():
-    pd = pytest.importorskip("pandas", minversion="1.0")
-    df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="Float64")})
+    # Impute pandas array of float types with 'median' strategy.
+    df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="float64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
     _assert_array_equal_and_same_dtype(
         imputer.fit_transform(df),
