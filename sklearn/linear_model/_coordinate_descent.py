@@ -1144,7 +1144,6 @@ class Lasso(ElasticNet):
             ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
-    precompute : 'auto', bool or array-like of shape (n_features, n_features),\
     precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
