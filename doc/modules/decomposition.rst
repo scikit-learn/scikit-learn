@@ -938,6 +938,65 @@ stored components::
       C. Fevotte, J. Idier, 2011
 
 
+.. _GDNMF:
+
+Graph-regularized Discriminative Non-negative Matrix Factorization (GDNMF)
+==========================================================================
+
+GDNMF extends NMF to explicitly consider the local invariance and
+label information. The geometrical structure of data space is encoded by constructing
+a k nearest neighbor graph, which increases the discriminative ability of different classes
+by considering the label information. It attempts to find a parts-based representation
+discriminative space in which two data points are sufficiently close to each other if
+they are connected in the graph. To this end, a new matrix decomposition
+objective function is proposed by integrating the graph structure and label information:
+
+.. math::
+   J = Tr((X - WH)^T (X - WH)) + \lambda Tr(HLH^T) + \gamma Tr((S - AH)^T (S - AH))
+
+where :math:`X, W, H` are defined as in :class:`NMF`, and
+
+.. math::
+   C_{i, j} = \begin{cases}
+   1 & \text{if $x_i \in N_k(x_j)$ or $x_j \in N_k(x_i)$} \\
+   0 & \text{otherwise}
+   \end{cases}
+
+.. math::
+   B_{i, i} = \sum_{j=1}^n C_{i, j}, L = B - C
+
+.. math::
+   S_{i, j} = \begin{cases}
+   1 & \text{if $y_j = i$, $j = 1, 2, ..., n, i = 1, 2, ..., c$} \\
+   0 & \text{otherwise}
+   \end{cases}
+
+where :math:`N_k(x_i)` is the :math:`k` nearest neighbors of sample :math:`i`,
+:math:`n` is the number of samples and :math:`c` is the number of classes.
+
+The objective function is then solved by multiplicative iterative updates of the factor matrices.
+This generates a new parts-based data representation which takes into account
+the geometrical structure and discriminative information of the input space simultaneously.
+
+
+.. note::
+
+  Unlike NMF, GDNMF will make use of the labels (:math:`y`) to perform transformation
+  on the input matrix (:math:`X`). Therefore, if using the transformed data for further predictive
+  modelling, the label information will have "leaked" into the input. As a result, if using GDNMF
+  as part of a predictive pipeline, care should be taken to avoid such leakage.
+
+.. topic:: Examples:
+
+   * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+
+.. topic:: References:
+
+  * Long, X., Lu, H., Peng, Y. and Li, W., 2014,
+    `"Graph regularized discriminative non-negative matrix factorization for face recognition"
+    <https://link.springer.com/article/10.1007/s11042-013-1572-z>`_
+
+
 .. _LatentDirichletAllocation:
 
 Latent Dirichlet Allocation (LDA)

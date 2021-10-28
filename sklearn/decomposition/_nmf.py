@@ -629,7 +629,7 @@ def _multiplicative_update_w(
     numerator /= denominator
     delta_W = numerator
 
-    # gamma is in ]0, 1]
+    # gamma is in [0, 1]
     if gamma != 1:
         delta_W **= gamma
 
