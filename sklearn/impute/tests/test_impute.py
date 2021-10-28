@@ -1527,6 +1527,7 @@ def test_simple_impute_pd_na():
 
 # Currently for float type arrays, `SimpleImputer` only supports 'constant'
 # imputing strategy. Other strategies will raise a `TypeError`.
+# XFAIL to be removed once #21278 gets merged
 @pytest.mark.xfail
 def test_simple_impute_pd_na_float_median():
     pd = pytest.importorskip("pandas", minversion="1.0")

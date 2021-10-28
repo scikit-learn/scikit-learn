@@ -83,6 +83,7 @@ Changelog
 
 - |Enhancement| Added support for `pd.NA` in :class:`SimpleImputer`.
   :pr:`21114` by :user:`Ying Xiong <yxiong>`.
+
 - |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
   :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
   :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
