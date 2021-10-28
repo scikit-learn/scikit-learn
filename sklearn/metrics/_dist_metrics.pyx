@@ -337,12 +337,12 @@ cdef class DistanceMetric:
 
         Parameters
         ----------
-        rdist : float
+        rdist : double
             Surrogate distance.
 
         Returns
         -------
-        float
+        double
             True distance.
         """
         return rdist
@@ -356,12 +356,12 @@ cdef class DistanceMetric:
 
         Parameters
         ----------
-        dist : float
+        dist : double
             True distance.
 
         Returns
         -------
-        float
+        double
             Surrogate distance.
         """
         return dist
