@@ -559,8 +559,8 @@ class BaseEstimator:
         no_val_X = isinstance(X, str) and X == "no_validation"
         no_val_y = y is None or isinstance(y, str) and y == "no_validation"
 
-        if "estimator" not in check_params:
-            check_params["estimator"] = self
+        default_check_params = {"estimator": self}
+        check_params = {**default_check_params, **check_params}
 
         if no_val_X and no_val_y:
             raise ValueError("Validation should be done on X, y or both.")
@@ -578,12 +578,10 @@ class BaseEstimator:
                 # :(
                 check_X_params, check_y_params = validate_separately
                 if "estimator" not in check_X_params:
-                    check_X_params = check_X_params.copy()
-                    check_X_params["estimator"] = self
+                    check_X_params = {**default_check_params, **check_X_params}
                 X = check_array(X, input_name="X", **check_X_params)
                 if "estimator" not in check_y_params:
-                    check_y_params = check_y_params.copy()
-                    check_y_params["estimator"] = self
+                    check_y_params = {**default_check_params, **check_y_params}
                 y = check_array(y, input_name="y", **check_y_params)
             else:
                 X, y = check_X_y(X, y, **check_params)
