@@ -49,7 +49,7 @@ class Perceptron(BaseSGDClassifier):
     verbose : int, default=0
         The verbosity level.
 
-    eta0 : double, default=1
+    eta0 : float, default=1
         Constant by which the updates are multiplied.
 
     n_jobs : int, default=None

@@ -11,9 +11,6 @@ import sklearn
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
-# List of modules ignored when checking for numpydoc validation.
-DOCSTRING_IGNORE_LIST = []
-
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn._config.config_context",
     "sklearn._config.get_config",
@@ -420,11 +417,6 @@ def test_docstring(Estimator, method, request):
         import_path.append(method)
 
     import_path = ".".join(import_path)
-
-    if Estimator.__name__ in DOCSTRING_IGNORE_LIST:
-        request.applymarker(
-            pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
-        )
 
     res = numpydoc_validation.validate(import_path)
 
