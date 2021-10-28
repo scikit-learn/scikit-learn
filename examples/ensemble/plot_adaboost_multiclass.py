@@ -23,7 +23,6 @@ therefore are not shown.
 .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 
 """
-print(__doc__)
 
 # Author: Noel Dawe <noel.dawe@gmail.com>
 #

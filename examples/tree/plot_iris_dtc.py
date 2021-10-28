@@ -14,7 +14,6 @@ the training samples.
 
 We also show the tree structure of a model built on all of the features.
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

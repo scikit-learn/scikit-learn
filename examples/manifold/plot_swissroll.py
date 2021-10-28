@@ -5,12 +5,11 @@ Swiss Roll reduction with LLE
 
 An illustration of Swiss Roll reduction
 with locally linear embedding
+
 """
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 # License: BSD 3 clause (C) INRIA 2011
-
-print(__doc__)
 
 import matplotlib.pyplot as plt
 

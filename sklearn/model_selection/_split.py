@@ -2330,7 +2330,7 @@ def train_test_split(
     shuffle=True,
     stratify=None,
 ):
-    """Split arrays or matrices into random train and test subsets
+    """Split arrays or matrices into random train and test subsets.
 
     Quick utility that wraps input validation and
     ``next(ShuffleSplit().split(X, y))`` and application to input data
@@ -2362,7 +2362,6 @@ def train_test_split(
         Controls the shuffling applied to the data before applying the split.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
-
 
     shuffle : bool, default=True
         Whether or not to shuffle the data before splitting. If shuffle=False
@@ -2414,7 +2413,6 @@ def train_test_split(
 
     >>> train_test_split(y, shuffle=False)
     [[0, 1, 2], [3, 4]]
-
     """
     n_arrays = len(arrays)
     if n_arrays == 0:

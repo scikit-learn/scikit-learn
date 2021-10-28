@@ -648,19 +648,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
     ):
         self._validate_params()
         if hasattr(self, "classes_"):
-            self.classes_ = None
-
-        X, y = self._validate_data(
-            X,
-            y,
-            accept_sparse="csr",
-            dtype=np.float64,
-            order="C",
-            accept_large_sparse=False,
-        )
+            # delete the attribute otherwise _partial_fit thinks it's not the first call
+            delattr(self, "classes_")
 
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
+        y = self._validate_data(y=y)
         classes = np.unique(y)
 
         if self.warm_start and hasattr(self, "coef_"):
@@ -1029,12 +1022,12 @@ class SGDClassifier(BaseSGDClassifier):
             .. versionadded:: 0.20
                 Added 'adaptive' option
 
-    eta0 : double, default=0.0
+    eta0 : float, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
 
-    power_t : double, default=0.5
+    power_t : float, default=0.5
         The exponent for inverse scaling learning rate [default 0.5].
 
     early_stopping : bool, default=False
@@ -1783,11 +1776,11 @@ class SGDRegressor(BaseSGDRegressor):
             .. versionadded:: 0.20
                 Added 'adaptive' option
 
-    eta0 : double, default=0.01
+    eta0 : float, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.01.
 
-    power_t : double, default=0.25
+    power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
 
     early_stopping : bool, default=False
@@ -2010,12 +2003,12 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             training loss by tol or fail to increase validation score by tol if
             early_stopping is True, the current learning rate is divided by 5.
 
-    eta0 : double
+    eta0 : float
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
 
-    power_t : double
+    power_t : float
         The exponent for inverse scaling learning rate [default 0.5].
 
     warm_start : bool, optional

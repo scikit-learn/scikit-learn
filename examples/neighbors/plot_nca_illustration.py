@@ -7,6 +7,7 @@ This example illustrates a learned distance metric that maximizes
 the nearest neighbors classification accuracy. It provides a visual
 representation of this metric compared to the original point
 space. Please refer to the :ref:`User Guide <nca>` for more information.
+
 """
 
 # License: BSD 3 clause
@@ -17,8 +18,6 @@ from sklearn.datasets import make_classification
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from matplotlib import cm
 from scipy.special import logsumexp
-
-print(__doc__)
 
 # %%
 # Original points

@@ -1493,3 +1493,22 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     assert expected == _most_frequent(
         np.array(array, dtype=dtype), extra_value, n_repeat
     )
+
+
+def test_missing_indicator_feature_names_out():
+    """Check that missing indicator return the feature names with a prefix."""
+    pd = pytest.importorskip("pandas")
+
+    missing_values = np.nan
+    X = pd.DataFrame(
+        [
+            [missing_values, missing_values, 1, missing_values],
+            [4, missing_values, 2, 10],
+        ],
+        columns=["a", "b", "c", "d"],
+    )
+
+    indicator = MissingIndicator(missing_values=missing_values).fit(X)
+    feature_names = indicator.get_feature_names_out()
+    expected_names = ["missingindicator_a", "missingindicator_b", "missingindicator_d"]
+    assert_array_equal(expected_names, feature_names)

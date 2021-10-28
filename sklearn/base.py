@@ -24,6 +24,8 @@ from .utils.validation import check_array
 from .utils.validation import _check_y
 from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
+from .utils.validation import _generate_get_feature_names_out
+from .utils.validation import check_is_fitted
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _get_feature_names
 
@@ -421,6 +423,10 @@ class BaseEstimator:
             feature_names_in = _get_feature_names(X)
             if feature_names_in is not None:
                 self.feature_names_in_ = feature_names_in
+            elif hasattr(self, "feature_names_in_"):
+                # Delete the attribute when the estimator is fitted on a new dataset
+                # that has no feature names.
+                delattr(self, "feature_names_in_")
             return
 
         fitted_feature_names = getattr(self, "feature_names_in_", None)
@@ -773,7 +779,6 @@ class BiclusterMixin:
             Indices of rows in the dataset that belong to the bicluster.
         col_ind : ndarray, dtype=np.intp
             Indices of columns in the dataset that belong to the bicluster.
-
         """
         rows = self.rows_[i]
         columns = self.columns_[i]
@@ -889,6 +894,31 @@ class _OneToOneFeatureMixin:
             Same as input features.
         """
         return _check_feature_names_in(self, input_features)
+
+
+class _ClassNamePrefixFeaturesOutMixin:
+    """Mixin class for transformers that generate their own names by prefixing.
+
+    Assumes that `_n_features_out` is defined for the estimator.
+    """
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        check_is_fitted(self, "_n_features_out")
+        return _generate_get_feature_names_out(
+            self, self._n_features_out, input_features=input_features
+        )
 
 
 class DensityMixin:
