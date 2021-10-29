@@ -5,7 +5,7 @@ parameters:
   condition: ''
   # matrix: []
 
-- template: build_tools/azure/posix.yml
+- template: azure/posix.yml
   parameters:
     name: ${{ parameters.name }}
     vmImage: ${{ parameters.vmImage }}
