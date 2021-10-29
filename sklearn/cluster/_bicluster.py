@@ -333,10 +333,13 @@ class SpectralCoclustering(BaseSpectral):
 
     def _check_parameters(self, n_samples):
         super()._check_parameters(n_samples)
-        check_scalar(self.n_clusters, "n_clusters",
-                     target_type=numbers.Integral,
-                     min_val=1,
-                     max_val=n_samples)
+        check_scalar(
+            self.n_clusters,
+            "n_clusters",
+            target_type=numbers.Integral,
+            min_val=1,
+            max_val=n_samples,
+        )
 
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
@@ -512,14 +515,29 @@ class SpectralBiclustering(BaseSpectral):
                 )
             )
         try:
-            check_scalar(self.n_clusters, "n_clusters",
-                         target_type=numbers.Integral, min_val=1, max_val=n_samples)
+            check_scalar(
+                self.n_clusters,
+                "n_clusters",
+                target_type=numbers.Integral,
+                min_val=1,
+                max_val=n_samples,
+            )
         except (ValueError, TypeError):
             try:
-                check_scalar(self.n_clusters[0], "n_row_clusters",
-                             target_type=numbers.Integral, min_val=1, max_val=n_samples)
-                check_scalar(self.n_clusters[1], "n_column_clusters",
-                             target_type=numbers.Integral, min_val=1, max_val=n_samples)
+                check_scalar(
+                    self.n_clusters[0],
+                    "n_row_clusters",
+                    target_type=numbers.Integral,
+                    min_val=1,
+                    max_val=n_samples,
+                )
+                check_scalar(
+                    self.n_clusters[1],
+                    "n_column_clusters",
+                    target_type=numbers.Integral,
+                    min_val=1,
+                    max_val=n_samples,
+                )
             except (ValueError, TypeError) as e:
                 raise ValueError(
                     "Incorrect parameter n_clusters has value:"
@@ -529,10 +547,16 @@ class SpectralBiclustering(BaseSpectral):
                     " And the values are should be in the"
                     " range: (1, n_samples)"
                 ) from e
-        check_scalar(self.n_components, "n_components", target_type=numbers.Integral,
-                     min_val=1)
-        check_scalar(self.n_best, "n_best", target_type=numbers.Integral,
-                     min_val=1, max_val=self.n_components)
+        check_scalar(
+            self.n_components, "n_components", target_type=numbers.Integral, min_val=1
+        )
+        check_scalar(
+            self.n_best,
+            "n_best",
+            target_type=numbers.Integral,
+            min_val=1,
+            max_val=self.n_components,
+        )
 
     def _fit(self, X):
         n_sv = self.n_components
