@@ -240,17 +240,18 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                     "'auto'. Got '{}' instead.".format(self.gamma)
                 )
         elif isinstance(self.gamma, (numbers.Real, numbers.Integral)):
-            if self.gamma == 0:
+            if self.gamma <= 0:
                 msg = (
-                    "The gamma value of 0.0 is invalid. Use 'auto' to set"
-                    " gamma to a value of 1 / n_features."
+                    f"gamma value must be > 0; {self.gamma} is invalid Use"
+                    " a positive number or use 'auto' to set gamma to a"
+                    " value of 1 / n_features."
                 )
                 raise ValueError(msg)
             self._gamma = self.gamma
         else:
             msg = (
-                "The gamma value should be set to 'scale', 'auto' or a float value"
-                f" {self.gamma} is not a valid option"
+                "The gamma value should be set to 'scale', 'auto' or a"
+                f" positive float value {self.gamma} is not a valid option"
             )
             raise ValueError(msg)
 
