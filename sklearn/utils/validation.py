@@ -490,6 +490,33 @@ def _ensure_no_complex_data(array):
         raise ValueError("Complex data not supported\n{}\n".format(array))
 
 
+def _pandas_dtype_needs_early_conversion(pd_dtype):
+    """Return True if pandas extension pd_dtype need to be converted early."""
+    try:
+        from pandas.api.types import (
+            is_extension_array_dtype,
+            is_float_dtype,
+            is_integer_dtype,
+            is_sparse,
+        )
+    except ImportError:
+        return False
+
+    if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
+        # Sparse arrays will be converted later in `check_array`
+        # Only handle extension arrays for interger and floats
+        return False
+    elif is_float_dtype(pd_dtype):
+        # Float ndarrays can normally support nans. They need to be converted
+        # first to map pd.NA to np.nan
+        return True
+    elif is_integer_dtype(pd_dtype):
+        # XXX: Warn when converting from a high integer to a float
+        return True
+
+    return False
+
+
 def check_array(
     array,
     accept_sparse=False,
@@ -612,7 +639,7 @@ def check_array(
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    has_pd_integer_array = False
+    pandas_requires_conversion = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
@@ -625,42 +652,17 @@ def check_array(
                     "It will be converted to a dense numpy array."
                 )
 
-        dtypes_orig = list(array.dtypes)
-        # pandas boolean dtype __array__ interface coerces bools to objects
-        for i, dtype_iter in enumerate(dtypes_orig):
+        dtypes_orig = []
+        for dtype_iter in array.dtypes:
             if dtype_iter.kind == "b":
-                dtypes_orig[i] = np.dtype(object)
-            elif dtype_iter.name.startswith(("Int", "UInt")):
-                # name looks like an Integer Extension Array, now check for
-                # the dtype
-                with suppress(ImportError):
-                    from pandas import (
-                        Int8Dtype,
-                        Int16Dtype,
-                        Int32Dtype,
-                        Int64Dtype,
-                        UInt8Dtype,
-                        UInt16Dtype,
-                        UInt32Dtype,
-                        UInt64Dtype,
-                    )
+                # pandas boolean dtype __array__ interface coerces bools to objects
+                dtype_iter = np.dtype(object)
+            elif _pandas_dtype_needs_early_conversion(dtype_iter):
+                pandas_requires_conversion = True
 
-                    if isinstance(
-                        dtype_iter,
-                        (
-                            Int8Dtype,
-                            Int16Dtype,
-                            Int32Dtype,
-                            Int64Dtype,
-                            UInt8Dtype,
-                            UInt16Dtype,
-                            UInt32Dtype,
-                            UInt64Dtype,
-                        ),
-                    ):
-                        has_pd_integer_array = True
+            dtypes_orig.append(dtype_iter)
 
-        if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
+        if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
     if dtype_numeric:
@@ -679,9 +681,12 @@ def check_array(
             # list of accepted types.
             dtype = dtype[0]
 
-    if has_pd_integer_array:
-        # If there are any pandas integer extension arrays,
+    if pandas_requires_conversion:
+        # pandas dataframe requires conversion earlier to handle extension dtypes with
+        # nans
         array = array.astype(dtype)
+        # Since we converted here, we do not need to convert again later
+        dtype = None
 
     if force_all_finite not in (True, False, "allow-nan"):
         raise ValueError(
@@ -1702,7 +1707,7 @@ def _get_feature_names(X):
         return feature_names
 
 
-def _check_feature_names_in(estimator, input_features=None):
+def _check_feature_names_in(estimator, input_features=None, *, generate_names=True):
     """Get output feature names for transformation.
 
     Parameters
@@ -1716,9 +1721,13 @@ def _check_feature_names_in(estimator, input_features=None):
         - If `input_features` is an array-like, then `input_features` must
             match `feature_names_in_` if `feature_names_in_` is defined.
 
+    generate_names : bool, default=True
+        Wether to generate names when `input_features` is `None` and
+        `estimator.feature_names_in_` is not defined.
+
     Returns
     -------
-    feature_names_in : ndarray of str
+    feature_names_in : ndarray of str or `None`
         Feature names in.
     """
 
@@ -1742,8 +1751,40 @@ def _check_feature_names_in(estimator, input_features=None):
     if feature_names_in_ is not None:
         return feature_names_in_
 
+    if not generate_names:
+        return
+
     # Generates feature names if `n_features_in_` is defined
     if n_features_in_ is None:
         raise ValueError("Unable to generate feature names without n_features_in_")
 
     return np.asarray([f"x{i}" for i in range(n_features_in_)], dtype=object)
+
+
+def _generate_get_feature_names_out(estimator, n_features_out, input_features=None):
+    """Generate feature names out for estimator using the estimator name as the prefix.
+
+    The input_feature names are validated but not used. This function is useful
+    for estimators that generate their own names based on `n_features_out`, i.e. PCA.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Estimator producing output feature names.
+
+    n_feature_out : int
+        Number of feature names out.
+
+    input_features : array-like of str or None, default=None
+        Only used to validate feature names with `estimator.feature_names_in_`.
+
+    Returns
+    -------
+    feature_names_in : ndarray of str or `None`
+        Feature names in.
+    """
+    _check_feature_names_in(estimator, input_features, generate_names=False)
+    estimator_name = estimator.__class__.__name__.lower()
+    return np.asarray(
+        [f"{estimator_name}{i}" for i in range(n_features_out)], dtype=object
+    )
