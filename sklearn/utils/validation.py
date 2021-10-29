@@ -144,7 +144,7 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     Parameters
     ----------
     X : {array-like, sparse matrix}
-        The input array.
+        The input data.
 
     copy : bool, default=True
         If True, a copy of X will be created. If False, a copy may still be
