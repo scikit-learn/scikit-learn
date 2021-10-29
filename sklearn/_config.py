@@ -164,11 +164,6 @@ def config_context(
     Traceback (most recent call last):
     ...
     ValueError: Input contains NaN...
-
-    See Also
-    --------
-    set_config : Set global scikit-learn configuration.
-    get_config : Retrieve current values of the global configuration.
     """
     old_config = get_config()
     set_config(
