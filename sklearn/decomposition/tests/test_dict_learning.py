@@ -664,3 +664,21 @@ def test_warning_default_transform_alpha(Estimator):
     dl = Estimator(alpha=0.1)
     with pytest.warns(FutureWarning, match="default transform_alpha"):
         dl.fit_transform(X)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [SparseCoder(X.T), DictionaryLearning(), MiniBatchDictionaryLearning()],
+    ids=lambda x: x.__class__.__name__,
+)
+def test_get_feature_names_out(estimator):
+    """Check feature names for dict learning estimators."""
+    estimator.fit(X)
+    n_components = X.shape[1]
+
+    feature_names_out = estimator.get_feature_names_out()
+    estimator_name = estimator.__class__.__name__.lower()
+    assert_array_equal(
+        feature_names_out,
+        [f"{estimator_name}{i}" for i in range(n_components)],
+    )
