@@ -341,7 +341,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
             if self.class_weight is not None:
                 # Build sample weights for calibrator.
-                # Those weights will not be used for the estimator to be calibrated.
+                # Those weights will not be used for the training of
+                # the underlying estimator which will then be calibrated.
                 self.class_weight_ = compute_class_weight(
                     self.class_weight, classes=self.classes_, y=y
                 )

@@ -52,9 +52,9 @@ Changelog
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| Add ``class_weight`` to
-  :class:`calibration.CalibratedClassifierCV`, which enables specifying weights
-  for classes when training the ``sigmoid`` or ``isotonic`` calibration methods.
+- |Enhancement| :class:`calibration.CalibratedClassifierCV` accepts ``class_weight``
+  which enables specifying weights for classes when training the ``sigmoid`` or
+  ``isotonic`` calibration methods.
   :pr:`17541` by :user:`Achille Mascia <amascia>`.
 
 - |Enhancement| :class:`CalibrationDisplay` accepts a parameter `pos_label` to
