@@ -33,9 +33,9 @@ jobs:
     THREADPOOLCTL_VERSION: 'latest'
     COVERAGE: 'true'
     TEST_DOCSTRINGS: 'false'
-  # strategy:
-  #   matrix:
-  #     ${{ insert }}: ${{ parameters.matrix }}
+  strategy:
+    matrix:
+      ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
