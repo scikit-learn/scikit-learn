@@ -493,7 +493,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             "learning_rate",
             target_type=numbers.Real,
             min_val=1,
-            include_boundaries="left",
+            include_boundaries="neither",
         )
 
         # Check that algorithm is supported
