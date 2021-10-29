@@ -82,8 +82,8 @@ def _check_targets(y_true, y_pred):
     y_pred : array or indicator matrix
     """
     check_consistent_length(y_true, y_pred)
-    type_true = type_of_target(y_true)
-    type_pred = type_of_target(y_pred)
+    type_true = type_of_target(y_true, input_name="y_true")
+    type_pred = type_of_target(y_pred, input_name="y_pred")
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:
@@ -2649,7 +2649,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
         raise ValueError(
             "Only binary classification is supported. The type of the target "

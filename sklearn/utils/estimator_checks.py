@@ -168,17 +168,33 @@ def check_supervised_y_no_nan(name, estimator_orig):
     estimator = clone(estimator_orig)
     rng = np.random.RandomState(888)
     X = rng.randn(10, 5)
-    y = np.full(10, np.inf)
-    y = _enforce_estimator_tags_y(estimator, y)
 
-    match = (
-        "Input contains NaN, infinity or a value too large for " r"dtype\('float64'\)."
-    )
-    err_msg = (
-        f"Estimator {name} should have raised error on fitting array y with NaN value."
-    )
-    with raises(ValueError, match=match, err_msg=err_msg):
-        estimator.fit(X, y)
+    for value in [np.nan, np.inf]:
+        y = np.full(10, value)
+        y = _enforce_estimator_tags_y(estimator, y)
+
+        module_name = estimator.__module__
+        if module_name.startswith("sklearn.") and not (
+            "test_" in module_name or module_name.endswith("_testing")
+        ):
+            # In scikit-learn we want the error message to mention the input
+            # name and be specific about the kind of unexpected value.
+            if np.isinf(value):
+                match = (
+                    r"Input (y|Y) contains infinity or a value too large for"
+                    r" dtype\('float64'\)."
+                )
+            else:
+                match = r"Input (y|Y) contains NaN."
+        else:
+            # Do not impose a particular error message to third-party libraries.
+            match = None
+        err_msg = (
+            f"Estimator {name} should have raised error on fitting array y with inf"
+            " value."
+        )
+        with raises(ValueError, match=match, err_msg=err_msg):
+            estimator.fit(X, y)
 
 
 def _yield_regressor_checks(regressor):
@@ -1730,9 +1746,11 @@ def check_estimators_nan_inf(name, estimator_orig):
     y = np.ones(10)
     y[:5] = 0
     y = _enforce_estimator_tags_y(estimator_orig, y)
-    error_string_fit = "Estimator doesn't check for NaN and inf in fit."
-    error_string_predict = "Estimator doesn't check for NaN and inf in predict."
-    error_string_transform = "Estimator doesn't check for NaN and inf in transform."
+    error_string_fit = f"Estimator {name} doesn't check for NaN and inf in fit."
+    error_string_predict = f"Estimator {name} doesn't check for NaN and inf in predict."
+    error_string_transform = (
+        f"Estimator {name} doesn't check for NaN and inf in transform."
+    )
     for X_train in [X_train_nan, X_train_inf]:
         # catch deprecation warnings
         with ignore_warnings(category=FutureWarning):
