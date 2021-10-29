@@ -8,8 +8,8 @@ An example using a one-class SVM for novelty detection.
 :ref:`One-class SVM <svm_outlier_detection>` is an unsupervised
 algorithm that learns a decision function for novelty detection:
 classifying new data as similar or different to the training set.
+
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

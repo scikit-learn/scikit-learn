@@ -7,6 +7,7 @@ An example showing how different online solvers perform
 on the hand-written digits dataset.
 
 """
+
 # Author: Rob Zinkov <rob at zinkov dot com>
 # License: BSD 3 clause
 

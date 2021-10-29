@@ -41,7 +41,6 @@ approaches outperform cross-validation, which is significantly most
 computationally costly.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

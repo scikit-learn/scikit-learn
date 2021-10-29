@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 SVM Margins Example
@@ -15,8 +13,6 @@ A small value of `C` includes more/all the observations, allowing
 the margins to be calculated using all the data in the area.
 
 """
-print(__doc__)
-
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
