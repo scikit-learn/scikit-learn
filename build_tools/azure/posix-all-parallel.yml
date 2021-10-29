@@ -1,11 +1,12 @@
-# parameters:
-#   name: ''
+parameters:
+  name: ''
 #   vmImage: ''
 #   dependsOn: []
 #   condition: ''
   # matrix: []
 
-- template: posix.yml
+extends:
+  template: posix.yml
   # parameters:
   #   name: ${{ parameters.name }}
   #   vmImage: ${{ parameters.vmImage }}
