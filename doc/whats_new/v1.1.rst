@@ -38,12 +38,23 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+- |Enhancement| All scikit-learn models now generate a more informative
+  error message when some input contains unexpected `NaN` or infinite values.
+  In particular the message contains the input name ("X", "y" or
+  "sample_weight") and if an unexpected `NaN` value is found in `X`, the error
+  message suggests potential solutions.
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
 - |Enhancement| :func:`calibration.calibration_curve` accepts a parameter
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`CalibrationDisplay` accepts a parameter `pos_label` to
+  add this information to the plot.
+  :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -52,12 +63,43 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
+  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
+
+- |API| Adds :term:`get_feature_names_out` to all transformers in the
+  :mod:`~sklearn.decomposition` module:
+  :class:`~sklearn.decomposition.DictionaryLearning`,
+  :class:`~sklearn.decomposition.FactorAnalysis`,
+  :class:`~sklearn.decomposition.FastICA`,
+  :class:`~sklearn.decomposition.IncrementalPCA`,
+  :class:`~sklearn.decomposition.KernelPCA`,
+  :class:`~sklearn.decomposition.LatentDirichletAllocation`,
+  :class:`~sklearn.decomposition.MiniBatchDictionaryLearning`,
+  :class:`~sklearn.decomposition.MiniBatchSparsePCA`,
+  :class:`~sklearn.decomposition.NMF`,
+  :class:`~sklearn.decomposition.PCA`,
+  :class:`~sklearn.decomposition.SparsePCA`,
+  and :class:`~sklearn.decomposition.TruncatedSVD`. :pr:`21334` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.impute`
 .....................
 
 - |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
   :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
   :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
+
+- |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
+  `predict` was performing an `argmax` on the scores obtained from
+  `decision_function` instead of returning the multilabel indicator matrix.
+  :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
+  multilabel classification.
+  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -88,6 +130,23 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
   by `Thomas Fan`_.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
+  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
+  :user:`Lucy Jimenez <LucyJimenez>`.
+
+- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
+  now accept an `input_name` parameter to make the error message more
+  informative when passed invalid input data (e.g. with NaN or infinite
+  values).
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Enhancement| :func:`utils.validation.check_array` returns a float
+  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
+  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------

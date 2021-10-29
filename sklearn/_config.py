@@ -163,7 +163,12 @@ def config_context(
     ...         assert_all_finite([float('nan')])
     Traceback (most recent call last):
     ...
-    ValueError: Input contains NaN, ...
+    ValueError: Input contains NaN.
+
+    See Also
+    --------
+    set_config : Set global scikit-learn configuration.
+    get_config : Retrieve current values of the global configuration.
     """
     old_config = get_config()
     set_config(
