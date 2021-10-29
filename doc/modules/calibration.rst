@@ -244,11 +244,11 @@ The parameters ``class_weight`` and ``sample_weight`` can be used to
 respectively set relative importance to classes and to individual samples.
 
 :class:`CalibratedClassifierCV` can handle such unbalanced dataset with the
-``class_weight`` parameter. ``class_weight`` has to be provided:
-  - as a dictionary of the form ``{class_label : value}``, where value is a
-  strictly positive floating point.
-  - as ``class_weight='balanced'`` which will automatically adjust weights
-  inversely proportional to class frequencies in the input data.
+``class_weight`` parameter. ``class_weight`` has to be provided as a
+dictionary of the form ``{class_label : value}``, where value is a strictly
+positive floating point, or as ``class_weight='balanced'`` which will
+automatically adjust weights inversely proportional to class frequencies in
+the input data.
 
 **Setting ``class_weight`` parameter in :class:`CalibratedClassifierCV`,
 will only affect the training of the chosen regressor (`'isotonic'` or `'sigmoid'`).**
