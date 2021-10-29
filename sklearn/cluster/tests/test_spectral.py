@@ -197,17 +197,18 @@ def test_affinities():
         sp.fit(X)
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_cluster_qr(dtype):
-    # Test cluster_qr for fixed data different dtypes return the same lables
+def test_cluster_qr():
+    # cluster_qr for fixed data but different dtypes must return the same labels.
     random_state = np.random.RandomState(seed=8)
-    data = random_state.randn(10, 5).astype(dtype)
-    labels = cluster_qr(data)
-    assert np.array_equal(labels, np.array([2, 1, 3, 3, 2, 4, 1, 3, 4, 0]))
+    X_64 = random_state.randn(10, 5).astype(np.float64)
+    X_32 = random_state.randn(10, 5).astype(np.float32)
+    labels_64 = cluster_qr(X_64)
+    labels_32 = cluster_qr(X_32)
+    assert np.array_equal(labels_64, labels_32)
 
 
 def test_cluster_qr_permutation_invariance():
-    # Test that cluster_qr is invariant to sample permutation
+    # cluster_qr must be invariant to sample permutation.
     random_state = np.random.RandomState(seed=8)
     n_samples, n_components = 100, 5
     data = random_state.randn(n_samples, n_components)
