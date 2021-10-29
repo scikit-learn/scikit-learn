@@ -546,10 +546,10 @@ def test_adaboostregressor_sample_weight():
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
-        ({"n_estimators": -1}, ValueError, "n_estimators == 0, must be >= 1"))
+        ({"n_estimators": -1}, ValueError, "n_estimators == 0, must be >= 1"),
         ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
         ({"learning_rate": -1}, ValueError, "learning_rate == 0, must be > 0."),
-        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."))
+        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
         (
             {"algorithm": "unknown"},
             ValueError,
