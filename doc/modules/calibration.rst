@@ -246,8 +246,7 @@ respectively set relative importance to classes and to individual samples.
 :class:`CalibratedClassifierCV` can handle such unbalanced dataset with the
 ``class_weight`` parameter. ``class_weight`` has to be provided:
   - as a dictionary of the form ``{class_label : value}``, where value is a
-  strictly positive floating point used to set the parameter ``CW`` of class
-  ``class_label`` to ``CW * value``.
+  strictly positive floating point.
   - as ``class_weight='balanced'`` which will automatically adjust weights
   inversely proportional to class frequencies in the input data.
 
