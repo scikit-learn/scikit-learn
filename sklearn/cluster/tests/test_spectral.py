@@ -198,13 +198,22 @@ def test_affinities():
 
 
 def test_cluster_qr():
-    # cluster_qr for fixed data but different dtypes must return the same labels.
+    # cluster_qr by itself should not be used for clusteing generic data
+    # other than the rows of the eigenvectors within spectral clustering,
+    # but cluster_qr must still preserve the labels for different dtypes
+    # of the generic fixed input even if the labels may be meaningless.
     random_state = np.random.RandomState(seed=8)
-    X_64 = random_state.randn(10, 5).astype(np.float64)
-    X_32 = random_state.randn(10, 5).astype(np.float32)
-    labels_64 = cluster_qr(X_64)
-    labels_32 = cluster_qr(X_32)
-    assert np.array_equal(labels_64, labels_32)
+    n_samples, n_components = 10, 5
+    data = random_state.randn(n_samples, n_components)
+    labels_float64 = cluster_qr(data.astype(np.float64))
+    # Each sample is assigned a cluster identifier
+    assert labels_float64.shape == (n_samples,)
+    assert labels_float64.dtype == np.int64
+    # All components should be covered by the assignment
+    assert np.array_equal(np.unique(labels_float64), np.arange(n_components))
+    # Single precision data should yield the same cluster assignments
+    labels_float32 = cluster_qr(data.astype(np.float32))
+    assert np.array_equal(labels_float64, labels_float32)
 
 
 def test_cluster_qr_permutation_invariance():
