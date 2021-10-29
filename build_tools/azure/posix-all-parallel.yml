@@ -4,7 +4,7 @@ parameters:
   matrix: []
   dependsOn: []
   condition: ''
-  matrix:
+  matrix: {}
 
 - template: build_tools/azure/posix.yml
   parameters:
