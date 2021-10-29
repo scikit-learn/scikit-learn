@@ -8,8 +8,7 @@ parameters:
   commitMessage: ''
 
 jobs:
-# When [azure all-parallel] is not in the commit message, this build is enabled.
-# When [azure all-parallel] is not in in the commit message, this job is disabled.
+# When [azure all-parallel] is *not* in the commit message, this build is enabled.
 # Later builds should check if this job succeed or skipped by using:
 # in(dependencies[{{ parameters.name }}]['result'], 'Succeeded', 'Skipped')
 - template: posix.yml
@@ -24,8 +23,9 @@ jobs:
         not(contains(${{ parameters.commitMessage }}, '[azure all-parallel]'))
       )
 
-# Runs when [azure all-parallel] is in the commit message. This allows for later builds
-#
+# This configures the "parallel" build. The build on top is skipped so
+# later builds can run in parallel with this "parallel" configuration.
+# When [azure all-parallel] is in the commit message, this build is enabled.
 - template: posix.yml
   parameters:
     name: ${{ parameters.name }}_Parallel
