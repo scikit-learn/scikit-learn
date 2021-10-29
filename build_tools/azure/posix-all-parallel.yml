@@ -3,7 +3,7 @@ parameters:
   vmImage: ''
   dependsOn: []
   condition: ''
-  matrix: []
+  # matrix: []
 
 - template: build_tools/azure/posix.yml
   parameters:
@@ -12,4 +12,4 @@ parameters:
     matrix: ${{ parameters.matrix }}
     dependsOn: ${{ parameters.dependsOn }}
     condition: ${ parameters.condition }}
-    matrix: ${{ parameters.matrix }}
+    # matrix: ${{ parameters.matrix }}
