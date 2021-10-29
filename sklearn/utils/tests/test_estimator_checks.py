@@ -23,11 +23,11 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.fixes import np_version, parse_version
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.decomposition import NMF
+from sklearn.decomposition import PCA
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
 from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import KNeighborsRegressor
@@ -603,9 +603,9 @@ def test_check_estimator_clones():
     for Estimator in [
         GaussianMixture,
         LinearRegression,
-        RandomForestClassifier,
-        NMF,
         SGDClassifier,
+        PCA,
+        ExtraTreesClassifier,
         MiniBatchKMeans,
     ]:
         with ignore_warnings(category=FutureWarning):
