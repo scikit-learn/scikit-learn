@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from sklearn import manifold, datasets
 
 
-sr_points, sr_color = datasets.make_swiss_roll(n_samples=1500)
+sr_points, sr_color = datasets.make_swiss_roll(n_samples=1500, random_state=0)
 
 # %%
 # Now, let's take a look at our data:
