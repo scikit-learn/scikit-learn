@@ -144,6 +144,10 @@ Changelog
   values).
   :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| :func:`utils.validation.check_array` returns a float
+  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
+  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
