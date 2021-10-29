@@ -46,8 +46,8 @@ Changelog
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| Add ``class_weight`` to
-  :class:`calibration.CalibratedClassifierCV`, which enables putting weights
-  to classes when training the calibration methods (sigmoid or isotonic).
+  :class:`calibration.CalibratedClassifierCV`, which enables specifying weights
+  for classes when training the ``sigmoid`` or ``isotonic`` calibration methods.
   :pr:`17541` by :user:`Achille Mascia <amascia>`.
 
 - |Enhancement| :class:`CalibrationDisplay` accepts a parameter `pos_label` to

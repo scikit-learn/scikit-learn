@@ -201,8 +201,8 @@ def test_class_weight(data, method, ensemble):
     calibrated_clf.fit(X_train, y_train)
     probs_with_cw = calibrated_clf.predict_proba(X_test)
 
-    # As the weights are used for the calibration, they should still yield
-    # a different predictions
+    # As the weights are used for the calibration, they should make
+    # the calibrated estimator yield different predictions.
     calibrated_clf = CalibratedClassifierCV(
         base_estimator, method=method, ensemble=ensemble
     )

@@ -147,8 +147,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         .. versionadded:: 0.24
 
     class_weight : dict or 'balanced', default=None
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Classes weights used for the calibration.
+        If a dict, it must be provided in this form: ``{class_label: weight}``.
 
+        Those weights won't be used for the underlying estimator training.
         See :term:`Glossary <class_weight>` for more details.
 
     Attributes
@@ -338,7 +340,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 )
 
             if self.class_weight is not None:
-                # build sample weights for calibrator
+                # Build sample weights for calibrator.
+                # Those weights will not be used for the estimator to be calibrated.
                 self.class_weight_ = compute_class_weight(
                     self.class_weight, classes=self.classes_, y=y
                 )
@@ -526,7 +529,11 @@ def _fit_classifier_calibrator_pair(
         The target classes.
 
     class_weight : dict or 'balanced', default=None
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Classes weights used for the calibration.
+        If a dict, it must be provided in this form: ``{class_label: weight}``.
+
+        Those weights won't be used for the underlying estimator training.
+        See :term:`Glossary <class_weight>` for more details.
 
     sample_weight : array-like, default=None
         Sample weights for `X`.

@@ -240,31 +240,29 @@ probabilities, the calibrated probabilities for each class
 are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
 
-In problems where it is desired to give more importance to certain classes
-or certain individual samples, the parameters ``class_weight`` and
-``sample_weight`` can be used.
+The parameters ``class_weight`` and ``sample_weight`` can be used to
+respectively set relative importance to classes and to individual samples.
 
 :class:`CalibratedClassifierCV` can handle such unbalanced dataset with the
-``class_weight`` parameter.
-It's a dictionary of the form ``{class_label : value}``, where value is
-a floating point number > 0 that sets the parameter ``C`` of class
-``class_label`` to ``C * value``. You can alternatively set
-``class_weight='balanced'`` which will automatically adjust
-weights inversely proportional to class frequencies in the input data.
+``class_weight`` parameter. ``class_weight`` has to be provided:
+  - as a dictionary of the form ``{class_label : value}``, where value is a
+  strictly positive floating point used to set the parameter ``CW`` of class
+  ``class_label`` to ``CW * value``.
+  - as ``class_weight='balanced'`` which will automatically adjust weights
+  inversely proportional to class frequencies in the input data.
 
-Please note that setting ``class_weight`` parameter in
-:class:`CalibratedClassifierCV`, will only affect the training of the
-chosen regressor (`'isotonic'` or `'sigmoid'`).
+**Setting ``class_weight`` parameter in :class:`CalibratedClassifierCV`,
+will only affect the training of the chosen regressor (`'isotonic'` or `'sigmoid'`).**
 For instance, if ``class_weight='balanced'`` is passed to
-:class:`CalibratedClassifierCV`, only the data used to fit the calibrator
-will be balanced. If the user also want the data used to fit the classifier
+:class:`CalibratedClassifierCV`, only the samples used to fit the calibrator
+will be balanced. If one also wants the samples used to fit the estimator
 to be balanced, one would need to set ``class_weight='balanced'`` within
 the `base_estimator` passed to :class:`CalibratedClassifierCV`.
-Alternatively, if `cv="prefit"` is set, the data is not split and all
-of it is used to fit the regressor in a balanced manner.
+Alternatively, if `cv="prefit"` is set, the samples are not split and are
+all used to fit the regressor in a balanced manner.
 
-The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate how
-well a classifier is calibrated.
+The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate the
+quality of a classifier's calibration.
 
 .. topic:: Examples:
 
