@@ -66,7 +66,7 @@ def test_classification():
     estimators = [
         None,
         DummyClassifier(),
-        Perceptron(max_iter=5),
+        Perceptron(max_iter=20),
         DecisionTreeClassifier(max_depth=2),
         KNeighborsClassifier(),
         SVC(),
