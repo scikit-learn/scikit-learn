@@ -1,0 +1,15 @@
+parameters:
+  name: ''
+  vmImage: ''
+  matrix: []
+  dependsOn: []
+  condition: ''
+
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: ${{ parameters.name }}
+    vmImage: ${{ parameters.vmImage }}
+    matrix: ${{ parameters.matrix }}
+    dependsOn: ${{ parameters.dependsOn }}
+    condition: ${ parameters.condition }}
+    matrix: ${{ parameters.matrix }}
