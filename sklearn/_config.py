@@ -163,7 +163,7 @@ def config_context(
     ...         assert_all_finite([float('nan')])
     Traceback (most recent call last):
     ...
-    ValueError: Input contains NaN.
+    ValueError: Input contains NaN...
 
     See Also
     --------
