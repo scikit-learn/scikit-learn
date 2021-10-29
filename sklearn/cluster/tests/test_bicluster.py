@@ -210,12 +210,16 @@ def test_perfect_checkerboard():
 @pytest.mark.parametrize(
     "args",
     [
+        {"n_init": 0},
+        {"n_init": "abc"},
         {"n_clusters": (3, 3, 3)},
         {"n_clusters": "abc"},
         {"n_clusters": (3, "abc")},
         {"method": "unknown"},
         {"n_components": 0},
+        {"n_components": "abc"},
         {"n_best": 0},
+        {"n_best": "abc"},
         {"svd_method": "unknown"},
         {"n_components": 3, "n_best": 4},
     ],
