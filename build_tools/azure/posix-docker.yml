@@ -34,9 +34,9 @@ jobs:
     # Set in azure-pipelines.yml
     DISTRIB: ''
     DOCKER_CONTAINER: ''
-  strategy:
-    matrix:
-      ${{ insert }}: ${{ parameters.matrix }}
+  # strategy:
+  #   matrix:
+  #     ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
     # Container is detached and sleeping, allowing steps to run commands
