@@ -177,7 +177,7 @@ def assert_all_finite(
 
 
 def as_float_array(X, *, copy=True, force_all_finite=True):
-    """Converts an array-like to an array of floats.
+    """Convert an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
     type. The function can create a copy or modify the argument depending
@@ -186,6 +186,7 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     Parameters
     ----------
     X : {array-like, sparse matrix}
+        The input data.
 
     copy : bool, default=True
         If True, a copy of X will be created. If False, a copy may still be
