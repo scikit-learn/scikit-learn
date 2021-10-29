@@ -5,8 +5,8 @@
 #   condition: ''
   # matrix: []
 
-extends:
-  template: posix.yml
+jobs:
+- template: posix.yml
   # parameters:
   #   name: ${{ parameters.name }}
   #   vmImage: ${{ parameters.vmImage }}
