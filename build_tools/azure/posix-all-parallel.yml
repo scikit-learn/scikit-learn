@@ -5,6 +5,7 @@ parameters:
   dependsOn: []
   dependsOnParallel: []
   condition: ''
+  parallelCondition: ''
 
 jobs:
 - template: posix.yml
@@ -16,7 +17,7 @@ jobs:
     condition: |
       and(
         ${{ parameters.condition }},
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[azure all-parallel]'))
+        not(${{ parameters.parallelCondition }})
       )
 
 - template: posix.yml
@@ -28,5 +29,5 @@ jobs:
     condition: |
       and(
         ${{ parameters.condition }},
-        contains(dependencies['git_commit']['outputs']['commit.message'], '[azure all-parallel]')
+        ${{ parameters.parallelCondition }}
       )
