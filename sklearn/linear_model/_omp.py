@@ -1022,9 +1022,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
 
-        X, y = self._validate_data(
-            X, y, y_numeric=True, ensure_min_features=2, estimator=self
-        )
+        X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
         X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         max_iter = (
