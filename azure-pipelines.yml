@@ -136,14 +136,14 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule'),
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[azure all-parallel]'))
       )
-    # matrix:
-    #   py37_conda_forge_openblas_ubuntu_1804:
-    #     DISTRIB: 'conda'
-    #     CONDA_CHANNEL: 'conda-forge'
-    #     PYTHON_VERSION: '3.7'
-    #     BLAS: 'openblas'
-    #     COVERAGE: 'false'
-    #     BUILD_WITH_ICC: 'false'
+    matrix:
+      py37_conda_forge_openblas_ubuntu_1804:
+        DISTRIB: 'conda'
+        CONDA_CHANNEL: 'conda-forge'
+        PYTHON_VERSION: '3.7'
+        BLAS: 'openblas'
+        COVERAGE: 'false'
+        BUILD_WITH_ICC: 'false'
 
 # This configuration matches the py37_conda_forge_openblas_ubuntu_1804 above. The difference
 # is that this configuration only runs when [azure all-parallel] is in the comment message.
@@ -159,14 +159,14 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule'),
         contains(dependencies['git_commit']['outputs']['commit.message'], '[azure all-parallel]')
       )
-    # matrix:
-    #   py37_conda_forge_openblas_ubuntu_1804:
-    #     DISTRIB: 'conda'
-    #     CONDA_CHANNEL: 'conda-forge'
-    #     PYTHON_VERSION: '3.7'
-    #     BLAS: 'openblas'
-    #     COVERAGE: 'false'
-    #     BUILD_WITH_ICC: 'false'
+    matrix:
+      py37_conda_forge_openblas_ubuntu_1804:
+        DISTRIB: 'conda'
+        CONDA_CHANNEL: 'conda-forge'
+        PYTHON_VERSION: '3.7'
+        BLAS: 'openblas'
+        COVERAGE: 'false'
+        BUILD_WITH_ICC: 'false'
 
 # - template: build_tools/azure/posix.yml
 #   parameters:

@@ -3,7 +3,7 @@
 #   vmImage: ''
 #   dependsOn: []
 #   condition: ''
-  # matrix: []
+  # matrix: {}
 
 jobs:
 - template: posix.yml
