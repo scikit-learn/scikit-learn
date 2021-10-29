@@ -42,48 +42,51 @@ jobs:
     # Container is detached and sleeping, allowing steps to run commands
     # in the container. The TEST_DIR is mapped allowing the host to access
     # the JUNITXML file
-    - script: >
-        docker container run --rm
-        --volume $TEST_DIR:/temp_dir
-        --volume $PWD:/io
-        -w /io
-        --detach
-        --name skcontainer
-        -e DISTRIB=$DISTRIB
-        -e TEST_DIR=/temp_dir
-        -e JUNITXML=$JUNITXML
-        -e VIRTUALENV=testvenv
-        -e NUMPY_VERSION=$NUMPY_VERSION
-        -e SCIPY_VERSION=$SCIPY_VERSION
-        -e CYTHON_VERSION=$CYTHON_VERSION
-        -e JOBLIB_VERSION=$JOBLIB_VERSION
-        -e PANDAS_VERSION=$PANDAS_VERSION
-        -e PYAMG_VERSION=$PYAMG_VERSION
-        -e PILLOW_VERSION=$PILLOW_VERSION
-        -e MATPLOTLIB_VERSION=$MATPLOTLIB_VERSION
-        -e PYTEST_VERSION=$PYTEST_VERSION
-        -e PYTEST_XDIST_VERSION=$PYTEST_XDIST_VERSION
-        -e THREADPOOLCTL_VERSION=$THREADPOOLCTL_VERSION
-        -e OMP_NUM_THREADS=$OMP_NUM_THREADS
-        -e OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS
-        -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
-        -e BLAS=$BLAS
-        $DOCKER_CONTAINER
-        sleep 1000000
-      displayName: 'Start container'
-    - script: >
-        docker exec skcontainer ./build_tools/azure/install.sh
-      displayName: 'Install'
-    - script: >
-        docker exec skcontainer ./build_tools/azure/test_script.sh
-      displayName: 'Test Library'
-    - task: PublishTestResults@2
-      inputs:
-        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
-        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
-      displayName: 'Publish Test Results'
-      condition: succeededOrFailed()
-    - script: >
-        docker container stop skcontainer
-      displayName: 'Stop container'
-      condition: always()
+    - bash: echo "##vso[task.prependpath]$CONDA/bin"
+      displayName: Add conda to PATH
+      condition: startsWith(variables['DISTRIB'], 'conda')
+    # - script: >
+    #     docker container run --rm
+    #     --volume $TEST_DIR:/temp_dir
+    #     --volume $PWD:/io
+    #     -w /io
+    #     --detach
+    #     --name skcontainer
+    #     -e DISTRIB=$DISTRIB
+    #     -e TEST_DIR=/temp_dir
+    #     -e JUNITXML=$JUNITXML
+    #     -e VIRTUALENV=testvenv
+    #     -e NUMPY_VERSION=$NUMPY_VERSION
+    #     -e SCIPY_VERSION=$SCIPY_VERSION
+    #     -e CYTHON_VERSION=$CYTHON_VERSION
+    #     -e JOBLIB_VERSION=$JOBLIB_VERSION
+    #     -e PANDAS_VERSION=$PANDAS_VERSION
+    #     -e PYAMG_VERSION=$PYAMG_VERSION
+    #     -e PILLOW_VERSION=$PILLOW_VERSION
+    #     -e MATPLOTLIB_VERSION=$MATPLOTLIB_VERSION
+    #     -e PYTEST_VERSION=$PYTEST_VERSION
+    #     -e PYTEST_XDIST_VERSION=$PYTEST_XDIST_VERSION
+    #     -e THREADPOOLCTL_VERSION=$THREADPOOLCTL_VERSION
+    #     -e OMP_NUM_THREADS=$OMP_NUM_THREADS
+    #     -e OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS
+    #     -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
+    #     -e BLAS=$BLAS
+    #     $DOCKER_CONTAINER
+    #     sleep 1000000
+    #   displayName: 'Start container'
+    # - script: >
+    #     docker exec skcontainer ./build_tools/azure/install.sh
+    #   displayName: 'Install'
+    # - script: >
+    #     docker exec skcontainer ./build_tools/azure/test_script.sh
+    #   displayName: 'Test Library'
+    # - task: PublishTestResults@2
+    #   inputs:
+    #     testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
+    #     testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+    #   displayName: 'Publish Test Results'
+    #   condition: succeededOrFailed()
+    # - script: >
+    #     docker container stop skcontainer
+    #   displayName: 'Stop container'
+    #   condition: always()
