@@ -90,9 +90,9 @@ def test_parameter_checking():
         ({"tol": -1}, "Tolerance for stopping criteria must be positive"),
         ({"solver": "wrong"}, "Invalid solver parameter"),
         ({"init": "wrong"}, "Invalid init parameter"),
-        ({"beta_loss": "wrong"}, "Invalid beta_loss parameter")
+        ({"beta_loss": "wrong"}, "Invalid beta_loss parameter"),
     ],
-)    
+)
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
 def test_nmf_wrong_params(Estimator, param, match):
     # Check that appropriate errors are raised for invalid values of paramters common
@@ -100,14 +100,13 @@ def test_nmf_wrong_params(Estimator, param, match):
     A = np.ones((2, 2))
     with pytest.raises(ValueError, match=match):
         Estimator(**param).fit(A)
- 
+
 
 @pytest.mark.parametrize(
     "param, match",
     [
         ({"solver": "cd"}, "Invalid solver parameter"),
         ({"batch_size": 0}, "batch_size must be a positive integer"),
-
     ],
 )
 def test_minibatch_nmf_wrong_params(param, match):
@@ -116,7 +115,7 @@ def test_minibatch_nmf_wrong_params(param, match):
     A = np.ones((2, 2))
     with pytest.raises(ValueError, match=match):
         MiniBatchNMF(**param).fit(A)
-   
+
 
 def test_initialize_close():
     # Test NNDSVD error
@@ -886,7 +885,14 @@ def test_nmf_minibatchnmf_equivalence(beta_loss):
     X = np.abs(rng.randn(48, 5))
     init = "nndsvda"  # FIXME : should be removed in 1.1
 
-    nmf = NMF(n_components=5, beta_loss=beta_loss, solver="mu", init=init, random_state=0, tol=0)
+    nmf = NMF(
+        n_components=5,
+        beta_loss=beta_loss,
+        solver="mu",
+        init=init,
+        random_state=0,
+        tol=0,
+    )
     mbnmf = MiniBatchNMF(
         n_components=5,
         beta_loss=beta_loss,
