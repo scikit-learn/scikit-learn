@@ -137,8 +137,9 @@ def test_label_binarizer_errors():
 
     input_labels = [0, 1, 0, 1]
     err_msg = "neg_label=2 must be strictly less than pos_label=1."
+    lb = LabelBinarizer(neg_label=2, pos_label=1)
     with pytest.raises(ValueError, match=err_msg):
-        LabelBinarizer(neg_label=2, pos_label=1).fit(input_labels)
+        lb.fit(input_labels)
     err_msg = "neg_label=2 must be strictly less than pos_label=2."
     with pytest.raises(ValueError, match=err_msg):
         LabelBinarizer(neg_label=2, pos_label=2).fit(input_labels)
