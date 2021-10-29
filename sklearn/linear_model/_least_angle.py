@@ -19,6 +19,7 @@ from joblib import Parallel
 
 from ._base import LinearModel
 from ._base import _deprecate_normalize
+from ._ridge import ridge_regression
 from ..base import RegressorMixin, MultiOutputMixin
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
@@ -1971,7 +1972,7 @@ class LassoLarsIC(LassoLars):
 
     Parameters
     ----------
-    criterion : {'bic' , 'aic'}, default='aic'
+    criterion : {'aic', 'bic'}, default='aic'
         The type of criterion to use.
 
     fit_intercept : bool, default=True
@@ -2025,6 +2026,13 @@ class LassoLarsIC(LassoLars):
         As a consequence using LassoLarsIC only makes sense for problems where
         a sparse solution is expected and/or reached.
 
+    noise_variance : float, default=None
+        The estimated noise variance of the data. If `None`, we will compute
+        an unbiased estimator using an OLS model. However, it is only possible
+        in the case `n_samples > n_features`.
+
+        .. versionadded:: 1.1
+
     Attributes
     ----------
     coef_ : array-like of shape (n_features,)
@@ -2050,6 +2058,12 @@ class LassoLarsIC(LassoLars):
         The value of the information criteria ('aic', 'bic') across all
         alphas. The alpha which has the smallest information criterion is
         chosen.
+
+    noise_variance_ : float
+        The estimated noise variance from the data used to compute the
+        criterion.
+
+        .. versionadded:: 1.1
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2113,6 +2127,7 @@ class LassoLarsIC(LassoLars):
         eps=np.finfo(float).eps,
         copy_X=True,
         positive=False,
+        noise_variance=None,
     ):
         self.criterion = criterion
         self.fit_intercept = fit_intercept
@@ -2124,6 +2139,7 @@ class LassoLarsIC(LassoLars):
         self.precompute = precompute
         self.eps = eps
         self.fit_path = True
+        self.noise_variance = noise_variance
 
     def _more_tags(self):
         return {"multioutput": False}
@@ -2181,15 +2197,16 @@ class LassoLarsIC(LassoLars):
         n_samples = X.shape[0]
 
         if self.criterion == "aic":
-            K = 2  # AIC
+            factor_criterion = 2
         elif self.criterion == "bic":
-            K = log(n_samples)  # BIC
+            factor_criterion = log(n_samples)
         else:
-            raise ValueError("criterion should be either bic or aic")
+            raise ValueError(
+                f"criterion should be either bic or aic, got {self.criterion!r}"
+            )
 
         residuals = y[:, np.newaxis] - np.dot(X, coef_path_)
-        mean_squared_error = np.mean(residuals ** 2, axis=0)
-
+        residuals_sum_squares = np.sum(residuals ** 2, axis=0)
         degrees_of_freedom = np.zeros(coef_path_.shape[1], dtype=int)
         for k, coef in enumerate(coef_path_.T):
             mask = np.abs(coef) > np.finfo(coef.dtype).eps
@@ -2201,10 +2218,18 @@ class LassoLarsIC(LassoLars):
             degrees_of_freedom[k] = np.sum(mask)
 
         self.alphas_ = alphas_
+
+        if self.noise_variance is None:
+            self.noise_variance_ = self._estimate_noise_variance(
+                X, y, positive=self.positive
+            )
+        else:
+            self.noise_variance_ = self.noise_variance
+
         self.criterion_ = (
-            n_samples * (np.log(2 * np.pi) + 1)  # constant that could be neglected
-            + n_samples * np.log(mean_squared_error)
-            + K * degrees_of_freedom
+            n_samples * np.log(2 * np.pi * self.noise_variance_)
+            + residuals_sum_squares / self.noise_variance_
+            + factor_criterion * degrees_of_freedom
         )
         n_best = np.argmin(self.criterion_)
 
@@ -2212,3 +2237,39 @@ class LassoLarsIC(LassoLars):
         self.coef_ = coef_path_[:, n_best]
         self._set_intercept(Xmean, ymean, Xstd)
         return self
+
+    def _estimate_noise_variance(self, X, y, positive):
+        """Compute a variance estimator of an OLS model.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Data to be fitted by the OLS model. We expect the data to be
+            centered.
+
+        y : ndarray of shape (n_samples,)
+            Associated target
+
+        Returns
+        -------
+        noise_variance : float
+            An estimator of the noise variance of an OLS model.
+
+        Note
+        ----
+        Instead of using a ordinary linear regression, we will use a ridge
+        model with a very low alpha for numerical stability in case of
+        collinearity features.
+        """
+        if X.shape[0] <= X.shape[1]:
+            raise ValueError(
+                f"You are using {self.__class__.__name__} in the case where the number "
+                "of samples is smaller than the number of features. In this setting, "
+                "getting a good estimator for the variance of the noise is not "
+                "possible. Provide an estimate of the noise variance in the "
+                "constructor."
+            )
+        ols_coef = ridge_regression(
+            X, y, alpha=1e-12, positive=positive, check_input=False
+        )
+        return np.sum((y - X @ ols_coef) ** 2) / (X.shape[0] - X.shape[1])

@@ -900,8 +900,8 @@ def test_copy_X_with_auto_gram():
 def test_lars_dtype_match(LARS, has_coef_path, args, dtype):
     # The test ensures that the fit method preserves input dtype
     rng = np.random.RandomState(0)
-    X = rng.rand(6, 6).astype(dtype)
-    y = rng.rand(6).astype(dtype)
+    X = rng.rand(20, 6).astype(dtype)
+    y = rng.rand(20).astype(dtype)
 
     model = LARS(**args)
     model.fit(X, y)
@@ -930,8 +930,8 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
     atol = 1e-5
 
     rng = np.random.RandomState(0)
-    X_64 = rng.rand(6, 6)
-    y_64 = rng.rand(6)
+    X_64 = rng.rand(10, 6)
+    y_64 = rng.rand(10)
 
     model_64 = LARS(**args).fit(X_64, y_64)
     model_32 = LARS(**args).fit(X_64.astype(np.float32), y_64.astype(np.float32))
@@ -960,3 +960,22 @@ def test_lassolarsic_alpha_selection(criterion):
 
     best_alpha_selected = np.argmin(model[-1].criterion_)
     assert best_alpha_selected == 7
+
+
+def test_lassolarsic_noise_variance():
+    """Check the behaviour when `n_samples` < `n_features` and that one needs
+    to provide the noise variance."""
+    rng = np.random.RandomState(0)
+    X, y = datasets.make_regression(n_samples=10, n_features=100, random_state=rng)
+
+    model = make_pipeline(StandardScaler(), LassoLarsIC(normalize=False))
+
+    err_msg = (
+        "You are using LassoLarsIC in the case where the number of samples is smaller"
+        " than the number of features"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        model.fit(X, y)
+
+    model.set_params(lassolarsic__noise_variance=1.0)
+    model.fit(X, y).predict(X)
