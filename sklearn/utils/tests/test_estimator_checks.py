@@ -603,12 +603,10 @@ def test_check_estimator_clones():
     for Estimator in [
          GaussianMixture,
          LinearRegression,
-         RandomForestClassifier,
-         NMF,
          SGDClassifier,
-        #  PCA,
-        # ExtraTreesClassifier,
-        MiniBatchKMeans,
+         PCA,
+         ExtraTreesClassifier,
+         MiniBatchKMeans,
     ]:
         with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
