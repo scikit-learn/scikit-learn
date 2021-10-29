@@ -1771,16 +1771,15 @@ def test_nested_cv():
 
     cvs = [
         LeaveOneGroupOut(),
-        LeaveOneOut(),
-        GroupKFold(n_splits=3),
-        StratifiedKFold(),
-        StratifiedGroupKFold(n_splits=3),
-        StratifiedShuffleSplit(n_splits=3, random_state=0),
+        GroupKFold(n_splits=2),
+        StratifiedKFold(n_splits=2),
+        StratifiedGroupKFold(n_splits=2),
+        StratifiedShuffleSplit(n_splits=2, random_state=0),
     ]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
         gs = GridSearchCV(
-            Ridge(), param_grid={"alpha": [1, 0.1]}, cv=inner_cv, error_score="raise"
+            Ridge(max_iter=1), param_grid={"alpha": [1, 0.1]}, cv=inner_cv, error_score="raise"
         )
         cross_val_score(
             gs, X=X, y=y, groups=groups, cv=outer_cv, fit_params={"groups": groups}
