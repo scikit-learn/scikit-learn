@@ -208,7 +208,6 @@ def test_cluster_qr():
     labels_float64 = cluster_qr(data.astype(np.float64))
     # Each sample is assigned a cluster identifier
     assert labels_float64.shape == (n_samples,)
-    assert labels_float64.dtype == np.int64
     # All components should be covered by the assignment
     assert np.array_equal(np.unique(labels_float64), np.arange(n_components))
     # Single precision data should yield the same cluster assignments
