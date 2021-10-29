@@ -601,12 +601,12 @@ def test_check_estimator_clones():
     iris = load_iris()
 
     for Estimator in [
-         GaussianMixture,
-         LinearRegression,
-         SGDClassifier,
-         PCA,
-         ExtraTreesClassifier,
-         MiniBatchKMeans,
+        GaussianMixture,
+        LinearRegression,
+        SGDClassifier,
+        PCA,
+        ExtraTreesClassifier,
+        MiniBatchKMeans,
     ]:
         with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
