@@ -189,7 +189,7 @@ def spectral_embedding(
         of the lobpcg eigen vectors decomposition when `eigen_solver ==
         'amg'`, and for the K-Means initialization. Use an int to make
         the results deterministic across calls (See
-        :term:`Glossary <random_state>`). If None,the random number
+        :term:`Glossary <random_state>`). If None, the random number
         generator is the ``RandomState`` instance used by ``np.random``.
 
         .. note::
