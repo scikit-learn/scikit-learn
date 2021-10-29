@@ -1,4 +1,6 @@
 import re
+import sys
+from io import StringIO
 
 import numpy as np
 import scipy.sparse as sp
@@ -48,14 +50,6 @@ def test_parameter_checking():
     name = "spam"
     # FIXME : should be removed in 1.1
     init = "nndsvda"
-    msg = "Invalid solver parameter: got 'spam' instead of one of"
-    with pytest.raises(ValueError, match=msg):
-        NMF(solver=name, init=init).fit(A)
-    with pytest.raises(ValueError, match=msg):
-        MiniBatchNMF(solver=name).fit(A)
-    msg = "Invalid init parameter: got 'spam' instead of one of"
-    with pytest.raises(ValueError, match=msg):
-        NMF(init=name).fit(A)
 
     with ignore_warnings(category=FutureWarning):
         # TODO remove in 1.2
@@ -63,27 +57,17 @@ def test_parameter_checking():
         with pytest.raises(ValueError, match=msg):
             NMF(regularization=name, init=init).fit(A)
 
-    msg = "Invalid beta_loss parameter: got 'spam' instead of one"
-    with pytest.raises(ValueError, match=msg):
-        NMF(solver="mu", init=init, beta_loss=name).fit(A)
-    with pytest.raises(ValueError, match=msg):
-        MiniBatchNMF(solver="mu", beta_loss=name).fit(A)
     msg = "Invalid beta_loss parameter: solver 'cd' does not handle beta_loss = 1.0"
     with pytest.raises(ValueError, match=msg):
         NMF(solver="cd", init=init, beta_loss=1.0).fit(A)
     msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
         NMF(init=init).fit(-A)
-    with pytest.raises(ValueError, match=msg):
-        MiniBatchNMF().fit(-A)
     clf = NMF(2, tol=0.1, init=init).fit(A)
     with pytest.raises(ValueError, match=msg):
         clf.transform(-A)
     with pytest.raises(ValueError, match=msg):
         nmf._initialize_nmf(-A, 2, "nndsvd")
-    msg = "Invalid beta_loss parameter: got 'spam' instead of one"
-    with pytest.raises(ValueError, match=msg):
-        MiniBatchNMF(solver="mu", beta_loss=name).fit(A)
 
     for init in ["nndsvd", "nndsvda", "nndsvdar"]:
         msg = re.escape(
@@ -97,6 +81,42 @@ def test_parameter_checking():
         with pytest.raises(ValueError, match=msg):
             nmf._initialize_nmf(A, 3, init)
 
+
+@pytest.mark.parametrize(
+    "param, match",
+    [
+        ({"n_components": 0}, "Number of components must be a positive integer"),
+        ({"max_iter": -1}, "Maximum number of iterations must be a positive integer"),
+        ({"tol": -1}, "Tolerance for stopping criteria must be positive"),
+        ({"solver": "wrong"}, "Invalid solver parameter"),
+        ({"init": "wrong"}, "Invalid init parameter"),
+        ({"beta_loss": "wrong"}, "Invalid beta_loss parameter")
+    ],
+)    
+@pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
+def test_nmf_wrong_params(Estimator, param, match):
+    # Check that appropriate errors are raised for invalid values of paramters common
+    # to NMF and MiniBatchNMF.
+    A = np.ones((2, 2))
+    with pytest.raises(ValueError, match=match):
+        Estimator(**param).fit(A)
+ 
+
+@pytest.mark.parametrize(
+    "param, match",
+    [
+        ({"solver": "cd"}, "Invalid solver parameter"),
+        ({"batch_size": 0}, "batch_size must be a positive integer"),
+
+    ],
+)
+def test_minibatch_nmf_wrong_params(param, match):
+    # Check that appropriate errors are raised for invalid values specific to
+    # MiniBatchNMF parameters
+    A = np.ones((2, 2))
+    with pytest.raises(ValueError, match=match):
+        MiniBatchNMF(**param).fit(A)
+   
 
 def test_initialize_close():
     # Test NNDSVD error
@@ -858,16 +878,18 @@ def test_nmf_custom_init_dtype_error(Estimator):
         non_negative_factorization(X, H=H, update_H=False)
 
 
-def test_nmf_minibatchnmf_equivalence():
+@pytest.mark.parametrize("beta_loss", [0, 1, 2])
+def test_nmf_minibatchnmf_equivalence(beta_loss):
     # Test that MiniBatchNMF is equivalent to NMF when batch_size = n_samples and
     # forget_factor 0.0 (stopping criterion put aside)
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
     init = "nndsvda"  # FIXME : should be removed in 1.1
 
-    nmf = NMF(n_components=5, solver="mu", init=init, random_state=0, tol=0)
+    nmf = NMF(n_components=5, beta_loss=beta_loss, solver="mu", init=init, random_state=0, tol=0)
     mbnmf = MiniBatchNMF(
         n_components=5,
+        beta_loss=beta_loss,
         init=init,
         random_state=0,
         tol=0,
@@ -935,3 +957,15 @@ def test_feature_names_out():
 
     names = nmf.get_feature_names_out()
     assert_array_equal([f"nmf{i}" for i in range(3)], names)
+
+
+def test_minibatch_nmf_verbose():
+    # Check verbose mode of MiniBatchNMF for better coverage.
+    A = np.random.RandomState(0).random_sample((100, 10))
+    nmf = MiniBatchNMF(tol=1e-2, random_state=0, verbose=1)
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        nmf.fit(A)
+    finally:
+        sys.stdout = old_stdout
