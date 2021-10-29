@@ -1,7 +1,7 @@
 parameters:
   name: ''
   vmImage: ''
-  matrix: []
+  # matrix: []
   dependsOn: []
   condition: ''
 
@@ -10,6 +10,6 @@ jobs:
   parameters:
     name: ${{ parameters.name }}
     vmImage: ${{ parameters.vmImage }}
-    matrix: ${{ parameters.matrix }}
+    # matrix: ${{ parameters.matrix }}
     dependsOn: ${{ parameters.dependsOn }}
     condition: ${ parameters.condition }}
