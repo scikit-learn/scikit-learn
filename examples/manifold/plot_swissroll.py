@@ -67,7 +67,9 @@ _ = axs[1].set_title("TSNE Embedding of Swiss Roll")
 # Now let's take a look at how both algorithms deal with us adding a hole to
 # the data. First, we generate the Swiss-Hole dataset and plot it:
 
-sh_points, sh_color = datasets.make_swiss_roll(n_samples=1500, hole=True)
+sh_points, sh_color = datasets.make_swiss_roll(
+    n_samples=1500, hole=True, random_state=0
+)
 
 fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111, projection="3d")
