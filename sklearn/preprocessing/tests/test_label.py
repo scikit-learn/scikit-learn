@@ -147,8 +147,9 @@ def test_label_binarizer_errors():
         "Sparse binarization is only supported with non zero pos_label and zero "
         "neg_label, got pos_label=2 and neg_label=1"
     )
+    lb = LabelBinarizer(neg_label=1, pos_label=2, sparse_output=True)
     with pytest.raises(ValueError, match=err_msg):
-        LabelBinarizer(neg_label=1, pos_label=2, sparse_output=True).fit(input_labels)
+        lb.fit(input_labels)
 
     # Fail on y_type
     err_msg = "foo format is not supported"
