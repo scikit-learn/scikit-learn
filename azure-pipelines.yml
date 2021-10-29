@@ -129,12 +129,12 @@ jobs:
     name: Ubuntu_Bionic
     vmImage: ubuntu-18.04
     dependsOn: [git_commit]
+    dependsOnParallel: [linting, git_commit]
     condition: |
       and(
         succeeded(),
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule'),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[azure all-parallel]'))
+        ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
       py37_conda_forge_openblas_ubuntu_1804:
@@ -145,28 +145,6 @@ jobs:
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
 
-# This configuration matches the py37_conda_forge_openblas_ubuntu_1804 above. The difference
-# is that this configuration only runs when [azure all-parallel] is in the comment message.
-- template: build_tools/azure/posix-all-parallel.yml
-  parameters:
-    name: Ubuntu_Bionic_Parallel
-    vmImage: ubuntu-18.04
-    dependsOn: [linting, git_commit]
-    condition: |
-      and(
-        succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule'),
-        contains(dependencies['git_commit']['outputs']['commit.message'], '[azure all-parallel]')
-      )
-    matrix:
-      py37_conda_forge_openblas_ubuntu_1804:
-        DISTRIB: 'conda'
-        CONDA_CHANNEL: 'conda-forge'
-        PYTHON_VERSION: '3.7'
-        BLAS: 'openblas'
-        COVERAGE: 'false'
-        BUILD_WITH_ICC: 'false'
 
 # - template: build_tools/azure/posix.yml
 #   parameters:

@@ -3,6 +3,7 @@ parameters:
   vmImage: ''
   matrix: []
   dependsOn: []
+  dependsOnParallel: []
   condition: ''
 
 jobs:
@@ -12,4 +13,20 @@ jobs:
     vmImage: ${{ parameters.vmImage }}
     matrix: ${{ parameters.matrix }}
     dependsOn: ${{ parameters.dependsOn }}
-    condition: ${{ parameters.condition }}
+    condition: |
+      and(
+        ${{ parameters.condition }},
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[azure all-parallel]'))
+      )
+
+- template: posix.yml
+  parameters:
+    name: ${{ parameters.name }}_Parallel
+    vmImage: ${{ parameters.vmImage }}
+    matrix: ${{ parameters.matrix }}
+    dependsOn: ${{ parameters.dependsOnParallel }}
+    condition: |
+      and(
+        ${{ parameters.condition }},
+        contains(dependencies['git_commit']['outputs']['commit.message'], '[azure all-parallel]')
+      )
