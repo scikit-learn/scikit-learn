@@ -499,8 +499,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         # Check that algorithm is supported
         if self.algorithm not in ("SAMME", "SAMME.R"):
             raise ValueError(
-                "Algorithm must be 'SAMME' or 'SAMME.R'. Got %s instead."
-                % self.algorithm
+                f"Algorithm must be 'SAMME' or 'SAMME.R'. Got {self.algorithm} instead."
             )
 
         # Fit
