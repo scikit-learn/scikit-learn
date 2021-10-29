@@ -37,7 +37,7 @@ def cluster_qr(vectors):
         Returns
         -------
         labels : array of integers, shape: n_samples
-            The labels of the clusters.
+            The cluster labels of vectors.
 
         References
         ----------
@@ -48,7 +48,7 @@ def cluster_qr(vectors):
     """
 
     k = vectors.shape[1]
-    piv = qr(vectors.T, pivoting=True)[2]
+    _, _, piv = qr(vectors.T, pivoting=True)
     ut, _, v = svd(vectors[piv[:k], :].T)
     vectors = abs(np.dot(vectors, np.dot(ut, v.conj())))
     return vectors.argmax(axis=1)
@@ -271,7 +271,7 @@ def spectral_clustering(
         approach which is less sensitive to random initialization [3]_.
         The cluster_qr method [5]_ directly extracts clusters from eigenvectors
         in spectral clustering. In contrast to k-means and discretization, cluster_qr
-        has no tuning parameters and runs no iterations, yet may outperform
+        has no tuning parameters and is not an iterative method, yet may outperform
         k-means and discretization in terms of both quality and speed.
 
         .. versionchanged:: 1.1
@@ -569,7 +569,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     .. [5] `Simple, direct, and efficient multi-way spectral clustering, 2019
            Anil Damle, Victor Minden, Lexing Ying
-           <https://doi.org/10.1093/imaiai/iay008>`_
+           <:doi:`10.1093/imaiai/iay008`>`_
 
     Examples
     --------
