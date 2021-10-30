@@ -154,8 +154,8 @@ def all_displays():
             module = import_module(module_name)
             classes = inspect.getmembers(module, inspect.isclass)
             classes = [
-                (name, est_cls)
-                for name, est_cls in classes
+                (name, display_class)
+                for name, display_class in classes
                 if not name.startswith("_") and name.endswith("Display")
             ]
             all_classes.extend(classes)
