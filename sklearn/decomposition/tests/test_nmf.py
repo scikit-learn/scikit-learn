@@ -42,11 +42,9 @@ def test_initialize_nn_output():
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = "spam"
-    # FIXME : should be removed in 1.1
-    init = "nndsvda"
     msg = "Invalid solver parameter: got 'spam' instead of one of"
     with pytest.raises(ValueError, match=msg):
-        NMF(solver=name, init=init).fit(A)
+        NMF(solver=name).fit(A)
     msg = "Invalid init parameter: got 'spam' instead of one of"
     with pytest.raises(ValueError, match=msg):
         NMF(init=name).fit(A)
@@ -55,21 +53,21 @@ def test_parameter_checking():
         # TODO remove in 1.2
         msg = "Invalid regularization parameter: got 'spam' instead of one of"
         with pytest.raises(ValueError, match=msg):
-            NMF(regularization=name, init=init).fit(A)
+            NMF(regularization=name).fit(A)
 
     msg = "Invalid beta_loss parameter: got 'spam' instead of one"
     with pytest.raises(ValueError, match=msg):
-        NMF(solver="mu", init=init, beta_loss=name).fit(A)
+        NMF(solver="mu", beta_loss=name).fit(A)
     msg = "Invalid beta_loss parameter: solver 'cd' does not handle beta_loss = 1.0"
     with pytest.raises(ValueError, match=msg):
-        NMF(solver="cd", init=init, beta_loss=1.0).fit(A)
+        NMF(solver="cd", beta_loss=1.0).fit(A)
 
     msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
-        NMF(init=init).fit(-A)
+        NMF().fit(-A)
     with pytest.raises(ValueError, match=msg):
         nmf._initialize_nmf(-A, 2, "nndsvd")
-    clf = NMF(2, tol=0.1, init=init).fit(A)
+    clf = NMF(2, tol=0.1).fit(A)
     with pytest.raises(ValueError, match=msg):
         clf.transform(-A)
 
@@ -198,9 +196,7 @@ def test_n_components_greater_n_features():
     # Smoke test for the case of more components than features.
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(30, 10))
-    # FIXME : should be removed in 1.1
-    init = "random"
-    NMF(n_components=15, random_state=0, tol=1e-2, init=init).fit(A)
+    NMF(n_components=15, random_state=0, tol=1e-2).fit(A)
 
 
 @pytest.mark.parametrize("solver", ["cd", "mu"])
@@ -533,8 +529,6 @@ def test_nmf_regularization(solver):
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(n_samples, n_features))
 
-    # FIXME : should be removed in 1.1
-    init = "nndsvda"
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.0
 
@@ -544,7 +538,6 @@ def test_nmf_regularization(solver):
         alpha_W=0.5,
         l1_ratio=l1_ratio,
         random_state=42,
-        init=init,
     )
     model = nmf.NMF(
         n_components=n_components,
@@ -552,7 +545,6 @@ def test_nmf_regularization(solver):
         alpha_W=0.0,
         l1_ratio=l1_ratio,
         random_state=42,
-        init=init,
     )
 
     W_regul = regul.fit_transform(X)
@@ -578,7 +570,6 @@ def test_nmf_regularization(solver):
         alpha_W=0.5,
         l1_ratio=l1_ratio,
         random_state=42,
-        init=init,
     )
     model = nmf.NMF(
         n_components=n_components,
@@ -586,7 +577,6 @@ def test_nmf_regularization(solver):
         alpha_W=0.0,
         l1_ratio=l1_ratio,
         random_state=42,
-        init=init,
     )
 
     W_regul = regul.fit_transform(X)
@@ -685,9 +675,7 @@ def test_nmf_dtype_match(dtype_in, dtype_out, solver, alpha_W, alpha_H):
     # Check that NMF preserves dtype (float32 and float64)
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
-    # FIXME : should be removed in 1.1
-    init = "nndsvda"
-    nmf = NMF(solver=solver, alpha_W=alpha_W, alpha_H=alpha_H, init=init)
+    nmf = NMF(solver=solver, alpha_W=alpha_W, alpha_H=alpha_H)
 
     assert nmf.fit(X).transform(X).dtype == dtype_out
     assert nmf.fit_transform(X).dtype == dtype_out
@@ -699,11 +687,10 @@ def test_nmf_float32_float64_consistency(solver):
     # Check that the result of NMF is the same between float32 and float64
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
-    # FIXME : should be removed in 1.1
-    init = "nndsvda"
-    nmf32 = NMF(solver=solver, random_state=0, init=init)
+
+    nmf32 = NMF(solver=solver, random_state=0)
     W32 = nmf32.fit_transform(X.astype(np.float32))
-    nmf64 = NMF(solver=solver, random_state=0, init=init)
+    nmf64 = NMF(solver=solver, random_state=0)
     W64 = nmf64.fit_transform(X)
 
     assert_allclose(W32, W64, rtol=1e-6, atol=1e-5)
@@ -724,30 +711,11 @@ def test_nmf_custom_init_dtype_error():
         non_negative_factorization(X, H=H, update_H=False)
 
 
-# FIXME : should be removed in 1.1
-def test_init_default_deprecation():
-    # Test FutureWarning on init default
-    msg = (
-        r"The 'init' value, when 'init=None' and "
-        r"n_components is less than n_samples and "
-        r"n_features, will be changed from 'nndsvd' to "
-        r"'nndsvda' in 1.1 \(renaming of 0.26\)."
-    )
-    rng = np.random.mtrand.RandomState(42)
-    A = np.abs(rng.randn(6, 5))
-    with pytest.warns(FutureWarning, match=msg):
-        nmf._initialize_nmf(A, 3)
-    with pytest.warns(FutureWarning, match=msg):
-        NMF().fit(A)
-    with pytest.warns(FutureWarning, match=msg):
-        non_negative_factorization(A)
-
-
 def test_feature_names_out():
     """Check feature names out for NMF."""
     random_state = np.random.RandomState(0)
     X = np.abs(random_state.randn(10, 4))
-    nmf = NMF(n_components=3, init="nndsvda").fit(X)
+    nmf = NMF(n_components=3).fit(X)
 
     names = nmf.get_feature_names_out()
     assert_array_equal([f"nmf{i}" for i in range(3)], names)
