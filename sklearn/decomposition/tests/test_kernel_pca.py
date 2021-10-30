@@ -559,3 +559,12 @@ def test_kernel_pca_alphas_deprecated():
     msg = r"Attribute `alphas_` was deprecated in version 1\.0"
     with pytest.warns(FutureWarning, match=msg):
         kp.alphas_
+
+
+def test_kernel_pca_feature_names_out():
+    """Check feature names out for KernelPCA."""
+    X, *_ = make_blobs(n_samples=100, n_features=4, random_state=0)
+    kpca = KernelPCA(n_components=2).fit(X)
+
+    names = kpca.get_feature_names_out()
+    assert_array_equal([f"kernelpca{i}" for i in range(2)], names)
