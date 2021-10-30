@@ -664,7 +664,7 @@ def cartesian(arrays, out=None):
 
     Returns
     -------
-    out : out : ndarray of shape (M, len(arrays))
+    out : ndarray of shape (M, len(arrays))
         Array containing the cartesian products formed of input arrays.
 
     Notes
