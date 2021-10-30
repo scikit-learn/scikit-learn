@@ -37,7 +37,7 @@ from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.model_selection import StratifiedGroupKFold
 
-from sklearn.linear_model import Ridge
+from sklearn.dummy import DummyClassifier
 
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _build_repr
@@ -1770,16 +1770,13 @@ def test_nested_cv():
     groups = rng.randint(0, 5, 15)
 
     cvs = [
-        LeaveOneGroupOut(),
-        GroupKFold(n_splits=2),
         StratifiedKFold(n_splits=2),
-        StratifiedGroupKFold(n_splits=2),
         StratifiedShuffleSplit(n_splits=2, random_state=0),
     ]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
         gs = GridSearchCV(
-            Ridge(max_iter=1), param_grid={"alpha": [1, 0.1]}, cv=inner_cv, error_score="raise"
+            DummyClassifier(), param_grid={"strategy": ["stratified", "most_frequent"]}, cv=inner_cv, error_score="raise"
         )
         cross_val_score(
             gs, X=X, y=y, groups=groups, cv=outer_cv, fit_params={"groups": groups}
