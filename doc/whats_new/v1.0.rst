@@ -26,7 +26,7 @@ Changelog
 
 - |Fix| :func:`utils.estimator_html_repr` now escapes all the estimator
   descriptions in the generated HTML. :pr:`21493` by
-  :user:`Aurélien Geron <ageron>`_.
+  :user:`Aurélien Geron <ageron>`.
 
 
 .. _changes_1_0_1:
