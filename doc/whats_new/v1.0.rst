@@ -21,6 +21,13 @@ Changelog
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`utils.estimator_html_repr` now escapes all the estimator
+  descriptions in the generated HTML. :pr:`21493` by
+  :user:`Aurélien Geron <ageron>`.
+
 
 .. _changes_1_0_1:
 
@@ -1102,10 +1109,10 @@ Adrian Garcia Badaracco, Adrian Sadłocha, Adrin Jalali, Agamemnon Krasoulis,
 Alberto Rubiales, Albert Thomas, Albert Villanova del Moral, Alek Lefebvre,
 Alessia Marcolini, Alexandr Fonari, Alihan Zihna, Aline Ribeiro de Almeida,
 Amanda, Amanda Dsouza, Amol Deshmukh, Ana Pessoa, Anavelyz, Andreas Mueller,
-Andrew Delong, Ashish, Ashvith Shetty, Atsushi Nukariya, Avi Gupta, Ayush
-Singh, baam, BaptBillard, Benjamin Pedigo, Bertrand Thirion, Bharat
-Raghunathan, bmalezieux, Brian Rice, Brian Sun, Bruno Charron, Bryan Chen,
-bumblebee, caherrera-meli, Carsten Allefeld, CeeThinwa, Chiara Marmo,
+Andrew Delong, Ashish, Ashvith Shetty, Atsushi Nukariya, Aurélien Geron, Avi
+Gupta, Ayush Singh, baam, BaptBillard, Benjamin Pedigo, Bertrand Thirion,
+Bharat Raghunathan, bmalezieux, Brian Rice, Brian Sun, Bruno Charron, Bryan
+Chen, bumblebee, caherrera-meli, Carsten Allefeld, CeeThinwa, Chiara Marmo,
 chrissobel, Christian Lorentzen, Christopher Yeh, Chuliang Xiao, Clément
 Fauchereau, cliffordEmmanuel, Conner Shen, Connor Tann, David Dale, David Katz,
 David Poznik, Dimitri Papadopoulos Orfanos, Divyanshu Deoli, dmallia17,
