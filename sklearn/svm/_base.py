@@ -136,32 +136,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # Used by cross_val_score.
         return self.kernel == "precomputed"
 
-    def _set_fitted_attributes(self, fitted_attributes):
-        self.support_ = fitted_attributes.support
-        self.support_vectors_ = fitted_attributes.support_vectors
-        self._n_support = fitted_attributes.n_class_SV
-        self.dual_coef_ = fitted_attributes.sv_coef
-        self.intercept_ = fitted_attributes.intercept
-        self._probA = fitted_attributes.probA
-        self._probB = fitted_attributes.probB
-        self.fit_status_ = fitted_attributes.fit_status
-        self._num_iter = fitted_attributes.n_iter
-
-    def _get_fitted_attributes(self):
-        return libsvm.FittedSVMAttributes(
-            self.support_,
-            self.support_vectors_,
-            self._n_support,
-            # Note that we use the private attributes, since they are modified
-            # in the binary classification case
-            self._dual_coef_,
-            self._intercept_,
-            self._probA,
-            self._probB,
-            self.fit_status_,
-            self._num_iter,
-        )
-
     def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
@@ -338,7 +312,17 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
-        fitted_attributes = libsvm.fit(
+        (
+            self.support_,
+            self.support_vectors_,
+            self._n_support,
+            self.dual_coef_,
+            self.intercept_,
+            self._probA,
+            self._probB,
+            self.fit_status_,
+            self._num_iter,
+        ) = libsvm.fit(
             X,
             y,
             svm_type=solver_type,
@@ -358,7 +342,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             max_iter=self.max_iter,
             random_seed=random_seed,
         )
-        self._set_fitted_attributes(fitted_attributes)
 
         self._warn_from_fit_status()
 
@@ -459,11 +442,17 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 )
 
         svm_type = LIBSVM_IMPL.index(self._impl)
-        fitted_attributes = self._get_fitted_attributes()
 
         return libsvm.predict(
             X,
-            fitted_attributes,
+            self.support_,
+            self.support_vectors_,
+            self._n_support,
+            self._dual_coef_,
+            self._intercept_,
+            self._num_iter,
+            self._probA,
+            self._probB,
             svm_type=svm_type,
             kernel=kernel,
             degree=self.degree,
@@ -557,11 +546,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if callable(kernel):
             kernel = "precomputed"
 
-        fitted_attributes = self._get_fitted_attributes()
-
         return libsvm.decision_function(
             X,
-            fitted_attributes,
+            self.support_,
+            self.support_vectors_,
+            self._n_support,
+            self._dual_coef_,
+            self._intercept_,
+            self._num_iter,
+            self._probA,
+            self._probB,
             svm_type=LIBSVM_IMPL.index(self._impl),
             kernel=kernel,
             degree=self.degree,
@@ -900,10 +894,16 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             kernel = "precomputed"
 
         svm_type = LIBSVM_IMPL.index(self._impl)
-        fitted_attributes = self._get_fitted_attributes()
         pprob = libsvm.predict_proba(
             X,
-            fitted_attributes,
+            self.support_,
+            self.support_vectors_,
+            self._n_support,
+            self._dual_coef_,
+            self._intercept_,
+            self._num_iter,
+            self._probA,
+            self._probB,
             svm_type=svm_type,
             kernel=kernel,
             degree=self.degree,
