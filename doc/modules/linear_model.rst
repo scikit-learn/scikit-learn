@@ -327,33 +327,33 @@ section, we give more information regarding the criterion computed in
 scikit-learn. The AIC criterion is defined as:
 
 .. math::
-    AIC = -2 \ln(\hat{L}) + 2 d
+    AIC = -2 \log(\hat{L}) + 2 d
 
 where :math:`\hat{L}` is the maximum likelihood of the model and
-:math:`d` is the number of parameters (as well referred as degrees of
+:math:`d` is the number of parameters (as well referred to as degrees of
 freedom in the previous section).
 
 For a linear Gaussian model, the maximum log-likelihood is defined as:
 
 .. math::
-    \ln(\hat{L}) = - \frac{n}{2} \ln(2 \pi) - \frac{n}{2} \ln(\hat{\sigma^2}) - \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{2\hat{\sigma^2}}
+    \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \ln(\hat{\sigma}^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{2\hat{\sigma}^2}
 
-where :math:`\hat{\sigma^2}` is an estimator of the noise variance,
+where :math:`\hat{\sigma}^2` is an estimate of the noise variance,
 :math:`y_i` and :math:`\hat{y_i}` are respectively the true and predicted
 targets, and :math:`n` is the number of samples.
 
 Plugging the maximum log-likelihood in the AIC formula yields:
 
 .. math::
-    AIC = n \ln(2 \pi \hat{\sigma^2}) + \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{\hat{\sigma^2}} + 2d
+    AIC = n \log(2 \pi \hat{\sigma}^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{\hat{\sigma}^2} + 2d
 
-The left-hand term of the above expression is sometimes discarded since it is a
-constant and does not change the rank of the models evaluated. In addition,
+The first term of the above expression is sometimes discarded since it is a
+constant when :math:`\hat{\sigma}^2` is provided. In addition,
 it is sometimes stated that the AIC is equivalent to the :math:`C_p` statistic
 [12]_. However, this is important to note that it is up to some constant
 and factor term.
 
-At last, we mentioned above that :math:`\hat{\sigma^2}` is an estimator of the
+At last, we mentioned above that :math:`\hat{\sigma}^2` is an estimate of the
 noise variance. In :class:`LassoLarsIC` when the parameter `noise_variance` is
 not provided (default), the noise variance is estimated via the unbiased
 estimator [13]_ defined as:
@@ -361,10 +361,11 @@ estimator [13]_ defined as:
 .. math::
     \hat{\sigma^2} = \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{n - p}
 
-where :math:`p` is the number of parameters in the model and :math:`\hat{y_i}`
+where :math:`p` is the number of features and :math:`\hat{y_i}`
 is the predicted target using an ordinary least squares regression. In
-scikit-learn, we used a ridge model with a very small regularization in case
-of ill-conditioned design matrix.
+scikit-learn, we use a ridge model with a very small regularization in case
+of ill-conditioned design matrix. Note, that this formula is valid only when
+`n_samples > n_features`.
 
 .. topic:: Examples:
 
