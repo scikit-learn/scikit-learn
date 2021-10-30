@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn._config.config_context",
     "sklearn._config.get_config",
     "sklearn.base.clone",
     "sklearn.cluster._affinity_propagation.affinity_propagation",
@@ -92,14 +91,12 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.classification_report",
     "sklearn.metrics._classification.cohen_kappa_score",
-    "sklearn.metrics._classification.confusion_matrix",
     "sklearn.metrics._classification.f1_score",
     "sklearn.metrics._classification.fbeta_score",
     "sklearn.metrics._classification.hinge_loss",
     "sklearn.metrics._classification.jaccard_score",
     "sklearn.metrics._classification.log_loss",
     "sklearn.metrics._classification.precision_recall_fscore_support",
-    "sklearn.metrics._classification.precision_score",
     "sklearn.metrics._classification.recall_score",
     "sklearn.metrics._plot.confusion_matrix.plot_confusion_matrix",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
@@ -222,7 +219,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.mean_variance_axis",
     "sklearn.utils.sparsefuncs.min_max_axis",
     "sklearn.utils.tosequence",
-    "sklearn.utils.validation.as_float_array",
     "sklearn.utils.validation.assert_all_finite",
     "sklearn.utils.validation.check_is_fitted",
     "sklearn.utils.validation.check_memory",
