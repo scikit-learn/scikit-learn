@@ -60,7 +60,7 @@ def get_auto_step_size(
 
     :arxiv: `Defazio, A., Bach F. & Lacoste-Julien S. (2014).
     "SAGA: A Fast Incremental Gradient Method With Support
-    for Non-Strongly Convex Composite Objectives" <1407.0202>`_
+    for Non-Strongly Convex Composite Objectives" <1407.0202>`
     """
     if loss in ("log", "multinomial"):
         L = 0.25 * (max_squared_sum + int(fit_intercept)) + alpha_scaled
@@ -233,7 +233,7 @@ def sag_solver(
 
     :arxiv: `Defazio, A., Bach F. & Lacoste-Julien S. (2014).
     "SAGA: A Fast Incremental Gradient Method With Support
-    for Non-Strongly Convex Composite Objectives" <1407.0202>`_
+    for Non-Strongly Convex Composite Objectives" <1407.0202>`
 
     See Also
     --------
