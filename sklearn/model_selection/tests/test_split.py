@@ -1776,7 +1776,7 @@ def test_nested_cv():
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
         gs = GridSearchCV(
-            DummyClassifier(), 
+            DummyClassifier(),
             param_grid={"strategy": ["stratified", "most_frequent"]},
             cv=inner_cv, error_score="raise"
         )
