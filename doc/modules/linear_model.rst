@@ -327,7 +327,7 @@ section, we give more information regarding the criterion computed in
 scikit-learn. The AIC criterion is defined as:
 
 .. math::
-    -2 \ln(\hat{L}) + 2 d \,
+    AIC = -2 \ln(\hat{L}) + 2 d
 
 where :math:`\hat{L}` is the maximum likelihood of the model and
 :math:`d` is the number of parameters (as well referred as degrees of
@@ -336,7 +336,7 @@ freedom in the previous section).
 For a linear Gaussian model, the maximum log-likelihood is defined as:
 
 .. math::
-    - \frac{n}{2} \ln(2 \pi) - \frac{n}{2} \ln(\hat{\sigma^2}) - \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{2\hat{\sigma^2}}\,
+    \ln(\hat{L}) = - \frac{n}{2} \ln(2 \pi) - \frac{n}{2} \ln(\hat{\sigma^2}) - \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{2\hat{\sigma^2}}
 
 where :math:`\hat{\sigma^2}` is an estimator of the noise variance,
 :math:`y_i` and :math:`\hat{y_i}` are respectively the true and predicted
@@ -345,7 +345,7 @@ targets, and :math:`n` is the number of samples.
 Plugging the maximum log-likelihood in the AIC formula yields:
 
 .. math::
-    n \ln(2 \pi \hat{\sigma^2}) + \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{\hat{\sigma^2}} + 2d \.
+    n \ln(2 \pi \hat{\sigma^2}) + \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{\hat{\sigma^2}} + 2d
 
 The left-hand term of the above expression is sometimes discarded since it is a
 constant and does not change the rank of the models evaluated. In addition,
@@ -359,7 +359,7 @@ not provided (default), the noise variance is estimated via the unbiased
 estimator [13]_ defined as:
 
 .. math::
-    \hat{\sigma^2} = \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{n - p} \,
+    \hat{\sigma^2} = \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{n - p}
 
 where :math:`p` is the number of parameters in the model and :math:`\hat{y_i}`
 is the predicted target using an ordinary least squares regression. In
