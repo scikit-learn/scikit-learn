@@ -57,7 +57,7 @@ X.head()
 # parameter alpha.
 #
 # Before fitting the model, we will standardize the data with a
-# :class:`~sklearn.preprocessing.StandardardScaler`. In addition, we will
+# :class:`~sklearn.preprocessing.StandardScaler`. In addition, we will
 # measure the time to fit and tune the hyperparameter alpha in order to
 # compare with the cross-validation strategy.
 #

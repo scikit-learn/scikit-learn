@@ -298,6 +298,7 @@ features, it is often faster than :class:`LassoCV`.
 
 .. centered:: |lasso_cv_1| |lasso_cv_2|
 
+.. _lasso_lars_ic:
 
 Information-criteria based model selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -318,10 +319,68 @@ They also tend to break when the problem is badly conditioned
     :align: center
     :scale: 50%
 
+Mathematical details
+""""""""""""""""""""
+
+The definition of AIC (and thus BIC) might differ in the literature. In this
+section, we give more information regarding the criterion computed in
+scikit-learn. The AIC criterion is defined as:
+
+.. math::
+    -2 \ln(\hat{L}) + 2 d \,
+
+where :math:`\hat{L}` is the maximum likelihood of the model and
+:math:`d` is the number of parameters (as well referred as degrees of
+freedom in the previous section).
+
+For a linear Gaussian model, the maximum log-likelihood is defined as:
+
+.. math::
+    - \frac{n}{2} \ln(2 \pi) - \frac{n}{2} \ln(\hat{\sigma^2}) - \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{2\hat{\sigma^2}}\,
+
+where :math:`\hat{\sigma^2}` is an estimator of the noise variance,
+:math:`y_i` and :math:`\hat{y_i}` are respectively the true and predicted
+targets, and :math:`n` is the number of samples.
+
+Plugging the maximum log-likelihood in the AIC formula yields:
+
+.. math::
+    n \ln(2 \pi \hat{\sigma^2}) + \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{\hat{\sigma^2}} + 2d \.
+
+The left-hand term of the above expression is sometimes discarded since it is a
+constant and does not change the rank of the models evaluated. In addition,
+it is sometimes stated that the AIC is equivalent to the :math:`C_p` statistic
+[12]_. However, this is important to note that it is up to some constant
+and factor term.
+
+At last, we mentioned above that :math:`\hat{\sigma^2}` is an estimator of the
+noise variance. In :class:`LassoLarsIC` when the parameter `noise_variance` is
+not provided (default), the noise variance is estimated via the unbiased
+estimator [13]_ defined as:
+
+.. math::
+    \hat{\sigma^2} = \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{n - p} \,
+
+where :math:`p` is the number of parameters in the model and :math:`\hat{y_i}`
+is the predicted target using an ordinary least squares regression. In
+scikit-learn, we used a ridge model with a very small regularization in case
+of ill-conditioned design matrix.
 
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
+
+.. topic:: References
+
+  .. [12] `Zou, Hui, Trevor Hastie, and Robert Tibshirani.
+           "On the degrees of freedom of the lasso."
+           The Annals of Statistics 35.5 (2007): 2173-2192.
+           <https://arxiv.org/pdf/0712.0881.pdf>`_
+
+  .. [13] `Cherkassky, Vladimir, and Yunqian Ma.
+           "Comparison of model selection for regression."
+           Neural computation 15.7 (2003): 1691-1714.
+           <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.392.8794&rep=rep1&type=pdf>`_
 
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -934,8 +993,8 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
     .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
 
-    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien: 
-        :arxiv:`SAGA: A Fast Incremental Gradient Method With Support for 
+    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien:
+        :arxiv:`SAGA: A Fast Incremental Gradient Method With Support for
         Non-Strongly Convex Composite Objectives. <1407.0202>`
 
     .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
