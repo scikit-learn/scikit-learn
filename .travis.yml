@@ -22,7 +22,7 @@ env:
     # Custom environment variables for the ARM wheel builder
     - CIBW_BUILD_VERBOSITY=1
     - CIBW_TEST_COMMAND="bash {project}/build_tools/travis/test_wheels.sh"
-    - CIBW_ENVIRONMENT="CPU_COUNT=2
+    - CIBW_ENVIRONMENT="CPU_COUNT=1
                         OMP_NUM_THREADS=2
                         OPENBLAS_NUM_THREADS=2
                         SKLEARN_BUILD_PARALLEL=2
