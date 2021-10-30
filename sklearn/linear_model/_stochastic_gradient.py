@@ -2029,10 +2029,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (1, n_features)
+    coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features.
 
-    offset_ : array, shape (1,)
+    offset_ : ndarray of shape (1,)
         Offset used to define the decision function from the raw scores.
         We have the relation: decision_function = score_samples - offset.
 
