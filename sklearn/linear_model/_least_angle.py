@@ -2243,7 +2243,7 @@ class LassoLarsIC(LassoLars):
         return self
 
     def _estimate_noise_variance(self, X, y, positive):
-        """Compute a variance estimator of an OLS model.
+        """Compute an estimate of the variance with an OLS model.
 
         Parameters
         ----------
@@ -2263,13 +2263,13 @@ class LassoLarsIC(LassoLars):
         ----
         Instead of using a ordinary linear regression, we will use a ridge
         model with a very low alpha for numerical stability in case of
-        collinearity features.
+        collinear features.
         """
         if X.shape[0] <= X.shape[1]:
             raise ValueError(
                 f"You are using {self.__class__.__name__} in the case where the number "
                 "of samples is smaller than the number of features. In this setting, "
-                "getting a good estimator for the variance of the noise is not "
+                "getting a good estimate for the variance of the noise is not "
                 "possible. Provide an estimate of the noise variance in the "
                 "constructor."
             )
