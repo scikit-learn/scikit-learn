@@ -542,7 +542,7 @@ class LinearDiscriminantAnalysis(
             Fitted estimator.
         """
         X, y = self._validate_data(
-            X, y, ensure_min_samples=2, estimator=self, dtype=[np.float64, np.float32]
+            X, y, ensure_min_samples=2, dtype=[np.float64, np.float32]
         )
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
