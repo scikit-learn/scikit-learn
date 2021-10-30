@@ -66,6 +66,8 @@ def test_libsvm_iris():
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
     # check also the low-level API
+    # We unpack the values to be able to repack some of the
+    # return values from libsvm.
     (
         libsvm_support,
         libsvm_support_vectors,
@@ -74,6 +76,7 @@ def test_libsvm_iris():
         libsvm_intercept,
         libsvm_probA,
         libsvm_probB,
+        # libsvm_fit_status won't be packed bellow.
         libsvm_fit_status,
         libsvm_n_iter,
     ) = _libsvm.fit(iris.data, iris.target.astype(np.float64))
@@ -91,6 +94,8 @@ def test_libsvm_iris():
     pred = _libsvm.predict(iris.data, *lib_svm_model)
     assert np.mean(pred == iris.target) > 0.95
 
+    # We unpack the values to be able to repack some of the
+    # return values from libsvm.
     (
         libsvm_support,
         libsvm_support_vectors,
@@ -99,6 +104,7 @@ def test_libsvm_iris():
         libsvm_intercept,
         libsvm_probA,
         libsvm_probB,
+        # libsvm_fit_status won't be packed bellow.
         libsvm_fit_status,
         libsvm_n_iter,
     ) = _libsvm.fit(iris.data, iris.target.astype(np.float64), kernel="linear")
