@@ -208,12 +208,11 @@ def test_perfect_checkerboard():
 
 
 @pytest.mark.parametrize(
-    "args",
+    "args1",
     [
         {"n_init": 0},
         {"n_clusters": (3, 3, 3)},
-        {"n_clusters": "abc"},
-        {"n_clusters": (3, "abc")},
+        {"n_clusters": (6, 6)},
         {"method": "unknown"},
         {"n_components": 0},
         {"n_best": 0},
@@ -221,11 +220,28 @@ def test_perfect_checkerboard():
         {"n_components": 3, "n_best": 4},
     ],
 )
-def test_errors(args):
+def test_value_errors(args1):
     data = np.arange(25).reshape((5, 5))
-
-    model = SpectralBiclustering(**args)
+    model = SpectralBiclustering(**args1)
     with pytest.raises(ValueError):
+        model.fit(data)
+
+
+@pytest.mark.parametrize(
+    "args2",
+    [
+        {"n_init": "abc"},
+        {"n_clusters": "abc"},
+        {"n_clusters": (3, "abc")},
+        {"n_clusters": ("abc", 3)},
+        {"n_components": "abc"},
+        {"n_best": "abc"},
+    ],
+)
+def test_type_errors(args2):
+    data = np.arange(25).reshape((5, 5))
+    model = SpectralBiclustering(**args2)
+    with pytest.raises(TypeError):
         model.fit(data)
 
 
