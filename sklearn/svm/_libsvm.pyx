@@ -51,6 +51,57 @@ LIBSVM_KERNEL_TYPES = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 
 
 ################################################################################
+# Wrapper classes
+cdef class FittedSVMAttributes:
+    """
+    Wrapper class to hold the attributes returned by the LibSVM fit function.
+    """
+
+    cdef readonly np.ndarray support
+    cdef readonly np.ndarray support_vectors
+    cdef readonly np.ndarray n_class_SV
+    cdef readonly np.ndarray sv_coef
+    cdef readonly np.ndarray intercept
+    cdef readonly np.ndarray probA
+    cdef readonly np.ndarray probB
+    cdef readonly int fit_status
+    cdef readonly np.ndarray n_iter
+
+    # Use cinit to initialize all arrays to empty: this will prevent memory
+    # errors and seg-faults in rare cases where __init__ is not called
+    def __cinit__(self):
+        self.support = np.empty(1, dtype=np.int32, order='C')
+        self.support_vectors = np.empty((1, 1), dtype=np.float64, order='C')
+        self.n_class_SV = np.empty(1, dtype=np.int32, order='C')
+        self.sv_coef = np.empty((1, 1), dtype=np.float64, order='C')
+        self.intercept = np.empty(1, dtype=np.float64, order='C')
+        self.probA = np.empty(1, dtype=np.float64, order='C')
+        self.probB = np.empty(1, dtype=np.float64, order='C')
+        self.n_iter = np.empty(1, dtype=np.intc, order='C')
+
+    def __init__(self,
+        np.ndarray[np.int32_t, ndim=1, mode='c'] support,
+        np.ndarray[np.float64_t, ndim=2, mode='c'] support_vectors,
+        np.ndarray[np.int32_t, ndim=1, mode='c'] n_class_SV,
+        np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
+        np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
+        np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
+        np.ndarray[np.float64_t, ndim=1, mode='c'] probB,
+        int fit_status,
+        np.ndarray[int, ndim=1, mode='c'] n_iter):
+
+        self.support = support
+        self.support_vectors = support_vectors
+        self.n_class_SV = n_class_SV
+        self.sv_coef = sv_coef
+        self.intercept = intercept
+        self.probA = probA
+        self.probB = probB
+        self.fit_status = fit_status
+        self.n_iter = n_iter
+
+
+################################################################################
 # Wrapper functions
 
 def fit(
@@ -257,8 +308,8 @@ def fit(
     svm_free_and_destroy_model(&model)
     free(problem.x)
 
-    return (support, support_vectors, n_class_SV, sv_coef, intercept,
-           probA, probB, fit_status, n_iter)
+    return FittedSVMAttributes(support, support_vectors, n_class_SV, sv_coef,
+                               intercept, probA, probB, fit_status, n_iter)
 
 
 cdef void set_predict_params(
@@ -284,14 +335,7 @@ cdef void set_predict_params(
 
 
 def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-            np.ndarray[np.int32_t, ndim=1, mode='c'] support,
-            np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
-            np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
-            np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-            np.ndarray[int, ndim=1, mode='c'] n_iter,
-            np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
-            np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
+            FittedSVMAttributes fitted_att,
             int svm_type=0, kernel='rbf', int degree=3,
             double gamma=0.1, double coef0=0.,
             np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -362,10 +406,14 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
                        cache_size, 0, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
-    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
-                      support.data, support.shape, sv_coef.strides,
-                      sv_coef.data, intercept.data, nSV.data, probA.data,
-                      probB.data, n_iter.data)
+    model = set_model(&param, <int> fitted_att.n_class_SV.shape[0],
+                      fitted_att.support_vectors.data,
+                      fitted_att.support_vectors.shape,
+                      fitted_att.support.data, fitted_att.support.shape,
+                      fitted_att.sv_coef.strides, fitted_att.sv_coef.data,
+                      fitted_att.intercept.data, fitted_att.n_class_SV.data,
+                      fitted_att.probA.data, fitted_att.probB.data,
+                      fitted_att.n_iter.data)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     #TODO: use check_model
@@ -383,14 +431,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
 def predict_proba(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] support,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
-    np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[int, ndim=1, mode='c'] n_iter,
-    np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
-    np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
+    FittedSVMAttributes fitted_att,
     int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -470,10 +511,13 @@ def predict_proba(
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
                        cache_size, 1, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
-    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
-                      support.data, support.shape, sv_coef.strides,
-                      sv_coef.data, intercept.data, nSV.data,
-                      probA.data, probB.data, n_iter.data)
+    model = set_model(&param, <int> fitted_att.n_class_SV.shape[0],
+                      fitted_att.support_vectors.data,
+                      fitted_att.support_vectors.shape, fitted_att.support.data,
+                      fitted_att.support.shape, fitted_att.sv_coef.strides,
+                      fitted_att.sv_coef.data, fitted_att.intercept.data,
+                      fitted_att.n_class_SV.data, fitted_att.probA.data,
+                      fitted_att.probB.data, fitted_att.n_iter.data)
 
     cdef np.npy_intp n_class = get_nr(model)
     cdef BlasFunctions blas_functions
@@ -492,14 +536,7 @@ def predict_proba(
 
 def decision_function(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] support,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
-    np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[int, ndim=1, mode='c'] n_iter,
-    np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
-    np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
+    FittedSVMAttributes fitted_att,
     int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -576,10 +613,13 @@ def decision_function(
                        cache_size, 0, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
 
-    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
-                      support.data, support.shape, sv_coef.strides,
-                      sv_coef.data, intercept.data, nSV.data,
-                      probA.data, probB.data, n_iter.data)
+    model = set_model(&param, <int> fitted_att.n_class_SV.shape[0],
+                      fitted_att.support_vectors.data,
+                      fitted_att.support_vectors.shape, fitted_att.support.data,
+                      fitted_att.support.shape, fitted_att.sv_coef.strides,
+                      fitted_att.sv_coef.data, fitted_att.intercept.data,
+                      fitted_att.n_class_SV.data, fitted_att.probA.data,
+                      fitted_att.probB.data, fitted_att.n_iter.data)
 
     if svm_type > 1:
         n_class = 1
