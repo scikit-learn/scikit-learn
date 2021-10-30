@@ -384,7 +384,7 @@ Tips on Practical Use
  * `"Efficient BackProp" <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
    Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
    of the Trade 1998.
-   
+
 .. _sgd_mathematical_formulation:
 
 Mathematical formulation
@@ -545,22 +545,27 @@ The code is written in Cython.
 
    .. [#1] `"Stochastic Gradient Descent"
        <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
+
    .. [#2] `"Pegasos: Primal estimated sub-gradient solver for svm"
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
       S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
+
    .. [#3] `"Stochastic gradient descent training for l1-regularized
       log-linear models with cumulative penalty"
       <https://www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
       Y. Tsuruoka, J. Tsujii, S. Ananiadou - In Proceedings of the AFNLP/ACL
       '09.
+
    .. [#4] `"Towards Optimal One Pass Large Scale Learning with
       Averaged Stochastic Gradient Descent"
       <https://arxiv.org/pdf/1107.2490v2.pdf>`_
       Xu, Wei
+
    .. [#5] `"Regularization and variable selection via the elastic net"
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
       H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
       67 (2), 301-320.
+
    .. [#6] `"Solving large scale linear prediction problems using stochastic
       gradient descent algorithms"
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.7377>`_
