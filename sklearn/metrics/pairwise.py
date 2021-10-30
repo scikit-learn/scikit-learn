@@ -1053,9 +1053,10 @@ def linear_kernel(X, Y=None, dense_output=True):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     dense_output : bool, default=True
         Whether to return dense output even when the input is sparse. If
@@ -1066,6 +1067,7 @@ def linear_kernel(X, Y=None, dense_output=True):
     Returns
     -------
     Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The Gram matrix of the linear kernel, i.e. `X @ Y.T`.
     """
     X, Y = check_pairwise_arrays(X, Y)
     return safe_sparse_dot(X, Y.T, dense_output=dense_output)
