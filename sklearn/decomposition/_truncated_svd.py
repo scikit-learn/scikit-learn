@@ -115,9 +115,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     References
     ----------
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
+    :arxiv: `Halko, et al. (2009) "Finding structure with randomness: Stochastic algorithms for
+    constructing approximate matrix decompositions" <0909.4061>`
 
     Examples
     --------
