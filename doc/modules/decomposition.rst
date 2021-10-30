@@ -169,7 +169,7 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
     * Algorithm 4.3 in
       :arxiv:`Halko, et al. (2009) "Finding structure with randomness:
       Stochastic algorithms for constructing approximate matrix decompositions"
-      <0909.4061>`_
+      <0909.4061>`
 
     * :arxiv:`A. Szlam et al. (2014) "An implementation of a randomized algorithm
       for principal component analysis" <1412.3510>`_
