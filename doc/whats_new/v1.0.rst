@@ -20,6 +20,7 @@ Changelog
   :class:`decomposition.MiniBatchDictionaryLearning`, :class:`decomposition.SparsePCA`
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |Fix| :func:`utils.estimator_html_repr` now escapes all the estimator
   descriptions in the generated HTML. :pr:`21493` by `Aurélien Geron`_.
 
