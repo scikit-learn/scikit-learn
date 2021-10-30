@@ -249,7 +249,7 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
 
     :arxiv: `Defazio, A., Bach F. & Lacoste-Julien S. (2014).
     "SAGA: A Fast Incremental Gradient Method With Support
-    for Non-Strongly Convex Composite Objectives" <1407.0202>`_
+    for Non-Strongly Convex Composite Objectives" <1407.0202>`
     """
     # the data pointer for x, the current sample
     cdef {{c_type}} *x_data_ptr = NULL
