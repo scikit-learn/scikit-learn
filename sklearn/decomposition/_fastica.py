@@ -403,9 +403,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
 
-    _whiten : str or bool
-        The whitening strategy used during fit.
-
     whitening_ : ndarray of shape (n_components, n_features)
         Only set if whiten is 'True'. This is the pre-whitening matrix
         that projects data onto the first `n_components` principal components.
