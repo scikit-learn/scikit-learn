@@ -345,7 +345,7 @@ targets, and :math:`n` is the number of samples.
 Plugging the maximum log-likelihood in the AIC formula yields:
 
 .. math::
-    n \ln(2 \pi \hat{\sigma^2}) + \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{\hat{\sigma^2}} + 2d
+    AIC = n \ln(2 \pi \hat{\sigma^2}) + \frac{\sum_{i=1}^{n} (y_i - \hat{y_i})^2}{\hat{\sigma^2}} + 2d
 
 The left-hand term of the above expression is sometimes discarded since it is a
 constant and does not change the rank of the models evaluated. In addition,
