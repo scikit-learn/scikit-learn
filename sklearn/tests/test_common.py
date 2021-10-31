@@ -417,7 +417,6 @@ VALIDATE_ESTIMATOR_INIT = [
     "NuSVR",
     "OneClassSVM",
     "Pipeline",
-    "RadiusNeighborsClassifier",
     "SGDOneClassSVM",
     "SVC",
     "SVR",
