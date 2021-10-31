@@ -2028,7 +2028,7 @@ class LassoLarsIC(LassoLars):
 
     noise_variance : float, default=None
         The estimated noise variance of the data. If `None`, we will compute
-        an unbiased estimator using an OLS model. However, it is only possible
+        an unbiased estimate using an OLS model. However, it is only possible
         in the case `n_samples > n_features`.
 
         .. versionadded:: 1.1
