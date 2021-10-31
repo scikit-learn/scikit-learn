@@ -42,6 +42,9 @@ fi
 if [[ -n "$CHECK_WARNINGS" ]]; then
     # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
+
+    # Python 3.10 deprecates disutils and is imported by numpy interally during import time
+    TEST_CMD="$TEST_CMD -Wignore:'The distutils.sysconfig module is deprecated':DeprecationWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
