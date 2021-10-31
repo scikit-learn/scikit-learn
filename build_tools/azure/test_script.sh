@@ -44,7 +44,7 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
 
     # Python 3.10 deprecates disutils and is imported by numpy interally during import time
-    TEST_CMD="$TEST_CMD -Wignore:'The distutils.sysconfig module is deprecated':DeprecationWarning"
+    TEST_CMD="$TEST_CMD -Wignore:'The distutils.sysconfig module is deprecated':DeprecationWarning -Wignore:'DeprecationWarning:'The distutils package is deprecated'"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
