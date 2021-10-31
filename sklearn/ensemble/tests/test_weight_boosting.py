@@ -548,7 +548,13 @@ def test_adaboostregressor_sample_weight():
     [
         ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1"),
         ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
-        ({"learning_rate": -1}, ValueError, "learning_rate == 0, must be > 0."),
+        (
+            {"n_estimators": 1.5},
+            TypeError,
+            "n_estimators must be an instance of <class 'numbers.Integral'>,"
+            " not <class 'float'>",
+        ),
+        ({"learning_rate": -1}, ValueError, "learning_rate == -1, must be > 0."),
         ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
         (
             {"algorithm": "unknown"},
@@ -560,7 +566,7 @@ def test_adaboostregressor_sample_weight():
 def test_adaboost_classifier_params_validation(params, err_type, err_msg):
     """Check the parameters validation in `AdaBoostClassifier`."""
     with pytest.raises(err_type, match=err_msg):
-        AdaBoostClassifier(**params).fit(X, y_class)  # args are from toy sample
+        AdaBoostClassifier(**params).fit(X, y_class)
 
 
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
