@@ -41,7 +41,7 @@ jobs:
       os: linux
       arch: arm64-graviton2
       dist: focal
-      virt: lxd
+      virt: vm
       group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
@@ -52,7 +52,7 @@ jobs:
       os: linux
       arch: arm64-graviton2
       dist: focal
-      virt: lxd
+      virt: vm
       group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
@@ -63,7 +63,7 @@ jobs:
       os: linux
       arch: arm64-graviton2
       dist: focal
-      virt: lxd
+      virt: vm
       group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
