@@ -75,7 +75,7 @@ estimators = [
     ),
     (
         "Non-negative components - NMF",
-        decomposition.NMF(n_components=n_components, init="nndsvda", tol=5e-3),
+        decomposition.NMF(n_components=n_components, tol=5e-3),
         False,
     ),
     (
