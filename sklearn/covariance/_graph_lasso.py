@@ -840,6 +840,9 @@ class GraphicalLassoCV(GraphicalLasso):
     def fit(self, X, y=None):
         """Fit the GraphicalLasso covariance model to X.
 
+        Model is finally refit on the best alpha obtained
+        from cross-validation.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)

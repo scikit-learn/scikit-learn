@@ -1652,6 +1652,8 @@ class LarsCV(Lars):
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
+        Model is finally refit on best alpha obtained from cross-validation.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1737,7 +1739,7 @@ class LarsCV(Lars):
         self.cv_alphas_ = all_alphas
         self.mse_path_ = mse_path
 
-        # Now compute the full model
+        # Now compute the full model using best_alpha
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
         self._fit(

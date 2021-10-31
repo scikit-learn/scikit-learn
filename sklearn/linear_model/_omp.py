@@ -1004,6 +1004,9 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
+        Model is finally refit on the best non-zero coefficients
+        obtained from cross-validation.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1050,6 +1053,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         )
         best_n_nonzero_coefs = np.argmin(mse_folds.mean(axis=0)) + 1
         self.n_nonzero_coefs_ = best_n_nonzero_coefs
+
+        # Refit the model with the best parameters obtained
         omp = OrthogonalMatchingPursuit(
             n_nonzero_coefs=best_n_nonzero_coefs,
             fit_intercept=self.fit_intercept,
