@@ -36,7 +36,7 @@ if [[ "$COVERAGE" == "true" ]]; then
     # report that otherwise hides the test failures and forces long scrolls in
     # the CI logs.
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
-    TEST_CMD="$TEST_CMD --cov-config=$COVERAGE_PROCESS_START --cov sklearn --cov-report="
+    TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
