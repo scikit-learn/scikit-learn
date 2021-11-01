@@ -382,7 +382,7 @@ def test_kbinsdiscretizer_subsample_invalid_strategy():
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
     kbd = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="uniform", subsample=3)
 
-    err_msg = '`subsample` must be used with `strategy`="quantile".'
+    err_msg = '`subsample` must be used with `strategy="quantile"`.'
     with pytest.raises(ValueError, match=err_msg):
         kbd.fit(X)
 
