@@ -24,7 +24,7 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Fix| Fixes compatibility bug with numpy 1.22 in :class:`preprocessing.OneHotEncoder`.
+- |Fix| Fixes compatibility bug with NumPy 1.22 in :class:`preprocessing.OneHotEncoder`.
   :pr:`21517` by `Thomas Fan`_.
 
 :mod:`sklearn.utils`
