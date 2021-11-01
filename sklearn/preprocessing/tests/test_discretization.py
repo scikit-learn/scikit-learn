@@ -378,7 +378,7 @@ def test_kbinsdiscretizer_subsample_default(subsample):
     assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
 
 
-def test_kbinsdiscretizer_subsample_strategy_other():
+def test_kbinsdiscretizer_subsample_invalid_strategy():
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
     kbd = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="uniform", subsample=3)
 
@@ -387,16 +387,21 @@ def test_kbinsdiscretizer_subsample_strategy_other():
         kbd.fit(X)
 
 
-def test_kbinsdiscretizer_subsample_value_other():
+def test_kbinsdiscretizer_subsample_invalid_type():
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
     kbd = KBinsDiscretizer(
         n_bins=10, encode="ordinal", strategy="quantile", subsample="full"
     )
 
-    with pytest.raises(ValueError, match="`subsample` must be int or None."):
+    msg = (
+        "subsample must be an instance of <class 'numbers.Integral'>, not "
+        "<class 'str'>."
+    )
+    with pytest.raises(TypeError, match=msg):
         kbd.fit(X)
 
 
+# TODO: Remove in 1.2
 def test_kbinsdiscretizer_subsample_warn():
     X = np.random.rand(200001, 1).reshape(-1, 1)
     kbd = KBinsDiscretizer(n_bins=100, encode="ordinal", strategy="quantile")
@@ -415,11 +420,10 @@ def test_kbinsdiscretizer_subsample_values(subsample):
     kbd_with_subsampling.set_params(subsample=subsample)
 
     if subsample == 0:
-        with pytest.raises(
-            ValueError, match="number of subsamples must be at least one."
-        ):
+        with pytest.raises(ValueError, match="subsample == 0, must be >= 1."):
             kbd_with_subsampling.fit(X)
     else:
+        # TODO: Remove in 1.2
         msg = "In version 1.2 onwards, subsample=2e5 will be used by default."
         with pytest.warns(FutureWarning, match=msg):
             kbd_default.fit(X)

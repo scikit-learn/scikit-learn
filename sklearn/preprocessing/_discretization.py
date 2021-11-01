@@ -17,6 +17,7 @@ from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
 from ..utils.validation import _check_feature_names_in
+from ..utils.validation import check_scalar
 from ..utils import _safe_indexing
 
 
@@ -68,17 +69,22 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     subsample : int or None (default='warn')
         Maximum number of samples, used to fit the model, for computational
         efficiency. Used when `strategy="quantile"`.
-        subsample=None means that all the training samples are used when
+        `subsample=None` means that all the training samples are used when
         computing the quantiles that determine the binning thresholds.
-        Since quantile computation relies on sorting each column of X and
-        that sorting has an n log(n) time complexity, it is recommended
-        to use subsampling on datasets with a very large number of samples.
+        Since quantile computation relies on sorting each column of `X` and
+        that sorting has an `n log(n)` time complexity,
+        it is recommended to use subsampling on datasets with a
+        very large number of samples.
 
-    random_state : int, RandomState instance or None (default=None)
+        .. versionadded:: 1.1
+
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling.
-        Please see `subsample` for more details.
         Pass an int for reproducible results across multiple function calls.
+        See the `subsample` parameter for more details.
         See :term:`Glossary <random_state>`.
+
+        .. versionadded:: 1.1
 
     Attributes
     ----------
@@ -206,7 +212,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if self.strategy == "quantile" and self.subsample is not None:
             if self.subsample == "warn":
-                if X.shape[0] > 2e5:
+                if n_samples > 2e5:
                     warnings.warn(
                         "In version 1.2 onwards, subsample=2e5 "
                         "will be used by default. Set subsample explicitly to "
@@ -214,30 +220,22 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         "subsample=None to disable subsampling explicitly.",
                         FutureWarning,
                     )
-            elif isinstance(self.subsample, numbers.Integral):
-                if self.subsample <= 0:
-                    raise ValueError(
-                        f"Invalid value for `subsample`: {self.subsample!r}. The "
-                        "number of subsamples must be at least one."
-                    )
-
+            else:
+                self.subsample = check_scalar(
+                    self.subsample, "subsample", numbers.Integral, min_val=1
+                )
                 rng = check_random_state(self.random_state)
                 if n_samples > self.subsample:
                     subsample_idx = rng.choice(
                         n_samples, size=self.subsample, replace=False
                     )
                     X = _safe_indexing(X, subsample_idx)
-            else:
-                raise ValueError(
-                    f"Invalid value for `subsample`: {self.subsample!r}. "
-                    "`subsample` must be int or None."
-                )
         elif self.strategy != "quantile" and isinstance(
             self.subsample, numbers.Integral
         ):
             raise ValueError(
                 f"Invalid parameter for `strategy`: {self.strategy}. "
-                '`subsample` must be used with `strategy`="quantile".'
+                '`subsample` must be used with `strategy="quantile"`.'
             )
 
         valid_encode = ("onehot", "onehot-dense", "ordinal")
