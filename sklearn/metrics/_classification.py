@@ -1855,6 +1855,10 @@ def recall_score(
         datasets.
     multilabel_confusion_matrix : Compute a confusion matrix for each class or
         sample.
+    PrecisionRecallDisplay.from_estimator : Plot precision-recall curve given
+        an estimator and some data.
+    PrecisionRecallDisplay.from_predictions : Plot precision-recall curve given
+        binary class predictions.
 
     Notes
     -----
