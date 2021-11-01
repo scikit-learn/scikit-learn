@@ -321,17 +321,17 @@ def test_fastica_whiten_unit_variance():
     assert_almost_equal(np.var(Xt), 1.0)
 
 
-def test_fastica_whiten_default_value_deprecation():
+@pytest.mark.parametrize("ica", [FastICA(), FastICA(whiten=True)])
+def test_fastica_whiten_default_value_deprecation(ica):
     """Test FastICA whiten default value deprecation.
 
     Regression test for #19490
     """
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    for ica in [FastICA(), FastICA(whiten=True)]:
-        with pytest.warns(FutureWarning, match=r"From version 1.3 whiten="):
-            ica.fit(X)
-            assert ica._whiten == "arbitrary-variance"
+    with pytest.warns(FutureWarning, match=r"From version 1.3 whiten="):
+        ica.fit(X)
+        assert ica._whiten == "arbitrary-variance"
 
 
 def test_fastica_whiten_backwards_compatibility():
