@@ -68,6 +68,7 @@ from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _num_samples
 
 
 __all__ = [
@@ -2627,14 +2628,8 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
-        X = self._validate_data(X, accept_sparse=["csc"])
-        if issparse(X):
-            # Pre-sort indices to avoid that each individual tree of the
-            # ensemble sorts the indices.
-            X.sort_indices()
-
         rnd = check_random_state(self.random_state)
-        y = rnd.uniform(size=X.shape[0])
+        y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)
 
         self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)

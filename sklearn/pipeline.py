@@ -746,6 +746,7 @@ class Pipeline(_BaseComposition):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        feature_names_out = input_features
         for _, name, transform in self._iter():
             if not hasattr(transform, "get_feature_names_out"):
                 raise AttributeError(
@@ -753,8 +754,8 @@ class Pipeline(_BaseComposition):
                     "Did you mean to call pipeline[:-1].get_feature_names_out"
                     "()?".format(name)
                 )
-            feature_names = transform.get_feature_names_out(input_features)
-        return feature_names
+            feature_names_out = transform.get_feature_names_out(feature_names_out)
+        return feature_names_out
 
     @property
     def n_features_in_(self):

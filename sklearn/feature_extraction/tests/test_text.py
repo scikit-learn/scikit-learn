@@ -436,7 +436,9 @@ def test_countvectorizer_custom_token_pattern_with_several_group():
 
 
 def test_countvectorizer_uppercase_in_vocab():
-    vocabulary = ["Sample", "Upper", "CaseVocabulary"]
+    # Check that the check for uppercase in the provided vocabulary is only done at fit
+    # time and not at transform time (#21251)
+    vocabulary = ["Sample", "Upper", "Case", "Vocabulary"]
     message = (
         "Upper case characters found in"
         " vocabulary while 'lowercase'"
@@ -445,8 +447,13 @@ def test_countvectorizer_uppercase_in_vocab():
     )
 
     vectorizer = CountVectorizer(lowercase=True, vocabulary=vocabulary)
+
     with pytest.warns(UserWarning, match=message):
-        vectorizer.fit_transform(vocabulary)
+        vectorizer.fit(vocabulary)
+
+    with pytest.warns(None) as record:
+        vectorizer.transform(vocabulary)
+    assert not record
 
 
 def test_tf_transformer_feature_names_out():
