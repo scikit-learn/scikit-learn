@@ -317,7 +317,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         else:
             if self.n_components < 1:
                 raise ValueError(
-                    f"`n_components` should be >= 1, got: {self.n_component}"
+                    f"`n_components` should be >= 1, got: {self.n_components}"
                 )
             n_components = min(K.shape[0], self.n_components)
 
