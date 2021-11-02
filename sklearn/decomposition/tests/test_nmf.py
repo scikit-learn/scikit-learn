@@ -307,6 +307,7 @@ def test_mbnmf_inverse_transform():
         random_state=0,
         max_iter=500,
         tol=1e-6,
+        init="nndsvd",
         fresh_restarts=True,
     )
     ft = m.fit_transform(A)
