@@ -3264,16 +3264,11 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
 
         set_random_state(estimator, 0)
 
-        if name in ["SVC", "NuSVC"] and estimator.kernel == "precomputed":
-            X = np.dot(X, X.T)
+        X = _pairwise_estimator_convert_X(X, estimator_orig)
 
         estimator.fit(X, y_)
 
-        # These return a n_iter per model optimized
-        if name in ["SVC", "NuSVC"] and len(estimator.classes_) > 2:
-            assert np.all(estimator.n_iter_ >= 1)
-        else:
-            assert estimator.n_iter_ >= 1
+        assert np.all(estimator.n_iter_ >= 1)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3300,9 +3295,7 @@ def check_transformer_n_iter(name, estimator_orig):
         estimator.fit(X, y_)
 
         # These return a n_iter per component.
-        if (name in CROSS_DECOMPOSITION) or (
-            name in ["SVC", "NuSVC"] and len(estimator.classes_) > 2
-        ):
+        if name in CROSS_DECOMPOSITION:
             for iter_ in estimator.n_iter_:
                 assert iter_ >= 1
         else:
