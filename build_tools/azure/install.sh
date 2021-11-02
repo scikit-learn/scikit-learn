@@ -114,7 +114,7 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # Do not build scikit-image from source because it is an optional dependency
     python -m pip install --only-binary :all: scikit-image || true
 
-    python -m pip install pandas matplotlib pyamg
+    python -m pip install pandas matplotlib pyamg psutil
     # do not install dependencies for lightgbm since it requires scikit-learn.
     python -m pip install "lightgbm>=3.0.0" --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
