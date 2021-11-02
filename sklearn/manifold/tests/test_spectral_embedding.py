@@ -87,7 +87,7 @@ def test_sparse_graph_connected_component():
 
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg", "amg"))
 def test_spectral_embedding_two_components(eigen_solver):
-    seed=36
+    seed = 36
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
     n_sample = 100
