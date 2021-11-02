@@ -132,18 +132,15 @@ def test_spectral_embedding_two_components(eigen_solver):
         eigen_solver=eigen_solver,
     )
     for dtype in [np.float32, np.float64]:
-            if eigen_solver=="amg" and not amg_loaded:
-                with pytest.warns(
-                    ValueError,
-                    match="The eigen_solver was set to 'amg', but pyamg"
-                    ):
-                        embedded_coordinate = se_precomp.fit_transform(
-                            affinity.astype(dtype)
-                            )
-            else:
+        if eigen_solver == "amg" and not amg_loaded:
+            with pytest.warns(
+                ValueError, match="The eigen_solver was set to 'amg', but"
+            ):
                 embedded_coordinate = se_precomp.fit_transform(
-                            affinity.astype(dtype)
-                            )
+                    affinity.astype(dtype))
+        else:
+            embedded_coordinate = se_precomp.fit_transform(
+                affinity.astype(dtype))
 
         # thresholding on the first components using 0.
         label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
