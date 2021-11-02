@@ -465,9 +465,7 @@ class GraphicalLasso(EmpiricalCovariance):
             Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
-        X = self._validate_data(
-            X, ensure_min_features=2, ensure_min_samples=2, estimator=self
-        )
+        X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
 
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
@@ -856,7 +854,7 @@ class GraphicalLassoCV(GraphicalLasso):
             Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
-        X = self._validate_data(X, ensure_min_features=2, estimator=self)
+        X = self._validate_data(X, ensure_min_features=2)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:

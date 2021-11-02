@@ -12,7 +12,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_equal
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
-from sklearn.cluster._spectral import discretize
+from sklearn.cluster._spectral import discretize, cluster_qr
 from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
@@ -29,7 +29,7 @@ except ImportError:
 
 
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg"))
-@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize"))
+@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
 def test_spectral_clustering(eigen_solver, assign_labels):
     S = np.array(
         [
@@ -101,7 +101,8 @@ def test_spectral_unknown_assign_labels():
         spectral_clustering(S, n_clusters=2, random_state=0, assign_labels="<unknown>")
 
 
-def test_spectral_clustering_sparse():
+@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
+def test_spectral_clustering_sparse(assign_labels):
     X, y = make_blobs(
         n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
@@ -111,7 +112,12 @@ def test_spectral_clustering_sparse():
     S = sparse.coo_matrix(S)
 
     labels = (
-        SpectralClustering(random_state=0, n_clusters=2, affinity="precomputed")
+        SpectralClustering(
+            random_state=0,
+            n_clusters=2,
+            affinity="precomputed",
+            assign_labels=assign_labels,
+        )
         .fit(S)
         .labels_
     )
@@ -189,6 +195,36 @@ def test_affinities():
     sp = SpectralClustering(n_clusters=2, affinity="<unknown>")
     with pytest.raises(ValueError):
         sp.fit(X)
+
+
+def test_cluster_qr():
+    # cluster_qr by itself should not be used for clustering generic data
+    # other than the rows of the eigenvectors within spectral clustering,
+    # but cluster_qr must still preserve the labels for different dtypes
+    # of the generic fixed input even if the labels may be meaningless.
+    random_state = np.random.RandomState(seed=8)
+    n_samples, n_components = 10, 5
+    data = random_state.randn(n_samples, n_components)
+    labels_float64 = cluster_qr(data.astype(np.float64))
+    # Each sample is assigned a cluster identifier
+    assert labels_float64.shape == (n_samples,)
+    # All components should be covered by the assignment
+    assert np.array_equal(np.unique(labels_float64), np.arange(n_components))
+    # Single precision data should yield the same cluster assignments
+    labels_float32 = cluster_qr(data.astype(np.float32))
+    assert np.array_equal(labels_float64, labels_float32)
+
+
+def test_cluster_qr_permutation_invariance():
+    # cluster_qr must be invariant to sample permutation.
+    random_state = np.random.RandomState(seed=8)
+    n_samples, n_components = 100, 5
+    data = random_state.randn(n_samples, n_components)
+    perm = random_state.permutation(n_samples)
+    assert np.array_equal(
+        cluster_qr(data)[perm],
+        cluster_qr(data[perm]),
+    )
 
 
 @pytest.mark.parametrize("n_samples", [50, 100, 150, 500])
@@ -283,7 +319,7 @@ def test_n_components():
     assert not np.array_equal(labels, labels_diff_ncomp)
 
 
-@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize"))
+@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
 def test_verbose(assign_labels, capsys):
     # Check verbose mode of KMeans for better coverage.
     X, y = make_blobs(
