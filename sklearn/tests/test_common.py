@@ -406,8 +406,7 @@ def test_transformers_get_feature_names_out(transformer):
 
 
 VALIDATE_ESTIMATOR_INIT = [
-    "ColumnTransformer",
-    "FactorAnalysis",
+    "ColumnTransformer", 
     "FastICA",
     "FeatureHasher",
     "FeatureUnion",
