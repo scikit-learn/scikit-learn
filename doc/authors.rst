@@ -42,7 +42,6 @@
     <p>Adrin Jalali</p>
     </div>
     <div>
-    <div>
     <a href='https://github.com/jjerphan'><img src='https://avatars.githubusercontent.com/u/13029839?v=4' class='avatar' /></a> <br />
     <p>Julien Jerphanion</p>
     </div>

@@ -5,6 +5,7 @@
     <style>
       img.avatar {border-radius: 10px;}
     </style>
+    <div>
     <a href='https://github.com/alfaro96'><img src='https://avatars.githubusercontent.com/u/32649176?v=4' class='avatar' /></a> <br />
     <p>Juan Carlos Alfaro Jiménez</p>
     </div>
