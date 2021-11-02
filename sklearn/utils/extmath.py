@@ -659,7 +659,7 @@ def cartesian(arrays, out=None):
     ----------
     arrays : list of array-like
         1-D arrays to form the cartesian product of.
-    out : ndarray, default=None
+    out : ndarray of shape (M, len(arrays)), default=None
         Array to place the cartesian product in.
 
     Returns
