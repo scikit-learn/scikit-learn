@@ -2126,7 +2126,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    gcv_mode : {'auto', 'svd', eigen'}, default='auto'
+    gcv_mode : {'auto', 'svd', 'eigen'}, default='auto'
         Flag indicating which strategy to use when performing
         Leave-One-Out Cross-Validation. Options are::
 
