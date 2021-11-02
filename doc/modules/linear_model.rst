@@ -354,8 +354,8 @@ Plugging the maximum log-likelihood in the AIC formula yields:
 The first term of the above expression is sometimes discarded since it is a
 constant when :math:`\hat{\sigma}^2` is provided. In addition,
 it is sometimes stated that the AIC is equivalent to the :math:`C_p` statistic
-[12]_. However, this is important to note that it is up to some constant
-and factor term.
+[12]_. In a strict sense, however, it is equivalent only up to some constant
+and a multiplicative factor.
 
 At last, we mentioned above that :math:`\hat{\sigma}^2` is an estimate of the
 noise variance. In :class:`LassoLarsIC` when the parameter `noise_variance` is
