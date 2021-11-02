@@ -38,12 +38,23 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+- |Enhancement| All scikit-learn models now generate a more informative
+  error message when some input contains unexpected `NaN` or infinite values.
+  In particular the message contains the input name ("X", "y" or
+  "sample_weight") and if an unexpected `NaN` value is found in `X`, the error
+  message suggests potential solutions.
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
 - |Enhancement| :func:`calibration.calibration_curve` accepts a parameter
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`CalibrationDisplay` accepts a parameter `pos_label` to
+  add this information to the plot.
+  :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -52,28 +63,43 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
-:mod:`sklearn.ensemble`
-.......................
+:mod:`sklearn.decomposition`
+............................
 
-- |Fix| Fixed a bug that could produce a segfault in rare cases for
-  :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor`.
-  :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
+- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
+  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
-:mod:`sklearn.feature_extraction`
-.................................
+- |API| Adds :term:`get_feature_names_out` to all transformers in the
+  :mod:`~sklearn.decomposition` module:
+  :class:`~sklearn.decomposition.DictionaryLearning`,
+  :class:`~sklearn.decomposition.FactorAnalysis`,
+  :class:`~sklearn.decomposition.FastICA`,
+  :class:`~sklearn.decomposition.IncrementalPCA`,
+  :class:`~sklearn.decomposition.KernelPCA`,
+  :class:`~sklearn.decomposition.LatentDirichletAllocation`,
+  :class:`~sklearn.decomposition.MiniBatchDictionaryLearning`,
+  :class:`~sklearn.decomposition.MiniBatchSparsePCA`,
+  :class:`~sklearn.decomposition.NMF`,
+  :class:`~sklearn.decomposition.PCA`,
+  :class:`~sklearn.decomposition.SparsePCA`,
+  and :class:`~sklearn.decomposition.TruncatedSVD`. :pr:`21334` by
+  `Thomas Fan`_.
 
-- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
-  :class:`feature_extraction.TfidfVectorizer` by raising an
-  error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
-  :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
+:mod:`sklearn.impute`
+.....................
 
-:mod:`sklearn.linear_model`
-...........................
+- |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
+  :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
+  :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
 
-- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
-  message when the solver does not support sparse matrices with int64 indices.
-  :pr:`21093` by `Tom Dupre la Tour`_.
+- |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
+  `predict` was performing an `argmax` on the scores obtained from
+  `decision_function` instead of returning the multilabel indicator matrix.
+  :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
+  multilabel classification.
+  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -101,17 +127,26 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| :func:`utils.validation._check_sample_weight` can perform a
-  non-negativity check on the sample weights. It can be turned on
-  using the only_non_negative bool parameter.
-  Estimators that check for non-negative weights are updated:
-  :func:`linear_model.LinearRegression` (here the previous
-  error message was misleading),
-  :func:`ensemble.AdaBoostClassifier`,
-  :func:`ensemble.AdaBoostRegressor`,
-  :func:`neighbors.KernelDensity`.
-  :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
-  and :user:`András Simon <simonandras>`.
+- |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
+  message when running in a jupyter notebook that is not trusted. :pr:`21316`
+  by `Thomas Fan`_.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
+  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
+  :user:`Lucy Jimenez <LucyJimenez>`.
+
+- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
+  now accept an `input_name` parameter to make the error message more
+  informative when passed invalid input data (e.g. with NaN or infinite
+  values).
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Enhancement| :func:`utils.validation.check_array` returns a float
+  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
+  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
 Miscellaneous
 .............

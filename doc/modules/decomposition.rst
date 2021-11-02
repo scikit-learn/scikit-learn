@@ -167,9 +167,9 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 .. topic:: References:
 
     * Algorithm 4.3 in
-      `"Finding structure with randomness: Stochastic algorithms for
+      :arxiv:`"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
-      <https://arxiv.org/abs/0909.4061>`_
+      <0909.4061>`
       Halko, et al., 2009
 
     * `"An implementation of a randomized algorithm for principal component
@@ -231,7 +231,7 @@ problem solved is a PCA problem (dictionary learning) with an
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_{\text{Fro}}^2+\alpha||V||_{1,1} \\
-                \text{subject to } & ||U_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||U_k||_2 <= 1 \text{ for all }
                 0 \leq k < n_{components}
 
 :math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
@@ -341,13 +341,13 @@ components is less than 10 (strict) and the number of samples is more than 200
 
     * *randomized* solver:
 
-        - Algorithm 4.3 in
-          `"Finding structure with randomness: Stochastic algorithms for
+        * Algorithm 4.3 in
+          :arxiv:`"Finding structure with randomness: Stochastic algorithms for
           constructing approximate matrix decompositions"
-          <https://arxiv.org/abs/0909.4061>`_
+          <0909.4061>`
           Halko, et al., 2009
 
-        - `"An implementation of a randomized algorithm for principal component
+        * `"An implementation of a randomized algorithm for principal component
           analysis"
           <https://arxiv.org/pdf/1412.3510.pdf>`_
           A. Szlam et al. 2014
@@ -513,7 +513,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_{\text{Fro}}^2+\alpha||U||_{1,1} \\
-                \text{subject to } & ||V_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||V_k||_2 <= 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
 

@@ -48,6 +48,7 @@ extensions = [
     "add_toctree_functions",
     "sphinx-prompt",
     "sphinxext.opengraph",
+    "doi_role",
 ]
 
 # Support for `plot::` directives in sphinx 3.2 requires matplotlib 3.1.0 or newer

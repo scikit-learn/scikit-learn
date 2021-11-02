@@ -13,12 +13,12 @@ method, and then setting specific thresholds on the reachability, which
 corresponds to :class:`~cluster.DBSCAN`. We can see that the different
 clusters of OPTICS's Xi method can be recovered with different choices of
 thresholds in DBSCAN.
+
 """
 
 # Authors: Shane Grigsby <refuge@rocktalus.com>
 #          Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
-
 
 from sklearn.cluster import OPTICS, cluster_optics_dbscan
 import matplotlib.gridspec as gridspec

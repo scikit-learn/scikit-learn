@@ -12,7 +12,6 @@ features that are selected at one time point are select for all time
 point. This makes feature selection by the Lasso more stable.
 
 """
-print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause

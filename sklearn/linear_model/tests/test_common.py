@@ -4,6 +4,7 @@
 
 import pytest
 
+import sys
 import numpy as np
 
 from sklearn.base import is_classifier
@@ -15,6 +16,7 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.linear_model import BayesianRidge
 from sklearn.linear_model import ARDRegression
 
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils import check_random_state
 
 
@@ -35,6 +37,10 @@ from sklearn.utils import check_random_state
     ],
 )
 # FIXME remove test in 1.2
+@pytest.mark.xfail(
+    sys.platform == "darwin" and np_version < parse_version("1.22"),
+    reason="https://github.com/scikit-learn/scikit-learn/issues/21395",
+)
 def test_linear_model_normalize_deprecation_message(
     estimator, normalize, n_warnings, warning_category
 ):
