@@ -124,6 +124,13 @@ Changelog
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in `fit`
+  instead of `__init__`.
+  :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
+
 :mod:`sklearn.utils`
 ....................
 
