@@ -150,24 +150,40 @@ def test_spectral_embedding_two_components(eigen_solver):
 
 
 @pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
-def test_spectral_embedding_precomputed_affinity(X, seed=36):
+@pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg", "amg"))
+@pytest.mark.parametrize("dtype", ("np.float32", "np.float64"))
+def test_spectral_embedding_precomputed_affinity(X, eigen_solver, dtype):
+    seed = 36
     # Test spectral embedding with precomputed kernel
     gamma = 1.0
     se_precomp = SpectralEmbedding(
         n_components=2,
         affinity="precomputed",
         random_state=np.random.RandomState(seed),
+        eigen_solver=eigen_solver,
     )
     se_rbf = SpectralEmbedding(
         n_components=2,
         affinity="rbf",
         gamma=gamma,
         random_state=np.random.RandomState(seed),
+        eigen_solver=eigen_solver,
     )
-    embed_precomp = se_precomp.fit_transform(rbf_kernel(X, gamma=gamma))
-    embed_rbf = se_rbf.fit_transform(X)
-    assert_array_almost_equal(se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-    _assert_equal_with_sign_flipping(embed_precomp, embed_rbf, 0.05)
+    if eigen_solver == "amg" and not amg_loaded:
+        # with pytest.raises(
+        #     ValueError, match="The eigen_solver was set to 'amg', but"
+        # ):
+        #     embedded_coordinate = se_precomp.fit_transform(
+        #         affinity.astype(dtype)
+        #     )
+        pass
+    else:
+        embed_precomp = se_precomp.fit_transform(
+            rbf_kernel(X.astype(dtype), gamma=gamma)
+        )
+        embed_rbf = se_rbf.fit_transform(X.astype(dtype))
+        assert_array_almost_equal(se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
+        _assert_equal_with_sign_flipping(embed_precomp, embed_rbf, 0.05)
 
 
 def test_precomputed_nearest_neighbors_filtering():
