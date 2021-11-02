@@ -131,7 +131,6 @@ Changelog
   instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
 
-
 :mod:`sklearn.utils`
 ....................
 

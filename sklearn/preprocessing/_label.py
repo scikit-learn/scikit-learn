@@ -275,7 +275,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        
+
         if self.neg_label >= self.pos_label:
             raise ValueError(
                 f"neg_label={self.neg_label} must be strictly less than "
@@ -288,7 +288,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
                 "zero pos_label and zero neg_label, got "
                 f"pos_label={self.pos_label} and neg_label={self.neg_label}"
             )
-        
+
         self.y_type_ = type_of_target(y, input_name="y")
 
         if "multioutput" in self.y_type_:
