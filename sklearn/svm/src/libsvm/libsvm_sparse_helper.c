@@ -4,8 +4,8 @@
 #include "_svm_cython_blas_helpers.h"
 
 
-#ifndef max
-    #define max(x, y) (((x) > (y)) ? (x) : (y))
+#ifndef MAX
+    #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #endif
 
 
@@ -364,7 +364,7 @@ void copy_sv_coef(char *data, struct svm_csr_model *model)
  */
 void copy_n_iter(char *data, struct svm_csr_model *model)
 {
-    const int n_models = max(1, model->nr_class * (model->nr_class-1)/2);
+    const int n_models = MAX(1, model->nr_class * (model->nr_class-1)/2);
     memcpy(data, model->n_iter, n_models * sizeof(int));
 }
 
