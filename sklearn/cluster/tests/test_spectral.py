@@ -198,7 +198,7 @@ def test_affinities():
 
 
 def test_cluster_qr():
-    # cluster_qr by itself should not be used for clusteing generic data
+    # cluster_qr by itself should not be used for clustering generic data
     # other than the rows of the eigenvectors within spectral clustering,
     # but cluster_qr must still preserve the labels for different dtypes
     # of the generic fixed input even if the labels may be meaningless.
