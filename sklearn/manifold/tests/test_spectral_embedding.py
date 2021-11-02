@@ -19,6 +19,13 @@ from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 
+try:
+    from pyamg import smoothed_aggregation_solver  # noqa
+
+    amg_loaded = True
+except ImportError:
+    amg_loaded = False
+
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -125,7 +132,19 @@ def test_spectral_embedding_two_components(eigen_solver):
         eigen_solver=eigen_solver,
     )
     for dtype in [np.float32, np.float64]:
-        embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
+            if eigen_solver=="amg" and not amg_loaded:
+                with pytest.warns(
+                    ValueError,
+                    match="The eigen_solver was set to 'amg', but pyamg"
+                    ):
+                        embedded_coordinate = se_precomp.fit_transform(
+                            affinity.astype(dtype)
+                            )
+            else:
+                embedded_coordinate = se_precomp.fit_transform(
+                            affinity.astype(dtype)
+                            )
+
         # thresholding on the first components using 0.
         label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
         assert normalized_mutual_info_score(true_label, label_) == pytest.approx(1.0)
