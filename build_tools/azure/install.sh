@@ -60,6 +60,7 @@ if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
     TO_INSTALL="$TO_INSTALL $(get_dep pyamg $PYAMG_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep Pillow $PILLOW_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep matplotlib $MATPLOTLIB_VERSION)"
+    TO_INSTALL="$TO_INSTALL $(get_dep psutil $PSUTIL_VERSION)"
 
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
