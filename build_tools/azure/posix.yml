@@ -31,7 +31,6 @@ jobs:
     PYTEST_VERSION: 'latest'
     PYTEST_XDIST_VERSION: 'latest'
     THREADPOOLCTL_VERSION: 'latest'
-    PSUTIL_VERSION: 'latest'
     COVERAGE: 'true'
     TEST_DOCSTRINGS: 'false'
   strategy:
