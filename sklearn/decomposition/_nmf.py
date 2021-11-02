@@ -232,7 +232,7 @@ def _beta_loss_to_float(beta_loss):
     return beta_loss
 
 
-def _initialize_nmf(X, n_components, init="warn", eps=1e-6, random_state=None):
+def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
     """Algorithms for NMF initialization.
 
     Computes an initial guess for the non-negative
@@ -248,10 +248,9 @@ def _initialize_nmf(X, n_components, init="warn", eps=1e-6, random_state=None):
 
     init :  {'random', 'nndsvd', 'nndsvda', 'nndsvdar'}, default=None
         Method used to initialize the procedure.
-        Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+        - None: 'nndsvda' if n_components <= min(n_samples, n_features),
             otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
@@ -268,6 +267,10 @@ def _initialize_nmf(X, n_components, init="warn", eps=1e-6, random_state=None):
             for when sparsity is not desired)
 
         - 'custom': use custom matrices W and H
+
+        .. versionchanged:: 1.1
+            When `init=None` and n_components is less than n_samples and n_features
+            defaults to `nndsvda` instead of `nndsvd`.
 
     eps : float, default=1e-6
         Truncate all values less then this in output to zero.
@@ -291,16 +294,6 @@ def _initialize_nmf(X, n_components, init="warn", eps=1e-6, random_state=None):
     nonnegative matrix factorization - Pattern Recognition, 2008
     http://tinyurl.com/nndsvd
     """
-    if init == "warn":
-        warnings.warn(
-            "The 'init' value, when 'init=None' and "
-            "n_components is less than n_samples and "
-            "n_features, will be changed from 'nndsvd' to "
-            "'nndsvda' in 1.1 (renaming of 0.26).",
-            FutureWarning,
-        )
-        init = None
-
     check_non_negative(X, "NMF initialization")
     n_samples, n_features = X.shape
 
@@ -316,7 +309,7 @@ def _initialize_nmf(X, n_components, init="warn", eps=1e-6, random_state=None):
 
     if init is None:
         if n_components <= min(n_samples, n_features):
-            init = "nndsvd"
+            init = "nndsvda"
         else:
             init = "random"
 
@@ -907,7 +900,7 @@ def non_negative_factorization(
     H=None,
     n_components=None,
     *,
-    init="warn",
+    init=None,
     update_H=True,
     solver="cd",
     beta_loss="frobenius",
@@ -980,7 +973,7 @@ def non_negative_factorization(
 
         Valid options:
 
-        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
+        - None: 'nndsvda' if n_components < n_features, otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -1000,6 +993,10 @@ def non_negative_factorization(
 
         .. versionchanged:: 0.23
             The default value of `init` changed from 'random' to None in 0.23.
+
+        .. versionchanged:: 1.1
+            When `init=None` and n_components is less than n_samples and n_features
+            defaults to `nndsvda` instead of `nndsvd`.
 
     update_H : bool, default=True
         Set to True, both W and H will be estimated from initial guesses.
@@ -1190,7 +1187,7 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         Default: None.
         Valid options:
 
-        - `None`: 'nndsvd' if n_components <= min(n_samples, n_features),
+        - `None`: 'nndsvda' if n_components <= min(n_samples, n_features),
           otherwise random.
 
         - `'random'`: non-negative random matrices, scaled with:
@@ -1207,6 +1204,10 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
           for when sparsity is not desired)
 
         - `'custom'`: use custom matrices W and H
+
+        .. versionchanged:: 1.1
+            When `init=None` and n_components is less than n_samples and n_features
+            defaults to `nndsvda` instead of `nndsvd`.
 
     solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
@@ -1361,7 +1362,7 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self,
         n_components=None,
         *,
-        init="warn",
+        init=None,
         solver="cd",
         beta_loss="frobenius",
         tol=1e-4,

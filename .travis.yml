@@ -22,7 +22,7 @@ env:
     # Custom environment variables for the ARM wheel builder
     - CIBW_BUILD_VERBOSITY=1
     - CIBW_TEST_COMMAND="bash {project}/build_tools/travis/test_wheels.sh"
-    - CIBW_ENVIRONMENT="CPU_COUNT=6
+    - CIBW_ENVIRONMENT="CPU_COUNT=2
                         OMP_NUM_THREADS=2
                         OPENBLAS_NUM_THREADS=2
                         SKLEARN_BUILD_PARALLEL=10
@@ -39,7 +39,10 @@ jobs:
     # fast.
     - python: 3.7
       os: linux
-      arch: arm64
+      arch: arm64-graviton2
+      dist: focal
+      virt: lxd
+      group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
@@ -47,7 +50,10 @@ jobs:
 
     - python: 3.8
       os: linux
-      arch: arm64
+      arch: arm64-graviton2
+      dist: focal
+      virt: lxd
+      group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
@@ -55,7 +61,10 @@ jobs:
 
     - python: 3.9
       os: linux
-      arch: arm64
+      arch: arm64-graviton2
+      dist: focal
+      virt: lxd
+      group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
