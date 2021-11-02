@@ -166,7 +166,7 @@ Changelog
 ................................
 
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
-  :mod:`sklearn.random_projection` module:
+  :mod:`~sklearn.random_projection` module:
   :class:`~sklearn.random_projection.GaussianRandomProjection` and
   :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
   :user:`Loïc Estève <lesteve>`.
