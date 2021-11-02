@@ -365,11 +365,9 @@ estimator [13]_ defined as:
 .. math::
     \hat{\sigma^2} = \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{n - p}
 
-where :math:`p` is the number of features and :math:`\hat{y}_i`
-is the predicted target using an ordinary least squares regression. In
-scikit-learn, we use a ridge model with a very small regularization in case
-of ill-conditioned design matrix. Note, that this formula is valid only when
-`n_samples > n_features`.
+where :math:`p` is the number of features and :math:`\hat{y}_i` is the
+predicted target using an ordinary least squares regression. Note, that this
+formula is valid only when `n_samples > n_features`.
 
 .. topic:: Examples:
 

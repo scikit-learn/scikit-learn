@@ -19,7 +19,7 @@ from joblib import Parallel
 
 from ._base import LinearModel
 from ._base import _deprecate_normalize
-from ._ridge import ridge_regression
+from ._base import LinearRegression
 from ..base import RegressorMixin, MultiOutputMixin
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
@@ -2258,12 +2258,6 @@ class LassoLarsIC(LassoLars):
         -------
         noise_variance : float
             An estimator of the noise variance of an OLS model.
-
-        Note
-        ----
-        Instead of using a ordinary linear regression, we will use a ridge
-        model with a very low alpha for numerical stability in case of
-        collinear features.
         """
         if X.shape[0] <= X.shape[1]:
             raise ValueError(
@@ -2273,7 +2267,6 @@ class LassoLarsIC(LassoLars):
                 "possible. Provide an estimate of the noise variance in the "
                 "constructor."
             )
-        ols_coef = ridge_regression(
-            X, y, alpha=1e-12, positive=positive, check_input=False
-        )
-        return np.sum((y - X @ ols_coef) ** 2) / (X.shape[0] - X.shape[1])
+        ols_model = LinearRegression(positive=positive, fit_intercept=False)
+        y_pred = ols_model.fit(X, y).predict(X)
+        return np.sum((y - y_pred) ** 2) / (X.shape[0] - X.shape[1])
