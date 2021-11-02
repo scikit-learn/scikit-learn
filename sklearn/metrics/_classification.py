@@ -1931,11 +1931,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     --------
     average_precision_score : Compute average precision (AP) from prediction
         scores.
-    precision_score : Compute the precision. The precision is the ratio
-        tp / (tp + fp) where tp is the number of true positives and fp the
-        number of false positives.
-    recall_score : Compute the ratio ``tp / (tp + fn)``, where ``tp`` is
-        the number of true positives and ``fn`` the number of false negatives.
+    precision_score : Compute the precision score.
+    recall_score : Compute the recall score.
     roc_auc_score : Compute Area Under the Receiver Operating Characteristic
         Curve (ROC AUC) from prediction scores.
 
