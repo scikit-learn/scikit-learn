@@ -122,7 +122,7 @@ def test_spectral_embedding_two_components(eigen_solver):
         n_components=1,
         affinity="precomputed",
         random_state=np.random.RandomState(seed),
-        eigen_solver="eigen_solver",
+        eigen_solver=eigen_solver,
     )
     for dtype in [np.float32, np.float64]:
         embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
