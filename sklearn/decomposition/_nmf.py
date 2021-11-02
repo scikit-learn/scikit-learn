@@ -1800,10 +1800,9 @@ class MiniBatchNMF(NMF):
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
-        Default: None.
         Valid options:
 
-        - `None`: 'nndsvd' if n_components <= min(n_samples, n_features),
+        - `None`: 'nndsvda' if n_components <= min(n_samples, n_features),
           otherwise random.
 
         - `'random'`: non-negative random matrices, scaled with:
