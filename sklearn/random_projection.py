@@ -425,7 +425,10 @@ class BaseRandomProjection(
 
     @property
     def _n_features_out(self):
-        """Number of transformed output features."""
+        """Number of transformed output features.
+
+        Used by _ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
+        """
         return self.n_components
 
 
