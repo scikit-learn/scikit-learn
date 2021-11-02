@@ -85,6 +85,7 @@ def test_sparse_graph_connected_component():
         assert_array_equal(component_1, component_2)
 
 
+@pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg", "amg"))
 def test_spectral_embedding_two_components(seed=36):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
@@ -117,14 +118,16 @@ def test_spectral_embedding_two_components(seed=36):
     true_label[0:n_sample] = 1
 
     se_precomp = SpectralEmbedding(
-        n_components=1, affinity="precomputed", random_state=np.random.RandomState(seed)
+        n_components=1,
+        affinity="precomputed",
+        random_state=np.random.RandomState(seed),
+        eigen_solver=eigen_solver,
     )
-    embedded_coordinate = se_precomp.fit_transform(affinity)
-    # Some numpy versions are touchy with types
-    embedded_coordinate = se_precomp.fit_transform(affinity.astype(np.float32))
-    # thresholding on the first components using 0.
-    label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
-    assert normalized_mutual_info_score(true_label, label_) == pytest.approx(1.0)
+    for dtype in [np.float32, np.float64]:
+        embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
+        # thresholding on the first components using 0.
+        label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
+        assert normalized_mutual_info_score(true_label, label_) == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
