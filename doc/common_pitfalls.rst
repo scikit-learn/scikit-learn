@@ -560,7 +560,7 @@ bad performance. Similarly, we want a random forest to be robust w.r.t the
 set of randomly selected features that each tree will be using.
 
 For these reasons, it is preferable to evaluate the cross-validation
-preformance by letting the estimator use a different RNG on each fold. This
+performance by letting the estimator use a different RNG on each fold. This
 is done by passing a `RandomState` instance (or `None`) to the estimator
 initialization.
 

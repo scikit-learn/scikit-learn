@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import optimize
 from numpy.testing import assert_allclose
+from scipy.special import factorial, xlogy
 from itertools import product
 import pytest
 
@@ -20,6 +21,7 @@ from sklearn.metrics import max_error
 from sklearn.metrics import mean_pinball_loss
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
+from sklearn.metrics import d2_tweedie_score
 from sklearn.metrics import make_scorer
 
 from sklearn.metrics._regression import _check_reg_targets
@@ -53,6 +55,9 @@ def test_regression_metrics(n_samples=50):
         mean_tweedie_deviance(y_true, y_pred, power=0),
         mean_squared_error(y_true, y_pred),
     )
+    assert_almost_equal(
+        d2_tweedie_score(y_true, y_pred, power=0), r2_score(y_true, y_pred)
+    )
 
     # Tweedie deviance needs positive y_pred, except for p=0,
     # p>=2 needs positive y_true
@@ -76,6 +81,17 @@ def test_regression_metrics(n_samples=50):
     )
     assert_almost_equal(
         mean_tweedie_deviance(y_true, y_pred, power=3), np.sum(1 / y_true) / (4 * n)
+    )
+
+    dev_mean = 2 * np.mean(xlogy(y_true, 2 * y_true / (n + 1)))
+    assert_almost_equal(
+        d2_tweedie_score(y_true, y_pred, power=1),
+        1 - (n + 1) * (1 - np.log(2)) / dev_mean,
+    )
+
+    dev_mean = 2 * np.log((n + 1) / 2) - 2 / n * np.log(factorial(n))
+    assert_almost_equal(
+        d2_tweedie_score(y_true, y_pred, power=2), 1 - (2 * np.log(2) - 1) / dev_mean
     )
 
 
@@ -131,23 +147,23 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(max_error([0.0], [0.0]), 0.0)
     assert_almost_equal(explained_variance_score([0.0], [0.0]), 1.0)
     assert_almost_equal(r2_score([0.0, 1], [0.0, 1]), 1.0)
-    err_msg = (
+    msg = (
         "Mean Squared Logarithmic Error cannot be used when targets "
         "contain negative values."
     )
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([-1.0], [-1.0])
-    err_msg = (
+    msg = (
         "Mean Squared Logarithmic Error cannot be used when targets "
         "contain negative values."
     )
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, 2.0, 3.0], [1.0, -2.0, 3.0])
-    err_msg = (
+    msg = (
         "Mean Squared Logarithmic Error cannot be used when targets "
         "contain negative values."
     )
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
 
     # Tweedie deviance error
@@ -155,35 +171,50 @@ def test_regression_metrics_at_limits():
     assert_allclose(
         mean_tweedie_deviance([0], [1.0], power=power), 2 / (2 - power), rtol=1e-3
     )
-    with pytest.raises(
-        ValueError, match="can only be used on strictly positive y_pred."
-    ):
+    msg = "can only be used on strictly positive y_pred."
+    with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.0], [0.0], power=power)
-    assert_almost_equal(mean_tweedie_deviance([0.0], [0.0], power=0), 0.00, 2)
+    with pytest.raises(ValueError, match=msg):
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
+    assert_almost_equal(mean_tweedie_deviance([0.0], [0.0], power=0), 0.0, 2)
+
+    power = 1.0
     msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance([0.0], [0.0], power=1.0)
+        mean_tweedie_deviance([0.0], [0.0], power=power)
+    with pytest.raises(ValueError, match=msg):
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
     power = 1.5
     assert_allclose(mean_tweedie_deviance([0.0], [1.0], power=power), 2 / (2 - power))
     msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.0], [0.0], power=power)
+    with pytest.raises(ValueError, match=msg):
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
+
     power = 2.0
     assert_allclose(mean_tweedie_deviance([1.0], [1.0], power=power), 0.00, atol=1e-8)
     msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.0], [0.0], power=power)
+    with pytest.raises(ValueError, match=msg):
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
+
     power = 3.0
     assert_allclose(mean_tweedie_deviance([1.0], [1.0], power=power), 0.00, atol=1e-8)
-
     msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.0], [0.0], power=power)
+    with pytest.raises(ValueError, match=msg):
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
+    power = 0.5
     with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
-        mean_tweedie_deviance([0.0], [0.0], power=0.5)
+        mean_tweedie_deviance([0.0], [0.0], power=power)
+    with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
 
 def test__check_reg_targets():
@@ -319,7 +350,7 @@ def test_regression_custom_weights():
     assert_almost_equal(msle, msle2, decimal=2)
 
 
-@pytest.mark.parametrize("metric", [r2_score])
+@pytest.mark.parametrize("metric", [r2_score, d2_tweedie_score])
 def test_regression_single_sample(metric):
     y_true = [0]
     y_pred = [1]

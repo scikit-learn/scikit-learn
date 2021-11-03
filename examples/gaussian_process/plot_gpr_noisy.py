@@ -8,7 +8,6 @@ This example shows the ability of the
 level in the data. Moreover, we show the importance of kernel hyperparameters
 initialization.
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #          Guillaume Lemaitre <guillaume.lemaitre@inria.fr>

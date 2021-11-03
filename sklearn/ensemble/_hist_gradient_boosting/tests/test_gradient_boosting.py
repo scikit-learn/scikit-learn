@@ -21,6 +21,9 @@ from sklearn.ensemble._hist_gradient_boosting.loss import BinaryCrossEntropy
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.utils import shuffle
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
+n_threads = _openmp_effective_n_threads()
 
 
 X_classification, y_classification = make_classification(random_state=0)
@@ -693,7 +696,7 @@ def test_sum_hessians_are_sample_weight(loss_name):
 
     sample_weight = rng.normal(size=n_samples)
 
-    loss = _LOSSES[loss_name](sample_weight=sample_weight)
+    loss = _LOSSES[loss_name](sample_weight=sample_weight, n_threads=n_threads)
     gradients, hessians = loss.init_gradients_and_hessians(
         n_samples=n_samples, prediction_dim=1, sample_weight=sample_weight
     )
