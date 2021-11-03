@@ -284,7 +284,7 @@ def test_dict_learning_online_shapes():
     rng = np.random.RandomState(0)
     n_components = 8
 
-    code, dictionary, _, _ = dict_learning_online(
+    code, dictionary = dict_learning_online(
         X,
         n_components=n_components,
         batch_size=4,
@@ -296,7 +296,7 @@ def test_dict_learning_online_shapes():
     assert dictionary.shape == (n_components, n_features)
     assert np.dot(code, dictionary).shape == X.shape
 
-    dictionary, _, _ = dict_learning_online(
+    dictionary = dict_learning_online(
         X,
         n_components=n_components,
         batch_size=4,
@@ -667,7 +667,7 @@ def test_sparse_coder_n_features_in():
     "param, match",
     [
         ({"n_components": 0}, "n_components should be > 0"),
-        ({"fit_algorithm": "wrong"}, "Coding method not supported"),
+        ({"fit_algorithm": "wrong"}, "Coding method 'wrong' not supported"),
         ({"batch_size": 0}, "batch_size should be > 0"),
         ({"n_iter": -1}, "n_iter should be >= 0"),
         ({"max_iter": -1}, "max_iter should be >= 0"),

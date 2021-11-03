@@ -717,6 +717,19 @@ def dict_learning(
         return code, dictionary, errors
 
 
+def _check_warn_deprecated(param, name, default, additional_message=None):
+    if param != "deprecated":
+        msg = (
+            f"'{name}' is deprecated in version 1.1 and will be removed in version 1.3."
+        )
+        if additional_message:
+            msg += f" {additional_message}"
+        warnings.warn(msg, FutureWarning)
+        return param
+    else:
+        return default
+
+
 def dict_learning_online(
     X,
     n_components=2,
@@ -872,7 +885,7 @@ def dict_learning_online(
 
     max_no_improvement : int, default=10
         Control early stopping based on the consecutive number of mini batches
-        that does not yield an improvement on the smoothed cost function. To
+        that do not yield an improvement on the smoothed cost function. To
         disable early stopping set `max_no_improvement` to None. Only used if
         `max_iter` is not None.
 
@@ -890,10 +903,6 @@ def dict_learning_online(
         Number of iterations run. Returned only if `return_n_iter` is
         set to `True`.
 
-    n_steps : int
-        The number of iteration on data batches that has been
-        performed before. Returned only if `max_iter` is not None.
-
     See Also
     --------
     dict_learning
@@ -909,42 +918,23 @@ def dict_learning_online(
             "return_n_iter, return_inner_stats, iter_offset, inner_stats"
         )
 
-    if iter_offset != "deprecated":
-        warnings.warn(
-            "'iter_offset' is deprecated in version 1.1 and "
-            "will be removed in version 1.3.",
-            FutureWarning,
-        )
-    else:
-        iter_offset = 0
-
-    if return_inner_stats != "deprecated":
-        warnings.warn(
-            "'return_inner_stats' is deprecated in version 1.1 and "
-            "will be removed in version 1.3.",
-            FutureWarning,
-        )
-    else:
-        return_inner_stats = False
-
-    if inner_stats != "deprecated":
-        warnings.warn(
-            "'inner_stats' is deprecated in version 1.1 and "
-            "will be removed in version 1.3.",
-            FutureWarning,
-        )
-    else:
-        inner_stats = None
-
-    if return_n_iter != "deprecated":
-        warnings.warn(
-            "'return_n_iter' is deprecated in version 1.1 and "
-            "will be removed in version 1.3. From version 1.3 n_iter"
-            " will always be returned",
-            FutureWarning,
-        )
-    else:
-        return_n_iter = False
+    iter_offset = _check_warn_deprecated(iter_offset, "iter_offset", default=0)
+    return_inner_stats = _check_warn_deprecated(
+        return_inner_stats,
+        "return_inner_stats",
+        default=False,
+        additional_message="From 1.3 inner_stats will never be returned.",
+    )
+    inner_stats = _check_warn_deprecated(inner_stats, "inner_stats", default=None)
+    return_n_iter = _check_warn_deprecated(
+        return_n_iter,
+        "return_n_iter",
+        default=False,
+        additional_message=(
+            "From 1.3 'n_iter' will never be returned. Refer to the 'n_iter_' and "
+            "'n_steps_' attributes of the MiniBatchDictionaryLearning object instead."
+        ),
+    )
 
     if max_iter is not None:
         transform_algorithm = "lasso_" + method
@@ -970,22 +960,17 @@ def dict_learning_online(
         ).fit(X)
 
         if not return_code:
-            return est.components_, est.n_iter_, est.n_steps_
+            return est.components_
         else:
             code = est.transform(X)
-            return code, est.components_, est.n_iter_, est.n_steps_
+            return code, est.components_
 
     # TODO remove the whole old behavior in 1.3
     # Fallback to old behavior
 
-    if n_iter != "deprecated":
-        warnings.warn(
-            "'n_iter' is deprecated in version 1.1 and will be removed"
-            " in version 1.3. Use 'max_iter' instead.",
-            FutureWarning,
-        )
-    else:
-        n_iter = 100
+    n_iter = _check_warn_deprecated(
+        n_iter, "n_iter", default=100, additional_message="Use 'max_iter' instead."
+    )
 
     if batch_size == "warn":
         warnings.warn(
@@ -2046,7 +2031,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # fit_algorithm
         if self.fit_algorithm not in ("lars", "cd"):
-            raise ValueError("Coding method not supported as a fit algorithm.")
+            raise ValueError(
+                f"Coding method {self.fit_algorithm!r} not supported as a fit "
+                'algorithm. Expected either "lars" or "cd".'
+            )
         _check_positive_coding(self.fit_algorithm, self.positive_code)
         self._fit_algorithm = "lasso_" + self.fit_algorithm
 
