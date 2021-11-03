@@ -325,7 +325,7 @@ def test_pipeline_raise_set_params_error():
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake="nope")
 
-    # invalid outer parameter name for compount parameter: the expected error message
+    # invalid outer parameter name for compound parameter: the expected error message
     # is the same as above.
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake__estimator="nope")
