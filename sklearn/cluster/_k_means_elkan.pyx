@@ -1,5 +1,3 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
-#
 # Author: Andreas Mueller
 #
 # Licence: BSD 3 clause

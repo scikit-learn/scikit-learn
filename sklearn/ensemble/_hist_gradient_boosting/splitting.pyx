@@ -1,8 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
-
 """This module contains routines and data structures to:
 
 - Find the best possible split of a node. For a given node, a split is
@@ -791,7 +786,6 @@ cdef class Splitter:
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
-    @cython.initializedcheck(False)
     cdef void _find_best_bin_to_split_category(
             self,
             unsigned int feature_idx,
