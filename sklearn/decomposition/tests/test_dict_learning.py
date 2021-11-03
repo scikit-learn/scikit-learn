@@ -394,22 +394,31 @@ def test_dict_learning_online_positivity(positive_code, positive_dict):
 
 
 def test_dict_learning_online_verbosity():
+    # test verbosity for better coverage
     n_components = 5
-    # test verbosity
     from io import StringIO
     import sys
 
     old_stdout = sys.stdout
     try:
         sys.stdout = StringIO()
+
+        # convergence monitoring verbosity
         dico = MiniBatchDictionaryLearning(
-            n_components, batch_size=4, max_iter=5, verbose=1, random_state=0
+            n_components, batch_size=4, max_iter=5, verbose=1, tol=0.1, random_state=0
         )
         dico.fit(X)
+        dico = MiniBatchDictionaryLearning(
+            n_components, batch_size=4, max_iter=5, verbose=1, max_no_improvement=2, random_state=0
+        )
+        dico.fit(X)
+        # higher verbosity level
         dico = MiniBatchDictionaryLearning(
             n_components, batch_size=4, max_iter=5, verbose=2, random_state=0
         )
         dico.fit(X)
+
+        # function API verbosity
         dict_learning_online(
             X,
             n_components=n_components,
