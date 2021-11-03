@@ -124,8 +124,6 @@ display = PartialDependenceDisplay.from_estimator(
     n_jobs=3,
     grid_resolution=20,
     random_state=0,
-    ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-    pd_line_kw={"color": "tab:orange", "linestyle": "--"},
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(

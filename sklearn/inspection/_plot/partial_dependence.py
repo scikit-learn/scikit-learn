@@ -1444,12 +1444,26 @@ class PartialDependenceDisplay:
                 # define the line-style for the current plot
                 default_line_kws = {
                     "color": "C0",
-                    "label": "average" if self.kind == "both" else None,
+                    "label": "average" if kind_plot == "both" else None,
                 }
-                if self.kind in ("individual", "both"):
+                if kind_plot in "individual":
                     default_ice_lines_kws = {"alpha": 0.3, "linewidth": 0.5}
+                    default_pd_lines_kws = {}
+                elif kind_plot in "both":
+                    # by default, we need to distinguish the average line from
+                    # the individual lines via color and line style
+                    default_ice_lines_kws = {
+                        "alpha": 0.3,
+                        "linewidth": 0.5,
+                        "color": "tab:blue",
+                    }
+                    default_pd_lines_kws = {
+                        "color": "tab:orange",
+                        "linestyle": "--",
+                    }
                 else:
                     default_ice_lines_kws = {}
+                    default_pd_lines_kws = {}
 
                 ice_lines_kw = {
                     **default_line_kws,
@@ -1459,7 +1473,12 @@ class PartialDependenceDisplay:
                 }
                 del ice_lines_kw["label"]
 
-                pd_line_kw = {**default_line_kws, **line_kw, **pd_line_kw}
+                pd_line_kw = {
+                    **default_line_kws,
+                    **line_kw,
+                    **default_pd_lines_kws,
+                    **pd_line_kw,
+                }
 
                 self._plot_one_way_partial_dependence(
                     kind_plot,
