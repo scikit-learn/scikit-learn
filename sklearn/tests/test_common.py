@@ -363,7 +363,6 @@ def test_pandas_column_name_consistency(estimator):
 GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "cluster",
     "cross_decomposition",
-    "decomposition",
     "discriminant_analysis",
     "ensemble",
     "isotonic",
@@ -413,7 +412,6 @@ VALIDATE_ESTIMATOR_INIT = [
     "GridSearchCV",
     "HalvingGridSearchCV",
     "KernelPCA",
-    "LabelBinarizer",
     "NuSVC",
     "NuSVR",
     "OneClassSVM",
