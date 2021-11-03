@@ -9,7 +9,7 @@
 #          Sylvain Marie
 # License: BSD 3 clause
 
-from functools import wraps
+from functools import reduce, wraps
 import warnings
 import numbers
 import operator
@@ -1677,6 +1677,58 @@ def _check_sample_weight(
         check_non_negative(sample_weight, "`sample_weight`")
 
     return sample_weight
+
+
+def _check_response_method(estimator, response_method=None):
+    """Check if `response_method` is available in estimator and return it.
+
+    .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Classifier or regressor to check.
+
+    response_method : {"predict_proba", "decision_function", "predict"} or \
+            list of such str, default=None
+        Specifies the response method to use get prediction from an estimator
+        (i.e. :term:`predict_proba`, :term:`decision_function` or
+        :term:`predict`). Possible choices are:
+
+        - if `str`, it corresponds to the name to the method to return;
+        - if a list of `str`, it provides the method names in order of
+          preference. The method returned corresponds to the first method in
+          the list and which is implemented by `estimator`;
+        - if `None`, :term:`predict_proba` is tried first and if it does not
+          exist :term:`decision_function` is tried next and :term:`predict`
+          last.
+
+    Returns
+    -------
+    prediction_method : callable
+        Prediction method of estimator.
+
+    Raises
+    ------
+    ValueError
+        If `response_method` is not available in `estimator`.
+    """
+    if response_method is None:
+        list_methods = ["predict_proba", "decision_function", "predict"]
+    elif isinstance(response_method, str):
+        list_methods = [response_method]
+    else:
+        list_methods = response_method
+
+    prediction_method = [getattr(estimator, method, None) for method in list_methods]
+    prediction_method = reduce(lambda x, y: x or y, prediction_method)
+    if prediction_method is None:
+        raise AttributeError(
+            f"{estimator.__class__.__name__} has none of the following attributes: "
+            f"{', '.join(list_methods)}."
+        )
+
+    return prediction_method
 
 
 def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
