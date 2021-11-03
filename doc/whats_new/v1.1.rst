@@ -60,7 +60,7 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral` 
+- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral`
   now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
   that clusters samples in the embedding space as an alternative to the existing
   `'kmeans'` and `'discrete'` methods.
@@ -74,14 +74,6 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
-:mod:`sklearn.ensemble`
-.......................
-
-- |Fix| Fixed a bug that could produce a segfault in rare cases for
-  :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor`.
-  :pr:`21130` :user:`Christian Lorentzen <lorentzenchr>`.
-
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -92,17 +84,7 @@ Changelog
   `n_features_to_select` changed from `None` to `‘warn’` in 1.1 and will become
   `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3. :pr:`20145` by
   :user:`murata-yu`.
-- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
-  :class:`feature_extraction.TfidfVectorizer` by raising an
-  error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
-  :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
-:mod:`sklearn.linear_model`
-...........................
-
-- |Fix| :class:`linear_model.LogisticRegression` now raises a better error
-  message when the solver does not support sparse matrices with int64 indices.
-  :pr:`21093` by `Tom Dupre la Tour`_.
 :mod:`sklearn.decomposition`
 ............................
 
