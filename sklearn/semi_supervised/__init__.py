@@ -8,4 +8,4 @@ Propagation.
 from ._label_propagation import LabelPropagation, LabelSpreading
 from ._self_training import SelfTrainingClassifier
 
-__all__ = ['SelfTrainingClassifier', 'LabelPropagation', 'LabelSpreading']
+__all__ = ["SelfTrainingClassifier", "LabelPropagation", "LabelSpreading"]

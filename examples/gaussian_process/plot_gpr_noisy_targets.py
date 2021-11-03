@@ -15,10 +15,9 @@ The figures illustrate the interpolating property of the Gaussian Process model
 as well as its probabilistic nature in the form of a pointwise 95% confidence
 interval.
 
-Note that the parameter `alpha` is applied as a Tikhonov regularization ridge
-parameter on the assumed covariance between the training points.
+Note that `alpha` is a parameter to control the strength of the Tikhonov
+regularization on the assumed training points' covariance matrix.
 """
-print(__doc__)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         Jake Vanderplas <vanderplas@astro.washington.edu>
@@ -48,13 +47,13 @@ _ = plt.title("True generative process")
 
 # %%
 # We will use this dataset in the next experiment to illustrate how Gaussian
-# process regression is working.
+# Process regression is working.
 #
 # Example with noise-free target
 # ------------------------------
 #
 # In this first example, we will use the true generative process without
-# adding any noise. For training the Gaussian process regression, we will only
+# adding any noise. For training the Gaussian Process regression, we will only
 # select few samples.
 rng = np.random.RandomState(1)
 training_indices = rng.choice(np.arange(y.size), size=6, replace=False)
@@ -68,9 +67,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
 kernel = 1 * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e2))
-gaussian_process = GaussianProcessRegressor(
-    kernel=kernel, n_restarts_optimizer=9
-)
+gaussian_process = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9)
 gaussian_process.fit(X_train, y_train)
 gaussian_process.kernel_
 
@@ -96,39 +93,39 @@ plt.ylabel("$f(x)$")
 _ = plt.title("Gaussian process regression on noise-free dataset")
 
 # %%
-# We see that for a prediction close to a training sample, the 95% confidence
-# interval is small. Whenever a sample is falls far from training data, our
-# model's prediction is less accurate and its confidence interval is larger.
+# We see that for a prediction made on a data point close to the one from the
+# training set, the 95% confidence has a small amplitude. Whenever a sample
+# falls far from training data, our model's prediction is less accurate and the
+# model prediction is less precise (higher uncertainty).
 #
 # Example with noisy targets
 # --------------------------
 #
-# We can repeat a similar experiment but this time we will add an additional
-# noise to the target. It will allow us to see the effect of the noise on the
-# fitted model.
+# We can repeat a similar experiment adding an additional noise to the target
+# this time. It will allow seeing the effect of the noise on the fitted model.
 #
-# We define the noise standard deviation and add it to the original training
-# target.
-dy = 0.5 + 1.0 * rng.random_sample(y_train.shape)
-y_train_noisy = y_train + rng.normal(0, dy)
+# We add some random Gaussian noise to the target with an arbitrary
+# standard deviation.
+noise_std = 0.75
+y_train_noisy = y_train + rng.normal(loc=0.0, scale=noise_std, size=y_train.shape)
 
 # %%
 # We create a similar Gaussian process model. In addition to the kernel, this
-# time, we specify the parameter `alpha` that is related to the variance of the
-# noise.
+# time, we specify the parameter `alpha` which can be interpreted as the
+# variance of a Gaussian noise.
 gaussian_process = GaussianProcessRegressor(
-    kernel=kernel, alpha=dy ** 2, n_restarts_optimizer=9
+    kernel=kernel, alpha=noise_std ** 2, n_restarts_optimizer=9
 )
 gaussian_process.fit(X_train, y_train_noisy)
 mean_prediction, std_prediction = gaussian_process.predict(X, return_std=True)
 
 # %%
-# Let's plot the mean prediction and the confidence interval as before.
+# Let's plot the mean prediction and the uncertainty region as before.
 plt.plot(X, y, label=r"$f(x) = x \sin(x)$", linestyle="dotted")
 plt.errorbar(
     X_train,
-    y_train,
-    dy,
+    y_train_noisy,
+    noise_std,
     linestyle="None",
     color="tab:blue",
     marker=".",
@@ -150,6 +147,7 @@ plt.ylabel("$f(x)$")
 _ = plt.title("Gaussian process regression on a noisy dataset")
 
 # %%
-# The noise affect the predictions close to the training samples: now, the
-# confidence interval close to the training samples is larger because we
-# indicated the amount of noise for each training samples.
+# The noise affects the predictions close to the training samples: the
+# predictive uncertainty near to the training samples is larger because we
+# explicitly model a given level target noise independent of the input
+# variable.

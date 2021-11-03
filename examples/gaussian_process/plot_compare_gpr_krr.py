@@ -24,7 +24,6 @@ distributions.
 We will illustrate these differences with an example and we will also focus on
 tuning the kernel hyperparameters.
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
@@ -69,8 +68,10 @@ plt.scatter(
 plt.legend()
 plt.xlabel("data")
 plt.ylabel("target")
-_ = plt.title("Illustration of the true generative process and \n"
-              "noisy measurements available during training")
+_ = plt.title(
+    "Illustration of the true generative process and \n"
+    "noisy measurements available during training"
+)
 
 # %%
 # Limitations of a simple linear model
@@ -131,8 +132,9 @@ kernel_ridge = KernelRidge(kernel=ExpSineSquared())
 
 start_time = time.time()
 kernel_ridge.fit(training_data, training_noisy_target)
-print(f"Fitting KernelRidge with default kernel: "
-      f"{time.time() - start_time:.3f} seconds")
+print(
+    f"Fitting KernelRidge with default kernel: {time.time() - start_time:.3f} seconds"
+)
 
 # %%
 plt.plot(data, target, label="True signal", linewidth=2, linestyle="dashed")
@@ -152,19 +154,21 @@ plt.plot(
 plt.legend(loc="lower right")
 plt.xlabel("data")
 plt.ylabel("target")
-_ = plt.title("Kernel ridge regression with an exponential sine squared\n "
-              "kernel using default hyperparameters")
+_ = plt.title(
+    "Kernel ridge regression with an exponential sine squared\n "
+    "kernel using default hyperparameters"
+)
 
 # %%
 # This fitted model is not accurate. Indeed, we did not set the parameters of
-# the kernel and instead used the default ones. We can have a look at them.
+# the kernel and instead used the default ones. We can inspect them.
 kernel_ridge.kernel
 
 # %%
 # Our kernel has two parameters: the length-scale and the periodicity. For our
-# dataset, we use `sin(x)` as the generative process. It means that we have
-# a periodicity of :math:`2 \pi`. The default value of the parameter being
-# :math:`1`, it explains the high frequency observed in the predictions of
+# dataset, we use `sin` as the generative process, implying a
+# :math:`2 \pi`-periodicity for the signal. The default value of the parameter
+# being :math:`1`, it explains the high frequency observed in the predictions of
 # our model.
 # Similar conclusions could be drawn with the length-scale parameter. Thus, it
 # tell us that the kernel parameters need to be tuned. We will use a randomized
@@ -199,8 +203,7 @@ kernel_ridge_tuned.best_params_
 # %%
 # Looking at the best parameters, we see that they are different from the
 # defaults. We also see that the periodicity is closer to the expected value:
-# :math:`2 \pi`. We can now have a look at the predictions of our tuned kernel
-# ridge.
+# :math:`2 \pi`. We can now inspect the predictions of our tuned kernel ridge.
 start_time = time.time()
 predictions_kr = kernel_ridge_tuned.predict(data)
 print(f"Time for KernelRidge predict: {time.time() - start_time:.3f} seconds")
@@ -223,8 +226,10 @@ plt.plot(
 plt.legend(loc="lower right")
 plt.xlabel("data")
 plt.ylabel("target")
-_ = plt.title("Kernel ridge regression with an exponential sine squared\n "
-              "kernel using tuned hyperparameters")
+_ = plt.title(
+    "Kernel ridge regression with an exponential sine squared\n "
+    "kernel using tuned hyperparameters"
+)
 
 # %%
 # We get a much more accurate model. We still observe some errors mainly due to
@@ -244,15 +249,14 @@ _ = plt.title("Kernel ridge regression with an exponential sine squared\n "
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel
 
-kernel = 1.0 * ExpSineSquared(
-    1.0, 5.0, periodicity_bounds=(1e-2, 1e1)
-) + WhiteKernel(1e-1)
+kernel = 1.0 * ExpSineSquared(1.0, 5.0, periodicity_bounds=(1e-2, 1e1)) + WhiteKernel(
+    1e-1
+)
 gaussian_process = GaussianProcessRegressor(kernel=kernel)
 start_time = time.time()
 gaussian_process.fit(training_data, training_noisy_target)
 print(
-    f"Time for GaussianProcessRegressor fitting: "
-    f"{time.time() - start_time:.3f} seconds"
+    f"Time for GaussianProcessRegressor fitting: {time.time() - start_time:.3f} seconds"
 )
 
 # %%
@@ -272,8 +276,7 @@ mean_predictions_gpr, std_predictions_gpr = gaussian_process.predict(
     return_std=True,
 )
 print(
-    f"Time for GaussianProcessRegressor predict: "
-    f"{time.time() - start_time:.3f} seconds"
+    f"Time for GaussianProcessRegressor predict: {time.time() - start_time:.3f} seconds"
 )
 
 # %%
@@ -338,9 +341,9 @@ _ = plt.title("Comparison between kernel ridge and gaussian process regressor")
 # kernel.
 from sklearn.gaussian_process.kernels import RBF
 
-kernel = 1.0 * ExpSineSquared(
-    1.0, 5.0, periodicity_bounds=(1e-2, 1e1)
-) * RBF(length_scale=15, length_scale_bounds="fixed") + WhiteKernel(1e-1)
+kernel = 1.0 * ExpSineSquared(1.0, 5.0, periodicity_bounds=(1e-2, 1e1)) * RBF(
+    length_scale=15, length_scale_bounds="fixed"
+) + WhiteKernel(1e-1)
 gaussian_process = GaussianProcessRegressor(kernel=kernel)
 gaussian_process.fit(training_data, training_noisy_target)
 mean_predictions_gpr, std_predictions_gpr = gaussian_process.predict(
