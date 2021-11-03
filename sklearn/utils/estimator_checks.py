@@ -660,7 +660,7 @@ def _set_checking_parameters(estimator):
 
     if name == "LassoLarsIC":
         # Noise variance estimation does not work when `n_samples < n_features`.
-        # We need to provide the noise variance explicitely.
+        # We need to provide the noise variance explicitly.
         estimator.set_params(noise_variance=1.0)
 
     if hasattr(estimator, "n_clusters"):

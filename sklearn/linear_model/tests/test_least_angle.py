@@ -946,12 +946,8 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
 def test_lassolarsic_alpha_selection(criterion):
     """Check that we properly compute the AIC and BIC score.
 
-    In this test, we reproduce the example of the Fig. 2 of Zou et al.
+    In this test, we reproduce the example of the Fig. 2 of Zou et al. (reference [1] in LassoLarsIC)
     In this example, only 7 features should be selected.
-
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/14566
-    https://github.com/scikit-learn/scikit-learn/issues/17145
     """
     model = make_pipeline(
         StandardScaler(), LassoLarsIC(criterion=criterion, normalize=False)
