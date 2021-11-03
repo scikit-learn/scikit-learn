@@ -1,0 +1,6 @@
+*__pycache__*
+env/
+html/
+results/
+scikit-learn/
+benchmarks/cache/

@@ -110,9 +110,9 @@ construction.  The prediction of the ensemble is given as the averaged
 prediction of the individual classifiers.
 
 As other classifiers, forest classifiers have to be fitted with two
-arrays: a sparse or dense array X of size ``[n_samples, n_features]`` holding the
-training samples, and an array Y of size ``[n_samples]`` holding the
-target values (class labels) for the training samples::
+arrays: a sparse or dense array X of shape ``(n_samples, n_features)``
+holding the training samples, and an array Y of shape ``(n_samples,)``
+holding the target values (class labels) for the training samples::
 
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> X = [[0, 0], [1, 1]]
@@ -120,9 +120,9 @@ target values (class labels) for the training samples::
     >>> clf = RandomForestClassifier(n_estimators=10)
     >>> clf = clf.fit(X, Y)
 
-Like :ref:`decision trees <tree>`, forests of trees also extend
-to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
-``[n_samples, n_outputs]``).
+Like :ref:`decision trees <tree>`, forests of trees also extend to
+:ref:`multi-output problems <tree_multioutput>`  (if Y is an array
+of shape ``(n_samples, n_outputs)``).
 
 Random Forests
 --------------
@@ -467,7 +467,7 @@ trees.
 
 .. note::
 
-  Scikit-learn 0.21 introduces two new experimental implementations of
+  Scikit-learn 0.21 introduces two new implementations of
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
   `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
@@ -537,7 +537,8 @@ Regression
 :class:`GradientBoostingRegressor` supports a number of
 :ref:`different loss functions <gradient_boosting_loss>`
 for regression which can be specified via the argument
-``loss``; the default loss function for regression is least squares (``'ls'``).
+``loss``; the default loss function for regression is squared error
+(``'squared_error'``).
 
 ::
 
@@ -549,8 +550,10 @@ for regression which can be specified via the argument
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-    >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
-    ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
+    >>> est = GradientBoostingRegressor(
+    ...     n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
+    ...     loss='squared_error'
+    ... ).fit(X_train, y_train)
     >>> mean_squared_error(y_test, est.predict(X_test))
     5.00...
 
@@ -741,8 +744,8 @@ the parameter ``loss``:
 
   * Regression
 
-    * Least squares (``'ls'``): The natural choice for regression due
-      to its superior computational properties. The initial model is
+    * Squared error (``'squared_error'``): The natural choice for regression
+      due to its superior computational properties. The initial model is
       given by the mean of the target values.
     * Least absolute deviation (``'lad'``): A robust loss function for
       regression. The initial model is given by the median of the
@@ -758,12 +761,12 @@ the parameter ``loss``:
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The negative binomial
-      log-likelihood loss function for binary classification (provides
+    * Binomial deviance (``'deviance'``): The binomial
+      negative log-likelihood loss function for binary classification (provides
       probability estimates).  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The negative multinomial
-      log-likelihood loss function for multi-class classification with
+    * Multinomial deviance (``'deviance'``): The multinomial
+      negative log-likelihood loss function for multi-class classification with
       ``n_classes`` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
       prior probability of each class. At each iteration ``n_classes``
@@ -895,7 +898,7 @@ based on permutation of the features.
 Histogram-Based Gradient Boosting
 =================================
 
-Scikit-learn 0.21 introduced two new experimental implementations of
+Scikit-learn 0.21 introduced two new implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
 `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
@@ -917,15 +920,6 @@ estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
 are not yet supported, for instance some loss functions.
 
-These estimators are still **experimental**: their predictions
-and their API might change without any deprecation cycle. To use them, you
-need to explicitly import ``enable_hist_gradient_boosting``::
-
-  >>> # explicitly require this experimental feature
-  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-  >>> # now you can import normally from ensemble
-  >>> from sklearn.ensemble import HistGradientBoostingClassifier
-
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
@@ -938,7 +932,6 @@ Most of the parameters are unchanged from
 One exception is the ``max_iter`` parameter that replaces ``n_estimators``, and
 controls the number of iterations of the boosting process::
 
-  >>> from sklearn.experimental import enable_hist_gradient_boosting
   >>> from sklearn.ensemble import HistGradientBoostingClassifier
   >>> from sklearn.datasets import make_hastie_10_2
 
@@ -950,8 +943,8 @@ controls the number of iterations of the boosting process::
   >>> clf.score(X_test, y_test)
   0.8965
 
-Available losses for regression are 'least_squares',
-'least_absolute_deviation', which is less sensitive to outliers, and
+Available losses for regression are 'squared_error',
+'absolute_error', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
 classification, 'binary_crossentropy' is used for binary classification and
 'categorical_crossentropy' is used for multiclass classification. By default
@@ -989,7 +982,6 @@ with missing values should go to the left or right child, based on the
 potential gain. When predicting, samples with missing values are assigned to
 the left or right child consequently::
 
-  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
   >>> from sklearn.ensemble import HistGradientBoostingClassifier
   >>> import numpy as np
 
@@ -1051,6 +1043,68 @@ multiplying the gradients (and the hessians) by the sample weights. Note that
 the binning stage (specifically the quantiles computation) does not take the
 weights into account.
 
+.. _categorical_support_gbdt:
+
+Categorical Features Support
+----------------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` have native support for categorical
+features: they can consider splits on non-ordered, categorical data.
+
+For datasets with categorical features, using the native categorical support
+is often better than relying on one-hot encoding
+(:class:`~sklearn.preprocessing.OneHotEncoder`), because one-hot encoding
+requires more tree depth to achieve equivalent splits. It is also usually
+better to rely on the native categorical support rather than to treat
+categorical features as continuous (ordinal), which happens for ordinal-encoded
+categorical data, since categories are nominal quantities where order does not
+matter.
+
+To enable categorical support, a boolean mask can be passed to the
+`categorical_features` parameter, indicating which feature is categorical. In
+the following, the first feature will be treated as categorical and the
+second feature as numerical::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
+
+Equivalently, one can pass a list of integers indicating the indices of the
+categorical features::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[0])
+
+The cardinality of each categorical feature should be less than the `max_bins`
+parameter, and each categorical feature is expected to be encoded in
+`[0, max_bins - 1]`. To that end, it might be useful to pre-process the data
+with an :class:`~sklearn.preprocessing.OrdinalEncoder` as done in
+:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
+
+If there are missing values during training, the missing values will be
+treated as a proper category. If there are no missing values during training,
+then at prediction time, missing values are mapped to the child node that has
+the most samples (just like for continuous features). When predicting,
+categories that were not seen during fit time will be treated as missing
+values.
+
+**Split finding with categorical features**: The canonical way of considering
+categorical splits in a tree is to consider
+all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
+categories. This can quickly become prohibitive when :math:`K` is large.
+Fortunately, since gradient boosting trees are always regression trees (even
+for classification problems), there exist a faster strategy that can yield
+equivalent splits. First, the categories of a feature are sorted according to
+the variance of the target, for each category `k`. Once the categories are
+sorted, one can consider *continuous partitions*, i.e. treat the categories
+as if they were ordered continuous values (see Fisher [Fisher1958]_ for a
+formal proof). As a result, only :math:`K - 1` splits need to be considered
+instead of :math:`2^{K - 1} - 1`. The initial sorting is a
+:math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
+:math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
+
 .. _monotonic_cst_gbdt:
 
 Monotonic Constraints
@@ -1081,7 +1135,6 @@ You can specify a monotonic constraint on each feature using the
 constraint, while -1 and 1 indicate a negative and positive constraint,
 respectively::
 
-  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
   >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
   ... # positive, negative, and no constraint on the 3 features
@@ -1091,6 +1144,10 @@ In a binary classification context, imposing a monotonic constraint means
 that the feature is supposed to have a positive / negative effect on the
 probability to belong to the positive class. Monotonic constraints are not
 supported for multiclass context.
+
+.. note::
+    Since categories are unordered quantities, it is not possible to enforce
+    monotonic constraints on categorical features.
 
 .. topic:: Examples:
 
@@ -1153,11 +1210,13 @@ Finally, many parts of the implementation of
      <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_
   .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm
      package", 2007
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, `"XGBoost: A Scalable Tree
-     Boosting System" <https://arxiv.org/abs/1603.02754>`_
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
+     Boosting System" <1603.02754>`
   .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree" <https://papers.nips.cc/paper/
      6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
+  .. [Fisher1958] Walter D. Fisher. `"On Grouping for Maximum Homogeneity"
+     <http://www.csiss.org/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
 
 .. _voting_classifier:
 

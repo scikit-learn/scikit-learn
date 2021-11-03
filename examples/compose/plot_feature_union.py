@@ -13,6 +13,7 @@ cross validation and grid searches over the whole process.
 
 The combination used in this example is not particularly helpful on this
 dataset and is only used to illustrate the usage of FeatureUnion.
+
 """
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
@@ -33,7 +34,7 @@ X, y = iris.data, iris.target
 # This dataset is way too high-dimensional. Better do PCA:
 pca = PCA(n_components=2)
 
-# Maybe some original features where good, too?
+# Maybe some original features were good, too?
 selection = SelectKBest(k=1)
 
 # Build estimator from PCA and Univariate selection:
@@ -50,9 +51,11 @@ svm = SVC(kernel="linear")
 
 pipeline = Pipeline([("features", combined_features), ("svm", svm)])
 
-param_grid = dict(features__pca__n_components=[1, 2, 3],
-                  features__univ_select__k=[1, 2],
-                  svm__C=[0.1, 1, 10])
+param_grid = dict(
+    features__pca__n_components=[1, 2, 3],
+    features__univ_select__k=[1, 2],
+    svm__C=[0.1, 1, 10],
+)
 
 grid_search = GridSearchCV(pipeline, param_grid=param_grid, verbose=10)
 grid_search.fit(X, y)

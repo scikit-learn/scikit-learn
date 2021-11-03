@@ -4,7 +4,7 @@ coverage:
   status:
     project:
       default:
-        # Commits pushed to master should not make the overall
+        # Commits pushed to main should not make the overall
         # project coverage decrease by more than 1%:
         target: auto
         threshold: 1%
@@ -16,6 +16,14 @@ coverage:
         # to codecov so that PR reviewers can see uncovered lines
         target: auto
         threshold: 1%
+
+codecov:
+  notify:
+    # Prevent coverage status to upload multiple times for parallel and long
+    # running CI pipelines. This configuration is particularly useful on PRs
+    # to avoid confusion. Note that this value is set to the number of Azure
+    # Pipeline jobs uploading coverage reports.
+    after_n_builds: 6
 
 ignore:
 - "sklearn/externals"

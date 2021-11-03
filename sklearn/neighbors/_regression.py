@@ -1,4 +1,4 @@
-"""Nearest Neighbor Regression"""
+"""Nearest Neighbor Regression."""
 
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
@@ -14,16 +14,13 @@ import warnings
 
 import numpy as np
 
-from ._base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
-from ._base import RadiusNeighborsMixin, SupervisedFloatMixin
+from ._base import _get_weights, _check_weights
+from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
-from ..utils import check_array
-from ..utils.validation import _deprecate_positional_args
+from ..utils.deprecation import deprecated
 
 
-class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
-                          SupervisedFloatMixin,
-                          RegressorMixin):
+class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     """Regression based on k-nearest neighbors.
 
     The target is predicted by local interpolation of the targets
@@ -39,7 +36,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         Number of neighbors to use by default for :meth:`kneighbors` queries.
 
     weights : {'uniform', 'distance'} or callable, default='uniform'
-        weight function used in prediction.  Possible values:
+        Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
           are weighted equally.
@@ -76,7 +73,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
@@ -107,26 +104,27 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
-    Examples
+    See Also
     --------
-    >>> X = [[0], [1], [2], [3]]
-    >>> y = [0, 0, 1, 1]
-    >>> from sklearn.neighbors import KNeighborsRegressor
-    >>> neigh = KNeighborsRegressor(n_neighbors=2)
-    >>> neigh.fit(X, y)
-    KNeighborsRegressor(...)
-    >>> print(neigh.predict([[1.5]]))
-    [0.5]
-
-    See also
-    --------
-    NearestNeighbors
-    RadiusNeighborsRegressor
-    KNeighborsClassifier
-    RadiusNeighborsClassifier
+    NearestNeighbors : Unsupervised learner for implementing neighbor searches.
+    RadiusNeighborsRegressor : Regression based on neighbors within a fixed radius.
+    KNeighborsClassifier : Classifier implementing the k-nearest neighbors vote.
+    RadiusNeighborsClassifier : Classifier implementing
+        a vote among neighbors within a given radius.
 
     Notes
     -----
@@ -141,27 +139,81 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
        training data.
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+
+    Examples
+    --------
+    >>> X = [[0], [1], [2], [3]]
+    >>> y = [0, 0, 1, 1]
+    >>> from sklearn.neighbors import KNeighborsRegressor
+    >>> neigh = KNeighborsRegressor(n_neighbors=2)
+    >>> neigh.fit(X, y)
+    KNeighborsRegressor(...)
+    >>> print(neigh.predict([[1.5]]))
+    [0.5]
     """
 
-    @_deprecate_positional_args
-    def __init__(self, n_neighbors=5, *, weights='uniform',
-                 algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
-                 **kwargs):
+    def __init__(
+        self,
+        n_neighbors=5,
+        *,
+        weights="uniform",
+        algorithm="auto",
+        leaf_size=30,
+        p=2,
+        metric="minkowski",
+        metric_params=None,
+        n_jobs=None,
+    ):
         super().__init__(
-              n_neighbors=n_neighbors,
-              algorithm=algorithm,
-              leaf_size=leaf_size, metric=metric, p=p,
-              metric_params=metric_params, n_jobs=n_jobs, **kwargs)
-        self.weights = _check_weights(weights)
+            n_neighbors=n_neighbors,
+            algorithm=algorithm,
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        )
+        self.weights = weights
 
+    def _more_tags(self):
+        # For cross-validation routines to split data correctly
+        return {"pairwise": self.metric == "precomputed"}
+
+    # TODO: Remove in 1.1
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `_pairwise` was deprecated in "
+        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
+    )
     @property
     def _pairwise(self):
         # For cross-validation routines to split data correctly
-        return self.metric == 'precomputed'
+        return self.metric == "precomputed"
+
+    def fit(self, X, y):
+        """Fit the k-nearest neighbors regressor from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : KNeighborsRegressor
+            The fitted k-nearest neighbors regressor.
+        """
+        self.weights = _check_weights(self.weights)
+
+        return self._fit(X, y)
 
     def predict(self, X):
-        """Predict the target for the provided data
+        """Predict the target for the provided data.
 
         Parameters
         ----------
@@ -174,8 +226,6 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
         """
-        X = check_array(X, accept_sparse='csr')
-
         neigh_dist, neigh_ind = self.kneighbors(X)
 
         weights = _get_weights(neigh_dist, self.weights)
@@ -200,9 +250,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         return y_pred
 
 
-class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
-                               SupervisedFloatMixin,
-                               RegressorMixin):
+class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBase):
     """Regression based on neighbors within a fixed radius.
 
     The target is predicted by local interpolation of the targets
@@ -219,7 +267,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         queries.
 
     weights : {'uniform', 'distance'} or callable, default='uniform'
-        weight function used in prediction.  Possible values:
+        Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
           are weighted equally.
@@ -256,7 +304,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
@@ -286,8 +334,33 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
+
+    See Also
+    --------
+    NearestNeighbors : Regression based on nearest neighbors.
+    KNeighborsRegressor : Regression based on k-nearest neighbors.
+    KNeighborsClassifier : Classifier based on the k-nearest neighbors.
+    RadiusNeighborsClassifier : Classifier based on neighbors within a given radius.
+
+    Notes
+    -----
+    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
+    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
 
     Examples
     --------
@@ -299,37 +372,55 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     RadiusNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
     [0.5]
-
-    See also
-    --------
-    NearestNeighbors
-    KNeighborsRegressor
-    KNeighborsClassifier
-    RadiusNeighborsClassifier
-
-    Notes
-    -----
-    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
-    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
-
-    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
-    def __init__(self, radius=1.0, *, weights='uniform',
-                 algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
-                 **kwargs):
+    def __init__(
+        self,
+        radius=1.0,
+        *,
+        weights="uniform",
+        algorithm="auto",
+        leaf_size=30,
+        p=2,
+        metric="minkowski",
+        metric_params=None,
+        n_jobs=None,
+    ):
         super().__init__(
-              radius=radius,
-              algorithm=algorithm,
-              leaf_size=leaf_size,
-              p=p, metric=metric, metric_params=metric_params,
-              n_jobs=n_jobs, **kwargs)
-        self.weights = _check_weights(weights)
+            radius=radius,
+            algorithm=algorithm,
+            leaf_size=leaf_size,
+            p=p,
+            metric=metric,
+            metric_params=metric_params,
+            n_jobs=n_jobs,
+        )
+        self.weights = weights
+
+    def fit(self, X, y):
+        """Fit the radius neighbors regressor from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : RadiusNeighborsRegressor
+            The fitted radius neighbors regressor.
+        """
+        self.weights = _check_weights(self.weights)
+
+        return self._fit(X, y)
 
     def predict(self, X):
-        """Predict the target for the provided data
+        """Predict the target for the provided data.
 
         Parameters
         ----------
@@ -343,8 +434,6 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                 dtype=double
             Target values.
         """
-        X = check_array(X, accept_sparse='csr')
-
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 
         weights = _get_weights(neigh_dist, self.weights)
@@ -356,19 +445,28 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         empty_obs = np.full_like(_y[0], np.nan)
 
         if weights is None:
-            y_pred = np.array([np.mean(_y[ind, :], axis=0)
-                               if len(ind) else empty_obs
-                               for (i, ind) in enumerate(neigh_ind)])
+            y_pred = np.array(
+                [
+                    np.mean(_y[ind, :], axis=0) if len(ind) else empty_obs
+                    for (i, ind) in enumerate(neigh_ind)
+                ]
+            )
 
         else:
-            y_pred = np.array([np.average(_y[ind, :], axis=0,
-                               weights=weights[i])
-                               if len(ind) else empty_obs
-                               for (i, ind) in enumerate(neigh_ind)])
+            y_pred = np.array(
+                [
+                    np.average(_y[ind, :], axis=0, weights=weights[i])
+                    if len(ind)
+                    else empty_obs
+                    for (i, ind) in enumerate(neigh_ind)
+                ]
+            )
 
         if np.any(np.isnan(y_pred)):
-            empty_warning_msg = ("One or more samples have no neighbors "
-                                 "within specified radius; predicting NaN.")
+            empty_warning_msg = (
+                "One or more samples have no neighbors "
+                "within specified radius; predicting NaN."
+            )
             warnings.warn(empty_warning_msg)
 
         if self._y.ndim == 1:

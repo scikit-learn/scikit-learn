@@ -12,7 +12,6 @@ cimport numpy as np
 import numpy as np
 
 from ..utils.murmurhash cimport murmurhash3_bytes_s32
-from ..utils.fixes import sp_version
 
 np.import_array()
 
@@ -69,7 +68,12 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
             h = murmurhash3_bytes_s32(<bytes>f, seed)
 
             array.resize_smart(indices, len(indices) + 1)
-            indices[len(indices) - 1] = abs(h) % n_features
+            if h == - 2147483648:
+                # abs(-2**31) is undefined behavior because h is a `np.int32`
+                # The following is defined such that it is equal to: abs(-2**31) % n_features
+                indices[len(indices) - 1] = (2147483647 - (n_features - 1)) % n_features
+            else:
+                indices[len(indices) - 1] = abs(h) % n_features
             # improve inner product preservation in the hashed space
             if alternate_sign:
                 value *= (h >= 0) * 2 - 1
@@ -89,12 +93,6 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
     indptr_a = np.frombuffer(indptr, dtype=indices_np_dtype)
 
     if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
-        if sp_version < (0, 14):
-            raise ValueError(('sparse CSR array has {} non-zero '
-                              'elements and requires 64 bit indexing, '
-                              ' which is unsupported with scipy {}. '
-                              'Please upgrade to scipy >=0.14')
-                             .format(indptr[-1], '.'.join(sp_version)))
         # both indices and indptr have the same dtype in CSR arrays
         indices_a = indices_a.astype(np.int64, copy=False)
     else:

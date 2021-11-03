@@ -106,9 +106,18 @@ detection.
 :class:`ensemble.IsolationForest` and :class:`neighbors.LocalOutlierFactor`
 perform reasonably well on the data sets considered here.
 The :class:`svm.OneClassSVM` is known to be sensitive to outliers and thus
-does not perform very well for outlier detection. Finally,
-:class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
-an ellipse. For more details on the different estimators refer to the example
+does not perform very well for outlier detection. That being said, outlier
+detection in high-dimension, or without any assumptions on the distribution
+of the inlying data is very challenging. :class:`svm.OneClassSVM` may still
+be used with outlier detection but requires fine-tuning of its hyperparameter
+`nu` to handle outliers and prevent overfitting.
+:class:`linear_model.SGDOneClassSVM` provides an implementation of a
+linear One-Class SVM with a linear complexity in the number of samples. This
+implementation is here used with a kernel approximation technique to obtain
+results similar to :class:`svm.OneClassSVM` which uses a Gaussian kernel
+by default. Finally, :class:`covariance.EllipticEnvelope` assumes the data is
+Gaussian and learns an ellipse. For more details on the different estimators
+refer to the example
 :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py` and the
 sections hereunder.
 
@@ -146,7 +155,7 @@ and implemented in the :ref:`svm` module in the
 kernel and a scalar parameter to define a frontier.  The RBF kernel is
 usually chosen although there exists no exact formula or algorithm to
 set its bandwidth parameter. This is the default in the scikit-learn
-implementation. The :math:`\nu` parameter, also known as the margin of
+implementation. The `nu` parameter, also known as the margin of
 the One-Class SVM, corresponds to the probability of finding a new,
 but regular, observation outside the frontier.
 
@@ -167,6 +176,23 @@ but regular, observation outside the frontier.
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75%
+
+
+Scaling up the One-Class SVM
+----------------------------
+
+An online linear version of the One-Class SVM is implemented in
+:class:`linear_model.SGDOneClassSVM`. This implementation scales linearly with
+the number of samples and can be used with a kernel approximation to
+approximate the solution of a kernelized :class:`svm.OneClassSVM` whose
+complexity is at best quadratic in the number of samples. See section
+:ref:`sgd_online_one_class_svm` for more details.
+
+.. topic:: Examples:
+
+  * See :ref:`sphx_glr_auto_examples_linear_model_plot_sgdocsvm_vs_ocsvm.py`
+    for an illustration of the approximation of a kernelized One-Class SVM
+    with the `linear_model.SGDOneClassSVM` combined with kernel approximation.
 
 
 Outlier Detection
@@ -274,8 +300,8 @@ allows you to add more trees to an already fitted model::
      for a comparison of :class:`ensemble.IsolationForest` with
      :class:`neighbors.LocalOutlierFactor`,
      :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
-     method) and a covariance-based outlier detection with
-     :class:`covariance.EllipticEnvelope`.
+     method), :class:`linear_model.SGDOneClassSVM`, and a covariance-based
+     outlier detection with :class:`covariance.EllipticEnvelope`.
 
 .. topic:: References:
 
@@ -306,7 +332,7 @@ chosen 1) greater than the minimum number of objects a cluster has to contain,
 so that other objects can be local outliers relative to this cluster, and 2)
 smaller than the maximum number of close by objects that can potentially be
 local outliers.
-In practice, such informations are generally not available, and taking
+In practice, such information is generally not available, and taking
 n_neighbors=20 appears to work well in general.
 When the proportion of outliers is high (i.e. greater than 10 \%, as in the
 example below), n_neighbors should be greater (n_neighbors=35 in the example
@@ -330,7 +356,7 @@ on new unseen data when LOF is applied for novelty detection, i.e. when the
 This strategy is illustrated below.
 
 .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_outlier_detection_001.png
-   :target: ../auto_examples/neighbors/sphx_glr_plot_lof_outlier_detection.html
+   :target: ../auto_examples/neighbors/plot_lof_outlier_detection.html
    :align: center
    :scale: 75%
 
@@ -375,7 +401,6 @@ Note that ``fit_predict`` is not available in this case.
 Novelty detection with Local Outlier Factor is illustrated below.
 
   .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
-     :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html
+     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
      :align: center
      :scale: 75%
-

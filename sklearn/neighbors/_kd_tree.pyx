@@ -2,6 +2,7 @@
 #cython: boundscheck=False
 #cython: wraparound=False
 #cython: cdivision=True
+#cython: initializedcheck=False
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
@@ -38,7 +39,7 @@ cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
                        ITYPE_t n_features) except -1:
     """Allocate arrays needed for the KD Tree"""
     tree.node_bounds_arr = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
-    tree.node_bounds = get_memview_DTYPE_3D(tree.node_bounds_arr)
+    tree.node_bounds = tree.node_bounds_arr
     return 0
 
 
