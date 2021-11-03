@@ -316,9 +316,7 @@ def spectral_embedding(
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
         laplacian = check_array(
-            laplacian,
-            dtype=[np.float64, np.float32],
-            accept_sparse=True
+            laplacian, dtype=[np.float64, np.float32], accept_sparse=True
         )
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
@@ -350,9 +348,7 @@ def spectral_embedding(
 
     if eigen_solver == "lobpcg":
         laplacian = check_array(
-            laplacian,
-            dtype=[np.float64, np.float32],
-            accept_sparse=True
+            laplacian, dtype=[np.float64, np.float32], accept_sparse=True
         )
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
@@ -638,8 +634,7 @@ class SpectralEmbedding(BaseEstimator):
                 raise ValueError(
                     "%s is not a valid affinity. Expected "
                     "'precomputed', 'rbf', 'nearest_neighbors' "
-                    "or a callable."
-                    % self.affinity
+                    "or a callable." % self.affinity
                 )
         elif not callable(self.affinity):
             raise ValueError(
