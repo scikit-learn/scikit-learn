@@ -21,6 +21,7 @@ particular pre-processor: by column names and by column data types.
 Finally, the preprocessing pipeline is integrated in a full prediction pipeline
 using :class:`~pipeline.Pipeline`, together with a simple classification
 model.
+
 """
 
 # Author: Pedro Morales <part.morales@gmail.com>
@@ -66,38 +67,40 @@ X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 # Note that ``pclass`` could either be treated as a categorical or numeric
 # feature.
 
-numeric_features = ['age', 'fare']
-numeric_transformer = Pipeline(steps=[
-    ('imputer', SimpleImputer(strategy='median')),
-    ('scaler', StandardScaler())])
+numeric_features = ["age", "fare"]
+numeric_transformer = Pipeline(
+    steps=[("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())]
+)
 
-categorical_features = ['embarked', 'sex', 'pclass']
-categorical_transformer = OneHotEncoder(handle_unknown='ignore')
+categorical_features = ["embarked", "sex", "pclass"]
+categorical_transformer = OneHotEncoder(handle_unknown="ignore")
 
 preprocessor = ColumnTransformer(
     transformers=[
-        ('num', numeric_transformer, numeric_features),
-        ('cat', categorical_transformer, categorical_features)])
+        ("num", numeric_transformer, numeric_features),
+        ("cat", categorical_transformer, categorical_features),
+    ]
+)
 
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
-clf = Pipeline(steps=[('preprocessor', preprocessor),
-                      ('classifier', LogisticRegression())])
+clf = Pipeline(
+    steps=[("preprocessor", preprocessor), ("classifier", LogisticRegression())]
+)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
-                                                    random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
 
 # %%
-# HTML representation of ``Pipeline``
+# HTML representation of ``Pipeline`` (display diagram)
 ###############################################################################
 # When the ``Pipeline`` is printed out in a jupyter notebook an HTML
 # representation of the estimator is displayed as follows:
 from sklearn import set_config
 
-set_config(display='diagram')
+set_config(display="diagram")
 clf
 
 # %%
@@ -110,7 +113,7 @@ clf
 # First, let's only select a subset of columns to simplify our
 # example.
 
-subset_feature = ['embarked', 'sex', 'pclass', 'age', 'fare']
+subset_feature = ["embarked", "sex", "pclass", "age", "fare"]
 X_train, X_test = X_train[subset_feature], X_test[subset_feature]
 
 # %%
@@ -134,12 +137,15 @@ X_train.info()
 
 from sklearn.compose import make_column_selector as selector
 
-preprocessor = ColumnTransformer(transformers=[
-    ('num', numeric_transformer, selector(dtype_exclude="category")),
-    ('cat', categorical_transformer, selector(dtype_include="category"))
-])
-clf = Pipeline(steps=[('preprocessor', preprocessor),
-                      ('classifier', LogisticRegression())])
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", numeric_transformer, selector(dtype_exclude="category")),
+        ("cat", categorical_transformer, selector(dtype_include="category")),
+    ]
+)
+clf = Pipeline(
+    steps=[("preprocessor", preprocessor), ("classifier", LogisticRegression())]
+)
 
 
 clf.fit(X_train, y_train)
@@ -167,8 +173,8 @@ selector(dtype_include="category")(X_train)
 # :class:`~sklearn.model_selection.GridSearchCV`.
 
 param_grid = {
-    'preprocessor__num__imputer__strategy': ['mean', 'median'],
-    'classifier__C': [0.1, 1.0, 10, 100],
+    "preprocessor__num__imputer__strategy": ["mean", "median"],
+    "classifier__C": [0.1, 1.0, 10, 100],
 }
 
 grid_search = GridSearchCV(clf, param_grid, cv=10)
@@ -193,15 +199,23 @@ import pandas as pd
 
 cv_results = pd.DataFrame(grid_search.cv_results_)
 cv_results = cv_results.sort_values("mean_test_score", ascending=False)
-cv_results[["mean_test_score", "std_test_score",
-            "param_preprocessor__num__imputer__strategy",
-            "param_classifier__C"
-            ]].head(5)
+cv_results[
+    [
+        "mean_test_score",
+        "std_test_score",
+        "param_preprocessor__num__imputer__strategy",
+        "param_classifier__C",
+    ]
+].head(5)
 
 # %%
 # The best hyper-parameters have be used to re-fit a final model on the full
 # training set. We can evaluate that final model on held out test data that was
 # not used for hyperparameter tuning.
 #
-print(("best logistic regression from grid search: %.3f"
-       % grid_search.score(X_test, y_test)))
+print(
+    (
+        "best logistic regression from grid search: %.3f"
+        % grid_search.score(X_test, y_test)
+    )
+)

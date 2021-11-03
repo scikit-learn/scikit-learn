@@ -26,7 +26,7 @@ exclude = '''
     \.eggs         # exclude a few common directories in the
   | \.git          # root of the project
   | \.mypy_cache
-  | examples
+  | \.vscode
   | build
   | dist
   | doc/tutorial

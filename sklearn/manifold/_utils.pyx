@@ -1,5 +1,3 @@
-# cython: boundscheck=False
-
 from libc cimport math
 cimport cython
 import numpy as np

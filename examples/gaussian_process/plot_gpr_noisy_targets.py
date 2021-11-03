@@ -18,7 +18,6 @@ interval.
 Note that `alpha` is a parameter to control the strength of the Tikhonov
 regularization on the assumed training points' covariance matrix.
 """
-print(__doc__)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         Jake Vanderplas <vanderplas@astro.washington.edu>

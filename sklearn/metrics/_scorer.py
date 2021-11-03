@@ -527,13 +527,10 @@ def _check_multimetric_scoring(estimator, scoring):
         err_msg = (
             "The list/tuple elements must be unique strings of predefined scorers. "
         )
-        invalid = False
         try:
             keys = set(scoring)
-        except TypeError:
-            invalid = True
-        if invalid:
-            raise ValueError(err_msg)
+        except TypeError as e:
+            raise ValueError(err_msg) from e
 
         if len(keys) != len(scoring):
             raise ValueError(

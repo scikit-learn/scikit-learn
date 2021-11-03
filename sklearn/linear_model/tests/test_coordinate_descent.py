@@ -406,7 +406,7 @@ def _scale_alpha_inplace(estimator, n_samples):
 )
 def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # Test that linear models (LinearModel) set with normalize set to True are
-    # doing the same as the same linear model preceeded by StandardScaler
+    # doing the same as the same linear model preceded by StandardScaler
     # in the pipeline and with normalize set to False
 
     # normalize is True
@@ -567,7 +567,7 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     ],
 )
 def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
-    # Test that linear model preceeded by StandardScaler in the pipeline and
+    # Test that linear model preceded by StandardScaler in the pipeline and
     # with normalize set to False gives the same y_pred and the same .coef_
     # given X sparse or dense
 
@@ -618,9 +618,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     coef_path_cont_lars = interpolate.interp1d(
         alphas_lars[::-1], coef_path_lars[:, ::-1]
     )
-    alphas_lasso2, coef_path_lasso2, _ = lasso_path(
-        X, y, alphas=alphas, return_models=False
-    )
+    alphas_lasso2, coef_path_lasso2, _ = lasso_path(X, y, alphas=alphas)
     coef_path_cont_lasso = interpolate.interp1d(
         alphas_lasso2[::-1], coef_path_lasso2[:, ::-1]
     )
@@ -1113,9 +1111,19 @@ def test_sparse_dense_descent_paths():
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
     csr = sparse.csr_matrix(X)
     for path in [enet_path, lasso_path]:
-        _, coefs, _ = path(X, y, fit_intercept=False)
-        _, sparse_coefs, _ = path(csr, y, fit_intercept=False)
+        _, coefs, _ = path(X, y)
+        _, sparse_coefs, _ = path(csr, y)
         assert_array_almost_equal(coefs, sparse_coefs)
+
+
+@pytest.mark.parametrize("path_func", [enet_path, lasso_path])
+def test_path_unknown_parameter(path_func):
+    """Check that passing parameter not used by the coordinate descent solver
+    will raise an error."""
+    X, y, _, _ = build_dataset(n_samples=50, n_features=20)
+    err_msg = "Unexpected parameters in params"
+    with pytest.raises(ValueError, match=err_msg):
+        path_func(X, y, normalize=True, fit_intercept=True)
 
 
 def test_check_input_false():
@@ -1522,8 +1530,7 @@ def test_enet_cv_sample_weight_correctness(fit_intercept):
     assert alphas[0] < reg.alpha_ < alphas[-1]
     assert reg_sw.alpha_ == reg.alpha_
     assert_allclose(reg_sw.coef_, reg.coef_)
-    if fit_intercept is not None:
-        assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
+    assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
 
 
 @pytest.mark.parametrize("sample_weight", [False, True])

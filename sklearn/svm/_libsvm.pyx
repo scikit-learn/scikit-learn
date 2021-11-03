@@ -18,10 +18,7 @@ where no sort of memory checks are done.
 
 Notes
 -----
-Maybe we could speed it a bit further by decorating functions with
-@cython.boundscheck(False), but probably it is not worth since all
-work is done in lisvm_helper.c
-Also, the signature mode='c' is somewhat superficial, since we already
+The signature mode='c' is somewhat superficial, since we already
 check that arrays are C-contiguous in svm.py
 
 Authors

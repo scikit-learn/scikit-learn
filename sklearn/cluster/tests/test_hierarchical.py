@@ -14,9 +14,10 @@ from functools import partial
 import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
+from scipy.sparse.csgraph import connected_components
 
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.neighbors.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
+from sklearn.metrics.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
 from sklearn.utils._testing import assert_almost_equal, create_memmap_backed_data
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
@@ -30,6 +31,7 @@ from sklearn.cluster._agglomerative import (
     _fix_connectivity,
 )
 from sklearn.feature_extraction.image import grid_to_graph
+from sklearn.metrics import DistanceMetric
 from sklearn.metrics.pairwise import (
     PAIRED_DISTANCES,
     cosine_distances,
@@ -37,7 +39,7 @@ from sklearn.metrics.pairwise import (
     pairwise_distances,
 )
 from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.neighbors import kneighbors_graph, DistanceMetric
+from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster._hierarchical_fast import (
     average_merge,
     max_merge,
@@ -870,3 +872,42 @@ def test_invalid_shape_precomputed_dist_matrix():
     X = rng.rand(5, 3)
     with pytest.raises(ValueError, match="Distance matrix should be square, "):
         AgglomerativeClustering(affinity="precomputed", linkage="complete").fit(X)
+
+
+def test_precomputed_connectivity_affinity_with_2_connected_components():
+    """Check that connecting components works when connectivity and
+    affinity are both precomputed and the number of connected components is
+    greater than 1. Non-regression test for #16151.
+    """
+
+    connectivity_matrix = np.array(
+        [
+            [0, 1, 1, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0],
+        ]
+    )
+    # ensure that connectivity_matrix has two connected components
+    assert connected_components(connectivity_matrix)[0] == 2
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(5, 10)
+
+    X_dist = pairwise_distances(X)
+    clusterer_precomputed = AgglomerativeClustering(
+        affinity="precomputed", connectivity=connectivity_matrix, linkage="complete"
+    )
+    msg = "Completing it to avoid stopping the tree early"
+    with pytest.warns(UserWarning, match=msg):
+        clusterer_precomputed.fit(X_dist)
+
+    clusterer = AgglomerativeClustering(
+        connectivity=connectivity_matrix, linkage="complete"
+    )
+    with pytest.warns(UserWarning, match=msg):
+        clusterer.fit(X)
+
+    assert_array_equal(clusterer.labels_, clusterer_precomputed.labels_)
+    assert_array_equal(clusterer.children_, clusterer_precomputed.children_)
