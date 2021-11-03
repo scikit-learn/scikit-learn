@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn._config.config_context",
     "sklearn._config.get_config",
     "sklearn.base.clone",
     "sklearn.cluster._affinity_propagation.affinity_propagation",
@@ -143,7 +142,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.laplacian_kernel",
-    "sklearn.metrics.pairwise.linear_kernel",
     "sklearn.metrics.pairwise.manhattan_distances",
     "sklearn.metrics.pairwise.nan_euclidean_distances",
     "sklearn.metrics.pairwise.paired_cosine_distances",
@@ -178,7 +176,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
     "sklearn.utils.check_pandas_support",
-    "sklearn.utils.extmath.cartesian",
     "sklearn.utils.extmath.density",
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_range_finder",
@@ -220,7 +217,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.mean_variance_axis",
     "sklearn.utils.sparsefuncs.min_max_axis",
     "sklearn.utils.tosequence",
-    "sklearn.utils.validation.as_float_array",
     "sklearn.utils.validation.assert_all_finite",
     "sklearn.utils.validation.check_is_fitted",
     "sklearn.utils.validation.check_memory",

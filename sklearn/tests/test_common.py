@@ -412,7 +412,6 @@ VALIDATE_ESTIMATOR_INIT = [
     "GridSearchCV",
     "HalvingGridSearchCV",
     "KernelPCA",
-    "LabelBinarizer",
     "NuSVC",
     "NuSVR",
     "OneClassSVM",

@@ -1954,64 +1954,60 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     Parameters
     ----------
-    nu : float, optional
+    nu : float, default=0.5
         The nu parameter of the One Class SVM: an upper bound on the
         fraction of training errors and a lower bound of the fraction of
         support vectors. Should be in the interval (0, 1]. By default 0.5
         will be taken.
 
-    fit_intercept : bool
+    fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. Defaults to True.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         `partial_fit`. Defaults to 1000.
 
-    tol : float or None, optional
+    tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol). Defaults to 1e-3.
 
-    shuffle : bool, optional
+    shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : int, optional
+    verbose : int, default=0
         The verbosity level.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    learning_rate : str, optional
+    learning_rate : {'constant', 'optimal', 'invscaling', 'adaptive'}, default='optimal'
         The learning rate schedule to use with `fit`. (If using `partial_fit`,
         learning rate must be controlled directly).
 
-        'constant':
-            eta = eta0
-        'optimal': [default]
-            eta = 1.0 / (alpha * (t + t0))
-            where t0 is chosen by a heuristic proposed by Leon Bottou.
-        'invscaling':
-            eta = eta0 / pow(t, power_t)
-        'adaptive':
-            eta = eta0, as long as the training keeps decreasing.
-            Each time n_iter_no_change consecutive epochs fail to decrease the
-            training loss by tol or fail to increase validation score by tol if
-            early_stopping is True, the current learning rate is divided by 5.
+        - 'constant': `eta = eta0`
+        - 'optimal': `eta = 1.0 / (alpha * (t + t0))`
+          where t0 is chosen by a heuristic proposed by Leon Bottou.
+        - 'invscaling': `eta = eta0 / pow(t, power_t)`
+        - 'adaptive': eta = eta0, as long as the training keeps decreasing.
+          Each time n_iter_no_change consecutive epochs fail to decrease the
+          training loss by tol or fail to increase validation score by tol if
+          early_stopping is True, the current learning rate is divided by 5.
 
-    eta0 : float
+    eta0 : float, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
 
-    power_t : float
+    power_t : float, default=0.5
         The exponent for inverse scaling learning rate [default 0.5].
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
@@ -2024,7 +2020,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         this counter, while ``partial_fit``  will result in increasing the
         existing counter.
 
-    average : bool or int, optional
+    average : bool or int, default=False
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
@@ -2033,10 +2029,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (1, n_features)
+    coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features.
 
-    offset_ : array, shape (1,)
+    offset_ : ndarray of shape (1,)
         Offset used to define the decision function from the raw scores.
         We have the relation: decision_function = score_samples - offset.
 
