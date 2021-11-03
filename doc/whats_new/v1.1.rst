@@ -162,6 +162,15 @@ Changelog
   ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
   array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
+:mod:`sklearn.random_projection`
+................................
+
+- |API| Adds :term:`get_feature_names_out` to all transformers in the
+  :mod:`~sklearn.random_projection` module:
+  :class:`~sklearn.random_projection.GaussianRandomProjection` and
+  :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
+  :user:`Loïc Estève <lesteve>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
