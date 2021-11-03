@@ -4,6 +4,7 @@ import numpy as np
 from scipy.linalg import block_diag
 from scipy.sparse import csr_matrix
 from scipy.special import psi
+from numpy.testing import assert_array_equal
 
 import pytest
 
@@ -427,3 +428,14 @@ def check_verbosity(verbose, evaluate_every, expected_lines, expected_perplexiti
 )
 def test_verbosity(verbose, evaluate_every, expected_lines, expected_perplexities):
     check_verbosity(verbose, evaluate_every, expected_lines, expected_perplexities)
+
+
+def test_lda_feature_names_out():
+    """Check feature names out for LatentDirichletAllocation."""
+    n_components, X = _build_sparse_mtx()
+    lda = LatentDirichletAllocation(n_components=n_components).fit(X)
+
+    names = lda.get_feature_names_out()
+    assert_array_equal(
+        [f"latentdirichletallocation{i}" for i in range(n_components)], names
+    )

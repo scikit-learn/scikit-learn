@@ -1277,7 +1277,7 @@ def test_missing_indicator_with_imputer(X, missing_values, X_trans_exp):
 @pytest.mark.parametrize(
     "imputer_missing_values, missing_value, err_msg",
     [
-        ("NaN", np.nan, "Input contains NaN"),
+        ("NaN", np.nan, "Input X contains NaN"),
         ("-1", -1, "types are expected to be both numerical."),
     ],
 )
