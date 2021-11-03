@@ -33,6 +33,11 @@ def _assert_array_equal_and_same_dtype(x, y):
     assert x.dtype == y.dtype
 
 
+def _assert_allclose_and_same_dtype(x, y):
+    assert_allclose(x, y)
+    assert x.dtype == y.dtype
+
+
 def _check_statistics(X, X_true, strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
 
@@ -1520,34 +1525,41 @@ def test_simple_impute_pd_na():
     # Impute pandas array of integer types.
     df = pd.DataFrame({"feature": pd.Series([1, None, 3], dtype="Int64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-1)
-    _assert_array_equal_and_same_dtype(
+    _assert_allclose_and_same_dtype(
         imputer.fit_transform(df), np.array([[1], [-1], [3]], dtype="float64")
     )
 
     # Use `np.nan` also works.
     imputer = SimpleImputer(missing_values=np.nan, strategy="constant", fill_value=-1)
-    _assert_array_equal_and_same_dtype(
+    _assert_allclose_and_same_dtype(
         imputer.fit_transform(df), np.array([[1], [-1], [3]], dtype="float64")
     )
 
     # Impute pandas array of integer types with 'median' strategy.
     df = pd.DataFrame({"feature": pd.Series([1, None, 2, 3], dtype="Int64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
-    _assert_array_equal_and_same_dtype(
+    _assert_allclose_and_same_dtype(
         imputer.fit_transform(df), np.array([[1], [2], [2], [3]], dtype="float64")
+    )
+
+    # Impute pandas array of integer types with 'mean' strategy.
+    df = pd.DataFrame({"feature": pd.Series([1, None, 2], dtype="Int64")})
+    imputer = SimpleImputer(missing_values=pd.NA, strategy="mean")
+    _assert_allclose_and_same_dtype(
+        imputer.fit_transform(df), np.array([[1], [1.5], [2]], dtype="float64")
     )
 
     # Impute pandas array of float types.
     df = pd.DataFrame({"feature": pd.Series([1.0, None, 3.0], dtype="float64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-2.0)
-    _assert_array_equal_and_same_dtype(
+    _assert_allclose_and_same_dtype(
         imputer.fit_transform(df), np.array([[1.0], [-2.0], [3.0]], dtype="float64")
     )
 
     # Impute pandas array of float types with 'median' strategy.
     df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="float64")})
     imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
-    _assert_array_equal_and_same_dtype(
+    _assert_allclose_and_same_dtype(
         imputer.fit_transform(df),
         np.array([[1.0], [2.0], [2.0], [3.0]], dtype="float64"),
     )
