@@ -425,8 +425,8 @@ def test_kbinsdiscretizer_subsample_values(subsample):
         with pytest.raises(ValueError, match="subsample == 0, must be >= 1."):
             kbd_with_subsampling.fit(X)
     else:
-        # TODO: Remove in 1.2
-        msg = "In version 1.2 onwards, subsample=2e5 will be used by default."
+        # TODO: Remove in 1.3
+        msg = "In version 1.3 onwards, subsample=2e5 will be used by default."
         with pytest.warns(FutureWarning, match=msg):
             kbd_default.fit(X)
 
