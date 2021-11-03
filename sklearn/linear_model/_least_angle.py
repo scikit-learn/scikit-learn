@@ -2029,7 +2029,7 @@ class LassoLarsIC(LassoLars):
     noise_variance : float, default=None
         The estimated noise variance of the data. If `None`, we will compute
         an unbiased estimate using an OLS model. However, it is only possible
-        in the case `n_samples > n_features`.
+        in the case `n_samples > n_features + fit_intercept`.
 
         .. versionadded:: 1.1
 
@@ -2259,7 +2259,7 @@ class LassoLarsIC(LassoLars):
         noise_variance : float
             An estimator of the noise variance of an OLS model.
         """
-        if X.shape[0] <= X.shape[1]:
+        if X.shape[0] <= X.shape[1] + self.fit_intercept:
             raise ValueError(
                 f"You are using {self.__class__.__name__} in the case where the number "
                 "of samples is smaller than the number of features. In this setting, "
@@ -2269,4 +2269,4 @@ class LassoLarsIC(LassoLars):
             )
         ols_model = LinearRegression(positive=positive, fit_intercept=False)
         y_pred = ols_model.fit(X, y).predict(X)
-        return np.sum((y - y_pred) ** 2) / (X.shape[0] - X.shape[1])
+        return np.sum((y - y_pred) ** 2) / (X.shape[0] - X.shape[1] - self.fit_intercept)
