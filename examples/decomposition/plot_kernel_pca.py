@@ -85,7 +85,7 @@ pca_proj_ax.set_title("Projection of testing data\n using PCA")
 kernel_pca_proj_ax.scatter(X_test_kernel_pca[:, 0], X_test_kernel_pca[:, 1], c=y_test)
 kernel_pca_proj_ax.set_ylabel("Principal component #1")
 kernel_pca_proj_ax.set_xlabel("Principal component #0")
-kernel_pca_proj_ax.set_title("Projection of testing data\n using KernelPCA")
+_ = kernel_pca_proj_ax.set_title("Projection of testing data\n using KernelPCA")
 
 # %%
 # We recall that PCA transforms the data linearly. Intuitively, it means that
