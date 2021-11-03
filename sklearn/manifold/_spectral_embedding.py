@@ -634,7 +634,8 @@ class SpectralEmbedding(BaseEstimator):
                 raise ValueError(
                     "%s is not a valid affinity. Expected "
                     "'precomputed', 'rbf', 'nearest_neighbors' "
-                    "or a callable." % self.affinity
+                    "or a callable."
+                    % self.affinity
                 )
         elif not callable(self.affinity):
             raise ValueError(
