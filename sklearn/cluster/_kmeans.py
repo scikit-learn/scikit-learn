@@ -908,10 +908,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
            [ 1.,  2.]])
     """
 
-    def __init__(
-        self,
-        n_clusters=8,
-        *,
+    def __init__(self, n_clusters=8, *,
         init="k-means++",
         n_init=10,
         max_iter=300,
