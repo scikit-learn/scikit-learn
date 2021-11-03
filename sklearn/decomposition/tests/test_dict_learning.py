@@ -409,7 +409,12 @@ def test_dict_learning_online_verbosity():
         )
         dico.fit(X)
         dico = MiniBatchDictionaryLearning(
-            n_components, batch_size=4, max_iter=5, verbose=1, max_no_improvement=2, random_state=0
+            n_components,
+            batch_size=4,
+            max_iter=5,
+            verbose=1,
+            max_no_improvement=2,
+            random_state=0,
         )
         dico.fit(X)
         # higher verbosity level
