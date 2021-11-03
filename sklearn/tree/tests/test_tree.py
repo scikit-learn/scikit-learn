@@ -2212,12 +2212,11 @@ def test_different_endianness_pickle():
     assert np.isclose(score, new_score)
 
 
+@pytest.mark.skipif(
+    parse_version(joblib.__version__) < parse_version("1.1"),
+    reason="joblib >= 1.1 is needed to load numpy arrays in native endianness",
+)
 def test_different_endianness_joblib_pickle():
-    if parse_version(joblib.__version__) < parse_version("1.1"):
-        pytest.skip(
-            "joblib >= 1.1 is needed to load numpy arrays in native endianness"
-        )
-
     X, y = datasets.make_classification(random_state=0)
 
     clf = DecisionTreeClassifier(random_state=0, max_depth=3)
