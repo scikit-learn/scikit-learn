@@ -703,6 +703,21 @@ def test_svm_gamma_error(Estimator, data):
         est.fit(X, y)
 
 
+@pytest.mark.parametrize(
+    'Estimator, data',
+    [(svm.SVC, datasets.load_iris(return_X_y=True)),
+     (svm.NuSVC, datasets.load_iris(return_X_y=True)),
+     (svm.SVR, datasets.load_diabetes(return_X_y=True)),
+     (svm.NuSVR, datasets.load_diabetes(return_X_y=True)),
+     (svm.OneClassSVM, datasets.load_iris(return_X_y=True))]
+)
+def test_svm_gamma_warning_with_linear_kernel(Estimator, data):
+    est = Estimator(kernel='linear', gamma=1.0)
+    warn_msg = "Setting 'gamma' when using 'linear' kernel"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        est.fit(*data)
+
+
 def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError
     clf = svm.SVC(kernel="linear", probability=True)

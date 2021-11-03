@@ -245,6 +245,12 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                     "'auto'. Got '{}' instead.".format(self.gamma)
                 )
         else:
+            if self.kernel == 'linear':
+                warnings.warn(
+                    "Setting 'gamma' when using 'linear' kernel may raise a "
+                    "`ValueError` starting in version 1.1 (renaming of 0.26).",
+                    FutureWarning
+                )
             self._gamma = self.gamma
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
