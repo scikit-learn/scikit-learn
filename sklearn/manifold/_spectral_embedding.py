@@ -315,6 +315,7 @@ def spectral_embedding(
         # problem.
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
+        laplacian = check_array(laplacian, dtype=[np.float64, np.float32], accept_sparse=True)
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # The Laplacian matrix is always singular, having at least one zero
@@ -344,6 +345,7 @@ def spectral_embedding(
             raise ValueError
 
     if eigen_solver == "lobpcg":
+        laplacian = check_array(laplacian, dtype=[np.float64, np.float32], accept_sparse=True)
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
