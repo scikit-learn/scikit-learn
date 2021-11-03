@@ -2191,6 +2191,7 @@ def test_different_endianness_pickle():
 
     clf = DecisionTreeClassifier(random_state=0, max_depth=3)
     clf.fit(X, y)
+    score = clf.score(X, y)
 
     def reduce_ndarray(arr):
         return arr.byteswap().newbyteorder().__reduce__()
@@ -2201,11 +2202,13 @@ def test_different_endianness_pickle():
         p.dispatch_table = copyreg.dispatch_table.copy()
         p.dispatch_table[np.ndarray] = reduce_ndarray
 
-        p.dump(clf.tree_)
+        p.dump(clf)
         f.seek(0)
         return f
 
-    pickle.load(get_pickle_non_native_endianness())
+    new_clf = pickle.load(get_pickle_non_native_endianness())
+    new_score = new_clf.score(X, y)
+    assert np.isclose(score, new_score)
 
 
 def test_different_endianness_joblib_pickle():
@@ -2213,8 +2216,9 @@ def test_different_endianness_joblib_pickle():
 
     clf = DecisionTreeClassifier(random_state=0, max_depth=3)
     clf.fit(X, y)
+    score = clf.score(X, y)
 
-    class MyNumpyPickler(NumpyPickler):
+    class NonNativeEndiannessNumpyPickler(NumpyPickler):
         def save(self, obj):
             if isinstance(obj, np.ndarray):
                 obj = obj.byteswap().newbyteorder()
@@ -2222,10 +2226,12 @@ def test_different_endianness_joblib_pickle():
 
     def get_joblib_pickle_non_native_endianness():
         f = io.BytesIO()
-        p = MyNumpyPickler(f)
+        p = NonNativeEndiannessNumpyPickler(f)
 
-        p.dump(clf.tree_)
+        p.dump(clf)
         f.seek(0)
         return f
 
-    joblib.load(get_joblib_pickle_non_native_endianness())
+    new_clf = joblib.load(get_joblib_pickle_non_native_endianness())
+    new_score = new_clf.score(X, y)
+    assert np.isclose(score, new_score)
