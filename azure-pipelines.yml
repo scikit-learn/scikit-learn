@@ -165,7 +165,6 @@ jobs:
         JOBLIB_VERSION: 'min'
         PANDAS_VERSION: 'none'
         THREADPOOLCTL_VERSION: 'min'
-        COVERAGE: 'true'
       # Linux + Python 3.7 build with OpenBLAS and without SITE_JOBLIB
       py37_conda_defaults_openblas:
         DISTRIB: 'conda'
@@ -176,6 +175,7 @@ jobs:
         SCIPY_VERSION: 'min'
         MATPLOTLIB_VERSION: 'min'
         THREADPOOLCTL_VERSION: '2.2.0'
+        COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:

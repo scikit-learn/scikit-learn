@@ -2,16 +2,14 @@
 
 set -e
 
-if [[ "$DISTRIB" =~ ^conda.* ]]; then
-    source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "ubuntu-32" ]]; then
-    source $VIRTUALENV/bin/activate
-fi
+# called when COVERAGE=="true" and DISTRIB=="conda"
+export PATH=$HOME/miniconda3/bin:$PATH
+source activate $VIRTUALENV
 
 # Need to run codecov from a git checkout, so we copy .coverage
 # from TEST_DIR where pytest has been run
 pushd $TEST_DIR
-COVERAGE_DEBUG=True coverage combine --append
+coverage combine --append
 popd
 
 cp $TEST_DIR/.coverage $BUILD_REPOSITORY_LOCALPATH
