@@ -36,6 +36,8 @@ from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
 
+from ._dist_metrics import DistanceMetric
+
 from . import cluster
 from .cluster import adjusted_mutual_info_score
 from .cluster import adjusted_rand_score
@@ -74,6 +76,7 @@ from ._regression import r2_score
 from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
 from ._regression import mean_gamma_deviance
+from ._regression import d2_tweedie_score
 
 
 from ._scorer import check_scoring
@@ -109,10 +112,12 @@ __all__ = [
     "confusion_matrix",
     "consensus_score",
     "coverage_error",
+    "d2_tweedie_score",
     "dcg_score",
     "davies_bouldin_score",
     "DetCurveDisplay",
     "det_curve",
+    "DistanceMetric",
     "euclidean_distances",
     "explained_variance_score",
     "f1_score",

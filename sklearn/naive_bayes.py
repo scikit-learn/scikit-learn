@@ -71,11 +71,12 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
         C : ndarray of shape (n_samples,)
-            Predicted target values for X
+            Predicted target values for X.
         """
         check_is_fitted(self)
         X = self._check_X(X)
@@ -89,6 +90,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -111,6 +113,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -124,7 +127,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
 class GaussianNB(_BaseNB):
     """
-    Gaussian Naive Bayes (GaussianNB)
+    Gaussian Naive Bayes (GaussianNB).
 
     Can perform online updates to model parameters via :meth:`partial_fit`.
     For details on algorithm used to update feature means and variance online,
@@ -165,6 +168,12 @@ class GaussianNB(_BaseNB):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     sigma_ : ndarray of shape (n_classes, n_features)
         Variance of each feature per class.
 
@@ -179,6 +188,13 @@ class GaussianNB(_BaseNB):
 
     theta_ : ndarray of shape (n_classes, n_features)
         mean of each feature per class.
+
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : Complement Naive Bayes classifier.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
 
     Examples
     --------
@@ -203,13 +219,13 @@ class GaussianNB(_BaseNB):
         self.var_smoothing = var_smoothing
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Gaussian Naive Bayes according to X, y
+        """Fit Gaussian Naive Bayes according to X, y.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -223,8 +239,9 @@ class GaussianNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
-        X, y = self._validate_data(X, y)
+        y = self._validate_data(y=y)
         return self._partial_fit(
             X, y, np.unique(y), _refit=True, sample_weight=sample_weight
         )
@@ -323,8 +340,8 @@ class GaussianNB(_BaseNB):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -343,6 +360,7 @@ class GaussianNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return self._partial_fit(
             X, y, classes, _refit=False, sample_weight=sample_weight
@@ -354,8 +372,8 @@ class GaussianNB(_BaseNB):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -558,8 +576,8 @@ class _BaseDiscreteNB(_BaseNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -576,6 +594,7 @@ class _BaseDiscreteNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         first_call = not hasattr(self, "classes_")
         X, y = self._check_X_y(X, y, reset=first_call)
@@ -622,13 +641,13 @@ class _BaseDiscreteNB(_BaseNB):
         return self
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Naive Bayes classifier according to X, y
+        """Fit Naive Bayes classifier according to X, y.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -639,6 +658,7 @@ class _BaseDiscreteNB(_BaseNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X, y = self._check_X_y(X, y)
         _, n_features = X.shape
@@ -719,7 +739,7 @@ class _BaseDiscreteNB(_BaseNB):
 
 class MultinomialNB(_BaseDiscreteNB):
     """
-    Naive Bayes classifier for multinomial models
+    Naive Bayes classifier for multinomial models.
 
     The multinomial Naive Bayes classifier is suitable for classification with
     discrete features (e.g., word counts for text classification). The
@@ -791,18 +811,18 @@ class MultinomialNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(1)
-    >>> X = rng.randint(5, size=(6, 100))
-    >>> y = np.array([1, 2, 3, 4, 5, 6])
-    >>> from sklearn.naive_bayes import MultinomialNB
-    >>> clf = MultinomialNB()
-    >>> clf.fit(X, y)
-    MultinomialNB()
-    >>> print(clf.predict(X[2:3]))
-    [3]
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : Complement Naive Bayes classifier.
+    GaussianNB : Gaussian Naive Bayes.
 
     Notes
     -----
@@ -815,6 +835,19 @@ class MultinomialNB(_BaseDiscreteNB):
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> from sklearn.naive_bayes import MultinomialNB
+    >>> clf = MultinomialNB()
+    >>> clf.fit(X, y)
+    MultinomialNB()
+    >>> print(clf.predict(X[2:3]))
+    [3]
     """
 
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
@@ -925,6 +958,26 @@ class ComplementNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    GaussianNB : Gaussian Naive Bayes.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
+
+    References
+    ----------
+    Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
+    Tackling the poor assumptions of naive bayes text classifiers. In ICML
+    (Vol. 3, pp. 616-623).
+    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
+
     Examples
     --------
     >>> import numpy as np
@@ -937,13 +990,6 @@ class ComplementNB(_BaseDiscreteNB):
     ComplementNB()
     >>> print(clf.predict(X[2:3]))
     [3]
-
-    References
-    ----------
-    Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
-    Tackling the poor assumptions of naive bayes text classifiers. In ICML
-    (Vol. 3, pp. 616-623).
-    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None, norm=False):
@@ -1049,18 +1095,19 @@ class BernoulliNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(1)
-    >>> X = rng.randint(5, size=(6, 100))
-    >>> Y = np.array([1, 2, 3, 4, 4, 5])
-    >>> from sklearn.naive_bayes import BernoulliNB
-    >>> clf = BernoulliNB()
-    >>> clf.fit(X, Y)
-    BernoulliNB()
-    >>> print(clf.predict(X[2:3]))
-    [3]
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : The Complement Naive Bayes classifier
+        described in Rennie et al. (2003).
+    GaussianNB : Gaussian Naive Bayes (GaussianNB).
+    MultinomialNB : Naive Bayes classifier for multinomial models.
 
     References
     ----------
@@ -1074,6 +1121,19 @@ class BernoulliNB(_BaseDiscreteNB):
 
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> Y = np.array([1, 2, 3, 4, 4, 5])
+    >>> from sklearn.naive_bayes import BernoulliNB
+    >>> clf = BernoulliNB()
+    >>> clf.fit(X, Y)
+    BernoulliNB()
+    >>> print(clf.predict(X[2:3]))
+    [3]
     """
 
     def __init__(self, *, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None):
@@ -1129,7 +1189,7 @@ class BernoulliNB(_BaseDiscreteNB):
 
 
 class CategoricalNB(_BaseDiscreteNB):
-    """Naive Bayes classifier for categorical features
+    """Naive Bayes classifier for categorical features.
 
     The categorical Naive Bayes classifier is suitable for classification with
     discrete features that are categorically distributed. The categories of
@@ -1197,11 +1257,24 @@ class CategoricalNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_categories_ : ndarray of shape (n_features,), dtype=np.int64
         Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
 
         .. versionadded:: 0.24
+
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    ComplementNB : Complement Naive Bayes classifier.
+    GaussianNB : Gaussian Naive Bayes.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
 
     Examples
     --------
@@ -1226,13 +1299,13 @@ class CategoricalNB(_BaseDiscreteNB):
         self.min_categories = min_categories
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Naive Bayes classifier according to X, y
+        """Fit Naive Bayes classifier according to X, y.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features. Here, each feature of X is
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. Here, each feature of X is
             assumed to be from a different categorical distribution.
             It is further assumed that all categories of each feature are
             represented by the numbers 0, ..., n - 1, where n refers to the
@@ -1248,6 +1321,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return super().fit(X, y, sample_weight=sample_weight)
 
@@ -1268,8 +1342,8 @@ class CategoricalNB(_BaseDiscreteNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features. Here, each feature of X is
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. Here, each feature of X is
             assumed to be from a different categorical distribution.
             It is further assumed that all categories of each feature are
             represented by the numbers 0, ..., n - 1, where n refers to the
@@ -1291,6 +1365,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 

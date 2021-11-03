@@ -24,7 +24,6 @@ distributions.
 We will illustrate these differences with an example and we will also focus on
 tuning the kernel hyperparameters.
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
@@ -134,8 +133,7 @@ kernel_ridge = KernelRidge(kernel=ExpSineSquared())
 start_time = time.time()
 kernel_ridge.fit(training_data, training_noisy_target)
 print(
-    f"Fitting KernelRidge with default kernel: "
-    f"{time.time() - start_time:.3f} seconds"
+    f"Fitting KernelRidge with default kernel: {time.time() - start_time:.3f} seconds"
 )
 
 # %%
@@ -258,8 +256,7 @@ gaussian_process = GaussianProcessRegressor(kernel=kernel)
 start_time = time.time()
 gaussian_process.fit(training_data, training_noisy_target)
 print(
-    f"Time for GaussianProcessRegressor fitting: "
-    f"{time.time() - start_time:.3f} seconds"
+    f"Time for GaussianProcessRegressor fitting: {time.time() - start_time:.3f} seconds"
 )
 
 # %%
@@ -279,8 +276,7 @@ mean_predictions_gpr, std_predictions_gpr = gaussian_process.predict(
     return_std=True,
 )
 print(
-    f"Time for GaussianProcessRegressor predict: "
-    f"{time.time() - start_time:.3f} seconds"
+    f"Time for GaussianProcessRegressor predict: {time.time() - start_time:.3f} seconds"
 )
 
 # %%

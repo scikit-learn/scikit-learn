@@ -13,7 +13,7 @@ from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils.extmath import row_norms
-from ..utils import deprecated
+from ..utils import check_scalar, deprecated
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
@@ -416,6 +416,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     MiniBatchKMeans : Alternative implementation that does incremental updates
@@ -474,7 +480,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "`fit_` is deprecated in 1.0 and will be removed in 1.2"
+        "`fit_` is deprecated in 1.0 and will be removed in 1.2."
     )
     @property
     def fit_(self):
@@ -483,7 +489,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2"
+        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2."
     )
     @property
     def partial_fit_(self):
@@ -506,6 +512,30 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
+
+        # Validating the scalar parameters.
+        check_scalar(
+            self.threshold,
+            "threshold",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+        check_scalar(
+            self.branching_factor,
+            "branching_factor",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="neither",
+        )
+        if isinstance(self.n_clusters, numbers.Number):
+            check_scalar(
+                self.n_clusters,
+                "n_clusters",
+                target_type=numbers.Integral,
+                min_val=1,
+            )
+
         # TODO: Remove deprected flags in 1.2
         self._deprecated_fit, self._deprecated_partial_fit = True, False
         return self._fit(X, partial=False)
@@ -520,8 +550,6 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         threshold = self.threshold
         branching_factor = self.branching_factor
 
-        if branching_factor <= 1:
-            raise ValueError("Branching_factor should be greater than one.")
         n_samples, n_features = X.shape
 
         # If partial_fit is called for the first time or fit is called, we
@@ -610,7 +638,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        # TODO: Remove deprected flags in 1.2
+        # TODO: Remove deprecated flags in 1.2
         self._deprecated_partial_fit, self._deprecated_fit = True, False
         if X is None:
             # Perform just the final global clustering step.
@@ -694,7 +722,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             if len(centroids) < self.n_clusters:
                 not_enough_centroids = True
         elif clusterer is not None and not hasattr(clusterer, "fit_predict"):
-            raise ValueError(
+            raise TypeError(
                 "n_clusters should be an instance of ClusterMixin or an int"
             )
 

@@ -15,6 +15,7 @@ the lower the better.
 #          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
+#          Michal Karbownik <michakarbownik@gmail.com>
 # License: BSD 3 clause
 
 
@@ -209,7 +210,7 @@ def average_precision_score(
         # guaranteed to be 1, as returned by precision_recall_curve
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type == "multilabel-indicator" and pos_label != 1:
         raise ValueError(
             "Parameter pos_label is fixed to 1 for "
@@ -280,7 +281,10 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     See Also
     --------
-    plot_det_curve : Plot detection error tradeoff (DET) curve.
+    DetCurveDisplay.from_estimator : Plot DET curve given an estimator and
+        some data.
+    DetCurveDisplay.from_predictions : Plot DET curve given the true and
+        predicted labels.
     DetCurveDisplay : DET curve visualization.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
     precision_recall_curve : Compute precision-recall curve.
@@ -490,7 +494,10 @@ def roc_auc_score(
     --------
     average_precision_score : Area under the precision-recall curve.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
 
     Examples
     --------
@@ -516,6 +523,7 @@ def roc_auc_score(
 
     Multilabel case:
 
+    >>> import numpy as np
     >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
     >>> X, y = make_multilabel_classification(random_state=0)
@@ -533,7 +541,7 @@ def roc_auc_score(
     array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
     """
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_score = check_array(y_score, ensure_2d=False)
 
@@ -718,7 +726,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         Decreasing score values.
     """
     # Check to make sure y_true is valid
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
@@ -823,9 +831,10 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     See Also
     --------
-    plot_precision_recall_curve : Plot Precision Recall Curve for binary
-        classifiers.
-    PrecisionRecallDisplay : Precision Recall visualization.
+    PrecisionRecallDisplay.from_estimator : Plot Precision Recall Curve given
+        a binary classifier.
+    PrecisionRecallDisplay.from_predictions : Plot Precision Recall Curve
+        using predictions from a binary classifier.
     average_precision_score : Compute average precision from prediction scores.
     det_curve: Compute error rates for different probability thresholds.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
@@ -914,8 +923,10 @@ def roc_curve(
 
     See Also
     --------
-    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
-    RocCurveDisplay : ROC Curve visualization.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
     det_curve: Compute error rates for different probability thresholds.
     roc_auc_score : Compute the area under the ROC curve.
 
@@ -1048,7 +1059,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
         raise ValueError("y_true and y_score have different shape")
 
     # Handle badly formatted array and the degenerate case with one label
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "multilabel-indicator" and not (
         y_type == "binary" and y_true.ndim == 2
     ):
@@ -1129,7 +1140,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "multilabel-indicator":
         raise ValueError("{0} format is not supported".format(y_type))
 
@@ -1187,7 +1198,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type not in ("multilabel-indicator",):
         raise ValueError("{0} format is not supported".format(y_type))
 
@@ -1246,7 +1257,7 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         "decision_function" on some classifiers).
 
     k : int, default=None
-        Only consider the highest k scores in the ranking. If None, use all
+        Only consider the highest k scores in the ranking. If `None`, use all
         outputs.
 
     log_base : float, default=2
@@ -1334,7 +1345,7 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
 
 
 def _check_dcg_target_type(y_true):
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     supported_fmt = (
         "multilabel-indicator",
         "continuous-multioutput",
@@ -1382,7 +1393,7 @@ def dcg_score(
         sharper discount (top results are more important).
 
     sample_weight : ndarray of shape (n_samples,), default=None
-        Sample weights. If None, all samples are given the same weight.
+        Sample weights. If `None`, all samples are given the same weight.
 
     ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
@@ -1419,6 +1430,7 @@ def dcg_score(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import dcg_score
     >>> # we have groud-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
@@ -1529,11 +1541,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         "decision_function" on some classifiers).
 
     k : int, default=None
-        Only consider the highest k scores in the ranking. If None, use all
+        Only consider the highest k scores in the ranking. If `None`, use all
         outputs.
 
     sample_weight : ndarray of shape (n_samples,), default=None
-        Sample weights. If None, all samples are given the same weight.
+        Sample weights. If `None`, all samples are given the same weight.
 
     ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
@@ -1568,6 +1580,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import ndcg_score
     >>> # we have groud-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
@@ -1684,7 +1697,7 @@ def top_k_accuracy_score(
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type == "binary" and labels is not None and len(labels) > 2:
         y_type = "multiclass"
     y_score = check_array(y_score, ensure_2d=False)

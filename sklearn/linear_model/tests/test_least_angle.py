@@ -383,9 +383,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     y = y.squeeze()
     lars_alphas, _, lars_coef = linear_model.lars_path(X, y, method="lasso")
 
-    _, lasso_coef2, _ = linear_model.lasso_path(
-        X, y, alphas=lars_alphas, tol=1e-6, fit_intercept=False
-    )
+    _, lasso_coef2, _ = linear_model.lasso_path(X, y, alphas=lars_alphas, tol=1e-6)
 
     assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
 

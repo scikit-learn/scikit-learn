@@ -18,14 +18,14 @@ CYTHON_MIN_VERSION = "0.28.5"
 
 # 'build' and 'install' is included to have structured metadata for CI.
 # It will NOT be included in setup's extras_require
-# The values are (version_spec, comma seperated tags)
+# The values are (version_spec, comma separated tags)
 dependent_packages = {
     "numpy": (NUMPY_MIN_VERSION, "build, install"),
     "scipy": (SCIPY_MIN_VERSION, "build, install"),
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "matplotlib": ("2.2.2", "benchmark, docs, examples, tests"),
+    "matplotlib": ("2.2.3", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.14.5", "docs, examples, tests"),
     "pandas": ("0.25.0", "benchmark, docs, examples, tests"),
     "seaborn": ("0.9.0", "docs, examples"),
@@ -41,6 +41,7 @@ dependent_packages = {
     "numpydoc": ("1.0.0", "docs"),
     "Pillow": ("7.1.2", "docs"),
     "sphinx-prompt": ("1.3.0", "docs"),
+    "sphinxext-opengraph": ("0.4.2", "docs"),
 }
 
 

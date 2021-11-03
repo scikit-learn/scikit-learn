@@ -9,7 +9,7 @@ if [[ "$OSTYPE" != "linux-gnu" ]]; then
     cp $CONFTEST_PATH $CONFTEST_NAME
 fi
 
+# Test that there are no links to system libraries in the
+# threadpoolctl output section of the show_versions output:
+python -c "import sklearn; sklearn.show_versions()"
 pytest --pyargs sklearn
-
-# Test that there are no links to system libraries
-python -m threadpoolctl -i sklearn
