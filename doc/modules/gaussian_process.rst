@@ -142,7 +142,7 @@ Moreover, the noise level
 of the data is learned explicitly by GPR by an additional WhiteKernel component
 in the kernel and by the regularization parameter alpha of KRR.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_compare_gpr_krr_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_compare_gpr_krr_005.png
    :target: ../auto_examples/gaussian_process/plot_compare_gpr_krr.html
    :align: center
 
