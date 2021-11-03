@@ -119,7 +119,7 @@ kernel_pca_proj_ax.set_title("Projection of testing data\n using KernelPCA")
 # `n_components` is the same than the number of original features.
 # This is the case in this example.
 #
-# We can investigate if we get a similar outcome with
+# We can investigate if we get the original dataset when back projecting with
 # :class:`~sklearn.decomposition.KernelPCA`.
 X_reconstructed_pca = pca.inverse_transform(pca.transform(X_test))
 X_reconstructed_kernel_pca = kernel_pca.inverse_transform(kernel_pca.transform(X_test))
