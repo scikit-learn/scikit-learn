@@ -37,6 +37,7 @@ from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.validation import check_random_state
+from sklearn.utils import parse_version
 
 from sklearn.exceptions import NotFittedError
 
@@ -2212,6 +2213,11 @@ def test_different_endianness_pickle():
 
 
 def test_different_endianness_joblib_pickle():
+    if parse_version(joblib.__version__) < parse_version("1.1"):
+        pytest.skip(
+            "joblib >= 1.1 is needed to load numpy arrays in native endianness"
+        )
+
     X, y = datasets.make_classification(random_state=0)
 
     clf = DecisionTreeClassifier(random_state=0, max_depth=3)
