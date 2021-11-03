@@ -184,29 +184,36 @@ def test_sample_weight(data, method, ensemble):
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
-def test_class_weight(data, method, ensemble):
-    n_samples = 100
+@pytest.mark.parametrize("prefit", [True, False])
+def test_class_weight(data, method, ensemble, prefit):
+    n_samples = 50
     n_classes = 2
     class_weight = np.random.RandomState(seed=42).uniform(size=n_classes)
     X, y = data
-    X_train, y_train = X[:n_samples], y[:n_samples]
-    X_test = X[n_samples:]
+    X_calib, y_calib = X[:n_samples], y[:n_samples]
+    X_test = X[2 * n_samples :]
 
     cw = dict(zip(np.arange(n_classes), class_weight))
-
     base_estimator = LinearSVC(random_state=42)
+    cv = None
+
+    if prefit:
+        X_train, y_train = X[n_samples : 2 * n_samples], y[n_samples : 2 * n_samples]
+        base_estimator.fit(X_train, y_train)
+        cv = "prefit"
+
     calibrated_clf = CalibratedClassifierCV(
-        base_estimator, method=method, ensemble=ensemble, class_weight=cw
+        base_estimator, method=method, cv=cv, ensemble=ensemble, class_weight=cw
     )
-    calibrated_clf.fit(X_train, y_train)
+    calibrated_clf.fit(X_calib, y_calib)
     probs_with_cw = calibrated_clf.predict_proba(X_test)
 
     # As the weights are used for the calibration, they should make
     # the calibrated estimator yield different predictions.
     calibrated_clf = CalibratedClassifierCV(
-        base_estimator, method=method, ensemble=ensemble
+        base_estimator, method=method, cv=cv, ensemble=ensemble
     )
-    calibrated_clf.fit(X_train, y_train)
+    calibrated_clf.fit(X_calib, y_calib)
     probs_without_cw = calibrated_clf.predict_proba(X_test)
 
     diff = np.linalg.norm(probs_with_cw - probs_without_cw)
