@@ -56,7 +56,7 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral` 
+- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral`
   now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
   that clusters samples in the embedding space as an alternative to the existing
   `'kmeans'` and `'discrete'` methods.
@@ -107,6 +107,23 @@ Changelog
 - |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
   multilabel classification.
   :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.inspection`
+........................
+
+- |Enhancement| in
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`, allow
+  `kind` to accept a list of strings to specify for each feature interaction
+  which type of plot a user wants to draw.
+  :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| in
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`, instead of
+  raising an error, asking for ICE plots (`kind='both'` or `kind='individual'`)
+  on a 2-way plot will use regular PDP and raise a warning.
+  :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................

@@ -622,9 +622,6 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Enhancement| Allow multiple scorers input to
-  :func:`~sklearn.inspection.permutation_importance`.
-  :pr:`19411` by :user:`Simona Maggio <simonamaggio>`.
 - |Enhancement| Add `max_samples` parameter in
   :func:`inspection.permutation_importance`. It enables to draw a subset of the
   samples to compute the permutation importance. This is useful to keep the
@@ -652,16 +649,6 @@ Changelog
   where the attribute `component_indices_` did not correspond to the subset of
   sample indices used to generate the approximated kernel. :pr:`20554` by
   :user:`Xiangyin Kong <kxytim>`.
-
-- |Enhancement| in :func:`~sklearn.inspection.plot_partial_dependence`, allow
-  `kind` to accept a list of strings to specify for each feature interaction
-  which type of plot a user wants to draw.
-  :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |Fix| in :func:`~sklearn.inspection.plot_partial_dependence`, instead of
-  raising an error, asking for ICE plots (`kind='both'` or `kind='individual'`)
-  on a 2-way plot will use regular PDP and raise a warning.
-  :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.linear_model`
 ...........................
