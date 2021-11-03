@@ -88,14 +88,14 @@ estimate the noise level of data. An illustration of the
 log-marginal-likelihood (LML) landscape shows that there exist two local
 maxima of LML.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_003.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
 The first corresponds to a model with a high noise level and a
 large length scale, which explains all variations in the data by noise.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_002.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_004.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
@@ -106,7 +106,7 @@ hyperparameters, the gradient-based optimization might also converge to the
 high-noise solution. It is thus important to repeat the optimization several
 times for different initializations.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_003.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_005.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
