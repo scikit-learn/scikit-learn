@@ -144,6 +144,7 @@ jobs:
         BLAS: 'openblas'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
+        CREATE_ISSUE_ON_TRACKER: 'true'
 
 - template: build_tools/azure/posix.yml
   parameters:
