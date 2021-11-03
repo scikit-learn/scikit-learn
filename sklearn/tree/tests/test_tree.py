@@ -5,6 +5,8 @@ import copy
 import pickle
 from itertools import product
 import struct
+import io
+import copyreg
 
 import pytest
 import numpy as np
@@ -12,6 +14,9 @@ from numpy.testing import assert_allclose
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
+
+import joblib
+from joblib.numpy_pickle import NumpyPickler
 
 from sklearn.random_projection import _sparse_random_matrix
 
@@ -2179,3 +2184,48 @@ def test_n_features_deprecated(Tree):
 
     with pytest.warns(FutureWarning, match=depr_msg):
         Tree().fit(X, y).n_features_
+
+
+def test_different_endianness_pickle():
+    X, y = datasets.make_classification(random_state=0)
+
+    clf = DecisionTreeClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+
+    def reduce_ndarray(arr):
+        return arr.byteswap().newbyteorder().__reduce__()
+
+    def get_pickle_non_native_endianness():
+        f = io.BytesIO()
+        p = pickle.Pickler(f)
+        p.dispatch_table = copyreg.dispatch_table.copy()
+        p.dispatch_table[np.ndarray] = reduce_ndarray
+
+        p.dump(clf.tree_)
+        f.seek(0)
+        return f
+
+    pickle.load(get_pickle_non_native_endianness())
+
+
+def test_different_endianness_joblib_pickle():
+    X, y = datasets.make_classification(random_state=0)
+
+    clf = DecisionTreeClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+
+    class MyNumpyPickler(NumpyPickler):
+        def save(self, obj):
+            if isinstance(obj, np.ndarray):
+                obj = obj.byteswap().newbyteorder()
+            super().save(obj)
+
+    def get_joblib_pickle_non_native_endianness():
+        f = io.BytesIO()
+        p = MyNumpyPickler(f)
+
+        p.dump(clf.tree_)
+        f.seek(0)
+        return f
+
+    joblib.load(get_joblib_pickle_non_native_endianness())
