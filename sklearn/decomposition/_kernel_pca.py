@@ -216,11 +216,10 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
        Advances in neural information processing systems 16 (2004): 449-456.
        <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
 
-    .. [3] `Halko, Nathan, Per-Gunnar Martinsson, and Joel A. Tropp.
+    .. [3] :arxiv:`Halko, Nathan, Per-Gunnar Martinsson, and Joel A. Tropp.
        "Finding structure with randomness: Probabilistic algorithms for
        constructing approximate matrix decompositions."
-       SIAM review 53.2 (2011): 217-288.
-       <https://arxiv.org/pdf/0909.4061.pdf>`_
+       SIAM review 53.2 (2011): 217-288. <0909.4061>`
 
     .. [4] `Martinsson, Per-Gunnar, Vladimir Rokhlin, and Mark Tygert.
        "A randomized algorithm for the decomposition of matrices."
