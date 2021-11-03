@@ -277,6 +277,7 @@ def _yield_outliers_checks(estimator):
         # test if NotFittedError is raised
         if _safe_tags(estimator, key="requires_fit"):
             yield check_estimators_unfitted
+    yield check_non_transformer_estimators_n_iter
 
 
 def _yield_all_checks(estimator):
