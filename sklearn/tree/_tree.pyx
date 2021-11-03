@@ -583,13 +583,23 @@ cdef class Tree:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
 
-    def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
-                  int n_outputs):
+    def __cinit__(self, int n_features, np.ndarray n_classes, int n_outputs):
         """Constructor."""
+        if n_classes.ndim != 1:
+            raise ValueError(f"Wrong dimensions for n_classes: expected 1, got {n_classes.ndim}")
+
+        try:
+            # TODO: what is the correct dtype here? And can I reuse SIZE_t rather
+            # than hardcode dtype=intp?
+            n_classes = n_classes.astype(dtype=np.intp)
+        except Exception as exc:
+            raise ValueError(f"Error converting n_classes: full exception was\n{exc}")
+
         # Input/Output layout
         self.n_features = n_features
         self.n_outputs = n_outputs
         self.n_classes = NULL
+
         safe_realloc(&self.n_classes, n_outputs)
 
         self.max_n_classes = np.max(n_classes)
@@ -645,17 +655,27 @@ cdef class Tree:
                        self.max_n_classes)
 
         if (node_ndarray.dtype != NODE_DTYPE):
-            # possible mismatch of big/little endian due to serialization
-            # on a different architecture. Try swapping the byte order.  
-            node_ndarray = node_ndarray.byteswap().newbyteorder()
-            if (node_ndarray.dtype != NODE_DTYPE):
-                raise ValueError('Did not recognise loaded array dytpe')
+            try:
+                node_ndarray = node_ndarray.astype(NODE_DTYPE)
+            except Exception as exc:
+                raise ValueError(
+                    "Error when converting node array "
+                    f"from dtype {node_ndarray.dtype} to {NODE_DTYPE}. "
+                    f"Exception was\n{exc}")
+
+        if (value_ndarray.dtype != np.float64):
+            try:
+                value_ndarray = value_ndarray.astype(np.float64)
+            except Exception as exc:
+                raise ValueError(
+                    "Error when converting value array "
+                    f" from dtype {value_ndarray.dtype} to float64. "
+                    f"Exception was\n{exc}")
 
         if (node_ndarray.ndim != 1 or
                 not node_ndarray.flags.c_contiguous or
                 value_ndarray.shape != value_shape or
-                not value_ndarray.flags.c_contiguous or
-                value_ndarray.dtype != np.float64):
+                not value_ndarray.flags.c_contiguous):
             raise ValueError('Did not recognise loaded array layout')
 
         self.capacity = node_ndarray.shape[0]

@@ -7,6 +7,7 @@ from itertools import product
 import struct
 import io
 import copyreg
+import re
 
 import pytest
 import numpy as np
@@ -38,6 +39,7 @@ from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.validation import check_random_state
 from sklearn.utils import parse_version
+from sklearn.utils import _IS_32BIT
 
 from sklearn.exceptions import NotFittedError
 
@@ -2238,5 +2240,91 @@ def test_different_endianness_joblib_pickle():
         return f
 
     new_clf = joblib.load(get_joblib_pickle_non_native_endianness())
+    new_score = new_clf.score(X, y)
+    assert np.isclose(score, new_score)
+
+
+def get_different_bitness_dtype_descr_single(dtype_descr_element):
+    dtype_name, dtype_str, *rest = dtype_descr_element
+
+    if _IS_32BIT:
+        new_dtype_str = re.sub(r"([iufc])4", r"\g<1>8", dtype_str)
+    else:
+        new_dtype_str = re.sub(r"([iufc])8", r"\g<1>4", dtype_str)
+
+    return (dtype_name, new_dtype_str, *rest)
+
+
+def get_different_bitness_array(arr):
+    descr = arr.dtype.descr
+
+    if arr.dtype.names is not None:
+        # Remove potential padding fields
+        descr = [
+            (field_name, *rest)
+            for field_name, *rest in descr
+            if field_name in arr.dtype.names
+        ]
+
+    new_descr = [get_different_bitness_dtype_descr_single(each) for each in descr]
+    # avoid creating dummy field names in simple dtype case e.g.
+    # dtype(np.float64)
+    if len(new_descr) == 1:
+        new_descr = new_descr[0][1]
+
+    return arr.astype(new_descr, casting="same_kind")
+
+
+def reduce_different_bitness_ndarray(arr):
+    return get_different_bitness_array(arr).__reduce__()
+
+
+def test_different_bitness_pickle():
+    X, y = datasets.make_classification(random_state=0)
+
+    clf = DecisionTreeClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+    score = clf.score(X, y)
+
+    def reduce_ndarray(arr):
+        return arr.byteswap().newbyteorder().__reduce__()
+
+    def get_different_bitness_pickle():
+        f = io.BytesIO()
+        p = pickle.Pickler(f)
+        p.dispatch_table = copyreg.dispatch_table.copy()
+        p.dispatch_table[np.ndarray] = reduce_different_bitness_ndarray
+
+        p.dump(clf)
+        f.seek(0)
+        return f
+
+    new_clf = pickle.load(get_different_bitness_pickle())
+    new_score = new_clf.score(X, y)
+    assert np.isclose(score, new_score)
+
+
+def test_different_bitness_joblib_pickle():
+    X, y = datasets.make_classification(random_state=0)
+
+    clf = DecisionTreeClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+    score = clf.score(X, y)
+
+    class DifferentBitnessNumpyPickler(NumpyPickler):
+        def save(self, obj):
+            if isinstance(obj, np.ndarray):
+                obj = get_different_bitness_array(obj)
+            super().save(obj)
+
+    def get_different_bitness_joblib_pickle():
+        f = io.BytesIO()
+        p = DifferentBitnessNumpyPickler(f)
+
+        p.dump(clf)
+        f.seek(0)
+        return f
+
+    new_clf = joblib.load(get_different_bitness_joblib_pickle())
     new_score = new_clf.score(X, y)
     assert np.isclose(score, new_score)
