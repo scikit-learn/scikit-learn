@@ -11,7 +11,6 @@ source activate $VIRTUALENV
 pushd $TEST_DIR
 coverage combine --append
 popd
-
 cp $TEST_DIR/.coverage $BUILD_REPOSITORY_LOCALPATH
 
 codecov --root $BUILD_REPOSITORY_LOCALPATH -t $CODECOV_TOKEN #|| echo "codecov upload failed"
