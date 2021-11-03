@@ -245,7 +245,9 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
 @pytest.mark.filterwarnings(
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
-def test_spectral_embedding_amg_solver(seed=36):
+@pytest.mark.parametrize("dtype", ("'float32'", "'float64'"))
+def test_spectral_embedding_amg_solver(dtype):
+    seed = 36
     # Test spectral embedding with amg solver
     pytest.importorskip("pyamg")
 
@@ -263,8 +265,8 @@ def test_spectral_embedding_amg_solver(seed=36):
         n_neighbors=5,
         random_state=np.random.RandomState(seed),
     )
-    embed_amg = se_amg.fit_transform(S)
-    embed_arpack = se_arpack.fit_transform(S)
+    embed_amg = se_amg.fit_transform(S.astype(dtype))
+    embed_arpack = se_arpack.fit_transform(S.astype(dtype))
     _assert_equal_with_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
     # same with special case in which amg is not actually used
@@ -279,8 +281,8 @@ def test_spectral_embedding_amg_solver(seed=36):
     ).toarray()
     se_amg.affinity = "precomputed"
     se_arpack.affinity = "precomputed"
-    embed_amg = se_amg.fit_transform(affinity)
-    embed_arpack = se_arpack.fit_transform(affinity)
+    embed_amg = se_amg.fit_transform(affinity.astype(dtype))
+    embed_arpack = se_arpack.fit_transform(affinity.astype(dtype))
     _assert_equal_with_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
 
@@ -298,12 +300,14 @@ def test_spectral_embedding_amg_solver(seed=36):
 @pytest.mark.filterwarnings(
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
-def test_spectral_embedding_amg_solver_failure():
+@pytest.mark.parametrize("dtype", ("'float32'", "'float64'"))
+def test_spectral_embedding_amg_solver_failure(dtype):
     # Non-regression test for amg solver failure (issue #13393 on github)
     pytest.importorskip("pyamg")
     seed = 36
     num_nodes = 100
     X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
+    X = X.astype(dtype)
     upper = sparse.triu(X) - sparse.diags(X.diagonal())
     sym_matrix = upper + upper.T
     embedding = spectral_embedding(
