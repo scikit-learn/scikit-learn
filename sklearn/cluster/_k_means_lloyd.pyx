@@ -1,5 +1,3 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
-#
 # Licence: BSD 3 clause
 
 # TODO: We still need to use ndarrays instead of typed memoryviews when using
