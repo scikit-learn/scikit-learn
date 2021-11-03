@@ -238,7 +238,7 @@ class BaseEstimator:
         for key, value in params.items():
             key, delim, sub_key = key.partition("__")
             if key not in valid_params:
-                local_valid_params = sorted(self.get_params(deep=False).keys())
+                local_valid_params = self._get_param_names()
                 raise ValueError(
                     f"Invalid parameter {key!r} for estimator {self}. "
                     f"Valid parameters are: {local_valid_params!r}."
