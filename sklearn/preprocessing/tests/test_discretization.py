@@ -408,7 +408,7 @@ def test_kbinsdiscretizer_subsample_warn():
     X = np.random.rand(200001, 1).reshape(-1, 1)
     kbd = KBinsDiscretizer(n_bins=100, encode="ordinal", strategy="quantile")
 
-    msg = "In version 1.2 onwards, subsample=2e5 will be used by default."
+    msg = "In version 1.3 onwards, subsample=2e5 will be used by default."
     with pytest.warns(FutureWarning, match=msg):
         kbd.fit(X)
 
