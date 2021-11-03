@@ -21,6 +21,7 @@ particular pre-processor: by column names and by column data types.
 Finally, the preprocessing pipeline is integrated in a full prediction pipeline
 using :class:`~pipeline.Pipeline`, together with a simple classification
 model.
+
 """
 
 # Author: Pedro Morales <part.morales@gmail.com>

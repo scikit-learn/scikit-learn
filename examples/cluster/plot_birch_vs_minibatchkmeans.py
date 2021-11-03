@@ -11,13 +11,12 @@ If ``n_clusters`` is set to None, the data is reduced from 100,000
 samples to a set of 158 clusters. This can be viewed as a preprocessing
 step before the final (global) clustering step that further reduces these
 158 clusters to 100 clusters.
+
 """
 
 # Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
-
-print(__doc__)
 
 from itertools import cycle
 from time import time

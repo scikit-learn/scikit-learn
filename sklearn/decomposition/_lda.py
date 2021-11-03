@@ -16,7 +16,7 @@ import scipy.sparse as sp
 from scipy.special import gammaln, logsumexp
 from joblib import Parallel, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
@@ -138,7 +138,9 @@ def _update_doc_distribution(
     return (doc_topic_distr, suff_stats)
 
 
-class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
+class LatentDirichletAllocation(
+    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+):
     """Latent Dirichlet Allocation with online variational Bayes algorithm.
 
     The implementation is based on [1]_ and [2]_.
@@ -684,20 +686,6 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         doc_topic_distr : ndarray of shape (n_samples, n_components)
             Document topic distribution for X.
         """
-        check_is_fitted(self)
-
-        # make sure feature size is the same in fitted model and in X
-        X = self._check_non_neg_array(
-            X, reset_n_features=True, whom="LatentDirichletAllocation.transform"
-        )
-        n_samples, n_features = X.shape
-        if n_features != self.components_.shape[1]:
-            raise ValueError(
-                "The provided data has %d dimensions while "
-                "the model was trained with feature size %d."
-                % (n_features, self.components_.shape[1])
-            )
-
         doc_topic_distr, _ = self._e_step(X, cal_sstats=False, random_init=False)
 
         return doc_topic_distr
@@ -851,12 +839,6 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         score : float
             Perplexity score.
         """
-        check_is_fitted(self)
-
-        X = self._check_non_neg_array(
-            X, reset_n_features=True, whom="LatentDirichletAllocation.perplexity"
-        )
-
         if doc_topic_distr is None:
             doc_topic_distr = self._unnormalized_transform(X)
         else:
@@ -902,4 +884,13 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         score : float
             Perplexity score.
         """
+        check_is_fitted(self)
+        X = self._check_non_neg_array(
+            X, reset_n_features=True, whom="LatentDirichletAllocation.perplexity"
+        )
         return self._perplexity_precomp_distr(X, sub_sampling=sub_sampling)
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

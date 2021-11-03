@@ -6,6 +6,7 @@ Test with permutations the significance of a classification score
 This example demonstrates the use of
 :func:`~sklearn.model_selection.permutation_test_score` to evaluate the
 significance of a cross-validated score using permutations.
+
 """
 
 # Authors:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
