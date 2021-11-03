@@ -15,7 +15,6 @@ Finally, we show that inverting this projection is an approximation with
 :class:`~sklearn.decomposition.KernelPCA`, while inverting is exact with
 :class:`~sklearn.decomposition.PCA`.
 """
-print(__doc__)
 
 # Authors: Mathieu Blondel
 #          Andreas Mueller
@@ -32,9 +31,8 @@ print(__doc__)
 from sklearn.datasets import make_circles
 from sklearn.model_selection import train_test_split
 
-X, y = make_circles(n_samples=1_000, factor=.3, noise=.05, random_state=0)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, stratify=y, random_state=0)
+X, y = make_circles(n_samples=1_000, factor=0.3, noise=0.05, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)
 
 # %%
 # Let's have a quick first look at the generated dataset.
@@ -63,8 +61,8 @@ from sklearn.decomposition import PCA, KernelPCA
 
 pca = PCA(n_components=2)
 kernel_pca = KernelPCA(
-    n_components=None, kernel="rbf", gamma=10, fit_inverse_transform=True,
-    alpha=0.1)
+    n_components=None, kernel="rbf", gamma=10, fit_inverse_transform=True, alpha=0.1
+)
 
 X_test_pca = pca.fit(X_train).transform(X_test)
 X_test_kernel_pca = kernel_pca.fit(X_train).transform(X_test)
@@ -123,8 +121,7 @@ axs[2].set_title("Projection of testing data\n using KernelPCA")
 # We can investigate if we get a similar outcome with
 # :class:`~sklearn.decomposition.KernelPCA`.
 X_reconstructed_pca = pca.inverse_transform(pca.transform(X_test))
-X_reconstructed_kernel_pca = kernel_pca.inverse_transform(
-    kernel_pca.transform(X_test))
+X_reconstructed_kernel_pca = kernel_pca.inverse_transform(kernel_pca.transform(X_test))
 
 # %%
 fig, axs = plt.subplots(ncols=3, sharex=True, sharey=True, figsize=(13, 4))
@@ -138,8 +135,9 @@ axs[1].scatter(X_reconstructed_pca[:, 0], X_reconstructed_pca[:, 1], c=y_test)
 axs[1].set_xlabel("Feature #0")
 axs[1].set_title("Reconstruction via PCA")
 
-axs[2].scatter(X_reconstructed_kernel_pca[:, 0],
-               X_reconstructed_kernel_pca[:, 1], c=y_test)
+axs[2].scatter(
+    X_reconstructed_kernel_pca[:, 0], X_reconstructed_kernel_pca[:, 1], c=y_test
+)
 axs[2].set_xlabel("Feature #0")
 _ = axs[2].set_title("Reconstruction via KernelPCA")
 

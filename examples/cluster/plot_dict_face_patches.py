@@ -18,8 +18,8 @@ clusters are reassigned during the successive calls to
 partial-fit. This is because the number of patches that they represent
 has become too low, and it is better to choose a random new
 cluster.
+
 """
-print(__doc__)
 
 import time
 
