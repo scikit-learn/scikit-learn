@@ -45,6 +45,10 @@ Changelog
   message suggests potential solutions.
   :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| All scikit-learn models now generate a more informative
+  error message when setting invalid hyper-parameters with `set_params`.
+  :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -56,7 +60,7 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral` 
+- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral`
   now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
   that clusters samples in the embedding space as an alternative to the existing
   `'kmeans'` and `'discrete'` methods.
