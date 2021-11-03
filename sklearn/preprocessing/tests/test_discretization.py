@@ -360,6 +360,8 @@ def test_32_equal_64(input_dtype, encode):
     assert_allclose_dense_sparse(Xt_32, Xt_64)
 
 
+# FIXME: remove the `filterwarnings` in 1.3
+@pytest.mark.filterwarnings("ignore:In version 1.3 onwards, subsample=2e5")
 @pytest.mark.parametrize("subsample", [None, "warn"])
 def test_kbinsdiscretizer_subsample_default(subsample):
     # Since the size of X is small (< 2e5), subsampling will not take place.
@@ -401,7 +403,7 @@ def test_kbinsdiscretizer_subsample_invalid_type():
         kbd.fit(X)
 
 
-# TODO: Remove in 1.2
+# TODO: Remove in 1.3
 def test_kbinsdiscretizer_subsample_warn():
     X = np.random.rand(200001, 1).reshape(-1, 1)
     kbd = KBinsDiscretizer(n_bins=100, encode="ordinal", strategy="quantile")

@@ -76,7 +76,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         it is recommended to use subsampling on datasets with a
         very large number of samples.
 
-        .. versionadded:: 1.1
+        .. deprecated:: 1.1
+           In version 1.3 and onwards, `subsample=2e5` will be the default.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling.
@@ -214,7 +215,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             if self.subsample == "warn":
                 if n_samples > 2e5:
                     warnings.warn(
-                        "In version 1.2 onwards, subsample=2e5 "
+                        "In version 1.3 onwards, subsample=2e5 "
                         "will be used by default. Set subsample explicitly to "
                         "silence this warning in the mean time. Set "
                         "subsample=None to disable subsampling explicitly.",
