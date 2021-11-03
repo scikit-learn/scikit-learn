@@ -1,8 +1,3 @@
-# cython: boundscheck=False
-# cython: cdivision=True
-# cython: initializedcheck=False
-# cython: wraparound=False
-
 cimport numpy as np
 from libc.math cimport sqrt, exp
 
