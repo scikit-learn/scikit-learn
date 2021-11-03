@@ -336,8 +336,9 @@ def spectral_embedding(
 
         M = ml.aspreconditioner()
         # Create initial approximation X to eigenvectors
-        X = random_state.rand(laplacian.shape[0], n_components + 1)
+        X = random_state.randn(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
+        X = X.astype(laplacian.dtype)
         _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.0e-5, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
@@ -366,8 +367,9 @@ def spectral_embedding(
             # We increase the number of eigenvectors requested, as lobpcg
             # doesn't behave well in low dimension and create initial
             # approximation X to eigenvectors
-            X = random_state.rand(laplacian.shape[0], n_components + 1)
+            X = random_state.randn(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
+            X = X.astype(laplacian.dtype)
             _, diffusion_map = lobpcg(
                 laplacian, X, tol=1e-5, largest=False, maxiter=2000
             )
