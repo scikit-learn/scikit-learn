@@ -318,7 +318,7 @@ def test_fastica_whiten_unit_variance():
     ica = FastICA(n_components=n_components, whiten="unit-variance", random_state=0)
     Xt = ica.fit_transform(X)
 
-    assert_almost_equal(np.var(Xt), 1.0)
+    assert np.var(Xt) == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize("ica", [FastICA(), FastICA(whiten=True)])
@@ -346,7 +346,7 @@ def test_fastica_whiten_backwards_compatibility():
     with pytest.warns(FutureWarning):
         Xt = ica.fit_transform(X)
 
-    assert_almost_equal(np.var(Xt), 1.0 / 100)
+    assert np.var(Xt) == pytest.approx(1.0 / 100)
 
 
 @pytest.mark.parametrize("whiten", ["arbitrary-variance", "unit-variance", False])
