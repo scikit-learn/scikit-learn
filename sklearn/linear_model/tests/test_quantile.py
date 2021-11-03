@@ -146,7 +146,7 @@ def test_asymmetric_error(quantile):
     # For an exponential distribution with rate lambda, e.g. exp(-lambda * x),
     # the quantile at level q is:
     #   quantile(q) = - log(1 - q) / lambda
-    #   scale = 1/lambda = -quantile(q) / log(1-q)
+    #   scale = 1/lambda = -quantile(q) / log(1 - q)
     y = rng.exponential(
         scale=-(X @ coef + intercept) / np.log(1 - quantile), size=n_samples
     )
