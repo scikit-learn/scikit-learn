@@ -371,7 +371,6 @@ GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "manifold",
     "neighbors",
     "neural_network",
-    "random_projection",
 ]
 
 
