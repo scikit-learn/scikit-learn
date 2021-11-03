@@ -1,10 +1,15 @@
-from .base import _get_response
+from .base import _check_estimator_target
 
 from .. import auc
 from .. import roc_curve
 from .._base import _check_pos_label_consistency
 
-from ...utils import check_matplotlib_support, deprecated
+from ...utils import (
+    check_matplotlib_support,
+    deprecated,
+    _get_response_values,
+)
+from ...utils.multiclass import type_of_target
 
 
 class RocCurveDisplay:
@@ -226,11 +231,16 @@ class RocCurveDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
+        _check_estimator_target(estimator, y)
+        if response_method == "auto":
+            response_method = ["predict_proba", "decision_function"]
+
         name = estimator.__class__.__name__ if name is None else name
 
-        y_pred, pos_label = _get_response(
-            X,
+        y_pred, pos_label = _get_response_values(
             estimator,
+            X,
+            y,
             response_method=response_method,
             pos_label=pos_label,
         )
@@ -329,6 +339,12 @@ class RocCurveDisplay:
         >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
+
+        if type_of_target(y_true) != "binary":
+            raise ValueError(
+                f"The target y is not binary. Got {type_of_target(y_true)} type of"
+                " target."
+            )
 
         fpr, tpr, _ = roc_curve(
             y_true,
@@ -451,8 +467,12 @@ def plot_roc_curve(
     """
     check_matplotlib_support("plot_roc_curve")
 
-    y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label
+    _check_estimator_target(estimator, y)
+    if response_method == "auto":
+        response_method = ["predict_proba", "decision_function"]
+
+    y_pred, pos_label = _get_response_values(
+        estimator, X, y, response_method, pos_label=pos_label
     )
 
     fpr, tpr, _ = roc_curve(

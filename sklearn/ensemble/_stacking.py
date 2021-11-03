@@ -30,8 +30,11 @@ from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils.validation import column_or_1d
+from ..utils.validation import (
+    _check_response_method,
+    check_is_fitted,
+    column_or_1d,
+)
 from ..utils.fixes import delayed
 
 
@@ -104,21 +107,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
     def _method_name(name, estimator, method):
         if estimator == "drop":
             return None
-        if method == "auto":
-            if getattr(estimator, "predict_proba", None):
-                return "predict_proba"
-            elif getattr(estimator, "decision_function", None):
-                return "decision_function"
-            else:
-                return "predict"
-        else:
-            if not hasattr(estimator, method):
-                raise ValueError(
-                    "Underlying estimator {} does not implement the method {}.".format(
-                        name, method
-                    )
-                )
-            return method
+        method = None if method == "auto" else method
+        try:
+            method_name = _check_response_method(estimator, method).__name__
+        except AttributeError as e:
+            raise ValueError(
+                f"Underlying estimator {name} does not implement the method {method}."
+            ) from e
+        return method_name
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.

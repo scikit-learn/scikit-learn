@@ -1,12 +1,16 @@
-from sklearn.base import is_classifier
-from .base import _get_response
+from .base import _check_estimator_target
 
 from .. import average_precision_score
 from .. import precision_recall_curve
 from .._base import _check_pos_label_consistency
 from .._classification import check_consistent_length
 
-from ...utils import check_matplotlib_support, deprecated
+from ...utils import (
+    check_matplotlib_support,
+    deprecated,
+    _get_response_values,
+)
+from ...utils.multiclass import type_of_target
 
 
 class PrecisionRecallDisplay:
@@ -235,11 +239,15 @@ class PrecisionRecallDisplay:
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
-        if not is_classifier(estimator):
-            raise ValueError(f"{method_name} only supports classifiers")
-        y_pred, pos_label = _get_response(
-            X,
+
+        _check_estimator_target(estimator, y)
+        if response_method == "auto":
+            response_method = ["predict_proba", "decision_function"]
+
+        y_pred, pos_label = _get_response_values(
             estimator,
+            X,
+            y,
             response_method,
             pos_label=pos_label,
         )
@@ -324,6 +332,12 @@ class PrecisionRecallDisplay:
         >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
+
+        if type_of_target(y_true) != "binary":
+            raise ValueError(
+                f"The target y is not binary. Got {type_of_target(y_true)} type of"
+                " target."
+            )
 
         check_consistent_length(y_true, y_pred, sample_weight)
         pos_label = _check_pos_label_consistency(pos_label, y_true)
@@ -430,8 +444,13 @@ def plot_precision_recall_curve(
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
-    y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label
+    _check_estimator_target(estimator, y)
+
+    if response_method == "auto":
+        response_method = ["predict_proba", "decision_function"]
+
+    y_pred, pos_label = _get_response_values(
+        estimator, X, y, response_method, pos_label=pos_label
     )
 
     precision, recall, _ = precision_recall_curve(

@@ -1,12 +1,16 @@
 import scipy as sp
 
-from .base import _get_response
+from .base import _check_estimator_target
 
 from .. import det_curve
 from .._base import _check_pos_label_consistency
 
-from ...utils import check_matplotlib_support
-from ...utils import deprecated
+from ...utils import (
+    check_matplotlib_support,
+    deprecated,
+    _get_response_values,
+)
+from ...utils.multiclass import type_of_target
 
 
 class DetCurveDisplay:
@@ -168,11 +172,16 @@ class DetCurveDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
+        _check_estimator_target(estimator, y)
+        if response_method == "auto":
+            response_method = ["predict_proba", "decision_function"]
+
         name = estimator.__class__.__name__ if name is None else name
 
-        y_pred, pos_label = _get_response(
-            X,
+        y_pred, pos_label = _get_response_values(
             estimator,
+            X,
+            y,
             response_method,
             pos_label=pos_label,
         )
@@ -265,6 +274,13 @@ class DetCurveDisplay:
         >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
+
+        if type_of_target(y_true) != "binary":
+            raise ValueError(
+                f"The target y is not binary. Got {type_of_target(y_true)} type of"
+                " target."
+            )
+
         fpr, fnr, _ = det_curve(
             y_true,
             y_pred,
@@ -454,8 +470,12 @@ def plot_det_curve(
     """
     check_matplotlib_support("plot_det_curve")
 
-    y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label
+    _check_estimator_target(estimator, y)
+    if response_method == "auto":
+        response_method = ["predict_proba", "decision_function"]
+
+    y_pred, pos_label = _get_response_values(
+        estimator, X, y, response_method, pos_label=pos_label
     )
 
     fpr, fnr, _ = det_curve(
