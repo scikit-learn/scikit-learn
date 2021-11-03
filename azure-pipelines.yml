@@ -48,7 +48,7 @@ jobs:
         pip install pytest flake8 mypy==0.782 black==21.6b0
       displayName: Install linters
     - bash: |
-        black --check .
+        black --check --diff .
       displayName: Run black
     - bash: |
         ./build_tools/circle/linting.sh
