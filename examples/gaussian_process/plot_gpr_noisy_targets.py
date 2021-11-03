@@ -106,15 +106,15 @@ _ = plt.title("Gaussian process regression on noise-free dataset")
 #
 # We add some random Gaussian noise to the target with an arbitrary
 # standard deviation.
-dy = 0.5 + 1.0 * rng.random_sample(y_train.shape)
-y_train_noisy = y_train + rng.normal(0, dy)
+noise_std = 0.75
+y_train_noisy = y_train + rng.normal(loc=0.0, scale=noise_std)
 
 # %%
 # We create a similar Gaussian process model. In addition to the kernel, this
 # time, we specify the parameter `alpha` which can be interpreted as the
 # variance of a Gaussian noise.
 gaussian_process = GaussianProcessRegressor(
-    kernel=kernel, alpha=dy ** 2, n_restarts_optimizer=9
+    kernel=kernel, alpha=noise_std ** 2, n_restarts_optimizer=9
 )
 gaussian_process.fit(X_train, y_train_noisy)
 mean_prediction, std_prediction = gaussian_process.predict(X, return_std=True)
@@ -125,7 +125,7 @@ plt.plot(X, y, label=r"$f(x) = x \sin(x)$", linestyle="dotted")
 plt.errorbar(
     X_train,
     y_train_noisy,
-    dy,
+    noise_std,
     linestyle="None",
     color="tab:blue",
     marker=".",
