@@ -31,9 +31,8 @@ California housing dataset. The example is taken from [1]_.
        the Black Box: Visualizing Statistical Learning With Plots of
        Individual Conditional Expectation. (2015) Journal of Computational and
        Graphical Statistics, 24(1): 44-65 (https://arxiv.org/abs/1309.6392)
-"""
 
-print(__doc__)
+"""
 
 # %%
 # California Housing data preprocessing
@@ -111,12 +110,12 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
 import matplotlib.pyplot as plt
 from sklearn.inspection import partial_dependence
-from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import PartialDependenceDisplay
 
 print("Computing partial dependence plots...")
 tic = time()
 features = ["MedInc", "AveOccup", "HouseAge", "AveRooms"]
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
     features,
@@ -125,6 +124,8 @@ display = plot_partial_dependence(
     n_jobs=3,
     grid_resolution=20,
     random_state=0,
+    ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+    pd_line_kw={"color": "tab:orange", "linestyle": "--"},
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -164,7 +165,7 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
 print("Computing partial dependence plots...")
 tic = time()
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
     features,
@@ -225,7 +226,7 @@ features = ["AveOccup", "HouseAge", ("AveOccup", "HouseAge")]
 print("Computing partial dependence plots...")
 tic = time()
 _, ax = plt.subplots(ncols=3, figsize=(9, 4))
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
     features,
@@ -267,6 +268,7 @@ pdp = partial_dependence(
 XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
 Z = pdp.average[0].T
 ax = Axes3D(fig)
+fig.add_axes(ax)
 surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu, edgecolor="k")
 ax.set_xlabel(features[0])
 ax.set_ylabel(features[1])

@@ -1,6 +1,3 @@
-# cython: boundscheck=False
-# cython: wraparound=False
-#
 # Author: Arnaud Joly
 #
 # License: BSD 3 clause
@@ -278,7 +275,7 @@ cpdef sample_without_replacement(np.int_t n_population,
 
     all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
 
-    ratio = n_samples / n_population if n_population != 0.0 else 1.0
+    ratio = <double> n_samples / n_population if n_population != 0.0 else 1.0
 
     # Check ratio and use permutation unless ratio < 0.01 or ratio > 0.99
     if method == "auto" and ratio > 0.01 and ratio < 0.99:

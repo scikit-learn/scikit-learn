@@ -167,9 +167,9 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 .. topic:: References:
 
     * Algorithm 4.3 in
-      `"Finding structure with randomness: Stochastic algorithms for
+      :arxiv:`"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
-      <https://arxiv.org/abs/0909.4061>`_
+      <0909.4061>`
       Halko, et al., 2009
 
     * `"An implementation of a randomized algorithm for principal component
@@ -231,7 +231,7 @@ problem solved is a PCA problem (dictionary learning) with an
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_{\text{Fro}}^2+\alpha||V||_{1,1} \\
-                \text{subject to } & ||U_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||U_k||_2 <= 1 \text{ for all }
                 0 \leq k < n_{components}
 
 :math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
@@ -341,13 +341,13 @@ components is less than 10 (strict) and the number of samples is more than 200
 
     * *randomized* solver:
 
-        - Algorithm 4.3 in
-          `"Finding structure with randomness: Stochastic algorithms for
+        * Algorithm 4.3 in
+          :arxiv:`"Finding structure with randomness: Stochastic algorithms for
           constructing approximate matrix decompositions"
-          <https://arxiv.org/abs/0909.4061>`_
+          <0909.4061>`
           Halko, et al., 2009
 
-        - `"An implementation of a randomized algorithm for principal component
+        * `"An implementation of a randomized algorithm for principal component
           analysis"
           <https://arxiv.org/pdf/1412.3510.pdf>`_
           A. Szlam et al. 2014
@@ -513,7 +513,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_{\text{Fro}}^2+\alpha||U||_{1,1} \\
-                \text{subject to } & ||V_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||V_k||_2 <= 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
 
@@ -825,25 +825,23 @@ In :class:`NMF`, L1 and L2 priors can be added to the loss function in order
 to regularize the model. The L2 prior uses the Frobenius norm, while the L1
 prior uses an elementwise L1 norm. As in :class:`ElasticNet`, we control the
 combination of L1 and L2 with the :attr:`l1_ratio` (:math:`\rho`) parameter,
-and the intensity of the regularization with the :attr:`alpha`
-(:math:`\alpha`) parameter. Then the priors terms are:
+and the intensity of the regularization with the :attr:`alpha_W` and :attr:`alpha_H`
+(:math:`\alpha_W` and :math:`\alpha_H`) parameters. The priors are scaled by the number
+of samples (:math:`n\_samples`) for `H` and the number of features (:math:`n\_features`)
+for `W` to keep their impact balanced with respect to one another and to the data fit
+term as independent as possible of the size of the training set. Then the priors terms
+are:
 
 .. math::
-    \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
+    (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
+    + (\alpha_H \rho ||H||_1 + \frac{\alpha_H(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2) * n\_samples
 
 and the regularized objective function is:
 
 .. math::
     d_{\mathrm{Fro}}(X, WH)
-    + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
-
-:class:`NMF` regularizes both W and H by default. The :attr:`regularization`
-parameter allows for finer control, with which only W, only H,
-or both can be regularized.
+    + (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
+    + (\alpha_H \rho ||H||_1 + \frac{\alpha_H(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2) * n\_samples
 
 NMF with a beta-divergence
 --------------------------

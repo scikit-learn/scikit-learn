@@ -37,30 +37,30 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     Parameters
     ----------
     base_estimator : estimator object
-        An estimator object implementing ``fit`` and ``predict_proba``.
-        Invoking the ``fit`` method will fit a clone of the passed estimator,
-        which will be stored in the ``base_estimator_`` attribute.
+        An estimator object implementing `fit` and `predict_proba`.
+        Invoking the `fit` method will fit a clone of the passed estimator,
+        which will be stored in the `base_estimator_` attribute.
 
     threshold : float, default=0.75
         The decision threshold for use with `criterion='threshold'`.
-        Should be in [0, 1). When using the 'threshold' criterion, a
+        Should be in [0, 1). When using the `'threshold'` criterion, a
         :ref:`well calibrated classifier <calibration>` should be used.
 
     criterion : {'threshold', 'k_best'}, default='threshold'
         The selection criterion used to select which labels to add to the
-        training set. If 'threshold', pseudo-labels with prediction
-        probabilities above `threshold` are added to the dataset. If 'k_best',
+        training set. If `'threshold'`, pseudo-labels with prediction
+        probabilities above `threshold` are added to the dataset. If `'k_best'`,
         the `k_best` pseudo-labels with highest prediction probabilities are
         added to the dataset. When using the 'threshold' criterion, a
         :ref:`well calibrated classifier <calibration>` should be used.
 
     k_best : int, default=10
         The amount of samples to add in each iteration. Only used when
-        `criterion` is k_best'.
+        `criterion='k_best'`.
 
     max_iter : int or None, default=10
         Maximum number of iterations allowed. Should be greater than or equal
-        to 0. If it is ``None``, the classifier will continue to predict labels
+        to 0. If it is `None`, the classifier will continue to predict labels
         until no new pseudo-labels are added, or all unlabeled samples have
         been labeled.
 
@@ -74,7 +74,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     classes_ : ndarray or list of ndarray of shape (n_classes,)
         Class labels for each output. (Taken from the trained
-        ``base_estimator_``).
+        `base_estimator_`).
 
     transduction_ : ndarray of shape (n_samples,)
         The labels used for the final fit of the classifier, including
@@ -91,6 +91,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         The number of rounds of self-training, that is the number of times the
         base estimator is fitted on relabeled variants of the training set.
@@ -98,10 +104,23 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     termination_condition_ : {'max_iter', 'no_change', 'all_labeled'}
         The reason that fitting was stopped.
 
-        - 'max_iter': `n_iter_` reached `max_iter`.
-        - 'no_change': no new labels were predicted.
-        - 'all_labeled': all unlabeled samples were labeled before `max_iter`
+        - `'max_iter'`: `n_iter_` reached `max_iter`.
+        - `'no_change'`: no new labels were predicted.
+        - `'all_labeled'`: all unlabeled samples were labeled before `max_iter`
           was reached.
+
+    See Also
+    --------
+    LabelPropagation : Label propagation classifier.
+    LabelSpreading : Label spreading model for semi-supervised learning.
+
+    References
+    ----------
+    David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
+    supervised methods. In Proceedings of the 33rd annual meeting on
+    Association for Computational Linguistics (ACL '95). Association for
+    Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
+    https://doi.org/10.3115/981658.981684
 
     Examples
     --------
@@ -117,14 +136,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     >>> self_training_model = SelfTrainingClassifier(svc)
     >>> self_training_model.fit(iris.data, iris.target)
     SelfTrainingClassifier(...)
-
-    References
-    ----------
-    David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
-    supervised methods. In Proceedings of the 33rd annual meeting on
-    Association for Computational Linguistics (ACL '95). Association for
-    Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
-    https://doi.org/10.3115/981658.981684
     """
 
     _estimator_type = "classifier"
@@ -147,7 +158,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     def fit(self, X, y):
         """
-        Fits this ``SelfTrainingClassifier`` to a dataset.
+        Fit self-training classifier using `X`, `y` as training data.
 
         Parameters
         ----------
@@ -161,10 +172,13 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Returns an instance of self.
+            Fitted estimator.
         """
-        # we need row slicing support for sparce matrices
-        X, y = self._validate_data(X, y, accept_sparse=["csr", "csc", "lil", "dok"])
+        # we need row slicing support for sparce matrices, but costly finiteness check
+        # can be delegated to the base estimator.
+        X, y = self._validate_data(
+            X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
+        )
 
         if self.base_estimator is None:
             raise ValueError("base_estimator cannot be None!")
@@ -237,7 +251,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 if n_to_select == max_proba.shape[0]:
                     selected = np.ones_like(max_proba, dtype=bool)
                 else:
-                    # NB these are indicies, not a mask
+                    # NB these are indices, not a mask
                     selected = np.argpartition(-max_proba, n_to_select)[:n_to_select]
 
             # Map selected indices into original array
@@ -272,7 +286,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     @if_delegate_has_method(delegate="base_estimator")
     def predict(self, X):
-        """Predict the classes of X.
+        """Predict the classes of `X`.
 
         Parameters
         ----------
@@ -285,6 +299,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with predicted labels.
         """
         check_is_fitted(self)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
         return self.base_estimator_.predict(X)
 
     def predict_proba(self, X):
@@ -301,11 +321,17 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with prediction probabilities.
         """
         check_is_fitted(self)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
         return self.base_estimator_.predict_proba(X)
 
     @if_delegate_has_method(delegate="base_estimator")
     def decision_function(self, X):
-        """Calls decision function of the `base_estimator`.
+        """Call decision function of the `base_estimator`.
 
         Parameters
         ----------
@@ -318,6 +344,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Result of the decision function of the `base_estimator`.
         """
         check_is_fitted(self)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
         return self.base_estimator_.decision_function(X)
 
     @if_delegate_has_method(delegate="base_estimator")
@@ -335,11 +367,17 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with log prediction probabilities.
         """
         check_is_fitted(self)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
         return self.base_estimator_.predict_log_proba(X)
 
     @if_delegate_has_method(delegate="base_estimator")
     def score(self, X, y):
-        """Calls score on the `base_estimator`.
+        """Call score on the `base_estimator`.
 
         Parameters
         ----------
@@ -355,4 +393,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Result of calling score on the `base_estimator`.
         """
         check_is_fitted(self)
+        X = self._validate_data(
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
+        )
         return self.base_estimator_.score(X, y)

@@ -11,6 +11,7 @@ from joblib import Parallel
 from .. import partial_dependence
 from ...base import is_regressor
 from ...utils import check_array
+from ...utils import deprecated
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import check_random_state
 from ...utils import _safe_indexing
@@ -18,6 +19,10 @@ from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import delayed
 
 
+@deprecated(
+    "Function `plot_partial_dependence` is deprecated in 1.0 and will be "
+    "removed in 1.2. Use PartialDependenceDisplay.from_estimator instead"
+)
 def plot_partial_dependence(
     estimator,
     X,
@@ -33,6 +38,8 @@ def plot_partial_dependence(
     n_jobs=None,
     verbose=0,
     line_kw=None,
+    ice_lines_kw=None,
+    pd_line_kw=None,
     contour_kw=None,
     ax=None,
     kind="average",
@@ -67,9 +74,9 @@ def plot_partial_dependence(
           >>> est1 = LinearRegression().fit(X, y)
           >>> est2 = RandomForestRegressor().fit(X, y)
           >>> disp1 = plot_partial_dependence(est1, X,
-          ...                                 [1, 2])
+          ...                                 [1, 2])  # doctest: +SKIP
           >>> disp2 = plot_partial_dependence(est2, X, [1, 2],
-          ...                                 ax=disp1.axes_)
+          ...                                 ax=disp1.axes_)  # doctest: +SKIP
 
     .. warning::
 
@@ -88,6 +95,11 @@ def plot_partial_dependence(
         :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
         :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
 
+    .. deprecated:: 1.0
+       `plot_partial_dependence` is deprecated in 1.0 and will be removed in
+       1.2. Please use the class method:
+       :func:`~sklearn.metrics.PartialDependenceDisplay.from_estimator`.
+
     Parameters
     ----------
     estimator : BaseEstimator
@@ -95,7 +107,7 @@ def plot_partial_dependence(
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
 
-    X : {array-like or dataframe} of shape (n_samples, n_features)
+    X : {array-like, dataframe} of shape (n_samples, n_features)
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
@@ -159,7 +171,7 @@ def plot_partial_dependence(
           but is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
-          probabilities. Since the `'recursion'` method implicitely computes
+          probabilities. Since the `'recursion'` method implicitly computes
           the average of the ICEs by design, it is not compatible with ICE and
           thus `kind` must be `'average'`.
 
@@ -186,7 +198,24 @@ def plot_partial_dependence(
 
     line_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
-        For one-way partial dependence plots.
+        For one-way partial dependence plots. It can be used to define common
+        properties for both `ice_lines_kw` and `pdp_line_kw`.
+
+    ice_lines_kw : dict, default=None
+        Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+        For ICE lines in the one-way partial dependence plots.
+        The key value pairs defined in `ice_lines_kw` takes priority over
+        `line_kw`.
+
+        .. versionadded:: 1.0
+
+    pd_line_kw : dict, default=None
+        Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+        For partial dependence in one-way partial dependence plots.
+        The key value pairs defined in `pd_line_kw` takes priority over
+        `line_kw`.
+
+        .. versionadded:: 1.0
 
     contour_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
@@ -258,17 +287,70 @@ def plot_partial_dependence(
     --------
     partial_dependence : Compute Partial Dependence values.
     PartialDependenceDisplay : Partial Dependence visualization.
+    PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
 
     Examples
     --------
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn.datasets import make_friedman1
     >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> from sklearn.inspection import plot_partial_dependence
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
-    >>> plot_partial_dependence(clf, X, [0, (0, 1)])
+    >>> plot_partial_dependence(clf, X, [0, (0, 1)])  # doctest: +SKIP
     <...>
+    >>> plt.show()  # doctest: +SKIP
     """
     check_matplotlib_support("plot_partial_dependence")  # noqa
+    return _plot_partial_dependence(
+        estimator,
+        X,
+        features,
+        feature_names=feature_names,
+        target=target,
+        response_method=response_method,
+        n_cols=n_cols,
+        grid_resolution=grid_resolution,
+        percentiles=percentiles,
+        method=method,
+        n_jobs=n_jobs,
+        verbose=verbose,
+        line_kw=line_kw,
+        ice_lines_kw=ice_lines_kw,
+        pd_line_kw=pd_line_kw,
+        contour_kw=contour_kw,
+        ax=ax,
+        kind=kind,
+        subsample=subsample,
+        random_state=random_state,
+    )
+
+
+# TODO: Move into PartialDependenceDisplay.from_estimator in 1.2
+def _plot_partial_dependence(
+    estimator,
+    X,
+    features,
+    *,
+    feature_names=None,
+    target=None,
+    response_method="auto",
+    n_cols=3,
+    grid_resolution=100,
+    percentiles=(0.05, 0.95),
+    method="auto",
+    n_jobs=None,
+    verbose=0,
+    line_kw=None,
+    ice_lines_kw=None,
+    pd_line_kw=None,
+    contour_kw=None,
+    ax=None,
+    kind="average",
+    subsample=1000,
+    random_state=None,
+):
+    """See PartialDependenceDisplay.from_estimator for details"""
     import matplotlib.pyplot as plt  # noqa
 
     # set target_idx for multi-class estimators
@@ -451,7 +533,14 @@ def plot_partial_dependence(
         subsample=subsample,
         random_state=random_state,
     )
-    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw)
+    return display.plot(
+        ax=ax,
+        n_cols=n_cols,
+        line_kw=line_kw,
+        ice_lines_kw=ice_lines_kw,
+        pd_line_kw=pd_line_kw,
+        contour_kw=contour_kw,
+    )
 
 
 class PartialDependenceDisplay:
@@ -461,7 +550,7 @@ class PartialDependenceDisplay:
     referred to as: Individual Condition Expectation (ICE).
 
     It is recommended to use
-    :func:`~sklearn.inspection.plot_partial_dependence` to create a
+    :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` to create a
     :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are
     stored as attributes.
 
@@ -600,7 +689,7 @@ class PartialDependenceDisplay:
     See Also
     --------
     partial_dependence : Compute Partial Dependence values.
-    plot_partial_dependence : Plot Partial Dependence.
+    PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
     """
 
     def __init__(
@@ -625,6 +714,277 @@ class PartialDependenceDisplay:
         self.kind = kind
         self.subsample = subsample
         self.random_state = random_state
+
+    @classmethod
+    def from_estimator(
+        cls,
+        estimator,
+        X,
+        features,
+        *,
+        feature_names=None,
+        target=None,
+        response_method="auto",
+        n_cols=3,
+        grid_resolution=100,
+        percentiles=(0.05, 0.95),
+        method="auto",
+        n_jobs=None,
+        verbose=0,
+        line_kw=None,
+        ice_lines_kw=None,
+        pd_line_kw=None,
+        contour_kw=None,
+        ax=None,
+        kind="average",
+        subsample=1000,
+        random_state=None,
+    ):
+        """Partial dependence (PD) and individual conditional expectation (ICE) plots.
+
+        Partial dependence plots, individual conditional expectation plots or an
+        overlay of both of them can be plotted by setting the ``kind``
+        parameter. The ``len(features)`` plots are arranged in a grid with
+        ``n_cols`` columns. Two-way partial dependence plots are plotted as
+        contour plots. The deciles of the feature values will be shown with tick
+        marks on the x-axes for one-way plots, and on both axes for two-way
+        plots.
+
+        Read more in the :ref:`User Guide <partial_dependence>`.
+
+        .. note::
+
+            :func:`PartialDependenceDisplay.from_estimator` does not support using the
+            same axes with multiple calls. To plot the the partial dependence for
+            multiple estimators, please pass the axes created by the first call to the
+            second call::
+
+               >>> from sklearn.inspection import PartialDependenceDisplay
+               >>> from sklearn.datasets import make_friedman1
+               >>> from sklearn.linear_model import LinearRegression
+               >>> from sklearn.ensemble import RandomForestRegressor
+               >>> X, y = make_friedman1()
+               >>> est1 = LinearRegression().fit(X, y)
+               >>> est2 = RandomForestRegressor().fit(X, y)
+               >>> disp1 = PartialDependenceDisplay.from_estimator(est1, X,
+               ...                                                 [1, 2])
+               >>> disp2 = PartialDependenceDisplay.from_estimator(est2, X, [1, 2],
+               ...                                                 ax=disp1.axes_)
+
+        .. warning::
+
+            For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
+            :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
+            `'recursion'` method (used by default) will not account for the `init`
+            predictor of the boosting process. In practice, this will produce
+            the same values as `'brute'` up to a constant offset in the target
+            response, provided that `init` is a constant estimator (which is the
+            default). However, if `init` is not a constant estimator, the
+            partial dependence values are incorrect for `'recursion'` because the
+            offset will be sample-dependent. It is preferable to use the `'brute'`
+            method. Note that this only applies to
+            :class:`~sklearn.ensemble.GradientBoostingClassifier` and
+            :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
+            :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+            :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
+
+        .. versionadded:: 1.0
+
+        Parameters
+        ----------
+        estimator : BaseEstimator
+            A fitted estimator object implementing :term:`predict`,
+            :term:`predict_proba`, or :term:`decision_function`.
+            Multioutput-multiclass classifiers are not supported.
+
+        X : {array-like, dataframe} of shape (n_samples, n_features)
+            ``X`` is used to generate a grid of values for the target
+            ``features`` (where the partial dependence will be evaluated), and
+            also to generate values for the complement features when the
+            `method` is `'brute'`.
+
+        features : list of {int, str, pair of int, pair of str}
+            The target features for which to create the PDPs.
+            If `features[i]` is an integer or a string, a one-way PDP is created;
+            if `features[i]` is a tuple, a two-way PDP is created (only supported
+            with `kind='average'`). Each tuple must be of size 2.
+            if any entry is a string, then it must be in ``feature_names``.
+
+        feature_names : array-like of shape (n_features,), dtype=str, default=None
+            Name of each feature; `feature_names[i]` holds the name of the feature
+            with index `i`.
+            By default, the name of the feature corresponds to their numerical
+            index for NumPy array and their column name for pandas dataframe.
+
+        target : int, default=None
+            - In a multiclass setting, specifies the class for which the PDPs
+              should be computed. Note that for binary classification, the
+              positive class (index 1) is always used.
+            - In a multioutput setting, specifies the task for which the PDPs
+              should be computed.
+
+            Ignored in binary classification or classical regression settings.
+
+        response_method : {'auto', 'predict_proba', 'decision_function'}, \
+                default='auto'
+            Specifies whether to use :term:`predict_proba` or
+            :term:`decision_function` as the target response. For regressors
+            this parameter is ignored and the response is always the output of
+            :term:`predict`. By default, :term:`predict_proba` is tried first
+            and we revert to :term:`decision_function` if it doesn't exist. If
+            ``method`` is `'recursion'`, the response is always the output of
+            :term:`decision_function`.
+
+        n_cols : int, default=3
+            The maximum number of columns in the grid plot. Only active when `ax`
+            is a single axis or `None`.
+
+        grid_resolution : int, default=100
+            The number of equally spaced points on the axes of the plots, for each
+            target feature.
+
+        percentiles : tuple of float, default=(0.05, 0.95)
+            The lower and upper percentile used to create the extreme values
+            for the PDP axes. Must be in [0, 1].
+
+        method : str, default='auto'
+            The method used to calculate the averaged predictions:
+
+            - `'recursion'` is only supported for some tree-based estimators
+              (namely
+              :class:`~sklearn.ensemble.GradientBoostingClassifier`,
+              :class:`~sklearn.ensemble.GradientBoostingRegressor`,
+              :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
+              :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
+              :class:`~sklearn.tree.DecisionTreeRegressor`,
+              :class:`~sklearn.ensemble.RandomForestRegressor`
+              but is more efficient in terms of speed.
+              With this method, the target response of a
+              classifier is always the decision function, not the predicted
+              probabilities. Since the `'recursion'` method implicitly computes
+              the average of the ICEs by design, it is not compatible with ICE and
+              thus `kind` must be `'average'`.
+
+            - `'brute'` is supported for any estimator, but is more
+              computationally intensive.
+
+            - `'auto'`: the `'recursion'` is used for estimators that support it,
+              and `'brute'` is used otherwise.
+
+            Please see :ref:`this note <pdp_method_differences>` for
+            differences between the `'brute'` and `'recursion'` method.
+
+        n_jobs : int, default=None
+            The number of CPUs to use to compute the partial dependences.
+            Computation is parallelized over features specified by the `features`
+            parameter.
+
+            ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+            ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+            for more details.
+
+        verbose : int, default=0
+            Verbose output during PD computations.
+
+        line_kw : dict, default=None
+            Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+            For one-way partial dependence plots. It can be used to define common
+            properties for both `ice_lines_kw` and `pdp_line_kw`.
+
+        ice_lines_kw : dict, default=None
+            Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+            For ICE lines in the one-way partial dependence plots.
+            The key value pairs defined in `ice_lines_kw` takes priority over
+            `line_kw`.
+
+        pd_line_kw : dict, default=None
+            Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+            For partial dependence in one-way partial dependence plots.
+            The key value pairs defined in `pd_line_kw` takes priority over
+            `line_kw`.
+
+        contour_kw : dict, default=None
+            Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
+            For two-way partial dependence plots.
+
+        ax : Matplotlib axes or array-like of Matplotlib axes, default=None
+            - If a single axis is passed in, it is treated as a bounding axes
+              and a grid of partial dependence plots will be drawn within
+              these bounds. The `n_cols` parameter controls the number of
+              columns in the grid.
+            - If an array-like of axes are passed in, the partial dependence
+              plots will be drawn directly into these axes.
+            - If `None`, a figure and a bounding axes is created and treated
+              as the single axes case.
+
+        kind : {'average', 'individual', 'both'}, default='average'
+            Whether to plot the partial dependence averaged across all the samples
+            in the dataset or one line per sample or both.
+
+            - ``kind='average'`` results in the traditional PD plot;
+            - ``kind='individual'`` results in the ICE plot.
+
+           Note that the fast ``method='recursion'`` option is only available for
+           ``kind='average'``. Plotting individual dependencies requires using the
+           slower ``method='brute'`` option.
+
+        subsample : float, int or None, default=1000
+            Sampling for ICE curves when `kind` is 'individual' or 'both'.
+            If `float`, should be between 0.0 and 1.0 and represent the proportion
+            of the dataset to be used to plot ICE curves. If `int`, represents the
+            absolute number samples to use.
+
+            Note that the full dataset is still used to calculate averaged partial
+            dependence when `kind='both'`.
+
+        random_state : int, RandomState instance or None, default=None
+            Controls the randomness of the selected samples when subsamples is not
+            `None` and `kind` is either `'both'` or `'individual'`.
+            See :term:`Glossary <random_state>` for details.
+
+        Returns
+        -------
+        display : :class:`~sklearn.inspection.PartialDependenceDisplay`
+
+        See Also
+        --------
+        partial_dependence : Compute Partial Dependence values.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_friedman1
+        >>> from sklearn.ensemble import GradientBoostingRegressor
+        >>> from sklearn.inspection import PartialDependenceDisplay
+        >>> X, y = make_friedman1()
+        >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
+        >>> PartialDependenceDisplay.from_estimator(clf, X, [0, (0, 1)])
+        <...>
+        >>> plt.show()
+        """
+        check_matplotlib_support(f"{cls.__name__}.from_estimator")  # noqa
+        return _plot_partial_dependence(
+            estimator,
+            X,
+            features,
+            feature_names=feature_names,
+            target=target,
+            response_method=response_method,
+            n_cols=n_cols,
+            grid_resolution=grid_resolution,
+            percentiles=percentiles,
+            method=method,
+            n_jobs=n_jobs,
+            verbose=verbose,
+            line_kw=line_kw,
+            ice_lines_kw=ice_lines_kw,
+            pd_line_kw=pd_line_kw,
+            contour_kw=contour_kw,
+            ax=ax,
+            kind=kind,
+            subsample=subsample,
+            random_state=random_state,
+        )
 
     def _get_sample_count(self, n_samples):
         """Compute the number of samples as an integer."""
@@ -729,8 +1089,8 @@ class PartialDependenceDisplay:
         n_cols,
         pd_plot_idx,
         n_lines,
-        individual_line_kw,
-        line_kw,
+        ice_lines_kw,
+        pd_line_kw,
     ):
         """Plot 1-way partial dependence: ICE and PDP.
 
@@ -760,9 +1120,9 @@ class PartialDependenceDisplay:
             matching 2D position in the grid layout.
         n_lines : int
             The total number of lines expected to be plot on the axis.
-        individual_line_kw : dict
+        ice_lines_kw : dict
             Dict with keywords passed when plotting the ICE lines.
-        line_kw : dict
+        pd_line_kw : dict
             Dict with keywords passed when plotting the PD plot.
         """
         from matplotlib import transforms  # noqa
@@ -775,7 +1135,7 @@ class PartialDependenceDisplay:
                 ax,
                 pd_plot_idx,
                 n_lines,
-                individual_line_kw,
+                ice_lines_kw,
             )
 
         if kind in ("average", "both"):
@@ -789,7 +1149,7 @@ class PartialDependenceDisplay:
                 feature_values,
                 ax,
                 pd_line_idx,
-                line_kw,
+                pd_line_kw,
             )
 
         trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
@@ -815,7 +1175,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if line_kw.get("label", None) and kind != "individual":
+        if pd_line_kw.get("label", None) and self.kind != "individual":
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -898,7 +1258,16 @@ class PartialDependenceDisplay:
         ax.set_ylabel(self.feature_names[feature_idx[1]])
 
     @_deprecate_positional_args(version="1.1")
-    def plot(self, *, ax=None, n_cols=3, line_kw=None, contour_kw=None):
+    def plot(
+        self,
+        *,
+        ax=None,
+        n_cols=3,
+        line_kw=None,
+        ice_lines_kw=None,
+        pd_line_kw=None,
+        contour_kw=None,
+    ):
         """Plot partial dependence plots.
 
         Parameters
@@ -920,6 +1289,22 @@ class PartialDependenceDisplay:
         line_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.plot` call.
             For one-way partial dependence plots.
+
+        ice_lines_kw : dict, default=None
+            Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+            For ICE lines in the one-way partial dependence plots.
+            The key value pairs defined in `ice_lines_kw` takes priority over
+            `line_kw`.
+
+            .. versionadded:: 1.0
+
+        pd_line_kw : dict, default=None
+            Dictionary with keywords passed to the `matplotlib.pyplot.plot` call.
+            For partial dependence in one-way partial dependence plots.
+            The key value pairs defined in `pd_line_kw` takes priority over
+            `line_kw`.
+
+            .. versionadded:: 1.0
 
         contour_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
@@ -946,6 +1331,15 @@ class PartialDependenceDisplay:
                 f"{len(kind)} element(s) and `features` contains "
                 f"{len(self.features)} element(s)."
             )
+
+        if line_kw is None:
+            line_kw = {}
+        if ice_lines_kw is None:
+            ice_lines_kw = {}
+        if pd_line_kw is None:
+            pd_line_kw = {}
+        if contour_kw is None:
+            contour_kw = {}
 
         if ax is None:
             _, ax = plt.subplots()
@@ -1047,21 +1441,25 @@ class PartialDependenceDisplay:
                 preds = pd_result.individual
 
             if len(feature_values) == 1:
-
                 # define the line-style for the current plot
-                line_kw_ = {} if line_kw is None else line_kw.copy()
                 default_line_kws = {
                     "color": "C0",
-                    "label": "average" if kind_plot == "both" else None,
+                    "label": "average" if self.kind == "both" else None,
                 }
-                line_kw_ = {**default_line_kws, **line_kw_}
+                if self.kind in ("individual", "both"):
+                    default_ice_lines_kws = {"alpha": 0.3, "linewidth": 0.5}
+                else:
+                    default_ice_lines_kws = {}
 
-                individual_line_kw = line_kw_.copy()
-                del individual_line_kw["label"]
+                ice_lines_kw = {
+                    **default_line_kws,
+                    **line_kw,
+                    **default_ice_lines_kws,
+                    **ice_lines_kw,
+                }
+                del ice_lines_kw["label"]
 
-                if kind_plot == "individual" or kind_plot == "both":
-                    individual_line_kw["alpha"] = 0.3
-                    individual_line_kw["linewidth"] = 0.5
+                pd_line_kw = {**default_line_kws, **line_kw, **pd_line_kw}
 
                 self._plot_one_way_partial_dependence(
                     kind_plot,
@@ -1074,8 +1472,8 @@ class PartialDependenceDisplay:
                     n_cols,
                     pd_plot_idx,
                     n_lines,
-                    individual_line_kw,
-                    line_kw_,
+                    ice_lines_kw,
+                    pd_line_kw,
                 )
             else:
                 self._plot_two_way_partial_dependence(

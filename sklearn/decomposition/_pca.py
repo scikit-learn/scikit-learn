@@ -214,8 +214,9 @@ class PCA(_BasePCA):
     ----------
     components_ : ndarray of shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
-        maximum variance in the data. The components are sorted by
-        ``explained_variance_``.
+        maximum variance in the data. Equivalently, the right singular
+        vectors of the centered input data, parallel to its eigenvectors.
+        The components are sorted by ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         The amount of variance explained by each of the selected components.
@@ -271,6 +272,12 @@ class PCA(_BasePCA):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -361,8 +368,8 @@ class PCA(_BasePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Ignored.
@@ -381,8 +388,8 @@ class PCA(_BasePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Ignored.

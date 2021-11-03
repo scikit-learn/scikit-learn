@@ -659,17 +659,22 @@ def cartesian(arrays, out=None):
     ----------
     arrays : list of array-like
         1-D arrays to form the cartesian product of.
-    out : ndarray, default=None
+    out : ndarray of shape (M, len(arrays)), default=None
         Array to place the cartesian product in.
 
     Returns
     -------
-    out : ndarray
-        2-D array of shape (M, len(arrays)) containing cartesian products
-        formed of input arrays.
+    out : ndarray of shape (M, len(arrays))
+        Array containing the cartesian products formed of input arrays.
+
+    Notes
+    -----
+    This function may not be used on more than 32 arrays
+    because the underlying numpy functions do not support it.
 
     Examples
     --------
+    >>> from sklearn.utils.extmath import cartesian
     >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
     array([[1, 4, 6],
            [1, 4, 7],
@@ -683,11 +688,6 @@ def cartesian(arrays, out=None):
            [3, 4, 7],
            [3, 5, 6],
            [3, 5, 7]])
-
-    Notes
-    -----
-    This function may not be used on more than 32 arrays
-    because the underlying numpy functions do not support it.
     """
     arrays = [np.asarray(x) for x in arrays]
     shape = (len(x) for x in arrays)
@@ -723,7 +723,7 @@ def svd_flip(u, v, u_based_decision=True):
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
         The input v should really be called vt to be consistent with scipy's
-        ouput.
+        output.
 
     u_based_decision : bool, default=True
         If True, use the columns of u as the basis for sign flipping.
@@ -955,24 +955,30 @@ def _incremental_mean_and_var(
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
+    X_nan_mask = np.isnan(X)
+    if np.any(X_nan_mask):
+        sum_op = np.nansum
+    else:
+        sum_op = np.sum
     if sample_weight is not None:
         if np_version >= parse_version("1.16.6"):
             # equivalent to np.nansum(X * sample_weight, axis=0)
             # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
             # dtype arg of np.matmul only exists since version 1.16
             new_sum = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(np.isnan(X), 0, X)
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
             )
         else:
             new_sum = _safe_accumulator_op(
                 np.nansum, X * sample_weight[:, None], axis=0
             )
         new_sample_count = _safe_accumulator_op(
-            np.sum, sample_weight[:, None] * (~np.isnan(X)), axis=0
+            np.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
         )
     else:
-        new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
-        new_sample_count = np.sum(~np.isnan(X), axis=0)
+        new_sum = _safe_accumulator_op(sum_op, X, axis=0)
+        n_samples = X.shape[0]
+        new_sample_count = n_samples - np.sum(X_nan_mask, axis=0)
 
     updated_sample_count = last_sample_count + new_sample_count
 
@@ -982,29 +988,31 @@ def _incremental_mean_and_var(
         updated_variance = None
     else:
         T = new_sum / new_sample_count
+        temp = X - T
         if sample_weight is not None:
             if np_version >= parse_version("1.16.6"):
                 # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
                 # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
                 # dtype arg of np.matmul only exists since version 1.16
-                new_unnormalized_variance = _safe_accumulator_op(
-                    np.matmul, sample_weight, np.where(np.isnan(X), 0, (X - T) ** 2)
-                )
                 correction = _safe_accumulator_op(
-                    np.matmul, sample_weight, np.where(np.isnan(X), 0, X - T)
+                    np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+                )
+                temp **= 2
+                new_unnormalized_variance = _safe_accumulator_op(
+                    np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
                 )
             else:
-                new_unnormalized_variance = _safe_accumulator_op(
-                    np.nansum, (X - T) ** 2 * sample_weight[:, None], axis=0
-                )
                 correction = _safe_accumulator_op(
-                    np.nansum, (X - T) * sample_weight[:, None], axis=0
+                    sum_op, temp * sample_weight[:, None], axis=0
+                )
+                temp *= temp
+                new_unnormalized_variance = _safe_accumulator_op(
+                    sum_op, temp * sample_weight[:, None], axis=0
                 )
         else:
-            new_unnormalized_variance = _safe_accumulator_op(
-                np.nansum, (X - T) ** 2, axis=0
-            )
-            correction = _safe_accumulator_op(np.nansum, X - T, axis=0)
+            correction = _safe_accumulator_op(sum_op, temp, axis=0)
+            temp **= 2
+            new_unnormalized_variance = _safe_accumulator_op(sum_op, temp, axis=0)
 
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis

@@ -85,8 +85,8 @@ citations to the following paper:
 If you want to cite scikit-learn for its API or design, you may also want to consider the
 following paper:
 
-  `API design for machine learning software: experiences from the scikit-learn
-  project <https://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+  :arxiv:`API design for machine learning software: experiences from the scikit-learn
+  project <1309.0238>`, Buitinck *et al.*, 2013.
 
   Bibtex entry::
 
@@ -217,7 +217,7 @@ July 2017.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/sydney-primary.jpeg
+.. image:: images/sydney-primary.jpeg
    :width: 100pt
    :align: center
    :target: https://sydney.edu.au/
@@ -320,7 +320,7 @@ Past Sponsors
 
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/columbia.png
+.. image:: images/columbia.png
    :width: 50pt
    :align: center
    :target: https://www.columbia.edu/
@@ -481,7 +481,7 @@ part-time.
    </div>
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/telecom.png
+.. image:: images/telecom.png
    :width: 50pt
    :align: center
    :target: https://www.telecom-paristech.fr/
@@ -508,7 +508,7 @@ funded a scikit-learn coding sprint in 2015.
    </div>
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/digicosme.png
+.. image:: images/digicosme.png
    :width: 100pt
    :align: center
    :target: https://digicosme.lri.fr
@@ -533,7 +533,7 @@ Hug to work full-time on scikit-learn in 2020.
    </div>
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/czi_logo.svg
+.. image:: images/czi_logo.svg
    :width: 100pt
    :align: center
    :target: https://chanzuckerberg.com
@@ -556,7 +556,7 @@ program.
 - 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
 - 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
-- 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <https://yclin.me/>`_
+- 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <https://yenchenlin.me/>`_
 
 .. _Vlad Niculae: https://vene.ro/
 

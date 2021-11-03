@@ -235,18 +235,18 @@ def lasso_path(
 
     y : {array-like, sparse matrix} of shape (n_samples,) or \
         (n_samples, n_targets)
-        Target values
+        Target values.
 
     eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``
+        ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, default=100
-        Number of alphas along the regularization path
+        Number of alphas along the regularization path.
 
     alphas : ndarray, default=None
         List of alphas where to compute the models.
-        If ``None`` alphas are set automatically
+        If ``None`` alphas are set automatically.
 
     precompute : 'auto', bool or array-like of shape \
             (n_features, n_features), default='auto'
@@ -269,14 +269,14 @@ def lasso_path(
         Amount of verbosity.
 
     return_n_iter : bool, default=False
-        whether to return the number of iterations or not.
+        Whether to return the number of iterations or not.
 
     positive : bool, default=False
         If set to True, forces coefficients to be positive.
         (Only allowed when ``y.ndim == 1``).
 
     **params : kwargs
-        keyword arguments passed to the coordinate descent solver.
+        Keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -293,6 +293,18 @@ def lasso_path(
     n_iters : list of int
         The number of iterations taken by the coordinate descent optimizer to
         reach the specified tolerance for each alpha.
+
+    See Also
+    --------
+    lars_path : Compute Least Angle Regression or Lasso path using LARS
+        algorithm.
+    Lasso : The Lasso is a linear model that estimates sparse coefficients.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoCV : Lasso linear model with iterative fitting along a regularization
+        path.
+    LassoLarsCV : Cross-validated Lasso using the LARS algorithm.
+    sklearn.decomposition.sparse_encode : Estimator that can be used to
+        transform signals into sparse linear combination of atoms from a fixed.
 
     Notes
     -----
@@ -313,6 +325,8 @@ def lasso_path(
 
     Comparing lasso_path and lars_path with interpolation:
 
+    >>> import numpy as np
+    >>> from sklearn.linear_model import lasso_path
     >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
     >>> y = np.array([1, 2, 3.1])
     >>> # Use lasso_path to compute a coefficient path
@@ -331,15 +345,6 @@ def lasso_path(
     >>> print(coef_path_continuous([5., 1., .5]))
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
-
-    See Also
-    --------
-    lars_path
-    Lasso
-    LassoLars
-    LassoCV
-    LassoLarsCV
-    sklearn.decomposition.sparse_encode
     """
     return enet_path(
         X,
@@ -493,6 +498,16 @@ def enet_path(
     :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
     """
+    X_offset_param = params.pop("X_offset", None)
+    X_scale_param = params.pop("X_scale", None)
+    tol = params.pop("tol", 1e-4)
+    max_iter = params.pop("max_iter", 1000)
+    random_state = params.pop("random_state", None)
+    selection = params.pop("selection", "cyclic")
+
+    if len(params) > 0:
+        raise ValueError("Unexpected parameters in params", params.keys())
+
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
@@ -529,10 +544,10 @@ def enet_path(
 
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
-        if "X_offset" in params:
+        if X_offset_param is not None:
             # As sparse matrices are not actually centered we need this
             # to be passed to the CD solver.
-            X_sparse_scaling = params["X_offset"] / params["X_scale"]
+            X_sparse_scaling = X_offset_param / X_scale_param
             X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
@@ -568,13 +583,10 @@ def enet_path(
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
-    tol = params.get("tol", 1e-4)
-    max_iter = params.get("max_iter", 1000)
     dual_gaps = np.empty(n_alphas)
     n_iters = []
 
-    rng = check_random_state(params.get("random_state", None))
-    selection = params.get("selection", "cyclic")
+    rng = check_random_state(random_state)
     if selection not in ["random", "cyclic"]:
         raise ValueError("selection should be either random or cyclic.")
     random = selection == "random"
@@ -784,6 +796,25 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
+    SGDRegressor : Implements elastic net regression with incremental training.
+    SGDClassifier : Implements logistic regression with elastic net penalty
+        (``SGDClassifier(loss="log", penalty="elasticnet")``).
+
+    Notes
+    -----
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a Fortran-contiguous numpy array.
+
     Examples
     --------
     >>> from sklearn.linear_model import ElasticNet
@@ -799,20 +830,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     1.451...
     >>> print(regr.predict([[0, 0]]))
     [1.451...]
-
-
-    Notes
-    -----
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
-
-    See Also
-    --------
-    ElasticNetCV : Elastic net model with best model selection by
-        cross-validation.
-    SGDRegressor : Implements elastic net regression with incremental training.
-    SGDClassifier : Implements logistic regression with elastic net penalty
-        (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """
 
     path = staticmethod(enet_path)
@@ -1014,7 +1031,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
-        # FIXME: 'normalize' to be removed in 1.2
         for k in range(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
@@ -1029,8 +1045,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 alphas=[alpha],
                 precompute=precompute,
                 Xy=this_Xy,
-                fit_intercept=False,
-                normalize=False,
                 copy_X=True,
                 verbose=False,
                 tol=self.tol,
@@ -1130,7 +1144,6 @@ class Lasso(ElasticNet):
             ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
-    precompute : 'auto', bool or array-like of shape (n_features, n_features),\
     precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
@@ -1193,6 +1206,12 @@ class Lasso(ElasticNet):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1265,6 +1284,8 @@ def _path_residuals(
     sample_weight,
     train,
     test,
+    normalize,
+    fit_intercept,
     path,
     path_params,
     alphas=None,
@@ -1345,9 +1366,6 @@ def _path_residuals(
                 # fancy indexing should create a writable copy but it doesn't
                 # for read-only memmaps (cf. numpy#14132).
                 array.setflags(write=True)
-
-    fit_intercept = path_params["fit_intercept"]
-    normalize = path_params["normalize"]
 
     if y.ndim == 1:
         precompute = path_params["precompute"]
@@ -1482,6 +1500,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         Returns
         -------
         self : object
+            Returns an instance of fitted model.
         """
 
         # Do as _deprecate_normalize but without warning as it's raised
@@ -1574,7 +1593,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         path_params = self.get_params()
 
         # FIXME: 'normalize' to be removed in 1.2
-        path_params["normalize"] = _normalize
+        # path_params["normalize"] = _normalize
+        # Pop `intercept` and `normalize` that are not parameter of the path
+        # function
+        path_params.pop("normalize", None)
+        path_params.pop("fit_intercept", None)
 
         if "l1_ratio" in path_params:
             l1_ratios = np.atleast_1d(path_params["l1_ratio"])
@@ -1632,6 +1655,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 sample_weight,
                 train,
                 test,
+                _normalize,
+                self.fit_intercept,
                 self.path,
                 path_params,
                 alphas=this_alphas,
@@ -1841,16 +1866,22 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> from sklearn.linear_model import LassoCV
-    >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(noise=4, random_state=0)
-    >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
-    >>> reg.score(X, y)
-    0.9993...
-    >>> reg.predict(X[:1,])
-    array([-78.4951...])
+    lars_path : Compute Least Angle Regression or Lasso path using LARS
+        algorithm.
+    lasso_path : Compute Lasso path with coordinate descent.
+    Lasso : The Lasso is a linear model that estimates sparse coefficients.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    LassoCV : Lasso linear model with iterative fitting along a regularization
+        path.
+    LassoLarsCV : Cross-validated Lasso using the LARS algorithm.
 
     Notes
     -----
@@ -1861,13 +1892,16 @@ class LassoCV(RegressorMixin, LinearModelCV):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    See Also
+    Examples
     --------
-    lars_path
-    lasso_path
-    LassoLars
-    Lasso
-    LassoLarsCV
+    >>> from sklearn.linear_model import LassoCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
+    >>> reg.score(X, y)
+    0.9993...
+    >>> reg.predict(X[:1,])
+    array([-78.4951...])
     """
 
     path = staticmethod(lasso_path)
@@ -1929,7 +1963,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     Parameters
     ----------
     l1_ratio : float or list of float, default=0.5
-        float between 0 and 1 passed to ElasticNet (scaling between
+        Float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For ``l1_ratio = 0``
         the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
         For ``0 < l1_ratio < 1``, the penalty is a combination of L1 and L2
@@ -2061,22 +2095,16 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> from sklearn.linear_model import ElasticNetCV
-    >>> from sklearn.datasets import make_regression
-
-    >>> X, y = make_regression(n_features=2, random_state=0)
-    >>> regr = ElasticNetCV(cv=5, random_state=0)
-    >>> regr.fit(X, y)
-    ElasticNetCV(cv=5, random_state=0)
-    >>> print(regr.alpha_)
-    0.199...
-    >>> print(regr.intercept_)
-    0.398...
-    >>> print(regr.predict([[0, 0]]))
-    [0.398...]
-
+    enet_path : Compute elastic net path with coordinate descent.
+    ElasticNet : Linear regression with combined L1 and L2 priors as regularizer.
 
     Notes
     -----
@@ -2104,10 +2132,21 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
         alpha = a + b and l1_ratio = a / (a + b).
 
-    See Also
+    Examples
     --------
-    enet_path
-    ElasticNet
+    >>> from sklearn.linear_model import ElasticNetCV
+    >>> from sklearn.datasets import make_regression
+
+    >>> X, y = make_regression(n_features=2, random_state=0)
+    >>> regr = ElasticNetCV(cv=5, random_state=0)
+    >>> regr.fit(X, y)
+    ElasticNetCV(cv=5, random_state=0)
+    >>> print(regr.alpha_)
+    0.199...
+    >>> print(regr.intercept_)
+    0.398...
+    >>> print(regr.predict([[0, 0]]))
+    [0.398...]
     """
 
     path = staticmethod(enet_path)
@@ -2164,8 +2203,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
 
 class MultiTaskElasticNet(Lasso):
-    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as
-    regularizer.
+    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -2267,6 +2305,26 @@ class MultiTaskElasticNet(Lasso):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
+        cross-validation.
+    ElasticNet : Linear regression with combined L1 and L2 priors as regularizer.
+    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2278,20 +2336,6 @@ class MultiTaskElasticNet(Lasso):
      [0.45663524 0.45612256]]
     >>> print(clf.intercept_)
     [0.0872422 0.0872422]
-
-    See Also
-    --------
-    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
-        cross-validation.
-    ElasticNet
-    MultiTaskLasso
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     def __init__(
@@ -2332,6 +2376,7 @@ class MultiTaskElasticNet(Lasso):
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
@@ -2481,7 +2526,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4
+        especially when tol is higher than 1e-4.
 
     Attributes
     ----------
@@ -2511,6 +2556,25 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    Lasso: Linear Model trained with L1 prior as regularizer (aka the Lasso).
+    MultiTaskLasso: Multi-task L1/L2 Lasso with built-in cross-validation.
+    MultiTaskElasticNet: Multi-task L1/L2 ElasticNet with built-in cross-validation.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2522,19 +2586,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
     [0.         0.94592424]]
     >>> print(clf.intercept_)
     [-0.41888636 -0.87382323]
-
-    See Also
-    --------
-    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation
-    Lasso
-    MultiTaskElasticNet
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     def __init__(
@@ -2595,7 +2646,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         prediction score is used. Note that a good choice of list of
         values for l1_ratio is often to put more values close to 1
         (i.e. Lasso) and less close to 0 (i.e. Ridge), as in ``[.1, .5, .7,
-        .9, .95, .99, 1]``
+        .9, .95, .99, 1]``.
 
     eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
@@ -2710,6 +2761,27 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
+    MultiTaskLassoCV : Multi-task Lasso model trained with L1/L2
+        mixed-norm as regularizer.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2722,19 +2794,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
      [0.52875032 0.46958558]]
     >>> print(clf.intercept_)
     [0.00166409 0.00166409]
-
-    See Also
-    --------
-    MultiTaskElasticNet
-    ElasticNetCV
-    MultiTaskLassoCV
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     path = staticmethod(enet_path)
@@ -2791,13 +2850,14 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Data
+            Training data.
         y : ndarray of shape (n_samples, n_targets)
-            Target. Will be cast to X's dtype if necessary
+            Training target variable. Will be cast to X's dtype if necessary.
 
         Returns
         -------
         self : object
+            Returns MultiTaskElasticNet instance.
         """
         return super().fit(X, y)
 
@@ -2932,6 +2992,28 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    MultiTaskElasticNet : Multi-task ElasticNet model trained with L1/L2
+        mixed-norm as regularizer.
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
+    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
+        cross-validation.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
+
     Examples
     --------
     >>> from sklearn.linear_model import MultiTaskLassoCV
@@ -2945,19 +3027,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     0.5713...
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
-
-    See Also
-    --------
-    MultiTaskElasticNet
-    ElasticNetCV
-    MultiTaskElasticNetCV
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     path = staticmethod(lasso_path)
@@ -3014,12 +3083,13 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Data
+            Data.
         y : ndarray of shape (n_samples, n_targets)
-            Target. Will be cast to X's dtype if necessary
+            Target. Will be cast to X's dtype if necessary.
 
         Returns
         -------
         self : object
+            Returns an instance of fitted model.
         """
         return super().fit(X, y)
