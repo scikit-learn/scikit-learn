@@ -107,7 +107,7 @@ _ = plt.title("Gaussian process regression on noise-free dataset")
 # We add some random Gaussian noise to the target with an arbitrary
 # standard deviation.
 noise_std = 0.75
-y_train_noisy = y_train + rng.normal(loc=0.0, scale=noise_std)
+y_train_noisy = y_train + rng.normal(loc=0.0, scale=noise_std, size=y_train.shape)
 
 # %%
 # We create a similar Gaussian process model. In addition to the kernel, this
