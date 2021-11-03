@@ -540,8 +540,8 @@ def _randomized_eigsh(
     References
     ----------
     * :arxiv: `Halko, et al. (2009) "Finding structure with randomness:
-    Stochastic algorithms for constructing approximate matrix decompositions"
-    (Algorithm 4.3 for strategy 'module') <0909.4061>`
+      Stochastic algorithms for constructing approximate matrix decompositions"
+      (Algorithm 4.3 for strategy 'module') <0909.4061>`
 
     """
     if selection == "value":  # pragma: no cover
