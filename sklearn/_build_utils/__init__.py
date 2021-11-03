@@ -76,11 +76,18 @@ def cythonize_extensions(top_path, config):
         compile_time_env={
             "SKLEARN_OPENMP_PARALLELISM_ENABLED": sklearn._OPENMP_SUPPORTED
         },
-        compiler_directives={"language_level": 3},
+        compiler_directives={
+            "language_level": 3,
+            "boundscheck": False,
+            "wraparound": False,
+            "initializedcheck": False,
+            "nonecheck": False,
+            "cdivision": True,
+        },
     )
 
 
-def gen_from_templates(templates, top_path):
+def gen_from_templates(templates):
     """Generate cython files from a list of templates"""
     # Lazy import because cython is not a runtime dependency.
     from Cython import Tempita

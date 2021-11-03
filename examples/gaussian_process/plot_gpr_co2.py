@@ -70,7 +70,7 @@ co2_data = co2_data.resample("M").mean().dropna(axis="index", how="any")
 co2_data.plot()
 plt.ylabel("Monthly average of CO$_2$ concentration (ppm)")
 _ = plt.title(
-    "Monthly average of air samples measurements\n" "from the Mauna Loa Observatory"
+    "Monthly average of air samples measurements\nfrom the Mauna Loa Observatory"
 )
 
 # %%
@@ -194,7 +194,7 @@ plt.legend()
 plt.xlabel("Year")
 plt.ylabel("Monthly average of CO$_2$ concentration (ppm)")
 _ = plt.title(
-    "Monthly average of air samples measurements\n" "from the Mauna Loa Observatory"
+    "Monthly average of air samples measurements\nfrom the Mauna Loa Observatory"
 )
 
 # %%

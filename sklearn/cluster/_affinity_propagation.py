@@ -5,12 +5,15 @@
 
 # License: BSD 3 clause
 
-import numpy as np
+import numbers
 import warnings
+
+import numpy as np
 
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_random_state
+from ..utils import check_scalar
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
@@ -132,8 +135,6 @@ def affinity_propagation(
 
     if preference is None:
         preference = np.median(S)
-    if damping < 0.5 or damping >= 1:
-        raise ValueError("damping must be >= 0.5 and < 1")
 
     preference = np.array(preference)
 
@@ -271,7 +272,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     damping : float, default=0.5
-        Damping factor (between 0.5 and 1) is the extent to
+        Damping factor in the range `[0.5, 1.0)` is the extent to
         which the current value is maintained relative to
         incoming values (weighted 1 - damping). This in order
         to avoid numerical oscillations when updating these
@@ -331,6 +332,24 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    AgglomerativeClustering : Recursively merges the pair of
+        clusters that minimally increases a given linkage distance.
+    FeatureAgglomeration : Similar to AgglomerativeClustering,
+        but recursively merges features instead of samples.
+    KMeans : K-Means clustering.
+    MiniBatchKMeans : Mini-Batch K-Means clustering.
+    MeanShift : Mean shift clustering using a flat kernel.
+    SpectralClustering : Apply clustering to a projection
+        of the normalized Laplacian.
 
     Notes
     -----
@@ -427,7 +446,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         Returns
         -------
         self
-
+            Returns the instance itself.
         """
         if self.affinity == "precomputed":
             accept_sparse = False
@@ -443,6 +462,22 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
                 "Affinity must be 'precomputed' or 'euclidean'. Got %s instead"
                 % str(self.affinity)
             )
+
+        check_scalar(
+            self.damping,
+            "damping",
+            target_type=numbers.Real,
+            min_val=0.5,
+            max_val=1,
+            include_boundaries="left",
+        )
+        check_scalar(self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1)
+        check_scalar(
+            self.convergence_iter,
+            "convergence_iter",
+            target_type=numbers.Integral,
+            min_val=1,
+        )
 
         (
             self.cluster_centers_indices_,
@@ -499,8 +534,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             return np.array([-1] * X.shape[0])
 
     def fit_predict(self, X, y=None):
-        """Fit the clustering from features or affinity matrix, and return
-        cluster labels.
+        """Fit clustering from features/affinity matrix; return cluster labels.
 
         Parameters
         ----------

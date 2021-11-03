@@ -27,6 +27,9 @@ def test_fetch_rcv1(fetch_rcv1_fxt):
     assert (804414,) == s1.shape
     assert 103 == len(cat_list)
 
+    # test descr
+    assert data1.DESCR.startswith(".. _rcv1_dataset:")
+
     # test ordering of categories
     first_categories = ["C11", "C12", "C13", "C14", "C15", "C151"]
     assert_array_equal(first_categories, cat_list[:6])

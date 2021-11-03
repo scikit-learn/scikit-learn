@@ -1286,7 +1286,7 @@ Support for Python 3.3 has been officially dropped.
   be used for novelty detection, i.e. predict on new unseen data. Available
   prediction methods are ``predict``, ``decision_function`` and
   ``score_samples``. By default, ``novelty`` is set to ``False``, and only
-  the ``fit_predict`` method is avaiable.
+  the ``fit_predict`` method is available.
   By :user:`Albert Thomas <albertcthomas>`.
 
 - |Fix| Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a
