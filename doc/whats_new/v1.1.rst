@@ -45,6 +45,10 @@ Changelog
   message suggests potential solutions.
   :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| All scikit-learn models now generate a more informative
+  error message when setting invalid hyper-parameters with `set_params`.
+  :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -150,6 +154,11 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
+  This allows specifying a maximum number of samples to be used while fitting
+  the model. The option is only available when `strategy` is set to `quantile`.
+  :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
 
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in `fit`
   instead of `__init__`.

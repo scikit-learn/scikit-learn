@@ -212,8 +212,7 @@ class BaseEstimator:
         return out
 
     def set_params(self, **params):
-        """
-        Set the parameters of this estimator.
+        """Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
         (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
@@ -239,10 +238,10 @@ class BaseEstimator:
         for key, value in params.items():
             key, delim, sub_key = key.partition("__")
             if key not in valid_params:
+                local_valid_params = self._get_param_names()
                 raise ValueError(
-                    "Invalid parameter %s for estimator %s. "
-                    "Check the list of available parameters "
-                    "with `estimator.get_params().keys()`." % (key, self)
+                    f"Invalid parameter {key!r} for estimator {self}. "
+                    f"Valid parameters are: {local_valid_params!r}."
                 )
 
             if delim:
