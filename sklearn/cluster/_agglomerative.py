@@ -429,11 +429,11 @@ def linkage_tree(
               observations of the two sets.
 
     affinity : str or callable, default='euclidean'
-        which metric to use. Can be 'euclidean', 'manhattan', or any
+        Which metric to use. Can be 'euclidean', 'manhattan', or any
         distance known to paired distance (see metric.pairwise).
 
     return_distance : bool, default=False
-        whether or not to return the distances between the clusters.
+        Whether or not to return the distances between the clusters.
 
     Returns
     -------
@@ -914,7 +914,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        X = self._validate_data(X, ensure_min_samples=2, estimator=self)
+        X = self._validate_data(X, ensure_min_samples=2)
         return self._fit(X)
 
     def _fit(self, X):
@@ -1234,7 +1234,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, ensure_min_features=2, estimator=self)
+        X = self._validate_data(X, ensure_min_features=2)
         super()._fit(X.T)
         return self
 

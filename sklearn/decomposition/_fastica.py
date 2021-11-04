@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
 
 from ..utils import check_array, as_float_array, check_random_state
@@ -319,7 +319,7 @@ def fastica(
                 return None, est._unmixing, sources
 
 
-class FastICA(TransformerMixin, BaseEstimator):
+class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     The implementation is based on [1]_.
@@ -444,10 +444,6 @@ class FastICA(TransformerMixin, BaseEstimator):
         random_state=None,
     ):
         super().__init__()
-        if max_iter < 1:
-            raise ValueError(
-                "max_iter should be greater than 1, got (max_iter={})".format(max_iter)
-            )
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
@@ -553,6 +549,13 @@ class FastICA(TransformerMixin, BaseEstimator):
                     "w_init has invalid shape -- should be %(shape)s"
                     % {"shape": (n_components, n_components)}
                 )
+
+        if self.max_iter < 1:
+            raise ValueError(
+                "max_iter should be greater than 1, got (max_iter={})".format(
+                    self.max_iter
+                )
+            )
 
         kwargs = {
             "tol": self.tol,
@@ -686,3 +689,8 @@ class FastICA(TransformerMixin, BaseEstimator):
             X += self.mean_
 
         return X
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
