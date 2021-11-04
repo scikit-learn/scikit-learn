@@ -259,7 +259,7 @@ def test_fit_docstring_attributes(name, Estimator):
 
     # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
     if Estimator.__name__ == "FastICA":
-        est.set_params(whiten="arbitrary-variance")
+        est.set_params(whiten="unit-variance")
 
     if Estimator.__name__.endswith("Vectorizer"):
         # Vectorizer require some specific input data
