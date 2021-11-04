@@ -34,6 +34,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
+from .base import _ClassNamePrefixFeaturesOutMixin
 
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
@@ -290,7 +291,9 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
-class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
+class BaseRandomProjection(
+    TransformerMixin, BaseEstimator, _ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+):
     """Base class for random projections.
 
     Warning: This class should not be used directly.
@@ -419,6 +422,14 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         X_new = safe_sparse_dot(X, self.components_.T, dense_output=self.dense_output)
         return X_new
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features.
+
+        Used by _ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
+        """
+        return self.n_components
 
 
 class GaussianRandomProjection(BaseRandomProjection):

@@ -371,7 +371,6 @@ GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "manifold",
     "neighbors",
     "neural_network",
-    "random_projection",
 ]
 
 
@@ -412,7 +411,6 @@ VALIDATE_ESTIMATOR_INIT = [
     "GridSearchCV",
     "HalvingGridSearchCV",
     "KernelPCA",
-    "LabelBinarizer",
     "NuSVC",
     "NuSVR",
     "OneClassSVM",

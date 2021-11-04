@@ -45,6 +45,10 @@ Changelog
   message suggests potential solutions.
   :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| All scikit-learn models now generate a more informative
+  error message when setting invalid hyper-parameters with `set_params`.
+  :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -55,6 +59,13 @@ Changelog
 - |Enhancement| :class:`CalibrationDisplay` accepts a parameter `pos_label` to
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral` 
+  now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
+  that clusters samples in the embedding space as an alternative to the existing
+  `'kmeans'` and `'discrete'` methods.
+  See :func:`cluster.spectral_clustering` for more details.
+  :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -124,6 +135,18 @@ Changelog
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
+  This allows specifying a maximum number of samples to be used while fitting
+  the model. The option is only available when `strategy` is set to `quantile`.
+  :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
+
+- |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in `fit`
+  instead of `__init__`.
+  :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
+
 :mod:`sklearn.utils`
 ....................
 
@@ -147,6 +170,15 @@ Changelog
 - |Enhancement| :func:`utils.validation.check_array` returns a float
   ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
   array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
+
+:mod:`sklearn.random_projection`
+................................
+
+- |API| Adds :term:`get_feature_names_out` to all transformers in the
+  :mod:`~sklearn.random_projection` module:
+  :class:`~sklearn.random_projection.GaussianRandomProjection` and
+  :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
+  :user:`Loïc Estève <lesteve>`.
 
 Code and Documentation Contributors
 -----------------------------------

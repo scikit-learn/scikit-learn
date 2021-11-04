@@ -13,7 +13,6 @@ from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
 from ..base import is_classifier, is_regressor
-from ..pipeline import Pipeline
 from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
@@ -383,19 +382,10 @@ def partial_dependence(
     ...                    grid_resolution=2) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
+    check_is_fitted(estimator)
+
     if not (is_classifier(estimator) or is_regressor(estimator)):
         raise ValueError("'estimator' must be a fitted regressor or classifier.")
-
-    if isinstance(estimator, Pipeline):
-        # TODO: to be removed if/when pipeline get a `steps_` attributes
-        # assuming Pipeline is the only estimator that does not store a new
-        # attribute
-        for est in estimator:
-            # FIXME: remove the None option when it will be deprecated
-            if est not in (None, "drop"):
-                check_is_fitted(est)
-    else:
-        check_is_fitted(estimator)
 
     if is_classifier(estimator) and isinstance(estimator.classes_[0], np.ndarray):
         raise ValueError("Multiclass-multioutput estimators are not supported")
