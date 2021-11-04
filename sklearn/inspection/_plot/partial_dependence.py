@@ -1,5 +1,4 @@
 import numbers
-import warnings
 from itertools import chain
 from math import ceil
 
@@ -432,19 +431,19 @@ def _plot_partial_dependence(
         tmp_features.append(fxs)
 
     if any(ice_for_two_way_pd):
-        # only warn when 1- and 2-way PD were requested
-        warnings.warn(
-            "You requested an ICE plot with 2-way feature interactions. "
-            "This is impossible to render. We will instead make a regular PD "
-            "plot ('average'). If you want finer control on how to specify "
-            "the kind of plot to render (ICE vs PD), you may pass a list of "
-            "strings to the kind parameter.",
-            UserWarning,
-        )
+        # raise an error an be specific regarding the parameter values
+        # when 1- and 2-way PD were requested
         kind_ = [
             "average" if forcing_average else kind_plot
             for forcing_average, kind_plot in zip(ice_for_two_way_pd, kind_)
         ]
+        raise ValueError(
+            "You requested an ICE plot with 2-way feature interactions. "
+            "This is impossible to render. You need to explicitely request "
+            "a PD plot ('average') for the 2-way feature interactions. "
+            f"Therefore for features={features!r}, you need to provide "
+            f"kind={kind_!r}"
+        )
     features = tmp_features
 
     # Early exit if the axes does not have the correct number of axes

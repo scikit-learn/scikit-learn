@@ -122,13 +122,6 @@ Changelog
   which type of plot a user wants to draw.
   :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| In
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`,
-  instead of raising an error, asking for ICE plots (`kind='both'` or
-  `kind='individual'`) on a 2-way plot will use regular PDP and raise a
-  warning. :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 :mod:`sklearn.metrics`
 ......................
 

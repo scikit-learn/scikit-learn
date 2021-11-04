@@ -775,7 +775,7 @@ def test_partial_dependence_kind_list(
         ([0, 2, (1, 2)], ["both", "both", "both"]),
     ],
 )
-def test_partial_dependence_kind_warning(
+def test_partial_dependence_kind_error(
     plot_partial_dependence,
     pyplot,
     clf_diabetes,
@@ -783,47 +783,20 @@ def test_partial_dependence_kind_warning(
     features,
     kind,
 ):
-    """Check that we can provide kind="both" but that a warning will be raised
-    due to the 2-way PD."""
-    matplotlib = pytest.importorskip("matplotlib")
-
+    """Check that we raise an informative error when 2-way PD is requested
+    together with 1-way PD/ICE"""
     warn_msg = (
         "You requested an ICE plot with 2-way feature interactions. "
-        "This is impossible to render."
+        "This is impossible to render. You need to explicitely request "
     )
-    with pytest.warns(UserWarning, match=warn_msg):
-        disp = plot_partial_dependence(
+    with pytest.raises(ValueError, match=warn_msg):
+        plot_partial_dependence(
             clf_diabetes,
             diabetes.data,
             features=features,
             grid_resolution=20,
             kind=kind,
         )
-
-    indices_one_way = [
-        i for i in range(len(features)) if not isinstance(features[i], tuple)
-    ]
-    indices_two_way = [
-        i for i in range(len(features)) if isinstance(features[i], tuple)
-    ]
-
-    # check the data for the one-way PD
-    for idx in indices_one_way:
-        assert all(
-            [
-                isinstance(line, matplotlib.lines.Line2D)
-                for line in disp.lines_[0, idx].ravel()
-            ]
-        )
-        assert disp.contours_[0, idx] is None
-
-    # check the data for the two-way PD
-    for idx in indices_two_way:
-        assert disp.contours_[0, idx] is not None
-        if disp.lines_.ndim == 3:
-            assert all([line is None for line in disp.lines_[0, idx].ravel()])
-        else:
-            assert all([line is None for line in disp.lines_.ravel()])
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
