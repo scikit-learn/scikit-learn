@@ -544,7 +544,7 @@ class OneHotEncoder(_BaseEncoder):
 
         indptr = np.empty(n_samples + 1, dtype=int)
         indptr[0] = 0
-        np.sum(X_mask, axis=1, out=indptr[1:])
+        np.sum(X_mask, axis=1, out=indptr[1:], dtype=indptr.dtype)
         np.cumsum(indptr[1:], out=indptr[1:])
         data = np.ones(indptr[-1])
 
