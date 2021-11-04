@@ -585,13 +585,14 @@ cdef class Tree:
 
     def __cinit__(self, int n_features, np.ndarray n_classes, int n_outputs):
         """Constructor."""
+        cdef SIZE_t dummy
+        size_t_dtype = np.array(dummy).dtype
+
         if n_classes.ndim != 1:
             raise ValueError(f"Wrong dimensions for n_classes: expected 1, got {n_classes.ndim}")
 
         try:
-            # TODO: what is the correct dtype here? And can I reuse SIZE_t rather
-            # than hardcode dtype=intp?
-            n_classes = n_classes.astype(dtype=np.intp)
+            n_classes = n_classes.astype(dtype=size_t_dtype)
         except Exception as exc:
             raise ValueError(f"Error converting n_classes: full exception was\n{exc}")
 
