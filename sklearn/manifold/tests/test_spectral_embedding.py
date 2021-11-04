@@ -133,9 +133,7 @@ def test_spectral_embedding_two_components(eigen_solver, seed=36):
     for dtype in [np.float32, np.float64]:
         if eigen_solver == "amg" and not amg_loaded:
             with pytest.raises(ValueError) as e:
-                embedded_coordinate = se_precomp.fit_transform(
-                    affinity.astype(dtype)
-                )
+                embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
             assert "The eigen_solver was set to 'amg', but" in str(e.value)
         else:
             embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
