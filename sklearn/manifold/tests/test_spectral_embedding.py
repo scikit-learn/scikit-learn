@@ -243,9 +243,6 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_amg_solver(dtype, seed=36):
-    # Test spectral embedding with amg solver
-    pytest.importorskip("pyamg")
-
     se_amg = SpectralEmbedding(
         n_components=2,
         affinity="nearest_neighbors",
@@ -295,10 +292,12 @@ def test_spectral_embedding_amg_solver(dtype, seed=36):
 @pytest.mark.filterwarnings(
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
+@pytest.mark.skipif(
+    is_pyamg_not_available, reason="PyAMG is not installed and thus we cannot test."
+)
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
     # Non-regression test for amg solver failure (issue #13393 on github)
-    pytest.importorskip("pyamg")
     num_nodes = 100
     X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
     X = X.astype(dtype)
