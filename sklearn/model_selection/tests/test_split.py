@@ -1770,8 +1770,9 @@ def test_nested_cv():
     groups = rng.randint(0, 5, 15)
 
     cvs = [
+        LeaveOneGroupOut(),
         StratifiedKFold(n_splits=2),
-        StratifiedShuffleSplit(n_splits=2, random_state=0),
+        GroupKFold(n_splits=3),
     ]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
