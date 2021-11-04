@@ -140,21 +140,23 @@ def test_spectral_embedding_two_components(eigen_solver, dtype, seed=36):
         eigen_solver=eigen_solver,
     )
     for dtype in [np.float32, np.float64]:
-        if eigen_solver == "amg" and not amg_loaded:
-            with pytest.raises(ValueError) as e:
-                embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
-            assert "The eigen_solver was set to 'amg', but" in str(e.value)
-        else:
-            embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
-            # thresholding on the first components using 0.
-            label_ = np.array(embedded_coordinate.ravel() < 0, dtype=np.float64)
-            assert normalized_mutual_info_score(true_label, label_) == pytest.approx(
-                1.0
-            )
+        embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
+        # thresholding on the first components using 0.
+        label_ = np.array(embedded_coordinate.ravel() < 0, dtype=np.float64)
+        assert normalized_mutual_info_score(true_label, label_) == pytest.approx(
+            1.0
+        )
 
 
 @pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
-@pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg", "amg"))
+@pytest.mark.parametrize(
+    "eigen_solver",
+    [
+        "arpack",
+        "lobpcg",
+        pytest.param("amg", marks=skip_if_no_pyamg),
+    ]
+)
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_precomputed_affinity(X, eigen_solver, dtype, seed=36):
     # Test spectral embedding with precomputed kernel
@@ -172,21 +174,12 @@ def test_spectral_embedding_precomputed_affinity(X, eigen_solver, dtype, seed=36
         random_state=np.random.RandomState(seed),
         eigen_solver=eigen_solver,
     )
-    if eigen_solver == "amg" and not amg_loaded:
-        # with pytest.raises(
-        #     ValueError, match="The eigen_solver was set to 'amg', but"
-        # ):
-        #     embedded_coordinate = se_precomp.fit_transform(
-        #         affinity.astype(dtype)
-        #     )
-        pass
-    else:
-        embed_precomp = se_precomp.fit_transform(
-            rbf_kernel(X.astype(dtype), gamma=gamma)
-        )
-        embed_rbf = se_rbf.fit_transform(X.astype(dtype))
-        assert_array_almost_equal(se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-        _assert_equal_with_sign_flipping(embed_precomp, embed_rbf, 0.05)
+    embed_precomp = se_precomp.fit_transform(
+        rbf_kernel(X.astype(dtype), gamma=gamma)
+    )
+    embed_rbf = se_rbf.fit_transform(X.astype(dtype))
+    assert_array_almost_equal(se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
+    _assert_equal_with_sign_flipping(embed_precomp, embed_rbf, 0.05)
 
 
 def test_precomputed_nearest_neighbors_filtering():
