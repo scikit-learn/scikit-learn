@@ -38,7 +38,6 @@ from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.validation import check_random_state
-from sklearn.utils import parse_version
 from sklearn.utils import _IS_32BIT
 
 from sklearn.exceptions import NotFittedError
@@ -2214,10 +2213,6 @@ def test_different_endianness_pickle():
     assert np.isclose(score, new_score)
 
 
-@pytest.mark.skipif(
-    parse_version(joblib.__version__) < parse_version("1.1"),
-    reason="joblib >= 1.1 is needed to load numpy arrays in native endianness",
-)
 def test_different_endianness_joblib_pickle():
     X, y = datasets.make_classification(random_state=0)
 
