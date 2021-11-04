@@ -438,6 +438,50 @@ def test_spectral_embedding_first_eigen_vector():
         assert np.std(embedding[:, 1]) > 1e-3
 
 
+@pytest.mark.parametrize(
+    "eigen_solver",
+    [
+        "arpack",
+        "lobpcg",
+        pytest.param("amg", marks=skip_if_no_pyamg),
+    ],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_spectral_embedding_preserves_dtype(eigen_solver, dtype):
+    """Check that `SpectralEmbedding is preserving the dtype of the fitted
+    attribute and transformed data.
+
+    Ideally, this test should be covered by the common test
+    `check_transformer_preserve_dtypes`. However, this test only run
+    with transformers implementing `transform` while `SpectralEmbedding`
+    implements only `fit_transform`.
+    """
+    X = S.astype(dtype)
+    se = SpectralEmbedding(
+        n_components=2, affinity="rbf", eigen_solver=eigen_solver, random_state=0
+    )
+    X_trans = se.fit_transform(X)
+
+    assert X_trans.dtype == dtype
+    assert se.embedding_.dtype == dtype
+    assert se.affinity_matrix_.dtype == dtype
+
+
+@pytest.mark.skipif(
+    not is_pyamg_not_available,
+    reason="PyAMG is installed and we should not test for an error.",
+)
+def test_error_pyamg_not_available():
+    se_precomp = SpectralEmbedding(
+        n_components=2,
+        affinity="rbf",
+        eigen_solver="amg",
+    )
+    err_msg = "The eigen_solver was set to 'amg', but pyamg is not available."
+    with pytest.raises(ValueError, match=err_msg):
+        se_precomp.fit_transform(S)
+
+
 # TODO: Remove in 1.1
 @pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
 def test_spectral_embedding_pairwise_deprecated(affinity):
