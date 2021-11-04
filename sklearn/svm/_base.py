@@ -239,7 +239,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                     "When 'gamma' is a string, it should be either 'scale' or "
                     "'auto'. Got '{}' instead.".format(self.gamma)
                 )
-        elif isinstance(self.gamma, (numbers.Real, numbers.Integral)):
+        elif isinstance(self.gamma, numbers.Real):
             if self.gamma <= 0:
                 msg = (
                     f"gamma value must be > 0; {self.gamma} is invalid Use"
