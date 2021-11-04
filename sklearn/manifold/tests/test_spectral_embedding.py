@@ -20,7 +20,8 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 
 try:
-    from pyamg import smoothed_aggregation_solver # noqa
+    from pyamg import smoothed_aggregation_solver  # noqa
+    
     is_pyamg_not_available = False
 except ImportError:
     is_pyamg_not_available = True
