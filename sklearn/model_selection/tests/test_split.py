@@ -1778,7 +1778,8 @@ def test_nested_cv():
         gs = GridSearchCV(
             DummyClassifier(),
             param_grid={"strategy": ["stratified", "most_frequent"]},
-            cv=inner_cv, error_score="raise"
+            cv=inner_cv,
+            error_score="raise",
         )
         cross_val_score(
             gs, X=X, y=y, groups=groups, cv=outer_cv, fit_params={"groups": groups}
