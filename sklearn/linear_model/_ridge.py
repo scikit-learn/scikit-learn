@@ -10,6 +10,7 @@ Ridge regression
 
 
 from abc import ABCMeta, abstractmethod
+import numbers
 import warnings
 
 import numpy as np
@@ -26,6 +27,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_array
 from ..utils import check_consistent_length
+from ..utils import check_scalar
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted
@@ -1842,12 +1844,40 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        self.alphas = np.asarray(self.alphas)
-
-        if np.any(self.alphas <= 0):
-            raise ValueError(
-                "alphas must be strictly positive. Got {} containing some "
-                "negative or null value instead.".format(self.alphas)
+        if isinstance(self.alphas, (np.ndarray, list, tuple)):
+            n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
+            if n_alphas != 1:
+                for alpha in self.alphas:
+                    alpha = check_scalar(
+                        alpha,
+                        "alpha",
+                        target_type=numbers.Real,
+                        min_val=0.0,
+                        include_boundaries="neither",
+                    )
+            elif np.ndim(self.alphas) == 0:
+                self.alphas[()] = check_scalar(
+                    self.alphas[()],
+                    "alpha",
+                    target_type=numbers.Real,
+                    min_val=0.0,
+                    include_boundaries="neither",
+                )
+            else:
+                self.alphas[0] = check_scalar(
+                    self.alphas[0],
+                    "alpha",
+                    target_type=numbers.Real,
+                    min_val=0.0,
+                    include_boundaries="neither",
+                )
+        else:
+            self.alphas = check_scalar(
+                self.alphas,
+                "alpha",
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="neither",
             )
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
