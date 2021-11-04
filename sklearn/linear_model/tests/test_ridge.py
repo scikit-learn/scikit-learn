@@ -1239,13 +1239,24 @@ def test_ridgecv_negative_alphas():
     y = [1, 1, 1, -1, -1]
 
     # Negative integers
-    ridge = RidgeCV(alphas=(-1, -10, -100))
-    with pytest.raises(ValueError, match="alphas must be strictly positive"):
+    ridge = RidgeCV(alphas=(1, -1, -100))
+    with pytest.raises(ValueError, match=r"alphas\[1\] == -1, must be > 0.0"):
         ridge.fit(X, y)
 
     # Negative floats
     ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
-    with pytest.raises(ValueError, match="alphas must be strictly positive"):
+    with pytest.raises(ValueError, match=r"alphas\[0\] == -0.1, must be > 0.0"):
+        ridge.fit(X, y)
+
+    # Positive strings
+    ridge = RidgeCV(alphas=(1, 1.0, "1"))
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not <class"
+            " 'str'>"
+        ),
+    ):
         ridge.fit(X, y)
 
 

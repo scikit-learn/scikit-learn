@@ -1847,10 +1847,10 @@ class _RidgeGCV(LinearModel):
         if isinstance(self.alphas, (np.ndarray, list, tuple)):
             n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
             if n_alphas != 1:
-                for alpha in self.alphas:
+                for index, alpha in enumerate(self.alphas):
                     alpha = check_scalar(
                         alpha,
-                        "alpha",
+                        f"alphas[{index}]",
                         target_type=numbers.Real,
                         min_val=0.0,
                         include_boundaries="neither",
@@ -1858,7 +1858,7 @@ class _RidgeGCV(LinearModel):
             elif np.ndim(self.alphas) == 0:
                 self.alphas[()] = check_scalar(
                     self.alphas[()],
-                    "alpha",
+                    "alphas",
                     target_type=numbers.Real,
                     min_val=0.0,
                     include_boundaries="neither",
@@ -1866,7 +1866,7 @@ class _RidgeGCV(LinearModel):
             else:
                 self.alphas[0] = check_scalar(
                     self.alphas[0],
-                    "alpha",
+                    "alphas",
                     target_type=numbers.Real,
                     min_val=0.0,
                     include_boundaries="neither",
@@ -1874,11 +1874,12 @@ class _RidgeGCV(LinearModel):
         else:
             self.alphas = check_scalar(
                 self.alphas,
-                "alpha",
+                "alphas",
                 target_type=numbers.Real,
                 min_val=0.0,
                 include_boundaries="neither",
             )
+        self.alphas = np.asarray(self.alphas)
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
             X,
