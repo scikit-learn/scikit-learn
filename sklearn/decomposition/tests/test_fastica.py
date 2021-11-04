@@ -179,10 +179,6 @@ def test_fastica_convergence_fail():
         ica.fit(m.T)
 
 
-# FIXME remove filter in 1.3
-@pytest.mark.filterwarnings(
-    "ignore:From version 1.3 whiten='unit-variance' will be used by default."
-)
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_non_square_fastica(add_noise):
     # Test the FastICA algorithm on very simple data.
@@ -206,7 +202,9 @@ def test_non_square_fastica(add_noise):
 
     center_and_norm(m)
 
-    k_, mixing_, s_ = fastica(m.T, n_components=2, random_state=rng)
+    k_, mixing_, s_ = fastica(
+        m.T, n_components=2, whiten="unit-variance", random_state=rng
+    )
     s_ = s_.T
 
     # Check that the mixing model described in the docstring holds:
