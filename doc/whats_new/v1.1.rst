@@ -121,7 +121,7 @@ Changelog
 .......................
 
 - |Enhancement| :func:`manifold.spectral_embedding` supports `np.float32` dtype.
-  :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`
+  :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.model_selection`
 ..............................

@@ -20,12 +20,13 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 
 try:
-    from pyamg import smoothed_aggregation_solver  # noqa
-
-    amg_loaded = True
+    import pyamg
+    is_pyamg_not_available = False
 except ImportError:
-    amg_loaded = False
-
+    is_pyamg_not_available = True
+skip_if_no_pyamg = pytest.mark.skipif(
+    is_pyamg_not_available, reason="PyAMG is required for the tests in this function."
+)
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -92,8 +93,16 @@ def test_sparse_graph_connected_component():
         assert_array_equal(component_1, component_2)
 
 
-@pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg", "amg"))
-def test_spectral_embedding_two_components(eigen_solver, seed=36):
+@pytest.mark.parametrize(
+    "eigen_solver",
+    [
+        "arpack",
+        "lobpcg",
+        pytest.param("amg", marks=skip_if_no_pyamg),
+    ]
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_spectral_embedding_two_components(eigen_solver, dtype, seed=36):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
     n_sample = 100
@@ -138,7 +147,7 @@ def test_spectral_embedding_two_components(eigen_solver, seed=36):
         else:
             embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
             # thresholding on the first components using 0.
-            label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
+            label_ = np.array(embedded_coordinate.ravel() < 0, dtype=np.float64)
             assert normalized_mutual_info_score(true_label, label_) == pytest.approx(
                 1.0
             )
