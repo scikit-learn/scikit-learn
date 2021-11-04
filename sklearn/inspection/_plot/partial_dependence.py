@@ -1332,6 +1332,13 @@ class PartialDependenceDisplay:
                 f"{len(self.features)} element(s)."
             )
 
+        valid_kinds = {"average", "individual", "both"}
+        if any([k not in valid_kinds for k in kind]):
+            raise ValueError(
+                f"Values provided to `kind` must be one of: {valid_kinds!r} or a list"
+                f" of such values. Currently, kind={self.kind}"
+            )
+
         if line_kw is None:
             line_kw = {}
         if ice_lines_kw is None:

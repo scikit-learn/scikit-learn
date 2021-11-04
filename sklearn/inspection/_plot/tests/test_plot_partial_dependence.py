@@ -605,6 +605,16 @@ dummy_classification_data = make_classification(random_state=0)
             {"features": [1], "subsample": 1.2},
             r"When a floating-point, subsample=1.2 should be in the \(0, 1\) range",
         ),
+        (
+            dummy_classification_data,
+            {"features": [1], "kind": "foo"},
+            "Values provided to `kind` must be one of",
+        ),
+        (
+            dummy_classification_data,
+            {"features": [0, 1], "kind": ["foo", "individual"]},
+            "Values provided to `kind` must be one of",
+        ),
     ],
 )
 def test_plot_partial_dependence_error(
