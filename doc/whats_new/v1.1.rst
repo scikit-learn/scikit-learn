@@ -60,7 +60,7 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral` 
+- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral`
   now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
   that clusters samples in the embedding space as an alternative to the existing
   `'kmeans'` and `'discrete'` methods.
@@ -179,6 +179,13 @@ Changelog
   :class:`~sklearn.random_projection.GaussianRandomProjection` and
   :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
   :user:`Loïc Estève <lesteve>`.
+:mod:`sklearn.tree`
+...................
+
+- [Fix| Support loading pickles of decision tree models when the pickle has
+  been generated on a platform with a different bitness. A typical example is to train and pickle the model on
+  64 bit machine and load the model on a 32 bit machine for prediction.
+  :pr:`21552` by :user:`Loïc Estève <lesteve>`.
 
 Code and Documentation Contributors
 -----------------------------------
