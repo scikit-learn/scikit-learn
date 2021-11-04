@@ -1368,7 +1368,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Minimizing Finite Sums with the Stochastic Average Gradient
         https://hal.inria.fr/hal-00860051/document
 
-    SAGA -- :arxiv: `Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+    SAGA -- :arxiv:`Defazio, A., Bach F. & Lacoste-Julien S. (2014).
         "SAGA: A Fast Incremental Gradient Method With Support
         for Non-Strongly Convex Composite Objectives" <1407.0202>`
 
