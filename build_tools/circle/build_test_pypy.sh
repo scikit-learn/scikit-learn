@@ -13,7 +13,8 @@ conda install -y mamba
 mamba create -n pypy -y \
     pypy numpy scipy cython \
     joblib threadpoolctl pillow pytest \
-    sphinx numpydoc docutils
+    sphinx numpydoc docutils \
+    "setuptools<58.5" # TODO: remove this line once setuptools#2849 is resolved.
 
 eval "$(conda shell.bash hook)"
 conda activate pypy
