@@ -99,7 +99,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     See Also
     --------
     DictionaryLearning : Find a dictionary that sparsely encodes data.
-    FactorAnalysis : A simple linear generative model with \
+    FactorAnalysis : A simple linear generative model with
         Gaussian latent variables.
     IncrementalPCA : Incremental principal components analysis.
     KernelPCA : Kernel Principal component analysis.
