@@ -258,6 +258,9 @@ def plot_partial_dependence(
            the slower ``method='brute'`` option.
 
         .. versionadded:: 0.24
+           Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
+           options.
+
         .. versionadded:: 1.0
            Add the possibility to pass a list of string for each plot.
 
@@ -618,6 +621,9 @@ class PartialDependenceDisplay:
            the slower ``method='brute'`` option.
 
         .. versionadded:: 0.24
+           Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
+           options.
+
         .. versionadded:: 1.0
            Add the possibility to pass a list of string for each plot.
 
