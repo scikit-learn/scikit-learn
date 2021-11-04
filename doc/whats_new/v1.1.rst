@@ -179,6 +179,7 @@ Changelog
   :class:`~sklearn.random_projection.GaussianRandomProjection` and
   :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
   :user:`Loïc Estève <lesteve>`.
+
 :mod:`sklearn.tree`
 ...................
 
