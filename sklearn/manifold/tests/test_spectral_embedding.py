@@ -99,7 +99,7 @@ def test_sparse_graph_connected_component():
         "arpack",
         "lobpcg",
         pytest.param("amg", marks=skip_if_no_pyamg),
-    ]
+    ],
 )
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_spectral_embedding_two_components(eigen_solver, dtype, seed=36):
@@ -143,9 +143,7 @@ def test_spectral_embedding_two_components(eigen_solver, dtype, seed=36):
         embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
         # thresholding on the first components using 0.
         label_ = np.array(embedded_coordinate.ravel() < 0, dtype=np.float64)
-        assert normalized_mutual_info_score(true_label, label_) == pytest.approx(
-            1.0
-        )
+        assert normalized_mutual_info_score(true_label, label_) == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
@@ -155,7 +153,7 @@ def test_spectral_embedding_two_components(eigen_solver, dtype, seed=36):
         "arpack",
         "lobpcg",
         pytest.param("amg", marks=skip_if_no_pyamg),
-    ]
+    ],
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_precomputed_affinity(X, eigen_solver, dtype, seed=36):
@@ -174,9 +172,7 @@ def test_spectral_embedding_precomputed_affinity(X, eigen_solver, dtype, seed=36
         random_state=np.random.RandomState(seed),
         eigen_solver=eigen_solver,
     )
-    embed_precomp = se_precomp.fit_transform(
-        rbf_kernel(X.astype(dtype), gamma=gamma)
-    )
+    embed_precomp = se_precomp.fit_transform(rbf_kernel(X.astype(dtype), gamma=gamma))
     embed_rbf = se_rbf.fit_transform(X.astype(dtype))
     assert_array_almost_equal(se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
     _assert_equal_with_sign_flipping(embed_precomp, embed_rbf, 0.05)
