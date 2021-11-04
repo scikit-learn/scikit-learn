@@ -222,8 +222,8 @@ identifies the dataset::
 .. topic:: References:
 
  * :arxiv:`Vanschoren, van Rijn, Bischl and Torgo. "OpenML: networked science in
-    machine learning" ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
-    <1407.7722>`
+  machine learning" ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
+  <1407.7722>`
 
 .. _external_datasets:
 
