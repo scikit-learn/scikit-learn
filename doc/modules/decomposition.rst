@@ -273,15 +273,22 @@ Exact Kernel PCA
 ----------------
 
 :class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels (see :ref:`metrics`). It
+dimensionality reduction through the use of kernels (see :ref:`metrics`) [Scholkopf1997]_. It
 has many applications including denoising, compression and structured
 prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 ``transform`` and ``inverse_transform``.
 
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_001.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_002.png
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
     :align: center
     :scale: 75%
+
+.. note::
+    :meth:`KernelPCA.inverse_transform` relies on a kernel ridge to learn the
+    function mapping samples from the PCA basis into the original feature
+    space [Bakir2004]_. Thus, the reconstruction obtained with
+    :meth:`KernelPCA.inverse_transform` is an approximation. See the example
+    linked below for more details.
 
 .. topic:: Examples:
 
@@ -289,10 +296,16 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 
 .. topic:: References:
 
-    * Kernel PCA was introduced in "Kernel principal component analysis"
-      Bernhard Schoelkopf, Alexander J. Smola, and Klaus-Robert Mueller. 1999.
-      In Advances in kernel methods, MIT Press, Cambridge, MA, USA 327-352.
+    .. [Scholkopf1997] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       `"Kernel principal component analysis."
+       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+       International conference on artificial neural networks.
+       Springer, Berlin, Heidelberg, 1997.
 
+    .. [Bakir2004] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+       `"Learning to find pre-images."
+       <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
+       Advances in neural information processing systems 16 (2004): 449-456.
 
 .. _kPCA_Solvers:
 

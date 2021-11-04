@@ -17,7 +17,6 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 python -c "import sklearn; sklearn.show_versions()"
-python -m threadpoolctl -i sklearn
 
 if ! command -v conda &> /dev/null
 then
