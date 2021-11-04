@@ -368,5 +368,5 @@ or want to do additional monitoring, using ``warm_start=True`` and
       Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
       of the Trade 1998.
 
-    *  :arxiv:`Kingma, Diederik, and Jimmy Ba. arXiv preprint arXiv:1412.6980 (2014). "Adam: A method for stochastic optimization."
-       <https://arxiv.org/pdf/1412.6980v8.pdf>`
+    *  :arxiv:`Kingma, Diederik, and Jimmy Ba (2014) "Adam: A method for stochastic optimization."
+        <1412.6980>`
