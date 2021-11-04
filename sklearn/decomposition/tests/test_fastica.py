@@ -9,6 +9,7 @@ from scipy import stats
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition._fastica import _gs_decorrelation
@@ -340,9 +341,30 @@ def test_fastica_whiten_backwards_compatibility():
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
     n_components = X.shape[1]
+
+    default_ica = FastICA(n_components=n_components, random_state=0)
+    with pytest.warns(FutureWarning):
+        Xt_on_default = default_ica.fit_transform(X)
+
     ica = FastICA(n_components=n_components, whiten=True, random_state=0)
     with pytest.warns(FutureWarning):
         Xt = ica.fit_transform(X)
+
+    # No warning must be raised in this case.
+    av_ica = FastICA(
+        n_components=n_components, whiten="arbitrary-variance", random_state=0
+    )
+    with pytest.warns(None) as warn_record:
+        Xt_av = av_ica.fit_transform(X)
+        assert len(warn_record) == 0
+
+    # The whitening strategy must be "arbitrary-variance" in all the cases.
+    assert default_ica._whiten == "arbitrary-variance"
+    assert ica._whiten == "arbitrary-variance"
+    assert av_ica._whiten == "arbitrary-variance"
+
+    assert_array_equal(Xt, Xt_on_default)
+    assert_array_equal(Xt, Xt_av)
 
     assert np.var(Xt) == pytest.approx(1.0 / 100)
 
