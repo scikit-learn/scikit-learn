@@ -138,6 +138,11 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
+  This allows specifying a maximum number of samples to be used while fitting
+  the model. The option is only available when `strategy` is set to `quantile`.
+  :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
+
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in `fit`
   instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
