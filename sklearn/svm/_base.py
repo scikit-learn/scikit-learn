@@ -237,12 +237,12 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             else:
                 raise ValueError(
                     "When 'gamma' is a string, it should be either 'scale' or "
-                    "'auto'. Got '{}' instead.".format(self.gamma)
+                    f"'auto'. Got '{self.gamma!r}' instead."
                 )
         elif isinstance(self.gamma, numbers.Real):
             if self.gamma <= 0:
                 msg = (
-                    f"gamma value must be > 0; {self.gamma} is invalid Use"
+                    f"gamma value must be > 0; {self.gamma!r} is invalid. Use"
                     " a positive number or use 'auto' to set gamma to a"
                     " value of 1 / n_features."
                 )
@@ -251,7 +251,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         else:
             msg = (
                 "The gamma value should be set to 'scale', 'auto' or a"
-                f" positive float value {self.gamma} is not a valid option"
+                f" positive float value. {self.gamma!r} is not a valid option"
             )
             raise ValueError(msg)
 
