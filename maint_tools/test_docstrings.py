@@ -101,7 +101,7 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._plot.confusion_matrix.plot_confusion_matrix",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
-    "sklearn.metrics._plot.roc_curve.plot_roc_curve",
+    # "sklearn.metrics._plot.roc_curve.plot_roc_curve",
     "sklearn.metrics._ranking.auc",
     "sklearn.metrics._ranking.average_precision_score",
     "sklearn.metrics._ranking.coverage_error",

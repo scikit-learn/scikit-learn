@@ -368,18 +368,18 @@ def plot_roc_curve(
     pos_label=None,
     **kwargs,
 ):
-    """Plot Receiver operating characteristic (ROC) curve.
-
-    Extra keyword arguments will be passed to matplotlib's `plot`.
-
-    Read more in the :ref:`User Guide <visualizations>`.
-
-    .. deprecated:: 1.0
+    """.. deprecated:: 1.0
       `plot_roc_curve` is deprecated in 1.0 and will be removed in
        1.2. Use one of the following class methods:
        :func:`~sklearn.metrics.RocCurveDisplay.from_predictions` or
        :func:`~sklearn.metrics.RocCurveDisplay.from_estimator`.
+    
+    Plot Receiver operating characteristic (ROC) curve.
 
+    Extra keyword arguments will be passed to matplotlib's `plot`.
+
+    Read more in the :ref:`User Guide <visualizations>`.
+    
     Parameters
     ----------
     estimator : estimator instance
@@ -418,6 +418,9 @@ def plot_roc_curve(
         The class considered as the positive class when computing the roc auc
         metrics. By default, `estimators.classes_[1]` is considered
         as the positive class.
+    
+    **kwargs : dict
+        Additional keywords arguments passed to matplotlib `plot` function.
 
         .. versionadded:: 0.24
 
