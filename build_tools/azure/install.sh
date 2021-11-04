@@ -13,6 +13,8 @@ fi
 
 make_conda() {
     TO_INSTALL="$@"
+    # TODO: Remove this line once setuptools#2849 is resolved.
+    TO_INSTALL="$TO_INSTALL setuptools<58.5"
     if [[ "$DISTRIB" == *"mamba"* ]]; then
         mamba create -n $VIRTUALENV --yes $TO_INSTALL
     else
