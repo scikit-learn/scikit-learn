@@ -1175,7 +1175,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if pd_line_kw.get("label", None) and self.kind != "individual":
+        if pd_line_kw.get("label", None) and kind != "individual":
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -1467,16 +1467,16 @@ class PartialDependenceDisplay:
 
                 ice_lines_kw = {
                     **default_line_kws,
-                    **line_kw,
                     **default_ice_lines_kws,
+                    **line_kw,
                     **ice_lines_kw,
                 }
                 del ice_lines_kw["label"]
 
                 pd_line_kw = {
                     **default_line_kws,
-                    **line_kw,
                     **default_pd_lines_kws,
+                    **line_kw,
                     **pd_line_kw,
                 }
 

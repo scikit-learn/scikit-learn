@@ -725,6 +725,7 @@ def test_partial_dependence_overwrite_labels(
 
 
 def test_partial_dependence_kind_list(
+    plot_partial_dependence,
     pyplot,
     clf_diabetes,
     diabetes,
@@ -765,6 +766,7 @@ def test_partial_dependence_kind_list(
     ],
 )
 def test_partial_dependence_kind_warning(
+    plot_partial_dependence,
     pyplot,
     clf_diabetes,
     diabetes,
@@ -858,7 +860,7 @@ def test_plot_partial_dependence_lines_kw(
     if pd_line_kw is not None and "linestyle" in pd_line_kw:
         assert line.get_linestyle() == pd_line_kw["linestyle"]
     else:
-        assert line.get_linestyle() == "-"
+        assert line.get_linestyle() == "--"
 
     line = disp.lines_[0, 0, 0]
     assert line.get_color() == expected_colors[1]
