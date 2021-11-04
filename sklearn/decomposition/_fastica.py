@@ -600,6 +600,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             )
         del X1
 
+        self.n_iter_ = n_iter
+
         if compute_sources:
             if self._whiten:
                 S = np.linalg.multi_dot([W, K, XT]).T
@@ -608,11 +610,10 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         else:
             S = None
 
-        self.n_iter_ = n_iter
-
         if self._whiten:
             if self._whiten == "unit-variance":
-                S = np.linalg.multi_dot([W, K, XT]).T
+                if not compute_sources:
+                    S = np.linalg.multi_dot([W, K, XT]).T
                 S_std = np.std(S, axis=0, keepdims=True)
                 S /= S_std
                 W /= S_std.T
