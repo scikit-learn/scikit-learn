@@ -93,8 +93,7 @@ def test_sparse_graph_connected_component():
 
 
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg", "amg"))
-def test_spectral_embedding_two_components(eigen_solver):
-    seed = 36
+def test_spectral_embedding_two_components(eigen_solver, seed=36):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
     n_sample = 100
@@ -152,8 +151,7 @@ def test_spectral_embedding_two_components(eigen_solver):
 @pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg", "amg"))
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
-def test_spectral_embedding_precomputed_affinity(X, eigen_solver, dtype):
-    seed = 36
+def test_spectral_embedding_precomputed_affinity(X, eigen_solver, dtype, seed=36):
     # Test spectral embedding with precomputed kernel
     gamma = 1.0
     se_precomp = SpectralEmbedding(
@@ -246,8 +244,7 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
-def test_spectral_embedding_amg_solver(dtype):
-    seed = 36
+def test_spectral_embedding_amg_solver(dtype, seed=36):
     # Test spectral embedding with amg solver
     pytest.importorskip("pyamg")
 
@@ -301,10 +298,9 @@ def test_spectral_embedding_amg_solver(dtype):
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
-def test_spectral_embedding_amg_solver_failure(dtype):
+def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
     # Non-regression test for amg solver failure (issue #13393 on github)
     pytest.importorskip("pyamg")
-    seed = 36
     num_nodes = 100
     X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
     X = X.astype(dtype)
