@@ -121,8 +121,8 @@ Changelog
 .......................
 
 - |Enhancement| :func:`manifold.spectral_embedding` and
-   :class:`manifold.SpectralEmbedding` supports `np.float32` dtype and will
-   preserve this dtype.
+  :class:`manifold.SpectralEmbedding` supports `np.float32` dtype and will
+  preserve this dtype.
   :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.model_selection`
