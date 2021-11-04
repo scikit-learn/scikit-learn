@@ -191,7 +191,7 @@ def fastica(
 
         .. deprecated:: 1.1
             From version 1.3, `whiten='unit-variance'` will be used by default.
-            `whiten=True` is deprecated from 1.1 and will be removed in 1.3.
+            `whiten=True` is deprecated from 1.1 and will raise ValueError in 1.3.
             Use `whiten=arbitrary-variance` instead.
 
     fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
@@ -338,7 +338,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         .. deprecated:: 1.1
             From version 1.3 whiten='unit-variance' will be used by default.
-            `whiten=True` is deprecated from 1.1 and will be removed in 1.3.
+            `whiten=True` is deprecated from 1.1 and will raise ValueError in 1.3.
             Use `whiten=arbitrary-variance` instead.
 
     fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
@@ -489,7 +489,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             warnings.warn(
                 "From version 1.3 whiten=True should be specified as "
                 "whiten='arbitrary-variance' (its current behaviour). This "
-                "behavior is deprecated in 1.1 and will be removed in 1.3.",
+                "behavior is deprecated in 1.1 and will raise ValueError in 1.3.",
                 FutureWarning,
                 stacklevel=2,
             )
