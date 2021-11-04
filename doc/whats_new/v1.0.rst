@@ -28,6 +28,12 @@ Changelog
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Fixes compatibility bug with NumPy 1.22 in :class:`preprocessing.OneHotEncoder`.
+  :pr:`21517` by `Thomas Fan`_.
+
 :mod:`sklearn.utils`
 ....................
 
