@@ -347,9 +347,9 @@ def randomized_svd(
 
     References
     ----------
-    * :arxiv: `Halko, et al. (2009) "Finding structure with randomness:
-    Stochastic algorithms for constructing approximate matrix decompositions"
-    <0909.4061>`
+    * :arxiv:`Halko, et al. (2009) "Finding structure with randomness:
+      Stochastic algorithms for constructing approximate matrix decompositions"
+      <0909.4061>`
 
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
