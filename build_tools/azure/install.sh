@@ -13,6 +13,8 @@ fi
 
 make_conda() {
     TO_INSTALL="$@"
+    # TODO: Remove this line once setuptools#2849 is resolved.
+    TO_INSTALL="$TO_INSTALL setuptools<58.5"
     if [[ "$DISTRIB" == *"mamba"* ]]; then
         mamba create -n $VIRTUALENV --yes $TO_INSTALL
     else
@@ -88,7 +90,8 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     source $VIRTUALENV/bin/activate
     setup_ccache
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
-                          $(get_dep joblib $JOBLIB_VERSION)
+                          $(get_dep joblib $JOBLIB_VERSION) \
+    "setuptools<58.5" # TODO: Remove this line once setuptools#2849 is resolved.
 
 elif [[ "$DISTRIB" == "debian-32" ]]; then
     apt-get update
@@ -98,7 +101,8 @@ elif [[ "$DISTRIB" == "debian-32" ]]; then
     source $VIRTUALENV/bin/activate
     setup_ccache
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
-                          $(get_dep joblib $JOBLIB_VERSION)
+                          $(get_dep joblib $JOBLIB_VERSION) \
+    "setuptools<58.5" # TODO: Remove this line once setuptools#2849 is resolved.
 
 elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # FIXME: temporary fix to link against system libraries on linux
