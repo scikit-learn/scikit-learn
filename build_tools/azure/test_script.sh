@@ -50,7 +50,7 @@ if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     TEST_CMD="$TEST_CMD -n2"
 fi
 
-if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
+if [[ "$SHOW_SHORT_SUMMARY" == "false" ]]; then
     TEST_CMD="$TEST_CMD -rN"
 fi
 
