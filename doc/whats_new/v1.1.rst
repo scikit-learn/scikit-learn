@@ -113,16 +113,16 @@ Changelog
   :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.inspection`
-........................
+.........................
 
-- |Enhancement| in
+- |Enhancement| In
   :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
   :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`, allow
   `kind` to accept a list of strings to specify for each feature interaction
   which type of plot a user wants to draw.
   :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| in
+- |Fix| In
   :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
   :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`,
   instead of raising an error, asking for ICE plots (`kind='both'` or

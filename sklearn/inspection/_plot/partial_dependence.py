@@ -611,7 +611,7 @@ class PartialDependenceDisplay:
         interaction requested in `features`.
 
         .. note::
-           ICE ('individual' or 'both') is impossible to render for 2-ways
+           ICE ('individual' or 'both') makes it impossible rendering 2-ways
            interactions plot. As a result, a warning will be raised and a
            regular 'average' plot will be made instead.
 
@@ -625,7 +625,8 @@ class PartialDependenceDisplay:
            options.
 
         .. versionadded:: 1.0
-           Add the possibility to pass a list of string for each plot.
+           Add the possibility to pass a list of string specifying `kind` 
+           for each plot.
 
     subsample : float, int or None, default=1000
         Sampling for ICE curves when `kind` is 'individual' or 'both'.
