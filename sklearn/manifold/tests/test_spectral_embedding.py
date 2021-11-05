@@ -21,12 +21,11 @@ from sklearn.utils._testing import assert_array_equal
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
-
-    is_pyamg_not_available = False
+    pyamg_available = True
 except ImportError:
-    is_pyamg_not_available = True
+    pyamg_available = False
 skip_if_no_pyamg = pytest.mark.skipif(
-    is_pyamg_not_available, reason="PyAMG is required for the tests in this function."
+    not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
 
 # non centered, sparse centers to check the
@@ -239,7 +238,7 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
 @pytest.mark.skipif(
-    is_pyamg_not_available, reason="PyAMG is not installed and thus we cannot test."
+    not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_amg_solver(dtype, seed=36):
@@ -293,7 +292,7 @@ def test_spectral_embedding_amg_solver(dtype, seed=36):
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
 @pytest.mark.skipif(
-    is_pyamg_not_available, reason="PyAMG is not installed and thus we cannot test."
+    not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
@@ -468,7 +467,7 @@ def test_spectral_embedding_preserves_dtype(eigen_solver, dtype):
 
 
 @pytest.mark.skipif(
-    not is_pyamg_not_available,
+    pyamg__available,
     reason="PyAMG is installed and we should not test for an error.",
 )
 def test_error_pyamg_not_available():
