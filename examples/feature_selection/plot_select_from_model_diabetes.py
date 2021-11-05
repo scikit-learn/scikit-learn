@@ -16,10 +16,8 @@ Authors: `Manoj Kumar <mks542@nyu.edu>`_,
 `Maria Telenczuk <https://github.com/maikia>`_, Nicolas Hug.
 
 License: BSD 3 clause
+
 """
-
-print(__doc__)
-
 
 # %%
 # Loading the data

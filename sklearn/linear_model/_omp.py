@@ -880,7 +880,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         copy is made anyway.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -953,6 +953,20 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    orthogonal_mp : Solves n_targets Orthogonal Matching Pursuit problems.
+    orthogonal_mp_gram : Solves n_targets Orthogonal Matching Pursuit
+        problems using only the Gram matrix X.T * X and the product X.T * y.
+    lars_path : Compute Least Angle Regression or Lasso path using LARS algorithm.
+    Lars : Least Angle Regression model a.k.a. LAR.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model (OMP).
+    LarsCV : Cross-validated Least Angle Regression model.
+    LassoLarsCV : Cross-validated Lasso model fit with Least Angle Regression.
+    sklearn.decomposition.sparse_encode : Generic sparse coding.
+        Each column of the result is the solution to a Lasso problem.
+
     Examples
     --------
     >>> from sklearn.linear_model import OrthogonalMatchingPursuitCV
@@ -966,19 +980,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     10
     >>> reg.predict(X[:1,])
     array([-78.3854...])
-
-    See Also
-    --------
-    orthogonal_mp
-    orthogonal_mp_gram
-    lars_path
-    Lars
-    LassoLars
-    OrthogonalMatchingPursuit
-    LarsCV
-    LassoLarsCV
-    sklearn.decomposition.sparse_encode
-
     """
 
     def __init__(
@@ -1014,16 +1015,14 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
 
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
 
-        X, y = self._validate_data(
-            X, y, y_numeric=True, ensure_min_features=2, estimator=self
-        )
+        X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
         X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         max_iter = (

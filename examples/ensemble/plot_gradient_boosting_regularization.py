@@ -18,8 +18,8 @@ analogous to the random splits in Random Forests
 
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
     Learning Ed. 2", Springer, 2009.
+
 """
-print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
