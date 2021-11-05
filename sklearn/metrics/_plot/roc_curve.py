@@ -373,6 +373,7 @@ def plot_roc_curve(
     Extra keyword arguments will be passed to matplotlib's `plot`.
 
     Read more in the :ref:`User Guide <visualizations>`.
+
     .. deprecated:: 1.0
       `plot_roc_curve` is deprecated in 1.0 and will be removed in
        1.2. Use one of the following class methods:
