@@ -268,9 +268,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         # If the number of models optimized by libSVM is one, get the number of
         # iterations as an integer instead of ndarray.
-        if (
-            self._impl in ["c_svc", "nu_svc"] and len(self.classes_) <= 2
-        ) or self._impl in ["one_class", "epsilon_svr", "nu_svr"]:
+        if len(self._num_iter) == 1:
             self.n_iter_ = self._num_iter[0]
         else:
             self.n_iter_ = self._num_iter
