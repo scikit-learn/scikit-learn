@@ -172,8 +172,8 @@ def discretize(
 
             try:
                 U, S, Vh = np.linalg.svd(t_svd)
-                svd_restarts += 1
             except LinAlgError:
+                svd_restarts += 1
                 print("SVD did not converge, randomizing and trying again")
                 break
 
