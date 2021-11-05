@@ -140,11 +140,11 @@ def test_spectral_embedding_two_components(eigen_solver, dtype, seed=36):
         random_state=np.random.RandomState(seed),
         eigen_solver=eigen_solver,
     )
-    for dtype in [np.float32, np.float64]:
-        embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
-        # thresholding on the first components using 0.
-        label_ = np.array(embedded_coordinate.ravel() < 0, dtype=np.int64)
-        assert normalized_mutual_info_score(true_label, label_) == pytest.approx(1.0)
+
+    embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
+    # thresholding on the first components using 0.
+    label_ = np.array(embedded_coordinate.ravel() < 0, dtype=np.int64)
+    assert normalized_mutual_info_score(true_label, label_) == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
