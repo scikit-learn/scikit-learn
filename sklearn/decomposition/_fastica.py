@@ -186,7 +186,7 @@ def fastica(
         Specify the whitening strategy to use.
         If 'arbitrary-variance'  (default), a whitening with variance arbitrary is used.
         If 'unit-variance', the whitening matrix is rescaled to ensure that each
-        recovered sources has unit variance.
+        recovered source has unit variance.
         If False, the data is already considered to be whitened, and no
         whitening is performed.
 
@@ -334,7 +334,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         Specify the whitening strategy to use.
         If 'arbitrary-variance' (default), a whitening with variance arbitrary is used.
         If 'unit-variance', the whitening matrix is rescaled to ensure that each
-        recovered sources has unit variance.
+        recovered source has unit variance.
         If False, the data is already considered to be whitened, and no
         whitening is performed.
 
