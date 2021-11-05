@@ -15,6 +15,7 @@ import platform
 import struct
 import timeit
 from pathlib import Path
+from contextlib import suppress
 
 import warnings
 import numpy as np
@@ -984,6 +985,30 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
         )
         chunk_n_rows = 1
     return chunk_n_rows
+
+
+def _is_pandas_na(x):
+    """Test if x is pandas.NA.
+
+    We intentionally do not use this function to return `True` for `pd.NA` in
+    `is_scalar_nan`, because estimators that support `pd.NA` are the exception
+    rather than the rule at the moment. When `pd.NA` is more universally
+    supported, we may reconsider this decision.
+
+    Parameters
+    ----------
+    x : any type
+
+    Returns
+    -------
+    boolean
+    """
+    with suppress(ImportError):
+        from pandas import NA
+
+        return x is NA
+
+    return False
 
 
 def is_scalar_nan(x):
