@@ -254,25 +254,25 @@ def test_fit_transform():
 
 @pytest.mark.filterwarnings("ignore:Ignoring n_components with whiten=False.")
 @pytest.mark.parametrize(
-    "whiten, n_components, expected_shape",
+    "whiten, n_components, expected_mixing_shape",
     [
-        ("arbitrary-variance", 5, (12, 5)),
-        ("arbitrary-variance", 10, (12, 10)),
-        ("unit-variance", 5, (12, 5)),
-        ("unit-variance", 10, (12, 10)),
-        (False, 5, (12, 12)),
-        (False, 10, (12, 12)),
+        ("arbitrary-variance", 5, (10, 5)),
+        ("arbitrary-variance", 10, (10, 10)),
+        ("unit-variance", 5, (10, 5)),
+        ("unit-variance", 10, (10, 10)),
+        (False, 5, (10, 10)),
+        (False, 10, (10, 10)),
     ],
 )
-def test_inverse_transform(whiten, n_components, expected_shape):
+def test_inverse_transform(whiten, n_components, expected_mixing_shape):
     # Test FastICA.inverse_transform
     n_samples = 100
     rng = np.random.RandomState(0)
-    X = rng.random_sample((n_samples, 12))
+    X = rng.random_sample((n_samples, 10))
 
     ica = FastICA(n_components=n_components, random_state=rng, whiten=whiten)
     Xt = ica.fit_transform(X)
-    assert ica.mixing_.shape == expected_shape
+    assert ica.mixing_.shape == expected_mixing_shape
     X2 = ica.inverse_transform(Xt)
     assert X.shape == X2.shape
 
