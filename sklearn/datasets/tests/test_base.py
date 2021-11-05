@@ -333,7 +333,7 @@ def test_load_boston_warning():
 @pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 def test_load_boston_alternative():
     pd = pytest.importorskip("pandas")
-    if not os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
+    if os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
         raise SkipTest(
             "This test requires an internet connection to fetch the dataset."
         )
