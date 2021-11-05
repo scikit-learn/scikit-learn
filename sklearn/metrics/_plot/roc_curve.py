@@ -379,6 +379,7 @@ def plot_roc_curve(
        1.2. Use one of the following class methods:
        :func:`~sklearn.metrics.RocCurveDisplay.from_predictions` or
        :func:`~sklearn.metrics.RocCurveDisplay.from_estimator`.
+
     Parameters
     ----------
     estimator : estimator instance
