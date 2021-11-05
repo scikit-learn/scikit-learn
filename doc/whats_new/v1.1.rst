@@ -158,6 +158,14 @@ Changelog
   instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
 
+:mod:`sklearn.svm`
+..................
+
+- |Fix| :class:`smv.NuSVC`, :class:`svm.NuSVR`, :class:`svm.SVC`,
+  :class:`svm.SVR`, :class:`svm.OneClassSVM` now validate input 
+  parameters in `fit` instead of `__init__`.
+  :pr:`21436` by :user:`Haidar Almubarak <Haidar13 >`.
+
 :mod:`sklearn.utils`
 ....................
 
