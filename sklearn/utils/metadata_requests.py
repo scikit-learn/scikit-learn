@@ -2,6 +2,7 @@ import inspect
 from enum import Enum
 from collections import defaultdict
 from typing import Union, Optional
+from warnings import warn
 from ..externals._sentinels import sentinel  # type: ignore # mypy error!!!
 
 
@@ -13,6 +14,11 @@ class RequestType(Enum):
     # that a metadata is not present even though it may be present in the
     # corresponding method's signature.
     UNUSED = sentinel("UNUSED")
+    # this sentinel is used whenever a default value is changed, and therefore
+    # the user should explicitly set the value, otherwise a warning is shown.
+    # An example is when a meta-estimator is only a router, but then becomes
+    # also a consumer.
+    WARN = sentinel("WARN")
 
 
 # this sentinel is the default used in `{method}_requests` methods to indicate
@@ -173,13 +179,14 @@ class MethodMetadataRequest:
             if alias == RequestType.REQUESTED and current in {
                 RequestType.ERROR_IF_PASSED,
                 RequestType.UNREQUESTED,
+                RequestType.WARN,
             }:
                 self.requests[prop] = alias
-            elif (
-                alias == RequestType.UNREQUESTED
-                and current == RequestType.ERROR_IF_PASSED
-            ):
-                self.requests[prop] = alias
+            elif alias in {RequestType.UNREQUESTED, RequestType.WARN} and current in {
+                RequestType.ERROR_IF_PASSED,
+                RequestType.WARN,
+            }:
+                self.requests[prop] = RequestType.UNREQUESTED
         elif self.requests[prop] != alias:
             raise ValueError(
                 f"{prop} is already requested as {self.requests[prop]}, "
@@ -264,6 +271,17 @@ class MethodMetadataRequest:
         self_metadata = getattr(
             metadata_request_factory(self_metadata), self.name
         ).requests
+        warn_metadata = [k for k, v in self_metadata.items() if v == RequestType.WARN]
+        warn_kwargs = [k for k in kwargs.keys() if k in warn_metadata]
+        if warn_kwargs:
+            warn(
+                "The following metadata are provided, which are now supported by this "
+                f"class: {warn_kwargs}. These metadata were not processed in previous "
+                "versions. Set their requested value to RequestType.UNREQUESTED "
+                "to maintain previous behavior, or to RequestType.REQUESTED to "
+                "consume and use the metadata.",
+                UserWarning,
+            )
         # we then remove self metadata from kwargs, since they should not be
         # validated.
         kwargs = {v: k for v, k in kwargs.items() if v not in self_metadata}
@@ -324,7 +342,15 @@ class MethodMetadataRequest:
             if not isinstance(alias, str):
                 alias = RequestType(alias)
 
-            if alias == RequestType.UNREQUESTED:
+            if alias == RequestType.WARN:
+                warn(
+                    f"Support for {prop} has recently been added to this class. "
+                    "To maintain backward compatibility, it is ignored now. "
+                    "You can set the request value to RequestType.UNREQUESTED "
+                    "to silence this warning, or to RequestType.REQUESTED to "
+                    "consume and use the metadata."
+                )
+            elif alias == RequestType.UNREQUESTED:
                 continue
             elif alias == RequestType.REQUESTED and prop in args:
                 res[prop] = args[prop]

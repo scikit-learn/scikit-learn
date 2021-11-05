@@ -22,8 +22,10 @@ First a few imports and some random data for the rest of the script.
 # %%
 
 import numpy as np
+import warnings
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
+from sklearn.base import RegressorMixin
 from sklearn.base import MetaEstimatorMixin
 from sklearn.base import TransformerMixin
 from sklearn.base import clone
@@ -31,6 +33,7 @@ from sklearn.utils.metadata_requests import RequestType
 from sklearn.utils.metadata_requests import metadata_request_factory
 from sklearn.utils.metadata_requests import MetadataRouter
 from sklearn.utils.validation import check_is_fitted
+from sklearn.linear_model import LinearRegression
 
 N, M = 100, 4
 X = np.random.rand(N, M)
@@ -519,3 +522,103 @@ est = SimplePipeline(
     ),
 )
 est.fit(X, y, foo=my_weights, bar=my_groups).predict(X[:3], bar=my_groups)
+
+# %%
+# Deprechation / Default Value Change
+# -----------------------------------
+# In this section we show how one should handle the case where a router becomes
+# also a consumer, especially when it consumes the same metadata as its
+# sub-estimator. In this case, a warning should be raised for a while, to let
+# users know the behavior is changed from previous versions.
+
+
+class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def fit(self, X, y, **fit_params):
+        metadata_request_factory(self).fit.validate_metadata(
+            ignore_extras=False, self_metadata=super(), kwargs=fit_params
+        )
+        fit_params_ = metadata_request_factory(self.estimator).fit.get_method_input(
+            ignore_extras=False, kwargs=fit_params
+        )
+        self.estimator_ = clone(self.estimator).fit(X, y, **fit_params_)
+
+    def get_metadata_request(self):
+        router = MetadataRouter().add(
+            self.estimator, mapping="one-to-one", overwrite=False, mask=True
+        )
+        return router.get_metadata_request()
+
+
+# %%
+# As explained above, this is now a valid usage:
+
+reg = MetaRegressor(estimator=LinearRegression().fit_requests(sample_weight=True))
+reg.fit(X, y, sample_weight=my_weights)
+
+
+# %%
+# Now imagine we further develop ``MetaRegressor`` and it now also *consumes*
+# ``sample_weight``:
+
+
+class SampledMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
+    __metadata_request__sample_weight = {"fit": {"sample_weight": RequestType.WARN}}
+
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def fit(self, X, y, sample_weight=None, **fit_params):
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
+        metadata_request_factory(self).fit.validate_metadata(
+            ignore_extras=False, self_metadata=super(), kwargs=fit_params
+        )
+        estimator_fit_params = metadata_request_factory(
+            self.estimator
+        ).fit.get_method_input(ignore_extras=True, kwargs=fit_params)
+        self.estimator_ = clone(self.estimator).fit(X, y, **estimator_fit_params)
+
+    def get_metadata_request(self):
+        router = (
+            MetadataRouter()
+            .add(super(), mapping="one-to-one", overwrite=False, mask=False)
+            .add(self.estimator, mapping="one-to-one", overwrite="smart", mask=True)
+        )
+        return router.get_metadata_request()
+
+
+# %%
+# The above implementation is almost no different than ``MetaRegressor``, and
+# because of the default request value defined in `__metadata_request__sample_weight``
+# there is a warning raised.
+
+with warnings.catch_warnings(record=True) as record:
+    SampledMetaRegressor(
+        estimator=LinearRegression().fit_requests(sample_weight=False)
+    ).fit(X, y, sample_weight=my_weights)
+for w in record:
+    print(w.message)
+
+
+# %%
+# When an estimator suports a metadata which wasn't supported before, the
+# following pattern can be used to warn the users about it.
+
+
+class ExampleRegressor(RegressorMixin, BaseEstimator):
+    __metadata_request__sample_weight = {"fit": {"sample_weight": RequestType.WARN}}
+
+    def fit(self, X, y, sample_weight=None):
+        return self
+
+    def predict(self, X):
+        return np.zeros(shape=(len(X)))
+
+
+with warnings.catch_warnings(record=True) as record:
+    MetaRegressor(estimator=ExampleRegressor()).fit(X, y, sample_weight=my_weights)
+for w in record:
+    print(w.message)
