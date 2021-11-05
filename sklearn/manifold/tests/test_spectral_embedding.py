@@ -21,6 +21,7 @@ from sklearn.utils._testing import assert_array_equal
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
+
     pyamg_available = True
 except ImportError:
     pyamg_available = False
