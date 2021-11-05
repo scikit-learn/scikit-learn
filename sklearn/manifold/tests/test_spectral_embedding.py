@@ -467,7 +467,7 @@ def test_spectral_embedding_preserves_dtype(eigen_solver, dtype):
 
 
 @pytest.mark.skipif(
-    pyamg__available,
+    pyamg_available,
     reason="PyAMG is installed and we should not test for an error.",
 )
 def test_error_pyamg_not_available():
