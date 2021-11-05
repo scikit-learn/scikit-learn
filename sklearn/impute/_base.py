@@ -17,10 +17,14 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
+from ..utils import _is_pandas_na
 from ..utils import is_scalar_nan
 
 
 def _check_inputs_dtype(X, missing_values):
+    if _is_pandas_na(missing_values):
+        # Allow using `pd.NA` as missing values to impute numerical arrays.
+        return
     if X.dtype.kind in ("f", "i", "u") and not isinstance(missing_values, numbers.Real):
         raise ValueError(
             "'X' and 'missing_values' types are expected to be"
@@ -136,11 +140,11 @@ class SimpleImputer(_BaseImputer):
 
     Parameters
     ----------
-    missing_values : int, float, str, np.nan or None, default=np.nan
+    missing_values : int, float, str, np.nan, None or pandas.NA, default=np.nan
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For pandas' dataframes with
         nullable integer dtypes with missing values, `missing_values`
-        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
+        can be set to either `np.nan` or `pd.NA`.
 
     strategy : str, default='mean'
         The imputation strategy.
@@ -269,10 +273,10 @@ class SimpleImputer(_BaseImputer):
         else:
             dtype = FLOAT_DTYPES
 
-        if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
-        else:
+        if _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
             force_all_finite = "allow-nan"
+        else:
+            force_all_finite = True
 
         try:
             X = self._validate_data(
@@ -603,6 +607,13 @@ class SimpleImputer(_BaseImputer):
 
         X_original[full_mask] = self.missing_values
         return X_original
+
+    def _more_tags(self):
+        return {
+            "allow_nan": (
+                _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values)
+            )
+        }
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
