@@ -32,7 +32,8 @@ X_r, y_r = load_diabetes(return_X_y=True)
                     ("lr", LogisticRegression()),
                     ("svm", LinearSVC()),
                     ("rf", RandomForestClassifier()),
-                ]
+                ],
+                cv=2,
             ),
         ),
         (
