@@ -47,8 +47,6 @@ conda create -n testenv --yes python=3.7
 source activate testenv
 conda install -y scipy numpy pandas cython
 pip install joblib threadpoolctl
-# TODO: This line once setuptools#2849 is resolved.
-pip install "setuptools<58.5"
 
 pip install $(get_dep pytest $PYTEST_VERSION) pytest-xdist
 

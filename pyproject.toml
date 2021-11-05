@@ -1,8 +1,7 @@
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = [
-    # TODO: Remove the specifier once setuptools#2849 is resolved.
-    "setuptools<58.5",
+    "setuptools",
     "wheel",
     "Cython>=0.28.5",
 
