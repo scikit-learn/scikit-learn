@@ -164,6 +164,14 @@ Changelog
   :class:`preprocessing.OrdinalEncoder`, and
   :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
 
+:mod:`sklearn.svm`
+..................
+
+- |Fix| :class:`smv.NuSVC`, :class:`svm.NuSVR`, :class:`svm.SVC`,
+  :class:`svm.SVR`, :class:`svm.OneClassSVM` now validate input 
+  parameters in `fit` instead of `__init__`.
+  :pr:`21436` by :user:`Haidar Almubarak <Haidar13 >`.
+
 :mod:`sklearn.utils`
 ....................
 
