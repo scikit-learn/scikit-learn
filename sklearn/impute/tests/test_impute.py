@@ -106,10 +106,14 @@ def test_imputation_error_invalid_strategy(strategy):
 def test_imputation_deletion_warning(strategy):
     X = np.ones((3, 5))
     X[:, 0] = np.nan
+    imputer = SimpleImputer(strategy=strategy, verbose=1)
 
-    with pytest.warns(UserWarning, match="Deleting"):
-        imputer = SimpleImputer(strategy=strategy, verbose=True)
-        imputer.fit_transform(X)
+    # TODO: Remove in 1.3
+    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
+        imputer.fit(X)
+
+    with pytest.warns(UserWarning, match="Skipping"):
+        imputer.transform(X)
 
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])

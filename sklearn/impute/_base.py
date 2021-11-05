@@ -171,8 +171,13 @@ class SimpleImputer(_BaseImputer):
     verbose : int, default=0
         Controls the verbosity of the imputer.
 
+        .. deprecated:: 1.1
+           The 'verbose' parameter was deprecated in version 1.1 and will be
+           removed in 1.3. A warning will always be raised upon the removal of
+           empty columns in the future version.
+
     copy : bool, default=True
-        If True, a copy of `X` will be created. If False, imputation will
+        If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
         a new copy will always be made, even if `copy=False`:
 
@@ -240,7 +245,7 @@ class SimpleImputer(_BaseImputer):
         missing_values=np.nan,
         strategy="mean",
         fill_value=None,
-        verbose=0,
+        verbose="deprecated",
         copy=True,
         add_indicator=False,
     ):
@@ -328,6 +333,15 @@ class SimpleImputer(_BaseImputer):
         self : object
             Fitted estimator.
         """
+        if self.verbose != "deprecated":
+            warnings.warn(
+                "The 'verbose' parameter was deprecated in version "
+                "1.1 and will be removed in 1.3. A warning will "
+                "always be raised upon the removal of empty columns "
+                "in the future version.",
+                FutureWarning,
+            )
+
         X = self._validate_input(X, in_fit=True)
 
         # default fill_value is 0 for numerical input and "missing_value"
@@ -504,9 +518,9 @@ class SimpleImputer(_BaseImputer):
 
             if invalid_mask.any():
                 missing = np.arange(X.shape[1])[invalid_mask]
-                if self.verbose:
+                if self.verbose != "deprecated" and self.verbose:
                     warnings.warn(
-                        "Deleting features without observed values: %s" % missing
+                        "Skipping features without observed values: %s" % missing
                     )
                 X = X[:, valid_statistics_indexes]
 
