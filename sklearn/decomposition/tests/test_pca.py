@@ -678,12 +678,8 @@ def test_pca_randomized_svd_n_oversamples():
     pca_full = PCA(n_components=1, svd_solver="full").fit(X)
     pca_arpack = PCA(n_components=1, svd_solver="arpack").fit(X)
 
-    assert np.sum(
-        np.abs(pca_full.components_) - np.abs(pca_arpack.components_)
-    ) == pytest.approx(0, rel=1e-8)
-    assert np.sum(
-        np.abs(pca_randomized.components_) - np.abs(pca_arpack.components_)
-    ) == pytest.approx(0, rel=1e-8)
+    assert_allclose(np.abs(pca_full.components_), np.abs(pca_arpack.components_))
+    assert_allclose(np.abs(pca_randomized.components_), np.abs(pca_arpack.components_))
 
 
 @pytest.mark.parametrize(
