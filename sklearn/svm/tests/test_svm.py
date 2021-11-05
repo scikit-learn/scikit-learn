@@ -695,11 +695,47 @@ def test_bad_input():
         (svm.OneClassSVM, datasets.load_iris(return_X_y=True)),
     ],
 )
-def test_svm_gamma_error(Estimator, data):
+@pytest.mark.parametrize(
+    "gamma, err_msg",
+    [
+        (
+            "auto_deprecated",
+            "When 'gamma' is a string, it should be either 'scale' or 'auto'",
+        ),
+        (
+            -1,
+            "gamma value must be > 0; -1 is invalid. Use"
+            " a positive number or use 'auto' to set gamma to a"
+            " value of 1 / n_features.",
+        ),
+        (
+            0.0,
+            "gamma value must be > 0; 0.0 is invalid. Use"
+            " a positive number or use 'auto' to set gamma to a"
+            " value of 1 / n_features.",
+        ),
+        (
+            np.array([1.0, 4.0]),
+            "The gamma value should be set to 'scale',"
+            f" 'auto' or a positive float value. {np.array([1.0, 4.0])!r}"
+            " is not a valid option",
+        ),
+        (
+            [],
+            "The gamma value should be set to 'scale', 'auto' or a positive"
+            f" float value. {[]} is not a valid option",
+        ),
+        (
+            {},
+            "The gamma value should be set to 'scale', 'auto' or a positive"
+            " float value. {} is not a valid option",
+        ),
+    ],
+)
+def test_svm_gamma_error(Estimator, data, gamma, err_msg):
     X, y = data
-    est = Estimator(gamma="auto_deprecated")
-    err_msg = "When 'gamma' is a string, it should be either 'scale' or 'auto'"
-    with pytest.raises(ValueError, match=err_msg):
+    est = Estimator(gamma=gamma)
+    with pytest.raises(ValueError, match=(re.escape(err_msg))):
         est.fit(X, y)
 
 

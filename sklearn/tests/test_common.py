@@ -411,13 +411,8 @@ VALIDATE_ESTIMATOR_INIT = [
     "GridSearchCV",
     "HalvingGridSearchCV",
     "KernelPCA",
-    "NuSVC",
-    "NuSVR",
-    "OneClassSVM",
     "Pipeline",
     "SGDOneClassSVM",
-    "SVC",
-    "SVR",
     "TheilSenRegressor",
     "TweedieRegressor",
 ]
