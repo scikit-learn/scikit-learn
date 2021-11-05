@@ -476,7 +476,7 @@ class PCA(_BasePCA):
             return self._fit_truncated(
                 X,
                 n_components,
-                self._fit_svd_solver,
+                self._fit_svd_solver
             )
         else:
             raise ValueError(
