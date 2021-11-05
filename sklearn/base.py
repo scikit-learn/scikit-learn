@@ -33,6 +33,10 @@ from .utils.validation import _get_feature_names
 def clone(estimator, *, safe=True):
     """Construct a new unfitted estimator with the same parameters.
 
+    Clone does a deep copy of the model in an estimator
+    without actually copying attached data. It returns a new estimator
+    with the same parameters that has not been fitted on any data.
+
     Parameters
     ----------
     estimator : {list, tuple, set} of estimator instance or a single \
@@ -49,10 +53,6 @@ def clone(estimator, *, safe=True):
 
     Notes
     -----
-    Clone does a deep copy of the model in an estimator
-    without actually copying attached data. It returns a new estimator
-    with the same parameters that has not been fitted on any data.
-
     If the estimator's `random_state` parameter is an integer (or if the
     estimator doesn't have a `random_state` parameter), an *exact clone* is
     returned: the clone and the original estimator will give the exact same
@@ -88,6 +88,7 @@ def clone(estimator, *, safe=True):
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
+
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
         param1 = new_object_params[name]
