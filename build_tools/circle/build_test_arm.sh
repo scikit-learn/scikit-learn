@@ -50,9 +50,7 @@ mamba install --verbose -y  ccache \
                             $(get_dep joblib $JOBLIB_VERSION) \
                             $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
                             $(get_dep pytest $PYTEST_VERSION) \
-                            $(get_dep pytest-xdist $PYTEST_XDIST_VERSION) \
-                            "setuptools<58.5" # TODO: Remove this line once setuptools#2849 is resolved.
-
+                            $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 setup_ccache
 
 if [[ "$COVERAGE" == "true" ]]; then
