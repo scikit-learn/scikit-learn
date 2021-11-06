@@ -165,10 +165,10 @@ Changelog
 
 - |Enhancement| Added the `get_feature_names_out` method and a new parameter
   `feature_names_out` to :class:`preprocessing.FunctionTransformer`. By default,
-  `get_feature_names_out` returns the input feature names, but you can set
-  `feature_names_out` to a callable that returns the output feature names
-  instead. This is especially useful when the transformer changes the number of
-  features.
+  `get_feature_names_out` raises an exception, but you can set
+  `feature_names_out` to 'one-to-one' to return the input features, or to a
+  callable that returns the output feature names. This is especially useful
+  when the transformer changes the number of features.
   :pr:`21569` by :user:`Aurélien Geron <ageron>`.
 
 :mod:`sklearn.svm`

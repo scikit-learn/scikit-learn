@@ -266,18 +266,18 @@ def test_function_transformer_get_feature_names_out(
 
 
 def test_function_transformer_get_feature_names_out_without_validation():
-    transformer = FunctionTransformer(validate=False)
+    transformer = FunctionTransformer(feature_names_out="one-to-one", validate=False)
     X = np.random.rand(100, 2)
     transformer.fit_transform(X)
 
-    msg = "'n_features_in_' must be defined"
+    msg = "When 'feature_names_out' is 'one-to-one', either"
     with pytest.raises(ValueError, match=msg):
         transformer.get_feature_names_out()
 
     assert tuple(transformer.get_feature_names_out(("a", "b"))) == ("a", "b")
 
 
-@pytest.mark.parametrize("feature_names_out", ['x0', ['x0'], ('x0',)])
+@pytest.mark.parametrize("feature_names_out", ["x0", ["x0"], ("x0",)])
 def test_function_transformer_feature_names_out_string(feature_names_out):
     transformer = FunctionTransformer(feature_names_out=feature_names_out)
     X = np.random.rand(100, 2)
