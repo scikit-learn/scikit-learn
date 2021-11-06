@@ -97,7 +97,7 @@ Changelog
   `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
-............................
+.................................
 
 - |Fix| :class:`feature_extraction.FeatureHasher` removed parameter validation from `__init__`.
   :pr:`21573` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
