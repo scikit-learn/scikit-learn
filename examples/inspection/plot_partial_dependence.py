@@ -28,9 +28,9 @@ California housing dataset. The example is taken from [1]_.
        the link function.
 
 .. [3] :arxiv:`Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E. (2015).
-        "Peeking Inside the Black Box: Visualizing Statistical Learning With Plots of
-        Individual Conditional Expectation". Journal of Computational and
-        Graphical Statistics, 24(1): 44-65 <1309.6392>
+       "Peeking Inside the Black Box: Visualizing Statistical Learning With Plots of
+       Individual Conditional Expectation". Journal of Computational and
+       Graphical Statistics, 24(1): 44-65 <1309.6392>
 
 """
 
