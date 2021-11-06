@@ -289,17 +289,17 @@ def test_function_transformer_get_feature_names_out(
     transformer = FunctionTransformer(
         feature_names_out=feature_names_out, validate=True
     )
-    X_trans = transformer.fit_transform(X)
+    transformer.fit_transform(X)
     assert tuple(transformer.get_feature_names_out(input_features)) == expected
 
 
 def test_function_transformer_get_feature_names_out_without_validation():
     transformer = FunctionTransformer(validate=False)
     X = np.random.rand(100, 2)
-    X_trans = transformer.fit_transform(X)
+    transformer.fit_transform(X)
 
     msg = "'n_features_in_' must be defined"
-    with pytest.raises(ValueError, match=msg) as excinfo:
+    with pytest.raises(ValueError, match=msg):
         transformer.get_feature_names_out()
 
     assert tuple(transformer.get_feature_names_out(["a", "b"])) == ("a", "b")
@@ -308,10 +308,10 @@ def test_function_transformer_get_feature_names_out_without_validation():
 def test_function_transformer_feature_names_out_string():
     transformer = FunctionTransformer(feature_names_out="x0")
     X = np.random.rand(100, 2)
-    X_trans = transformer.fit_transform(X)
+    transformer.fit_transform(X)
 
     msg = "'feature_names_out' must not be a string"
-    with pytest.raises(ValueError, match=msg) as excinfo:
+    with pytest.raises(ValueError, match=msg):
         transformer.get_feature_names_out()
 
 
@@ -331,7 +331,7 @@ def test_function_transformer_feature_names_out_uses_estimator():
     )
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"a": np.random.rand(100), "b": np.random.rand(100)})
-    X_trans = transformer.fit_transform(df)
+    transformer.fit_transform(df)
     names_out = transformer.get_feature_names_out()
 
     assert tuple(names_out) == ("a", "b", "rnd0", "rnd1", "rnd2")
