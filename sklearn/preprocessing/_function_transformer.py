@@ -9,6 +9,7 @@ from ..utils.validation import (
     column_or_1d,
 )
 
+
 def _identity(X):
     """The identity function."""
     return X
