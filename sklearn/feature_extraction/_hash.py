@@ -100,8 +100,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         dtype=np.float64,
         alternate_sign=True,
     ):
-        self._validate_params(n_features, input_type)
-
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
