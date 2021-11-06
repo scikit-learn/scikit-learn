@@ -173,7 +173,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.svm._bounds.l1_min_c",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
-    "sklearn.utils.check_pandas_support",
     "sklearn.utils.extmath.density",
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_range_finder",
