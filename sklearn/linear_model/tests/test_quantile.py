@@ -183,9 +183,9 @@ def test_asymmetric_error(quantile):
         options={"maxiter": 2000},
     )
 
-    assert func(model_coef) == approx(func(res.x), rel=1e-7)
-    assert_allclose(model.intercept_, res.x[0], rtol=1e-7)
-    assert_allclose(model.coef_, res.x[1:], rtol=1e-7)
+    assert func(model_coef) == approx(func(res.x))
+    assert_allclose(model.intercept_, res.x[0])
+    assert_allclose(model.coef_, res.x[1:])
     assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=6e-3)
 
 
