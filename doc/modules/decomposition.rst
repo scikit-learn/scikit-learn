@@ -168,8 +168,8 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
     * Algorithm 4.3 in
       :arxiv:`"Finding structure with randomness: Stochastic algorithms for
-       constructing approximate matrix decompositions" <0909.4061>`
-       Halko, et al., 2009
+      constructing approximate matrix decompositions" <0909.4061>`
+      Halko, et al., 2009
       
     * :arxiv:`"An implementation of a randomized algorithm for principal component
       analysis" <1412.3510>` A. Szlam et al. 2014
@@ -340,10 +340,10 @@ components is less than 10 (strict) and the number of samples is more than 200
 
         * Algorithm 4.3 in
           :arxiv:`Halko, et al. (2009) "Finding structure with randomness: Stochastic
-           algorithms for constructing approximate matrix decompositions" <0909.4061>`
+          algorithms for constructing approximate matrix decompositions" <0909.4061>`
 
         * :arxiv:`A. Szlam et al. 2014. "An implementation of a randomized algorithm
-           for principal component analysis" <1412.3510>`
+          for principal component analysis" <1412.3510>`
 
     * *arpack* solver:
       `scipy.sparse.linalg.eigsh documentation
@@ -911,19 +911,24 @@ stored components::
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
       <http://www.columbia.edu/~jwp2128/Teaching/E4903/papers/nmf_nature.pdf>`_
       D. Lee, S. Seung, 1999
+
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
       <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
       P. Hoyer, 2004
+
     .. [4] `"SVD based initialization: A head start for nonnegative
       matrix factorization"
       <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
+
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
       A. Cichocki, A. Phan, 2009
+
     .. [6] :arxiv:`C. Fevotte, J. Idier, 2011. "Algorithms for nonnegative matrix factorization with
-            the beta-divergence" <1010.1763>`
+           the beta-divergence" <1010.1763>`
+
 
 .. _LatentDirichletAllocation:
 
