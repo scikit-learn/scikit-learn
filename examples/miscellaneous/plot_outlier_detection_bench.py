@@ -42,14 +42,14 @@ rng = np.random.RandomState(42)
 
 # datasets
 datasets = [
-"http",
-"smtp",
-"SA",
-"SF",
-"forestcover",
-"glass",
-"wdbc",
-"cardiotocography"
+            "http",
+            "smtp",
+            "SA",
+            "SF",
+            "forestcover",
+            "glass",
+            "wdbc",
+            "cardiotocography"
 ]
 
 # outlier detection models
