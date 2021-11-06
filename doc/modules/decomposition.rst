@@ -172,7 +172,7 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
        Halko, et al., 2009
       
     * :arxiv:`"An implementation of a randomized algorithm for principal component
-       analysis" <1412.3510>` A. Szlam et al. 2014
+      analysis" <1412.3510>` A. Szlam et al. 2014
 
 .. _SparsePCA:
 
