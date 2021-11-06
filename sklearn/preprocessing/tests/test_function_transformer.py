@@ -176,6 +176,167 @@ def test_function_transformer_frame():
     assert hasattr(X_df_trans, "loc")
 
 
+@pytest.mark.parametrize(
+    "X, feature_names_out, input_features, expected",
+    [
+        (
+            # NumPy inputs, default behavior: generate names
+            np.random.rand(100, 3),
+            None,
+            None,
+            ("x0", "x1", "x2"),
+        ),
+        (
+            # Pandas input, default behavior: use input feature names
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            None,
+            None,
+            ("a", "b"),
+        ),
+        (
+            # NumPy inputs, feature_names_out=list of names
+            np.random.rand(100, 3),
+            ("a", "b", "c", "d", "e"),
+            None,
+            ("a", "b", "c", "d", "e"),
+        ),
+        (
+            # Pandas input, feature_names_out= list of names
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            ("c", "d", "e"),
+            None,
+            ("c", "d", "e"),
+        ),
+        (
+            # NumPy input, feature_names_out=callable
+            np.random.rand(100, 3),
+            lambda transformer, input_features: ("a", "b"),
+            None,
+            ("a", "b"),
+        ),
+        (
+            # Pandas input, feature_names_out=callable
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            lambda transformer, input_features: ("c", "d", "e"),
+            None,
+            ("c", "d", "e"),
+        ),
+        (
+            # NumPy input, feature_names_out=callable – default input_features
+            np.random.rand(100, 3),
+            lambda transformer, input_features: tuple(input_features) + ("a",),
+            None,
+            ("x0", "x1", "x2", "a"),
+        ),
+        (
+            # Pandas input, feature_names_out=callable – default input_features
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            lambda transformer, input_features: tuple(input_features) + ("c",),
+            None,
+            ("a", "b", "c"),
+        ),
+        (
+            # NumPy input, input_features=list of names
+            np.random.rand(100, 3),
+            None,
+            ("a", "b", "c"),
+            ("a", "b", "c"),
+        ),
+        (
+            # Pandas input, input_features=list of names
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            None,
+            ("a", "b"),  # must match feature_names_in_
+            ("a", "b"),
+        ),
+        (
+            # NumPy input, both feature_names_out and input_features are names
+            np.random.rand(100, 3),
+            ("c", "d"),
+            ("e", "f", "g"),
+            ("c", "d"),
+        ),
+        (
+            # Pandas input, both feature_names_out and input_features are names
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            ("c", "d", "e"),
+            ("a", "b"),  # must match feature_names_in_
+            ("c", "d", "e"),
+        ),
+        (
+            # NumPy input, feature_names_out=callable, input_features=list
+            np.random.rand(100, 3),
+            lambda transformer, input_features: tuple(input_features) + ("d",),
+            ("a", "b", "c"),
+            ("a", "b", "c", "d"),
+        ),
+        (
+            # Pandas input, feature_names_out=callable, input_features=list
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            lambda transformer, input_features: tuple(input_features) + ("c",),
+            ("a", "b"),  # must match feature_names_in_
+            ("a", "b", "c"),
+        ),
+    ],
+)
+def test_function_transformer_get_feature_names_out(
+    X, feature_names_out, input_features, expected
+):
+    if isinstance(X, dict):
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X)
+
+    transformer = FunctionTransformer(
+        feature_names_out=feature_names_out, validate=True
+    )
+    X_trans = transformer.fit_transform(X)
+    assert tuple(transformer.get_feature_names_out(input_features)) == expected
+
+
+def test_function_transformer_get_feature_names_out_without_validation():
+    transformer = FunctionTransformer(validate=False)
+    X = np.random.rand(100, 2)
+    X_trans = transformer.fit_transform(X)
+
+    msg = "'n_features_in_' must be defined"
+    with pytest.raises(ValueError, match=msg) as excinfo:
+        transformer.get_feature_names_out()
+
+    assert tuple(transformer.get_feature_names_out(["a", "b"])) == ("a", "b")
+
+
+def test_function_transformer_feature_names_out_string():
+    transformer = FunctionTransformer(feature_names_out="x0")
+    X = np.random.rand(100, 2)
+    X_trans = transformer.fit_transform(X)
+
+    msg = "'feature_names_out' must not be a string"
+    with pytest.raises(ValueError, match=msg) as excinfo:
+        transformer.get_feature_names_out()
+
+
+def test_function_transformer_feature_names_out_uses_estimator():
+    def add_n_random_features(X, n):
+        return np.concatenate([X, np.random.rand(len(X), n)], axis=1)
+
+    def feature_names_out(transformer, input_features):
+        n = transformer.kw_args["n"]
+        return list(input_features) + [f"rnd{i}" for i in range(n)]
+
+    transformer = FunctionTransformer(
+        func=add_n_random_features,
+        feature_names_out=feature_names_out,
+        kw_args=dict(n=3),
+        validate=True,
+    )
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": np.random.rand(100), "b": np.random.rand(100)})
+    X_trans = transformer.fit_transform(df)
+    names_out = transformer.get_feature_names_out()
+
+    assert tuple(names_out) == ("a", "b", "rnd0", "rnd1", "rnd2")
+
+
 def test_function_transformer_validate_inverse():
     """Test that function transformer does not reset estimator in
     `inverse_transform`."""
