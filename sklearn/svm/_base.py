@@ -274,12 +274,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.intercept_ *= -1
             self.dual_coef_ = -self.dual_coef_
 
-        # If the number of models optimized by libSVM is one, get the number of
-        # iterations as an integer instead of ndarray.
-        if len(self._num_iter) == 1:
-            self.n_iter_ = self._num_iter[0]
-        else:
+        # Since, in the case of SVC and NuSVC, the number of models optimized by
+        # libSVM could be greater than one (depending on the input), `n_iter_`
+        # stores an ndarray.
+        # For the other sub-classes (SVR, NuSVR, and OneClassSVM), the number of
+        # models optimized by libSVM is always one, so `n_iter_` stores an
+        # integer.
+        if self._impl in ["c_svc", "nu_svc"]:
             self.n_iter_ = self._num_iter
+        else:
+            self.n_iter_ = self._num_iter[0]
 
         return self
 
