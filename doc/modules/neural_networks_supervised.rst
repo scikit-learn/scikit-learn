@@ -369,4 +369,4 @@ or want to do additional monitoring, using ``warm_start=True`` and
       of the Trade 1998.
 
     *  :arxiv:`Kingma, Diederik, and Jimmy Ba (2014) "Adam: A method for stochastic optimization."
-        <1412.6980>`
+       <1412.6980>`
