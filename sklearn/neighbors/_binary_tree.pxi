@@ -77,6 +77,10 @@
 # both these results can be straightforwardly shown by induction.  The
 # following code uses these values in the construction of the tree.
 #
+# Further reading
+# ===============
+#     *   https://en.wikipedia.org/wiki/Binary_tree
+#
 # Distance Metrics
 # ----------------
 # For flexibility, the trees can be built using a variety of distance metrics.
