@@ -162,6 +162,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         X : sparse matrix of shape (n_samples, n_features)
             Feature matrix, for use with estimators or further transformers.
         """
+        self._validate_params(self.n_features, self.input_type)
         raw_X = iter(raw_X)
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)

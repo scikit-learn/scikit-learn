@@ -114,14 +114,16 @@ def test_hash_empty_input():
 
 
 def test_hasher_invalid_input():
+    raw_X = [[], (), iter(range(0))]
+
     with pytest.raises(ValueError):
-        FeatureHasher(input_type="gobbledygook")
+        FeatureHasher(input_type="gobbledygook").transform(raw_X)
     with pytest.raises(ValueError):
-        FeatureHasher(n_features=-1)
+        FeatureHasher(n_features=-1).transform(raw_X)
     with pytest.raises(ValueError):
-        FeatureHasher(n_features=0)
+        FeatureHasher(n_features=0).transform(raw_X)
     with pytest.raises(TypeError):
-        FeatureHasher(n_features="ham")
+        FeatureHasher(n_features="ham").transform(raw_X)
 
     h = FeatureHasher(n_features=np.uint16(2 ** 6))
     with pytest.raises(ValueError):
