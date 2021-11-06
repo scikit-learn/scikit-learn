@@ -341,6 +341,10 @@ def mean_absolute_percentage_error(
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_absolute_percentage_error(y_true, y_pred)
     0.3273...
+    >>> y_true = [1, 0, 2.4, 7]
+    >>> y_pred = [1.2, 0.1, 2.4, 8]
+    >>> mean_absolute_percentage_error(y_true, y_pred)
+    1.126e+14
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_percentage_error(y_true, y_pred)
