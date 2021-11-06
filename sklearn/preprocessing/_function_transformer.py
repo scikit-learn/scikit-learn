@@ -248,8 +248,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         """
         if hasattr(self, "n_features_in_") or input_features is not None:
             input_features = _check_feature_names_in(self, input_features)
-        elif input_features is not None:
-            input_features = column_or_1d(input_features)
         if self.feature_names_out is None:
             if input_features is None:
                 raise ValueError(
