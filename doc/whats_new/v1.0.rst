@@ -12,7 +12,7 @@ Version 1.0.2
 - |Fix| :class:`cluster.Birch`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.RandomForestClassifier`, and
   :class:`feature_selection.RFECV`, does not raise warning when fitted on
-  a pandas DataFrame. :pr:`xxxxx` by `Thomas Fan`_.
+  a pandas DataFrame. :pr:`21578` by `Thomas Fan`_.
 
 Changelog
 ---------
