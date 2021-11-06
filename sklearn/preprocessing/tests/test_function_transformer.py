@@ -182,30 +182,16 @@ def test_function_transformer_frame():
         (
             # NumPy inputs, default behavior: generate names
             np.random.rand(100, 3),
-            None,
+            "one-to-one",
             None,
             ("x0", "x1", "x2"),
         ),
         (
             # Pandas input, default behavior: use input feature names
             {"a": np.random.rand(100), "b": np.random.rand(100)},
-            None,
+            "one-to-one",
             None,
             ("a", "b"),
-        ),
-        (
-            # NumPy inputs, feature_names_out=list of names
-            np.random.rand(100, 3),
-            ("a", "b", "c", "d", "e"),
-            None,
-            ("a", "b", "c", "d", "e"),
-        ),
-        (
-            # Pandas input, feature_names_out= list of names
-            {"a": np.random.rand(100), "b": np.random.rand(100)},
-            ("c", "d", "e"),
-            None,
-            ("c", "d", "e"),
         ),
         (
             # NumPy input, feature_names_out=callable
@@ -238,30 +224,16 @@ def test_function_transformer_frame():
         (
             # NumPy input, input_features=list of names
             np.random.rand(100, 3),
-            None,
+            "one-to-one",
             ("a", "b", "c"),
             ("a", "b", "c"),
         ),
         (
             # Pandas input, input_features=list of names
             {"a": np.random.rand(100), "b": np.random.rand(100)},
-            None,
+            "one-to-one",
             ("a", "b"),  # must match feature_names_in_
             ("a", "b"),
-        ),
-        (
-            # NumPy input, both feature_names_out and input_features are names
-            np.random.rand(100, 3),
-            ("c", "d"),
-            ("e", "f", "g"),
-            ("c", "d"),
-        ),
-        (
-            # Pandas input, both feature_names_out and input_features are names
-            {"a": np.random.rand(100), "b": np.random.rand(100)},
-            ("c", "d", "e"),
-            ("a", "b"),  # must match feature_names_in_
-            ("c", "d", "e"),
         ),
         (
             # NumPy input, feature_names_out=callable, input_features=list
@@ -302,15 +274,16 @@ def test_function_transformer_get_feature_names_out_without_validation():
     with pytest.raises(ValueError, match=msg):
         transformer.get_feature_names_out()
 
-    assert tuple(transformer.get_feature_names_out(["a", "b"])) == ("a", "b")
+    assert tuple(transformer.get_feature_names_out(("a", "b"))) == ("a", "b")
 
 
-def test_function_transformer_feature_names_out_string():
-    transformer = FunctionTransformer(feature_names_out="x0")
+@pytest.mark.parametrize("feature_names_out", ['x0', ['x0'], ('x0',)])
+def test_function_transformer_feature_names_out_string(feature_names_out):
+    transformer = FunctionTransformer(feature_names_out=feature_names_out)
     X = np.random.rand(100, 2)
     transformer.fit_transform(X)
 
-    msg = "'feature_names_out' must not be a string"
+    msg = """'feature_names_out' must either be "one-to-one" or a callable"""
     with pytest.raises(ValueError, match=msg):
         transformer.get_feature_names_out()
 

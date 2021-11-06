@@ -66,12 +66,14 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
        .. versionadded:: 0.20
 
-    feature_names_out : array-like of str, or callable, or None, default=None
+    feature_names_out : callable or 'one-to-one', default='one-to-one'
         Determines the list of feature names that will be returned by the
-        `get_feature_names_out` method. If you pass a callable, then it must
-        take two positional arguments: this `FunctionTransformer` (`self`) and
-        an array-like of input feature names (`input_features`). It must return
-        an array-like of output feature names.
+        `get_feature_names_out` method. If it is 'one-to-one', then the output
+        feature names will be equal to the input feature names. If it is a
+        callable, then it must take two positional arguments: this
+        `FunctionTransformer` (`self`) and an array-like of input feature names
+        (`input_features`). It must return an array-like of output feature
+        names.
 
         See ``get_feature_names_out`` for more details.
 
@@ -129,7 +131,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         validate=False,
         accept_sparse=False,
         check_inverse=True,
-        feature_names_out=None,
+        feature_names_out="one-to-one",
         kw_args=None,
         inv_kw_args=None,
     ):
@@ -236,19 +238,18 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
 
-            - If `feature_names_out` is None, the input feature names are
-              returned (see `input_features` above). This requires
-              `n_features_in_` to be defined, which in turn requires
-              `validate=True`.
-            - If `feature_names_out` is an array-like of strings, then it
-              is returned, ignoring the input feature names.
+            - If `feature_names_out` is 'one-to-one', the input feature names
+              are returned (see `input_features` above). This requires
+              `feature_names_in_` to be defined (or at least `n_features_in_`),
+              which is done automatically if `validate=True`, or you can set
+              them in `func`.
             - If `feature_names_out` is a callable, then it is called with two
               arguments, `self` and `input_features`, and its return value is
               returned by this method.
         """
         if hasattr(self, "n_features_in_") or input_features is not None:
             input_features = _check_feature_names_in(self, input_features)
-        if self.feature_names_out is None:
+        if self.feature_names_out == "one-to-one":
             if input_features is None:
                 raise ValueError(
                     "If 'feature_names_out' is None, then 'input_features' "
@@ -259,14 +260,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             names_out = input_features
         elif callable(self.feature_names_out):
             names_out = self.feature_names_out(self, input_features)
-        elif isinstance(self.feature_names_out, str):
-            raise ValueError(
-                "'feature_names_out' must not be a string. If there is a "
-                "single output feature name, then set 'feature_names_out' to "
-                "an array-like containing just that name."
-            )
         else:
-            names_out = self.feature_names_out
+            raise ValueError(
+                "'feature_names_out' must either be \"one-to-one\" or a "
+                "callable with two arguments: the function transformer and "
+                "an array-like of input feature names. The callable must "
+                "return an array-like of output feature names."
+            )
         return column_or_1d(names_out)
 
     def _transform(self, X, func=None, kw_args=None):
