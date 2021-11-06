@@ -1,6 +1,8 @@
-"""
-Tests for Graph-Based clustering algorithms
-"""
+"""Tests for Graph-Based clustering using connected components and spanning trees."""
+
+# Authors: Dani El-Ayyass <dayyass@yandex.ru>
+# License: BSD 3 clause
+
 
 import unittest
 from typing import Dict, Tuple
