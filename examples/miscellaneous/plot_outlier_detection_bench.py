@@ -41,8 +41,16 @@ print(__doc__)
 rng = np.random.RandomState(42)
 
 # datasets
-datasets = ["http", "smtp", "SA", "SF", "forestcover",
-            "glass", "wdbc", "cardiotocography"]
+datasets = [
+	"http",
+	"smtp",
+	"SA",
+	"SF",
+	"forestcover",
+	"glass",
+	"wdbc",
+	"cardiotocography"
+]
 
 # outlier detection models
 models = [
@@ -50,7 +58,7 @@ models = [
     ("IForest", IsolationForest(random_state=rng, contamination="auto")),
 ]
 
-rows = math.ceil(len(datasets)/2)
+rows = math.ceil(len(datasets) / 2)
 plt.figure(figsize=(10, rows * 3))
 for dataset_idx, dataset_name in enumerate(datasets):
     plt.subplot(rows, 2, dataset_idx + 1)
@@ -58,15 +66,13 @@ for dataset_idx, dataset_name in enumerate(datasets):
     # loading and vectorization
     print(f"Loading {dataset_name} data")
     if dataset_name in ["http", "smtp", "SA", "SF"]:
-        dataset = fetch_kddcup99(
-            subset=dataset_name, percent10=True, random_state=rng
-        )
+        dataset = fetch_kddcup99(subset=dataset_name, percent10=True, random_state=rng)
         X = dataset.data
         y = dataset.target
 
     print("vectorizing data")
     if dataset_name == "SF":
-        idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
+        idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
         X = X[idx]  # reduce the sample size to speed up computation
         y = y[idx]
         lb = LabelBinarizer()
@@ -75,7 +81,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         y = (y != b"normal.").astype(int)
 
     if dataset_name == "SA":
-        idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
+        idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
         X = X[idx]  # reduce the sample size to speed up computation
         y = y[idx]
         lb = LabelBinarizer()
@@ -92,7 +98,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         dataset = fetch_covtype()
         X = dataset.data
         y = dataset.target
-        idx = rng.choice(X.shape[0], int(X.shape[0]*0.1), replace=False)
+        idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
         X = X[idx]  # reduce the sample size to speed up computation
         y = y[idx]
 
@@ -104,17 +110,16 @@ for dataset_idx, dataset_name in enumerate(datasets):
         y = (y != 2).astype(int)
 
     if dataset_name in ["glass", "wdbc", "cardiotocography"]:
-        dataset = fetch_openml(name=dataset_name, version=1,
-                               as_frame=False)
+        dataset = fetch_openml(name=dataset_name, version=1,as_frame=False)
         X = dataset.data
         y = dataset.target
 
         if dataset_name == "glass":
-            s = y == 'tableware'
+            s = y == "tableware"
             y = s.astype(int)
 
         if dataset_name == "wdbc":
-            s = y == '2'
+            s = y == "2"
             y = s.astype(int)
             X_mal, y_mal = X[s], y[s]
             X_ben, y_ben = X[~s], y[~s]
@@ -127,7 +132,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
             y = np.concatenate((y_ben, y_mal2), axis=0)
 
         if dataset_name == "cardiotocography":
-            s = y == '3'
+            s = y == "3"
             y = s.astype(int)
 
     print("Estimator processing...")
@@ -146,8 +151,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
 
         fpr, tpr, thresholds = roc_curve(y, scoring)
         area = auc(fpr, tpr)
-        label_ = (f'{model_name} (AUC = {area:0.3f}, '
-                  f'train time: {fit_time:0.2f})')
+        label_ = (f"{model_name} (AUC = {area:0.3f}, train time: {fit_time:0.2f})")
         plt.plot(fpr, tpr, lw=1, label=label_)
 
     plt.xlim([-0.05, 1.05])
