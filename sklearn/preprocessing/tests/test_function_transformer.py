@@ -288,6 +288,16 @@ def test_function_transformer_feature_names_out_string(feature_names_out):
         transformer.get_feature_names_out()
 
 
+def test_function_transformer_feature_names_out_is_None():
+    transformer = FunctionTransformer()
+    X = np.random.rand(100, 2)
+    transformer.fit_transform(X)
+
+    msg = "This 'FunctionTransformer' has no attribute 'get_feature_names_out'"
+    with pytest.raises(AttributeError, match=msg):
+        transformer.get_feature_names_out()
+
+
 def test_function_transformer_feature_names_out_uses_estimator():
     def add_n_random_features(X, n):
         return np.concatenate([X, np.random.rand(len(X), n)], axis=1)

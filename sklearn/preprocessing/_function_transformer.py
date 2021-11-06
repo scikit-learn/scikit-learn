@@ -1,13 +1,13 @@
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _allclose_dense_sparse,
     _check_feature_names_in,
     check_array,
     column_or_1d,
 )
-
 
 def _identity(X):
     """The identity function."""
@@ -73,8 +73,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         callable, then it must take two positional arguments: this
         `FunctionTransformer` (`self`) and an array-like of input feature names
         (`input_features`). It must return an array-like of output feature
-        names. If it is None, then `get_feature_names_out` will raise a
-        ValueError.
+        names. The `get_feature_names_out` method is only defined if
+        `feature_names_out` is not None.
 
         See ``get_feature_names_out`` for more details.
 
@@ -219,8 +219,10 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             X = check_array(X, accept_sparse=self.accept_sparse)
         return self._transform(X, func=self.inverse_func, kw_args=self.inv_kw_args)
 
+    @available_if(lambda transformer: transformer.feature_names_out is not None)
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
+        This method is only defined if `feature_names_out` is not None.
 
         Parameters
         ----------
@@ -247,11 +249,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             - If `feature_names_out` is a callable, then it is called with two
               arguments, `self` and `input_features`, and its return value is
               returned by this method.
-
-        Raises
-        ------
-        ValueError
-            When `feature_names_out` is None.
         """
         if hasattr(self, "n_features_in_") or input_features is not None:
             input_features = _check_feature_names_in(self, input_features)
