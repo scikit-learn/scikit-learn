@@ -42,14 +42,14 @@ rng = np.random.RandomState(42)
 
 # datasets
 datasets = [
-	"http",
-	"smtp",
-	"SA",
-	"SF",
-	"forestcover",
-	"glass",
-	"wdbc",
-	"cardiotocography"
+"http",
+"smtp",
+"SA",
+"SF",
+"forestcover",
+"glass",
+"wdbc",
+"cardiotocography"
 ]
 
 # outlier detection models
@@ -110,7 +110,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         y = (y != 2).astype(int)
 
     if dataset_name in ["glass", "wdbc", "cardiotocography"]:
-        dataset = fetch_openml(name=dataset_name, version=1,as_frame=False)
+        dataset = fetch_openml(name=dataset_name, version=1, as_frame=False)
         X = dataset.data
         y = dataset.target
 
@@ -151,7 +151,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
 
         fpr, tpr, thresholds = roc_curve(y, scoring)
         area = auc(fpr, tpr)
-        label_ = (f"{model_name} (AUC = {area:0.3f}, train time: {fit_time:0.2f})")
+        label_ = f"{model_name} (AUC = {area:0.3f}, train time: {fit_time:0.2f})"
         plt.plot(fpr, tpr, lw=1, label=label_)
 
     plt.xlim([-0.05, 1.05])
