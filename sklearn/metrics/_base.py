@@ -20,8 +20,7 @@ from ..utils import check_array, check_consistent_length
 from ..utils.multiclass import type_of_target
 
 
-def _average_binary_score(binary_metric, y_true, y_score, average,
-                          sample_weight=None):
+def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight=None):
     """Average a binary metric for multilabel classification.
 
     Parameters
@@ -33,7 +32,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    average : {None, 'micro', 'macro', 'samples', 'weighted'}, default='macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
@@ -64,10 +63,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         classes.
 
     """
-    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
+    average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
-        raise ValueError('average has to be one of {0}'
-                         ''.format(average_options))
+        raise ValueError("average has to be one of {0}".format(average_options))
 
     y_type = type_of_target(y_true)
     if y_type not in ("binary", "multilabel-indicator"):
@@ -90,16 +88,17 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         y_true = y_true.ravel()
         y_score = y_score.ravel()
 
-    elif average == 'weighted':
+    elif average == "weighted":
         if score_weight is not None:
-            average_weight = np.sum(np.multiply(
-                y_true, np.reshape(score_weight, (-1, 1))), axis=0)
+            average_weight = np.sum(
+                np.multiply(y_true, np.reshape(score_weight, (-1, 1))), axis=0
+            )
         else:
             average_weight = np.sum(y_true, axis=0)
         if np.isclose(average_weight.sum(), 0.0):
             return 0
 
-    elif average == 'samples':
+    elif average == "samples":
         # swap average_weight <-> score_weight
         average_weight = score_weight
         score_weight = None
@@ -116,8 +115,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     for c in range(n_classes):
         y_true_c = y_true.take([c], axis=not_average_axis).ravel()
         y_score_c = y_score.take([c], axis=not_average_axis).ravel()
-        score[c] = binary_metric(y_true_c, y_score_c,
-                                 sample_weight=score_weight)
+        score[c] = binary_metric(y_true_c, y_score_c, sample_weight=score_weight)
 
     # Average the results
     if average is not None:
@@ -131,8 +129,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         return score
 
 
-def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
-                                  average='macro'):
+def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro"):
     """Average one-versus-one scores for multiclass classification.
 
     Uses the binary metric for one-vs-one multiclass classification,
@@ -232,20 +229,23 @@ def _check_pos_label_consistency(pos_label, y_true):
     # triggering a FutureWarning by calling np.array_equal(a, b)
     # when elements in the two arrays are not comparable.
     classes = np.unique(y_true)
-    if (pos_label is None and (
-            classes.dtype.kind in 'OUS' or
-            not (np.array_equal(classes, [0, 1]) or
-                 np.array_equal(classes, [-1, 1]) or
-                 np.array_equal(classes, [0]) or
-                 np.array_equal(classes, [-1]) or
-                 np.array_equal(classes, [1])))):
+    if pos_label is None and (
+        classes.dtype.kind in "OUS"
+        or not (
+            np.array_equal(classes, [0, 1])
+            or np.array_equal(classes, [-1, 1])
+            or np.array_equal(classes, [0])
+            or np.array_equal(classes, [-1])
+            or np.array_equal(classes, [1])
+        )
+    ):
         classes_repr = ", ".join(repr(c) for c in classes)
         raise ValueError(
             f"y_true takes value in {{{classes_repr}}} and pos_label is not "
-            f"specified: either make y_true take value in {{0, 1}} or "
-            f"{{-1, 1}} or pass pos_label explicitly."
+            "specified: either make y_true take value in {0, 1} or "
+            "{-1, 1} or pass pos_label explicitly."
         )
     elif pos_label is None:
-        pos_label = 1.0
+        pos_label = 1
 
     return pos_label

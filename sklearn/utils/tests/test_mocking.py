@@ -26,24 +26,30 @@ def _fail(x):
     return False
 
 
-@pytest.mark.parametrize('kwargs', [
-    {},
-    {'check_X': _success},
-    {'check_y': _success},
-    {'check_X': _success, 'check_y': _success},
-])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {},
+        {"check_X": _success},
+        {"check_y": _success},
+        {"check_X": _success, "check_y": _success},
+    ],
+)
 def test_check_on_fit_success(iris, kwargs):
     X, y = iris
     CheckingClassifier(**kwargs).fit(X, y)
 
 
-@pytest.mark.parametrize('kwargs', [
-    {'check_X': _fail},
-    {'check_y': _fail},
-    {'check_X': _success, 'check_y': _fail},
-    {'check_X': _fail, 'check_y': _success},
-    {'check_X': _fail, 'check_y': _fail},
-])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"check_X": _fail},
+        {"check_y": _fail},
+        {"check_X": _success, "check_y": _fail},
+        {"check_X": _fail, "check_y": _success},
+        {"check_X": _fail, "check_y": _fail},
+    ],
+)
 def test_check_on_fit_fail(iris, kwargs):
     X, y = iris
     clf = CheckingClassifier(**kwargs)
@@ -71,9 +77,7 @@ def test_check_X_on_predict_fail(iris, pred_func):
         getattr(clf, pred_func)(X)
 
 
-@pytest.mark.parametrize(
-    "input_type", ["list", "array", "sparse", "dataframe"]
-)
+@pytest.mark.parametrize("input_type", ["list", "array", "sparse", "dataframe"])
 def test_checking_classifier(iris, input_type):
     # Check that the CheckingClassifier outputs what we expect
     X, y = iris
@@ -157,16 +161,15 @@ def test_checking_classifier_missing_fit_params(iris):
     [["predict"], ["predict", "predict_proba"]],
 )
 @pytest.mark.parametrize(
-    "predict_method",
-    ["predict", "predict_proba", "decision_function", "score"]
+    "predict_method", ["predict", "predict_proba", "decision_function", "score"]
 )
-def test_checking_classifier_methods_to_check(iris, methods_to_check,
-                                              predict_method):
+def test_checking_classifier_methods_to_check(iris, methods_to_check, predict_method):
     # check that methods_to_check allows to bypass checks
     X, y = iris
 
     clf = CheckingClassifier(
-        check_X=sparse.issparse, methods_to_check=methods_to_check,
+        check_X=sparse.issparse,
+        methods_to_check=methods_to_check,
     )
 
     clf.fit(X, y)

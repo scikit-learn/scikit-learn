@@ -5,6 +5,7 @@ Statistical comparison of models using grid search
 
 This example illustrates how to statistically compare the performance of models
 trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
+
 """
 
 # %%
@@ -13,7 +14,6 @@ trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
 # Datapoints will belong to one of two possible classes to be predicted by two
 # features. We will simulate 50 samples for each class:
 
-print(__doc__)
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.datasets import make_moons
@@ -21,8 +21,7 @@ from sklearn.datasets import make_moons
 X, y = make_moons(noise=0.352, random_state=1, n_samples=100)
 
 sns.scatterplot(
-    x=X[:, 0], y=X[:, 1], hue=y,
-    marker='o', s=25, edgecolor='k', legend=False
+    x=X[:, 0], y=X[:, 1], hue=y, marker="o", s=25, edgecolor="k", legend=False
 ).set_title("Data")
 plt.show()
 
@@ -40,21 +39,16 @@ from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
 from sklearn.svm import SVC
 
 param_grid = [
-    {'kernel': ['linear']},
-    {'kernel': ['poly'], 'degree': [2, 3]},
-    {'kernel': ['rbf']}
+    {"kernel": ["linear"]},
+    {"kernel": ["poly"], "degree": [2, 3]},
+    {"kernel": ["rbf"]},
 ]
 
 svc = SVC(random_state=0)
 
-cv = RepeatedStratifiedKFold(
-    n_splits=10, n_repeats=10, random_state=0
-)
+cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=10, random_state=0)
 
-search = GridSearchCV(
-    estimator=svc, param_grid=param_grid,
-    scoring='roc_auc', cv=cv
-)
+search = GridSearchCV(estimator=svc, param_grid=param_grid, scoring="roc_auc", cv=cv)
 search.fit(X, y)
 
 # %%
@@ -64,23 +58,17 @@ search.fit(X, y)
 import pandas as pd
 
 results_df = pd.DataFrame(search.cv_results_)
-results_df = results_df.sort_values(by=['rank_test_score'])
-results_df = (
-    results_df
-    .set_index(results_df["params"].apply(
-        lambda x: "_".join(str(val) for val in x.values()))
-    )
-    .rename_axis('kernel')
-)
-results_df[
-    ['params', 'rank_test_score', 'mean_test_score', 'std_test_score']
-]
+results_df = results_df.sort_values(by=["rank_test_score"])
+results_df = results_df.set_index(
+    results_df["params"].apply(lambda x: "_".join(str(val) for val in x.values()))
+).rename_axis("kernel")
+results_df[["params", "rank_test_score", "mean_test_score", "std_test_score"]]
 
 # %%
 # We can see that the estimator using the `'rbf'` kernel performed best,
 # closely followed by `'linear'`. Both estimators with a `'poly'` kernel
 # performed worse, with the one using a two-degree polynomial achieving a much
-# lower perfomance than all other models.
+# lower performance than all other models.
 #
 # Usually, the analysis just ends here, but half the story is missing. The
 # output of :class:`~sklearn.model_selection.GridSearchCV` does not provide
@@ -101,14 +89,18 @@ results_df[
 # Let's inspect this partition effect by plotting the performance of all models
 # in each fold, and calculating the correlation between models across folds:
 
-# create df of model scores ordered by perfomance
-model_scores = results_df.filter(regex=r'split\d*_test_score')
+# create df of model scores ordered by performance
+model_scores = results_df.filter(regex=r"split\d*_test_score")
 
 # plot 30 examples of dependency between cv fold and AUC scores
 fig, ax = plt.subplots()
 sns.lineplot(
     data=model_scores.transpose().iloc[:30],
-    dashes=False, palette='Set1', marker='o', alpha=.5, ax=ax
+    dashes=False,
+    palette="Set1",
+    marker="o",
+    alpha=0.5,
+    ax=ax,
 )
 ax.set_xlabel("CV test fold", size=12, labelpad=10)
 ax.set_ylabel("Model AUC", size=12)
@@ -146,7 +138,7 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # described in the previous section. We will use the one proven to obtain the
 # highest replicability scores (which rate how similar the performance of a
 # model is when evaluating it on different random partitions of the same
-# dataset) while mantaining a low rate of false postitives and false negatives:
+# dataset) while maintaining a low rate of false positives and false negatives:
 # the Nadeau and Bengio's corrected t-test [2]_ that uses a 10 times repeated
 # 10-fold cross validation [3]_.
 #
@@ -178,7 +170,7 @@ def corrected_std(differences, n_train, n_test):
 
     Parameters
     ----------
-    differences : ndarray of shape (n_samples, 1)
+    differences : ndarray of shape (n_samples,)
         Vector containing the differences in the score metrics of two models.
     n_train : int
         Number of samples in the training set.
@@ -187,13 +179,13 @@ def corrected_std(differences, n_train, n_test):
 
     Returns
     -------
-    corrected_std : int
+    corrected_std : float
         Variance-corrected standard deviation of the set of differences.
     """
-    n = n_train + n_test
-    corrected_var = (
-        np.var(differences, ddof=1) * ((1 / n) + (n_test / n_train))
-    )
+    # kr = k times r, r times repeated k-fold crossvalidation,
+    # kr equals the number of times the model was evaluated
+    kr = len(differences)
+    corrected_var = np.var(differences, ddof=1) * (1 / kr + n_test / n_train)
     corrected_std = np.sqrt(corrected_var)
     return corrected_std
 
@@ -203,7 +195,7 @@ def compute_corrected_ttest(differences, df, n_train, n_test):
 
     Parameters
     ----------
-    differences : array-like of shape (n_samples, 1)
+    differences : array-like of shape (n_samples,)
         Vector containing the differences in the score metrics of two models.
     df : int
         Degrees of freedom.
@@ -238,19 +230,18 @@ n_train = len(list(cv.split(X, y))[0][0])
 n_test = len(list(cv.split(X, y))[0][1])
 
 t_stat, p_val = compute_corrected_ttest(differences, df, n_train, n_test)
-print(f"Corrected t-value: {t_stat:.3f}\n"
-      f"Corrected p-value: {p_val:.3f}")
+print(f"Corrected t-value: {t_stat:.3f}\nCorrected p-value: {p_val:.3f}")
 
 # %%
 # We can compare the corrected t- and p-values with the uncorrected ones:
 
-t_stat_uncorrected = (
-    np.mean(differences) / np.sqrt(np.var(differences, ddof=1) / n)
-)
+t_stat_uncorrected = np.mean(differences) / np.sqrt(np.var(differences, ddof=1) / n)
 p_val_uncorrected = t.sf(np.abs(t_stat_uncorrected), df)
 
-print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
-      f"Uncorrected p-value: {p_val_uncorrected:.3f}")
+print(
+    f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
+    f"Uncorrected p-value: {p_val_uncorrected:.3f}"
+)
 
 # %%
 # Using the conventional significance alpha level at `p=0.05`, we observe that
@@ -279,10 +270,10 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 #
 # Bayesian estimation can be carried out in many forms to answer our question,
 # but in this example we will implement the approach suggested by Benavoli and
-# collegues [4]_.
+# colleagues [4]_.
 #
 # One way of defining our posterior using a closed-form expression is to select
-# a prior conjugate to the likelihood function. Benavoli and collegues [4]_
+# a prior conjugate to the likelihood function. Benavoli and colleagues [4]_
 # show that when comparing the performance of two classifiers we can model the
 # prior as a Normal-Gamma distribution (with both mean and variance unknown)
 # conjugate to a normal likelihood, to thus express the posterior as a normal
@@ -306,10 +297,9 @@ print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
 #
 # Let's compute and plot the posterior:
 
-# intitialize random variable
+# initialize random variable
 t_post = t(
-    df, loc=np.mean(differences),
-    scale=corrected_std(differences, n_train, n_test)
+    df, loc=np.mean(differences), scale=corrected_std(differences, n_train, n_test)
 )
 
 # %%
@@ -319,7 +309,7 @@ x = np.linspace(t_post.ppf(0.001), t_post.ppf(0.999), 100)
 
 plt.plot(x, t_post.pdf(x))
 plt.xticks(np.arange(-0.04, 0.06, 0.01))
-plt.fill_between(x, t_post.pdf(x), 0, facecolor='blue', alpha=.2)
+plt.fill_between(x, t_post.pdf(x), 0, facecolor="blue", alpha=0.2)
 plt.ylabel("Probability density")
 plt.xlabel(r"Mean difference ($\mu$)")
 plt.title("Posterior distribution")
@@ -327,17 +317,21 @@ plt.show()
 
 # %%
 # We can calculate the probability that the first model is better than the
-# second by computing the area under the curve of the posterior distirbution
+# second by computing the area under the curve of the posterior distribution
 # from zero to infinity. And also the reverse: we can calculate the probability
 # that the second model is better than the first by computing the area under
 # the curve from minus infinity to zero.
 
 better_prob = 1 - t_post.cdf(0)
 
-print(f"Probability of {model_scores.index[0]} being more accurate than "
-      f"{model_scores.index[1]}: {better_prob:.3f}")
-print(f"Probability of {model_scores.index[1]} being more accurate than "
-      f"{model_scores.index[0]}: {1 - better_prob:.3f}")
+print(
+    f"Probability of {model_scores.index[0]} being more accurate than "
+    f"{model_scores.index[1]}: {better_prob:.3f}"
+)
+print(
+    f"Probability of {model_scores.index[1]} being more accurate than "
+    f"{model_scores.index[0]}: {1 - better_prob:.3f}"
+)
 
 # %%
 # In contrast with the frequentist approach, we can compute the probability
@@ -371,8 +365,10 @@ print(f"Probability of {model_scores.index[1]} being more accurate than "
 rope_interval = [-0.01, 0.01]
 rope_prob = t_post.cdf(rope_interval[1]) - t_post.cdf(rope_interval[0])
 
-print(f"Probability of {model_scores.index[0]} and {model_scores.index[1]} "
-      f"being practically equivalent: {rope_prob:.3f}")
+print(
+    f"Probability of {model_scores.index[0]} and {model_scores.index[1]} "
+    f"being practically equivalent: {rope_prob:.3f}"
+)
 
 # %%
 # We can plot how the posterior is distributed over the ROPE interval:
@@ -382,7 +378,7 @@ x_rope = np.linspace(rope_interval[0], rope_interval[1], 100)
 plt.plot(x, t_post.pdf(x))
 plt.xticks(np.arange(-0.04, 0.06, 0.01))
 plt.vlines([-0.01, 0.01], ymin=0, ymax=(np.max(t_post.pdf(x)) + 1))
-plt.fill_between(x_rope, t_post.pdf(x_rope), 0, facecolor='blue', alpha=.2)
+plt.fill_between(x_rope, t_post.pdf(x_rope), 0, facecolor="blue", alpha=0.2)
 plt.ylabel("Probability density")
 plt.xlabel(r"Mean difference ($\mu$)")
 plt.title("Posterior distribution under the ROPE")
@@ -414,9 +410,8 @@ for interval in intervals:
     cred_intervals.append([interval, cred_interval[0], cred_interval[1]])
 
 cred_int_df = pd.DataFrame(
-    cred_intervals,
-    columns=['interval', 'lower value', 'upper value']
-).set_index('interval')
+    cred_intervals, columns=["interval", "lower value", "upper value"]
+).set_index("interval")
 cred_int_df
 
 # %%
@@ -446,9 +441,8 @@ cred_int_df
 from itertools import combinations
 from math import factorial
 
-n_comparisons = (
-    factorial(len(model_scores))
-    / (factorial(2) * factorial(len(model_scores) - 2))
+n_comparisons = factorial(len(model_scores)) / (
+    factorial(2) * factorial(len(model_scores) - 2)
 )
 pairwise_t_test = []
 
@@ -456,20 +450,16 @@ for model_i, model_k in combinations(range(len(model_scores)), 2):
     model_i_scores = model_scores.iloc[model_i].values
     model_k_scores = model_scores.iloc[model_k].values
     differences = model_i_scores - model_k_scores
-    t_stat, p_val = compute_corrected_ttest(
-        differences, df, n_train, n_test
-    )
+    t_stat, p_val = compute_corrected_ttest(differences, df, n_train, n_test)
     p_val *= n_comparisons  # implement Bonferroni correction
     # Bonferroni can output p-values higher than 1
     p_val = 1 if p_val > 1 else p_val
     pairwise_t_test.append(
-        [model_scores.index[model_i], model_scores.index[model_k],
-         t_stat, p_val]
+        [model_scores.index[model_i], model_scores.index[model_k], t_stat, p_val]
     )
 
 pairwise_comp_df = pd.DataFrame(
-    pairwise_t_test,
-    columns=['model_1', 'model_2', 't_stat', 'p_val']
+    pairwise_t_test, columns=["model_1", "model_2", "t_stat", "p_val"]
 ).round(3)
 pairwise_comp_df
 
@@ -497,8 +487,7 @@ for model_i, model_k in combinations(range(len(model_scores)), 2):
     model_k_scores = model_scores.iloc[model_k].values
     differences = model_i_scores - model_k_scores
     t_post = t(
-        df, loc=np.mean(differences),
-        scale=corrected_std(differences, n_train, n_test)
+        df, loc=np.mean(differences), scale=corrected_std(differences, n_train, n_test)
     )
     worse_prob = t_post.cdf(rope_interval[0])
     better_prob = 1 - t_post.cdf(rope_interval[1])
@@ -506,10 +495,9 @@ for model_i, model_k in combinations(range(len(model_scores)), 2):
 
     pairwise_bayesian.append([worse_prob, better_prob, rope_prob])
 
-pairwise_bayesian_df = (pd.DataFrame(
-    pairwise_bayesian,
-    columns=['worse_prob', 'better_prob', 'rope_prob']
-).round(3))
+pairwise_bayesian_df = pd.DataFrame(
+    pairwise_bayesian, columns=["worse_prob", "better_prob", "rope_prob"]
+).round(3)
 
 pairwise_comp_df = pairwise_comp_df.join(pairwise_bayesian_df)
 pairwise_comp_df

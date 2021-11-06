@@ -79,9 +79,9 @@ The function :func:`validation_curve` can help in this case::
   >>> np.random.shuffle(indices)
   >>> X, y = X[indices], y[indices]
 
-  >>> train_scores, valid_scores = validation_curve(Ridge(), X, y, "alpha",
-  ...                                               np.logspace(-7, 3, 3),
-  ...                                               cv=5)
+  >>> train_scores, valid_scores = validation_curve(
+  ...     Ridge(), X, y, param_name="alpha", param_range=np.logspace(-7, 3, 3),
+  ...     cv=5)
   >>> train_scores
   array([[0.93..., 0.94..., 0.92..., 0.91..., 0.92...],
          [0.93..., 0.94..., 0.92..., 0.91..., 0.92...],
