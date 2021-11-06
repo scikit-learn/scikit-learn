@@ -260,6 +260,7 @@ factorization, while larger values shrink many coefficients to zero.
      <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
+
 .. _kernel_PCA:
 
 Kernel Principal Component Analysis (kPCA)
