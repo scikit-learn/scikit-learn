@@ -35,6 +35,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import make_pipeline
 
 from sklearn.utils import IS_PYPY
@@ -340,6 +341,7 @@ column_name_estimators = list(
         _tested_estimators(),
         [make_pipeline(LogisticRegression(C=1))],
         list(_generate_search_cv_instances()),
+        [RandomForestClassifier(oob_score=True)],
     )
 )
 
