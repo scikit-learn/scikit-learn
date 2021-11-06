@@ -286,10 +286,15 @@ def mean_pinball_loss(
 def mean_absolute_percentage_error(
     y_true, y_pred, sample_weight=None, multioutput="uniform_average"
 ):
-    """Mean absolute percentage error regression loss.
+    """Mean absolute percentage error (MAPE) regression loss.
 
-    Note here that we do not represent the output as a percentage in range
-    [0, 100]. Instead, we represent it in range [0, 1/eps]. Read more in the
+	The MAPE computes the mean of the absolute value of the distance 
+	between `y_true` and `y_pred` over `y_true`, which is a 
+	relative error term.
+
+    Note here that the output is not a percentage in range [0, 100]. 
+    Instead, it can be arbitrarily high. Hence, the best value is 0
+    and the output is not upper bounded. Read more in the
     :ref:`User Guide <mean_absolute_percentage_error>`.
 
     .. versionadded:: 0.24
@@ -318,16 +323,16 @@ def mean_absolute_percentage_error(
 
     Returns
     -------
-    loss : float or ndarray of floats in the range [0, 1/eps]
+    loss : float or ndarray of floats
         If multioutput is 'raw_values', then mean absolute percentage error
         is returned for each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
         weighted average of all output errors is returned.
 
         MAPE output is non-negative floating point. The best value is 0.0.
-        But note the fact that bad predictions can lead to arbitrarily large
-        MAPE values, especially if some y_true values are very close to zero.
-        Note that we return a large value instead of `inf` when y_true is zero.
+        But note that bad predictions can lead to arbitrarily large
+        MAPE values, especially if some `y_true` values are very close to zero.
+        Note that we return a large value instead of `inf` when `y_true` is zero.
 
     Examples
     --------
