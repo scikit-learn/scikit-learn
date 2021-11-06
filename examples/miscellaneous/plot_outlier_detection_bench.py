@@ -49,7 +49,7 @@ datasets = [
     "forestcover",
     "glass",
     "wdbc",
-    "cardiotocography"
+    "cardiotocography",
 ]
 
 # outlier detection models
