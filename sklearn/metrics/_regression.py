@@ -288,11 +288,11 @@ def mean_absolute_percentage_error(
 ):
     """Mean absolute percentage error (MAPE) regression loss.
 
-	The MAPE computes the mean of the absolute value of the distance 
-	between `y_true` and `y_pred` over `y_true`, which is a 
-	relative error term.
+        The MAPE computes the mean of the absolute value of the distance
+        between `y_true` and `y_pred` over `y_true`, which is a
+        relative error term.
 
-    Note here that the output is not a percentage in range [0, 100]. 
+    Note here that the output is not a percentage in range [0, 100].
     Instead, it can be arbitrarily high. Hence, the best value is 0
     and the output is not upper bounded. Read more in the
     :ref:`User Guide <mean_absolute_percentage_error>`.
@@ -344,7 +344,7 @@ def mean_absolute_percentage_error(
     >>> y_true = [1, 0, 2.4, 7]
     >>> y_pred = [1.2, 0.1, 2.4, 8]
     >>> mean_absolute_percentage_error(y_true, y_pred)
-    1.126e+14
+    112589990684262.48
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_percentage_error(y_true, y_pred)
