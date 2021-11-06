@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from pytest import approx
 from scipy.optimize import minimize
+import scipy
 
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
@@ -128,12 +129,15 @@ def test_quantile_sample_weight():
     assert weighted_fraction_below == approx(0.5, abs=3e-2)
 
 
+@pytest.mark.skipif(
+    parse_version(scipy.__version__) < parse_version("1.6.0"),
+    reason="The `highs` solver is available from the 1.6.0 scipy version",
+)
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
 def test_asymmetric_error(quantile):
     """Test quantile regression for asymmetric distributed targets."""
     n_samples = 1000
     rng = np.random.RandomState(42)
-    # take care that X @ coef + intercept > 0
     X = np.concatenate(
         (
             np.abs(rng.randn(n_samples)[:, None]),
@@ -143,6 +147,7 @@ def test_asymmetric_error(quantile):
     )
     intercept = 1.23
     coef = np.array([0.5, -2])
+    assert np.max(X @ coef + intercept) > 0, "take care that X @ coef + intercept > 0"
     # For an exponential distribution with rate lambda, e.g. exp(-lambda * x),
     # the quantile at level q is:
     #   quantile(q) = - log(1 - q) / lambda
@@ -153,12 +158,12 @@ def test_asymmetric_error(quantile):
     model = QuantileRegressor(
         quantile=quantile,
         alpha=0,
-        solver="interior-point",
-        solver_options={"tol": 1e-5},
+        solver="highs",
     ).fit(X, y)
+
     assert model.intercept_ == approx(intercept, rel=0.2)
     assert_allclose(model.coef_, coef, rtol=0.6)
-    assert_allclose(np.mean(model.predict(X) > y), quantile)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=6e-3)
 
     # Now compare to Nelder-Mead optimization with L1 penalty
     alpha = 0.01
@@ -178,10 +183,10 @@ def test_asymmetric_error(quantile):
         options={"maxiter": 2000},
     )
 
-    assert func(model_coef) == approx(func(res.x), rel=1e-3)
-    assert_allclose(model.intercept_, res.x[0], rtol=1e-3)
-    assert_allclose(model.coef_, res.x[1:], rtol=1e-3)
-    assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=8e-3)
+    assert func(model_coef) == approx(func(res.x), rel=1e-7)
+    assert_allclose(model.intercept_, res.x[0], rtol=1e-7)
+    assert_allclose(model.coef_, res.x[1:], rtol=1e-7)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=6e-3)
 
 
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
