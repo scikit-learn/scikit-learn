@@ -418,7 +418,7 @@ def plot_roc_curve(
         The class considered as the positive class when computing the roc auc
         metrics. By default, `estimators.classes_[1]` is considered
         as the positive class.
-    
+
     **kwargs : dict
         Additional keywords arguments passed to matplotlib `plot` function.
 
