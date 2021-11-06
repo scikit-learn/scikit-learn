@@ -284,7 +284,7 @@ def mean_pinball_loss(
 
 
 def mean_absolute_percentage_error(
-    y_true, y_pred, sample_weight=None, multioutput="uniform_average"
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
     """Mean absolute percentage error regression loss.
 
