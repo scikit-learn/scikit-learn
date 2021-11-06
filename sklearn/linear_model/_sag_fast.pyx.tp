@@ -247,7 +247,7 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
     https://hal.inria.fr/hal-00860051/document
     (section 4.3)
 
-    :arxiv: `Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+    :arxiv:`Defazio, A., Bach F. & Lacoste-Julien S. (2014).
     "SAGA: A Fast Incremental Gradient Method With Support
     for Non-Strongly Convex Composite Objectives" <1407.0202>`
     """
