@@ -462,7 +462,7 @@ def mst_linkage_core(
     tree for computation of single linkage clustering. This
     represents the MST-LINKAGE-CORE algorithm (Figure 6) from
     :arxiv:`Daniel Mullner, "Modern hierarchical, agglomerative clustering
-     algorithms" <1109.2378>`.
+    algorithms" <1109.2378>`.
 
     In contrast to the scipy implementation is never computes
     a full distance matrix, generating distances only as they
