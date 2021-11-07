@@ -1369,7 +1369,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         https://hal.inria.fr/hal-00860051/document
 
     SAGA -- Defazio, A., Bach F. & Lacoste-Julien S. (2014).
-            :arxiv:``"SAGA: A Fast Incremental Gradient Method With Support
+            :arxiv:`"SAGA: A Fast Incremental Gradient Method With Support
             for Non-Strongly Convex Composite Objectives" <1407.0202>`
 
     Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
