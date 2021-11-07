@@ -109,7 +109,7 @@ Changelog
 - |API| The `verbose` parameter was deprecated for :class:`impute.SimpleImputer`.
   A warning will always be raised upon the removal of empty columns.
   :pr:`21448` by :user:`Oleh Kozynets <OlehKSS>` and
-  :user:`Christian Ritter <chritter>.
+  :user:`Christian Ritter <chritter>`.
   
 - |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
   `predict` was performing an `argmax` on the scores obtained from
