@@ -604,6 +604,30 @@ class PLSRegression(_PLS):
             copy=copy,
         )
 
+    def fit(self, X, Y):
+        """Fit model to data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
+
+        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Target vectors, where `n_samples` is the number of samples and
+            `n_targets` is the number of response variables.
+
+        Returns
+        -------
+        self : object
+            Fitted model.
+        """
+        super().fit(X, Y)
+        # expose the fitted attribute `x_scores_` and `y_scores_`
+        self.x_scores_ = self._x_scores
+        self.y_scores_ = self._y_scores
+        return self
+
 
 class PLSCanonical(_PLS):
     """Partial Least Squares transformer and regressor.
@@ -946,8 +970,6 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         U, Vt = svd_flip(U, Vt)
         V = Vt.T
 
-        self._x_scores = np.dot(X, U)  # TODO: remove in 1.1
-        self._y_scores = np.dot(Y, V)  # TODO: remove in 1.1
         self.x_weights_ = U
         self.y_weights_ = V
         return self
