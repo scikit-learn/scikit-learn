@@ -69,6 +69,7 @@ def _write_label_html(
     name = html.escape(name)
 
     if name_details is not None:
+        name_details = html.escape(str(name_details))
         checked_str = "checked" if checked else ""
         est_id = uuid.uuid4()
         out.write(
@@ -354,7 +355,7 @@ def estimator_html_repr(estimator):
         )
         out.write(
             f"<style>{style_with_id}</style>"
-            f'<div id="{container_id}" class"sk-top-container">'
+            f'<div id="{container_id}" class="sk-top-container">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
