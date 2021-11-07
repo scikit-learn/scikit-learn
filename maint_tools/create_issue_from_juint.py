@@ -7,9 +7,8 @@ This scirpt depends on:
 
 The GitHub token only requires the `repo:public_repo` scope are described in
 https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes.
-This scope allows the bot to create
-and edit its own issues. It is best to use a github account that does **not**
-have commit access to the public repo.
+This scope allows the bot to create and edit its own issues. It is best to use a
+github account that does **not** have commit access to the public repo.
 """
 
 from pathlib import Path
