@@ -77,7 +77,7 @@ jobs:
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.9'
-      displayName: Place Python into path to publish results
+      displayName: Place Python into path to update issue tracker
       condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
                      in(variables['Build.Reason'], 'Schedule', 'IndividualCI'))
     - bash: |

@@ -1,7 +1,7 @@
 """Creates or updates an issue if the CI fails. This is useful to keep track of
-scheduled jobs that an fail.
+scheduled jobs that are failing repeatedly.
 
-This scirpt depends on:
+This script depends on:
 - `defusedxml` for safer parsing for xml
 - `PyGithub` for interacting with GitHub
 
