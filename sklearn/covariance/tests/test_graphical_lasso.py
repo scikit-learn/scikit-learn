@@ -159,43 +159,6 @@ def test_graphical_lasso_cv(random_state=1):
     GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
 
 
-# TODO: Remove in 1.1 when grid_scores_ is deprecated
-def test_graphical_lasso_cv_grid_scores_and_cv_alphas_deprecated():
-    splits = 4
-    n_alphas = 5
-    n_refinements = 3
-    true_cov = np.array(
-        [
-            [0.8, 0.0, 0.2, 0.0],
-            [0.0, 0.4, 0.0, 0.0],
-            [0.2, 0.0, 0.3, 0.1],
-            [0.0, 0.0, 0.1, 0.7],
-        ]
-    )
-    rng = np.random.RandomState(0)
-    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
-    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
-        X
-    )
-
-    total_alphas = n_refinements * n_alphas + 1
-    msg = (
-        r"The `grid_scores_` attribute is deprecated in version 0\.24 in "
-        r"favor of `cv_results_` and will be removed in version 1\.1 "
-        r"\(renaming of 0\.26\)."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert cov.grid_scores_.shape == (total_alphas, splits)
-
-    msg = (
-        r"The `cv_alphas_` attribute is deprecated in version 0\.24 in "
-        r"favor of `cv_results_\['alpha'\]` and will be removed in version "
-        r"1\.1 \(renaming of 0\.26\)"
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert len(cov.cv_alphas_) == total_alphas
-
-
 # TODO: Remove `score` and `test_score` suffix in 1.2
 @pytest.mark.parametrize("suffix", ["score", "test_score"])
 @pytest.mark.filterwarnings("ignore:Key*:FutureWarning:sklearn")
