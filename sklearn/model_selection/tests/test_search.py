@@ -2223,13 +2223,21 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
 
     Non-regression test for issue #13920.
     """
-    est = BaseEstimator()
+
+    class EstimatorPairwise(BaseEstimator):
+        def __init__(self, pairwise=True):
+            self.pairwise = pairwise
+
+        def _more_tags(self):
+            return {"pairwise": self.pairwise}
+
+    est = EstimatorPairwise()
     attr_message = "BaseSearchCV _pairwise property must match estimator"
 
     for _pairwise_setting in [True, False]:
-        setattr(est, "_pairwise", _pairwise_setting)
+        est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert _pairwise_setting == cv._pairwise, attr_message
+        assert _pairwise_setting == cv._get_tags()["pairwise"], attr_message
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():

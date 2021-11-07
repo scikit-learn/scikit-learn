@@ -893,19 +893,6 @@ def test_pairwise_n_features_in():
     assert ovo_precomputed.estimators_[2].n_features_in_ == 100  # class 1 vs class 2
 
 
-@ignore_warnings(category=FutureWarning)
-def test_pairwise_attribute():
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    clf_notprecomputed = svm.SVC()
-
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovr_false = MultiClassClassifier(clf_notprecomputed)
-        assert not ovr_false._pairwise
-
-        ovr_true = MultiClassClassifier(clf_precomputed)
-        assert ovr_true._pairwise
-
-
 @pytest.mark.parametrize(
     "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
 )
