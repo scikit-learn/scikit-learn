@@ -782,12 +782,6 @@ class MultinomialNB(_BaseDiscreteNB):
     ComplementNB : Complement Naive Bayes classifier.
     GaussianNB : Gaussian Naive Bayes.
 
-    Notes
-    -----
-    For the rationale behind the names `coef_` and `intercept_`, i.e.
-    naive Bayes as a linear classifier, see J. Rennie et al. (2003),
-    Tackling the poor assumptions of naive Bayes text classifiers, ICML.
-
     References
     ----------
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
@@ -1009,10 +1003,6 @@ class BernoulliNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
-    coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting `BernoulliNB`
-        as a linear model.
-
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -1020,10 +1010,6 @@ class BernoulliNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features given a class, P(x_i|y).
-
-    intercept_ : ndarray of shape (n_classes,)
-        Mirrors ``class_log_prior_`` for interpreting `BernoulliNB`
-        as a linear model.
 
     n_features_ : int
         Number of features of each sample.
