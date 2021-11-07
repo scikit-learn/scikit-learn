@@ -37,44 +37,44 @@ jobs:
     # a scheduled task to build the weekly dev build on the main branch. The
     # weekly frequency is meant to avoid depleting the Travis CI credits too
     # fast.
-    - python: 3.7
+    - python: '3.7'
       os: linux
       arch: arm64-graviton2
       dist: focal
-      virt: lxd
+      virt: vm
       group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp37-manylinux_aarch64
 
-    - python: 3.8
+    - python: '3.8'
       os: linux
       arch: arm64-graviton2
       dist: focal
-      virt: lxd
+      virt: vm
       group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp38-manylinux_aarch64
 
-    - python: 3.9
+    - python: '3.9'
       os: linux
       arch: arm64-graviton2
       dist: focal
-      virt: lxd
+      virt: vm
       group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
         - BUILD_WHEEL=true
         - CIBW_BUILD=cp39-manylinux_aarch64
 
-    - python: 3.9
+    - python: '3.10'
       os: linux
       arch: arm64-graviton2
       dist: focal
-      virt: lxd
+      virt: vm
       group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:

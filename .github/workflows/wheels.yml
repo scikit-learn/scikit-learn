@@ -78,6 +78,7 @@ jobs:
             python: 310
             bitness: 64
             platform_id: win_amd64
+            manylinux_image: manylinux2014
           - os: macos-latest
             python: 310
             bitness: 64
