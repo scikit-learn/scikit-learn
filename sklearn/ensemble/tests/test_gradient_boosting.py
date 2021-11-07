@@ -104,6 +104,7 @@ def test_classification_toy(loss):
         ({"max_features": 100}, r"max_features must be in \(0, n_features\]"),
         ({"max_features": -0.1}, r"max_features must be in \(0, n_features\]"),
         ({"n_iter_no_change": "invalid"}, "n_iter_no_change should either be"),
+        ({"criterion": "mae"}, "criterion='mae' is not supported."),
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
@@ -1368,21 +1369,6 @@ def test_gbr_degenerate_feature_importances():
     y = np.ones((10,))
     gbr = GradientBoostingRegressor().fit(X, y)
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
-
-
-@pytest.mark.parametrize(
-    "estimator",
-    [
-        GradientBoostingClassifier(criterion="mae"),
-        GradientBoostingRegressor(criterion="mae"),
-    ],
-)
-def test_criterion_mae_deprecation(estimator):
-    # checks whether a deprecation warning is issues when criterion='mae'
-    # is used.
-    msg = "criterion=mae is not supported anymore."
-    with pytest.raises(ValueError, match=msg):
-        estimator.fit(X, y)
 
 
 # FIXME: remove in 1.2

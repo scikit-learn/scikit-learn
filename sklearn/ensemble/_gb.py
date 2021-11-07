@@ -458,9 +458,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        if self.criterion in ("absolute_error", "mae"):
+        possible_criterion = ("friedman_mse", "squared_error", "mse")
+        if self.criterion not in possible_criterion:
             raise ValueError(
-                f"criterion={self.criterion} is not supported anymore. Use "
+                f"criterion={self.criterion!r} is not supported. Use "
                 "criterion='friedman_mse' or 'squared_error' instead, as"
                 " trees should use a squared error criterion in Gradient"
                 " Boosting."
