@@ -1370,31 +1370,6 @@ def test_gbr_degenerate_feature_importances():
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
 
 
-# TODO: Remove in 1.1 when `n_classes_` is deprecated
-def test_gbr_deprecated_attr():
-    # check that accessing n_classes_ in GradientBoostingRegressor raises
-    # a deprecation warning
-    X = np.zeros((10, 10))
-    y = np.ones((10,))
-    gbr = GradientBoostingRegressor().fit(X, y)
-    msg = "Attribute `n_classes_` was deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        gbr.n_classes_
-
-
-# TODO: Remove in 1.1 when `n_classes_` is deprecated
-@pytest.mark.filterwarnings("ignore:Attribute `n_classes_` was deprecated")
-def test_attr_error_raised_if_not_fitted():
-    # check that accessing n_classes_ in not fitted GradientBoostingRegressor
-    # raises an AttributeError
-    gbr = GradientBoostingRegressor()
-    # test raise AttributeError if not fitted
-    msg = f"{GradientBoostingRegressor.__name__} object has no n_classes_ attribute."
-    with pytest.raises(AttributeError, match=msg):
-        gbr.n_classes_
-
-
-# TODO: Update in 1.1 to check for the error raised
 @pytest.mark.parametrize(
     "estimator",
     [
@@ -1405,11 +1380,8 @@ def test_attr_error_raised_if_not_fitted():
 def test_criterion_mae_deprecation(estimator):
     # checks whether a deprecation warning is issues when criterion='mae'
     # is used.
-    msg = (
-        "criterion='mae' was deprecated in version 0.24 and "
-        "will be removed in version 1.1"
-    )
-    with pytest.warns(FutureWarning, match=msg):
+    msg = "criterion=mae is not supported anymore."
+    with pytest.raises(ValueError, match=msg):
         estimator.fit(X, y)
 
 
