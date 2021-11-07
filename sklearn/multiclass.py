@@ -577,17 +577,6 @@ class OneVsRestClassifier(
             raise AttributeError("Base estimator doesn't have an intercept_ attribute.")
         return np.array([e.intercept_.ravel() for e in self.estimators_])
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        return getattr(self.estimator, "_pairwise", False)
-
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return {"pairwise": _safe_tags(self.estimator, key="pairwise")}
@@ -667,12 +656,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
         ``None`` when ``estimator``'s `pairwise` tag is False.
-
-        .. deprecated:: 0.24
-
-            The _pairwise attribute is deprecated in 0.24. From 1.1
-            (renaming of 0.25) and onward, `pairwise_indices_` will use the
-            pairwise estimator tag instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -895,17 +878,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def n_classes_(self):
         """Number of classes."""
         return len(self.classes_)
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        return getattr(self.estimator, "_pairwise", False)
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""

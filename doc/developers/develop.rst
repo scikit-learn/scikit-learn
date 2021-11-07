@@ -217,20 +217,6 @@ Optional Arguments
 In iterative algorithms, the number of iterations should be specified by
 an integer called ``n_iter``.
 
-Pairwise Attributes
-^^^^^^^^^^^^^^^^^^^
-
-An estimator that accepts ``X`` of shape ``(n_samples, n_samples)`` and defines
-a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
-the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
-the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
-to slice rows and columns.
-
-.. deprecated:: 0.24
-
-    The _pairwise attribute is deprecated in 0.24. From 1.1 (renaming of 0.26)
-    onward, the `pairwise` estimator tag should be used instead.
-
 Universal attributes
 ^^^^^^^^^^^^^^^^^^^^
 

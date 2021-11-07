@@ -920,18 +920,6 @@ def test_pairwise_tag(MultiClassClassifier):
     assert ovr_true._get_tags()["pairwise"]
 
 
-# TODO: Remove in 1.1
-@pytest.mark.parametrize(
-    "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
-)
-def test_pairwise_deprecated(MultiClassClassifier):
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    ov_clf = MultiClassClassifier(clf_precomputed)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        ov_clf._pairwise
-
-
 @pytest.mark.parametrize(
     "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
 )

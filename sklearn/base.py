@@ -1042,15 +1042,7 @@ def is_outlier_detector(estimator):
 
 
 def _is_pairwise(estimator):
-    """Returns True if estimator is pairwise.
-
-    - If the `_pairwise` attribute and the tag are present and consistent,
-      then use the value and not issue a warning.
-    - If the `_pairwise` attribute and the tag are present and not
-      consistent, use the `_pairwise` value and issue a deprecation
-      warning.
-    - If only the `_pairwise` attribute is present and it is not False,
-      issue a deprecation warning and use the `_pairwise` value.
+    """Returns True if estimator is pairwise using the estimator tag.
 
     Parameters
     ----------
@@ -1062,21 +1054,4 @@ def _is_pairwise(estimator):
     out : bool
         True if the estimator is pairwise and False otherwise.
     """
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=FutureWarning)
-        has_pairwise_attribute = hasattr(estimator, "_pairwise")
-        pairwise_attribute = getattr(estimator, "_pairwise", False)
-    pairwise_tag = _safe_tags(estimator, key="pairwise")
-
-    if has_pairwise_attribute:
-        if pairwise_attribute != pairwise_tag:
-            warnings.warn(
-                "_pairwise was deprecated in 0.24 and will be removed in 1.1 "
-                "(renaming of 0.26). Set the estimator tags of your estimator "
-                "instead",
-                FutureWarning,
-            )
-        return pairwise_attribute
-
-    # use pairwise tag when the attribute is not present
-    return pairwise_tag
+    return _safe_tags(estimator, key="pairwise")

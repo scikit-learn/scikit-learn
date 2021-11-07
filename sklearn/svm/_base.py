@@ -17,7 +17,6 @@ from ..utils import check_array, check_random_state
 from ..utils import column_or_1d
 from ..utils import compute_class_weight
 from ..utils.metaestimators import available_if
-from ..utils.deprecation import deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.validation import _num_samples
@@ -119,17 +118,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     def _more_tags(self):
         # Used by cross_val_score.
         return {"pairwise": self.kernel == "precomputed"}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # Used by cross_val_score.
-        return self.kernel == "precomputed"
 
     def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.

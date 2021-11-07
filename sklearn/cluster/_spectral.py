@@ -15,7 +15,6 @@ from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
-from ..utils.deprecation import deprecated
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
@@ -730,13 +729,3 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             "pairwise": self.affinity
             in ["precomputed", "precomputed_nearest_neighbors"]
         }
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.affinity in ["precomputed", "precomputed_nearest_neighbors"]
