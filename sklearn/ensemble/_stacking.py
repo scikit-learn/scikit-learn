@@ -37,7 +37,12 @@ from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
 
 
-class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, _ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta):
+class _BaseStacking(
+    TransformerMixin,
+    _BaseHeterogeneousEnsemble,
+    _ClassNamePrefixFeaturesOutMixin,
+    metaclass=ABCMeta,
+):
     """Base class for stacking method."""
 
     @abstractmethod

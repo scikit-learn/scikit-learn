@@ -38,7 +38,9 @@ from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
 
 
-class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble, _ClassNamePrefixFeaturesOutMixin):
+class _BaseVoting(
+    TransformerMixin, _BaseHeterogeneousEnsemble, _ClassNamePrefixFeaturesOutMixin
+):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
