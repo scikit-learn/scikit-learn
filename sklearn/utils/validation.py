@@ -1116,6 +1116,11 @@ def column_or_1d(y, *, warn=False):
     -------
     y : ndarray
        Output data.
+
+    Raises
+    -------
+    ValueError
+        If `y` is not a 1D array or a 2D array with a single row or column.
     """
     y = np.asarray(y)
     shape = np.shape(y)
