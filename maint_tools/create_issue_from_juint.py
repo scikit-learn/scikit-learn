@@ -4,6 +4,12 @@ scheduled jobs that an fail.
 This scirpt depends on:
 - `defusedxml` for safer parsing for xml
 - `PyGithub` for interacting with GitHub
+
+The GitHub token only requires the `repo:public_repo` scope are described in
+https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes.
+This scope allows the bot to create
+and edit its own issues. It is best to use a github account that does **not**
+have commit access to the public repo.
 """
 
 from pathlib import Path
