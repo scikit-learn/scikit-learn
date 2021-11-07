@@ -48,7 +48,7 @@ jobs:
         pip install pytest flake8 mypy==0.782 black==21.6b0
       displayName: Install linters
     - bash: |
-        black --check .
+        black --check --diff .
       displayName: Run black
     - bash: |
         ./build_tools/circle/linting.sh
@@ -123,6 +123,7 @@ jobs:
         PYTHON_VERSION: '*'
         BLAS: 'mkl'
         COVERAGE: 'true'
+        SHOW_SHORT_SUMMARY: 'true'
 
 # Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
 - template: build_tools/azure/posix.yml
@@ -237,7 +238,7 @@ jobs:
 - template: build_tools/azure/windows.yml
   parameters:
     name: Windows
-    vmImage: vs2017-win2016
+    vmImage: windows-latest
     dependsOn: [linting, git_commit]
     condition: |
       and(
