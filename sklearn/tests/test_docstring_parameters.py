@@ -250,8 +250,8 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == "TSNE":
         est.set_params(learning_rate=200.0, init="random")
 
-    # For PLS, TODO remove in 1.1
-    skipped_attributes = {"x_scores_", "y_scores_"}
+    # In case we want to deprecate some attributes in the future
+    skipped_attributes = {}
 
     if Estimator.__name__.endswith("Vectorizer"):
         # Vectorizer require some specific input data

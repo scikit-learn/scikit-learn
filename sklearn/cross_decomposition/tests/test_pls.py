@@ -15,7 +15,6 @@ from sklearn.datasets import make_regression
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import svd_flip
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import ignore_warnings
 
 
 def assert_matrix_orthogonal(M):
@@ -360,11 +359,6 @@ def test_attibutes_shapes(Est):
     assert all(
         attr.shape[1] == n_components for attr in (pls.x_weights_, pls.y_weights_)
     )
-    # TODO: remove in 1.1
-    with ignore_warnings(category=FutureWarning):
-        assert all(
-            attr.shape[1] == n_components for attr in (pls.x_scores_, pls.y_scores_)
-        )
 
 
 @pytest.mark.parametrize("Est", (PLSRegression, PLSCanonical, CCA))
@@ -469,70 +463,48 @@ def test_scale_and_stability(Est, X, Y):
 
 
 @pytest.mark.parametrize("Est", (PLSSVD, PLSCanonical, CCA))
-@pytest.mark.parametrize("n_components", (0, 4))
-def test_n_components_bounds(Est, n_components):
-    # n_components should be in [1, min(n_samples, n_features, n_targets)]
-    # TODO: catch error instead of warning in 1.1
+@pytest.mark.parametrize(
+    "n_components, err_type, err_msg",
+    [
+        (0, ValueError, "n_components == 0, must be >= 1."),
+        (4, ValueError, "n_components == 4, must be <= 3."),
+        (
+            2.0,
+            TypeError,
+            "n_components must be an instance of <class 'numbers.Integral'>",
+        ),
+    ],
+)
+def test_n_components_bounds(Est, n_components, err_type, err_msg):
+    """Check the validation of `n_components` for `PLS` regressors."""
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
     est = Est(n_components=n_components)
-    with pytest.warns(FutureWarning, match="n_components=3 will be used instead"):
+    with pytest.raises(err_type, match=err_msg):
         est.fit(X, Y)
-        # make sure upper bound of rank is used as a fallback
-        assert est.transform(X).shape[1] == 3
 
 
-@pytest.mark.parametrize("n_components", (0, 6))
-def test_n_components_bounds_pls_regression(n_components):
-    # For PLSRegression, the upper bound for n_components is n_features
-    # TODO: catch error instead of warning in 1.1
+@pytest.mark.parametrize(
+    "n_components, err_type, err_msg",
+    [
+        (0, ValueError, "n_components == 0, must be >= 1."),
+        (6, ValueError, "n_components == 6, must be <= 5."),
+        (
+            2.0,
+            TypeError,
+            "n_components must be an instance of <class 'numbers.Integral'>",
+        ),
+    ],
+)
+def test_n_components_bounds_pls_regression(n_components, err_type, err_msg):
+    """Check the validation of `n_components` for `PLSRegression`."""
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
     est = PLSRegression(n_components=n_components)
-    with pytest.warns(FutureWarning, match="n_components=5 will be used instead"):
+    with pytest.raises(err_type, match=err_msg):
         est.fit(X, Y)
-        # make sure upper bound of rank is used as a fallback
-        assert est.transform(X).shape[1] == 5
-
-
-@pytest.mark.parametrize("Est", (PLSSVD, CCA, PLSCanonical))
-def test_scores_deprecations(Est):
-    # Make sure x_scores_ and y_scores_ are deprecated.
-    # It's not deprecated for PLSRegression because y_score_ is different from
-    # transform(Y_train)
-    # TODO: remove attributes and test in 1.1
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 5)
-    Y = rng.randn(10, 3)
-    est = Est().fit(X, Y)
-    with pytest.warns(FutureWarning, match="`x_scores_` was deprecated"):
-        assert_allclose(est.x_scores_, est.transform(X))
-    with pytest.warns(FutureWarning, match="`y_scores_` was deprecated"):
-        assert_allclose(est.y_scores_, est.transform(X, Y)[1])
-
-
-@pytest.mark.parametrize("Est", (PLSRegression, PLSCanonical, CCA))
-def test_norm_y_weights_deprecation(Est):
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 5)
-    Y = rng.randn(10, 3)
-    est = Est().fit(X, Y)
-    with pytest.warns(FutureWarning, match="`norm_y_weights` was deprecated"):
-        est.norm_y_weights
-
-
-# TODO: Remove test in 1.1
-@pytest.mark.parametrize("Estimator", (PLSRegression, PLSCanonical, CCA, PLSSVD))
-@pytest.mark.parametrize("attribute", ("x_mean_", "y_mean_", "x_std_", "y_std_"))
-def test_mean_and_std_deprecation(Estimator, attribute):
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 5)
-    Y = rng.randn(10, 3)
-    estimator = Estimator().fit(X, Y)
-    with pytest.warns(FutureWarning, match=f"`{attribute}` was deprecated"):
-        getattr(estimator, attribute)
 
 
 @pytest.mark.parametrize("n_samples, n_features", [(100, 10), (100, 200)])
