@@ -1805,5 +1805,5 @@ def test_random_trees_embedding_feature_names_out():
     hasher = RandomTreesEmbedding(n_estimators=10, sparse_output=False).fit(X)
     names = hasher.get_feature_names_out()
     assert_array_equal(
-        [f"randomtreesembedding{i}" for i in range(hasher.n_outputs_)], names
+        [f"randomtreesembedding{i}" for i in range(hasher._n_features_out)], names
     )

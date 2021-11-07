@@ -52,7 +52,7 @@ from joblib import Parallel
 
 from ..base import is_classifier
 from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin
-from ..base import _check_feature_names_in
+from ..base import _check_feature_names_in, _ClassNamePrefixFeaturesOutMixin
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (
@@ -2345,7 +2345,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.ccp_alpha = ccp_alpha
 
 
-class RandomTreesEmbedding(BaseForest):
+class RandomTreesEmbedding(BaseForest, _ClassNamePrefixFeaturesOutMixin):
     """
     An ensemble of totally random trees.
 
@@ -2634,7 +2634,10 @@ class RandomTreesEmbedding(BaseForest):
         super().fit(X, y, sample_weight=sample_weight)
 
         self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
-        return self.one_hot_encoder_.fit_transform(self.apply(X))
+        X_leaf = self.apply(X)
+        self.one_hot_encoder_.fit(X_leaf)
+        self._n_features_out = np.product(np.asarray(self.one_hot_encoder_.categories_).shape)
+        return self.one_hot_encoder_.transform(X_leaf)
 
     def transform(self, X):
         """
@@ -2654,21 +2657,3 @@ class RandomTreesEmbedding(BaseForest):
         """
         check_is_fitted(self)
         return self.one_hot_encoder_.transform(self.apply(X))
-
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-        Returns
-        -------
-        feature_names_out : ndarray of str objects
-            Transformed feature names.
-        """
-        _check_feature_names_in(self, input_features)
-        class_name = self.__class__.__name__.lower()
-        return np.asarray(
-            [f"{class_name}{i}" for i in range(self.n_outputs_)],
-            dtype=object,
-        )
