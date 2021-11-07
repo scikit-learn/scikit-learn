@@ -74,16 +74,14 @@ jobs:
             bitness: 64
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-          # Include in build matrix once numpy/scipy supports osx and windows
-          # Be sure to updated build_tools/github/check_wheels.py
-          # - os: windows-latest
-          #   python: 310
-          #   bitness: 64
-          #   platform_id: win_amd64
-          # - os: macos-latest
-          #   python: 310
-          #   bitness: 64
-          #   platform_id: macosx_x86_64
+          - os: windows-latest
+            python: 310
+            bitness: 64
+            platform_id: win_amd64
+          - os: macos-latest
+            python: 310
+            bitness: 64
+            platform_id: macosx_x86_64
         exclude:
           - os: macos-latest
             bitness: 32

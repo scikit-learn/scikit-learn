@@ -19,7 +19,7 @@ n_wheels = 7 * n_python_versions
 
 # NumPy on Python 3.10 only supports 64bit and is only avaliable with manylinux2014
 # With macos and window support the number of wheels should go up to 3
-n_wheels += 1
+n_wheels += 3
 
 # plus one more for the sdist
 n_wheels += 1
