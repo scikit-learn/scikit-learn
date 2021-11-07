@@ -2,8 +2,8 @@
 scheduled jobs that an fail.
 
 This scirpt depends on:
-- defusedxml for safer parsing for xml
-- PyGithub for interacting with GitHub
+- `defusedxml` for safer parsing for xml
+- `PyGithub` for interacting with GitHub
 """
 
 from pathlib import Path
@@ -12,9 +12,6 @@ import argparse
 
 import defusedxml.ElementTree as ET
 from github import Github
-
-# Labels to place on issue
-CI_LABEL_NAMES = ["Build / CI"]
 
 parser = argparse.ArgumentParser(
     description="Create or update issue from JUnit test results from pytest"
@@ -28,31 +25,34 @@ parser.add_argument("link_to_run", help="URL to link to")
 parser.add_argument("junit_file", help="JUnit file")
 
 args = parser.parse_args()
+gh = Github(args.bot_gitub_token)
+issue_repo = gh.get_repo(args.issue_repo)
+title = f"⚠️ CI failed on {args.ci_name} ⚠️"
 
 
-def create_or_update_issue(body):
-    # Interact with GitHub API to create issue
-    title = f"⚠️ CI failed on {args.ci_name} ⚠️"
-    header = f"**CI Failed on [{args.ci_name}]({args.link_to_run})**"
-    body_text = f"{header}\n{body}"
-
-    gh = Github(args.bot_github_token)
-    issue_repo = gh.get_repo(args.issue_repo)
+def get_issue():
     login = gh.get_user().login
     issues = gh.search_issues(
         f"repo:{args.issue_repo} {title} in:title state:open author:{login}"
     )
-
     first_page = issues.get_page(0)
-    if not first_page:
+    # Return issue if it exist
+    return first_page[0] if first_page else None
+
+
+def create_or_update_issue(body):
+    # Interact with GitHub API to create issue
+    header = f"**CI Failed on [{args.ci_name}]({args.link_to_run})**"
+    body_text = f"{header}\n{body}"
+    issue = get_issue()
+
+    if issue is None:
         # Create new issue
-        labels = [issue_repo.get_label(label) for label in CI_LABEL_NAMES]
-        issue = issue_repo.create_issue(title, body=body_text, labels=labels)
+        issue = issue_repo.create_issue(title, body=body_text)
         print(f"Created issue in {args.issue_repo}#{issue.number}")
         sys.exit(0)
     else:
         # Update existing issue
-        issue = first_page[0]
         issue.edit(title, body=body_text)
         print(f"Updated issue in {args.issue_repo}#{issue.number}")
         sys.exit(0)
@@ -81,8 +81,13 @@ for item in tree.iter("testcase"):
     )
 
 if not failure_cases:
-    # TODO: Do we want to close the issue here?
     print("Test has no failures!")
+    issue = get_issue()
+    if issue is not None:
+        print(f"Closing issue {issue}")
+        issue.edit(state="closed")
+        issue
+
     sys.exit(0)
 
 # Create content for issue
