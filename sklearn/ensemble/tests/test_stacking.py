@@ -594,4 +594,4 @@ def test_stacking_get_feature_names_out(estimator, X, y):
     eclf = estimator.fit(X, y)
     names = eclf.get_feature_names_out()
     cls_name = estimator.__class__.__name__.lower()
-    assert_array_equal([f"{cls_name}{i}" for i in range(len(eclf.estimators_))], names)
+    assert_array_equal([f"{cls_name}{i}" for i in range(eclf._n_features_out)], names)

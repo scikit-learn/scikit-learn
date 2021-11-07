@@ -23,7 +23,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
-from ..base import _check_feature_names_in
+from ..base import _check_feature_names_in, _ClassNamePrefixFeaturesOutMixin
 
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
@@ -38,7 +38,7 @@ from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
 
 
-class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
+class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble, _ClassNamePrefixFeaturesOutMixin):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
@@ -85,6 +85,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
             for idx, clf in enumerate(clfs)
             if clf != "drop"
         )
+        self._n_features_out = len(self.estimators_)
 
         self.named_estimators_ = Bunch()
 
@@ -145,14 +146,6 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     def _more_tags(self):
         return {"preserves_dtype": []}
-
-    def get_feature_names_out(self, input_features=None):
-        _check_feature_names_in(self, input_features)
-        class_name = self.__class__.__name__.lower()
-        return np.asarray(
-            [f"{class_name}{i}" for i in range(len(self.estimators_))],
-            dtype=object,
-        )
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
