@@ -17,7 +17,6 @@ from ._config import get_config
 from .utils import _IS_32BIT
 from .utils._tags import (
     _DEFAULT_TAGS,
-    _safe_tags,
 )
 from .utils.validation import check_X_y
 from .utils.validation import check_array
@@ -1039,19 +1038,3 @@ def is_outlier_detector(estimator):
         True if estimator is an outlier detector and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "outlier_detector"
-
-
-def _is_pairwise(estimator):
-    """Returns True if estimator is pairwise using the estimator tag.
-
-    Parameters
-    ----------
-    estimator : object
-        Estimator object to test.
-
-    Returns
-    -------
-    out : bool
-        True if the estimator is pairwise and False otherwise.
-    """
-    return _safe_tags(estimator, key="pairwise")

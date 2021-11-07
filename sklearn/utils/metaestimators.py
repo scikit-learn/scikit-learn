@@ -10,8 +10,8 @@ from functools import update_wrapper
 import numpy as np
 
 from ..utils import _safe_indexing
+from ..utils._tags import _safe_tags
 from ..base import BaseEstimator
-from ..base import _is_pairwise
 
 __all__ = ["available_if", "if_delegate_has_method"]
 
@@ -282,7 +282,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         Indexed targets.
 
     """
-    if _is_pairwise(estimator):
+    if _safe_tags(estimator, key="pairwise"):
         if not hasattr(X, "shape"):
             raise ValueError(
                 "Precomputed kernels or affinity matrices have "
