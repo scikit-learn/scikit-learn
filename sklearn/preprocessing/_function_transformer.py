@@ -223,6 +223,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     @available_if(lambda transformer: transformer.feature_names_out is not None)
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
+
         This method is only defined if `feature_names_out` is not None.
 
         Parameters
