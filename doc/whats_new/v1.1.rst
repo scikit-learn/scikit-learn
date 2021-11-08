@@ -77,7 +77,7 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Fix| Expose a parameter `n_oversamples` to tune
+- |Enhancement| Expose a parameter `n_oversamples` to tune
   :func:`sklearn.decomposition.randomized_svd` and
   get accurate results when the number of features is large.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
