@@ -82,13 +82,13 @@ def test_libsvm_iris():
     ) = _libsvm.fit(iris.data, iris.target.astype(np.float64))
 
     model_params = {
-        'support': libsvm_support,
-        'SV': libsvm_support_vectors,
-        'nSV': libsvm_n_class_SV,
-        'sv_coef': libsvm_sv_coef,
-        'intercept': libsvm_intercept,
-        'probA': libsvm_probA,
-        'probB': libsvm_probB,
+        "support": libsvm_support,
+        "SV": libsvm_support_vectors,
+        "nSV": libsvm_n_class_SV,
+        "sv_coef": libsvm_sv_coef,
+        "intercept": libsvm_intercept,
+        "probA": libsvm_probA,
+        "probB": libsvm_probB,
     }
     pred = _libsvm.predict(iris.data, **model_params)
     assert np.mean(pred == iris.target) > 0.95
@@ -109,13 +109,13 @@ def test_libsvm_iris():
     ) = _libsvm.fit(iris.data, iris.target.astype(np.float64), kernel="linear")
 
     model_params = {
-        'support': libsvm_support,
-        'SV': libsvm_support_vectors,
-        'nSV': libsvm_n_class_SV,
-        'sv_coef': libsvm_sv_coef,
-        'intercept': libsvm_intercept,
-        'probA': libsvm_probA,
-        'probB': libsvm_probB,
+        "support": libsvm_support,
+        "SV": libsvm_support_vectors,
+        "nSV": libsvm_n_class_SV,
+        "sv_coef": libsvm_sv_coef,
+        "intercept": libsvm_intercept,
+        "probA": libsvm_probA,
+        "probB": libsvm_probB,
     }
     pred = _libsvm.predict(iris.data, **model_params, kernel="linear")
     assert np.mean(pred == iris.target) > 0.95
