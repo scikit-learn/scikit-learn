@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from scipy.special import expit
 
-# Generate a dataset, it's just a straight line with some Gaussian noise:
+# Generate a toy dataset, it's just a straight line with some Gaussian noise:
 xmin, xmax = -5, 5
 n_samples = 100
 np.random.seed(0)
