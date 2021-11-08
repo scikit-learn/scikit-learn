@@ -82,7 +82,6 @@ Changelog
   get accurate results when the number of features is large.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
 
-
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
