@@ -109,14 +109,13 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
                             char *SV_indices, npy_intp *SV_indptr_dims,
                             char *SV_intptr,
                             char *sv_coef, char *rho, char *nSV,
-                            char *probA, char *probB, char *n_iter)
+                            char *probA, char *probB)
 {
     struct svm_csr_model *model;
     double *dsv_coef = (double *) sv_coef;
-    int i, m, n_models;
+    int i, m;
 
     m = nr_class * (nr_class-1)/2;
-    n_models = nr_class <= 2 ? 1 : m;
 
     if ((model = malloc(sizeof(struct svm_csr_model))) == NULL)
         goto model_error;
@@ -128,8 +127,9 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
         goto sv_coef_error;
     if ((model->rho = malloc( m * sizeof(double))) == NULL)
         goto rho_error;
-    if ((model->n_iter = malloc(n_models * sizeof(int))) == NULL)
-        goto n_iter_error;
+
+    // This is only allocated in dynamic memory while training.
+    model->n_iter = NULL;
 
     /* in the case of precomputed kernels we do not use
        dense_to_precomputed because we don't want the leading 0. As
@@ -189,8 +189,6 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
     model->free_sv = 0;
     return model;
 
-n_iter_error:
-    free(model->n_iter);
 probB_error:
     free(model->probA);
 probA_error:
@@ -422,6 +420,7 @@ int free_problem(struct svm_csr_problem *problem)
 int free_model(struct svm_csr_model *model)
 {
     /* like svm_free_and_destroy_model, but does not free sv_coef[i] */
+    /* We don't free n_iter, since we did not create them in set_model. */
     if (model == NULL) return -1;
     free(model->SV);
     free(model->sv_coef);
@@ -429,7 +428,6 @@ int free_model(struct svm_csr_model *model)
     free(model->label);
     free(model->probA);
     free(model->probB);
-    free(model->n_iter);
     free(model->nSV);
     free(model);
 

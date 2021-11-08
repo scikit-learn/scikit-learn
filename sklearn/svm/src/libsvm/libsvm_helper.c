@@ -116,14 +116,13 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
                             char *support, npy_intp *support_dims,
                             npy_intp *sv_coef_strides,
                             char *sv_coef, char *rho, char *nSV,
-                            char *probA, char *probB, char *n_iter)
+                            char *probA, char *probB)
 {
     struct svm_model *model;
     double *dsv_coef = (double *) sv_coef;
-    int i, m, n_models;
+    int i, m;
 
     m = nr_class * (nr_class-1)/2;
-    n_models = nr_class <= 2 ? 1 : m;
 
     if ((model = malloc(sizeof(struct svm_model))) == NULL)
         goto model_error;
@@ -135,8 +134,9 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
         goto sv_coef_error;
     if ((model->rho = malloc( m * sizeof(double))) == NULL)
         goto rho_error;
-    if ((model->n_iter = malloc(n_models * sizeof(int))) == NULL)
-        goto n_iter_error;
+
+    // This is only allocated in dynamic memory while training.
+    model->n_iter = NULL;
 
     model->nr_class = nr_class;
     model->param = *param;
@@ -191,8 +191,6 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     model->free_sv = 0;
     return model;
 
-n_iter_error:
-    free(model->n_iter);
 probB_error:
     free(model->probA);
 probA_error:
@@ -384,15 +382,16 @@ int free_model(struct svm_model *model)
     if (model == NULL) return -1;
     free(model->SV);
 
-    /* We don't free sv_ind, since we did not create them in
+    /* We don't free sv_ind and n_iter, since we did not create them in
        set_model */
-    /* free(model->sv_ind); */
+    /* free(model->sv_ind);
+     * free(model->n_iter);
+     */
     free(model->sv_coef);
     free(model->rho);
     free(model->label);
     free(model->probA);
     free(model->probB);
-    free(model->n_iter);
     free(model->nSV);
     free(model);
 

@@ -670,14 +670,10 @@ class SVC(BaseSVC):
 
         .. versionadded:: 1.0
 
-    n_iter_ : ndarray of shape (1,) or (n_class * (n_class - 1) // 2,)
+    n_iter_ : ndarray of shape (n_classes * (n_classes - 1) // 2,)
         Number of iterations run by the optimization routine to fit the model.
-        The shape of this attribute depends on the number of models optimized.
-        If `classes_ <= 2`, only one model is optimized, thus the shape of the
-        attribute is `(1,)`.
-        Otherwise, a series of models are optimized separately, having a number
-        of iterations for each. In this case the shape of the attribute is
-        `(n_class * (n_class - 1) // 2,)`.
+        The shape of this attribute depends on the number of models optimized
+        which in turn depends on the number of classes.
 
         .. versionadded:: 1.1
 
@@ -936,14 +932,10 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 1.0
 
-    n_iter_ : ndarray of shape (1,) or (n_class * (n_class - 1) // 2,)
+    n_iter_ : ndarray of shape (n_classes * (n_classes - 1) // 2,)
         Number of iterations run by the optimization routine to fit the model.
-        The shape of this attribute depends on the number of models optimized.
-        If `classes_ <= 2`, only one model is optimized, thus the shape of the
-        attribute is `(1,)`.
-        Otherwise, a series of models are optimized separately, having a number
-        of iterations for each. In this case the shape of the attribute is
-        `(n_class * (n_class - 1) // 2,)`.
+        The shape of this attribute depends on the number of models optimized
+        which in turn depends on the number of classes.
 
         .. versionadded:: 1.1
 

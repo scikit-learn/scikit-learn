@@ -66,8 +66,8 @@ def test_libsvm_iris():
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
     # check also the low-level API
-    # We unpack the values to be able to repack some of the
-    # return values from libsvm.
+    # We unpack the values to create a dictionary with some of the return values
+    # from Libsvm's fit.
     (
         libsvm_support,
         libsvm_support_vectors,
@@ -76,26 +76,25 @@ def test_libsvm_iris():
         libsvm_intercept,
         libsvm_probA,
         libsvm_probB,
-        # libsvm_fit_status won't be packed bellow.
+        # libsvm_fit_status and libsvm_n_iter won't be used below.
         libsvm_fit_status,
         libsvm_n_iter,
     ) = _libsvm.fit(iris.data, iris.target.astype(np.float64))
 
-    lib_svm_model = (
-        libsvm_support,
-        libsvm_support_vectors,
-        libsvm_n_class_SV,
-        libsvm_sv_coef,
-        libsvm_intercept,
-        libsvm_n_iter,
-        libsvm_probA,
-        libsvm_probB,
-    )
-    pred = _libsvm.predict(iris.data, *lib_svm_model)
+    model_params = {
+        'support': libsvm_support,
+        'SV': libsvm_support_vectors,
+        'nSV': libsvm_n_class_SV,
+        'sv_coef': libsvm_sv_coef,
+        'intercept': libsvm_intercept,
+        'probA': libsvm_probA,
+        'probB': libsvm_probB,
+    }
+    pred = _libsvm.predict(iris.data, **model_params)
     assert np.mean(pred == iris.target) > 0.95
 
-    # We unpack the values to be able to repack some of the
-    # return values from libsvm.
+    # We unpack the values to create a dictionary with some of the return values
+    # from Libsvm's fit.
     (
         libsvm_support,
         libsvm_support_vectors,
@@ -104,22 +103,21 @@ def test_libsvm_iris():
         libsvm_intercept,
         libsvm_probA,
         libsvm_probB,
-        # libsvm_fit_status won't be packed bellow.
+        # libsvm_fit_status and libsvm_n_iter won't be used below.
         libsvm_fit_status,
         libsvm_n_iter,
     ) = _libsvm.fit(iris.data, iris.target.astype(np.float64), kernel="linear")
 
-    lib_svm_model = (
-        libsvm_support,
-        libsvm_support_vectors,
-        libsvm_n_class_SV,
-        libsvm_sv_coef,
-        libsvm_intercept,
-        libsvm_n_iter,
-        libsvm_probA,
-        libsvm_probB,
-    )
-    pred = _libsvm.predict(iris.data, *lib_svm_model, kernel="linear")
+    model_params = {
+        'support': libsvm_support,
+        'SV': libsvm_support_vectors,
+        'nSV': libsvm_n_class_SV,
+        'sv_coef': libsvm_sv_coef,
+        'intercept': libsvm_intercept,
+        'probA': libsvm_probA,
+        'probB': libsvm_probB,
+    }
+    pred = _libsvm.predict(iris.data, **model_params, kernel="linear")
     assert np.mean(pred == iris.target) > 0.95
 
     pred = _libsvm.cross_validation(

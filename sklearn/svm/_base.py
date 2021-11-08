@@ -460,7 +460,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._n_support,
             self._dual_coef_,
             self._intercept_,
-            self._num_iter,
             self._probA,
             self._probB,
             svm_type=svm_type,
@@ -505,7 +504,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._n_support,
             self._probA,
             self._probB,
-            self._num_iter,
         )
 
     def _compute_kernel(self, X):
@@ -563,7 +561,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._n_support,
             self._dual_coef_,
             self._intercept_,
-            self._num_iter,
             self._probA,
             self._probB,
             svm_type=LIBSVM_IMPL.index(self._impl),
@@ -607,7 +604,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._n_support,
             self._probA,
             self._probB,
-            self._num_iter,
         )
 
     def _validate_for_predict(self, X):
@@ -911,7 +907,6 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self._n_support,
             self._dual_coef_,
             self._intercept_,
-            self._num_iter,
             self._probA,
             self._probB,
             svm_type=svm_type,
@@ -957,7 +952,6 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self._n_support,
             self._probA,
             self._probB,
-            self._num_iter,
         )
 
     def _get_coef(self):
