@@ -78,20 +78,19 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
+        # note: we use _safe_tags instead of _get_tags because this is a
+        # public Mixin.
+        X = self._validate_data(
+            X,
+            dtype=None,
+            accept_sparse="csr",
+            force_all_finite=not _safe_tags(self, key="allow_nan"),
+            reset=False,
+        )
         return self._transform(X)
 
-    def _transform(self, X, check_input=True):
+    def _transform(self, X):
         """Reduce X to the selected features."""
-        if check_input:
-            # note: we use _safe_tags instead of _get_tags because this is a
-            # public Mixin.
-            X = self._validate_data(
-                X,
-                dtype=None,
-                accept_sparse="csr",
-                force_all_finite=not _safe_tags(self, key="allow_nan"),
-                reset=False,
-            )
         mask = self.get_support()
         if not mask.any():
             warn(
