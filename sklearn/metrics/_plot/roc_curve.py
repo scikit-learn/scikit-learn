@@ -350,10 +350,10 @@ class RocCurveDisplay:
 
 
 @deprecated(
-    "Function `plot_roc_curve` is deprecated in 1.0 and will be "
+    "Function :func:`plot_roc_curve` is deprecated in 1.0 and will be "
     "removed in 1.2. Use one of the class methods: "
-    "RocCurveDisplay.from_predictions or "
-    "RocCurveDisplay.from_estimator."
+    ":meth:`sklearn.metric.RocCurveDisplay.from_predictions` or "
+    ":meth:`sklearn.metric.RocCurveDisplay.from_estimator`."
 )
 def plot_roc_curve(
     estimator,
