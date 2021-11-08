@@ -11,7 +11,10 @@ from itertools import chain
 import warnings
 
 from scipy.sparse import issparse
-from scipy.sparse.base import spmatrix
+try:
+    from scipy.sparse import spmatrix
+except ImportError:  # SciPy < 1.8
+    from scipy.sparse.base import spmatrix
 from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
