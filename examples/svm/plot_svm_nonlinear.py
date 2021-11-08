@@ -15,6 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm
 
+# Generate the datapoints
 xx, yy = np.meshgrid(np.linspace(-3, 3, 500), np.linspace(-3, 3, 500))
 np.random.seed(0)
 X = np.random.randn(300, 2)
