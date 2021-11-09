@@ -291,7 +291,7 @@ def mean_absolute_percentage_error(
     Note here that the output is not a percentage in range [0, 100].
     Instead, the output can be arbitrarily high when `y_true` is small
     (which is specific to the metric) or when `abs(y_true-y_pred)` is
-    large (which is common for most regressino metrics). Read more in the
+    large (which is common for most regression metrics). Read more in the
     :ref:`User Guide <mean_absolute_percentage_error>`.
 
     .. versionadded:: 0.24
