@@ -48,9 +48,9 @@ def loss_instance_name(param):
         loss = param
         name = loss.__class__.__name__
         if hasattr(loss, "quantile"):
-            name += f"(quantile={loss.quantile})"
+            name += f"(quantile={loss.closs.quantile})"
         elif hasattr(loss, "power"):
-            name += f"(power={loss.power})"
+            name += f"(power={loss.closs.power})"
         return name
     else:
         return str(param)
@@ -132,7 +132,7 @@ def test_loss_boundary(loss):
     assert loss.in_y_pred_range(y_pred)
 
     # calculating losses should not fail
-    raw_prediction = loss.link(y_pred)
+    raw_prediction = loss.link.link(y_pred)
     loss.loss(y_true=y_true, raw_prediction=raw_prediction)
 
 
@@ -354,7 +354,7 @@ def test_loss_same_as_C_functions(loss, sample_weight):
             sample_weight=sample_weight,
             loss_out=out_l1,
         ),
-        loss._loss(
+        loss.closs.loss(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -368,21 +368,21 @@ def test_loss_same_as_C_functions(loss, sample_weight):
             sample_weight=sample_weight,
             gradient_out=out_g1,
         ),
-        loss._gradient(
+        loss.closs.gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
             gradient_out=out_g2,
         ),
     )
-    loss.loss_gradient(
+    loss.closs.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
         loss_out=out_l1,
         gradient_out=out_g1,
     )
-    loss._loss_gradient(
+    loss.closs.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
@@ -398,7 +398,7 @@ def test_loss_same_as_C_functions(loss, sample_weight):
         gradient_out=out_g1,
         hessian_out=out_h1,
     )
-    loss._gradient_hessian(
+    loss.closs.gradient_hessian(
         y_true=y_true,
         raw_prediction=raw_prediction,
         sample_weight=sample_weight,
@@ -603,7 +603,7 @@ def test_loss_of_perfect_prediction(loss, sample_weight):
     if not loss.is_multiclass:
         # Use small values such that exp(value) is not nan.
         raw_prediction = np.array([-10, -0.1, 0, 0.1, 3, 10])
-        y_true = loss.inverse(raw_prediction)
+        y_true = loss.link.inverse(raw_prediction)
     else:
         # CategoricalCrossEntropy
         y_true = np.arange(loss.n_classes).astype(float)
@@ -786,7 +786,7 @@ def test_derivatives(loss, x0, y_true):
     # dimensions.
     y_true = y_true.ravel()
     optimum = optimum.ravel()
-    assert_allclose(loss.inverse(optimum), y_true)
+    assert_allclose(loss.link.inverse(optimum), y_true)
     assert_allclose(func(optimum), 0, atol=1e-14)
     assert_allclose(loss.gradient(y_true=y_true, raw_prediction=optimum), 0, atol=5e-7)
 
@@ -800,7 +800,7 @@ def test_loss_intercept_only(loss, sample_weight):
     """
     n_samples = 50
     if not loss.is_multiclass:
-        y_true = loss.inverse(np.linspace(-4, 4, num=n_samples))
+        y_true = loss.link.inverse(np.linspace(-4, 4, num=n_samples))
     else:
         y_true = np.arange(n_samples).astype(float) % loss.n_classes
         y_true[::5] = 0  # exceedance of class 0
@@ -891,10 +891,10 @@ def test_specific_fit_intercept_only(loss, func, random_dist):
     # Make sure baseline prediction is the expected functional=func, e.g. mean
     # or median.
     assert_all_finite(baseline_prediction)
-    assert baseline_prediction == approx(loss.link(func(y_train)))
-    assert loss.inverse(baseline_prediction) == approx(func(y_train))
+    assert baseline_prediction == approx(loss.link.link(func(y_train)))
+    assert loss.link.inverse(baseline_prediction) == approx(func(y_train))
     if isinstance(loss, IdentityLink):
-        assert_allclose(loss.inverse(baseline_prediction), baseline_prediction)
+        assert_allclose(loss.link.inverse(baseline_prediction), baseline_prediction)
 
     # Test baseline at boundary
     if loss.interval_y_true.low_inclusive:
@@ -921,7 +921,7 @@ def test_categorical_crossentropy_fit_intercept_only():
     for k in range(n_classes):
         p[k] = (y_train == k).mean()
     assert_allclose(baseline_prediction, np.log(p) - np.mean(np.log(p)))
-    assert_allclose(baseline_prediction[None, :], loss.link(p[None, :]))
+    assert_allclose(baseline_prediction[None, :], loss.link.link(p[None, :]))
 
     for y_train in (np.zeros(shape=10), np.ones(shape=10)):
         y_train = y_train.astype(np.float64)

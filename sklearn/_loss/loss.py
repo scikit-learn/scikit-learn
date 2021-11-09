@@ -7,7 +7,7 @@ classification.
 """
 # Goals:
 # - Provide a common private module for loss functions/classes.
-# - Replace losses for:
+# - To be used in:
 #   - LogisticRegression
 #   - PoissonRegressor, GammaRegressor, TweedieRegressor
 #   - HistGradientBoostingRegressor, HistGradientBoostingClassifier
@@ -18,7 +18,6 @@ classification.
 import numpy as np
 from scipy.special import xlogy
 from ._loss import (
-    CyLossFunction,
     CyHalfSquaredError,
     CyAbsoluteError,
     CyPinballLoss,
@@ -30,7 +29,6 @@ from ._loss import (
 )
 from .link import (
     Interval,
-    BaseLink,
     IdentityLink,
     LogLink,
     LogitLink,
@@ -43,7 +41,22 @@ from ..utils.stats import _weighted_percentile
 # Note: The shape of raw_prediction for multiclass classifications are
 # - GradientBoostingClassifier: (n_samples, n_classes)
 # - HistGradientBoostingClassifier: (n_classes, n_samples)
-class BaseLoss(BaseLink, CyLossFunction):
+#
+# Note: Instead of inheritance like
+#
+#    class BaseLoss(BaseLink, CyLossFunction):
+#    ...
+#
+#    # Note: Naturally, we would inherit in the following order
+#    #     class HalfSquaredError(IdentityLink, CyHalfSquaredError, BaseLoss)
+#    #   But because of https://github.com/cython/cython/issues/4350 we set BaseLoss as
+#    #   the last one. This, of course, changes the MRO.
+#    class HalfSquaredError(IdentityLink, CyHalfSquaredError, BaseLoss):
+#
+# we use composition. This way we improve maintainability by avoiding the above
+# mentioned Cython edge case and have easier to understand code (which method calls
+# which code).
+class BaseLoss:
     """Base class for a loss function of 1-dimensional targets.
 
     Conventions:
@@ -72,14 +85,16 @@ class BaseLoss(BaseLink, CyLossFunction):
 
     Attributes
     ----------
-    interval_y_true: Interval
+    closs: CyLossFunction
+    link : BaseLink
+    interval_y_true : Interval
         Valid interval for y_true
-    interval_y_pred: Interval
+    interval_y_pred : Interval
         Valid Interval for y_pred
-    differentiable: bool
+    differentiable : bool
         Indicates whether or not loss function is differentiable in
         raw_prediction everywhere.
-    need_update_leaves_values: bool
+    need_update_leaves_values : bool
         Indicates whether decision trees in gradient boosting need to uptade
         leave values after having been fit to the (negative) gradients.
     approx_hessian : bool
@@ -90,13 +105,6 @@ class BaseLoss(BaseLink, CyLossFunction):
     is_multiclass : bool
         Indicates whether n_classes > 2 is allowed.
     """
-
-    # Inherited methods from BaseLink:
-    # - link
-    # - inverse
-    #
-    # Inherited methods from CyLossFunction:
-    # - _loss, _loss_gradient, _gradient, _gradient_hessian
 
     # For decision trees:
     # This variable indicates whether the loss requires the leaves values to
@@ -116,7 +124,7 @@ class BaseLoss(BaseLink, CyLossFunction):
         self.constant_hessian = False
         self.n_classes = n_classes
         self.interval_y_true = Interval(-np.inf, np.inf, False, False)
-        self.interval_y_pred = Interval(-np.inf, np.inf, False, False)
+        self.interval_y_pred = self.link.interval_y_pred
 
     def in_y_true_range(self, y):
         """Return True if y is in the valid range of y_true.
@@ -176,7 +184,7 @@ class BaseLoss(BaseLink, CyLossFunction):
         raw_prediction = ReadonlyArrayWrapper(raw_prediction)
         if sample_weight is not None:
             sample_weight = ReadonlyArrayWrapper(sample_weight)
-        return self._loss(
+        return self.closs.loss(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -241,7 +249,7 @@ class BaseLoss(BaseLink, CyLossFunction):
         raw_prediction = ReadonlyArrayWrapper(raw_prediction)
         if sample_weight is not None:
             sample_weight = ReadonlyArrayWrapper(sample_weight)
-        return self._loss_gradient(
+        return self.closs.loss_gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -294,7 +302,7 @@ class BaseLoss(BaseLink, CyLossFunction):
         raw_prediction = ReadonlyArrayWrapper(raw_prediction)
         if sample_weight is not None:
             sample_weight = ReadonlyArrayWrapper(sample_weight)
-        return self._gradient(
+        return self.closs.gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -362,7 +370,7 @@ class BaseLoss(BaseLink, CyLossFunction):
         raw_prediction = ReadonlyArrayWrapper(raw_prediction)
         if sample_weight is not None:
             sample_weight = ReadonlyArrayWrapper(sample_weight)
-        return self._gradient_hessian(
+        return self.closs.gradient_hessian(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -440,9 +448,9 @@ class BaseLoss(BaseLink, CyLossFunction):
             a_max = self.interval_y_pred.high - eps
 
         if a_min is None and a_max is None:
-            return self.link(y_pred)
+            return self.link.link(y_pred)
         else:
-            return self.link(np.clip(y_pred, a_min, a_max))
+            return self.link.link(np.clip(y_pred, a_min, a_max))
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
         """Calculate term dropped in loss.
@@ -456,7 +464,7 @@ class BaseLoss(BaseLink, CyLossFunction):
 #         class HalfSquaredError(IdentityLink, CyHalfSquaredError, BaseLoss)
 #       But because of https://github.com/cython/cython/issues/4350 we
 #       set BaseLoss as the last one. This, of course, changes the MRO.
-class HalfSquaredError(IdentityLink, CyHalfSquaredError, BaseLoss):
+class HalfSquaredError(BaseLoss):
     """Half squared error with identity link, for regression.
 
     Domain:
@@ -475,11 +483,13 @@ class HalfSquaredError(IdentityLink, CyHalfSquaredError, BaseLoss):
     """
 
     def __init__(self, sample_weight=None):
+        self.closs = CyHalfSquaredError()
+        self.link = IdentityLink()
         super().__init__()
         self.constant_hessian = sample_weight is None
 
 
-class AbsoluteError(IdentityLink, CyAbsoluteError, BaseLoss):
+class AbsoluteError(BaseLoss):
     """Absolute error with identity link, for regression.
 
     Domain:
@@ -497,6 +507,8 @@ class AbsoluteError(IdentityLink, CyAbsoluteError, BaseLoss):
     need_update_leaves_values = True
 
     def __init__(self, sample_weight=None):
+        self.closs = CyAbsoluteError()
+        self.link = IdentityLink()
         super().__init__()
         self.approx_hessian = True
         self.constant_hessian = sample_weight is None
@@ -513,7 +525,7 @@ class AbsoluteError(IdentityLink, CyAbsoluteError, BaseLoss):
             return _weighted_percentile(y_true, sample_weight, 50)
 
 
-class PinballLoss(IdentityLink, CyPinballLoss, BaseLoss):
+class PinballLoss(BaseLoss):
     """Quantile loss aka pinball loss, for regression.
 
     Domain:
@@ -543,15 +555,16 @@ class PinballLoss(IdentityLink, CyPinballLoss, BaseLoss):
     need_update_leaves_values = True
 
     def __init__(self, sample_weight=None, quantile=0.5):
-        BaseLoss.__init__(self)
-        CyPinballLoss.__init__(self, quantile=float(quantile))
-        self.approx_hessian = True
-        self.constant_hessian = sample_weight is None
         if quantile <= 0 or quantile >= 1:
             raise ValueError(
                 "PinballLoss aka quantile loss only accepts "
                 f"0 < quantile < 1; {quantile} was given."
             )
+        self.closs = CyPinballLoss(quantile=float(quantile))
+        self.link = IdentityLink()
+        BaseLoss.__init__(self)
+        self.approx_hessian = True
+        self.constant_hessian = sample_weight is None
 
     def fit_intercept_only(self, y_true, sample_weight=None):
         """Compute raw_prediction of an intercept-only model.
@@ -560,12 +573,14 @@ class PinballLoss(IdentityLink, CyPinballLoss, BaseLoss):
         axis=0.
         """
         if sample_weight is None:
-            return np.percentile(y_true, 100 * self.quantile, axis=0)
+            return np.percentile(y_true, 100 * self.closs.quantile, axis=0)
         else:
-            return _weighted_percentile(y_true, sample_weight, 100 * self.quantile)
+            return _weighted_percentile(
+                y_true, sample_weight, 100 * self.closs.quantile
+            )
 
 
-class HalfPoissonLoss(LogLink, CyHalfPoissonLoss, BaseLoss):
+class HalfPoissonLoss(BaseLoss):
     """Poisson deviance loss with log-link, for regression.
 
     Domain:
@@ -587,9 +602,10 @@ class HalfPoissonLoss(LogLink, CyHalfPoissonLoss, BaseLoss):
     """
 
     def __init__(self, sample_weight=None):
+        self.closs = CyHalfPoissonLoss()
+        self.link = LogLink()
         super().__init__()
         self.interval_y_true = Interval(0, np.inf, True, False)
-        self.interval_y_pred = Interval(0, np.inf, False, False)
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
         term = xlogy(y_true, y_true) - y_true
@@ -598,7 +614,7 @@ class HalfPoissonLoss(LogLink, CyHalfPoissonLoss, BaseLoss):
         return term
 
 
-class HalfGammaLoss(LogLink, CyHalfGammaLoss, BaseLoss):
+class HalfGammaLoss(BaseLoss):
     """Gamma deviance loss with log-link, for regression.
 
     Domain:
@@ -619,9 +635,10 @@ class HalfGammaLoss(LogLink, CyHalfGammaLoss, BaseLoss):
     """
 
     def __init__(self, sample_weight=None):
+        self.closs = CyHalfGammaLoss()
+        self.link = LogLink()
         super().__init__()
         self.interval_y_true = Interval(0, np.inf, False, False)
-        self.interval_y_pred = Interval(0, np.inf, False, False)
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
         term = -np.log(y_true) - 1
@@ -630,7 +647,7 @@ class HalfGammaLoss(LogLink, CyHalfGammaLoss, BaseLoss):
         return term
 
 
-class HalfTweedieLoss(LogLink, CyHalfTweedieLoss, BaseLoss):
+class HalfTweedieLoss(BaseLoss):
     """Tweedie deviance loss with log-link, for regression.
 
     Domain:
@@ -662,38 +679,38 @@ class HalfTweedieLoss(LogLink, CyHalfTweedieLoss, BaseLoss):
     """
 
     def __init__(self, sample_weight=None, power=1.5):
+        self.closs = CyHalfTweedieLoss(power=power)
+        self.link = LogLink()
         BaseLoss.__init__(self)
-        CyHalfTweedieLoss.__init__(self, power=power)
-        self.interval_y_pred = Interval(0, np.inf, False, False)
-        if self.power <= 0:
+        if self.closs.power <= 0:
             self.interval_y_true = Interval(-np.inf, np.inf, False, False)
-        elif self.power < 2:
+        elif self.closs.power < 2:
             self.interval_y_true = Interval(0, np.inf, True, False)
         else:
             self.interval_y_true = Interval(0, np.inf, False, False)
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
-        if self.power == 0:
+        if self.closs.power == 0:
             return HalfSquaredError().constant_to_optimal_zero(
                 y_true=y_true, sample_weight=sample_weight
             )
-        elif self.power == 1:
+        elif self.closs.power == 1:
             return HalfPoissonLoss().constant_to_optimal_zero(
                 y_true=y_true, sample_weight=sample_weight
             )
-        elif self.power == 2:
+        elif self.closs.power == 2:
             return HalfGammaLoss().constant_to_optimal_zero(
                 y_true=y_true, sample_weight=sample_weight
             )
         else:
-            p = self.power
+            p = self.closs.power
             term = np.power(np.maximum(y_true, 0), 2 - p) / (1 - p) / (2 - p)
             if sample_weight is not None:
                 term *= sample_weight
             return term
 
 
-class BinaryCrossEntropy(LogitLink, CyBinaryCrossEntropy, BaseLoss):
+class BinaryCrossEntropy(BaseLoss):
     """Binary cross entropy loss with logit link, for binary classification.
 
     Domain:
@@ -720,9 +737,10 @@ class BinaryCrossEntropy(LogitLink, CyBinaryCrossEntropy, BaseLoss):
     """
 
     def __init__(self, sample_weight=None):
+        self.closs = CyBinaryCrossEntropy()
+        self.link = LogitLink()
         super().__init__(n_classes=2)
         self.interval_y_true = Interval(0, 1, True, True)
-        self.interval_y_pred = Interval(0, 1, False, False)
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
         # This is non-zero only if y_true is neither 0 nor 1.
@@ -748,12 +766,12 @@ class BinaryCrossEntropy(LogitLink, CyBinaryCrossEntropy, BaseLoss):
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
         proba = np.empty((raw_prediction.shape[0], 2), dtype=raw_prediction.dtype)
-        proba[:, 1] = self.inverse(raw_prediction)
+        proba[:, 1] = self.link.inverse(raw_prediction)
         proba[:, 0] = 1 - proba[:, 1]
         return proba
 
 
-class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseLoss):
+class CategoricalCrossEntropy(BaseLoss):
     """Categorical cross-entropy loss, for multiclass classification.
 
     Domain:
@@ -791,6 +809,8 @@ class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseL
     is_multiclass = True
 
     def __init__(self, sample_weight=None, n_classes=3):
+        self.closs = CyCategoricalCrossEntropy()
+        self.link = MultinomialLogit()
         super().__init__(n_classes=n_classes)
         self.interval_y_true = Interval(0, np.inf, True, False)
         self.interval_y_pred = Interval(0, 1, False, False)
@@ -815,7 +835,7 @@ class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseL
         for k in range(self.n_classes):
             out[k] = np.average(y_true == k, weights=sample_weight, axis=0)
             out[k] = np.clip(out[k], eps, 1 - eps)
-        return self.link(out[None, :]).reshape(-1)
+        return self.link.link(out[None, :]).reshape(-1)
 
     def predict_proba(self, raw_prediction):
         """Predict probabilities.
@@ -830,7 +850,7 @@ class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseL
         proba : array of shape (n_samples, n_classes)
             Element-wise class probabilites.
         """
-        return self.inverse(raw_prediction)
+        return self.link.inverse(raw_prediction)
 
     def gradient_proba(
         self,
@@ -881,7 +901,7 @@ class CategoricalCrossEntropy(MultinomialLogit, CyCategoricalCrossEntropy, BaseL
         raw_prediction = ReadonlyArrayWrapper(raw_prediction)
         if sample_weight is not None:
             sample_weight = ReadonlyArrayWrapper(sample_weight)
-        return self._gradient_proba(
+        return self.closs.gradient_proba(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,

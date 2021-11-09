@@ -185,9 +185,9 @@ WARNING: Do not edit `sklearn/_loss/_loss.pyx` file directly, as it is generated
 #      These are used e.g. in SGD `_plain_sgd`.
 #    - Member functions operating on ndarrays, see c), looping over calls to C
 #      functions from b).
-# e) Provide convenience Python classes that inherit from these extension types
+# e) Provide convenience Python classes that compose from these extension types
 #    elsewhere (see loss.py)
-#    - Example: loss.gradient calls CyLoss._gradient but does some input
+#    - Example: loss.gradient calls CyLoss.gradient but does some input
 #      checking like None -> np.empty().
 #
 # Note: We require 1-dim ndarrays to be contiguous.
@@ -640,7 +640,7 @@ cdef class CyLossFunction:
     #       const Y_DTYPE_C double[::1] y_true
     # See release notes 3.0.0 alpha1
     # https://cython.readthedocs.io/en/latest/src/changes.html#alpha-1-2020-04-12
-    def _loss(
+    def loss(
         self,
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
@@ -670,7 +670,7 @@ cdef class CyLossFunction:
         """
         pass
 
-    def _gradient(
+    def gradient(
         self,
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
@@ -700,7 +700,7 @@ cdef class CyLossFunction:
         """
         pass
 
-    def _loss_gradient(
+    def loss_gradient(
         self,
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
@@ -734,11 +734,11 @@ cdef class CyLossFunction:
         gradient : array of shape (n_samples,)
             Element-wise gradients.
         """
-        self._loss(y_true, raw_prediction, sample_weight, loss_out, n_threads)
-        self._gradient(y_true, raw_prediction, sample_weight, gradient_out, n_threads)
+        self.loss(y_true, raw_prediction, sample_weight, loss_out, n_threads)
+        self.gradient(y_true, raw_prediction, sample_weight, gradient_out, n_threads)
         return np.asarray(loss_out), np.asarray(gradient_out)
 
-    def _gradient_hessian(
+    def gradient_hessian(
         self,
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
@@ -800,7 +800,7 @@ cdef class {{name}}(CyLossFunction):
     cdef inline double_pair cy_grad_hess(self, double y_true, double raw_prediction) nogil:
         return {{cgrad_hess}}(y_true, raw_prediction{{with_param}})
 
-    def _loss(
+    def loss(
         self,
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
@@ -826,7 +826,7 @@ cdef class {{name}}(CyLossFunction):
         return np.asarray(loss_out)
 
     {{if closs_grad is not None}}
-    def _loss_gradient(
+    def loss_gradient(
         self,
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
@@ -858,7 +858,7 @@ cdef class {{name}}(CyLossFunction):
         return np.asarray(loss_out), np.asarray(gradient_out)
     {{endif}}
 
-    def _gradient(
+    def gradient(
         self,
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
@@ -883,7 +883,7 @@ cdef class {{name}}(CyLossFunction):
 
         return np.asarray(gradient_out)
 
-    def _gradient_hessian(
+    def gradient_hessian(
         self,
         Y_DTYPE_C[::1] y_true,          # IN
         Y_DTYPE_C[::1] raw_prediction,  # IN
@@ -934,7 +934,7 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
     # Note that we do not assume memory alignement/contiguity of 2d arrays.
     # There seems to be little benefit in doing so. Benchmarks proofing the
     # opposite are welcome.
-    def _loss(
+    def loss(
         self,
         Y_DTYPE_C[::1] y_true,           # IN
         Y_DTYPE_C[:, :] raw_prediction,  # IN
@@ -994,7 +994,7 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
 
         return np.asarray(loss_out)
 
-    def _loss_gradient(
+    def loss_gradient(
         self,
         Y_DTYPE_C[::1] y_true,           # IN
         Y_DTYPE_C[:, :] raw_prediction,  # IN
@@ -1056,7 +1056,7 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
 
         return np.asarray(loss_out), np.asarray(gradient_out)
 
-    def _gradient(
+    def gradient(
         self,
         Y_DTYPE_C[::1] y_true,           # IN
         Y_DTYPE_C[:, :] raw_prediction,  # IN
@@ -1105,7 +1105,7 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
 
         return np.asarray(gradient_out)
 
-    def _gradient_hessian(
+    def gradient_hessian(
         self,
         Y_DTYPE_C[::1] y_true,           # IN
         Y_DTYPE_C[:, :] raw_prediction,  # IN
@@ -1163,7 +1163,7 @@ cdef class CyCategoricalCrossEntropy(CyLossFunction):
     # This method simplifies the implementation of hessp in linear models,
     # i.e. the matrix-vector product of the full hessian, not only of the
     # diagonal (in the classes) approximation as implemented above.
-    def _gradient_proba(
+    def gradient_proba(
         self,
         Y_DTYPE_C[::1] y_true,           # IN
         Y_DTYPE_C[:, :] raw_prediction,  # IN
