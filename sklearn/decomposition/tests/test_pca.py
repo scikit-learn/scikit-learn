@@ -673,10 +673,13 @@ def test_pca_randomized_svd_n_oversamples():
     # The default value of `n_oversamples` will lead to inaccurate results
     # We force it to the number of features.
     pca_randomized = PCA(
-        n_components=1, svd_solver="randomized", n_oversamples=n_features
+        n_components=1,
+        svd_solver="randomized",
+        n_oversamples=n_features,
+        random_state=0,
     ).fit(X)
     pca_full = PCA(n_components=1, svd_solver="full").fit(X)
-    pca_arpack = PCA(n_components=1, svd_solver="arpack").fit(X)
+    pca_arpack = PCA(n_components=1, svd_solver="arpack", random_state=0).fit(X)
 
     assert_allclose(np.abs(pca_full.components_), np.abs(pca_arpack.components_))
     assert_allclose(np.abs(pca_randomized.components_), np.abs(pca_arpack.components_))
