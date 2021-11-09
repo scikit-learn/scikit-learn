@@ -50,6 +50,10 @@ if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     TEST_CMD="$TEST_CMD -n2"
 fi
 
+if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
+    TEST_CMD="$TEST_CMD -ra"
+fi
+
 set -x
 eval "$TEST_CMD --pyargs sklearn"
 set +x
