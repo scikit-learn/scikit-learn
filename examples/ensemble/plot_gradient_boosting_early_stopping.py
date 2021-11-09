@@ -45,9 +45,9 @@ from sklearn import ensemble
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
-data_list = [datasets.load_iris(), datasets.load_digits()]
+data_list = [datasets.load_iris(), datasets.load_digits(n_class=5)]
 data_list = [(d.data, d.target) for d in data_list]
-data_list += [datasets.make_hastie_10_2()]
+data_list += [datasets.make_hastie_10_2(n_samples=6000)]
 names = ["Iris Data", "Digits Data", "Hastie Data"]
 
 n_gb = []
@@ -57,7 +57,7 @@ n_gbes = []
 score_gbes = []
 time_gbes = []
 
-n_estimators = 500
+n_estimators = 200
 
 for X, y in data_list:
     X_train, X_test, y_train, y_test = train_test_split(
@@ -121,7 +121,7 @@ def autolabel(rects, n_estimators):
             "n_est=%d" % n_estimators[i],
             ha="center",
             va="bottom",
-        )
+            )
 
 
 autolabel(bar1, n_gb)
