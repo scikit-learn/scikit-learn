@@ -20,6 +20,7 @@ jobs:
     PYTEST_XDIST: 'true'
     PYTEST_XDIST_VERSION: 'latest'
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
+    SHOW_SHORT_SUMMARY: 'false'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
