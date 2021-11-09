@@ -90,6 +90,9 @@ results["BIC criterion"] = lasso_lars_ic[-1].criterion_
 alpha_bic = lasso_lars_ic[-1].alpha_
 
 # %%
+results
+
+# %%
 # Finally, we can plot the AIC and BIC values for the different alpha values.
 # The vertical lines in the plot corresponds to the alpha chosen for each
 # criterion. The selected alpha corresponds to the minimum of the AIC or BIC
