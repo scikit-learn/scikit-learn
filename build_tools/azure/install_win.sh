@@ -4,8 +4,7 @@ set -e
 set -x
 
 if [[ "$PYTHON_ARCH" == "64" ]]; then
-    conda create -n $VIRTUALENV -q -y python=$PYTHON_VERSION numpy scipy cython matplotlib wheel pillow joblib \
-    "setuptools<58.5" # TODO: Remove this line once setuptools#2849 is resolved.
+    conda create -n $VIRTUALENV -q -y python=$PYTHON_VERSION numpy scipy cython matplotlib wheel pillow joblib
 
     source activate $VIRTUALENV
 
@@ -17,8 +16,7 @@ if [[ "$PYTHON_ARCH" == "64" ]]; then
         pip install pytest==$PYTEST_VERSION
     fi
 else
-    pip install numpy scipy cython pytest wheel pillow joblib threadpoolctl \
-    "setuptools<58.5" # TODO: Remove this line once setuptools#2849 is resolved.
+    pip install numpy scipy cython pytest wheel pillow joblib threadpoolctl
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
