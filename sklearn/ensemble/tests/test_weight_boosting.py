@@ -569,6 +569,33 @@ def test_adaboost_classifier_params_validation(params, err_type, err_msg):
         AdaBoostClassifier(**params).fit(X, y_class)
 
 
+@pytest.mark.parametrize(
+    # Test that it gives proper exception on deficient input.
+    "params, err_type, err_msg",
+    [
+        ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1"),
+        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
+        (
+            {"n_estimators": 1.5},
+            TypeError,
+            "n_estimators must be an instance of <class 'numbers.Integral'>,"
+            " not <class 'float'>",
+        ),
+        ({"learning_rate": -1}, ValueError, "learning_rate == -1, must be > 0."),
+        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
+        (
+            {"loss": "unknown"},
+            ValueError,
+            "loss must be 'linear', 'square', or 'exponential'",
+        ),
+    ],
+)
+def test_adaboost_regressor_params_validation(params, err_type, err_msg):
+    """Check the parameters validation in `AdaBoostRegressor`."""
+    with pytest.raises(err_type, match=err_msg):
+        AdaBoostRegressor(**params).fit(X, y_regr)
+
+
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboost_consistent_predict(algorithm):
     # check that predict_proba and predict give consistent results
