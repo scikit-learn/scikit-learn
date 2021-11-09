@@ -126,7 +126,7 @@ Changelog
 
 - |API| Parameters ``sample_weight`` and ``multioutput`` of
   :func:`metrics.mean_absolute_percentage_error` are now keyword-only,
-  in accordance withSLEP009. A deprecation cycle was introduced.
+  in accordance with SLEP009. A deprecation cycle was introduced.
   :pr:`21576` by :user:`Paul-Emile Dugnat <pedugnat>`.
 
 :mod:`sklearn.manifold`
