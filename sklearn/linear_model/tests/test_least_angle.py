@@ -946,8 +946,9 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
 def test_lassolarsic_alpha_selection(criterion):
     """Check that we properly compute the AIC and BIC score.
 
-    In this test, we reproduce the example of the Fig. 2 of Zou et al. (reference [1] in LassoLarsIC)
-    In this example, only 7 features should be selected.
+    In this test, we reproduce the example of the Fig. 2 of Zou et al.
+    (reference [1] in LassoLarsIC) In this example, only 7 features should be
+    selected.
     """
     model = make_pipeline(
         StandardScaler(), LassoLarsIC(criterion=criterion, normalize=False)
@@ -958,13 +959,16 @@ def test_lassolarsic_alpha_selection(criterion):
     assert best_alpha_selected == 7
 
 
-def test_lassolarsic_noise_variance():
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_lassolarsic_noise_variance(fit_intercept):
     """Check the behaviour when `n_samples` < `n_features` and that one needs
     to provide the noise variance."""
     rng = np.random.RandomState(0)
     X, y = datasets.make_regression(n_samples=10, n_features=100, random_state=rng)
 
-    model = make_pipeline(StandardScaler(), LassoLarsIC(normalize=False))
+    model = make_pipeline(
+        StandardScaler(), LassoLarsIC(fit_intercept=fit_intercept, normalize=False)
+    )
 
     err_msg = (
         "You are using LassoLarsIC in the case where the number of samples is smaller"

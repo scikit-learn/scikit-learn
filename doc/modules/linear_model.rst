@@ -339,30 +339,30 @@ freedom in the previous section).
 For a linear Gaussian model, the maximum log-likelihood is defined as:
 
 .. math::
-    \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \ln(\hat{\sigma}^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\hat{\sigma}^2}
+    \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \ln(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
 
-where :math:`\hat{\sigma}^2` is an estimate of the noise variance,
+where :math:`\sigma^2` is an estimate of the noise variance,
 :math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
 targets, and :math:`n` is the number of samples.
 
 Plugging the maximum log-likelihood in the AIC formula yields:
 
 .. math::
-    AIC = n \log(2 \pi \hat{\sigma}^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\hat{\sigma}^2} + 2d
+    AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2} + 2d
 
 The first term of the above expression is sometimes discarded since it is a
-constant when :math:`\hat{\sigma}^2` is provided. In addition,
+constant when :math:`\sigma^2` is provided. In addition,
 it is sometimes stated that the AIC is equivalent to the :math:`C_p` statistic
 [12]_. In a strict sense, however, it is equivalent only up to some constant
 and a multiplicative factor.
 
-At last, we mentioned above that :math:`\hat{\sigma}^2` is an estimate of the
+At last, we mentioned above that :math:`\sigma^2` is an estimate of the
 noise variance. In :class:`LassoLarsIC` when the parameter `noise_variance` is
 not provided (default), the noise variance is estimated via the unbiased
 estimator [13]_ defined as:
 
 .. math::
-    \hat{\sigma^2} = \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{n - p}
+    \sigma^2 = \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{n - p}
 
 where :math:`p` is the number of features and :math:`\hat{y}_i` is the
 predicted target using an ordinary least squares regression. Note, that this
