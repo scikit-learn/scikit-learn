@@ -2113,7 +2113,9 @@ class LassoLarsIC(LassoLars):
     --------
     >>> from sklearn import linear_model
     >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
-    >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
+    >>> X = [[-2, 2], [-1, 1], [0, 0], [1, 1], [2, 2]]
+    >>> y = [-2.2222, -1.1111, 0, -1.1111, -2.2222]
+    >>> reg.fit(X, y)
     LassoLarsIC(criterion='bic', normalize=False)
     >>> print(reg.coef_)
     [ 0.  -1.11...]
@@ -2252,7 +2254,11 @@ class LassoLarsIC(LassoLars):
             centered.
 
         y : ndarray of shape (n_samples,)
-            Associated target
+            Associated target.
+
+        positive : bool, default=False
+            Restrict coefficients to be >= 0. This should be inline with
+            the `positive` parameter from `LassoLarsIC`.
 
         Returns
         -------
@@ -2267,6 +2273,9 @@ class LassoLarsIC(LassoLars):
                 "possible. Provide an estimate of the noise variance in the "
                 "constructor."
             )
+        # X is supposed to be centered and we don't need to fit with an intercept
         ols_model = LinearRegression(positive=positive, fit_intercept=False)
         y_pred = ols_model.fit(X, y).predict(X)
-        return np.sum((y - y_pred) ** 2) / (X.shape[0] - X.shape[1] - self.fit_intercept)
+        return np.sum((y - y_pred) ** 2) / (
+            X.shape[0] - X.shape[1] - self.fit_intercept
+        )
