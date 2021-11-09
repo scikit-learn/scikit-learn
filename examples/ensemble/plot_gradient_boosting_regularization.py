@@ -38,11 +38,11 @@ X = X.astype(np.float32)
 # map labels from {-1, 1} to {0, 1}
 labels, y = np.unique(y, return_inverse=True)
 
-X_train, X_test = X[:2000], X[2000:]
-y_train, y_test = y[:2000], y[2000:]
+X_train, X_test = X[:1500], X[1500:]
+y_train, y_test = y[:1500], y[1500:]
 
 original_params = {
-    "n_estimators": 1000,
+    "n_estimators": 600,
     "max_leaf_nodes": 4,
     "max_depth": None,
     "random_state": 2,
@@ -53,17 +53,17 @@ plt.figure()
 
 for label, color, setting in [
     ("No shrinkage", "orange", {"learning_rate": 1.0, "subsample": 1.0}),
-    ("learning_rate=0.1", "turquoise", {"learning_rate": 0.1, "subsample": 1.0}),
+    ("learning_rate=0.2", "turquoise", {"learning_rate": 0.2, "subsample": 1.0}),
     ("subsample=0.5", "blue", {"learning_rate": 1.0, "subsample": 0.5}),
     (
-        "learning_rate=0.1, subsample=0.5",
+        "learning_rate=0.2, subsample=0.5",
         "gray",
-        {"learning_rate": 0.1, "subsample": 0.5},
+        {"learning_rate": 0.2, "subsample": 0.5},
     ),
     (
-        "learning_rate=0.1, max_features=2",
+        "learning_rate=0.2, max_features=2",
         "magenta",
-        {"learning_rate": 0.1, "max_features": 2},
+        {"learning_rate": 0.2, "max_features": 2},
     ),
 ]:
     params = dict(original_params)
