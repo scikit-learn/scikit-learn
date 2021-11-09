@@ -6,7 +6,6 @@
 Descent (SGD).
 """
 
-from typing import Type
 import numpy as np
 import warnings
 
@@ -2099,10 +2098,12 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         average=False,
     ):
 
+        alpha = nu / 2
         self.nu = nu
         super(SGDOneClassSVM, self).__init__(
             loss="hinge",
             penalty="l2",
+            alpha=alpha,
             C=1.0,
             l1_ratio=0,
             fit_intercept=fit_intercept,
@@ -2126,10 +2127,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         """Validate input params."""
         if not (0 < self.nu <= 1):
             raise ValueError("nu must be in (0, 1], got nu=%f" % self.nu)
-        try:
-            self.alpha = self.nu / 2
-        except:
-            raise TypeError("alpha and nu should be of type float")
 
         super(SGDOneClassSVM, self)._validate_params(for_partial_fit=for_partial_fit)
 
