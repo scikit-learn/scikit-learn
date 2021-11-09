@@ -227,8 +227,8 @@ def evaluate(model, X, y, cv):
         cv=cv,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
     )
-    mae = -cv_results["test_neg_mean_absolute_error"]
-    rmse = -cv_results["test_neg_root_mean_squared_error"]
+    ##mae = cv_results["test_neg_mean_absolute_error"]
+    rmse = cv_results["test_neg_root_mean_squared_error"]
     print(
         f"Mean Absolute Error:     {mae.mean():.3f} +/- {mae.std():.3f}\n"
         f"Root Mean Squared Error: {rmse.mean():.3f} +/- {rmse.std():.3f}"

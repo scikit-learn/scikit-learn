@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm, datasets
 
-# import some data to play with
+# Generate iris dataset
 iris = datasets.load_iris()
 X = iris.data[:, :2]  # we only take the first two features. We could
 # avoid this ugly slicing by using a two-dim dataset
@@ -46,7 +46,7 @@ Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
+plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired, shading="nearest")
 
 # Plot also the training points
 plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired, edgecolors="k")
