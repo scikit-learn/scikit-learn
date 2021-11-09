@@ -102,7 +102,7 @@ class BaseLink(ABC):
 
     # Usually, raw_prediction may be any real number and y_pred is an open
     # interval.
-    interval_raw_prediction = Interval(-np.inf, np.inf, False, False)
+    # interval_raw_prediction = Interval(-np.inf, np.inf, False, False)
     interval_y_pred = Interval(-np.inf, np.inf, False, False)
 
     @abstractmethod
