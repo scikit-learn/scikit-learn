@@ -180,7 +180,7 @@ def test_dbscan_metric_params():
             min_samples=min_samples,
             algorithm="ball_tree",
         ).fit(X)
-    assert not warns
+    assert not warns, warns[0].message
     core_sample_1, labels_1 = db.core_sample_indices_, db.labels_
 
     # Test that sample labels are the same as passing Minkowski 'p' directly

@@ -15,7 +15,10 @@ from . import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
+from ..utils.validation import check_random_state
 from ..utils.validation import _check_feature_names_in
+from ..utils.validation import check_scalar
+from ..utils import _safe_indexing
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -62,6 +65,27 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         supported.
 
         .. versionadded:: 0.24
+
+    subsample : int or None (default='warn')
+        Maximum number of samples, used to fit the model, for computational
+        efficiency. Used when `strategy="quantile"`.
+        `subsample=None` means that all the training samples are used when
+        computing the quantiles that determine the binning thresholds.
+        Since quantile computation relies on sorting each column of `X` and
+        that sorting has an `n log(n)` time complexity,
+        it is recommended to use subsampling on datasets with a
+        very large number of samples.
+
+        .. deprecated:: 1.1
+           In version 1.3 and onwards, `subsample=2e5` will be the default.
+
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation for subsampling.
+        Pass an int for reproducible results across multiple function calls.
+        See the `subsample` parameter for more details.
+        See :term:`Glossary <random_state>`.
+
+        .. versionadded:: 1.1
 
     Attributes
     ----------
@@ -136,11 +160,22 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  1.5]])
     """
 
-    def __init__(self, n_bins=5, *, encode="onehot", strategy="quantile", dtype=None):
+    def __init__(
+        self,
+        n_bins=5,
+        *,
+        encode="onehot",
+        strategy="quantile",
+        dtype=None,
+        subsample="warn",
+        random_state=None,
+    ):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
         self.dtype = dtype
+        self.subsample = subsample
+        self.random_state = random_state
 
     def fit(self, X, y=None):
         """
@@ -172,6 +207,36 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 "Valid options for 'dtype' are "
                 f"{supported_dtype + (None,)}. Got dtype={self.dtype} "
                 " instead."
+            )
+
+        n_samples, n_features = X.shape
+
+        if self.strategy == "quantile" and self.subsample is not None:
+            if self.subsample == "warn":
+                if n_samples > 2e5:
+                    warnings.warn(
+                        "In version 1.3 onwards, subsample=2e5 "
+                        "will be used by default. Set subsample explicitly to "
+                        "silence this warning in the mean time. Set "
+                        "subsample=None to disable subsampling explicitly.",
+                        FutureWarning,
+                    )
+            else:
+                self.subsample = check_scalar(
+                    self.subsample, "subsample", numbers.Integral, min_val=1
+                )
+                rng = check_random_state(self.random_state)
+                if n_samples > self.subsample:
+                    subsample_idx = rng.choice(
+                        n_samples, size=self.subsample, replace=False
+                    )
+                    X = _safe_indexing(X, subsample_idx)
+        elif self.strategy != "quantile" and isinstance(
+            self.subsample, numbers.Integral
+        ):
+            raise ValueError(
+                f"Invalid parameter for `strategy`: {self.strategy}. "
+                '`subsample` must be used with `strategy="quantile"`.'
             )
 
         valid_encode = ("onehot", "onehot-dense", "ordinal")

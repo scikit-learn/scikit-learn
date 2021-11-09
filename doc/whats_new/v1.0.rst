@@ -12,6 +12,13 @@ Version 1.0.2
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed an infinite loop in :func:`cluster.SpectralClustering` by
+  moving an iteration counter from try to except.
+  :pr:`21271` by :user:`Tyler Martin <martintb>`
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -20,6 +27,12 @@ Changelog
   :class:`decomposition.MiniBatchDictionaryLearning`, :class:`decomposition.SparsePCA`
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Fixes compatibility bug with NumPy 1.22 in :class:`preprocessing.OneHotEncoder`.
+  :pr:`21517` by `Thomas Fan`_.
 
 :mod:`sklearn.utils`
 ....................

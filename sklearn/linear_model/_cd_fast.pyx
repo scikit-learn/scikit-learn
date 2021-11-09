@@ -5,8 +5,6 @@
 #         Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #
 # License: BSD 3 clause
-#
-# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs
 cimport numpy as np
