@@ -30,13 +30,22 @@ classifiers = [
     ("Perceptron", Perceptron(max_iter=110, warm_start=True)),
     (
         "Passive-Aggressive I",
-        PassiveAggressiveClassifier(max_iter=110, loss="hinge", C=1.0, tol=1e-4, warm_start=True),
+        PassiveAggressiveClassifier(
+            max_iter=110, loss="hinge", C=1.0, tol=1e-4, warm_start=True
+        ),
     ),
     (
         "Passive-Aggressive II",
-        PassiveAggressiveClassifier(max_iter=110, loss="squared_hinge", C=1.0, tol=1e-4, warm_start=True),
+        PassiveAggressiveClassifier(
+            max_iter=110, loss="squared_hinge", C=1.0, tol=1e-4, warm_start=True
+        ),
     ),
-    ("SAG", LogisticRegression(max_iter=110, solver="sag", tol=1e-1, C=1.0e4 / X.shape[0], warm_start=True)),
+    (
+        "SAG",
+        LogisticRegression(
+            max_iter=110, solver="sag", tol=1e-1, C=1.0e4 / X.shape[0], warm_start=True
+        ),
+    ),
 ]
 
 xx = 1.0 - np.array(heldout)
