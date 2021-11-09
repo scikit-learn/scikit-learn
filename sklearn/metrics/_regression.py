@@ -344,9 +344,8 @@ def mean_absolute_percentage_error(
     0.5515...
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.6198...
-    >>> # the value when some element of the y_true is zero
-    >>> # is arbitrarily high because of the division
-    >>> # by epsilon
+    >>> # the value when some element of the y_true is zero is arbitrarily high because
+    >>> # of the division by epsilon
     >>> y_true = [1., 0., 2.4, 7.]
     >>> y_pred = [1.2, 0.1, 2.4, 8.]
     >>> mean_absolute_percentage_error(y_true, y_pred)
