@@ -323,6 +323,8 @@ the problem is badly conditioned (e.g. more features than samples).
     :align: center
     :scale: 50%
 
+.. _aic_bic:
+
 **Mathematical details**
 
 The definition of AIC (and thus BIC) might differ in the literature. In this
@@ -335,6 +337,13 @@ scikit-learn. The AIC criterion is defined as:
 where :math:`\hat{L}` is the maximum likelihood of the model and
 :math:`d` is the number of parameters (as well referred to as degrees of
 freedom in the previous section).
+
+The definition of BIC replace the constant `2` by `log(N)`:
+
+.. math::
+    BIC = -2 \log(\hat{L}) + \log(N) d
+
+where :math:`N` is the number of samples.
 
 For a linear Gaussian model, the maximum log-likelihood is defined as:
 
