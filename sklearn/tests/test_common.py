@@ -35,7 +35,6 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import make_pipeline
 
 from sklearn.utils import IS_PYPY
@@ -333,6 +332,17 @@ def test_check_n_features_in_after_fitting(estimator):
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
 
 
+def _estimators_that_predict_in_fit():
+    for estimator in _tested_estimators():
+        est_params = set(estimator.get_params())
+        if "oob_score" in est_params:
+            yield estimator.set_params(oob_score=True, bootstrap=True)
+        elif "n_iter_no_change" in est_params:
+            yield estimator.set_params(n_iter_no_change=1)
+        elif "early_stopping" in est_params:
+            yield estimator.set_params(early_stopping=True)
+
+
 # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
 # delegates validation to a base estimator, the check is testing that the base estimator
 # is checking for column name consistency.
@@ -341,7 +351,7 @@ column_name_estimators = list(
         _tested_estimators(),
         [make_pipeline(LogisticRegression(C=1))],
         list(_generate_search_cv_instances()),
-        [RandomForestClassifier(oob_score=True)],
+        _estimators_that_predict_in_fit(),
     )
 )
 
