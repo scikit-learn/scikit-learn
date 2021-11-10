@@ -142,7 +142,7 @@ def test_imputation_deletion_warning_feature_names(strategy):
 
     # ensure that skipped feature warning includes feature name
     with pytest.warns(
-        UserWarning, match="Skipping features without observed values: \['b'\]"
+        UserWarning, match=r"Skipping features without observed values: \['b'\]"
     ):
         imputer.transform(X)
 
