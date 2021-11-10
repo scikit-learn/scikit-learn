@@ -40,7 +40,7 @@ t0 = timeit.default_timer()
 solver = "saga"
 
 # Turn down for faster run time
-n_samples = 10000
+n_samples = 7000
 
 X, y = fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
 X = X[:n_samples]
@@ -82,6 +82,7 @@ for model in models:
             penalty="l1",
             max_iter=this_max_iter,
             random_state=42,
+            warm_start=True,
         )
         t1 = timeit.default_timer()
         lr.fit(X_train, y_train)
