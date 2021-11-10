@@ -512,8 +512,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         oob_pred : ndarray of shape (n_samples, n_classes, n_outputs) or \
                 (n_samples, 1, n_outputs)
             The OOB predictions.
-      """
-        X = check_array(X, dtype=DTYPE, accept_sparse="csr", copy=False)
+        """
+        # Prediction requires X to be in CSR format
+        if issparse(X):
+            X = check_array(X, accept_sparse="csr", force_all_finite=True)
 
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
