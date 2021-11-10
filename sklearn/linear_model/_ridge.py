@@ -558,6 +558,8 @@ def _ridge_regression(
             # we implement sample_weight via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
+    # Some callers of this method might pass alpha as single
+    # element array which already has been validated.
     if not isinstance(alpha, (np.ndarray, type(None), tuple)):
         alpha = check_scalar(
             alpha,
