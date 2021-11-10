@@ -121,7 +121,7 @@ def autolabel(rects, n_estimators):
             "n_est=%d" % n_estimators[i],
             ha="center",
             va="bottom",
-            )
+        )
 
 
 autolabel(bar1, n_gb)
