@@ -62,7 +62,7 @@ from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 from sklearn.metrics import mean_absolute_error, mean_squared_error, auc
 
 
-def load_mtpl2(n_samples=100000):
+def load_mtpl2(n_samples=60000):
     """Fetch the French Motor Third-Party Liability Claims dataset.
 
     Parameters
@@ -216,7 +216,7 @@ def score_estimator(
 # containing the claim amount (``ClaimAmount``) for the same policy ids
 # (``IDpol``).
 
-df = load_mtpl2(n_samples=60000)
+df = load_mtpl2(n_samples=40000)
 
 # Note: filter out claims with zero amount, as the severity model
 # requires strictly positive target values.
@@ -277,7 +277,7 @@ df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 # The parameters of the model are estimated by minimizing the Poisson deviance
 # on the training set via a quasi-Newton solver: l-BFGS. Some of the features
 # are collinear, we use a weak penalization to avoid numerical issues.
-glm_freq = PoissonRegressor(alpha=1e-3, max_iter=400)
+glm_freq = PoissonRegressor(alpha=1e-3, max_iter=350)
 glm_freq.fit(X_train, df_train["Frequency"], sample_weight=df_train["Exposure"])
 
 scores = score_estimator(
@@ -370,7 +370,7 @@ plot_obs_pred(
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
 
-glm_sev = GammaRegressor(alpha=10.0, max_iter=10000)
+glm_sev = GammaRegressor(alpha=10.0, max_iter=8000)
 
 glm_sev.fit(
     X_train[mask_train.values],
@@ -475,7 +475,7 @@ plt.tight_layout()
 # Ideally, we hope that one model will be consistently better than the other,
 # regardless of `power`.
 
-glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, max_iter=10000)
+glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, max_iter=8000)
 glm_pure_premium.fit(
     X_train, df_train["PurePremium"], sample_weight=df_train["Exposure"]
 )
