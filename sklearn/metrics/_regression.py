@@ -288,10 +288,11 @@ def mean_absolute_percentage_error(
 ):
     """Mean absolute percentage error (MAPE) regression loss.
 
-    Note here that the output is not a percentage in the range [0, 100] and a value of 100
-    does not mean 100% but 1e2. Furthermore, the output can be arbitrarily high when `y_true` is small
-    (which is specific to the metric) or when `abs(y_true - y_pred)` is
-    large (which is common for most regression metrics). Read more in the
+    Note here that the output is not a percentage in the range [0, 100]
+    and a value of 100 does not mean 100% but 1e2. Furthermore, the output
+    can be arbitrarily high when `y_true` is small (which is specific to the
+    metric) or when `abs(y_true - y_pred)` is large (which is common for most
+    regression metrics). Read more in the
     :ref:`User Guide <mean_absolute_percentage_error>`.
 
     .. versionadded:: 0.24
