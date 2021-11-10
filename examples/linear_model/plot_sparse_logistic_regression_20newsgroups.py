@@ -40,7 +40,7 @@ t0 = timeit.default_timer()
 solver = "saga"
 
 # Turn down for faster run time
-n_samples = 7000
+n_samples = 5000
 
 X, y = fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
 X = X[:n_samples]
