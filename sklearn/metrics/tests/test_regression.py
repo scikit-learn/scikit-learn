@@ -372,9 +372,7 @@ def test_deprecation_positional_arguments_mape():
 
     # Trigger the warning
     with pytest.warns(FutureWarning, match=warning_msg):
-        mean_absolute_percentage_error(
-            y_true, y_pred, sample_weights, multioutput
-        )
+        mean_absolute_percentage_error(y_true, y_pred, sample_weights, multioutput)
 
 
 def test_tweedie_deviance_continuity():
