@@ -62,7 +62,7 @@ from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 from sklearn.metrics import mean_absolute_error, mean_squared_error, auc
 
 
-def load_mtpl2(n_samples=60000):
+def load_mtpl2(n_samples=50000):
     """Fetch the French Motor Third-Party Liability Claims dataset.
 
     Parameters
@@ -216,7 +216,7 @@ def score_estimator(
 # containing the claim amount (``ClaimAmount``) for the same policy ids
 # (``IDpol``).
 
-df = load_mtpl2(n_samples=40000)
+df = load_mtpl2(n_samples=30000)
 
 # Note: filter out claims with zero amount, as the severity model
 # requires strictly positive target values.
