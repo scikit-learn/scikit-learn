@@ -179,7 +179,7 @@ fig, axes = plt.subplots(3, 2, figsize=(10, 15))
 X, y = load_digits(return_X_y=True)
 
 title = "Learning Curves (Naive Bayes)"
-# Cross validation with 100 iterations to get smoother mean test and train
+# Cross validation with 50 iterations to get smoother mean test and train
 # score curves, each time with 20% data randomly selected as a validation set.
 cv = ShuffleSplit(n_splits=50, test_size=0.2, random_state=0)
 
