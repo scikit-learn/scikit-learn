@@ -286,10 +286,13 @@ def mean_pinball_loss(
 def mean_absolute_percentage_error(
     y_true, y_pred, sample_weight=None, multioutput="uniform_average"
 ):
-    """Mean absolute percentage error regression loss.
+    """Mean absolute percentage error (MAPE) regression loss.
 
-    Note here that we do not represent the output as a percentage in range
-    [0, 100]. Instead, we represent it in range [0, 1/eps]. Read more in the
+    Note here that the output is not a percentage in the range [0, 100]
+    and a value of 100 does not mean 100% but 1e2. Furthermore, the output
+    can be arbitrarily high when `y_true` is small (which is specific to the
+    metric) or when `abs(y_true - y_pred)` is large (which is common for most
+    regression metrics). Read more in the
     :ref:`User Guide <mean_absolute_percentage_error>`.
 
     .. versionadded:: 0.24
@@ -318,16 +321,16 @@ def mean_absolute_percentage_error(
 
     Returns
     -------
-    loss : float or ndarray of floats in the range [0, 1/eps]
+    loss : float or ndarray of floats
         If multioutput is 'raw_values', then mean absolute percentage error
         is returned for each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
         weighted average of all output errors is returned.
 
         MAPE output is non-negative floating point. The best value is 0.0.
-        But note the fact that bad predictions can lead to arbitrarily large
-        MAPE values, especially if some y_true values are very close to zero.
-        Note that we return a large value instead of `inf` when y_true is zero.
+        But note that bad predictions can lead to arbitrarily large
+        MAPE values, especially if some `y_true` values are very close to zero.
+        Note that we return a large value instead of `inf` when `y_true` is zero.
 
     Examples
     --------
@@ -342,6 +345,12 @@ def mean_absolute_percentage_error(
     0.5515...
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.6198...
+    >>> # the value when some element of the y_true is zero is arbitrarily high because
+    >>> # of the division by epsilon
+    >>> y_true = [1., 0., 2.4, 7.]
+    >>> y_pred = [1.2, 0.1, 2.4, 8.]
+    >>> mean_absolute_percentage_error(y_true, y_pred)
+    112589990684262.48
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
