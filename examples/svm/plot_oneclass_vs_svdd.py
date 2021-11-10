@@ -41,22 +41,26 @@ X_test = np.r_[X + 2, X - 2]
 X_outliers = random_state.uniform(low=-4, high=4, size=(20, 2))
 
 # Define the models
-nu = .1
-kernels = [("RBF", dict(kernel="rbf", gamma=0.1)),
-           ("Poly", dict(kernel="poly", degree=2, coef0=1.0)),
-           ]
+nu = 0.1
+kernels = [
+    ("RBF", dict(kernel="rbf", gamma=0.1)),
+    ("Poly", dict(kernel="poly", degree=2, coef0=1.0)),
+]
 
 for kernel_name, kernel in kernels:
 
     # Use low tolerance to ensure better precision of the SVM
     # optimization procedure.
-    classifiers = [("OCSVM", svm.OneClassSVM(nu=nu, tol=1e-8, **kernel)),
-                   ("SVDD", svm.SVDD(nu=nu, tol=1e-8, **kernel)),
-                   ]
+    classifiers = [
+        ("OCSVM", svm.OneClassSVM(nu=nu, tol=1e-8, **kernel)),
+        ("SVDD", svm.SVDD(nu=nu, tol=1e-8, **kernel)),
+    ]
 
     fig = plt.figure(figsize=(12, 5))
-    fig.suptitle("One-Class SVM versus SVDD "
-                 "(error train, error novel regular, error novel abnormal)")
+    fig.suptitle(
+        "One-Class SVM versus SVDD "
+        "(error train, error novel regular, error novel abnormal)"
+    )
 
     for i, (model_name, clf) in enumerate(classifiers):
         clf.fit(X_train)
@@ -74,32 +78,46 @@ for kernel_name, kernel in kernels:
         Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         Z = Z.reshape(xx.shape)
 
-        ax.contourf(xx, yy, Z, levels=np.linspace(Z.min(), 0, 7),
-                    cmap=plt.cm.PuBu, zorder=-99)
-        ax.contourf(xx, yy, Z, levels=[0, Z.max()], colors='palevioletred',
-                    zorder=-98)
-        a = ax.contour(xx, yy, Z, levels=[0], linewidths=2, colors='darkred',
-                       zorder=-97)
+        ax.contourf(
+            xx, yy, Z, levels=np.linspace(Z.min(), 0, 7), cmap=plt.cm.PuBu, zorder=-99
+        )
+        ax.contourf(xx, yy, Z, levels=[0, Z.max()], colors="palevioletred", zorder=-98)
+        a = ax.contour(
+            xx, yy, Z, levels=[0], linewidths=2, colors="darkred", zorder=-97
+        )
 
         s = 40
-        b1 = ax.scatter(X_train[:, 0], X_train[:, 1], s=s,
-                        c='white', edgecolors='k')
-        b2 = ax.scatter(X_test[:, 0], X_test[:, 1], c='blueviolet', s=s)
-        c = ax.scatter(X_outliers[:, 0], X_outliers[:, 1], c='gold', s=s)
-        ax.axis('tight')
+        b1 = ax.scatter(X_train[:, 0], X_train[:, 1], s=s, c="white", edgecolors="k")
+        b2 = ax.scatter(X_test[:, 0], X_test[:, 1], c="blueviolet", s=s)
+        c = ax.scatter(X_outliers[:, 0], X_outliers[:, 1], c="gold", s=s)
+        ax.axis("tight")
         ax.set_xlim((-6, 6))
         ax.set_ylim((-6, 6))
 
-        ax.set_title("%s %s (%d/%d, %d/%d, %d/%d)"
-                     % (model_name, kernel_name,
-                        n_error_train, len(X_train),
-                        n_error_test, len(X_test),
-                        n_error_outliers, len(X_outliers)))
+        ax.set_title(
+            "%s %s (%d/%d, %d/%d, %d/%d)"
+            % (
+                model_name,
+                kernel_name,
+                n_error_train,
+                len(X_train),
+                n_error_test,
+                len(X_test),
+                n_error_outliers,
+                len(X_outliers),
+            )
+        )
 
-        ax.legend([a.collections[0], b1, b2, c],
-                  ["learned frontier", "training observations",
-                   "new regular observations", "new abnormal observations"],
-                  loc="lower right",
-                  prop=matplotlib.font_manager.FontProperties(size=10))
+        ax.legend(
+            [a.collections[0], b1, b2, c],
+            [
+                "learned frontier",
+                "training observations",
+                "new regular observations",
+                "new abnormal observations",
+            ],
+            loc="lower right",
+            prop=matplotlib.font_manager.FontProperties(size=10),
+        )
 
 plt.show()

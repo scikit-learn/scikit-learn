@@ -1213,13 +1213,6 @@ Changelog
   now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
   by `Tom Dupre la Tour`_.
 
-:mod:`sklearn.svm`
-..................
-
-- |Feature| Added the :class:`svm.SVDD` class for novelty detection based
-  on soft minimal volume hypersphere around the sample data. :pr:`7910`
-  by :user:`Ivan Nazarov <ivannz>`.
-
 Code and Documentation Contributors
 -----------------------------------
 

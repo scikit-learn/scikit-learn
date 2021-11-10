@@ -1837,7 +1837,7 @@ class SVDD(OutlierMixin, BaseLibSVM):
 
     Read more in the :ref:`User Guide <svm_outlier_detection>`.
 
-    ..versionadded: 1.0
+    ..versionadded: 1.1
 
     Parameters
     ----------
@@ -1912,7 +1912,9 @@ class SVDD(OutlierMixin, BaseLibSVM):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -2001,8 +2003,8 @@ class SVDD(OutlierMixin, BaseLibSVM):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Set of samples, where n_samples is the number of samples and
-            n_features is the number of features.
+            Set of samples, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -2013,6 +2015,11 @@ class SVDD(OutlierMixin, BaseLibSVM):
 
         **params : dict
             Additional fit parameters.
+
+            .. deprecated:: 1.0
+                The `fit` method will not longer accept extra keyword
+                parameters in 1.2. These keyword parameters were
+                already discarded.
 
         Returns
         -------
