@@ -119,7 +119,9 @@ class BaseLoss:
     differentiable = True
     is_multiclass = False
 
-    def __init__(self, n_classes=1):
+    def __init__(self, closs, link, n_classes=1):
+        self.closs = closs
+        self.link = link
         self.approx_hessian = False
         self.constant_hessian = False
         self.n_classes = n_classes
@@ -483,9 +485,7 @@ class HalfSquaredError(BaseLoss):
     """
 
     def __init__(self, sample_weight=None):
-        self.closs = CyHalfSquaredError()
-        self.link = IdentityLink()
-        super().__init__()
+        super().__init__(closs=CyHalfSquaredError(), link=IdentityLink())
         self.constant_hessian = sample_weight is None
 
 
@@ -507,9 +507,7 @@ class AbsoluteError(BaseLoss):
     need_update_leaves_values = True
 
     def __init__(self, sample_weight=None):
-        self.closs = CyAbsoluteError()
-        self.link = IdentityLink()
-        super().__init__()
+        super().__init__(closs=CyAbsoluteError(), link=IdentityLink())
         self.approx_hessian = True
         self.constant_hessian = sample_weight is None
 
@@ -560,9 +558,10 @@ class PinballLoss(BaseLoss):
                 "PinballLoss aka quantile loss only accepts "
                 f"0 < quantile < 1; {quantile} was given."
             )
-        self.closs = CyPinballLoss(quantile=float(quantile))
-        self.link = IdentityLink()
-        BaseLoss.__init__(self)
+        super().__init__(
+            closs=CyPinballLoss(quantile=float(quantile)),
+            link=IdentityLink(),
+        )
         self.approx_hessian = True
         self.constant_hessian = sample_weight is None
 
@@ -602,9 +601,7 @@ class HalfPoissonLoss(BaseLoss):
     """
 
     def __init__(self, sample_weight=None):
-        self.closs = CyHalfPoissonLoss()
-        self.link = LogLink()
-        super().__init__()
+        super().__init__(closs=CyHalfPoissonLoss(), link=LogLink())
         self.interval_y_true = Interval(0, np.inf, True, False)
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
@@ -635,9 +632,7 @@ class HalfGammaLoss(BaseLoss):
     """
 
     def __init__(self, sample_weight=None):
-        self.closs = CyHalfGammaLoss()
-        self.link = LogLink()
-        super().__init__()
+        super().__init__(closs=CyHalfGammaLoss(), link=LogLink())
         self.interval_y_true = Interval(0, np.inf, False, False)
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
@@ -679,9 +674,10 @@ class HalfTweedieLoss(BaseLoss):
     """
 
     def __init__(self, sample_weight=None, power=1.5):
-        self.closs = CyHalfTweedieLoss(power=power)
-        self.link = LogLink()
-        BaseLoss.__init__(self)
+        super().__init__(
+            closs=CyHalfTweedieLoss(power=float(power)),
+            link=LogLink(),
+        )
         if self.closs.power <= 0:
             self.interval_y_true = Interval(-np.inf, np.inf, False, False)
         elif self.closs.power < 2:
@@ -737,9 +733,11 @@ class BinaryCrossEntropy(BaseLoss):
     """
 
     def __init__(self, sample_weight=None):
-        self.closs = CyBinaryCrossEntropy()
-        self.link = LogitLink()
-        super().__init__(n_classes=2)
+        super().__init__(
+            closs=CyBinaryCrossEntropy(),
+            link=LogitLink(),
+            n_classes=2,
+        )
         self.interval_y_true = Interval(0, 1, True, True)
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
@@ -809,9 +807,11 @@ class CategoricalCrossEntropy(BaseLoss):
     is_multiclass = True
 
     def __init__(self, sample_weight=None, n_classes=3):
-        self.closs = CyCategoricalCrossEntropy()
-        self.link = MultinomialLogit()
-        super().__init__(n_classes=n_classes)
+        super().__init__(
+            closs=CyCategoricalCrossEntropy(),
+            link=MultinomialLogit(),
+            n_classes=n_classes,
+        )
         self.interval_y_true = Interval(0, np.inf, True, False)
         self.interval_y_pred = Interval(0, 1, False, False)
 
