@@ -364,8 +364,8 @@ def test_ridge_individual_penalties():
         ),
     ],
 )
-def test_Ridge_params_validation(params, err_type, err_msg):
-    """Check the parameters validation in `Ridge`."""
+def test_ridge_params_validation(params, err_type, err_msg):
+    """Check the parameters validation in Ridge."""
 
     rng = np.random.RandomState(42)
     n_samples, n_features, n_targets = 20, 10, 5
