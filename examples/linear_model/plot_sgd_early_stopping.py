@@ -48,12 +48,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn import linear_model
+from sklearn.linear_model import SGDClassifier
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import shuffle
+
 
 
 def load_mnist(n_samples=None, class_0="0", class_1="8"):
@@ -68,6 +69,9 @@ def load_mnist(n_samples=None, class_0="0", class_1="8"):
     if n_samples is not None:
         X, y = X[:n_samples], y[:n_samples]
     return X, y
+
+
+
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -89,17 +93,17 @@ def fit_and_score(estimator, max_iter, X_train, X_test, y_train, y_test):
 
 # Define the estimators to compare
 estimator_dict = {
-    "No stopping criterion": linear_model.SGDClassifier(n_iter_no_change=3),
-    "Training loss": linear_model.SGDClassifier(
-        early_stopping=False, n_iter_no_change=3, tol=0.1
+    "No stopping criterion": SGDClassifier(n_iter_no_change=3),
+    "Training loss": SGDClassifier(
+        early_stopping = False,  n_iter_no_change=3, tol=0.1
     ),
-    "Validation score": linear_model.SGDClassifier(
+    "Validation score": SGDClassifier(
         early_stopping=True, n_iter_no_change=3, tol=0.0001, validation_fraction=0.2
     ),
 }
 
 # Load the dataset
-X, y = load_mnist(n_samples=10000)
+X, y = load_mnist(n_samples=5000)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
 results = []
