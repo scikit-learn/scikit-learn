@@ -147,6 +147,7 @@ Changelog
 
 - |Feature| :class:`metrics.LiftCurveDisplay` to plot the :func:`metrics.lift_curve`.
   In :pr:`21320` by :user:`Nawar Halabi <nawarhalabi>`.
+
 :mod:`sklearn.manifold`
 .......................
 
