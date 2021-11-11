@@ -79,10 +79,16 @@ def test_classification_toy(loss):
 
 
 @pytest.mark.parametrize(
-    "params, err_msg",
+    "params, err_type,err_msg",
     [
-        ({"n_estimators": 0}, "n_estimators must be greater than 0"),
-        ({"n_estimators": -1}, "n_estimators must be greater than 0"),
+        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1."),
+        ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1."),
+        (
+            {"n_estimators": 1.5},
+            TypeError,
+            "n_estimators must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'float'>",
+        ),
         ({"learning_rate": 0}, "learning_rate must be greater than 0"),
         ({"learning_rate": -1.0}, "learning_rate must be greater than 0"),
         ({"loss": "foobar"}, "Loss 'foobar' not supported"),
@@ -116,9 +122,9 @@ def test_classification_toy(loss):
         (GradientBoostingClassifier, iris.data, iris.target),
     ],
 )
-def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_msg):
+def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_type, err_msg):
     # Check input parameter validation for GradientBoosting
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(err_type, match=err_msg):
         GradientBoosting(**params).fit(X, y)
 
 
