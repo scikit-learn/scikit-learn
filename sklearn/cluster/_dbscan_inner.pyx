@@ -1,8 +1,6 @@
 # Fast inner loop for DBSCAN.
 # Author: Lars Buitinck
 # License: 3-clause BSD
-#
-# cython: boundscheck=False, wraparound=False
 
 cimport cython
 from libcpp.vector cimport vector
