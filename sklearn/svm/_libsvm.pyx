@@ -357,8 +357,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                        class_weight_label.data, class_weight.data)
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
-                      sv_coef.data, intercept.data, nSV.data, probA.data,
-                      probB.data)
+                      sv_coef.data, intercept.data, nSV.data, probA.data, probB.data)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     #TODO: use check_model
