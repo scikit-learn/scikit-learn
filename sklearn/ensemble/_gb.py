@@ -50,6 +50,7 @@ from . import _gb_losses
 
 from ..utils import check_random_state
 from ..utils import check_array
+from ..utils import check_scalar
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
@@ -265,10 +266,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _check_params(self):
         """Check validity of parameters and raise ValueError if not valid."""
-        if self.n_estimators <= 0:
-            raise ValueError(
-                "n_estimators must be greater than 0 but was %r" % self.n_estimators
-            )
+        # if self.n_estimators <= 0:
+        #     raise ValueError(
+        #         "n_estimators must be greater than 0 but was %r" % self.n_estimators
+        #     )
 
         if self.learning_rate <= 0.0:
             raise ValueError(
@@ -523,6 +524,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             X_val = y_val = sample_weight_val = None
 
         self._check_params()
+
+        check_scalar(
+            self.n_estimators,
+            "n_estimators",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
 
         if not self._is_initialized():
             # init state
