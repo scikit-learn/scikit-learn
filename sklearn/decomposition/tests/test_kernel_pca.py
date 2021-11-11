@@ -79,7 +79,10 @@ def test_kernel_pca_invalid_parameters():
     ValueError.
     """
     with pytest.raises(ValueError):
-        KernelPCA(10, fit_inverse_transform=True, kernel="precomputed")
+        estimator = KernelPCA(
+            n_components=10, fit_inverse_transform=True, kernel="precomputed"
+        )
+        estimator.fit(np.random.randn(10, 10))
 
 
 def test_kernel_pca_consistent_transform():
