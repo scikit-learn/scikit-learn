@@ -36,17 +36,17 @@ X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
 categorical_features = X.select_dtypes(include="category").columns
 numerical_features = X.select_dtypes(include="number").columns
 
-k_columns = 10
-columns_subset = list(categorical_features[:k_columns]) + list(
-    numerical_features[:k_columns]
+n_columns = 10
+columns_subset = list(categorical_features[:n_columns]) + list(
+    numerical_features[:n_columns]
 )
 
 X = X[columns_subset]
 
 print(f"Number of samples: {X.shape[0]}")
 print(f"Number of features: {X.shape[1]}")
-print(f"Number of categorical features: {k_columns}")
-print(f"Number of numerical features: {k_columns}")
+print(f"Number of categorical features: {n_columns}")
+print(f"Number of numerical features: {n_columns}")
 
 # %%
 # Gradient boosting estimator with dropped categorical features
@@ -125,7 +125,7 @@ hist_ordinal = make_pipeline(
 
 # The ordinal encoder will first output the categorical features, and then the
 # continuous (passed-through) features
-categorical_mask = [True] * k_columns + [False] * k_columns
+categorical_mask = [True] * n_columns + [False] * n_columns
 hist_native = make_pipeline(
     ordinal_encoder,
     HistGradientBoostingRegressor(
