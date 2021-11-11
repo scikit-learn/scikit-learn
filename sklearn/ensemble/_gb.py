@@ -271,10 +271,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         #         "n_estimators must be greater than 0 but was %r" % self.n_estimators
         #     )
 
-        if self.learning_rate <= 0.0:
-            raise ValueError(
-                "learning_rate must be greater than 0 but was %r" % self.learning_rate
-            )
+        # if self.learning_rate <= 0.0:
+        #     raise ValueError(
+        #         "learning_rate must be greater than 0 but was %r" % self.learning_rate
+        #     )
 
         if (
             self.loss not in self._SUPPORTED_LOSS
@@ -531,6 +531,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             target_type=numbers.Integral,
             min_val=1,
             include_boundaries="left",
+        )
+
+        check_scalar(
+            self.learning_rate,
+            "learning_rate",
+            target_type=numbers.Real,
+            min_val=0,
+            include_boundaries="neither",
         )
 
         if not self._is_initialized():
