@@ -89,8 +89,8 @@ def test_classification_toy(loss):
             "n_estimators must be an instance of <class 'numbers.Integral'>, not <class"
             " 'float'>",
         ),
-        ({"learning_rate": 0}, "learning_rate must be greater than 0"),
-        ({"learning_rate": -1.0}, "learning_rate must be greater than 0"),
+        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
+        ({"learning_rate": -1.0}, ValueError, "learning_rate == -1.0, must be > 0."),
         ({"loss": "foobar"}, "Loss 'foobar' not supported"),
         ({"min_samples_split": 0.0}, "min_samples_split must be an integer"),
         ({"min_samples_split": -1.0}, "min_samples_split must be an integer"),
