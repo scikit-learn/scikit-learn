@@ -28,12 +28,9 @@ and categorical features, where the houses' sales prices is the target.
 # -------------------------
 # First, we load the Ames Housing data as a pandas dataframe. The features
 # are either categorical or numerical:
-import warnings
 from sklearn.datasets import fetch_openml
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=UserWarning)
-    X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
+X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
 
 # take a subset of features of X, both from categorical and numerical columns
 categorical_features = X.select_dtypes(include="category").columns
