@@ -125,7 +125,10 @@ hist_ordinal = make_pipeline(
 
 # The ordinal encoder will first output the categorical features, and then the
 # continuous (passed-through) features
-categorical_mask = [True] * n_columns + [False] * n_columns
+n_categorical_features = len(X.select_dtypes(include="category").columns)
+n_numerical_features = len(X.select_dtypes(include="number").columns)
+
+categorical_mask = [True] * n_categorical_features + [False] * n_numerical_features
 hist_native = make_pipeline(
     ordinal_encoder,
     HistGradientBoostingRegressor(
