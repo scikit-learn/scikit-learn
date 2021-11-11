@@ -32,7 +32,7 @@ from sklearn.datasets import fetch_openml
 
 X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
 
-# take a subset of features of X, both from categorical and numerical columns
+# Take a subset of features of X to make the example faster to run
 categorical_features = X.select_dtypes(include="category").columns
 numerical_features = X.select_dtypes(include="number").columns
 
