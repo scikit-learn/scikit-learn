@@ -260,6 +260,7 @@ def test_spectalcoclustering_parameter_validation(params, type_err, err_msg):
         ({"n_init": 1.5}, TypeError, "n_init must be an instance of integer"),
         (
             {"n_clusters": (3, 3, 3)},
+            ValueError,
             r"Incorrect parameter n_clusters has value: \(3, 3, 3\)",
         ),
         (
