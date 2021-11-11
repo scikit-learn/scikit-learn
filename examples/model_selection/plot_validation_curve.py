@@ -30,7 +30,7 @@ train_scores, test_scores = validation_curve(
     param_name="gamma",
     param_range=param_range,
     scoring="accuracy",
-    n_jobs=1,
+    n_jobs=-1,
 )
 train_scores_mean = np.mean(train_scores, axis=1)
 train_scores_std = np.std(train_scores, axis=1)
