@@ -26,18 +26,30 @@ and categorical features, where the houses' sales prices is the target.
 # %%
 # Load Ames Housing dataset
 # -------------------------
-# First, we load the ames housing data as a pandas dataframe. The features
+# First, we load the Ames Housing data as a pandas dataframe. The features
 # are either categorical or numerical:
+import warnings
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=UserWarning)
+    X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
 
-n_categorical_features = (X.dtypes == "category").sum()
-n_numerical_features = (X.dtypes == "float").sum()
+# take a subset of features of X, both from categorical and numerical columns
+categorical_features = X.select_dtypes(include="category").columns
+numerical_features = X.select_dtypes(include="number").columns
+
+k_columns = 10
+columns_subset = list(categorical_features[:k_columns]) + list(
+    numerical_features[:k_columns]
+)
+
+X = X[columns_subset]
+
 print(f"Number of samples: {X.shape[0]}")
 print(f"Number of features: {X.shape[1]}")
-print(f"Number of categorical features: {n_categorical_features}")
-print(f"Number of numerical features: {n_numerical_features}")
+print(f"Number of categorical features: {k_columns}")
+print(f"Number of numerical features: {k_columns}")
 
 # %%
 # Gradient boosting estimator with dropped categorical features
@@ -53,7 +65,9 @@ from sklearn.compose import make_column_selector
 dropper = make_column_transformer(
     ("drop", make_column_selector(dtype_include="category")), remainder="passthrough"
 )
-hist_dropped = make_pipeline(dropper, HistGradientBoostingRegressor(random_state=42))
+hist_dropped = make_pipeline(
+    dropper, HistGradientBoostingRegressor(max_iter=50, random_state=42)
+)
 
 # %%
 # Gradient boosting estimator with one-hot encoding
@@ -72,7 +86,7 @@ one_hot_encoder = make_column_transformer(
 )
 
 hist_one_hot = make_pipeline(
-    one_hot_encoder, HistGradientBoostingRegressor(random_state=42)
+    one_hot_encoder, HistGradientBoostingRegressor(max_iter=50, random_state=42)
 )
 
 # %%
@@ -94,7 +108,7 @@ ordinal_encoder = make_column_transformer(
 )
 
 hist_ordinal = make_pipeline(
-    ordinal_encoder, HistGradientBoostingRegressor(random_state=42)
+    ordinal_encoder, HistGradientBoostingRegressor(max_iter=50, random_state=42)
 )
 
 # %%
@@ -114,11 +128,11 @@ hist_ordinal = make_pipeline(
 
 # The ordinal encoder will first output the categorical features, and then the
 # continuous (passed-through) features
-categorical_mask = [True] * n_categorical_features + [False] * n_numerical_features
+categorical_mask = [True] * k_columns + [False] * k_columns
 hist_native = make_pipeline(
     ordinal_encoder,
     HistGradientBoostingRegressor(
-        random_state=42, categorical_features=categorical_mask
+        max_iter=50, random_state=42, categorical_features=categorical_mask
     ),
 )
 
@@ -134,10 +148,12 @@ from sklearn.model_selection import cross_validate
 import matplotlib.pyplot as plt
 
 scoring = "neg_mean_absolute_percentage_error"
-dropped_result = cross_validate(hist_dropped, X, y, cv=3, scoring=scoring)
-one_hot_result = cross_validate(hist_one_hot, X, y, cv=3, scoring=scoring)
-ordinal_result = cross_validate(hist_ordinal, X, y, cv=3, scoring=scoring)
-native_result = cross_validate(hist_native, X, y, cv=3, scoring=scoring)
+n_cv_folds = 3
+
+dropped_result = cross_validate(hist_dropped, X, y, cv=n_cv_folds, scoring=scoring)
+one_hot_result = cross_validate(hist_one_hot, X, y, cv=n_cv_folds, scoring=scoring)
+ordinal_result = cross_validate(hist_ordinal, X, y, cv=n_cv_folds, scoring=scoring)
+native_result = cross_validate(hist_native, X, y, cv=n_cv_folds, scoring=scoring)
 
 
 def plot_results(figure_title):
@@ -145,7 +161,7 @@ def plot_results(figure_title):
 
     plot_info = [
         ("fit_time", "Fit times (s)", ax1, None),
-        ("test_score", "Mean Absolute Percentage Error", ax2, (0, 0.20)),
+        ("test_score", "Mean Absolute Percentage Error", ax2, (0, 0.22)),
     ]
 
     x, width = np.arange(4), 0.9
@@ -156,11 +172,15 @@ def plot_results(figure_title):
             ordinal_result[key],
             native_result[key],
         ]
+
+        mape = [np.mean(np.abs(item)) for item in items]
+        std_pred = [np.std(item) for item in items]
+
         ax.bar(
-            x,
-            [np.mean(np.abs(item)) for item in items],
-            width,
-            yerr=[np.std(item) for item in items],
+            x=x,
+            height=mape,
+            width=width,
+            yerr=std_pred,
             color=["C0", "C1", "C2", "C3"],
         )
         ax.set(
@@ -219,10 +239,10 @@ for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
         histgradientboostingregressor__max_iter=15,
     )
 
-dropped_result = cross_validate(hist_dropped, X, y, cv=3, scoring=scoring)
-one_hot_result = cross_validate(hist_one_hot, X, y, cv=3, scoring=scoring)
-ordinal_result = cross_validate(hist_ordinal, X, y, cv=3, scoring=scoring)
-native_result = cross_validate(hist_native, X, y, cv=3, scoring=scoring)
+dropped_result = cross_validate(hist_dropped, X, y, cv=n_cv_folds, scoring=scoring)
+one_hot_result = cross_validate(hist_one_hot, X, y, cv=n_cv_folds, scoring=scoring)
+ordinal_result = cross_validate(hist_ordinal, X, y, cv=n_cv_folds, scoring=scoring)
+native_result = cross_validate(hist_native, X, y, cv=n_cv_folds, scoring=scoring)
 
 plot_results("Gradient Boosting on Adult Census (few and small trees)")
 
