@@ -236,7 +236,8 @@ def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
     ) == approx(loss_true, rel=1e-11, abs=1e-12)
 
 
-@pytest.mark.parametrize("loss", ALL_LOSSES)
+# @pytest.mark.parametrize("loss", ALL_LOSSES)
+@pytest.mark.parametrize("loss", [HalfSquaredError, HalfGammaLoss])
 @pytest.mark.parametrize("readonly_memmap", [False, True])
 @pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
 @pytest.mark.parametrize("dtype_out", [np.float32, np.float64])
@@ -278,6 +279,27 @@ def test_loss_dtype(
         y_true, raw_prediction = create_memmap_backed_data([y_true, raw_prediction])
         if sample_weight is not None:
             sample_weight = create_memmap_backed_data(sample_weight)
+
+    print("START DEBUG")
+    print(f"loss={loss}")
+    print(f"readonly_memmap={readonly_memmap}")
+    print(f"dtype_in={dtype_in}")
+    print(f"dtype_out={dtype_out}")
+    print(f"sample_weight={sample_weight}")
+    print(f"out1={out1}")
+    print(f"out2={out2}")
+    print(f"n_threads={n_threads}")
+    print(f"y_true.shape={y_true.shape}")
+    print(f"y_true.dtype={y_true.dtype}")
+    print(f"raw_prediction.shape={raw_prediction.shape}")
+    print(f"raw_prediction.dtype={raw_prediction.dtype}")
+    if sample_weight is not None:
+        print(f"sample_weight.shape={sample_weight.shape}")
+        print(f"sample_weight.dtype={sample_weight.dtype}")
+    if out1 is not None:
+        print(f"out1.shape={out1.shape}")
+        print(f"out1.dtype={out1.dtype}")
+    print("END DEBUG", flush=True)
 
     loss.loss(
         y_true=y_true,
@@ -846,7 +868,7 @@ def test_loss_intercept_only(loss, sample_weight):
             fun,
             np.empty((loss.n_classes)),
             tol=1e-13,
-            options={"maxiter": 100},
+            options={"maxiter": 100, "disp": True},
             method="SLSQP",
             constraints={
                 "type": "eq",
