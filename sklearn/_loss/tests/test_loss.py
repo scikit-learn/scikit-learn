@@ -238,7 +238,8 @@ def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
 
 # @pytest.mark.parametrize("loss", ALL_LOSSES)
 @pytest.mark.parametrize("loss", [HalfSquaredError, HalfGammaLoss])
-@pytest.mark.parametrize("readonly_memmap", [False, True])
+# @pytest.mark.parametrize("readonly_memmap", [False, True])
+@pytest.mark.parametrize("readonly_memmap", [False])
 @pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
 @pytest.mark.parametrize("dtype_out", [np.float32, np.float64])
 @pytest.mark.parametrize("sample_weight", [None, 1])
