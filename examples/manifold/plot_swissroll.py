@@ -3,7 +3,7 @@
 Swiss Roll And Swiss-Hole Reduction
 ===================================
 This notebook seeks to compare two popular non-linear dimensionality
-techniques, t-SNE and LLE, on the classic Swiss Roll dataset. Then, we will
+techniques, T-distributed Stochastic Neighbor Embedding (t-SNE) and Locally Linear Embedding (LLE), on the classic Swiss Roll dataset. Then, we will
 explore how they both deal with the addition of a hole in the data.
 """
 # %%
@@ -50,7 +50,7 @@ fig, axs = plt.subplots(figsize=(8, 8), nrows=2)
 axs[0].scatter(sr_lle[:, 0], sr_lle[:, 1], c=sr_color)
 axs[0].set_title("LLE Embedding of Swiss Roll")
 axs[1].scatter(sr_tsne[:, 0], sr_tsne[:, 1], c=sr_color)
-_ = axs[1].set_title("TSNE Embedding of Swiss Roll")
+_ = axs[1].set_title("t-SNE Embedding of Swiss Roll")
 
 # %%
 # .. note::
