@@ -43,10 +43,13 @@ columns_subset = list(categorical_features[:n_columns]) + list(
 
 X = X[columns_subset]
 
+n_categorical_features = len(X.select_dtypes(include="category").columns)
+n_numerical_features = len(X.select_dtypes(include="number").columns)
+
 print(f"Number of samples: {X.shape[0]}")
 print(f"Number of features: {X.shape[1]}")
-print(f"Number of categorical features: {n_columns}")
-print(f"Number of numerical features: {n_columns}")
+print(f"Number of categorical features: {n_categorical_features}")
+print(f"Number of numerical features: {n_numerical_features}")
 
 # %%
 # Gradient boosting estimator with dropped categorical features
@@ -125,8 +128,6 @@ hist_ordinal = make_pipeline(
 
 # The ordinal encoder will first output the categorical features, and then the
 # continuous (passed-through) features
-n_categorical_features = len(X.select_dtypes(include="category").columns)
-n_numerical_features = len(X.select_dtypes(include="number").columns)
 
 categorical_mask = [True] * n_categorical_features + [False] * n_numerical_features
 hist_native = make_pipeline(
@@ -173,14 +174,14 @@ def plot_results(figure_title):
             native_result[key],
         ]
 
-        mape = [np.mean(np.abs(item)) for item in items]
-        std_pred = [np.std(item) for item in items]
+        mape_cv_mean = [np.mean(-item) for item in items]
+        mape_cv_std = [np.std(item) for item in items]
 
         ax.bar(
             x=x,
-            height=mape,
+            height=mape_cv_mean,
             width=width,
-            yerr=std_pred,
+            yerr=mape_cv_std,
             color=["C0", "C1", "C2", "C3"],
         )
         ax.set(
@@ -193,7 +194,7 @@ def plot_results(figure_title):
     fig.suptitle(figure_title)
 
 
-plot_results("Gradient Boosting on Adult Census")
+plot_results("Gradient Boosting on Ames Housing")
 
 # %%
 # We see that the model with one-hot-encoded data is by far the slowest. This
@@ -244,7 +245,7 @@ one_hot_result = cross_validate(hist_one_hot, X, y, cv=n_cv_folds, scoring=scori
 ordinal_result = cross_validate(hist_ordinal, X, y, cv=n_cv_folds, scoring=scoring)
 native_result = cross_validate(hist_native, X, y, cv=n_cv_folds, scoring=scoring)
 
-plot_results("Gradient Boosting on Adult Census (few and small trees)")
+plot_results("Gradient Boosting on Ames Housing (few and small trees)")
 
 plt.show()
 
