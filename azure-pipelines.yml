@@ -106,6 +106,28 @@ jobs:
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'true'
 
+- template: build_tools/azure/posix-docker.yml
+  parameters:
+    name: Linux_Nightly_PyPy
+    vmImage: ubuntu-20.04
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(
+          eq(variables['Build.Reason'], 'Schedule'),
+          contains(dependencies['git_commit']['outputs']['commit.message'], '[pypy]')
+        )
+      )
+    matrix:
+      pypy3:
+        DISTRIB: 'conda-mamba-pypy3'
+        DOCKER_CONTAINER: 'condaforge/mambaforge-pypy3:4.10.3-5'
+        PILLOW_VERSION: 'none'
+        PANDAS_VERSION: 'none'
+        CREATE_ISSUE_ON_TRACKER: 'true'
+
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
   parameters:
@@ -200,11 +222,6 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      pypy3:
-        DISTRIB: 'conda-mamba-pypy3'
-        DOCKER_CONTAINER: 'condaforge/mambaforge-pypy3:4.10.3-5'
-        PILLOW_VERSION: 'none'
-        PANDAS_VERSION: 'none'
       debian_atlas_32bit:
         DISTRIB: 'debian-32'
         DOCKER_CONTAINER: 'i386/debian:10.9'
