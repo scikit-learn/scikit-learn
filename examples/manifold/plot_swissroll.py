@@ -32,7 +32,7 @@ ax.view_init(azim=-66, elev=12)
 _ = ax.text2D(0.8, 0.05, s="n_samples=1500", transform=ax.transAxes)
 
 # %%
-# Computing the LLE and TSNE embeddings, we find that LLE seems to unroll the
+# Computing the LLE and t-SNE embeddings, we find that LLE seems to unroll the
 # Swiss Roll pretty effectively. t-SNE on the other hand, is able
 # to preserve the general structure of the data, but, poorly represents the
 # continous nature of our original data. Instead, it seems to unnecessarily
@@ -83,7 +83,7 @@ ax.view_init(azim=-66, elev=12)
 _ = ax.text2D(0.8, 0.05, s="n_samples=1500", transform=ax.transAxes)
 
 # %%
-# Computing the LLE and TSNE embeddings, we obtain similar results to the
+# Computing the LLE and t-SNE embeddings, we obtain similar results to the
 # Swiss Roll. LLE very capably unrolls the data and even preserves
 # the hole. t-SNE, again seems to clump sections of points together, but, we
 # note that it preserves the general topology of the original data.
@@ -101,7 +101,7 @@ fig, axs = plt.subplots(figsize=(8, 8), nrows=2)
 axs[0].scatter(sh_lle[:, 0], sh_lle[:, 1], c=sh_color)
 axs[0].set_title("LLE Embedding of Swiss-Hole")
 axs[1].scatter(sh_tsne[:, 0], sh_tsne[:, 1], c=sh_color)
-_ = axs[1].set_title("TSNE Embedding of Swiss-Hole")
+_ = axs[1].set_title("t-SNE Embedding of Swiss-Hole")
 
 # %%
 #
@@ -112,6 +112,6 @@ _ = axs[1].set_title("TSNE Embedding of Swiss-Hole")
 # Better results could probably have been obtained by better tuning these
 # parameters.
 #
-# We observe that, as seen in in the "Manifold learning on
+# We observe that, as seen in the "Manifold learning on
 # handwritten digits" example, t-SNE generally performs better than LLE
 # on real world data.
