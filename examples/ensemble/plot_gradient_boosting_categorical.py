@@ -32,19 +32,37 @@ from sklearn.datasets import fetch_openml
 
 X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
 
-# Take a subset of features of X to make the example faster to run
-categorical_features = X.select_dtypes(include="category").columns
-numerical_features = X.select_dtypes(include="number").columns
+# Select only a subset of features of X to make the example faster to run
+categorical_columns_subset = [
+    "Bldg_Type",
+    "Garage_Finish",
+    "Lot_Config",
+    "Functional",
+    "Mas_Vnr_Type",
+    "House_Style",
+    "Fireplace_Qu",
+    "Exter_Cond",
+    "Exter_Qual",
+    "Pool_QC",
+]
 
-n_columns = 10
-columns_subset = list(categorical_features[:n_columns]) + list(
-    numerical_features[:n_columns]
-)
+numerical_columns_subset = [
+    "Three_season_porch",
+    "Fireplaces",
+    "Bsmt_Half_Bath",
+    "Half_Bath",
+    "Garage_Cars",
+    "TotRms_AbvGrd",
+    "BsmtFin_SF_1",
+    "BsmtFin_SF_2",
+    "Gr_Liv_Area",
+    "Screen_Porch",
+]
 
-X = X[columns_subset]
+X = X[categorical_columns_subset + numerical_columns_subset]
 
-n_categorical_features = len(X.select_dtypes(include="category").columns)
-n_numerical_features = len(X.select_dtypes(include="number").columns)
+n_categorical_features = X.select_dtypes(include="category").shape[1]
+n_numerical_features = X.select_dtypes(include="number").shape[1]
 
 print(f"Number of samples: {X.shape[0]}")
 print(f"Number of features: {X.shape[1]}")
@@ -65,9 +83,7 @@ from sklearn.compose import make_column_selector
 dropper = make_column_transformer(
     ("drop", make_column_selector(dtype_include="category")), remainder="passthrough"
 )
-hist_dropped = make_pipeline(
-    dropper, HistGradientBoostingRegressor(max_iter=50, random_state=42)
-)
+hist_dropped = make_pipeline(dropper, HistGradientBoostingRegressor(random_state=42))
 
 # %%
 # Gradient boosting estimator with one-hot encoding
@@ -86,7 +102,7 @@ one_hot_encoder = make_column_transformer(
 )
 
 hist_one_hot = make_pipeline(
-    one_hot_encoder, HistGradientBoostingRegressor(max_iter=50, random_state=42)
+    one_hot_encoder, HistGradientBoostingRegressor(random_state=42)
 )
 
 # %%
@@ -108,7 +124,7 @@ ordinal_encoder = make_column_transformer(
 )
 
 hist_ordinal = make_pipeline(
-    ordinal_encoder, HistGradientBoostingRegressor(max_iter=50, random_state=42)
+    ordinal_encoder, HistGradientBoostingRegressor(random_state=42)
 )
 
 # %%
@@ -133,7 +149,7 @@ categorical_mask = [True] * n_categorical_features + [False] * n_numerical_featu
 hist_native = make_pipeline(
     ordinal_encoder,
     HistGradientBoostingRegressor(
-        max_iter=50, random_state=42, categorical_features=categorical_mask
+        random_state=42, categorical_features=categorical_mask
     ),
 )
 
@@ -162,7 +178,7 @@ def plot_results(figure_title):
 
     plot_info = [
         ("fit_time", "Fit times (s)", ax1, None),
-        ("test_score", "Mean Absolute Percentage Error", ax2, (0, 0.22)),
+        ("test_score", "Mean Absolute Percentage Error", ax2, None),
     ]
 
     x, width = np.arange(4), 0.9
@@ -174,7 +190,7 @@ def plot_results(figure_title):
             native_result[key],
         ]
 
-        mape_cv_mean = [np.mean(-item) for item in items]
+        mape_cv_mean = [np.mean(np.abs(item)) for item in items]
         mape_cv_std = [np.std(item) for item in items]
 
         ax.bar(
