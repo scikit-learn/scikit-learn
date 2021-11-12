@@ -46,7 +46,7 @@ Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired, shading="auto")
+plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired, shading="nearest")
 
 # Plot also the training points
 plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired, edgecolors="k")
