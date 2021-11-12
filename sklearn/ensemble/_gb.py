@@ -314,8 +314,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             self.loss_ = loss_class()
 
-        if not (0.0 < self.subsample <= 1.0):
-            raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
+        # if not (0.0 < self.subsample <= 1.0):
+        #     raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
 
         if self.init is not None:
             # init must be an estimator or 'zero'
@@ -539,6 +539,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             target_type=numbers.Real,
             min_val=0,
             include_boundaries="neither",
+        )
+
+        check_scalar(
+            self.subsample,
+            "subsample",
+            target_type=numbers.Real,
+            min_val=0,
+            max_val=1.0,
+            include_boundaries="right",
         )
 
         if not self._is_initialized():
