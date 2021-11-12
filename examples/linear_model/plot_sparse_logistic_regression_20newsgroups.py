@@ -82,7 +82,6 @@ for model in models:
             penalty="l1",
             max_iter=this_max_iter,
             random_state=42,
-            warm_start=True,
         )
         t1 = timeit.default_timer()
         lr.fit(X_train, y_train)
