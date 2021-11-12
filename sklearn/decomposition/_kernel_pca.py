@@ -22,16 +22,16 @@ from ..metrics.pairwise import pairwise_kernels
 
 
 class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
-    """Kernel Principal component analysis (KPCA).
+    """Kernel Principal component analysis (KPCA) [1]_.
 
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
 
-    It uses the `scipy.linalg.eigh` LAPACK implementation of the full SVD or
-    the `scipy.sparse.linalg.eigsh` ARPACK implementation of the truncated SVD,
-    depending on the shape of the input data and the number of components to
-    extract. It can also use a randomized truncated SVD by the method of
-    Halko et al. 2009, see `eigen_solver`.
+    It uses the :func:`scipy.linalg.eigh` LAPACK implementation of the full SVD
+    or the :func:`scipy.sparse.linalg.eigsh` ARPACK implementation of the
+    truncated SVD, depending on the shape of the input data and the number of
+    components to extract. It can also use a randomized truncated SVD by the
+    method proposed in [3]_, see `eigen_solver`.
 
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
@@ -66,14 +66,16 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
 
     fit_inverse_transform : bool, default=False
         Learn the inverse transform for non-precomputed kernels
-        (i.e. learn to find the pre-image of a point).
+        (i.e. learn to find the pre-image of a point). This method is based
+        on [2]_.
 
     eigen_solver : {'auto', 'dense', 'arpack', 'randomized'}, \
-        default='auto'
+            default='auto'
         Select eigensolver to use. If `n_components` is much
         less than the number of training samples, randomized (or arpack to a
         smaller extend) may be more efficient than the dense eigensolver.
-        Randomized SVD is performed according to the method of Halko et al.
+        Randomized SVD is performed according to the method of Halko et al
+        [3]_.
 
         auto :
             the solver is selected by a default policy based on n_samples
@@ -92,10 +94,10 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             `scipy.sparse.linalg.eigsh`. It requires strictly
             0 < n_components < n_samples
         randomized :
-            run randomized SVD by the method of Halko et al. The current
+            run randomized SVD by the method of Halko et al. [3]_. The current
             implementation selects eigenvalues based on their module; therefore
             using this method can lead to unexpected results if the kernel is
-            not positive semi-definite.
+            not positive semi-definite. See also [4]_.
 
         .. versionchanged:: 1.0
            `'randomized'` was added.
@@ -203,20 +205,26 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
 
     References
     ----------
-    Kernel PCA was introduced in:
-        Bernhard Schoelkopf, Alexander J. Smola,
-        and Klaus-Robert Mueller. 1999. Kernel principal
-        component analysis. In Advances in kernel methods,
-        MIT Press, Cambridge, MA, USA 327-352.
+    .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       "Kernel principal component analysis."
+       International conference on artificial neural networks.
+       Springer, Berlin, Heidelberg, 1997.
+       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
 
-    For eigen_solver == 'arpack', refer to `scipy.sparse.linalg.eigsh`.
+    .. [2] `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+       "Learning to find pre-images."
+       Advances in neural information processing systems 16 (2004): 449-456.
+       <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
 
-    For eigen_solver == 'randomized', see:
-        Finding structure with randomness: Stochastic algorithms
-        for constructing approximate matrix decompositions Halko, et al., 2009
-        (arXiv:909)
-        A randomized algorithm for the decomposition of matrices
-        Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
+    .. [3] :arxiv:`Halko, Nathan, Per-Gunnar Martinsson, and Joel A. Tropp.
+       "Finding structure with randomness: Probabilistic algorithms for
+       constructing approximate matrix decompositions."
+       SIAM review 53.2 (2011): 217-288. <0909.4061>`
+
+    .. [4] `Martinsson, Per-Gunnar, Vladimir Rokhlin, and Mark Tygert.
+       "A randomized algorithm for the decomposition of matrices."
+       Applied and Computational Harmonic Analysis 30.1 (2011): 47-68.
+       <https://www.sciencedirect.com/science/article/pii/S1063520310000242>`_
 
     Examples
     --------
@@ -532,7 +540,10 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
 
         References
         ----------
-        "Learning to Find Pre-Images", G BakIr et al, 2004.
+        `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+        "Learning to find pre-images."
+        Advances in neural information processing systems 16 (2004): 449-456.
+        <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
         """
         if not self.fit_inverse_transform:
             raise NotFittedError(

@@ -216,7 +216,10 @@ def test_pipeline_init():
     repr(pipe)
 
     # Check that params are not set when naming them wrong
-    msg = "Invalid parameter C for estimator SelectKBest"
+    msg = re.escape(
+        "Invalid parameter 'C' for estimator SelectKBest(). Valid parameters are: ['k',"
+        " 'score_func']."
+    )
     with pytest.raises(ValueError, match=msg):
         pipe.set_params(anova__C=0.1)
 
@@ -316,17 +319,25 @@ def test_pipeline_raise_set_params_error():
 
     # expected error message
     error_msg = re.escape(
-        f"Invalid parameter fake for estimator {pipe}. "
-        "Check the list of available parameters "
-        "with `estimator.get_params().keys()`."
+        "Invalid parameter 'fake' for estimator Pipeline(steps=[('cls',"
+        " LinearRegression())]). Valid parameters are: ['memory', 'steps', 'verbose']."
     )
-
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake="nope")
 
-    # nested model check
+    # invalid outer parameter name for compound parameter: the expected error message
+    # is the same as above.
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake__estimator="nope")
+
+    # expected error message for invalid inner parameter
+    error_msg = re.escape(
+        "Invalid parameter 'invalid_param' for estimator LinearRegression(). Valid"
+        " parameters are: ['copy_X', 'fit_intercept', 'n_jobs', 'normalize',"
+        " 'positive']."
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        pipe.set_params(cls__invalid_param="nope")
 
 
 def test_pipeline_methods_pca_svm():
