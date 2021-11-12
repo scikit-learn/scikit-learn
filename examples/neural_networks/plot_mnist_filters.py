@@ -40,13 +40,13 @@ X_train, X_test = X[:60000], X[60000:]
 y_train, y_test = y[:60000], y[60000:]
 
 mlp = MLPClassifier(
-    hidden_layer_sizes=(50,),
-    max_iter=10,
+    hidden_layer_sizes=(40,),
+    max_iter=8,
     alpha=1e-4,
     solver="sgd",
     verbose=10,
     random_state=1,
-    learning_rate_init=0.1,
+    learning_rate_init=0.2,
 )
 
 # this example won't converge because of CI's time constraints, so we catch the
