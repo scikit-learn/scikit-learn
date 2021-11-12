@@ -49,7 +49,7 @@ gs = GridSearchCV(
     param_grid={"min_samples_split": range(2, 403, 10)},
     scoring=scoring,
     refit="AUC",
-    n_jobs=-1,
+    n_jobs=2,
     return_train_score=True,
 )
 gs.fit(X, y)
