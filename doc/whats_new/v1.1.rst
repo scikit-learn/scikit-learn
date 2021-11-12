@@ -74,6 +74,13 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.make_swiss_roll` now supports the optional argument
+  hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
+  :user:`Sebastian Pujalte <pujaltes>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
