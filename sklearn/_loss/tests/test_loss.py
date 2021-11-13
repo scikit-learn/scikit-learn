@@ -277,8 +277,15 @@ def test_loss_dtype(
 
     if readonly_memmap:
         y_true, raw_prediction = create_memmap_backed_data([y_true, raw_prediction])
+        is_aligned = y_true.flags["ALIGNED"] and raw_prediction.flags["ALIGNED"]
         if sample_weight is not None:
             sample_weight = create_memmap_backed_data(sample_weight)
+            is_aligned &= sample_weight.flags["ALIGNED"]
+        if not is_aligned:
+            pytest.skip(
+                "Losses need aligned data, but "
+                "https://github.com/joblib/joblib/issues/563 gets in the way."
+            )
 
     print("START DEBUG")
     print(f"loss={loss}")
