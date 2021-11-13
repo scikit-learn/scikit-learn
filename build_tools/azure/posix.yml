@@ -33,6 +33,7 @@ jobs:
     THREADPOOLCTL_VERSION: 'latest'
     COVERAGE: 'true'
     TEST_DOCSTRINGS: 'false'
+    CREATE_ISSUE_ON_TRACKER: 'false'
     SHOW_SHORT_SUMMARY: 'false'
   strategy:
     matrix:
@@ -73,6 +74,30 @@ jobs:
         testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
       displayName: 'Publish Test Results'
       condition: succeededOrFailed()
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.9'
+      displayName: Place Python into path to update issue tracker
+      condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
+                     eq(variables['Build.Reason'], 'Schedule'))
+    - bash: |
+        set -ex
+        if [[ $(BOT_GITHUB_TOKEN) == "" ]]; then
+          echo "GitHub Token is not set. Issue tracker will not be updated."
+          exit
+        fi
+
+        LINK_TO_RUN="https://dev.azure.com/$BUILD_REPOSITORY_NAME/_build/results?buildId=$BUILD_BUILDID&view=logs&j=$SYSTEM_JOBID"
+        CI_NAME="$SYSTEM_JOBIDENTIFIER"
+        ISSUE_REPO="$BUILD_REPOSITORY_NAME"
+
+        pip install defusedxml PyGithub
+        python maint_tools/create_issue_from_juint.py $(BOT_GITHUB_TOKEN) $CI_NAME $ISSUE_REPO $LINK_TO_RUN $JUNIT_FILE
+      displayName: 'Update issue tracker'
+      env:
+        JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)
+      condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
+                     eq(variables['Build.Reason'], 'Schedule'))
     - script: |
         build_tools/azure/upload_codecov.sh
       condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))

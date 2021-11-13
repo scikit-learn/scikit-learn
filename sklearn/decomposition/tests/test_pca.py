@@ -659,6 +659,55 @@ def test_assess_dimesion_rank_one():
         assert _assess_dimension(s, rank, n_samples) == -np.inf
 
 
+def test_pca_randomized_svd_n_oversamples():
+    """Check that exposing and setting `n_oversamples` will provide accurate results
+    even when `X` as a large number of features.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20589
+    """
+    rng = np.random.RandomState(0)
+    n_features = 100
+    X = rng.randn(1_000, n_features)
+
+    # The default value of `n_oversamples` will lead to inaccurate results
+    # We force it to the number of features.
+    pca_randomized = PCA(
+        n_components=1,
+        svd_solver="randomized",
+        n_oversamples=n_features,
+        random_state=0,
+    ).fit(X)
+    pca_full = PCA(n_components=1, svd_solver="full").fit(X)
+    pca_arpack = PCA(n_components=1, svd_solver="arpack", random_state=0).fit(X)
+
+    assert_allclose(np.abs(pca_full.components_), np.abs(pca_arpack.components_))
+    assert_allclose(np.abs(pca_randomized.components_), np.abs(pca_arpack.components_))
+
+
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        (
+            {"n_oversamples": 0},
+            ValueError,
+            "n_oversamples == 0, must be >= 1.",
+        ),
+        (
+            {"n_oversamples": 1.5},
+            TypeError,
+            "n_oversamples must be an instance of <class 'numbers.Integral'>",
+        ),
+    ],
+)
+def test_pca_params_validation(params, err_type, err_msg):
+    """Check the parameters validation in `PCA`."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(100, 20)
+    with pytest.raises(err_type, match=err_msg):
+        PCA(**params).fit(X)
+
+
 def test_feature_names_out():
     """Check feature names out for PCA."""
     pca = PCA(n_components=2).fit(iris.data)
