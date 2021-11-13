@@ -78,7 +78,7 @@ def cythonize_extensions(top_path, config):
         },
         compiler_directives={
             "language_level": 3,
-            "boundscheck": False,
+            "boundscheck": True,
             "wraparound": False,
             "initializedcheck": False,
             "nonecheck": False,
