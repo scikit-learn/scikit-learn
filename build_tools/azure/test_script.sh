@@ -26,7 +26,7 @@ else
     conda list
 fi
 
-TEST_CMD="python -X faulthandler -m pytest -v --full-trace --showlocals --durations=20 --junitxml=$JUNITXML"
+TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
 if [[ "$COVERAGE" == "true" ]]; then
     # Note: --cov-report= is used to disable to long text output report in the
