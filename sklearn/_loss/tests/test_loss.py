@@ -844,14 +844,13 @@ def test_loss_intercept_only(loss, sample_weight):
         a == approx(opt.x, rel=1e-7)
         grad.sum() == approx(0, abs=1e-12)
     else:
-        # constraint corresponds to sum(raw_prediction) = 0
-        # without the constraint, we would need to apply
-        # loss.symmetrize_raw_prediction to opt.x before comparing
+        # The constraint corresponds to sum(raw_prediction) = 0. Without it, we would
+        # need to apply loss.symmetrize_raw_prediction to opt.x before comparing.
         # TODO: With scipy 1.1.0, one could use
         # LinearConstraint(np.ones((1, loss.n_classes)), 0, 0)
         opt = minimize(
             fun,
-            np.empty((loss.n_classes)),
+            np.zeros((loss.n_classes)),
             tol=1e-13,
             options={"maxiter": 100},
             method="SLSQP",
