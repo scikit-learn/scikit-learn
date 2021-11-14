@@ -33,3 +33,12 @@ def test_readonly_array_wrapper(readonly, dtype):
     x_readonly = ReadonlyArrayWrapper(x_readonly)
     sum_readonly = _test_sum(x_readonly)
     assert sum_readonly == pytest.approx(sum_origin, rel=1e-11)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
+def test_contig_mmapped(dtype):
+    x = np.arange(10).astype(dtype)
+    sum_origin = _test_sum(x)
+    x_mmap = create_memmap_backed_data(x, mmap_mode="w+")
+    sum_mmap = _test_sum(x_mmap)
+    assert sum_mmap == pytest.approx(sum_origin, rel=1e-11)
