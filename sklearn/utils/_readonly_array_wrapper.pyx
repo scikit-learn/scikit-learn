@@ -13,6 +13,7 @@ This way, we can use it on arrays that we don't touch.
 
 from cpython cimport Py_buffer
 from cpython.buffer cimport PyObject_GetBuffer, PyBuffer_Release, PyBUF_WRITABLE
+from cpython.ref cimport Py_INCREF
 
 import numpy as np
 cimport numpy as np
@@ -43,8 +44,15 @@ cdef class ReadonlyArrayWrapper:
         if request_for_writeable:
             # The following is a lie when self.wraps is readonly!
             buffer.readonly = False
+            buffer.obj = self
 
     def __releasebuffer__(self, Py_buffer *buffer):
+        # restore the state when the buffer was created
+        # because reassigning buffer.obj decrefs self, and the specification of
+        # __releasebuffer__ ways we shouldn't do that
+        Py_INCREF(self)
+        buffer.obj = self.wraps
+        buffer.readonly = True
         PyBuffer_Release(buffer)
 
 
