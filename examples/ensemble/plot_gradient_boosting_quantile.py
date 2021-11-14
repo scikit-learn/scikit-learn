@@ -62,7 +62,7 @@ from sklearn.metrics import mean_pinball_loss, mean_squared_error
 all_models = {}
 common_params = dict(
     learning_rate=0.05,
-    n_estimators=250,
+    n_estimators=200,
     max_depth=2,
     min_samples_leaf=9,
     min_samples_split=9,
@@ -224,7 +224,7 @@ coverage_fraction(
 # underfit and could not adapt to sinusoidal shape of the signal.
 #
 # The hyper-parameters of the model were approximately hand-tuned for the
-# median regressor and there is no reason than the same hyper-parameters are
+# median regressor and there is no reason that the same hyper-parameters are
 # suitable for the 5th percentile regressor.
 #
 # To confirm this hypothesis, we tune the hyper-parameters of a new regressor
@@ -238,11 +238,11 @@ from pprint import pprint
 
 
 param_grid = dict(
-    learning_rate=[0.01, 0.05, 0.1],
-    n_estimators=[100, 150, 200, 250, 300],
-    max_depth=[2, 5, 10, 15, 20],
-    min_samples_leaf=[1, 5, 10, 20, 30, 50],
-    min_samples_split=[2, 5, 10, 20, 30, 50],
+    learning_rate=[0.05, 0.1, 0.2],
+    n_estimators=[150, 200, 250],
+    max_depth=[2, 5, 10],
+    min_samples_leaf=[1, 5, 10, 20],
+    min_samples_split=[5, 10, 20, 30, 50],
 )
 alpha = 0.05
 neg_mean_pinball_loss_05p_scorer = make_scorer(
@@ -262,9 +262,9 @@ search_05p = RandomizedSearchCV(
 pprint(search_05p.best_params_)
 
 # %%
-# We observe that the search procedure identifies that deeper trees are needed
-# to get a good fit for the 5th percentile regressor. Deeper trees are more
-# expressive and less likely to underfit.
+# We observe that the hyper-parameters that were hand-tuned for the median
+# regressor are in the same range as the hyper-parameters suitable for the 5th
+# percentile regressor
 #
 # Let's now tune the hyper-parameters for the 95th percentile regressor. We
 # need to redefine the `scoring` metric used to select the best model, along
@@ -286,15 +286,12 @@ search_95p.fit(X_train, y_train)
 pprint(search_95p.best_params_)
 
 # %%
-# This time, shallower trees are selected and lead to a more constant piecewise
-# and therefore more robust estimation of the 95th percentile. This is
-# beneficial as it avoids overfitting the large outliers of the log-normal
-# additive noise.
-#
-# We can confirm this intuition by displaying the predicted 90% confidence
-# interval comprised by the predictions of those two tuned quantile regressors:
-# the prediction of the upper 95th percentile has a much coarser shape than the
-# prediction of the lower 5th percentile:
+# The result shows that the hyper-parameters for the 95th percentile regressor
+# identified by the grid search are roughly in the same range as the hand-
+# tuned hyper-parameters for the median regressor and the hyper-parameters
+# identified by the grid search for the 5th percentile regressor. However, the
+# hyper-parameter grid searches did lead to an improved 90% confidence
+# interval which can be seen below:
 y_lower = search_05p.predict(xx)
 y_upper = search_95p.predict(xx)
 
