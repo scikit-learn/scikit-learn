@@ -13,6 +13,7 @@ def _readonly_array_copy(x):
     return y
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize("readonly", [_readonly_array_copy, create_memmap_backed_data])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
 def test_readonly_array_wrapper(readonly, dtype):
