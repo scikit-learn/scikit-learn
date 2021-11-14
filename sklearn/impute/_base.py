@@ -517,18 +517,16 @@ class SimpleImputer(_BaseImputer):
             valid_statistics_indexes = np.flatnonzero(valid_mask)
 
             if invalid_mask.any():
-                missing = np.arange(X.shape[1])[invalid_mask]
+                invalid_features = np.arange(X.shape[1])[invalid_mask]
                 if self.verbose != "deprecated" and self.verbose:
                     # use feature names warning if features are provided
                     if hasattr(self, "feature_names_in_"):
-                        warnings.warn(
-                            "Skipping features without observed values: %s"
-                            % self.feature_names_in_[missing]
-                        )
-                    else:
-                        warnings.warn(
-                            "Skipping features without observed values: %s" % missing
-                        )
+                        invalid_features = self.feature_names_in_[invalid_features]
+                    warnings.warn(
+                        "Skipping features without any observed values:"
+                        f" {invalid_features}. At least one non-missing value is needed"
+                        f" for imputation with strategy='{self.strategy}'."
+                    )
                 X = X[:, valid_statistics_indexes]
 
         # Do actual imputation
