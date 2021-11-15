@@ -19,9 +19,9 @@ the weight matrix as a 28x28 pixel image.
 To make the example run faster, we use very few hidden units, and train only
 for a very short time. Training longer would result in weights with a much
 smoother spatial appearance. The example will throw a warning because it
-doesn't converge, in this case this is what we want because of CI's time
-constraints.
-
+doesn't converge, in this case this is what we want because of resource
+usage constraints on our Continuous Integration infrastructure that is used
+to build this documentation on a regular basis.
 """
 
 import warnings
