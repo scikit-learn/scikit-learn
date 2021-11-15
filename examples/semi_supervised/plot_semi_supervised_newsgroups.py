@@ -11,7 +11,6 @@ loader or setting them to `None` to get all 20 of them.
 
 """
 
-import os
 
 import numpy as np
 
