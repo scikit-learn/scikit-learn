@@ -26,7 +26,17 @@ from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.semi_supervised import LabelSpreading
 from sklearn.metrics import f1_score
 
-data = fetch_20newsgroups(subset="train", categories=None)
+# Loading dataset containing first five categories
+data = fetch_20newsgroups(
+    subset="train",
+    categories=[
+        "alt.atheism",
+        "comp.graphics",
+        "comp.os.ms-windows.misc",
+        "comp.sys.ibm.pc.hardware",
+        "comp.sys.mac.hardware",
+    ],
+)
 print("%d documents" % len(data.filenames))
 print("%d categories" % len(data.target_names))
 print()
