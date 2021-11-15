@@ -12,6 +12,7 @@ import pytest
 
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import available_if, if_delegate_has_method
+from sklearn.utils._readonly_array_wrapper import _test_sum
 from sklearn.utils._testing import (
     assert_raises,
     assert_warns,
@@ -680,30 +681,59 @@ def test_tempmemmap(monkeypatch):
     assert registration_counter.nb_calls == 2
 
 
-def test_create_memmap_backed_data(monkeypatch):
+@pytest.mark.parametrize("aligned", [False, True])
+def test_create_memmap_backed_data(monkeypatch, aligned):
     registration_counter = RegistrationCounter()
     monkeypatch.setattr(atexit, "register", registration_counter)
 
     input_array = np.ones(3)
-    data = create_memmap_backed_data(input_array)
+    data = create_memmap_backed_data(input_array, aligned=aligned)
     check_memmap(input_array, data)
     assert registration_counter.nb_calls == 1
 
-    data, folder = create_memmap_backed_data(input_array, return_folder=True)
+    data, folder = create_memmap_backed_data(
+        input_array, return_folder=True, aligned=aligned
+    )
     check_memmap(input_array, data)
     assert folder == os.path.dirname(data.filename)
     assert registration_counter.nb_calls == 2
 
     mmap_mode = "r+"
-    data = create_memmap_backed_data(input_array, mmap_mode=mmap_mode)
+    data = create_memmap_backed_data(input_array, mmap_mode=mmap_mode, aligned=aligned)
     check_memmap(input_array, data, mmap_mode)
     assert registration_counter.nb_calls == 3
 
     input_list = [input_array, input_array + 1, input_array + 2]
-    mmap_data_list = create_memmap_backed_data(input_list)
-    for input_array, data in zip(input_list, mmap_data_list):
-        check_memmap(input_array, data)
-    assert registration_counter.nb_calls == 4
+    if aligned:
+        with pytest.raises(
+            ValueError, match="If aligned=True, input must be a single numpy array."
+        ):
+            create_memmap_backed_data(input_list, aligned=True)
+    else:
+        mmap_data_list = create_memmap_backed_data(input_list, aligned=False)
+        for input_array, data in zip(input_list, mmap_data_list):
+            check_memmap(input_array, data)
+        assert registration_counter.nb_calls == 4
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
+def test_memmap_on_contiguous_data(dtype):
+    """Test memory mapped array on contigous memoryview."""
+    x = np.arange(10).astype(dtype)
+    assert x.flags["C_CONTIGUOUS"]
+    assert x.flags["ALIGNED"]
+
+    # _test_sum consumes contiguous arrays
+    # def _test_sum(NUM_TYPES[::1] x):
+    sum_origin = _test_sum(x)
+
+    # now on memory mapped data
+    # aligned=True so avoid https://github.com/joblib/joblib/issues/563
+    # without alignment, this can produce segmentation faults, see
+    # https://github.com/scikit-learn/scikit-learn/pull/21654
+    x_mmap = create_memmap_backed_data(x, mmap_mode="r+", aligned=True)
+    sum_mmap = _test_sum(x_mmap)
+    assert sum_mmap == pytest.approx(sum_origin, rel=1e-11)
 
 
 @pytest.mark.parametrize(
