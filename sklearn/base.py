@@ -48,7 +48,7 @@ def clone(estimator, *, safe=True):
 
     Returns
     -------
-    estimator : Estimator instance
+    estimator : object
         The deep copy of the estimator.
 
     Notes
