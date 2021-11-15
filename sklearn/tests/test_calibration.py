@@ -591,22 +591,6 @@ def test_calibration_inconsistent_prefit_n_features_in():
         calib_clf.fit(X[:, :3], y)
 
 
-# FIXME: remove in 1.1
-def test_calibrated_classifier_cv_deprecation(data):
-    # Check that we raise the proper deprecation warning if accessing
-    # `calibrators_` from the `_CalibratedClassifier`.
-    X, y = data
-    calib_clf = CalibratedClassifierCV(cv=2).fit(X, y)
-
-    with pytest.warns(FutureWarning):
-        calibrators = calib_clf.calibrated_classifiers_[0].calibrators_
-
-    for clf1, clf2 in zip(
-        calibrators, calib_clf.calibrated_classifiers_[0].calibrators
-    ):
-        assert clf1 is clf2
-
-
 def test_calibration_votingclassifier():
     # Check that `CalibratedClassifier` works with `VotingClassifier`.
     # The method `predict_proba` from `VotingClassifier` is dynamically
