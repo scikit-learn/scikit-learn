@@ -60,11 +60,10 @@ def get_name(estimator):
     return name
 
 
+# list of (estimator, param_grid), where param_grid is used in GridSearchCV
 # The parameter spaces in this example are limited to a narrow band to reduce
 # its runtime. In a real use case, a broader search space for the algorithms
 # should be used.
-
-# list of (estimator, param_grid), where param_grid is used in GridSearchCV
 classifiers = [
     (
         make_pipeline(StandardScaler(), LogisticRegression(random_state=0)),
