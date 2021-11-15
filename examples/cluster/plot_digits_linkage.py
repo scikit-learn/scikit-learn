@@ -22,6 +22,10 @@ being drawn from noise points around the fringes.
 # Authors: Gael Varoquaux
 # License: BSD 3 clause (C) INRIA 2014
 
+# We utilize the digits dataset which has 1800 entries.
+# We will only use 800 entries for the sake of speeding
+# up the calculations but feel free to use the whole dataset.
+
 from time import time
 
 import numpy as np
@@ -31,6 +35,7 @@ from matplotlib import pyplot as plt
 from sklearn import manifold, datasets
 
 X, y = datasets.load_digits(return_X_y=True)
+X, y = X[:800], y[:800]
 n_samples, n_features = X.shape
 
 np.random.seed(0)
@@ -65,7 +70,7 @@ def plot_clustering(X_red, labels, title=None):
             X_red[i, 1],
             str(y[i]),
             color=plt.cm.nipy_spectral(labels[i] / 10.0),
-            fontdict={"weight": "bold", "size": 9},
+            fontdict={"weight": "bold", "size": 10},
         )
 
     plt.xticks([])
@@ -79,7 +84,7 @@ def plot_clustering(X_red, labels, title=None):
 # ----------------------------------------------------------------------
 # 2D embedding of the digits dataset
 print("Computing embedding")
-X_red = manifold.SpectralEmbedding(n_components=2).fit_transform(X)
+X_red = manifold.SpectralEmbedding(n_components=2, random_state=0).fit_transform(X)
 print("Done.")
 
 from sklearn.cluster import AgglomerativeClustering
