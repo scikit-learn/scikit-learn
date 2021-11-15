@@ -49,7 +49,7 @@ mlp = MLPClassifier(
     learning_rate_init=0.2,
 )
 
-# this example won't converge bbecause of resource usage constraints on
+# this example won't converge because of resource usage constraints on
 # our Continuous Integration infrastructure, so we catch the warning and
 # ignore it here
 with warnings.catch_warnings():
