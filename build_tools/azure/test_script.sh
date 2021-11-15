@@ -55,5 +55,5 @@ if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
 fi
 
 set -x
-eval "$TEST_CMD -v -k test_memmap_on_contiguous_data --pyargs sklearn.utils.tests.test_testing"
+eval "$TEST_CMD -s -v -k test_memmap_on_contiguous_data --pyargs sklearn.utils.tests.test_testing"
 set +x
