@@ -12,7 +12,7 @@ This example shows how to plot some of the first layer weights in a
 MLPClassifier trained on the MNIST dataset.
 
 The input data consists of 28x28 pixel handwritten digits, leading to 784
-features in the dataset. Therefore the first layer weight matrix have the shape
+features in the dataset. Therefore the first layer weight matrix has the shape
 (784, hidden_layer_sizes[0]).  We can therefore visualize a single column of
 the weight matrix as a 28x28 pixel image.
 
@@ -49,8 +49,9 @@ mlp = MLPClassifier(
     learning_rate_init=0.2,
 )
 
-# this example won't converge because of CI's time constraints, so we catch the
-# warning and are ignore it here
+# this example won't converge bbecause of resource usage constraints on
+# our Continuous Integration infrastructure, so we catch the warning and
+# ignore it here
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
     mlp.fit(X_train, y_train)
