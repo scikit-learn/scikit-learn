@@ -49,7 +49,7 @@ def clone(estimator, *, safe=True):
     Returns
     -------
     estimator : object
-        The deep copy of the estimator.
+        The deep copy of the input, an estimator if input is an estimator.
 
     Notes
     -----
