@@ -92,6 +92,7 @@ def _yield_checks(estimator):
             yield check_sample_weights_not_overwritten
             yield partial(check_sample_weights_invariance, kind="ones")
             yield partial(check_sample_weights_invariance, kind="zeros")
+            yield check_classe_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
@@ -1075,6 +1076,67 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 
     err_msg = "{name} overwrote the original `sample_weight` given during fit"
     assert_allclose(sample_weight_fit, sample_weight_original, err_msg=err_msg)
+
+
+@ignore_warnings(category=FutureWarning)
+def check_classe_weights_invariance(name, estimator_orig):
+    # test relation between class weight and sample weigth
+    # setting a class weights to zero is equivalent to excluding
+    # the samples associated to this class
+    # setting some samples weights to zero is equivalent to excluding those samples
+    cond1 = has_fit_parameter(LogisticRegression, "class_weight")
+    cond2 = has_fit_parameter(LogisticRegression, "sample_weight")
+    if cond1 and cond2:
+        estimator1 = clone(estimator_orig)
+        # Create a class weigth with a class weighted 0
+        class_weight = {1: 2, 2: 0, 3: 2}
+        estimator2 = clone(estimator_orig, class_weight)
+        set_random_state(estimator1, random_state=0)
+        set_random_state(estimator2, random_state=0)
+
+        X1 = np.array(
+            [
+                [1, 3],
+                [1, 3],
+                [1, 3],
+                [1, 3],
+                [2, 1],
+                [2, 1],
+                [2, 1],
+                [2, 1],
+                [3, 3],
+                [3, 3],
+                [3, 3],
+                [3, 3],
+                [4, 1],
+                [4, 1],
+                [4, 1],
+                [4, 1],
+            ],
+            dtype=np.float64,
+        )
+        y1 = np.array([1, 1, 1, 1, 2, 2, 3, 2, 1, 1, 3, 1, 2, 2, 2, 2], dtype=int)
+
+        # Construct a sample weigth randomly and put 0 where we have class 2
+        sw1 = np.random.randn(len(y1))
+        sw1[4] = 0
+        sw1[5] = 0
+        sw1[7] = 0
+        sw1[12] = 0
+        sw1[13] = 0
+        sw1[14] = 0
+        sw1[15] = 0
+        print("Sw1 = ", sw1)
+        err_msg = f"For {name} MY PROBLEME"
+
+        estimator1.fit(X1, y=y1, sample_weight=sw1)
+        estimator2.fit(X1, y=y1)
+
+        for method in ["predict", "predict_proba", "decision_function", "transform"]:
+            if hasattr(estimator_orig, method):
+                X_pred1 = getattr(estimator1, method)(X1)
+                X_pred2 = getattr(estimator2, method)(X1)
+                assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
 @ignore_warnings(category=(FutureWarning, UserWarning))
