@@ -160,6 +160,11 @@ try:
 except ImportError:
     print('pandas not installed')
 "
+
+if [[ $(type -P "gcc") ]]; then
+    gcc --version
+fi
+
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
