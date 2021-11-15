@@ -274,12 +274,6 @@ def test_error():
     # Test that it gives proper exception on deficient input.
 
     with pytest.raises(ValueError):
-        AdaBoostClassifier(learning_rate=-1).fit(X, y_class)
-
-    with pytest.raises(ValueError):
-        AdaBoostClassifier(algorithm="foo").fit(X, y_class)
-
-    with pytest.raises(ValueError):
         AdaBoostClassifier().fit(X, y_class, sample_weight=np.asarray([-1]))
 
 
@@ -547,6 +541,32 @@ def test_adaboostregressor_sample_weight():
     assert score_with_outlier < score_no_outlier
     assert score_with_outlier < score_with_weight
     assert score_no_outlier == pytest.approx(score_with_weight)
+
+
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1"),
+        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
+        (
+            {"n_estimators": 1.5},
+            TypeError,
+            "n_estimators must be an instance of <class 'numbers.Integral'>,"
+            " not <class 'float'>",
+        ),
+        ({"learning_rate": -1}, ValueError, "learning_rate == -1, must be > 0."),
+        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
+        (
+            {"algorithm": "unknown"},
+            ValueError,
+            "Algorithm must be 'SAMME' or 'SAMME.R'.",
+        ),
+    ],
+)
+def test_adaboost_classifier_params_validation(params, err_type, err_msg):
+    """Check the parameters validation in `AdaBoostClassifier`."""
+    with pytest.raises(err_type, match=err_msg):
+        AdaBoostClassifier(**params).fit(X, y_class)
 
 
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])

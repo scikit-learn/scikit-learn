@@ -214,6 +214,6 @@ def test_inf_nan_input(metric_name, metric_func):
     else:
         X = np.random.randint(10, size=(2, 10))
         invalids = [(X, [np.inf, np.inf]), (X, [np.nan, np.nan]), (X, [np.nan, np.inf])]
-    with pytest.raises(ValueError, match="contains NaN, infinity"):
+    with pytest.raises(ValueError, match=r"contains (NaN|infinity)"):
         for args in invalids:
             metric_func(*args)

@@ -34,6 +34,7 @@ jobs:
     # Set in azure-pipelines.yml
     DISTRIB: ''
     DOCKER_CONTAINER: ''
+    SHOW_SHORT_SUMMARY: 'false'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
