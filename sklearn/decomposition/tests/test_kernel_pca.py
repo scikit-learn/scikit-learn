@@ -78,8 +78,12 @@ def test_kernel_pca_invalid_parameters():
     Tests fitting inverse transform with a precomputed kernel raises a
     ValueError.
     """
-    with pytest.raises(ValueError):
-        KernelPCA(10, fit_inverse_transform=True, kernel="precomputed")
+    estimator = KernelPCA(
+        n_components=10, fit_inverse_transform=True, kernel="precomputed"
+    )
+    err_ms = "Cannot fit_inverse_transform with a precomputed kernel"
+    with pytest.raises(ValueError, match=err_ms):
+        estimator.fit(np.random.randn(10, 10))
 
 
 def test_kernel_pca_consistent_transform():

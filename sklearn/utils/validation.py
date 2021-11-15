@@ -1165,7 +1165,7 @@ def check_random_state(seed):
 
 
 def has_fit_parameter(estimator, parameter):
-    """Checks whether the estimator's fit method supports the given parameter.
+    """Check whether the estimator's fit method supports the given parameter.
 
     Parameters
     ----------
@@ -1177,7 +1177,7 @@ def has_fit_parameter(estimator, parameter):
 
     Returns
     -------
-    is_parameter: bool
+    is_parameter : bool
         Whether the parameter was found to be a named parameter of the
         estimator's fit method.
 
@@ -1187,7 +1187,6 @@ def has_fit_parameter(estimator, parameter):
     >>> from sklearn.utils.validation import has_fit_parameter
     >>> has_fit_parameter(SVC(), "sample_weight")
     True
-
     """
     return parameter in signature(estimator.fit).parameters
 
