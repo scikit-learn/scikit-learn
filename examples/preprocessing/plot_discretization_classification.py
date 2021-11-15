@@ -61,7 +61,7 @@ def get_name(estimator):
 
 
 # list of (estimator, param_grid), where param_grid is used in GridSearchCV
-# The parameter spaces in this example are limited to a narrow band in order to speed up.
+# The parameter spaces in this example are limited to a narrow band to speed up.
 # In a real use case, a broader search space for the algorithms should be used.
 classifiers = [
     (
