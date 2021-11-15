@@ -1107,6 +1107,7 @@ def column_or_1d(y, *, warn=False):
     Parameters
     ----------
     y : array-like
+       Input data.
 
     warn : bool, default=False
        To control display of warnings.
@@ -1114,7 +1115,12 @@ def column_or_1d(y, *, warn=False):
     Returns
     -------
     y : ndarray
+       Output data.
 
+    Raises
+    -------
+    ValueError
+        If `y` is not a 1D array or a 2D array with a single row or column.
     """
     y = np.asarray(y)
     shape = np.shape(y)
