@@ -92,9 +92,7 @@ def _yield_checks(estimator):
             yield check_sample_weights_not_overwritten
             yield partial(check_sample_weights_invariance, kind="ones")
             yield partial(check_sample_weights_invariance, kind="zeros")
-            # Mycode
             yield check_classe_weights_invariance
-            # endofMyCode
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
@@ -1080,9 +1078,6 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
     assert_allclose(sample_weight_fit, sample_weight_original, err_msg=err_msg)
 
 
-# Mycode
-
-
 @ignore_warnings(category=FutureWarning)
 def check_classe_weights_invariance(name, estimator_orig):
     # test relation between class weight and sample weigth
@@ -1091,7 +1086,7 @@ def check_classe_weights_invariance(name, estimator_orig):
     # setting some samples weights to zero is equivalent to excluding those samples
     cond1 = has_fit_parameter(LogisticRegression, "class_weight")
     cond2 = has_fit_parameter(LogisticRegression, "sample_weight")
-    if (cond1 and cond2):
+    if cond1 and cond2:
         estimator1 = clone(estimator_orig)
         # Create a class weigth with a class weighted 0
         class_weight = {1: 2, 2: 0, 3: 2}
@@ -1131,10 +1126,8 @@ def check_classe_weights_invariance(name, estimator_orig):
         sw1[13] = 0
         sw1[14] = 0
         sw1[15] = 0
-        print('Sw1 = ', sw1)
-        err_msg = (
-            f"For {name} MY PROBLEME"
-        )
+        print("Sw1 = ", sw1)
+        err_msg = f"For {name} MY PROBLEME"
 
         estimator1.fit(X1, y=y1, sample_weight=sw1)
         estimator2.fit(X1, y=y1)
@@ -1144,7 +1137,6 @@ def check_classe_weights_invariance(name, estimator_orig):
                 X_pred1 = getattr(estimator1, method)(X1)
                 X_pred2 = getattr(estimator2, method)(X1)
                 assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
-    # End of my code
 
 
 @ignore_warnings(category=(FutureWarning, UserWarning))
