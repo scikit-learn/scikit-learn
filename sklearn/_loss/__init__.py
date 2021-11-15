@@ -10,8 +10,8 @@ from .loss import (
     HalfPoissonLoss,
     HalfGammaLoss,
     HalfTweedieLoss,
-    BinaryCrossEntropy,
-    CategoricalCrossEntropy,
+    HalfBinomialLoss,
+    HalfMultinomialLoss,
 )
 
 
@@ -22,6 +22,6 @@ __all__ = [
     "HalfPoissonLoss",
     "HalfGammaLoss",
     "HalfTweedieLoss",
-    "BinaryCrossEntropy",
-    "CategoricalCrossEntropy",
+    "HalfBinomialLoss",
+    "HalfMultinomialLoss",
 ]

@@ -16,9 +16,9 @@ from sklearn._loss.loss import (
     _LOSSES,
     BaseLoss,
     AbsoluteError,
-    BinaryCrossEntropy,
-    CategoricalCrossEntropy,
+    HalfBinomialLoss,
     HalfGammaLoss,
+    HalfMultinomialLoss,
     HalfPoissonLoss,
     HalfSquaredError,
     HalfTweedieLoss,
@@ -149,8 +149,8 @@ Y_COMMON_PARAMS = [
     (HalfTweedieLoss(power=1.5), [0.1, 100], [-np.inf, -3, -0.1, np.inf]),
     (HalfTweedieLoss(power=2), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
     (HalfTweedieLoss(power=3), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
-    (BinaryCrossEntropy(), [0.1, 0.5, 0.9], [-np.inf, -1, 2, np.inf]),
-    (CategoricalCrossEntropy(), [], [-np.inf, -1, 1.1, np.inf]),
+    (HalfBinomialLoss(), [0.1, 0.5, 0.9], [-np.inf, -1, 2, np.inf]),
+    (HalfMultinomialLoss(), [], [-np.inf, -1, 1.1, np.inf]),
 ]
 # y_pred and y_true do not always have the same domain (valid value range).
 # Hence, we define extra sets of parameters for each of them.
@@ -160,8 +160,8 @@ Y_TRUE_PARAMS = [  # type: ignore
     (HalfTweedieLoss(power=-3), [-100, -0.1, 0], []),
     (HalfTweedieLoss(power=0), [-100, 0], []),
     (HalfTweedieLoss(power=1.5), [0], []),
-    (BinaryCrossEntropy(), [0, 1], []),
-    (CategoricalCrossEntropy(), [0.0, 1.0, 2], []),
+    (HalfBinomialLoss(), [0, 1], []),
+    (HalfMultinomialLoss(), [0.0, 1.0, 2], []),
 ]
 Y_PRED_PARAMS = [
     # (loss, [y success], [y fail])
@@ -169,8 +169,8 @@ Y_PRED_PARAMS = [
     (HalfTweedieLoss(power=-3), [], [-3, -0.1, 0]),
     (HalfTweedieLoss(power=0), [], [-3, -0.1, 0]),
     (HalfTweedieLoss(power=1.5), [], [0]),
-    (BinaryCrossEntropy(), [], [0, 1]),
-    (CategoricalCrossEntropy(), [0.1, 0.5], [0, 1]),
+    (HalfBinomialLoss(), [], [0, 1]),
+    (HalfMultinomialLoss(), [0.1, 0.5], [0, 1]),
 ]
 
 
@@ -207,21 +207,21 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
         (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4)),
         (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4),
         (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4 ** 2),
-        (BinaryCrossEntropy(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4)),
+        (HalfBinomialLoss(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4)),
         (
-            CategoricalCrossEntropy(n_classes=3),
+            HalfMultinomialLoss(n_classes=3),
             0.0,
             [0.2, 0.5, 0.3],
             logsumexp([0.2, 0.5, 0.3]) - 0.2,
         ),
         (
-            CategoricalCrossEntropy(n_classes=3),
+            HalfMultinomialLoss(n_classes=3),
             1.0,
             [0.2, 0.5, 0.3],
             logsumexp([0.2, 0.5, 0.3]) - 0.5,
         ),
         (
-            CategoricalCrossEntropy(n_classes=3),
+            HalfMultinomialLoss(n_classes=3),
             2.0,
             [0.2, 0.5, 0.3],
             logsumexp([0.2, 0.5, 0.3]) - 0.3,
@@ -474,7 +474,7 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
     assert np.shares_memory(g3, out_g3)
 
     if hasattr(loss, "gradient_proba"):
-        assert loss.is_multiclass  # only for CategoricalCrossEntropy
+        assert loss.is_multiclass  # only for HalfMultinomialLoss
         out_g4 = np.empty_like(raw_prediction)
         out_proba = np.empty_like(raw_prediction)
         g4, proba = loss.gradient_proba(
@@ -605,7 +605,7 @@ def test_loss_of_perfect_prediction(loss, sample_weight):
         raw_prediction = np.array([-10, -0.1, 0, 0.1, 3, 10])
         y_true = loss.link.inverse(raw_prediction)
     else:
-        # CategoricalCrossEntropy
+        # HalfMultinomialLoss
         y_true = np.arange(loss.n_classes).astype(float)
         # raw_prediction with entries -exp(10), but +exp(10) on the diagonal
         # this is close enough to np.inf which would produce nan
@@ -729,12 +729,12 @@ def test_gradients_hessians_numerically(loss, sample_weight):
         ("squared_error", -2.0, 42),
         ("squared_error", 117.0, 1.05),
         ("squared_error", 0.0, 0.0),
-        # The argmin of binary_crossentropy for y_true=0 and y_true=1 is resp.
+        # The argmin of binomial_loss for y_true=0 and y_true=1 is resp.
         # -inf and +inf due to logit, cf. "complete separation". Therefore, we
         # use 0 < y_true < 1.
-        ("binary_crossentropy", 0.3, 0.1),
-        ("binary_crossentropy", -12, 0.2),
-        ("binary_crossentropy", 30, 0.9),
+        ("binomial_loss", 0.3, 0.1),
+        ("binomial_loss", -12, 0.2),
+        ("binomial_loss", 30, 0.9),
         ("poisson_loss", 12.0, 1.0),
         ("poisson_loss", 0.0, 2.0),
         ("poisson_loss", -22.0, 10.0),
@@ -872,7 +872,7 @@ def test_loss_intercept_only(loss, sample_weight):
         (HalfPoissonLoss(), np.mean, "poisson"),
         (HalfGammaLoss(), np.mean, "exponential"),
         (HalfTweedieLoss(), np.mean, "exponential"),
-        (BinaryCrossEntropy(), np.mean, "binomial"),
+        (HalfBinomialLoss(), np.mean, "binomial"),
     ],
 )
 def test_specific_fit_intercept_only(loss, func, random_dist):
@@ -906,11 +906,11 @@ def test_specific_fit_intercept_only(loss, func, random_dist):
         assert_all_finite(baseline_prediction)
 
 
-def test_categorical_crossentropy_fit_intercept_only():
+def test_multinomial_loss_fit_intercept_only():
     """Test that fit_intercept_only returns the mean functional for CCE."""
     rng = np.random.RandomState(0)
     n_classes = 4
-    loss = CategoricalCrossEntropy(n_classes=n_classes)
+    loss = HalfMultinomialLoss(n_classes=n_classes)
     # Same logic as test_specific_fit_intercept_only. Here inverse link
     # function = softmax and link function = log - symmetry term.
     y_train = rng.randint(0, n_classes + 1, size=100).astype(np.float64)
@@ -929,20 +929,20 @@ def test_categorical_crossentropy_fit_intercept_only():
         assert_all_finite(baseline_prediction)
 
 
-def test_binary_and_categorical_crossentropy():
-    """Test that CCE with n_classes = 2 is the same as BinaryCrossEntropy."""
+def test_binomial_and_multinomial_loss():
+    """Test that multinomial loss with n_classes = 2 is the same as binomial loss."""
     rng = np.random.RandomState(0)
     n_samples = 20
-    bce = BinaryCrossEntropy()
-    cce = CategoricalCrossEntropy(n_classes=2)
+    binom = HalfBinomialLoss()
+    multinom = HalfMultinomialLoss(n_classes=2)
     y_train = rng.randint(0, 2, size=n_samples).astype(np.float64)
     raw_prediction = rng.normal(size=n_samples)
-    raw_cce = np.empty((n_samples, 2))
-    raw_cce[:, 0] = -0.5 * raw_prediction
-    raw_cce[:, 1] = 0.5 * raw_prediction
+    raw_multinom = np.empty((n_samples, 2))
+    raw_multinom[:, 0] = -0.5 * raw_prediction
+    raw_multinom[:, 1] = 0.5 * raw_prediction
     assert_allclose(
-        bce.loss(y_true=y_train, raw_prediction=raw_prediction),
-        cce.loss(y_true=y_train, raw_prediction=raw_cce),
+        binom.loss(y_true=y_train, raw_prediction=raw_prediction),
+        multinom.loss(y_true=y_train, raw_prediction=raw_multinom),
     )
 
 

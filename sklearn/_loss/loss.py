@@ -24,8 +24,8 @@ from ._loss import (
     CyHalfPoissonLoss,
     CyHalfGammaLoss,
     CyHalfTweedieLoss,
-    CyBinaryCrossEntropy,
-    CyCategoricalCrossEntropy,
+    CyHalfBinomialLoss,
+    CyHalfMultinomialLoss,
 )
 from .link import (
     Interval,
@@ -580,7 +580,7 @@ class PinballLoss(BaseLoss):
 
 
 class HalfPoissonLoss(BaseLoss):
-    """Poisson deviance loss with log-link, for regression.
+    """Half Poisson deviance loss with log-link, for regression.
 
     Domain:
     y_true in non-negative real numbers
@@ -612,7 +612,7 @@ class HalfPoissonLoss(BaseLoss):
 
 
 class HalfGammaLoss(BaseLoss):
-    """Gamma deviance loss with log-link, for regression.
+    """Half Gamma deviance loss with log-link, for regression.
 
     Domain:
     y_true and y_pred in positive real numbers
@@ -643,7 +643,7 @@ class HalfGammaLoss(BaseLoss):
 
 
 class HalfTweedieLoss(BaseLoss):
-    """Tweedie deviance loss with log-link, for regression.
+    """Half Tweedie deviance loss with log-link, for regression.
 
     Domain:
     y_true in real numbers for power <= 0
@@ -706,18 +706,20 @@ class HalfTweedieLoss(BaseLoss):
             return term
 
 
-class BinaryCrossEntropy(BaseLoss):
-    """Binary cross entropy loss with logit link, for binary classification.
+class HalfBinomialLoss(BaseLoss):
+    """Half Binomial deviance loss with logit link, for binary classification.
+
+    This is also know as binary cross entropy, log-loss and logistic loss.
 
     Domain:
-    y_true in [0, 1]
+    y_true in [0, 1], i.e. regression on the unit interval
     y_pred in (0, 1), i.e. boundaries excluded
 
     Link:
     y_pred = expit(raw_prediction)
 
-    For a given sample x_i, the binary cross-entropy, is defined as the
-    negative log-likelihood of the Bernoulli distribution and can be expressed
+    For a given sample x_i, half Binomial deviance is defined as the negative
+    log-likelihood of the Binomial/Bernoulli distribution and can be expressed
     as::
 
         loss(x_i) = log(1 + exp(raw_pred_i)) - y_true_i * raw_pred_i
@@ -725,7 +727,6 @@ class BinaryCrossEntropy(BaseLoss):
     See The Elements of Statistical Learning, by Hastie, Tibshirani, Friedman,
     section 4.4.1 (about logistic regression).
 
-    This loss is also known as log loss or logistic loss.
     Note that the formulation works for classification, y = {0, 1}, as well as
     logistic regression, y = [0, 1].
     If you add `constant_to_optimal_zero` to the loss, you get half the
@@ -734,7 +735,7 @@ class BinaryCrossEntropy(BaseLoss):
 
     def __init__(self, sample_weight=None):
         super().__init__(
-            closs=CyBinaryCrossEntropy(),
+            closs=CyHalfBinomialLoss(),
             link=LogitLink(),
             n_classes=2,
         )
@@ -769,7 +770,7 @@ class BinaryCrossEntropy(BaseLoss):
         return proba
 
 
-class CategoricalCrossEntropy(BaseLoss):
+class HalfMultinomialLoss(BaseLoss):
     """Categorical cross-entropy loss, for multiclass classification.
 
     Domain:
@@ -808,7 +809,7 @@ class CategoricalCrossEntropy(BaseLoss):
 
     def __init__(self, sample_weight=None, n_classes=3):
         super().__init__(
-            closs=CyCategoricalCrossEntropy(),
+            closs=CyHalfMultinomialLoss(),
             link=MultinomialLogit(),
             n_classes=n_classes,
         )
@@ -918,6 +919,6 @@ _LOSSES = {
     "poisson_loss": HalfPoissonLoss,
     "gamma_loss": HalfGammaLoss,
     "tweedie_loss": HalfTweedieLoss,
-    "binary_crossentropy": BinaryCrossEntropy,
-    "categorical_crossentropy": CategoricalCrossEntropy,
+    "binomial_loss": HalfBinomialLoss,
+    "multinomial_loss": HalfMultinomialLoss,
 }
