@@ -2,7 +2,6 @@
 Test the fastica algorithm.
 """
 import itertools
-import warnings
 import pytest
 
 import numpy as np
@@ -10,6 +9,7 @@ from scipy import stats
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition._fastica import _gs_decorrelation
@@ -46,6 +46,10 @@ def test_gs():
     assert (tmp[:5] ** 2).sum() < 1.0e-10
 
 
+# FIXME remove filter in 1.3
+@pytest.mark.filterwarnings(
+    "ignore:From version 1.3 whiten='unit-variance' will be used by default."
+)
 @pytest.mark.parametrize("add_noise", [True, False])
 @pytest.mark.parametrize("seed", range(1))
 def test_fastica_simple(add_noise, seed):
@@ -76,12 +80,14 @@ def test_fastica_simple(add_noise, seed):
 
     algos = ["parallel", "deflation"]
     nls = ["logcosh", "exp", "cube", g_test]
-    whitening = [True, False]
+    whitening = ["arbitrary-variance", "unit-variance", False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
-            k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo, random_state=rng)
+            k_, mixing_, s_ = fastica(
+                m.T, fun=nl, whiten=whiten, algorithm=algo, random_state=rng
+            )
             with pytest.raises(ValueError):
-                fastica(m.T, fun=np.tanh, algorithm=algo)
+                fastica(m.T, fun=np.tanh, whiten=whiten, algorithm=algo)
         else:
             pca = PCA(n_components=2, whiten=True, random_state=rng)
             X = pca.fit_transform(m.T)
@@ -197,7 +203,9 @@ def test_non_square_fastica(add_noise):
 
     center_and_norm(m)
 
-    k_, mixing_, s_ = fastica(m.T, n_components=2, random_state=rng)
+    k_, mixing_, s_ = fastica(
+        m.T, n_components=2, whiten="unit-variance", random_state=rng
+    )
     s_ = s_.T
 
     # Check that the mixing model described in the docstring holds:
@@ -219,10 +227,16 @@ def test_non_square_fastica(add_noise):
 
 
 def test_fit_transform():
-    # Test FastICA.fit_transform
+    """Test unit variance of transformed data using FastICA algorithm.
+
+    Check that `fit_transform` gives the same result as applying
+    `fit` and then `transform`.
+
+    Bug #13056
+    """
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    for whiten, n_components in [[True, 5], [False, None]]:
+    for whiten, n_components in [["unit-variance", 5], [False, None]]:
         n_components_ = n_components if n_components is not None else X.shape[1]
 
         ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
@@ -238,36 +252,39 @@ def test_fit_transform():
         assert_array_almost_equal(Xt, Xt2)
 
 
-def test_inverse_transform():
+@pytest.mark.filterwarnings("ignore:Ignoring n_components with whiten=False.")
+@pytest.mark.parametrize(
+    "whiten, n_components, expected_mixing_shape",
+    [
+        ("arbitrary-variance", 5, (10, 5)),
+        ("arbitrary-variance", 10, (10, 10)),
+        ("unit-variance", 5, (10, 5)),
+        ("unit-variance", 10, (10, 10)),
+        (False, 5, (10, 10)),
+        (False, 10, (10, 10)),
+    ],
+)
+def test_inverse_transform(whiten, n_components, expected_mixing_shape):
     # Test FastICA.inverse_transform
-    n_features = 10
     n_samples = 100
-    n1, n2 = 5, 10
     rng = np.random.RandomState(0)
-    X = rng.random_sample((n_samples, n_features))
-    expected = {
-        (True, n1): (n_features, n1),
-        (True, n2): (n_features, n2),
-        (False, n1): (n_features, n2),
-        (False, n2): (n_features, n2),
-    }
-    for whiten in [True, False]:
-        for n_components in [n1, n2]:
-            n_components_ = n_components if n_components is not None else X.shape[1]
-            ica = FastICA(n_components=n_components, random_state=rng, whiten=whiten)
-            with warnings.catch_warnings(record=True):
-                # catch "n_components ignored" warning
-                Xt = ica.fit_transform(X)
-            expected_shape = expected[(whiten, n_components_)]
-            assert ica.mixing_.shape == expected_shape
-            X2 = ica.inverse_transform(Xt)
-            assert X.shape == X2.shape
+    X = rng.random_sample((n_samples, 10))
 
-            # reversibility test in non-reduction case
-            if n_components == X.shape[1]:
-                assert_array_almost_equal(X, X2)
+    ica = FastICA(n_components=n_components, random_state=rng, whiten=whiten)
+    Xt = ica.fit_transform(X)
+    assert ica.mixing_.shape == expected_mixing_shape
+    X2 = ica.inverse_transform(Xt)
+    assert X.shape == X2.shape
+
+    # reversibility test in non-reduction case
+    if n_components == X.shape[1]:
+        assert_array_almost_equal(X, X2)
 
 
+# FIXME remove filter in 1.3
+@pytest.mark.filterwarnings(
+    "ignore:From version 1.3 whiten='unit-variance' will be used by default."
+)
 def test_fastica_errors():
     n_features = 3
     n_samples = 10
@@ -289,7 +306,70 @@ def test_fastica_errors():
         fastica(X, algorithm="pizza")
 
 
-@pytest.mark.parametrize("whiten", [True, False])
+def test_fastica_whiten_unit_variance():
+    """Test unit variance of transformed data using FastICA algorithm.
+
+    Bug #13056
+    """
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    n_components = X.shape[1]
+    ica = FastICA(n_components=n_components, whiten="unit-variance", random_state=0)
+    Xt = ica.fit_transform(X)
+
+    assert np.var(Xt) == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize("ica", [FastICA(), FastICA(whiten=True)])
+def test_fastica_whiten_default_value_deprecation(ica):
+    """Test FastICA whiten default value deprecation.
+
+    Regression test for #19490
+    """
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    with pytest.warns(FutureWarning, match=r"From version 1.3 whiten="):
+        ica.fit(X)
+        assert ica._whiten == "arbitrary-variance"
+
+
+def test_fastica_whiten_backwards_compatibility():
+    """Test previous behavior for FastICA whitening (whiten=True)
+
+    Regression test for #19490
+    """
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    n_components = X.shape[1]
+
+    default_ica = FastICA(n_components=n_components, random_state=0)
+    with pytest.warns(FutureWarning):
+        Xt_on_default = default_ica.fit_transform(X)
+
+    ica = FastICA(n_components=n_components, whiten=True, random_state=0)
+    with pytest.warns(FutureWarning):
+        Xt = ica.fit_transform(X)
+
+    # No warning must be raised in this case.
+    av_ica = FastICA(
+        n_components=n_components, whiten="arbitrary-variance", random_state=0
+    )
+    with pytest.warns(None) as warn_record:
+        Xt_av = av_ica.fit_transform(X)
+        assert len(warn_record) == 0
+
+    # The whitening strategy must be "arbitrary-variance" in all the cases.
+    assert default_ica._whiten == "arbitrary-variance"
+    assert ica._whiten == "arbitrary-variance"
+    assert av_ica._whiten == "arbitrary-variance"
+
+    assert_array_equal(Xt, Xt_on_default)
+    assert_array_equal(Xt, Xt_av)
+
+    assert np.var(Xt) == pytest.approx(1.0 / 100)
+
+
+@pytest.mark.parametrize("whiten", ["arbitrary-variance", "unit-variance", False])
 @pytest.mark.parametrize("return_X_mean", [True, False])
 @pytest.mark.parametrize("return_n_iter", [True, False])
 def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):

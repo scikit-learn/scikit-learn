@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn._config.get_config",
     "sklearn.cluster._affinity_propagation.affinity_propagation",
     "sklearn.cluster._kmeans.kmeans_plusplus",
     "sklearn.cluster._mean_shift.estimate_bandwidth",
@@ -30,7 +29,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._base.get_data_home",
     "sklearn.datasets._base.load_boston",
     "sklearn.datasets._base.load_breast_cancer",
-    "sklearn.datasets._base.load_diabetes",
     "sklearn.datasets._base.load_digits",
     "sklearn.datasets._base.load_files",
     "sklearn.datasets._base.load_iris",
@@ -86,7 +84,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.linear_model._ridge.ridge_regression",
     "sklearn.manifold._locally_linear.locally_linear_embedding",
     "sklearn.manifold._t_sne.trustworthiness",
-    "sklearn.metrics._classification.balanced_accuracy_score",
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.classification_report",
     "sklearn.metrics._classification.cohen_kappa_score",
@@ -96,7 +93,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._classification.jaccard_score",
     "sklearn.metrics._classification.log_loss",
     "sklearn.metrics._classification.precision_recall_fscore_support",
-    "sklearn.metrics._classification.recall_score",
     "sklearn.metrics._plot.confusion_matrix.plot_confusion_matrix",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
@@ -174,7 +170,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.svm._bounds.l1_min_c",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
-    "sklearn.utils.check_pandas_support",
     "sklearn.utils.extmath.density",
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_range_finder",
@@ -220,8 +215,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.validation.check_is_fitted",
     "sklearn.utils.validation.check_memory",
     "sklearn.utils.validation.check_random_state",
-    "sklearn.utils.validation.column_or_1d",
-    "sklearn.utils.validation.has_fit_parameter",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
