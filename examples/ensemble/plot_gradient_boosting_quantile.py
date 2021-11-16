@@ -264,7 +264,7 @@ pprint(search_05p.best_params_)
 # %%
 # We observe that the hyper-parameters that were hand-tuned for the median
 # regressor are in the same range as the hyper-parameters suitable for the 5th
-# percentile regressor
+# percentile regressor.
 #
 # Let's now tune the hyper-parameters for the 95th percentile regressor. We
 # need to redefine the `scoring` metric used to select the best model, along
