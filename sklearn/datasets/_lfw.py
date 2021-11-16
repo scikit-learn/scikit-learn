@@ -290,7 +290,7 @@ def fetch_lfw_people(
 
         .. versionadded:: 0.20
 
-    n_retries : int 
+    n_retries : int
         Number of retries when HTTP errors are encountered.
 
     delay : int
