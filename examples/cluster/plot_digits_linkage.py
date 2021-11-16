@@ -84,7 +84,7 @@ def plot_clustering(X_red, labels, title=None):
 # ----------------------------------------------------------------------
 # 2D embedding of the digits dataset
 print("Computing embedding")
-X_red = manifold.SpectralEmbedding(n_components=2, random_state=0).fit_transform(X)
+X_red = manifold.SpectralEmbedding(n_components=2).fit_transform(X)
 print("Done.")
 
 from sklearn.cluster import AgglomerativeClustering
