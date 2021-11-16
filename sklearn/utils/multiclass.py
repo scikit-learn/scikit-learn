@@ -28,9 +28,7 @@ def _unique_multiclass(y):
 
 
 def _unique_indicator(y):
-    return np.arange(
-        check_array(y, input_name="y", accept_sparse=["csr", "csc", "coo"]).shape[1]
-    )
+    return np.arange(check_array(y, accept_sparse=["csr", "csc", "coo"]).shape[1])
 
 
 _FN_UNIQUE_LABELS = {
@@ -189,7 +187,7 @@ def check_classification_targets(y):
     ----------
     y : array-like
     """
-    y_type = type_of_target(y, input_name="y")
+    y_type = type_of_target(y)
     if y_type not in [
         "binary",
         "multiclass",
@@ -200,7 +198,7 @@ def check_classification_targets(y):
         raise ValueError("Unknown label type: %r" % y_type)
 
 
-def type_of_target(y, input_name=""):
+def type_of_target(y):
     """Determine the type of data indicated by the target.
 
     Note that this type is the most specific type that can be inferred.
@@ -215,11 +213,6 @@ def type_of_target(y, input_name=""):
     Parameters
     ----------
     y : array-like
-
-    input_name : str, default=""
-        The data name used to construct the error message.
-
-        .. versionadded:: 1.1.0
 
     Returns
     -------
@@ -329,7 +322,7 @@ def type_of_target(y, input_name=""):
     # check float and contains non-integer float values
     if y.dtype.kind == "f" and np.any(y != y.astype(int)):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
-        _assert_all_finite(y, input_name=input_name)
+        _assert_all_finite(y)
         return "continuous" + suffix
 
     if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):

@@ -28,7 +28,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import FunctionTransformer, scale
-from itertools import cycle
 
 from scipy.sparse import csc_matrix, csr_matrix
 
@@ -58,28 +57,24 @@ def test_classification():
     grid = ParameterGrid(
         {
             "max_samples": [0.5, 1.0],
-            "max_features": [1, 4],
+            "max_features": [1, 2, 4],
             "bootstrap": [True, False],
             "bootstrap_features": [True, False],
         }
     )
-    estimators = [
+
+    for base_estimator in [
         None,
         DummyClassifier(),
-        Perceptron(max_iter=20),
-        DecisionTreeClassifier(max_depth=2),
+        Perceptron(),
+        DecisionTreeClassifier(),
         KNeighborsClassifier(),
         SVC(),
-    ]
-    # Try different parameter settings with different base classifiers without
-    # doing the full cartesian product to keep the test durations low.
-    for params, base_estimator in zip(grid, cycle(estimators)):
-        BaggingClassifier(
-            base_estimator=base_estimator,
-            random_state=rng,
-            n_estimators=2,
-            **params,
-        ).fit(X_train, y_train).predict(X_test)
+    ]:
+        for params in grid:
+            BaggingClassifier(
+                base_estimator=base_estimator, random_state=rng, **params
+            ).fit(X_train, y_train).predict(X_test)
 
 
 @pytest.mark.parametrize(

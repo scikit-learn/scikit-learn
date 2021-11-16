@@ -530,7 +530,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 % (self.strategy, allowed_strategies)
             )
 
-        y = check_array(y, ensure_2d=False, input_name="y")
+        y = check_array(y, ensure_2d=False)
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 

@@ -363,6 +363,7 @@ def test_pandas_column_name_consistency(estimator):
 GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "cluster",
     "cross_decomposition",
+    "decomposition",
     "discriminant_analysis",
     "isotonic",
     "kernel_approximation",

@@ -11,14 +11,12 @@
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_is_fitted
 from abc import ABCMeta, abstractmethod
 
 
-class _BasePCA(
-    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, metaclass=ABCMeta
-):
+class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for PCA methods.
 
     Warning: This class should not be used directly.
@@ -156,8 +154,3 @@ class _BasePCA(
             )
         else:
             return np.dot(X, self.components_) + self.mean_
-
-    @property
-    def _n_features_out(self):
-        """Number of transformed output features."""
-        return self.components_.shape[0]
