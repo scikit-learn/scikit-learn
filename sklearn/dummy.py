@@ -58,7 +58,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    constant : int or str or array-like of shape (n_outputs,)
+    constant : int or str or array-like of shape (n_outputs,), default=None
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
@@ -530,7 +530,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 % (self.strategy, allowed_strategies)
             )
 
-        y = check_array(y, ensure_2d=False)
+        y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 

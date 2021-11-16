@@ -902,7 +902,7 @@ invalids_nan_inf = [
 )
 @pytest.mark.parametrize("y_true, y_score", invalids_nan_inf)
 def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
-    with pytest.raises(ValueError, match="contains NaN, infinity"):
+    with pytest.raises(ValueError, match=r"contains (NaN|infinity)"):
         metric(y_true, y_score)
 
 
@@ -913,12 +913,29 @@ def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
     # Add an additional case for classification only
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/6809
-    [([np.nan, 1, 2], [1, 2, 3])],  # type: ignore
+    [
+        ([np.nan, 1, 2], [1, 2, 3]),
+        ([np.inf, 1, 2], [1, 2, 3]),
+    ],  # type: ignore
 )
 def test_classification_inf_nan_input(metric, y_true, y_score):
     """check that classification metrics raise a message mentioning the
     occurrence of non-finite values in the target vectors."""
-    err_msg = "Input contains NaN, infinity or a value too large"
+    if not np.isfinite(y_true).all():
+        input_name = "y_true"
+        if np.isnan(y_true).any():
+            unexpected_value = "NaN"
+        else:
+            unexpected_value = "infinity or a value too large"
+    else:
+        input_name = "y_pred"
+        if np.isnan(y_score).any():
+            unexpected_value = "NaN"
+        else:
+            unexpected_value = "infinity or a value too large"
+
+    err_msg = f"Input {input_name} contains {unexpected_value}"
+
     with pytest.raises(ValueError, match=err_msg):
         metric(y_true, y_score)
 

@@ -11,7 +11,7 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator, signature
+from inspect import isgenerator, signature, Parameter
 from itertools import product, chain
 from functools import partial
 
@@ -363,7 +363,6 @@ def test_pandas_column_name_consistency(estimator):
 GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "cluster",
     "cross_decomposition",
-    "decomposition",
     "discriminant_analysis",
     "isotonic",
     "kernel_approximation",
@@ -371,7 +370,6 @@ GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "manifold",
     "neighbors",
     "neural_network",
-    "random_projection",
 ]
 
 
@@ -411,16 +409,8 @@ VALIDATE_ESTIMATOR_INIT = [
     "FeatureUnion",
     "GridSearchCV",
     "HalvingGridSearchCV",
-    "KernelPCA",
-    "LabelBinarizer",
-    "NuSVC",
-    "NuSVR",
-    "OneClassSVM",
     "Pipeline",
-    "RadiusNeighborsClassifier",
     "SGDOneClassSVM",
-    "SVC",
-    "SVR",
     "TheilSenRegressor",
     "TweedieRegressor",
 ]
@@ -433,7 +423,14 @@ VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
 )
 def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
     """Check that init or set_param does not raise errors."""
-    params = signature(Estimator).parameters
+
+    # Remove parameters with **kwargs by filtering out Parameter.VAR_KEYWORD
+    # TODO: Remove in 1.2 when **kwargs is removed in RadiusNeighborsClassifier
+    params = [
+        name
+        for name, param in signature(Estimator).parameters.items()
+        if param.kind != Parameter.VAR_KEYWORD
+    ]
 
     smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), {}, []]
     for value in smoke_test_values:

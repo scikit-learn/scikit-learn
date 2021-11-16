@@ -78,8 +78,12 @@ def test_kernel_pca_invalid_parameters():
     Tests fitting inverse transform with a precomputed kernel raises a
     ValueError.
     """
-    with pytest.raises(ValueError):
-        KernelPCA(10, fit_inverse_transform=True, kernel="precomputed")
+    estimator = KernelPCA(
+        n_components=10, fit_inverse_transform=True, kernel="precomputed"
+    )
+    err_ms = "Cannot fit_inverse_transform with a precomputed kernel"
+    with pytest.raises(ValueError, match=err_ms):
+        estimator.fit(np.random.randn(10, 10))
 
 
 def test_kernel_pca_consistent_transform():
@@ -559,3 +563,12 @@ def test_kernel_pca_alphas_deprecated():
     msg = r"Attribute `alphas_` was deprecated in version 1\.0"
     with pytest.warns(FutureWarning, match=msg):
         kp.alphas_
+
+
+def test_kernel_pca_feature_names_out():
+    """Check feature names out for KernelPCA."""
+    X, *_ = make_blobs(n_samples=100, n_features=4, random_state=0)
+    kpca = KernelPCA(n_components=2).fit(X)
+
+    names = kpca.get_feature_names_out()
+    assert_array_equal([f"kernelpca{i}" for i in range(2)], names)
