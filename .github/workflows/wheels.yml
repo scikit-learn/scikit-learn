@@ -110,6 +110,7 @@ jobs:
 
       - name: Store artifacts
         uses: actions/upload-artifact@v2
+        if: failure()
         with:
           path: wheelhouse/*.whl
 
