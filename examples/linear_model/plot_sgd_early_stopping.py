@@ -56,7 +56,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import shuffle
 
 
-
 def load_mnist(n_samples=None, class_0="0", class_1="8"):
     """Load MNIST, select two classes, shuffle and return only n_samples."""
     # Load data from http://openml.org/d/554
@@ -69,9 +68,6 @@ def load_mnist(n_samples=None, class_0="0", class_1="8"):
     if n_samples is not None:
         X, y = X[:n_samples], y[:n_samples]
     return X, y
-
-
-
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -95,7 +91,7 @@ def fit_and_score(estimator, max_iter, X_train, X_test, y_train, y_test):
 estimator_dict = {
     "No stopping criterion": SGDClassifier(n_iter_no_change=3),
     "Training loss": SGDClassifier(
-        early_stopping = False,  n_iter_no_change=3, tol=0.1
+        early_stopping=False, n_iter_no_change=3, tol=0.1
     ),
     "Validation score": SGDClassifier(
         early_stopping=True, n_iter_no_change=3, tol=0.0001, validation_fraction=0.2
