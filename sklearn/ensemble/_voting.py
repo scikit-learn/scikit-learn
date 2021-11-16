@@ -23,7 +23,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
-from ..base import _check_feature_names_in, _ClassNamePrefixFeaturesOutMixin
+from ..base import _ClassNamePrefixFeaturesOutMixin
 
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble

@@ -52,7 +52,7 @@ from joblib import Parallel
 
 from ..base import is_classifier
 from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin
-from ..base import _check_feature_names_in, _ClassNamePrefixFeaturesOutMixin
+from ..base import _ClassNamePrefixFeaturesOutMixin
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (

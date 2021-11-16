@@ -13,7 +13,7 @@ import scipy.sparse as sparse
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
-from ..base import _check_feature_names_in, _ClassNamePrefixFeaturesOutMixin
+from ..base import _ClassNamePrefixFeaturesOutMixin
 
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
