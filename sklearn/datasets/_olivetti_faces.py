@@ -43,6 +43,8 @@ def fetch_olivetti_faces(
     random_state=0,
     download_if_missing=True,
     return_X_y=False,
+    n_retries=3,
+    delay=1,
 ):
     """Load the Olivetti faces data-set from AT&T (classification).
 
@@ -82,6 +84,12 @@ def fetch_olivetti_faces(
 
         .. versionadded:: 0.22
 
+    n_retries : int
+        Number of retries when HTTP errors are encountered.
+
+    delay : int
+        Number of seconds between retries.
+
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
@@ -112,7 +120,9 @@ def fetch_olivetti_faces(
             raise IOError("Data not found and `download_if_missing` is False")
 
         print("downloading Olivetti faces from %s to %s" % (FACES.url, data_home))
-        mat_path = _fetch_remote(FACES, dirname=data_home)
+        mat_path = _fetch_remote(
+            FACES, dirname=data_home, n_retries=n_retries, delay=delay
+        )
         mfile = loadmat(file_name=mat_path)
         # delete raw .mat data
         remove(mat_path)

@@ -51,7 +51,13 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_california_housing(
-    *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
+    *,
+    data_home=None,
+    download_if_missing=True,
+    return_X_y=False,
+    as_frame=False,
+    n_retries=3,
+    delay=1,
 ):
     """Load the California housing dataset (regression).
 
@@ -87,6 +93,12 @@ def fetch_california_housing(
         a pandas DataFrame or Series depending on the number of target_columns.
 
         .. versionadded:: 0.23
+
+    n_retries : int
+        Number of retries when HTTP errors are encountered.
+
+    delay : int
+        Number of seconds between retries.
 
     Returns
     -------
@@ -132,7 +144,9 @@ def fetch_california_housing(
             "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)
         )
 
-        archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
+        archive_path = _fetch_remote(
+            ARCHIVE, dirname=data_home, n_retries=n_retries, delay=delay
+        )
 
         with tarfile.open(mode="r:gz", name=archive_path) as f:
             cal_housing = np.loadtxt(

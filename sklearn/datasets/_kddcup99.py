@@ -56,6 +56,8 @@ def fetch_kddcup99(
     download_if_missing=True,
     return_X_y=False,
     as_frame=False,
+    n_retries=3,
+    delay=1,
 ):
     """Load the kddcup99 dataset (classification).
 
@@ -111,6 +113,13 @@ def fetch_kddcup99(
         have a ``frame`` member.
 
         .. versionadded:: 0.24
+
+    n_retries : int
+        Number of retries when HTTP errors are encountered.
+
+    delay : int
+        Number of seconds between retries.
+
 
     Returns
     -------
@@ -224,7 +233,9 @@ def fetch_kddcup99(
     )
 
 
-def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=True):
+def _fetch_brute_kddcup99(
+    data_home=None, download_if_missing=True, percent10=True, n_retries=3, delay=1
+):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -240,6 +251,12 @@ def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=Tr
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.
+
+    n_retries : int
+        Number of retries when HTTP errors are encountered.
+
+    delay : int
+        Number of seconds between retries.
 
     Returns
     -------
@@ -336,7 +353,7 @@ def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=Tr
     elif download_if_missing:
         _mkdirp(kddcup_dir)
         logger.info("Downloading %s" % archive.url)
-        _fetch_remote(archive, dirname=kddcup_dir)
+        _fetch_remote(archive, dirname=kddcup_dir, n_retries=n_retries, delay=delay)
         DT = np.dtype(dt)
         logger.debug("extracting archive")
         archive_path = join(kddcup_dir, archive.filename)

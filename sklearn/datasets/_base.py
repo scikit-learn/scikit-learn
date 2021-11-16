@@ -10,6 +10,8 @@ import csv
 import hashlib
 import gzip
 import shutil
+import time
+import warnings
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
@@ -23,6 +25,7 @@ from ..utils.deprecation import deprecated
 import numpy as np
 
 from urllib.request import urlretrieve
+from urllib.error import URLError
 
 DATA_MODULE = "sklearn.datasets.data"
 DESCR_MODULE = "sklearn.datasets.descr"
@@ -1424,7 +1427,7 @@ def _sha256(path):
     return sha256hash.hexdigest()
 
 
-def _fetch_remote(remote, dirname=None):
+def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
     """Helper function to download a remote dataset into path
 
     Fetch a dataset pointed by remote's url, save into path using remote's
@@ -1440,6 +1443,12 @@ def _fetch_remote(remote, dirname=None):
     dirname : str
         Directory to save the file to.
 
+    n_retries : int
+        Number of retries when HTTP errors are encountered.
+
+    delay : int
+        Number of seconds between retries.
+
     Returns
     -------
     file_path: str
@@ -1447,7 +1456,20 @@ def _fetch_remote(remote, dirname=None):
     """
 
     file_path = remote.filename if dirname is None else join(dirname, remote.filename)
-    urlretrieve(remote.url, file_path)
+
+    retry_cnt = n_retries
+    while 1:
+        try:
+            urlretrieve(remote.url, file_path)
+            break
+        except URLError:
+            if retry_cnt > 0:
+                warnings.warn("Retry downloading from url: {}".format(remote.url))
+                time.sleep(delay)
+                retry_cnt -= 1
+            else:
+                raise
+
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
         raise IOError(

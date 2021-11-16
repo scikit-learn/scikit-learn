@@ -69,6 +69,8 @@ def fetch_covtype(
     shuffle=False,
     return_X_y=False,
     as_frame=False,
+    n_retries=3,
+    delay=1,
 ):
     """Load the covertype dataset (classification).
 
@@ -116,6 +118,12 @@ def fetch_covtype(
 
         .. versionadded:: 0.24
 
+    n_retries : int
+        Number of retries when HTTP errors are encountered.
+
+    delay : int
+        Number of seconds between retries.
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
@@ -153,7 +161,9 @@ def fetch_covtype(
             makedirs(covtype_dir)
         logger.info("Downloading %s" % ARCHIVE.url)
 
-        archive_path = _fetch_remote(ARCHIVE, dirname=covtype_dir)
+        archive_path = _fetch_remote(
+            ARCHIVE, dirname=covtype_dir, n_retries=n_retries, delay=delay
+        )
         Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
         # delete archive
         remove(archive_path)

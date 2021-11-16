@@ -62,7 +62,7 @@ TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
 
 
-def _download_20newsgroups(target_dir, cache_path):
+def _download_20newsgroups(target_dir, cache_path, n_retries=3, delay=1):
     """Download the 20 newsgroups data and stored it as a zipped pickle."""
     train_path = os.path.join(target_dir, TRAIN_FOLDER)
     test_path = os.path.join(target_dir, TEST_FOLDER)
@@ -71,7 +71,9 @@ def _download_20newsgroups(target_dir, cache_path):
         os.makedirs(target_dir)
 
     logger.info("Downloading dataset from %s (14 MB)", ARCHIVE.url)
-    archive_path = _fetch_remote(ARCHIVE, dirname=target_dir)
+    archive_path = _fetch_remote(
+        ARCHIVE, dirname=target_dir, n_retries=n_retries, delay=delay
+    )
 
     logger.debug("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
@@ -159,6 +161,8 @@ def fetch_20newsgroups(
     remove=(),
     download_if_missing=True,
     return_X_y=False,
+    n_retries=3,
+    delay=1,
 ):
     """Load the filenames and data from the 20 newsgroups dataset \
 (classification).
@@ -222,6 +226,13 @@ def fetch_20newsgroups(
 
         .. versionadded:: 0.22
 
+    n_retries : int
+        Number of retries when HTTP errors are encountered.
+
+    delay : int
+        Number of seconds between retries.
+
+
     Returns
     -------
     bunch : :class:`~sklearn.utils.Bunch`
@@ -262,7 +273,10 @@ def fetch_20newsgroups(
         if download_if_missing:
             logger.info("Downloading 20news dataset. This may take a few minutes.")
             cache = _download_20newsgroups(
-                target_dir=twenty_home, cache_path=cache_path
+                target_dir=twenty_home,
+                cache_path=cache_path,
+                n_retries=n_retries,
+                delay=delay,
             )
         else:
             raise IOError("20Newsgroups dataset not found")
@@ -340,6 +354,8 @@ def fetch_20newsgroups_vectorized(
     return_X_y=False,
     normalize=True,
     as_frame=False,
+    n_retries=3,
+    delay=1,
 ):
     """Load and vectorize the 20 newsgroups dataset (classification).
 
@@ -411,6 +427,12 @@ def fetch_20newsgroups_vectorized(
 
         .. versionadded:: 0.24
 
+    n_retries : int
+        Number of retries when HTTP errors are encountered.
+
+    delay : int
+        Number of seconds between retries.
+
     Returns
     -------
     bunch : :class:`~sklearn.utils.Bunch`
@@ -453,6 +475,8 @@ def fetch_20newsgroups_vectorized(
         random_state=12,
         remove=remove,
         download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
 
     data_test = fetch_20newsgroups(
@@ -463,6 +487,8 @@ def fetch_20newsgroups_vectorized(
         random_state=12,
         remove=remove,
         download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
 
     if os.path.exists(target_file):

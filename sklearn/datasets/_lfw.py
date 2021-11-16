@@ -73,7 +73,9 @@ TARGETS = (
 #
 
 
-def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
+def _check_fetch_lfw(
+    data_home=None, funneled=True, download_if_missing=True, n_retries=3, delay=1
+):
     """Helper function to download any missing LFW data"""
 
     data_home = get_data_home(data_home=data_home)
@@ -87,7 +89,9 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         if not exists(target_filepath):
             if download_if_missing:
                 logger.info("Downloading LFW metadata: %s", target.url)
-                _fetch_remote(target, dirname=lfw_home)
+                _fetch_remote(
+                    target, dirname=lfw_home, n_retries=n_retries, delay=delay
+                )
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -232,6 +236,8 @@ def fetch_lfw_people(
     slice_=(slice(70, 195), slice(78, 172)),
     download_if_missing=True,
     return_X_y=False,
+    n_retries=3,
+    delay=1,
 ):
     """Load the Labeled Faces in the Wild (LFW) people dataset \
 (classification).
@@ -284,6 +290,12 @@ def fetch_lfw_people(
 
         .. versionadded:: 0.20
 
+    n_retries : int 
+        Number of retries when HTTP errors are encountered.
+
+    delay : int
+        Number of seconds between retries.
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
@@ -310,7 +322,11 @@ def fetch_lfw_people(
 
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
-        data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
+        data_home=data_home,
+        funneled=funneled,
+        download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
     logger.debug("Loading LFW people faces from %s", lfw_home)
 

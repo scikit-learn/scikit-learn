@@ -84,6 +84,8 @@ def fetch_rcv1(
     random_state=None,
     shuffle=False,
     return_X_y=False,
+    n_retries=3,
+    delay=1,
 ):
     """Load the RCV1 multilabel dataset (classification).
 
@@ -133,6 +135,12 @@ def fetch_rcv1(
 
         .. versionadded:: 0.20
 
+    n_retries : int
+        Number of retries when HTTP errors are encountered.
+
+    delay : int
+        Number of seconds between retries.
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
@@ -175,7 +183,9 @@ def fetch_rcv1(
         files = []
         for each in XY_METADATA:
             logger.info("Downloading %s" % each.url)
-            file_path = _fetch_remote(each, dirname=rcv1_dir)
+            file_path = _fetch_remote(
+                each, dirname=rcv1_dir, n_retries=n_retries, delay=delay
+            )
             files.append(GzipFile(filename=file_path))
 
         Xy = load_svmlight_files(files, n_features=N_FEATURES)
@@ -201,7 +211,9 @@ def fetch_rcv1(
         not exists(sample_topics_path) or not exists(topics_path)
     ):
         logger.info("Downloading %s" % TOPICS_METADATA.url)
-        topics_archive_path = _fetch_remote(TOPICS_METADATA, dirname=rcv1_dir)
+        topics_archive_path = _fetch_remote(
+            TOPICS_METADATA, dirname=rcv1_dir, n_retries=n_retries, delay=delay
+        )
 
         # parse the target file
         n_cat = -1
