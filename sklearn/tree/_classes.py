@@ -914,7 +914,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         sample_weight=None,
         check_input=True,
         classes=None,
-        X_idx_sorted="deprecated",
     ):
         """Build a decision tree classifier from the training set (X, y).
 
