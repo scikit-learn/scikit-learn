@@ -283,7 +283,7 @@ def test_function_transformer_feature_names_out_string(feature_names_out):
     X = np.random.rand(100, 2)
     transformer.fit_transform(X)
 
-    msg = """'feature_names_out' must either be "one-to-one" or a callable"""
+    msg = """must either be "one-to-one" or a callable"""
     with pytest.raises(ValueError, match=msg):
         transformer.get_feature_names_out()
 

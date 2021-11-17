@@ -269,10 +269,11 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             names_out = self.feature_names_out(self, input_features)
         else:
             raise ValueError(
-                "'feature_names_out' must either be \"one-to-one\" or a "
-                "callable with two arguments: the function transformer and "
-                "an array-like of input feature names. The callable must "
-                "return an array-like of output feature names."
+                f"feature_names_out={self.feature_names_out!r} is invalid. "
+                'It must either be "one-to-one" or a callable with two '
+                "arguments: the function transformer and an array-like of "
+                "input feature names. The callable must return an array-like "
+                "of output feature names."
             )
         return column_or_1d(names_out)
 
